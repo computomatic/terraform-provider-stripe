@@ -112,6 +112,7 @@ func (p *stripeProvider) DataSources(_ context.Context) []func() datasource.Data
 	return []func() datasource.DataSource{
 		NewBalanceDataSource,
 		NewProductDataSource,
+		NewPriceDataSource,
 	}
 }
 
