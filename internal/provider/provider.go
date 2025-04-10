@@ -119,5 +119,6 @@ func (p *stripeProvider) DataSources(_ context.Context) []func() datasource.Data
 func (p *stripeProvider) Resources(_ context.Context) []func() resource.Resource {
 	return []func() resource.Resource{
 		NewProductResource,
+		NewPriceResource,
 	}
 }

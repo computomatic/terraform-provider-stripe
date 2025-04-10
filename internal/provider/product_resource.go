@@ -571,19 +571,50 @@ func (r *productResource) Delete(ctx context.Context, req resource.DeleteRequest
 		return
 	}
 
-	tflog.Debug(ctx, "Deleting Stripe product", map[string]any{"id": state.ID.ValueString()})
+	tflog.Debug(ctx, "Checking if Stripe product has prices", map[string]any{"id": state.ID.ValueString()})
 
-	// Delete existing product
-	_, err := r.client.Products.Del(state.ID.ValueString(), nil)
-	if err != nil {
-		resp.Diagnostics.AddError(
-			"Error Deleting Stripe Product",
-			"Could not delete product, unexpected error: "+err.Error(),
-		)
-		return
+	// Check if product has any prices
+	params := &stripe.PriceListParams{
+		Product: stripe.String(state.ID.ValueString()),
 	}
+	params.Limit = stripe.Int64(1)
 
-	tflog.Info(ctx, "Deleted Stripe product", map[string]any{"id": state.ID.ValueString()})
+	i := r.client.Prices.List(params)
+	hasPrices := i.Next()
+
+	if hasPrices {
+		tflog.Warn(ctx, "Product has prices, deactivating instead of deleting", map[string]any{"id": state.ID.ValueString()})
+
+		// Deactivate the product instead of deleting
+		updateParams := &stripe.ProductParams{
+			Active: stripe.Bool(false),
+		}
+
+		_, err := r.client.Products.Update(state.ID.ValueString(), updateParams)
+		if err != nil {
+			resp.Diagnostics.AddError(
+				"Error Deactivating Stripe Product",
+				"Could not deactivate product, unexpected error: "+err.Error(),
+			)
+			return
+		}
+
+		tflog.Info(ctx, "Deactivated Stripe product", map[string]any{"id": state.ID.ValueString()})
+	} else {
+		tflog.Debug(ctx, "Deleting Stripe product", map[string]any{"id": state.ID.ValueString()})
+
+		// Delete existing product
+		_, err := r.client.Products.Del(state.ID.ValueString(), nil)
+		if err != nil {
+			resp.Diagnostics.AddError(
+				"Error Deleting Stripe Product",
+				"Could not delete product, unexpected error: "+err.Error(),
+			)
+			return
+		}
+
+		tflog.Info(ctx, "Deleted Stripe product", map[string]any{"id": state.ID.ValueString()})
+	}
 }
 
 func (r *productResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
