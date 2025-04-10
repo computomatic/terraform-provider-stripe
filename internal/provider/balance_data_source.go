@@ -7,7 +7,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/types"
-
+	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/stripe/stripe-go/v82/client"
 )
 
@@ -17,7 +17,7 @@ var (
 	_ datasource.DataSourceWithConfigure = &balanceDataSource{}
 )
 
-// NewCoffeesDataSource is a helper function to simplify the provider implementation.
+// NewBalanceDataSource is a helper function to simplify the provider implementation.
 func NewBalanceDataSource() datasource.DataSource {
 	return &balanceDataSource{}
 }
@@ -38,8 +38,6 @@ type balanceDataSourceModel struct {
 	ConnectReserved  []balanceAmountModel `tfsdk:"connect_reserved"`
 	InstantAvailable []balanceAmountModel `tfsdk:"instant_available"`
 	Issuing          *balanceIssuingModel `tfsdk:"issuing"`
-	Livemode         types.Bool           `tfsdk:"livemode"`
-	Object           types.String         `tfsdk:"object"`
 	Pending          []balanceAmountModel `tfsdk:"pending"`
 }
 
@@ -52,77 +50,82 @@ type balanceAmountModel struct {
 // balanceIssuingModel represents the issuing portion of a balance
 type balanceIssuingModel struct {
 	Available types.Int64 `tfsdk:"available"`
-	Pending   types.Int64 `tfsdk:"pending"`
 }
 
 // Schema defines the schema for the data source.
 func (d *balanceDataSource) Schema(_ context.Context, _ datasource.SchemaRequest, resp *datasource.SchemaResponse) {
 	resp.Schema = schema.Schema{
+		Description: "Use this data source to get information about your Stripe account balance.",
 		Attributes: map[string]schema.Attribute{
 			"available": schema.ListNestedAttribute{
+				Description: "Available balance for each currency.",
 				NestedObject: schema.NestedAttributeObject{
 					Attributes: map[string]schema.Attribute{
 						"amount": schema.Int64Attribute{
-							Computed: true,
+							Description: "Amount available in the smallest currency unit (e.g., cents for USD).",
+							Computed:    true,
 						},
 						"currency": schema.StringAttribute{
-							Computed: true,
+							Description: "Three-letter ISO currency code (e.g., 'usd').",
+							Computed:    true,
 						},
 					},
 				},
 				Computed: true,
 			},
 			"connect_reserved": schema.ListNestedAttribute{
+				Description: "Balance reserved for Connect accounts.",
 				NestedObject: schema.NestedAttributeObject{
 					Attributes: map[string]schema.Attribute{
 						"amount": schema.Int64Attribute{
-							Computed: true,
+							Description: "Amount reserved in the smallest currency unit.",
+							Computed:    true,
 						},
 						"currency": schema.StringAttribute{
-							Computed: true,
+							Description: "Three-letter ISO currency code.",
+							Computed:    true,
 						},
 					},
 				},
 				Computed: true,
 			},
 			"instant_available": schema.ListNestedAttribute{
+				Description: "Balance available for instant payouts.",
 				NestedObject: schema.NestedAttributeObject{
 					Attributes: map[string]schema.Attribute{
 						"amount": schema.Int64Attribute{
-							Computed: true,
+							Description: "Amount available in the smallest currency unit.",
+							Computed:    true,
 						},
 						"currency": schema.StringAttribute{
-							Computed: true,
+							Description: "Three-letter ISO currency code.",
+							Computed:    true,
 						},
 					},
 				},
 				Computed: true,
 			},
 			"issuing": schema.SingleNestedAttribute{
+				Description: "Balance information for Stripe Issuing.",
 				Attributes: map[string]schema.Attribute{
 					"available": schema.Int64Attribute{
-						Computed: true,
-					},
-					"pending": schema.Int64Attribute{
-						Computed: true,
+						Description: "Available balance for issuing operations.",
+						Computed:    true,
 					},
 				},
 				Computed: true,
 			},
-			"livemode": schema.BoolAttribute{
-				Computed: true,
-			},
-			"object": schema.StringAttribute{
-				Computed: true,
-			},
 			"pending": schema.ListNestedAttribute{
+				Description: "Pending balance for each currency.",
 				NestedObject: schema.NestedAttributeObject{
 					Attributes: map[string]schema.Attribute{
 						"amount": schema.Int64Attribute{
-							Computed: true,
+							Description: "Amount pending in the smallest currency unit.",
+							Computed:    true,
 						},
 						"currency": schema.StringAttribute{
-							Computed: true,
+							Description: "Three-letter ISO currency code.",
+							Computed:    true,
 						},
 					},
 				},
@@ -134,8 +137,6 @@ func (d *balanceDataSource) Schema(_ context.Context, _ datasource.SchemaRequest
 
 // Configure adds the provider configured client to the data source.
 func (d *balanceDataSource) Configure(_ context.Context, req datasource.ConfigureRequest, resp *datasource.ConfigureResponse) {
-	// Add a nil check when handling ProviderData because Terraform
-	// sets that data after it calls the ConfigureProvider RPC.
 	if req.ProviderData == nil {
 		return
 	}
@@ -146,7 +147,6 @@ func (d *balanceDataSource) Configure(_ context.Context, req datasource.Configur
 			"Unexpected Data Source Configure Type",
 			fmt.Sprintf("Expected *client.API, got: %T. Please report this issue to the provider developers.", req.ProviderData),
 		)
-
 		return
 	}
 
@@ -157,35 +157,40 @@ func (d *balanceDataSource) Configure(_ context.Context, req datasource.Configur
 func (d *balanceDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
 	var state balanceDataSourceModel
 
+	tflog.Debug(ctx, "Reading Stripe balance")
+
 	balance, err := d.client.Balance.Get(nil)
 	if err != nil {
 		resp.Diagnostics.AddError(
-			"Unable to Read Stripe balance",
-			err.Error(),
+			"Error reading Stripe balance",
+			fmt.Sprintf("Could not read Stripe balance: %s", err.Error()),
 		)
 		return
 	}
 
 	// Map response body to model
-	for _, amount := range balance.Available {
-		state.Available = append(state.Available, balanceAmountModel{
+	state.Available = make([]balanceAmountModel, len(balance.Available))
+	for i, amount := range balance.Available {
+		state.Available[i] = balanceAmountModel{
 			Amount:   types.Int64Value(amount.Amount),
 			Currency: types.StringValue(string(amount.Currency)),
-		})
+		}
 	}
 
-	for _, amount := range balance.ConnectReserved {
-		state.ConnectReserved = append(state.ConnectReserved, balanceAmountModel{
+	state.ConnectReserved = make([]balanceAmountModel, len(balance.ConnectReserved))
+	for i, amount := range balance.ConnectReserved {
+		state.ConnectReserved[i] = balanceAmountModel{
 			Amount:   types.Int64Value(amount.Amount),
 			Currency: types.StringValue(string(amount.Currency)),
-		})
+		}
 	}
 
-	for _, amount := range balance.InstantAvailable {
-		state.InstantAvailable = append(state.InstantAvailable, balanceAmountModel{
+	state.InstantAvailable = make([]balanceAmountModel, len(balance.InstantAvailable))
+	for i, amount := range balance.InstantAvailable {
+		state.InstantAvailable[i] = balanceAmountModel{
 			Amount:   types.Int64Value(amount.Amount),
 			Currency: types.StringValue(string(amount.Currency)),
-		})
+		}
 	}
 
 	if balance.Issuing != nil {
@@ -194,19 +199,13 @@ func (d *balanceDataSource) Read(ctx context.Context, req datasource.ReadRequest
 		}
 	}
 
-	for _, amount := range balance.Pending {
-		state.Pending = append(state.Pending, balanceAmountModel{
+	state.Pending = make([]balanceAmountModel, len(balance.Pending))
+	for i, amount := range balance.Pending {
+		state.Pending[i] = balanceAmountModel{
 			Amount:   types.Int64Value(amount.Amount),
 			Currency: types.StringValue(string(amount.Currency)),
-		})
+		}
 	}
-
-	state.Livemode = types.BoolValue(balance.Livemode)
-	state.Object = types.StringValue(balance.Object)
-	state.Pending = append(state.Pending, balanceAmountModel{
-		Amount:   types.Int64Value(balance.Pending[0].Amount),
-		Currency: types.StringValue(string(balance.Pending[0].Currency)),
-	})
 
 	// Set state
 	diags := resp.State.Set(ctx, &state)
@@ -214,4 +213,6 @@ func (d *balanceDataSource) Read(ctx context.Context, req datasource.ReadRequest
 	if resp.Diagnostics.HasError() {
 		return
 	}
+
+	tflog.Debug(ctx, "Read Stripe balance")
 }
