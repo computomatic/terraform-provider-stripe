@@ -21,14 +21,14 @@ func main() {
 	flag.Parse()
 
 	opts := providerserver.ServeOpts{
-			// TODO: Update this after publishing
-			Address: "example.com/computomatic/stripe",
-			Debug:   debug,
+		// TODO: Update this after publishing
+		Address: "example.com/computomatic/stripe",
+		Debug:   debug,
 	}
 
 	err := providerserver.Serve(context.Background(), provider.New(version), opts)
 
 	if err != nil {
-			log.Fatal(err.Error())
+		log.Fatal(err.Error())
 	}
 }

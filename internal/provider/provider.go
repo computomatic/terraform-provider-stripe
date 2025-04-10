@@ -111,6 +111,7 @@ func (p *stripeProvider) Configure(ctx context.Context, req provider.ConfigureRe
 func (p *stripeProvider) DataSources(_ context.Context) []func() datasource.DataSource {
   return []func() datasource.DataSource {
     NewBalanceDataSource,
+    NewProductDataSource,
   }
 }
 
