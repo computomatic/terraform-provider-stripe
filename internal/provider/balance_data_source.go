@@ -13,163 +13,160 @@ import (
 
 // Ensure the implementation satisfies the expected interfaces.
 var (
-  _ datasource.DataSource              = &balanceDataSource{}
-  _ datasource.DataSourceWithConfigure = &balanceDataSource{}
+	_ datasource.DataSource              = &balanceDataSource{}
+	_ datasource.DataSourceWithConfigure = &balanceDataSource{}
 )
-
 
 // NewCoffeesDataSource is a helper function to simplify the provider implementation.
 func NewBalanceDataSource() datasource.DataSource {
-  return &balanceDataSource{}
+	return &balanceDataSource{}
 }
 
 // balanceDataSource is the data source implementation.
 type balanceDataSource struct {
-  client *client.API
+	client *client.API
 }
-
 
 // Metadata returns the data source type name.
 func (d *balanceDataSource) Metadata(_ context.Context, req datasource.MetadataRequest, resp *datasource.MetadataResponse) {
-  resp.TypeName = req.ProviderTypeName + "_balance"
+	resp.TypeName = req.ProviderTypeName + "_balance"
 }
 
 // balanceDataSourceModel maps the data source schema data.
 type balanceDataSourceModel struct {
-  Available         []balanceAmountModel `tfsdk:"available"`
-  ConnectReserved   []balanceAmountModel `tfsdk:"connect_reserved"`
-  InstantAvailable  []balanceAmountModel `tfsdk:"instant_available"`
-  Issuing           *balanceIssuingModel `tfsdk:"issuing"`
-  Livemode          types.Bool           `tfsdk:"livemode"`
-  Object            types.String         `tfsdk:"object"`
-  Pending           []balanceAmountModel `tfsdk:"pending"`
+	Available        []balanceAmountModel `tfsdk:"available"`
+	ConnectReserved  []balanceAmountModel `tfsdk:"connect_reserved"`
+	InstantAvailable []balanceAmountModel `tfsdk:"instant_available"`
+	Issuing          *balanceIssuingModel `tfsdk:"issuing"`
+	Livemode         types.Bool           `tfsdk:"livemode"`
+	Object           types.String         `tfsdk:"object"`
+	Pending          []balanceAmountModel `tfsdk:"pending"`
 }
 
 // balanceAmountModel represents a balance amount for a specific currency
 type balanceAmountModel struct {
-  Amount   types.Int64  `tfsdk:"amount"`
-  Currency types.String `tfsdk:"currency"`
+	Amount   types.Int64  `tfsdk:"amount"`
+	Currency types.String `tfsdk:"currency"`
 }
 
 // balanceIssuingModel represents the issuing portion of a balance
 type balanceIssuingModel struct {
-  Available types.Int64 `tfsdk:"available"`
-  Pending   types.Int64 `tfsdk:"pending"`
+	Available types.Int64 `tfsdk:"available"`
+	Pending   types.Int64 `tfsdk:"pending"`
 }
 
 // Schema defines the schema for the data source.
 func (d *balanceDataSource) Schema(_ context.Context, _ datasource.SchemaRequest, resp *datasource.SchemaResponse) {
-  resp.Schema = schema.Schema{
-    Attributes: map[string]schema.Attribute{
-      "available": schema.ListNestedAttribute{
-        NestedObject: schema.NestedAttributeObject{
-          Attributes: map[string]schema.Attribute{
-            "amount": schema.Int64Attribute{
-              Computed: true,
-            },
-            "currency": schema.StringAttribute{
-              Computed: true,
-            },
-          },
-        },
-        Computed: true,
-      },
-      "connect_reserved": schema.ListNestedAttribute{
-        NestedObject: schema.NestedAttributeObject{
-          Attributes: map[string]schema.Attribute{
-            "amount": schema.Int64Attribute{
-              Computed: true,
-            },
-            "currency": schema.StringAttribute{
-              Computed: true,
-            },
-          },
-        },
-        Computed: true,
-      },
-      "instant_available": schema.ListNestedAttribute{
-        NestedObject: schema.NestedAttributeObject{
-          Attributes: map[string]schema.Attribute{
-            "amount": schema.Int64Attribute{
-              Computed: true,
-            },
-            "currency": schema.StringAttribute{
-              Computed: true,
-            },
-          },
-        },
-        Computed: true,
-      },
-      "issuing": schema.SingleNestedAttribute{
-        Attributes: map[string]schema.Attribute{
-          "available": schema.Int64Attribute{
-            Computed: true,
-          },
-          "pending": schema.Int64Attribute{
-            Computed: true,
-          },
-        },
-        Computed: true,
-      },
-      "livemode": schema.BoolAttribute{
-        Computed: true,
-      },
-      "object": schema.StringAttribute{
-        Computed: true,
-      },
-      "pending": schema.ListNestedAttribute{
-        NestedObject: schema.NestedAttributeObject{
-          Attributes: map[string]schema.Attribute{
-            "amount": schema.Int64Attribute{
-              Computed: true,
-            },
-            "currency": schema.StringAttribute{
-              Computed: true,
-            },
-          },
-        },
-        Computed: true,
-      },
-    },
-  }
+	resp.Schema = schema.Schema{
+		Attributes: map[string]schema.Attribute{
+			"available": schema.ListNestedAttribute{
+				NestedObject: schema.NestedAttributeObject{
+					Attributes: map[string]schema.Attribute{
+						"amount": schema.Int64Attribute{
+							Computed: true,
+						},
+						"currency": schema.StringAttribute{
+							Computed: true,
+						},
+					},
+				},
+				Computed: true,
+			},
+			"connect_reserved": schema.ListNestedAttribute{
+				NestedObject: schema.NestedAttributeObject{
+					Attributes: map[string]schema.Attribute{
+						"amount": schema.Int64Attribute{
+							Computed: true,
+						},
+						"currency": schema.StringAttribute{
+							Computed: true,
+						},
+					},
+				},
+				Computed: true,
+			},
+			"instant_available": schema.ListNestedAttribute{
+				NestedObject: schema.NestedAttributeObject{
+					Attributes: map[string]schema.Attribute{
+						"amount": schema.Int64Attribute{
+							Computed: true,
+						},
+						"currency": schema.StringAttribute{
+							Computed: true,
+						},
+					},
+				},
+				Computed: true,
+			},
+			"issuing": schema.SingleNestedAttribute{
+				Attributes: map[string]schema.Attribute{
+					"available": schema.Int64Attribute{
+						Computed: true,
+					},
+					"pending": schema.Int64Attribute{
+						Computed: true,
+					},
+				},
+				Computed: true,
+			},
+			"livemode": schema.BoolAttribute{
+				Computed: true,
+			},
+			"object": schema.StringAttribute{
+				Computed: true,
+			},
+			"pending": schema.ListNestedAttribute{
+				NestedObject: schema.NestedAttributeObject{
+					Attributes: map[string]schema.Attribute{
+						"amount": schema.Int64Attribute{
+							Computed: true,
+						},
+						"currency": schema.StringAttribute{
+							Computed: true,
+						},
+					},
+				},
+				Computed: true,
+			},
+		},
+	}
 }
-
 
 // Configure adds the provider configured client to the data source.
 func (d *balanceDataSource) Configure(_ context.Context, req datasource.ConfigureRequest, resp *datasource.ConfigureResponse) {
-  // Add a nil check when handling ProviderData because Terraform
-  // sets that data after it calls the ConfigureProvider RPC.
-  if req.ProviderData == nil {
-    return
-  }
+	// Add a nil check when handling ProviderData because Terraform
+	// sets that data after it calls the ConfigureProvider RPC.
+	if req.ProviderData == nil {
+		return
+	}
 
-  client, ok := req.ProviderData.(*client.API)
-  if !ok {
-    resp.Diagnostics.AddError(
-      "Unexpected Data Source Configure Type",
-      fmt.Sprintf("Expected *client.API, got: %T. Please report this issue to the provider developers.", req.ProviderData),
-    )
+	client, ok := req.ProviderData.(*client.API)
+	if !ok {
+		resp.Diagnostics.AddError(
+			"Unexpected Data Source Configure Type",
+			fmt.Sprintf("Expected *client.API, got: %T. Please report this issue to the provider developers.", req.ProviderData),
+		)
 
-    return
-  }
+		return
+	}
 
-  d.client = client
+	d.client = client
 }
 
 // Read refreshes the Terraform state with the latest data.
 func (d *balanceDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
-  var state balanceDataSourceModel
+	var state balanceDataSourceModel
 
-  balance, err := d.client.Balance.Get(nil)
-  if err != nil {
-    resp.Diagnostics.AddError(
-      "Unable to Read Stripe balance",
-      err.Error(),
-    )
-    return
-  }
+	balance, err := d.client.Balance.Get(nil)
+	if err != nil {
+		resp.Diagnostics.AddError(
+			"Unable to Read Stripe balance",
+			err.Error(),
+		)
+		return
+	}
 
-  // Map response body to model
+	// Map response body to model
 	for _, amount := range balance.Available {
 		state.Available = append(state.Available, balanceAmountModel{
 			Amount:   types.Int64Value(amount.Amount),
@@ -211,10 +208,10 @@ func (d *balanceDataSource) Read(ctx context.Context, req datasource.ReadRequest
 		Currency: types.StringValue(string(balance.Pending[0].Currency)),
 	})
 
-  // Set state
-  diags := resp.State.Set(ctx, &state)
-  resp.Diagnostics.Append(diags...)
-  if resp.Diagnostics.HasError() {
-    return
-  }
+	// Set state
+	diags := resp.State.Set(ctx, &state)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
 }

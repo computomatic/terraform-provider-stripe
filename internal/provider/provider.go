@@ -16,19 +16,19 @@ import (
 )
 
 var (
-    _ provider.Provider = &stripeProvider{}
+	_ provider.Provider = &stripeProvider{}
 )
 
 func New(version string) func() provider.Provider {
-    return func() provider.Provider {
-        return &stripeProvider{
-            version: version,
-        }
-    }
+	return func() provider.Provider {
+		return &stripeProvider{
+			version: version,
+		}
+	}
 }
 
 type stripeProvider struct {
-    version string
+	version string
 }
 
 type stripeProviderModel struct {
@@ -36,18 +36,18 @@ type stripeProviderModel struct {
 }
 
 func (p *stripeProvider) Metadata(_ context.Context, _ provider.MetadataRequest, resp *provider.MetadataResponse) {
-    resp.TypeName = "stripe"
-    resp.Version = p.version
+	resp.TypeName = "stripe"
+	resp.Version = p.version
 }
 
 func (p *stripeProvider) Schema(_ context.Context, _ provider.SchemaRequest, resp *provider.SchemaResponse) {
 	resp.Schema = schema.Schema{
-			Attributes: map[string]schema.Attribute{
-				"api_key": schema.StringAttribute{
-					Optional: true,
-					Sensitive: true,
-				},
+		Attributes: map[string]schema.Attribute{
+			"api_key": schema.StringAttribute{
+				Optional:  true,
+				Sensitive: true,
 			},
+		},
 	}
 }
 
@@ -58,40 +58,40 @@ func (p *stripeProvider) Configure(ctx context.Context, req provider.ConfigureRe
 	diags := req.Config.Get(ctx, &config)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
-			return
+		return
 	}
 
 	if config.ApiKey.IsUnknown() {
-			resp.Diagnostics.AddAttributeError(
-					path.Root("api_key"),
-					"Unknown Stripe API Key",
-					"The provider cannot create the Stripe API client as there is an unknown configuration value for the Stripe API key. "+
-							"Either target apply the source of the value first, set the value statically in the configuration, or use the STRIPE_API_KEY environment variable.",
-			)
+		resp.Diagnostics.AddAttributeError(
+			path.Root("api_key"),
+			"Unknown Stripe API Key",
+			"The provider cannot create the Stripe API client as there is an unknown configuration value for the Stripe API key. "+
+				"Either target apply the source of the value first, set the value statically in the configuration, or use the STRIPE_API_KEY environment variable.",
+		)
 	}
 
 	if resp.Diagnostics.HasError() {
-			return
+		return
 	}
 
 	apiKey := os.Getenv("STRIPE_API_KEY")
 
 	if !config.ApiKey.IsNull() {
-			apiKey = config.ApiKey.ValueString()
+		apiKey = config.ApiKey.ValueString()
 	}
 
 	if apiKey == "" {
-			resp.Diagnostics.AddAttributeError(
-					path.Root("api_key"),
-					"Missing Stripe API Key",
-					"The provider cannot create the Stripe API client as there is a missing or empty value for the Stripe API key. "+
-							"Set the api_key value in the configuration or use the STRIPE_API_KEY environment variable. "+
-							"If either is already set, ensure the value is not empty.",
-			)
+		resp.Diagnostics.AddAttributeError(
+			path.Root("api_key"),
+			"Missing Stripe API Key",
+			"The provider cannot create the Stripe API client as there is a missing or empty value for the Stripe API key. "+
+				"Set the api_key value in the configuration or use the STRIPE_API_KEY environment variable. "+
+				"If either is already set, ensure the value is not empty.",
+		)
 	}
 
 	if resp.Diagnostics.HasError() {
-			return
+		return
 	}
 
 	tflog.SetField(ctx, "api_key", apiKey)
@@ -109,12 +109,14 @@ func (p *stripeProvider) Configure(ctx context.Context, req provider.ConfigureRe
 }
 
 func (p *stripeProvider) DataSources(_ context.Context) []func() datasource.DataSource {
-  return []func() datasource.DataSource {
-    NewBalanceDataSource,
-    NewProductDataSource,
-  }
+	return []func() datasource.DataSource{
+		NewBalanceDataSource,
+		NewProductDataSource,
+	}
 }
 
 func (p *stripeProvider) Resources(_ context.Context) []func() resource.Resource {
-    return nil
+	return []func() resource.Resource{
+		NewProductResource,
+	}
 }

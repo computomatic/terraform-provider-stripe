@@ -31,21 +31,21 @@ type productDataSource struct {
 
 // productDataSourceModel maps the data source schema data.
 type productDataSourceModel struct {
-	ID          types.String `tfsdk:"id"`
-	Name        types.String `tfsdk:"name"`
-	Description types.String `tfsdk:"description"`
-	Active      types.Bool   `tfsdk:"active"`
-	Created     types.Int64  `tfsdk:"created"`
-	Updated     types.Int64  `tfsdk:"updated"`
-	Metadata    types.Map    `tfsdk:"metadata"`
-	Images      types.List   `tfsdk:"images"`
-	DefaultPrice types.String `tfsdk:"default_price"`
-	PackageDimensions types.Object `tfsdk:"package_dimensions"`
-	Shippable    types.Bool   `tfsdk:"shippable"`
+	ID                  types.String `tfsdk:"id"`
+	Name                types.String `tfsdk:"name"`
+	Description         types.String `tfsdk:"description"`
+	Active              types.Bool   `tfsdk:"active"`
+	Created             types.Int64  `tfsdk:"created"`
+	Updated             types.Int64  `tfsdk:"updated"`
+	Metadata            types.Map    `tfsdk:"metadata"`
+	Images              types.List   `tfsdk:"images"`
+	DefaultPrice        types.String `tfsdk:"default_price"`
+	PackageDimensions   types.Object `tfsdk:"package_dimensions"`
+	Shippable           types.Bool   `tfsdk:"shippable"`
 	StatementDescriptor types.String `tfsdk:"statement_descriptor"`
-	TaxCode      types.String `tfsdk:"tax_code"`
-	UnitLabel    types.String `tfsdk:"unit_label"`
-	URL          types.String `tfsdk:"url"`
+	TaxCode             types.String `tfsdk:"tax_code"`
+	UnitLabel           types.String `tfsdk:"unit_label"`
+	URL                 types.String `tfsdk:"url"`
 }
 
 // Metadata returns the data source type name.
@@ -241,7 +241,9 @@ func (d *productDataSource) Read(ctx context.Context, req datasource.ReadRequest
 		)
 	}
 
+	// Set shippable attribute
 	state.Shippable = types.BoolValue(product.Shippable)
+
 	state.StatementDescriptor = types.StringValue(product.StatementDescriptor)
 
 	// Handle tax code
