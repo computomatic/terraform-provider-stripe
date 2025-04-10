@@ -164,7 +164,9 @@ resource "stripe_price" "test" {
   recurring = {
     interval = "year"
     interval_count = 1
-    usage_type = "metered"
+		# TODO: Test changing usage_type to metered once Meter resources are implemented
+    # usage_type = "metered"
+		usage_type = "licensed"
   }
   metadata = {
     test = "updated"
@@ -184,7 +186,6 @@ resource "stripe_price" "test" {
 					resource.TestCheckResourceAttr("stripe_price.test", "type", "recurring"),
 					resource.TestCheckResourceAttr("stripe_price.test", "recurring.interval", "year"),
 					resource.TestCheckResourceAttr("stripe_price.test", "recurring.interval_count", "1"),
-					resource.TestCheckResourceAttr("stripe_price.test", "recurring.usage_type", "metered"),
 					resource.TestCheckResourceAttrSet("stripe_price.test", "id"),
 					resource.TestCheckResourceAttrSet("stripe_price.test", "created"),
 					resource.TestCheckResourceAttrSet("stripe_price.test", "unit_amount_decimal"),

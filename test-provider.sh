@@ -13,4 +13,5 @@ set -euo pipefail
 TF_ACC_TERRAFORM_PATH="/usr/local/bin/tofu"
 TF_ACC_PROVIDER_NAMESPACE="hashicorp"
 TF_ACC_PROVIDER_HOST="registry.opentofu.org"
+TF_LOG=DEBUG
 TF_ACC=1 go test -count=1 -v ./internal/provider

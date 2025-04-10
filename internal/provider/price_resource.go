@@ -8,6 +8,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/int64planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/types"
@@ -36,8 +37,6 @@ type priceResourceModel struct {
 	ID                types.String      `tfsdk:"id"`
 	Active            types.Bool        `tfsdk:"active"`
 	Currency          types.String      `tfsdk:"currency"`
-	Interval          types.String      `tfsdk:"interval"`
-	IntervalCount     types.Int64       `tfsdk:"interval_count"`
 	LookupKey         types.String      `tfsdk:"lookup_key"`
 	Metadata          types.Map         `tfsdk:"metadata"`
 	Nickname          types.String      `tfsdk:"nickname"`
@@ -87,14 +86,6 @@ func (r *priceResource) Schema(_ context.Context, _ resource.SchemaRequest, resp
 			"currency": schema.StringAttribute{
 				Description: "Three-letter ISO currency code.",
 				Required:    true,
-			},
-			"interval": schema.StringAttribute{
-				Description: "The recurring interval.",
-				Optional:    true,
-			},
-			"interval_count": schema.Int64Attribute{
-				Description: "The number of intervals between recurring billings.",
-				Optional:    true,
 			},
 			"lookup_key": schema.StringAttribute{
 				Description: "A lookup key used to retrieve prices.",
@@ -156,6 +147,9 @@ func (r *priceResource) Schema(_ context.Context, _ resource.SchemaRequest, resp
 			"unit_amount": schema.Int64Attribute{
 				Description: "The unit amount in cents to be charged.",
 				Optional:    true,
+				PlanModifiers: []planmodifier.Int64{
+					int64planmodifier.RequiresReplace(),
+				},
 			},
 			"unit_amount_decimal": schema.StringAttribute{
 				Description: "The unit amount in decimal form.",
@@ -295,9 +289,6 @@ func (r *priceResource) Create(ctx context.Context, req resource.CreateRequest, 
 
 	// Handle recurring attributes
 	if price.Recurring != nil {
-		state.Interval = types.StringValue(string(price.Recurring.Interval))
-		state.IntervalCount = types.Int64Value(price.Recurring.IntervalCount)
-
 		recurring := map[string]attr.Value{
 			"interval":       types.StringValue(string(price.Recurring.Interval)),
 			"interval_count": types.Int64Value(price.Recurring.IntervalCount),
@@ -312,8 +303,6 @@ func (r *priceResource) Create(ctx context.Context, req resource.CreateRequest, 
 			recurring,
 		)
 	} else {
-		state.Interval = types.StringNull()
-		state.IntervalCount = types.Int64Null()
 		state.Recurring = types.ObjectNull(
 			map[string]attr.Type{
 				"interval":       types.StringType,
@@ -419,9 +408,6 @@ func (r *priceResource) Read(ctx context.Context, req resource.ReadRequest, resp
 
 	// Handle recurring attributes
 	if price.Recurring != nil {
-		state.Interval = types.StringValue(string(price.Recurring.Interval))
-		state.IntervalCount = types.Int64Value(price.Recurring.IntervalCount)
-
 		recurring := map[string]attr.Value{
 			"interval":       types.StringValue(string(price.Recurring.Interval)),
 			"interval_count": types.Int64Value(price.Recurring.IntervalCount),
@@ -436,8 +422,6 @@ func (r *priceResource) Read(ctx context.Context, req resource.ReadRequest, resp
 			recurring,
 		)
 	} else {
-		state.Interval = types.StringNull()
-		state.IntervalCount = types.Int64Null()
 		state.Recurring = types.ObjectNull(
 			map[string]attr.Type{
 				"interval":       types.StringType,
@@ -606,6 +590,31 @@ func (r *priceResource) Update(ctx context.Context, req resource.UpdateRequest, 
 		newState.TiersMode = types.StringValue(string(price.TiersMode))
 	} else {
 		newState.TiersMode = types.StringNull()
+	}
+
+	// Handle recurring attributes
+	if price.Recurring != nil {
+		recurring := map[string]attr.Value{
+			"interval":       types.StringValue(string(price.Recurring.Interval)),
+			"interval_count": types.Int64Value(price.Recurring.IntervalCount),
+			"usage_type":     types.StringValue(string(price.Recurring.UsageType)),
+		}
+		newState.Recurring = types.ObjectValueMust(
+			map[string]attr.Type{
+				"interval":       types.StringType,
+				"interval_count": types.Int64Type,
+				"usage_type":     types.StringType,
+			},
+			recurring,
+		)
+	} else {
+		newState.Recurring = types.ObjectNull(
+			map[string]attr.Type{
+				"interval":       types.StringType,
+				"interval_count": types.Int64Type,
+				"usage_type":     types.StringType,
+			},
+		)
 	}
 
 	// Handle transform usage
