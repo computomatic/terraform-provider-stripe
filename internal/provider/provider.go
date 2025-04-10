@@ -10,6 +10,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/provider/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/types"
+	"github.com/hashicorp/terraform-plugin-log/tflog"
 
 	"github.com/stripe/stripe-go/v82/client"
 )
@@ -51,6 +52,8 @@ func (p *stripeProvider) Schema(_ context.Context, _ provider.SchemaRequest, res
 }
 
 func (p *stripeProvider) Configure(ctx context.Context, req provider.ConfigureRequest, resp *provider.ConfigureResponse) {
+	tflog.Info(ctx, "Configuring Stripe client")
+
 	var config stripeProviderModel
 	diags := req.Config.Get(ctx, &config)
 	resp.Diagnostics.Append(diags...)
@@ -91,11 +94,18 @@ func (p *stripeProvider) Configure(ctx context.Context, req provider.ConfigureRe
 			return
 	}
 
+	tflog.SetField(ctx, "api_key", apiKey)
+	ctx = tflog.MaskFieldValuesWithFieldKeys(ctx, "api_key")
+
+	tflog.Debug(ctx, "Creating Stripe client")
+
 	client := &client.API{}
 	client.Init(apiKey, nil)
 
 	resp.DataSourceData = client
 	resp.ResourceData = client
+
+	tflog.Info(ctx, "Configured Stripe client", map[string]any{"success": true})
 }
 
 func (p *stripeProvider) DataSources(_ context.Context) []func() datasource.DataSource {

@@ -6,4 +6,4 @@ set -euo pipefail
 go install .
 
 # Run tofu init in the test directory
-tofu -chdir=examples/provider-install-verification plan
+TF_LOG=DEBUG tofu -chdir=examples/data-sources plan
