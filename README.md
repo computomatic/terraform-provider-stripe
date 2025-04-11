@@ -8,7 +8,7 @@
 % echo <<EOF > ~/.terraformrc
 provider_installation {
   dev_overrides {
-      "example.com/computomatic/stripe" = "/Users/toby/go/bin"
+      "github.com/computomatic/stripe" = "/Users/toby/go/bin"
   }
 
   # This is necessary to load other providers; otherwise, terraform will only use the dev_overrides block.

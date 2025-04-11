@@ -21,8 +21,7 @@ func main() {
 	flag.Parse()
 
 	opts := providerserver.ServeOpts{
-		// TODO: Update this after publishing
-		Address: "example.com/computomatic/stripe",
+		Address: "github.com/computomatic/stripe",
 		Debug:   debug,
 	}
 
