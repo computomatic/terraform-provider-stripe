@@ -75,7 +75,7 @@ func (d *priceDataSource) Schema(_ context.Context, _ datasource.SchemaRequest, 
 				Description: "The unit amount in cents to be charged.",
 				Computed:    true,
 			},
-			"unit_amount_decimal": schema.StringAttribute{
+			"unit_amount_decimal": schema.Float64Attribute{
 				Description: "The unit amount in decimal form.",
 				Computed:    true,
 			},
