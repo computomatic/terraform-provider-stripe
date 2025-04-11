@@ -274,6 +274,9 @@ func (r *productResource) Read(ctx context.Context, req resource.ReadRequest, re
 
 	// Create a new state model to avoid modifying the original state
 	err = mapStripeProductToResourceState(product, &state)
+	if err != nil {
+		resp.Diagnostics.AddError("Error mapping Stripe Product to state", fmt.Sprintf(`%v`, err))
+	}
 
 	// Set refreshed state
 	diags = resp.State.Set(ctx, &state)

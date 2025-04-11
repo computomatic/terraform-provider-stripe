@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/go-errors/errors"
+
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/path"
@@ -41,7 +43,6 @@ type paymentLinkResourceModel struct {
 	ID                  types.String `tfsdk:"id"`
 	Active              types.Bool   `tfsdk:"active"`
 	AllowPromotionCodes types.Bool   `tfsdk:"allow_promotion_codes"`
-	AutomaticTax        types.Object `tfsdk:"automatic_tax"`
 	Currency            types.String `tfsdk:"currency"`
 	LineItems           types.List   `tfsdk:"line_items"`
 	Metadata            types.Map    `tfsdk:"metadata"`
@@ -67,14 +68,9 @@ type adjustableQuantityModel struct {
 
 // afterCompletionModel maps after completion data.
 type afterCompletionModel struct {
-	Type                      types.String `tfsdk:"type"`
-	RedirectURL               types.String `tfsdk:"redirect_url"`
-	HostedConfirmationMessage types.String `tfsdk:"hosted_confirmation_custom_message"`
-}
-
-// automaticTaxModel maps automatic tax data.
-type automaticTaxModel struct {
-	Enabled types.Bool `tfsdk:"enabled"`
+	Type                            types.String `tfsdk:"type"`
+	RedirectURL                     types.String `tfsdk:"redirect_url"`
+	HostedConfirmationCustomMessage types.String `tfsdk:"hosted_confirmation_custom_message"`
 }
 
 func (r *paymentLinkResource) Metadata(_ context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
@@ -102,22 +98,17 @@ func (r *paymentLinkResource) Schema(_ context.Context, _ resource.SchemaRequest
 				Description: "Enables user redeemable promotion codes.",
 				Optional:    true,
 				Computed:    true,
-			},
-			"automatic_tax": schema.SingleNestedAttribute{
-				Description: "Configuration for automatic tax collection.",
-				Optional:    true,
-				Computed:    true,
-				Attributes: map[string]schema.Attribute{
-					"enabled": schema.BoolAttribute{
-						Description: "Set to `true` to calculate tax automatically using the customer's location.",
-						Required:    true,
-					},
+				PlanModifiers: []planmodifier.Bool{
+					boolplanmodifier.UseStateForUnknown(),
 				},
 			},
 			"currency": schema.StringAttribute{
 				Description: "Three-letter ISO currency code, in lowercase.",
 				Optional:    true,
 				Computed:    true,
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.UseStateForUnknown(),
+				},
 			},
 			"line_items": schema.ListNestedAttribute{
 				Description: "The line items representing what is being sold.",
@@ -127,6 +118,9 @@ func (r *paymentLinkResource) Schema(_ context.Context, _ resource.SchemaRequest
 						"id": schema.StringAttribute{
 							Computed:    true,
 							Description: "Unique identifier for the object.",
+							PlanModifiers: []planmodifier.String{
+								stringplanmodifier.UseStateForUnknown(),
+							},
 						},
 						"price": schema.StringAttribute{
 							Required:    true,
@@ -178,26 +172,45 @@ func (r *paymentLinkResource) Schema(_ context.Context, _ resource.SchemaRequest
 				Description: "Describes the type of transaction being performed in order to customize relevant text on the page.",
 				Optional:    true,
 				Computed:    true,
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.UseStateForUnknown(),
+				},
 			},
 			"url": schema.StringAttribute{
 				Description: "The public URL that can be shared with customers.",
 				Computed:    true,
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.UseStateForUnknown(),
+				},
 			},
 			"after_completion": schema.SingleNestedAttribute{
 				Description: "Behavior after the purchase is complete.",
 				Optional:    true,
+				// Will receive a `hosted_confirmation` configuration if none specified
+				Computed: true,
+				PlanModifiers: []planmodifier.Object{
+					objectplanmodifier.UseStateForUnknown(),
+				},
 				Attributes: map[string]schema.Attribute{
 					"type": schema.StringAttribute{
 						Description: "The specified behavior after the purchase is complete.",
 						Required:    true,
 					},
+					// Required if `type` is `redirect`
 					"redirect_url": schema.StringAttribute{
 						Description: "The URL the customer will be redirected to after the purchase is complete.",
 						Optional:    true,
+						PlanModifiers: []planmodifier.String{
+							stringplanmodifier.UseStateForUnknown(),
+						},
 					},
+					// Required if `type` is `hosted_confirmation` but can be an empty string
 					"hosted_confirmation_custom_message": schema.StringAttribute{
 						Description: "A custom message to display to the customer after the purchase is complete.",
 						Optional:    true,
+						PlanModifiers: []planmodifier.String{
+							stringplanmodifier.UseStateForUnknown(),
+						},
 					},
 				},
 			},
@@ -222,19 +235,30 @@ func (r *paymentLinkResource) Configure(_ context.Context, req resource.Configur
 	r.client = client
 }
 
-func mapPaymentLinkResourceStateToStripeParams(ctx context.Context, state *paymentLinkResourceModel, params *stripe.PaymentLinkParams) diag.Diagnostics {
+// Certain params can't be set on specific endpoints. Easiest to simply disable these mappings.
+type stripePaymentLinkParamOptions struct {
+	canSetActive       bool
+	canSetCurrency     bool
+	canCreateLineItems bool
+}
+
+func mapPaymentLinkResourceStateToStripeParams(ctx context.Context, state *paymentLinkResourceModel, params *stripe.PaymentLinkParams, opts stripePaymentLinkParamOptions) diag.Diagnostics {
 	var respDiags diag.Diagnostics
 
-	if !state.Active.IsNull() && !state.Active.IsUnknown() {
-		params.Active = stripe.Bool(state.Active.ValueBool())
+	if opts.canSetActive {
+		if !state.Active.IsNull() && !state.Active.IsUnknown() {
+			params.Active = stripe.Bool(state.Active.ValueBool())
+		}
 	}
 
 	if !state.AllowPromotionCodes.IsNull() && !state.AllowPromotionCodes.IsUnknown() {
 		params.AllowPromotionCodes = stripe.Bool(state.AllowPromotionCodes.ValueBool())
 	}
 
-	if !state.Currency.IsNull() && !state.Currency.IsUnknown() {
-		params.Currency = stripe.String(state.Currency.ValueString())
+	if opts.canSetCurrency {
+		if !state.Currency.IsNull() && !state.Currency.IsUnknown() {
+			params.Currency = stripe.String(state.Currency.ValueString())
+		}
 	}
 
 	if !state.SubmitType.IsNull() && !state.SubmitType.IsUnknown() {
@@ -246,47 +270,57 @@ func mapPaymentLinkResourceStateToStripeParams(ctx context.Context, state *payme
 	diags := state.LineItems.ElementsAs(ctx, &lineItems, false)
 	respDiags.Append(diags...)
 	if respDiags.HasError() {
+		err := errors.Errorf(`mapping error %s`, diags.Errors()[0].Summary())
+		tflog.Error(ctx, fmt.Sprintf(`returning error: %s`, err.ErrorStack()))
 		return respDiags
 	}
 
 	params.LineItems = make([]*stripe.PaymentLinkLineItemParams, len(lineItems))
 	// TODO: Error if lineItems is empty
-	for i, item := range lineItems {
-		lineItem := &stripe.PaymentLinkLineItemParams{
-			Price:    stripe.String(item.Price.ValueString()),
-			Quantity: stripe.Int64(item.Quantity.ValueInt64()),
+	for i, stateLineItem := range lineItems {
+		stripeLineItem := &stripe.PaymentLinkLineItemParams{
+			Quantity: stripe.Int64(stateLineItem.Quantity.ValueInt64()),
+		}
+		if opts.canCreateLineItems {
+			stripeLineItem.Price = stripe.String(stateLineItem.Price.ValueString())
+		} else {
+			stripeLineItem.ID = stripe.String(stateLineItem.Id.ValueString())
 		}
 
-		if !item.AdjustableQuantity.IsNull() {
+		if !stateLineItem.AdjustableQuantity.IsNull() {
 			var adjQuantity adjustableQuantityModel
-			diags = item.AdjustableQuantity.As(ctx, &adjQuantity, basetypes.ObjectAsOptions{})
+			diags = stateLineItem.AdjustableQuantity.As(ctx, &adjQuantity, basetypes.ObjectAsOptions{})
 			respDiags.Append(diags...)
 			if respDiags.HasError() {
+				err := errors.Errorf(`mapping error %s`, diags.Errors()[0].Summary())
+				tflog.Error(ctx, fmt.Sprintf(`returning error: %s`, err.ErrorStack()))
 				return respDiags
 			}
 
-			lineItem.AdjustableQuantity = &stripe.PaymentLinkLineItemAdjustableQuantityParams{
+			stripeLineItem.AdjustableQuantity = &stripe.PaymentLinkLineItemAdjustableQuantityParams{
 				Enabled: stripe.Bool(adjQuantity.Enabled.ValueBool()),
 			}
 
 			if !adjQuantity.Minimum.IsNull() {
-				lineItem.AdjustableQuantity.Minimum = stripe.Int64(adjQuantity.Minimum.ValueInt64())
+				stripeLineItem.AdjustableQuantity.Minimum = stripe.Int64(adjQuantity.Minimum.ValueInt64())
 			}
 
 			if !adjQuantity.Maximum.IsNull() {
-				lineItem.AdjustableQuantity.Maximum = stripe.Int64(adjQuantity.Maximum.ValueInt64())
+				stripeLineItem.AdjustableQuantity.Maximum = stripe.Int64(adjQuantity.Maximum.ValueInt64())
 			}
 		}
 
-		params.LineItems[i] = lineItem
+		params.LineItems[i] = stripeLineItem
 	}
 
 	// Handle after completion
-	if !state.AfterCompletion.IsNull() {
+	if !state.AfterCompletion.IsNull() && !state.AfterCompletion.IsUnknown() {
 		var afterCompletion afterCompletionModel
 		diags = state.AfterCompletion.As(ctx, &afterCompletion, basetypes.ObjectAsOptions{})
 		respDiags.Append(diags...)
 		if respDiags.HasError() {
+			err := errors.Errorf(`mapping error %s`, diags.Errors()[0].Summary())
+			tflog.Error(ctx, fmt.Sprintf(`returning error: %s`, err.ErrorStack()))
 			return respDiags
 		}
 
@@ -300,24 +334,10 @@ func mapPaymentLinkResourceStateToStripeParams(ctx context.Context, state *payme
 			}
 		}
 
-		if !afterCompletion.HostedConfirmationMessage.IsNull() {
+		if !afterCompletion.HostedConfirmationCustomMessage.IsNull() {
 			params.AfterCompletion.HostedConfirmation = &stripe.PaymentLinkAfterCompletionHostedConfirmationParams{
-				CustomMessage: stripe.String(afterCompletion.HostedConfirmationMessage.ValueString()),
+				CustomMessage: stripe.String(afterCompletion.HostedConfirmationCustomMessage.ValueString()),
 			}
-		}
-	}
-
-	// Handle automatic tax
-	if !state.AutomaticTax.IsNull() {
-		var automaticTax automaticTaxModel
-		diags = state.AutomaticTax.As(ctx, &automaticTax, basetypes.ObjectAsOptions{})
-		respDiags.Append(diags...)
-		if respDiags.HasError() {
-			return respDiags
-		}
-
-		params.AutomaticTax = &stripe.PaymentLinkAutomaticTaxParams{
-			Enabled: stripe.Bool(automaticTax.Enabled.ValueBool()),
 		}
 	}
 
@@ -351,6 +371,8 @@ func mapStripePaymentLinkToResourceState(ctx context.Context, stripeClient *clie
 	diags := plan.LineItems.ElementsAs(ctx, &planLineItems, false)
 	respDiags.Append(diags...)
 	if respDiags.HasError() {
+		err := errors.Errorf(`mapping error %s`, diags.Errors()[0].Summary())
+		tflog.Error(ctx, fmt.Sprintf(`returning error: %s`, err.ErrorStack()))
 		return respDiags
 	}
 
@@ -358,68 +380,59 @@ func mapStripePaymentLinkToResourceState(ctx context.Context, stripeClient *clie
 	diags = state.LineItems.ElementsAs(ctx, &stateLineItems, false)
 	respDiags.Append(diags...)
 	if respDiags.HasError() {
+		err := errors.Errorf(`mapping error %s`, diags.Errors()[0].Summary())
+		tflog.Error(ctx, fmt.Sprintf(`returning error: %s`, err.ErrorStack()))
 		return respDiags
 	}
 
 	// Handle after completion
 	if paymentLink.AfterCompletion != nil {
-		afterCompletion := map[string]attr.Value{
-			"type": types.StringValue(string(paymentLink.AfterCompletion.Type)),
+		afterCompletion := afterCompletionModel{
+			Type: types.StringValue(string(paymentLink.AfterCompletion.Type)),
 		}
 
 		if paymentLink.AfterCompletion.Redirect != nil {
-			afterCompletion["redirect_url"] = types.StringValue(paymentLink.AfterCompletion.Redirect.URL)
+			afterCompletion.RedirectURL = types.StringValue(paymentLink.AfterCompletion.Redirect.URL)
 		} else {
-			afterCompletion["redirect_url"] = types.StringNull()
+			afterCompletion.RedirectURL = types.StringNull()
 		}
 
 		if paymentLink.AfterCompletion.HostedConfirmation != nil {
-			afterCompletion["hosted_confirmation_custom_message"] = types.StringValue(paymentLink.AfterCompletion.HostedConfirmation.CustomMessage)
+			afterCompletion.HostedConfirmationCustomMessage = types.StringValue(paymentLink.AfterCompletion.HostedConfirmation.CustomMessage)
 		} else {
-			afterCompletion["hosted_confirmation_custom_message"] = types.StringNull()
+			afterCompletion.HostedConfirmationCustomMessage = types.StringNull()
 		}
 
-		state.AfterCompletion, diags = types.ObjectValue(
-			map[string]attr.Type{
-				"type":                               types.StringType,
-				"redirect_url":                       types.StringType,
-				"hosted_confirmation_custom_message": types.StringType,
-			},
-			afterCompletion,
-		)
+		afterCompletionAttrTypes := map[string]attr.Type{
+			"type":                               types.StringType,
+			"redirect_url":                       types.StringType,
+			"hosted_confirmation_custom_message": types.StringType,
+		}
+		state.AfterCompletion, diags = types.ObjectValueFrom(ctx, afterCompletionAttrTypes, afterCompletion)
 		respDiags.Append(diags...)
 		if respDiags.HasError() {
-			return respDiags
-		}
-	}
-
-	// Handle automatic tax
-	if paymentLink.AutomaticTax != nil {
-		automaticTax := map[string]attr.Value{
-			"enabled": types.BoolValue(paymentLink.AutomaticTax.Enabled),
-		}
-
-		state.AutomaticTax, diags = types.ObjectValue(
-			map[string]attr.Type{
-				"enabled": types.BoolType,
-			},
-			automaticTax,
-		)
-		respDiags.Append(diags...)
-		if respDiags.HasError() {
+			err := errors.Errorf(`mapping error %s`, diags.Errors()[0].Summary())
+			tflog.Error(ctx, fmt.Sprintf(`returning error: %s`, err.ErrorStack()))
 			return respDiags
 		}
 	}
 
 	// Handle metadata
-	metadata := make(map[string]attr.Value)
-	for k, v := range paymentLink.Metadata {
-		metadata[k] = types.StringValue(v)
-	}
-	state.Metadata, diags = types.MapValue(types.StringType, metadata)
-	respDiags.Append(diags...)
-	if respDiags.HasError() {
-		return respDiags
+	if len(paymentLink.Metadata) == 0 && state.Metadata.IsNull() {
+		// Preserve null state if the map is empty
+		state.Metadata = types.MapNull(types.StringType)
+	} else {
+		metadata := make(map[string]attr.Value)
+		for k, v := range paymentLink.Metadata {
+			metadata[k] = types.StringValue(v)
+		}
+		state.Metadata, diags = types.MapValue(types.StringType, metadata)
+		respDiags.Append(diags...)
+		if respDiags.HasError() {
+			err := errors.Errorf(`mapping error %s`, diags.Errors()[0].Summary())
+			tflog.Error(ctx, fmt.Sprintf(`returning error: %s`, err.ErrorStack()))
+			return respDiags
+		}
 	}
 
 	// Fetch line items from the Stripe API
@@ -483,6 +496,8 @@ func mapStripePaymentLinkToResourceState(ctx context.Context, stripeClient *clie
 		)
 		respDiags.Append(diags...)
 		if respDiags.HasError() {
+			err := errors.Errorf(`mapping error %s`, diags.Errors()[0].Summary())
+			tflog.Error(ctx, fmt.Sprintf(`returning error: %s`, err.ErrorStack()))
 			return respDiags
 		}
 
@@ -504,6 +519,8 @@ func mapStripePaymentLinkToResourceState(ctx context.Context, stripeClient *clie
 	)
 	respDiags.Append(diags...)
 	if respDiags.HasError() {
+		err := errors.Errorf(`mapping error %s`, diags.Errors()[0].Summary())
+		tflog.Error(ctx, fmt.Sprintf(`returning error: %s`, err.ErrorStack()))
 		return respDiags
 	}
 
@@ -515,6 +532,8 @@ func (r *paymentLinkResource) Create(ctx context.Context, req resource.CreateReq
 	diags := req.Plan.Get(ctx, &plan)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
+		err := errors.Errorf(`mapping error %s`, resp.Diagnostics.Errors()[0].Summary())
+		tflog.Error(ctx, fmt.Sprintf(`returning error: %s`, err.ErrorStack()))
 		return
 	}
 
@@ -523,9 +542,11 @@ func (r *paymentLinkResource) Create(ctx context.Context, req resource.CreateReq
 	params := &stripe.PaymentLinkParams{}
 
 	// Set basic parameters
-	diags = mapPaymentLinkResourceStateToStripeParams(ctx, &plan, params)
+	diags = mapPaymentLinkResourceStateToStripeParams(ctx, &plan, params, stripePaymentLinkParamOptions{canSetActive: false, canSetCurrency: true, canCreateLineItems: true})
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
+		err := errors.Errorf(`mapping error %s`, resp.Diagnostics.Errors()[0].Summary())
+		tflog.Error(ctx, fmt.Sprintf(`returning error: %s`, err.ErrorStack()))
 		return
 	}
 	if !plan.Active.IsNull() && !plan.Active.IsUnknown() {
@@ -557,6 +578,8 @@ func (r *paymentLinkResource) Create(ctx context.Context, req resource.CreateReq
 	diags = mapStripePaymentLinkToResourceState(ctx, r.client, paymentLink, &state, &plan)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
+		err := errors.Errorf(`mapping error %s`, resp.Diagnostics.Errors()[0].Summary())
+		tflog.Error(ctx, fmt.Sprintf(`returning error: %s`, err.ErrorStack()))
 		return
 	}
 
@@ -564,6 +587,8 @@ func (r *paymentLinkResource) Create(ctx context.Context, req resource.CreateReq
 	diags = resp.State.Set(ctx, &state)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
+		err := errors.Errorf(`mapping error %s`, resp.Diagnostics.Errors()[0].Summary())
+		tflog.Error(ctx, fmt.Sprintf(`returning error: %s`, err.ErrorStack()))
 		return
 	}
 
@@ -575,6 +600,8 @@ func (r *paymentLinkResource) Read(ctx context.Context, req resource.ReadRequest
 	diags := req.State.Get(ctx, &state)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
+		err := errors.Errorf(`mapping error %s`, resp.Diagnostics.Errors()[0].Summary())
+		tflog.Error(ctx, fmt.Sprintf(`returning error: %s`, err.ErrorStack()))
 		return
 	}
 
@@ -596,6 +623,8 @@ func (r *paymentLinkResource) Read(ctx context.Context, req resource.ReadRequest
 	diags = resp.State.Set(ctx, &state)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
+		err := errors.Errorf(`mapping error %s`, resp.Diagnostics.Errors()[0].Summary())
+		tflog.Error(ctx, fmt.Sprintf(`returning error: %s`, err.ErrorStack()))
 		return
 	}
 
@@ -607,6 +636,8 @@ func (r *paymentLinkResource) Update(ctx context.Context, req resource.UpdateReq
 	diags := req.Plan.Get(ctx, &plan)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
+		err := errors.Errorf(`mapping error %s`, resp.Diagnostics.Errors()[0].Summary())
+		tflog.Error(ctx, fmt.Sprintf(`returning error: %s`, err.ErrorStack()))
 		return
 	}
 
@@ -614,15 +645,19 @@ func (r *paymentLinkResource) Update(ctx context.Context, req resource.UpdateReq
 	diags = req.State.Get(ctx, &state)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
+		err := errors.Errorf(`mapping error %s`, resp.Diagnostics.Errors()[0].Summary())
+		tflog.Error(ctx, fmt.Sprintf(`returning error: %s`, err.ErrorStack()))
 		return
 	}
 
 	tflog.Debug(ctx, "Updating Stripe payment link", map[string]any{"id": state.ID.ValueString()})
 
 	params := &stripe.PaymentLinkParams{}
-	diags = mapPaymentLinkResourceStateToStripeParams(ctx, &plan, params)
+	diags = mapPaymentLinkResourceStateToStripeParams(ctx, &plan, params, stripePaymentLinkParamOptions{canSetActive: true, canSetCurrency: false, canCreateLineItems: false})
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
+		err := errors.Errorf(`mapping error %s`, resp.Diagnostics.Errors()[0].Summary())
+		tflog.Error(ctx, fmt.Sprintf(`returning error: %s`, err.ErrorStack()))
 		return
 	}
 
@@ -643,6 +678,8 @@ func (r *paymentLinkResource) Update(ctx context.Context, req resource.UpdateReq
 	diags = resp.State.Set(ctx, &state)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
+		err := errors.Errorf(`mapping error %s`, resp.Diagnostics.Errors()[0].Summary())
+		tflog.Error(ctx, fmt.Sprintf(`returning error: %s`, err.ErrorStack()))
 		return
 	}
 
@@ -654,6 +691,8 @@ func (r *paymentLinkResource) Delete(ctx context.Context, req resource.DeleteReq
 	diags := req.State.Get(ctx, &state)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
+		err := errors.Errorf(`mapping error %s`, resp.Diagnostics.Errors()[0].Summary())
+		tflog.Error(ctx, fmt.Sprintf(`returning error: %s`, err.ErrorStack()))
 		return
 	}
 
