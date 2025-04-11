@@ -3,12 +3,12 @@
 page_title: "stripe_balance Data Source - stripe"
 subcategory: ""
 description: |-
-  
+  Use this data source to get information about your Stripe account balance.
 ---
 
 # stripe_balance (Data Source)
 
-
+Use this data source to get information about your Stripe account balance.
 
 
 
@@ -17,21 +17,19 @@ description: |-
 
 ### Read-Only
 
-- `available` (Attributes List) (see [below for nested schema](#nestedatt--available))
-- `connect_reserved` (Attributes List) (see [below for nested schema](#nestedatt--connect_reserved))
-- `instant_available` (Attributes List) (see [below for nested schema](#nestedatt--instant_available))
-- `issuing` (Attributes) (see [below for nested schema](#nestedatt--issuing))
-- `livemode` (Boolean)
-- `object` (String)
-- `pending` (Attributes List) (see [below for nested schema](#nestedatt--pending))
+- `available` (Attributes List) Available balance for each currency. (see [below for nested schema](#nestedatt--available))
+- `connect_reserved` (Attributes List) Balance reserved for Connect accounts. (see [below for nested schema](#nestedatt--connect_reserved))
+- `instant_available` (Attributes List) Balance available for instant payouts. (see [below for nested schema](#nestedatt--instant_available))
+- `issuing` (Attributes) Balance information for Stripe Issuing. (see [below for nested schema](#nestedatt--issuing))
+- `pending` (Attributes List) Pending balance for each currency. (see [below for nested schema](#nestedatt--pending))
 
 <a id="nestedatt--available"></a>
 ### Nested Schema for `available`
 
 Read-Only:
 
-- `amount` (Number)
-- `currency` (String)
+- `amount` (Number) Amount available in the smallest currency unit (e.g., cents for USD).
+- `currency` (String) Three-letter ISO currency code (e.g., 'usd').
 
 
 <a id="nestedatt--connect_reserved"></a>
@@ -39,8 +37,8 @@ Read-Only:
 
 Read-Only:
 
-- `amount` (Number)
-- `currency` (String)
+- `amount` (Number) Amount reserved in the smallest currency unit.
+- `currency` (String) Three-letter ISO currency code.
 
 
 <a id="nestedatt--instant_available"></a>
@@ -48,8 +46,8 @@ Read-Only:
 
 Read-Only:
 
-- `amount` (Number)
-- `currency` (String)
+- `amount` (Number) Amount available in the smallest currency unit.
+- `currency` (String) Three-letter ISO currency code.
 
 
 <a id="nestedatt--issuing"></a>
@@ -57,8 +55,7 @@ Read-Only:
 
 Read-Only:
 
-- `available` (Number)
-- `pending` (Number)
+- `available` (Number) Available balance for issuing operations.
 
 
 <a id="nestedatt--pending"></a>
@@ -66,5 +63,5 @@ Read-Only:
 
 Read-Only:
 
-- `amount` (Number)
-- `currency` (String)
+- `amount` (Number) Amount pending in the smallest currency unit.
+- `currency` (String) Three-letter ISO currency code.

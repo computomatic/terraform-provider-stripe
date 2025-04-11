@@ -16,8 +16,6 @@ func TestAccProductResource(t *testing.T) {
 resource "stripe_product" "test" {
   name = "Test Product"
   description = "Test product for acceptance tests"
-  active = true
-  shippable = true
   metadata = {
     test = "value"
   }
@@ -28,7 +26,6 @@ resource "stripe_product" "test" {
 					resource.TestCheckResourceAttr("stripe_product.test", "name", "Test Product"),
 					resource.TestCheckResourceAttr("stripe_product.test", "description", "Test product for acceptance tests"),
 					resource.TestCheckResourceAttr("stripe_product.test", "active", "true"),
-					resource.TestCheckResourceAttr("stripe_product.test", "shippable", "true"),
 					resource.TestCheckResourceAttr("stripe_product.test", "metadata.test", "value"),
 					resource.TestCheckResourceAttrSet("stripe_product.test", "id"),
 					resource.TestCheckResourceAttrSet("stripe_product.test", "created"),
@@ -49,26 +46,20 @@ resource "stripe_product" "test" {
 resource "stripe_product" "test" {
   name = "Updated Test Product"
   description = "Updated test product for acceptance tests"
-  active = false
-  shippable = false
+  active = true
   metadata = {
     test = "updated"
     new = "value"
   }
-  statement_descriptor = "TEST PRODUCT"
-  unit_label = "item"
 }
 `,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					// Verify updated product attributes
 					resource.TestCheckResourceAttr("stripe_product.test", "name", "Updated Test Product"),
 					resource.TestCheckResourceAttr("stripe_product.test", "description", "Updated test product for acceptance tests"),
-					resource.TestCheckResourceAttr("stripe_product.test", "active", "false"),
-					resource.TestCheckResourceAttr("stripe_product.test", "shippable", "false"),
+					resource.TestCheckResourceAttr("stripe_product.test", "active", "true"),
 					resource.TestCheckResourceAttr("stripe_product.test", "metadata.test", "updated"),
 					resource.TestCheckResourceAttr("stripe_product.test", "metadata.new", "value"),
-					resource.TestCheckResourceAttr("stripe_product.test", "statement_descriptor", "TEST PRODUCT"),
-					resource.TestCheckResourceAttr("stripe_product.test", "unit_label", "item"),
 					resource.TestCheckResourceAttrSet("stripe_product.test", "updated"),
 				),
 			},

@@ -31,21 +31,14 @@ type productDataSource struct {
 
 // productDataSourceModel maps the data source schema data.
 type productDataSourceModel struct {
-	ID                  types.String `tfsdk:"id"`
-	Name                types.String `tfsdk:"name"`
-	Description         types.String `tfsdk:"description"`
-	Active              types.Bool   `tfsdk:"active"`
-	Created             types.Int64  `tfsdk:"created"`
-	Updated             types.Int64  `tfsdk:"updated"`
-	Metadata            types.Map    `tfsdk:"metadata"`
-	Images              types.List   `tfsdk:"images"`
-	DefaultPrice        types.String `tfsdk:"default_price"`
-	PackageDimensions   types.Object `tfsdk:"package_dimensions"`
-	Shippable           types.Bool   `tfsdk:"shippable"`
-	StatementDescriptor types.String `tfsdk:"statement_descriptor"`
-	TaxCode             types.String `tfsdk:"tax_code"`
-	UnitLabel           types.String `tfsdk:"unit_label"`
-	URL                 types.String `tfsdk:"url"`
+	ID          types.String `tfsdk:"id"`
+	Name        types.String `tfsdk:"name"`
+	Description types.String `tfsdk:"description"`
+	Active      types.Bool   `tfsdk:"active"`
+	Created     types.Int64  `tfsdk:"created"`
+	Updated     types.Int64  `tfsdk:"updated"`
+	Metadata    types.Map    `tfsdk:"metadata"`
+	Images      types.List   `tfsdk:"images"`
 }
 
 // Metadata returns the data source type name.
@@ -92,52 +85,6 @@ func (d *productDataSource) Schema(_ context.Context, _ datasource.SchemaRequest
 				ElementType: types.StringType,
 				Computed:    true,
 			},
-			"default_price": schema.StringAttribute{
-				Description: "The ID of the default price for this product.",
-				Computed:    true,
-			},
-			"package_dimensions": schema.SingleNestedAttribute{
-				Description: "The dimensions of this product for shipping purposes.",
-				Computed:    true,
-				Attributes: map[string]schema.Attribute{
-					"height": schema.Float64Attribute{
-						Description: "Height, in inches.",
-						Computed:    true,
-					},
-					"length": schema.Float64Attribute{
-						Description: "Length, in inches.",
-						Computed:    true,
-					},
-					"weight": schema.Float64Attribute{
-						Description: "Weight, in ounces.",
-						Computed:    true,
-					},
-					"width": schema.Float64Attribute{
-						Description: "Width, in inches.",
-						Computed:    true,
-					},
-				},
-			},
-			"shippable": schema.BoolAttribute{
-				Description: "Whether this product is a shipped good.",
-				Computed:    true,
-			},
-			"statement_descriptor": schema.StringAttribute{
-				Description: "Extra information about a product which will appear on a customer's credit card statement.",
-				Computed:    true,
-			},
-			"tax_code": schema.StringAttribute{
-				Description: "A tax code ID.",
-				Computed:    true,
-			},
-			"unit_label": schema.StringAttribute{
-				Description: "The label for the product's unit of measure.",
-				Computed:    true,
-			},
-			"url": schema.StringAttribute{
-				Description: "The URL of the product.",
-				Computed:    true,
-			},
 		},
 	}
 }
@@ -163,7 +110,6 @@ func (d *productDataSource) Configure(_ context.Context, req datasource.Configur
 // Read refreshes the Terraform state with the latest data.
 func (d *productDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
 	var config productDataSourceModel
-	var state productDataSourceModel
 
 	// Read Terraform configuration data into the model
 	resp.Diagnostics.Append(req.Config.Get(ctx, &config)...)
@@ -185,76 +131,41 @@ func (d *productDataSource) Read(ctx context.Context, req datasource.ReadRequest
 	}
 
 	// Map response body to model
-	state.ID = types.StringValue(product.ID)
-	state.Name = types.StringValue(product.Name)
-	state.Description = types.StringValue(product.Description)
-	state.Active = types.BoolValue(product.Active)
-	state.Created = types.Int64Value(product.Created)
-	state.Updated = types.Int64Value(product.Updated)
+	state := productResourceModel{
+		ID:      types.StringValue(product.ID),
+		Name:    types.StringValue(product.Name),
+		Created: types.Int64Value(product.Created),
+		Updated: types.Int64Value(product.Updated),
+		Active:  types.BoolValue(product.Active),
+	}
+
+	if product.Description != "" {
+		state.Description = types.StringValue((product.Description))
+	} else {
+		state.Description = types.StringNull()
+	}
 
 	// Handle metadata
-	metadata := make(map[string]attr.Value)
-	for k, v := range product.Metadata {
-		metadata[k] = types.StringValue(v)
+	if product.Metadata == nil {
+		state.Metadata = types.MapNull(types.StringType)
+	} else {
+		metadata := make(map[string]attr.Value)
+		for k, v := range product.Metadata {
+			metadata[k] = types.StringValue(v)
+		}
+		state.Metadata = types.MapValueMust(types.StringType, metadata)
 	}
-	state.Metadata = types.MapValueMust(types.StringType, metadata)
 
 	// Handle images
-	images := make([]attr.Value, len(product.Images))
-	for i, img := range product.Images {
-		images[i] = types.StringValue(img)
-	}
-	state.Images = types.ListValueMust(types.StringType, images)
-
-	// Handle default price
-	if product.DefaultPrice != nil {
-		state.DefaultPrice = types.StringValue(product.DefaultPrice.ID)
+	if product.Images == nil {
+		state.Images = types.ListNull(types.StringType)
 	} else {
-		state.DefaultPrice = types.StringNull()
-	}
-
-	// Handle package dimensions
-	if product.PackageDimensions != nil {
-		packageDimensions := map[string]attr.Value{
-			"height": types.Float64Value(product.PackageDimensions.Height),
-			"length": types.Float64Value(product.PackageDimensions.Length),
-			"weight": types.Float64Value(product.PackageDimensions.Weight),
-			"width":  types.Float64Value(product.PackageDimensions.Width),
+		images := make([]attr.Value, len(product.Images))
+		for i, img := range product.Images {
+			images[i] = types.StringValue(img)
 		}
-		state.PackageDimensions = types.ObjectValueMust(
-			map[string]attr.Type{
-				"height": types.Float64Type,
-				"length": types.Float64Type,
-				"weight": types.Float64Type,
-				"width":  types.Float64Type,
-			},
-			packageDimensions,
-		)
-	} else {
-		state.PackageDimensions = types.ObjectNull(
-			map[string]attr.Type{
-				"height": types.Float64Type,
-				"length": types.Float64Type,
-				"weight": types.Float64Type,
-				"width":  types.Float64Type,
-			},
-		)
+		state.Images = types.ListValueMust(types.StringType, images)
 	}
-
-	// Set shippable attribute
-	state.Shippable = types.BoolValue(product.Shippable)
-
-	state.StatementDescriptor = types.StringValue(product.StatementDescriptor)
-
-	// Handle tax code
-	if product.TaxCode != nil {
-		state.TaxCode = types.StringValue(product.TaxCode.ID)
-	} else {
-		state.TaxCode = types.StringNull()
-	}
-
-	state.UnitLabel = types.StringValue(product.UnitLabel)
-	state.URL = types.StringValue(product.URL)
 
 	// Set state
 	diags := resp.State.Set(ctx, &state)

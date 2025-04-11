@@ -31,22 +31,13 @@ type priceDataSource struct {
 
 // priceDataSourceModel maps the data source schema data.
 type priceDataSourceModel struct {
-	ID                types.String `tfsdk:"id"`
-	Active            types.Bool   `tfsdk:"active"`
-	Currency          types.String `tfsdk:"currency"`
-	Description       types.String `tfsdk:"description"`
-	Interval          types.String `tfsdk:"interval"`
-	IntervalCount     types.Int64  `tfsdk:"interval_count"`
-	LookupKey         types.String `tfsdk:"lookup_key"`
-	Metadata          types.Map    `tfsdk:"metadata"`
-	Nickname          types.String `tfsdk:"nickname"`
-	Product           types.String `tfsdk:"product"`
-	Recurring         types.Object `tfsdk:"recurring"`
-	TiersMode         types.String `tfsdk:"tiers_mode"`
-	TransformUsage    types.Object `tfsdk:"transform_usage"`
-	Type              types.String `tfsdk:"type"`
-	UnitAmount        types.Int64  `tfsdk:"unit_amount"`
-	UnitAmountDecimal types.String `tfsdk:"unit_amount_decimal"`
+	ID                types.String  `tfsdk:"id"`
+	Active            types.Bool    `tfsdk:"active"`
+	Currency          types.String  `tfsdk:"currency"`
+	Metadata          types.Map     `tfsdk:"metadata"`
+	Product           types.String  `tfsdk:"product"`
+	UnitAmount        types.Int64   `tfsdk:"unit_amount"`
+	UnitAmountDecimal types.Float64 `tfsdk:"unit_amount_decimal"`
 }
 
 // Metadata returns the data source type name.
@@ -71,80 +62,20 @@ func (d *priceDataSource) Schema(_ context.Context, _ datasource.SchemaRequest, 
 				Description: "Three-letter ISO currency code.",
 				Computed:    true,
 			},
-			"description": schema.StringAttribute{
-				Description: "The price's description.",
-				Computed:    true,
-			},
-			"interval": schema.StringAttribute{
-				Description: "The recurring interval.",
-				Computed:    true,
-			},
-			"interval_count": schema.Int64Attribute{
-				Description: "The number of intervals between recurring billings.",
-				Computed:    true,
-			},
-			"lookup_key": schema.StringAttribute{
-				Description: "A lookup key used to retrieve prices.",
-				Computed:    true,
-			},
 			"metadata": schema.MapAttribute{
 				Description: "Set of key-value pairs that you can attach to a price.",
 				ElementType: types.StringType,
-				Computed:    true,
-			},
-			"nickname": schema.StringAttribute{
-				Description: "A brief description of the price.",
 				Computed:    true,
 			},
 			"product": schema.StringAttribute{
 				Description: "The ID of the product this price is associated with.",
 				Computed:    true,
 			},
-			"recurring": schema.SingleNestedAttribute{
-				Description: "The recurring components of a price.",
-				Attributes: map[string]schema.Attribute{
-					"interval": schema.StringAttribute{
-						Description: "The recurring interval.",
-						Computed:    true,
-					},
-					"interval_count": schema.Int64Attribute{
-						Description: "The number of intervals between recurring billings.",
-						Computed:    true,
-					},
-					"usage_type": schema.StringAttribute{
-						Description: "Configures how the quantity per period should be determined.",
-						Computed:    true,
-					},
-				},
-				Computed: true,
-			},
-			"tiers_mode": schema.StringAttribute{
-				Description: "Defines if the tiering price should be `graduated` or `volume` based.",
-				Computed:    true,
-			},
-			"transform_usage": schema.SingleNestedAttribute{
-				Description: "Apply a transformation to the reported usage or set quantity before computing the amount billed.",
-				Attributes: map[string]schema.Attribute{
-					"divide_by": schema.Int64Attribute{
-						Description: "Divide usage by this number.",
-						Computed:    true,
-					},
-					"round": schema.StringAttribute{
-						Description: "After division, either round the result `up` or `down`.",
-						Computed:    true,
-					},
-				},
-				Computed: true,
-			},
-			"type": schema.StringAttribute{
-				Description: "One of `one_time` or `recurring` depending on whether the price is for a one-time purchase or a recurring (subscription) purchase.",
-				Computed:    true,
-			},
 			"unit_amount": schema.Int64Attribute{
 				Description: "The unit amount in cents to be charged.",
 				Computed:    true,
 			},
-			"unit_amount_decimal": schema.StringAttribute{
+			"unit_amount_decimal": schema.Float64Attribute{
 				Description: "The unit amount in decimal form.",
 				Computed:    true,
 			},
@@ -173,7 +104,6 @@ func (d *priceDataSource) Configure(_ context.Context, req datasource.ConfigureR
 // Read refreshes the Terraform state with the latest data.
 func (d *priceDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
 	var config priceDataSourceModel
-	var state priceDataSourceModel
 
 	// Read Terraform configuration data into the model
 	resp.Diagnostics.Append(req.Config.Get(ctx, &config)...)
@@ -195,76 +125,25 @@ func (d *priceDataSource) Read(ctx context.Context, req datasource.ReadRequest, 
 	}
 
 	// Map response body to model
-	state.ID = types.StringValue(price.ID)
-	state.Active = types.BoolValue(price.Active)
-	state.Currency = types.StringValue(string(price.Currency))
-	state.Description = types.StringNull()
-
-	// Handle recurring attributes safely
-	if price.Recurring != nil {
-		state.Interval = types.StringValue(string(price.Recurring.Interval))
-		state.IntervalCount = types.Int64Value(price.Recurring.IntervalCount)
-	} else {
-		state.Interval = types.StringNull()
-		state.IntervalCount = types.Int64Null()
+	state := priceDataSourceModel{
+		ID:                types.StringValue(price.ID),
+		Active:            types.BoolValue(price.Active),
+		Product:           types.StringValue(price.Product.ID),
+		Currency:          types.StringValue(string(price.Currency)),
+		UnitAmount:        types.Int64Value(price.UnitAmount),
+		UnitAmountDecimal: types.Float64Value(price.UnitAmountDecimal),
 	}
-
-	state.LookupKey = types.StringValue(price.LookupKey)
 
 	// Handle metadata
-	metadata := make(map[string]attr.Value)
-	for k, v := range price.Metadata {
-		metadata[k] = types.StringValue(v)
-	}
-	state.Metadata = types.MapValueMust(types.StringType, metadata)
-
-	state.Nickname = types.StringValue(price.Nickname)
-	state.Product = types.StringValue(price.Product.ID)
-
-	// Handle recurring
-	if price.Recurring != nil {
-		recurring := map[string]attr.Value{
-			"interval":       types.StringValue(string(price.Recurring.Interval)),
-			"interval_count": types.Int64Value(price.Recurring.IntervalCount),
-			"usage_type":     types.StringValue(string(price.Recurring.UsageType)),
-		}
-		state.Recurring = types.ObjectValueMust(
-			map[string]attr.Type{
-				"interval":       types.StringType,
-				"interval_count": types.Int64Type,
-				"usage_type":     types.StringType,
-			},
-			recurring,
-		)
+	if price.Metadata == nil {
+		state.Metadata = types.MapNull(types.StringType)
 	} else {
-		recurring := map[string]attr.Value{
-			"interval":       types.StringValue(""),
-			"interval_count": types.Int64Value(0),
-			"usage_type":     types.StringValue(""),
+		metadata := make(map[string]attr.Value)
+		for k, v := range price.Metadata {
+			metadata[k] = types.StringValue(v)
 		}
-		state.Recurring = types.ObjectValueMust(
-			map[string]attr.Type{
-				"interval":       types.StringType,
-				"interval_count": types.Int64Type,
-				"usage_type":     types.StringType,
-			},
-			recurring,
-		)
+		state.Metadata = types.MapValueMust(types.StringType, metadata)
 	}
-
-	state.TiersMode = types.StringValue(string(price.TiersMode))
-
-	// TransformUsage is not available in the API response
-	state.TransformUsage = types.ObjectNull(
-		map[string]attr.Type{
-			"divide_by": types.Int64Type,
-			"round":     types.StringType,
-		},
-	)
-
-	state.Type = types.StringValue(string(price.Type))
-	state.UnitAmount = types.Int64Value(price.UnitAmount)
-	state.UnitAmountDecimal = types.StringValue(fmt.Sprintf("%.2f", price.UnitAmountDecimal))
 
 	// Set state
 	diags := resp.State.Set(ctx, &state)

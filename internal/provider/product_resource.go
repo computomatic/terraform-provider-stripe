@@ -8,6 +8,8 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/boolplanmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/int64planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/types"
@@ -32,29 +34,14 @@ type productResource struct {
 
 // productResourceModel maps the resource schema data.
 type productResourceModel struct {
-	ID                  types.String            `tfsdk:"id"`
-	Name                types.String            `tfsdk:"name"`
-	Description         types.String            `tfsdk:"description"`
-	Active              types.Bool              `tfsdk:"active"`
-	Created             types.Int64             `tfsdk:"created"`
-	Updated             types.Int64             `tfsdk:"updated"`
-	Metadata            types.Map               `tfsdk:"metadata"`
-	Images              types.List              `tfsdk:"images"`
-	DefaultPrice        types.String            `tfsdk:"default_price"`
-	PackageDimensions   *packageDimensionsModel `tfsdk:"package_dimensions"`
-	Shippable           types.Bool              `tfsdk:"shippable"`
-	StatementDescriptor types.String            `tfsdk:"statement_descriptor"`
-	TaxCode             types.String            `tfsdk:"tax_code"`
-	UnitLabel           types.String            `tfsdk:"unit_label"`
-	URL                 types.String            `tfsdk:"url"`
-}
-
-// packageDimensionsModel maps package dimensions data.
-type packageDimensionsModel struct {
-	Height types.Float64 `tfsdk:"height"`
-	Length types.Float64 `tfsdk:"length"`
-	Weight types.Float64 `tfsdk:"weight"`
-	Width  types.Float64 `tfsdk:"width"`
+	ID          types.String `tfsdk:"id"`
+	Name        types.String `tfsdk:"name"`
+	Description types.String `tfsdk:"description"`
+	Active      types.Bool   `tfsdk:"active"`
+	Created     types.Int64  `tfsdk:"created"`
+	Updated     types.Int64  `tfsdk:"updated"`
+	Metadata    types.Map    `tfsdk:"metadata"`
+	Images      types.List   `tfsdk:"images"`
 }
 
 func (r *productResource) Metadata(_ context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
@@ -84,10 +71,16 @@ func (r *productResource) Schema(_ context.Context, _ resource.SchemaRequest, re
 				Description: "Whether the product is currently available for purchase.",
 				Optional:    true,
 				Computed:    true,
+				PlanModifiers: []planmodifier.Bool{
+					boolplanmodifier.UseStateForUnknown(),
+				},
 			},
 			"created": schema.Int64Attribute{
 				Description: "Time at which the product was created.",
 				Computed:    true,
+				PlanModifiers: []planmodifier.Int64{
+					int64planmodifier.UseStateForUnknown(),
+				},
 			},
 			"updated": schema.Int64Attribute{
 				Description: "Time at which the product was last updated.",
@@ -101,53 +94,6 @@ func (r *productResource) Schema(_ context.Context, _ resource.SchemaRequest, re
 			"images": schema.ListAttribute{
 				Description: "A list of up to 8 URLs of images for this product.",
 				ElementType: types.StringType,
-				Optional:    true,
-			},
-			"default_price": schema.StringAttribute{
-				Description: "The ID of the default price for this product.",
-				Optional:    true,
-				Computed:    true,
-			},
-			"package_dimensions": schema.SingleNestedAttribute{
-				Description: "The dimensions of this product for shipping purposes.",
-				Optional:    true,
-				Attributes: map[string]schema.Attribute{
-					"height": schema.Float64Attribute{
-						Description: "Height, in inches.",
-						Required:    true,
-					},
-					"length": schema.Float64Attribute{
-						Description: "Length, in inches.",
-						Required:    true,
-					},
-					"weight": schema.Float64Attribute{
-						Description: "Weight, in ounces.",
-						Required:    true,
-					},
-					"width": schema.Float64Attribute{
-						Description: "Width, in inches.",
-						Required:    true,
-					},
-				},
-			},
-			"shippable": schema.BoolAttribute{
-				Description: "Whether this product is a shipped good.",
-				Optional:    true,
-			},
-			"statement_descriptor": schema.StringAttribute{
-				Description: "Extra information about a product which will appear on a customer's credit card statement.",
-				Optional:    true,
-			},
-			"tax_code": schema.StringAttribute{
-				Description: "A tax code ID.",
-				Optional:    true,
-			},
-			"unit_label": schema.StringAttribute{
-				Description: "The label for the product's unit of measure.",
-				Optional:    true,
-			},
-			"url": schema.StringAttribute{
-				Description: "The URL of the product.",
 				Optional:    true,
 			},
 		},
@@ -173,6 +119,84 @@ func (r *productResource) Configure(_ context.Context, req resource.ConfigureReq
 	r.client = client
 }
 
+func mapProductResourceStateToStripeParams(ctx context.Context, plan *productResourceModel, params *stripe.ProductParams) error {
+	if !plan.Name.IsNull() && !plan.Name.IsUnknown() {
+		params.Name = stripe.String(plan.Name.ValueString())
+	}
+
+	if !plan.Description.IsNull() && !plan.Description.IsUnknown() {
+		params.Description = stripe.String(plan.Description.ValueString())
+	}
+
+	if !plan.Active.IsNull() && !plan.Active.IsUnknown() {
+		params.Active = stripe.Bool(plan.Active.ValueBool())
+	}
+
+	if !plan.Metadata.IsNull() && !plan.Metadata.IsUnknown() {
+		metadata := make(map[string]string)
+		plan.Metadata.ElementsAs(ctx, &metadata, false)
+		params.Metadata = metadata
+	}
+
+	if !plan.Images.IsNull() && !plan.Images.IsUnknown() {
+		var imageStrings []string
+		plan.Images.ElementsAs(ctx, &imageStrings, false)
+
+		// Convert []string to []*string
+		images := make([]*string, len(imageStrings))
+		for i, img := range imageStrings {
+			images[i] = stripe.String(img)
+		}
+		params.Images = images
+	}
+
+	return nil
+}
+
+func mapStripeProductToResourceState(product *stripe.Product, state *productResourceModel) error {
+	state.ID = types.StringValue(product.ID)
+	state.Name = types.StringValue(product.Name)
+	state.Created = types.Int64Value(product.Created)
+	state.Updated = types.Int64Value(product.Updated)
+	state.Active = types.BoolValue(product.Active)
+
+	if product.Description != "" {
+		state.Description = types.StringValue((product.Description))
+	} else {
+		state.Description = types.StringNull()
+	}
+
+	// Handle metadata
+	if product.Metadata == nil {
+		state.Metadata = types.MapNull(types.StringType)
+	} else if len(product.Metadata) == 0 && state.Metadata.IsNull() {
+		// Preserve null state if result is empty
+		state.Metadata = types.MapNull(types.StringType)
+	} else {
+		metadata := make(map[string]attr.Value)
+		for k, v := range product.Metadata {
+			metadata[k] = types.StringValue(v)
+		}
+		state.Metadata = types.MapValueMust(types.StringType, metadata)
+	}
+
+	// Handle images
+	if product.Images == nil {
+		state.Images = types.ListNull(types.StringType)
+	} else if len(product.Images) == 0 && state.Images.IsNull() {
+		// Preserve null state if result is empty
+		state.Images = types.ListNull(types.StringType)
+	} else {
+		images := make([]attr.Value, len(product.Images))
+		for i, img := range product.Images {
+			images[i] = types.StringValue(img)
+		}
+		state.Images = types.ListValueMust(types.StringType, images)
+	}
+
+	return nil
+}
+
 func (r *productResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
 	// Retrieve values from plan
 	var plan productResourceModel
@@ -185,67 +209,14 @@ func (r *productResource) Create(ctx context.Context, req resource.CreateRequest
 	tflog.Debug(ctx, "Creating Stripe product", map[string]any{"name": plan.Name.ValueString()})
 
 	// Generate API request parameters from plan
-	params := &stripe.ProductParams{
-		Name: stripe.String(plan.Name.ValueString()),
-	}
-
-	if !plan.Description.IsNull() {
-		params.Description = stripe.String(plan.Description.ValueString())
-	}
-
-	if !plan.Active.IsNull() {
-		params.Active = stripe.Bool(plan.Active.ValueBool())
-	}
-
-	if !plan.Metadata.IsNull() {
-		metadata := make(map[string]string)
-		plan.Metadata.ElementsAs(ctx, &metadata, false)
-		params.Metadata = metadata
-	}
-
-	if !plan.Images.IsNull() {
-		var imageStrings []string
-		plan.Images.ElementsAs(ctx, &imageStrings, false)
-
-		// Convert []string to []*string
-		images := make([]*string, len(imageStrings))
-		for i, img := range imageStrings {
-			images[i] = stripe.String(img)
-		}
-		params.Images = images
-	}
-
-	// Note: default_price is not a valid parameter for product creation
-	// It's only available when retrieving a product
-	// We'll handle it in the response mapping
-
-	if plan.PackageDimensions != nil {
-		params.PackageDimensions = &stripe.ProductPackageDimensionsParams{
-			Height: stripe.Float64(plan.PackageDimensions.Height.ValueFloat64()),
-			Length: stripe.Float64(plan.PackageDimensions.Length.ValueFloat64()),
-			Weight: stripe.Float64(plan.PackageDimensions.Weight.ValueFloat64()),
-			Width:  stripe.Float64(plan.PackageDimensions.Width.ValueFloat64()),
-		}
-	}
-
-	if !plan.Shippable.IsNull() {
-		params.Shippable = stripe.Bool(plan.Shippable.ValueBool())
-	}
-
-	if !plan.StatementDescriptor.IsNull() {
-		params.StatementDescriptor = stripe.String(plan.StatementDescriptor.ValueString())
-	}
-
-	if !plan.TaxCode.IsNull() {
-		params.TaxCode = stripe.String(plan.TaxCode.ValueString())
-	}
-
-	if !plan.UnitLabel.IsNull() {
-		params.UnitLabel = stripe.String(plan.UnitLabel.ValueString())
-	}
-
-	if !plan.URL.IsNull() {
-		params.URL = stripe.String(plan.URL.ValueString())
+	params := &stripe.ProductParams{}
+	err := mapProductResourceStateToStripeParams(ctx, &plan, params)
+	if err != nil {
+		resp.Diagnostics.AddError(
+			"Error creating Stripe product",
+			"Could not create product, unexpected error: "+err.Error(),
+		)
+		return
 	}
 
 	// Create new product
@@ -259,43 +230,18 @@ func (r *productResource) Create(ctx context.Context, req resource.CreateRequest
 	}
 
 	// Map response to schema and populate Computed attribute values
-	plan.ID = types.StringValue(product.ID)
-	plan.Created = types.Int64Value(product.Created)
-	plan.Updated = types.Int64Value(product.Updated)
-	plan.Active = types.BoolValue(product.Active)
-	plan.Shippable = types.BoolValue(product.Shippable)
-
-	// Handle metadata - preserve null state if it was null in the plan
-	if plan.Metadata.IsNull() {
-		plan.Metadata = types.MapNull(types.StringType)
-	} else {
-		metadata := make(map[string]attr.Value)
-		for k, v := range product.Metadata {
-			metadata[k] = types.StringValue(v)
-		}
-		plan.Metadata = types.MapValueMust(types.StringType, metadata)
-	}
-
-	// Handle images - preserve null state if it was null in the plan
-	if plan.Images.IsNull() {
-		plan.Images = types.ListNull(types.StringType)
-	} else {
-		images := make([]attr.Value, len(product.Images))
-		for i, img := range product.Images {
-			images[i] = types.StringValue(img)
-		}
-		plan.Images = types.ListValueMust(types.StringType, images)
-	}
-
-	// Handle default price
-	if product.DefaultPrice != nil {
-		plan.DefaultPrice = types.StringValue(product.DefaultPrice.ID)
-	} else {
-		plan.DefaultPrice = types.StringNull()
+	state := plan
+	err = mapStripeProductToResourceState(product, &state)
+	if err != nil {
+		resp.Diagnostics.AddError(
+			"Error creating Stripe product",
+			"Could not create product, unexpected error: "+err.Error(),
+		)
+		return
 	}
 
 	// Set state to fully populated data
-	diags = resp.State.Set(ctx, plan)
+	diags = resp.State.Set(ctx, state)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -327,98 +273,13 @@ func (r *productResource) Read(ctx context.Context, req resource.ReadRequest, re
 	}
 
 	// Create a new state model to avoid modifying the original state
-	newState := productResourceModel{
-		// Preserve the ID from the state
-		ID: state.ID,
-
-		// Set computed attributes
-		Name:    types.StringValue(product.Name),
-		Active:  types.BoolValue(product.Active),
-		Created: types.Int64Value(product.Created),
-		Updated: types.Int64Value(product.Updated),
-	}
-
-	// Set description from the API response
-	if product.Description != "" {
-		newState.Description = types.StringValue(product.Description)
-	} else {
-		newState.Description = types.StringNull()
-	}
-
-	// Set metadata from the API response
-	if len(product.Metadata) > 0 {
-		metadata := make(map[string]attr.Value)
-		for k, v := range product.Metadata {
-			metadata[k] = types.StringValue(v)
-		}
-		newState.Metadata = types.MapValueMust(types.StringType, metadata)
-	} else {
-		newState.Metadata = types.MapNull(types.StringType)
-	}
-
-	// Set images from the API response
-	if len(product.Images) > 0 {
-		images := make([]attr.Value, len(product.Images))
-		for i, img := range product.Images {
-			images[i] = types.StringValue(img)
-		}
-		newState.Images = types.ListValueMust(types.StringType, images)
-	} else {
-		newState.Images = types.ListNull(types.StringType)
-	}
-
-	// Set shippable from the API response
-	newState.Shippable = types.BoolValue(product.Shippable)
-
-	// Set statement descriptor from the API response
-	if product.StatementDescriptor != "" {
-		newState.StatementDescriptor = types.StringValue(product.StatementDescriptor)
-	} else {
-		newState.StatementDescriptor = types.StringNull()
-	}
-
-	// Set unit label from the API response
-	if product.UnitLabel != "" {
-		newState.UnitLabel = types.StringValue(product.UnitLabel)
-	} else {
-		newState.UnitLabel = types.StringNull()
-	}
-
-	// Set URL from the API response
-	if product.URL != "" {
-		newState.URL = types.StringValue(product.URL)
-	} else {
-		newState.URL = types.StringNull()
-	}
-
-	// Handle default price
-	if product.DefaultPrice != nil {
-		newState.DefaultPrice = types.StringValue(product.DefaultPrice.ID)
-	} else {
-		newState.DefaultPrice = types.StringNull()
-	}
-
-	// Handle package dimensions
-	if product.PackageDimensions != nil {
-		newState.PackageDimensions = &packageDimensionsModel{
-			Height: types.Float64Value(product.PackageDimensions.Height),
-			Length: types.Float64Value(product.PackageDimensions.Length),
-			Weight: types.Float64Value(product.PackageDimensions.Weight),
-			Width:  types.Float64Value(product.PackageDimensions.Width),
-		}
-	} else {
-		newState.PackageDimensions = nil
-	}
-
-	// Handle tax code
-	if product.TaxCode != nil {
-		newState.TaxCode = types.StringValue(product.TaxCode.ID)
-	} else {
-		newState.TaxCode = types.StringNull()
+	err = mapStripeProductToResourceState(product, &state)
+	if err != nil {
+		resp.Diagnostics.AddError("Error mapping Stripe Product to state", fmt.Sprintf(`%v`, err))
 	}
 
 	// Set refreshed state
-	diags = resp.State.Set(ctx, &newState)
+	diags = resp.State.Set(ctx, &state)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -447,63 +308,14 @@ func (r *productResource) Update(ctx context.Context, req resource.UpdateRequest
 	tflog.Debug(ctx, "Updating Stripe product", map[string]any{"id": state.ID.ValueString()})
 
 	// Generate API request parameters from plan
-	params := &stripe.ProductParams{
-		Name: stripe.String(plan.Name.ValueString()),
-	}
-
-	if !plan.Description.IsNull() {
-		params.Description = stripe.String(plan.Description.ValueString())
-	}
-
-	if !plan.Active.IsNull() {
-		params.Active = stripe.Bool(plan.Active.ValueBool())
-	}
-
-	if !plan.Metadata.IsNull() {
-		metadata := make(map[string]string)
-		plan.Metadata.ElementsAs(ctx, &metadata, false)
-		params.Metadata = metadata
-	}
-
-	if !plan.Images.IsNull() {
-		var imageStrings []string
-		plan.Images.ElementsAs(ctx, &imageStrings, false)
-
-		// Convert []string to []*string
-		images := make([]*string, len(imageStrings))
-		for i, img := range imageStrings {
-			images[i] = stripe.String(img)
-		}
-		params.Images = images
-	}
-
-	if plan.PackageDimensions != nil {
-		params.PackageDimensions = &stripe.ProductPackageDimensionsParams{
-			Height: stripe.Float64(plan.PackageDimensions.Height.ValueFloat64()),
-			Length: stripe.Float64(plan.PackageDimensions.Length.ValueFloat64()),
-			Weight: stripe.Float64(plan.PackageDimensions.Weight.ValueFloat64()),
-			Width:  stripe.Float64(plan.PackageDimensions.Width.ValueFloat64()),
-		}
-	}
-
-	if !plan.Shippable.IsNull() {
-		params.Shippable = stripe.Bool(plan.Shippable.ValueBool())
-	}
-
-	if !plan.StatementDescriptor.IsNull() {
-		params.StatementDescriptor = stripe.String(plan.StatementDescriptor.ValueString())
-	}
-
-	if !plan.TaxCode.IsNull() {
-		params.TaxCode = stripe.String(plan.TaxCode.ValueString())
-	}
-
-	if !plan.UnitLabel.IsNull() {
-		params.UnitLabel = stripe.String(plan.UnitLabel.ValueString())
-	}
-
-	if !plan.URL.IsNull() {
-		params.URL = stripe.String(plan.URL.ValueString())
+	params := &stripe.ProductParams{}
+	err := mapProductResourceStateToStripeParams(ctx, &plan, params)
+	if err != nil {
+		resp.Diagnostics.AddError(
+			"Error Updating Stripe Product",
+			"Could not update product, unexpected error: "+err.Error(),
+		)
+		return
 	}
 
 	// Update existing product
@@ -517,49 +329,16 @@ func (r *productResource) Update(ctx context.Context, req resource.UpdateRequest
 	}
 
 	// Map response to schema and populate Computed attribute values
-	plan.ID = types.StringValue(product.ID)
-	plan.Created = types.Int64Value(product.Created)
-	plan.Updated = types.Int64Value(product.Updated)
-	plan.Active = types.BoolValue(product.Active)
-	plan.Shippable = types.BoolValue(product.Shippable)
-
-	// Handle metadata - preserve null state if it was null in the plan
-	if plan.Metadata.IsNull() {
-		plan.Metadata = types.MapNull(types.StringType)
-	} else {
-		metadata := make(map[string]attr.Value)
-		for k, v := range product.Metadata {
-			metadata[k] = types.StringValue(v)
-		}
-		plan.Metadata = types.MapValueMust(types.StringType, metadata)
-	}
-
-	// Handle images - preserve null state if it was null in the plan
-	if plan.Images.IsNull() {
-		plan.Images = types.ListNull(types.StringType)
-	} else {
-		images := make([]attr.Value, len(product.Images))
-		for i, img := range product.Images {
-			images[i] = types.StringValue(img)
-		}
-		plan.Images = types.ListValueMust(types.StringType, images)
-	}
-
-	// Handle default price
-	if product.DefaultPrice != nil {
-		plan.DefaultPrice = types.StringValue(product.DefaultPrice.ID)
-	} else {
-		plan.DefaultPrice = types.StringNull()
-	}
+	mapStripeProductToResourceState(product, &state)
 
 	// Set state to fully populated data
-	diags = resp.State.Set(ctx, plan)
+	diags = resp.State.Set(ctx, &state)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
-	tflog.Info(ctx, "Updated Stripe product", map[string]any{"id": product.ID})
+	tflog.Info(ctx, "Updated Stripe product", map[string]any{"id": state.ID.ValueString()})
 }
 
 func (r *productResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {

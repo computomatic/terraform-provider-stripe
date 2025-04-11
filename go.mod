@@ -3,6 +3,7 @@ module terraform-provider-stripe
 go 1.23.7
 
 require (
+	github.com/go-errors/errors v1.5.1
 	github.com/hashicorp/terraform-plugin-docs v0.21.0
 	github.com/hashicorp/terraform-plugin-framework v1.14.1
 	github.com/hashicorp/terraform-plugin-go v0.26.0

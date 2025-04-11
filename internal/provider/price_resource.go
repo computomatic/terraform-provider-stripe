@@ -2,17 +2,18 @@ package provider
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/float64planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/int64planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/types"
-	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/stripe/stripe-go/v82"
 	"github.com/stripe/stripe-go/v82/client"
@@ -34,33 +35,20 @@ type priceResource struct {
 
 // priceResourceModel maps the resource schema data.
 type priceResourceModel struct {
-	ID                types.String      `tfsdk:"id"`
-	Active            types.Bool        `tfsdk:"active"`
-	Currency          types.String      `tfsdk:"currency"`
-	LookupKey         types.String      `tfsdk:"lookup_key"`
-	Metadata          types.Map         `tfsdk:"metadata"`
-	Nickname          types.String      `tfsdk:"nickname"`
-	Product           types.String      `tfsdk:"product"`
-	Recurring         types.Object      `tfsdk:"recurring"`
-	TiersMode         types.String      `tfsdk:"tiers_mode"`
-	TransformUsage    types.Object      `tfsdk:"transform_usage"`
-	Type              types.String      `tfsdk:"type"`
-	UnitAmount        types.Int64       `tfsdk:"unit_amount"`
-	UnitAmountDecimal types.String      `tfsdk:"unit_amount_decimal"`
-	Created           types.Int64       `tfsdk:"created"`
-}
-
-// recurringModel maps recurring price data.
-type recurringModel struct {
-	Interval     types.String `tfsdk:"interval"`
-	IntervalCount types.Int64  `tfsdk:"interval_count"`
-	UsageType    types.String `tfsdk:"usage_type"`
-}
-
-// transformUsageModel maps transform usage data.
-type transformUsageModel struct {
-	DivideBy types.Int64  `tfsdk:"divide_by"`
-	Round    types.String `tfsdk:"round"`
+	ID       types.String `tfsdk:"id"`
+	Created  types.Int64  `tfsdk:"created"`
+	Active   types.Bool   `tfsdk:"active"`
+	Currency types.String `tfsdk:"currency"`
+	// LookupKey         types.String      `tfsdk:"lookup_key"`
+	Metadata types.Map `tfsdk:"metadata"`
+	// Nickname          types.String      `tfsdk:"nickname"`
+	Product types.String `tfsdk:"product"`
+	// Recurring         types.Object      `tfsdk:"recurring"`
+	// TiersMode         types.String      `tfsdk:"tiers_mode"`
+	// TransformUsage    types.Object      `tfsdk:"transform_usage"`
+	// Type              types.String      `tfsdk:"type"`
+	UnitAmount        types.Int64   `tfsdk:"unit_amount"`
+	UnitAmountDecimal types.Float64 `tfsdk:"unit_amount_decimal"`
 }
 
 func (r *priceResource) Metadata(_ context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
@@ -87,73 +75,30 @@ func (r *priceResource) Schema(_ context.Context, _ resource.SchemaRequest, resp
 				Description: "Three-letter ISO currency code.",
 				Required:    true,
 			},
-			"lookup_key": schema.StringAttribute{
-				Description: "A lookup key used to retrieve prices.",
-				Optional:    true,
-			},
 			"metadata": schema.MapAttribute{
 				Description: "Set of key-value pairs that you can attach to a price.",
 				ElementType: types.StringType,
-				Optional:    true,
-			},
-			"nickname": schema.StringAttribute{
-				Description: "A brief description of the price.",
 				Optional:    true,
 			},
 			"product": schema.StringAttribute{
 				Description: "The ID of the product this price is associated with.",
 				Required:    true,
 			},
-			"recurring": schema.SingleNestedAttribute{
-				Description: "The recurring components of a price.",
-				Optional:    true,
-				Attributes: map[string]schema.Attribute{
-					"interval": schema.StringAttribute{
-						Description: "The recurring interval.",
-						Optional:    true,
-					},
-					"interval_count": schema.Int64Attribute{
-						Description: "The number of intervals between recurring billings.",
-						Optional:    true,
-					},
-					"usage_type": schema.StringAttribute{
-						Description: "Configures how the quantity per period should be determined.",
-						Optional:    true,
-					},
-				},
-			},
-			"tiers_mode": schema.StringAttribute{
-				Description: "Defines if the tiering price should be `graduated` or `volume` based.",
-				Optional:    true,
-			},
-			"transform_usage": schema.SingleNestedAttribute{
-				Description: "Apply a transformation to the reported usage or set quantity before computing the amount billed.",
-				Optional:    true,
-				Attributes: map[string]schema.Attribute{
-					"divide_by": schema.Int64Attribute{
-						Description: "Divide usage by this number.",
-						Optional:    true,
-					},
-					"round": schema.StringAttribute{
-						Description: "After division, either round the result `up` or `down`.",
-						Optional:    true,
-					},
-				},
-			},
-			"type": schema.StringAttribute{
-				Description: "One of `one_time` or `recurring` depending on whether the price is for a one-time purchase or a recurring (subscription) purchase.",
-				Computed:    true,
-			},
 			"unit_amount": schema.Int64Attribute{
 				Description: "The unit amount in cents to be charged.",
 				Optional:    true,
+				Computed:    true,
 				PlanModifiers: []planmodifier.Int64{
 					int64planmodifier.RequiresReplace(),
 				},
 			},
-			"unit_amount_decimal": schema.StringAttribute{
+			"unit_amount_decimal": schema.Float64Attribute{
 				Description: "The unit amount in decimal form.",
+				Optional:    true,
 				Computed:    true,
+				PlanModifiers: []planmodifier.Float64{
+					float64planmodifier.RequiresReplace(),
+				},
 			},
 			"created": schema.Int64Attribute{
 				Description: "Time at which the price was created.",
@@ -180,6 +125,68 @@ func (r *priceResource) Configure(_ context.Context, req resource.ConfigureReque
 	r.client = client
 }
 
+func mapStripePriceToResourceState(price *stripe.Price, state *priceResourceModel) {
+	// Map response body to model
+	state.ID = types.StringValue(price.ID)
+	state.Active = types.BoolValue(price.Active)
+	state.Product = types.StringValue(price.Product.ID)
+	state.Currency = types.StringValue(string(price.Currency))
+	state.Created = types.Int64Value(price.Created)
+	state.UnitAmount = types.Int64Value(price.UnitAmount)
+	state.UnitAmountDecimal = types.Float64Value(price.UnitAmountDecimal)
+
+	// Handle metadata
+	if price.Metadata == nil {
+		state.Metadata = types.MapNull(types.StringType)
+	} else if len(price.Metadata) == 0 && state.Metadata.IsNull() {
+		// Preserve null state
+		state.Metadata = types.MapNull(types.StringType)
+	} else {
+		metadata := make(map[string]attr.Value)
+		for k, v := range price.Metadata {
+			metadata[k] = types.StringValue(v)
+		}
+		state.Metadata = types.MapValueMust(types.StringType, metadata)
+	}
+}
+
+func mapPriceResourceStateToStripeParams(plan *priceResourceModel, params *stripe.PriceParams) error {
+	// Generate API request parameters from plan
+	if !plan.Currency.IsNull() && !plan.Currency.IsUnknown() {
+		params.Currency = stripe.String(plan.Currency.ValueString())
+	}
+
+	if !plan.Product.IsNull() && !plan.Product.IsUnknown() {
+		params.Product = stripe.String(plan.Product.ValueString())
+	}
+
+	if !plan.Active.IsNull() && !plan.Active.IsUnknown() {
+		params.Active = stripe.Bool(plan.Active.ValueBool())
+	}
+
+	if !plan.Metadata.IsNull() && !plan.Metadata.IsUnknown() {
+		for k, v := range plan.Metadata.Elements() {
+			params.AddMetadata(k, v.(types.String).ValueString())
+		}
+	}
+
+	unitAmountSet := !plan.UnitAmount.IsNull() && !plan.UnitAmount.IsUnknown()
+	unitAmountDecimalSet := !plan.UnitAmountDecimal.IsNull() && !plan.UnitAmountDecimal.IsUnknown()
+
+	if unitAmountSet && unitAmountDecimalSet {
+		return fmt.Errorf("exactly one of `unit_amount` and `unit_amount_decimal` must be provided (received both: (%v, %v))", plan.UnitAmount.ValueInt64(), plan.UnitAmountDecimal.ValueFloat64())
+	}
+	if unitAmountSet {
+		params.UnitAmount = stripe.Int64(plan.UnitAmount.ValueInt64())
+	} else if unitAmountDecimalSet {
+		params.UnitAmountDecimal = stripe.Float64(plan.UnitAmountDecimal.ValueFloat64())
+	} else {
+		return errors.New("exactly one of `unit_amount` and `unit_amount_decimal` must be provided (received neither)")
+	}
+
+	return nil
+}
+
 func (r *priceResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
 	// Retrieve values from plan
 	var plan priceResourceModel
@@ -192,79 +199,14 @@ func (r *priceResource) Create(ctx context.Context, req resource.CreateRequest, 
 	tflog.Debug(ctx, "Creating Stripe price", map[string]any{"product": plan.Product.ValueString()})
 
 	// Generate API request parameters from plan
-	params := &stripe.PriceParams{
-		Currency: stripe.String(plan.Currency.ValueString()),
-		Product:  stripe.String(plan.Product.ValueString()),
-	}
-
-	if !plan.Active.IsNull() {
-		params.Active = stripe.Bool(plan.Active.ValueBool())
-	}
-
-	if !plan.LookupKey.IsNull() {
-		params.LookupKey = stripe.String(plan.LookupKey.ValueString())
-	}
-
-	if !plan.Metadata.IsNull() {
-		for k, v := range plan.Metadata.Elements() {
-			params.AddMetadata(k, v.(types.String).ValueString())
-		}
-	}
-
-	if !plan.Nickname.IsNull() {
-		params.Nickname = stripe.String(plan.Nickname.ValueString())
-	}
-
-	// Handle recurring price
-	if !plan.Recurring.IsNull() {
-		var recurring recurringModel
-		diags := plan.Recurring.As(ctx, &recurring, basetypes.ObjectAsOptions{})
-		resp.Diagnostics.Append(diags...)
-		if resp.Diagnostics.HasError() {
-			return
-		}
-
-		params.Recurring = &stripe.PriceRecurringParams{}
-
-		if !recurring.Interval.IsNull() {
-			params.Recurring.Interval = stripe.String(recurring.Interval.ValueString())
-		}
-
-		if !recurring.IntervalCount.IsNull() {
-			params.Recurring.IntervalCount = stripe.Int64(recurring.IntervalCount.ValueInt64())
-		}
-
-		if !recurring.UsageType.IsNull() {
-			params.Recurring.UsageType = stripe.String(recurring.UsageType.ValueString())
-		}
-	}
-
-	if !plan.TiersMode.IsNull() {
-		params.TiersMode = stripe.String(plan.TiersMode.ValueString())
-	}
-
-	// Handle transform usage
-	if !plan.TransformUsage.IsNull() {
-		var transformUsage transformUsageModel
-		diags := plan.TransformUsage.As(ctx, &transformUsage, basetypes.ObjectAsOptions{})
-		resp.Diagnostics.Append(diags...)
-		if resp.Diagnostics.HasError() {
-			return
-		}
-
-		params.TransformQuantity = &stripe.PriceTransformQuantityParams{}
-
-		if !transformUsage.DivideBy.IsNull() {
-			params.TransformQuantity.DivideBy = stripe.Int64(transformUsage.DivideBy.ValueInt64())
-		}
-
-		if !transformUsage.Round.IsNull() {
-			params.TransformQuantity.Round = stripe.String(transformUsage.Round.ValueString())
-		}
-	}
-
-	if !plan.UnitAmount.IsNull() {
-		params.UnitAmount = stripe.Int64(plan.UnitAmount.ValueInt64())
+	params := &stripe.PriceParams{}
+	err := mapPriceResourceStateToStripeParams(&plan, params)
+	if err != nil {
+		resp.Diagnostics.AddError(
+			"Error creating Stripe price",
+			fmt.Sprintf("Could not create Stripe price: %s", err.Error()),
+		)
+		return
 	}
 
 	// Create the price
@@ -278,94 +220,8 @@ func (r *priceResource) Create(ctx context.Context, req resource.CreateRequest, 
 	}
 
 	// Map response body to model
-	state := priceResourceModel{
-		ID:                types.StringValue(price.ID),
-		Active:            types.BoolValue(price.Active),
-		Currency:          types.StringValue(string(price.Currency)),
-		Created:           types.Int64Value(price.Created),
-		Type:              types.StringValue(string(price.Type)),
-		UnitAmountDecimal: types.StringValue(fmt.Sprintf("%.2f", price.UnitAmountDecimal)),
-	}
-
-	// Handle recurring attributes
-	if price.Recurring != nil {
-		recurring := map[string]attr.Value{
-			"interval":       types.StringValue(string(price.Recurring.Interval)),
-			"interval_count": types.Int64Value(price.Recurring.IntervalCount),
-			"usage_type":     types.StringValue(string(price.Recurring.UsageType)),
-		}
-		state.Recurring = types.ObjectValueMust(
-			map[string]attr.Type{
-				"interval":       types.StringType,
-				"interval_count": types.Int64Type,
-				"usage_type":     types.StringType,
-			},
-			recurring,
-		)
-	} else {
-		state.Recurring = types.ObjectNull(
-			map[string]attr.Type{
-				"interval":       types.StringType,
-				"interval_count": types.Int64Type,
-				"usage_type":     types.StringType,
-			},
-		)
-	}
-
-	if price.LookupKey != "" {
-		state.LookupKey = types.StringValue(price.LookupKey)
-	} else {
-		state.LookupKey = types.StringNull()
-	}
-
-	// Handle metadata
-	metadata := make(map[string]attr.Value)
-	for k, v := range price.Metadata {
-		metadata[k] = types.StringValue(v)
-	}
-	state.Metadata = types.MapValueMust(types.StringType, metadata)
-
-	if price.Nickname != "" {
-		state.Nickname = types.StringValue(price.Nickname)
-	} else {
-		state.Nickname = types.StringNull()
-	}
-
-	state.Product = types.StringValue(price.Product.ID)
-
-	if price.TiersMode != "" {
-		state.TiersMode = types.StringValue(string(price.TiersMode))
-	} else {
-		state.TiersMode = types.StringNull()
-	}
-
-	// Handle transform usage
-	if price.TransformQuantity != nil {
-		transformUsage := map[string]attr.Value{
-			"divide_by": types.Int64Value(price.TransformQuantity.DivideBy),
-			"round":     types.StringValue(string(price.TransformQuantity.Round)),
-		}
-		state.TransformUsage = types.ObjectValueMust(
-			map[string]attr.Type{
-				"divide_by": types.Int64Type,
-				"round":     types.StringType,
-			},
-			transformUsage,
-		)
-	} else {
-		state.TransformUsage = types.ObjectNull(
-			map[string]attr.Type{
-				"divide_by": types.Int64Type,
-				"round":     types.StringType,
-			},
-		)
-	}
-
-	if price.UnitAmount != 0 {
-		state.UnitAmount = types.Int64Value(price.UnitAmount)
-	} else {
-		state.UnitAmount = types.Int64Null()
-	}
+	state := plan
+	mapStripePriceToResourceState(price, &state)
 
 	// Set state
 	diags = resp.State.Set(ctx, &state)
@@ -399,92 +255,7 @@ func (r *priceResource) Read(ctx context.Context, req resource.ReadRequest, resp
 		return
 	}
 
-	// Overwrite state with refreshed values
-	state.Active = types.BoolValue(price.Active)
-	state.Currency = types.StringValue(string(price.Currency))
-	state.Created = types.Int64Value(price.Created)
-	state.Type = types.StringValue(string(price.Type))
-	state.UnitAmountDecimal = types.StringValue(fmt.Sprintf("%.2f", price.UnitAmountDecimal))
-
-	// Handle recurring attributes
-	if price.Recurring != nil {
-		recurring := map[string]attr.Value{
-			"interval":       types.StringValue(string(price.Recurring.Interval)),
-			"interval_count": types.Int64Value(price.Recurring.IntervalCount),
-			"usage_type":     types.StringValue(string(price.Recurring.UsageType)),
-		}
-		state.Recurring = types.ObjectValueMust(
-			map[string]attr.Type{
-				"interval":       types.StringType,
-				"interval_count": types.Int64Type,
-				"usage_type":     types.StringType,
-			},
-			recurring,
-		)
-	} else {
-		state.Recurring = types.ObjectNull(
-			map[string]attr.Type{
-				"interval":       types.StringType,
-				"interval_count": types.Int64Type,
-				"usage_type":     types.StringType,
-			},
-		)
-	}
-
-	if price.LookupKey != "" {
-		state.LookupKey = types.StringValue(price.LookupKey)
-	} else {
-		state.LookupKey = types.StringNull()
-	}
-
-	// Handle metadata
-	metadata := make(map[string]attr.Value)
-	for k, v := range price.Metadata {
-		metadata[k] = types.StringValue(v)
-	}
-	state.Metadata = types.MapValueMust(types.StringType, metadata)
-
-	if price.Nickname != "" {
-		state.Nickname = types.StringValue(price.Nickname)
-	} else {
-		state.Nickname = types.StringNull()
-	}
-
-	state.Product = types.StringValue(price.Product.ID)
-
-	if price.TiersMode != "" {
-		state.TiersMode = types.StringValue(string(price.TiersMode))
-	} else {
-		state.TiersMode = types.StringNull()
-	}
-
-	// Handle transform usage
-	if price.TransformQuantity != nil {
-		transformUsage := map[string]attr.Value{
-			"divide_by": types.Int64Value(price.TransformQuantity.DivideBy),
-			"round":     types.StringValue(string(price.TransformQuantity.Round)),
-		}
-		state.TransformUsage = types.ObjectValueMust(
-			map[string]attr.Type{
-				"divide_by": types.Int64Type,
-				"round":     types.StringType,
-			},
-			transformUsage,
-		)
-	} else {
-		state.TransformUsage = types.ObjectNull(
-			map[string]attr.Type{
-				"divide_by": types.Int64Type,
-				"round":     types.StringType,
-			},
-		)
-	}
-
-	if price.UnitAmount != 0 {
-		state.UnitAmount = types.Int64Value(price.UnitAmount)
-	} else {
-		state.UnitAmount = types.Int64Null()
-	}
+	mapStripePriceToResourceState(price, &state)
 
 	// Set refreshed state
 	diags = resp.State.Set(ctx, &state)
@@ -517,24 +288,7 @@ func (r *priceResource) Update(ctx context.Context, req resource.UpdateRequest, 
 
 	// Generate API request parameters from plan
 	params := &stripe.PriceParams{}
-
-	if !plan.Active.IsNull() {
-		params.Active = stripe.Bool(plan.Active.ValueBool())
-	}
-
-	if !plan.LookupKey.IsNull() {
-		params.LookupKey = stripe.String(plan.LookupKey.ValueString())
-	}
-
-	if !plan.Metadata.IsNull() {
-		for k, v := range plan.Metadata.Elements() {
-			params.AddMetadata(k, v.(types.String).ValueString())
-		}
-	}
-
-	if !plan.Nickname.IsNull() {
-		params.Nickname = stripe.String(plan.Nickname.ValueString())
-	}
+	mapPriceResourceStateToStripeParams(&plan, params)
 
 	// Update the price
 	price, err := r.client.Prices.Update(state.ID.ValueString(), params)
@@ -547,112 +301,16 @@ func (r *priceResource) Update(ctx context.Context, req resource.UpdateRequest, 
 	}
 
 	// Create a new state model to avoid modifying the original state
-	newState := priceResourceModel{
-		ID:                state.ID,
-		Active:            types.BoolValue(price.Active),
-		Currency:          types.StringValue(string(price.Currency)),
-		Created:           types.Int64Value(price.Created),
-		Type:              types.StringValue(string(price.Type)),
-		UnitAmountDecimal: types.StringValue(fmt.Sprintf("%.2f", price.UnitAmountDecimal)),
-	}
-
-	// Copy over values from plan for attributes that should be preserved
-	if !plan.LookupKey.IsNull() {
-		newState.LookupKey = plan.LookupKey
-	} else if price.LookupKey != "" {
-		newState.LookupKey = types.StringValue(price.LookupKey)
-	} else {
-		newState.LookupKey = types.StringNull()
-	}
-
-	// Handle metadata
-	if !plan.Metadata.IsNull() {
-		newState.Metadata = plan.Metadata
-	} else {
-		metadata := make(map[string]attr.Value)
-		for k, v := range price.Metadata {
-			metadata[k] = types.StringValue(v)
-		}
-		newState.Metadata = types.MapValueMust(types.StringType, metadata)
-	}
-
-	if !plan.Nickname.IsNull() {
-		newState.Nickname = plan.Nickname
-	} else if price.Nickname != "" {
-		newState.Nickname = types.StringValue(price.Nickname)
-	} else {
-		newState.Nickname = types.StringNull()
-	}
-
-	newState.Product = types.StringValue(price.Product.ID)
-
-	if price.TiersMode != "" {
-		newState.TiersMode = types.StringValue(string(price.TiersMode))
-	} else {
-		newState.TiersMode = types.StringNull()
-	}
-
-	// Handle recurring attributes
-	if price.Recurring != nil {
-		recurring := map[string]attr.Value{
-			"interval":       types.StringValue(string(price.Recurring.Interval)),
-			"interval_count": types.Int64Value(price.Recurring.IntervalCount),
-			"usage_type":     types.StringValue(string(price.Recurring.UsageType)),
-		}
-		newState.Recurring = types.ObjectValueMust(
-			map[string]attr.Type{
-				"interval":       types.StringType,
-				"interval_count": types.Int64Type,
-				"usage_type":     types.StringType,
-			},
-			recurring,
-		)
-	} else {
-		newState.Recurring = types.ObjectNull(
-			map[string]attr.Type{
-				"interval":       types.StringType,
-				"interval_count": types.Int64Type,
-				"usage_type":     types.StringType,
-			},
-		)
-	}
-
-	// Handle transform usage
-	if price.TransformQuantity != nil {
-		transformUsage := map[string]attr.Value{
-			"divide_by": types.Int64Value(price.TransformQuantity.DivideBy),
-			"round":     types.StringValue(string(price.TransformQuantity.Round)),
-		}
-		newState.TransformUsage = types.ObjectValueMust(
-			map[string]attr.Type{
-				"divide_by": types.Int64Type,
-				"round":     types.StringType,
-			},
-			transformUsage,
-		)
-	} else {
-		newState.TransformUsage = types.ObjectNull(
-			map[string]attr.Type{
-				"divide_by": types.Int64Type,
-				"round":     types.StringType,
-			},
-		)
-	}
-
-	if price.UnitAmount != 0 {
-		newState.UnitAmount = types.Int64Value(price.UnitAmount)
-	} else {
-		newState.UnitAmount = types.Int64Null()
-	}
+	mapStripePriceToResourceState(price, &state)
 
 	// Set refreshed state
-	diags = resp.State.Set(ctx, &newState)
+	diags = resp.State.Set(ctx, &state)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
-	tflog.Debug(ctx, "Updated Stripe price", map[string]any{"id": newState.ID.ValueString()})
+	tflog.Debug(ctx, "Updated Stripe price", map[string]any{"id": state.ID.ValueString()})
 }
 
 func (r *priceResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
