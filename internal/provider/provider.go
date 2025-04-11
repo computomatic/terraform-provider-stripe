@@ -120,5 +120,6 @@ func (p *stripeProvider) Resources(_ context.Context) []func() resource.Resource
 	return []func() resource.Resource{
 		NewProductResource,
 		NewPriceResource,
+		NewPaymentLinkResource,
 	}
 }

@@ -40,7 +40,6 @@ resource "stripe_product" "test" {
   name = "Test Product for Price Data Source"
   description = "Test product for price data source acceptance tests"
   active = true
-  shippable = false
 }
 
 resource "stripe_price" "test_price" {
@@ -48,7 +47,6 @@ resource "stripe_price" "test_price" {
   currency = "usd"
   unit_amount = 1000
   active = true
-  nickname = "Test Price"
   metadata = {}
 }
 
