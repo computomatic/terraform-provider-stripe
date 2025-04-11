@@ -13,7 +13,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/booldefault"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/boolplanmodifier"
-	"github.com/hashicorp/terraform-plugin-framework/resource/schema/int64planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/objectplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
@@ -53,17 +52,9 @@ type paymentLinkResourceModel struct {
 
 // lineItemModel maps line item data.
 type lineItemModel struct {
-	Id                 types.String `tfsdk:"id"`
-	Price              types.String `tfsdk:"price"`
-	Quantity           types.Int64  `tfsdk:"quantity"`
-	AdjustableQuantity types.Object `tfsdk:"adjustable_quantity"`
-}
-
-// adjustableQuantityModel maps adjustable quantity data.
-type adjustableQuantityModel struct {
-	Enabled types.Bool  `tfsdk:"enabled"`
-	Minimum types.Int64 `tfsdk:"minimum"`
-	Maximum types.Int64 `tfsdk:"maximum"`
+	Id       types.String `tfsdk:"id"`
+	Price    types.String `tfsdk:"price"`
+	Quantity types.Int64  `tfsdk:"quantity"`
 }
 
 // afterCompletionModel maps after completion data.
@@ -129,36 +120,6 @@ func (r *paymentLinkResource) Schema(_ context.Context, _ resource.SchemaRequest
 						"quantity": schema.Int64Attribute{
 							Required:    true,
 							Description: "The quantity of the line item being purchased.",
-						},
-						"adjustable_quantity": schema.SingleNestedAttribute{
-							Optional:  true,
-							WriteOnly: true,
-							PlanModifiers: []planmodifier.Object{
-								objectplanmodifier.UseStateForUnknown(),
-							},
-							Attributes: map[string]schema.Attribute{
-								"enabled": schema.BoolAttribute{
-									Required:  true,
-									WriteOnly: true,
-									PlanModifiers: []planmodifier.Bool{
-										boolplanmodifier.UseStateForUnknown(),
-									},
-								},
-								"maximum": schema.Int64Attribute{
-									Optional:  true,
-									WriteOnly: true,
-									PlanModifiers: []planmodifier.Int64{
-										int64planmodifier.UseStateForUnknown(),
-									},
-								},
-								"minimum": schema.Int64Attribute{
-									Optional:  true,
-									WriteOnly: true,
-									PlanModifiers: []planmodifier.Int64{
-										int64planmodifier.UseStateForUnknown(),
-									},
-								},
-							},
 						},
 					},
 				},
@@ -285,29 +246,6 @@ func mapPaymentLinkResourceStateToStripeParams(ctx context.Context, state *payme
 			stripeLineItem.Price = stripe.String(stateLineItem.Price.ValueString())
 		} else {
 			stripeLineItem.ID = stripe.String(stateLineItem.Id.ValueString())
-		}
-
-		if !stateLineItem.AdjustableQuantity.IsNull() {
-			var adjQuantity adjustableQuantityModel
-			diags = stateLineItem.AdjustableQuantity.As(ctx, &adjQuantity, basetypes.ObjectAsOptions{})
-			respDiags.Append(diags...)
-			if respDiags.HasError() {
-				err := errors.Errorf(`mapping error %s`, diags.Errors()[0].Summary())
-				tflog.Error(ctx, fmt.Sprintf(`returning error: %s`, err.ErrorStack()))
-				return respDiags
-			}
-
-			stripeLineItem.AdjustableQuantity = &stripe.PaymentLinkLineItemAdjustableQuantityParams{
-				Enabled: stripe.Bool(adjQuantity.Enabled.ValueBool()),
-			}
-
-			if !adjQuantity.Minimum.IsNull() {
-				stripeLineItem.AdjustableQuantity.Minimum = stripe.Int64(adjQuantity.Minimum.ValueInt64())
-			}
-
-			if !adjQuantity.Maximum.IsNull() {
-				stripeLineItem.AdjustableQuantity.Maximum = stripe.Int64(adjQuantity.Maximum.ValueInt64())
-			}
 		}
 
 		params.LineItems[i] = stripeLineItem
@@ -446,38 +384,11 @@ func mapStripePaymentLinkToResourceState(ctx context.Context, stripeClient *clie
 	}
 
 	var updatedLineItems []attr.Value
-	for i, item := range lineItems {
+	for _, item := range lineItems {
 		lineItem := map[string]attr.Value{
 			"id":       types.StringValue(item.ID),
 			"price":    types.StringValue(item.Price.ID),
 			"quantity": types.Int64Value(item.Quantity),
-		}
-
-		var stateLineItem *lineItemModel = nil
-		if i < len(stateLineItems) {
-			stateLineItem = &stateLineItems[i]
-		}
-
-		var planLineItem *lineItemModel = nil
-		if i < len(planLineItems) {
-			planLineItem = &planLineItems[i]
-		}
-
-		// We need to preserve the adjustable_quantity from the request
-		// since it's not available in the API response
-		if planLineItem != nil && !planLineItem.AdjustableQuantity.IsNull() {
-			// adjustable_quantity was updated by current plan, so use that
-			lineItem["adjustable_quantity"] = planLineItem.AdjustableQuantity
-		} else if stateLineItem != nil && !stateLineItem.AdjustableQuantity.IsNull() {
-			// preserve adjustable quantity that exists on previous state
-			lineItem["adjustable_quantity"] = stateLineItem.AdjustableQuantity
-		} else {
-			// If no adjustable_quantity was specified in the request, set it to null
-			lineItem["adjustable_quantity"] = types.ObjectNull(map[string]attr.Type{
-				"enabled": types.BoolType,
-				"minimum": types.Int64Type,
-				"maximum": types.Int64Type,
-			})
 		}
 
 		// Add the complete line item to the list of state line items
@@ -486,11 +397,6 @@ func mapStripePaymentLinkToResourceState(ctx context.Context, stripeClient *clie
 				"id":       types.StringType,
 				"price":    types.StringType,
 				"quantity": types.Int64Type,
-				"adjustable_quantity": types.ObjectType{AttrTypes: map[string]attr.Type{
-					"enabled": types.BoolType,
-					"minimum": types.Int64Type,
-					"maximum": types.Int64Type,
-				}},
 			},
 			lineItem,
 		)
@@ -509,11 +415,6 @@ func mapStripePaymentLinkToResourceState(ctx context.Context, stripeClient *clie
 			"id":       types.StringType,
 			"price":    types.StringType,
 			"quantity": types.Int64Type,
-			"adjustable_quantity": types.ObjectType{AttrTypes: map[string]attr.Type{
-				"enabled": types.BoolType,
-				"minimum": types.Int64Type,
-				"maximum": types.Int64Type,
-			}},
 		}},
 		updatedLineItems,
 	)

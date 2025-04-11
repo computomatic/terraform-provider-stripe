@@ -55,11 +55,6 @@ resource "stripe_payment_link" "test" {
   line_items = [{
     price    = stripe_price.test.id
     quantity = 1
-    adjustable_quantity = {
-      enabled = true
-      minimum = 1
-      maximum = 10
-    }
   }]
   after_completion = {
     type = "redirect"
@@ -71,9 +66,6 @@ resource "stripe_payment_link" "test" {
 					resource.TestCheckResourceAttr("stripe_payment_link.test", "line_items.#", "1"),
 					resource.TestCheckResourceAttrPair("stripe_payment_link.test", "line_items.0.price", "stripe_price.test", "id"),
 					resource.TestCheckResourceAttr("stripe_payment_link.test", "line_items.0.quantity", "1"),
-					resource.TestCheckResourceAttr("stripe_payment_link.test", "line_items.0.adjustable_quantity.enabled", "true"),
-					resource.TestCheckResourceAttr("stripe_payment_link.test", "line_items.0.adjustable_quantity.minimum", "1"),
-					resource.TestCheckResourceAttr("stripe_payment_link.test", "line_items.0.adjustable_quantity.maximum", "10"),
 					resource.TestCheckResourceAttr("stripe_payment_link.test", "after_completion.type", "redirect"),
 					resource.TestCheckResourceAttr("stripe_payment_link.test", "after_completion.redirect_url", "https://example.com/success"),
 				),
@@ -83,109 +75,6 @@ resource "stripe_payment_link" "test" {
 				ImportState:       true,
 				ImportStateVerify: true,
 			},
-		},
-	})
-}
-
-func TestAccPaymentLinkResource_WithAdjustableQuantity(t *testing.T) {
-	resource.Test(t, resource.TestCase{
-		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
-		Steps: []resource.TestStep{
-			// Create and Read testing
-			{
-				Config: providerConfig + `
-resource "stripe_product" "test" {
-  name = "Test Product for Payment Link with Adjustable Quantity"
-  description = "Test product for payment link with adjustable quantity acceptance tests"
-  active = true
-}
-
-resource "stripe_price" "test" {
-  product = stripe_product.test.id
-  currency = "usd"
-  unit_amount = 1000
-  active = true
-}
-
-resource "stripe_payment_link" "test" {
-  line_items = [{
-    price = stripe_price.test.id
-    quantity = 1
-    adjustable_quantity = {
-      enabled = true
-      minimum = 1
-      maximum = 10
-    }
-  }]
-  active = true
-  currency = "usd"
-}
-`,
-				Check: resource.ComposeAggregateTestCheckFunc(
-					// Verify payment link attributes
-					resource.TestCheckResourceAttr("stripe_payment_link.test", "active", "true"),
-					resource.TestCheckResourceAttr("stripe_payment_link.test", "currency", "usd"),
-					resource.TestCheckResourceAttr("stripe_payment_link.test", "line_items.#", "1"),
-					resource.TestCheckResourceAttr("stripe_payment_link.test", "line_items.0.quantity", "1"),
-					resource.TestCheckResourceAttr("stripe_payment_link.test", "line_items.0.adjustable_quantity.enabled", "true"),
-					resource.TestCheckResourceAttr("stripe_payment_link.test", "line_items.0.adjustable_quantity.minimum", "1"),
-					resource.TestCheckResourceAttr("stripe_payment_link.test", "line_items.0.adjustable_quantity.maximum", "10"),
-					resource.TestCheckResourceAttrPair("stripe_payment_link.test", "line_items.0.price", "stripe_price.test", "id"),
-					resource.TestCheckResourceAttrSet("stripe_payment_link.test", "id"),
-					resource.TestCheckResourceAttrSet("stripe_payment_link.test", "url"),
-				),
-			},
-			// ImportState testing
-			{
-				ResourceName:      "stripe_payment_link.test",
-				ImportState:       true,
-				ImportStateVerify: true,
-			},
-			// Update and Read testing
-			{
-				Config: providerConfig + `
-resource "stripe_product" "test" {
-  name = "Test Product for Payment Link with Adjustable Quantity"
-  description = "Test product for payment link with adjustable quantity acceptance tests"
-  active = true
-}
-
-resource "stripe_price" "test" {
-  product = stripe_product.test.id
-  currency = "usd"
-  unit_amount = 1000
-  active = true
-}
-
-resource "stripe_payment_link" "test" {
-  line_items = [{
-    price = stripe_price.test.id
-    quantity = 1
-    adjustable_quantity = {
-      enabled = true
-      minimum = 5
-      maximum = 20
-    }
-  }]
-  active = false
-  currency = "usd"
-}
-`,
-				Check: resource.ComposeAggregateTestCheckFunc(
-					// Verify updated payment link attributes
-					resource.TestCheckResourceAttr("stripe_payment_link.test", "active", "false"),
-					resource.TestCheckResourceAttr("stripe_payment_link.test", "currency", "usd"),
-					resource.TestCheckResourceAttr("stripe_payment_link.test", "line_items.#", "1"),
-					resource.TestCheckResourceAttr("stripe_payment_link.test", "line_items.0.quantity", "1"),
-					resource.TestCheckResourceAttr("stripe_payment_link.test", "line_items.0.adjustable_quantity.enabled", "true"),
-					resource.TestCheckResourceAttr("stripe_payment_link.test", "line_items.0.adjustable_quantity.minimum", "5"),
-					resource.TestCheckResourceAttr("stripe_payment_link.test", "line_items.0.adjustable_quantity.maximum", "20"),
-					resource.TestCheckResourceAttrPair("stripe_payment_link.test", "line_items.0.price", "stripe_price.test", "id"),
-					resource.TestCheckResourceAttrSet("stripe_payment_link.test", "id"),
-					resource.TestCheckResourceAttrSet("stripe_payment_link.test", "url"),
-				),
-			},
-			// Delete testing automatically occurs in TestCase
 		},
 	})
 }
