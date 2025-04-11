@@ -26,4 +26,4 @@ Use this data source to get information about a Stripe price.
 - `metadata` (Map of String) Set of key-value pairs that you can attach to a price.
 - `product` (String) The ID of the product this price is associated with.
 - `unit_amount` (Number) The unit amount in cents to be charged.
-- `unit_amount_decimal` (String) The unit amount in decimal form.
+- `unit_amount_decimal` (Number) The unit amount in decimal form.

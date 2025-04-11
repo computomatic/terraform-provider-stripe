@@ -24,7 +24,6 @@ A payment link is a shareable URL that will take your customers to a hosted paym
 - `active` (Boolean) Whether the payment link's `url` is active.
 - `after_completion` (Attributes) Behavior after the purchase is complete. (see [below for nested schema](#nestedatt--after_completion))
 - `allow_promotion_codes` (Boolean) Enables user redeemable promotion codes.
-- `automatic_tax` (Attributes) Configuration for automatic tax collection. (see [below for nested schema](#nestedatt--automatic_tax))
 - `currency` (String) Three-letter ISO currency code, in lowercase.
 - `metadata` (Map of String) Set of key-value pairs that you can attach to an object.
 - `submit_type` (String) Describes the type of transaction being performed in order to customize relevant text on the page.
@@ -42,26 +41,9 @@ Required:
 - `price` (String) The ID of the Price or Plan object.
 - `quantity` (Number) The quantity of the line item being purchased.
 
-Optional:
-
-- `adjustable_quantity` (Attributes, [Write-only](https://developer.hashicorp.com/terraform/language/resources/ephemeral#write-only-arguments)) (see [below for nested schema](#nestedatt--line_items--adjustable_quantity))
-
 Read-Only:
 
 - `id` (String) Unique identifier for the object.
-
-<a id="nestedatt--line_items--adjustable_quantity"></a>
-### Nested Schema for `line_items.adjustable_quantity`
-
-Required:
-
-- `enabled` (Boolean, [Write-only](https://developer.hashicorp.com/terraform/language/resources/ephemeral#write-only-arguments))
-
-Optional:
-
-- `maximum` (Number, [Write-only](https://developer.hashicorp.com/terraform/language/resources/ephemeral#write-only-arguments))
-- `minimum` (Number, [Write-only](https://developer.hashicorp.com/terraform/language/resources/ephemeral#write-only-arguments))
-
 
 
 <a id="nestedatt--after_completion"></a>
@@ -75,11 +57,3 @@ Optional:
 
 - `hosted_confirmation_custom_message` (String) A custom message to display to the customer after the purchase is complete.
 - `redirect_url` (String) The URL the customer will be redirected to after the purchase is complete.
-
-
-<a id="nestedatt--automatic_tax"></a>
-### Nested Schema for `automatic_tax`
-
-Required:
-
-- `enabled` (Boolean) Set to `true` to calculate tax automatically using the customer's location.
