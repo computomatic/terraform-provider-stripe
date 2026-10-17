@@ -9,6 +9,18 @@ go build ./...
 go test ./...
 ```
 
+## Generated code
+
+`spec/openapi.json` is the pinned Stripe OpenAPI spec (`spec/PIN.json` records its tag, commit and hash). `tools/schemagen` turns it into the field tables under `internal/generated` and into `internal/stripeapi/version.go`. After changing the spec, the pin, the generator or the list of resources in `tools/schemagen/resources.go`, regenerate and commit the result:
+
+```sh
+go generate ./internal/generated
+```
+
+`go test ./...` fails when a generated file is out of date. `tools/schemadiff old.json new.json` compares two `terraform providers schema -json` documents and marks breaking changes.
+
+A resource is a short declaration in `internal/resources/<name>` that the generic engine in `internal/engine` turns into a resource and a data source. Each resource directory needs its declaration, a docs example under `examples/` and the six acceptance tests `TestAcc<Name>_{create,update,replace,import,delete,drift}`; `internal/resources` checks that.
+
 Tests that need a Stripe API run against the fake, one fresh account per test, and are skipped when no fake is configured. Set `STRIPE_FAKE_SOURCE` to the fake's source tree and the harness builds it from a temporary copy and starts it, or set `STRIPE_FAKE_URL` (and `STRIPE_FAKE_ADMIN_TOKEN` if it needs one) to use a running fake.
 
 ## Try it against the fake

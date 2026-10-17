@@ -1,9 +1,6 @@
 // Package stripeapi is the provider's client for the Stripe API.
 package stripeapi
 
-// Version is the Stripe API version the provider pins. It is sent on every request.
-const Version = "2026-09-30.endive"
-
 const (
 	// DefaultBaseURL is the Stripe API host.
 	DefaultBaseURL = "https://api.stripe.com"
