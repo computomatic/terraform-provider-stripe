@@ -1,26 +1,23 @@
-# Stripe provider for terraform
+# Stripe provider for Terraform
 
-## Testing
+Design: `adrs/1-pending/2026-10-17-provider-architecture/ADR.md`. The provider sends Stripe API version `2026-09-30.endive`.
+
+## Build and test
 
 ```sh
-% go install .
+go build ./...
+go test ./...
+```
 
-% echo <<EOF > ~/.terraformrc
-provider_installation {
-  dev_overrides {
-      "github.com/computomatic/stripe" = "/Users/toby/go/bin"
-  }
+## Try it against the fake
 
-  # This is necessary to load other providers; otherwise, terraform will only use the dev_overrides block.
-  direct {}
+Start the fake Stripe API with `-default-account-key sk_test_<anything>`, then point `base_url` at it:
+
+```hcl
+provider "stripe" {
+  api_key  = "sk_test_<anything>"
+  base_url = "http://127.0.0.1:12111"
 }
-EOF
-
-% STRIPE_API_KEY='<test-key>' ./test-provider.sh
 ```
 
-## Build docs
-
-```sh
-% ./build-docs.sh
-```
+To use a local build, `go install .` and add a `dev_overrides` entry for `github.com/computomatic/stripe` in a CLI configuration file selected with `TF_CLI_CONFIG_FILE`.
