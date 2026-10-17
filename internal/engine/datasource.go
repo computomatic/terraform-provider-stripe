@@ -69,6 +69,9 @@ func (d *DataSource) Configure(ctx context.Context, req datasource.ConfigureRequ
 
 // lookupNames lists the attributes a block may use to find its object, `id` first.
 func (d *DataSource) lookupNames() []string {
+	if d.m.decl.Singleton {
+		return nil
+	}
 	names := []string{"id"}
 	for _, l := range d.m.decl.Lookups {
 		names = append(names, d.attrName(l.Field))
@@ -87,6 +90,9 @@ func (d *DataSource) ValidateConfig(ctx context.Context, req datasource.Validate
 	var config basetypes.ObjectValue
 	resp.Diagnostics.Append(req.Config.Get(ctx, &config)...)
 	if resp.Diagnostics.HasError() {
+		return
+	}
+	if d.m.decl.Singleton {
 		return
 	}
 	set := 0
@@ -116,8 +122,10 @@ func (d *DataSource) Read(ctx context.Context, req datasource.ReadRequest, resp 
 	id, parent := d.m.ids(config)
 	var body wire.Object
 	var err error
-	if id != "" {
-		body, err = d.api.call(ctx, "GET", d.m.expand(d.m.decl.Paths.Retrieve, id, parent), nil)
+	if d.m.decl.Singleton {
+		body, err = d.api.call(ctx, "GET", d.m.decl.Paths.Retrieve, d.api.expanded(nil, ""))
+	} else if id != "" {
+		body, err = d.api.call(ctx, "GET", d.m.expand(d.m.decl.Paths.Retrieve, id, parent), d.api.expanded(nil, ""))
 		if stripeapi.IsNotFound(err) {
 			resp.Diagnostics.AddError("Not found", fmt.Sprintf("no %s found for id=%s", d.m.decl.TypeName, id))
 			return
@@ -154,11 +162,15 @@ func (d *DataSource) lookup(ctx context.Context, config basetypes.ObjectValue, p
 		if param == "" {
 			param = l.Field
 		}
+		var filter wire.Value = wire.String(value)
+		if l.Array {
+			filter = wire.Array{wire.String(value)}
+		}
 		params := wire.Object{
 			{Name: "limit", Value: wire.Int(listLimit)},
-			{Name: param, Value: wire.String(value)},
+			{Name: param, Value: filter},
 		}
-		page, err := d.api.call(ctx, "GET", d.m.expand(d.m.decl.Paths.List, "", parent), params)
+		page, err := d.api.call(ctx, "GET", d.m.expand(d.m.decl.Paths.List, "", parent), d.api.expanded(params, "data."))
 		if err != nil {
 			return nil, err
 		}

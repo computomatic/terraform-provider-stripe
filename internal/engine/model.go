@@ -29,6 +29,8 @@ type node struct {
 	UseState bool
 	// Once is a once-returned output: a response that omits it keeps the prior value.
 	Once bool
+	// NullAs is the string a null response value stands for. Empty means none.
+	NullAs string
 	// Preserve keeps the configured value when the response redacts or reformats it.
 	Preserve bool
 }
@@ -69,6 +71,9 @@ func compile(decl Declaration, table []fields.Field) (*model, error) {
 	if decl.Paths.Retrieve == "" {
 		return nil, fmt.Errorf("%s: declaration has no retrieve path", decl.TypeName)
 	}
+	if decl.Singleton && (decl.Delete != NoDelete || len(decl.Lookups) > 0) {
+		return nil, fmt.Errorf("%s: a singleton has no delete strategy and no lookups", decl.TypeName)
+	}
 	if decl.Delete != NoDelete && decl.Paths.Create == "" {
 		return nil, fmt.Errorf("%s: declaration has no create path", decl.TypeName)
 	}
@@ -77,9 +82,13 @@ func compile(decl Declaration, table []fields.Field) (*model, error) {
 		if decl.Paths.Delete == "" {
 			return nil, fmt.Errorf("%s: the delete strategy needs a delete path", decl.TypeName)
 		}
+	case DeleteOrArchive:
+		if decl.Paths.Delete == "" || decl.ArchiveOn == nil || !decl.archivable() {
+			return nil, fmt.Errorf("%s: the delete-or-archive strategy needs a delete path, a refusal, an archive action and an update path or action endpoint", decl.TypeName)
+		}
 	case Archive:
-		if decl.Archive == nil || decl.Paths.Update == "" {
-			return nil, fmt.Errorf("%s: the archive strategy needs an archive action and an update path", decl.TypeName)
+		if !decl.archivable() {
+			return nil, fmt.Errorf("%s: the archive strategy needs an archive action and an update path or action endpoint", decl.TypeName)
 		}
 	case Expire:
 		if decl.Expire == nil || decl.Paths.Update == "" {
@@ -90,6 +99,7 @@ func compile(decl Declaration, table []fields.Field) (*model, error) {
 	c := compiler{
 		decl:         decl,
 		once:         newPathSet(decl.OnceReturned),
+		defaulted:    newPathSet(decl.ServerDefaulted),
 		unDefaulted:  newPathSet(decl.NotServerDefaulted),
 		sensitive:    newPathSet(decl.Sensitive),
 		preserve:     newPathSet(decl.PreserveConfig),
@@ -106,7 +116,7 @@ func compile(decl Declaration, table []fields.Field) (*model, error) {
 	}
 
 	m := &model{decl: decl, nodes: nodes}
-	if _, ok := m.top("id"); !ok {
+	if _, ok := m.top("id"); !ok && !decl.Singleton {
 		return nil, fmt.Errorf("%s: the table has no `id` field", decl.TypeName)
 	}
 	for _, n := range nodes {
@@ -115,6 +125,11 @@ func compile(decl Declaration, table []fields.Field) (*model, error) {
 		}
 		if n.AttrName() == "timeouts" || n.AttrName() == decl.Parent {
 			return nil, fmt.Errorf("%s: field `%s` collides with a provider-added attribute; rename it", decl.TypeName, n.AttrName())
+		}
+	}
+	for _, e := range decl.Expand {
+		if n, ok := m.top(e); !ok || !n.Response {
+			return nil, fmt.Errorf("%s: expand entry `%s` is not a top-level field the response returns", decl.TypeName, e)
 		}
 	}
 	for _, l := range decl.Lookups {
@@ -138,6 +153,12 @@ func compile(decl Declaration, table []fields.Field) (*model, error) {
 	return m, nil
 }
 
+// archivable reports whether the declaration says how to archive: an archive action with
+// an update to send or an action endpoint to call.
+func (d Declaration) archivable() bool {
+	return d.Archive != nil && (d.Archive.Path != "" || d.Paths.Update != "")
+}
+
 // top returns the top-level node with the given Stripe field name.
 func (m *model) top(name string) (*node, bool) {
 	for _, n := range m.nodes {
@@ -151,6 +172,7 @@ func (m *model) top(name string) (*node, bool) {
 type compiler struct {
 	decl         Declaration
 	once         pathSet
+	defaulted    pathSet
 	unDefaulted  pathSet
 	sensitive    pathSet
 	preserve     pathSet
@@ -174,6 +196,7 @@ func (c *compiler) unused() error {
 		set  pathSet
 	}{
 		{"once_returned", c.once},
+		{"server_defaulted", c.defaulted},
 		{"not_server_defaulted", c.unDefaulted},
 		{"sensitive", c.sensitive},
 		{"preserve_config", c.preserve},
@@ -183,6 +206,11 @@ func (c *compiler) unused() error {
 			if !c.used[e.kind+"/"+p] {
 				return fmt.Errorf("%s entry `%s` names no field", e.kind, p)
 			}
+		}
+	}
+	for p := range c.decl.NullAs {
+		if !c.used["null_as/"+p] {
+			return fmt.Errorf("null_as entry `%s` names no field", p)
 		}
 	}
 	for p := range c.decl.Rename {
@@ -210,11 +238,21 @@ func (c *compiler) build(table []fields.Field, prefix string, top, parentOutput,
 			f.Shape = fields.ScalarSet
 		}
 		n := &node{Field: f, Path: path}
+		if v, ok := c.decl.NullAs[path]; ok {
+			if f.Shape != fields.String {
+				return nil, fmt.Errorf("null_as entry `%s` is not a string field", path)
+			}
+			n.NullAs = v
+			c.used["null_as/"+path] = true
+		}
 
 		once := c.mark("once_returned", c.once, path)
 		n.Sensitive = c.mark("sensitive", c.sensitive, path) || once
 		n.Preserve = c.mark("preserve_config", c.preserve, path)
 		notDefaulted := c.mark("not_server_defaulted", c.unDefaulted, path)
+		if c.mark("server_defaulted", c.defaulted, path) {
+			f.ServerDefaulted = true
+		}
 		if n.Sensitive {
 			c.sensitiveSet[path] = true
 		}
@@ -238,7 +276,7 @@ func (c *compiler) build(table []fields.Field, prefix string, top, parentOutput,
 		}
 		n.Replace = f.CreateOnly() && !parentReplace && !n.computedOnly()
 		n.UseState = n.Computed && !n.Required &&
-			((top && (f.Name == "id" || f.Name == "created" || f.Name == "livemode")) || f.CreateOnly())
+			((top && (f.Name == "id" || f.Name == "created" || f.Name == "livemode")) || f.CreateOnly() || n.Once)
 
 		switch f.Shape {
 		case fields.Object, fields.ObjectList, fields.ObjectMap:
@@ -270,6 +308,8 @@ func attrType(n *node) attr.Type {
 		return types.MapType{ElemType: objectType(n.Kids)}
 	case fields.StringMap:
 		return types.MapType{ElemType: types.StringType}
+	case fields.IntMap:
+		return types.MapType{ElemType: types.Int64Type}
 	case fields.ScalarList:
 		return types.ListType{ElemType: scalarType(n.Elem)}
 	case fields.ScalarSet:

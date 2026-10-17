@@ -18,6 +18,12 @@ type Resource struct {
 	// CreatePath is the `POST` path that creates the object. Its 200 response is the object
 	// schema.
 	CreatePath string
+	// ReadPath is the `GET` path of an object that has no create operation, such as a
+	// singleton. Its 200 response is the object schema. Used only when CreatePath is empty.
+	ReadPath string
+	// Omit lists dotted field paths the table leaves out: fields Stripe returns only when
+	// expanded, which the provider never requests, in shapes the engine does not model.
+	Omit []string
 	// UpdatePath is the `POST` path that updates the object, or empty when there is none.
 	UpdatePath string
 }
@@ -42,8 +48,15 @@ func (v *view) scalar() bool {
 
 // Build derives the field table of one resource from the spec.
 func Build(spec *Spec, res Resource) ([]fields.Field, error) {
-	b := builder{spec: spec}
-	createOp, err := spec.operation("POST", res.CreatePath)
+	b := builder{spec: spec, omit: map[string]bool{}}
+	for _, p := range res.Omit {
+		b.omit[p] = false
+	}
+	method, path := "POST", res.CreatePath
+	if path == "" {
+		method, path = "GET", res.ReadPath
+	}
+	createOp, err := spec.operation(method, path)
 	if err != nil {
 		return nil, err
 	}
@@ -69,11 +82,18 @@ func Build(spec *Spec, res Resource) ([]fields.Field, error) {
 	if err != nil {
 		return nil, fmt.Errorf("%s: %w", res.Package, err)
 	}
+	for _, p := range res.Omit {
+		if !b.omit[p] {
+			return nil, fmt.Errorf("%s: omit entry %q names no field", res.Package, p)
+		}
+	}
 	return table, nil
 }
 
 type builder struct {
 	spec *Spec
+	// omit maps each omitted path to whether the build met it.
+	omit map[string]bool
 }
 
 func prop(s *Schema, name string) *Schema {
@@ -109,6 +129,10 @@ func (b *builder) object(create, update, resp *Schema, where string, depth int) 
 			continue
 		}
 		at := where + name
+		if _, omitted := b.omit[at]; omitted {
+			b.omit[at] = true
+			continue
+		}
 		cv, err := b.classify(prop(create, name), at, depth)
 		if err != nil {
 			return nil, err
@@ -130,6 +154,12 @@ func (b *builder) object(create, update, resp *Schema, where string, depth int) 
 			if base == nil {
 				base = v
 			} else if v.shape != base.shape || v.elem != base.elem {
+				// A union of an integer and a string (`up_to` is an integer or `inf`)
+				// is a string: the response's integer decodes into one.
+				if isIntOrString(base, v) {
+					base.shape = fields.String
+					continue
+				}
 				return nil, fmt.Errorf("%s: request and response disagree on the shape (%d/%d against %d/%d)", at, base.shape, base.elem, v.shape, v.elem)
 			}
 		}
@@ -255,6 +285,8 @@ func (b *builder) classify(sc *Schema, where string, depth int) (*view, error) {
 				return nil, fmt.Errorf("%s: map without a usable value schema", where)
 			case value.shape == fields.String:
 				v.shape = fields.StringMap
+			case value.shape == fields.Int:
+				v.shape = fields.IntMap
 			case value.shape == fields.Object:
 				v.shape, v.obj = fields.ObjectMap, value.obj
 			default:
@@ -321,4 +353,10 @@ func onlyEmpty(sc *Schema) bool {
 		return false
 	}
 	return len(enumStrings(sc)) == 0
+}
+
+// isIntOrString reports whether one view is a plain integer and the other a plain string.
+func isIntOrString(a, b *view) bool {
+	plain := func(v *view, shape fields.Shape) bool { return v.shape == shape && v.elem == 0 }
+	return plain(a, fields.Int) && plain(b, fields.String) || plain(a, fields.String) && plain(b, fields.Int)
 }

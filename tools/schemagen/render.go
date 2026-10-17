@@ -23,6 +23,7 @@ var shapeNames = map[fields.Shape]string{
 	fields.ScalarSet:  "ScalarSet",
 	fields.ObjectMap:  "ObjectMap",
 	fields.StringMap:  "StringMap",
+	fields.IntMap:     "IntMap",
 }
 
 // RenderTable renders the Go source of a resource's field table.

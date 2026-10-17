@@ -5,6 +5,7 @@
 package tfacc
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-framework/providerserver"
@@ -34,5 +35,22 @@ func Post(t *testing.T, c acctest.Config, path string, params wire.Object) {
 	t.Helper()
 	if _, err := Client(c).Do(t.Context(), stripeapi.Request{Method: "POST", Path: path, Params: params}); err != nil {
 		t.Fatalf("POST %s: %v", path, err)
+	}
+}
+
+// SkipWhenFakeLacks returns an ErrorCheck that skips the test when the fake answers
+// `fake_not_implemented` or `fake_unproven` for something that mentions needle, such as a
+// parameter name. Any other error fails the test. The provider never works around a fake
+// gap: the test runs again once the fake serves it.
+func SkipWhenFakeLacks(t *testing.T, needle string) func(error) error {
+	return func(err error) error {
+		if err == nil {
+			return nil
+		}
+		msg := err.Error()
+		if (strings.Contains(msg, "fake_not_implemented") || strings.Contains(msg, "fake_unproven")) && strings.Contains(msg, needle) {
+			t.Skipf("the fake does not serve %s yet: %v", needle, err)
+		}
+		return err
 	}
 }

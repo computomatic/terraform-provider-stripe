@@ -92,6 +92,9 @@ func resourceAttribute(n *node) rschema.Attribute {
 	case fields.StringMap:
 		return rschema.MapAttribute{ElementType: scalarType(fields.String), Required: n.Required, Optional: n.Optional, Computed: n.Computed, Sensitive: n.Sensitive, MarkdownDescription: desc,
 			PlanModifiers: planMods(n, mapplanmodifier.UseStateForUnknown, mapplanmodifier.RequiresReplace)}
+	case fields.IntMap:
+		return rschema.MapAttribute{ElementType: scalarType(fields.Int), Required: n.Required, Optional: n.Optional, Computed: n.Computed, Sensitive: n.Sensitive, MarkdownDescription: desc,
+			PlanModifiers: planMods(n, mapplanmodifier.UseStateForUnknown, mapplanmodifier.RequiresReplace)}
 	case fields.ScalarList:
 		return rschema.ListAttribute{ElementType: scalarType(n.Elem), Required: n.Required, Optional: n.Optional, Computed: n.Computed, Sensitive: n.Sensitive, MarkdownDescription: desc,
 			PlanModifiers: planMods(n, listplanmodifier.UseStateForUnknown, listplanmodifier.RequiresReplace)}
@@ -124,7 +127,10 @@ func (m *model) identitySchema() ischema.Schema {
 
 func (m *model) dataSourceSchema() dschema.Schema {
 	attrs := make(map[string]dschema.Attribute, len(m.nodes)+1)
-	lookups := map[string]bool{"id": true}
+	lookups := map[string]bool{}
+	if !m.decl.Singleton {
+		lookups["id"] = true
+	}
 	for _, l := range m.decl.Lookups {
 		lookups[l.Field] = true
 	}
@@ -158,6 +164,8 @@ func dataSourceAttribute(n *node) dschema.Attribute {
 		return dschema.MapNestedAttribute{Computed: true, Sensitive: n.Sensitive, MarkdownDescription: desc, NestedObject: dschema.NestedAttributeObject{Attributes: dataSourceAttributes(n.Kids)}}
 	case fields.StringMap:
 		return dschema.MapAttribute{ElementType: scalarType(fields.String), Computed: true, Sensitive: n.Sensitive, MarkdownDescription: desc}
+	case fields.IntMap:
+		return dschema.MapAttribute{ElementType: scalarType(fields.Int), Computed: true, Sensitive: n.Sensitive, MarkdownDescription: desc}
 	case fields.ScalarList:
 		return dschema.ListAttribute{ElementType: scalarType(n.Elem), Computed: true, Sensitive: n.Sensitive, MarkdownDescription: desc}
 	case fields.ScalarSet:

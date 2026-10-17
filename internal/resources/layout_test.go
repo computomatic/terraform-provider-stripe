@@ -37,11 +37,11 @@ func TestEveryResourceMeetsTheLayout(t *testing.T) {
 // layoutProblems checks internal/resources/<name> under the repository root.
 func layoutProblems(root, name string) []string {
 	dir := filepath.Join(root, "internal", "resources", name)
-	var problems []string
-	if _, err := os.Stat(filepath.Join(dir, "resource.go")); err != nil {
-		problems = append(problems, name+": no declaration (resource.go)")
-	}
 	typeName := "stripe_" + name
+	if _, err := os.Stat(filepath.Join(dir, "resource.go")); err != nil {
+		return dataSourceOnlyProblems(root, dir, name, typeName)
+	}
+	var problems []string
 	if _, err := os.Stat(filepath.Join(root, "examples", "resources", typeName, "resource.tf")); err != nil {
 		problems = append(problems, fmt.Sprintf("%s: no docs example (examples/resources/%s/resource.tf)", name, typeName))
 	}
@@ -51,6 +51,25 @@ func layoutProblems(root, name string) []string {
 		}
 	}
 
+	return append(problems, missingTests(dir, name, requiredTests)...)
+}
+
+// dataSourceOnlyProblems checks a directory with a data source declaration and no
+// resource, such as the balance: a docs example and one `read` acceptance test.
+func dataSourceOnlyProblems(root, dir, name, typeName string) []string {
+	var problems []string
+	if _, err := os.Stat(filepath.Join(dir, "datasource.go")); err != nil {
+		problems = append(problems, name+": no declaration (resource.go or datasource.go)")
+	}
+	if _, err := os.Stat(filepath.Join(root, "examples", "data-sources", typeName, "data-source.tf")); err != nil {
+		problems = append(problems, fmt.Sprintf("%s: no data source example (examples/data-sources/%s/data-source.tf)", name, typeName))
+	}
+	return append(problems, missingTests(dir, name, []string{"read"})...)
+}
+
+// missingTests lists the `TestAcc<Name>_<suffix>` functions the directory's tests lack.
+func missingTests(dir, name string, suffixes []string) []string {
+	var problems []string
 	have := map[string]bool{}
 	files, _ := filepath.Glob(filepath.Join(dir, "*_test.go"))
 	for _, file := range files {
@@ -65,7 +84,7 @@ func layoutProblems(root, name string) []string {
 			}
 		}
 	}
-	for _, suffix := range requiredTests {
+	for _, suffix := range suffixes {
 		if want := "TestAcc" + pascal(name) + "_" + suffix; !have[want] {
 			problems = append(problems, fmt.Sprintf("%s: no acceptance test %s", name, want))
 		}
@@ -113,5 +132,27 @@ func TestLayoutCheckFindsGaps(t *testing.T) {
 	write("internal/resources/billing_meter/datasource.go", "package billing_meter\n")
 	if got := layoutProblems(root, "billing_meter"); len(got) != 1 {
 		t.Fatalf("a data source needs its example: %v", got)
+	}
+}
+
+func TestLayoutCheckFindsDataSourceGaps(t *testing.T) {
+	root := t.TempDir()
+	write := func(rel, content string) {
+		path := filepath.Join(root, rel)
+		if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
+			t.Fatal(err)
+		}
+		if err := os.WriteFile(path, []byte(content), 0o644); err != nil {
+			t.Fatal(err)
+		}
+	}
+	write("internal/resources/balance/datasource.go", "package balance\n")
+	if got := layoutProblems(root, "balance"); len(got) != 2 {
+		t.Fatalf("a data source without example or read test has 2 problems, got %d: %v", len(got), got)
+	}
+	write("internal/resources/balance/datasource_test.go", "package balance\nfunc TestAccBalance_read() {}\n")
+	write("examples/data-sources/stripe_balance/data-source.tf", "")
+	if got := layoutProblems(root, "balance"); len(got) != 0 {
+		t.Fatalf("a complete data source has no problems: %v", got)
 	}
 }

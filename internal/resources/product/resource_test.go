@@ -3,6 +3,7 @@ package product_test
 import (
 	"fmt"
 	"os"
+	"slices"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
@@ -190,6 +191,58 @@ func TestAccProduct_delete(t *testing.T) {
 			Config: productConfig(acct, "prod_doomed", "Doomed", ""),
 			Check:  idOf(&id),
 		}},
+	})
+}
+
+// Stripe refuses to delete a product that has a price. Destroy archives the product
+// instead.
+func TestAccProduct_destroyWithPrices(t *testing.T) {
+	acct := acctest.NewAccount(t)
+	var id string
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: tfacc.ProviderFactories,
+		CheckDestroy: func(*terraform.State) error {
+			resp, err := tfacc.Client(acct).Do(t.Context(), stripeapi.Request{Method: "GET", Path: "/v1/products/" + id})
+			if err != nil {
+				return fmt.Errorf("an archived product still retrieves: %w", err)
+			}
+			if active, _ := resp.Body.(wire.Object).GetBool("active"); active {
+				return fmt.Errorf("product %s should be archived after destroy", id)
+			}
+			var deleteTried, archived bool
+			// The log lists the newest request first.
+			log := acctest.RequestLog(t, acct)
+			slices.Reverse(log)
+			for _, entry := range log {
+				switch {
+				case entry.Method == "DELETE" && entry.Path == "/v1/products/"+id:
+					deleteTried = entry.Status == 400
+				case entry.Method == "POST" && entry.Path == "/v1/products/"+id:
+					if params, ok := entry.Params.(wire.Object); ok && deleteTried {
+						_, archived = params.Get("active")
+					}
+				}
+			}
+			if !deleteTried || !archived {
+				return fmt.Errorf("destroy must try DELETE (refused with 400) and then set active=false: delete refused %v, archived %v", deleteTried, archived)
+			}
+			return nil
+		},
+		Steps: []resource.TestStep{
+			{Config: productConfig(acct, "prod_priced", "Gold plan", ""), Check: idOf(&id)},
+			{
+				// The price is made behind the provider's back, so this test does not depend
+				// on stripe_price.
+				PreConfig: func() {
+					tfacc.Post(t, acct, "/v1/prices", wire.Object{
+						{Name: "product", Value: wire.String(id)},
+						{Name: "currency", Value: wire.String("usd")},
+						{Name: "unit_amount", Value: wire.Int(2000)},
+					})
+				},
+				Config: productConfig(acct, "prod_priced", "Gold plan", ""),
+			},
+		},
 	})
 }
 

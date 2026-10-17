@@ -83,6 +83,9 @@ func (d *decoder) node(n *node, w wire.Value, prior attr.Value) attr.Value {
 			return nullOf(attrType(n))
 		}
 	}
+	if n.NullAs != "" && isAbsent(w) {
+		return types.StringValue(n.NullAs)
+	}
 	v := d.value(n, w, prior)
 	// An Optional field the user left out reads back as an empty collection from Stripe;
 	// that is null in the configuration, not a difference.
@@ -185,6 +188,20 @@ func (d *decoder) value(n *node, w wire.Value, prior attr.Value) attr.Value {
 			elems[f.Name] = s
 		}
 		return d.mapOf(types.StringType, elems)
+	case fields.IntMap:
+		o, ok := w.(wire.Object)
+		if !ok {
+			return d.fail(n, fmt.Sprintf("expected an object, got %T", w))
+		}
+		elems := make(map[string]attr.Value, len(o))
+		for _, f := range o {
+			i, ok := d.scalar(n, fields.Int, f.Value).(basetypes.Int64Value)
+			if !ok || i.IsNull() {
+				return nullOf(attrType(n))
+			}
+			elems[f.Name] = i
+		}
+		return d.mapOf(types.Int64Type, elems)
 	case fields.ScalarList, fields.ScalarSet:
 		arr, ok := w.(wire.Array)
 		if !ok {

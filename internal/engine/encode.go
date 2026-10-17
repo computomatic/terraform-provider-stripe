@@ -198,6 +198,20 @@ func encodeValue(n *node, v attr.Value, allow func(*node) bool) (value wire.Valu
 			obj = append(obj, wire.Field{Name: key, Value: s})
 		}
 		return obj, true, nil
+	case fields.IntMap:
+		mv, isMap := v.(basetypes.MapValue)
+		if !isMap {
+			return mismatch()
+		}
+		obj := wire.Object{}
+		for _, key := range sortedKeys(mv.Elements()) {
+			i, err := encodeScalar(fields.Int, mv.Elements()[key])
+			if err != nil {
+				return nil, false, fmt.Errorf("%s: %w", n.Path, err)
+			}
+			obj = append(obj, wire.Field{Name: key, Value: i})
+		}
+		return obj, true, nil
 	case fields.ScalarList, fields.ScalarSet:
 		var elems []attr.Value
 		switch c := v.(type) {
