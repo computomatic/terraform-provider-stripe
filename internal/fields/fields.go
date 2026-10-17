@@ -29,6 +29,8 @@ const (
 	ObjectMap
 	// StringMap is a free-form map of strings, such as `metadata`.
 	StringMap
+	// IntMap is a hash of integers keyed by a variable, such as amounts by currency.
+	IntMap
 )
 
 // Field is one entry of a resource's table. Nested fields hang off Fields.

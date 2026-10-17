@@ -61,6 +61,19 @@ func (a *api) call(ctx context.Context, method, target string, params wire.Objec
 	return obj, nil
 }
 
+// expanded returns params with the declaration's `expand[]` entries added. prefix is
+// `data.` for a list response. A declaration that expands nothing gets params back.
+func (a *api) expanded(params wire.Object, prefix string) wire.Object {
+	if len(a.m.decl.Expand) == 0 {
+		return params
+	}
+	paths := make(wire.Array, len(a.m.decl.Expand))
+	for i, e := range a.m.decl.Expand {
+		paths[i] = wire.String(prefix + e)
+	}
+	return append(append(wire.Object(nil), params...), wire.Field{Name: "expand", Value: paths})
+}
+
 func (a *api) fail(diags *diag.Diagnostics, err error) {
 	stripeapi.AddToDiagnostics(diags, err, a.hasAttribute)
 }

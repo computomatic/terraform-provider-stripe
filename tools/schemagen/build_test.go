@@ -145,3 +145,59 @@ func TestBuildErrors(t *testing.T) {
 		t.Error("an unsupported schema type must fail loudly, not be skipped")
 	}
 }
+
+const readOnlySpec = `{
+  "openapi": "3.0.0",
+  "info": {"version": "v"},
+  "paths": {
+    "/v1/gauge": {"get": {"operationId": "GetGauge", "responses": {"200": {"content": {"application/json": {"schema": {"$ref": "#/components/schemas/gauge"}}}}}}},
+    "/v1/gauges": {"post": {
+      "operationId": "PostGauges",
+      "requestBody": {"content": {"application/x-www-form-urlencoded": {"schema": {"type": "object", "properties": {
+        "limit": {"anyOf": [{"type": "string", "enum": ["inf"]}, {"type": "integer"}]}
+      }}}}},
+      "responses": {"200": {"content": {"application/json": {"schema": {"$ref": "#/components/schemas/gauge"}}}}}
+    }}
+  },
+  "components": {"schemas": {"gauge": {"type": "object", "properties": {
+    "by_currency": {"type": "object", "additionalProperties": {"type": "integer"}},
+    "limit": {"type": "integer", "nullable": true},
+    "sources": {"type": "array", "items": {"anyOf": [{"type": "object", "properties": {"a": {"type": "string"}}}, {"type": "object", "properties": {"b": {"type": "string"}}}]}}
+  }}}}
+}`
+
+func TestReadPathIntMapUnionAndOmit(t *testing.T) {
+	spec, err := ParseSpec([]byte(readOnlySpec))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := Build(spec, Resource{Package: "gauge", ReadPath: "/v1/gauge"}); err == nil {
+		t.Fatal("an array of alternative objects is not modelled and must fail unless omitted")
+	}
+	table, err := Build(spec, Resource{Package: "gauge", ReadPath: "/v1/gauge", Omit: []string{"sources"}})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got := lookup(t, table, "by_currency").Shape; got != fields.IntMap {
+		t.Errorf("a map of integers is an IntMap, got %d", got)
+	}
+	if _, ok := fields.Find(table, "sources"); ok {
+		t.Error("an omitted field must not be in the table")
+	}
+	if f := lookup(t, table, "limit"); f.Create || f.Shape != fields.Int {
+		t.Errorf("a read-only table has response fields only: %+v", f)
+	}
+
+	if _, err := Build(spec, Resource{Package: "gauge", ReadPath: "/v1/gauge", Omit: []string{"sources", "nothing"}}); err == nil {
+		t.Error("an omit entry that names no field must fail")
+	}
+
+	// An integer in the response and `inf` or an integer in the request is a string.
+	table, err = Build(spec, Resource{Package: "gauge", CreatePath: "/v1/gauges", Omit: []string{"sources"}})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if f := lookup(t, table, "limit"); f.Shape != fields.String || !f.Create || !f.Response {
+		t.Errorf("limit: %+v", f)
+	}
+}

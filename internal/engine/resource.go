@@ -2,6 +2,7 @@ package engine
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"strings"
 	"time"
@@ -99,7 +100,7 @@ func (r *Resource) Create(ctx context.Context, req resource.CreateRequest, resp 
 		return
 	}
 	_, parent := r.m.ids(plan)
-	body, err := r.api.call(ctx, "POST", r.m.expand(r.m.decl.Paths.Create, "", parent), params)
+	body, err := r.api.call(ctx, "POST", r.m.expand(r.m.decl.Paths.Create, "", parent), r.api.expanded(params, ""))
 	if err != nil {
 		r.api.fail(&resp.Diagnostics, err)
 		return
@@ -117,10 +118,14 @@ func (r *Resource) Create(ctx context.Context, req resource.CreateRequest, resp 
 			return
 		}
 		if len(followUp) > 0 {
-			if body, err = r.api.call(ctx, "POST", r.m.expand(r.m.decl.Paths.Update, id, parent), followUp); err != nil {
+			updated, err := r.api.call(ctx, "POST", r.m.expand(r.m.decl.Paths.Update, id, parent), r.api.expanded(followUp, ""))
+			if err != nil {
 				r.api.fail(&resp.Diagnostics, err)
 				return
 			}
+			// Stripe sends once-returned fields, such as a webhook secret, on the create
+			// response only.
+			body = mergeBodies(body, updated)
 		}
 	}
 
@@ -143,7 +148,7 @@ func (r *Resource) Read(ctx context.Context, req resource.ReadRequest, resp *res
 	defer cancel()
 
 	id, parent := r.m.ids(state)
-	body, err := r.api.call(ctx, "GET", r.m.expand(r.m.decl.Paths.Retrieve, id, parent), nil)
+	body, err := r.api.call(ctx, "GET", r.m.expand(r.m.decl.Paths.Retrieve, id, parent), r.api.expanded(nil, ""))
 	if stripeapi.IsNotFound(err) {
 		resp.State.RemoveResource(ctx)
 		return
@@ -186,6 +191,7 @@ func (r *Resource) Update(ctx context.Context, req resource.UpdateRequest, resp 
 	if len(params) > 0 {
 		method, target, sent = "POST", r.m.expand(r.m.decl.Paths.Update, id, parent), params
 	}
+	sent = r.api.expanded(sent, "")
 	body, err := r.api.call(ctx, method, target, sent)
 	if err != nil {
 		r.api.fail(&resp.Diagnostics, err)
@@ -218,6 +224,18 @@ func (r *Resource) Delete(ctx context.Context, req resource.DeleteRequest, resp 
 	switch r.m.decl.Delete {
 	case Delete:
 		_, err = r.api.call(ctx, "DELETE", r.m.expand(r.m.decl.Paths.Delete, id, parent), nil)
+	case DeleteOrArchive:
+		_, err = r.api.call(ctx, "DELETE", r.m.expand(r.m.decl.Paths.Delete, id, parent), nil)
+		if refused(err, r.m.decl.ArchiveOn) {
+			refusal := err
+			if err = r.archive(ctx, id, parent); err == nil {
+				resp.Diagnostics.AddWarning(
+					"Archived instead of deleted",
+					fmt.Sprintf("Stripe refused to delete %s %s: %v\n\nThe object was archived instead. It is out of Terraform's state and still exists in the Stripe account.",
+						r.m.decl.TypeName, id, refusal),
+				)
+			}
+		}
 	case Archive:
 		err = r.archive(ctx, id, parent)
 	case Expire:
@@ -226,6 +244,30 @@ func (r *Resource) Delete(ctx context.Context, req resource.DeleteRequest, resp 
 	if err != nil && !stripeapi.IsNotFound(err) {
 		r.api.fail(&resp.Diagnostics, err)
 	}
+}
+
+// mergeBodies overlays the fields of later onto earlier.
+func mergeBodies(earlier, later wire.Object) wire.Object {
+	out := append(wire.Object(nil), earlier...)
+	for _, f := range later {
+		replaced := false
+		for i := range out {
+			if out[i].Name == f.Name {
+				out[i].Value, replaced = f.Value, true
+				break
+			}
+		}
+		if !replaced {
+			out = append(out, f)
+		}
+	}
+	return out
+}
+
+// refused reports whether err is the Stripe refusal the declaration names.
+func refused(err error, want *Refusal) bool {
+	var apiErr *stripeapi.APIError
+	return errors.As(err, &apiErr) && apiErr.Status == want.Status && apiErr.Type == want.Type
 }
 
 // archive retrieves the object first, because archiving twice can be an error, and sends
@@ -238,6 +280,10 @@ func (r *Resource) archive(ctx context.Context, id, parent string) error {
 	a := r.m.decl.Archive
 	if archived(body, a, time.Now()) {
 		return nil
+	}
+	if a.Path != "" {
+		_, err = r.api.call(ctx, "POST", r.m.expand(a.Path, id, parent), nil)
+		return err
 	}
 	value := a.Value
 	if a.Now {

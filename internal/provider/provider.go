@@ -16,7 +16,13 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 
+	"github.com/computomatic/terraform-provider-stripe/internal/resources/balance"
+	"github.com/computomatic/terraform-provider-stripe/internal/resources/billing_meter"
+	"github.com/computomatic/terraform-provider-stripe/internal/resources/coupon"
+	"github.com/computomatic/terraform-provider-stripe/internal/resources/customer"
+	"github.com/computomatic/terraform-provider-stripe/internal/resources/price"
 	"github.com/computomatic/terraform-provider-stripe/internal/resources/product"
+	"github.com/computomatic/terraform-provider-stripe/internal/resources/webhook_endpoint"
 	"github.com/computomatic/terraform-provider-stripe/internal/stripeapi"
 )
 
@@ -113,11 +119,26 @@ func (p *stripeProvider) Configure(ctx context.Context, req provider.ConfigureRe
 }
 
 func (p *stripeProvider) Resources(_ context.Context) []func() resource.Resource {
-	return []func() resource.Resource{must(product.NewResource())}
+	return []func() resource.Resource{
+		must(billing_meter.NewResource()),
+		must(coupon.NewResource()),
+		must(customer.NewResource()),
+		must(price.NewResource()),
+		must(product.NewResource()),
+		must(webhook_endpoint.NewResource()),
+	}
 }
 
 func (p *stripeProvider) DataSources(_ context.Context) []func() datasource.DataSource {
-	return []func() datasource.DataSource{must(product.NewDataSource())}
+	return []func() datasource.DataSource{
+		must(balance.NewDataSource()),
+		must(billing_meter.NewDataSource()),
+		must(coupon.NewDataSource()),
+		must(customer.NewDataSource()),
+		must(price.NewDataSource()),
+		must(product.NewDataSource()),
+		must(webhook_endpoint.NewDataSource()),
+	}
 }
 
 // must unwraps a constructor built from a declaration. A declaration that does not fit its

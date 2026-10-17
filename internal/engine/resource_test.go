@@ -398,3 +398,228 @@ func TestCreateFailureKeepsID(t *testing.T) {
 		t.Errorf("the created object's ID must be in state so destroy can find it, got %q", id.ValueString())
 	}
 }
+
+func deleteOrArchiveDeclaration() Declaration {
+	decl := fixtureDeclaration()
+	decl.Delete = DeleteOrArchive
+	decl.Archive = &ArchiveAction{Field: "active", Value: wire.Bool(false)}
+	decl.ArchiveOn = &Refusal{Status: 400, Type: "invalid_request_error"}
+	return decl
+}
+
+// refusingDeletes answers DELETE with err and everything else from the stub.
+func refusingDeletes(stub *stubStripe, err error) clientFunc {
+	return func(ctx context.Context, req stripeapi.Request) (*stripeapi.Response, error) {
+		if req.Method == "DELETE" {
+			return nil, err
+		}
+		return stub.Do(ctx, req)
+	}
+}
+
+func TestDeleteOrArchiveDeletesWhenStripeAllows(t *testing.T) {
+	stub := newStub()
+	r := configured(t, deleteOrArchiveDeclaration(), fixtureTable(), stub)
+	state, _ := r.create(t, createPlan(r))
+	stub.reset()
+	diags := r.destroy(t, state)
+	noErrors(t, diags)
+	if len(diags.Warnings()) != 0 {
+		t.Errorf("a plain delete must not warn: %v", diags)
+	}
+	if reqs := stub.requests(); len(reqs) != 1 || reqs[0].Method != "DELETE" {
+		t.Fatalf("requests: %+v", reqs)
+	}
+}
+
+func TestDeleteOrArchiveArchivesOnTheNamedRefusal(t *testing.T) {
+	stub := newStub()
+	refusal := &stripeapi.APIError{Status: 400, Type: "invalid_request_error", Message: "This product has prices."}
+	r := configured(t, deleteOrArchiveDeclaration(), fixtureTable(), refusingDeletes(stub, refusal))
+	state, _ := r.create(t, createPlan(r))
+	stub.reset()
+	diags := r.destroy(t, state)
+	noErrors(t, diags)
+	if len(diags.Warnings()) != 1 || diags.Warnings()[0].Summary() != "Archived instead of deleted" {
+		t.Errorf("want one archive warning: %v", diags)
+	}
+	reqs := stub.requests()
+	if len(reqs) != 2 || reqs[0].Method != "GET" || reqs[1].Method != "POST" || wireOf(t, reqs[1].Params) != `{"active":false}` {
+		t.Fatalf("archive requests: %+v", reqs)
+	}
+}
+
+func TestDeleteOrArchiveFailsOnOtherErrors(t *testing.T) {
+	for name, apiErr := range map[string]*stripeapi.APIError{
+		"another status":   {Status: 403, Type: "invalid_request_error", Message: "no"},
+		"another type":     {Status: 400, Type: "api_error", Message: "no"},
+		"a server failure": {Status: 500, Type: "api_error", Message: "no"},
+	} {
+		t.Run(name, func(t *testing.T) {
+			stub := newStub()
+			r := configured(t, deleteOrArchiveDeclaration(), fixtureTable(), refusingDeletes(stub, apiErr))
+			state, _ := r.create(t, createPlan(r))
+			stub.reset()
+			if !r.destroy(t, state).HasError() {
+				t.Error("the error must fail the destroy")
+			}
+			for _, req := range stub.requests() {
+				if req.Method == "POST" {
+					t.Errorf("nothing may be archived: %+v", req)
+				}
+			}
+		})
+	}
+}
+
+func TestDeleteOrArchiveTreatsMissingAsGone(t *testing.T) {
+	stub := newStub()
+	r := configured(t, deleteOrArchiveDeclaration(), fixtureTable(), refusingDeletes(stub, notFound()))
+	state, _ := r.create(t, createPlan(r))
+	noErrors(t, r.destroy(t, state))
+}
+
+func TestArchiveThroughAnActionEndpoint(t *testing.T) {
+	decl := fixtureDeclaration()
+	decl.Delete = Archive
+	decl.Archive = &ArchiveAction{Field: "active", Value: wire.Bool(false), Path: "/v1/widgets/{id}/deactivate"}
+	var calls []string
+	client := clientFunc(func(_ context.Context, req stripeapi.Request) (*stripeapi.Response, error) {
+		calls = append(calls, req.Method+" "+req.Path)
+		return &stripeapi.Response{Body: wire.Object{{Name: "active", Value: wire.Bool(true)}}}, nil
+	})
+	r := configured(t, decl, fixtureTable(), client)
+	state := r.fill(map[string]attr.Value{"id": types.StringValue("wid_1")})
+	noErrors(t, r.destroy(t, state))
+	if got := strings.Join(calls, ","); got != "GET /v1/widgets/wid_1,POST /v1/widgets/wid_1/deactivate" {
+		t.Errorf("calls: %s", got)
+	}
+}
+
+// Stripe sends once-returned fields on the create response only, so a follow-up update
+// (the create plan sets an update-only field) must not replace them.
+func TestCreateKeepsOnceReturnedFieldsAcrossFollowUp(t *testing.T) {
+	stub := newStub()
+	followUpOmitsSecret := clientFunc(func(ctx context.Context, req stripeapi.Request) (*stripeapi.Response, error) {
+		resp, err := stub.Do(ctx, req)
+		if err != nil || req.Method != "POST" || req.Path == "/v1/widgets" {
+			return resp, err
+		}
+		body, _ := resp.Body.(wire.Object)
+		return &stripeapi.Response{Status: resp.Status, Body: drop(append(wire.Object(nil), body...), "secret")}, nil
+	})
+	r := fixtureResource(t, followUpOmitsSecret)
+	state, _ := r.create(t, createPlan(r))
+	if got := str(t, state, "secret"); got != "whsec_wid_1" {
+		t.Fatalf("secret after create with a follow-up update: %q", got)
+	}
+	var followUps int
+	for _, req := range stub.requests() {
+		if req.Method == "POST" && req.Path != "/v1/widgets" {
+			followUps++
+		}
+	}
+	if followUps != 1 {
+		t.Fatalf("the plan sets default_ref, so create must send one follow-up update, got %d", followUps)
+	}
+}
+
+func TestMergeBodies(t *testing.T) {
+	got := mergeBodies(
+		wire.Object{{Name: "a", Value: wire.Int(1)}, {Name: "b", Value: wire.Int(2)}},
+		wire.Object{{Name: "b", Value: wire.Int(3)}, {Name: "c", Value: wire.Int(4)}},
+	)
+	if s := wireOf(t, got); s != `{"a":1,"b":3,"c":4}` {
+		t.Errorf("merged: %s", s)
+	}
+}
+
+func hasExpand(t *testing.T, req stripeapi.Request, want string) bool {
+	t.Helper()
+	v, ok := req.Params.Get("expand")
+	if !ok {
+		return false
+	}
+	b, err := wire.EncodeJSON(v)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return string(b) == want
+}
+
+// A declared expand list rides on every request that returns the object.
+func TestExpandIsSentOnEveryRequestThatReturnsTheObject(t *testing.T) {
+	decl := fixtureDeclaration()
+	decl.Expand = []string{"options"}
+	stub := newStub()
+	r := configured(t, decl, fixtureTable(), stub)
+	state, _ := r.create(t, createPlan(r))
+	r.read(t, state)
+	plan := r.fill(map[string]attr.Value{})
+	attrs := plan.Attributes()
+	for k, v := range state.Attributes() {
+		attrs[k] = v
+	}
+	attrs["name"] = types.StringValue("renamed")
+	r.update(t, r.fill(attrs), state)
+	// A plan with nothing to send reads instead; that read expands too.
+	r.update(t, state, state)
+	noErrors(t, r.destroy(t, state))
+
+	for _, req := range stub.requests() {
+		switch req.Method {
+		case "DELETE":
+			if _, sent := req.Params.Get("expand"); sent {
+				t.Errorf("DELETE must not send expand: %+v", req)
+			}
+		default:
+			if !hasExpand(t, req, `["options"]`) {
+				t.Errorf("%s %s sent no expand: %+v", req.Method, req.Path, req.Params)
+			}
+		}
+	}
+}
+
+func TestExpandMustNameAResponseField(t *testing.T) {
+	for _, name := range []string{"nothing", "passcode"} {
+		decl := fixtureDeclaration()
+		decl.Expand = []string{name}
+		if _, err := NewResource(decl, fixtureTable()); err == nil {
+			t.Errorf("expand %q names no response field and must fail", name)
+		}
+	}
+}
+
+func TestNullAsDecodesNullToTheString(t *testing.T) {
+	decl := fixtureDeclaration()
+	decl.NullAs = map[string]string{"default_ref": "inf", "address.zip": "inf"}
+	client := clientFunc(func(_ context.Context, req stripeapi.Request) (*stripeapi.Response, error) {
+		return &stripeapi.Response{Body: wire.Object{
+			{Name: "id", Value: wire.String("wid_1")},
+			{Name: "default_ref", Value: wire.Null{}},
+			{Name: "address", Value: wire.Object{{Name: "line1", Value: wire.String("x")}, {Name: "zip", Value: wire.Null{}}}},
+		}}, nil
+	})
+	r := configured(t, decl, fixtureTable(), client)
+	state := r.fill(map[string]attr.Value{"id": types.StringValue("wid_1")})
+	read, found := r.read(t, state)
+	if !found {
+		t.Fatal("not found")
+	}
+	if got := str(t, read, "default_ref"); got != "inf" {
+		t.Errorf("a null default_ref decodes to %q, want inf", got)
+	}
+	addr, _ := read.Attributes()["address"].(basetypes.ObjectValue)
+	if got := str(t, addr, "zip"); got != "inf" {
+		t.Errorf("a null address.zip decodes to %q, want inf", got)
+	}
+
+	decl.NullAs = map[string]string{"nothing": "inf"}
+	if _, err := NewResource(decl, fixtureTable()); err == nil {
+		t.Error("a null_as entry that names no field must fail")
+	}
+	decl.NullAs = map[string]string{"quantity": "inf"}
+	if _, err := NewResource(decl, fixtureTable()); err == nil {
+		t.Error("a null_as entry on a non-string field must fail")
+	}
+}
