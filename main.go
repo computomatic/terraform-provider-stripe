@@ -7,17 +7,14 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-framework/providerserver"
 
-	"terraform-provider-stripe/internal/provider"
+	"github.com/computomatic/terraform-provider-stripe/internal/provider"
 )
 
-var (
-	version string = "dev"
-)
+var version = "dev"
 
 func main() {
 	var debug bool
-
-	flag.BoolVar(&debug, "debug", false, "set to true to run the provider with support for debuggers like delve")
+	flag.BoolVar(&debug, "debug", false, "run the provider with support for debuggers like delve")
 	flag.Parse()
 
 	opts := providerserver.ServeOpts{
@@ -25,9 +22,7 @@ func main() {
 		Debug:   debug,
 	}
 
-	err := providerserver.Serve(context.Background(), provider.New(version), opts)
-
-	if err != nil {
+	if err := providerserver.Serve(context.Background(), provider.New(version), opts); err != nil {
 		log.Fatal(err.Error())
 	}
 }
