@@ -106,8 +106,9 @@ func (p *stripeProvider) Configure(ctx context.Context, req provider.ConfigureRe
 		return
 	}
 
-	resp.DataSourceData = &cfg
-	resp.ResourceData = &cfg
+	client := stripeapi.New(cfg, stripeapi.Options{Version: p.version})
+	resp.DataSourceData = client
+	resp.ResourceData = client
 }
 
 func (p *stripeProvider) Resources(_ context.Context) []func() resource.Resource {

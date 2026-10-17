@@ -9,6 +9,8 @@ go build ./...
 go test ./...
 ```
 
+Tests that need a Stripe API run against the fake, one fresh account per test, and are skipped when no fake is configured. Set `STRIPE_FAKE_SOURCE` to the fake's source tree and the harness builds it from a temporary copy and starts it, or set `STRIPE_FAKE_URL` (and `STRIPE_FAKE_ADMIN_TOKEN` if it needs one) to use a running fake.
+
 ## Try it against the fake
 
 Start the fake Stripe API with `-default-account-key sk_test_<anything>`, then point `base_url` at it:
