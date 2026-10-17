@@ -16,6 +16,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 
+	"github.com/computomatic/terraform-provider-stripe/internal/resources/product"
 	"github.com/computomatic/terraform-provider-stripe/internal/stripeapi"
 )
 
@@ -112,11 +113,20 @@ func (p *stripeProvider) Configure(ctx context.Context, req provider.ConfigureRe
 }
 
 func (p *stripeProvider) Resources(_ context.Context) []func() resource.Resource {
-	return nil
+	return []func() resource.Resource{must(product.NewResource())}
 }
 
 func (p *stripeProvider) DataSources(_ context.Context) []func() datasource.DataSource {
-	return nil
+	return []func() datasource.DataSource{must(product.NewDataSource())}
+}
+
+// must unwraps a constructor built from a declaration. A declaration that does not fit its
+// field table is a programming error, and the provider's tests construct every one.
+func must[T any](constructor T, err error) T {
+	if err != nil {
+		panic(err)
+	}
+	return constructor
 }
 
 // resolveConfig applies environment fallbacks and defaults, and validates the result.
