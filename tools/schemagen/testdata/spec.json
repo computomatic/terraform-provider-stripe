@@ -1,0 +1,89 @@
+{
+  "openapi": "3.0.0",
+  "info": {"version": "2000-01-01.fixture"},
+  "paths": {
+    "/v1/widgets": {
+      "post": {
+        "operationId": "PostWidgets",
+        "requestBody": {"content": {"application/x-www-form-urlencoded": {"schema": {
+          "type": "object",
+          "required": ["name"],
+          "properties": {
+            "name": {"type": "string", "maxLength": 100, "description": "The display name."},
+            "kind": {"type": "string", "enum": ["a", "b"]},
+            "active": {"type": "boolean"},
+            "count": {"type": "integer"},
+            "ratio": {"type": "number"},
+            "address": {"anyOf": [
+              {"type": "object", "required": ["line1"], "properties": {"line1": {"type": "string"}, "zip": {"type": "string"}}},
+              {"type": "string", "enum": [""]}
+            ]},
+            "items": {"type": "array", "items": {"type": "object", "properties": {"sku": {"type": "string"}, "qty": {"type": "integer"}}}},
+            "tags": {"type": "array", "items": {"type": "string"}},
+            "options": {"type": "object", "additionalProperties": {"type": "object", "properties": {"amount": {"type": "integer"}}}},
+            "metadata": {"anyOf": [
+              {"type": "object", "additionalProperties": {"type": "string"}},
+              {"type": "string", "enum": [""]}
+            ]},
+            "tier_limit": {"anyOf": [{"type": "string", "enum": ["inf"]}, {"type": "integer"}]},
+            "expand": {"type": "array", "items": {"type": "string"}}
+          }
+        }}}},
+        "responses": {"200": {"content": {"application/json": {"schema": {"$ref": "#/components/schemas/widget"}}}}}
+      }
+    },
+    "/v1/widgets/{id}": {
+      "post": {
+        "operationId": "PostWidgetsId",
+        "requestBody": {"content": {"application/x-www-form-urlencoded": {"schema": {
+          "type": "object",
+          "properties": {
+            "name": {"type": "string"},
+            "active": {"type": "boolean"},
+            "count": {"type": "integer"},
+            "ratio": {"type": "number"},
+            "address": {"anyOf": [
+              {"type": "object", "properties": {"line1": {"type": "string"}}},
+              {"type": "string", "enum": [""]}
+            ]},
+            "items": {"type": "array", "items": {"type": "object", "properties": {"sku": {"type": "string"}, "qty": {"type": "integer"}}}},
+            "tags": {"type": "array", "items": {"type": "string"}},
+            "options": {"type": "object", "additionalProperties": {"type": "object", "properties": {"amount": {"type": "integer"}}}},
+            "metadata": {"anyOf": [
+              {"type": "object", "additionalProperties": {"type": "string"}},
+              {"type": "string", "enum": [""]}
+            ]},
+            "default_ref": {"type": "string"}
+          }
+        }}}},
+        "responses": {"200": {"content": {"application/json": {"schema": {"$ref": "#/components/schemas/widget"}}}}}
+      }
+    }
+  },
+  "components": {"schemas": {
+    "widget": {
+      "type": "object",
+      "required": ["active", "created", "id", "metadata", "name", "tags"],
+      "properties": {
+        "id": {"type": "string"},
+        "object": {"type": "string", "enum": ["widget"]},
+        "created": {"type": "integer"},
+        "name": {"type": "string"},
+        "kind": {"type": "string", "enum": ["a", "b"], "nullable": true},
+        "active": {"type": "boolean"},
+        "count": {"type": "integer", "nullable": true},
+        "ratio": {"type": "number", "nullable": true},
+        "address": {"nullable": true, "$ref": "#/components/schemas/address"},
+        "items": {"type": "array", "items": {"$ref": "#/components/schemas/item"}},
+        "tags": {"type": "array", "items": {"type": "string"}},
+        "options": {"type": "object", "additionalProperties": {"type": "object", "properties": {"amount": {"type": "integer"}}}},
+        "metadata": {"type": "object", "additionalProperties": {"type": "string"}},
+        "default_ref": {"nullable": true, "anyOf": [{"type": "string"}, {"$ref": "#/components/schemas/other"}]},
+        "owner": {"anyOf": [{"type": "string"}, {"$ref": "#/components/schemas/other"}]}
+      }
+    },
+    "address": {"type": "object", "required": ["line1"], "properties": {"line1": {"type": "string"}, "zip": {"type": "string", "nullable": true}}},
+    "item": {"type": "object", "properties": {"sku": {"type": "string"}, "qty": {"type": "integer"}}},
+    "other": {"type": "object", "properties": {"id": {"type": "string"}, "widget": {"$ref": "#/components/schemas/widget"}}}
+  }}
+}
