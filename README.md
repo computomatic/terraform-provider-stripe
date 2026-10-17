@@ -23,6 +23,8 @@ A resource is a short declaration in `internal/resources/<name>` that the generi
 
 Tests that need a Stripe API run against the fake, one fresh account per test, and are skipped when no fake is configured. Set `STRIPE_FAKE_SOURCE` to the fake's source tree and the harness builds it from a temporary copy and starts it, or set `STRIPE_FAKE_URL` (and `STRIPE_FAKE_ADMIN_TOKEN` if it needs one) to use a running fake.
 
+Acceptance tests use terraform-plugin-testing and need `TF_ACC=1`: `TF_ACC=1 STRIPE_FAKE_SOURCE=<fake source> go test ./internal/resources/...`. They run with the `terraform` on the path. To run them with OpenTofu, also set `TF_ACC_TERRAFORM_PATH=$(which tofu)`, `TF_ACC_PROVIDER_NAMESPACE=hashicorp` and `TF_ACC_PROVIDER_HOST=registry.opentofu.org`.
+
 ## Try it against the fake
 
 Start the fake Stripe API with `-default-account-key sk_test_<anything>`, then point `base_url` at it:
