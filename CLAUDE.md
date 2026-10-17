@@ -2,7 +2,8 @@
 
 Placeholder spike from April 2025. Its code is not a base for the real provider, which restarts from scratch on the current plugin framework.
 
-- The real provider build is gated on a go/no-go decision (G2), which needs a baseline scorecard of the official provider. Add no new resources until the owner agent says so.
+- Resources are built against the fake, wave by wave, per the ADR (the gate was lifted on 2026-10-17).
+- The governing design is `adrs/1-pending/2026-10-17-provider-architecture/ADR.md`. Follow it for generation, resource mapping, configuration, API version, client, testing and naming.
 - Clean room applies strictly here. Never copy the official or lukasaron providers' source, and do not read it while writing ours. Observe their schemas, behaviour and docs instead.
 
 ## Project context
