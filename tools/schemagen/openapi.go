@@ -121,18 +121,25 @@ func (s *Spec) operation(method, path string) (*Operation, error) {
 	return op, nil
 }
 
-// requestSchema returns the resolved request schema of an operation, preferring the form
-// encoding (v1) and falling back to JSON (v2).
-func (s *Spec) requestSchema(op *Operation) (*Schema, error) {
+// requestSchema returns the resolved request schema of the operation at path. A `/v2`
+// operation must take JSON only and any other must take a form, so a spec release that
+// changes a namespace's encoding fails generation instead of producing a wrong table.
+func (s *Spec) requestSchema(op *Operation, path string) (*Schema, error) {
 	if op.RequestBody == nil {
 		return nil, nil
 	}
-	for _, mt := range []string{"application/x-www-form-urlencoded", "application/json"} {
-		if m := op.RequestBody.Content[mt]; m != nil {
-			return s.resolve(m.Schema)
-		}
+	form := op.RequestBody.Content["application/x-www-form-urlencoded"]
+	js := op.RequestBody.Content["application/json"]
+	switch {
+	case strings.HasPrefix(path, "/v2/") && (js == nil || form != nil):
+		return nil, fmt.Errorf("%s: a /v2 operation must take a JSON body and no form", op.OperationID)
+	case !strings.HasPrefix(path, "/v2/") && form == nil:
+		return nil, fmt.Errorf("%s: a /v1 operation must take a form body", op.OperationID)
+	case form != nil:
+		return s.resolve(form.Schema)
+	default:
+		return s.resolve(js.Schema)
 	}
-	return nil, fmt.Errorf("%s has no form or JSON request body", op.OperationID)
 }
 
 // responseSchema returns the resolved schema of an operation's 200 response.

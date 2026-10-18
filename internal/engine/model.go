@@ -9,6 +9,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
 
 	"github.com/computomatic/terraform-provider-stripe/internal/fields"
+	"github.com/computomatic/terraform-provider-stripe/internal/stripeapi"
 )
 
 // node is a table field with every decision of the D2 rules resolved.
@@ -43,6 +44,8 @@ func (n *node) computedOnly() bool { return n.Computed && !n.Optional && !n.Requ
 type model struct {
 	decl  Declaration
 	nodes []*node
+	// v2 is true when the declaration's paths are in the `/v2` namespace.
+	v2 bool
 	// sensitiveNames are the field names masked in request logs.
 	sensitiveNames []string
 }
@@ -70,6 +73,10 @@ func compile(decl Declaration, table []fields.Field) (*model, error) {
 	}
 	if decl.Paths.Retrieve == "" {
 		return nil, fmt.Errorf("%s: declaration has no retrieve path", decl.TypeName)
+	}
+	v2, err := namespaceOf(decl)
+	if err != nil {
+		return nil, err
 	}
 	if decl.Singleton && (decl.Delete != NoDelete || len(decl.Lookups) > 0) {
 		return nil, fmt.Errorf("%s: a singleton has no delete strategy and no lookups", decl.TypeName)
@@ -116,7 +123,7 @@ func compile(decl Declaration, table []fields.Field) (*model, error) {
 		return nil, fmt.Errorf("%s: %w", decl.TypeName, err)
 	}
 
-	m := &model{decl: decl, nodes: nodes}
+	m := &model{decl: decl, nodes: nodes, v2: v2}
 	if _, ok := m.top("id"); !ok && !decl.Singleton {
 		return nil, fmt.Errorf("%s: the table has no `id` field", decl.TypeName)
 	}
@@ -131,6 +138,17 @@ func compile(decl Declaration, table []fields.Field) (*model, error) {
 	for _, e := range decl.Expand {
 		if n, ok := m.top(e); !ok || !n.Response {
 			return nil, fmt.Errorf("%s: expand entry `%s` is not a top-level field the response returns", decl.TypeName, e)
+		}
+	}
+	if v2 && len(decl.Expand) > 0 {
+		return nil, fmt.Errorf("%s: /v2 does not support expand; declare include values instead", decl.TypeName)
+	}
+	if !v2 && (len(decl.Include) > 0 || len(decl.ClearsWithNull) > 0) {
+		return nil, fmt.Errorf("%s: include and clears-with-null belong to /v2 declarations", decl.TypeName)
+	}
+	for _, name := range decl.ClearsWithNull {
+		if n, ok := m.top(name); !ok || !n.Update || n.Required {
+			return nil, fmt.Errorf("%s: clears-with-null entry `%s` is not an optional top-level field Stripe takes on update", decl.TypeName, name)
 		}
 	}
 	if decl.CurrencyOptions != "" {
@@ -161,6 +179,31 @@ func compile(decl Declaration, table []fields.Field) (*model, error) {
 	}
 	sort.Strings(m.sensitiveNames)
 	return m, nil
+}
+
+// namespaceOf reports whether the declaration is `/v2`, and fails when its paths mix
+// namespaces or name neither.
+func namespaceOf(decl Declaration) (bool, error) {
+	paths := []string{decl.Paths.Create, decl.Paths.Retrieve, decl.Paths.Update, decl.Paths.Delete, decl.Paths.List}
+	if decl.Archive != nil {
+		paths = append(paths, decl.Archive.Path)
+	}
+	v1, v2 := 0, 0
+	for _, p := range paths {
+		switch {
+		case p == "":
+		case stripeapi.IsV2Path(p):
+			v2++
+		case strings.HasPrefix(p, "/v1/"):
+			v1++
+		default:
+			return false, fmt.Errorf("%s: path %q is in neither /v1 nor /v2", decl.TypeName, p)
+		}
+	}
+	if v1 > 0 && v2 > 0 {
+		return false, fmt.Errorf("%s: paths mix /v1 and /v2", decl.TypeName)
+	}
+	return v2 > 0, nil
 }
 
 // archivable reports whether the declaration says how to archive: an archive action with

@@ -34,25 +34,19 @@ const (
 	FilesHost
 )
 
-// Encoding selects the request body codec.
-type Encoding int
-
-const (
-	// FormEncoding sends bracket-notation form bodies, as v1 takes.
-	FormEncoding Encoding = iota
-	// JSONEncoding sends JSON bodies, as v2 takes.
-	JSONEncoding
-)
+// IsV2Path reports whether a request path belongs to the `/v2` namespace, whose bodies are
+// JSON where `/v1` takes forms.
+func IsV2Path(path string) bool { return strings.HasPrefix(path, "/v2/") }
 
 // Request is one logical Stripe operation.
 type Request struct {
 	Method string
-	// Path starts with a slash, for example `/v1/products/prod_123`.
+	// Path starts with a slash, for example `/v1/products/prod_123`. A `/v2/` path sends a
+	// JSON body; any other sends a form.
 	Path string
 	// Params go in the query string for GET and in the body for every other method.
-	Params   wire.Object
-	Host     Host
-	Encoding Encoding
+	Params wire.Object
+	Host   Host
 	// Sensitive lists field names, at any depth, whose values are masked in trace logs.
 	Sensitive []string
 }
@@ -145,7 +139,7 @@ func (c *Client) Do(ctx context.Context, req Request) (*Response, error) {
 		case status >= 200 && status < 300:
 			return resp, nil
 		default:
-			lastErr, retry = decodeAPIError(status, header, bodyOf(resp)), shouldRetryStatus(status, header)
+			lastErr, retry = decodeAPIError(status, header, bodyOf(resp), IsV2Path(req.Path)), shouldRetryStatus(status, header)
 		}
 
 		if !retry || int64(attempt) >= c.cfg.MaxRetries {
@@ -193,20 +187,23 @@ func (c *Client) build(req Request) (target string, body []byte, contentType str
 		return target, nil, "", nil
 	}
 
-	switch req.Encoding {
-	case JSONEncoding:
+	if IsV2Path(req.Path) {
+		// The conformance suite sends no body and no content type when there is nothing to
+		// send, and the fake refuses a body on a DELETE.
+		if len(req.Params) == 0 {
+			return target, nil, "", nil
+		}
 		encoded, err := wire.EncodeJSON(req.Params)
 		if err != nil {
 			return "", nil, "", err
 		}
 		return target, encoded, "application/json", nil
-	default:
-		encoded, err := wire.EncodeForm(req.Params)
-		if err != nil {
-			return "", nil, "", err
-		}
-		return target, []byte(encoded), "application/x-www-form-urlencoded", nil
 	}
+	encoded, err := wire.EncodeForm(req.Params)
+	if err != nil {
+		return "", nil, "", err
+	}
+	return target, []byte(encoded), "application/x-www-form-urlencoded", nil
 }
 
 // attempt performs one HTTP exchange. On a received response it returns the decoded body

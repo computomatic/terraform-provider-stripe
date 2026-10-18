@@ -2,6 +2,8 @@ package stripeapi
 
 import (
 	"context"
+	"github.com/hashicorp/terraform-plugin-framework/attr"
+	"github.com/hashicorp/terraform-plugin-framework/types"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -282,7 +284,7 @@ func TestRequestShape(t *testing.T) {
 	if _, err := c.Do(context.Background(), Request{Method: "GET", Path: "/v1/products", Params: wire.Object{{Name: "limit", Value: wire.Int(100)}}}); err != nil {
 		t.Fatal(err)
 	}
-	if _, err := c.Do(context.Background(), Request{Method: "POST", Path: "/v2/core/event_destinations", Encoding: JSONEncoding, Params: params}); err != nil {
+	if _, err := c.Do(context.Background(), Request{Method: "POST", Path: "/v2/core/event_destinations", Params: params}); err != nil {
 		t.Fatal(err)
 	}
 
@@ -360,14 +362,14 @@ func TestDiagnosticAttachesToExistingAttribute(t *testing.T) {
 	want := path.Root("tiers").AtListIndex(1).AtName("up_to")
 
 	var attached diag.Diagnostics
-	AddToDiagnostics(&attached, err, func(p path.Path) bool { return p.Equal(want) })
+	AddToDiagnostics(&attached, err, existing(func(p path.Path) bool { return p.Equal(want) }))
 	withPath, ok := attached[0].(diag.DiagnosticWithPath)
 	if !ok || !withPath.Path().Equal(want) {
 		t.Fatalf("expected a diagnostic at %s, got %#v", want, attached[0])
 	}
 
 	var general diag.Diagnostics
-	AddToDiagnostics(&general, err, func(path.Path) bool { return false })
+	AddToDiagnostics(&general, err, existing(func(path.Path) bool { return false }))
 	if _, ok := general[0].(diag.DiagnosticWithPath); ok {
 		t.Fatal("diagnostic should not carry a path when the attribute does not exist")
 	}
@@ -447,5 +449,187 @@ func TestOperationDeadlineCancelsWait(t *testing.T) {
 	cancel()
 	if _, err := c.Do(ctx, Request{Method: "GET", Path: "/v1/balance"}); err != context.Canceled {
 		t.Fatalf("expected context.Canceled, got %v", err)
+	}
+}
+
+func TestV2GetSendsIndexedArrays(t *testing.T) {
+	srv, seen := testServer(t, scripted{200, nil, okBody})
+	c, _ := testClient(srv, 0)
+	params := wire.Object{{Name: "include", Value: wire.Array{wire.String("webhook_endpoint.url")}}, {Name: "limit", Value: wire.Int(20)}}
+	if _, err := c.Do(context.Background(), Request{Method: "GET", Path: "/v2/core/event_destinations", Params: params}); err != nil {
+		t.Fatal(err)
+	}
+	if got := seen()[0].uri; got != "/v2/core/event_destinations?include%5B0%5D=webhook_endpoint.url&limit=20" {
+		t.Fatalf("uri %q", got)
+	}
+}
+
+func TestV2RequestWithoutParamsSendsNoBody(t *testing.T) {
+	srv, seen := testServer(t, scripted{200, nil, okBody})
+	c, _ := testClient(srv, 0)
+	for _, method := range []string{"POST", "DELETE"} {
+		if _, err := c.Do(context.Background(), Request{Method: method, Path: "/v2/core/event_destinations/ed_1"}); err != nil {
+			t.Fatal(err)
+		}
+	}
+	for _, got := range seen() {
+		if got.body != "" || got.header.Get("Content-Type") != "" {
+			t.Fatalf("%s: body %q type %q", got.method, got.body, got.header.Get("Content-Type"))
+		}
+	}
+}
+
+func TestV2ErrorKeepsInvalidFieldsAndContext(t *testing.T) {
+	body := `{"error":{"code":"invalid_fields","message":"Invalid fields","invalid_fields":[` +
+		`{"field":"webhook_endpoint.url","message":"Required request field missing"},` +
+		`{"field":"enabled_events.0","message":"Unknown field."},{"field":"nowhere","message":"Unknown field."},"odd"]}}`
+	srv, _ := testServer(t, scripted{400, map[string]string{"Request-Id": "req_v2"}, body})
+	c, _ := testClient(srv, 0)
+	_, err := c.Do(context.Background(), Request{Method: "POST", Path: "/v2/core/event_destinations", Params: wire.Object{}})
+	apiErr, ok := err.(*APIError)
+	if !ok || len(apiErr.InvalidFields) != 3 || apiErr.InvalidFields[0] != (InvalidField{"webhook_endpoint.url", "Required request field missing"}) {
+		t.Fatalf("got %#v", err)
+	}
+	if encoded, _ := wire.EncodeJSON(apiErr.Context); string(encoded) != `{"invalid_fields":["odd"]}` {
+		t.Fatalf("context %s", encoded)
+	}
+
+	known := map[string]bool{"webhook_endpoint": true, "webhook_endpoint.url": true, "enabled_events": true}
+	var diags diag.Diagnostics
+	AddToDiagnostics(&diags, err, existing(func(p path.Path) bool { return known[p.String()] }))
+	if len(diags) != 3 {
+		t.Fatalf("want 3 diagnostics, got %v", diags)
+	}
+	paths := []string{}
+	for _, d := range diags {
+		if wp, ok := d.(diag.DiagnosticWithPath); ok {
+			paths = append(paths, wp.Path().String())
+		} else {
+			paths = append(paths, "-")
+		}
+	}
+	if strings.Join(paths, ",") != "webhook_endpoint.url,enabled_events,-" {
+		t.Fatalf("paths %v", paths)
+	}
+	if !strings.Contains(diags[2].Detail(), "nowhere: Unknown field.") || !strings.Contains(diags[2].Detail(), "Request-Id: req_v2") {
+		t.Fatalf("general detail %q", diags[2].Detail())
+	}
+}
+
+func TestV2ErrorContextFields(t *testing.T) {
+	body := `{"error":{"message":"You passed invalid Event type(s)","event_type":["v1.not.an.event"],"request_log_url":"https://x"}}`
+	srv, _ := testServer(t, scripted{400, nil, body})
+	c, _ := testClient(srv, 0)
+	_, err := c.Do(context.Background(), Request{Method: "POST", Path: "/v2/core/event_destinations"})
+	var diags diag.Diagnostics
+	AddToDiagnostics(&diags, err, nil)
+	if diags[0].Summary() != "Stripe API error: HTTP 400" || !strings.Contains(diags[0].Detail(), `{"event_type":["v1.not.an.event"]}`) {
+		t.Fatalf("%q %q", diags[0].Summary(), diags[0].Detail())
+	}
+}
+
+func TestV2NotFoundIsNotFound(t *testing.T) {
+	srv, _ := testServer(t, scripted{404, nil, `{"error":{"code":"not_found","message":"No such event_destination: 'ed_x'"}}`})
+	c, _ := testClient(srv, 0)
+	_, err := c.Do(context.Background(), Request{Method: "GET", Path: "/v2/core/event_destinations/ed_x"})
+	if !IsNotFound(err) {
+		t.Fatalf("got %v", err)
+	}
+}
+
+// existing adapts a yes-or-no schema check to the lookup AddToDiagnostics takes: every
+// attribute that exists is a string.
+func existing(has func(path.Path) bool) AttributeType {
+	return func(p path.Path) (attr.Type, bool) {
+		if !has(p) {
+			return nil, false
+		}
+		return types.StringType, true
+	}
+}
+
+// A /v1 error carries members such as `payment_intent` that hold objects and secrets. None
+// of them reaches the diagnostic, which stays what it was before /v2 support.
+func TestV1ErrorContextNeverReachesTheDiagnostic(t *testing.T) {
+	body := `{"error":{"type":"card_error","code":"card_declined","message":"Your card was declined.","decline_code":"generic_decline",` +
+		`"charge":"ch_1","payment_intent":{"id":"pi_1","client_secret":"pi_1_secret_abc","status":"requires_payment_method"},` +
+		`"source":{"id":"src_1"},"invalid_fields":[{"field":"x","message":"y"}]}}`
+	srv, _ := testServer(t, scripted{402, map[string]string{"Request-Id": "req_card"}, body})
+	c, _ := testClient(srv, 0)
+	_, err := c.Do(context.Background(), Request{Method: "POST", Path: "/v1/payment_intents", Params: wire.Object{}})
+	apiErr, ok := err.(*APIError)
+	if !ok || apiErr.Context != nil || apiErr.InvalidFields != nil {
+		t.Fatalf("a /v1 error must carry no context: %#v", err)
+	}
+	var diags diag.Diagnostics
+	AddToDiagnostics(&diags, err, nil)
+	if len(diags) != 1 {
+		t.Fatalf("diagnostics %v", diags)
+	}
+	if want := "Your card was declined.\n\nRequest-Id: req_card"; diags[0].Detail() != want {
+		t.Errorf("detail %q, want %q", diags[0].Detail(), want)
+	}
+	for _, leaked := range []string{"pi_1_secret_abc", "client_secret", "decline_code", "ch_1", "src_1"} {
+		if strings.Contains(diags[0].Detail(), leaked) || strings.Contains(diags[0].Summary(), leaked) {
+			t.Errorf("the diagnostic leaks %q", leaked)
+		}
+	}
+}
+
+// Even on /v2 only scalars and arrays of scalars are kept as context; an object never is.
+func TestV2ErrorContextKeepsOnlyScalars(t *testing.T) {
+	body := `{"error":{"message":"bad","field":"webhook_endpoint","event_type":["a"],"count":3,"flag":true,` +
+		`"payment_intent":{"client_secret":"pi_secret"},"nested":["ok",{"client_secret":"x"}],"invalid_fields":[{"field":"a","message":"m"},{"client_secret":"x"},"plain"]}}`
+	srv, _ := testServer(t, scripted{400, nil, body})
+	c, _ := testClient(srv, 0)
+	_, err := c.Do(context.Background(), Request{Method: "POST", Path: "/v2/core/event_destinations", Params: wire.Object{}})
+	apiErr := err.(*APIError)
+	encoded, _ := wire.EncodeJSON(apiErr.Context)
+	if want := `{"field":"webhook_endpoint","event_type":["a"],"count":3,"flag":true,"invalid_fields":["plain"]}`; string(encoded) != want {
+		t.Errorf("context %s, want %s", encoded, want)
+	}
+	if strings.Contains(string(encoded), "secret") {
+		t.Errorf("context leaks a secret: %s", encoded)
+	}
+}
+
+// An element of a set has no stable index and a map key is data, so an error about one
+// attaches to the set or map itself. A list index is kept.
+func TestInvalidFieldAttachesToSetAndMapButKeepsListIndexes(t *testing.T) {
+	schema := map[string]attr.Type{
+		"enabled_events":    types.SetType{ElemType: types.StringType},
+		"enabled_events[0]": types.StringType,
+		"labels":            types.MapType{ElemType: types.StringType},
+		"labels.env":        types.StringType,
+		"tags":              types.ListType{ElemType: types.StringType},
+		"tags[2]":           types.StringType,
+		"items":             types.ListType{ElemType: types.ObjectType{AttrTypes: map[string]attr.Type{"sku": types.StringType}}},
+		"items[1]":          types.ObjectType{AttrTypes: map[string]attr.Type{"sku": types.StringType}},
+		"items[1].sku":      types.StringType,
+		"groups":            types.SetType{ElemType: types.ObjectType{AttrTypes: map[string]attr.Type{"id": types.StringType}}},
+		"groups[0]":         types.ObjectType{AttrTypes: map[string]attr.Type{"id": types.StringType}},
+		"groups[0].id":      types.StringType,
+	}
+	typeAt := func(p path.Path) (attr.Type, bool) {
+		typ, ok := schema[p.String()]
+		return typ, ok
+	}
+	for field, want := range map[string]string{
+		"enabled_events.0": "enabled_events",
+		"labels.env":       "labels",
+		"labels.nope":      "labels",
+		"tags.2":           "tags[2]",
+		"items.1.sku":      "items[1].sku",
+		"items.1.zip":      "items[1]",
+		"groups.0.id":      "groups",
+		"enabled_events":   "enabled_events",
+	} {
+		p, ok := attributeFor(field, typeAt)
+		if !ok || p.String() != want {
+			t.Errorf("%s attaches to %q (%v), want %q", field, p, ok, want)
+		}
+	}
+	if _, ok := attributeFor("missing.0", typeAt); ok {
+		t.Error("a field with no attribute must not attach")
 	}
 }

@@ -89,6 +89,12 @@ func (d *decoder) node(n *node, w wire.Value, prior attr.Value) attr.Value {
 	if n.NullAs != "" && isAbsent(w) {
 		return types.StringValue(n.NullAs)
 	}
+	// Stripe may leave out a collection the user configured empty (`/v2` create sends none),
+	// or return null for it. Absent and null read the same, and an empty collection in the
+	// plan is what the user asked for, so it stays.
+	if !d.dataSource && isAbsent(w) && emptyCollection(prior) {
+		return prior
+	}
 	v := d.value(n, w, prior)
 	// An Optional field the user left out reads back as an empty collection from Stripe;
 	// that is null in the configuration, not a difference.
@@ -107,7 +113,7 @@ func isAbsent(w wire.Value) bool {
 }
 
 func emptyCollection(v attr.Value) bool {
-	if v.IsNull() || v.IsUnknown() {
+	if v == nil || v.IsNull() || v.IsUnknown() {
 		return false
 	}
 	switch c := v.(type) {

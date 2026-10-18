@@ -4,6 +4,7 @@ import (
 	"context"
 	"net/http"
 	"strconv"
+	"strings"
 	"sync"
 	"testing"
 
@@ -161,13 +162,26 @@ func stringMapValue(kv map[string]string) basetypes.MapValue {
 // stubStripe is a tiny in-memory Stripe: it creates, retrieves, updates, deletes and
 // lists one kind of object under /v1/widgets, and records every request.
 type stubStripe struct {
-	mu      sync.Mutex
-	next    int
-	objects map[string]wire.Object
-	log     []stripeapi.Request
+	// prefix is the collection path, `/v1/widgets` or, for a /v2 stub, `/v2/core/widgets`.
+	prefix string
+	// morePages makes a /v2 list report a next page.
+	morePages bool
+	// omitEmpty leaves the empty collections out of a created object, as /v2 may.
+	omitEmpty bool
+	mu        sync.Mutex
+	next      int
+	objects   map[string]wire.Object
+	log       []stripeapi.Request
 }
 
-func newStub() *stubStripe { return &stubStripe{objects: map[string]wire.Object{}} }
+func newStub() *stubStripe {
+	return &stubStripe{prefix: "/v1/widgets", objects: map[string]wire.Object{}}
+}
+
+// newStubV2 serves the same widgets under /v2/core/widgets, with the /v2 list envelope.
+func newStubV2() *stubStripe {
+	return &stubStripe{prefix: "/v2/core/widgets", objects: map[string]wire.Object{}}
+}
 
 func (s *stubStripe) requests() []stripeapi.Request {
 	s.mu.Lock()
@@ -213,7 +227,7 @@ func (s *stubStripe) Do(_ context.Context, req stripeapi.Request) (*stripeapi.Re
 		return &stripeapi.Response{Status: 200, Body: o}, nil
 	}
 
-	const prefix = "/v1/widgets"
+	prefix := s.prefix
 	id := ""
 	if len(req.Path) > len(prefix)+1 {
 		id = req.Path[len(prefix)+1:]
@@ -229,9 +243,11 @@ func (s *stubStripe) Do(_ context.Context, req stripeapi.Request) (*stripeapi.Re
 		obj = put(obj, "id", wire.String(newID))
 		obj = put(obj, "created", wire.Int(100))
 		obj = put(obj, "active", wire.Bool(true))
-		obj = put(obj, "metadata", wire.Object{})
-		obj = put(obj, "tags", wire.Array{})
-		obj = put(obj, "events", wire.Array{})
+		if !s.omitEmpty {
+			obj = put(obj, "metadata", wire.Object{})
+			obj = put(obj, "tags", wire.Array{})
+			obj = put(obj, "events", wire.Array{})
+		}
 		obj = put(obj, "secret", wire.String("whsec_"+newID))
 		for _, f := range req.Params {
 			obj = s.apply(obj, f)
@@ -247,6 +263,13 @@ func (s *stubStripe) Do(_ context.Context, req stripeapi.Request) (*stripeapi.Re
 				}
 			}
 			data = append(data, o)
+		}
+		if strings.HasPrefix(prefix, "/v2/") {
+			var next wire.Value = wire.Null{}
+			if s.morePages {
+				next = wire.String("/v2/core/widgets?page=next")
+			}
+			return ok(wire.Object{{Name: "data", Value: data}, {Name: "next_page_url", Value: next}, {Name: "previous_page_url", Value: wire.Null{}}})
 		}
 		return ok(wire.Object{{Name: "data", Value: data}, {Name: "has_more", Value: wire.Bool(false)}})
 	}

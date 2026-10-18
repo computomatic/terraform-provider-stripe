@@ -113,8 +113,9 @@ type Declaration struct {
 	IDPrefix string
 	// Description is the resource's documentation lead.
 	Description string
-	// V2 sends JSON bodies instead of forms.
-	V2    bool
+	// Paths say which namespace the object lives in: `/v2/` paths send JSON bodies and read
+	// `/v2` errors and lists, any other path is `/v1`. All of a declaration's paths share one
+	// namespace.
 	Paths Paths
 	// Singleton marks an object with no ID that Stripe serves from one path, such as the
 	// balance. It has a data source only: no `id` attribute, no lookups.
@@ -142,6 +143,16 @@ type Declaration struct {
 	// `expand[]`, such as a price's `tiers`. The engine asks for them on every request that
 	// returns the object, so they are read back and drift in them is detected.
 	Expand []string
+	// Include lists the values of the `include` parameter that `/v2` takes in place of
+	// `expand`, such as `webhook_endpoint.url`, which Stripe redacts unless asked. The engine
+	// sends them on every request that returns the object, so the value is read back and
+	// drift in it is detected. `include` is never an attribute.
+	Include []string
+	// ClearsWithNull lists top-level fields of a `/v2` object that Stripe is known to unset
+	// when sent `null`. Removing any other field from the configuration fails the update,
+	// because `/v2` has proven null only for a `metadata` key. A field joins the list when the
+	// conformance suite proves it.
+	ClearsWithNull []string
 	// CurrencyOptions names a top-level map of per-currency options, such as a price's
 	// `currency_options`, on an object with a top-level `currency`. Stripe always returns the
 	// object's own currency in that map and refuses a request that names it, so the engine

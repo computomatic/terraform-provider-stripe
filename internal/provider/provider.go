@@ -23,6 +23,7 @@ import (
 	"github.com/computomatic/terraform-provider-stripe/internal/resources/billing_feedback_option"
 	"github.com/computomatic/terraform-provider-stripe/internal/resources/billing_meter"
 	"github.com/computomatic/terraform-provider-stripe/internal/resources/billing_portal_configuration"
+	"github.com/computomatic/terraform-provider-stripe/internal/resources/core_event_destination"
 	"github.com/computomatic/terraform-provider-stripe/internal/resources/country_spec"
 	"github.com/computomatic/terraform-provider-stripe/internal/resources/coupon"
 	"github.com/computomatic/terraform-provider-stripe/internal/resources/customer"
@@ -150,6 +151,7 @@ func (p *stripeProvider) Resources(_ context.Context) []func() resource.Resource
 		must(billing_feedback_option.NewResource()),
 		must(billing_meter.NewResource()),
 		must(billing_portal_configuration.NewResource()),
+		must(core_event_destination.NewResource()),
 		must(coupon.NewResource()),
 		must(customer.NewResource()),
 		must(entitlements_feature.NewResource()),
@@ -183,6 +185,7 @@ func (p *stripeProvider) DataSources(_ context.Context) []func() datasource.Data
 		must(billing_meter.NewDataSource()),
 		must(billing_portal_configuration.NewDataSource()),
 		must(country_spec.NewDataSource()),
+		must(core_event_destination.NewDataSource()),
 		must(coupon.NewDataSource()),
 		must(customer.NewDataSource()),
 		must(entitlements_feature.NewDataSource()),

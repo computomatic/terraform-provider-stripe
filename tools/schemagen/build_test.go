@@ -207,3 +207,73 @@ func TestReadPathIntMapUnionAndOmit(t *testing.T) {
 		t.Errorf("owner: %+v", f)
 	}
 }
+
+const v2Spec = `{"paths":{
+ "/v2/core/things":{"post":{"operationId":"PostThings","requestBody":{"content":{"application/json":{"schema":{
+   "type":"object","required":["name","kind"],"properties":{
+    "name":{"type":"string"},"kind":{"type":"string","enum":["a","b"]},"note":{"type":"string"},
+    "include":{"type":"array","items":{"type":"string"}},
+    "target":{"type":"object","required":["url"],"properties":{"url":{"type":"string"},"secret":{"type":"string"}}}}}}}},
+   "responses":{"200":{"content":{"application/json":{"schema":{"type":"object",
+   "required":["id","name","kind","note","created"],"properties":{
+    "id":{"type":"string"},"object":{"type":"string"},"name":{"type":"string"},"kind":{"type":"string"},"note":{"type":"string"},
+    "created":{"type":"string","format":"date-time"},
+    "target":{"type":"object","properties":{"url":{"type":"string"},"secret":{"type":"string"}}}}}}}}}}},
+ "/v2/core/things/{id}":{"post":{"operationId":"PostThingsId","requestBody":{"content":{"application/json":{"schema":{
+   "type":"object","properties":{"name":{"type":"string"},"note":{"type":"string"},"include":{"type":"array","items":{"type":"string"}}}}}}}}},
+ "/v2/core/forms":{"post":{"operationId":"PostForms","requestBody":{"content":{"application/x-www-form-urlencoded":{"schema":{"type":"object","properties":{"a":{"type":"string"}}}}}},
+   "responses":{"200":{"content":{"application/json":{"schema":{"type":"object","properties":{"id":{"type":"string"}}}}}}}}},
+ "/v1/jsonly":{"post":{"operationId":"PostJsonly","requestBody":{"content":{"application/json":{"schema":{"type":"object","properties":{"a":{"type":"string"}}}}}},
+   "responses":{"200":{"content":{"application/json":{"schema":{"type":"object","properties":{"id":{"type":"string"}}}}}}}}}
+}}`
+
+func TestV2TableFromJSONBodies(t *testing.T) {
+	spec, err := ParseSpec([]byte(v2Spec))
+	if err != nil {
+		t.Fatal(err)
+	}
+	table, err := Build(spec, Resource{
+		Package: "thing", CreatePath: "/v2/core/things", UpdatePath: "/v2/core/things/{id}",
+		Omit: []string{"include", "target.secret"},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, absent := range []string{"include", "object"} {
+		if _, ok := fields.Find(table, absent); ok {
+			t.Errorf("%s must not be a field", absent)
+		}
+	}
+	if _, ok := fields.Find(lookup(t, table, "target").Fields, "secret"); ok {
+		t.Error("an omitted nested field must not be in the table")
+	}
+	if kind := lookup(t, table, "kind"); !kind.Required || !kind.CreateOnly() || !kind.Response {
+		t.Errorf("kind: %+v", kind)
+	}
+	// No /v2 schema says nullable, so an optional field the response lists as required is
+	// server-defaulted, which keeps it Optional and Computed.
+	if note := lookup(t, table, "note"); !note.ServerDefaulted || !note.Update {
+		t.Errorf("note: %+v", note)
+	}
+	if created := lookup(t, table, "created"); created.Shape != fields.String || created.Writable() {
+		t.Errorf("created: %+v", created)
+	}
+	if url := lookup(t, table, "target", "url"); !url.Required || url.Update {
+		t.Errorf("target.url: %+v", url)
+	}
+}
+
+func TestV2AndV1MustKeepTheirBodyEncodings(t *testing.T) {
+	spec, err := ParseSpec([]byte(v2Spec))
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, res := range []Resource{
+		{Package: "forms", CreatePath: "/v2/core/forms"},
+		{Package: "jsonly", CreatePath: "/v1/jsonly"},
+	} {
+		if _, err := Build(spec, res); err == nil {
+			t.Errorf("%s: a body in the wrong encoding for its namespace must fail", res.Package)
+		}
+	}
+}

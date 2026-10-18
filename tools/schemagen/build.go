@@ -60,7 +60,7 @@ func Build(spec *Spec, res Resource) ([]fields.Field, error) {
 	if err != nil {
 		return nil, err
 	}
-	create, err := spec.requestSchema(createOp)
+	create, err := spec.requestSchema(createOp, path)
 	if err != nil {
 		return nil, err
 	}
@@ -74,7 +74,7 @@ func Build(spec *Spec, res Resource) ([]fields.Field, error) {
 		if err != nil {
 			return nil, err
 		}
-		if update, err = spec.requestSchema(updateOp); err != nil {
+		if update, err = spec.requestSchema(updateOp, res.UpdatePath); err != nil {
 			return nil, err
 		}
 	}
