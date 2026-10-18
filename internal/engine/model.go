@@ -34,6 +34,10 @@ type node struct {
 	NullAs string
 	// Preserve keeps the configured value when the response redacts or reformats it.
 	Preserve bool
+	// ReplaceIfSet replaces the resource when the configuration sets a value that differs
+	// from the state's, and never for an unknown one: a create-only value Stripe fills in for
+	// a list element.
+	ReplaceIfSet bool
 }
 
 // computedOnly reports an output the user cannot set.
@@ -160,6 +164,9 @@ func compile(decl Declaration, table []fields.Field) (*model, error) {
 			return nil, fmt.Errorf("%s: currency options need a top-level string field `currency` the response returns", decl.TypeName)
 		}
 	}
+	if err := m.checkListEntries(); err != nil {
+		return nil, fmt.Errorf("%s: %w", decl.TypeName, err)
+	}
 	for _, l := range decl.Lookups {
 		n, ok := m.top(l.Field)
 		if !ok || n.Shape != fields.String || !n.Response {
@@ -179,6 +186,79 @@ func compile(decl Declaration, table []fields.Field) (*model, error) {
 	}
 	sort.Strings(m.sensitiveNames)
 	return m, nil
+}
+
+// checkListEntries rejects a MatchBy, Carry, SendWithUpdate or SendWithUpdateOn entry that
+// names no field of the kind it needs.
+func kidNamed(n *node, name string) *node {
+	for _, k := range n.Kids {
+		if k.Name == name {
+			return k
+		}
+	}
+	return nil
+}
+
+func (m *model) checkListEntries() error {
+	list := func(entry, name string) (*node, error) {
+		n, ok := m.top(name)
+		if !ok || n.Shape != fields.ObjectList || !n.Update {
+			return nil, fmt.Errorf("%s entry `%s` is not an updatable top-level list of objects", entry, name)
+		}
+		return n, nil
+	}
+	kid := func(n *node, name string) *node {
+		for _, k := range n.Kids {
+			if k.Name == name {
+				return k
+			}
+		}
+		return nil
+	}
+	for name, key := range m.decl.MatchBy {
+		n, err := list("match_by", name)
+		if err != nil {
+			return err
+		}
+		if k := kid(n, key); k == nil || k.Shape != fields.String {
+			return fmt.Errorf("match_by entry `%s` names `%s`, which is not a string field of its elements", name, key)
+		}
+		if id := kid(n, "id"); id == nil || id.Shape != fields.String || !id.Update {
+			return fmt.Errorf("match_by entry `%s` needs an updatable string `id` field in its elements", name)
+		}
+	}
+	for name, field := range m.decl.MatchData {
+		n, err := list("match_data", name)
+		if err != nil {
+			return err
+		}
+		if _, keyed := m.decl.MatchBy[name]; !keyed {
+			return fmt.Errorf("match_data entry `%s` is not a match_by list", name)
+		}
+		if k := kidNamed(n, field); k == nil || k.Shape != fields.Object || !k.Update {
+			return fmt.Errorf("match_data entry `%s` names `%s`, which is not an updatable object field of its elements", name, field)
+		}
+	}
+	for _, c := range m.decl.Carry {
+		n, err := list("carry", c.List)
+		if err != nil {
+			return err
+		}
+		if k := kid(n, c.Field); k == nil || k.Shape != fields.String {
+			return fmt.Errorf("carry entry `%s.%s` is not a string field of the list's elements; only strings can be carried", c.List, c.Field)
+		}
+	}
+	if (len(m.decl.SendWithUpdate) > 0) != (len(m.decl.SendWithUpdateOn) > 0) {
+		return fmt.Errorf("send_with_update and send_with_update_on go together")
+	}
+	for kind, names := range map[string][]string{"send_with_update": m.decl.SendWithUpdate, "send_with_update_on": m.decl.SendWithUpdateOn} {
+		for _, name := range names {
+			if n, ok := m.top(name); !ok || !n.Update {
+				return fmt.Errorf("%s entry `%s` is not an updatable top-level field", kind, name)
+			}
+		}
+	}
+	return nil
 }
 
 // namespaceOf reports whether the declaration is `/v2`, and fails when its paths mix
@@ -333,14 +413,20 @@ func (c *compiler) build(table []fields.Field, prefix string, top, parentOutput,
 		if replaceOn && !f.Update {
 			return nil, fmt.Errorf("replace_on entry `%s` is not an updatable field; a create-only field already forces replacement", path)
 		}
-		n.Replace = (f.CreateOnly() || replaceOn) && !parentReplace && !n.computedOnly()
+		// A create-only value Stripe fills in for an element of a list (a schedule phase's
+		// `currency`) cannot be told from a new element's: the element has no prior value to
+		// keep, and an unknown one would force replacement. It is computed, and replaces only
+		// when the configuration sets a value that differs from the state's.
+		serverFilledInList := inList && n.Computed && f.CreateOnly() && !replaceOn
+		n.ReplaceIfSet = serverFilledInList && !parentReplace && !nestedShape(f.Shape)
+		n.Replace = (f.CreateOnly() || replaceOn) && !parentReplace && !n.computedOnly() && !serverFilledInList
 		// Below a field that forces replacement nothing changes in place, so a computed
 		// value there stays as it is: an unknown one would read as a change of the parent.
 		// Terraform proposes null for an unset nested attribute even when it is Computed
 		// (it keeps the prior value of a scalar), which would read as a change on every plan,
 		// so a nested attribute Stripe fills in keeps its prior value too. Inside a list element
 		// that would copy another element's value after an insert or reorder, so it does not apply.
-		n.UseState = n.Computed && !n.Required &&
+		n.UseState = n.Computed && !n.Required && !serverFilledInList &&
 			((top && (f.Name == "id" || f.Name == "created" || f.Name == "livemode")) || f.CreateOnly() || replaceOn || n.Once || parentReplace ||
 				n.Optional && !inList && nestedShape(f.Shape))
 

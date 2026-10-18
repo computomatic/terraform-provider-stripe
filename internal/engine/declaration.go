@@ -55,10 +55,26 @@ type ArchiveAction struct {
 	Value wire.Value
 	// Now sends the literal `now`, which is how file links expire. A Unix time taken here can
 	// already be in the past by the time Stripe reads it, and Stripe refuses a past time.
+	// With Path the request is bare, and Now only says the object is archived once Field
+	// holds a time that has passed.
 	Now bool
 	// Path is an action endpoint, such as `/v1/billing/meters/{id}/deactivate`, that
 	// archives the object by a bare POST. Empty means an update of Field.
 	Path string
+	// Ended lists the other states in which the object has already ended, so that Stripe
+	// would refuse the archive: a quote that was accepted, a credit grant that expired.
+	// Destroy leaves such an object as it is.
+	Ended []Ended
+}
+
+// Ended is a state of an object that has finished by another route than the archive.
+type Ended struct {
+	// Field is the Stripe field that says so, such as `status`.
+	Field string
+	// Value is the ended value. Ignored when Past is set.
+	Value wire.Value
+	// Past says the object has ended once Field holds a Unix time that has passed.
+	Past bool
 }
 
 // Refusal names a Stripe error response by its status and type. Stripe answers the
@@ -101,6 +117,16 @@ type Lookup struct {
 	Param string
 	// Array sends the value as a one-element array, for a filter such as `lookup_keys`.
 	Array bool
+}
+
+// Carry names a field of a list element that an update sends back from the state.
+type Carry struct {
+	// List is the top-level list, such as `phases`, and Field the element's field, such as
+	// `start_date`.
+	List, Field string
+	// WhenPast carries the value only when it is a Unix time that has passed, so that only the
+	// element that has begun keeps it and later ones are derived by Stripe.
+	WhenPast bool
 }
 
 // Declaration is what the spec cannot say about a resource. It holds no CRUD logic.
@@ -179,6 +205,36 @@ type Declaration struct {
 	// change on update, such as a terminal location's `address.country`. A change forces
 	// replacement, as for a create-only field.
 	ReplaceOn []string
+	// MatchBy maps the name of a top-level list of objects to the string field that identifies
+	// its elements, such as `items` to `price` for a subscription. Elements are matched by
+	// that key, never by position: a reorder is not a change, an element whose key is in both
+	// the state and the plan keeps its `id` and is changed in place, one whose key is only in
+	// the plan is added, and one whose key is only in the state is sent as `{id, deleted:
+	// true}`. A plan that lists a key twice is refused. An element with no key of its own (it
+	// sets `price_data`) cannot be changed on update. The list needs an updatable `id` field.
+	// The state holds only the elements the resource manages, so an element added from outside
+	// is neither shown nor deleted (see managedKeys).
+	MatchBy map[string]string
+	// MatchData maps a MatchBy list to the object field an element sets in place of its key,
+	// such as `items` to `price_data`, which creates the price the key names. An element with
+	// no key of its own pairs with a state element that has equal data, and keeps its item when
+	// only other fields change; it is matched to the response element whose key object (the
+	// price) the data describes. Changing the data replaces the element. A plan that carries
+	// the same data twice is refused.
+	MatchData map[string]string
+	// Carry lists fields of the elements of a top-level list that an update must send back to
+	// name what it keeps. When the plan leaves one unknown, the update sends the state's value
+	// for the matching element: the one with the same key in a MatchBy list, the one at the
+	// same position in any other. The values go into the request only, never into the plan or
+	// the state. A carried field is a string.
+	Carry []Carry
+	// SendWithUpdate lists top-level fields that say how Stripe applies a change, such as a
+	// subscription's `proration_behavior`. Stripe never returns them. An update sends one when
+	// it is set, whether or not its value changed, but only along with a change to one of the
+	// fields in SendWithUpdateOn, because those are the changes the suite proves them with.
+	// A field removed from the configuration is never sent as null.
+	SendWithUpdate   []string
+	SendWithUpdateOn []string
 	// Sets lists scalar arrays that are sets of values.
 	Sets []string
 	// Rename maps a Stripe field path to the attribute name used instead, for names

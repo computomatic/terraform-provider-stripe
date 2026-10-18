@@ -144,7 +144,7 @@ func (d *DataSource) Read(ctx context.Context, req datasource.ReadRequest, resp 
 	if body == nil {
 		return
 	}
-	state, diags := d.m.decodeState(body, config, d.objType, true)
+	state, diags := d.m.decodeState(body, config, d.objType, true, nil)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		return

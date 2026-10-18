@@ -27,6 +27,11 @@ type Resource struct {
 	Omit []string
 	// UpdatePath is the `POST` path that updates the object, or empty when there is none.
 	UpdatePath string
+	// CreateOnly lists dotted field paths whose update request takes another shape than the
+	// create request, such as a subscription's `billing_cycle_anchor` (a timestamp on create,
+	// a reset action on update). The table counts them as create-only: the update form is an
+	// action, not a value.
+	CreateOnly []string
 }
 
 // view is a schema classified into one of the engine's shapes.
@@ -49,9 +54,12 @@ func (v *view) scalar() bool {
 
 // Build derives the field table of one resource from the spec.
 func Build(spec *Spec, res Resource) ([]fields.Field, error) {
-	b := builder{spec: spec, omit: map[string]bool{}}
+	b := builder{spec: spec, omit: map[string]bool{}, createOnly: map[string]bool{}}
 	for _, p := range res.Omit {
 		b.omit[p] = false
+	}
+	for _, p := range res.CreateOnly {
+		b.createOnly[p] = false
 	}
 	method, path := "POST", res.CreatePath
 	if path == "" {
@@ -88,6 +96,11 @@ func Build(spec *Spec, res Resource) ([]fields.Field, error) {
 			return nil, fmt.Errorf("%s: omit entry %q names no field", res.Package, p)
 		}
 	}
+	for _, p := range res.CreateOnly {
+		if !b.createOnly[p] {
+			return nil, fmt.Errorf("%s: create-only entry %q names no field", res.Package, p)
+		}
+	}
 	return table, nil
 }
 
@@ -95,6 +108,8 @@ type builder struct {
 	spec *Spec
 	// omit maps each omitted path to whether the build met it.
 	omit map[string]bool
+	// createOnly maps each path of Resource.CreateOnly to whether the build met it.
+	createOnly map[string]bool
 }
 
 func prop(s *Schema, name string) *Schema {
@@ -142,8 +157,15 @@ func (b *builder) object(create, update, resp *Schema, where string, depth int) 
 		if err != nil {
 			return nil, err
 		}
+		if _, only := b.createOnly[at]; only {
+			b.createOnly[at] = true
+			uv = nil
+		}
 		rv, err := b.classify(prop(resp, name), at, depth)
 		if err != nil {
+			return nil, err
+		}
+		if rv, err = b.unwrapList(rv, cv, uv, at, depth); err != nil {
 			return nil, err
 		}
 		views := []*view{cv, uv, rv}
@@ -166,6 +188,11 @@ func (b *builder) object(create, update, resp *Schema, where string, depth int) 
 				// takes it from the object.
 				if isStringOrObject(base, v) {
 					base.shape, base.obj = fields.String, nil
+					continue
+				}
+				// The same for a list: IDs are sent and the objects returned, as for a
+				// subscription's `tax_rates`. The decoder takes each element's `id`.
+				if isIDListOrObjects(base, v) {
 					continue
 				}
 				return nil, fmt.Errorf("%s: request and response disagree on the shape (%d/%d against %d/%d)", at, base.shape, base.elem, v.shape, v.elem)
@@ -361,6 +388,36 @@ func onlyEmpty(sc *Schema) bool {
 		return false
 	}
 	return len(enumStrings(sc)) == 0
+}
+
+// unwrapList turns the response's list envelope, an object whose `object` is `list` and whose
+// `data` is an array, into the
+// list inside it when the request sends a list of objects, as a subscription does for its
+// `items`. The fields of an element are then merged with the request's.
+func (b *builder) unwrapList(rv, cv, uv *view, where string, depth int) (*view, error) {
+	isList := func(v *view) bool { return v != nil && v.shape == fields.ObjectList }
+	if rv == nil || rv.shape != fields.Object || rv.obj == nil || !(isList(cv) || isList(uv)) {
+		return rv, nil
+	}
+	data := rv.obj.Properties["data"]
+	kind := rv.obj.Properties["object"]
+	if data == nil || kind == nil || !slices.Contains(enumStrings(kind), "list") {
+		return rv, nil
+	}
+	inner, err := b.classify(data, where+".data", depth+1)
+	if err != nil {
+		return nil, err
+	}
+	if inner == nil || inner.shape != fields.ObjectList {
+		return rv, nil
+	}
+	inner.nullable = rv.nullable
+	return inner, nil
+}
+
+// isIDListOrObjects reports whether a is a list of strings and b a list of objects.
+func isIDListOrObjects(a, b *view) bool {
+	return a.shape == fields.ScalarList && a.elem == fields.String && b.shape == fields.ObjectList
 }
 
 // isIntOrString reports whether one view is a plain integer and the other a plain string.

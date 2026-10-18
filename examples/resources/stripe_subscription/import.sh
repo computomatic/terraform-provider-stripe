@@ -1,0 +1,1 @@
+terraform import stripe_subscription.team sub_123

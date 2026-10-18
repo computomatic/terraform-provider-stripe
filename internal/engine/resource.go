@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strconv"
 	"strings"
 	"time"
 
@@ -96,6 +97,9 @@ func (r *Resource) Configure(ctx context.Context, req resource.ConfigureRequest,
 // configuration sets, such as a reference to an object being replaced, is a pending change
 // and leaves the plan alone.
 func (r *Resource) ModifyPlan(ctx context.Context, req resource.ModifyPlanRequest, resp *resource.ModifyPlanResponse) {
+	if !req.Plan.Raw.IsNull() {
+		r.refuseDuplicateKeys(ctx, req, resp)
+	}
 	if req.State.Raw.IsNull() || req.Plan.Raw.IsNull() {
 		return
 	}
@@ -176,7 +180,7 @@ func (r *Resource) Create(ctx context.Context, req resource.CreateRequest, resp 
 		}
 	}
 
-	state, diags := r.m.decodeState(body, plan, r.objType, false)
+	state, diags := r.m.decodeState(body, plan, r.objType, false, nil)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -210,7 +214,7 @@ func (r *Resource) Read(ctx context.Context, req resource.ReadRequest, resp *res
 		r.api.fail(&resp.Diagnostics, err)
 		return
 	}
-	next, diags := r.m.decodeState(body, state, r.objType, false)
+	next, diags := r.m.decodeState(body, state, r.objType, false, r.m.managedKeys(state))
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -233,7 +237,7 @@ func (r *Resource) Update(ctx context.Context, req resource.UpdateRequest, resp 
 		return
 	}
 
-	params, err := r.m.encodeUpdate(plan, state)
+	params, err := r.m.encodeUpdate(plan, state, req.Config.Raw)
 	if err != nil {
 		resp.Diagnostics.AddError("Cannot build the update request", err.Error())
 		return
@@ -245,12 +249,37 @@ func (r *Resource) Update(ctx context.Context, req resource.UpdateRequest, resp 
 		method, target, sent = "POST", r.m.expand(r.m.decl.Paths.Update, id, parent), params
 	}
 	sent = r.api.expanded(sent, "")
+	keep := r.m.managedKeys(state, plan)
+	hints, addsKeyless := r.m.keyedHints(plan, state, req.Config.Raw)
+	for list, ids := range hints {
+		if keep[list] != nil {
+			keep[list].hint = ids
+		}
+	}
+	// An item with no key of its own has no key to recognise it by in the response, so the
+	// items that exist before the request tell the new ones from the old.
+	var before map[string]map[string]bool
+	if addsKeyless && len(params) > 0 {
+		pre, err := r.api.call(ctx, "GET", r.m.expand(r.m.decl.Paths.Retrieve, id, parent), r.api.expanded(nil, ""))
+		if err != nil {
+			r.api.fail(&resp.Diagnostics, err)
+			return
+		}
+		before = itemIDs(pre, r.m.decl.MatchBy)
+	}
 	body, err := r.api.call(ctx, method, target, sent)
 	if err != nil {
 		r.api.fail(&resp.Diagnostics, err)
 		return
 	}
-	next, diags := r.m.decodeState(body, plan, r.objType, false)
+	for list, ids := range itemIDs(body, r.m.decl.MatchBy) {
+		for id := range ids {
+			if before != nil && !before[list][id] && keep[list] != nil {
+				keep[list].ids[id] = true
+			}
+		}
+	}
+	next, diags := r.m.decodeState(body, plan, r.objType, false, keep)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -396,15 +425,28 @@ func sameWire(a, b wire.Value) bool {
 }
 
 func archived(body wire.Object, a *ArchiveAction, now time.Time) bool {
-	v, ok := body.Get(a.Field)
+	if holds(body, a.Field, a.Value, a.Now, now) {
+		return true
+	}
+	for _, e := range a.Ended {
+		if holds(body, e.Field, e.Value, e.Past, now) {
+			return true
+		}
+	}
+	return false
+}
+
+// holds reports whether field has the value, or with past a Unix time that has passed.
+func holds(body wire.Object, field string, value wire.Value, past bool, now time.Time) bool {
+	v, ok := body.Get(field)
 	if !ok {
 		return false
 	}
-	if a.Now {
+	if past {
 		at, isInt := v.(wire.Int)
 		return isInt && int64(at) <= now.Unix()
 	}
-	return sameWire(v, a.Value)
+	return sameWire(v, value)
 }
 
 // expire ends the object a few seconds ahead and waits for its status to say so.
@@ -477,4 +519,136 @@ func (r *Resource) ImportState(ctx context.Context, req resource.ImportStateRequ
 		resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root(r.m.decl.Parent), parent)...)
 	}
 	resp.Diagnostics.Append(r.m.setIdentity(ctx, resp.Identity, id, parent)...)
+}
+
+// refuseDuplicateKeys fails the plan of a keyed list that names one key twice: Stripe does
+// not allow the same price twice on a subscription, and the elements could not be told
+// apart.
+func (r *Resource) refuseDuplicateKeys(ctx context.Context, req resource.ModifyPlanRequest, resp *resource.ModifyPlanResponse) {
+	var plan basetypes.ObjectValue
+	if diags := req.Plan.Get(ctx, &plan); diags.HasError() {
+		return
+	}
+	for list, key := range r.m.decl.MatchBy {
+		n, ok := r.m.top(list)
+		if !ok {
+			continue
+		}
+		seen := map[string]bool{}
+		for i, e := range listElements(plan.Attributes()[n.AttrName()]) {
+			k, has := attrKey(e, key)
+			if !has {
+				continue
+			}
+			if seen[k] {
+				resp.Diagnostics.AddAttributeError(path.Root(n.AttrName()).AtListIndex(i),
+					"Duplicate "+key+" in "+n.AttrName(),
+					fmt.Sprintf("`%s` lists %s `%s` more than once. Stripe does not allow the same %s twice; give one element the combined quantity.", n.AttrName(), key, k, key))
+			}
+			seen[k] = true
+		}
+		data := r.m.decl.MatchData[list]
+		if data == "" {
+			continue
+		}
+		var built []attr.Value
+		for i, e := range listElements(plan.Attributes()[n.AttrName()]) {
+			if _, has := attrKey(e, key); has {
+				continue
+			}
+			o, isObj := e.(basetypes.ObjectValue)
+			if !isObj || o.IsNull() || o.IsUnknown() {
+				continue
+			}
+			d := o.Attributes()[data]
+			if d == nil || d.IsNull() || d.IsUnknown() || !fullyKnown(d) {
+				continue
+			}
+			for _, b := range built {
+				if sameData(b, d) {
+					resp.Diagnostics.AddAttributeError(path.Root(n.AttrName()).AtListIndex(i).AtName(data),
+						"Duplicate "+data+" in "+n.AttrName(),
+						fmt.Sprintf("`%s` lists the same `%s` twice. The two items could not be told apart when Stripe returns them; give them different data or one the combined quantity.", n.AttrName(), data))
+				}
+			}
+			built = append(built, d)
+		}
+	}
+}
+
+// fullyKnown reports whether a value holds no unknown part.
+func fullyKnown(v attr.Value) bool {
+	raw, err := v.ToTerraformValue(context.Background())
+	return err == nil && raw.IsFullyKnown()
+}
+
+// itemIDs returns the IDs of the elements of each keyed list in a response.
+func itemIDs(body wire.Object, lists map[string]string) map[string]map[string]bool {
+	out := map[string]map[string]bool{}
+	for list := range lists {
+		w, _ := body.Get(list)
+		arr, problem := listItems(w)
+		if problem != "" {
+			continue
+		}
+		out[list] = map[string]bool{}
+		for _, item := range arr {
+			if o, ok := item.(wire.Object); ok {
+				if id, ok := o.GetString("id"); ok {
+					out[list][id] = true
+				}
+			}
+		}
+	}
+	return out
+}
+
+// sameData reports whether two `price_data` values describe one price. A fixed amount can be
+// given as `unit_amount` or as `unit_amount_decimal`; the two name the same price when they
+// are the same number.
+func sameData(a, b attr.Value) bool {
+	x, okX := a.(basetypes.ObjectValue)
+	y, okY := b.(basetypes.ObjectValue)
+	if !okX || !okY {
+		return a.Equal(b)
+	}
+	amount := func(o basetypes.ObjectValue) (float64, bool) {
+		attrs := o.Attributes()
+		if i, ok := attrs["unit_amount"].(basetypes.Int64Value); ok && known(i) {
+			return float64(i.ValueInt64()), true
+		}
+		if s, ok := attrs["unit_amount_decimal"].(basetypes.StringValue); ok && known(s) {
+			f, err := strconv.ParseFloat(s.ValueString(), 64)
+			return f, err == nil
+		}
+		return 0, false
+	}
+	fx, hasX := amount(x)
+	fy, hasY := amount(y)
+	if hasX != hasY || fx != fy {
+		return false
+	}
+	names := map[string]bool{}
+	for name := range x.Attributes() {
+		names[name] = true
+	}
+	for name := range y.Attributes() {
+		names[name] = true
+	}
+	for name := range names {
+		if name == "unit_amount" || name == "unit_amount_decimal" {
+			continue
+		}
+		av, bv := x.Attributes()[name], y.Attributes()[name]
+		if av == nil || bv == nil {
+			if av != nil && !av.IsNull() || bv != nil && !bv.IsNull() {
+				return false
+			}
+			continue
+		}
+		if !sameData(av, bv) {
+			return false
+		}
+	}
+	return true
 }

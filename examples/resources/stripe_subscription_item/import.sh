@@ -1,0 +1,1 @@
+terraform import stripe_subscription_item.addon si_123

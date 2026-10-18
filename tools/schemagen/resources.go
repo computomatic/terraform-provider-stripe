@@ -39,4 +39,16 @@ var Resources = []Resource{
 	{Package: "tax_settings", ReadPath: "/v1/tax/settings", Omit: []string{"status_details.active"}},
 	{Package: "terminal_configuration", CreatePath: "/v1/terminal/configurations", UpdatePath: "/v1/terminal/configurations/{configuration}"},
 	{Package: "terminal_location", CreatePath: "/v1/terminal/locations", UpdatePath: "/v1/terminal/locations/{location}"},
+	// The Omit entries of the billing objects: `discounts` is sent as objects and returned as
+	// IDs, which no attribute holds both ways, so discounts wait for a decision on them.
+	{Package: "billing_credit_grant", CreatePath: "/v1/billing/credit_grants", UpdatePath: "/v1/billing/credit_grants/{id}"},
+	{Package: "credit_note", ReadPath: "/v1/credit_notes/{id}"},
+	// An invoice's payment error is a nested payment intent that repeats without end, and
+	// three payment method options are empty objects in the response.
+	{Package: "invoice", ReadPath: "/v1/invoices/{invoice}", Omit: []string{"last_finalization_error", "payment_settings.payment_method_options.blik", "payment_settings.payment_method_options.konbini", "payment_settings.payment_method_options.sepa_debit"}},
+	{Package: "invoiceitem", CreatePath: "/v1/invoiceitems", UpdatePath: "/v1/invoiceitems/{invoiceitem}", Omit: []string{"discounts"}},
+	{Package: "quote", CreatePath: "/v1/quotes", UpdatePath: "/v1/quotes/{quote}", Omit: []string{"discounts"}},
+	{Package: "subscription", CreatePath: "/v1/subscriptions", UpdatePath: "/v1/subscriptions/{subscription_exposed_id}", Omit: []string{"discounts", "payment_settings.payment_method_options.konbini", "payment_settings.payment_method_options.sepa_debit", "items.discounts"}, CreateOnly: []string{"billing_cycle_anchor"}},
+	{Package: "subscription_item", CreatePath: "/v1/subscription_items", UpdatePath: "/v1/subscription_items/{item}", Omit: []string{"discounts"}},
+	{Package: "subscription_schedule", CreatePath: "/v1/subscription_schedules", UpdatePath: "/v1/subscription_schedules/{schedule}", Omit: []string{"from_subscription", "pause_schedules"}},
 }
