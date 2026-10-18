@@ -53,6 +53,10 @@ TF_ACC=1 STRIPE_FAKE_SOURCE=<fake source> go test ./internal/resources/...
 
 They run with the `terraform` on the path. To run them with OpenTofu, also set `TF_ACC_TERRAFORM_PATH=$(which tofu)`, `TF_ACC_PROVIDER_NAMESPACE=hashicorp` and `TF_ACC_PROVIDER_HOST=registry.opentofu.org`.
 
+## CI
+
+CI (`.github/workflows/ci.yml`) runs the checks as the `unit` job, the docs check (`scripts/check-docs.sh`) as the `docs` job, and the acceptance tests as the `acceptance` job, under Terraform and then OpenTofu, against the released fake image named by `.fake-version`. To move to a newer fake, change that one line.
+
 ## Trying a build against the fake
 
 Start the fake Stripe API with `-default-account-key sk_test_<anything>`, then point `base_url` at it:
