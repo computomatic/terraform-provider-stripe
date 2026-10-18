@@ -24,17 +24,24 @@ import (
 	"github.com/computomatic/terraform-provider-stripe/internal/resources/billing_feedback_option"
 	"github.com/computomatic/terraform-provider-stripe/internal/resources/billing_meter"
 	"github.com/computomatic/terraform-provider-stripe/internal/resources/billing_portal_configuration"
+	"github.com/computomatic/terraform-provider-stripe/internal/resources/charge"
+	"github.com/computomatic/terraform-provider-stripe/internal/resources/checkout_session"
 	"github.com/computomatic/terraform-provider-stripe/internal/resources/core_event_destination"
 	"github.com/computomatic/terraform-provider-stripe/internal/resources/country_spec"
 	"github.com/computomatic/terraform-provider-stripe/internal/resources/coupon"
 	"github.com/computomatic/terraform-provider-stripe/internal/resources/credit_note"
 	"github.com/computomatic/terraform-provider-stripe/internal/resources/customer"
+	"github.com/computomatic/terraform-provider-stripe/internal/resources/customer_payment_method"
+	"github.com/computomatic/terraform-provider-stripe/internal/resources/dispute"
 	"github.com/computomatic/terraform-provider-stripe/internal/resources/entitlements_feature"
 	"github.com/computomatic/terraform-provider-stripe/internal/resources/event"
 	"github.com/computomatic/terraform-provider-stripe/internal/resources/file"
 	"github.com/computomatic/terraform-provider-stripe/internal/resources/file_link"
 	"github.com/computomatic/terraform-provider-stripe/internal/resources/invoice"
 	"github.com/computomatic/terraform-provider-stripe/internal/resources/invoiceitem"
+	"github.com/computomatic/terraform-provider-stripe/internal/resources/mandate"
+	"github.com/computomatic/terraform-provider-stripe/internal/resources/payment_intent"
+	"github.com/computomatic/terraform-provider-stripe/internal/resources/payment_link"
 	"github.com/computomatic/terraform-provider-stripe/internal/resources/payment_method_configuration"
 	"github.com/computomatic/terraform-provider-stripe/internal/resources/payment_method_domain"
 	"github.com/computomatic/terraform-provider-stripe/internal/resources/plan"
@@ -46,7 +53,9 @@ import (
 	"github.com/computomatic/terraform-provider-stripe/internal/resources/quote"
 	"github.com/computomatic/terraform-provider-stripe/internal/resources/radar_value_list"
 	"github.com/computomatic/terraform-provider-stripe/internal/resources/radar_value_list_item"
+	"github.com/computomatic/terraform-provider-stripe/internal/resources/refund"
 	"github.com/computomatic/terraform-provider-stripe/internal/resources/reporting_report_type"
+	"github.com/computomatic/terraform-provider-stripe/internal/resources/setup_intent"
 	"github.com/computomatic/terraform-provider-stripe/internal/resources/shipping_rate"
 	"github.com/computomatic/terraform-provider-stripe/internal/resources/subscription"
 	"github.com/computomatic/terraform-provider-stripe/internal/resources/subscription_item"
@@ -163,9 +172,11 @@ func (p *stripeProvider) Resources(_ context.Context) []func() resource.Resource
 		must(core_event_destination.NewResource()),
 		must(coupon.NewResource()),
 		must(customer.NewResource()),
+		must(customer_payment_method.NewResource()),
 		must(entitlements_feature.NewResource()),
 		must(file_link.NewResource()),
 		must(invoiceitem.NewResource()),
+		must(payment_link.NewResource()),
 		must(payment_method_configuration.NewResource()),
 		must(payment_method_domain.NewResource()),
 		must(plan.NewResource()),
@@ -177,6 +188,7 @@ func (p *stripeProvider) Resources(_ context.Context) []func() resource.Resource
 		must(quote.NewResource()),
 		must(radar_value_list.NewResource()),
 		must(radar_value_list_item.NewResource()),
+		must(setup_intent.NewResource()),
 		must(shipping_rate.NewResource()),
 		must(subscription.NewResource()),
 		must(subscription_item.NewResource()),
@@ -232,6 +244,15 @@ func (p *stripeProvider) DataSources(_ context.Context) []func() datasource.Data
 		must(tax_settings.NewDataSource()),
 		must(terminal_configuration.NewDataSource()),
 		must(terminal_location.NewDataSource()),
+		must(charge.NewDataSource()),
+		must(checkout_session.NewDataSource()),
+		must(customer_payment_method.NewDataSource()),
+		must(dispute.NewDataSource()),
+		must(mandate.NewDataSource()),
+		must(payment_intent.NewDataSource()),
+		must(payment_link.NewDataSource()),
+		must(refund.NewDataSource()),
+		must(setup_intent.NewDataSource()),
 		must(webhook_endpoint.NewDataSource()),
 	}
 }

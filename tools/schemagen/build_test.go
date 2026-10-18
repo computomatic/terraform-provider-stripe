@@ -132,6 +132,45 @@ func TestFixtureRules(t *testing.T) {
 	}
 }
 
+func TestReadOnlyFieldsAreResponseOnly(t *testing.T) {
+	spec := fixtureSpec(t)
+	table, err := Build(spec, Resource{Package: "widget", CreatePath: "/v1/widgets", UpdatePath: "/v1/widgets/{id}", ReadOnly: []string{"kind", "address.zip"}})
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, path := range [][]string{{"kind"}, {"address", "zip"}} {
+		if f := lookup(t, table, path...); f.Writable() || !f.Response {
+			t.Errorf("%v must be response-only: %+v", path, f)
+		}
+	}
+	if _, err := Build(spec, Resource{Package: "widget", CreatePath: "/v1/widgets", ReadOnly: []string{"nothing"}}); err == nil {
+		t.Error("a read-only entry that names no field must fail")
+	}
+}
+
+func TestRequireMakesACreateFieldRequired(t *testing.T) {
+	spec := fixtureSpec(t)
+	base := Resource{Package: "widget", CreatePath: "/v1/widgets", UpdatePath: "/v1/widgets/{id}"}
+	table, err := Build(spec, base)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if lookup(t, table, "address", "zip").Required {
+		t.Fatal("the fixture's address.zip must be optional for this test")
+	}
+	base.Require = []string{"address.zip"}
+	if table, err = Build(spec, base); err != nil {
+		t.Fatal(err)
+	}
+	if !lookup(t, table, "address", "zip").Required {
+		t.Error("address.zip must be required")
+	}
+	base.Require = []string{"nothing"}
+	if _, err := Build(spec, base); err == nil {
+		t.Error("a require entry that names no field must fail")
+	}
+}
+
 func TestBuildErrors(t *testing.T) {
 	spec := fixtureSpec(t)
 	if _, err := Build(spec, Resource{Package: "x", CreatePath: "/v1/nope"}); err == nil {
@@ -144,6 +183,11 @@ func TestBuildErrors(t *testing.T) {
 	bad.Components.Schemas = map[string]*Schema{"widget": {Type: "object", Properties: map[string]*Schema{"x": {Type: "weird"}}}}
 	if _, err := Build(&bad, Resource{Package: "x", CreatePath: "/v1/widgets"}); err == nil {
 		t.Error("an unsupported schema type must fail loudly, not be skipped")
+	}
+	empty := *spec
+	empty.Components.Schemas = map[string]*Schema{"widget": {Type: "object", Properties: map[string]*Schema{"x": {Type: "object"}}}}
+	if _, err := Build(&empty, Resource{Package: "x", CreatePath: "/v1/widgets"}); err != nil {
+		t.Errorf("a response object with no keys is skipped: %v", err)
 	}
 }
 
@@ -164,6 +208,7 @@ const readOnlySpec = `{
   "components": {"schemas": {"gauge": {"type": "object", "properties": {
     "by_currency": {"type": "object", "additionalProperties": {"type": "integer"}},
     "limit": {"type": "integer", "nullable": true},
+    "marker": {"type": "object"},
     "owner": {"type": "object", "properties": {"id": {"type": "string"}, "name": {"type": "string"}}},
     "sources": {"type": "array", "items": {"anyOf": [{"type": "object", "properties": {"a": {"type": "string"}}}, {"type": "object", "properties": {"b": {"type": "string"}}}]}}
   }}}}
@@ -186,6 +231,9 @@ func TestReadPathIntMapUnionAndOmit(t *testing.T) {
 	}
 	if _, ok := fields.Find(table, "sources"); ok {
 		t.Error("an omitted field must not be in the table")
+	}
+	if _, ok := fields.Find(table, "marker"); ok {
+		t.Error("a response object with no keys must not be in the table")
 	}
 	if f := lookup(t, table, "limit"); f.Create || f.Shape != fields.Int {
 		t.Errorf("a read-only table has response fields only: %+v", f)

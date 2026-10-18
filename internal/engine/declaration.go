@@ -149,6 +149,15 @@ type Declaration struct {
 	// Parent names the path parameter, and the required attribute of that name, for an
 	// object addressed under a parent. Its import ID is `<parent_id>/<child_id>`.
 	Parent string
+	// Attach makes the resource the attachment of an existing object to its Parent, such as a
+	// payment method (`payment_method`) to a customer. It names the required attribute that
+	// holds the existing object's ID. The create path names it in braces
+	// (`/v1/payment_methods/{payment_method}/attach`) and the request body carries the parent's
+	// ID under the Parent's name. The resource's `id` is the ID Stripe returns, which can differ
+	// from the attribute (attaching a test payment method ID such as `pm_card_visa` returns a new
+	// payment method), so the attribute keeps the configured value. Changing it replaces the
+	// resource. Import sets it to the imported ID.
+	Attach string
 
 	Delete  DeleteKind
 	Archive *ArchiveAction
@@ -215,6 +224,13 @@ type Declaration struct {
 	// The state holds only the elements the resource manages, so an element added from outside
 	// is neither shown nor deleted (see managedKeys).
 	MatchBy map[string]string
+	// FixedKeys lists MatchBy lists whose elements Stripe cannot add, drop or reprice on
+	// update, such as a payment link's `line_items`. A plan whose keys differ from the state's,
+	// or that changes a create-only field of an element, replaces the resource. An update that
+	// changes an element sends the whole list, because Stripe takes the update as a statement
+	// of the list: every element goes with its `id` and the fields that change in place. Every
+	// element Stripe returns is managed, so one added from outside shows as a change.
+	FixedKeys []string
 	// MatchData maps a MatchBy list to the object field an element sets in place of its key,
 	// such as `items` to `price_data`, which creates the price the key names. An element with
 	// no key of its own pairs with a state element that has equal data, and keeps its item when
