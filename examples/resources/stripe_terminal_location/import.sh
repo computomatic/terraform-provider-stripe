@@ -1,0 +1,1 @@
+terraform import stripe_terminal_location.store tml_123

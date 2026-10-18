@@ -1,41 +1,74 @@
-# Stripe provider for Terraform
+# Stripe provider for Terraform and OpenTofu
 
-Design: `adrs/1-pending/2026-10-17-provider-architecture/ADR.md`. The provider sends Stripe API version `2026-09-30.endive`.
+Manage the objects in your Stripe account as code: products, prices, coupons, customers, webhook endpoints, tax rates, billing meters and more. Each resource has a matching data source, and Stripe's read-only objects, such as the account balance and the tax code catalogue, are data sources.
 
-## Build and test
+## Installation
 
-```sh
-go build ./...
-go test ./...
-```
-
-## Generated code
-
-`spec/openapi.json` is the pinned Stripe OpenAPI spec (`spec/PIN.json` records its tag, commit and hash). `tools/schemagen` turns it into the field tables under `internal/generated` and into `internal/stripeapi/version.go`. After changing the spec, the pin, the generator or the list of resources in `tools/schemagen/resources.go`, regenerate and commit the result:
+The provider is not published to a registry yet. Until it is, build it from source and tell Terraform or OpenTofu to use the build with a `dev_overrides` entry in your CLI configuration.
 
 ```sh
-go generate ./internal/generated
+git clone https://github.com/computomatic/terraform-provider-stripe
+cd terraform-provider-stripe
+GOBIN="$HOME/terraform-plugins" go install .
 ```
 
-`go test ./...` fails when a generated file is out of date. `tools/schemadiff old.json new.json` compares two `terraform providers schema -json` documents and marks breaking changes.
-
-A resource is a short declaration in `internal/resources/<name>` that the generic engine in `internal/engine` turns into a resource and a data source. Each resource directory needs its declaration, a docs example under `examples/` and the six acceptance tests `TestAcc<Name>_{create,update,replace,import,delete,drift}`; `internal/resources` checks that. A read-only object, such as the balance or the tax code catalogue, has a `datasource.go`, a data source example and one `TestAcc<Name>_read` instead.
-
-Tests that need a Stripe API run against the fake, one fresh account per test, and are skipped when no fake is configured. Set `STRIPE_FAKE_SOURCE` to the fake's source tree and the harness builds it from a temporary copy and starts it, or set `STRIPE_FAKE_URL` (and `STRIPE_FAKE_ADMIN_TOKEN` if it needs one) to use a running fake.
-
-Acceptance tests use terraform-plugin-testing and need `TF_ACC=1`: `TF_ACC=1 STRIPE_FAKE_SOURCE=<fake source> go test ./internal/resources/...`. They run with the `terraform` on the path. To run them with OpenTofu, also set `TF_ACC_TERRAFORM_PATH=$(which tofu)`, `TF_ACC_PROVIDER_NAMESPACE=hashicorp` and `TF_ACC_PROVIDER_HOST=registry.opentofu.org`.
-
-CI (`.github/workflows/ci.yml`) runs the checks as the `unit` job and the acceptance tests as the `acceptance` job, under Terraform and then OpenTofu, against the released fake image named by `.fake-version`. To move to a newer fake, change that one line.
-
-## Try it against the fake
-
-Start the fake Stripe API with `-default-account-key sk_test_<anything>`, then point `base_url` at it:
+Terraform reads `~/.terraformrc` (or the file named by `TF_CLI_CONFIG_FILE`), and OpenTofu reads `~/.tofurc` (or the same variable):
 
 ```hcl
-provider "stripe" {
-  api_key  = "sk_test_<anything>"
-  base_url = "http://127.0.0.1:12111"
+provider_installation {
+  dev_overrides {
+    "github.com/computomatic/stripe" = "/Users/you/terraform-plugins"
+  }
+  direct {}
 }
 ```
 
-To use a local build, `go install .` and add a `dev_overrides` entry for `github.com/computomatic/stripe` in a CLI configuration file selected with `TF_CLI_CONFIG_FILE`.
+With a `dev_overrides` entry, skip `terraform init` for the provider; `plan` and `apply` use the build directly. The path is the directory that holds the `terraform-provider-stripe` binary.
+
+## Usage
+
+```hcl
+terraform {
+  required_providers {
+    stripe = {
+      source = "github.com/computomatic/stripe"
+    }
+  }
+}
+
+provider "stripe" {}
+
+resource "stripe_product" "gold" {
+  name = "Gold plan"
+}
+
+resource "stripe_price" "monthly" {
+  product     = stripe_product.gold.id
+  currency    = "usd"
+  unit_amount = 2000
+
+  recurring = {
+    interval = "month"
+  }
+}
+```
+
+## Authentication
+
+The provider uses a Stripe secret key (`sk_test_...` or `sk_live_...`) or a restricted key (`rk_...`). Export it as `STRIPE_API_KEY` and leave `api_key` out of the configuration:
+
+```sh
+export STRIPE_API_KEY=sk_test_...
+```
+
+A test-mode key manages your sandbox and a live-mode key your live account. Never commit a key: a key written into a configuration ends up in version control.
+
+## Stripe API version
+
+The provider sends every request with Stripe API version `2026-09-30.endive`, whatever your account's default version is. Attributes mean what that version documents, and a change to your account's default version does not change the provider's behaviour.
+
+## Documentation
+
+`docs/` has a page for the provider and for every resource and data source, with the arguments, the attributes, an example and how to import.
+
+Working on the provider itself? See [CONTRIBUTING.md](CONTRIBUTING.md).

@@ -1,0 +1,1 @@
+terraform import stripe_terminal_configuration.store tmc_123

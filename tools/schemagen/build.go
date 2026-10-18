@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"regexp"
 	"slices"
 	"sort"
 
@@ -187,7 +188,7 @@ func (b *builder) object(create, update, resp *Schema, where string, depth int) 
 				continue
 			}
 			if f.Description == "" {
-				f.Description = v.desc
+				f.Description = cleanDescription(v.desc)
 			}
 			if f.Enum == nil && len(v.enum) > 0 {
 				f.Enum = v.enum
@@ -373,4 +374,18 @@ func isStringOrObject(a, b *view) bool {
 	str := func(v *view) bool { return v.shape == fields.String && v.elem == 0 }
 	obj := func(v *view) bool { return v.shape == fields.Object }
 	return str(a) && obj(b) || obj(a) && str(b)
+}
+
+var (
+	// relativeLink matches a Markdown link into Stripe's docs, such as `(/tax/tax-codes)`.
+	relativeLink   = regexp.MustCompile(`\]\((/[^)]*)\)`)
+	paragraphBreak = regexp.MustCompile(`\s*\n\s*\n\s*`)
+)
+
+// cleanDescription makes a Stripe description fit one Markdown list item on the registry:
+// links into Stripe's docs become absolute, and paragraph breaks become a space so the text
+// stays in its bullet.
+func cleanDescription(d string) string {
+	d = relativeLink.ReplaceAllString(d, "](https://docs.stripe.com$1)")
+	return paragraphBreak.ReplaceAllString(d, " ")
 }

@@ -15,8 +15,9 @@ import (
 // suffixes of `TestAcc<Resource>_<suffix>`.
 var requiredTests = []string{"create", "update", "replace", "import", "delete", "drift"}
 
-// A resource directory without a declaration, a docs example or the six acceptance tests
-// fails the build (ADR D1, drift control).
+// A resource directory without a declaration, its docs examples or the six acceptance tests
+// fails the build (ADR D1, drift control). The pages under docs/ are generated from the
+// schema and the examples; scripts/check-docs.sh checks they are current.
 func TestEveryResourceMeetsTheLayout(t *testing.T) {
 	entries, err := os.ReadDir(".")
 	if err != nil {
@@ -44,6 +45,9 @@ func layoutProblems(root, name string) []string {
 	var problems []string
 	if _, err := os.Stat(filepath.Join(root, "examples", "resources", typeName, "resource.tf")); err != nil {
 		problems = append(problems, fmt.Sprintf("%s: no docs example (examples/resources/%s/resource.tf)", name, typeName))
+	}
+	if _, err := os.Stat(filepath.Join(root, "examples", "resources", typeName, "import.sh")); err != nil {
+		problems = append(problems, fmt.Sprintf("%s: no import example (examples/resources/%s/import.sh)", name, typeName))
 	}
 	if _, err := os.Stat(filepath.Join(dir, "datasource.go")); err == nil {
 		if _, err := os.Stat(filepath.Join(root, "examples", "data-sources", typeName, "data-source.tf")); err != nil {
@@ -114,8 +118,8 @@ func TestLayoutCheckFindsGaps(t *testing.T) {
 		}
 	}
 	write("internal/resources/billing_meter/resource.go", "package billing_meter\n")
-	if got := layoutProblems(root, "billing_meter"); len(got) != 7 {
-		t.Fatalf("an empty resource has 7 problems (example and six tests), got %d: %v", len(got), got)
+	if got := layoutProblems(root, "billing_meter"); len(got) != 8 {
+		t.Fatalf("an empty resource has 8 problems (two examples and six tests), got %d: %v", len(got), got)
 	}
 
 	var tests strings.Builder
@@ -125,6 +129,7 @@ func TestLayoutCheckFindsGaps(t *testing.T) {
 	}
 	write("internal/resources/billing_meter/resource_test.go", tests.String())
 	write("examples/resources/stripe_billing_meter/resource.tf", "")
+	write("examples/resources/stripe_billing_meter/import.sh", "")
 	if got := layoutProblems(root, "billing_meter"); len(got) != 0 {
 		t.Fatalf("a complete resource has no problems: %v", got)
 	}

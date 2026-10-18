@@ -1,0 +1,1 @@
+terraform import stripe_product_catalog_trial_offer.first_month to_123

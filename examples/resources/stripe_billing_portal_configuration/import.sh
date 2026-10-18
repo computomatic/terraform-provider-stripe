@@ -1,0 +1,1 @@
+terraform import stripe_billing_portal_configuration.default bpc_123

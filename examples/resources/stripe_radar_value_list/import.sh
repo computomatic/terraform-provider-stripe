@@ -1,0 +1,1 @@
+terraform import stripe_radar_value_list.blocked_emails rsl_123

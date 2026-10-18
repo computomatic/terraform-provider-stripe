@@ -8,7 +8,7 @@ import "github.com/computomatic/terraform-provider-stripe/internal/fields"
 // Table lists every request and response field of the object.
 var Table = []fields.Field{
 	{Name: "active", Shape: fields.Bool, Create: true, Update: true, Response: true, ServerDefaulted: true, Description: "Whether the promotion code is currently active."},
-	{Name: "code", Shape: fields.String, Create: true, Response: true, ServerDefaulted: true, Description: "The customer-facing code. Regardless of case, this code must be unique across all active promotion codes for a specific customer. Valid characters are lower case letters (a-z), upper case letters (A-Z), digits (0-9), and dashes (-).\n\nIf left blank, we will generate one automatically."},
+	{Name: "code", Shape: fields.String, Create: true, Response: true, ServerDefaulted: true, Description: "The customer-facing code. Regardless of case, this code must be unique across all active promotion codes for a specific customer. Valid characters are lower case letters (a-z), upper case letters (A-Z), digits (0-9), and dashes (-). If left blank, we will generate one automatically."},
 	{Name: "created", Shape: fields.Int, Response: true, Description: "Time at which the object was created. Measured in seconds since the Unix epoch."},
 	{Name: "customer", Shape: fields.String, Create: true, Response: true, Description: "The customer who can use this promotion code. If not set, all customers can use the promotion code."},
 	{Name: "customer_account", Shape: fields.String, Create: true, Response: true, Description: "The account representing the customer who can use this promotion code. If not set, all customers can use the promotion code."},

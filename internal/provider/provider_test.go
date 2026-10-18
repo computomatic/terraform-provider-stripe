@@ -1,9 +1,13 @@
 package provider
 
 import (
+	"os"
+	"strings"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-framework/types"
+
+	"github.com/computomatic/terraform-provider-stripe/internal/stripeapi"
 )
 
 func env(values map[string]string) func(string) string {
@@ -89,5 +93,17 @@ func TestEveryDeclarationBuilds(t *testing.T) {
 	}
 	if got := len(p.DataSources(t.Context())); got != 34 {
 		t.Errorf("%d data sources, want 34", got)
+	}
+}
+
+// The README tells users which Stripe API version the provider pins. It must follow the
+// constant.
+func TestReadmeNamesThePinnedAPIVersion(t *testing.T) {
+	readme, err := os.ReadFile("../../README.md")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(string(readme), stripeapi.Version) {
+		t.Errorf("README.md does not name the pinned Stripe API version %s", stripeapi.Version)
 	}
 }

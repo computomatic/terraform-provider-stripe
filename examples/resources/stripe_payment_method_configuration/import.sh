@@ -1,0 +1,1 @@
+terraform import stripe_payment_method_configuration.checkout pmc_123

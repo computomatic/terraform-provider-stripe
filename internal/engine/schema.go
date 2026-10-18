@@ -21,6 +21,7 @@ import (
 	"github.com/computomatic/terraform-provider-stripe/internal/fields"
 )
 
+// describe is the description of a data source attribute.
 func describe(n *node) string {
 	d := n.Description
 	if len(n.Enum) > 0 {
@@ -29,6 +30,16 @@ func describe(n *node) string {
 			quoted[i] = "`" + e + "`"
 		}
 		d += " Possible values: " + strings.Join(quoted, ", ") + "."
+	}
+	return strings.TrimSpace(d)
+}
+
+// describeResource is describe plus what a resource user must know: a change to a field that
+// Stripe cannot update replaces the resource.
+func describeResource(n *node) string {
+	d := describe(n)
+	if n.Replace {
+		d += " Changing it replaces the resource."
 	}
 	return strings.TrimSpace(d)
 }
@@ -66,7 +77,7 @@ func (m *model) resourceSchema(ctx context.Context) rschema.Schema {
 }
 
 func resourceAttribute(n *node) rschema.Attribute {
-	desc := describe(n)
+	desc := describeResource(n)
 	switch n.Shape {
 	case fields.Bool:
 		return rschema.BoolAttribute{Required: n.Required, Optional: n.Optional, Computed: n.Computed, Sensitive: n.Sensitive, MarkdownDescription: desc,

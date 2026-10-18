@@ -1,0 +1,1 @@
+terraform import stripe_apple_pay_domain.checkout apwc_123

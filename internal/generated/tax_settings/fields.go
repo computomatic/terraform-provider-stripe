@@ -8,7 +8,7 @@ import "github.com/computomatic/terraform-provider-stripe/internal/fields"
 // Table lists every request and response field of the object.
 var Table = []fields.Field{
 	{Name: "defaults", Shape: fields.Object, Response: true, Fields: []fields.Field{
-		{Name: "provider", Shape: fields.String, Response: true, Enum: []string{"anrok", "avalara", "sphere", "stripe"}, Description: "The tax calculation provider this account uses. Defaults to `stripe` when not using a [third-party provider](/tax/third-party-apps)."},
+		{Name: "provider", Shape: fields.String, Response: true, Enum: []string{"anrok", "avalara", "sphere", "stripe"}, Description: "The tax calculation provider this account uses. Defaults to `stripe` when not using a [third-party provider](https://docs.stripe.com/tax/third-party-apps)."},
 		{Name: "tax_behavior", Shape: fields.String, Response: true, Enum: []string{"exclusive", "inclusive", "inferred_by_currency"}, Description: "Default [tax behavior](https://stripe.com/docs/tax/products-prices-tax-categories-tax-behavior#tax-behavior) used to specify whether the price is considered inclusive of taxes or exclusive of taxes. If the item's price has a tax behavior set, it will take precedence over the default tax behavior."},
 		{Name: "tax_code", Shape: fields.String, Response: true, Description: "Default [tax code](https://stripe.com/docs/tax/tax-categories) used to classify your products and prices."},
 	}},
