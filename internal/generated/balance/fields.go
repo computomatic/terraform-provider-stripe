@@ -16,7 +16,7 @@ var Table = []fields.Field{
 			{Name: "fpx", Shape: fields.Int, Response: true, Description: "Amount coming from [FPX](https://docs.stripe.com/payments/fpx), a Malaysian payment method."},
 		}},
 	}},
-	{Name: "connect_reserved", Shape: fields.ObjectList, Response: true, Description: "Funds held due to negative balances on connected accounts where [account.controller.requirement_collection](/api/accounts/object#account_object-controller-requirement_collection) is `application`, which includes Custom accounts. You can find the connect reserve balance for each currency and payment type in the `source_types` property.", Fields: []fields.Field{
+	{Name: "connect_reserved", Shape: fields.ObjectList, Response: true, Description: "Funds held due to negative balances on connected accounts where [account.controller.requirement_collection](https://docs.stripe.com/api/accounts/object#account_object-controller-requirement_collection) is `application`, which includes Custom accounts. You can find the connect reserve balance for each currency and payment type in the `source_types` property.", Fields: []fields.Field{
 		{Name: "amount", Shape: fields.Int, Response: true, Description: "Balance amount."},
 		{Name: "currency", Shape: fields.String, Response: true, Description: "Three-letter [ISO currency code](https://www.iso.org/iso-4217-currency-codes.html), in lowercase. Must be a [supported currency](https://stripe.com/docs/currencies)."},
 		{Name: "source_types", Shape: fields.Object, Response: true, Fields: []fields.Field{

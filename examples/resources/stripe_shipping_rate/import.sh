@@ -1,0 +1,1 @@
+terraform import stripe_shipping_rate.ground shr_123

@@ -1,0 +1,1 @@
+terraform import stripe_tax_registration.gb taxreg_123

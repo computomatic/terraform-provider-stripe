@@ -1,0 +1,1 @@
+terraform import stripe_coupon.launch launch_offer

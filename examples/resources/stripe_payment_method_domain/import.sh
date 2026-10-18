@@ -1,0 +1,1 @@
+terraform import stripe_payment_method_domain.checkout pmd_123

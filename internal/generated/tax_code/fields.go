@@ -10,7 +10,7 @@ var Table = []fields.Field{
 	{Name: "description", Shape: fields.String, Response: true, Description: "A detailed description of which types of products the tax code represents."},
 	{Name: "id", Shape: fields.String, Response: true, Description: "Unique identifier for the object."},
 	{Name: "name", Shape: fields.String, Response: true, Description: "A short name for the tax code."},
-	{Name: "requirements", Shape: fields.Object, Response: true, Description: "An object that describes more information about the tax location required for this tax code. Some tax codes require a [performance location](/tax/location-sales#required-versus-optional-performance-locations) to calculate tax correctly.", Fields: []fields.Field{
+	{Name: "requirements", Shape: fields.Object, Response: true, Description: "An object that describes more information about the tax location required for this tax code. Some tax codes require a [performance location](https://docs.stripe.com/tax/location-sales#required-versus-optional-performance-locations) to calculate tax correctly.", Fields: []fields.Field{
 		{Name: "performance_location", Shape: fields.String, Response: true, Enum: []string{"optional", "required"}, Description: "Describes whether a performance location is required for a successful tax calculation with a tax code."},
 	}},
 }

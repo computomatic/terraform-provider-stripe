@@ -1,0 +1,1 @@
+terraform import stripe_plan.monthly gold_monthly

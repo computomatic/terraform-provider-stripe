@@ -1,0 +1,1 @@
+terraform import stripe_promotion_code.launch promo_123
