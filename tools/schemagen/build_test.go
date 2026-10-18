@@ -154,7 +154,8 @@ const readOnlySpec = `{
     "/v1/gauges": {"post": {
       "operationId": "PostGauges",
       "requestBody": {"content": {"application/x-www-form-urlencoded": {"schema": {"type": "object", "properties": {
-        "limit": {"anyOf": [{"type": "string", "enum": ["inf"]}, {"type": "integer"}]}
+        "limit": {"anyOf": [{"type": "string", "enum": ["inf"]}, {"type": "integer"}]},
+        "owner": {"type": "string"}
       }}}}},
       "responses": {"200": {"content": {"application/json": {"schema": {"$ref": "#/components/schemas/gauge"}}}}}
     }}
@@ -162,6 +163,7 @@ const readOnlySpec = `{
   "components": {"schemas": {"gauge": {"type": "object", "properties": {
     "by_currency": {"type": "object", "additionalProperties": {"type": "integer"}},
     "limit": {"type": "integer", "nullable": true},
+    "owner": {"type": "object", "properties": {"id": {"type": "string"}, "name": {"type": "string"}}},
     "sources": {"type": "array", "items": {"anyOf": [{"type": "object", "properties": {"a": {"type": "string"}}}, {"type": "object", "properties": {"b": {"type": "string"}}}]}}
   }}}}
 }`
@@ -199,5 +201,9 @@ func TestReadPathIntMapUnionAndOmit(t *testing.T) {
 	}
 	if f := lookup(t, table, "limit"); f.Shape != fields.String || !f.Create || !f.Response {
 		t.Errorf("limit: %+v", f)
+	}
+	// A reference sent as an ID and returned as the whole object is a string.
+	if f := lookup(t, table, "owner"); f.Shape != fields.String || !f.Create || !f.Response || len(f.Fields) != 0 {
+		t.Errorf("owner: %+v", f)
 	}
 }

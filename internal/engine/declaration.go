@@ -68,6 +68,12 @@ type Refusal struct {
 	Type string
 }
 
+// FieldIs says that a response field has a value, such as `is_default` being true.
+type FieldIs struct {
+	Field string
+	Value wire.Value
+}
+
 // ExpireAction ends an object at a time a few seconds ahead.
 type ExpireAction struct {
 	// Field is the time field, such as `expires_at`.
@@ -115,7 +121,12 @@ type Declaration struct {
 	// ArchiveOn is the refusal of DELETE after which DeleteOrArchive archives. Any other
 	// error fails the destroy.
 	ArchiveOn *Refusal
-	Expire    *ExpireAction
+	// KeepWhen names the object Stripe protects from the Archive strategy, such as the
+	// account's default portal configuration. When the archive update fails and a retrieve
+	// afterwards shows the object so, destroy warns, leaves the object as it is and removes
+	// it from state. Any other failure, and a failed retrieve, fails the destroy.
+	KeepWhen *FieldIs
+	Expire   *ExpireAction
 
 	// OnceReturned lists outputs Stripe returns only at creation. They are Computed and
 	// Sensitive, and read and update responses that omit them keep the prior value.

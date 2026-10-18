@@ -1,11 +1,13 @@
 package engine
 
 import (
+	"context"
 	"fmt"
 	"sort"
 	"strconv"
 
 	"github.com/hashicorp/terraform-plugin-framework/attr"
+	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 
 	"github.com/computomatic/terraform-provider-stripe/internal/fields"
@@ -51,7 +53,7 @@ func (m *model) encodeUpdate(plan, state basetypes.ObjectValue) (wire.Object, er
 		case pv.IsNull():
 			out = append(out, wire.Field{Name: n.Name, Value: wire.Null{}})
 		default:
-			v, ok, err := encodeValue(n, pv, func(k *node) bool { return k.Update })
+			v, ok, err := encodeValue(n, withoutUnchangedDefaults(n, pv, sv), func(k *node) bool { return k.Update })
 			if err != nil {
 				return nil, err
 			}
@@ -61,6 +63,34 @@ func (m *model) encodeUpdate(plan, state basetypes.ObjectValue) (wire.Object, er
 		}
 	}
 	return out, nil
+}
+
+// withoutUnchangedDefaults drops, from an object that changed, the nested objects Stripe
+// filled in and the update leaves as they are, so the request does not send Stripe its own
+// values back.
+func withoutUnchangedDefaults(n *node, plan, state attr.Value) attr.Value {
+	p, isObj := plan.(basetypes.ObjectValue)
+	s, hasState := state.(basetypes.ObjectValue)
+	if n.Shape != fields.Object || !isObj || !hasState || p.IsNull() || s.IsNull() {
+		return plan
+	}
+	attrs := make(map[string]attr.Value, len(p.Attributes()))
+	for _, k := range n.Kids {
+		name := k.AttrName()
+		pv, sv := p.Attributes()[name], s.Attributes()[name]
+		switch {
+		case pv == nil:
+		case k.Computed && k.Shape == fields.Object && pv.Equal(sv):
+			attrs[name] = nullOf(attrType(k))
+		default:
+			attrs[name] = withoutUnchangedDefaults(k, pv, sv)
+		}
+	}
+	out, diags := types.ObjectValue(p.AttributeTypes(context.Background()), attrs)
+	if diags.HasError() {
+		return plan
+	}
+	return out
 }
 
 func metadataDiff(plan, state attr.Value) (wire.Object, error) {

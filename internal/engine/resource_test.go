@@ -623,3 +623,101 @@ func TestNullAsDecodesNullToTheString(t *testing.T) {
 		t.Error("a null_as entry on a non-string field must fail")
 	}
 }
+
+// protectedStripe answers the archive update with refusal and every retrieve with the stub's
+// object plus is_default set to isDefault. getErr, when set, fails every retrieve.
+func protectedStripe(stub *stubStripe, refusal, getErr error, isDefault bool) clientFunc {
+	return func(ctx context.Context, req stripeapi.Request) (*stripeapi.Response, error) {
+		switch {
+		case req.Method == "POST" && len(req.Params) > 0 && req.Params[0].Name == "active":
+			return nil, refusal
+		case req.Method == "GET" && getErr != nil:
+			return nil, getErr
+		case req.Method == "GET":
+			resp, err := stub.Do(ctx, req)
+			if err != nil {
+				return nil, err
+			}
+			body, _ := resp.Body.(wire.Object)
+			return &stripeapi.Response{Status: resp.Status, Body: put(body, "is_default", wire.Bool(isDefault))}, nil
+		}
+		return stub.Do(ctx, req)
+	}
+}
+
+func keepWhenDeclaration() Declaration {
+	decl := fixtureDeclaration()
+	decl.Delete = Archive
+	decl.Archive = &ArchiveAction{Field: "active", Value: wire.Bool(false)}
+	decl.KeepWhen = &FieldIs{Field: "is_default", Value: wire.Bool(true)}
+	return decl
+}
+
+var archiveRefusal = &stripeapi.APIError{Status: 400, Type: "invalid_request_error", Message: "You cannot deactivate your default configuration."}
+
+func TestArchiveKeepsTheProtectedObject(t *testing.T) {
+	stub := newStub()
+	r := configured(t, keepWhenDeclaration(), fixtureTable(), protectedStripe(stub, archiveRefusal, nil, true))
+	state, _ := r.create(t, createPlan(r))
+	diags := r.destroy(t, state)
+	noErrors(t, diags)
+	if len(diags.Warnings()) != 1 || diags.Warnings()[0].Summary() != "Left active instead of archived" {
+		t.Errorf("want one warning: %v", diags)
+	}
+}
+
+func TestArchiveFailsForAnObjectThatIsNotProtected(t *testing.T) {
+	stub := newStub()
+	r := configured(t, keepWhenDeclaration(), fixtureTable(), protectedStripe(stub, archiveRefusal, nil, false))
+	state, _ := r.create(t, createPlan(r))
+	if diags := r.destroy(t, state); !diags.HasError() {
+		t.Fatal("a refused archive of an ordinary object must fail the destroy")
+	}
+}
+
+func TestArchiveFailsWhenTheObjectCannotBeRead(t *testing.T) {
+	stub := newStub()
+	r := configured(t, keepWhenDeclaration(), fixtureTable(), protectedStripe(stub, archiveRefusal, nil, true))
+	state, _ := r.create(t, createPlan(r))
+	// The retrieve that precedes the archive fails with the same 400.
+	r = configured(t, keepWhenDeclaration(), fixtureTable(), protectedStripe(stub, archiveRefusal, archiveRefusal, true))
+	if diags := r.destroy(t, state); !diags.HasError() {
+		t.Fatal("a failed retrieve must fail the destroy, not keep the object")
+	}
+}
+
+func TestArchiveFailsWhenTheRetrieveAfterTheRefusalFails(t *testing.T) {
+	stub := newStub()
+	inner := protectedStripe(stub, archiveRefusal, nil, true)
+	gets := 0
+	r := configured(t, keepWhenDeclaration(), fixtureTable(), clientFunc(func(ctx context.Context, req stripeapi.Request) (*stripeapi.Response, error) {
+		if req.Method == "GET" {
+			if gets++; gets == 2 {
+				return nil, &stripeapi.APIError{Status: 500, Type: "api_error", Message: "down"}
+			}
+		}
+		return inner(ctx, req)
+	}))
+	state, _ := r.create(t, createPlan(r))
+	gets = 0
+	if diags := r.destroy(t, state); !diags.HasError() {
+		t.Fatal("a failed retrieve after the refusal must fail the destroy")
+	}
+}
+
+func TestReadTreatsADeletedStubAsGone(t *testing.T) {
+	stub := newStub()
+	r := configured(t, fixtureDeclaration(), fixtureTable(), clientFunc(func(ctx context.Context, req stripeapi.Request) (*stripeapi.Response, error) {
+		if req.Method == "GET" {
+			return &stripeapi.Response{Status: 200, Body: wire.Object{
+				{Name: "id", Value: wire.String("wid_1")},
+				{Name: "deleted", Value: wire.Bool(true)},
+			}}, nil
+		}
+		return stub.Do(ctx, req)
+	}))
+	state, _ := r.create(t, createPlan(r))
+	if _, found := r.read(t, state); found {
+		t.Fatal("an object Stripe answers for with deleted: true must leave state")
+	}
+}

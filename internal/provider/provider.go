@@ -18,10 +18,20 @@ import (
 
 	"github.com/computomatic/terraform-provider-stripe/internal/resources/balance"
 	"github.com/computomatic/terraform-provider-stripe/internal/resources/billing_meter"
+	"github.com/computomatic/terraform-provider-stripe/internal/resources/billing_portal_configuration"
+	"github.com/computomatic/terraform-provider-stripe/internal/resources/country_spec"
 	"github.com/computomatic/terraform-provider-stripe/internal/resources/coupon"
 	"github.com/computomatic/terraform-provider-stripe/internal/resources/customer"
+	"github.com/computomatic/terraform-provider-stripe/internal/resources/entitlements_feature"
+	"github.com/computomatic/terraform-provider-stripe/internal/resources/plan"
 	"github.com/computomatic/terraform-provider-stripe/internal/resources/price"
 	"github.com/computomatic/terraform-provider-stripe/internal/resources/product"
+	"github.com/computomatic/terraform-provider-stripe/internal/resources/product_catalog_trial_offer"
+	"github.com/computomatic/terraform-provider-stripe/internal/resources/product_feature"
+	"github.com/computomatic/terraform-provider-stripe/internal/resources/promotion_code"
+	"github.com/computomatic/terraform-provider-stripe/internal/resources/shipping_rate"
+	"github.com/computomatic/terraform-provider-stripe/internal/resources/tax_code"
+	"github.com/computomatic/terraform-provider-stripe/internal/resources/tax_rate"
 	"github.com/computomatic/terraform-provider-stripe/internal/resources/webhook_endpoint"
 	"github.com/computomatic/terraform-provider-stripe/internal/stripeapi"
 )
@@ -121,10 +131,18 @@ func (p *stripeProvider) Configure(ctx context.Context, req provider.ConfigureRe
 func (p *stripeProvider) Resources(_ context.Context) []func() resource.Resource {
 	return []func() resource.Resource{
 		must(billing_meter.NewResource()),
+		must(billing_portal_configuration.NewResource()),
 		must(coupon.NewResource()),
 		must(customer.NewResource()),
+		must(entitlements_feature.NewResource()),
+		must(plan.NewResource()),
 		must(price.NewResource()),
 		must(product.NewResource()),
+		must(product_catalog_trial_offer.NewResource()),
+		must(product_feature.NewResource()),
+		must(promotion_code.NewResource()),
+		must(shipping_rate.NewResource()),
+		must(tax_rate.NewResource()),
 		must(webhook_endpoint.NewResource()),
 	}
 }
@@ -133,10 +151,20 @@ func (p *stripeProvider) DataSources(_ context.Context) []func() datasource.Data
 	return []func() datasource.DataSource{
 		must(balance.NewDataSource()),
 		must(billing_meter.NewDataSource()),
+		must(billing_portal_configuration.NewDataSource()),
+		must(country_spec.NewDataSource()),
 		must(coupon.NewDataSource()),
 		must(customer.NewDataSource()),
+		must(entitlements_feature.NewDataSource()),
+		must(plan.NewDataSource()),
 		must(price.NewDataSource()),
 		must(product.NewDataSource()),
+		must(product_catalog_trial_offer.NewDataSource()),
+		must(product_feature.NewDataSource()),
+		must(promotion_code.NewDataSource()),
+		must(shipping_rate.NewDataSource()),
+		must(tax_code.NewDataSource()),
+		must(tax_rate.NewDataSource()),
 		must(webhook_endpoint.NewDataSource()),
 	}
 }
