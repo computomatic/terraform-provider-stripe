@@ -302,7 +302,7 @@ func TestUpdateSkipsUnchangedServerFilledObjects(t *testing.T) {
 	state := r.fill(map[string]attr.Value{"id": types.StringValue("x"), "features": features(true, false)})
 	plan := r.fill(map[string]attr.Value{"id": types.StringValue("x"), "features": features(false, false)})
 
-	params, err := r.m.encodeUpdate(plan, state)
+	params, err := r.m.encodeUpdate(plan, state, tftypes.Value{})
 	if err != nil {
 		t.Fatal(err)
 	}

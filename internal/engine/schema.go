@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/hashicorp/terraform-plugin-framework-timeouts/resource/timeouts"
+	"github.com/hashicorp/terraform-plugin-framework/attr"
 	dschema "github.com/hashicorp/terraform-plugin-framework/datasource/schema"
 	ischema "github.com/hashicorp/terraform-plugin-framework/resource/identityschema"
 	rschema "github.com/hashicorp/terraform-plugin-framework/resource/schema"
@@ -45,7 +46,7 @@ func describeResource(n *node) string {
 }
 
 // planMods builds a node's plan modifiers from the framework constructors of one type.
-func planMods[M comparable](n *node, useState, replace func() M) []M {
+func planMods[M comparable](n *node, useState, replace func() M, replaceIfSet ...func() M) []M {
 	var mods []M
 	if n.UseState {
 		mods = append(mods, useState())
@@ -53,8 +54,20 @@ func planMods[M comparable](n *node, useState, replace func() M) []M {
 	if n.Replace {
 		mods = append(mods, replace())
 	}
+	if n.ReplaceIfSet && len(replaceIfSet) > 0 {
+		mods = append(mods, replaceIfSet[0]())
+	}
 	return mods
 }
+
+// changedByConfig reports whether the configuration sets a value that differs from the
+// state's. An unknown plan value, or a value the configuration leaves unset, is not one.
+func changedByConfig(config, state attr.Value) bool {
+	known := func(v attr.Value) bool { return !v.IsNull() && !v.IsUnknown() }
+	return known(config) && known(state) && !config.Equal(state)
+}
+
+const replaceIfSetDescription = "Changing the configured value replaces the resource."
 
 func (m *model) resourceSchema(ctx context.Context) rschema.Schema {
 	attrs := make(map[string]rschema.Attribute, len(m.nodes)+2)
@@ -81,13 +94,25 @@ func resourceAttribute(n *node) rschema.Attribute {
 	switch n.Shape {
 	case fields.Bool:
 		return rschema.BoolAttribute{Required: n.Required, Optional: n.Optional, Computed: n.Computed, Sensitive: n.Sensitive, MarkdownDescription: desc,
-			PlanModifiers: planMods(n, boolplanmodifier.UseStateForUnknown, boolplanmodifier.RequiresReplace)}
+			PlanModifiers: planMods(n, boolplanmodifier.UseStateForUnknown, boolplanmodifier.RequiresReplace, func() planmodifier.Bool {
+				return boolplanmodifier.RequiresReplaceIf(func(_ context.Context, req planmodifier.BoolRequest, resp *boolplanmodifier.RequiresReplaceIfFuncResponse) {
+					resp.RequiresReplace = changedByConfig(req.ConfigValue, req.StateValue)
+				}, replaceIfSetDescription, replaceIfSetDescription)
+			})}
 	case fields.Int:
 		return rschema.Int64Attribute{Required: n.Required, Optional: n.Optional, Computed: n.Computed, Sensitive: n.Sensitive, MarkdownDescription: desc,
-			PlanModifiers: planMods(n, int64planmodifier.UseStateForUnknown, int64planmodifier.RequiresReplace)}
+			PlanModifiers: planMods(n, int64planmodifier.UseStateForUnknown, int64planmodifier.RequiresReplace, func() planmodifier.Int64 {
+				return int64planmodifier.RequiresReplaceIf(func(_ context.Context, req planmodifier.Int64Request, resp *int64planmodifier.RequiresReplaceIfFuncResponse) {
+					resp.RequiresReplace = changedByConfig(req.ConfigValue, req.StateValue)
+				}, replaceIfSetDescription, replaceIfSetDescription)
+			})}
 	case fields.Float:
 		return rschema.Float64Attribute{Required: n.Required, Optional: n.Optional, Computed: n.Computed, Sensitive: n.Sensitive, MarkdownDescription: desc,
-			PlanModifiers: planMods(n, float64planmodifier.UseStateForUnknown, float64planmodifier.RequiresReplace)}
+			PlanModifiers: planMods(n, float64planmodifier.UseStateForUnknown, float64planmodifier.RequiresReplace, func() planmodifier.Float64 {
+				return float64planmodifier.RequiresReplaceIf(func(_ context.Context, req planmodifier.Float64Request, resp *float64planmodifier.RequiresReplaceIfFuncResponse) {
+					resp.RequiresReplace = changedByConfig(req.ConfigValue, req.StateValue)
+				}, replaceIfSetDescription, replaceIfSetDescription)
+			})}
 	case fields.Object:
 		return rschema.SingleNestedAttribute{Required: n.Required, Optional: n.Optional, Computed: n.Computed, Sensitive: n.Sensitive, MarkdownDescription: desc,
 			Attributes:    resourceAttributes(n.Kids),
@@ -114,7 +139,11 @@ func resourceAttribute(n *node) rschema.Attribute {
 			PlanModifiers: planMods(n, setplanmodifier.UseStateForUnknown, setplanmodifier.RequiresReplace)}
 	default:
 		return rschema.StringAttribute{Required: n.Required, Optional: n.Optional, Computed: n.Computed, Sensitive: n.Sensitive, MarkdownDescription: desc,
-			PlanModifiers: planMods(n, stringplanmodifier.UseStateForUnknown, stringplanmodifier.RequiresReplace)}
+			PlanModifiers: planMods(n, stringplanmodifier.UseStateForUnknown, stringplanmodifier.RequiresReplace, func() planmodifier.String {
+				return stringplanmodifier.RequiresReplaceIf(func(_ context.Context, req planmodifier.StringRequest, resp *stringplanmodifier.RequiresReplaceIfFuncResponse) {
+					resp.RequiresReplace = changedByConfig(req.ConfigValue, req.StateValue)
+				}, replaceIfSetDescription, replaceIfSetDescription)
+			})}
 	}
 }
 

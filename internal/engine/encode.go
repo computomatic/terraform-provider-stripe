@@ -6,10 +6,12 @@ import (
 	"slices"
 	"sort"
 	"strconv"
+	"time"
 
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
+	"github.com/hashicorp/terraform-plugin-go/tftypes"
 
 	"github.com/computomatic/terraform-provider-stripe/internal/fields"
 	"github.com/computomatic/terraform-provider-stripe/internal/wire"
@@ -97,17 +99,35 @@ func (m *model) encodeFollowUp(plan basetypes.ObjectValue) (wire.Object, error) 
 
 // encodeUpdate builds the update request body: the updatable fields whose planned value
 // differs from state. A removed field is sent as null, which both codecs render as
-// Stripe's way of unsetting it. Create-only fields are never sent, even unchanged.
-// Metadata sends only the keys that changed (ADR D2).
-func (m *model) encodeUpdate(plan, state basetypes.ObjectValue) (wire.Object, error) {
+// Stripe's way of unsetting it, except a SendWithUpdate field, which is never sent as null.
+// Create-only fields are never sent, even unchanged.
+// Metadata sends only the keys that changed (ADR D2). A field whose plan differs from the
+// state only in computed values the configuration leaves unset is unchanged: Terraform marks
+// those unknown on every update, and sending the field again would, for a list of
+// subscription items, ask Stripe to change them. config is the configuration; the zero
+// value turns that check off.
+func (m *model) encodeUpdate(plan, state basetypes.ObjectValue, config tftypes.Value) (wire.Object, error) {
 	var out wire.Object
 	planAttrs, stateAttrs := plan.Attributes(), state.Attributes()
 	for _, n := range m.nodes {
-		if !n.Update {
+		if !n.Update || slices.Contains(m.decl.SendWithUpdate, n.Name) {
 			continue
 		}
 		pv, sv := planAttrs[n.AttrName()], stateAttrs[n.AttrName()]
 		if pv == nil || pv.IsUnknown() || pv.Equal(sv) {
+			continue
+		}
+		if _, keyed := m.decl.MatchBy[n.Name]; keyed && !pv.IsNull() {
+			v, ok, err := m.encodeKeyedList(n, pv, sv, config)
+			if err != nil {
+				return nil, err
+			}
+			if ok {
+				out = append(out, wire.Field{Name: n.Name, Value: v})
+			}
+			continue
+		}
+		if unchangedBesidesComputed(n, pv, sv, config) {
 			continue
 		}
 		// On /v2 an empty collection and no value mean the same, and neither is proven as
@@ -142,11 +162,268 @@ func (m *model) encodeUpdate(plan, state basetypes.ObjectValue) (wire.Object, er
 				return nil, err
 			}
 			if ok {
+				v = m.carryOnUpdate(n, sv, v)
 				out = append(out, wire.Field{Name: n.Name, Value: v})
 			}
 		}
 	}
+	if !slices.ContainsFunc(m.decl.SendWithUpdateOn, func(name string) bool { _, sent := out.Get(name); return sent }) {
+		return out, nil
+	}
+	for _, n := range m.nodes {
+		if !n.Update || !slices.Contains(m.decl.SendWithUpdate, n.Name) {
+			continue
+		}
+		v, ok, err := encodeValue(n, planAttrs[n.AttrName()], func(k *node) bool { return k.Update })
+		if err != nil {
+			return nil, err
+		}
+		if ok {
+			out = append(out, wire.Field{Name: n.Name, Value: v})
+		}
+	}
 	return out, nil
+}
+
+// unchangedBesidesComputed reports whether pv equals sv once the unknown values that the
+// configuration leaves unset take their state values.
+func unchangedBesidesComputed(n *node, pv, sv attr.Value, config tftypes.Value) bool {
+	return sameBesidesComputed(tftypes.NewAttributePath().WithAttributeName(n.AttrName()), pv, sv, config)
+}
+
+// sameBesidesComputed is unchangedBesidesComputed for the value at root in the configuration.
+func sameBesidesComputed(root *tftypes.AttributePath, pv, sv attr.Value, config tftypes.Value) bool {
+	if sv == nil || sv.IsNull() || sv.IsUnknown() || config.Type() == nil {
+		return false
+	}
+	ctx := context.Background()
+	planRaw, err := pv.ToTerraformValue(ctx)
+	if err != nil {
+		return false
+	}
+	stateRaw, err := sv.ToTerraformValue(ctx)
+	if err != nil {
+		return false
+	}
+	filled, err := tftypes.Transform(planRaw, func(p *tftypes.AttributePath, v tftypes.Value) (tftypes.Value, error) {
+		if v.IsKnown() {
+			return v, nil
+		}
+		full := tftypes.NewAttributePathWithSteps(append(slices.Clone(root.Steps()), p.Steps()...))
+		if set, _, err := tftypes.WalkAttributePath(config, full); err == nil {
+			if cv, ok := set.(tftypes.Value); !ok || !cv.IsNull() {
+				return v, nil
+			}
+		}
+		if prior, _, err := tftypes.WalkAttributePath(stateRaw, p); err == nil {
+			if pr, ok := prior.(tftypes.Value); ok {
+				return pr, nil
+			}
+		}
+		return v, nil
+	})
+	return err == nil && filled.Equal(stateRaw)
+}
+
+// listElements returns the elements of a list value, or none.
+func listElements(v attr.Value) []attr.Value {
+	if l, ok := v.(basetypes.ListValue); ok && known(l) {
+		return l.Elements()
+	}
+	return nil
+}
+
+// keyedElement is an element of a keyed list in the plan, with the state element it
+// continues.
+type keyedElement struct {
+	plan  basetypes.ObjectValue
+	state *basetypes.ObjectValue
+	// own is true when the element has a key of its own to match by.
+	own bool
+}
+
+// matchKeyed pairs the plan's elements with the state's by key, in the plan's order, and
+// returns the state elements nothing claimed. An element whose key is not yet known and that
+// the configuration leaves unset (it sets `price_data`) pairs with a state element only when
+// the two are equal; if its data changed, Stripe cannot change the item in place, so the old
+// one is removed and the new one added. config is the configuration of the whole object.
+func (m *model) matchKeyed(n *node, plan, state []attr.Value, config tftypes.Value) (paired []keyedElement, removed []basetypes.ObjectValue) {
+	key := m.decl.MatchBy[n.Name]
+	used := make([]bool, len(state))
+	stateObj := func(i int) *basetypes.ObjectValue {
+		o, ok := state[i].(basetypes.ObjectValue)
+		if !ok || o.IsNull() || o.IsUnknown() {
+			return nil
+		}
+		return &o
+	}
+	paired = make([]keyedElement, len(plan))
+	for i, pe := range plan {
+		po, _ := pe.(basetypes.ObjectValue)
+		paired[i].plan = po
+		pk, ok := attrKey(po, key)
+		if !ok {
+			continue
+		}
+		paired[i].own = true
+		for j := range state {
+			if sk, has := attrKey(state[j], key); has && sk == pk && !used[j] {
+				used[j] = true
+				paired[i].state = stateObj(j)
+				break
+			}
+		}
+	}
+	data := m.decl.MatchData[n.Name]
+	for i := range plan {
+		if paired[i].own || configSets(config, n.AttrName(), i, key) {
+			continue
+		}
+		root := tftypes.NewAttributePath().WithAttributeName(n.AttrName()).WithElementKeyInt(i)
+		want := paired[i].plan.Attributes()[data]
+		for j := range state {
+			o := stateObj(j)
+			if o == nil || used[j] {
+				continue
+			}
+			// Elements built from the same data are the same item, whatever else changed.
+			same := sameBesidesComputed(root, paired[i].plan, *o, config)
+			if data != "" {
+				same = want != nil && !want.IsNull() && !want.IsUnknown() && want.Equal(o.Attributes()[data])
+			}
+			if same {
+				used[j] = true
+				paired[i].state = o
+				break
+			}
+		}
+	}
+	for j := range state {
+		if o := stateObj(j); !used[j] && o != nil {
+			removed = append(removed, *o)
+		}
+	}
+	return paired, removed
+}
+
+// keyedHints says, for each MatchBy list, which state element each plan element continues
+// (its ID, or "" for a new one), and whether the update adds an item with no key of its own,
+// whose ID the update then has to learn by reading the list before and after.
+func (m *model) keyedHints(plan, state basetypes.ObjectValue, config tftypes.Value) (hints map[string][]string, addsKeyless bool) {
+	hints = map[string][]string{}
+	for list, key := range m.decl.MatchBy {
+		n, ok := m.top(list)
+		if !ok {
+			continue
+		}
+		paired, _ := m.matchKeyed(n, listElements(plan.Attributes()[n.AttrName()]), listElements(state.Attributes()[n.AttrName()]), config)
+		ids := make([]string, len(paired))
+		for i, e := range paired {
+			if e.state != nil {
+				ids[i], _ = attrKey(*e.state, "id")
+			}
+			if e.state == nil && !e.own && !configSets(config, n.AttrName(), i, key) {
+				addsKeyless = true
+			}
+		}
+		hints[list] = ids
+	}
+	return hints, addsKeyless
+}
+
+// configSets reports whether the configuration sets list[i].field.
+func configSets(config tftypes.Value, list string, i int, field string) bool {
+	if config.Type() == nil {
+		return false
+	}
+	p := tftypes.NewAttributePath().WithAttributeName(list).WithElementKeyInt(i).WithAttributeName(field)
+	set, _, err := tftypes.WalkAttributePath(config, p)
+	if err != nil {
+		return false
+	}
+	cv, ok := set.(tftypes.Value)
+	return ok && !cv.IsNull()
+}
+
+// encodeKeyedList builds the update of a MatchBy list: the elements that changed, with the
+// `id` of the state element each continues, the elements the plan adds, and `{id, deleted:
+// true}` for the state elements the plan dropped. A list that only reordered sends nothing.
+func (m *model) encodeKeyedList(n *node, pv, sv attr.Value, config tftypes.Value) (wire.Value, bool, error) {
+	paired, removed := m.matchKeyed(n, listElements(pv), listElements(sv), config)
+	var out wire.Array
+	for i, e := range paired {
+		if e.state != nil && sameBesidesComputed(tftypes.NewAttributePath().WithAttributeName(n.AttrName()).WithElementKeyInt(i), e.plan, *e.state, config) {
+			continue
+		}
+		obj, err := encodeObject(n.Kids, e.plan.Attributes(), func(k *node) bool { return k.Update })
+		if err != nil {
+			return nil, false, err
+		}
+		if data := m.decl.MatchData[n.Name]; data != "" && e.state != nil && !e.own {
+			// The data is unchanged: sending it again would make Stripe price the item anew.
+			obj = slices.DeleteFunc(obj, func(f wire.Field) bool { return f.Name == data })
+		}
+		if e.state != nil {
+			if _, sent := obj.Get("id"); !sent {
+				if id, ok := attrKey(*e.state, "id"); ok {
+					obj = append(obj, wire.Field{Name: "id", Value: wire.String(id)})
+				}
+			}
+		}
+		out = append(out, obj)
+	}
+	for _, r := range removed {
+		if id, ok := attrKey(r, "id"); ok {
+			out = append(out, wire.Object{{Name: "id", Value: wire.String(id)}, {Name: "deleted", Value: wire.Bool(true)}})
+		}
+	}
+	return out, len(out) > 0, nil
+}
+
+// carryOnUpdate sends the state's value of each Carry field of an updated list whose plan
+// left it unknown, for the element at the same position. v is the encoded list.
+func (m *model) carryOnUpdate(n *node, state attr.Value, v wire.Value) wire.Value {
+	arr, isArr := v.(wire.Array)
+	old := listElements(state)
+	if n.Shape != fields.ObjectList || !isArr || len(old) == 0 {
+		return v
+	}
+	// A phase that began within a minute counts as current, so a clock a little behind
+	// Stripe's does not lose its start.
+	now := time.Now().Unix() + 60
+	out := make(wire.Array, len(arr))
+	for i, item := range arr {
+		obj, _ := item.(wire.Object)
+		out[i] = obj
+		if i >= len(old) {
+			continue
+		}
+		before, isObj := old[i].(basetypes.ObjectValue)
+		if !isObj || before.IsNull() {
+			continue
+		}
+		for _, c := range m.decl.Carry {
+			if c.List != n.Name {
+				continue
+			}
+			if _, sent := obj.Get(c.Field); sent {
+				continue
+			}
+			s, isStr := before.Attributes()[c.Field].(basetypes.StringValue)
+			if !isStr || !known(s) {
+				continue
+			}
+			if c.WhenPast {
+				at, err := strconv.ParseInt(s.ValueString(), 10, 64)
+				if err != nil || at > now {
+					continue
+				}
+			}
+			obj = append(obj, wire.Field{Name: c.Field, Value: wire.String(s.ValueString())})
+		}
+		out[i] = obj
+	}
+	return out
 }
 
 // withoutUnchangedDefaults drops, from an object that changed, the nested objects Stripe

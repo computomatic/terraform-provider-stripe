@@ -1,0 +1,1 @@
+terraform import stripe_subscription_schedule.team sub_sched_123

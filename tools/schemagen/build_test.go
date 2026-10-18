@@ -4,6 +4,7 @@ import (
 	"flag"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/computomatic/terraform-provider-stripe/internal/fields"
@@ -275,5 +276,75 @@ func TestV2AndV1MustKeepTheirBodyEncodings(t *testing.T) {
 		if _, err := Build(spec, res); err == nil {
 			t.Errorf("%s: a body in the wrong encoding for its namespace must fail", res.Package)
 		}
+	}
+}
+
+const listSpec = `{"paths":{
+ "/v1/orders":{"post":{"operationId":"PostOrders","requestBody":{"content":{"application/x-www-form-urlencoded":{"schema":{
+   "type":"object","properties":{
+    "items":{"type":"array","items":{"type":"object","properties":{"price":{"type":"string"},"quantity":{"type":"integer"}}}},
+    "tax_rates":{"anyOf":[{"type":"array","items":{"type":"string"}},{"type":"string","enum":[""]}]},
+    "discounts":{"type":"array","items":{"type":"object","properties":{"coupon":{"type":"string"}}}},
+    "anchor":{"type":"integer"}}}}}},
+   "responses":{"200":{"content":{"application/json":{"schema":{"type":"object","required":["id"],"properties":{
+    "id":{"type":"string"},
+    "items":{"type":"object","properties":{"object":{"type":"string","enum":["list"]},"data":{"type":"array","items":{"type":"object","properties":{"id":{"type":"string"},"price":{"type":"string"},"quantity":{"type":"integer"}}}}}},
+    "tax_rates":{"type":"array","items":{"type":"object","properties":{"id":{"type":"string"},"percentage":{"type":"number"}}}},
+    "discounts":{"type":"array","items":{"type":"string"}},
+    "anchor":{"type":"integer"}}}}}}}}},
+ "/v1/orders/{id}":{"post":{"operationId":"PostOrdersId","requestBody":{"content":{"application/x-www-form-urlencoded":{"schema":{
+   "type":"object","properties":{"anchor":{"type":"object","properties":{"type":{"type":"string"}}}}}}}}}}
+}}`
+
+func TestListShapes(t *testing.T) {
+	spec, err := ParseSpec([]byte(listSpec))
+	if err != nil {
+		t.Fatal(err)
+	}
+	res := Resource{Package: "order", CreatePath: "/v1/orders", UpdatePath: "/v1/orders/{id}", Omit: []string{"discounts"}, CreateOnly: []string{"anchor"}}
+	table, err := Build(spec, res)
+	if err != nil {
+		t.Fatal(err)
+	}
+	// The envelope in the response becomes the list inside it, with its fields merged into
+	// the request's.
+	items := lookup(t, table, "items")
+	if items.Shape != fields.ObjectList || !items.Create || !items.Response {
+		t.Errorf("items: %+v", items)
+	}
+	if id := lookup(t, items.Fields, "id"); !id.Response || id.Create {
+		t.Errorf("items.id comes from the response element: %+v", id)
+	}
+	if price := lookup(t, items.Fields, "price"); !price.Create || !price.Response {
+		t.Errorf("items.price: %+v", price)
+	}
+	// IDs are sent and the objects come back: a list of strings.
+	if f := lookup(t, table, "tax_rates"); f.Shape != fields.ScalarList || f.Elem != fields.String || !f.Create || !f.Response {
+		t.Errorf("tax_rates: %+v", f)
+	}
+	// An update form of another shape makes the field create-only.
+	if f := lookup(t, table, "anchor"); f.Shape != fields.Int || !f.CreateOnly() {
+		t.Errorf("anchor: %+v", f)
+	}
+
+	// Objects sent and IDs returned have no one shape, so the field must be omitted.
+	if _, err := Build(spec, Resource{Package: "order", CreatePath: "/v1/orders", CreateOnly: []string{"anchor"}}); err == nil {
+		t.Error("a list of objects against a list of IDs must fail unless omitted")
+	}
+	if _, err := Build(spec, Resource{Package: "order", CreatePath: "/v1/orders", Omit: []string{"discounts"}, CreateOnly: []string{"nothing"}}); err == nil {
+		t.Error("a create-only entry that names no field must fail")
+	}
+}
+
+// Only a list envelope is unwrapped: an object that merely has a `data` array is a nested
+// object of its own.
+func TestListEnvelopeNeedsTheListObject(t *testing.T) {
+	spec, err := ParseSpec([]byte(strings.Replace(listSpec, `"enum":["list"]`, `"enum":["wrapper"]`, 1)))
+	if err != nil {
+		t.Fatal(err)
+	}
+	res := Resource{Package: "order", CreatePath: "/v1/orders", UpdatePath: "/v1/orders/{id}", Omit: []string{"discounts"}, CreateOnly: []string{"anchor"}}
+	if _, err := Build(spec, res); err == nil {
+		t.Error("an object with a `data` array that is not a list must not stand for the request's list of objects")
 	}
 }
