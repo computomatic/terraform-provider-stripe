@@ -30,13 +30,18 @@ func idOf(dst *string) resource.TestCheckFunc {
 	})
 }
 
+// named is the body for customerConfig that sets the customer's name, then the rest.
+func named(c acctest.Config, name, rest string) string {
+	return fmt.Sprintf("  name = %q\n%s", c.Name(name), rest)
+}
+
 func TestAccCustomer_create(t *testing.T) {
 	acct := acctest.NewAccount(t)
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: tfacc.ProviderFactories,
 		Steps: []resource.TestStep{{
-			Config: customerConfig(acct, `
-  name        = "Acme Inc."
+			Config: customerConfig(acct, fmt.Sprintf(`
+  name        = %q
   email       = "billing@acme.example"
   description = "The Acme account"
   metadata    = { team = "a" }
@@ -46,14 +51,14 @@ func TestAccCustomer_create(t *testing.T) {
     postal_code = "12345"
     country     = "US"
   }
-`) + `
+`, acct.Name("Acme Inc."))) + `
 data "stripe_customer" "test" {
   id = stripe_customer.test.id
 }
 `,
 			Check: resource.ComposeAggregateTestCheckFunc(
 				resource.TestCheckResourceAttrSet(address, "id"),
-				resource.TestCheckResourceAttr(address, "name", "Acme Inc."),
+				resource.TestCheckResourceAttr(address, "name", acct.Name("Acme Inc.")),
 				resource.TestCheckResourceAttr(address, "email", "billing@acme.example"),
 				resource.TestCheckResourceAttr(address, "metadata.team", "a"),
 				resource.TestCheckResourceAttr(address, "address.city", "Springfield"),
@@ -73,16 +78,16 @@ func TestAccCustomer_update(t *testing.T) {
 		ProtoV6ProviderFactories: tfacc.ProviderFactories,
 		Steps: []resource.TestStep{
 			{
-				Config: customerConfig(acct, "  name = \"Acme\"\n  email = \"a@acme.example\"\n  metadata = { team = \"a\", tier = \"1\" }\n"),
+				Config: customerConfig(acct, named(acct, "Acme", "  email = \"a@acme.example\"\n  metadata = { team = \"a\", tier = \"1\" }\n")),
 				Check:  resource.TestCheckResourceAttr(address, "email", "a@acme.example"),
 			},
 			{
-				Config: customerConfig(acct, "  name = \"Acme v2\"\n  email = \"b@acme.example\"\n  metadata = { team = \"b\" }\n"),
+				Config: customerConfig(acct, named(acct, "Acme v2", "  email = \"b@acme.example\"\n  metadata = { team = \"b\" }\n")),
 				ConfigPlanChecks: resource.ConfigPlanChecks{PreApply: []plancheck.PlanCheck{
 					plancheck.ExpectResourceAction(address, plancheck.ResourceActionUpdate),
 				}},
 				Check: resource.ComposeAggregateTestCheckFunc(
-					resource.TestCheckResourceAttr(address, "name", "Acme v2"),
+					resource.TestCheckResourceAttr(address, "name", acct.Name("Acme v2")),
 					resource.TestCheckResourceAttr(address, "email", "b@acme.example"),
 					resource.TestCheckResourceAttr(address, "metadata.%", "1"),
 					resource.TestCheckResourceAttr(address, "metadata.team", "b"),
@@ -99,7 +104,7 @@ func TestAccCustomer_replace(t *testing.T) {
 	acct := acctest.NewAccount(t)
 	var first string
 	taxID := func(value string) string {
-		return fmt.Sprintf("  name = \"Acme\"\n  tax_id_data = [{ type = \"eu_vat\", value = %q }]\n", value)
+		return fmt.Sprintf("  name = %q\n  tax_id_data = [{ type = \"eu_vat\", value = %q }]\n", acct.Name("Acme"), value)
 	}
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: tfacc.ProviderFactories,
@@ -124,7 +129,7 @@ func TestAccCustomer_replace(t *testing.T) {
 
 func TestAccCustomer_import(t *testing.T) {
 	acct := acctest.NewAccount(t)
-	cfg := customerConfig(acct, "  name = \"Acme\"\n  email = \"a@acme.example\"\n  metadata = { team = \"a\" }\n  preferred_locales = [\"en\"]\n")
+	cfg := customerConfig(acct, named(acct, "Acme", "  email = \"a@acme.example\"\n  metadata = { team = \"a\" }\n  preferred_locales = [\"en\"]\n"))
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: tfacc.ProviderFactories,
 		Steps: []resource.TestStep{
@@ -164,7 +169,7 @@ func TestAccCustomer_delete(t *testing.T) {
 			return nil
 		},
 		Steps: []resource.TestStep{{
-			Config: customerConfig(acct, "  name = \"Doomed\"\n"),
+			Config: customerConfig(acct, named(acct, "Doomed", "")),
 			Check:  idOf(&id),
 		}},
 	})
@@ -173,7 +178,7 @@ func TestAccCustomer_delete(t *testing.T) {
 func TestAccCustomer_drift(t *testing.T) {
 	acct := acctest.NewAccount(t)
 	var id string
-	cfg := customerConfig(acct, "  name = \"Acme\"\n  email = \"a@acme.example\"\n")
+	cfg := customerConfig(acct, named(acct, "Acme", "  email = \"a@acme.example\"\n"))
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: tfacc.ProviderFactories,
 		Steps: []resource.TestStep{
@@ -189,7 +194,7 @@ func TestAccCustomer_drift(t *testing.T) {
 					plancheck.ExpectNonEmptyPlan(),
 					plancheck.ExpectResourceAction(address, plancheck.ResourceActionUpdate),
 				}},
-				Check: resource.TestCheckResourceAttr(address, "name", "Acme"),
+				Check: resource.TestCheckResourceAttr(address, "name", acct.Name("Acme")),
 			},
 		},
 	})

@@ -19,7 +19,7 @@ func TestMain(m *testing.M) { os.Exit(acctest.Main(m)) }
 
 const address = "stripe_billing_meter.test"
 
-// meterConfig is a sum meter. extra lands inside the resource block.
+// meterConfig is a sum meter. Both names are made unique to a smoke run.
 func meterConfig(c acctest.Config, eventName, displayName string) string {
 	return c.ProviderBlock() + fmt.Sprintf(`
 resource "stripe_billing_meter" "test" {
@@ -36,7 +36,7 @@ resource "stripe_billing_meter" "test" {
     event_payload_key = "value"
   }
 }
-`, displayName, eventName)
+`, c.Name(displayName), c.Unique(eventName))
 }
 
 func idOf(dst *string) resource.TestCheckFunc {
@@ -51,21 +51,21 @@ func TestAccBillingMeter_create(t *testing.T) {
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: tfacc.ProviderFactories,
 		Steps: []resource.TestStep{{
-			Config: meterConfig(acct, "api_call", "API calls") + `
+			Config: meterConfig(acct, "create_calls", "API calls") + `
 data "stripe_billing_meter" "test" {
   id = stripe_billing_meter.test.id
 }
 `,
 			Check: resource.ComposeAggregateTestCheckFunc(
 				resource.TestCheckResourceAttrSet(address, "id"),
-				resource.TestCheckResourceAttr(address, "display_name", "API calls"),
-				resource.TestCheckResourceAttr(address, "event_name", "api_call"),
+				resource.TestCheckResourceAttr(address, "display_name", acct.Name("API calls")),
+				resource.TestCheckResourceAttr(address, "event_name", acct.Unique("create_calls")),
 				resource.TestCheckResourceAttr(address, "default_aggregation.formula", "sum"),
 				resource.TestCheckResourceAttr(address, "customer_mapping.type", "by_id"),
 				resource.TestCheckResourceAttr(address, "value_settings.event_payload_key", "value"),
 				resource.TestCheckResourceAttr(address, "status", "active"),
 				resource.TestCheckResourceAttrPair("data.stripe_billing_meter.test", "id", address, "id"),
-				resource.TestCheckResourceAttr("data.stripe_billing_meter.test", "event_name", "api_call"),
+				resource.TestCheckResourceAttr("data.stripe_billing_meter.test", "event_name", acct.Unique("create_calls")),
 				resource.TestCheckResourceAttr("data.stripe_billing_meter.test", "status", "active"),
 			),
 		}},
@@ -78,15 +78,15 @@ func TestAccBillingMeter_update(t *testing.T) {
 		ProtoV6ProviderFactories: tfacc.ProviderFactories,
 		Steps: []resource.TestStep{
 			{
-				Config: meterConfig(acct, "api_call", "API calls"),
-				Check:  resource.TestCheckResourceAttr(address, "display_name", "API calls"),
+				Config: meterConfig(acct, "update_calls", "API calls"),
+				Check:  resource.TestCheckResourceAttr(address, "display_name", acct.Name("API calls")),
 			},
 			{
-				Config: meterConfig(acct, "api_call", "API calls v2"),
+				Config: meterConfig(acct, "update_calls", "API calls v2"),
 				ConfigPlanChecks: resource.ConfigPlanChecks{PreApply: []plancheck.PlanCheck{
 					plancheck.ExpectResourceAction(address, plancheck.ResourceActionUpdate),
 				}},
-				Check: resource.TestCheckResourceAttr(address, "display_name", "API calls v2"),
+				Check: resource.TestCheckResourceAttr(address, "display_name", acct.Name("API calls v2")),
 			},
 		},
 	})
@@ -99,14 +99,14 @@ func TestAccBillingMeter_replace(t *testing.T) {
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: tfacc.ProviderFactories,
 		Steps: []resource.TestStep{
-			{Config: meterConfig(acct, "api_call", "API calls"), Check: idOf(&first)},
+			{Config: meterConfig(acct, "replace_calls", "API calls"), Check: idOf(&first)},
 			{
-				Config: meterConfig(acct, "api_call_v2", "API calls"),
+				Config: meterConfig(acct, "replace_calls_v2", "API calls"),
 				ConfigPlanChecks: resource.ConfigPlanChecks{PreApply: []plancheck.PlanCheck{
 					plancheck.ExpectResourceAction(address, plancheck.ResourceActionReplace),
 				}},
 				Check: resource.ComposeAggregateTestCheckFunc(
-					resource.TestCheckResourceAttr(address, "event_name", "api_call_v2"),
+					resource.TestCheckResourceAttr(address, "event_name", acct.Unique("replace_calls_v2")),
 					resource.TestCheckResourceAttrWith(address, "id", func(v string) error {
 						if v == first {
 							return fmt.Errorf("the replacement kept the meter ID %s", v)
@@ -121,7 +121,7 @@ func TestAccBillingMeter_replace(t *testing.T) {
 
 func TestAccBillingMeter_import(t *testing.T) {
 	acct := acctest.NewAccount(t)
-	cfg := meterConfig(acct, "api_call", "API calls")
+	cfg := meterConfig(acct, "import_calls", "API calls")
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: tfacc.ProviderFactories,
 		Steps: []resource.TestStep{
@@ -158,7 +158,7 @@ func TestAccBillingMeter_delete(t *testing.T) {
 			return nil
 		},
 		Steps: []resource.TestStep{{
-			Config: meterConfig(acct, "api_call", "API calls"),
+			Config: meterConfig(acct, "delete_calls", "API calls"),
 			Check:  idOf(&id),
 		}},
 	})
@@ -167,7 +167,7 @@ func TestAccBillingMeter_delete(t *testing.T) {
 func TestAccBillingMeter_drift(t *testing.T) {
 	acct := acctest.NewAccount(t)
 	var id string
-	cfg := meterConfig(acct, "api_call", "API calls")
+	cfg := meterConfig(acct, "drift_calls", "API calls")
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: tfacc.ProviderFactories,
 		Steps: []resource.TestStep{
@@ -183,7 +183,7 @@ func TestAccBillingMeter_drift(t *testing.T) {
 					plancheck.ExpectNonEmptyPlan(),
 					plancheck.ExpectResourceAction(address, plancheck.ResourceActionUpdate),
 				}},
-				Check: resource.TestCheckResourceAttr(address, "display_name", "API calls"),
+				Check: resource.TestCheckResourceAttr(address, "display_name", acct.Name("API calls")),
 			},
 		},
 	})

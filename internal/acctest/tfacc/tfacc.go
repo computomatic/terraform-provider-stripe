@@ -27,7 +27,7 @@ var ProviderFactories = map[string]func() (tfprotov6.ProviderServer, error){
 // Client returns a Stripe client for the test's account. Tests use it to change an
 // object out of band (drift) and to check what is left after destroy.
 func Client(c acctest.Config) *stripeapi.Client {
-	return stripeapi.New(stripeapi.Config{APIKey: c.Key, BaseURL: c.BaseURL, MaxRetries: 3}, stripeapi.Options{Version: "test"})
+	return stripeapi.New(stripeapi.Config{APIKey: c.APIKey(), BaseURL: c.BaseURL, MaxRetries: 3}, stripeapi.Options{Version: "test"})
 }
 
 // Post sends an update to an object behind the provider's back.
@@ -41,11 +41,12 @@ func Post(t *testing.T, c acctest.Config, path string, params wire.Object) {
 // SkipWhenFakeLacks returns an ErrorCheck that skips the test when the fake answers
 // `fake_not_implemented` or `fake_unproven` for something that mentions needle, such as a
 // parameter name. Any other error, a fake crash included, fails the test. The provider never works around a fake
-// gap: the test runs again once the fake serves it.
+// gap: the test runs again once the fake serves it. Real Stripe has no such gaps, so in
+// smoke mode every error passes through.
 func SkipWhenFakeLacks(t *testing.T, needle string) func(error) error {
 	return func(err error) error {
-		if err == nil {
-			return nil
+		if err == nil || acctest.Smoke() {
+			return err
 		}
 		msg := err.Error()
 		if (strings.Contains(msg, "fake_not_implemented") || strings.Contains(msg, "fake_unproven")) && strings.Contains(msg, needle) {
