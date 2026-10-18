@@ -306,3 +306,29 @@ func TestFixedKeysListNeverMatchesByPosition(t *testing.T) {
 		}
 	}
 }
+
+// A field of an element that the plan check guards and Stripe takes on update (a payment
+// link line item's `adjustable_quantity`) is restated from the state when the list is sent,
+// so a list Stripe reads as a statement keeps it. A field only a create takes is not sent.
+func TestFixedKeysListRestatesGuardedFieldsFromTheState(t *testing.T) {
+	decl := fixedDeclaration()
+	decl.ReplaceOn = []string{"items.note"}
+	r := configured(t, decl, fixedTable(), newStub())
+	withNote := func(row map[string]attr.Value, note attr.Value) map[string]attr.Value {
+		row["note"] = note
+		return row
+	}
+	state := []map[string]attr.Value{withNote(fixedState("li_A", "pa", 1), sv("keep")), fixedState("li_B", "pb", 1)}
+	cfg := []map[string]attr.Value{fixedCfg("pa", 1), fixedCfg("pb", 4)}
+	for name, note := range map[string]attr.Value{"planned as the state has it": sv("keep"), "left unknown": types.StringUnknown()} {
+		plan := []map[string]attr.Value{withNote(fixedRow("pa", 1), note), fixedRow("pb", 4)}
+		params, err := r.m.encodeUpdate(fixedPlan(r, plan), fixedPlan(r, state), raw(t, fixedPlan(r, cfg)))
+		if err != nil {
+			t.Fatalf("%s: %v", name, err)
+		}
+		want := `{"items":[{"quantity":1,"note":"keep","id":"li_A"},{"quantity":4,"id":"li_B"}]}`
+		if got := wireOf(t, params); got != want {
+			t.Errorf("%s:\n got %s\nwant %s", name, got, want)
+		}
+	}
+}

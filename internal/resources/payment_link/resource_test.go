@@ -307,3 +307,52 @@ func TestAccPaymentLink_drift(t *testing.T) {
 		},
 	})
 }
+
+// An update restates the whole list, so a line item's `adjustable_quantity` must survive a
+// quantity change. The suite does not exercise `adjustable_quantity` and the fake answers
+// `fake_not_implemented` for it, so the test skips until the fake serves it.
+func TestAccPaymentLink_adjustableQuantitySurvivesAQuantityChange(t *testing.T) {
+	acct := acctest.NewAccount(t)
+	cfg := func(quantity int) string {
+		return linkConfig(acct, fmt.Sprintf(`[
+    { price = stripe_price.a.id, quantity = %d, adjustable_quantity = { enabled = true, minimum = 1, maximum = 10 } },
+    { price = stripe_price.b.id, quantity = 3 },
+  ]`, quantity), "")
+	}
+	survives := resource.ComposeAggregateTestCheckFunc(
+		resource.TestCheckResourceAttr(address, "line_items.0.adjustable_quantity.enabled", "true"),
+		resource.TestCheckResourceAttr(address, "line_items.0.adjustable_quantity.maximum", "10"),
+	)
+	var id string
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: tfacc.ProviderFactories,
+		ErrorCheck:               tfacc.SkipWhenFakeLacks(t, "adjustable_quantity"),
+		Steps: []resource.TestStep{
+			{Config: cfg(2), Check: resource.ComposeAggregateTestCheckFunc(idOf(&id), survives)},
+			{
+				Config: cfg(5),
+				ConfigPlanChecks: resource.ConfigPlanChecks{PreApply: []plancheck.PlanCheck{
+					plancheck.ExpectResourceAction(address, plancheck.ResourceActionUpdate),
+				}},
+				Check: resource.ComposeAggregateTestCheckFunc(
+					survives,
+					resource.TestCheckResourceAttr(address, "line_items.0.quantity", "5"),
+					func(*terraform.State) error {
+						resp, err := tfacc.Client(acct).Do(t.Context(), stripeapi.Request{Method: "GET", Path: "/v1/payment_links/" + id + "/line_items"})
+						if err != nil {
+							return err
+						}
+						data, _ := resp.Body.(wire.Object).Get("data")
+						items, _ := data.(wire.Array)
+						for _, it := range items {
+							if aq, _ := it.(wire.Object).GetObject("adjustable_quantity"); len(aq) > 0 {
+								return nil
+							}
+						}
+						return fmt.Errorf("no line item of %s still has adjustable_quantity in Stripe", id)
+					},
+				),
+			},
+		},
+	})
+}

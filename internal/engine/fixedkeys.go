@@ -2,6 +2,7 @@ package engine
 
 import (
 	"context"
+	"maps"
 
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/path"
@@ -67,7 +68,10 @@ func (m *model) fixedKeysChanged(n *node, plan, state attr.Value, config tftypes
 }
 
 // encodeFixedList builds the update of a FixedKeys list: nothing when no element changed,
-// else every element with its `id` and the fields Stripe changes in place.
+// else every element restated in full, with its `id`, the fields Stripe changes in place and
+// the state's value of each field the plan check guards (`adjustable_quantity`) that Stripe
+// takes on update, so a list Stripe reads as a statement does not reset it. Fields only a
+// create takes are not sent.
 func (m *model) encodeFixedList(n *node, pv, sv attr.Value, config tftypes.Value) (wire.Value, bool, error) {
 	paired, _ := m.matchKeyed(n, listElements(pv), listElements(sv), config)
 	changed := false
@@ -81,7 +85,16 @@ func (m *model) encodeFixedList(n *node, pv, sv attr.Value, config tftypes.Value
 	}
 	out := make(wire.Array, 0, len(paired))
 	for _, e := range paired {
-		obj, err := encodeObject(n.Kids, e.plan.Attributes(), func(k *node) bool { return k.Update && !k.Fixed })
+		attrs := e.plan.Attributes()
+		if e.state != nil {
+			attrs = maps.Clone(attrs)
+			for _, k := range n.Kids {
+				if sv, ok := e.state.Attributes()[k.AttrName()]; ok && k.Fixed && k.Update {
+					attrs[k.AttrName()] = sv
+				}
+			}
+		}
+		obj, err := encodeObject(n.Kids, attrs, func(k *node) bool { return k.Update })
 		if err != nil {
 			return nil, false, err
 		}
