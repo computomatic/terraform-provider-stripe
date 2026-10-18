@@ -72,6 +72,28 @@ CI (`.github/workflows/ci.yml`) runs the checks as the `unit` job, the docs chec
 
 `scripts/smoke-bundle/build.sh` stages the build context. To try the image without Stripe, build it from a linux/amd64 Terraform and run it against a fake: it refuses to start without `TF_SMOKE=1`, and `STRIPE_BASE_URL` can point the sandbox mode at a fake account's URL with that account's key (the entrypoint reads neither). The tests that need a fake-only feature (the two `_replace` tests) fail there, because smoke mode does not skip them.
 
+## Releasing
+
+Before tagging a release, the release commit must pass the smoke run against the CI sandbox. Use the commit's full 40-character SHA throughout.
+
+1. Wait for the `smoke-bundle` run for that commit on `main` to finish, so the `sha-<sha>` image exists.
+2. Dispatch the suite workflow with that SHA:
+
+   ```sh
+   gh workflow run e2e-stripe.yml -R computomatic/stripe-api-conformance -f provider_ref=<full sha>
+   ```
+
+3. Find the run you started:
+
+   ```sh
+   gh run list -R computomatic/stripe-api-conformance --workflow e2e-stripe.yml --event workflow_dispatch -L 1
+   ```
+
+4. Wait for it with `gh run watch <run id> -R computomatic/stripe-api-conformance`. It queues behind any run already in the `e2e-stripe` group, so it can take a while to start.
+5. Pass condition: the run's `provider-smoke` job concludes `success` for that SHA (check with `gh run view <run id> -R computomatic/stripe-api-conformance`, and confirm the run's `provider_ref` is the release SHA). A failed job blocks the release. Failures feed back into the conformance suite, not into provider-only fixes.
+
+A run shown as cancelled, or displaced (another run of the `e2e-stripe` group replaced it while it was pending), is never a pass. Re-dispatch with the same command and repeat from step 3. Tag the release only after a successful `provider-smoke` job for the release SHA.
+
 ## Trying a build against the fake
 
 Start the fake Stripe API with `-default-account-key sk_test_<anything>`, then point `base_url` at it:

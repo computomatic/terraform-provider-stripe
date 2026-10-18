@@ -221,7 +221,7 @@ Add the smoke step to `CONTRIBUTING.md`: dispatch `e2e-stripe.yml` in `computoma
 
 Acceptance criteria: CONTRIBUTING.md names the command, the pass condition and the re-dispatch rule.
 
-Status: PENDING
+Status: BUILT, 2026-10-18. Added a "Releasing" section to `CONTRIBUTING.md` after "The smoke bundle" (no release section existed). It names the `gh workflow run e2e-stripe.yml -R computomatic/stripe-api-conformance -f provider_ref=<full sha>` command, the wait for the `smoke-bundle` run on `main` first, finding the run with `gh run list ... --workflow e2e-stripe.yml --event workflow_dispatch -L 1`, `gh run watch`, the pass condition (a successful `provider-smoke` job for the release SHA) and the rule that a cancelled or displaced run is re-dispatched, never a pass. README and `docs/` are untouched.
 
 Dependencies: Step 7.
 
