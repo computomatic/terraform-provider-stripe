@@ -137,6 +137,7 @@ var currencyCode = regexp.MustCompile(`^[a-z]{3}$`)
 // ValidateConfig rejects a currency option key that is not a lowercase ISO code, and one
 // for the object's own currency, which Stripe adds by itself and refuses to be given.
 func (r *Resource) ValidateConfig(ctx context.Context, req resource.ValidateConfigRequest, resp *resource.ValidateConfigResponse) {
+	r.validateExactlyOneOf(ctx, req, resp)
 	name := r.m.currencyOptionsAttr()
 	if name == "" {
 		return
@@ -177,4 +178,30 @@ func (r *Resource) requiresReplaceForCurrencyOptions(ctx context.Context, req re
 	}
 	resp.RequiresReplace = append(resp.RequiresReplace, path.Root(name))
 	return true
+}
+
+// validateExactlyOneOf refuses a configuration that sets none or several of the fields of a
+// declared group. A group with an unknown value is left for apply.
+func (r *Resource) validateExactlyOneOf(ctx context.Context, req resource.ValidateConfigRequest, resp *resource.ValidateConfigResponse) {
+	for _, group := range r.m.decl.ExactlyOneOf {
+		var names []string
+		set, unknown := 0, 0
+		for _, field := range group {
+			n, _ := r.m.top(field)
+			names = append(names, "`"+n.AttrName()+"`")
+			var v attr.Value
+			resp.Diagnostics.Append(req.Config.GetAttribute(ctx, path.Root(n.AttrName()), &v)...)
+			switch {
+			case resp.Diagnostics.HasError():
+				return
+			case v.IsUnknown():
+				unknown++
+			case !v.IsNull():
+				set++
+			}
+		}
+		if set > 1 || set == 0 && unknown == 0 {
+			resp.Diagnostics.AddError("Invalid configuration", fmt.Sprintf("exactly one of %s must be set, got %d", strings.Join(names, ", "), set))
+		}
+	}
 }

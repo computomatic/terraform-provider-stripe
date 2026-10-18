@@ -328,7 +328,8 @@ func RequestLog(t *testing.T, c Config) []LoggedRequest {
 
 // Seed inserts whole objects into the test's account through the fake's admin API and
 // returns their IDs in order. It is for objects Stripe creates on its own, such as files
-// and events. Each object names its type in `object`.
+// and events, and for the balance. Each object names its type in `object`. A singleton
+// such as the balance has no ID, and its entry is empty.
 func Seed(t *testing.T, c Config, objects ...wire.Object) []string {
 	t.Helper()
 	requireFakeAccount(t, c)

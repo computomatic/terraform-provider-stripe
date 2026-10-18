@@ -1,0 +1,1 @@
+terraform import stripe_identity_verification_session.kyc vs_123

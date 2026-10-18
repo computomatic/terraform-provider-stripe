@@ -26,6 +26,9 @@ import (
 	"github.com/computomatic/terraform-provider-stripe/internal/resources/billing_portal_configuration"
 	"github.com/computomatic/terraform-provider-stripe/internal/resources/charge"
 	"github.com/computomatic/terraform-provider-stripe/internal/resources/checkout_session"
+	"github.com/computomatic/terraform-provider-stripe/internal/resources/climate_order"
+	"github.com/computomatic/terraform-provider-stripe/internal/resources/climate_product"
+	"github.com/computomatic/terraform-provider-stripe/internal/resources/climate_supplier"
 	"github.com/computomatic/terraform-provider-stripe/internal/resources/core_event_destination"
 	"github.com/computomatic/terraform-provider-stripe/internal/resources/country_spec"
 	"github.com/computomatic/terraform-provider-stripe/internal/resources/coupon"
@@ -37,6 +40,7 @@ import (
 	"github.com/computomatic/terraform-provider-stripe/internal/resources/event"
 	"github.com/computomatic/terraform-provider-stripe/internal/resources/file"
 	"github.com/computomatic/terraform-provider-stripe/internal/resources/file_link"
+	"github.com/computomatic/terraform-provider-stripe/internal/resources/identity_verification_session"
 	"github.com/computomatic/terraform-provider-stripe/internal/resources/invoice"
 	"github.com/computomatic/terraform-provider-stripe/internal/resources/invoiceitem"
 	"github.com/computomatic/terraform-provider-stripe/internal/resources/mandate"
@@ -66,6 +70,7 @@ import (
 	"github.com/computomatic/terraform-provider-stripe/internal/resources/tax_settings"
 	"github.com/computomatic/terraform-provider-stripe/internal/resources/terminal_configuration"
 	"github.com/computomatic/terraform-provider-stripe/internal/resources/terminal_location"
+	"github.com/computomatic/terraform-provider-stripe/internal/resources/terminal_reader"
 	"github.com/computomatic/terraform-provider-stripe/internal/resources/webhook_endpoint"
 	"github.com/computomatic/terraform-provider-stripe/internal/stripeapi"
 )
@@ -188,11 +193,14 @@ func (p *stripeProvider) Resources(_ context.Context) []func() resource.Resource
 		must(quote.NewResource()),
 		must(radar_value_list.NewResource()),
 		must(radar_value_list_item.NewResource()),
+		must(climate_order.NewResource()),
+		must(identity_verification_session.NewResource()),
 		must(setup_intent.NewResource()),
 		must(shipping_rate.NewResource()),
 		must(subscription.NewResource()),
 		must(subscription_item.NewResource()),
 		must(subscription_schedule.NewResource()),
+		must(terminal_reader.NewResource()),
 		must(tax_rate.NewResource()),
 		must(tax_registration.NewResource()),
 		must(terminal_configuration.NewResource()),
@@ -253,6 +261,11 @@ func (p *stripeProvider) DataSources(_ context.Context) []func() datasource.Data
 		must(payment_link.NewDataSource()),
 		must(refund.NewDataSource()),
 		must(setup_intent.NewDataSource()),
+		must(climate_order.NewDataSource()),
+		must(climate_product.NewDataSource()),
+		must(climate_supplier.NewDataSource()),
+		must(identity_verification_session.NewDataSource()),
+		must(terminal_reader.NewDataSource()),
 		must(webhook_endpoint.NewDataSource()),
 	}
 }

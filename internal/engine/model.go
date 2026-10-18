@@ -172,6 +172,16 @@ func compile(decl Declaration, table []fields.Field) (*model, error) {
 			return nil, fmt.Errorf("%s: currency options need a top-level string field `currency` the response returns", decl.TypeName)
 		}
 	}
+	for _, group := range decl.ExactlyOneOf {
+		if len(group) < 2 {
+			return nil, fmt.Errorf("%s: an exactly-one-of group needs at least two fields", decl.TypeName)
+		}
+		for _, name := range group {
+			if n, ok := m.top(name); !ok || !n.Optional {
+				return nil, fmt.Errorf("%s: exactly-one-of entry `%s` is not an optional top-level field", decl.TypeName, name)
+			}
+		}
+	}
 	if err := m.checkListEntries(); err != nil {
 		return nil, fmt.Errorf("%s: %w", decl.TypeName, err)
 	}
