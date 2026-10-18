@@ -11,6 +11,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	rschema "github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
+	"github.com/hashicorp/terraform-plugin-go/tftypes"
 
 	"github.com/computomatic/terraform-provider-stripe/internal/fields"
 	"github.com/computomatic/terraform-provider-stripe/internal/stripeapi"
@@ -52,6 +53,7 @@ var (
 	_ resource.ResourceWithConfigure   = (*Resource)(nil)
 	_ resource.ResourceWithImportState = (*Resource)(nil)
 	_ resource.ResourceWithIdentity    = (*Resource)(nil)
+	_ resource.ResourceWithModifyPlan  = (*Resource)(nil)
 )
 
 func (r *Resource) Metadata(_ context.Context, _ resource.MetadataRequest, resp *resource.MetadataResponse) {
@@ -79,6 +81,43 @@ func (r *Resource) Configure(ctx context.Context, req resource.ConfigureRequest,
 		_, diags := r.schema.AttributeAtPath(ctx, p)
 		return !diags.HasError()
 	}}
+}
+
+// ModifyPlan keeps a plan that changes nothing empty. Terraform proposes null for a nested
+// attribute that is Optional and Computed and left out of the configuration, so the
+// framework sees a change and marks every Computed attribute unknown. When all the values
+// the plan does know equal the state, and every unknown one is a value the configuration
+// leaves unset, no configured value changed, and the plan is the state. An unknown that the
+// configuration sets, such as a reference to an object being replaced, is a pending change
+// and leaves the plan alone.
+func (r *Resource) ModifyPlan(_ context.Context, req resource.ModifyPlanRequest, resp *resource.ModifyPlanResponse) {
+	if req.State.Raw.IsNull() || req.Plan.Raw.IsNull() {
+		return
+	}
+	configured := false
+	filled, err := tftypes.Transform(req.Plan.Raw, func(p *tftypes.AttributePath, v tftypes.Value) (tftypes.Value, error) {
+		if v.IsKnown() {
+			return v, nil
+		}
+		// A walk error means a parent is null in the configuration, so the value is unset.
+		if set, _, err := tftypes.WalkAttributePath(req.Config.Raw, p); err == nil {
+			if cv, ok := set.(tftypes.Value); ok && !cv.IsNull() {
+				configured = true
+				return v, nil
+			}
+		}
+		prior, _, err := tftypes.WalkAttributePath(req.State.Raw, p)
+		if err != nil {
+			return v, nil
+		}
+		if pv, ok := prior.(tftypes.Value); ok {
+			return pv, nil
+		}
+		return v, nil
+	})
+	if err == nil && !configured && filled.Equal(req.State.Raw) {
+		resp.Plan.Raw = req.State.Raw
+	}
 }
 
 func (r *Resource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
@@ -149,7 +188,7 @@ func (r *Resource) Read(ctx context.Context, req resource.ReadRequest, resp *res
 
 	id, parent := r.m.ids(state)
 	body, err := r.api.call(ctx, "GET", r.m.expand(r.m.decl.Paths.Retrieve, id, parent), r.api.expanded(nil, ""))
-	if stripeapi.IsNotFound(err) {
+	if stripeapi.IsNotFound(err) || err == nil && isDeletedStub(body) {
 		resp.State.RemoveResource(ctx)
 		return
 	}
@@ -238,12 +277,28 @@ func (r *Resource) Delete(ctx context.Context, req resource.DeleteRequest, resp 
 		}
 	case Archive:
 		err = r.archive(ctx, id, parent)
+		var kept *keptError
+		if errors.As(err, &kept) {
+			resp.Diagnostics.AddWarning(
+				"Left active instead of archived",
+				fmt.Sprintf("Stripe refused to archive %s %s: %v\n\nThe object is protected (%s). It is out of Terraform's state and still active in the Stripe account.",
+					r.m.decl.TypeName, id, kept.refusal, r.m.decl.KeepWhen.Field),
+			)
+			err = nil
+		}
 	case Expire:
 		err = r.expire(ctx, id, parent)
 	}
 	if err != nil && !stripeapi.IsNotFound(err) {
 		r.api.fail(&resp.Diagnostics, err)
 	}
+}
+
+// isDeletedStub reports the `{id, object, deleted: true}` Stripe returns for an object it
+// has deleted but still answers for, such as a detached product feature.
+func isDeletedStub(body wire.Object) bool {
+	deleted, _ := body.GetBool("deleted")
+	return deleted
 }
 
 // mergeBodies overlays the fields of later onto earlier.
@@ -290,7 +345,36 @@ func (r *Resource) archive(ctx context.Context, id, parent string) error {
 		value = wire.Int(time.Now().Unix())
 	}
 	_, err = r.api.call(ctx, "POST", r.m.expand(r.m.decl.Paths.Update, id, parent), wire.Object{{Name: a.Field, Value: value}})
-	return err
+	return r.keepIfProtected(ctx, id, parent, err)
+}
+
+// keptError is an archive that Stripe refused for an object the declaration protects.
+type keptError struct{ refusal error }
+
+func (e *keptError) Error() string { return e.refusal.Error() }
+
+// keepIfProtected turns a failed archive into a keptError when the object is the one the
+// declaration says Stripe protects. It reads the object after the failure; a failed read
+// leaves the archive error as it is.
+func (r *Resource) keepIfProtected(ctx context.Context, id, parent string, archiveErr error) error {
+	keep := r.m.decl.KeepWhen
+	if archiveErr == nil || keep == nil {
+		return archiveErr
+	}
+	body, err := r.api.call(ctx, "GET", r.m.expand(r.m.decl.Paths.Retrieve, id, parent), nil)
+	if err != nil {
+		return archiveErr
+	}
+	if v, ok := body.Get(keep.Field); ok && sameWire(v, keep.Value) {
+		return &keptError{refusal: archiveErr}
+	}
+	return archiveErr
+}
+
+func sameWire(a, b wire.Value) bool {
+	have, errHave := wire.EncodeJSON(a)
+	want, errWant := wire.EncodeJSON(b)
+	return errHave == nil && errWant == nil && string(have) == string(want)
 }
 
 func archived(body wire.Object, a *ArchiveAction, now time.Time) bool {
@@ -302,9 +386,7 @@ func archived(body wire.Object, a *ArchiveAction, now time.Time) bool {
 		at, isInt := v.(wire.Int)
 		return isInt && int64(at) <= now.Unix()
 	}
-	have, errHave := wire.EncodeJSON(v)
-	want, errWant := wire.EncodeJSON(a.Value)
-	return errHave == nil && errWant == nil && string(have) == string(want)
+	return sameWire(v, a.Value)
 }
 
 // expire ends the object a few seconds ahead and waits for its status to say so.

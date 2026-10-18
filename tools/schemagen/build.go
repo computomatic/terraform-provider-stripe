@@ -160,6 +160,13 @@ func (b *builder) object(create, update, resp *Schema, where string, depth int) 
 					base.shape = fields.String
 					continue
 				}
+				// A reference is sent as an ID and returned as the whole object (a product
+				// feature's `entitlement_feature`): the ID is the value, and the decoder
+				// takes it from the object.
+				if isStringOrObject(base, v) {
+					base.shape, base.obj = fields.String, nil
+					continue
+				}
 				return nil, fmt.Errorf("%s: request and response disagree on the shape (%d/%d against %d/%d)", at, base.shape, base.elem, v.shape, v.elem)
 			}
 		}
@@ -359,4 +366,11 @@ func onlyEmpty(sc *Schema) bool {
 func isIntOrString(a, b *view) bool {
 	plain := func(v *view, shape fields.Shape) bool { return v.shape == shape && v.elem == 0 }
 	return plain(a, fields.Int) && plain(b, fields.String) || plain(a, fields.String) && plain(b, fields.Int)
+}
+
+// isStringOrObject reports whether one view is a plain string and the other an object.
+func isStringOrObject(a, b *view) bool {
+	str := func(v *view) bool { return v.shape == fields.String && v.elem == 0 }
+	obj := func(v *view) bool { return v.shape == fields.Object }
+	return str(a) && obj(b) || obj(a) && str(b)
 }

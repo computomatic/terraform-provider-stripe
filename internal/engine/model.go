@@ -107,7 +107,7 @@ func compile(decl Declaration, table []fields.Field) (*model, error) {
 		used:         pathSet{},
 		sensitiveSet: pathSet{},
 	}
-	nodes, err := c.build(table, "", true, false, false)
+	nodes, err := c.build(table, "", true, false, false, false)
 	if err != nil {
 		return nil, fmt.Errorf("%s: %w", decl.TypeName, err)
 	}
@@ -223,7 +223,7 @@ func (c *compiler) unused() error {
 
 // build resolves one level of the table. parentOutput is true when every field below is a
 // Computed output; parentReplace when an enclosing field already forces replacement.
-func (c *compiler) build(table []fields.Field, prefix string, top, parentOutput, parentReplace bool) ([]*node, error) {
+func (c *compiler) build(table []fields.Field, prefix string, top, parentOutput, parentReplace, inList bool) ([]*node, error) {
 	var out []*node
 	for _, f := range table {
 		path := prefix + f.Name
@@ -275,12 +275,19 @@ func (c *compiler) build(table []fields.Field, prefix string, top, parentOutput,
 			}
 		}
 		n.Replace = f.CreateOnly() && !parentReplace && !n.computedOnly()
+		// Below a field that forces replacement nothing changes in place, so a computed
+		// value there stays as it is: an unknown one would read as a change of the parent.
+		// Terraform proposes null for an unset nested attribute even when it is Computed
+		// (it keeps the prior value of a scalar), which would read as a change on every plan,
+		// so a nested attribute Stripe fills in keeps its prior value too. Inside a list element
+		// that would copy another element's value after an insert or reorder, so it does not apply.
 		n.UseState = n.Computed && !n.Required &&
-			((top && (f.Name == "id" || f.Name == "created" || f.Name == "livemode")) || f.CreateOnly() || n.Once)
+			((top && (f.Name == "id" || f.Name == "created" || f.Name == "livemode")) || f.CreateOnly() || n.Once || parentReplace ||
+				n.Optional && !inList && nestedShape(f.Shape))
 
 		switch f.Shape {
 		case fields.Object, fields.ObjectList, fields.ObjectMap:
-			kids, err := c.build(f.Fields, path+".", false, n.computedOnly(), parentReplace || n.Replace)
+			kids, err := c.build(f.Fields, path+".", false, n.computedOnly(), parentReplace || n.Replace, inList || f.Shape == fields.ObjectList)
 			if err != nil {
 				return nil, err
 			}
@@ -289,6 +296,11 @@ func (c *compiler) build(table []fields.Field, prefix string, top, parentOutput,
 		out = append(out, n)
 	}
 	return out, nil
+}
+
+// nestedShape reports a shape that becomes a nested attribute.
+func nestedShape(s fields.Shape) bool {
+	return s == fields.Object || s == fields.ObjectList || s == fields.ObjectMap
 }
 
 // attrType returns the framework type of the attribute built from n.
