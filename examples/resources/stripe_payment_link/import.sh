@@ -1,0 +1,1 @@
+terraform import stripe_payment_link.course plink_123

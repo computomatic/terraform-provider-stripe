@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"net/url"
 	"strconv"
 	"strings"
 	"time"
@@ -103,7 +104,7 @@ func (r *Resource) ModifyPlan(ctx context.Context, req resource.ModifyPlanReques
 	if req.State.Raw.IsNull() || req.Plan.Raw.IsNull() {
 		return
 	}
-	if r.requiresReplaceForCurrencyOptions(ctx, req, resp) {
+	if r.requiresReplaceForCurrencyOptions(ctx, req, resp) || r.requiresReplaceForFixedKeys(ctx, req, resp) {
 		return
 	}
 	configured := false
@@ -151,7 +152,12 @@ func (r *Resource) Create(ctx context.Context, req resource.CreateRequest, resp 
 		return
 	}
 	_, parent := r.m.ids(plan)
-	body, err := r.api.call(ctx, "POST", r.m.expand(r.m.decl.Paths.Create, "", parent), r.api.expanded(params, ""))
+	createPath := r.m.expand(r.m.decl.Paths.Create, "", parent)
+	if attach := r.m.decl.Attach; attach != "" {
+		createPath = strings.ReplaceAll(createPath, "{"+attach+"}", url.PathEscape(stringAttr(plan, attach)))
+		params = append(params, wire.Field{Name: r.m.decl.Parent, Value: wire.String(parent)})
+	}
+	body, err := r.api.call(ctx, "POST", createPath, r.api.expanded(params, ""))
 	if err != nil {
 		r.api.fail(&resp.Diagnostics, err)
 		return
@@ -160,7 +166,15 @@ func (r *Resource) Create(ctx context.Context, req resource.CreateRequest, resp 
 
 	// Whatever happens next, the object exists in Stripe. Record its ID first so a failure
 	// below leaves a tainted resource that destroy can remove instead of an orphan.
+	// Destroy and refresh address the object through its parent, so the parent and the
+	// attached object's attribute go into the early state too.
 	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("id"), id)...)
+	if r.m.decl.Parent != "" {
+		resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root(r.m.decl.Parent), parent)...)
+	}
+	if r.m.decl.Attach != "" {
+		resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root(r.m.decl.Attach), stringAttr(plan, r.m.decl.Attach))...)
+	}
 
 	if r.m.decl.Paths.Update != "" {
 		followUp, err := r.m.encodeFollowUp(plan)
@@ -517,6 +531,9 @@ func (r *Resource) ImportState(ctx context.Context, req resource.ImportStateRequ
 	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("id"), id)...)
 	if r.m.decl.Parent != "" {
 		resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root(r.m.decl.Parent), parent)...)
+	}
+	if r.m.decl.Attach != "" {
+		resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root(r.m.decl.Attach), id)...)
 	}
 	resp.Diagnostics.Append(r.m.setIdentity(ctx, resp.Identity, id, parent)...)
 }

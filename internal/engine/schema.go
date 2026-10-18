@@ -81,6 +81,13 @@ func (m *model) resourceSchema(ctx context.Context) rschema.Schema {
 			PlanModifiers:       []planmodifier.String{stringplanmodifier.RequiresReplace()},
 		}
 	}
+	if m.decl.Attach != "" {
+		attrs[m.decl.Attach] = rschema.StringAttribute{
+			Required:            true,
+			MarkdownDescription: "The ID of the existing object to attach to the parent. Changing it replaces the resource. The resource's `id` is the ID Stripe returns, which differs from this when a test ID is attached.",
+			PlanModifiers:       []planmodifier.String{stringplanmodifier.RequiresReplace()},
+		}
+	}
 	attrs["timeouts"] = timeouts.Attributes(ctx, timeouts.Opts{
 		Create: true,
 		Update: m.decl.Paths.Update != "",

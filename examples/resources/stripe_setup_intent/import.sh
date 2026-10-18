@@ -1,0 +1,1 @@
+terraform import stripe_setup_intent.card seti_123

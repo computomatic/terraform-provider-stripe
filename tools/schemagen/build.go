@@ -32,6 +32,15 @@ type Resource struct {
 	// a reset action on update). The table counts them as create-only: the update form is an
 	// action, not a value.
 	CreateOnly []string
+	// ReadOnly lists dotted field paths that a request takes but the conformance suite has
+	// not proven, on an object where a replacement is no remedy (a detached payment method
+	// cannot be attached again). The table counts them as response-only.
+	ReadOnly []string
+	// Require lists dotted field paths of the create request that the resource requires
+	// although the spec leaves them optional, because the spec's alternative to the field is
+	// left out (a payment link line item takes `price` or `price_data`, and the suite proves
+	// only `price`).
+	Require []string
 }
 
 // view is a schema classified into one of the engine's shapes.
@@ -54,12 +63,18 @@ func (v *view) scalar() bool {
 
 // Build derives the field table of one resource from the spec.
 func Build(spec *Spec, res Resource) ([]fields.Field, error) {
-	b := builder{spec: spec, omit: map[string]bool{}, createOnly: map[string]bool{}}
+	b := builder{spec: spec, omit: map[string]bool{}, createOnly: map[string]bool{}, readOnly: map[string]bool{}, require: map[string]bool{}}
 	for _, p := range res.Omit {
 		b.omit[p] = false
 	}
 	for _, p := range res.CreateOnly {
 		b.createOnly[p] = false
+	}
+	for _, p := range res.ReadOnly {
+		b.readOnly[p] = false
+	}
+	for _, p := range res.Require {
+		b.require[p] = false
 	}
 	method, path := "POST", res.CreatePath
 	if path == "" {
@@ -101,6 +116,16 @@ func Build(spec *Spec, res Resource) ([]fields.Field, error) {
 			return nil, fmt.Errorf("%s: create-only entry %q names no field", res.Package, p)
 		}
 	}
+	for _, p := range res.Require {
+		if !b.require[p] {
+			return nil, fmt.Errorf("%s: require entry %q names no create field", res.Package, p)
+		}
+	}
+	for _, p := range res.ReadOnly {
+		if !b.readOnly[p] {
+			return nil, fmt.Errorf("%s: read-only entry %q names no field", res.Package, p)
+		}
+	}
 	return table, nil
 }
 
@@ -110,6 +135,10 @@ type builder struct {
 	omit map[string]bool
 	// createOnly maps each path of Resource.CreateOnly to whether the build met it.
 	createOnly map[string]bool
+	// readOnly maps each path of Resource.ReadOnly to whether the build met it.
+	readOnly map[string]bool
+	// require maps each path of Resource.Require to whether the build met it.
+	require map[string]bool
 }
 
 func prop(s *Schema, name string) *Schema {
@@ -149,6 +178,12 @@ func (b *builder) object(create, update, resp *Schema, where string, depth int) 
 			b.omit[at] = true
 			continue
 		}
+		// A hash with no keys in the response only says its payment method type is in use,
+		// which `type` already does. A request hash with none is still an error: it might
+		// be a field the provider needs to send.
+		if prop(create, name) == nil && prop(update, name) == nil && b.emptyObject(prop(resp, name)) {
+			continue
+		}
 		cv, err := b.classify(prop(create, name), at, depth)
 		if err != nil {
 			return nil, err
@@ -160,6 +195,10 @@ func (b *builder) object(create, update, resp *Schema, where string, depth int) 
 		if _, only := b.createOnly[at]; only {
 			b.createOnly[at] = true
 			uv = nil
+		}
+		if _, only := b.readOnly[at]; only {
+			b.readOnly[at] = true
+			cv, uv = nil, nil
 		}
 		rv, err := b.classify(prop(resp, name), at, depth)
 		if err != nil {
@@ -224,6 +263,10 @@ func (b *builder) object(create, update, resp *Schema, where string, depth int) 
 		if cv != nil && create != nil {
 			f.Required = slices.Contains(create.Required, name)
 		}
+		if _, req := b.require[at]; req && cv != nil {
+			b.require[at] = true
+			f.Required = true
+		}
 		if cv != nil && !f.Required && rv != nil && !rv.nullable && resp != nil && slices.Contains(resp.Required, name) {
 			f.ServerDefaulted = true
 		}
@@ -240,6 +283,18 @@ func (b *builder) object(create, update, resp *Schema, where string, depth int) 
 		out = append(out, f)
 	}
 	return out, nil
+}
+
+// emptyObject reports a schema of an object that names no keys and no value schema.
+func (b *builder) emptyObject(sc *Schema) bool {
+	if sc == nil {
+		return false
+	}
+	sc, err := b.spec.resolve(sc)
+	if err != nil || len(sc.AnyOf)+len(sc.OneOf)+len(sc.AllOf) > 0 {
+		return false
+	}
+	return (sc.Type == "object" || sc.Type == "") && len(sc.Properties) == 0 && (sc.AdditionalProperties == nil || sc.AdditionalProperties.Schema == nil)
 }
 
 func objOf(v *view) *Schema {

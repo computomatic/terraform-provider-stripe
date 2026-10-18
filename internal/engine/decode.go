@@ -3,6 +3,7 @@ package engine
 import (
 	"context"
 	"fmt"
+	"slices"
 	"strconv"
 
 	"github.com/hashicorp/terraform-plugin-framework/attr"
@@ -25,7 +26,9 @@ type decoder struct {
 	matchData map[string]string
 	// keep maps a keyed list's path to the elements the resource manages. A list with no
 	// entry keeps every element Stripe returns.
-	keep  map[string]*managedSet
+	keep map[string]*managedSet
+	// fixed lists the keyed lists whose elements must all be matched by key.
+	fixed []string
 	diags diag.Diagnostics
 }
 
@@ -36,7 +39,7 @@ type decoder struct {
 // keep limits each keyed list to the elements the resource manages (see managedKeys); nil
 // keeps all of them.
 func (m *model) decodeState(body wire.Object, prior basetypes.ObjectValue, objType basetypes.ObjectType, dataSource bool, keep map[string]*managedSet) (basetypes.ObjectValue, diag.Diagnostics) {
-	d := decoder{dataSource: dataSource, matchBy: m.decl.MatchBy, matchData: m.decl.MatchData, keep: keep}
+	d := decoder{dataSource: dataSource, matchBy: m.decl.MatchBy, matchData: m.decl.MatchData, keep: keep, fixed: m.decl.FixedKeys}
 	priorAttrs := prior.Attributes()
 	byAttr := make(map[string]*node, len(m.nodes))
 	for _, n := range m.nodes {
@@ -170,7 +173,10 @@ func (d *decoder) value(n *node, w wire.Value, prior attr.Value) attr.Value {
 			}
 			items[i] = o
 		}
-		pairs := d.pair(n, items, priorElems)
+		pairs, problem := d.pair(n, items, priorElems)
+		if problem != "" {
+			return d.fail(n, problem)
+		}
 		elems := make([]attr.Value, len(pairs))
 		for i, p := range pairs {
 			elems[i] = d.object(n.Kids, p.item, objectAttrs(p.prior))
@@ -375,7 +381,7 @@ type managedSet struct {
 // removed element never takes another's values, and the list follows the prior order. A
 // prior element with no key yet (an unknown price, from `price_data`) takes the next element
 // nothing else claimed. Elements the resource does not manage are dropped.
-func (d *decoder) pair(n *node, items []wire.Object, prior []attr.Value) []pair {
+func (d *decoder) pair(n *node, items []wire.Object, prior []attr.Value) (pairs []pair, problem string) {
 	key, keyed := d.matchBy[n.Path]
 	if !keyed {
 		out := make([]pair, len(items))
@@ -385,7 +391,7 @@ func (d *decoder) pair(n *node, items []wire.Object, prior []attr.Value) []pair 
 				out[i].prior = prior[i]
 			}
 		}
-		return out
+		return out, ""
 	}
 	managed := d.keep[n.Path]
 	if managed != nil {
@@ -476,6 +482,10 @@ func (d *decoder) pair(n *node, items []wire.Object, prior []attr.Value) []pair 
 	}
 	for i, p := range prior {
 		if _, ok := attrKey(p, key); !ok && matched[i] < 0 {
+			// A guess would hand one element another's id and computed values.
+			if slices.Contains(d.fixed, n.Path) {
+				return nil, fmt.Sprintf("element %d of the prior list has no known %s to match it by, and elements of this list are matched by %s only", i, key, key)
+			}
 			matched[i] = claim(func(wire.Object) bool { return true })
 		}
 	}
@@ -490,7 +500,7 @@ func (d *decoder) pair(n *node, items []wire.Object, prior []attr.Value) []pair 
 			out = append(out, pair{item: item})
 		}
 	}
-	return out
+	return out, ""
 }
 
 // wireKey reads an element's key: a string, or the `id` of an expanded object.
@@ -530,7 +540,7 @@ func (m *model) managedKeys(objs ...basetypes.ObjectValue) map[string]*managedSe
 	var out map[string]*managedSet
 	for list, key := range m.decl.MatchBy {
 		n, ok := m.top(list)
-		if !ok {
+		if !ok || slices.Contains(m.decl.FixedKeys, list) {
 			continue
 		}
 		for _, o := range objs {

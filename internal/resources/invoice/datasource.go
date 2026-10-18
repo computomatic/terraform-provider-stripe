@@ -18,6 +18,8 @@ var Declaration = engine.Declaration{
 	Description: "A bill sent to a customer, such as the `latest_invoice` of a subscription. Look one up by its `id`. The invoice's `last_finalization_error` is not available.",
 	Paths:       engine.Paths{Retrieve: "/v1/invoices/{id}"},
 	Delete:      engine.NoDelete,
+	// The confirmation secret is the client secret of the invoice's payment.
+	Sensitive: []string{"confirmation_secret.client_secret"},
 }
 
 // NewDataSource returns the data source constructor the provider registers. It looks an invoice up by `id` only: the list endpoint does not filter by the invoice `number`.

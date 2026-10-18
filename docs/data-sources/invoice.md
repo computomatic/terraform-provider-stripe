@@ -137,7 +137,7 @@ Read-Only:
 
 Read-Only:
 
-- `client_secret` (String) The client_secret of the payment that Stripe creates for the invoice after finalization.
+- `client_secret` (String, Sensitive) The client_secret of the payment that Stripe creates for the invoice after finalization.
 - `type` (String) The type of client_secret. Currently this is always payment_intent, referencing the default payment_intent that Stripe creates during invoice finalization
 
 

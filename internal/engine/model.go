@@ -2,6 +2,7 @@ package engine
 
 import (
 	"fmt"
+	"slices"
 	"sort"
 	"strings"
 
@@ -38,6 +39,10 @@ type node struct {
 	// from the state's, and never for an unknown one: a create-only value Stripe fills in for
 	// a list element.
 	ReplaceIfSet bool
+	// Fixed is a field of an element of a FixedKeys list that Stripe cannot change in place.
+	// The plan check replaces the resource when it changes, element by element, so a
+	// reorder does not.
+	Fixed bool
 }
 
 // computedOnly reports an output the user cannot set.
@@ -119,7 +124,7 @@ func compile(decl Declaration, table []fields.Field) (*model, error) {
 		used:         pathSet{},
 		sensitiveSet: pathSet{},
 	}
-	nodes, err := c.build(table, "", true, false, false, false)
+	nodes, err := c.build(table, "", true, false, false, false, false)
 	if err != nil {
 		return nil, fmt.Errorf("%s: %w", decl.TypeName, err)
 	}
@@ -128,6 +133,9 @@ func compile(decl Declaration, table []fields.Field) (*model, error) {
 	}
 
 	m := &model{decl: decl, nodes: nodes, v2: v2}
+	if decl.Attach != "" && (decl.Parent == "" || !strings.Contains(decl.Paths.Create, "{"+decl.Attach+"}")) {
+		return nil, fmt.Errorf("%s: an attachment needs a parent and a create path that names `{%s}`", decl.TypeName, decl.Attach)
+	}
 	if _, ok := m.top("id"); !ok && !decl.Singleton {
 		return nil, fmt.Errorf("%s: the table has no `id` field", decl.TypeName)
 	}
@@ -135,7 +143,7 @@ func compile(decl Declaration, table []fields.Field) (*model, error) {
 		if reservedNames[n.AttrName()] {
 			return nil, fmt.Errorf("%s: field `%s` is a name Terraform reserves; add a rename to the declaration", decl.TypeName, n.AttrName())
 		}
-		if n.AttrName() == "timeouts" || n.AttrName() == decl.Parent {
+		if n.AttrName() == "timeouts" || n.AttrName() == decl.Parent || decl.Attach != "" && n.AttrName() == decl.Attach {
 			return nil, fmt.Errorf("%s: field `%s` collides with a provider-added attribute; rename it", decl.TypeName, n.AttrName())
 		}
 	}
@@ -225,6 +233,11 @@ func (m *model) checkListEntries() error {
 		}
 		if id := kid(n, "id"); id == nil || id.Shape != fields.String || !id.Update {
 			return fmt.Errorf("match_by entry `%s` needs an updatable string `id` field in its elements", name)
+		}
+	}
+	for _, name := range m.decl.FixedKeys {
+		if _, keyed := m.decl.MatchBy[name]; !keyed {
+			return fmt.Errorf("fixed_keys entry `%s` is not a match_by list", name)
 		}
 	}
 	for name, field := range m.decl.MatchData {
@@ -358,7 +371,7 @@ func (c *compiler) unused() error {
 
 // build resolves one level of the table. parentOutput is true when every field below is a
 // Computed output; parentReplace when an enclosing field already forces replacement.
-func (c *compiler) build(table []fields.Field, prefix string, top, parentOutput, parentReplace, inList bool) ([]*node, error) {
+func (c *compiler) build(table []fields.Field, prefix string, top, parentOutput, parentReplace, inList, inFixed bool) ([]*node, error) {
 	var out []*node
 	for _, f := range table {
 		path := prefix + f.Name
@@ -426,13 +439,17 @@ func (c *compiler) build(table []fields.Field, prefix string, top, parentOutput,
 		// (it keeps the prior value of a scalar), which would read as a change on every plan,
 		// so a nested attribute Stripe fills in keeps its prior value too. Inside a list element
 		// that would copy another element's value after an insert or reorder, so it does not apply.
+		if inFixed {
+			n.Fixed = (f.CreateOnly() || replaceOn) && !n.computedOnly()
+			n.Replace, n.ReplaceIfSet = false, false
+		}
 		n.UseState = n.Computed && !n.Required && !serverFilledInList &&
 			((top && (f.Name == "id" || f.Name == "created" || f.Name == "livemode")) || f.CreateOnly() || replaceOn || n.Once || parentReplace ||
 				n.Optional && !inList && nestedShape(f.Shape))
 
 		switch f.Shape {
 		case fields.Object, fields.ObjectList, fields.ObjectMap:
-			kids, err := c.build(f.Fields, path+".", false, n.computedOnly(), parentReplace || n.Replace, inList || f.Shape == fields.ObjectList)
+			kids, err := c.build(f.Fields, path+".", false, n.computedOnly(), parentReplace || n.Replace, inList || f.Shape == fields.ObjectList, inFixed || top && slices.Contains(c.decl.FixedKeys, f.Name))
 			if err != nil {
 				return nil, err
 			}

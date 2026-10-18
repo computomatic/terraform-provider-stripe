@@ -118,7 +118,11 @@ func (m *model) encodeUpdate(plan, state basetypes.ObjectValue, config tftypes.V
 			continue
 		}
 		if _, keyed := m.decl.MatchBy[n.Name]; keyed && !pv.IsNull() {
-			v, ok, err := m.encodeKeyedList(n, pv, sv, config)
+			encode := m.encodeKeyedList
+			if slices.Contains(m.decl.FixedKeys, n.Name) {
+				encode = m.encodeFixedList
+			}
+			v, ok, err := encode(n, pv, sv, config)
 			if err != nil {
 				return nil, err
 			}

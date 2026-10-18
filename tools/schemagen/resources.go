@@ -51,4 +51,19 @@ var Resources = []Resource{
 	{Package: "subscription", CreatePath: "/v1/subscriptions", UpdatePath: "/v1/subscriptions/{subscription_exposed_id}", Omit: []string{"discounts", "payment_settings.payment_method_options.konbini", "payment_settings.payment_method_options.sepa_debit", "items.discounts"}, CreateOnly: []string{"billing_cycle_anchor"}},
 	{Package: "subscription_item", CreatePath: "/v1/subscription_items", UpdatePath: "/v1/subscription_items/{item}", Omit: []string{"discounts"}},
 	{Package: "subscription_schedule", CreatePath: "/v1/subscription_schedules", UpdatePath: "/v1/subscription_schedules/{schedule}", Omit: []string{"from_subscription", "pause_schedules"}},
+	// Wave 6. The setup intent leaves out what only confirming it uses, and its payment
+	// method options, which the suite does not prove. The customer payment method is an
+	// attachment, so the engine adds its `customer` as the parent and `customer_account` is
+	// not offered. The Omit entries of the read-only objects are unions and recursions the
+	// tables cannot hold. The ReadOnly entries are the payment method updates the suite does
+	// not prove, on an object that cannot be replaced.
+	{Package: "payment_link", CreatePath: "/v1/payment_links", UpdatePath: "/v1/payment_links/{payment_link}", Omit: []string{"line_items.price_data"}, Require: []string{"line_items.price"}},
+	{Package: "setup_intent", CreatePath: "/v1/setup_intents", UpdatePath: "/v1/setup_intents/{intent}", Omit: []string{"last_setup_error.payment_intent", "last_setup_error.setup_intent", "last_setup_error.source", "confirm", "mandate_data", "payment_method_data", "return_url", "use_stripe_sdk", "single_use", "payment_method_options", "confirmation_token"}},
+	{Package: "customer_payment_method", CreatePath: "/v1/payment_methods/{payment_method}/attach", UpdatePath: "/v1/payment_methods/{payment_method}", Omit: []string{"customer", "customer_account"}, ReadOnly: []string{"allow_redisplay", "card.exp_month", "card.networks", "us_bank_account"}},
+	{Package: "payment_intent", ReadPath: "/v1/payment_intents/{intent}", Omit: []string{"payment_method_options", "amount_details", "last_payment_error.payment_intent", "last_payment_error.setup_intent", "last_payment_error.source"}},
+	{Package: "charge", ReadPath: "/v1/charges/{charge}"},
+	{Package: "refund", ReadPath: "/v1/refunds/{refund}"},
+	{Package: "dispute", ReadPath: "/v1/disputes/{dispute}"},
+	{Package: "checkout_session", ReadPath: "/v1/checkout/sessions/{session}"},
+	{Package: "mandate", ReadPath: "/v1/mandates/{mandate}"},
 }
