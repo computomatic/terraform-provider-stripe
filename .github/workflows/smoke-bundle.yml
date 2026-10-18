@@ -1,0 +1,107 @@
+name: smoke-bundle
+
+# Publishes the image the sandbox smoke run executes (adrs/1-pending/2026-10-17-sandbox-smoke-run).
+# It only builds from main and release tags: the smoke job in stripe-api-conformance runs
+# this image with the sandbox key.
+on:
+  push:
+    branches: [main]
+    tags: ["v*"]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: smoke-bundle-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  IMAGE: ghcr.io/computomatic/terraform-provider-stripe-smoke
+  # How many sha-only image versions to keep.
+  KEEP_SHA_VERSIONS: "30"
+
+jobs:
+  publish:
+    runs-on: aws-linux-2cpu
+    timeout-minutes: 30
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version-file: go.mod
+      # The image carries this terraform. hashicorp/setup-terraform downloads without checking
+      # the checksum, so fetch it here and check it against HashiCorp's SHA256SUMS. The version
+      # is the one ci.yml pins.
+      - name: Fetch Terraform
+        run: |
+          version=$(sed -n 's/^ *terraform_version: *//p' .github/workflows/ci.yml | head -n 1)
+          if [ -z "${version}" ]; then
+            echo "no terraform_version in ci.yml"
+            exit 1
+          fi
+          base="https://releases.hashicorp.com/terraform/${version}"
+          zip="terraform_${version}_linux_amd64.zip"
+          mkdir -p dist/terraform
+          curl -fsSL -o "dist/terraform/${zip}" "${base}/${zip}"
+          curl -fsSL -o dist/terraform/SHA256SUMS "${base}/terraform_${version}_SHA256SUMS"
+          (cd dist/terraform && grep " ${zip}\$" SHA256SUMS | sha256sum -c -)
+          unzip -q -o "dist/terraform/${zip}" terraform -d dist/terraform
+      - name: Stage the bundle
+        run: |
+          if [ "$(uname -m)" != "x86_64" ]; then
+            echo "the bundle is linux/amd64 and this runner is $(uname -m)"
+            exit 1
+          fi
+          TERRAFORM_BIN=dist/terraform/terraform sh scripts/smoke-bundle/build.sh dist/smoke-bundle
+      - name: Build the image
+        env:
+          REF_NAME: ${{ github.ref_name }}
+          REF_TYPE: ${{ github.ref_type }}
+        run: |
+          tags=("sha-${GITHUB_SHA}")
+          if [ "${REF_TYPE}" = "tag" ]; then
+            tags+=("${REF_NAME}")
+          else
+            tags+=("main")
+          fi
+          args=()
+          for tag in "${tags[@]}"; do
+            args+=(-t "${IMAGE}:${tag}")
+          done
+          docker build --platform linux/amd64 \
+            --label "org.opencontainers.image.source=${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}" \
+            --label "org.opencontainers.image.revision=${GITHUB_SHA}" \
+            "${args[@]}" dist/smoke-bundle
+          printf '%s\n' "${tags[@]}" > dist/smoke-bundle-tags
+      - name: Push the image
+        env:
+          GHCR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GHCR_USER: ${{ github.actor }}
+        run: |
+          echo "${GHCR_TOKEN}" | docker login ghcr.io -u "${GHCR_USER}" --password-stdin
+          while read -r tag; do
+            docker push "${IMAGE}:${tag}"
+          done < dist/smoke-bundle-tags
+          docker logout ghcr.io
+      # Old sha- tags would pile up, one per push to main. Versions that also carry main or a
+      # release tag stay.
+      - name: Remove old sha- tags
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          OWNER: ${{ github.repository_owner }}
+        run: |
+          set -euo pipefail
+          package=terraform-provider-stripe-smoke
+          # Listed into a file first so a failed list call fails the step instead of
+          # looking like an empty package.
+          gh api --paginate "/orgs/${OWNER}/packages/container/${package}/versions?per_page=100" \
+            --jq '.[] | select((.metadata.container.tags | length) > 0 and all(.metadata.container.tags[]; startswith("sha-"))) | [.created_at, .id] | @tsv' \
+            > dist/versions.tsv
+          sort -r dist/versions.tsv | tail -n "+$((KEEP_SHA_VERSIONS + 1))" | cut -f2 > dist/stale-ids
+          while read -r id; do
+            echo "deleting package version ${id}"
+            gh api -X DELETE "/orgs/${OWNER}/packages/container/${package}/versions/${id}"
+          done < dist/stale-ids
