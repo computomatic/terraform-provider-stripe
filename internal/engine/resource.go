@@ -50,10 +50,11 @@ type Resource struct {
 }
 
 var (
-	_ resource.ResourceWithConfigure   = (*Resource)(nil)
-	_ resource.ResourceWithImportState = (*Resource)(nil)
-	_ resource.ResourceWithIdentity    = (*Resource)(nil)
-	_ resource.ResourceWithModifyPlan  = (*Resource)(nil)
+	_ resource.ResourceWithConfigure      = (*Resource)(nil)
+	_ resource.ResourceWithImportState    = (*Resource)(nil)
+	_ resource.ResourceWithIdentity       = (*Resource)(nil)
+	_ resource.ResourceWithModifyPlan     = (*Resource)(nil)
+	_ resource.ResourceWithValidateConfig = (*Resource)(nil)
 )
 
 func (r *Resource) Metadata(_ context.Context, _ resource.MetadataRequest, resp *resource.MetadataResponse) {
@@ -90,8 +91,11 @@ func (r *Resource) Configure(ctx context.Context, req resource.ConfigureRequest,
 // leaves unset, no configured value changed, and the plan is the state. An unknown that the
 // configuration sets, such as a reference to an object being replaced, is a pending change
 // and leaves the plan alone.
-func (r *Resource) ModifyPlan(_ context.Context, req resource.ModifyPlanRequest, resp *resource.ModifyPlanResponse) {
+func (r *Resource) ModifyPlan(ctx context.Context, req resource.ModifyPlanRequest, resp *resource.ModifyPlanResponse) {
 	if req.State.Raw.IsNull() || req.Plan.Raw.IsNull() {
+		return
+	}
+	if r.requiresReplaceForCurrencyOptions(ctx, req, resp) {
 		return
 	}
 	configured := false
@@ -187,6 +191,12 @@ func (r *Resource) Read(ctx context.Context, req resource.ReadRequest, resp *res
 	defer cancel()
 
 	id, parent := r.m.ids(state)
+	// A create that failed before Stripe answered leaves a tainted resource with no ID. A
+	// request for it would address the collection, not an object.
+	if id == "" {
+		resp.State.RemoveResource(ctx)
+		return
+	}
 	body, err := r.api.call(ctx, "GET", r.m.expand(r.m.decl.Paths.Retrieve, id, parent), r.api.expanded(nil, ""))
 	if stripeapi.IsNotFound(err) || err == nil && isDeletedStub(body) {
 		resp.State.RemoveResource(ctx)
@@ -259,6 +269,10 @@ func (r *Resource) Delete(ctx context.Context, req resource.DeleteRequest, resp 
 	}
 
 	id, parent := r.m.ids(state)
+	// Nothing was created, so there is nothing to remove. See Read.
+	if id == "" {
+		return
+	}
 	var err error
 	switch r.m.decl.Delete {
 	case Delete:
@@ -445,6 +459,10 @@ func (r *Resource) ImportState(ctx context.Context, req resource.ImportStateRequ
 		}
 	}
 	if resp.Diagnostics.HasError() {
+		return
+	}
+	if id == "" {
+		resp.Diagnostics.AddError("Invalid import ID", "the ID is empty")
 		return
 	}
 	if p := r.m.decl.IDPrefix; p != "" && !strings.HasPrefix(id, p) {

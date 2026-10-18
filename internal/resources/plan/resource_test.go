@@ -210,8 +210,8 @@ func TestAccPlan_drift(t *testing.T) {
 }
 
 // Tiers are returned only when expanded. Stripe returns the unbounded last tier's `up_to`
-// as null, which must read back as the configured `inf`. Every plan test skips on the
-// fake's fake_not_implemented reply for expand[tiers] until it serves it.
+// as null, which must read back as the configured `inf`, and it fills in each tier's
+// decimal amounts.
 func TestAccPlan_tiers(t *testing.T) {
 	acct := acctest.NewAccount(t)
 	cfg := acct.ProviderBlock() + `
@@ -233,7 +233,6 @@ resource "stripe_plan" "test" {
 `
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: tfacc.ProviderFactories,
-		ErrorCheck:               tfacc.SkipWhenFakeLacks(t, "expand["),
 		Steps: []resource.TestStep{
 			{
 				Config: cfg,

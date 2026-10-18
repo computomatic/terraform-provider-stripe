@@ -779,3 +779,37 @@ func TestReadTreatsADeletedStubAsGone(t *testing.T) {
 		t.Fatal("an object Stripe answers for with deleted: true must leave state")
 	}
 }
+
+// noCalls is a client that fails the test on any request.
+func noCalls(t *testing.T) Client {
+	return clientFunc(func(_ context.Context, req stripeapi.Request) (*stripeapi.Response, error) {
+		t.Errorf("unexpected request %s %s", req.Method, req.Path)
+		return nil, nil
+	})
+}
+
+func TestEmptyIDNeverCallsStripe(t *testing.T) {
+	for _, id := range []attr.Value{types.StringNull(), types.StringValue("")} {
+		r := configured(t, fixtureDeclaration(), fixtureTable(), noCalls(t))
+		state := r.fill(map[string]attr.Value{"id": id})
+
+		if _, found := r.read(t, state); found {
+			t.Errorf("id %v: read must remove an object with no ID from state", id)
+		}
+		noErrors(t, r.destroy(t, state))
+
+		resp := resource.ImportStateResponse{State: tfsdk.State{Schema: r.schema, Raw: tftypes.NewValue(r.schema.Type().TerraformType(context.Background()), nil)}}
+		r.ImportState(context.Background(), resource.ImportStateRequest{ID: ""}, &resp)
+		if !resp.Diagnostics.HasError() {
+			t.Error("an empty import ID must be an error")
+		}
+	}
+}
+
+func TestEmptyIDDestroyIsANoOpForArchive(t *testing.T) {
+	decl := fixtureDeclaration()
+	decl.Delete = Archive
+	decl.Archive = &ArchiveAction{Field: "active", Value: wire.Bool(false)}
+	r := configured(t, decl, fixtureTable(), noCalls(t))
+	noErrors(t, r.destroy(t, r.fill(map[string]attr.Value{"id": types.StringValue("")})))
+}

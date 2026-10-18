@@ -13,6 +13,11 @@ import (
 	"time"
 )
 
+// startTimeout bounds how long a started fake may take to listen and answer its health
+// check. A full `go test ./...` starts a fake per package while the machine is busy
+// building and running everything else, so the fake needs far longer than it does alone.
+const startTimeout = 3 * time.Minute
+
 var listeningAddress = regexp.MustCompile(`msg=listening address=(\S+)`)
 
 // fake is a fake Stripe API process started by the harness.
@@ -77,11 +82,11 @@ func startFake(source string) (*fake, error) {
 			return nil, fmt.Errorf("the fake exited before it listened")
 		}
 		f.baseURL = "http://" + a
-	case <-time.After(30 * time.Second):
-		return nil, fmt.Errorf("the fake did not report a listen address within 30s")
+	case <-time.After(startTimeout):
+		return nil, fmt.Errorf("the fake did not report a listen address within %s", startTimeout)
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), startTimeout)
 	defer cancel()
 	if err := waitHealthy(ctx, f.baseURL); err != nil {
 		return nil, err

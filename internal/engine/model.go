@@ -133,6 +133,15 @@ func compile(decl Declaration, table []fields.Field) (*model, error) {
 			return nil, fmt.Errorf("%s: expand entry `%s` is not a top-level field the response returns", decl.TypeName, e)
 		}
 	}
+	if decl.CurrencyOptions != "" {
+		n, ok := m.top(decl.CurrencyOptions)
+		if !ok || n.Shape != fields.ObjectMap || !n.Response {
+			return nil, fmt.Errorf("%s: currency options entry `%s` is not a top-level map the response returns", decl.TypeName, decl.CurrencyOptions)
+		}
+		if c, ok := m.top("currency"); !ok || c.Shape != fields.String || !c.Response {
+			return nil, fmt.Errorf("%s: currency options need a top-level string field `currency` the response returns", decl.TypeName)
+		}
+	}
 	for _, l := range decl.Lookups {
 		n, ok := m.top(l.Field)
 		if !ok || n.Shape != fields.String || !n.Response {

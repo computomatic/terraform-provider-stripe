@@ -3,7 +3,6 @@ package terminal_configuration_test
 import (
 	"fmt"
 	"os"
-	"strings"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
@@ -140,19 +139,13 @@ func TestAccTerminalConfiguration_update(t *testing.T) {
 	})
 }
 
-// Removing an object from the configuration unsets it. The fake's handler panics on that
-// request for tipping (fake_internal_error), so this test skips, naming the fake bug, until
-// the fake is fixed. Any other error fails the test.
+// Removing an object from the configuration unsets it. The fake does not prove clearing
+// tipping yet (fake_unproven), so this test skips until it does. Any other error fails it.
 func TestAccTerminalConfiguration_unsetTipping(t *testing.T) {
 	acct := acctest.NewAccount(t)
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: tfacc.ProviderFactories,
-		ErrorCheck: func(err error) error {
-			if err != nil && strings.Contains(err.Error(), "fake_internal_error") && strings.Contains(err.Error(), "panicked") {
-				t.Skip("the fake panics when tipping is removed from a terminal configuration; fake bug, to be fixed")
-			}
-			return err
-		},
+		ErrorCheck:               tfacc.SkipWhenFakeLacks(t, "clearing tipping"),
 		Steps: []resource.TestStep{
 			{Config: configurationConfig(acct, "Store readers", tipping), Check: resource.TestCheckResourceAttr(address, "tipping.usd.smart_tip_threshold", "1000")},
 			{Config: configurationConfig(acct, "Store readers", ""), Check: resource.TestCheckNoResourceAttr(address, "tipping.usd.smart_tip_threshold")},

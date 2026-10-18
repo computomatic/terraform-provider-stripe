@@ -23,7 +23,9 @@ var Declaration = engine.Declaration{
 	},
 	// Stripe returns these only when asked for.
 	Expand: []string{"applies_to", "currency_options"},
-	Delete: engine.Delete,
+	// Stripe returns the coupon's own currency among the options and refuses it as one.
+	CurrencyOptions: "currency_options",
+	Delete:          engine.Delete,
 }
 
 // NewResource returns the resource constructor the provider registers.
