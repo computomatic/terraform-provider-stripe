@@ -11,7 +11,7 @@ import (
 	"github.com/computomatic/terraform-provider-stripe/internal/wire"
 )
 
-// adminClient is typed to the four admin calls the harness needs.
+// adminClient is typed to the five admin calls the harness needs.
 type adminClient struct {
 	baseURL string
 	token   string
@@ -141,4 +141,34 @@ func (a *adminClient) Health(ctx context.Context) (Health, error) {
 	h.FakeVersion, _ = obj.GetString("fake_version")
 	h.APIVersion, _ = obj.GetString("api_version")
 	return h, nil
+}
+
+// Seed inserts whole objects, such as files and events that no API call can create, and
+// returns the IDs the fake gave them, in order.
+func (a *adminClient) Seed(ctx context.Context, accountID string, objects []wire.Object) ([]string, error) {
+	items := make(wire.Array, len(objects))
+	for i, o := range objects {
+		items[i] = o
+	}
+	body, err := wire.EncodeJSON(wire.Object{{Name: "objects", Value: items}})
+	if err != nil {
+		return nil, err
+	}
+	obj, err := a.call(ctx, http.MethodPost, "/_fake/accounts/"+url.PathEscape(accountID)+"/seed", body)
+	if err != nil {
+		return nil, err
+	}
+	list, _ := obj.Get("objects")
+	refs, ok := list.(wire.Array)
+	if !ok || len(refs) != len(objects) {
+		return nil, fmt.Errorf("the seed response does not list the %d objects", len(objects))
+	}
+	ids := make([]string, len(refs))
+	for i, r := range refs {
+		ref, _ := r.(wire.Object)
+		if ids[i], _ = ref.GetString("id"); ids[i] == "" {
+			return nil, fmt.Errorf("seeded object %d has no id in the response", i)
+		}
+	}
+	return ids, nil
 }

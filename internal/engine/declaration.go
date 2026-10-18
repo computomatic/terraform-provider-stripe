@@ -53,7 +53,8 @@ type ArchiveAction struct {
 	Field string
 	// Value is the archived value. Ignored when Now is set.
 	Value wire.Value
-	// Now sets the field to the current Unix time, which is how file links expire.
+	// Now sends the literal `now`, which is how file links expire. A Unix time taken here can
+	// already be in the past by the time Stripe reads it, and Stripe refuses a past time.
 	Now bool
 	// Path is an action endpoint, such as `/v1/billing/meters/{id}/deactivate`, that
 	// archives the object by a bare POST. Empty means an update of Field.
@@ -83,6 +84,12 @@ type ExpireAction struct {
 	// StatusField and StatusValue name the status that says the object has ended.
 	StatusField string
 	StatusValue string
+	// NotStarted and Start name the status of an object that has not started yet, such as
+	// `scheduled`, and the update that starts it. Such an object cannot end before it
+	// starts, so destroy sends Start before the end time. Empty NotStarted means every object
+	// can be ended as it is.
+	NotStarted string
+	Start      wire.Object
 }
 
 // Lookup is a data source lookup key: a field Stripe documents as unique per account and
@@ -149,6 +156,10 @@ type Declaration struct {
 	// PreserveConfig lists attributes whose response is a redacted or reformatted value.
 	// The configured value stays in state.
 	PreserveConfig []string
+	// ReplaceOn lists updatable fields, by dotted path, that Stripe nevertheless refuses to
+	// change on update, such as a terminal location's `address.country`. A change forces
+	// replacement, as for a create-only field.
+	ReplaceOn []string
 	// Sets lists scalar arrays that are sets of values.
 	Sets []string
 	// Rename maps a Stripe field path to the attribute name used instead, for names

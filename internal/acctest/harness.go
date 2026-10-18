@@ -14,6 +14,8 @@ import (
 	"sync"
 	"testing"
 	"time"
+
+	"github.com/computomatic/terraform-provider-stripe/internal/wire"
 )
 
 const (
@@ -118,4 +120,22 @@ func RequestLog(t *testing.T, c Config) []LoggedRequest {
 		t.Fatalf("reading the request log: %v", err)
 	}
 	return log
+}
+
+// Seed inserts whole objects into the test's account through the fake's admin API and
+// returns their IDs in order. It is for objects Stripe creates on its own, such as files
+// and events. Each object names its type in `object`.
+func Seed(t *testing.T, c Config, objects ...wire.Object) []string {
+	t.Helper()
+	a, err := admin()
+	if err != nil || a == nil {
+		t.Fatalf("no fake available: %v", err)
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), adminTimeout)
+	defer cancel()
+	ids, err := a.Seed(ctx, c.AccountID, objects)
+	if err != nil {
+		t.Fatalf("seeding the account: %v", err)
+	}
+	return ids
 }
