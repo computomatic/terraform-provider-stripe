@@ -3,6 +3,7 @@ package coupon_test
 import (
 	"fmt"
 	"os"
+	"regexp"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
@@ -211,7 +212,6 @@ resource "stripe_coupon" "test" {
 `
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: tfacc.ProviderFactories,
-		ErrorCheck:               tfacc.SkipWhenFakeLacks(t, ""),
 		Steps: []resource.TestStep{
 			{
 				Config: cfg,
@@ -222,5 +222,110 @@ resource "stripe_coupon" "test" {
 			},
 			{Config: cfg, PlanOnly: true},
 		},
+	})
+}
+
+// couponOptionsConfig is a coupon with the given currency options.
+func couponOptionsConfig(c acctest.Config, options string) string {
+	return c.ProviderBlock() + fmt.Sprintf(`
+resource "stripe_coupon" "test" {
+  amount_off = 500
+  currency   = "usd"
+  duration   = "once"
+  currency_options = {
+%s  }
+}
+`, options)
+}
+
+// Stripe lists the coupon's own currency among the expanded options. It stays out of state,
+// so a configuration with only eur applies cleanly and plans empty.
+func TestAccCoupon_currencyOptions(t *testing.T) {
+	acct := acctest.NewAccount(t)
+	cfg := couponOptionsConfig(acct, "    eur = { amount_off = 400 }\n")
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: tfacc.ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: cfg,
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr(address, "currency_options.%", "1"),
+					resource.TestCheckResourceAttr(address, "currency_options.eur.amount_off", "400"),
+				),
+			},
+			{Config: cfg, PlanOnly: true},
+		},
+	})
+}
+
+func TestAccCoupon_currencyOptionsAddInPlace(t *testing.T) {
+	acct := acctest.NewAccount(t)
+	var first string
+	both := couponOptionsConfig(acct, "    eur = { amount_off = 400 }\n    gbp = { amount_off = 300 }\n")
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: tfacc.ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: couponOptionsConfig(acct, "    eur = { amount_off = 400 }\n"),
+				Check: resource.TestCheckResourceAttrWith(address, "id", func(v string) error {
+					first = v
+					return nil
+				}),
+			},
+			{
+				Config: both,
+				ConfigPlanChecks: resource.ConfigPlanChecks{PreApply: []plancheck.PlanCheck{
+					plancheck.ExpectResourceAction(address, plancheck.ResourceActionUpdate),
+				}},
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr(address, "currency_options.%", "2"),
+					resource.TestCheckResourceAttr(address, "currency_options.gbp.amount_off", "300"),
+					resource.TestCheckResourceAttrWith(address, "id", func(v string) error {
+						if v != first {
+							return fmt.Errorf("adding a currency replaced the coupon: %s became %s", first, v)
+						}
+						return nil
+					}),
+				),
+			},
+			{Config: both, PlanOnly: true},
+		},
+	})
+}
+
+func TestAccCoupon_currencyOptionsChangeReplaces(t *testing.T) {
+	acct := acctest.NewAccount(t)
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: tfacc.ProviderFactories,
+		Steps: []resource.TestStep{
+			{Config: couponOptionsConfig(acct, "    eur = { amount_off = 400 }\n    gbp = { amount_off = 300 }\n")},
+			{
+				Config: couponOptionsConfig(acct, "    eur = { amount_off = 450 }\n    gbp = { amount_off = 300 }\n"),
+				ConfigPlanChecks: resource.ConfigPlanChecks{PreApply: []plancheck.PlanCheck{
+					plancheck.ExpectResourceAction(address, plancheck.ResourceActionReplace),
+				}},
+				Check: resource.TestCheckResourceAttr(address, "currency_options.eur.amount_off", "450"),
+			},
+			// Stripe's suite does not prove removing an option, so it replaces as well.
+			{
+				Config: couponOptionsConfig(acct, "    eur = { amount_off = 450 }\n"),
+				ConfigPlanChecks: resource.ConfigPlanChecks{PreApply: []plancheck.PlanCheck{
+					plancheck.ExpectResourceAction(address, plancheck.ResourceActionReplace),
+				}},
+				Check: resource.TestCheckResourceAttr(address, "currency_options.%", "1"),
+			},
+		},
+	})
+}
+
+func TestAccCoupon_currencyOptionsRejectOwnCurrency(t *testing.T) {
+	acct := acctest.NewAccount(t)
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: tfacc.ProviderFactories,
+		Steps: []resource.TestStep{{
+			Config:      couponOptionsConfig(acct, "    usd = { amount_off = 400 }\n"),
+			PlanOnly:    true,
+			ExpectError: regexp.MustCompile(`(?s)Own currency in currency options.*currency of this object`),
+		}},
 	})
 }

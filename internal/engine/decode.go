@@ -36,6 +36,9 @@ func (m *model) decodeState(body wire.Object, prior basetypes.ObjectValue, objTy
 	for name, t := range objType.AttrTypes {
 		if n, ok := byAttr[name]; ok {
 			w, _ := body.Get(n.Name)
+			if n.Name == m.decl.CurrencyOptions {
+				w = withoutOwnCurrency(w, body)
+			}
 			attrs[name] = d.node(n, w, priorAttrs[name])
 			continue
 		}

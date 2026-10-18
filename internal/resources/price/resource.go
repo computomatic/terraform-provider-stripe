@@ -28,9 +28,17 @@ var Declaration = engine.Declaration{
 	// The last tier of a graduated or volume price is unbounded: Stripe returns its `up_to`
 	// as null, and the configuration says `inf`.
 	NullAs: map[string]string{"tiers.up_to": "inf", "currency_options.tiers.up_to": "inf"},
-	// Stripe derives each amount from the other, and reports an unset `tax_behavior` as
-	// `unspecified`.
-	ServerDefaulted: []string{"unit_amount", "unit_amount_decimal", "tax_behavior", "currency_options.tax_behavior"},
+	// Stripe derives each amount from the other, in tiers and currency options too, and
+	// reports an unset `tax_behavior` as `unspecified`.
+	ServerDefaulted: []string{
+		"unit_amount", "unit_amount_decimal", "tax_behavior",
+		"tiers.unit_amount", "tiers.unit_amount_decimal", "tiers.flat_amount", "tiers.flat_amount_decimal",
+		"currency_options.unit_amount", "currency_options.unit_amount_decimal", "currency_options.tax_behavior",
+		"currency_options.tiers.unit_amount", "currency_options.tiers.unit_amount_decimal",
+		"currency_options.tiers.flat_amount", "currency_options.tiers.flat_amount_decimal",
+	},
+	// Stripe returns the price's own currency among the options and refuses it as one.
+	CurrencyOptions: "currency_options",
 	Delete:          engine.Archive,
 	Archive:         &engine.ArchiveAction{Field: "active", Value: wire.Bool(false)},
 	Lookups:         []engine.Lookup{{Field: "lookup_key", Param: "lookup_keys", Array: true}},

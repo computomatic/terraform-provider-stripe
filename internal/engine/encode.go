@@ -52,6 +52,14 @@ func (m *model) encodeUpdate(plan, state basetypes.ObjectValue) (wire.Object, er
 			}
 		case pv.IsNull():
 			out = append(out, wire.Field{Name: n.Name, Value: wire.Null{}})
+		case n.Name == m.decl.CurrencyOptions:
+			v, ok, err := encodeValue(n, addedKeys(pv, sv), func(k *node) bool { return k.Update })
+			if err != nil {
+				return nil, err
+			}
+			if ok {
+				out = append(out, wire.Field{Name: n.Name, Value: v})
+			}
 		default:
 			v, ok, err := encodeValue(n, withoutUnchangedDefaults(n, pv, sv), func(k *node) bool { return k.Update })
 			if err != nil {

@@ -142,6 +142,14 @@ type Declaration struct {
 	// `expand[]`, such as a price's `tiers`. The engine asks for them on every request that
 	// returns the object, so they are read back and drift in them is detected.
 	Expand []string
+	// CurrencyOptions names a top-level map of per-currency options, such as a price's
+	// `currency_options`, on an object with a top-level `currency`. Stripe always returns the
+	// object's own currency in that map and refuses a request that names it, so the engine
+	// leaves that key out of state and rejects it in the configuration. Stripe also refuses to
+	// change an existing currency's option, but accepts a new currency, so changing or
+	// removing a key replaces the object and adding one is an update that sends only the new
+	// keys.
+	CurrencyOptions string
 	// NullAs maps a field path to the string Stripe's null stands for, such as `inf` for
 	// the unbounded last tier's `up_to`. A null or missing value decodes to the string.
 	NullAs map[string]string

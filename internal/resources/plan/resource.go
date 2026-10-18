@@ -27,9 +27,12 @@ var Declaration = engine.Declaration{
 	// The last tier of a tiered plan is unbounded: Stripe returns its `up_to` as null, and
 	// the configuration says `inf`.
 	NullAs: map[string]string{"tiers.up_to": "inf"},
-	// Stripe derives each amount from the other.
-	ServerDefaulted: []string{"amount", "amount_decimal"},
-	Delete:          engine.Delete,
+	// Stripe derives each amount from the other, in tiers too.
+	ServerDefaulted: []string{
+		"amount", "amount_decimal",
+		"tiers.unit_amount", "tiers.unit_amount_decimal", "tiers.flat_amount", "tiers.flat_amount_decimal",
+	},
+	Delete: engine.Delete,
 }
 
 // NewResource returns the resource constructor the provider registers.
