@@ -240,3 +240,24 @@ func TestObjectAccessors(t *testing.T) {
 		t.Fatal("GetBool")
 	}
 }
+
+// A /v2 body is the JSON of the same tree: null stays null, empty collections stay empty,
+// and member order is kept.
+func TestEncodeJSONOfUnsetEmptyAndNull(t *testing.T) {
+	body := Object{
+		{Name: "name", Value: String("w")},
+		{Name: "description", Value: Null{}},
+		{Name: "events", Value: Array{}},
+		{Name: "target", Value: Object{}},
+		{Name: "metadata", Value: Object{{Name: "gone", Value: Null{}}, {Name: "new", Value: String("v")}}},
+		{Name: "count", Value: Int(0)},
+	}
+	got, err := EncodeJSON(body)
+	if err != nil {
+		t.Fatal(err)
+	}
+	want := `{"name":"w","description":null,"events":[],"target":{},"metadata":{"gone":null,"new":"v"},"count":0}`
+	if string(got) != want {
+		t.Errorf("got %s\nwant %s", got, want)
+	}
+}

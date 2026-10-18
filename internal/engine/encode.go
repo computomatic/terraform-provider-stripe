@@ -3,6 +3,7 @@ package engine
 import (
 	"context"
 	"fmt"
+	"slices"
 	"sort"
 	"strconv"
 
@@ -16,8 +17,76 @@ import (
 
 // encodeCreate builds the create request body from the plan: every configured field
 // Stripe takes on create. Unknown and null values are left out.
+//
+// A `/v2` body leaves out an empty list, set, map or object unless Stripe requires the
+// field: JSON has no unset marker the conformance suite has proven, and an Optional
+// collection configured empty means the same as one left out.
 func (m *model) encodeCreate(plan basetypes.ObjectValue) (wire.Object, error) {
-	return encodeObject(m.nodes, plan.Attributes(), func(n *node) bool { return n.Create })
+	body, err := encodeObject(m.nodes, plan.Attributes(), func(n *node) bool { return n.Create })
+	if err != nil || !m.v2 {
+		return body, err
+	}
+	return pruneEmpty(m.nodes, body), nil
+}
+
+// pruneEmpty drops, at every depth, the empty arrays and objects of fields that are not
+// required.
+func pruneEmpty(kids []*node, obj wire.Object) wire.Object {
+	var out wire.Object
+	for _, f := range obj {
+		k := findNode(kids, f.Name)
+		if k == nil {
+			out = append(out, f)
+			continue
+		}
+		v := f.Value
+		switch t := v.(type) {
+		case wire.Object:
+			if k.Shape == fields.ObjectMap {
+				pruned := make(wire.Object, len(t))
+				for i, entry := range t {
+					inner, _ := entry.Value.(wire.Object)
+					pruned[i] = wire.Field{Name: entry.Name, Value: pruneEmpty(k.Kids, inner)}
+				}
+				v = pruned
+			} else if k.Shape == fields.Object {
+				v = pruneEmpty(k.Kids, t)
+			}
+		case wire.Array:
+			if k.Shape == fields.ObjectList {
+				pruned := make(wire.Array, len(t))
+				for i, item := range t {
+					inner, _ := item.(wire.Object)
+					pruned[i] = pruneEmpty(k.Kids, inner)
+				}
+				v = pruned
+			}
+		}
+		if emptyWire(v) && !k.Required {
+			continue
+		}
+		out = append(out, wire.Field{Name: f.Name, Value: v})
+	}
+	return out
+}
+
+func findNode(kids []*node, name string) *node {
+	for _, k := range kids {
+		if k.Name == name {
+			return k
+		}
+	}
+	return nil
+}
+
+func emptyWire(v wire.Value) bool {
+	switch t := v.(type) {
+	case wire.Array:
+		return len(t) == 0
+	case wire.Object:
+		return len(t) == 0
+	}
+	return false
 }
 
 // encodeFollowUp builds the update that sets fields Stripe takes only on update and never
@@ -41,6 +110,11 @@ func (m *model) encodeUpdate(plan, state basetypes.ObjectValue) (wire.Object, er
 		if pv == nil || pv.IsUnknown() || pv.Equal(sv) {
 			continue
 		}
+		// On /v2 an empty collection and no value mean the same, and neither is proven as
+		// something to send, so a change between the two sends nothing.
+		if m.v2 && n.Name != "metadata" && (emptyCollection(pv) && (sv == nil || sv.IsNull()) || pv.IsNull() && sv != nil && emptyCollection(sv)) {
+			continue
+		}
 		switch {
 		case n.Name == "metadata" && n.Shape == fields.StringMap:
 			diff, err := metadataDiff(pv, sv)
@@ -50,6 +124,8 @@ func (m *model) encodeUpdate(plan, state basetypes.ObjectValue) (wire.Object, er
 			if len(diff) > 0 {
 				out = append(out, wire.Field{Name: n.Name, Value: diff})
 			}
+		case pv.IsNull() && m.v2 && !slices.Contains(m.decl.ClearsWithNull, n.Name):
+			return nil, fmt.Errorf("clearing `%s` is not supported on this resource: Stripe's /v2 behaviour for null is not yet verified for it", n.Path)
 		case pv.IsNull():
 			out = append(out, wire.Field{Name: n.Name, Value: wire.Null{}})
 		case n.Name == m.decl.CurrencyOptions:

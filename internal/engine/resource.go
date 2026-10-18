@@ -7,6 +7,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	rschema "github.com/hashicorp/terraform-plugin-framework/resource/schema"
@@ -78,9 +79,12 @@ func (r *Resource) Configure(ctx context.Context, req resource.ConfigureRequest,
 		resp.Diagnostics.AddError("Unexpected provider data", fmt.Sprintf("expected a Stripe client, got %T", req.ProviderData))
 		return
 	}
-	r.api = api{m: r.m, client: client, hasAttribute: func(p path.Path) bool {
-		_, diags := r.schema.AttributeAtPath(ctx, p)
-		return !diags.HasError()
+	r.api = api{m: r.m, client: client, typeAt: func(p path.Path) (attr.Type, bool) {
+		a, diags := r.schema.AttributeAtPath(ctx, p)
+		if diags.HasError() {
+			return nil, false
+		}
+		return a.GetType(), true
 	}}
 }
 

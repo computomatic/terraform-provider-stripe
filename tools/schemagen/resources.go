@@ -7,6 +7,9 @@ var Resources = []Resource{
 	{Package: "billing_meter", CreatePath: "/v1/billing/meters", UpdatePath: "/v1/billing/meters/{id}"},
 	{Package: "billing_portal_configuration", CreatePath: "/v1/billing_portal/configurations", UpdatePath: "/v1/billing_portal/configurations/{configuration}"},
 	{Package: "country_spec", ReadPath: "/v1/country_specs/{country}", Omit: []string{"supported_bank_account_currencies"}},
+	// The Omit entries: `include` is a request parameter, not an object field, and the signing
+	// secret waits for the conformance suite and the fake to prove it (ADR 2026-10-17-v2-support).
+	{Package: "core_event_destination", CreatePath: "/v2/core/event_destinations", UpdatePath: "/v2/core/event_destinations/{id}", Omit: []string{"include", "webhook_endpoint.signing_secret"}},
 	{Package: "coupon", CreatePath: "/v1/coupons", UpdatePath: "/v1/coupons/{coupon}"},
 	{Package: "customer", CreatePath: "/v1/customers", UpdatePath: "/v1/customers/{customer}", Omit: []string{"sources", "subscriptions"}},
 	{Package: "entitlements_feature", CreatePath: "/v1/entitlements/features", UpdatePath: "/v1/entitlements/features/{id}"},

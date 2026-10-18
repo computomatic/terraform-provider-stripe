@@ -25,6 +25,9 @@ const (
 	ReadTimeout = 5 * time.Minute
 	// listLimit is the page size of a data source lookup.
 	listLimit = 100
+	// listLimitV2 is the page size of a `/v2` lookup: the largest the conformance suite
+	// sends, because `/v2`'s maximum is unobserved.
+	listLimitV2 = 20
 
 	expirePollInterval = time.Second
 )
@@ -33,8 +36,8 @@ const (
 type api struct {
 	m      *model
 	client Client
-	// hasAttribute reports whether a path exists in the schema, to attach errors to it.
-	hasAttribute func(path.Path) bool
+	// typeAt gives the type of the attribute at a path, to attach errors to it.
+	typeAt stripeapi.AttributeType
 }
 
 func (a *api) call(ctx context.Context, method, target string, params wire.Object) (wire.Object, error) {
@@ -43,9 +46,6 @@ func (a *api) call(ctx context.Context, method, target string, params wire.Objec
 		Path:      target,
 		Params:    params,
 		Sensitive: a.m.sensitiveNames,
-	}
-	if a.m.decl.V2 {
-		req.Encoding = stripeapi.JSONEncoding
 	}
 	resp, err := a.client.Do(ctx, req)
 	if err != nil {
@@ -61,9 +61,17 @@ func (a *api) call(ctx context.Context, method, target string, params wire.Objec
 	return obj, nil
 }
 
-// expanded returns params with the declaration's `expand[]` entries added. prefix is
-// `data.` for a list response. A declaration that expands nothing gets params back.
+// expanded returns params with the declaration's `expand[]` entries added, or its `include`
+// values for a `/v2` object. prefix is `data.` for a `/v1` list response; `include` has no
+// prefix. A declaration that expands and includes nothing gets params back.
 func (a *api) expanded(params wire.Object, prefix string) wire.Object {
+	if len(a.m.decl.Include) > 0 {
+		values := make(wire.Array, len(a.m.decl.Include))
+		for i, v := range a.m.decl.Include {
+			values[i] = wire.String(v)
+		}
+		return append(append(wire.Object(nil), params...), wire.Field{Name: "include", Value: values})
+	}
 	if len(a.m.decl.Expand) == 0 {
 		return params
 	}
@@ -75,7 +83,7 @@ func (a *api) expanded(params wire.Object, prefix string) wire.Object {
 }
 
 func (a *api) fail(diags *diag.Diagnostics, err error) {
-	stripeapi.AddToDiagnostics(diags, err, a.hasAttribute)
+	stripeapi.AddToDiagnostics(diags, err, a.typeAt)
 }
 
 // expand fills a path template. A parent placeholder is only expanded when the

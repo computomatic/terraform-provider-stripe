@@ -6,6 +6,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	dschema "github.com/hashicorp/terraform-plugin-framework/datasource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/path"
@@ -61,9 +62,12 @@ func (d *DataSource) Configure(ctx context.Context, req datasource.ConfigureRequ
 		resp.Diagnostics.AddError("Unexpected provider data", fmt.Sprintf("expected a Stripe client, got %T", req.ProviderData))
 		return
 	}
-	d.api = api{m: d.m, client: client, hasAttribute: func(p path.Path) bool {
-		_, diags := d.schema.AttributeAtPath(ctx, p)
-		return !diags.HasError()
+	d.api = api{m: d.m, client: client, typeAt: func(p path.Path) (attr.Type, bool) {
+		a, diags := d.schema.AttributeAtPath(ctx, p)
+		if diags.HasError() {
+			return nil, false
+		}
+		return a.GetType(), true
 	}}
 }
 
@@ -148,6 +152,21 @@ func (d *DataSource) Read(ctx context.Context, req datasource.ReadRequest, resp 
 	resp.Diagnostics.Append(resp.State.Set(ctx, state)...)
 }
 
+// hasMore reports whether a list has another page: `has_more` on `/v1`, a non-null
+// `next_page_url` on `/v2`, which has no `has_more`.
+func hasMore(page wire.Object, v2 bool) bool {
+	if !v2 {
+		more, _ := page.GetBool("has_more")
+		return more
+	}
+	next, ok := page.Get("next_page_url")
+	if !ok {
+		return false
+	}
+	_, isNull := next.(wire.Null)
+	return !isNull
+}
+
 // lookup finds the one object whose unique key matches the configured value, using the
 // list endpoint's filter (never Search, which lags writes). It reads one page, which is
 // enough to prove zero, one or more than one match. A nil body with no error means an
@@ -166,8 +185,12 @@ func (d *DataSource) lookup(ctx context.Context, config basetypes.ObjectValue, p
 		if l.Array {
 			filter = wire.Array{wire.String(value)}
 		}
+		limit := wire.Int(listLimit)
+		if d.m.v2 {
+			limit = listLimitV2
+		}
 		params := wire.Object{
-			{Name: "limit", Value: wire.Int(listLimit)},
+			{Name: "limit", Value: limit},
 			{Name: param, Value: filter},
 		}
 		page, err := d.api.call(ctx, "GET", d.m.expand(d.m.decl.Paths.List, "", parent), d.api.expanded(params, "data."))
@@ -176,7 +199,7 @@ func (d *DataSource) lookup(ctx context.Context, config basetypes.ObjectValue, p
 		}
 		data, _ := page.Get("data")
 		items, _ := data.(wire.Array)
-		more, _ := page.GetBool("has_more")
+		more := hasMore(page, d.m.v2)
 		label := fmt.Sprintf("%s=%s", l.Field, value)
 		switch {
 		case len(items) == 0:
