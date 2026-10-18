@@ -66,6 +66,12 @@ In this mode every test shares the one account, and the key stays in the environ
 
 CI (`.github/workflows/ci.yml`) runs the checks as the `unit` job, the docs check (`scripts/check-docs.sh`) as the `docs` job, and the acceptance tests as the `acceptance` job, under Terraform and then OpenTofu, against the released fake image named by `.fake-version`. To move to a newer fake, change that one line.
 
+## The smoke bundle
+
+`.github/workflows/smoke-bundle.yml` publishes `ghcr.io/computomatic/terraform-provider-stripe-smoke` on every push to `main` (tags `sha-<sha>` and `main`) and every `v*` tag (`sha-<sha>` and the version). The image holds the wave 1 acceptance test binaries, the sweep, Terraform at the version `ci.yml` pins, and `entrypoint.sh`; the stripe-api-conformance workflow runs it against the CI sandbox. Only the 30 newest versions tagged `sha-` alone are kept.
+
+`scripts/smoke-bundle/build.sh` stages the build context. To try the image without Stripe, build it from a linux/amd64 Terraform and run it against a fake: it refuses to start without `TF_SMOKE=1`, and `STRIPE_BASE_URL` can point the sandbox mode at a fake account's URL with that account's key (the entrypoint reads neither). The tests that need a fake-only feature (the two `_replace` tests) fail there, because smoke mode does not skip them.
+
 ## Trying a build against the fake
 
 Start the fake Stripe API with `-default-account-key sk_test_<anything>`, then point `base_url` at it:
