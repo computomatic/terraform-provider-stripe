@@ -1,0 +1,1 @@
+terraform import stripe_terminal_reader.counter tmr_123

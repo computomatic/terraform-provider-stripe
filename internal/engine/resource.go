@@ -399,7 +399,7 @@ func (r *Resource) archive(ctx context.Context, id, parent string) error {
 	}
 	if a.Path != "" {
 		_, err = r.api.call(ctx, "POST", r.m.expand(a.Path, id, parent), nil)
-		return err
+		return r.keepIfProtected(ctx, id, parent, err)
 	}
 	value := a.Value
 	if a.Now {

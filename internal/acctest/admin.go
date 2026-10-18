@@ -165,10 +165,12 @@ func (a *adminClient) Seed(ctx context.Context, accountID string, objects []wire
 	}
 	ids := make([]string, len(refs))
 	for i, r := range refs {
-		ref, _ := r.(wire.Object)
-		if ids[i], _ = ref.GetString("id"); ids[i] == "" {
-			return nil, fmt.Errorf("seeded object %d has no id in the response", i)
+		ref, ok := r.(wire.Object)
+		if !ok {
+			return nil, fmt.Errorf("seeded object %d is not an object in the response", i)
 		}
+		// A singleton such as the balance has no ID, so its entry is empty.
+		ids[i], _ = ref.GetString("id")
 	}
 	return ids, nil
 }

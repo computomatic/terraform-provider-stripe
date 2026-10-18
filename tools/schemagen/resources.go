@@ -66,4 +66,12 @@ var Resources = []Resource{
 	{Package: "dispute", ReadPath: "/v1/disputes/{dispute}"},
 	{Package: "checkout_session", ReadPath: "/v1/checkout/sessions/{session}"},
 	{Package: "mandate", ReadPath: "/v1/mandates/{mandate}"},
+	// Wave 7 batch a. The Climate catalogue is read-only. The identity session leaves out
+	// verification flows and related persons, which the suite does not prove, so it takes a
+	// `type`. Its redact action is a transition the resource leaves out.
+	{Package: "terminal_reader", CreatePath: "/v1/terminal/readers", UpdatePath: "/v1/terminal/readers/{reader}", Omit: []string{"action.api_error.payment_intent", "action.api_error.setup_intent", "action.api_error.source"}},
+	{Package: "climate_order", CreatePath: "/v1/climate/orders", UpdatePath: "/v1/climate/orders/{order}"},
+	{Package: "identity_verification_session", CreatePath: "/v1/identity/verification_sessions", UpdatePath: "/v1/identity/verification_sessions/{session}", Omit: []string{"verification_flow", "related_person"}, Require: []string{"type"}},
+	{Package: "climate_product", ReadPath: "/v1/climate/products/{product}"},
+	{Package: "climate_supplier", ReadPath: "/v1/climate/suppliers/{supplier}"},
 }

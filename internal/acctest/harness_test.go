@@ -111,3 +111,17 @@ func TestSeedInsertsAnObjectTheAPICannotCreate(t *testing.T) {
 		t.Fatalf("GET of the seeded file: HTTP %d", got)
 	}
 }
+
+// The balance has no ID, so seeding it returns an empty entry.
+func TestSeedInsertsTheBalanceWhichHasNoID(t *testing.T) {
+	c := NewAccount(t)
+	ids := Seed(t, c, wire.Object{
+		{Name: "object", Value: wire.String("balance")},
+		{Name: "livemode", Value: wire.Bool(false)},
+		{Name: "available", Value: wire.Array{wire.Object{{Name: "amount", Value: wire.Int(1000)}, {Name: "currency", Value: wire.String("cad")}}}},
+		{Name: "pending", Value: wire.Array{wire.Object{{Name: "amount", Value: wire.Int(0)}, {Name: "currency", Value: wire.String("cad")}}}},
+	})
+	if len(ids) != 1 || ids[0] != "" {
+		t.Fatalf("seeded ids: %q", ids)
+	}
+}

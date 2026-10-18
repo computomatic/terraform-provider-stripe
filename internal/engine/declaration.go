@@ -251,6 +251,11 @@ type Declaration struct {
 	// A field removed from the configuration is never sent as null.
 	SendWithUpdate   []string
 	SendWithUpdateOn []string
+	// ExactlyOneOf lists groups of top-level writable fields of which a configuration sets
+	// exactly one, for the alternatives Stripe's create takes, such as a climate order's
+	// `amount` or `metric_tons`. A plan that sets none or several is refused before Stripe is
+	// called. A value unknown at plan time is left for apply.
+	ExactlyOneOf [][]string
 	// Sets lists scalar arrays that are sets of values.
 	Sets []string
 	// Rename maps a Stripe field path to the attribute name used instead, for names
