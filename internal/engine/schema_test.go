@@ -13,6 +13,8 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 	"github.com/hashicorp/terraform-plugin-go/tftypes"
+
+	"github.com/computomatic/terraform-provider-stripe/internal/fields"
 )
 
 // The engine builds a valid schema for a declaration whose table has every shape of the
@@ -115,19 +117,21 @@ func TestDataSourceSchemaFromFixture(t *testing.T) {
 
 func TestDeclarationsAreCheckedAgainstTheTable(t *testing.T) {
 	cases := map[string]func(*Declaration){
-		"once":        func(d *Declaration) { d.OnceReturned = []string{"nope"} },
-		"pruned":      func(d *Declaration) { d.NotServerDefaulted = []string{"nope"} },
-		"sensitive":   func(d *Declaration) { d.Sensitive = []string{"nope"} },
-		"preserve":    func(d *Declaration) { d.PreserveConfig = []string{"secret"} },
-		"set":         func(d *Declaration) { d.Sets = []string{"name"} },
-		"rename":      func(d *Declaration) { d.Rename = map[string]string{"nope": "x"} },
-		"lookup":      func(d *Declaration) { d.Lookups = []Lookup{{Field: "quantity"}} },
-		"reserved":    func(d *Declaration) { d.Rename = nil },
-		"collision":   func(d *Declaration) { d.Rename = map[string]string{"name": "timeouts"} },
-		"archive":     func(d *Declaration) { d.Delete = Archive },
-		"expire":      func(d *Declaration) { d.Delete = Expire },
-		"delete path": func(d *Declaration) { d.Paths.Delete = "" },
-		"type name":   func(d *Declaration) { d.TypeName = "" },
+		"once":                   func(d *Declaration) { d.OnceReturned = []string{"nope"} },
+		"pruned":                 func(d *Declaration) { d.NotServerDefaulted = []string{"nope"} },
+		"sensitive":              func(d *Declaration) { d.Sensitive = []string{"nope"} },
+		"preserve":               func(d *Declaration) { d.PreserveConfig = []string{"secret"} },
+		"set":                    func(d *Declaration) { d.Sets = []string{"name"} },
+		"rename":                 func(d *Declaration) { d.Rename = map[string]string{"nope": "x"} },
+		"replace on":             func(d *Declaration) { d.ReplaceOn = []string{"nope"} },
+		"replace on create-only": func(d *Declaration) { d.ReplaceOn = []string{"kind"} },
+		"lookup":                 func(d *Declaration) { d.Lookups = []Lookup{{Field: "quantity"}} },
+		"reserved":               func(d *Declaration) { d.Rename = nil },
+		"collision":              func(d *Declaration) { d.Rename = map[string]string{"name": "timeouts"} },
+		"archive":                func(d *Declaration) { d.Delete = Archive },
+		"expire":                 func(d *Declaration) { d.Delete = Expire },
+		"delete path":            func(d *Declaration) { d.Paths.Delete = "" },
+		"type name":              func(d *Declaration) { d.TypeName = "" },
 	}
 	for name, mutate := range cases {
 		t.Run(name, func(t *testing.T) {
@@ -251,5 +255,57 @@ func TestDataSourceRequiresExactlyOneLookup(t *testing.T) {
 	}
 	if !validate(map[string]string{"id": "x"}) || !validate(map[string]string{"kind": "a"}) {
 		t.Error("one lookup must be accepted")
+	}
+}
+
+// ReplaceOn makes a nested updatable field force replacement, as a create-only field does,
+// and leaves its siblings updatable in place.
+func TestReplaceOnForcesReplacementOfANestedField(t *testing.T) {
+	decl := fixtureDeclaration()
+	decl.ReplaceOn = []string{"address.line1", "quantity"}
+	r := configured(t, decl, fixtureTable(), newStub())
+	address := r.schema.Attributes["address"].(rschema.SingleNestedAttribute)
+	if line1 := address.Attributes["line1"].(rschema.StringAttribute); len(line1.PlanModifiers) != 1 {
+		t.Errorf("address.line1 must require replacement: %#v", line1)
+	}
+	if quantity := r.schema.Attributes["quantity"].(rschema.Int64Attribute); len(quantity.PlanModifiers) != 1 {
+		t.Errorf("quantity must require replacement: %#v", quantity)
+	}
+	if name := r.schema.Attributes["name"].(rschema.StringAttribute); len(name.PlanModifiers) != 0 {
+		t.Errorf("name stays updatable in place: %#v", name)
+	}
+}
+
+// A ReplaceOn field Stripe fills in when it is left out is Optional+Computed. It keeps its
+// state value when something else changes, or RequiresReplace would fire on an unrelated edit.
+func TestReplaceOnOfAServerDefaultedFieldKeepsItsState(t *testing.T) {
+	table := []fields.Field{
+		{Name: "id", Shape: fields.String, Response: true},
+		{Name: "name", Shape: fields.String, Required: true, Create: true, Update: true, Response: true},
+		{Name: "region", Shape: fields.String, Create: true, Update: true, Response: true, ServerDefaulted: true},
+	}
+	decl := planDecl()
+	decl.ReplaceOn = []string{"region"}
+
+	r := configured(t, decl, table, newStub())
+	region := r.schema.Attributes["region"].(rschema.StringAttribute)
+	if !region.Optional || !region.Computed || len(region.PlanModifiers) != 2 {
+		t.Fatalf("region must be Optional+Computed with UseStateForUnknown and RequiresReplace: %#v", region)
+	}
+
+	p := newPlanner(t, decl, table)
+	state := map[string]tftypes.Value{"id": tfString("id_1"), "name": tfString("n"), "region": tfString("us")}
+	config := map[string]tftypes.Value{"name": tfString("changed")}
+	proposed := map[string]tftypes.Value{"id": tfString("id_1"), "name": tfString("changed"), "region": tfString("us")}
+	planned, replace := p.plan(p.value(state), p.value(proposed), p.value(config))
+	if len(replace) != 0 {
+		t.Fatalf("changing name must not replace the resource: %v", replace)
+	}
+	got, err := planned.ApplyTerraform5AttributePathStep(tftypes.AttributeName("region"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if v := got.(tftypes.Value); !v.Equal(tfString("us")) {
+		t.Fatalf("region must keep its state value, got %v", v)
 	}
 }

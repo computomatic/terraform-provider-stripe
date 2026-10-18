@@ -342,7 +342,7 @@ func (r *Resource) archive(ctx context.Context, id, parent string) error {
 	}
 	value := a.Value
 	if a.Now {
-		value = wire.Int(time.Now().Unix())
+		value = wire.String("now")
 	}
 	_, err = r.api.call(ctx, "POST", r.m.expand(r.m.decl.Paths.Update, id, parent), wire.Object{{Name: a.Field, Value: value}})
 	return r.keepIfProtected(ctx, id, parent, err)
@@ -398,8 +398,14 @@ func (r *Resource) expire(ctx context.Context, id, parent string) error {
 		return err
 	}
 	if !expired(body, e) {
+		update := r.m.expand(r.m.decl.Paths.Update, id, parent)
+		if status, _ := body.GetString(e.StatusField); e.NotStarted != "" && status == e.NotStarted {
+			if _, err := r.api.call(ctx, "POST", update, e.Start); err != nil {
+				return err
+			}
+		}
 		at := wire.Int(time.Now().Unix() + e.Seconds)
-		if _, err := r.api.call(ctx, "POST", r.m.expand(r.m.decl.Paths.Update, id, parent), wire.Object{{Name: e.Field, Value: at}}); err != nil {
+		if _, err := r.api.call(ctx, "POST", update, wire.Object{{Name: e.Field, Value: at}}); err != nil {
 			return err
 		}
 	}

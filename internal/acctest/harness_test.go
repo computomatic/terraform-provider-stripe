@@ -5,14 +5,27 @@ import (
 	"io"
 	"net/http"
 	"os"
+	"strings"
 	"testing"
+
+	"github.com/computomatic/terraform-provider-stripe/internal/wire"
 )
 
 func TestMain(m *testing.M) { os.Exit(Main(m)) }
 
 func getBalance(t *testing.T, c Config, key string) int {
 	t.Helper()
-	req, err := http.NewRequestWithContext(context.Background(), http.MethodGet, c.BaseURL+"/v1/balance", nil)
+	return getStatusWithKey(t, c, "/v1/balance", key)
+}
+
+func getStatus(t *testing.T, c Config, path string) int {
+	t.Helper()
+	return getStatusWithKey(t, c, path, c.Key)
+}
+
+func getStatusWithKey(t *testing.T, c Config, path, key string) int {
+	t.Helper()
+	req, err := http.NewRequestWithContext(context.Background(), http.MethodGet, c.BaseURL+path, nil)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -76,5 +89,25 @@ func TestProviderBlock(t *testing.T) {
 	want := "provider \"stripe\" {\n  api_key  = \"sk_test_k\"\n  base_url = \"http://127.0.0.1:1\"\n}\n"
 	if got := c.ProviderBlock(); got != want {
 		t.Fatalf("got %q", got)
+	}
+}
+
+func TestSeedInsertsAnObjectTheAPICannotCreate(t *testing.T) {
+	c := NewAccount(t)
+	ids := Seed(t, c, wire.Object{
+		{Name: "object", Value: wire.String("file")},
+		{Name: "filename", Value: wire.String("seed.png")},
+		{Name: "purpose", Value: wire.String("dispute_evidence")},
+		{Name: "size", Value: wire.Int(70)},
+		{Name: "type", Value: wire.String("png")},
+		{Name: "title", Value: wire.Null{}},
+		{Name: "url", Value: wire.Null{}},
+		{Name: "expires_at", Value: wire.Null{}},
+	})
+	if len(ids) != 1 || !strings.HasPrefix(ids[0], "file_") {
+		t.Fatalf("seeded ids: %v", ids)
+	}
+	if got := getStatus(t, c, "/v1/files/"+ids[0]); got != http.StatusOK {
+		t.Fatalf("GET of the seeded file: HTTP %d", got)
 	}
 }

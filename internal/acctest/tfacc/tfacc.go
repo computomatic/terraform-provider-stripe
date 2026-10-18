@@ -40,7 +40,7 @@ func Post(t *testing.T, c acctest.Config, path string, params wire.Object) {
 
 // SkipWhenFakeLacks returns an ErrorCheck that skips the test when the fake answers
 // `fake_not_implemented` or `fake_unproven` for something that mentions needle, such as a
-// parameter name. Any other error fails the test. The provider never works around a fake
+// parameter name. Any other error, a fake crash included, fails the test. The provider never works around a fake
 // gap: the test runs again once the fake serves it.
 func SkipWhenFakeLacks(t *testing.T, needle string) func(error) error {
 	return func(err error) error {

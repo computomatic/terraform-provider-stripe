@@ -342,6 +342,26 @@ func TestArchiveNow(t *testing.T) {
 	}
 }
 
+// The archive request carries the literal `now`: a Unix time can be a second behind Stripe's
+// clock by the time it arrives, and Stripe refuses a time that is not in the future.
+func TestArchiveNowSendsTheLiteral(t *testing.T) {
+	decl := fixtureDeclaration()
+	decl.Delete = Archive
+	decl.Archive = &ArchiveAction{Field: "expires_at", Now: true}
+	var sent wire.Object
+	client := clientFunc(func(_ context.Context, req stripeapi.Request) (*stripeapi.Response, error) {
+		if req.Method == "POST" {
+			sent = req.Params
+		}
+		return &stripeapi.Response{Body: wire.Object{{Name: "expires_at", Value: wire.Null{}}}}, nil
+	})
+	r := configured(t, decl, fixtureTable(), client)
+	noErrors(t, r.destroy(t, r.fill(map[string]attr.Value{"id": types.StringValue("wid_1")})))
+	if v, ok := sent.Get("expires_at"); !ok || v != wire.Value(wire.String("now")) {
+		t.Errorf("archive request: %v", sent)
+	}
+}
+
 func TestExpireStrategy(t *testing.T) {
 	decl := fixtureDeclaration()
 	decl.Delete = Expire
@@ -371,6 +391,44 @@ func TestExpireStrategy(t *testing.T) {
 	}
 	if polls < 3 {
 		t.Errorf("did not wait for the status: %d reads", polls)
+	}
+}
+
+// An object that has not started cannot end before it starts, so destroy starts it first.
+func TestExpireStartsAnObjectThatHasNotStarted(t *testing.T) {
+	decl := fixtureDeclaration()
+	decl.Delete = Expire
+	decl.Expire = &ExpireAction{
+		Field: "expires_at", Seconds: 5, StatusField: "status", StatusValue: "expired",
+		NotStarted: "scheduled", Start: wire.Object{{Name: "active_from", Value: wire.String("now")}},
+	}
+	for _, c := range []struct {
+		status string
+		want   []string
+	}{
+		{"scheduled", []string{"active_from", "expires_at"}},
+		{"active", []string{"expires_at"}},
+	} {
+		t.Run(c.status, func(t *testing.T) {
+			var posts []string
+			client := clientFunc(func(_ context.Context, req stripeapi.Request) (*stripeapi.Response, error) {
+				if req.Method == "POST" {
+					posts = append(posts, req.Params[0].Name)
+					return &stripeapi.Response{Body: wire.Object{}}, nil
+				}
+				status := c.status
+				if len(posts) > 0 && posts[len(posts)-1] == "expires_at" {
+					status = "expired"
+				}
+				return &stripeapi.Response{Body: wire.Object{{Name: "status", Value: wire.String(status)}}}, nil
+			})
+			r := configured(t, decl, fixtureTable(), client)
+			r.pollInterval = time.Millisecond
+			noErrors(t, r.destroy(t, r.fill(map[string]attr.Value{"id": types.StringValue("wid_1")})))
+			if strings.Join(posts, ",") != strings.Join(c.want, ",") {
+				t.Errorf("updates sent: %v, want %v", posts, c.want)
+			}
+		})
 	}
 }
 

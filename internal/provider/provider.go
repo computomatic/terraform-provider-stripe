@@ -16,22 +16,38 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 
+	"github.com/computomatic/terraform-provider-stripe/internal/resources/apple_pay_domain"
 	"github.com/computomatic/terraform-provider-stripe/internal/resources/balance"
+	"github.com/computomatic/terraform-provider-stripe/internal/resources/balance_settings"
+	"github.com/computomatic/terraform-provider-stripe/internal/resources/balance_transaction"
+	"github.com/computomatic/terraform-provider-stripe/internal/resources/billing_feedback_option"
 	"github.com/computomatic/terraform-provider-stripe/internal/resources/billing_meter"
 	"github.com/computomatic/terraform-provider-stripe/internal/resources/billing_portal_configuration"
 	"github.com/computomatic/terraform-provider-stripe/internal/resources/country_spec"
 	"github.com/computomatic/terraform-provider-stripe/internal/resources/coupon"
 	"github.com/computomatic/terraform-provider-stripe/internal/resources/customer"
 	"github.com/computomatic/terraform-provider-stripe/internal/resources/entitlements_feature"
+	"github.com/computomatic/terraform-provider-stripe/internal/resources/event"
+	"github.com/computomatic/terraform-provider-stripe/internal/resources/file"
+	"github.com/computomatic/terraform-provider-stripe/internal/resources/file_link"
+	"github.com/computomatic/terraform-provider-stripe/internal/resources/payment_method_configuration"
+	"github.com/computomatic/terraform-provider-stripe/internal/resources/payment_method_domain"
 	"github.com/computomatic/terraform-provider-stripe/internal/resources/plan"
 	"github.com/computomatic/terraform-provider-stripe/internal/resources/price"
 	"github.com/computomatic/terraform-provider-stripe/internal/resources/product"
 	"github.com/computomatic/terraform-provider-stripe/internal/resources/product_catalog_trial_offer"
 	"github.com/computomatic/terraform-provider-stripe/internal/resources/product_feature"
 	"github.com/computomatic/terraform-provider-stripe/internal/resources/promotion_code"
+	"github.com/computomatic/terraform-provider-stripe/internal/resources/radar_value_list"
+	"github.com/computomatic/terraform-provider-stripe/internal/resources/radar_value_list_item"
+	"github.com/computomatic/terraform-provider-stripe/internal/resources/reporting_report_type"
 	"github.com/computomatic/terraform-provider-stripe/internal/resources/shipping_rate"
 	"github.com/computomatic/terraform-provider-stripe/internal/resources/tax_code"
 	"github.com/computomatic/terraform-provider-stripe/internal/resources/tax_rate"
+	"github.com/computomatic/terraform-provider-stripe/internal/resources/tax_registration"
+	"github.com/computomatic/terraform-provider-stripe/internal/resources/tax_settings"
+	"github.com/computomatic/terraform-provider-stripe/internal/resources/terminal_configuration"
+	"github.com/computomatic/terraform-provider-stripe/internal/resources/terminal_location"
 	"github.com/computomatic/terraform-provider-stripe/internal/resources/webhook_endpoint"
 	"github.com/computomatic/terraform-provider-stripe/internal/stripeapi"
 )
@@ -130,41 +146,67 @@ func (p *stripeProvider) Configure(ctx context.Context, req provider.ConfigureRe
 
 func (p *stripeProvider) Resources(_ context.Context) []func() resource.Resource {
 	return []func() resource.Resource{
+		must(apple_pay_domain.NewResource()),
+		must(billing_feedback_option.NewResource()),
 		must(billing_meter.NewResource()),
 		must(billing_portal_configuration.NewResource()),
 		must(coupon.NewResource()),
 		must(customer.NewResource()),
 		must(entitlements_feature.NewResource()),
+		must(file_link.NewResource()),
+		must(payment_method_configuration.NewResource()),
+		must(payment_method_domain.NewResource()),
 		must(plan.NewResource()),
 		must(price.NewResource()),
 		must(product.NewResource()),
 		must(product_catalog_trial_offer.NewResource()),
 		must(product_feature.NewResource()),
 		must(promotion_code.NewResource()),
+		must(radar_value_list.NewResource()),
+		must(radar_value_list_item.NewResource()),
 		must(shipping_rate.NewResource()),
 		must(tax_rate.NewResource()),
+		must(tax_registration.NewResource()),
+		must(terminal_configuration.NewResource()),
+		must(terminal_location.NewResource()),
 		must(webhook_endpoint.NewResource()),
 	}
 }
 
 func (p *stripeProvider) DataSources(_ context.Context) []func() datasource.DataSource {
 	return []func() datasource.DataSource{
+		must(apple_pay_domain.NewDataSource()),
 		must(balance.NewDataSource()),
+		must(balance_settings.NewDataSource()),
+		must(balance_transaction.NewDataSource()),
+		must(billing_feedback_option.NewDataSource()),
 		must(billing_meter.NewDataSource()),
 		must(billing_portal_configuration.NewDataSource()),
 		must(country_spec.NewDataSource()),
 		must(coupon.NewDataSource()),
 		must(customer.NewDataSource()),
 		must(entitlements_feature.NewDataSource()),
+		must(event.NewDataSource()),
+		must(file.NewDataSource()),
+		must(file_link.NewDataSource()),
+		must(payment_method_configuration.NewDataSource()),
+		must(payment_method_domain.NewDataSource()),
 		must(plan.NewDataSource()),
 		must(price.NewDataSource()),
 		must(product.NewDataSource()),
 		must(product_catalog_trial_offer.NewDataSource()),
 		must(product_feature.NewDataSource()),
 		must(promotion_code.NewDataSource()),
+		must(radar_value_list.NewDataSource()),
+		must(radar_value_list_item.NewDataSource()),
+		must(reporting_report_type.NewDataSource()),
 		must(shipping_rate.NewDataSource()),
 		must(tax_code.NewDataSource()),
 		must(tax_rate.NewDataSource()),
+		must(tax_registration.NewDataSource()),
+		must(tax_settings.NewDataSource()),
+		must(terminal_configuration.NewDataSource()),
+		must(terminal_location.NewDataSource()),
 		must(webhook_endpoint.NewDataSource()),
 	}
 }

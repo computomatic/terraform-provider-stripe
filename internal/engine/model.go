@@ -104,6 +104,7 @@ func compile(decl Declaration, table []fields.Field) (*model, error) {
 		sensitive:    newPathSet(decl.Sensitive),
 		preserve:     newPathSet(decl.PreserveConfig),
 		sets:         newPathSet(decl.Sets),
+		replaceOn:    newPathSet(decl.ReplaceOn),
 		used:         pathSet{},
 		sensitiveSet: pathSet{},
 	}
@@ -177,6 +178,7 @@ type compiler struct {
 	sensitive    pathSet
 	preserve     pathSet
 	sets         pathSet
+	replaceOn    pathSet
 	used         pathSet
 	sensitiveSet pathSet
 }
@@ -201,6 +203,7 @@ func (c *compiler) unused() error {
 		{"sensitive", c.sensitive},
 		{"preserve_config", c.preserve},
 		{"sets", c.sets},
+		{"replace_on", c.replaceOn},
 	} {
 		for p := range e.set {
 			if !c.used[e.kind+"/"+p] {
@@ -274,7 +277,11 @@ func (c *compiler) build(table []fields.Field, prefix string, top, parentOutput,
 				n.Computed = false
 			}
 		}
-		n.Replace = f.CreateOnly() && !parentReplace && !n.computedOnly()
+		replaceOn := c.mark("replace_on", c.replaceOn, path)
+		if replaceOn && !f.Update {
+			return nil, fmt.Errorf("replace_on entry `%s` is not an updatable field; a create-only field already forces replacement", path)
+		}
+		n.Replace = (f.CreateOnly() || replaceOn) && !parentReplace && !n.computedOnly()
 		// Below a field that forces replacement nothing changes in place, so a computed
 		// value there stays as it is: an unknown one would read as a change of the parent.
 		// Terraform proposes null for an unset nested attribute even when it is Computed
@@ -282,7 +289,7 @@ func (c *compiler) build(table []fields.Field, prefix string, top, parentOutput,
 		// so a nested attribute Stripe fills in keeps its prior value too. Inside a list element
 		// that would copy another element's value after an insert or reorder, so it does not apply.
 		n.UseState = n.Computed && !n.Required &&
-			((top && (f.Name == "id" || f.Name == "created" || f.Name == "livemode")) || f.CreateOnly() || n.Once || parentReplace ||
+			((top && (f.Name == "id" || f.Name == "created" || f.Name == "livemode")) || f.CreateOnly() || replaceOn || n.Once || parentReplace ||
 				n.Optional && !inList && nestedShape(f.Shape))
 
 		switch f.Shape {
