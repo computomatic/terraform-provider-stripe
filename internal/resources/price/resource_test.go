@@ -24,7 +24,7 @@ const address = "stripe_price.test"
 func priceConfig(c acctest.Config, amount int, extra string) string {
 	return c.ProviderBlock() + fmt.Sprintf(`
 resource "stripe_product" "test" {
-  name = "Gold plan"
+  name = %q
 }
 
 resource "stripe_price" "test" {
@@ -35,7 +35,13 @@ resource "stripe_price" "test" {
     interval = "month"
   }
 %s}
-`, amount, extra)
+`, c.Name("Gold plan"), amount, extra)
+}
+
+// monthlyExtra is price config with a nickname and a lookup key. Stripe keeps a lookup key
+// after the price is archived, so each test passes a key of its own.
+func monthlyExtra(c acctest.Config, key string) string {
+	return fmt.Sprintf("  nickname   = \"Monthly\"\n  lookup_key = %q\n  metadata   = { team = \"a\" }\n", c.Unique(key))
 }
 
 func idOf(dst *string) resource.TestCheckFunc {
@@ -51,7 +57,7 @@ func TestAccPrice_create(t *testing.T) {
 		ProtoV6ProviderFactories: tfacc.ProviderFactories,
 		ErrorCheck:               tfacc.SkipWhenFakeLacks(t, "expand["),
 		Steps: []resource.TestStep{{
-			Config: priceConfig(acct, 2000, "  nickname   = \"Monthly\"\n  lookup_key = \"gold_monthly\"\n  metadata   = { team = \"a\" }\n") + `
+			Config: priceConfig(acct, 2000, monthlyExtra(acct, "create_monthly")) + `
 data "stripe_price" "by_id" {
   id = stripe_price.test.id
 }
@@ -133,7 +139,7 @@ func TestAccPrice_replace(t *testing.T) {
 
 func TestAccPrice_import(t *testing.T) {
 	acct := acctest.NewAccount(t)
-	cfg := priceConfig(acct, 2000, "  nickname   = \"Monthly\"\n  lookup_key = \"gold_monthly\"\n  metadata   = { team = \"a\" }\n")
+	cfg := priceConfig(acct, 2000, monthlyExtra(acct, "import_monthly"))
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: tfacc.ProviderFactories,
 		ErrorCheck:               tfacc.SkipWhenFakeLacks(t, "expand["),
@@ -213,9 +219,9 @@ func TestAccPrice_drift(t *testing.T) {
 // options are on a second, per-unit price.
 func TestAccPrice_tiersAndCurrencyOptions(t *testing.T) {
 	acct := acctest.NewAccount(t)
-	cfg := acct.ProviderBlock() + `
+	cfg := acct.ProviderBlock() + fmt.Sprintf(`
 resource "stripe_product" "test" {
-  name = "Metered plan"
+  name = %q
 }
 
 resource "stripe_price" "test" {
@@ -240,7 +246,7 @@ resource "stripe_price" "options" {
     eur = { unit_amount = 900 }
   }
 }
-`
+`, acct.Name("Metered plan"))
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: tfacc.ProviderFactories,
 		Steps: []resource.TestStep{
@@ -264,7 +270,7 @@ resource "stripe_price" "options" {
 func currencyOptionsConfig(c acctest.Config, options string) string {
 	return c.ProviderBlock() + fmt.Sprintf(`
 resource "stripe_product" "test" {
-  name = "Gold plan"
+  name = %q
 }
 
 resource "stripe_price" "test" {
@@ -274,7 +280,7 @@ resource "stripe_price" "test" {
   currency_options = {
 %s  }
 }
-`, options)
+`, c.Name("Gold plan"), options)
 }
 
 // Stripe lists the price's own currency among the expanded options. It stays out of state,

@@ -25,7 +25,7 @@ func config(c acctest.Config, body string) string {
 }
 
 func productConfig(c acctest.Config, id, name, extra string) string {
-	return config(c, fmt.Sprintf("resource \"stripe_product\" \"test\" {\n  id   = %q\n  name = %q\n%s}\n", id, name, extra))
+	return config(c, fmt.Sprintf("resource \"stripe_product\" \"test\" {\n  id   = %q\n  name = %q\n%s}\n", c.ID("prod", id), c.Name(name), extra))
 }
 
 // idOf returns a check that stores the product's ID for the out-of-band calls.
@@ -38,12 +38,13 @@ func idOf(dst *string) resource.TestCheckFunc {
 
 func TestAccProduct_create(t *testing.T) {
 	acct := acctest.NewAccount(t)
+	name := acct.Name("Gold plan")
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: tfacc.ProviderFactories,
 		Steps: []resource.TestStep{{
-			Config: config(acct, `
+			Config: config(acct, fmt.Sprintf(`
 resource "stripe_product" "test" {
-  name        = "Gold plan"
+  name        = %q
   description = "The gold one"
   metadata    = { team = "a" }
   package_dimensions = {
@@ -57,17 +58,17 @@ resource "stripe_product" "test" {
 data "stripe_product" "test" {
   id = stripe_product.test.id
 }
-`),
+`, name)),
 			Check: resource.ComposeAggregateTestCheckFunc(
 				resource.TestCheckResourceAttrSet(address, "id"),
-				resource.TestCheckResourceAttr(address, "name", "Gold plan"),
+				resource.TestCheckResourceAttr(address, "name", name),
 				resource.TestCheckResourceAttr(address, "active", "true"),
 				resource.TestCheckResourceAttr(address, "metadata.team", "a"),
 				resource.TestCheckResourceAttr(address, "package_dimensions.height", "1.5"),
 				resource.TestCheckResourceAttr(address, "livemode", "false"),
 				resource.TestCheckNoResourceAttr(address, "url"),
 				resource.TestCheckResourceAttrPair("data.stripe_product.test", "id", address, "id"),
-				resource.TestCheckResourceAttr("data.stripe_product.test", "name", "Gold plan"),
+				resource.TestCheckResourceAttr("data.stripe_product.test", "name", name),
 				resource.TestCheckResourceAttr("data.stripe_product.test", "metadata.team", "a"),
 			),
 		}},
@@ -76,35 +77,39 @@ data "stripe_product" "test" {
 
 func TestAccProduct_update(t *testing.T) {
 	acct := acctest.NewAccount(t)
+	name, renamed := acct.Name("Gold plan"), acct.Name("Gold plan v2")
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: tfacc.ProviderFactories,
 		Steps: []resource.TestStep{
 			{
-				Config: config(acct, `
+				Config: config(acct, fmt.Sprintf(`
 resource "stripe_product" "test" {
-  name        = "Gold plan"
+  name        = %q
   description = "The gold one"
   metadata    = { team = "a", tier = "1" }
 }
-`),
+`, name)),
 				Check: resource.TestCheckResourceAttr(address, "description", "The gold one"),
 			},
 			{
-				Config: config(acct, `
+				Config: config(acct, fmt.Sprintf(`
 resource "stripe_product" "test" {
-  name     = "Gold plan v2"
+  name     = %q
   metadata = { team = "b" }
 }
-`),
+`, renamed)),
 				ConfigPlanChecks: resource.ConfigPlanChecks{PreApply: []plancheck.PlanCheck{
 					plancheck.ExpectResourceAction(address, plancheck.ResourceActionUpdate),
 				}},
 				Check: resource.ComposeAggregateTestCheckFunc(
-					resource.TestCheckResourceAttr(address, "name", "Gold plan v2"),
+					resource.TestCheckResourceAttr(address, "name", renamed),
 					resource.TestCheckNoResourceAttr(address, "description"),
 					resource.TestCheckResourceAttr(address, "metadata.%", "1"),
 					resource.TestCheckResourceAttr(address, "metadata.team", "b"),
 					func(*terraform.State) error {
+						if acct.Smoke {
+							return nil // the request log is the fake's
+						}
 						// The provider never sent the create-only `id` on update, and every
 						// POST carried an idempotency key.
 						for _, entry := range acctest.RequestLog(t, acct) {
@@ -133,13 +138,13 @@ func TestAccProduct_replace(t *testing.T) {
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: tfacc.ProviderFactories,
 		Steps: []resource.TestStep{
-			{Config: productConfig(acct, "prod_first", "Gold plan", "")},
+			{Config: productConfig(acct, "first", "Gold plan", "")},
 			{
-				Config: productConfig(acct, "prod_second", "Gold plan", ""),
+				Config: productConfig(acct, "second", "Gold plan", ""),
 				ConfigPlanChecks: resource.ConfigPlanChecks{PreApply: []plancheck.PlanCheck{
 					plancheck.ExpectResourceAction(address, plancheck.ResourceActionReplace),
 				}},
-				Check: resource.TestCheckResourceAttr(address, "id", "prod_second"),
+				Check: resource.TestCheckResourceAttr(address, "id", acct.ID("prod", "second")),
 			},
 		},
 	})
@@ -147,15 +152,15 @@ func TestAccProduct_replace(t *testing.T) {
 
 func TestAccProduct_import(t *testing.T) {
 	acct := acctest.NewAccount(t)
-	body := `
+	body := fmt.Sprintf(`
 resource "stripe_product" "test" {
-  name        = "Gold plan"
+  name        = %q
   description = "The gold one"
   metadata    = { team = "a" }
   images      = ["https://example.com/gold.png"]
   marketing_features = [{ name = "Priority support" }]
 }
-`
+`, acct.Name("Gold plan"))
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: tfacc.ProviderFactories,
 		Steps: []resource.TestStep{
@@ -188,7 +193,7 @@ func TestAccProduct_delete(t *testing.T) {
 			return nil
 		},
 		Steps: []resource.TestStep{{
-			Config: productConfig(acct, "prod_doomed", "Doomed", ""),
+			Config: productConfig(acct, "doomed", "Doomed", ""),
 			Check:  idOf(&id),
 		}},
 	})
@@ -197,6 +202,7 @@ func TestAccProduct_delete(t *testing.T) {
 // Stripe refuses to delete a product that has a price. Destroy archives the product
 // instead.
 func TestAccProduct_destroyWithPrices(t *testing.T) {
+	acctest.RequireFake(t)
 	acct := acctest.NewAccount(t)
 	var id string
 	resource.ParallelTest(t, resource.TestCase{
@@ -229,7 +235,7 @@ func TestAccProduct_destroyWithPrices(t *testing.T) {
 			return nil
 		},
 		Steps: []resource.TestStep{
-			{Config: productConfig(acct, "prod_priced", "Gold plan", ""), Check: idOf(&id)},
+			{Config: productConfig(acct, "priced", "Gold plan", ""), Check: idOf(&id)},
 			{
 				// The price is made behind the provider's back, so this test does not depend
 				// on stripe_price.
@@ -240,7 +246,7 @@ func TestAccProduct_destroyWithPrices(t *testing.T) {
 						{Name: "unit_amount", Value: wire.Int(2000)},
 					})
 				},
-				Config: productConfig(acct, "prod_priced", "Gold plan", ""),
+				Config: productConfig(acct, "priced", "Gold plan", ""),
 			},
 		},
 	})
@@ -249,7 +255,7 @@ func TestAccProduct_destroyWithPrices(t *testing.T) {
 func TestAccProduct_drift(t *testing.T) {
 	acct := acctest.NewAccount(t)
 	var id string
-	cfg := productConfig(acct, "prod_drift", "Gold plan", "  description = \"The gold one\"\n")
+	cfg := productConfig(acct, "drift", "Gold plan", "  description = \"The gold one\"\n")
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: tfacc.ProviderFactories,
 		Steps: []resource.TestStep{
@@ -265,7 +271,7 @@ func TestAccProduct_drift(t *testing.T) {
 					plancheck.ExpectNonEmptyPlan(),
 					plancheck.ExpectResourceAction(address, plancheck.ResourceActionUpdate),
 				}},
-				Check: resource.TestCheckResourceAttr(address, "name", "Gold plan"),
+				Check: resource.TestCheckResourceAttr(address, "name", acct.Name("Gold plan")),
 			},
 		},
 	})

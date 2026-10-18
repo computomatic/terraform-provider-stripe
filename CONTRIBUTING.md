@@ -53,6 +53,15 @@ TF_ACC=1 STRIPE_FAKE_SOURCE=<fake source> go test ./internal/resources/...
 
 They run with the `terraform` on the path. To run them with OpenTofu, also set `TF_ACC_TERRAFORM_PATH=$(which tofu)`, `TF_ACC_PROVIDER_NAMESPACE=hashicorp` and `TF_ACC_PROVIDER_HOST=registry.opentofu.org`.
 
+### Real-Stripe mode
+
+The same tests can run against a Stripe sandbox for the weekly smoke run (`adrs/1-pending/2026-10-17-sandbox-smoke-run/ADR.md`). Set `TF_SMOKE=1` and `STRIPE_API_KEY` to an `sk_test_` key; do not set any `STRIPE_FAKE_*` variable, the harness refuses both together. Only the CI sandbox's run does this: never run it locally.
+
+In this mode every test shares the one account, and the key stays in the environment, out of generated HCL. A test written for both modes:
+
+- passes every display name through `acct.Name(base)`, every chosen ID through `acct.ID(prefix, base)` and every other value Stripe keeps unique (lookup keys, meter event names) through `acct.Unique(base)`. In smoke mode they gain a `tfsmoke-<run id>-` prefix and the latter two fail the test when a different test asks for the same value, because archived objects keep their keys, so give each test its own base. Against the fake they return the base unchanged;
+- calls `acctest.RequireFake(t)` before `acctest.RequestLog` or `acctest.Seed`, or checks `acct.Smoke` before them, and assumes no fresh account (an empty list, a zero balance). A test that skips this fails `TestWave1FakeOnlyCallsAreGuarded`.
+
 ## CI
 
 CI (`.github/workflows/ci.yml`) runs the checks as the `unit` job, the docs check (`scripts/check-docs.sh`) as the `docs` job, and the acceptance tests as the `acceptance` job, under Terraform and then OpenTofu, against the released fake image named by `.fake-version`. To move to a newer fake, change that one line.

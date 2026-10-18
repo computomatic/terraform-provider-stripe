@@ -3,6 +3,7 @@ package webhook_endpoint_test
 import (
 	"fmt"
 	"os"
+	"strings"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
@@ -19,8 +20,18 @@ func TestMain(m *testing.M) { os.Exit(acctest.Main(m)) }
 
 const address = "stripe_webhook_endpoint.test"
 
+// endpointConfig is an endpoint with body inside its block. An endpoint has no name, so a
+// body that sets no description gets one, which is how a smoke run recognises its objects.
 func endpointConfig(c acctest.Config, body string) string {
+	if !strings.Contains(body, "description") {
+		body += fmt.Sprintf("  description = %q\n", c.Name("endpoint"))
+	}
 	return c.ProviderBlock() + "resource \"stripe_webhook_endpoint\" \"test\" {\n" + body + "}\n"
+}
+
+// describe is the description line of an endpoint body.
+func describe(c acctest.Config, text string) string {
+	return fmt.Sprintf("  description = %q\n", c.Name(text))
 }
 
 func idOf(dst *string) resource.TestCheckFunc {
@@ -43,9 +54,8 @@ func TestAccWebhookEndpoint_create(t *testing.T) {
 			Config: endpointConfig(acct, `
   url            = "https://example.com/hook"
   enabled_events = ["invoice.paid", "customer.created"]
-  description    = "Billing events"
   metadata       = { team = "a" }
-`) + `
+`+describe(acct, "Billing events")) + `
 data "stripe_webhook_endpoint" "test" {
   id = stripe_webhook_endpoint.test.id
 }
@@ -54,7 +64,7 @@ data "stripe_webhook_endpoint" "test" {
 				resource.TestCheckResourceAttrSet(address, "id"),
 				resource.TestCheckResourceAttr(address, "url", "https://example.com/hook"),
 				resource.TestCheckResourceAttr(address, "enabled_events.#", "2"),
-				resource.TestCheckResourceAttr(address, "description", "Billing events"),
+				resource.TestCheckResourceAttr(address, "description", acct.Name("Billing events")),
 				resource.TestCheckResourceAttr(address, "status", "enabled"),
 				resource.TestCheckResourceAttr(address, "metadata.team", "a"),
 				// The secret is returned once, at creation, and state keeps it.
@@ -78,24 +88,23 @@ func TestAccWebhookEndpoint_update(t *testing.T) {
 		ProtoV6ProviderFactories: tfacc.ProviderFactories,
 		Steps: []resource.TestStep{
 			{
-				Config: endpointConfig(acct, basic+"  description = \"one\"\n  metadata = { team = \"a\", tier = \"1\" }\n"),
+				Config: endpointConfig(acct, basic+describe(acct, "one")+"  metadata = { team = \"a\", tier = \"1\" }\n"),
 				Check:  remember,
 			},
 			{
 				Config: endpointConfig(acct, `
   url            = "https://example.com/other"
   enabled_events = ["invoice.paid", "invoice.voided"]
-  description    = "two"
   metadata       = { team = "b" }
   disabled       = true
-`),
+`+describe(acct, "two")),
 				ConfigPlanChecks: resource.ConfigPlanChecks{PreApply: []plancheck.PlanCheck{
 					plancheck.ExpectResourceAction(address, plancheck.ResourceActionUpdate),
 				}},
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr(address, "url", "https://example.com/other"),
 					resource.TestCheckResourceAttr(address, "enabled_events.#", "2"),
-					resource.TestCheckResourceAttr(address, "description", "two"),
+					resource.TestCheckResourceAttr(address, "description", acct.Name("two")),
 					resource.TestCheckResourceAttr(address, "status", "disabled"),
 					resource.TestCheckResourceAttr(address, "metadata.%", "1"),
 					// An update response omits the secret; state keeps the one from creation.
@@ -144,7 +153,7 @@ func TestAccWebhookEndpoint_replace(t *testing.T) {
 
 func TestAccWebhookEndpoint_import(t *testing.T) {
 	acct := acctest.NewAccount(t)
-	cfg := endpointConfig(acct, basic+"  description = \"Billing\"\n  metadata = { team = \"a\" }\n")
+	cfg := endpointConfig(acct, basic+describe(acct, "Billing")+"  metadata = { team = \"a\" }\n")
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: tfacc.ProviderFactories,
 		Steps: []resource.TestStep{
@@ -185,7 +194,7 @@ func TestAccWebhookEndpoint_delete(t *testing.T) {
 func TestAccWebhookEndpoint_drift(t *testing.T) {
 	acct := acctest.NewAccount(t)
 	var id string
-	cfg := endpointConfig(acct, basic+"  description = \"Billing\"\n")
+	cfg := endpointConfig(acct, basic+describe(acct, "Billing"))
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: tfacc.ProviderFactories,
 		Steps: []resource.TestStep{
@@ -201,7 +210,7 @@ func TestAccWebhookEndpoint_drift(t *testing.T) {
 					plancheck.ExpectNonEmptyPlan(),
 					plancheck.ExpectResourceAction(address, plancheck.ResourceActionUpdate),
 				}},
-				Check: resource.TestCheckResourceAttr(address, "description", "Billing"),
+				Check: resource.TestCheckResourceAttr(address, "description", acct.Name("Billing")),
 			},
 		},
 	})
@@ -230,7 +239,7 @@ func TestAccWebhookEndpoint_disabledAtCreation(t *testing.T) {
 				),
 			},
 			{
-				Config: endpointConfig(acct, basic+"  disabled = true\n  description = \"later\"\n"),
+				Config: endpointConfig(acct, basic+"  disabled = true\n"+describe(acct, "later")),
 				Check: resource.TestCheckResourceAttrWith(address, "secret", func(v string) error {
 					if v == "" || v != secret {
 						return fmt.Errorf("secret changed on update: %q was %q", v, secret)

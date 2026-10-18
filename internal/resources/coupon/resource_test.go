@@ -27,18 +27,24 @@ resource "stripe_coupon" "test" {
   percent_off = 25
   duration    = "once"
 %s}
-`, id, extra)
+`, c.ID("", id), extra)
+}
+
+// named is the extra for couponConfig that sets the coupon's name, then the rest.
+func named(c acctest.Config, name, rest string) string {
+	return fmt.Sprintf("  name     = %q\n%s", c.Name(name), rest)
 }
 
 func TestAccCoupon_create(t *testing.T) {
 	acct := acctest.NewAccount(t)
+	name := acct.Name("Launch offer")
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: tfacc.ProviderFactories,
 		ErrorCheck:               tfacc.SkipWhenFakeLacks(t, "expand["),
 		Steps: []resource.TestStep{{
-			Config: acct.ProviderBlock() + `
+			Config: acct.ProviderBlock() + fmt.Sprintf(`
 resource "stripe_coupon" "test" {
-  name               = "Launch offer"
+  name               = %q
   percent_off        = 25
   duration           = "repeating"
   duration_in_months = 3
@@ -49,10 +55,10 @@ resource "stripe_coupon" "test" {
 data "stripe_coupon" "test" {
   id = stripe_coupon.test.id
 }
-`,
+`, name),
 			Check: resource.ComposeAggregateTestCheckFunc(
 				resource.TestCheckResourceAttrSet(address, "id"),
-				resource.TestCheckResourceAttr(address, "name", "Launch offer"),
+				resource.TestCheckResourceAttr(address, "name", name),
 				resource.TestCheckResourceAttr(address, "percent_off", "25"),
 				resource.TestCheckResourceAttr(address, "duration", "repeating"),
 				resource.TestCheckResourceAttr(address, "duration_in_months", "3"),
@@ -61,7 +67,7 @@ data "stripe_coupon" "test" {
 				resource.TestCheckResourceAttr(address, "metadata.team", "a"),
 				resource.TestCheckNoResourceAttr(address, "amount_off"),
 				resource.TestCheckResourceAttrPair("data.stripe_coupon.test", "id", address, "id"),
-				resource.TestCheckResourceAttr("data.stripe_coupon.test", "name", "Launch offer"),
+				resource.TestCheckResourceAttr("data.stripe_coupon.test", "name", name),
 				resource.TestCheckResourceAttr("data.stripe_coupon.test", "percent_off", "25"),
 			),
 		}},
@@ -75,16 +81,16 @@ func TestAccCoupon_update(t *testing.T) {
 		ErrorCheck:               tfacc.SkipWhenFakeLacks(t, "expand["),
 		Steps: []resource.TestStep{
 			{
-				Config: couponConfig(acct, "launch", "  name     = \"Launch\"\n  metadata = { team = \"a\", tier = \"1\" }\n"),
-				Check:  resource.TestCheckResourceAttr(address, "name", "Launch"),
+				Config: couponConfig(acct, "launch", named(acct, "Launch", "  metadata = { team = \"a\", tier = \"1\" }\n")),
+				Check:  resource.TestCheckResourceAttr(address, "name", acct.Name("Launch")),
 			},
 			{
-				Config: couponConfig(acct, "launch", "  name     = \"Launch v2\"\n  metadata = { team = \"b\" }\n"),
+				Config: couponConfig(acct, "launch", named(acct, "Launch v2", "  metadata = { team = \"b\" }\n")),
 				ConfigPlanChecks: resource.ConfigPlanChecks{PreApply: []plancheck.PlanCheck{
 					plancheck.ExpectResourceAction(address, plancheck.ResourceActionUpdate),
 				}},
 				Check: resource.ComposeAggregateTestCheckFunc(
-					resource.TestCheckResourceAttr(address, "name", "Launch v2"),
+					resource.TestCheckResourceAttr(address, "name", acct.Name("Launch v2")),
 					resource.TestCheckResourceAttr(address, "metadata.%", "1"),
 					resource.TestCheckResourceAttr(address, "metadata.team", "b"),
 				),
@@ -106,16 +112,16 @@ func TestAccCoupon_replace(t *testing.T) {
 				ConfigPlanChecks: resource.ConfigPlanChecks{PreApply: []plancheck.PlanCheck{
 					plancheck.ExpectResourceAction(address, plancheck.ResourceActionReplace),
 				}},
-				Check: resource.TestCheckResourceAttr(address, "id", "second"),
+				Check: resource.TestCheckResourceAttr(address, "id", acct.ID("", "second")),
 			},
 			{
-				Config: acct.ProviderBlock() + `
+				Config: acct.ProviderBlock() + fmt.Sprintf(`
 resource "stripe_coupon" "test" {
-  id          = "second"
+  id          = %q
   percent_off = 50
   duration    = "once"
 }
-`,
+`, acct.ID("", "second")),
 				ConfigPlanChecks: resource.ConfigPlanChecks{PreApply: []plancheck.PlanCheck{
 					plancheck.ExpectResourceAction(address, plancheck.ResourceActionReplace),
 				}},
@@ -127,7 +133,7 @@ resource "stripe_coupon" "test" {
 
 func TestAccCoupon_import(t *testing.T) {
 	acct := acctest.NewAccount(t)
-	cfg := couponConfig(acct, "launch", "  name     = \"Launch\"\n  metadata = { team = \"a\" }\n")
+	cfg := couponConfig(acct, "import", named(acct, "Launch", "  metadata = { team = \"a\" }\n"))
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: tfacc.ProviderFactories,
 		ErrorCheck:               tfacc.SkipWhenFakeLacks(t, "expand["),
@@ -154,7 +160,7 @@ func TestAccCoupon_delete(t *testing.T) {
 		ProtoV6ProviderFactories: tfacc.ProviderFactories,
 		ErrorCheck:               tfacc.SkipWhenFakeLacks(t, "expand["),
 		CheckDestroy: func(*terraform.State) error {
-			_, err := tfacc.Client(acct).Do(t.Context(), stripeapi.Request{Method: "GET", Path: "/v1/coupons/doomed"})
+			_, err := tfacc.Client(acct).Do(t.Context(), stripeapi.Request{Method: "GET", Path: "/v1/coupons/" + acct.ID("", "doomed")})
 			if !stripeapi.IsNotFound(err) {
 				return fmt.Errorf("the coupon should be gone after destroy, got %v", err)
 			}
@@ -166,7 +172,7 @@ func TestAccCoupon_delete(t *testing.T) {
 
 func TestAccCoupon_drift(t *testing.T) {
 	acct := acctest.NewAccount(t)
-	cfg := couponConfig(acct, "drifty", "  name = \"Launch\"\n")
+	cfg := couponConfig(acct, "drifty", named(acct, "Launch", ""))
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: tfacc.ProviderFactories,
 		ErrorCheck:               tfacc.SkipWhenFakeLacks(t, "expand["),
@@ -174,7 +180,7 @@ func TestAccCoupon_drift(t *testing.T) {
 			{Config: cfg},
 			{
 				PreConfig: func() {
-					tfacc.Post(t, acct, "/v1/coupons/drifty", wire.Object{
+					tfacc.Post(t, acct, "/v1/coupons/"+acct.ID("", "drifty"), wire.Object{
 						{Name: "name", Value: wire.String("Renamed")},
 					})
 				},
@@ -183,7 +189,7 @@ func TestAccCoupon_drift(t *testing.T) {
 					plancheck.ExpectNonEmptyPlan(),
 					plancheck.ExpectResourceAction(address, plancheck.ResourceActionUpdate),
 				}},
-				Check: resource.TestCheckResourceAttr(address, "name", "Launch"),
+				Check: resource.TestCheckResourceAttr(address, "name", acct.Name("Launch")),
 			},
 		},
 	})
@@ -193,9 +199,9 @@ func TestAccCoupon_drift(t *testing.T) {
 // them yet, so the test skips on its fake_* reply.
 func TestAccCoupon_appliesToAndCurrencyOptions(t *testing.T) {
 	acct := acctest.NewAccount(t)
-	cfg := acct.ProviderBlock() + `
+	cfg := acct.ProviderBlock() + fmt.Sprintf(`
 resource "stripe_product" "test" {
-  name = "Gold plan"
+  name = %q
 }
 
 resource "stripe_coupon" "test" {
@@ -209,7 +215,7 @@ resource "stripe_coupon" "test" {
     eur = { amount_off = 450 }
   }
 }
-`
+`, acct.Name("Gold plan"))
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: tfacc.ProviderFactories,
 		Steps: []resource.TestStep{
@@ -229,13 +235,14 @@ resource "stripe_coupon" "test" {
 func couponOptionsConfig(c acctest.Config, options string) string {
 	return c.ProviderBlock() + fmt.Sprintf(`
 resource "stripe_coupon" "test" {
+  name       = %q
   amount_off = 500
   currency   = "usd"
   duration   = "once"
   currency_options = {
 %s  }
 }
-`, options)
+`, c.Name("Options"), options)
 }
 
 // Stripe lists the coupon's own currency among the expanded options. It stays out of state,

@@ -85,7 +85,7 @@ on:
 - It sits in the `e2e-stripe` group because the group is workflow-wide. It does not have `publish-results` (the fidelity report joins suite runs, not smoke runs); `publish-results` gets `if` conditions that already exclude non-push events (`github.event_name == 'push'`), so it needs no change.
 - Only images built from `main` are accepted: the provider publishes bundle tags only from a `push` to `main` or a tag, and the suite job refuses a `provider_ref` that is not an ancestor of the provider's `main` (checked with the GitHub compare API at job start using the job's own token; if the token cannot read the provider repo, the check is dropped and the publishing rule is the only control, which Decision 2 accepts).
 
-**Workflow change in the provider: `.github/workflows/smoke-bundle.yml`.** On `push` to `main` and on `v*` tags: build `go test -c` binaries for the wave 1 packages (`internal/resources/{product,price,coupon,customer,webhook_endpoint,billing_meter,balance}`), a pinned Terraform (the `1.16.6` the CI jobs use), and a small `entrypoint.sh`; push `ghcr.io/computomatic/terraform-provider-stripe-smoke:sha-<sha>` and move `:main`. Runs on `aws-linux-2cpu` (no credentials besides `GITHUB_TOKEN` `packages: write`). Whether the test binaries need repository files at run time (testdata, working directory) is settled in Step 1 by running the binaries in an empty container.
+**Workflow change in the provider: `.github/workflows/smoke-bundle.yml`.** On `push` to `main` and on `v*` tags: build `go test -c` binaries for the wave 1 packages (`internal/resources/{product,price,coupon,customer,webhook_endpoint,billing_meter,balance}`), a pinned Terraform (the `1.16.6` the CI jobs use), and a small `entrypoint.sh`; push `ghcr.io/computomatic/terraform-provider-stripe-smoke:sha-<sha>` and move `:main`. Runs on `aws-linux-2cpu` (no credentials besides `GITHUB_TOKEN` `packages: write`). The binaries need no repository files (Step 1), but the image must carry a `/tmp` directory and a CA bundle, run with a writable `/tmp` (`--tmpfs`), and have a shell for `entrypoint.sh`.
 
 **Entrypoint.** `entrypoint.sh` runs, in order, serially per package: the sweep (below), `TF_ACC=1 ./<pkg>.test -test.run '^TestAcc' -test.parallel 1 -test.timeout 40m -test.v` for each package, and the sweep again with `if` semantics of "always". Exit status is the OR of the test runs. Terraform only; the OpenTofu pass adds time and the suite-gap finding it exists for does not depend on the CLI.
 
@@ -134,7 +134,18 @@ Build the wave 1 test binaries with `go test -c`, copy them with a pinned Terraf
 
 Acceptance criteria: in the empty container the wave 1 acceptance tests pass against the fake with no repository checkout present, and the list of runtime requirements is written down in the Step 5 notes; or the ADR is revised to ship those files in the image.
 
-Status: PENDING
+Status: DONE, 2026-10-18.
+
+Findings. The seven wave 1 test binaries (`CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go test -c`, about 38 MB each) and Terraform 1.16.6 (`linux_amd64` from releases.hashicorp.com) were copied into a `FROM scratch` image and run against a fake started from `fake-stripe-api`'s source (`FAKE_STRIPE_ADMIN_TOKEN` set, listening on all interfaces, reached as `host.containers.internal`). With `-test.parallel 4` every wave 1 package passed; the only skips were the two `_replace` tests whose `SkipWhenFakeLacks` the fake still triggers (customer, webhook endpoint). The image held no repository file, no `HOME`, no plugin cache and no provider binary (the provider is served in process; `terraform init` needs no download). What the binaries need at run time:
+
+- A writable `/tmp`. `scratch` has none, and plugin-testing fails with `failed to create temp dir: stat /tmp: no such file or directory`. A `/tmp` copied into the image arrived without world write, so a non-root user failed with `permission denied`; running as root worked, and so did `--tmpfs /tmp:rw,mode=1777` as the image's non-root user. The bundle ships a `/tmp` directory and the entrypoint's `docker run` passes `--tmpfs /tmp:rw,mode=1777`.
+- `terraform` on `PATH` (plugin-testing looks it up; `TF_ACC_TERRAFORM_PATH` would also do).
+- `TF_ACC=1`; without it every test skips cleanly. Without a fake (or smoke) setting, tests skip with the harness's message.
+- `STRIPE_FAKE_URL` and `STRIPE_FAKE_ADMIN_TOKEN` against the fake. Against Stripe: `TF_SMOKE=1` and `STRIPE_API_KEY` (Step 3).
+- Nothing else: no working directory, no testdata, no `HOME`, no repository files.
+- Not exercised, because it needs real Stripe: TLS to `api.stripe.com`. Go on Linux reads root certificates from files such as `/etc/ssl/certs/ca-certificates.crt`, and `scratch` has none, so the bundle must ship a CA bundle there (Step 5 copies one from the build runner); the first smoke run proves it.
+
+Bundle design revisions: ship a `/tmp` directory and a CA bundle in the image, and give the container a writable `/tmp` (`--tmpfs`). The image is otherwise the seven test binaries, `terraform` and `entrypoint.sh` (which needs a shell, so the base becomes a minimal image with `/bin/sh` rather than `scratch`, or the entrypoint becomes a small static program; Step 5 chooses).
 
 Dependencies: (none)
 
@@ -154,7 +165,7 @@ Implement the smoke mode in `internal/acctest` and `internal/acctest/tfacc` (mod
 
 Acceptance criteria: `go test ./...` and the repository's CI pass unchanged against the fake; a harness unit test shows smoke mode refuses a non-`sk_test_` key, refuses fake and smoke together, and renders no key into HCL; the meta-test fails when a fake-only call lacks `RequireFake`.
 
-Status: PENDING
+Status: DONE, 2026-10-18. Built: `TF_SMOKE=1` mode with the `sk_test_` check and the fake exclusion in `internal/acctest` (checked in `Main`, so a bad setup exits non-zero before any test), the shared key-free smoke account, `Config.Name`, `Config.ID`, `Config.APIKey`, `RequireFake` and `Smoke()`, `SkipWhenFakeLacks` as a pass-through in smoke mode, `tfacc.Client` reading the key from the environment, unit tests in `smoke_test.go`, and the meta-test in `guard_test.go`. The wave 1 tests now route names and IDs through the new helpers; `TestAccProduct_destroyWithPrices` calls `RequireFake`, and `TestAccProduct_update` skips only its request-log check in smoke mode. Fake mode is unchanged. Where the code differed from the design: `RequestLog` and `Seed` also fail on the smoke account, a webhook endpoint (which has no name) gets a `tfsmoke-` description by default, and the meta-test accepts a read of `Config.Smoke` as a guard as well as `RequireFake`. `Config.Unique` and `Config.ID` also refuse, in smoke mode, a value a different test already asked for (archived objects keep their unique keys), and the run id carries `GITHUB_RUN_ATTEMPT` so a re-run does not reuse the first attempt's keys.
 
 Dependencies: (none) beyond the findings of Step 1 on fixtures.
 
