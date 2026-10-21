@@ -1,3 +1,0 @@
-self-hosted-runner:
-  labels:
-    - aws-linux-2cpu

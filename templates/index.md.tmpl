@@ -6,6 +6,8 @@ description: |-
 
 # Stripe Provider
 
+This is an independent, community-maintained provider. It is not affiliated with or endorsed by Stripe, Inc.
+
 The Stripe provider manages the objects in a Stripe account: products, prices, customers, coupons, webhook endpoints, tax rates and more. Data sources read objects, and Stripe's read-only catalogues such as country specs and tax codes.
 
 ## Example Usage
