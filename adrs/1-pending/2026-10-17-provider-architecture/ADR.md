@@ -2,38 +2,38 @@
 
 ## Executive Summary
 
-This ADR decides the architecture of `terraform-provider-stripe` (roadmap deliverable P1.0) before any code exists: a provider on terraform-plugin-framework over protocol 6, built from schema tables generated from the pinned OpenAPI spec plus a small hand-written declaration per resource, talking to Stripe through its own thin HTTP client, pinned to API version `2026-09-30.endive`, and tested in parallel against the fake with a fresh account per test. It fixes how Stripe objects map to Terraform resources (archive versus delete, immutable fields, once-returned secrets, defaults, metadata, nesting, references), the provider configuration, and the naming rules. These choices are expensive to reverse because users' state files and configurations encode them, and 69 manageable resources will copy whatever pattern the first one sets.
+This ADR decides the architecture of `terraform-provider-stripe` before any code exists: a provider on terraform-plugin-framework over protocol 6, built from schema tables generated from the pinned OpenAPI spec plus a small hand-written declaration per resource, talking to Stripe through its own thin HTTP client, pinned to API version `2026-09-30.endive`, and tested in parallel against the fake with a fresh account per test. It fixes how Stripe objects map to Terraform resources (archive versus delete, immutable fields, once-returned secrets, defaults, metadata, nesting, references), the provider configuration, and the naming rules. These choices are expensive to reverse because users' state files and configurations encode them, and 69 manageable resources will copy whatever pattern the first one sets.
 
-## Status and ownership
+## Status
 
-Status: Accepted, 2026-10-17, by the owner agent, open to the owner's veto. The ADR stays in `adrs/1-pending/` until it is built, then moves to `adrs/2-implemented/`.
+Status: Accepted, 2026-10-17. The ADR stays in `adrs/1-pending/` until it is built, then moves to `adrs/2-implemented/`.
 
 Resolutions recorded at acceptance:
 - **Raw client.** A raw `net/http` client instead of `stripe-go`: accepted, because a generic engine cannot use per-resource typed structs (D5).
 - **Archive and expire.** Destroy archives or expires where Stripe has no DELETE: accepted. What happens when a replace reuses the same unique key is settled per resource by its acceptance tests and documented on that resource (D2).
 - **Major releases.** A breaking schema change in an API version bump makes a major release: accepted (D4).
-- **Licence.** Stays with the owner (P1.6). Not decided here.
+- **Licence.** Not decided here.
 
-Evidence is current as of: `computomatic/stripe-api-conformance` commit dac9aec (`docs/stripe-api-behaviour.md`), `computomatic/fake-stripe-api` commit c45772d (the fake's architecture ADR, `adrs/1-pending/2026-10-17-fake-architecture/ADR.md`), and the owner's `work/` files read on 2026-10-17 (`brief.md`, `decisions.md`, `roadmap/phase-3-provider.md`, `roadmap/resource-waves.md`).
+Evidence is current as of 2026-10-17: the behaviour of the Stripe API as observed by a black-box conformance suite, and the design of the Stripe API fake the provider is tested against.
 
-The decisions below most deserved the owner's attention; each is argued where it is decided:
+The decisions below are the ones most worth scrutiny; each is argued where it is decided:
 
-1. **A raw HTTP client, not `stripe-go` v87 (D5).** The roadmap names `stripe-go` first and a raw client as the alternative. This ADR picks the raw client, because a generic engine over generated tables cannot use per-resource typed SDK structs.
+1. **A raw HTTP client, not `stripe-go` v87 (D5).** `stripe-go` was the obvious first choice and a raw client the alternative. This ADR picks the raw client, because a generic engine over generated tables cannot use per-resource typed SDK structs.
 2. **Destroy archives where Stripe offers no delete (D2).** `terraform destroy` on a price, promotion code, shipping rate and similar objects leaves an inactive object in the account. Unique keys on it (a promotion code's `code`, a feature's `lookup_key`) stay taken.
 3. **Hybrid generation (D1).** Checked-in generated tables and a generic engine, with hand-written declarations only for what the spec cannot say. This sets the cost of every later resource.
 4. **A version bump with a breaking schema change is a major provider release (D4).** Stripe names a version about twice a year, so expect up to two major releases a year.
 5. **Provider attribute names (D3).** `api_key`, `base_url`, `files_base_url`, `stripe_account`. No account ID is required.
-6. **The licence is not decided here.** P1.6 stays with the owner (`work/roadmap/phase-3-provider.md`).
+6. **The licence is not decided here.**
 
 ## Background Context
 
-**Project.** The provider is the third link of the chain of guarantees: the conformance suite is validated against real Stripe, the fake against the suite, the provider against the fake (`work/brief.md`, "Chain of guarantees"). The gate on building it was lifted on 2026-10-17 (owner issue #2, option C, `work/decisions.md`). The code is wholly ours and clean room: no source from `stripe/terraform-provider-stripe` or `lukasaron/terraform-provider-stripe` is read or copied; their docs and behaviour may be observed (`work/decisions.md`, 2026-10-09 "Build the provider from scratch and own the code outright"; this repo's `CLAUDE.md`). The April 2025 spike in this repo is not a base. Its `go.mod` requires terraform-plugin-framework v1.14.1 and Go 1.23.7; the restart (P1.1) replaces it.
+**Project.** The provider is the third link of the chain of guarantees: the conformance suite is validated against real Stripe, the fake against the suite, the provider against the fake. The code is wholly ours and clean room: no source from `stripe/terraform-provider-stripe` or `lukasaron/terraform-provider-stripe` is read or copied; their docs and behaviour may be observed. The April 2025 spike in this repo is not a base. Its `go.mod` requires terraform-plugin-framework v1.14.1 and Go 1.23.7; the restart replaces it.
 
-**Scale.** The scorecard universe has 145 entries, 69 of them manageable (`work/roadmap/resource-waves.md`, "Waves"). Wave 1 is product, price, coupon, customer, webhook_endpoint and billing_meter, plus the balance data source. Later waves include nested and parent-scoped objects (`accounts.external_accounts`, `products.features`), v2 objects (`v2.core.event_destination`) and objects that cannot be deleted. The P2 standard requires, per resource, a resource and a data source covering every writable and readable field the spec lists, and acceptance tests for create, read, update in place, replace on immutable change, import, delete and drift (`work/roadmap/phase-3-provider.md`, "Per-resource standard (P2)").
+**Scale.** The universe of Stripe objects has 145 entries, 69 of them manageable. Wave 1 is product, price, coupon, customer, webhook_endpoint and billing_meter, plus the balance data source. Later waves include nested and parent-scoped objects (`accounts.external_accounts`, `products.features`), v2 objects (`v2.core.event_destination`) and objects that cannot be deleted. The per-resource standard requires a resource and a data source covering every writable and readable field the spec lists, and acceptance tests for create, read, update in place, replace on immutable change, import, delete and drift.
 
-**API version policy.** One version for the whole project, pinned by the `stripe-go` major the suite uses: `2026-09-30.endive` (stripe-go v87). The provider sends it explicitly and documents it; it supports only that version; "a version upgrade is a provider release that notes every schema change" (`work/decisions.md`, 2026-10-17 "API version policy, M1.2").
+**API version policy.** One version for the whole project, pinned by the `stripe-go` major the suite uses: `2026-09-30.endive` (stripe-go v87). The provider sends it explicitly and documents it; it supports only that version; a version upgrade is a provider release that notes every schema change.
 
-**What the suite has observed** (all on `2026-09-30.endive`, `stripe-api-conformance` dac9aec, `docs/stripe-api-behaviour.md`):
+**What the suite has observed** (all on `2026-09-30.endive`, from the conformance suite's behaviour notes):
 
 - Immutable fields are rejected on update as `parameter_unknown`, with the object unchanged (lines 8, 18, 28).
 - Shipping rates, tax rates and promotion codes cannot be deleted: "they are archived with `active=false`" (line 19). File links, payment method configurations and payment method domains cannot be deleted either: "retired with `expires_at=now`, configurations with `active=false` and domains with `enabled=false`" (line 79). Tax registrations cannot be deleted and are ended by setting `expires_at` a few seconds ahead (line 64). Files cannot be deleted at all, and `POST /v1/files` is served by `https://files.stripe.com` (line 78).
@@ -52,9 +52,9 @@ The decisions below most deserved the owner's attention; each is argued where it
 
 **Tooling versions** (latest releases, `gh api repos/{owner}/{repo}/releases/latest`, 2026-10-17): terraform-plugin-framework v1.19.0, terraform-plugin-go v0.31.0, terraform-plugin-testing v1.16.0, terraform-plugin-docs v0.25.0, terraform-plugin-mux v0.23.1, stripe-go v87.0.0. terraform-plugin-testing's README: "Go **1.25** or later must be used when including this project as a dependency" (https://github.com/hashicorp/terraform-plugin-testing).
 
-**The fake.** Its admin API lives under `/_fake/` on the same port. `POST /_fake/accounts` creates an isolated account and returns `{"account_id","secret_key","api_version"}`; `DELETE /_fake/accounts/{id}` removes it; `GET /_fake/accounts/{id}/requests` returns a bounded request log of decoded parameters; `GET /_fake/health` reports versions; an optional `-admin-token` bearer protects it (fake ADR D6, c45772d). The fake serves one API version, runs in memory, and releases an image the provider's CI pulls by exact tag (fake ADR D7, K1.5).
+**The fake.** Its admin API lives under `/_fake/` on the same port. `POST /_fake/accounts` creates an isolated account and returns `{"account_id","secret_key","api_version"}`; `DELETE /_fake/accounts/{id}` removes it; `GET /_fake/accounts/{id}/requests` returns a bounded request log of decoded parameters; `GET /_fake/health` reports versions; an optional `-admin-token` bearer protects it. The fake serves one API version, runs in memory, and releases an image the provider's CI pulls by exact tag.
 
-**Constraints.** Stripe is only ever called in a sandbox (`sk_test_` keys); the CI sandbox key is never used locally (this repo's `CLAUDE.md`). The owner's global rules forbid `any` types. No licence is set.
+**Constraints.** Stripe is only ever called in a sandbox (`sk_test_` keys); the CI sandbox key is never used locally (this repo's `CLAUDE.md`). Code uses no `any` types.
 
 ## Approach Overview
 
@@ -75,8 +75,8 @@ The decisions below most deserved the owner's attention; each is argued where it
   1. `tools/schemagen` (a Go program run by `go generate`) reads `spec/openapi.json`, the same pinned file the fake pins (`spec/PIN.json` records tag, commit and sha256), and writes `internal/generated/<resource>/fields.go`: one Go table per resource listing each request field with its Stripe name, wire type, required flag, whether it is accepted on create, on update, and both, its nested fields, and the matching response field. Generated files are checked in and carry a `Code generated` header.
   2. `internal/resources/<resource>/resource.go` is hand-written and short. It declares the resource's identity (type name, ID prefix, path templates for create, retrieve, update, delete, list, including parent segments; a `/v2/` prefix on the paths makes the resource `/v2`, see `adrs/1-pending/2026-10-17-v2-support/ADR.md`), its delete strategy (D2), its once-returned fields, its server-defaulted fields, its list-lookup keys for the data source, and any field overrides (renamed collisions, set versus list). It may not contain CRUD logic.
   3. `internal/engine` is hand-written once. From a declaration and its table it builds the framework `schema.Schema`, the resource and data source implementations, the request encoder, the response decoder and the plan modifiers.
-- **How create-only is derived.** The spec lists a field in the create request schema and not in the update request schema exactly when Stripe will not take it on update. That is the observed behaviour: such fields "are rejected as `parameter_unknown`" (`stripe-api-conformance` dac9aec, `docs/stripe-api-behaviour.md:8`, `:18`, `:28`). The generator therefore marks such fields create-only and the engine attaches `RequiresReplace`. The suite and the fake prove each one, so a spec error shows as a failing acceptance test.
-- **Drift control.** A CI check runs `go generate` and fails on any diff. A second check fails when a resource directory lacks a declaration, a docs example or the six acceptance tests of the P2 standard (D6). A third compares the generated tables to `terraform providers schema -json` of the previous release (D4).
+- **How create-only is derived.** The spec lists a field in the create request schema and not in the update request schema exactly when Stripe will not take it on update. That is the observed behaviour: such fields "are rejected as `parameter_unknown`" (the conformance suite's behaviour notes). The generator therefore marks such fields create-only and the engine attaches `RequiresReplace`. The suite and the fake prove each one, so a spec error shows as a failing acceptance test.
+- **Drift control.** A CI check runs `go generate` and fails on any diff. A second check fails when a resource directory lacks a declaration, a docs example or the six acceptance tests of the per-resource standard (D6). A third compares the generated tables to `terraform providers schema -json` of the previous release (D4).
 - **No untyped values.** The engine moves data between three representations: framework `attr.Value` trees, a closed JSON value type (`internal/wire`: null, bool, int64, string, decimal-string, array, object, built on `json.RawMessage` decoding into that type only), and the form or JSON request body. None uses `any` or `interface{}`. Per-type switches over the closed set replace reflection.
 - **Escape hatch.** A resource whose behaviour does not fit the engine (a singleton such as `tax.settings`, a stateful action) may provide a hand-written resource that implements the framework interfaces directly and reuses the codec and client. Each use is recorded in the ADR log with the reason. The engine is not extended for one resource.
 - **Why this way.** The 69 manageable entries share a structure the spec already encodes, so field tables are mechanical and a hand-written copy per resource would drift from the spec and from each other. The semantics are not mechanical: which delete strategy applies, which field is returned once, which server default must not show as a diff. Those need a human decision, are few per resource, and sit in the declaration where review can see them.
@@ -111,7 +111,7 @@ Every rule below is implemented once in `internal/engine`; declarations choose a
 
 **Clearing fields.** An Optional (not Computed) string or scalar removed from configuration is sent as the empty string, Stripe's way of unsetting. An Optional+Computed field removed from configuration keeps its value, as is standard.
 
-**Metadata.** `metadata` is `MapAttribute` of strings, Optional (not Computed), on every resource that has it. Create sends the map. Update sends only the diff: each key whose value changed, and each removed key as the empty string (`null` on `/v2`). Clear-all as a single empty `metadata` is not used, because the suite has no proof of it yet (the fake ADR lists "metadata clear-all" among behaviours the suite has not proven, c45772d, Cross-repo dependencies, "Suite" row). The provider adds no keys of its own. Stripe's limits (50 keys, 40-character keys, 500-character values) are not duplicated in validators: Stripe's error is the source of truth.
+**Metadata.** `metadata` is `MapAttribute` of strings, Optional (not Computed), on every resource that has it. Create sends the map. Update sends only the diff: each key whose value changed, and each removed key as the empty string (`null` on `/v2`). Clear-all as a single empty `metadata` is not used, because the suite has no proof of it yet (metadata clear-all is among the behaviours the conformance suite has not proven). The provider adds no keys of its own. Stripe's limits (50 keys, 40-character keys, 500-character values) are not duplicated in validators: Stripe's error is the source of truth.
 
 **Nested objects.** Mapped by shape, never flattened or renamed:
 
@@ -149,7 +149,7 @@ provider "stripe" {
 |`stripe_account`|No|Sent as the `Stripe-Account` header for Connect platforms acting on a connected account. Not needed for a standalone account|
 |`max_retries`|No|Retries per request (D5)|
 
-- **No account ID is required.** The secret key identifies the account. The brief leaves "possibly an account ID" open (`work/brief.md`, "Component 3"); the suite uses an account ID only as a test configuration input, and the provider has no use for one. A read-only `stripe_account` data source (the account the key belongs to) may come with the Connect wave.
+- **No account ID is required.** The secret key identifies the account. The conformance suite uses an account ID only as a test configuration input, and the provider has no use for one. A read-only `stripe_account` data source (the account the key belongs to) may come with the Connect wave.
 - The API version is not configurable (D4). There is no `api_version` attribute.
 - A `User-Agent` of `terraform-provider-stripe/<version>` and Stripe's `X-Stripe-Client-User-Agent` shape are sent; the key is never logged. The framework's `tflog` masks the `api_key` field.
 - Request timeout: per-resource `timeouts` blocks (terraform-plugin-framework-timeouts) for create, update and delete; reads use a fixed provider default.
@@ -158,13 +158,13 @@ provider "stripe" {
 
 - `internal/stripeapi.Version` is the constant `2026-09-30.endive`. It is read from `spec/PIN.json` by a generated file, so the tables and the header cannot disagree. Every request, v1 and v2, files host included, sends `Stripe-Version: <Version>`.
 - The provider documents the version on the registry index page and in every release note.
-- **Upgrade procedure**, after the suite and the fake have moved (the project's build order, `work/decisions.md` 2026-10-17):
+- **Upgrade procedure**, after the suite and the fake have moved:
   1. Update `spec/openapi.json` and `spec/PIN.json` to the matching release of `stripe/openapi`.
   2. Run `go generate`. The diff of `internal/generated/` is the schema change.
   3. Run `tools/schemadiff` against the previous release's `terraform providers schema -json`. It lists added, removed and changed attributes and flags breaking ones: a removed or renamed attribute, a type change, an optional that became required, a computed that became required-replace.
   4. Run the full acceptance suite against the matching fake release.
   5. Release. Breaking diff: new major version. Additive only: minor. The release notes embed the schemadiff output.
-- Within a named version, Stripe's monthly versions are additive (`work/decisions.md` 2026-10-17). New fields appear as new attributes at the next regenerate, as a minor release.
+- Within a named version, Stripe's monthly versions are additive. New fields appear as new attributes at the next regenerate, as a minor release.
 
 ### D5. HTTP client
 
@@ -181,11 +181,11 @@ provider "stripe" {
 
 - **Framework.** `terraform-plugin-testing` v1.16.0 (needs Go 1.25 or later, so the module's Go version is at least that), `ProtoV6ProviderFactories`, `resource.ParallelTest` as the default.
 - **Harness** (`internal/acctest`). `TestMain` reads `STRIPE_FAKE_URL` (and `STRIPE_FAKE_ADMIN_TOKEN` when set). `NewAccount(t)` calls `POST /_fake/accounts`, registers `t.Cleanup` calling `DELETE /_fake/accounts/{id}`, and returns a `Config` with `Key` and `BaseURL`. Every test builds its provider block from that, so no test shares state and tests run fully parallel. The admin client is typed to the four calls the harness needs. Acceptance tests require `TF_ACC=1`.
-- **Per-resource tests.** Each resource ships the P2 set: create and read, update in place, replace on a create-only change (with `plancheck.ExpectResourceAction(..., ResourceActionReplace)`), import (`ImportStateVerify`, ignoring once-returned fields), delete (and the archive aftermath for archive strategies), and drift. Drift tests change the object out of band through the typed Stripe client in the harness and expect a non-empty plan, then an apply that restores it. A meta-test fails when a resource directory lacks any of these by name.
+- **Per-resource tests.** Each resource ships this set: create and read, update in place, replace on a create-only change (with `plancheck.ExpectResourceAction(..., ResourceActionReplace)`), import (`ImportStateVerify`, ignoring once-returned fields), delete (and the archive aftermath for archive strategies), and drift. Drift tests change the object out of band through the typed Stripe client in the harness and expect a non-empty plan, then an apply that restores it. A meta-test fails when a resource directory lacks any of these by name.
 - **Request log assertions.** Update tests read `GET /_fake/accounts/{id}/requests` to assert the provider never sent a create-only field on update and sent each POST with an idempotency key. This is a fake-only assertion and is skipped on a sandbox.
 - **Unit tests.** Codecs (round trip of the nested-shape table), the retry policy (table-driven with a fake transport), the schemadiff tool, and the generator against a small fixture spec.
-- **Real sandbox (phase 4).** The same tests run with `STRIPE_ACC_TARGET=sandbox` and a key from the environment. In that mode `NewAccount` makes no admin call and returns the sandbox key, tests marked smoke are the only ones run, parallelism is one (`-parallel 1`, the sandbox is a single shared account), every name carries a random prefix, and fake-only assertions skip. CI uses the CI sandbox key from `StripeProvider/CiSandbox` read at run time (`work/decisions.md`, 2026-10-09); no one runs it locally against that sandbox. A failure there feeds back to the suite, as the brief describes (`work/brief.md`, "Closing the loop").
-- **CI shape** (P1.3). Unit tests, generated-code check, docs check and the acceptance suite run on every PR against a pinned fake image by exact tag, in parallel. The Terraform and OpenTofu matrix (D8) runs the acceptance suite once per CLI.
+- **Real sandbox.** The same tests run with `STRIPE_ACC_TARGET=sandbox` and a key from the environment. In that mode `NewAccount` makes no admin call and returns the sandbox key, tests marked smoke are the only ones run, parallelism is one (`-parallel 1`, the sandbox is a single shared account), every name carries a random prefix, and fake-only assertions skip. CI uses a dedicated sandbox key supplied at run time; no one runs it locally against that sandbox. A failure there feeds back to the conformance suite.
+- **CI shape.** Unit tests, generated-code check, docs check and the acceptance suite run on every PR against a pinned fake image by exact tag, in parallel. The Terraform and OpenTofu matrix (D8) runs the acceptance suite once per CLI.
 
 ### D7. Naming, import and lookups
 
@@ -193,7 +193,7 @@ provider "stripe" {
 - **Attribute names.** Stripe's field names, verbatim, at every nesting level. No renaming, flattening, singularising or prefixing, so docs map one to one to Stripe's reference and the generator needs no per-field table. `id` is Computed. `object` is omitted. Other read-only fields (`created`, `livemode`, `status`) are Computed. Timestamps stay Int64 Unix seconds on v1 and RFC 3339 strings on v2, as Stripe returns them; amounts stay integers in minor units, with `*_decimal` fields as strings. A field whose name Terraform reserves (`count`, `depends_on`, `for_each`, `lifecycle`, `provider`, `providers`) gets a `_` suffix by an override in the declaration; none exists in the waves read so far.
 - **Import IDs.** The Stripe ID for a top-level object (`terraform import stripe_product.x prod_123`). For an object addressed under a parent, `<parent_id>/<child_id>` (`stripe_product_feature`: `prod_123/pf_456`). Singletons (a per-account settings object) import with a constant ID `default`. Each resource also declares a resource identity with the same shape, so import blocks with identity work on Terraform versions that support it. Attributes that Stripe never returns cannot be set by import and are listed in the docs.
 - **Data source lookups.** Every data source accepts `id`, or the lookup keys its declaration lists, exactly one form per block (`ExactlyOneOf`). A lookup key is a field that Stripe documents as unique per account (price `lookup_key`, promotion code `code`, entitlement feature `lookup_key`, billing meter `event_name`, radar value list `alias`, apple pay domain `domain_name`) and that appears among the list endpoint's parameters. A tax registration's `country` is not one (the list endpoint filters by `status` only, and an expired registration does not free the country). An apple pay domain's `domain_name` is offered although Stripe accepts duplicates, because an ambiguous match is an error. Rules:
-  - Lookups use the List endpoint's filter, never the Search API, because search results lag writes (the fake ADR also lists "search lag" as a known divergence, c45772d).
+  - Lookups use the List endpoint's filter, never the Search API, because search results lag writes (search lag is a known divergence of the fake).
   - Zero matches is an error "no <type> found for <key>=<value>". More than one match is an error naming how many. The provider never picks the first of many.
   - A key that is not unique in Stripe (`name`, `email`) is not offered. A user who needs those uses `id`.
   - Data sources return every readable field of the object, same attribute names as the resource, all Computed.
@@ -201,11 +201,11 @@ provider "stripe" {
 
 ### D8. Framework, protocol and OpenTofu
 
-- terraform-plugin-framework v1.19.0 and terraform-plugin-go v0.31.0 (the latest releases on 2026-10-17); `go.mod` is bumped to the latest at P1.1 and kept current by dependency updates.
+- terraform-plugin-framework v1.19.0 and terraform-plugin-go v0.31.0 (the latest releases on 2026-10-17); `go.mod` is bumped to the latest at the restart and kept current by dependency updates.
 - **Protocol 6 only**, served with `providerserver.NewProtocol6WithError`. `terraform-registry-manifest.json` declares `protocol_versions: ["6.0"]`. No SDKv2 and no `terraform-plugin-mux`: all resources are framework resources, so there is nothing to mux.
-- **Terraform and OpenTofu.** The minimum supported versions are the oldest releases that both support protocol 6 and the framework features used (resource identity, write-only where used), fixed in P1.3 and listed in the docs. The CI matrix runs the acceptance suite with the Terraform and the OpenTofu CLI (pointing terraform-plugin-testing at a CLI binary; the exact variables are confirmed in P1.3 from the testing module's documentation, since the README read for this ADR does not cover them). Provider code uses no feature absent from the OpenTofu release in the matrix. The provider is published to both registries at P1.6.
-- **Docs.** `tfplugindocs` v0.25.0 generates registry docs from the schema and from `examples/` (one example per resource and data source, as P1.5 requires); CI fails if regenerating changes the checked-in output.
-- **Go.** The latest stable Go at P1.1, and at least 1.25 for terraform-plugin-testing.
+- **Terraform and OpenTofu.** The minimum supported versions are the oldest releases that both support protocol 6 and the framework features used (resource identity, write-only where used), fixed with the CI setup and listed in the docs. The CI matrix runs the acceptance suite with the Terraform and the OpenTofu CLI (pointing terraform-plugin-testing at a CLI binary; the exact variables are confirmed from the testing module's documentation when CI is set up). Provider code uses no feature absent from the OpenTofu release in the matrix. The provider is published to both registries.
+- **Docs.** `tfplugindocs` v0.25.0 generates registry docs from the schema and from `examples/` (one example per resource and data source); CI fails if regenerating changes the checked-in output.
+- **Go.** The latest stable Go at the restart, and at least 1.25 for terraform-plugin-testing.
 - **Layout:**
 
 ```
@@ -226,17 +226,17 @@ docs/                         generated
 
 ## Implementation Roadmap
 
-### Step 1: Restart scaffold (P1.1)
+### Step 1: Restart scaffold
 
 Remove the spike's code. Create the module, `main.go`, the provider with the D3 configuration, `internal/stripeapi` with the version constant, and the layout in D8. Targets the fake in `terraform init` and `plan`.
 
-Acceptance criteria: an empty provider builds; `terraform init` and `terraform plan` work with `base_url` pointing at a running fake; the provider rejects a missing key at configure time; the repo's `CLAUDE.md` line "add no resources until the owner agent says so" is replaced.
+Acceptance criteria: an empty provider builds; `terraform init` and `terraform plan` work with `base_url` pointing at a running fake; the provider rejects a missing key at configure time.
 
 Status: PENDING
 
 Dependencies: (none)
 
-### Step 2: Client and wire (P1.2, part 1)
+### Step 2: Client and wire
 
 `internal/wire` and `internal/stripeapi` as in D5: codecs, errors, retry, idempotency, limiter.
 
@@ -246,7 +246,7 @@ Status: PENDING
 
 Dependencies: Step 1: module and layout.
 
-### Step 3: Generator and engine (P1.2, part 2)
+### Step 3: Generator and engine
 
 `tools/schemagen`, `tools/schemadiff` and `internal/engine` as in D1 and D2, with the CI checks for generated drift.
 
@@ -256,17 +256,17 @@ Status: PENDING
 
 Dependencies: Step 1: module and layout. Step 2: the engine calls the client and codecs.
 
-### Step 4: Test harness and the product resource (P1.2, part 3)
+### Step 4: Test harness and the product resource
 
 `internal/acctest` and `stripe_product` with its data source, using all the machinery.
 
-Acceptance criteria: product passes the P2 acceptance set against a pinned fake release, with parallel tests each on a fresh account; the meta-test for required tests is green.
+Acceptance criteria: product passes the acceptance set against a pinned fake release, with parallel tests each on a fresh account; the meta-test for required tests is green.
 
 Status: PENDING
 
-Dependencies: Step 2, Step 3. The fake's product resource (K1.4, fake ADR step 7) and a fake release (K1.5).
+Dependencies: Step 2, Step 3. The fake's product resource and a fake release.
 
-### Step 5: CI and docs (P1.3, P1.5)
+### Step 5: CI and docs
 
 Workflows for unit, generate check, docs check and the Terraform and OpenTofu acceptance matrix; `tfplugindocs` wiring and the examples check.
 
@@ -274,23 +274,23 @@ Acceptance criteria: required on PRs; a PR that breaks a generated file or a res
 
 Status: PENDING
 
-Dependencies: Step 4. The fake image pull grant (fake ADR step 8, owner-only).
+Dependencies: Step 4. Access to the fake image.
 
-### Step 6: Wave 1 resources (P1.4)
+### Step 6: Wave 1 resources
 
 Declarations, examples and tests for price, coupon, customer, webhook_endpoint, billing_meter and the balance data source. Product is done in Step 4.
 
-Acceptance criteria: each meets the P2 standard items 1 to 4; item 5 (the sandbox smoke test, L1) is recorded when it has run.
+Acceptance criteria: each meets items 1 to 4 of the per-resource standard; item 5 (the sandbox smoke test) is recorded when it has run.
 
 Status: PENDING
 
-Dependencies: Step 5. Fake wave 1 (K1.4).
+Dependencies: Step 5. Fake wave 1.
 
 ### Step 7: Architecture docs
 
-Land the `architecture/` documents drafted in `1-architecture-doc-updates.md` once Steps 1 to 4 are done.
+Write the `architecture/` documents once Steps 1 to 4 are done.
 
-Acceptance criteria: the files exist as drafted and match the code.
+Acceptance criteria: the files exist as described under "Architecture Documentation Updates" and match the code.
 
 Status: PENDING
 
@@ -298,7 +298,7 @@ Dependencies: Step 4.
 
 ## Architecture Documentation Updates
 
-The repo has no `architecture/` directory yet; initialise it with `/init-adrs`. The drafted prose is in `1-architecture-doc-updates.md` beside this ADR. It creates `architecture/README.md` (map and reading order) and `architecture/provider/mapping.md` (the D2 rules, D3 configuration, D4 version policy, D7 naming), and the repo's `CLAUDE.md` gains the `architecture/` and `adrs/` lines the fake's `CLAUDE.md` carries.
+The repo has no `architecture/` directory yet; initialise it with `/init-adrs`. It gets `architecture/README.md` (map and reading order) and `architecture/provider/mapping.md` (the D2 rules, D3 configuration, D4 version policy, D7 naming).
 
 ## Alternatives Considered
 
@@ -382,7 +382,7 @@ Treat `active=false` as gone.
 ### 7. A `stripe_account_id` required provider attribute
 
 **Pros:**
-- Matches the suite's configuration (`work/brief.md`, "Component 1").
+- Matches the conformance suite's configuration.
 
 **Cons:**
 - The key already identifies the account; a second source can only disagree. Connect use is covered by `stripe_account`.

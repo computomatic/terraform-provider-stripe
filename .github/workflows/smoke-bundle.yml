@@ -1,8 +1,7 @@
 name: smoke-bundle
 
-# Publishes the image the sandbox smoke run executes (adrs/1-pending/2026-10-17-sandbox-smoke-run).
-# It only builds from main and release tags: the smoke job in stripe-api-conformance runs
-# this image with the sandbox key.
+# Publishes the image that feeds a maintainer smoke run against a Stripe sandbox.
+# It only builds from main and release tags.
 on:
   push:
     branches: [main]
@@ -22,7 +21,7 @@ env:
 
 jobs:
   publish:
-    runs-on: aws-linux-2cpu
+    runs-on: ubuntu-latest
     timeout-minutes: 30
     permissions:
       contents: read

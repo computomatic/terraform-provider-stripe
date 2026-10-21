@@ -4,11 +4,11 @@
 
 The accepted architecture (`adrs/1-pending/2026-10-17-provider-architecture/ADR.md`) builds every resource from a generated field table, a small declaration and one engine, and the engine is written for `/v1`. This ADR extends it to `/v2`, starting with `v2.core.event_destination` (wave 2) and ready for `v2.core.account` (wave 4): the generator reads `/v2` operations from the pinned spec, the engine sends and reads JSON, and the client and error mapping learn the `/v2` envelope. Every rule is limited to what the conformance suite has observed; where it has not, the engine refuses or omits rather than guesses, and the gaps are listed as work for the suite.
 
-## Status and ownership
+## Status
 
-Status: Accepted, 2026-10-18, by the product owner, who answered the four open questions as recommended (see "Resolved questions"). The ADR stays in `adrs/1-pending/` until implemented.
+Status: Accepted, 2026-10-18, with the four open questions answered as recommended (see "Resolved questions"). The ADR stays in `adrs/1-pending/` until implemented.
 
-Evidence is current as of this repository at `9f7a5b1`, `computomatic/fake-stripe-api` at `0a85822` (includes fake PR #24, `bc902dc`) and `computomatic/stripe-api-conformance` at `3054ac4`. All three commits are on their repository's main branch.
+Evidence is current as of 2026-10-18: the behaviour of the Stripe API as observed by a black-box conformance suite, and the behaviour of the Stripe API fake the provider is tested against.
 
 ## Background Context
 
@@ -23,19 +23,19 @@ Evidence is current as of this repository at `9f7a5b1`, `computomatic/fake-strip
 - Delete returns `v2.deleted_object` (`id`, `object`). Errors are `v2.error`: `{error: {code, message, type?, doc_url?, user_message?}}`, with `v2.error.not_found` for 404.
 - No `/v2` component schema sets `nullable: true` (counted over every schema whose name starts with `v2.`). Timestamps are `type: string, format: date-time`; `format: decimal` and `format: int64` are strings.
 
-**What the suite observed** (`stripe-api-conformance` `docs/stripe-api-behaviour.md:44-45`, `event_destination_test.go`, API version `2026-09-30.endive`):
+**What the suite observed** (API version `2026-09-30.endive`):
 
 - `POST` takes `application/json`; a form body is rejected with a status in 400 to 499 (subtest "create requires a JSON body", which asserts only the range).
 - A v2 error has no `type` and no `param`. Field validation is 400 `code: "invalid_fields"` with `invalid_fields: [{field, message}]` sorted by field. Other validation failures are 400 with a `message` and context fields but no `code` (`field`, `event_destination_type`, `event_type`). A missing object is 404 `code: "not_found"`, message `No such event_destination: '<id>'`.
-- IDs are `ed_test_...`, `created` and `updated` are RFC 3339 strings, and `webhook_endpoint.url` is absent unless `include=webhook_endpoint.url` is sent (on create, retrieve, update and list). The suite reads the field as "absent or null" (`webhookURL`, `event_destination_test.go:187`), so it does not pin which.
-- Update: `metadata` merges and a `null` value removes that key (subtest "update metadata", `:376`: `{"metadata":{"new":"v","drop":null}}` leaves `{"keep":"me","new":"v"}`). `type`, `event_payload` and `snapshot_api_version` are rejected as unknown fields (`:386`). An update that sends a changed `name`, `description`, `enabled_events` and `webhook_endpoint` changes each (`:353`).
-- List: `limit` 1 and 20 are sent; the token comes from the `page` query parameter of `next_page_url`; the first page has a null `previous_page_url` (`:461`, `nextPage` at `:151`).
-- Delete returns `id` and `object`; a second delete, and a retrieve after delete, are 404 `not_found` (`:476`).
+- IDs are `ed_test_...`, `created` and `updated` are RFC 3339 strings, and `webhook_endpoint.url` is absent unless `include=webhook_endpoint.url` is sent (on create, retrieve, update and list). The suite reads the field as "absent or null", so it does not pin which.
+- Update: `metadata` merges and a `null` value removes that key (subtest "update metadata": `{"metadata":{"new":"v","drop":null}}` leaves `{"keep":"me","new":"v"}`). `type`, `event_payload` and `snapshot_api_version` are rejected as unknown fields. An update that sends a changed `name`, `description`, `enabled_events` and `webhook_endpoint` changes each.
+- List: `limit` 1 and 20 are sent; the token comes from the `page` query parameter of `next_page_url`; the first page has a null `previous_page_url`.
+- Delete returns `id` and `object`; a second delete, and a retrieve after delete, are 404 `not_found`.
 - Enable and disable set `status` to `enabled` and `disabled`.
 
 **What the suite does not observe.** A `null` or empty string for a scalar on create or update. An empty array or empty object in a body. Whether a shrinking `enabled_events` replaces or merges (the suite's update only grows the list, so replace and merge look the same). `signing_secret` (the suite never sends `include` on create). An array `include` in the indexed form below. The index form of an array element in `invalid_fields.field`. Any `429` body on `/v2`.
 
-**What the fake serves** (`fake-stripe-api` `0a85822`): `/v2` is detected by path prefix (`internal/wire/v2.go:19`). A `POST` body must be JSON; a form body is a 400 (`:27`). `GET` parameters come from the query string, and a scalar given for an array parameter becomes a one-element array (`:64`). Validation returns `invalid_fields` sorted by field, with "Unknown field, did you mean ...?" (`internal/validate/v2.go:26`, `:110`). A `null` for a field the schema types as a string, or any other type mismatch, is `fake_unproven` (`:40`), except `null` as a value inside a map schema such as `metadata`, which is allowed (`:90`). Event destination update replaces `enabled_events` and `webhook_endpoint` and merges `metadata` (`internal/resources/eventdestination/eventdestination.go:299`, `:257`). Only `type=webhook_endpoint` is served, and `include=webhook_endpoint.signing_secret` answers `fake_not_implemented` (`:131`, `:179`). Idempotency keys are honoured on `POST` only (`internal/server/exchange.go:85`).
+**What the fake serves:** `/v2` is detected by path prefix. A `POST` body must be JSON; a form body is a 400. `GET` parameters come from the query string, and a scalar given for an array parameter becomes a one-element array. Validation returns `invalid_fields` sorted by field, with "Unknown field, did you mean ...?". A `null` for a field the schema types as a string, or any other type mismatch, is `fake_unproven`, except `null` as a value inside a map schema such as `metadata`, which is allowed. Event destination update replaces `enabled_events` and `webhook_endpoint` and merges `metadata`. Only `type=webhook_endpoint` is served, and `include=webhook_endpoint.signing_secret` answers `fake_not_implemented`. Idempotency keys are honoured on `POST` only.
 
 **What Stripe documents** (https://docs.stripe.com/api-v2-overview):
 
@@ -55,7 +55,7 @@ Evidence is current as of this repository at `9f7a5b1`, `computomatic/fake-strip
 - **Decoding and errors (D5).** Missing and `null` read the same. `invalid_fields` entries become attribute-level diagnostics; context fields are kept in the detail.
 - **Pagination (D6).** A `/v2` lookup reads one page of 20 and treats a non-null `next_page_url` as "more". No page is followed, because no consumer needs one.
 - **Client (D7).** JSON by path prefix, `Stripe-Version` as today, an idempotency key on `POST` only.
-- **Tests (D8).** The P2 set for `stripe_core_event_destination` against the fake, plus unit tests for the codec, errors, generator and engine, and a list of behaviours the suite and fake must prove first.
+- **Tests (D8).** The per-resource acceptance set for `stripe_core_event_destination` against the fake, plus unit tests for the codec, errors, generator and engine, and a list of behaviours the suite and fake must prove first.
 
 ## Approach Details
 
@@ -63,7 +63,7 @@ Evidence is current as of this repository at `9f7a5b1`, `computomatic/fake-strip
 
 - **Decision.** A declaration is `/v2` when its `Paths` start with `/v2/`. The engine and client derive everything else from that. `Declaration.V2` (`internal/engine/declaration.go:116`) and `stripeapi.Request.Encoding` with `FormEncoding`/`JSONEncoding` (`internal/stripeapi/client.go:30-44`) are deleted.
 - **Check.** `newModel` (`internal/engine/model.go`, beside the existing `Paths` checks at `:71-94`) fails when the non-empty paths of one declaration do not all start with `/v2/` or all with `/v1/`. An archive `Path` is held to the same rule.
-- **Why.** The fake decides the same way, by path prefix (`internal/wire/v2.go:19`), so a flag can only disagree with the wire. A flag also leaves a trap: `tfacc.Post` (`internal/acctest/tfacc/tfacc.go:34`) builds a `stripeapi.Request` with the default form encoding, so any test that touches a `/v2` path out of band would send a form. Derived encoding makes that test helper correct without a change.
+- **Why.** The fake decides the same way, by path prefix, so a flag can only disagree with the wire. A flag also leaves a trap: `tfacc.Post` (`internal/acctest/tfacc/tfacc.go:34`) builds a `stripeapi.Request` with the default form encoding, so any test that touches a `/v2` path out of band would send a form. Derived encoding makes that test helper correct without a change.
 - **Type name and import.** Unchanged from the architecture ADR (D7): `stripe_core_event_destination`, import ID the bare `ed_...` ID. `IDPrefix` is `ed_`; the suite sees `ed_test_...` and the import check is a prefix match that only warns (`internal/engine/resource.go:468`), so `ed_` holds.
 - **Parents.** A `/v2` child path uses its own placeholder (`/v2/core/accounts/{account_id}/persons/{id}`). `Declaration.Parent` already names the placeholder, so `Parent: "account_id"` works with no change; the parent attribute is then named `account_id`, which is Stripe's name and is kept verbatim (architecture ADR D7).
 
@@ -93,7 +93,7 @@ The engine builds one `wire.Object` tree for every namespace; the only differenc
 | Removed Optional scalar, update | `k=` | refused (below) |
 | Create-only field, update | never sent | never sent |
 
-- **Why create drops empty values.** An empty array or object in a body is unobserved (suite gap, "What the suite does not observe"), and the fake answers `fake_unproven` for a wrong-typed value. Omitting it produces what the user configured: an Optional collection set to empty and one left unset mean the same thing on create. A required collection is sent as written, so Stripe's own error (`Required request field missing`, `invalid_fields`) reaches the user.
+- **Why create drops empty values.** An empty array or object in a body is unobserved (a gap in the suite, see "What the suite does not observe"), and the fake answers `fake_unproven` for a wrong-typed value. Omitting it produces what the user configured: an Optional collection set to empty and one left unset mean the same thing on create. A required collection is sent as written, so Stripe's own error (`Required request field missing`, `invalid_fields`) reaches the user.
 - **Why update sends whole arrays and objects.** Whether `/v2` replaces or merges a changed array or object is unobserved: the suite's update grows `enabled_events` from one entry to two (`event_destination_test.go:353`), which replace and merge both produce, and `webhook_endpoint` has one member. The fake replaces (`eventdestination.go:314`), which the fake's own comment does not claim as proven. Sending the whole new value is correct under replace. Under merge it is correct except for a removed list item or object member, which then stays in Stripe, so the read after apply differs from the plan and the framework reports an inconsistent result. That fails loudly rather than corrupting state, and it is the signal for the suite to settle the question (D8, suite work).
 - **Metadata.** `metadataDiff` (`internal/engine/encode.go`) already returns `wire.Null{}` for a removed key and the changed value for a new one; only the form codec turns that null into `""`. The JSON codec sends `null`, which is the proven `/v2` behaviour ("update metadata"). No change to `metadataDiff`. Clear-all (`metadata = {}` or removed) is a diff of `null` per existing key, never a single empty object, for the same reason the architecture ADR gives (D2, Metadata).
 - **Removed Optional scalar.** `encodeUpdate` emits `wire.Null{}` for a field removed from configuration (`internal/engine/encode.go:53`). In `/v1` that means "unset". In `/v2` it is unobserved, and the fake rejects it as `fake_unproven` for string fields (`internal/validate/v2.go:40`). On a `/v2` declaration the engine therefore does not send `null` for any field except a `metadata` key. Instead the update fails with the diagnostic "clearing `<path>` is not supported on this resource: Stripe's `/v2` behaviour for null is not yet verified". The declaration lists `ClearsWithNull []string` of dotted paths once the suite has proven each one, and the engine sends `null` for those. Event destinations have no such field: `description` is Optional+Computed and a removed Optional+Computed field keeps its value (architecture ADR D2, Clearing fields); `metadata` keys are proven. The rule matters for `v2.core.account` in wave 4.
@@ -144,7 +144,7 @@ A `/v2` request with no parameters (`DELETE`, or a `POST` to `/enable` or `/disa
 
 ### D8. Testing
 
-**Acceptance tests** (`internal/resources/core_event_destination/resource_test.go`, the P2 set, fake-backed, parallel, a fresh account each; the layout meta-test in `internal/resources/layout_test.go` requires the six by name):
+**Acceptance tests** (`internal/resources/core_event_destination/resource_test.go`, fake-backed, parallel, a fresh account each; the layout meta-test in `internal/resources/layout_test.go` requires the six by name):
 
 | Test | `/v2` content |
 |-|-|
@@ -175,7 +175,7 @@ A `/v2` request with no parameters (`DELETE`, or a `POST` to `/enable` or `/disa
 
 ## Resolved questions
 
-Answered by the product owner on 2026-10-18, each as recommended.
+Answered on 2026-10-18, each as recommended.
 
 1. **`webhook_endpoint.signing_secret`.** `stripe_core_event_destination` ships without it, and the generator omits it from the table because neither the suite nor the fake proves it yet. Proving it is a priority, since the secret is what makes a webhook destination usable; the field follows.
 2. **Enable and disable.** `status` is read-only Computed. A writable `status` comes once the suite proves the action calls.
@@ -226,17 +226,17 @@ Dependencies: Steps 1 to 3. Suite proof of the `include[0]` form (D8 table) and 
 
 ### Step 5: Architecture docs
 
-Land `1-architecture-doc-updates.md` in `architecture/` and apply the corrections to the architecture ADR (D5 pagination and idempotency sentences; D1 "v1 versus v2" wording).
+Write the section for `architecture/provider/mapping.md` and apply the corrections to the architecture ADR (D5 pagination and idempotency sentences; D1 "v1 versus v2" wording).
 
-Acceptance criteria: the drafted text exists under `architecture/` and matches the code.
+Acceptance criteria: the section exists under `architecture/` and matches the code.
 
-Status: PARTIAL. The corrections to the architecture ADR (D1, D2, D5) are applied. `architecture/` does not exist yet, so `1-architecture-doc-updates.md` waits for the architecture ADR to initialise it.
+Status: PARTIAL. The corrections to the architecture ADR (D1, D2, D5) are applied. `architecture/` does not exist yet, so the section waits for the architecture ADR to initialise it.
 
 Dependencies: Step 4.
 
 ## Architecture Documentation Updates
 
-The repository has no `architecture/` directory yet (the architecture ADR initialises it). The drafted section for `architecture/provider/mapping.md` is in `1-architecture-doc-updates.md` beside this ADR.
+The repository has no `architecture/` directory yet (the architecture ADR initialises it). The `/v2` rules in D1 to D7 belong in `architecture/provider/mapping.md` once it exists.
 
 ## Alternatives Considered
 

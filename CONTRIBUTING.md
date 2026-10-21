@@ -43,7 +43,7 @@ Generation needs `terraform` or `tofu` on the path. `scripts/check-docs.sh` rege
 
 ## Acceptance tests
 
-Tests that need a Stripe API run against the fake, one fresh account per test, and are skipped when no fake is configured. Set `STRIPE_FAKE_SOURCE` to the fake's source tree and the harness builds it from a temporary copy and starts it, or set `STRIPE_FAKE_URL` (and `STRIPE_FAKE_ADMIN_TOKEN` if it needs one) to use a running fake.
+Tests that need a Stripe API run against a Stripe API fake, one fresh account per test, and are skipped when no fake is configured. The fake is not yet public, so you cannot run these tests yourself. CI runs them on pushes and on pull requests from branches of this repository; maintainers run them for pull requests from forks. Unit tests and the docs check run for everyone. Set `STRIPE_FAKE_SOURCE` to the fake's source tree and the harness builds it from a temporary copy and starts it, or set `STRIPE_FAKE_URL` (and `STRIPE_FAKE_ADMIN_TOKEN` if it needs one) to use a running fake.
 
 They use terraform-plugin-testing and need `TF_ACC=1`:
 
@@ -55,7 +55,7 @@ They run with the `terraform` on the path. To run them with OpenTofu, also set `
 
 ### Real-Stripe mode
 
-The same tests can run against a Stripe sandbox for the weekly smoke run (`adrs/1-pending/2026-10-17-sandbox-smoke-run/ADR.md`). Set `TF_SMOKE=1` and `STRIPE_API_KEY` to an `sk_test_` key; do not set any `STRIPE_FAKE_*` variable, the harness refuses both together. Only the CI sandbox's run does this: never run it locally.
+The same tests can run against a Stripe sandbox, which maintainers do for smoke runs. Set `TF_SMOKE=1` and `STRIPE_API_KEY` to an `sk_test_` key; do not set any `STRIPE_FAKE_*` variable, the harness refuses both together. Only the maintainers' sandbox run does this: never run it locally.
 
 In this mode every test shares the one account, and the key stays in the environment, out of generated HCL. A test written for both modes:
 
@@ -64,35 +64,7 @@ In this mode every test shares the one account, and the key stays in the environ
 
 ## CI
 
-CI (`.github/workflows/ci.yml`) runs the checks as the `unit` job, the docs check (`scripts/check-docs.sh`) as the `docs` job, and the acceptance tests as the `acceptance` job, under Terraform and then OpenTofu, against the released fake image named by `.fake-version`. To move to a newer fake, change that one line.
-
-## The smoke bundle
-
-`.github/workflows/smoke-bundle.yml` publishes `ghcr.io/computomatic/terraform-provider-stripe-smoke` on every push to `main` (tags `sha-<sha>` and `main`) and every `v*` tag (`sha-<sha>` and the version). The image holds the wave 1 acceptance test binaries, the sweep, Terraform at the version `ci.yml` pins, and `entrypoint.sh`; the stripe-api-conformance workflow runs it against the CI sandbox. Only the 30 newest versions tagged `sha-` alone are kept.
-
-`scripts/smoke-bundle/build.sh` stages the build context. To try the image without Stripe, build it from a linux/amd64 Terraform and run it against a fake: it refuses to start without `TF_SMOKE=1`, and `STRIPE_BASE_URL` can point the sandbox mode at a fake account's URL with that account's key (the entrypoint reads neither). The tests that need a fake-only feature (the two `_replace` tests) fail there, because smoke mode does not skip them.
-
-## Releasing
-
-Before tagging a release, the release commit must pass the smoke run against the CI sandbox. Use the commit's full 40-character SHA throughout.
-
-1. Wait for the `smoke-bundle` run for that commit on `main` to finish, so the `sha-<sha>` image exists.
-2. Dispatch the suite workflow with that SHA:
-
-   ```sh
-   gh workflow run e2e-stripe.yml -R computomatic/stripe-api-conformance -f provider_ref=<full sha>
-   ```
-
-3. Find the run you started:
-
-   ```sh
-   gh run list -R computomatic/stripe-api-conformance --workflow e2e-stripe.yml --event workflow_dispatch -L 1
-   ```
-
-4. Wait for it with `gh run watch <run id> -R computomatic/stripe-api-conformance`. It queues behind any run already in the `e2e-stripe` group, so it can take a while to start.
-5. Pass condition: the run's `provider-smoke` job concludes `success` for that SHA (check with `gh run view <run id> -R computomatic/stripe-api-conformance`, and confirm the run's `provider_ref` is the release SHA). A failed job blocks the release. Failures feed back into the conformance suite, not into provider-only fixes.
-
-A run shown as cancelled, or displaced (another run of the `e2e-stripe` group replaced it while it was pending), is never a pass. Re-dispatch with the same command and repeat from step 3. Tag the release only after a successful `provider-smoke` job for the release SHA.
+CI (`.github/workflows/ci.yml`) runs the checks as the `unit` job, the docs check (`scripts/check-docs.sh`) as the `docs` job, and the acceptance tests as the `acceptance` job, under Terraform and then OpenTofu, against the released fake image named by `.fake-version`. To move to a newer fake, change that one line. The `acceptance` job is skipped for pull requests from forks, because the fake image is private.
 
 ## Trying a build against the fake
 
