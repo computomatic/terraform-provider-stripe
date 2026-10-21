@@ -77,8 +77,19 @@ provider "stripe" {
 }
 ```
 
-To use a local build, `go install .` and add a `dev_overrides` entry for `github.com/computomatic/stripe` in a CLI configuration file selected with `TF_CLI_CONFIG_FILE`.
+To use a local build, `go install .` and add a `dev_overrides` entry for `registry.terraform.io/computomatic/stripe` in a CLI configuration file selected with `TF_CLI_CONFIG_FILE`.
 
 ## Clean room
 
 Never copy source from `stripe/terraform-provider-stripe` or `lukasaron/terraform-provider-stripe`. Derive code from Stripe's public API docs and OpenAPI spec.
+
+## Releasing
+
+Releases are cut from `main`. Tag the commit `vX.Y.Z` and push the tag:
+
+```sh
+git tag vX.Y.Z
+git push origin vX.Y.Z
+```
+
+The release workflow builds the provider for each supported platform, signs the checksums and publishes a GitHub release. The Terraform Registry picks the release up from there. Move the changelog's Unreleased entries under the new version before tagging.

@@ -16,7 +16,7 @@ The Stripe provider manages the objects in a Stripe account: products, prices, c
 terraform {
   required_providers {
     stripe = {
-      source = "github.com/computomatic/stripe"
+      source = "computomatic/stripe"
     }
   }
 }

@@ -18,7 +18,7 @@ func main() {
 	flag.Parse()
 
 	opts := providerserver.ServeOpts{
-		Address: "github.com/computomatic/stripe",
+		Address: "registry.terraform.io/computomatic/stripe",
 		Debug:   debug,
 	}
 
