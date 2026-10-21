@@ -20,7 +20,7 @@ Evidence is current as of `terraform-provider-stripe` at `51fce7e` (main), `stri
 
 **The provider's OIDC subject.** `gh api repos/computomatic/terraform-provider-stripe/actions/oidc/customization/sub` returns `{"use_default":true,"use_immutable_subject":false,"sub_claim_prefix":"repo:computomatic/terraform-provider-stripe"}`, and the repository ID is 963774367. The provider therefore emits name-based subjects (`repo:computomatic/terraform-provider-stripe:ref:refs/heads/main`), which the immutable-subject trust does not match. Trusting the provider directly (option 1) needs either `use_immutable_subject: true` on the repository, which is a repository setting in `computomatic/github-infra` (owner-merged), after which the subject is `repo:computomatic@115172828/terraform-provider-stripe@963774367:ref:refs/heads/main`; or a weaker name-based subject in the trust, which a renamed or re-created repository could take over. The recommended option does not touch this.
 
-**Runners.** A job that assumes an AWS role must run on `ubuntu-latest`; the self-hosted runners forbid credentialed jobs (`computomatic/github-runners` README; revisiting it is github-runners #17). The provider's other jobs run on `aws-linux-2cpu` (`.github/workflows/ci.yml`, `51fce7e`).
+**Runners.** A job that assumes an AWS role was expected to need `ubuntu-latest`, on the strength of the self-hosted runners' README forbidding credentialed jobs; the first smoke run assumed the role and read the key on `aws-linux-2cpu` and passed (`computomatic/github-runners` README; revisiting it is github-runners #17). The provider's other jobs run on `aws-linux-2cpu` (`.github/workflows/ci.yml`, `51fce7e`).
 
 **The suite's run** (`stripe-api-conformance` `.github/workflows/e2e-stripe.yml`, `d9b694e`). It runs on every push to `main` and on `workflow_dispatch` (input `test_filter`), under `concurrency: group: e2e-stripe, cancel-in-progress: false`, in one `e2e` job on `ubuntu-latest` with `timeout-minutes: 60` and `id-token: write`. The job assumes the role, reads the secret, masks the key, exports it, and runs `go test`. Its comment records the queue rule: "GitHub keeps only one pending run per group, so a burst of merges cancels the older pending runs and runs the latest pending one". A second job, `publish-results`, is in the same workflow.
 
@@ -30,7 +30,7 @@ Evidence is current as of `terraform-provider-stripe` at `51fce7e` (main), `stri
 
 **What the harness assumes today.** `internal/acctest` takes `STRIPE_FAKE_URL`, `STRIPE_FAKE_ADMIN_TOKEN` or `STRIPE_FAKE_SOURCE`; `NewAccount` creates a fresh account per test through the fake's admin API, and `Config.ProviderBlock()` renders the key and `base_url` into HCL (`internal/acctest/harness.go`, `51fce7e`). Tests use `resource.ParallelTest`. Some use fake-only aids: `acctest.RequestLog` (for example `TestAccProduct_destroyWithPrices` asserts the DELETE-then-archive sequence from the fake's request log) and `acctest.Seed` (data source tests for events, files and balance transactions). Some pick fixed IDs (`id = "prod_priced"` in `internal/resources/product/resource_test.go`), which are unique per fake account but not per real account. The provider already reads `STRIPE_API_KEY` when `api_key` is unset (`internal/provider/provider.go:231`).
 
-**Cost.** Recurring cost needs the owner's approval. The run uses GitHub-hosted minutes on private repositories.
+**Cost.** Recurring cost needs the owner's approval. The first run used the self-hosted `aws-linux-2cpu` runners, not GitHub-hosted minutes (Decision 1).
 
 ## Approach Overview
 
@@ -81,7 +81,7 @@ on:
 ```
 
 - The `e2e` job gets `if: github.event_name != 'schedule' && inputs.provider_ref == ''`: scheduled and provider-ref dispatches skip the suite (Decision 6: smoke only on the schedule).
-- A new job `provider-smoke`, `if: github.event_name == 'schedule' || inputs.provider_ref != ''`, `runs-on: ubuntu-latest`, `timeout-minutes: 50`, `permissions: {contents: read, id-token: write, packages: read}`. Steps: configure AWS credentials and read the key exactly as `e2e` does (same pinned actions, same masking); log in to `ghcr.io` with `GITHUB_TOKEN`; resolve the tag (`sha-${provider_ref}` or `main` for a schedule); run the image with `-e STRIPE_API_KEY` taken from the environment (never on the command line) and `-e TF_SMOKE=1`; always upload the `go test -json` output as an artifact; write the same pass/fail table to the step summary.
+- A new job `provider-smoke`, `if: github.event_name == 'schedule' || inputs.provider_ref != ''`, `runs-on: aws-linux-2cpu` (the first run's label; it was drafted as `ubuntu-latest`), `timeout-minutes: 50`, `permissions: {contents: read, id-token: write, packages: read}`. Steps: configure AWS credentials and read the key exactly as `e2e` does (same pinned actions, same masking); log in to `ghcr.io` with `GITHUB_TOKEN`; resolve the tag (`sha-${provider_ref}` or `main` for a schedule); run the image with `-e STRIPE_API_KEY` taken from the environment (never on the command line) and `-e TF_SMOKE=1`; always upload the `go test -json` output as an artifact; write the same pass/fail table to the step summary.
 - It sits in the `e2e-stripe` group because the group is workflow-wide. It does not have `publish-results` (the fidelity report joins suite runs, not smoke runs); `publish-results` gets `if` conditions that already exclude non-push events (`github.event_name == 'push'`), so it needs no change.
 - Only images built from `main` are accepted: the provider publishes bundle tags only from a `push` to `main` or a tag, and the suite job refuses a `provider_ref` that is not an ancestor of the provider's `main` (checked with the GitHub compare API at job start using the job's own token; if the token cannot read the provider repo, the check is dropped and the publishing rule is the only control, which Decision 2 accepts).
 
@@ -98,7 +98,7 @@ on:
 - Parallelism: `resource.ParallelTest` still calls `t.Parallel()`, and the entrypoint passes `-test.parallel 1`, so smoke tests run one at a time. Unique names make a higher value safe against collisions, but the sandbox has one rate limit and one set of object quotas, so raising it is a decision made from a measured run (Step 7), not a default.
 - Tests that rely on the fake's behaviour where Stripe's is not suite-proven fail on the first smoke run. That is the point: each failure becomes a suite test (L2), then a fake fix, then, if needed, a provider fix.
 
-**Selection and duration.** The selection is everything the harness can run in smoke mode in the wave 1 packages, `^TestAcc`; there is no second list to maintain. Duration is unmeasured. A rough bound: about 50 wave 1 tests, each three to five steps of terraform plan/apply/refresh, at one to three seconds per Stripe call and a second or two per Terraform process, is 15 to 30 minutes serial. The `go test` timeout is 40 minutes and the job limit 50, below the suite's 60, and Step 7 measures it and replaces both.
+**Selection and duration.** The selection is everything the harness can run in smoke mode in the wave 1 packages, `^TestAcc`; there is no second list to maintain. The first run (Decision 1) took about 2 minutes 20 seconds for the whole image, serial at `-test.parallel 1`, against a pre-run estimate of 15 to 30 minutes; the estimate was wrong by an order of magnitude. The `go test` timeout is still 40 minutes and the job limit 50, below the suite's 60. Both are provisional ceilings that the measurement shows are far looser than needed; Step 7 replaces them.
 
 **Avoiding junk.**
 
@@ -116,7 +116,7 @@ on:
 
 Decided by the product owner on 2026-10-17. They were open questions in the first draft.
 
-1. **Cost: approved, capped at the weekly schedule plus manual dispatches.** There is no push trigger. Release runs and re-dispatches are manual dispatches. The run adds one `ubuntu-latest` job on private repositories: about 4 scheduled runs a month plus a handful of dispatches, so 8 to 10 runs at 25 to 40 minutes, roughly 4 to 7 hours a month. At GitHub's list price for 2-core Linux (about $0.006 to $0.008 a minute; the organisation's plan and included quota were not checked) that is about $1.50 to $3.50 a month before included minutes, probably nothing if the plan has headroom, and marginal next to the suite's push runs on the same runners. GHCR storage for one small image per `main` push is extra; Step 5 adds a retention rule. The duration figure is an estimate until Step 7 measures it.
+1. **Cost: approved, capped at the weekly schedule plus manual dispatches.** There is no push trigger. Release runs and re-dispatches are manual dispatches. The first run (suite run 39616067426, a `workflow_dispatch` of 2026-10-21 for provider `main` at `6186aa0`, image `sha-6186aa0c2a3bf72b3023b4c492505117fcf256c5`) passed and measured the cost. The `provider-smoke` job ran on `aws-linux-2cpu` in the `aws-spot-runners` group, not on `ubuntu-latest`, so the run uses no GitHub-hosted minutes. The job started at 14:23:41 UTC; the image ran from 14:24:10 to 14:26:28, about 2 minutes 20 seconds, which included the image pull and the sweep before (about 8 seconds, pull included). The packages took: balance 3s, billing_meter 14s, coupon 26s, customer 16s, price 35s, product 14s, webhook_endpoint 16s. The sweep after took 5 seconds. With about 4 scheduled runs a month plus a handful of dispatches, so 8 to 10 runs, that is under 30 minutes of runner time a month. The run costs the self-hosted runners' spot instances for those minutes, which was not priced. GHCR storage for one small image per `main` push is extra; Step 5 adds a retention rule.
 2. **Provider code runs with the sandbox key: accepted.** Bundles are built only from the provider's `main` and release tags. The key is a test-mode key for a sandbox.
 3. **GHCR access: a one-time manual step by the owner**, not a `github-infra` change. Once the image exists, the owner adds `stripe-api-conformance` to the package's Actions access (package settings, Manage Actions access), the same setting the fake's package needed for the provider repo. The owner raises it as an ask when the image exists (Step 6).
 4. **Release gate: the documented procedure step for now.** Automating it is a later decision.
@@ -126,7 +126,7 @@ Decided by the product owner on 2026-10-17. They were open questions in the firs
 
 ## Implementation Roadmap
 
-The first three steps verify what the design assumed and can proceed in parallel. They settle the details Steps 4 to 7 build on. The duration of a run cannot be measured before a run exists, so Step 7 measures it; until then the timeouts (40 minutes for `go test`, 50 for the job) are provisional ceilings.
+The first three steps verify what the design assumed and can proceed in parallel. They settle the details Steps 4 to 7 build on. The first run measured about 2 minutes 20 seconds (Decision 1); the timeouts (40 minutes for `go test`, 50 for the job) are still the provisional ceilings, to be replaced in Step 7.
 
 ### Step 1: Verify the test binaries run without a checkout
 
@@ -211,7 +211,7 @@ In `stripe-api-conformance`, add the schedule (`17 3 * * 0`), the `provider_ref`
 
 Acceptance criteria: a dispatch made while a suite run is in progress queues behind it in the `e2e-stripe` group (observed once); a run on the CI sandbox passes for wave 1, and after the final sweep the sandbox holds no active, deletable `tfsmoke-` object. This is the roadmap's "Done when". The measured duration and the cost estimate are written back into Decision 1.
 
-Status: PENDING
+Status: PENDING. The first dispatch (Decision 1) passed and its duration is recorded there. Not yet done: replacing the timeouts, deciding the parallelism, the queue-behind-a-suite-run observation, and the check that the sandbox holds no active, deletable `tfsmoke-` object after the final sweep.
 
 Dependencies: Steps 5 and 6.
 
