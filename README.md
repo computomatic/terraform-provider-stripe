@@ -19,7 +19,7 @@ Terraform reads `~/.terraformrc` (or the file named by `TF_CLI_CONFIG_FILE`), an
 ```hcl
 provider_installation {
   dev_overrides {
-    "github.com/computomatic/stripe" = "/Users/you/terraform-plugins"
+    "registry.terraform.io/computomatic/stripe" = "/Users/you/terraform-plugins"
   }
   direct {}
 }
@@ -33,7 +33,7 @@ With a `dev_overrides` entry, skip `terraform init` for the provider; `plan` and
 terraform {
   required_providers {
     stripe = {
-      source = "github.com/computomatic/stripe"
+      source = "computomatic/stripe"
     }
   }
 }

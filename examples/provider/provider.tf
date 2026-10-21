@@ -1,7 +1,7 @@
 terraform {
   required_providers {
     stripe = {
-      source = "github.com/computomatic/stripe"
+      source = "computomatic/stripe"
     }
   }
 }

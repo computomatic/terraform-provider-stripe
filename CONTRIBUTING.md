@@ -77,7 +77,7 @@ provider "stripe" {
 }
 ```
 
-To use a local build, `go install .` and add a `dev_overrides` entry for `github.com/computomatic/stripe` in a CLI configuration file selected with `TF_CLI_CONFIG_FILE`.
+To use a local build, `go install .` and add a `dev_overrides` entry for `registry.terraform.io/computomatic/stripe` in a CLI configuration file selected with `TF_CLI_CONFIG_FILE`.
 
 ## Clean room
 
