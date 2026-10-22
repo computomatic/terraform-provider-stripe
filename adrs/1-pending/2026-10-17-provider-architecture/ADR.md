@@ -10,7 +10,7 @@ Status: Accepted, 2026-10-17. The ADR stays in `adrs/1-pending/` until it is bui
 
 Resolutions recorded at acceptance:
 - **Raw client.** A raw `net/http` client instead of `stripe-go`: accepted, because a generic engine cannot use per-resource typed structs (D5).
-- **Archive and expire.** Destroy archives or expires where Stripe has no DELETE: accepted. What happens when a replace reuses the same unique key is settled per resource by its acceptance tests and documented on that resource (D2).
+- **Archive and expire.** Destroy archives or expires where Stripe has no DELETE: accepted (amended 2026-10-22 by `adrs/1-pending/2026-10-22-destroy-semantics/ADR.md`: destroy deletes or archives, and is refused otherwise). What happens when a replace reuses the same unique key is settled per resource by its acceptance tests and documented on that resource (D2).
 - **Major releases.** A breaking schema change in an API version bump makes a major release: accepted (D4).
 - **Licence.** Not decided here.
 
@@ -19,7 +19,7 @@ Evidence is current as of 2026-10-17: the behaviour of the Stripe API as observe
 The decisions below are the ones most worth scrutiny; each is argued where it is decided:
 
 1. **A raw HTTP client, not `stripe-go` v87 (D5).** `stripe-go` was the obvious first choice and a raw client the alternative. This ADR picks the raw client, because a generic engine over generated tables cannot use per-resource typed SDK structs.
-2. **Destroy archives where Stripe offers no delete (D2).** `terraform destroy` on a price, promotion code, shipping rate and similar objects leaves an inactive object in the account. Unique keys on it (a promotion code's `code`, a feature's `lookup_key`) stay taken.
+2. **Destroy archives where Stripe offers no delete (D2).** `terraform destroy` on a price, promotion code, shipping rate and similar objects leaves an inactive object in the account. An object Stripe can neither delete nor archive refuses destroy (amended 2026-10-22). Unique keys on it (a promotion code's `code`, a feature's `lookup_key`) stay taken.
 3. **Hybrid generation (D1).** Checked-in generated tables and a generic engine, with hand-written declarations only for what the spec cannot say. This sets the cost of every later resource.
 4. **A version bump with a breaking schema change is a major provider release (D4).** Stripe names a version about twice a year, so expect up to two major releases a year.
 5. **Provider attribute names (D3).** `api_key`, `base_url`, `files_base_url`, `stripe_account`. No account ID is required.
@@ -85,19 +85,20 @@ The decisions below are the ones most worth scrutiny; each is argued where it is
 
 Every rule below is implemented once in `internal/engine`; declarations choose among them.
 
-**Delete versus archive.** The declaration names one strategy:
+**Delete versus archive.** Destroy follows the object's lifecycle in Stripe (amended by `adrs/1-pending/2026-10-22-destroy-semantics/ADR.md`). The declaration names one strategy:
 
 |Strategy|When|Destroy does|
 |-|-|-|
-|`delete`|The spec has `DELETE` for the object (customer, coupon, webhook endpoint, apple pay domain, terminal location)|Calls `DELETE`. A 404 is success. A 200 with `deleted: true` is success (a second delete returns 200 for terminal locations: `docs/stripe-api-behaviour.md:67`)|
-|`archive`|No `DELETE`; the object has an off switch (price `active=false`, shipping rate, tax rate, promotion code, payment method configuration; payment method domain `enabled=false`; file link `expires_at=now`)|Retrieves, then sends the declared update (`field=value`), then removes the object from state. Retrieve first, because a second archive can be an error (`docs/stripe-api-behaviour.md:21`). An object already archived counts as done|
-|`expire`|The object ends at a time (tax registration)|Sends `expires_at` a few seconds ahead and waits for status `expired` (`docs/stripe-api-behaviour.md:64`)|
-|`none`|Stripe offers no way to remove it (files)|There is no resource; only a data source exists|
+|`Delete`|The spec has `DELETE` on the object, whatever Stripe calls it (a subscription's `DELETE` cancels it)|Calls `DELETE`. A 404 is success, and so is a 200 with `deleted: true` (`docs/stripe-api-behaviour.md:67`)|
+|`Archive`|No `DELETE`; a reversible deactivation: an `active`-style field the update takes back, or a deactivate endpoint with a matching reactivate (price, shipping rate, meter, portal configuration)|Retrieves, sends the declared update or action unless the object is already archived, then removes it from state|
+|`DeleteOrArchive`|`DELETE`, which Stripe refuses for objects it lets be archived (a product with a price)|Calls `DELETE`, archives on the declared refusal and warns|
+|`Refuse`|Neither: what ends the object (cancel, void, expire, close, detach) is irreversible, or nothing does|Fails at plan time, and at apply as a backstop, with how to remove the object from state with a `removed` block or `terraform state rm`. A change that would replace the object fails at plan time too|
+|`NoDelete`|The object cannot be created here (files)|There is no resource; only a data source exists|
 
-- The docs for each archiving resource say in the first paragraph that `terraform destroy` archives and what stays behind.
-- `active` (or `enabled`) remains an ordinary Optional+Computed attribute. Read never removes an object from state because it is inactive; only a 404 does. An object archived out of band appears as drift on `active`, and `terraform import` works on archived objects. This keeps "archived" visible and avoids deleting state for something that still exists.
-- Unique keys on archived objects (a promotion code's `code`, a feature's `lookup_key`) stay taken. A create that collides surfaces Stripe's error unchanged with a diagnostic suffix naming the archive behaviour. The provider never adopts an existing object silently. Whether a replace of such a resource can succeed is proven per resource by its replace acceptance test; a resource that cannot replace gets a documented `lifecycle` note rather than a hidden workaround.
-- Frozen objects (an archived entitlement feature rejects updates) are handled by the `archive` strategy being last: update is never attempted after archive.
+- `RefuseWhen` names a state in which Stripe refuses to delete or archive an object of a deleting or archiving resource (the account's default portal configuration, a canceled card). An object in that state is refused as under `Refuse`.
+- Destroy never creates an object (a reversal, a refund) and never sends a lifecycle action. An irreversible action is a change of state: where the suite proves it, it is an attribute the user sets (`stripe_issuing_dispute.status = "submitted"`).
+- `active` (or `enabled`) remains an ordinary Optional+Computed attribute. Read never removes an object from state because it is inactive; only a 404 does. An object archived out of band appears as drift on `active`, and `terraform import` works on archived objects.
+- Unique keys on archived objects (a promotion code's `code`) stay taken. A create that collides surfaces Stripe's error unchanged. The provider never adopts an existing object silently. Whether a replace of such a resource can succeed is proven per resource by its replace acceptance test.
 
 **Immutable fields.** Create-only fields (D1) get `RequiresReplace`. The update request never includes a create-only field, even unchanged, because Stripe rejects the name itself (`parameter_unknown`), not only a changed value. Replace is destroy then create under the default lifecycle.
 

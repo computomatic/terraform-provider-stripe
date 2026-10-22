@@ -3,12 +3,14 @@
 page_title: "stripe_setup_intent Resource - Stripe"
 subcategory: ""
 description: |-
-  Collects a customer's payment method for later use. terraform destroy cancels the setup intent, because Stripe cannot delete one; the canceled intent stays in the account. An intent that already succeeded cannot be canceled and is left as it is. Confirming an intent is not a resource: confirm it with its client_secret from your front end, or from your server with Stripe's API, and status reports what happened. The resource has no confirm, mandate_data, payment_method_data or payment_method_options argument. Setting payment_method moves the intent to requires_confirmation. usage and on_behalf_of cannot change after creation, and neither can the other arguments that only a create takes, so changing one replaces the intent. The client_secret is sensitive and stays in the state.
+  Collects a customer's payment method for later use. Set status to canceled to cancel the intent; one that already succeeded cannot be canceled. Confirming an intent is not a resource: confirm it with its client_secret from your front end, or from your server with Stripe's API, and status reports what happened. The resource has no confirm, mandate_data, payment_method_data or payment_method_options argument. Setting payment_method moves the intent to requires_confirmation. usage and on_behalf_of cannot change after creation, and neither can the other arguments that only a create takes, so changing one fails the plan. The client_secret is sensitive and stays in the state.
 ---
 
 # Resource: stripe_setup_intent
 
-Collects a customer's payment method for later use. `terraform destroy` cancels the setup intent, because Stripe cannot delete one; the canceled intent stays in the account. An intent that already succeeded cannot be canceled and is left as it is. Confirming an intent is not a resource: confirm it with its `client_secret` from your front end, or from your server with Stripe's API, and `status` reports what happened. The resource has no `confirm`, `mandate_data`, `payment_method_data` or `payment_method_options` argument. Setting `payment_method` moves the intent to `requires_confirmation`. `usage` and `on_behalf_of` cannot change after creation, and neither can the other arguments that only a create takes, so changing one replaces the intent. The `client_secret` is sensitive and stays in the state.
+Collects a customer's payment method for later use. Set `status` to `canceled` to cancel the intent; one that already succeeded cannot be canceled. Confirming an intent is not a resource: confirm it with its `client_secret` from your front end, or from your server with Stripe's API, and `status` reports what happened. The resource has no `confirm`, `mandate_data`, `payment_method_data` or `payment_method_options` argument. Setting `payment_method` moves the intent to `requires_confirmation`. `usage` and `on_behalf_of` cannot change after creation, and neither can the other arguments that only a create takes, so changing one fails the plan. The `client_secret` is sensitive and stays in the state.
+
+~> Stripe cannot delete a setup intent; set `status` to `canceled` to cancel one. `terraform destroy`, and a change that would replace the setup intent, fail at plan time. To stop managing a setup intent, remove it from the state as [Removing from State](#removing-from-state) shows; it stays in the Stripe account.
 
 ## Example Usage
 
@@ -38,19 +40,20 @@ output "client_secret" {
 
 The following arguments are optional:
 
-* `allowed_payment_method_types` - (Optional) The list of payment method types to allow for this SetupIntent. Stripe will only use methods in this list when determining the payment methods to offer. A list of valid payment method types can be found [here](https://docs.stripe.com/api/payment_methods/object#payment_method_object-type). Changing it replaces the resource.
-* `attach_to_self` - (Optional) If present, the SetupIntent's payment method will be attached to the in-context Stripe Account. It can only be used for this Stripe Account’s own money movement flows like InboundTransfer and OutboundTransfers. It cannot be set to true when setting up a PaymentMethod for a Customer, and defaults to false when attaching a PaymentMethod to a Customer. Changing it replaces the resource.
-* `automatic_payment_methods` - (Optional) When you enable this parameter, this SetupIntent accepts payment methods that you enable in the Dashboard and that are compatible with its other parameters. Changing it replaces the resource. See [`automatic_payment_methods`](#automatic_payment_methods) below.
+* `allowed_payment_method_types` - (Optional) The list of payment method types to allow for this SetupIntent. Stripe will only use methods in this list when determining the payment methods to offer. A list of valid payment method types can be found [here](https://docs.stripe.com/api/payment_methods/object#payment_method_object-type). Changing it fails the plan, because this resource cannot be replaced.
+* `attach_to_self` - (Optional) If present, the SetupIntent's payment method will be attached to the in-context Stripe Account. It can only be used for this Stripe Account’s own money movement flows like InboundTransfer and OutboundTransfers. It cannot be set to true when setting up a PaymentMethod for a Customer, and defaults to false when attaching a PaymentMethod to a Customer. Changing it fails the plan, because this resource cannot be replaced.
+* `automatic_payment_methods` - (Optional) When you enable this parameter, this SetupIntent accepts payment methods that you enable in the Dashboard and that are compatible with its other parameters. Changing it fails the plan, because this resource cannot be replaced. See [`automatic_payment_methods`](#automatic_payment_methods) below.
 * `customer` - (Optional) ID of the Customer this SetupIntent belongs to, if one exists. If present, the SetupIntent's payment method will be attached to the Customer on successful setup. Payment methods attached to other Customers cannot be used with this SetupIntent.
-* `customer_account` - (Optional) ID of the Account this SetupIntent belongs to, if one exists. If present, the SetupIntent's payment method will be attached to the Account on successful setup. Payment methods attached to other Accounts cannot be used with this SetupIntent. Changing it replaces the resource.
+* `customer_account` - (Optional) ID of the Account this SetupIntent belongs to, if one exists. If present, the SetupIntent's payment method will be attached to the Account on successful setup. Payment methods attached to other Accounts cannot be used with this SetupIntent. Changing it fails the plan, because this resource cannot be replaced.
 * `description` - (Optional) An arbitrary string attached to the object. Often useful for displaying to users.
-* `excluded_payment_method_types` - (Optional) The list of payment method types to exclude from use with this SetupIntent. Changing it replaces the resource.
-* `flow_directions` - (Optional) Indicates the directions of money movement for which this payment method is intended to be used. Include `inbound` if you intend to use the payment method as the origin to pull funds from. Include `outbound` if you intend to use the payment method as the destination to send funds to. You can include both if you intend to use the payment method for both purposes. Changing it replaces the resource.
+* `excluded_payment_method_types` - (Optional) The list of payment method types to exclude from use with this SetupIntent. Changing it fails the plan, because this resource cannot be replaced.
+* `flow_directions` - (Optional) Indicates the directions of money movement for which this payment method is intended to be used. Include `inbound` if you intend to use the payment method as the origin to pull funds from. Include `outbound` if you intend to use the payment method as the destination to send funds to. You can include both if you intend to use the payment method for both purposes. Changing it fails the plan, because this resource cannot be replaced.
 * `metadata` - (Optional) Set of [key-value pairs](https://docs.stripe.com/api/metadata) that you can attach to an object. This can be useful for storing additional information about the object in a structured format. Individual keys can be unset by posting an empty value to them. All keys can be unset by posting an empty value to `metadata`.
-* `on_behalf_of` - (Optional) The Stripe account ID created for this SetupIntent. Changing it replaces the resource.
+* `on_behalf_of` - (Optional) The Stripe account ID created for this SetupIntent. Changing it fails the plan, because this resource cannot be replaced.
 * `payment_method` - (Optional) ID of the payment method (a PaymentMethod, Card, or saved Source object) to attach to this SetupIntent.
-* `payment_method_configuration` - (Optional) The ID of the [payment method configuration](https://docs.stripe.com/api/payment_method_configurations) to use with this SetupIntent. Changing it replaces the resource.
-* `usage` - (Optional) Indicates how the payment method is intended to be used in the future. If not provided, this value defaults to `off_session`. Possible values: `off_session`, `on_session`. Changing it replaces the resource.
+* `payment_method_configuration` - (Optional) The ID of the [payment method configuration](https://docs.stripe.com/api/payment_method_configurations) to use with this SetupIntent. Changing it fails the plan, because this resource cannot be replaced.
+* `status` - (Optional) [Status](https://docs.stripe.com/payments/intents#intent-statuses) of this SetupIntent, one of `requires_payment_method`, `requires_confirmation`, `requires_action`, `processing`, `canceled`, or `succeeded`. Possible values: `canceled`.
+* `usage` - (Optional) Indicates how the payment method is intended to be used in the future. If not provided, this value defaults to `off_session`. Possible values: `off_session`, `on_session`. Changing it fails the plan, because this resource cannot be replaced.
 
 <a id="automatic_payment_methods"></a>
 ### `automatic_payment_methods`
@@ -78,7 +81,6 @@ This resource exports the following attributes in addition to the arguments abov
 * `payment_method_configuration_details` - Information about the [payment method configuration](https://docs.stripe.com/api/payment_method_configurations) used for this Setup Intent. See [`payment_method_configuration_details`](#payment_method_configuration_details) below.
 * `payment_method_types` - The list of payment method types (e.g. card) that this SetupIntent is allowed to set up. A list of valid payment method types can be found [here](https://docs.stripe.com/api/payment_methods/object#payment_method_object-type).
 * `single_use_mandate` - ID of the single_use Mandate generated by the SetupIntent.
-* `status` - [Status](https://docs.stripe.com/payments/intents#intent-statuses) of this SetupIntent, one of `requires_payment_method`, `requires_confirmation`, `requires_action`, `processing`, `canceled`, or `succeeded`. Possible values: `canceled`, `processing`, `requires_action`, `requires_confirmation`, `requires_payment_method`, `succeeded`.
 
 <a id="last_setup_error"></a>
 ### `last_setup_error`
@@ -795,6 +797,28 @@ The `payment_method_configuration_details` attribute supports:
 * `create` - (Default `20m`)
 * `delete` - (Default `20m`)
 * `update` - (Default `20m`)
+
+## Removing from State
+
+To stop managing a setup intent whose destroy is refused, remove it from the state without destroying it. In Terraform 1.7 and later, and OpenTofu 1.10 and later, replace the `resource` block with a [`removed` block](https://developer.hashicorp.com/terraform/language/block/removed) and apply:
+
+```terraform
+removed {
+  from = stripe_setup_intent.card
+
+  lifecycle {
+    destroy = false
+  }
+}
+```
+
+Using `terraform state rm`:
+
+```console
+% terraform state rm stripe_setup_intent.card
+```
+
+The setup intent stays in the Stripe account. Replacing one with `terraform apply -replace` or `terraform taint` fails in the same way, at apply.
 
 ## Import
 

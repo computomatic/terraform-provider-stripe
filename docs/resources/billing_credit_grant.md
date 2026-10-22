@@ -3,12 +3,14 @@
 page_title: "stripe_billing_credit_grant Resource - Stripe"
 subcategory: ""
 description: |-
-  Billing credits given to a customer. terraform destroy voids the grant, because Stripe cannot delete one: the unused credits can no longer be applied, and the grant stays in the account. Only expires_at and metadata can change after creation.
+  Billing credits given to a customer. Only expires_at and metadata can change after creation.
 ---
 
 # Resource: stripe_billing_credit_grant
 
-Billing credits given to a customer. `terraform destroy` voids the grant, because Stripe cannot delete one: the unused credits can no longer be applied, and the grant stays in the account. Only `expires_at` and `metadata` can change after creation.
+Billing credits given to a customer. Only `expires_at` and `metadata` can change after creation.
+
+~> Stripe cannot delete a credit grant; set `expires_at` to end one. `terraform destroy`, and a change that would replace the billing credit grant, fail at plan time. To stop managing a billing credit grant, remove it from the state as [Removing from State](#removing-from-state) shows; it stays in the Stripe account.
 
 ## Example Usage
 
@@ -42,19 +44,19 @@ resource "stripe_billing_credit_grant" "welcome" {
 
 The following arguments are required:
 
-* `amount` - (Required) Amount of this credit grant. Changing it replaces the resource. See [`amount`](#amount) below.
-* `applicability_config` - (Required) Configuration specifying what this credit grant applies to. We currently only support `metered` prices that have a [Billing Meter](https://docs.stripe.com/api/billing/meter) attached to them. Changing it replaces the resource. See [`applicability_config`](#applicability_config) below.
+* `amount` - (Required) Amount of this credit grant. Changing it fails the plan, because this resource cannot be replaced. See [`amount`](#amount) below.
+* `applicability_config` - (Required) Configuration specifying what this credit grant applies to. We currently only support `metered` prices that have a [Billing Meter](https://docs.stripe.com/api/billing/meter) attached to them. Changing it fails the plan, because this resource cannot be replaced. See [`applicability_config`](#applicability_config) below.
 
 The following arguments are optional:
 
-* `category` - (Optional) The category of this credit grant. It defaults to `paid` if not specified. Possible values: `paid`, `promotional`. Changing it replaces the resource.
-* `customer` - (Optional) ID of the customer receiving the billing credits. Changing it replaces the resource.
-* `customer_account` - (Optional) ID of the account representing the customer receiving the billing credits. Changing it replaces the resource.
-* `effective_at` - (Optional) The time when the billing credits become effective-when they're eligible for use. It defaults to the current timestamp if not specified. Changing it replaces the resource.
+* `category` - (Optional) The category of this credit grant. It defaults to `paid` if not specified. Possible values: `paid`, `promotional`. Changing it fails the plan, because this resource cannot be replaced.
+* `customer` - (Optional) ID of the customer receiving the billing credits. Changing it fails the plan, because this resource cannot be replaced.
+* `customer_account` - (Optional) ID of the account representing the customer receiving the billing credits. Changing it fails the plan, because this resource cannot be replaced.
+* `effective_at` - (Optional) The time when the billing credits become effective-when they're eligible for use. It defaults to the current timestamp if not specified. Changing it fails the plan, because this resource cannot be replaced.
 * `expires_at` - (Optional) The time when the billing credits expire. If not specified, the billing credits don't expire.
 * `metadata` - (Optional) Set of key-value pairs that you can attach to an object. You can use this to store additional information about the object (for example, cost basis) in a structured format.
-* `name` - (Optional) A descriptive name shown in the Dashboard. Changing it replaces the resource.
-* `priority` - (Optional) The desired priority for applying this credit grant. If not specified, it will be set to the default value of 50. The highest priority is 0 and the lowest is 100. Changing it replaces the resource.
+* `name` - (Optional) A descriptive name shown in the Dashboard. Changing it fails the plan, because this resource cannot be replaced.
+* `priority` - (Optional) The desired priority for applying this credit grant. If not specified, it will be set to the default value of 50. The highest priority is 0 and the lowest is 100. Changing it fails the plan, because this resource cannot be replaced.
 
 <a id="amount"></a>
 ### `amount`
@@ -112,6 +114,28 @@ This resource exports the following attributes in addition to the arguments abov
 * `create` - (Default `20m`)
 * `delete` - (Default `20m`)
 * `update` - (Default `20m`)
+
+## Removing from State
+
+To stop managing a billing credit grant whose destroy is refused, remove it from the state without destroying it. In Terraform 1.7 and later, and OpenTofu 1.10 and later, replace the `resource` block with a [`removed` block](https://developer.hashicorp.com/terraform/language/block/removed) and apply:
+
+```terraform
+removed {
+  from = stripe_billing_credit_grant.welcome
+
+  lifecycle {
+    destroy = false
+  }
+}
+```
+
+Using `terraform state rm`:
+
+```console
+% terraform state rm stripe_billing_credit_grant.welcome
+```
+
+The billing credit grant stays in the Stripe account. Replacing one with `terraform apply -replace` or `terraform taint` fails in the same way, at apply.
 
 ## Import
 

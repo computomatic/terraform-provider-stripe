@@ -19,15 +19,14 @@ import (
 // with feature statuses, and only when expanded, so it is request-only, as an account's
 // `capabilities` is, and the statuses are read from `active_features`, `pending_features` and
 // `restricted_features`. Nothing proves that an update requests or drops a feature, so a change
-// to `features` is refused. Stripe has a close endpoint, but nothing proves closing, so destroy
-// leaves the account open. The suite reads `supported_currencies` as a set of currencies.
+// to `features` is refused. Stripe has a close endpoint, but nothing proves closing, and Stripe
+// cannot delete a financial account, so destroy is refused. The suite reads `supported_currencies` as a set of currencies.
 var Declaration = engine.Declaration{
 	TypeName: "stripe_treasury_financial_account",
 	IDPrefix: "fa_",
 	Description: "A Treasury financial account that holds money on a connected account and that Issuing cards draw on. " +
 		"Treasury runs on a platform's connected accounts, so manage financial accounts through a provider configuration whose `stripe_account` is a connected account with the `treasury` capability active. " +
-		"`features` requests features when the account is created; `active_features`, `pending_features` and `restricted_features` say how Stripe answered. A plan that changes `features` afterwards fails: create a new financial account instead.\n\n" +
-		"~> Stripe can close a financial account, but the provider does not do so yet: `terraform destroy` leaves the financial account open on the connected account and removes it from state. Changing `supported_currencies` replaces it, which leaves the old one open too.",
+		"`features` requests features when the account is created; `active_features`, `pending_features` and `restricted_features` say how Stripe answered. A plan that changes `features` afterwards fails.",
 	DataSourceDescription: "A Treasury financial account that holds money on a connected account. Look one up by its `id`.",
 	ImportNote:            "Stripe does not return which features were requested, so an imported financial account has no `features` in state. Add `lifecycle { ignore_changes = [features] }` to a configuration that sets it, because a plan that changes `features` fails.",
 	ImportNoteLevel:       engine.NoteWarning,
@@ -37,11 +36,11 @@ var Declaration = engine.Declaration{
 		Update:   "/v1/treasury/financial_accounts/{id}",
 		List:     "/v1/treasury/financial_accounts",
 	},
-	Delete:        engine.Retain,
-	RetainWarning: "The provider does not close financial accounts yet, so it stays open.",
-	RefuseChange:  []string{"features"},
-	Sets:          []string{"supported_currencies"},
-	Sensitive:     []string{"financial_addresses.aba.account_number"},
+	Delete:       engine.Refuse,
+	RefuseReason: "Stripe cannot delete a financial account, and the provider does not close one.",
+	RefuseChange: []string{"features"},
+	Sets:         []string{"supported_currencies"},
+	Sensitive:    []string{"financial_addresses.aba.account_number"},
 }
 
 // NewResource returns the resource constructor the provider registers.

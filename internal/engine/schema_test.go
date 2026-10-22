@@ -129,7 +129,7 @@ func TestDeclarationsAreCheckedAgainstTheTable(t *testing.T) {
 		"reserved":               func(d *Declaration) { d.Rename = nil },
 		"collision":              func(d *Declaration) { d.Rename = map[string]string{"name": "timeouts"} },
 		"archive":                func(d *Declaration) { d.Delete = Archive },
-		"expire":                 func(d *Declaration) { d.Delete = Expire },
+		"refuse":                 func(d *Declaration) { d.Delete = Refuse },
 		"delete path":            func(d *Declaration) { d.Paths.Delete = "" },
 		"type name":              func(d *Declaration) { d.TypeName = "" },
 	}

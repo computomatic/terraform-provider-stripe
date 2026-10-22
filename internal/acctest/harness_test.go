@@ -8,6 +8,8 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
+
 	"github.com/computomatic/terraform-provider-stripe/internal/wire"
 )
 
@@ -89,6 +91,59 @@ func TestProviderBlock(t *testing.T) {
 	want := "provider \"stripe\" {\n  api_key  = \"sk_test_k\"\n  base_url = \"http://127.0.0.1:1\"\n}\n"
 	if got := c.ProviderBlock(); got != want {
 		t.Fatalf("got %q", got)
+	}
+}
+
+func TestRemoved(t *testing.T) {
+	want := "removed {\n  from = stripe_quote.a\n\n  lifecycle {\n    destroy = false\n  }\n}\n" +
+		"removed {\n  from = stripe_quote.b\n\n  lifecycle {\n    destroy = false\n  }\n}\n"
+	if got := Removed("stripe_quote.a", "stripe_quote.b"); got != want {
+		t.Fatalf("got %q", got)
+	}
+}
+
+// Forgetting a type drops each block of it and every block that refers to one, keeps the
+// rest, and removes each from state without a destroy.
+func TestForgetDropsTheResourceAndWhatRefersToIt(t *testing.T) {
+	config := `provider "stripe" {}
+
+resource "stripe_customer" "test" {
+  name = "c"
+}
+
+resource "stripe_quote" "test" {
+  customer = stripe_customer.test.id
+}
+
+resource "stripe_quote" "test_other" {
+  customer = stripe_customer.test.id
+}
+
+data "stripe_quote" "test" {
+  id = stripe_quote.test.id
+}
+
+output "quote_status" {
+  value = data.stripe_quote.test.status
+}
+`
+	steps := Forget(t, []resource.TestStep{{Config: config}, {ImportState: true, ResourceName: "stripe_quote.test"}}, nil, "stripe_quote")
+	if len(steps) != 3 {
+		t.Fatalf("want one step appended: %d", len(steps))
+	}
+	got := steps[2].Config
+	for _, keep := range []string{`provider "stripe"`, `resource "stripe_customer" "test"`, Removed("stripe_quote.test", "stripe_quote.test_other")} {
+		if !strings.Contains(got, keep) {
+			t.Errorf("lacks %q:\n%s", keep, got)
+		}
+	}
+	for _, drop := range []string{`resource "stripe_quote"`, `data "stripe_quote"`, `output "quote_status"`} {
+		if strings.Contains(got, drop) {
+			t.Errorf("keeps %q:\n%s", drop, got)
+		}
+	}
+	if strings.Count(got, "removed {") != 2 {
+		t.Errorf("a removed block per quote:\n%s", got)
 	}
 }
 

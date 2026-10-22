@@ -9,11 +9,9 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/hashicorp/terraform-plugin-testing/plancheck"
-	"github.com/hashicorp/terraform-plugin-testing/terraform"
 
 	"github.com/computomatic/terraform-provider-stripe/internal/acctest"
 	"github.com/computomatic/terraform-provider-stripe/internal/acctest/tfacc"
-	"github.com/computomatic/terraform-provider-stripe/internal/stripeapi"
 	"github.com/computomatic/terraform-provider-stripe/internal/wire"
 )
 
@@ -74,11 +72,19 @@ func idOf(dst *string) resource.TestCheckFunc {
 	})
 }
 
+// pathOf records the object's API path.
+func pathOf(dst *string) resource.TestCheckFunc {
+	return resource.TestCheckResourceAttrWith(address, "id", func(v string) error {
+		*dst = "/v1/tax/registrations/" + v
+		return nil
+	})
+}
+
 func TestAccTaxRegistration_create(t *testing.T) {
 	acct := withHeadOffice(t)
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: tfacc.ProviderFactories,
-		Steps: []resource.TestStep{{
+		Steps: acctest.Forget(t, []resource.TestStep{{
 			Config: registrationConfig(acct, "GB", "") + `
 data "stripe_tax_registration" "test" {
   id = stripe_tax_registration.test.id
@@ -94,7 +100,7 @@ data "stripe_tax_registration" "test" {
 				resource.TestCheckResourceAttr("data.stripe_tax_registration.test", "country", "GB"),
 				resource.TestCheckResourceAttr("data.stripe_tax_registration.test", "status", "active"),
 			),
-		}},
+		}}, nil, "stripe_tax_registration"),
 	})
 }
 
@@ -115,14 +121,14 @@ resource "stripe_tax_registration" "test" {
 `, start, end)
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: tfacc.ProviderFactories,
-		Steps: []resource.TestStep{
+		Steps: acctest.Forget(t, []resource.TestStep{
 			{Config: cfg, Check: resource.ComposeAggregateTestCheckFunc(
 				resource.TestCheckResourceAttr(address, "status", "scheduled"),
 				resource.TestCheckResourceAttr(address, "active_from", start),
 				resource.TestCheckResourceAttr(address, "expires_at", end),
 			)},
 			{Config: cfg, PlanOnly: true},
-		},
+		}, nil, "stripe_tax_registration"),
 	})
 }
 
@@ -132,7 +138,7 @@ func TestAccTaxRegistration_update(t *testing.T) {
 	later := inHours(72)
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: tfacc.ProviderFactories,
-		Steps: []resource.TestStep{
+		Steps: acctest.Forget(t, []resource.TestStep{
 			{Config: registrationConfig(acct, "GB", ""), Check: idOf(&first)},
 			{
 				Config: registrationConfig(acct, "GB", fmt.Sprintf("  expires_at = %q\n", inHours(48))),
@@ -156,35 +162,22 @@ func TestAccTaxRegistration_update(t *testing.T) {
 					}),
 				),
 			},
-		},
+		}, nil, "stripe_tax_registration"),
 	})
 }
 
-// country and country_options are accepted on create only, so another country replaces the
-// registration. Destroy ends the old one first.
+// `country` is create-only, so changing it would replace the registration, which Stripe
+// cannot delete: the plan fails, and so does a taint, at apply.
 func TestAccTaxRegistration_replace(t *testing.T) {
 	acct := withHeadOffice(t)
-	var first string
+	cfg := registrationConfig(acct, "GB", "")
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: tfacc.ProviderFactories,
-		Steps: []resource.TestStep{
-			{Config: registrationConfig(acct, "GB", ""), Check: idOf(&first)},
-			{
-				Config: registrationConfig(acct, "AU", ""),
-				ConfigPlanChecks: resource.ConfigPlanChecks{PreApply: []plancheck.PlanCheck{
-					plancheck.ExpectResourceAction(address, plancheck.ResourceActionDestroyBeforeCreate),
-				}},
-				Check: resource.ComposeAggregateTestCheckFunc(
-					resource.TestCheckResourceAttr(address, "country", "AU"),
-					resource.TestCheckResourceAttrWith(address, "id", func(v string) error {
-						if v == first {
-							return fmt.Errorf("the replacement kept the registration ID %s", v)
-						}
-						return nil
-					}),
-				),
-			},
-		},
+		Steps: acctest.Forget(t, []resource.TestStep{
+			{Config: cfg},
+			{Config: registrationConfig(acct, "AU", ""), PlanOnly: true, ExpectError: tfacc.RefusedReplace},
+			{Config: cfg, Taint: []string{address}, ExpectError: tfacc.RefusedDestroy},
+		}, nil, "stripe_tax_registration"),
 	})
 }
 
@@ -205,7 +198,7 @@ resource "stripe_tax_registration" "test" {
 `, inHours(24), inHours(48))
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: tfacc.ProviderFactories,
-		Steps: []resource.TestStep{
+		Steps: acctest.Forget(t, []resource.TestStep{
 			{Config: cfg},
 			{
 				ResourceName:      address,
@@ -218,30 +211,24 @@ resource "stripe_tax_registration" "test" {
 				ImportStateKind: resource.ImportBlockWithID,
 				Config:          cfg,
 			},
-		},
+		}, nil, "stripe_tax_registration"),
 	})
 }
 
-// Stripe cannot delete a registration and refuses `expires_at = now` on a fresh one (suite:
-// tax_registration_test.go, "update expires at a few seconds ahead expires the
-// registration"), so destroy sets `expires_at` five seconds ahead and waits for the status
-// `expired`. The registration stays in the account.
+// Stripe cannot delete a tax registration, so dropping it from the configuration, and `terraform
+// destroy`, fail at plan time, and the tax registration stays as it was.
 func TestAccTaxRegistration_delete(t *testing.T) {
 	acct := withHeadOffice(t)
-	var id string
+	var path string
+	var mark int
+	cfg := registrationConfig(acct, "GB", "")
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: tfacc.ProviderFactories,
-		CheckDestroy: func(*terraform.State) error {
-			resp, err := tfacc.Client(acct).Do(t.Context(), stripeapi.Request{Method: "GET", Path: "/v1/tax/registrations/" + id})
-			if err != nil {
-				return fmt.Errorf("an expired registration still retrieves: %w", err)
-			}
-			if status, _ := resp.Body.(wire.Object).GetString("status"); status != "expired" {
-				return fmt.Errorf("registration %s should be expired after destroy, got %q", id, status)
-			}
-			return nil
-		},
-		Steps: []resource.TestStep{{Config: registrationConfig(acct, "GB", ""), Check: idOf(&id)}},
+		Steps: acctest.Forget(t, []resource.TestStep{
+			{Config: cfg, Check: resource.ComposeTestCheckFunc(pathOf(&path), tfacc.LogMark(t, acct, &mark))},
+			{Config: acctest.Without(t, cfg, "stripe_tax_registration"), PlanOnly: true, ExpectError: tfacc.RefusedDestroy},
+			{Config: cfg, Destroy: true, ExpectError: tfacc.RefusedDestroy},
+		}, tfacc.Untouched(t, acct, &path, &mark, "status", wire.String("active")), "stripe_tax_registration"),
 	})
 }
 
@@ -252,7 +239,7 @@ func TestAccTaxRegistration_drift(t *testing.T) {
 	cfg := registrationConfig(acct, "GB", fmt.Sprintf("  expires_at = %q\n", expires))
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: tfacc.ProviderFactories,
-		Steps: []resource.TestStep{
+		Steps: acctest.Forget(t, []resource.TestStep{
 			{Config: cfg, Check: idOf(&id)},
 			{
 				PreConfig: func() {
@@ -267,6 +254,6 @@ func TestAccTaxRegistration_drift(t *testing.T) {
 				}},
 				Check: resource.TestCheckResourceAttr(address, "expires_at", expires),
 			},
-		},
+		}, nil, "stripe_tax_registration"),
 	})
 }

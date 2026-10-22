@@ -7,16 +7,16 @@ import (
 
 	"github.com/computomatic/terraform-provider-stripe/internal/engine"
 	"github.com/computomatic/terraform-provider-stripe/internal/generated/billing_feedback_option"
-	"github.com/computomatic/terraform-provider-stripe/internal/wire"
 )
 
-// Declaration is what the spec cannot say about a feedback option. Stripe never deletes one;
-// a bare POST to its deactivate endpoint makes it inactive, and a second deactivate is an
-// error, so destroy retrieves first.
+// Declaration is what the spec cannot say about a feedback option. Stripe never deletes one,
+// and deactivating one is final: Stripe has no reactivate. So destroy is refused, and setting
+// `status` to `inactive` deactivates the option through a bare POST to its deactivate
+// endpoint (suite: "deactivate").
 var Declaration = engine.Declaration{
 	TypeName:              "stripe_billing_feedback_option",
 	IDPrefix:              "fo_",
-	Description:           "A reason a customer can pick when canceling a subscription. `terraform destroy` deactivates the option, because Stripe cannot delete one; it stays in the account.",
+	Description:           "A reason a customer can pick when canceling a subscription. Set `status` to `inactive` to deactivate the option, which cannot be undone.",
 	DataSourceDescription: "A reason a customer can pick when canceling a subscription.",
 	Paths: engine.Paths{
 		Create:   "/v1/billing/feedback_options",
@@ -24,8 +24,9 @@ var Declaration = engine.Declaration{
 		Update:   "/v1/billing/feedback_options/{id}",
 		List:     "/v1/billing/feedback_options",
 	},
-	Delete:  engine.Archive,
-	Archive: &engine.ArchiveAction{Field: "status", Value: wire.String("inactive"), Path: "/v1/billing/feedback_options/{id}/deactivate"},
+	Delete:       engine.Refuse,
+	RefuseReason: "Stripe cannot delete a feedback option; set `status` to `inactive` to deactivate one, which cannot be undone.",
+	Transitions:  []engine.Transition{{Field: "status", Value: "inactive", Path: "/v1/billing/feedback_options/{id}/deactivate"}},
 }
 
 // NewResource returns the resource constructor the provider registers.

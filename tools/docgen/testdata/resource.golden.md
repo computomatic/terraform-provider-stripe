@@ -10,6 +10,8 @@ description: |-
 
 A gadget. `terraform destroy` deletes it.
 
+~> Gadgets cannot be deleted. `terraform destroy`, and a change that would replace the gadget, fail at plan time. To stop managing a gadget, remove it from the state as [Removing from State](#removing-from-state) shows; it stays in the account.
+
 ## Example Usage
 
 ```terraform
@@ -87,6 +89,28 @@ The `history` attribute is a set. Each element supports:
 * `create` - (Default `20m`)
 * `delete` - (Default `20m`)
 * `update` - (Default `20m`)
+
+## Removing from State
+
+To stop managing a widget gadget whose destroy is refused, remove it from the state without destroying it. In Terraform 1.7 and later, and OpenTofu 1.10 and later, replace the `resource` block with a [`removed` block](https://developer.hashicorp.com/terraform/language/block/removed) and apply:
+
+```terraform
+removed {
+  from = widget_gadget.main
+
+  lifecycle {
+    destroy = false
+  }
+}
+```
+
+Using `terraform state rm`:
+
+```console
+% terraform state rm widget_gadget.main
+```
+
+The widget gadget stays in the Stripe account. Replacing one with `terraform apply -replace` or `terraform taint` fails in the same way, at apply.
 
 ## Import
 

@@ -63,7 +63,7 @@ func cancelDeclaration() Declaration {
 	decl := fixtureDeclaration()
 	decl.Delete = Archive
 	decl.Archive = &ArchiveAction{Field: "active", Value: wire.Bool(false), Path: "/v1/widgets/{id}/cancel"}
-	decl.KeepWhen = &FieldIs{Field: "is_default", Value: wire.Bool(true)}
+	decl.RefuseWhen = &RefuseWhen{Field: "is_default", Value: wire.Bool(true), Reason: "Stripe refuses to cancel the default widget."}
 	return decl
 }
 
@@ -83,22 +83,20 @@ func canceledStripe(stub *stubStripe, protected bool) clientFunc {
 	}
 }
 
-// An archive by an action endpoint keeps a provably protected object like an archive by
-// update does, and fails for any other object.
-func TestArchiveByActionKeepsTheProtectedObject(t *testing.T) {
+// An archive by an action endpoint refuses a provably protected object like an archive by
+// update does, and fails with Stripe's error alone for any other object.
+func TestArchiveByActionRefusesTheProtectedObject(t *testing.T) {
 	stub := newStub()
-	r := configured(t, cancelDeclaration(), fixtureTable(), canceledStripe(stub, true))
+	r := configured(t, cancelDeclaration(), defaultTable(), canceledStripe(stub, true))
 	state, _ := r.create(t, createPlan(r))
-	diags := r.destroy(t, state)
-	noErrors(t, diags)
-	if len(diags.Warnings()) != 1 || diags.Warnings()[0].Summary() != "Left active instead of archived" {
-		t.Errorf("want one warning: %v", diags)
+	if diags := r.destroy(t, state); !refusedDestroy(diags) {
+		t.Errorf("want the refusal: %v", diags)
 	}
 
 	stub = newStub()
-	r = configured(t, cancelDeclaration(), fixtureTable(), canceledStripe(stub, false))
+	r = configured(t, cancelDeclaration(), defaultTable(), canceledStripe(stub, false))
 	state, _ = r.create(t, createPlan(r))
-	if diags := r.destroy(t, state); !diags.HasError() {
-		t.Fatal("a refused cancel of an ordinary object must fail the destroy")
+	if diags := r.destroy(t, state); !diags.HasError() || refusedDestroy(diags) {
+		t.Fatalf("a refused cancel of an ordinary object fails with Stripe's error only: %v", diags)
 	}
 }

@@ -3,12 +3,14 @@
 page_title: "stripe_tax_registration Resource - Stripe"
 subcategory: ""
 description: |-
-  A place where you are registered to collect tax. terraform destroy ends the registration, because Stripe cannot delete one: it starts a scheduled registration, sets expires_at a few seconds ahead and waits for the status expired. The registration stays in the account. A country keeps one live registration, so a replacement can only be created once the old one has expired.
+  A place where you are registered to collect tax. Set expires_at to end the registration. A country keeps one live registration, so a new one can only be created once the old one has expired.
 ---
 
 # Resource: stripe_tax_registration
 
-A place where you are registered to collect tax. `terraform destroy` ends the registration, because Stripe cannot delete one: it starts a scheduled registration, sets `expires_at` a few seconds ahead and waits for the status `expired`. The registration stays in the account. A country keeps one live registration, so a replacement can only be created once the old one has expired.
+A place where you are registered to collect tax. Set `expires_at` to end the registration. A country keeps one live registration, so a new one can only be created once the old one has expired.
+
+~> Stripe cannot delete a tax registration, and it keeps collecting tax until `expires_at`; set `expires_at` to end one. `terraform destroy`, and a change that would replace the tax registration, fail at plan time. To stop managing a tax registration, remove it from the state as [Removing from State](#removing-from-state) shows; it stays in the Stripe account.
 
 ## Example Usage
 
@@ -30,8 +32,8 @@ resource "stripe_tax_registration" "gb" {
 The following arguments are required:
 
 * `active_from` - (Required) Time at which the Tax Registration becomes active. It can be either `now` to indicate the current time, or a future timestamp measured in seconds since the Unix epoch.
-* `country` - (Required) Two-letter country code ([ISO 3166-1 alpha-2](https://en.wikipedia.org/wiki/ISO_3166-1_alpha-2)). Changing it replaces the resource.
-* `country_options` - (Required) Specific options for a registration in the specified `country`. Changing it replaces the resource. See [`country_options`](#country_options) below.
+* `country` - (Required) Two-letter country code ([ISO 3166-1 alpha-2](https://en.wikipedia.org/wiki/ISO_3166-1_alpha-2)). Changing it fails the plan, because this resource cannot be replaced.
+* `country_options` - (Required) Specific options for a registration in the specified `country`. Changing it fails the plan, because this resource cannot be replaced. See [`country_options`](#country_options) below.
 
 The following arguments are optional:
 
@@ -1444,6 +1446,28 @@ This resource exports the following attributes in addition to the arguments abov
 * `create` - (Default `20m`)
 * `delete` - (Default `20m`)
 * `update` - (Default `20m`)
+
+## Removing from State
+
+To stop managing a tax registration whose destroy is refused, remove it from the state without destroying it. In Terraform 1.7 and later, and OpenTofu 1.10 and later, replace the `resource` block with a [`removed` block](https://developer.hashicorp.com/terraform/language/block/removed) and apply:
+
+```terraform
+removed {
+  from = stripe_tax_registration.gb
+
+  lifecycle {
+    destroy = false
+  }
+}
+```
+
+Using `terraform state rm`:
+
+```console
+% terraform state rm stripe_tax_registration.gb
+```
+
+The tax registration stays in the Stripe account. Replacing one with `terraform apply -replace` or `terraform taint` fails in the same way, at apply.
 
 ## Import
 

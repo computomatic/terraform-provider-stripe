@@ -22,15 +22,14 @@ import (
 // Stripe's answer instead of the state. Submitting is an action endpoint that moves `status` from
 // `unsubmitted` to `submitted`, after which evidence is fixed and metadata still changes
 // ("submit"); Stripe then decides the dispute, which the suite does not prove. A dispute cannot
-// be deleted or withdrawn, so destroy leaves it.
+// be deleted or withdrawn, so destroy is refused.
 var Declaration = engine.Declaration{
 	TypeName: "stripe_issuing_dispute",
 	IDPrefix: "idp_",
 	Description: "A dispute of an Issuing transaction, with the evidence for it. " +
 		"Stripe issues cards only for a platform's connected accounts, so manage disputes through a provider configuration whose `stripe_account` is a connected account with the `card_issuing` capability active. " +
 		"A new dispute is `unsubmitted`, for the whole transaction unless `amount` says less, and `amount`, `evidence` and `metadata` change in place until it is submitted. " +
-		"Set `status` to `submitted` to submit it to the card network, on create or later. After that Stripe refuses a change to `evidence` or `amount`, and decides the dispute: `status` then reads `won`, `lost` or `expired`, and a configuration that still sets `submitted` plans a change Stripe refuses, so remove `status` from it then.\n\n" +
-		"~> Stripe cannot delete or withdraw a dispute, so `terraform destroy` leaves it on the connected account, submitted or not. Changing `transaction` replaces the dispute, which leaves the old one too.",
+		"Set `status` to `submitted` to submit it to the card network, on create or later. After that Stripe refuses a change to `evidence` or `amount`, and decides the dispute: `status` then reads `won`, `lost` or `expired`, and a configuration that still sets `submitted` plans a change Stripe refuses, so remove `status` from it then.",
 	DataSourceDescription: "A dispute of an Issuing transaction, on a connected account, with the evidence for it. Look one up by its `id`.",
 	Paths: engine.Paths{
 		Create:   "/v1/issuing/disputes",
@@ -38,8 +37,8 @@ var Declaration = engine.Declaration{
 		Update:   "/v1/issuing/disputes/{id}",
 		List:     "/v1/issuing/disputes",
 	},
-	Delete:          engine.Retain,
-	RetainWarning:   "Stripe cannot withdraw a dispute either, so it stays as it is.",
+	Delete:          engine.Refuse,
+	RefuseReason:    "Stripe cannot delete or withdraw a dispute.",
 	Transitions:     []engine.Transition{{Field: "status", Value: "submitted", Path: "/v1/issuing/disputes/{id}/submit"}},
 	ServerDefaulted: evidenceHashes,
 	FilledFrom:      map[string][]string{"evidence.reason": evidenceHashes},

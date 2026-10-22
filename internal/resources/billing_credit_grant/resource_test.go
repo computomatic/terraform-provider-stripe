@@ -7,11 +7,9 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/hashicorp/terraform-plugin-testing/plancheck"
-	"github.com/hashicorp/terraform-plugin-testing/terraform"
 
 	"github.com/computomatic/terraform-provider-stripe/internal/acctest"
 	"github.com/computomatic/terraform-provider-stripe/internal/acctest/tfacc"
-	"github.com/computomatic/terraform-provider-stripe/internal/stripeapi"
 	"github.com/computomatic/terraform-provider-stripe/internal/wire"
 )
 
@@ -50,11 +48,19 @@ func idOf(dst *string) resource.TestCheckFunc {
 	})
 }
 
+// pathOf records the object's API path.
+func pathOf(dst *string) resource.TestCheckFunc {
+	return resource.TestCheckResourceAttrWith(address, "id", func(v string) error {
+		*dst = "/v1/billing/credit_grants/" + v
+		return nil
+	})
+}
+
 func TestAccBillingCreditGrant_create(t *testing.T) {
 	acct := acctest.NewAccount(t)
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: tfacc.ProviderFactories,
-		Steps: []resource.TestStep{{
+		Steps: acctest.Forget(t, []resource.TestStep{{
 			Config: grantConfig(acct, "Welcome", "  metadata = { team = \"a\" }\n") + `
 data "stripe_billing_credit_grant" "by_id" {
   id = stripe_billing_credit_grant.test.id
@@ -73,7 +79,7 @@ data "stripe_billing_credit_grant" "by_id" {
 				resource.TestCheckResourceAttrPair("data.stripe_billing_credit_grant.by_id", "id", address, "id"),
 				resource.TestCheckResourceAttr("data.stripe_billing_credit_grant.by_id", "amount.monetary.value", "1000"),
 			),
-		}},
+		}}, nil, "stripe_billing_credit_grant"),
 	})
 }
 
@@ -81,7 +87,7 @@ func TestAccBillingCreditGrant_update(t *testing.T) {
 	acct := acctest.NewAccount(t)
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: tfacc.ProviderFactories,
-		Steps: []resource.TestStep{
+		Steps: acctest.Forget(t, []resource.TestStep{
 			{Config: grantConfig(acct, "Welcome", "  metadata = { team = \"a\", tier = \"1\" }\n")},
 			{
 				Config: grantConfig(acct, "Welcome", "  metadata = { team = \"b\" }\n  expires_at = 4102444800\n"),
@@ -94,35 +100,22 @@ func TestAccBillingCreditGrant_update(t *testing.T) {
 					resource.TestCheckResourceAttr(address, "metadata.team", "b"),
 				),
 			},
-		},
+		}, nil, "stripe_billing_credit_grant"),
 	})
 }
 
-// name is accepted on create only (suite: "Only `expires_at` and `metadata` are updatable"),
-// so changing it replaces the grant. The replaced grant is voided.
+// `name` is create-only, so changing it would replace the grant, which Stripe cannot delete:
+// the plan fails, and so does a taint, at apply.
 func TestAccBillingCreditGrant_replace(t *testing.T) {
 	acct := acctest.NewAccount(t)
-	var first string
+	cfg := grantConfig(acct, "Welcome", "")
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: tfacc.ProviderFactories,
-		Steps: []resource.TestStep{
-			{Config: grantConfig(acct, "Welcome", ""), Check: idOf(&first)},
-			{
-				Config: grantConfig(acct, "Renewal", ""),
-				ConfigPlanChecks: resource.ConfigPlanChecks{PreApply: []plancheck.PlanCheck{
-					plancheck.ExpectResourceAction(address, plancheck.ResourceActionReplace),
-				}},
-				Check: resource.ComposeAggregateTestCheckFunc(
-					resource.TestCheckResourceAttr(address, "name", "Renewal"),
-					resource.TestCheckResourceAttrWith(address, "id", func(v string) error {
-						if v == first {
-							return fmt.Errorf("the replacement kept the grant ID %s", v)
-						}
-						return nil
-					}),
-				),
-			},
-		},
+		Steps: acctest.Forget(t, []resource.TestStep{
+			{Config: cfg},
+			{Config: grantConfig(acct, "Renewal", ""), PlanOnly: true, ExpectError: tfacc.RefusedReplace},
+			{Config: cfg, Taint: []string{address}, ExpectError: tfacc.RefusedDestroy},
+		}, nil, "stripe_billing_credit_grant"),
 	})
 }
 
@@ -131,7 +124,7 @@ func TestAccBillingCreditGrant_import(t *testing.T) {
 	cfg := grantConfig(acct, "Welcome", "  metadata = { team = \"a\" }\n")
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: tfacc.ProviderFactories,
-		Steps: []resource.TestStep{
+		Steps: acctest.Forget(t, []resource.TestStep{
 			{Config: cfg},
 			{
 				ResourceName:      address,
@@ -144,49 +137,24 @@ func TestAccBillingCreditGrant_import(t *testing.T) {
 				ImportStateKind: resource.ImportBlockWithID,
 				Config:          cfg,
 			},
-		},
+		}, nil, "stripe_billing_credit_grant"),
 	})
 }
 
-// Stripe cannot delete a credit grant, so destroy voids it (suite: "Voided grants stay in
-// the list") and the grant stays in the account.
+// Stripe cannot delete a credit grant, so dropping it from the configuration, and `terraform
+// destroy`, fail at plan time, and the credit grant stays as it was.
 func TestAccBillingCreditGrant_delete(t *testing.T) {
 	acct := acctest.NewAccount(t)
-	var id string
-	resource.ParallelTest(t, resource.TestCase{
-		ProtoV6ProviderFactories: tfacc.ProviderFactories,
-		CheckDestroy: func(*terraform.State) error {
-			resp, err := tfacc.Client(acct).Do(t.Context(), stripeapi.Request{Method: "GET", Path: "/v1/billing/credit_grants/" + id})
-			if err != nil {
-				return fmt.Errorf("a voided grant still retrieves: %w", err)
-			}
-			if at, ok := resp.Body.(wire.Object).Get("voided_at"); !ok || at == (wire.Null{}) {
-				return fmt.Errorf("credit grant %s should be voided after destroy", id)
-			}
-			return nil
-		},
-		Steps: []resource.TestStep{{Config: grantConfig(acct, "Welcome", ""), Check: idOf(&id)}},
-	})
-}
-
-// A grant that expired or was voided out of band cannot be voided again (suite: "Expiring
-// twice ... voiding an expired grant ... are 400"), so destroy leaves it as it is.
-func TestAccBillingCreditGrant_deleteAfterExpiry(t *testing.T) {
-	acct := acctest.NewAccount(t)
-	var id string
+	var path string
+	var mark int
 	cfg := grantConfig(acct, "Welcome", "")
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: tfacc.ProviderFactories,
-		Steps: []resource.TestStep{
-			{Config: cfg, Check: idOf(&id)},
-			{
-				PreConfig: func() { tfacc.Post(t, acct, "/v1/billing/credit_grants/"+id+"/expire", nil) },
-				Config:    cfg,
-				// The expiry shows as drift in `expires_at`; destroy then has nothing to void.
-				ExpectNonEmptyPlan: true,
-				PlanOnly:           true,
-			},
-		},
+		Steps: acctest.Forget(t, []resource.TestStep{
+			{Config: cfg, Check: resource.ComposeTestCheckFunc(pathOf(&path), tfacc.LogMark(t, acct, &mark))},
+			{Config: acctest.Without(t, cfg, "stripe_billing_credit_grant"), PlanOnly: true, ExpectError: tfacc.RefusedDestroy},
+			{Config: cfg, Destroy: true, ExpectError: tfacc.RefusedDestroy},
+		}, tfacc.Untouched(t, acct, &path, &mark, "voided_at", wire.Null{}), "stripe_billing_credit_grant"),
 	})
 }
 
@@ -196,7 +164,7 @@ func TestAccBillingCreditGrant_drift(t *testing.T) {
 	cfg := grantConfig(acct, "Welcome", "  metadata = { team = \"a\" }\n")
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: tfacc.ProviderFactories,
-		Steps: []resource.TestStep{
+		Steps: acctest.Forget(t, []resource.TestStep{
 			{Config: cfg, Check: idOf(&id)},
 			{
 				PreConfig: func() {
@@ -211,6 +179,6 @@ func TestAccBillingCreditGrant_drift(t *testing.T) {
 				}},
 				Check: resource.TestCheckResourceAttr(address, "metadata.team", "a"),
 			},
-		},
+		}, nil, "stripe_billing_credit_grant"),
 	})
 }

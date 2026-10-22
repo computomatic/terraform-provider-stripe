@@ -105,7 +105,7 @@ var Table = []fields.Field{
 			{Name: "state", Shape: fields.String, Response: true, Description: "The identified tax state, county, province, or region of the customer."},
 		}},
 		{Name: "provider", Shape: fields.String, Response: true, Enum: []string{"anrok", "avalara", "sphere", "stripe"}, Description: "The tax calculation provider used for location resolution. Defaults to `stripe` when not using a [third-party provider](https://docs.stripe.com/tax/third-party-apps)."},
-		{Name: "validate_location", Shape: fields.String, Create: true, Update: true, Enum: []string{"deferred", "immediately"}},
+		{Name: "validate_location", Shape: fields.String, Create: true, Update: true, Enum: []string{"deferred", "immediately", "auto"}},
 	}},
 	{Name: "tax_exempt", Shape: fields.String, Create: true, Update: true, Response: true, Enum: []string{"exempt", "none", "reverse"}, Description: "The customer's tax exemption. One of `none`, `exempt`, or `reverse`."},
 	{Name: "tax_id_data", Shape: fields.ObjectList, Create: true, Description: "The customer's tax IDs.", Fields: []fields.Field{

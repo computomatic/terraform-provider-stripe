@@ -3,15 +3,14 @@ package subscription_schedule_test
 import (
 	"fmt"
 	"os"
+	"regexp"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/hashicorp/terraform-plugin-testing/plancheck"
-	"github.com/hashicorp/terraform-plugin-testing/terraform"
 
 	"github.com/computomatic/terraform-provider-stripe/internal/acctest"
 	"github.com/computomatic/terraform-provider-stripe/internal/acctest/tfacc"
-	"github.com/computomatic/terraform-provider-stripe/internal/stripeapi"
 	"github.com/computomatic/terraform-provider-stripe/internal/wire"
 )
 
@@ -80,11 +79,19 @@ func idOf(dst *string) resource.TestCheckFunc {
 	})
 }
 
+// pathOf records the schedule's API path.
+func pathOf(dst *string) resource.TestCheckFunc {
+	return resource.TestCheckResourceAttrWith(address, "id", func(v string) error {
+		*dst = "/v1/subscription_schedules/" + v
+		return nil
+	})
+}
+
 func TestAccSubscriptionSchedule_create(t *testing.T) {
 	acct := acctest.NewAccount(t)
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: tfacc.ProviderFactories,
-		Steps: []resource.TestStep{{
+		Steps: acctest.Forget(t, []resource.TestStep{{
 			Config: scheduleConfig(acct, "a", onePhase, "  metadata = { team = \"a\" }\n") + `
 data "stripe_subscription_schedule" "by_id" {
   id = stripe_subscription_schedule.test.id
@@ -104,7 +111,7 @@ data "stripe_subscription_schedule" "by_id" {
 				resource.TestCheckResourceAttrPair("data.stripe_subscription_schedule.by_id", "id", address, "id"),
 				resource.TestCheckResourceAttrSet("data.stripe_subscription_schedule.by_id", "phases.0.end_date"),
 			),
-		}},
+		}}, nil, "stripe_subscription_schedule"),
 	})
 }
 
@@ -112,7 +119,7 @@ func TestAccSubscriptionSchedule_update(t *testing.T) {
 	acct := acctest.NewAccount(t)
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: tfacc.ProviderFactories,
-		Steps: []resource.TestStep{
+		Steps: acctest.Forget(t, []resource.TestStep{
 			{Config: scheduleConfig(acct, "a", onePhase, "  metadata = { team = \"a\", tier = \"1\" }\n")},
 			{
 				Config: scheduleConfig(acct, "a", onePhase, "  metadata = { team = \"b\" }\n"),
@@ -124,7 +131,7 @@ func TestAccSubscriptionSchedule_update(t *testing.T) {
 					resource.TestCheckResourceAttr(address, "metadata.team", "b"),
 				),
 			},
-		},
+		}, nil, "stripe_subscription_schedule"),
 	})
 }
 
@@ -145,7 +152,7 @@ func TestAccSubscriptionSchedule_updatePhases(t *testing.T) {
   ]`
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: tfacc.ProviderFactories,
-		Steps: []resource.TestStep{
+		Steps: acctest.Forget(t, []resource.TestStep{
 			{
 				Config: scheduleConfig(acct, "a", onePhase, ""),
 				Check:  resource.TestCheckResourceAttrWith(address, "phases.0.start_date", func(v string) error { start = v; return nil }),
@@ -166,33 +173,22 @@ func TestAccSubscriptionSchedule_updatePhases(t *testing.T) {
 					}),
 				),
 			},
-		},
+		}, nil, "stripe_subscription_schedule"),
 	})
 }
 
-// customer is accepted on create only (suite: "`customer`, `start_date` and
-// `from_subscription` on update are `parameter_unknown`"), so changing it replaces the
-// schedule, which cancels the old one.
+// `customer` is create-only, so changing it would replace the schedule, which Stripe cannot
+// delete: the plan fails, and so does a taint, at apply.
 func TestAccSubscriptionSchedule_replace(t *testing.T) {
 	acct := acctest.NewAccount(t)
-	var first string
+	cfg := scheduleConfig(acct, "a", onePhase, "")
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: tfacc.ProviderFactories,
-		Steps: []resource.TestStep{
-			{Config: scheduleConfig(acct, "a", onePhase, ""), Check: idOf(&first)},
-			{
-				Config: scheduleConfig(acct, "b", onePhase, ""),
-				ConfigPlanChecks: resource.ConfigPlanChecks{PreApply: []plancheck.PlanCheck{
-					plancheck.ExpectResourceAction(address, plancheck.ResourceActionReplace),
-				}},
-				Check: resource.TestCheckResourceAttrWith(address, "id", func(v string) error {
-					if v == first {
-						return fmt.Errorf("the replacement kept the schedule ID %s", v)
-					}
-					return nil
-				}),
-			},
-		},
+		Steps: acctest.Forget(t, []resource.TestStep{
+			{Config: cfg},
+			{Config: scheduleConfig(acct, "b", onePhase, ""), PlanOnly: true, ExpectError: tfacc.RefusedReplace},
+			{Config: cfg, Taint: []string{address}, ExpectError: tfacc.RefusedDestroy},
+		}, nil, "stripe_subscription_schedule"),
 	})
 }
 
@@ -201,7 +197,7 @@ func TestAccSubscriptionSchedule_import(t *testing.T) {
 	cfg := scheduleConfig(acct, "a", onePhase, "  metadata = { team = \"a\" }\n")
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: tfacc.ProviderFactories,
-		Steps: []resource.TestStep{
+		Steps: acctest.Forget(t, []resource.TestStep{
 			{Config: cfg},
 			{
 				ResourceName:      address,
@@ -221,68 +217,80 @@ func TestAccSubscriptionSchedule_import(t *testing.T) {
     items = [{ price = stripe_price.one.id }]
   }]`, "  metadata = { team = \"a\" }\n"),
 			},
-		},
+		}, nil, "stripe_subscription_schedule"),
 	})
 }
 
-// Stripe cannot delete a schedule, so destroy cancels it (suite: "Subscription schedules",
-// `cancel`, which "cancels the subscription"); the schedule stays in the account.
+// Stripe cannot delete a schedule, so dropping it from the configuration, and `terraform
+// destroy`, fail at plan time, and the schedule stays as it was.
 func TestAccSubscriptionSchedule_delete(t *testing.T) {
 	acct := acctest.NewAccount(t)
-	var id, subscription string
-	resource.ParallelTest(t, resource.TestCase{
-		ProtoV6ProviderFactories: tfacc.ProviderFactories,
-		CheckDestroy: func(*terraform.State) error {
-			get := func(path string) (wire.Object, error) {
-				resp, err := tfacc.Client(acct).Do(t.Context(), stripeapi.Request{Method: "GET", Path: path})
-				if err != nil {
-					return nil, err
-				}
-				return resp.Body.(wire.Object), nil
-			}
-			schedule, err := get("/v1/subscription_schedules/" + id)
-			if err != nil {
-				return fmt.Errorf("a cancelled schedule still retrieves: %w", err)
-			}
-			if status, _ := schedule.GetString("status"); status != "canceled" {
-				return fmt.Errorf("schedule %s is %q after destroy, want canceled", id, status)
-			}
-			sub, err := get("/v1/subscriptions/" + subscription)
-			if err != nil {
-				return err
-			}
-			if status, _ := sub.GetString("status"); status != "canceled" {
-				return fmt.Errorf("subscription %s is %q after destroy, want canceled", subscription, status)
-			}
-			return nil
-		},
-		Steps: []resource.TestStep{{
-			Config: scheduleConfig(acct, "a", onePhase, ""),
-			Check: resource.ComposeAggregateTestCheckFunc(
-				idOf(&id),
-				resource.TestCheckResourceAttrWith(address, "subscription", func(v string) error { subscription = v; return nil }),
-			),
-		}},
-	})
-}
-
-// A schedule released out of band cannot be cancelled (suite: "Release and cancel of a
-// schedule not in `not_started` or `active` are 400"), and has nothing left to cancel, so
-// destroy leaves it as it is.
-func TestAccSubscriptionSchedule_deleteAfterRelease(t *testing.T) {
-	acct := acctest.NewAccount(t)
-	var id string
+	var path string
+	var mark int
 	cfg := scheduleConfig(acct, "a", onePhase, "")
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: tfacc.ProviderFactories,
-		Steps: []resource.TestStep{
-			{Config: cfg, Check: idOf(&id)},
+		Steps: acctest.Forget(t, []resource.TestStep{
+			{Config: cfg, Check: resource.ComposeTestCheckFunc(pathOf(&path), tfacc.LogMark(t, acct, &mark))},
+			{Config: acctest.Without(t, cfg, "stripe_subscription_schedule"), PlanOnly: true, ExpectError: tfacc.RefusedDestroy},
+			{Config: cfg, Destroy: true, ExpectError: tfacc.RefusedDestroy},
+		}, tfacc.Untouched(t, acct, &path, &mark, "status", wire.String("active")), "stripe_subscription_schedule"),
+	})
+}
+
+// Setting `status` to `canceled` cancels the schedule (suite: "cancel"), which also cancels the
+// subscription it started ("cancels the subscription"), and cannot be undone.
+func TestAccSubscriptionSchedule_cancel(t *testing.T) {
+	acct := acctest.NewAccount(t)
+	var path, subscription string
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: tfacc.ProviderFactories,
+		Steps: acctest.Forget(t, []resource.TestStep{
 			{
-				PreConfig: func() { tfacc.Post(t, acct, "/v1/subscription_schedules/"+id+"/release", nil) },
-				Config:    cfg,
-				Check:     resource.TestCheckResourceAttr(address, "status", "released"),
+				Config: scheduleConfig(acct, "a", onePhase, ""),
+				Check: resource.ComposeTestCheckFunc(pathOf(&path),
+					resource.TestCheckResourceAttrWith(address, "subscription", func(v string) error { subscription = "/v1/subscriptions/" + v; return nil })),
 			},
-		},
+			{
+				Config: scheduleConfig(acct, "a", onePhase, "  status = \"canceled\"\n"),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr(address, "status", "canceled"),
+					tfacc.Holds(t, acct, &path, "status", wire.String("canceled")),
+					tfacc.Holds(t, acct, &subscription, "status", wire.String("canceled")),
+				),
+			},
+			// Canceling is final, so releasing the schedule afterwards fails at plan time.
+			{
+				Config:      scheduleConfig(acct, "a", onePhase, "  status = \"released\"\n"),
+				PlanOnly:    true,
+				ExpectError: regexp.MustCompile("Cannot change `status` from `canceled`"),
+			},
+		}, nil, "stripe_subscription_schedule"),
+	})
+}
+
+// Setting `status` to `released` releases the subscription from the schedule (suite:
+// "release"): the schedule ends and the subscription keeps billing on its own.
+func TestAccSubscriptionSchedule_release(t *testing.T) {
+	acct := acctest.NewAccount(t)
+	var path, subscription string
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: tfacc.ProviderFactories,
+		Steps: acctest.Forget(t, []resource.TestStep{
+			{
+				Config: scheduleConfig(acct, "a", onePhase, ""),
+				Check: resource.ComposeTestCheckFunc(pathOf(&path),
+					resource.TestCheckResourceAttrWith(address, "subscription", func(v string) error { subscription = "/v1/subscriptions/" + v; return nil })),
+			},
+			{
+				Config: scheduleConfig(acct, "a", onePhase, "  status = \"released\"\n"),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr(address, "status", "released"),
+					tfacc.Holds(t, acct, &path, "status", wire.String("released")),
+					tfacc.Holds(t, acct, &subscription, "status", wire.String("active")),
+				),
+			},
+		}, nil, "stripe_subscription_schedule"),
 	})
 }
 
@@ -292,7 +300,7 @@ func TestAccSubscriptionSchedule_drift(t *testing.T) {
 	cfg := scheduleConfig(acct, "a", onePhase, "  metadata = { team = \"a\" }\n")
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: tfacc.ProviderFactories,
-		Steps: []resource.TestStep{
+		Steps: acctest.Forget(t, []resource.TestStep{
 			{Config: cfg, Check: idOf(&id)},
 			{
 				PreConfig: func() {
@@ -307,6 +315,6 @@ func TestAccSubscriptionSchedule_drift(t *testing.T) {
 				}},
 				Check: resource.TestCheckResourceAttr(address, "metadata.team", "a"),
 			},
-		},
+		}, nil, "stripe_subscription_schedule"),
 	})
 }

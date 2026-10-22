@@ -11,6 +11,8 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/tfsdk"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
+	"github.com/hashicorp/terraform-plugin-go/tfprotov6"
+	"github.com/hashicorp/terraform-plugin-go/tftypes"
 
 	"github.com/computomatic/terraform-provider-stripe/internal/fields"
 	"github.com/computomatic/terraform-provider-stripe/internal/stripeapi"
@@ -101,24 +103,6 @@ func TestTransitionsMustNameAResponseOnlyField(t *testing.T) {
 		if _, err := NewResource(decl, transitionTable()); err == nil {
 			t.Errorf("%s: want an error", name)
 		}
-	}
-}
-
-// Retain sends nothing, warns with the declaration's sentence and leaves the state to
-// Terraform.
-func TestRetainWarnsAndSendsNothing(t *testing.T) {
-	decl := fixtureDeclaration()
-	decl.Delete = Retain
-	decl.RetainWarning = "The widget stays on the shelf."
-	r := configured(t, decl, fixtureTable(), noCalls(t))
-	diags := r.destroy(t, r.fill(map[string]attr.Value{"id": types.StringValue("wid_1")}))
-	if diags.HasError() || len(diags) != 1 || !strings.Contains(diags[0].Detail(), "The widget stays on the shelf.") || !strings.Contains(diags[0].Detail(), "wid_1") {
-		t.Fatalf("diagnostics: %v", diags)
-	}
-
-	decl.RetainWarning = ""
-	if _, err := NewResource(decl, fixtureTable()); err == nil {
-		t.Error("a retain strategy with no warning must be refused")
 	}
 }
 
@@ -279,5 +263,53 @@ func TestTransitionFieldIsNeverARequestParameter(t *testing.T) {
 		if _, sent := req.Params.Get("phase"); sent {
 			t.Errorf("%s %s sent phase: %+v", req.Method, req.Path, req.Params)
 		}
+	}
+}
+
+// A transition cannot leave a value it declares Final: a plan that moves the field from one to
+// the transition's value fails on the attribute, before Stripe refuses the action. Any other
+// move plans.
+func TestTransitionRefusesLeavingAFinalValue(t *testing.T) {
+	decl := transitionDeclaration()
+	for i := range decl.Transitions {
+		decl.Transitions[i].Final = []string{"gone"}
+	}
+	p := newPlanner(t, decl, transitionTable())
+	plan := func(from, to string) *tfprotov6.PlanResourceChangeResponse {
+		state := map[string]tftypes.Value{"id": tfString("wid_1"), "name": tfString("w"), "phase": tfString(from)}
+		proposed := clone(state, map[string]tftypes.Value{"phase": tfString(to)})
+		config := clone(proposed, map[string]tftypes.Value{"id": tftypes.NewValue(tftypes.String, nil)})
+		return p.planResponse(p.value(state), p.value(proposed), p.value(config))
+	}
+	errs := errorsOf(plan("gone", "on"))
+	if len(errs) != 1 || errs[0].Summary != "Cannot change `phase` from `gone`" || errs[0].Attribute == nil {
+		t.Fatalf("want the refusal on the attribute: %+v", errs)
+	}
+	// `gone` is a value no transition sets, so the configuration cannot hold it.
+	if want := "Stripe cannot move this widget out of `gone`. Remove `phase` from the configuration."; errs[0].Detail != want {
+		t.Errorf("detail: %s", errs[0].Detail)
+	}
+	if errs := errorsOf(plan("off", "on")); len(errs) != 0 {
+		t.Errorf("a move from a value that is not final must plan: %+v", errs)
+	}
+	if errs := errorsOf(plan("gone", "gone")); len(errs) != 0 {
+		t.Errorf("a plan that keeps the final value must plan: %+v", errs)
+	}
+}
+
+// A resource page lists the values a configuration can set on a transition field, without the
+// spec's sentence that lists them all; the data source, which only reads it, keeps both.
+func TestTransitionFieldListsTheValuesItSets(t *testing.T) {
+	table := transitionTable()
+	table[len(table)-1].Description = "The phase. Possible values are `off`, `on` and `gone`. Read more in the guide."
+	m, err := compile(transitionDeclaration(), table)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got := m.resourceSchema(context.Background()).Attributes["phase"].GetMarkdownDescription(); got != "The phase. Read more in the guide. Possible values: `on`, `off`." {
+		t.Errorf("resource: %q", got)
+	}
+	if got := m.dataSourceSchema().Attributes["phase"].GetMarkdownDescription(); got != "The phase. Possible values are `off`, `on` and `gone`. Read more in the guide. Possible values: `off`, `on`, `gone`." {
+		t.Errorf("data source: %q", got)
 	}
 }

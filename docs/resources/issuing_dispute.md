@@ -10,7 +10,7 @@ description: |-
 
 A dispute of an Issuing transaction, with the evidence for it. Stripe issues cards only for a platform's connected accounts, so manage disputes through a provider configuration whose `stripe_account` is a connected account with the `card_issuing` capability active. A new dispute is `unsubmitted`, for the whole transaction unless `amount` says less, and `amount`, `evidence` and `metadata` change in place until it is submitted. Set `status` to `submitted` to submit it to the card network, on create or later. After that Stripe refuses a change to `evidence` or `amount`, and decides the dispute: `status` then reads `won`, `lost` or `expired`, and a configuration that still sets `submitted` plans a change Stripe refuses, so remove `status` from it then.
 
-~> Stripe cannot delete or withdraw a dispute, so `terraform destroy` leaves it on the connected account, submitted or not. Changing `transaction` replaces the dispute, which leaves the old one too.
+~> Stripe cannot delete or withdraw a dispute. `terraform destroy`, and a change that would replace the issuing dispute, fail at plan time. To stop managing an issuing dispute, remove it from the state as [Removing from State](#removing-from-state) shows; it stays in the Stripe account.
 
 ## Example Usage
 
@@ -52,13 +52,13 @@ resource "stripe_issuing_dispute" "unrecognised" {
 The following arguments are required:
 
 * `evidence` - (Required) Evidence provided for the dispute. See [`evidence`](#evidence) below.
-* `transaction` - (Required) The ID of the issuing transaction to create a dispute for. For transaction on Treasury FinancialAccounts, use `treasury.received_debit`. Changing it replaces the resource.
+* `transaction` - (Required) The ID of the issuing transaction to create a dispute for. For transaction on Treasury FinancialAccounts, use `treasury.received_debit`. Changing it fails the plan, because this resource cannot be replaced.
 
 The following arguments are optional:
 
 * `amount` - (Optional) The dispute amount in the card's currency and in the [smallest currency unit](https://docs.stripe.com/currencies#zero-decimal). If not set, defaults to the full transaction amount.
 * `metadata` - (Optional) Set of [key-value pairs](https://docs.stripe.com/api/metadata) that you can attach to an object. This can be useful for storing additional information about the object in a structured format. Individual keys can be unset by posting an empty value to them. All keys can be unset by posting an empty value to `metadata`.
-* `status` - (Optional) Current status of the dispute. Possible values: `expired`, `lost`, `submitted`, `unsubmitted`, `won`.
+* `status` - (Optional) Current status of the dispute. Possible values: `submitted`.
 
 <a id="evidence"></a>
 ### `evidence`
@@ -223,6 +223,28 @@ The `treasury` attribute supports:
 * `create` - (Default `20m`)
 * `delete` - (Default `20m`)
 * `update` - (Default `20m`)
+
+## Removing from State
+
+To stop managing an issuing dispute whose destroy is refused, remove it from the state without destroying it. In Terraform 1.7 and later, and OpenTofu 1.10 and later, replace the `resource` block with a [`removed` block](https://developer.hashicorp.com/terraform/language/block/removed) and apply:
+
+```terraform
+removed {
+  from = stripe_issuing_dispute.unrecognised
+
+  lifecycle {
+    destroy = false
+  }
+}
+```
+
+Using `terraform state rm`:
+
+```console
+% terraform state rm stripe_issuing_dispute.unrecognised
+```
+
+The issuing dispute stays in the Stripe account. Replacing one with `terraform apply -replace` or `terraform taint` fails in the same way, at apply.
 
 ## Import
 

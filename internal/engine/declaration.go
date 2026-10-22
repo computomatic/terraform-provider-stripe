@@ -33,24 +33,27 @@ func (l NoteLevel) Sigil() string {
 	return "->"
 }
 
-// DeleteKind selects what `terraform destroy` does (ADR D2, "Delete versus archive").
+// DeleteKind selects what `terraform destroy` does (ADR D2, "Delete versus archive", as
+// amended by adrs/1-pending/2026-10-22-destroy-semantics). Destroy deletes or archives, and
+// is refused otherwise: it never creates an object and never sends a lifecycle action.
 type DeleteKind int
 
 const (
 	// Delete calls DELETE. A 404 is success.
 	Delete DeleteKind = iota
-	// Archive retrieves the object, sends the declared update and removes it from state.
+	// Archive retrieves the object, sends the declared reversible deactivation and removes it
+	// from state.
 	Archive
 	// DeleteOrArchive calls DELETE and, when Stripe refuses in the way the declaration's
 	// ArchiveOn names, archives the object instead and warns.
 	DeleteOrArchive
-	// Expire sends a time a few seconds ahead and waits for the declared status.
-	Expire
-	// Retain means Stripe cannot remove the object and nothing archives it. Destroy sends
-	// nothing, warns with the declaration's RetainWarning and drops the object from state.
-	Retain
-	// NoDelete means Stripe offers no way to remove the object. There is no resource, only
-	// a data source.
+	// Refuse means Stripe can neither delete nor archive the object. Destroy, and a change
+	// that would replace the object, fail at plan time with RefuseReason and how to remove
+	// the object from state. Destroy fails again at apply, for replacements plan time cannot
+	// see, and sends nothing.
+	Refuse
+	// NoDelete means the object cannot be created here. There is no resource, only a data
+	// source.
 	NoDelete
 )
 
@@ -72,30 +75,11 @@ type ArchiveAction struct {
 	// Field is the Stripe field that says the object is archived, such as `active`. It is
 	// the field the update sets, unless Path names an action endpoint.
 	Field string
-	// Value is the archived value. Ignored when Now is set.
+	// Value is the archived value.
 	Value wire.Value
-	// Now sends the literal `now`, which is how file links expire. A Unix time taken here can
-	// already be in the past by the time Stripe reads it, and Stripe refuses a past time.
-	// With Path the request is bare, and Now only says the object is archived once Field
-	// holds a time that has passed.
-	Now bool
 	// Path is an action endpoint, such as `/v1/billing/meters/{id}/deactivate`, that
 	// archives the object by a bare POST. Empty means an update of Field.
 	Path string
-	// Ended lists the other states in which the object has already ended, so that Stripe
-	// would refuse the archive: a quote that was accepted, a credit grant that expired.
-	// Destroy leaves such an object as it is.
-	Ended []Ended
-}
-
-// Ended is a state of an object that has finished by another route than the archive.
-type Ended struct {
-	// Field is the Stripe field that says so, such as `status`.
-	Field string
-	// Value is the ended value. Ignored when Past is set.
-	Value wire.Value
-	// Past says the object has ended once Field holds a Unix time that has passed.
-	Past bool
 }
 
 // Refusal names a Stripe error response by its status and type. Stripe answers the
@@ -106,27 +90,18 @@ type Refusal struct {
 	Type string
 }
 
-// FieldIs says that a response field has a value, such as `is_default` being true.
-type FieldIs struct {
+// RefuseWhen names a state in which Stripe refuses to delete or archive an object of a
+// resource that otherwise deletes or archives, such as the account's default portal
+// configuration. An object in that state is refused as under the Refuse strategy.
+type RefuseWhen struct {
+	// Field is a top-level Bool or String attribute that the response fills, such as
+	// `is_default`.
 	Field string
+	// Value is the refused value, a wire.Bool or a wire.String.
 	Value wire.Value
-}
-
-// ExpireAction ends an object at a time a few seconds ahead.
-type ExpireAction struct {
-	// Field is the time field, such as `expires_at`.
-	Field string
-	// Seconds is how far ahead of now the time is set.
-	Seconds int64
-	// StatusField and StatusValue name the status that says the object has ended.
-	StatusField string
-	StatusValue string
-	// NotStarted and Start name the status of an object that has not started yet, such as
-	// `scheduled`, and the update that starts it. Such an object cannot end before it
-	// starts, so destroy sends Start before the end time. Empty NotStarted means every object
-	// can be ended as it is.
-	NotStarted string
-	Start      wire.Object
+	// Reason is the sentence that says why, such as "Stripe refuses to deactivate the
+	// account's default portal configuration."
+	Reason string
 }
 
 // Transition is an action endpoint that sets a status-like field Stripe never takes on create
@@ -139,6 +114,10 @@ type Transition struct {
 	// Path is the action endpoint, such as `/v1/billing/alerts/{id}/activate`. It is sent as
 	// a bare POST.
 	Path string
+	// Final lists the values of Field, other than Value, that the transition cannot leave,
+	// such as an alert's `archived`. A plan that moves the field from one of them to Value fails, because Stripe
+	// refuses the action.
+	Final []string
 }
 
 // AdvanceAction moves a required time field forward in place through an action endpoint, as a
@@ -242,16 +221,15 @@ type Declaration struct {
 	// ArchiveOn is the refusal of DELETE after which DeleteOrArchive archives. Any other
 	// error fails the destroy.
 	ArchiveOn *Refusal
-	// KeepWhen names the object Stripe protects from the Archive or Delete strategy, such as the
-	// account's default portal configuration or the default bank account of a currency. When
-	// the archive or delete fails and a retrieve afterwards shows the object so, destroy warns,
-	// leaves the object as it is and removes it from state. Any other failure, and a failed
-	// retrieve, fails the destroy. For the Delete strategy the failure must also be a 400
-	// `invalid_request_error`, the refusal; a 403 or a server error fails the destroy.
-	KeepWhen *FieldIs
-	Expire   *ExpireAction
-	// RetainWarning is the sentence that tells a user what the Retain strategy leaves behind.
-	RetainWarning string
+	// RefuseReason is, for the Refuse strategy, the sentence that says why Stripe cannot
+	// remove the object and, where an attribute ends it, which one. It opens every refusal
+	// and the page's callout.
+	RefuseReason string
+	// RefuseWhen refuses destroy and replacement of an object in the named state, for the
+	// Delete, Archive and DeleteOrArchive strategies. When Stripe refuses the delete or
+	// archive (400 `invalid_request_error`) and a retrieve shows the object in that state,
+	// destroy fails with the same guidance.
+	RefuseWhen *RefuseWhen
 	// Advance makes a change to a create-only time field an update that moves the object
 	// forward, and a change backwards a plan error.
 	Advance *AdvanceAction
@@ -355,7 +333,8 @@ type Declaration struct {
 	// RefuseChange lists top-level fields, optional or required, that Stripe's update takes but
 	// that nothing proves it applies as asked, such as an account's `capabilities`. A plan that
 	// changes one on an existing object fails before Stripe is called, and the error says to
-	// revert, to ignore the change or to taint the object. The field is sent on create only. A plan that is a replace is not
+	// revert, to ignore the change or to taint the object, or for a resource that refuses
+	// destroy to remove it from state. The field is sent on create only. A plan that is a replace is not
 	// refused when a top-level create-only or replace-on field, the parent, the attached object,
 	// a currency options change or a fixed keys change forces it. compile refuses a declaration
 	// with a replace source below the top level, which is not checked. Nor is a value not fully

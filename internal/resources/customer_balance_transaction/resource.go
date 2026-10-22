@@ -13,12 +13,11 @@ import (
 // Declaration is what the spec cannot say about a customer balance transaction. It is
 // addressed under its customer, so its import ID is `<customer_id>/<transaction_id>`. Stripe
 // updates only `description` and `metadata` (suite: "amount is not updatable") and has no
-// delete (suite: "delete is not served"), so destroy keeps the transaction on the customer's
-// balance and says so.
+// delete (suite: "delete is not served"), so destroy is refused.
 var Declaration = engine.Declaration{
 	TypeName:              "stripe_customer_balance_transaction",
 	IDPrefix:              "cbtxn_",
-	Description:           "An adjustment to a customer's credit balance: a negative `amount` credits the customer, a positive one debits them. Stripe cannot delete or reverse a transaction, so `terraform destroy` only removes it from Terraform's state and the adjustment stays on the customer's balance. Changing `amount` or `currency` replaces the resource, which adds a second transaction and does not undo the first.",
+	Description:           "An adjustment to a customer's credit balance: a negative `amount` credits the customer, a positive one debits them. Only `description` and `metadata` change after creation.",
 	DataSourceDescription: "An adjustment to a customer's credit balance.",
 	Parent:                "customer",
 	Paths: engine.Paths{
@@ -27,8 +26,8 @@ var Declaration = engine.Declaration{
 		Update:   "/v1/customers/{customer}/balance_transactions/{id}",
 		List:     "/v1/customers/{customer}/balance_transactions",
 	},
-	Delete:        engine.Retain,
-	RetainWarning: "The transaction stays on the customer's balance, and replacing it adds a second transaction instead of undoing the first.",
+	Delete:       engine.Refuse,
+	RefuseReason: "Stripe cannot delete or reverse a customer balance transaction; it stays on the customer's balance.",
 }
 
 // NewResource returns the resource constructor the provider registers.

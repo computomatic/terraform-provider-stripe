@@ -156,6 +156,7 @@ func TestGoldenPages(t *testing.T) {
 	}
 	byType(s.Resources, "widget_gadget").ImportNote = "An imported gadget has no `token`."
 	byType(s.Resources, "widget_gadget").ImportNoteLevel = engine.NoteWarning
+	byType(s.Resources, "widget_gadget").DestroyNote = "Gadgets cannot be deleted. `terraform destroy`, and a change that would replace the gadget, fail at plan time. To stop managing a gadget, remove it from the state as [Removing from State](#removing-from-state) shows; it stays in the account."
 	byType(s.Resources, "widget_gadget_part").ImportNote = "Parts are matched by serial."
 	gadget, err := renderResource(byType(s.Resources, "widget_gadget"), pageInput{
 		Examples: ex,

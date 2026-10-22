@@ -209,7 +209,7 @@ func (r *Resource) validateExactlyOneOf(ctx context.Context, req resource.Valida
 }
 
 // validateTransitions refuses a configured value of a transition field that no transition
-// sets, such as an alert's `archived`, which only destroy reaches.
+// sets, such as a quote's `accepted`, which Stripe reaches by other routes.
 func (r *Resource) validateTransitions(ctx context.Context, req resource.ValidateConfigRequest, resp *resource.ValidateConfigResponse) {
 	byField := map[string][]string{}
 	for _, t := range r.m.decl.Transitions {

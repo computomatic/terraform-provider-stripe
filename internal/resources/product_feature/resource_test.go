@@ -74,7 +74,7 @@ func TestAccProductFeature_create(t *testing.T) {
 	acct := acctest.NewAccount(t)
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: tfacc.ProviderFactories,
-		Steps: []resource.TestStep{{
+		Steps: acctest.Forget(t, []resource.TestStep{{
 			Config: featureConfig(acct, "a", "") + `
 data "stripe_product_feature" "test" {
   product = stripe_product.test.id
@@ -89,7 +89,7 @@ data "stripe_product_feature" "test" {
 				resource.TestCheckResourceAttrPair("data.stripe_product_feature.test", "id", address, "id"),
 				resource.TestCheckResourceAttrPair("data.stripe_product_feature.test", "entitlement_feature", "stripe_entitlements_feature.a", "id"),
 			),
-		}},
+		}}, nil, "stripe_entitlements_feature"),
 	})
 }
 
@@ -100,7 +100,7 @@ func TestAccProductFeature_update(t *testing.T) {
 	var first string
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: tfacc.ProviderFactories,
-		Steps: []resource.TestStep{
+		Steps: acctest.Forget(t, []resource.TestStep{
 			{
 				Config: featureConfig(acct, "a", ""),
 				Check:  resource.TestCheckResourceAttrWith(address, "id", func(v string) error { first = v; return nil }),
@@ -117,7 +117,7 @@ func TestAccProductFeature_update(t *testing.T) {
 					return nil
 				}),
 			},
-		},
+		}, nil, "stripe_entitlements_feature"),
 	})
 }
 
@@ -128,7 +128,7 @@ func TestAccProductFeature_replace(t *testing.T) {
 	var first string
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: tfacc.ProviderFactories,
-		Steps: []resource.TestStep{
+		Steps: acctest.Forget(t, []resource.TestStep{
 			{
 				Config: featureConfig(acct, "a", ""),
 				Check:  resource.TestCheckResourceAttrWith(address, "id", func(v string) error { first = v; return nil }),
@@ -150,7 +150,7 @@ func TestAccProductFeature_replace(t *testing.T) {
 			},
 			// Attaching the first feature again works because the replacement detached it.
 			{Config: featureConfig(acct, "a", ""), Check: resource.TestCheckResourceAttrPair(address, "entitlement_feature", "stripe_entitlements_feature.a", "id")},
-		},
+		}, nil, "stripe_entitlements_feature"),
 	})
 }
 
@@ -160,7 +160,7 @@ func TestAccProductFeature_import(t *testing.T) {
 	cfg := featureConfig(acct, "a", "")
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: tfacc.ProviderFactories,
-		Steps: []resource.TestStep{
+		Steps: acctest.Forget(t, []resource.TestStep{
 			{Config: cfg},
 			{
 				ResourceName:      address,
@@ -181,7 +181,7 @@ func TestAccProductFeature_import(t *testing.T) {
 				ImportStateId: "not-a-compound-id",
 				ExpectError:   regexpInvalidImportID,
 			},
-		},
+		}, nil, "stripe_entitlements_feature"),
 	})
 }
 
@@ -193,7 +193,7 @@ func TestAccProductFeature_importIdentity(t *testing.T) {
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: tfacc.ProviderFactories,
 		TerraformVersionChecks:   []tfversion.TerraformVersionCheck{tfversion.RequireAbove(version.Must(version.NewVersion("1.12.0")))},
-		Steps: []resource.TestStep{
+		Steps: acctest.Forget(t, []resource.TestStep{
 			{Config: cfg},
 			{
 				ResourceName:    address,
@@ -201,7 +201,7 @@ func TestAccProductFeature_importIdentity(t *testing.T) {
 				ImportStateKind: resource.ImportBlockWithResourceIdentity,
 				Config:          cfg,
 			},
-		},
+		}, nil, "stripe_entitlements_feature"),
 	})
 }
 
@@ -225,7 +225,7 @@ func TestAccProductFeature_delete(t *testing.T) {
 			}
 			return nil
 		},
-		Steps: []resource.TestStep{{Config: featureConfig(acct, "a", ""), Check: ids(&product, &id)}},
+		Steps: acctest.Forget(t, []resource.TestStep{{Config: featureConfig(acct, "a", ""), Check: ids(&product, &id)}}, nil, "stripe_entitlements_feature"),
 	})
 }
 
@@ -237,7 +237,7 @@ func TestAccProductFeature_drift(t *testing.T) {
 	cfg := featureConfig(acct, "a", "")
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: tfacc.ProviderFactories,
-		Steps: []resource.TestStep{
+		Steps: acctest.Forget(t, []resource.TestStep{
 			{Config: cfg, Check: ids(&product, &id)},
 			{
 				PreConfig: func() {
@@ -257,6 +257,6 @@ func TestAccProductFeature_drift(t *testing.T) {
 					return nil
 				}),
 			},
-		},
+		}, nil, "stripe_entitlements_feature"),
 	})
 }

@@ -93,6 +93,10 @@ func TestFixtureRules(t *testing.T) {
 	if f := lookup(t, table, "kind"); !f.CreateOnly() || len(f.Enum) != 2 {
 		t.Errorf("kind is create-only with an enum: %+v", f)
 	}
+	// An argument's values are what the create and the update take, not what the response adds.
+	if f := lookup(t, table, "state"); strings.Join(f.Enum, ",") != "on,off,gone" {
+		t.Errorf("state: the enum merges the update's values: %v", f.Enum)
+	}
 	if f := lookup(t, table, "address", "zip"); !f.CreateOnly() || f.Update {
 		t.Errorf("a nested field missing from the update schema is create-only: %+v", f)
 	}

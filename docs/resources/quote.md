@@ -3,12 +3,14 @@
 page_title: "stripe_quote Resource - Stripe"
 subcategory: ""
 description: |-
-  A proposal of prices to a customer. terraform destroy cancels the quote, because Stripe cannot delete one; the cancelled quote stays in the account. A quote that was accepted cannot be cancelled and is left as it is. Finalizing and accepting a quote are not resources: the quote stays a draft here, and status reports what happened to it elsewhere. Stripe lets only metadata and a few other fields change once the quote is finalized.
+  A proposal of prices to a customer. Set status to canceled to cancel the quote; a quote that was accepted cannot be cancelled. Finalizing and accepting a quote are not resources: the quote stays a draft here, and status reports what happened to it elsewhere. Stripe lets only metadata and a few other fields change once the quote is finalized.
 ---
 
 # Resource: stripe_quote
 
-A proposal of prices to a customer. `terraform destroy` cancels the quote, because Stripe cannot delete one; the cancelled quote stays in the account. A quote that was accepted cannot be cancelled and is left as it is. Finalizing and accepting a quote are not resources: the quote stays a draft here, and `status` reports what happened to it elsewhere. Stripe lets only `metadata` and a few other fields change once the quote is finalized.
+A proposal of prices to a customer. Set `status` to `canceled` to cancel the quote; a quote that was accepted cannot be cancelled. Finalizing and accepting a quote are not resources: the quote stays a draft here, and `status` reports what happened to it elsewhere. Stripe lets only `metadata` and a few other fields change once the quote is finalized.
+
+~> Stripe cannot delete a quote; set `status` to `canceled` to cancel one. `terraform destroy`, and a change that would replace the quote, fail at plan time. To stop managing a quote, remove it from the state as [Removing from State](#removing-from-state) shows; it stays in the Stripe account.
 
 ## Example Usage
 
@@ -57,14 +59,15 @@ The following arguments are optional:
 * `description` - (Optional) A description that will be displayed on the quote PDF. If no value is passed, the default description configured in your [quote template settings](https://dashboard.stripe.com/settings/billing/quote) will be used.
 * `expires_at` - (Optional) A future timestamp on which the quote will be canceled if in `open` or `draft` status. Measured in seconds since the Unix epoch. If no value is passed, the default expiration date configured in your [quote template settings](https://dashboard.stripe.com/settings/billing/quote) will be used.
 * `footer` - (Optional) A footer that will be displayed on the quote PDF. If no value is passed, the default footer configured in your [quote template settings](https://dashboard.stripe.com/settings/billing/quote) will be used.
-* `from_quote` - (Optional) Clone an existing quote. The new quote will be created in `status=draft`. When using this parameter, you cannot specify any other parameters except for `expires_at`. Changing it replaces the resource. See [`from_quote`](#from_quote) below.
+* `from_quote` - (Optional) Clone an existing quote. The new quote will be created in `status=draft`. When using this parameter, you cannot specify any other parameters except for `expires_at`. Changing it fails the plan, because this resource cannot be replaced. See [`from_quote`](#from_quote) below.
 * `header` - (Optional) A header that will be displayed on the quote PDF. If no value is passed, the default header configured in your [quote template settings](https://dashboard.stripe.com/settings/billing/quote) will be used.
 * `invoice_settings` - (Optional) All invoices will be billed using the specified settings. See [`invoice_settings`](#invoice_settings) below.
 * `line_items` - (Optional) A list of line items the customer is being quoted for. Each line item includes information about the product, the quantity, and the resulting cost. See [`line_items`](#line_items) below.
 * `metadata` - (Optional) Set of [key-value pairs](https://docs.stripe.com/api/metadata) that you can attach to an object. This can be useful for storing additional information about the object in a structured format. Individual keys can be unset by posting an empty value to them. All keys can be unset by posting an empty value to `metadata`.
 * `on_behalf_of` - (Optional) The account on behalf of which to charge.
+* `status` - (Optional) The status of the quote. Possible values: `canceled`.
 * `subscription_data` - (Optional) When creating a subscription or subscription schedule, the specified configuration data will be used. There must be at least one line item with a recurring price for a subscription or subscription schedule to be created. A subscription schedule is created if `subscription_data[effective_date]` is present and in the future, otherwise a subscription is created. See [`subscription_data`](#subscription_data) below.
-* `test_clock` - (Optional) ID of the test clock to attach to the quote. Changing it replaces the resource.
+* `test_clock` - (Optional) ID of the test clock to attach to the quote. Changing it fails the plan, because this resource cannot be replaced.
 * `transfer_data` - (Optional) The data with which to automatically create a Transfer for each of the invoices. See [`transfer_data`](#transfer_data) below.
 
 <a id="automatic_tax"></a>
@@ -228,7 +231,7 @@ The `line_items.taxes.rate.flat_amount` attribute supports:
 
 The `subscription_data` attribute supports:
 
-* `billing_mode` - (Optional) The billing mode of the quote. Changing it replaces the resource. See [`subscription_data.billing_mode`](#subscription_data.billing_mode) below.
+* `billing_mode` - (Optional) The billing mode of the quote. Changing it fails the plan, because this resource cannot be replaced. See [`subscription_data.billing_mode`](#subscription_data.billing_mode) below.
 * `description` - (Optional) The subscription's description, meant to be displayable to the customer. Use this field to optionally store an explanation of the subscription for rendering in Stripe surfaces and certain local payment methods UIs.
 * `effective_date` - (Optional) When creating a new subscription, the date of which the subscription schedule will start after the quote is accepted. This date is ignored if it is in the past when the quote is accepted. Measured in seconds since the Unix epoch.
 * `metadata` - (Optional) Set of [key-value pairs](https://docs.stripe.com/api/metadata) that will set metadata on the subscription or subscription schedule when the quote is accepted. If a recurring price is included in `line_items`, this field will be passed to the resulting subscription's `metadata` field. If `subscription_data.effective_date` is used, this field will be passed to the resulting subscription schedule's `phases.metadata` field. Unlike object-level metadata, this field is declarative. Updates will clear prior values.
@@ -272,7 +275,6 @@ This resource exports the following attributes in addition to the arguments abov
 * `invoice` - The invoice that was created from this quote.
 * `livemode` - If the object exists in live mode, the value is `true`. If the object exists in test mode, the value is `false`.
 * `number` - A unique number that identifies this particular quote. This number is assigned once the quote is [finalized](https://docs.stripe.com/quotes/overview#finalize).
-* `status` - The status of the quote. Possible values: `accepted`, `canceled`, `draft`, `open`.
 * `status_transitions` - See [`status_transitions`](#status_transitions) below.
 * `subscription` - The subscription that was created or updated from this quote.
 * `subscription_schedule` - The subscription schedule that was created or updated from this quote.
@@ -820,6 +822,28 @@ The `total_details.breakdown.taxes.rate.flat_amount` attribute supports:
 * `create` - (Default `20m`)
 * `delete` - (Default `20m`)
 * `update` - (Default `20m`)
+
+## Removing from State
+
+To stop managing a quote whose destroy is refused, remove it from the state without destroying it. In Terraform 1.7 and later, and OpenTofu 1.10 and later, replace the `resource` block with a [`removed` block](https://developer.hashicorp.com/terraform/language/block/removed) and apply:
+
+```terraform
+removed {
+  from = stripe_quote.onboarding
+
+  lifecycle {
+    destroy = false
+  }
+}
+```
+
+Using `terraform state rm`:
+
+```console
+% terraform state rm stripe_quote.onboarding
+```
+
+The quote stays in the Stripe account. Replacing one with `terraform apply -replace` or `terraform taint` fails in the same way, at apply.
 
 ## Import
 

@@ -10,13 +10,12 @@ import (
 )
 
 // Declaration is what the spec cannot say about a billing credit grant. Stripe never deletes
-// a grant, so destroy voids it (suite: "Billing credit grants", `void`) and drops it from
-// state; the voided grant stays in the account. Stripe refuses to void a grant that already
-// expired or was voided, so destroy leaves those as they are.
+// a grant, and voiding or expiring one is final (suite: "Billing credit grants", "void again",
+// "expire again"), so destroy is refused. `expires_at` ends a grant at a time.
 var Declaration = engine.Declaration{
 	TypeName:              "stripe_billing_credit_grant",
 	IDPrefix:              "credgr_",
-	Description:           "Billing credits given to a customer. `terraform destroy` voids the grant, because Stripe cannot delete one: the unused credits can no longer be applied, and the grant stays in the account. Only `expires_at` and `metadata` can change after creation.",
+	Description:           "Billing credits given to a customer. Only `expires_at` and `metadata` can change after creation.",
 	DataSourceDescription: "Billing credits given to a customer.",
 	Paths: engine.Paths{
 		Create:   "/v1/billing/credit_grants",
@@ -26,13 +25,8 @@ var Declaration = engine.Declaration{
 	},
 	// Stripe starts a grant at once, with priority 50.
 	ServerDefaulted: []string{"effective_at", "priority"},
-	Delete:          engine.Archive,
-	Archive: &engine.ArchiveAction{
-		Field: "voided_at",
-		Now:   true,
-		Path:  "/v1/billing/credit_grants/{id}/void",
-		Ended: []engine.Ended{{Field: "expires_at", Past: true}},
-	},
+	Delete:          engine.Refuse,
+	RefuseReason:    "Stripe cannot delete a credit grant; set `expires_at` to end one.",
 }
 
 // NewResource returns the resource constructor the provider registers.

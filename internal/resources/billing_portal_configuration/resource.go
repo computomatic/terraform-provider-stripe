@@ -14,13 +14,11 @@ import (
 // Declaration is what the spec cannot say about a portal configuration. Stripe never
 // deletes one, so destroy deactivates it (`active = false`) and drops it from state. The
 // first configuration an account creates becomes its default, and Stripe refuses to
-// deactivate a default: when the archive fails and the configuration is the default
-// (`is_default`), destroy warns, leaves it active and drops it from state. Any other
-// failure fails the destroy.
+// deactivate a default, so destroy and replacement of the default are refused.
 var Declaration = engine.Declaration{
 	TypeName:              "stripe_billing_portal_configuration",
 	IDPrefix:              "bpc_",
-	Description:           "How the customer portal looks and what customers can do in it. `terraform destroy` deactivates the configuration, because Stripe cannot delete one. Stripe refuses to deactivate the account's default configuration (the first one created), so destroy leaves that one active with a warning.",
+	Description:           "How the customer portal looks and what customers can do in it. `terraform destroy` deactivates the configuration, because Stripe cannot delete one.",
 	DataSourceDescription: "How the customer portal looks and what customers can do in it.",
 	Paths: engine.Paths{
 		Create:   "/v1/billing_portal/configurations",
@@ -28,9 +26,13 @@ var Declaration = engine.Declaration{
 		Update:   "/v1/billing_portal/configurations/{id}",
 		List:     "/v1/billing_portal/configurations",
 	},
-	Delete:   engine.Archive,
-	Archive:  &engine.ArchiveAction{Field: "active", Value: wire.Bool(false)},
-	KeepWhen: &engine.FieldIs{Field: "is_default", Value: wire.Bool(true)},
+	Delete:  engine.Archive,
+	Archive: &engine.ArchiveAction{Field: "active", Value: wire.Bool(false)},
+	RefuseWhen: &engine.RefuseWhen{
+		Field:  "is_default",
+		Value:  wire.Bool(true),
+		Reason: "Stripe refuses to deactivate the account's default portal configuration, the first one the account creates.",
+	},
 }
 
 // NewResource returns the resource constructor the provider registers.

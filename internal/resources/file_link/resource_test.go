@@ -9,11 +9,9 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/hashicorp/terraform-plugin-testing/plancheck"
-	"github.com/hashicorp/terraform-plugin-testing/terraform"
 
 	"github.com/computomatic/terraform-provider-stripe/internal/acctest"
 	"github.com/computomatic/terraform-provider-stripe/internal/acctest/tfacc"
-	"github.com/computomatic/terraform-provider-stripe/internal/stripeapi"
 	"github.com/computomatic/terraform-provider-stripe/internal/wire"
 )
 
@@ -56,13 +54,21 @@ func idOf(dst *string) resource.TestCheckFunc {
 	})
 }
 
+// pathOf records the object's API path.
+func pathOf(dst *string) resource.TestCheckFunc {
+	return resource.TestCheckResourceAttrWith(address, "id", func(v string) error {
+		*dst = "/v1/file_links/" + v
+		return nil
+	})
+}
+
 func TestAccFileLink_create(t *testing.T) {
 	acct := acctest.NewAccount(t)
 	file := seedFile(t, acct)
 	expires := inOneDay(1)
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: tfacc.ProviderFactories,
-		Steps: []resource.TestStep{{
+		Steps: acctest.Forget(t, []resource.TestStep{{
 			Config: linkConfig(acct, file, fmt.Sprintf("  expires_at = %q\n  metadata   = { team = \"a\" }\n", expires)) + `
 data "stripe_file_link" "test" {
   id = stripe_file_link.test.id
@@ -78,7 +84,7 @@ data "stripe_file_link" "test" {
 				resource.TestCheckResourceAttrPair("data.stripe_file_link.test", "id", address, "id"),
 				resource.TestCheckResourceAttr("data.stripe_file_link.test", "file", file),
 			),
-		}},
+		}}, nil, "stripe_file_link"),
 	})
 }
 
@@ -89,7 +95,7 @@ func TestAccFileLink_update(t *testing.T) {
 	later := inOneDay(2)
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: tfacc.ProviderFactories,
-		Steps: []resource.TestStep{
+		Steps: acctest.Forget(t, []resource.TestStep{
 			{Config: linkConfig(acct, file, fmt.Sprintf("  expires_at = %q\n  metadata = { team = \"a\", tier = \"1\" }\n", inOneDay(1))), Check: idOf(&first)},
 			{
 				Config: linkConfig(acct, file, fmt.Sprintf("  expires_at = %q\n  metadata = { team = \"b\" }\n", later)),
@@ -108,35 +114,23 @@ func TestAccFileLink_update(t *testing.T) {
 					}),
 				),
 			},
-		},
+		}, nil, "stripe_file_link"),
 	})
 }
 
-// file is accepted on create only, so another file replaces the link.
+// `file` is create-only, so changing it would replace the link, which Stripe cannot delete:
+// the plan fails, and so does a taint, at apply.
 func TestAccFileLink_replace(t *testing.T) {
 	acct := acctest.NewAccount(t)
 	one, two := seedFile(t, acct), seedFile(t, acct)
-	var first string
+	cfg := linkConfig(acct, one, "")
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: tfacc.ProviderFactories,
-		Steps: []resource.TestStep{
-			{Config: linkConfig(acct, one, ""), Check: idOf(&first)},
-			{
-				Config: linkConfig(acct, two, ""),
-				ConfigPlanChecks: resource.ConfigPlanChecks{PreApply: []plancheck.PlanCheck{
-					plancheck.ExpectResourceAction(address, plancheck.ResourceActionReplace),
-				}},
-				Check: resource.ComposeAggregateTestCheckFunc(
-					resource.TestCheckResourceAttr(address, "file", two),
-					resource.TestCheckResourceAttrWith(address, "id", func(v string) error {
-						if v == first {
-							return fmt.Errorf("the replacement kept the link ID %s", v)
-						}
-						return nil
-					}),
-				),
-			},
-		},
+		Steps: acctest.Forget(t, []resource.TestStep{
+			{Config: cfg},
+			{Config: linkConfig(acct, two, ""), PlanOnly: true, ExpectError: tfacc.RefusedReplace},
+			{Config: cfg, Taint: []string{address}, ExpectError: tfacc.RefusedDestroy},
+		}, nil, "stripe_file_link"),
 	})
 }
 
@@ -145,7 +139,7 @@ func TestAccFileLink_import(t *testing.T) {
 	cfg := linkConfig(acct, seedFile(t, acct), fmt.Sprintf("  expires_at = %q\n  metadata = { team = \"a\" }\n", inOneDay(1)))
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: tfacc.ProviderFactories,
-		Steps: []resource.TestStep{
+		Steps: acctest.Forget(t, []resource.TestStep{
 			{Config: cfg},
 			{
 				ResourceName:      address,
@@ -158,30 +152,25 @@ func TestAccFileLink_import(t *testing.T) {
 				ImportStateKind: resource.ImportBlockWithID,
 				Config:          cfg,
 			},
-		},
+		}, nil, "stripe_file_link"),
 	})
 }
 
-// Stripe cannot delete a file link (suite: file_link_test.go, "cannot be deleted"), so
-// destroy expires it with `expires_at` set to now ("update expires now") and the link
-// stays in the account.
+// Stripe cannot delete a file link, so dropping it from the configuration, and `terraform
+// destroy`, fail at plan time, and the file link stays as it was.
 func TestAccFileLink_delete(t *testing.T) {
 	acct := acctest.NewAccount(t)
 	file := seedFile(t, acct)
-	var id string
+	var path string
+	var mark int
+	cfg := linkConfig(acct, file, fmt.Sprintf("  expires_at = %q\n", inOneDay(1)))
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: tfacc.ProviderFactories,
-		CheckDestroy: func(*terraform.State) error {
-			resp, err := tfacc.Client(acct).Do(t.Context(), stripeapi.Request{Method: "GET", Path: "/v1/file_links/" + id})
-			if err != nil {
-				return fmt.Errorf("an expired file link still retrieves: %w", err)
-			}
-			if expired, _ := resp.Body.(wire.Object).GetBool("expired"); !expired {
-				return fmt.Errorf("file link %s should be expired after destroy", id)
-			}
-			return nil
-		},
-		Steps: []resource.TestStep{{Config: linkConfig(acct, file, fmt.Sprintf("  expires_at = %q\n", inOneDay(1))), Check: idOf(&id)}},
+		Steps: acctest.Forget(t, []resource.TestStep{
+			{Config: cfg, Check: resource.ComposeTestCheckFunc(pathOf(&path), tfacc.LogMark(t, acct, &mark))},
+			{Config: acctest.Without(t, cfg, "stripe_file_link"), PlanOnly: true, ExpectError: tfacc.RefusedDestroy},
+			{Config: cfg, Destroy: true, ExpectError: tfacc.RefusedDestroy},
+		}, tfacc.Untouched(t, acct, &path, &mark, "expired", wire.Bool(false)), "stripe_file_link"),
 	})
 }
 
@@ -192,7 +181,7 @@ func TestAccFileLink_drift(t *testing.T) {
 	cfg := linkConfig(acct, file, "  metadata = { team = \"a\" }\n")
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: tfacc.ProviderFactories,
-		Steps: []resource.TestStep{
+		Steps: acctest.Forget(t, []resource.TestStep{
 			{Config: cfg, Check: idOf(&id)},
 			{
 				PreConfig: func() {
@@ -207,6 +196,6 @@ func TestAccFileLink_drift(t *testing.T) {
 				}},
 				Check: resource.TestCheckResourceAttr(address, "metadata.team", "a"),
 			},
-		},
+		}, nil, "stripe_file_link"),
 	})
 }

@@ -111,7 +111,8 @@ resource "stripe_billing_alert" "filtered" {
 }
 
 // Status moves between active and inactive in place, by Stripe's action endpoints (suite:
-// "deactivate and activate"); the alert keeps its ID. Archived is reached only by destroy.
+// "deactivate and activate"); the alert keeps its ID. TestAccBillingAlert_archive covers
+// `archived`.
 func TestAccBillingAlert_update(t *testing.T) {
 	acct := acctest.NewAccount(t)
 	var first string
@@ -149,15 +150,33 @@ func TestAccBillingAlert_update(t *testing.T) {
 	})
 }
 
-// Archiving is permanent, so only destroy archives an alert.
-func TestAccBillingAlert_refusesArchived(t *testing.T) {
+// Setting `status` to `archived` archives the alert (suite: "archive"), which is final (suite:
+// "archived alert cannot be reactivated"): destroy and replacement of an archived alert then
+// fail at plan time. A value no action sets is refused.
+func TestAccBillingAlert_archive(t *testing.T) {
 	acct := acctest.NewAccount(t)
+	var id string
+	path := func() string { return "/v1/billing/alerts/" + id }
+	archived := alertConfig(acct, "Heavy usage", 100, "  status = \"archived\"\n")
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: tfacc.ProviderFactories,
-		Steps: []resource.TestStep{{
-			Config:      alertConfig(acct, "Heavy usage", 100, "  status = \"archived\"\n"),
-			ExpectError: regexp.MustCompile("can be set to `active` or `inactive`"),
-		}},
+		Steps: acctest.Forget(t, []resource.TestStep{
+			{Config: alertConfig(acct, "Heavy usage", 100, "  status = \"paused\"\n"), PlanOnly: true, ExpectError: regexp.MustCompile("can be set to `active` or `inactive` or `archived`")},
+			{Config: alertConfig(acct, "Heavy usage", 100, ""), Check: idOf(&id)},
+			{
+				Config: archived,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr(address, "status", "archived"),
+					func(s *terraform.State) error {
+						p := path()
+						return tfacc.Holds(t, acct, &p, "status", wire.String("archived"))(s)
+					},
+				),
+			},
+			{Config: alertConfig(acct, "Heavy usage", 100, "  status = \"active\"\n"), PlanOnly: true, ExpectError: regexp.MustCompile("Cannot change `status` from `archived`")},
+			{Config: acctest.Without(t, archived, "stripe_billing_alert"), PlanOnly: true, ExpectError: tfacc.RefusedDestroy},
+			{Config: alertConfig(acct, "Heavier usage", 100, "  status = \"archived\"\n"), PlanOnly: true, ExpectError: tfacc.RefusedReplace},
+		}, nil, "stripe_billing_alert"),
 	})
 }
 
@@ -232,7 +251,8 @@ func TestAccBillingAlert_importIdentity(t *testing.T) {
 	})
 }
 
-// Destroy archives the alert (suite: "archive"). An archived alert still retrieves.
+// Stripe cannot delete an alert, so destroy deactivates it, which `status` can undo; the
+// alert stays in the account.
 func TestAccBillingAlert_delete(t *testing.T) {
 	acct := acctest.NewAccount(t)
 	var id string
@@ -241,14 +261,15 @@ func TestAccBillingAlert_delete(t *testing.T) {
 		CheckDestroy: func(*terraform.State) error {
 			status, err := alertStatus(t, acct, id)
 			if err != nil {
-				return fmt.Errorf("an archived alert should still retrieve: %w", err)
+				return fmt.Errorf("a deactivated alert should still retrieve: %w", err)
 			}
-			if status != "archived" {
-				return fmt.Errorf("the alert should be archived after destroy, got %q", status)
+			if status != "inactive" {
+				return fmt.Errorf("the alert should be inactive after destroy, got %q", status)
 			}
 			return nil
 		},
-		Steps: []resource.TestStep{{Config: alertConfig(acct, "Heavy usage", 100, ""), Check: idOf(&id)}},
+		Steps: []resource.TestStep{{Config: alertConfig(acct, "Heavy usage", 100, ""), Check: resource.ComposeTestCheckFunc(
+			idOf(&id), resource.TestCheckResourceAttr(address, "status", "active"))}},
 	})
 }
 

@@ -15,6 +15,7 @@ import (
 
 	"github.com/computomatic/terraform-provider-stripe/internal/fields"
 	"github.com/computomatic/terraform-provider-stripe/internal/stripeapi"
+	"github.com/computomatic/terraform-provider-stripe/internal/wire"
 )
 
 // node is a table field with every decision of the D2 rules resolved.
@@ -118,13 +119,16 @@ func compile(decl Declaration, table []fields.Field) (*model, error) {
 		if !decl.archivable() {
 			return nil, fmt.Errorf("%s: the archive strategy needs an archive action and an update path or action endpoint", decl.TypeName)
 		}
-	case Retain:
-		if decl.RetainWarning == "" {
-			return nil, fmt.Errorf("%s: the retain strategy needs a warning that says what stays behind", decl.TypeName)
+	case Refuse:
+		if decl.RefuseReason == "" || decl.Archive != nil || decl.ArchiveOn != nil || decl.Paths.Delete != "" || decl.RefuseWhen != nil {
+			return nil, fmt.Errorf("%s: the refuse strategy needs a reason and has no archive action, refusal, delete path or refuse-when state", decl.TypeName)
 		}
-	case Expire:
-		if decl.Expire == nil || decl.Paths.Update == "" {
-			return nil, fmt.Errorf("%s: the expire strategy needs an expire action and an update path", decl.TypeName)
+	}
+	if decl.Delete == Refuse || decl.RefuseWhen != nil {
+		// Those two force a replacement in ModifyPlan, which the refusal does not cover; no
+		// refusing resource has either.
+		if decl.CurrencyOptions != "" || len(decl.FixedKeys) > 0 {
+			return nil, fmt.Errorf("%s: a resource that refuses destroy cannot have currency options or fixed keys", decl.TypeName)
 		}
 	}
 
@@ -174,6 +178,17 @@ func compile(decl Declaration, table []fields.Field) (*model, error) {
 	}
 	if err := m.openTransitions(); err != nil {
 		return nil, err
+	}
+	if w := decl.RefuseWhen; w != nil {
+		if decl.Delete != Delete && decl.Delete != Archive && decl.Delete != DeleteOrArchive || w.Reason == "" {
+			return nil, fmt.Errorf("%s: refuse-when needs the delete, archive or delete-or-archive strategy and a reason", decl.TypeName)
+		}
+		n, ok := m.top(w.Field)
+		_, isBool := w.Value.(wire.Bool)
+		_, isString := w.Value.(wire.String)
+		if !ok || !n.Response || !(n.Shape == fields.Bool && isBool || n.Shape == fields.String && isString) {
+			return nil, fmt.Errorf("%s: refuse-when field `%s` is not a top-level bool or string field the response returns, with a value of its type", decl.TypeName, w.Field)
+		}
 	}
 	for _, e := range decl.Expand {
 		if n, ok := m.top(e); !ok || !n.Response {

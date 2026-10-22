@@ -28,6 +28,7 @@ var Table = []fields.Field{
 	}},
 	{Name: "owner", Shape: fields.String, Response: true},
 	{Name: "ratio", Shape: fields.Float, Create: true, Update: true, Response: true},
+	{Name: "state", Shape: fields.String, Create: true, Update: true, Response: true, Enum: []string{"on", "off", "gone"}},
 	{Name: "tags", Shape: fields.ScalarList, Elem: fields.String, Create: true, Update: true, Response: true, ServerDefaulted: true},
 	{Name: "tier_limit", Shape: fields.String, Create: true},
 }

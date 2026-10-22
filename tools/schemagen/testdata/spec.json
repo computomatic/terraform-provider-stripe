@@ -11,6 +11,7 @@
           "properties": {
             "name": {"type": "string", "maxLength": 100, "description": "The display name."},
             "kind": {"type": "string", "enum": ["a", "b"]},
+            "state": {"type": "string", "enum": ["on", "off"]},
             "active": {"type": "boolean"},
             "count": {"type": "integer"},
             "ratio": {"type": "number"},
@@ -39,6 +40,7 @@
           "type": "object",
           "properties": {
             "name": {"type": "string"},
+            "state": {"type": "string", "enum": ["on", "off", "gone"]},
             "active": {"type": "boolean"},
             "count": {"type": "integer"},
             "ratio": {"type": "number"},
@@ -70,6 +72,7 @@
         "created": {"type": "integer"},
         "name": {"type": "string"},
         "kind": {"type": "string", "enum": ["a", "b"], "nullable": true},
+        "state": {"type": "string", "enum": ["on", "off", "gone", "pending"], "nullable": true},
         "active": {"type": "boolean"},
         "count": {"type": "integer", "nullable": true},
         "ratio": {"type": "number", "nullable": true},

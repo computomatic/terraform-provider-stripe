@@ -3,12 +3,14 @@
 page_title: "stripe_billing_portal_configuration Resource - Stripe"
 subcategory: ""
 description: |-
-  How the customer portal looks and what customers can do in it. terraform destroy deactivates the configuration, because Stripe cannot delete one. Stripe refuses to deactivate the account's default configuration (the first one created), so destroy leaves that one active with a warning.
+  How the customer portal looks and what customers can do in it. terraform destroy deactivates the configuration, because Stripe cannot delete one.
 ---
 
 # Resource: stripe_billing_portal_configuration
 
-How the customer portal looks and what customers can do in it. `terraform destroy` deactivates the configuration, because Stripe cannot delete one. Stripe refuses to deactivate the account's default configuration (the first one created), so destroy leaves that one active with a warning.
+How the customer portal looks and what customers can do in it. `terraform destroy` deactivates the configuration, because Stripe cannot delete one.
+
+~> Stripe refuses to deactivate the account's default portal configuration, the first one the account creates. `terraform destroy`, and a change that would replace it, fail at plan time for such a billing portal configuration. To stop managing one, remove it from the state as [Removing from State](#removing-from-state) shows; it stays in the Stripe account.
 
 ## Example Usage
 
@@ -185,6 +187,28 @@ This resource exports the following attributes in addition to the arguments abov
 * `create` - (Default `20m`)
 * `delete` - (Default `20m`)
 * `update` - (Default `20m`)
+
+## Removing from State
+
+To stop managing a billing portal configuration whose destroy is refused, remove it from the state without destroying it. In Terraform 1.7 and later, and OpenTofu 1.10 and later, replace the `resource` block with a [`removed` block](https://developer.hashicorp.com/terraform/language/block/removed) and apply:
+
+```terraform
+removed {
+  from = stripe_billing_portal_configuration.default
+
+  lifecycle {
+    destroy = false
+  }
+}
+```
+
+Using `terraform state rm`:
+
+```console
+% terraform state rm stripe_billing_portal_configuration.default
+```
+
+The billing portal configuration stays in the Stripe account. Replacing one with `terraform apply -replace` or `terraform taint` fails in the same way, at apply.
 
 ## Import
 

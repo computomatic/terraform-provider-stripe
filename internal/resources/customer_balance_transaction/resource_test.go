@@ -14,7 +14,6 @@ import (
 
 	"github.com/computomatic/terraform-provider-stripe/internal/acctest"
 	"github.com/computomatic/terraform-provider-stripe/internal/acctest/tfacc"
-	"github.com/computomatic/terraform-provider-stripe/internal/stripeapi"
 	"github.com/computomatic/terraform-provider-stripe/internal/wire"
 )
 
@@ -69,7 +68,7 @@ func TestAccCustomerBalanceTransaction_create(t *testing.T) {
 	acct := acctest.NewAccount(t)
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: tfacc.ProviderFactories,
-		Steps: []resource.TestStep{{
+		Steps: acctest.Forget(t, []resource.TestStep{{
 			Config: transactionConfig(acct, -500, "  description = \"Goodwill credit\"\n  metadata    = { reason = \"outage\" }\n") + `
 data "stripe_customer_balance_transaction" "test" {
   customer = stripe_customer.test.id
@@ -89,7 +88,7 @@ data "stripe_customer_balance_transaction" "test" {
 				resource.TestCheckResourceAttr("data.stripe_customer_balance_transaction.test", "amount", "-500"),
 				resource.TestCheckResourceAttr("data.stripe_customer_balance_transaction.test", "description", "Goodwill credit"),
 			),
-		}},
+		}}, nil, "stripe_customer_balance_transaction"),
 	})
 }
 
@@ -99,7 +98,7 @@ func TestAccCustomerBalanceTransaction_update(t *testing.T) {
 	var first string
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: tfacc.ProviderFactories,
-		Steps: []resource.TestStep{
+		Steps: acctest.Forget(t, []resource.TestStep{
 			{
 				Config: transactionConfig(acct, -500, "  description = \"Goodwill credit\"\n  metadata    = { reason = \"outage\" }\n"),
 				Check:  resource.TestCheckResourceAttrWith(address, "id", func(v string) error { first = v; return nil }),
@@ -122,44 +121,22 @@ func TestAccCustomerBalanceTransaction_update(t *testing.T) {
 					}),
 				),
 			},
-		},
+		}, nil, "stripe_customer_balance_transaction"),
 	})
 }
 
-// `amount` is create-only (suite: "amount is not updatable"), so a new amount replaces the
-// transaction. The first one stays on the customer's balance: replacing adds a second.
+// `amount` is create-only, so changing it would replace the transaction, which Stripe cannot
+// delete or reverse: the plan fails, and so does a taint, at apply.
 func TestAccCustomerBalanceTransaction_replace(t *testing.T) {
 	acct := acctest.NewAccount(t)
-	var customer, first string
+	cfg := transactionConfig(acct, -500, "")
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: tfacc.ProviderFactories,
-		Steps: []resource.TestStep{
-			{Config: transactionConfig(acct, -500, ""), Check: ids(&customer, &first)},
-			{
-				Config: transactionConfig(acct, -700, ""),
-				ConfigPlanChecks: resource.ConfigPlanChecks{PreApply: []plancheck.PlanCheck{
-					plancheck.ExpectResourceAction(address, plancheck.ResourceActionReplace),
-				}},
-				Check: resource.ComposeAggregateTestCheckFunc(
-					resource.TestCheckResourceAttr(address, "amount", "-700"),
-					// The first transaction is still applied, so the balance holds both.
-					resource.TestCheckResourceAttr(address, "ending_balance", "-1200"),
-					resource.TestCheckResourceAttrWith(address, "id", func(v string) error {
-						if v == first {
-							return fmt.Errorf("the replacement kept the transaction %s", v)
-						}
-						return nil
-					}),
-					func(*terraform.State) error {
-						_, err := tfacc.Client(acct).Do(t.Context(), stripeapi.Request{Method: "GET", Path: transactionPath(customer, first)})
-						if err != nil {
-							return fmt.Errorf("the replaced transaction should stay on the customer: %w", err)
-						}
-						return nil
-					},
-				),
-			},
-		},
+		Steps: acctest.Forget(t, []resource.TestStep{
+			{Config: cfg},
+			{Config: transactionConfig(acct, -700, ""), PlanOnly: true, ExpectError: tfacc.RefusedReplace},
+			{Config: cfg, Taint: []string{address}, ExpectError: tfacc.RefusedDestroy},
+		}, nil, "stripe_customer_balance_transaction"),
 	})
 }
 
@@ -169,7 +146,7 @@ func TestAccCustomerBalanceTransaction_import(t *testing.T) {
 	cfg := transactionConfig(acct, -500, "  description = \"Goodwill credit\"\n  metadata    = { reason = \"outage\" }\n")
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: tfacc.ProviderFactories,
-		Steps: []resource.TestStep{
+		Steps: acctest.Forget(t, []resource.TestStep{
 			{Config: cfg},
 			{
 				ResourceName:      address,
@@ -190,7 +167,7 @@ func TestAccCustomerBalanceTransaction_import(t *testing.T) {
 				ImportStateId: "not-a-compound-id",
 				ExpectError:   regexpInvalidImportID,
 			},
-		},
+		}, nil, "stripe_customer_balance_transaction"),
 	})
 }
 
@@ -202,7 +179,7 @@ func TestAccCustomerBalanceTransaction_importIdentity(t *testing.T) {
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: tfacc.ProviderFactories,
 		TerraformVersionChecks:   []tfversion.TerraformVersionCheck{tfversion.RequireAbove(version.Must(version.NewVersion("1.12.0")))},
-		Steps: []resource.TestStep{
+		Steps: acctest.Forget(t, []resource.TestStep{
 			{Config: cfg},
 			{
 				ResourceName:    address,
@@ -210,38 +187,28 @@ func TestAccCustomerBalanceTransaction_importIdentity(t *testing.T) {
 				ImportStateKind: resource.ImportBlockWithResourceIdentity,
 				Config:          cfg,
 			},
-		},
+		}, nil, "stripe_customer_balance_transaction"),
 	})
 }
 
-// Stripe cannot delete a balance transaction (suite: "delete is not served"), so destroy
-// leaves it on the customer's balance.
+// Stripe cannot delete a balance transaction (suite: "delete is not served"), so dropping it
+// from the configuration, and `terraform destroy`, fail at plan time, and the transaction
+// stays on the customer's balance.
 func TestAccCustomerBalanceTransaction_delete(t *testing.T) {
 	acct := acctest.NewAccount(t)
-	var customer, id string
+	var customer, id, path string
+	var mark int
+	cfg := transactionConfig(acct, -500, "")
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: tfacc.ProviderFactories,
-		Steps: []resource.TestStep{
-			{Config: transactionConfig(acct, -500, ""), Check: ids(&customer, &id)},
-			{
-				// Dropping the transaction from the configuration destroys it and keeps the customer.
-				Config: acct.ProviderBlock() + fmt.Sprintf(`
-resource "stripe_customer" "test" {
-  name = %q
-}
-`, acct.Name("Balance customer")),
-				Check: func(*terraform.State) error {
-					resp, err := tfacc.Client(acct).Do(t.Context(), stripeapi.Request{Method: "GET", Path: transactionPath(customer, id)})
-					if err != nil {
-						return fmt.Errorf("the transaction should stay on the customer after destroy: %w", err)
-					}
-					if got, _ := resp.Body.(wire.Object).GetString("id"); got != id {
-						return fmt.Errorf("retrieved %q, want %q", got, id)
-					}
-					return nil
-				},
-			},
-		},
+		Steps: acctest.Forget(t, []resource.TestStep{
+			{Config: cfg, Check: resource.ComposeTestCheckFunc(ids(&customer, &id), func(*terraform.State) error {
+				path = transactionPath(customer, id)
+				return nil
+			}, tfacc.LogMark(t, acct, &mark))},
+			{Config: acctest.Without(t, cfg, "stripe_customer_balance_transaction"), PlanOnly: true, ExpectError: tfacc.RefusedDestroy},
+			{Config: cfg, Destroy: true, ExpectError: tfacc.RefusedDestroy},
+		}, tfacc.Untouched(t, acct, &path, &mark, "amount", wire.Int(-500)), "stripe_customer_balance_transaction"),
 	})
 }
 
@@ -252,7 +219,7 @@ func TestAccCustomerBalanceTransaction_drift(t *testing.T) {
 	cfg := transactionConfig(acct, -500, "  description = \"Goodwill credit\"\n")
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: tfacc.ProviderFactories,
-		Steps: []resource.TestStep{
+		Steps: acctest.Forget(t, []resource.TestStep{
 			{Config: cfg, Check: ids(&customer, &id)},
 			{
 				PreConfig: func() {
@@ -265,6 +232,6 @@ func TestAccCustomerBalanceTransaction_drift(t *testing.T) {
 				}},
 				Check: resource.TestCheckResourceAttr(address, "description", "Goodwill credit"),
 			},
-		},
+		}, nil, "stripe_customer_balance_transaction"),
 	})
 }

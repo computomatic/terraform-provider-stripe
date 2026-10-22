@@ -7,11 +7,9 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/hashicorp/terraform-plugin-testing/plancheck"
-	"github.com/hashicorp/terraform-plugin-testing/terraform"
 
 	"github.com/computomatic/terraform-provider-stripe/internal/acctest"
 	"github.com/computomatic/terraform-provider-stripe/internal/acctest/tfacc"
-	"github.com/computomatic/terraform-provider-stripe/internal/stripeapi"
 	"github.com/computomatic/terraform-provider-stripe/internal/wire"
 )
 
@@ -35,11 +33,19 @@ func idOf(dst *string) resource.TestCheckFunc {
 	})
 }
 
+// pathOf records the option's API path.
+func pathOf(dst *string) resource.TestCheckFunc {
+	return resource.TestCheckResourceAttrWith(address, "id", func(v string) error {
+		*dst = "/v1/billing/feedback_options/" + v
+		return nil
+	})
+}
+
 func TestAccBillingFeedbackOption_create(t *testing.T) {
 	acct := acctest.NewAccount(t)
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: tfacc.ProviderFactories,
-		Steps: []resource.TestStep{{
+		Steps: acctest.Forget(t, []resource.TestStep{{
 			Config: optionConfig(acct, "Too expensive", "") + `
 data "stripe_billing_feedback_option" "test" {
   id = stripe_billing_feedback_option.test.id
@@ -53,7 +59,7 @@ data "stripe_billing_feedback_option" "test" {
 				resource.TestCheckResourceAttrPair("data.stripe_billing_feedback_option.test", "id", address, "id"),
 				resource.TestCheckResourceAttr("data.stripe_billing_feedback_option.test", "description", "Too expensive"),
 			),
-		}},
+		}}, nil, "stripe_billing_feedback_option"),
 	})
 }
 
@@ -62,7 +68,7 @@ func TestAccBillingFeedbackOption_update(t *testing.T) {
 	var first string
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: tfacc.ProviderFactories,
-		Steps: []resource.TestStep{
+		Steps: acctest.Forget(t, []resource.TestStep{
 			{Config: optionConfig(acct, "Too expensive", ""), Check: idOf(&first)},
 			{
 				Config: optionConfig(acct, "Missing features", ""),
@@ -79,16 +85,15 @@ func TestAccBillingFeedbackOption_update(t *testing.T) {
 					}),
 				),
 			},
-		},
+		}, nil, "stripe_billing_feedback_option"),
 	})
 }
 
-// Stripe accepts every create field on update, so no argument forces a replacement. A
-// replacement forced from outside (a changed trigger) deactivates the option and creates
-// another.
+// An option has no field that forces replacement, but `replace_triggered_by` and a taint plan
+// one, which the provider cannot see at plan time; Stripe cannot delete an option, so the apply
+// fails before anything is created.
 func TestAccBillingFeedbackOption_replace(t *testing.T) {
 	acct := acctest.NewAccount(t)
-	var first string
 	config := func(trigger string) string {
 		return optionConfig(acct, "Too expensive", `
   lifecycle {
@@ -102,21 +107,11 @@ resource "terraform_data" "trigger" {
 	}
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: tfacc.ProviderFactories,
-		Steps: []resource.TestStep{
-			{Config: config("one"), Check: idOf(&first)},
-			{
-				Config: config("two"),
-				ConfigPlanChecks: resource.ConfigPlanChecks{PreApply: []plancheck.PlanCheck{
-					plancheck.ExpectResourceAction(address, plancheck.ResourceActionDestroyBeforeCreate),
-				}},
-				Check: resource.TestCheckResourceAttrWith(address, "id", func(v string) error {
-					if v == first {
-						return fmt.Errorf("the replacement kept the option ID %s", v)
-					}
-					return nil
-				}),
-			},
-		},
+		Steps: acctest.Forget(t, []resource.TestStep{
+			{Config: config("one")},
+			{Config: config("two"), ExpectError: tfacc.RefusedDestroy},
+			{Config: config("one"), Taint: []string{address}, ExpectError: tfacc.RefusedDestroy},
+		}, nil, "stripe_billing_feedback_option"),
 	})
 }
 
@@ -125,7 +120,7 @@ func TestAccBillingFeedbackOption_import(t *testing.T) {
 	cfg := optionConfig(acct, "Too expensive", "")
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: tfacc.ProviderFactories,
-		Steps: []resource.TestStep{
+		Steps: acctest.Forget(t, []resource.TestStep{
 			{Config: cfg},
 			{
 				ResourceName:      address,
@@ -138,49 +133,44 @@ func TestAccBillingFeedbackOption_import(t *testing.T) {
 				ImportStateKind: resource.ImportBlockWithID,
 				Config:          cfg,
 			},
-		},
+		}, nil, "stripe_billing_feedback_option"),
 	})
 }
 
-// Stripe cannot delete a feedback option, so destroy deactivates it through the deactivate
-// endpoint (suite: billing_feedback_option_test.go, "deactivate"). A second deactivate is
-// an error ("deactivate twice"), so an option deactivated out of band is left as it is.
+// Stripe cannot delete a feedback option, and deactivating one is final, so dropping it from
+// the configuration, and `terraform destroy`, fail at plan time, and the option stays active.
 func TestAccBillingFeedbackOption_delete(t *testing.T) {
 	acct := acctest.NewAccount(t)
-	var id string
+	var path string
+	var mark int
+	cfg := optionConfig(acct, "Too expensive", "")
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: tfacc.ProviderFactories,
-		CheckDestroy: func(*terraform.State) error {
-			resp, err := tfacc.Client(acct).Do(t.Context(), stripeapi.Request{Method: "GET", Path: "/v1/billing/feedback_options/" + id})
-			if err != nil {
-				return fmt.Errorf("a deactivated feedback option still retrieves: %w", err)
-			}
-			if status, _ := resp.Body.(wire.Object).GetString("status"); status != "inactive" {
-				return fmt.Errorf("feedback option %s should be inactive after destroy, got %q", id, status)
-			}
-			return nil
-		},
-		Steps: []resource.TestStep{{Config: optionConfig(acct, "Too expensive", ""), Check: idOf(&id)}},
+		Steps: acctest.Forget(t, []resource.TestStep{
+			{Config: cfg, Check: resource.ComposeTestCheckFunc(pathOf(&path), tfacc.LogMark(t, acct, &mark))},
+			{Config: acctest.Without(t, cfg, "stripe_billing_feedback_option"), PlanOnly: true, ExpectError: tfacc.RefusedDestroy},
+			{Config: cfg, Destroy: true, ExpectError: tfacc.RefusedDestroy},
+		}, tfacc.Untouched(t, acct, &path, &mark, "status", wire.String("active")), "stripe_billing_feedback_option"),
 	})
 }
 
-// An option deactivated out of band shows as drift only in the computed status, which
-// carries no configuration, and destroy must not deactivate it a second time.
-func TestAccBillingFeedbackOption_deleteDeactivated(t *testing.T) {
+// Setting `status` to `inactive` deactivates the option through its action endpoint (suite:
+// "deactivate"), after which it reads back inactive.
+func TestAccBillingFeedbackOption_deactivate(t *testing.T) {
 	acct := acctest.NewAccount(t)
-	var id string
+	var path string
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: tfacc.ProviderFactories,
-		Steps: []resource.TestStep{
-			{Config: optionConfig(acct, "Too expensive", ""), Check: idOf(&id)},
+		Steps: acctest.Forget(t, []resource.TestStep{
+			{Config: optionConfig(acct, "Too expensive", ""), Check: pathOf(&path)},
 			{
-				PreConfig: func() {
-					tfacc.Post(t, acct, "/v1/billing/feedback_options/"+id+"/deactivate", nil)
-				},
-				Config: optionConfig(acct, "Too expensive", ""),
-				Check:  resource.TestCheckResourceAttr(address, "status", "inactive"),
+				Config: optionConfig(acct, "Too expensive", "  status = \"inactive\"\n"),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr(address, "status", "inactive"),
+					tfacc.Holds(t, acct, &path, "status", wire.String("inactive")),
+				),
 			},
-		},
+		}, nil, "stripe_billing_feedback_option"),
 	})
 }
 
@@ -190,7 +180,7 @@ func TestAccBillingFeedbackOption_drift(t *testing.T) {
 	cfg := optionConfig(acct, "Too expensive", "")
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: tfacc.ProviderFactories,
-		Steps: []resource.TestStep{
+		Steps: acctest.Forget(t, []resource.TestStep{
 			{Config: cfg, Check: idOf(&id)},
 			{
 				PreConfig: func() {
@@ -205,6 +195,6 @@ func TestAccBillingFeedbackOption_drift(t *testing.T) {
 				}},
 				Check: resource.TestCheckResourceAttr(address, "description", "Too expensive"),
 			},
-		},
+		}, nil, "stripe_billing_feedback_option"),
 	})
 }

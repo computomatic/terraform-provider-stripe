@@ -70,6 +70,7 @@ func loadSchemas(ctx context.Context) (*schemas, error) {
 		r.Metadata(ctx, resource.MetadataRequest{ProviderTypeName: "stripe"}, &meta)
 		noted, ok := r.(interface {
 			ImportNote() (string, engine.NoteLevel)
+			DestroyNote() string
 		})
 		if !ok {
 			continue
@@ -77,6 +78,7 @@ func loadSchemas(ctx context.Context) (*schemas, error) {
 		for _, rs := range s.Resources {
 			if rs.Type == meta.TypeName {
 				rs.ImportNote, rs.ImportNoteLevel = noted.ImportNote()
+				rs.DestroyNote = noted.DestroyNote()
 			}
 		}
 	}

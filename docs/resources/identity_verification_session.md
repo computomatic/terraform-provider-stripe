@@ -3,12 +3,14 @@
 page_title: "stripe_identity_verification_session Resource - Stripe"
 subcategory: ""
 description: |-
-  A Stripe Identity check of one person's document or ID number. terraform destroy cancels the session, because Stripe cannot delete one; the canceled session stays in the account, and a session that is already verified cannot be canceled and is left as it is, with a warning. The client_secret and url that start the check are sensitive and stay in the state. Redacting a session is not a resource: redact it with Stripe's API, after which Stripe no longer serves it. Verification flows and related persons are not available, so type is required. type and metadata change in place; changing options or provided_details, or any argument that only a create takes, creates a new session.
+  A Stripe Identity check of one person's document or ID number. Set status to canceled to cancel a session that still requires input. The client_secret and url that start the check are sensitive and stay in the state. Redacting a session is not a resource: redact it with Stripe's API, after which Stripe no longer serves it. Verification flows and related persons are not available, so type is required. type and metadata change in place; changing options or provided_details, or any argument that only a create takes, fails the plan.
 ---
 
 # Resource: stripe_identity_verification_session
 
-A Stripe Identity check of one person's document or ID number. `terraform destroy` cancels the session, because Stripe cannot delete one; the canceled session stays in the account, and a session that is already verified cannot be canceled and is left as it is, with a warning. The `client_secret` and `url` that start the check are sensitive and stay in the state. Redacting a session is not a resource: redact it with Stripe's API, after which Stripe no longer serves it. Verification flows and related persons are not available, so `type` is required. `type` and `metadata` change in place; changing `options` or `provided_details`, or any argument that only a create takes, creates a new session.
+A Stripe Identity check of one person's document or ID number. Set `status` to `canceled` to cancel a session that still requires input. The `client_secret` and `url` that start the check are sensitive and stay in the state. Redacting a session is not a resource: redact it with Stripe's API, after which Stripe no longer serves it. Verification flows and related persons are not available, so `type` is required. `type` and `metadata` change in place; changing `options` or `provided_details`, or any argument that only a create takes, fails the plan.
+
+~> Stripe cannot delete a verification session; set `status` to `canceled` to cancel one that still requires input. `terraform destroy`, and a change that would replace the identity verification session, fail at plan time. To stop managing an identity verification session, remove it from the state as [Removing from State](#removing-from-state) shows; it stays in the Stripe account.
 
 ## Example Usage
 
@@ -44,13 +46,14 @@ The following arguments are required:
 
 The following arguments are optional:
 
-* `client_reference_id` - (Optional) A string to reference this user. This can be a customer ID, a session ID, or similar, and can be used to reconcile this verification with your internal systems. Changing it replaces the resource.
+* `client_reference_id` - (Optional) A string to reference this user. This can be a customer ID, a session ID, or similar, and can be used to reconcile this verification with your internal systems. Changing it fails the plan, because this resource cannot be replaced.
 * `metadata` - (Optional) Set of [key-value pairs](https://docs.stripe.com/api/metadata) that you can attach to an object. This can be useful for storing additional information about the object in a structured format. Individual keys can be unset by posting an empty value to them. All keys can be unset by posting an empty value to `metadata`.
-* `options` - (Optional) A set of options for the session’s verification checks. Changing it replaces the resource. See [`options`](#options) below.
-* `provided_details` - (Optional) Details provided about the user being verified. These details might be shown to the user. Changing it replaces the resource. See [`provided_details`](#provided_details) below.
-* `related_customer` - (Optional) Customer ID Changing it replaces the resource.
-* `related_customer_account` - (Optional) The ID of the Account representing a customer. Changing it replaces the resource.
-* `return_url` - (Optional) The URL that the user will be redirected to upon completing the verification flow. Changing it replaces the resource.
+* `options` - (Optional) A set of options for the session’s verification checks. Changing it fails the plan, because this resource cannot be replaced. See [`options`](#options) below.
+* `provided_details` - (Optional) Details provided about the user being verified. These details might be shown to the user. Changing it fails the plan, because this resource cannot be replaced. See [`provided_details`](#provided_details) below.
+* `related_customer` - (Optional) Customer ID Changing it fails the plan, because this resource cannot be replaced.
+* `related_customer_account` - (Optional) The ID of the Account representing a customer. Changing it fails the plan, because this resource cannot be replaced.
+* `return_url` - (Optional) The URL that the user will be redirected to upon completing the verification flow. Changing it fails the plan, because this resource cannot be replaced.
+* `status` - (Optional) Status of this VerificationSession. [Learn more about the lifecycle of sessions](https://docs.stripe.com/identity/how-sessions-work). Possible values: `canceled`.
 
 <a id="options"></a>
 ### `options`
@@ -113,7 +116,6 @@ This resource exports the following attributes in addition to the arguments abov
 * `last_verification_report` - ID of the most recent VerificationReport. [Learn more about accessing detailed verification results.](https://docs.stripe.com/identity/verification-sessions#results)
 * `livemode` - If the object exists in live mode, the value is `true`. If the object exists in test mode, the value is `false`.
 * `redaction` - Redaction status of this VerificationSession. If the VerificationSession is not redacted, this field will be null. See [`redaction`](#redaction) below.
-* `status` - Status of this VerificationSession. [Learn more about the lifecycle of sessions](https://docs.stripe.com/identity/how-sessions-work). Possible values: `canceled`, `processing`, `requires_input`, `verified`.
 * `url` - (Sensitive) The short-lived URL that you use to redirect a user to Stripe to submit their identity information. This URL expires after 48 hours and can only be used once. Don’t store it, log it, send it in emails or expose it to anyone other than the user. Refer to our docs on [verifying identity documents](https://docs.stripe.com/identity/verify-identity-documents?platform=web&type=redirect) to learn how to redirect users to Stripe.
 * `verified_outputs` - (Sensitive) The user’s verified data. See [`verified_outputs`](#verified_outputs) below.
 
@@ -177,6 +179,28 @@ The `verified_outputs.dob` attribute supports:
 * `create` - (Default `20m`)
 * `delete` - (Default `20m`)
 * `update` - (Default `20m`)
+
+## Removing from State
+
+To stop managing an identity verification session whose destroy is refused, remove it from the state without destroying it. In Terraform 1.7 and later, and OpenTofu 1.10 and later, replace the `resource` block with a [`removed` block](https://developer.hashicorp.com/terraform/language/block/removed) and apply:
+
+```terraform
+removed {
+  from = stripe_identity_verification_session.kyc
+
+  lifecycle {
+    destroy = false
+  }
+}
+```
+
+Using `terraform state rm`:
+
+```console
+% terraform state rm stripe_identity_verification_session.kyc
+```
+
+The identity verification session stays in the Stripe account. Replacing one with `terraform apply -replace` or `terraform taint` fails in the same way, at apply.
 
 ## Import
 

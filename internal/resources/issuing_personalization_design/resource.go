@@ -20,9 +20,9 @@ import (
 // `lookup_key` (releasing the old one) and `metadata` (suite: "update"); nothing proves a
 // change of the bundle, the logo or the carrier text, so those are refused. Stripe has no
 // DELETE route (suite: "delete is not a route"), and only the deactivate test helper, which
-// live mode lacks, ends a design, so destroy leaves it. Its `lookup_key` stays taken: a create
-// with a key in use is refused (suite: "lookup key in use"), so a replacement that keeps the key
-// fails, and the transfer Stripe offers is not proven. Because the key is unique, the data
+// live mode lacks, ends a design, so destroy is refused. Its `lookup_key` stays taken: a create
+// with a key in use is refused (suite: "lookup key in use"), and the transfer Stripe offers is
+// not proven. Because the key is unique, the data
 // source also finds a design by it.
 var Declaration = engine.Declaration{
 	TypeName: "stripe_issuing_personalization_design",
@@ -31,8 +31,7 @@ var Declaration = engine.Declaration{
 		"Stripe issues cards only for a platform's connected accounts, so manage designs through a provider configuration whose `stripe_account` is a connected account with the `card_issuing` capability active. " +
 		"`card_logo` is the ID of a file uploaded with the purpose `issuing_logo`, which a bundle whose `features.card_logo` is `required` needs; Terraform cannot upload files. " +
 		"Stripe reviews a new design: `status` reads `review` until Stripe makes it `active` or `rejected`, with its reasons in `rejection_reasons`. " +
-		"A plan that changes `physical_bundle`, `card_logo` or `carrier_text` of an existing design fails: create a new design instead.\n\n" +
-		"~> Stripe cannot delete a personalization design, so `terraform destroy` leaves it on the connected account, and its `lookup_key` stays taken. A replacement that keeps the `lookup_key` therefore fails: give the new design another key in the same change.",
+		"A plan that changes `physical_bundle`, `card_logo` or `carrier_text` of an existing design fails.",
 	DataSourceDescription: "The look of a physical Issuing card, on a connected account: its physical bundle, card logo and carrier letter. Look one up by its `id` or its `lookup_key`.",
 	Paths: engine.Paths{
 		Create:   "/v1/issuing/personalization_designs",
@@ -40,10 +39,10 @@ var Declaration = engine.Declaration{
 		Update:   "/v1/issuing/personalization_designs/{id}",
 		List:     "/v1/issuing/personalization_designs",
 	},
-	Delete:        engine.Retain,
-	RetainWarning: "Only Stripe's review ends a personalization design, so it stays, and keeps its `lookup_key`.",
-	RefuseChange:  []string{"physical_bundle", "card_logo", "carrier_text"},
-	Lookups:       []engine.Lookup{{Field: "lookup_key", Param: "lookup_keys", Array: true}},
+	Delete:       engine.Refuse,
+	RefuseReason: "Stripe cannot delete a personalization design, and only Stripe's review ends one; it keeps its `lookup_key`, so a new design needs another key.",
+	RefuseChange: []string{"physical_bundle", "card_logo", "carrier_text"},
+	Lookups:      []engine.Lookup{{Field: "lookup_key", Param: "lookup_keys", Array: true}},
 }
 
 // NewResource returns the resource constructor the provider registers.
