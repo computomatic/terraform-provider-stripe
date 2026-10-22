@@ -22,32 +22,23 @@ func TestAccCustomerCashBalanceTransaction_read(t *testing.T) {
 	acctest.RequireFake(t)
 	acct := acctest.NewAccount(t)
 	customer := tfacc.Create(t, acct, "/v1/customers", nil)
-	// The account takes only some currencies and refuses the others with `Invalid currency`
-	// (suite: "fund_cash_balance result"), so each is tried in turn.
-	var id, currency string
-	for _, c := range []string{"usd", "eur", "gbp", "jpy", "mxn"} {
-		resp, err := tfacc.Client(acct).Do(t.Context(), stripeapi.Request{Method: "POST", Path: "/v1/test_helpers/customers/" + customer + "/fund_cash_balance", Params: wire.Object{
-			{Name: "amount", Value: wire.Int(1500)},
-			{Name: "currency", Value: wire.String(c)},
-			{Name: "reference", Value: wire.String("acceptance")},
-		}})
-		if err != nil {
-			if strings.Contains(err.Error(), "Invalid currency") {
-				continue
-			}
-			var apiErr *stripeapi.APIError
-			if errors.As(err, &apiErr) && strings.HasPrefix(apiErr.Code, "fake_") {
-				t.Skipf("the fake does not serve funding a cash balance in %s yet: %v", c, err)
-			}
-			t.Fatalf("funding the cash balance in %s: %v", c, err)
-		}
-		id, _ = resp.Body.(wire.Object).GetString("id")
-		currency = c
-		break
+	// Stripe funds a cash balance by bank transfer in usd, eur, gbp, jpy and mxn, and an
+	// account takes the currencies of its country (suite: "fund_cash_balance result"), so the
+	// test funds it in the account's own currency: usd on a US account.
+	currency := tfacc.AccountCurrency(t, acct)
+	resp, err := tfacc.Client(acct).Do(t.Context(), stripeapi.Request{Method: "POST", Path: "/v1/test_helpers/customers/" + customer + "/fund_cash_balance", Params: wire.Object{
+		{Name: "amount", Value: wire.Int(1500)},
+		{Name: "currency", Value: wire.String(currency)},
+		{Name: "reference", Value: wire.String("acceptance")},
+	}})
+	var apiErr *stripeapi.APIError
+	if errors.As(err, &apiErr) && strings.HasPrefix(apiErr.Code, "fake_") {
+		t.Skipf("the fake does not serve funding a cash balance in %s yet: %v", currency, err)
 	}
-	if id == "" {
-		t.Skip("the fake takes none of the currencies for funding a cash balance")
+	if err != nil {
+		t.Fatalf("funding the cash balance in %s: %v", currency, err)
 	}
+	id, _ := resp.Body.(wire.Object).GetString("id")
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: tfacc.ProviderFactories,
 		Steps: []resource.TestStep{{

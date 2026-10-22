@@ -121,4 +121,30 @@ var Resources = []Resource{
 	{Package: "credit_note_line", ListPath: "/v1/credit_notes/{credit_note}/lines"},
 	{Package: "quote_line_item", ListPath: "/v1/quotes/{quote}/line_items"},
 	{Package: "quote_computed_upfront_line_item", ListPath: "/v1/quotes/{quote}/computed_upfront_line_items"},
+	// Wave 7 batch b. Issuing and Treasury run on a connected account. The card is virtual: the
+	// Omit entries are the physical card's shipping, PIN, personalization design and second line.
+	// Stripe refuses a card without a cardholder (suite: "create errors"), although the spec
+	// leaves it optional.
+	// A financial account's `features` is a hash of `requested` flags on the way in and of
+	// feature statuses, returned only when expanded, on the way out; the top-level
+	// `active_features`, `pending_features` and `restricted_features` read the statuses, so the
+	// attribute is request-only, as an account's `capabilities` is. `forwarding_settings` belongs
+	// to closing the account, which the suite does not prove. The Treasury flows and Financial
+	// Connections objects are read-only. A transaction's `entries` is returned only when
+	// expanded, which neither the suite nor the fake proves yet; the transaction entry data
+	// source reads them.
+	{Package: "issuing_cardholder", CreatePath: "/v1/issuing/cardholders", UpdatePath: "/v1/issuing/cardholders/{cardholder}"},
+	{Package: "issuing_card", CreatePath: "/v1/issuing/cards", UpdatePath: "/v1/issuing/cards/{card}", Omit: []string{"shipping", "pin", "personalization_design", "second_line"}, Require: []string{"cardholder"}},
+	{Package: "treasury_financial_account", CreatePath: "/v1/treasury/financial_accounts", UpdatePath: "/v1/treasury/financial_accounts/{financial_account}", Omit: []string{"forwarding_settings"}, NoResponse: []string{"features"}},
+	{Package: "treasury_transaction", ReadPath: "/v1/treasury/transactions/{id}", Omit: []string{"entries"}},
+	{Package: "treasury_transaction_entry", ReadPath: "/v1/treasury/transaction_entries/{id}"},
+	{Package: "treasury_received_credit", ReadPath: "/v1/treasury/received_credits/{id}"},
+	{Package: "treasury_received_debit", ReadPath: "/v1/treasury/received_debits/{id}"},
+	{Package: "treasury_credit_reversal", ReadPath: "/v1/treasury/credit_reversals/{credit_reversal}"},
+	{Package: "treasury_debit_reversal", ReadPath: "/v1/treasury/debit_reversals/{debit_reversal}"},
+	{Package: "treasury_inbound_transfer", ReadPath: "/v1/treasury/inbound_transfers/{id}"},
+	{Package: "treasury_outbound_transfer", ReadPath: "/v1/treasury/outbound_transfers/{outbound_transfer}"},
+	{Package: "treasury_outbound_payment", ReadPath: "/v1/treasury/outbound_payments/{id}"},
+	{Package: "financial_connections_account", ReadPath: "/v1/financial_connections/accounts/{account}"},
+	{Package: "financial_connections_session", ReadPath: "/v1/financial_connections/sessions/{session}"},
 }

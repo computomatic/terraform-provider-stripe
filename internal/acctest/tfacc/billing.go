@@ -9,8 +9,8 @@ import (
 )
 
 // AccountCurrency returns the account's default currency. The fake's account settles in the
-// currency of the dev sandbox it copies (`cad`), so a test that needs one reads it instead of
-// naming one.
+// currency of the sandbox it copies, which has changed country before, so a test that needs
+// one reads it instead of naming one.
 func AccountCurrency(t *testing.T, c acctest.Config) string {
 	t.Helper()
 	resp, err := Client(c).Do(t.Context(), stripeapi.Request{Method: "GET", Path: "/v1/account"})
