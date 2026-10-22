@@ -27,7 +27,9 @@ var Declaration = engine.Declaration{
 	},
 	// Stripe returns the line items only when asked for.
 	Expand: []string{"line_items"},
-	Delete: engine.Archive,
+	// A quote created from another one takes its customer from the source.
+	ServerDefaulted: []string{"customer"},
+	Delete:          engine.Archive,
 	Archive: &engine.ArchiveAction{
 		Field: "status",
 		Value: wire.String("canceled"),

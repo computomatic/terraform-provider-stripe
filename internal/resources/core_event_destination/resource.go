@@ -30,6 +30,8 @@ var Declaration = engine.Declaration{
 	},
 	Delete:  engine.Delete,
 	Include: []string{"webhook_endpoint.url"},
+	// Stripe defaults `events_from` to `["@self"]` when a request omits it.
+	ServerDefaulted: []string{"events_from"},
 }
 
 // NewResource returns the resource constructor the provider registers.

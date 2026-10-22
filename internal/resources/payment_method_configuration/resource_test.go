@@ -78,14 +78,12 @@ func TestAccPaymentMethodConfiguration_serverDefaults(t *testing.T) {
 	})
 }
 
-// The fake serves the card payment method only (fake_not_implemented for the others), so
-// this test skips until it serves `link`.
+// A payment method other than card is configured by its own argument.
 func TestAccPaymentMethodConfiguration_otherMethods(t *testing.T) {
 	acct := acctest.NewAccount(t)
 	cfg := configurationConfig(acct, "Checkout", preference("link", "off"))
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: tfacc.ProviderFactories,
-		ErrorCheck:               tfacc.SkipWhenFakeLacks(t, "link"),
 		Steps: []resource.TestStep{
 			{Config: cfg, Check: resource.TestCheckResourceAttr(address, "link.display_preference.preference", "off")},
 			{Config: cfg, PlanOnly: true},

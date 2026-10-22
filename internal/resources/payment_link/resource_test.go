@@ -326,7 +326,6 @@ func TestAccPaymentLink_adjustableQuantitySurvivesAQuantityChange(t *testing.T) 
 	var id string
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: tfacc.ProviderFactories,
-		ErrorCheck:               tfacc.SkipWhenFakeLacks(t, "adjustable_quantity"),
 		Steps: []resource.TestStep{
 			{Config: cfg(2), Check: resource.ComposeAggregateTestCheckFunc(idOf(&id), survives)},
 			{
