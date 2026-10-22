@@ -92,6 +92,19 @@ func TestProviderBlock(t *testing.T) {
 	}
 }
 
+func TestConnectedProviderBlock(t *testing.T) {
+	c := Config{Key: "sk_test_k", BaseURL: "http://127.0.0.1:1"}.Connected("acct_1")
+	want := "provider \"stripe\" {\n  alias          = \"connected\"\n  api_key        = \"sk_test_k\"\n  base_url       = \"http://127.0.0.1:1\"\n  stripe_account = \"acct_1\"\n}\n"
+	if got := c.ConnectedProviderBlock(); got != want {
+		t.Fatalf("got %q", got)
+	}
+	// In smoke mode the key stays in the environment.
+	c.Key = ""
+	if got := c.ConnectedProviderBlock(); strings.Contains(got, "api_key") {
+		t.Fatalf("the provider block carries a key: %q", got)
+	}
+}
+
 func TestSeedInsertsAnObjectTheAPICannotCreate(t *testing.T) {
 	c := NewAccount(t)
 	ids := Seed(t, c, wire.Object{

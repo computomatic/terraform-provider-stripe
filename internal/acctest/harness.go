@@ -176,6 +176,9 @@ type Config struct {
 	// and Client read STRIPE_API_KEY from the environment, so the key is never written
 	// into HCL or a working directory.
 	Smoke bool
+	// StripeAccount is a connected account of the test's account that calls act on, through
+	// the `Stripe-Account` header. Empty means the account itself.
+	StripeAccount string
 	// t is the test the account was made for. It owns the unique values the account asks
 	// for.
 	t testing.TB
@@ -188,6 +191,22 @@ func (c Config) ProviderBlock() string {
 		return fmt.Sprintf("provider \"stripe\" {\n  base_url = %q\n}\n", c.BaseURL)
 	}
 	return fmt.Sprintf("provider \"stripe\" {\n  api_key  = %q\n  base_url = %q\n}\n", c.Key, c.BaseURL)
+}
+
+// Connected returns the configuration for acting on a connected account of c's account.
+func (c Config) Connected(account string) Config {
+	c.StripeAccount = account
+	return c
+}
+
+// ConnectedProviderBlock renders a second provider block, aliased `connected`, that acts on
+// the connected account c names. Resources select it with `provider = stripe.connected`.
+func (c Config) ConnectedProviderBlock() string {
+	key := ""
+	if c.Key != "" {
+		key = fmt.Sprintf("  api_key        = %q\n", c.Key)
+	}
+	return fmt.Sprintf("provider \"stripe\" {\n  alias          = \"connected\"\n%s  base_url       = %q\n  stripe_account = %q\n}\n", key, c.BaseURL, c.StripeAccount)
 }
 
 // APIKey is the key for the harness's own calls: the account's key against the fake, the

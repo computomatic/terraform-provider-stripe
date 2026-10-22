@@ -47,11 +47,15 @@ import (
 	"github.com/computomatic/terraform-provider-stripe/internal/resources/event"
 	"github.com/computomatic/terraform-provider-stripe/internal/resources/file"
 	"github.com/computomatic/terraform-provider-stripe/internal/resources/file_link"
+	"github.com/computomatic/terraform-provider-stripe/internal/resources/financial_connections_account"
+	"github.com/computomatic/terraform-provider-stripe/internal/resources/financial_connections_session"
 	"github.com/computomatic/terraform-provider-stripe/internal/resources/identity_verification_session"
 	"github.com/computomatic/terraform-provider-stripe/internal/resources/invoice"
 	"github.com/computomatic/terraform-provider-stripe/internal/resources/invoice_line"
 	"github.com/computomatic/terraform-provider-stripe/internal/resources/invoice_payment"
 	"github.com/computomatic/terraform-provider-stripe/internal/resources/invoiceitem"
+	"github.com/computomatic/terraform-provider-stripe/internal/resources/issuing_card"
+	"github.com/computomatic/terraform-provider-stripe/internal/resources/issuing_cardholder"
 	"github.com/computomatic/terraform-provider-stripe/internal/resources/mandate"
 	"github.com/computomatic/terraform-provider-stripe/internal/resources/payment_intent"
 	"github.com/computomatic/terraform-provider-stripe/internal/resources/payment_link"
@@ -88,6 +92,16 @@ import (
 	"github.com/computomatic/terraform-provider-stripe/internal/resources/terminal_reader"
 	"github.com/computomatic/terraform-provider-stripe/internal/resources/test_helpers_test_clock"
 	"github.com/computomatic/terraform-provider-stripe/internal/resources/topup"
+	"github.com/computomatic/terraform-provider-stripe/internal/resources/treasury_credit_reversal"
+	"github.com/computomatic/terraform-provider-stripe/internal/resources/treasury_debit_reversal"
+	"github.com/computomatic/terraform-provider-stripe/internal/resources/treasury_financial_account"
+	"github.com/computomatic/terraform-provider-stripe/internal/resources/treasury_inbound_transfer"
+	"github.com/computomatic/terraform-provider-stripe/internal/resources/treasury_outbound_payment"
+	"github.com/computomatic/terraform-provider-stripe/internal/resources/treasury_outbound_transfer"
+	"github.com/computomatic/terraform-provider-stripe/internal/resources/treasury_received_credit"
+	"github.com/computomatic/terraform-provider-stripe/internal/resources/treasury_received_debit"
+	"github.com/computomatic/terraform-provider-stripe/internal/resources/treasury_transaction"
+	"github.com/computomatic/terraform-provider-stripe/internal/resources/treasury_transaction_entry"
 	"github.com/computomatic/terraform-provider-stripe/internal/resources/webhook_endpoint"
 	"github.com/computomatic/terraform-provider-stripe/internal/stripeapi"
 )
@@ -229,6 +243,9 @@ func (p *stripeProvider) Resources(_ context.Context) []func() resource.Resource
 		must(terminal_location.NewResource()),
 		must(webhook_endpoint.NewResource()),
 		must(test_helpers_test_clock.NewResource()),
+		must(issuing_card.NewResource()),
+		must(issuing_cardholder.NewResource()),
+		must(treasury_financial_account.NewResource()),
 	}
 }
 
@@ -298,6 +315,20 @@ func (p *stripeProvider) DataSources(_ context.Context) []func() datasource.Data
 		must(terminal_reader.NewDataSource()),
 		must(webhook_endpoint.NewDataSource()),
 		must(payout.NewDataSource()),
+		must(issuing_card.NewDataSource()),
+		must(issuing_cardholder.NewDataSource()),
+		must(treasury_financial_account.NewDataSource()),
+		must(treasury_transaction.NewDataSource()),
+		must(treasury_transaction_entry.NewDataSource()),
+		must(treasury_received_credit.NewDataSource()),
+		must(treasury_received_debit.NewDataSource()),
+		must(treasury_credit_reversal.NewDataSource()),
+		must(treasury_debit_reversal.NewDataSource()),
+		must(treasury_inbound_transfer.NewDataSource()),
+		must(treasury_outbound_transfer.NewDataSource()),
+		must(treasury_outbound_payment.NewDataSource()),
+		must(financial_connections_account.NewDataSource()),
+		must(financial_connections_session.NewDataSource()),
 		must(topup.NewDataSource()),
 		must(radar_early_fraud_warning.NewDataSource()),
 		must(review.NewDataSource()),

@@ -1,8 +1,11 @@
 package topup_test
 
 import (
+	"errors"
+	"net/http"
 	"os"
 	"regexp"
+	"strings"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
@@ -15,16 +18,23 @@ import (
 
 func TestMain(m *testing.M) { os.Exit(acctest.Main(m)) }
 
-// Stripe refuses a top-up for a Canadian account (suite: "Top-ups are refused for CA
-// accounts"), and the fake follows it, so the read runs only where a top-up can be made.
+// A US account makes a top-up in its own currency. Stripe refuses one for a Canadian account
+// (suite: "Top-ups are refused for CA accounts"), so the test skips on exactly that refusal, in
+// case the sandbox it runs on is Canadian again; any other error fails it.
 func TestAccTopup_read(t *testing.T) {
 	acct := acctest.NewAccount(t)
+	currency := tfacc.AccountCurrency(t, acct)
 	resp, err := tfacc.Client(acct).Do(t.Context(), stripeapi.Request{Method: "POST", Path: "/v1/topups", Params: wire.Object{
 		{Name: "amount", Value: wire.Int(1000)},
-		{Name: "currency", Value: wire.String(tfacc.AccountCurrency(t, acct))},
+		{Name: "currency", Value: wire.String(currency)},
 	}})
-	if err != nil {
+	var apiErr *stripeapi.APIError
+	if errors.As(err, &apiErr) && apiErr.Status == http.StatusBadRequest && apiErr.Code == "" && apiErr.Param == "currency" &&
+		strings.HasPrefix(apiErr.Message, "Top-up creation is not supported for country") {
 		t.Skipf("top-ups are refused on this account: %v", err)
+	}
+	if err != nil {
+		t.Fatalf("creating a top-up: %v", err)
 	}
 	id, _ := resp.Body.(wire.Object).GetString("id")
 	resource.ParallelTest(t, resource.TestCase{
@@ -38,6 +48,7 @@ data "stripe_topup" "test" {
 			Check: resource.ComposeAggregateTestCheckFunc(
 				resource.TestCheckResourceAttr("data.stripe_topup.test", "id", id),
 				resource.TestCheckResourceAttr("data.stripe_topup.test", "amount", "1000"),
+				resource.TestCheckResourceAttr("data.stripe_topup.test", "currency", currency),
 			),
 		}},
 	})

@@ -21,18 +21,20 @@ func TestMain(m *testing.M) { os.Exit(acctest.Main(m)) }
 const address = "stripe_climate_order.test"
 
 // fundedAccount is an account whose available balance covers a few orders. A Climate order
-// spends a `cad` balance (suite: "Climate orders spend the available balance"), which a fresh
-// account on the fake lacks, so the test seeds one. It runs on the fake only: real Stripe has
+// spends a balance in the account's currency (suite: "Climate orders spend the available
+// balance", "Climate products price only in the account's currency"), which a fresh account on
+// the fake lacks, so the test seeds one. It runs on the fake only: real Stripe has
 // no seed, and the order is not in the smoke selection.
 func fundedAccount(t *testing.T) acctest.Config {
 	t.Helper()
 	acctest.RequireFake(t)
 	acct := acctest.NewAccount(t)
+	currency := tfacc.AccountCurrency(t, acct)
 	acctest.Seed(t, acct, wire.Object{
 		{Name: "object", Value: wire.String("balance")},
 		{Name: "livemode", Value: wire.Bool(false)},
-		{Name: "available", Value: wire.Array{wire.Object{{Name: "amount", Value: wire.Int(10_000_000)}, {Name: "currency", Value: wire.String("cad")}}}},
-		{Name: "pending", Value: wire.Array{wire.Object{{Name: "amount", Value: wire.Int(0)}, {Name: "currency", Value: wire.String("cad")}}}},
+		{Name: "available", Value: wire.Array{wire.Object{{Name: "amount", Value: wire.Int(10_000_000)}, {Name: "currency", Value: wire.String(currency)}}}},
+		{Name: "pending", Value: wire.Array{wire.Object{{Name: "amount", Value: wire.Int(0)}, {Name: "currency", Value: wire.String(currency)}}}},
 	})
 	return acct
 }
@@ -96,7 +98,7 @@ data "stripe_climate_order" "test" {
 				resource.TestCheckResourceAttr(address, "product", p),
 				resource.TestCheckResourceAttr(address, "metric_tons", "1"),
 				resource.TestCheckResourceAttr(address, "status", "confirmed"),
-				resource.TestCheckResourceAttr(address, "currency", "cad"),
+				resource.TestCheckResourceAttr(address, "currency", tfacc.AccountCurrency(t, acct)),
 				resource.TestCheckResourceAttr(address, "beneficiary.public_name", "Conformance Beneficiary"),
 				resource.TestCheckResourceAttr(address, "metadata.env", "test"),
 				resource.TestCheckResourceAttrSet(address, "amount_total"),
@@ -302,7 +304,7 @@ func TestAccClimateOrder_deleteDelivered(t *testing.T) {
 		{Name: "certificate", Value: wire.String("https://example.com/certificate")},
 		{Name: "confirmed_at", Value: wire.Int(1700000000)},
 		{Name: "created", Value: wire.Int(1700000000)},
-		{Name: "currency", Value: wire.String("cad")},
+		{Name: "currency", Value: wire.String(tfacc.AccountCurrency(t, acct))},
 		{Name: "delayed_at", Value: wire.Null{}},
 		{Name: "delivered_at", Value: wire.Int(1700000100)},
 		{Name: "delivery_details", Value: wire.Array{}},
