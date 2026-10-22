@@ -74,6 +74,27 @@ var Resources = []Resource{
 	{Package: "identity_verification_session", CreatePath: "/v1/identity/verification_sessions", UpdatePath: "/v1/identity/verification_sessions/{session}", Omit: []string{"verification_flow", "related_person"}, Require: []string{"type"}},
 	{Package: "climate_product", ReadPath: "/v1/climate/products/{product}"},
 	{Package: "climate_supplier", ReadPath: "/v1/climate/suppliers/{supplier}"},
+	// Wave 8a Connect. The account table keeps what the conformance suite and the fake prove: its
+	// type or controller, country, email, business profile name, metadata and the capabilities
+	// it requests. The rest of its create and update parameters, and the objects it only
+	// returns when onboarding fills them in, are left out or read-only. `external_accounts` is
+	// the child resource's. The response's `capabilities` is a hash of statuses, which a request
+	// does not send, so the attribute is request-only and the capability data source reads the
+	// statuses. The resource refuses a change to it.
+	{Package: "account", CreatePath: "/v1/accounts", UpdatePath: "/v1/accounts/{account}",
+		Omit:       []string{"account_token", "bank_account", "external_account", "documents", "company", "individual", "groups", "tos_acceptance", "external_accounts"},
+		ReadOnly:   []string{"business_type", "default_currency", "settings", "business_profile.annual_revenue", "business_profile.estimated_worker_count", "business_profile.mcc", "business_profile.minority_owned_business_designation", "business_profile.monthly_estimated_revenue", "business_profile.product_description", "business_profile.specified_commercial_transactions_act_url", "business_profile.support_address", "business_profile.support_email", "business_profile.support_phone", "business_profile.support_url", "business_profile.url"},
+		NoResponse: []string{"capabilities"},
+		Require:    []string{"country"}},
+	// The external account is a bank account here (a card is a different object), created from
+	// the hash the spec documents under `bank_account`. Its `account` is the parent ID. The
+	// Omit entries are the card's update parameters and the documents, which need a file. The
+	// account type is refused on a US account.
+	{Package: "account_external_account", CreatePath: "/v1/accounts/{account}/external_accounts", UpdatePath: "/v1/accounts/{account}/external_accounts/{id}",
+		Response: "bank_account", CreateHash: "bank_account",
+		Omit:     []string{"external_account", "account", "documents", "address_city", "address_country", "address_line1", "address_line2", "address_state", "address_zip", "exp_month", "exp_year", "name"},
+		ReadOnly: []string{"account_type"}, Require: []string{"currency", "routing_number"}},
+	{Package: "account_capability", ReadPath: "/v1/accounts/{account}/capabilities/{capability}", Omit: []string{"account"}},
 	// Wave 8 batch a. A billing alert is never updated: its status moves by action endpoints
 	// the declaration names. A tax ID takes only `self` and `customer` owners, which the suite
 	// proves; the other owners' arguments stay out of reach. The customer's balance

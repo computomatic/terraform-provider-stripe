@@ -16,6 +16,9 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 
+	"github.com/computomatic/terraform-provider-stripe/internal/resources/account"
+	"github.com/computomatic/terraform-provider-stripe/internal/resources/account_capability"
+	"github.com/computomatic/terraform-provider-stripe/internal/resources/account_external_account"
 	"github.com/computomatic/terraform-provider-stripe/internal/resources/apple_pay_domain"
 	"github.com/computomatic/terraform-provider-stripe/internal/resources/balance"
 	"github.com/computomatic/terraform-provider-stripe/internal/resources/balance_settings"
@@ -173,6 +176,8 @@ func (p *stripeProvider) Configure(ctx context.Context, req provider.ConfigureRe
 
 func (p *stripeProvider) Resources(_ context.Context) []func() resource.Resource {
 	return []func() resource.Resource{
+		must(account.NewResource()),
+		must(account_external_account.NewResource()),
 		must(apple_pay_domain.NewResource()),
 		must(billing_alert.NewResource()),
 		must(billing_credit_grant.NewResource()),
@@ -218,6 +223,9 @@ func (p *stripeProvider) Resources(_ context.Context) []func() resource.Resource
 
 func (p *stripeProvider) DataSources(_ context.Context) []func() datasource.DataSource {
 	return []func() datasource.DataSource{
+		must(account.NewDataSource()),
+		must(account_capability.NewDataSource()),
+		must(account_external_account.NewDataSource()),
 		must(apple_pay_domain.NewDataSource()),
 		must(balance.NewDataSource()),
 		must(balance_settings.NewDataSource()),

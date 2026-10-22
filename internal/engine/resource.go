@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"net/http"
 	"net/url"
 	"strconv"
 	"strings"
@@ -112,6 +113,11 @@ func (r *Resource) ModifyPlan(ctx context.Context, req resource.ModifyPlanReques
 	if r.requiresReplaceForCurrencyOptions(ctx, req, resp) || r.requiresReplaceForFixedKeys(ctx, req, resp) {
 		return
 	}
+	// The refusal comes after every replace check of the engine: a plan any of them has made a
+	// replace creates the object anew, with the new value.
+	if r.refuseChanges(ctx, req, resp) {
+		return
+	}
 	configured := false
 	filled, err := tftypes.Transform(req.Plan.Raw, func(p *tftypes.AttributePath, v tftypes.Value) (tftypes.Value, error) {
 		if v.IsKnown() {
@@ -136,6 +142,63 @@ func (r *Resource) ModifyPlan(ctx context.Context, req resource.ModifyPlanReques
 	if err == nil && !configured && filled.Equal(req.State.Raw) {
 		resp.Plan.Raw = req.State.Raw
 	}
+}
+
+// refuseChanges fails the plan when it changes a field the declaration lists in RefuseChange.
+// A value not fully known at plan time is left for apply. A plan that also changes a field
+// that forces replacement is a replace, whose create sends the new value, so it is not
+// refused. The framework gives ModifyPlan no RequiresReplace for the attributes' own plan
+// modifiers, so the declaration decides it: the top-level create-only and replace-on fields,
+// the parent and the attached object. The engine's own checks (currency options, fixed keys)
+// have run before, and a plan they replace never gets here. compile refuses a declaration
+// with a replace source below the top level, which is not checked. (`-replace` is not seen: its first plan still carries the prior state.)
+func (r *Resource) refuseChanges(ctx context.Context, req resource.ModifyPlanRequest, resp *resource.ModifyPlanResponse) bool {
+	if len(r.m.decl.RefuseChange) == 0 {
+		return false
+	}
+	var plan, state, config basetypes.ObjectValue
+	diags := req.Plan.Get(ctx, &plan)
+	diags.Append(req.State.Get(ctx, &state)...)
+	diags.Append(req.Config.Get(ctx, &config)...)
+	if resp.Diagnostics.Append(diags...); diags.HasError() {
+		return true
+	}
+	for _, n := range r.m.nodes {
+		if n.Replace && differs(plan.Attributes()[n.AttrName()], state.Attributes()[n.AttrName()], config.Attributes()[n.AttrName()]) {
+			return false
+		}
+	}
+	for _, name := range []string{r.m.decl.Parent, r.m.decl.Attach} {
+		if name != "" && differs(plan.Attributes()[name], state.Attributes()[name], config.Attributes()[name]) {
+			return false
+		}
+	}
+	for _, name := range r.m.decl.RefuseChange {
+		n, _ := r.m.top(name)
+		pv, sv := plan.Attributes()[n.AttrName()], state.Attributes()[n.AttrName()]
+		if pv == nil || pv.Equal(sv) {
+			continue
+		}
+		if v, err := pv.ToTerraformValue(ctx); err != nil || !v.IsFullyKnown() {
+			continue
+		}
+		resp.Diagnostics.AddAttributeError(path.Root(n.AttrName()), "Changing `"+n.AttrName()+"` is not supported yet",
+			"Changing the "+n.AttrName()+" of an existing "+r.m.decl.TypeName+" is not supported yet. Revert the configuration, add `lifecycle { ignore_changes = ["+n.AttrName()+"] }` to leave it as it is, or recreate the object deliberately with `terraform taint` (`tofu taint` in OpenTofu).")
+	}
+	return resp.Diagnostics.HasError()
+}
+
+// differs reports whether a planned value is a change from the state's. An unknown planned
+// value counts only when the configuration sets it, such as a reference to an object being
+// replaced: an unset computed value that is unknown carries no change.
+func differs(plan, state, config attr.Value) bool {
+	switch {
+	case plan == nil:
+		return false
+	case plan.IsUnknown():
+		return config != nil && !config.IsNull()
+	}
+	return !plan.Equal(state)
 }
 
 func (r *Resource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
@@ -230,7 +293,7 @@ func (r *Resource) Read(ctx context.Context, req resource.ReadRequest, resp *res
 		return
 	}
 	body, err := r.api.call(ctx, "GET", r.m.expand(r.m.decl.Paths.Retrieve, id, parent), r.api.expanded(nil, ""))
-	if stripeapi.IsNotFound(err) || err == nil && isDeletedStub(body) {
+	if r.m.gone(err, &resp.Diagnostics) || err == nil && isDeletedStub(body) {
 		resp.State.RemoveResource(ctx)
 		return
 	}
@@ -339,6 +402,11 @@ func (r *Resource) Delete(ctx context.Context, req resource.DeleteRequest, resp 
 	switch r.m.decl.Delete {
 	case Delete:
 		_, err = r.api.call(ctx, "DELETE", r.m.expand(r.m.decl.Paths.Delete, id, parent), nil)
+		// Only a refusal can mean the object is protected: a 403 from a read-only key or a
+		// server error says nothing about why, whatever the retrieve shows.
+		if refused(err, &Refusal{Status: http.StatusBadRequest, Type: "invalid_request_error"}) {
+			err = r.keepIfProtected(ctx, id, parent, err)
+		}
 	case DeleteOrArchive:
 		_, err = r.api.call(ctx, "DELETE", r.m.expand(r.m.decl.Paths.Delete, id, parent), nil)
 		if refused(err, r.m.decl.ArchiveOn) {
@@ -353,15 +421,6 @@ func (r *Resource) Delete(ctx context.Context, req resource.DeleteRequest, resp 
 		}
 	case Archive:
 		err = r.archive(ctx, id, parent)
-		var kept *keptError
-		if errors.As(err, &kept) {
-			resp.Diagnostics.AddWarning(
-				"Left active instead of archived",
-				fmt.Sprintf("Stripe refused to archive %s %s: %v\n\nThe object is protected (%s). It is out of Terraform's state and still active in the Stripe account.",
-					r.m.decl.TypeName, id, kept.refusal, r.m.decl.KeepWhen.Field),
-			)
-			err = nil
-		}
 	case Retain:
 		resp.Diagnostics.AddWarning(
 			"Left in the Stripe account",
@@ -370,7 +429,20 @@ func (r *Resource) Delete(ctx context.Context, req resource.DeleteRequest, resp 
 	case Expire:
 		err = r.expire(ctx, id, parent)
 	}
-	if err != nil && !stripeapi.IsNotFound(err) {
+	var kept *keptError
+	if errors.As(err, &kept) {
+		verb, left, still := "archive", "Left active instead of archived", "active"
+		if r.m.decl.Delete == Delete {
+			verb, left, still = "delete", "Left in place instead of deleted", "in place"
+		}
+		resp.Diagnostics.AddWarning(
+			left,
+			fmt.Sprintf("Stripe refused to %s %s %s: %v\n\nThe object is protected (%s). It is out of Terraform's state and still %s in the Stripe account.",
+				verb, r.m.decl.TypeName, id, kept.refusal, r.m.decl.KeepWhen.Field, still),
+		)
+		err = nil
+	}
+	if err != nil && !r.m.gone(err, &resp.Diagnostics) {
 		r.api.fail(&resp.Diagnostics, err)
 	}
 }

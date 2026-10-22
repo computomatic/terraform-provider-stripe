@@ -1,5 +1,6 @@
 ## Unreleased
 
+- Connect: the `stripe_account` resource and data source for connected accounts, the `stripe_account_external_account` resource and data source for their bank accounts, and the `stripe_account_capability` data source.
 - New resources, each with a data source: `stripe_billing_alert`, `stripe_tax_id` and `stripe_customer_balance_transaction`. A tax ID is created through `/v1/tax_ids` with an `owner` of `self` or a customer. A customer balance transaction cannot be deleted, so destroying it only removes it from state and warns that it stays on the customer's balance.
 - New data source: `stripe_customer_cash_balance_transaction`.
 

@@ -1,0 +1,1 @@
+terraform import stripe_account.seller acct_1Nv0FGQ9RKHgCVdK
