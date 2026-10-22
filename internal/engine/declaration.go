@@ -366,4 +366,21 @@ type Declaration struct {
 	FindInList bool
 	// Lookups are the data source lookup keys besides `id`.
 	Lookups []Lookup
+	// FindBy says Stripe reads the object by required parameters in place of an ID, such as a
+	// secret by its `name` and `scope`. A data source with FindBy has no `id` lookup: each
+	// parameter is a Required attribute, sent with the configured value on a GET of the
+	// retrieve path, which answers the object, or of the list path when there is no retrieve
+	// path, which must list exactly one. There is no resource.
+	FindBy []FindParam
+}
+
+// FindParam is a parameter a data source reads its object by (FindBy).
+type FindParam struct {
+	// Name is the request parameter and the attribute that holds it. A top-level field of the
+	// table keeps its type, which is a string, an integer or an object of those, and the
+	// configured value stays in state. A name the table lacks is a string the response does
+	// not carry, such as a meter event summary's `customer`.
+	Name string
+	// Description documents a name the table lacks.
+	Description string
 }

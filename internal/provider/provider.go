@@ -20,19 +20,24 @@ import (
 	"github.com/computomatic/terraform-provider-stripe/internal/resources/account_capability"
 	"github.com/computomatic/terraform-provider-stripe/internal/resources/account_external_account"
 	"github.com/computomatic/terraform-provider-stripe/internal/resources/apple_pay_domain"
+	"github.com/computomatic/terraform-provider-stripe/internal/resources/apps_secret"
 	"github.com/computomatic/terraform-provider-stripe/internal/resources/balance"
 	"github.com/computomatic/terraform-provider-stripe/internal/resources/balance_settings"
 	"github.com/computomatic/terraform-provider-stripe/internal/resources/balance_transaction"
 	"github.com/computomatic/terraform-provider-stripe/internal/resources/billing_alert"
+	"github.com/computomatic/terraform-provider-stripe/internal/resources/billing_credit_balance_transaction"
 	"github.com/computomatic/terraform-provider-stripe/internal/resources/billing_credit_grant"
 	"github.com/computomatic/terraform-provider-stripe/internal/resources/billing_feedback_option"
 	"github.com/computomatic/terraform-provider-stripe/internal/resources/billing_meter"
+	"github.com/computomatic/terraform-provider-stripe/internal/resources/billing_meter_event_summary"
 	"github.com/computomatic/terraform-provider-stripe/internal/resources/billing_portal_configuration"
 	"github.com/computomatic/terraform-provider-stripe/internal/resources/charge"
 	"github.com/computomatic/terraform-provider-stripe/internal/resources/checkout_session"
 	"github.com/computomatic/terraform-provider-stripe/internal/resources/climate_order"
 	"github.com/computomatic/terraform-provider-stripe/internal/resources/climate_product"
 	"github.com/computomatic/terraform-provider-stripe/internal/resources/climate_supplier"
+	"github.com/computomatic/terraform-provider-stripe/internal/resources/commerce_product_catalog_import"
+	"github.com/computomatic/terraform-provider-stripe/internal/resources/core_event"
 	"github.com/computomatic/terraform-provider-stripe/internal/resources/core_event_destination"
 	"github.com/computomatic/terraform-provider-stripe/internal/resources/country_spec"
 	"github.com/computomatic/terraform-provider-stripe/internal/resources/coupon"
@@ -43,24 +48,29 @@ import (
 	"github.com/computomatic/terraform-provider-stripe/internal/resources/customer_cash_balance_transaction"
 	"github.com/computomatic/terraform-provider-stripe/internal/resources/customer_payment_method"
 	"github.com/computomatic/terraform-provider-stripe/internal/resources/dispute"
+	"github.com/computomatic/terraform-provider-stripe/internal/resources/entitlements_active_entitlement"
 	"github.com/computomatic/terraform-provider-stripe/internal/resources/entitlements_feature"
 	"github.com/computomatic/terraform-provider-stripe/internal/resources/event"
 	"github.com/computomatic/terraform-provider-stripe/internal/resources/file"
 	"github.com/computomatic/terraform-provider-stripe/internal/resources/file_link"
 	"github.com/computomatic/terraform-provider-stripe/internal/resources/financial_connections_account"
 	"github.com/computomatic/terraform-provider-stripe/internal/resources/financial_connections_session"
+	"github.com/computomatic/terraform-provider-stripe/internal/resources/identity_verification_report"
 	"github.com/computomatic/terraform-provider-stripe/internal/resources/identity_verification_session"
 	"github.com/computomatic/terraform-provider-stripe/internal/resources/invoice"
 	"github.com/computomatic/terraform-provider-stripe/internal/resources/invoice_line"
 	"github.com/computomatic/terraform-provider-stripe/internal/resources/invoice_payment"
+	"github.com/computomatic/terraform-provider-stripe/internal/resources/invoice_rendering_template"
 	"github.com/computomatic/terraform-provider-stripe/internal/resources/invoiceitem"
 	"github.com/computomatic/terraform-provider-stripe/internal/resources/issuing_card"
 	"github.com/computomatic/terraform-provider-stripe/internal/resources/issuing_cardholder"
 	"github.com/computomatic/terraform-provider-stripe/internal/resources/mandate"
 	"github.com/computomatic/terraform-provider-stripe/internal/resources/payment_intent"
+	"github.com/computomatic/terraform-provider-stripe/internal/resources/payment_intent_amount_details_line_item"
 	"github.com/computomatic/terraform-provider-stripe/internal/resources/payment_link"
 	"github.com/computomatic/terraform-provider-stripe/internal/resources/payment_method_configuration"
 	"github.com/computomatic/terraform-provider-stripe/internal/resources/payment_method_domain"
+	"github.com/computomatic/terraform-provider-stripe/internal/resources/payment_record"
 	"github.com/computomatic/terraform-provider-stripe/internal/resources/payout"
 	"github.com/computomatic/terraform-provider-stripe/internal/resources/plan"
 	"github.com/computomatic/terraform-provider-stripe/internal/resources/price"
@@ -75,6 +85,7 @@ import (
 	"github.com/computomatic/terraform-provider-stripe/internal/resources/radar_value_list"
 	"github.com/computomatic/terraform-provider-stripe/internal/resources/radar_value_list_item"
 	"github.com/computomatic/terraform-provider-stripe/internal/resources/refund"
+	"github.com/computomatic/terraform-provider-stripe/internal/resources/reporting_report_run"
 	"github.com/computomatic/terraform-provider-stripe/internal/resources/reporting_report_type"
 	"github.com/computomatic/terraform-provider-stripe/internal/resources/review"
 	"github.com/computomatic/terraform-provider-stripe/internal/resources/setup_intent"
@@ -84,9 +95,12 @@ import (
 	"github.com/computomatic/terraform-provider-stripe/internal/resources/subscription_schedule"
 	"github.com/computomatic/terraform-provider-stripe/internal/resources/tax_code"
 	"github.com/computomatic/terraform-provider-stripe/internal/resources/tax_id"
+	"github.com/computomatic/terraform-provider-stripe/internal/resources/tax_location"
 	"github.com/computomatic/terraform-provider-stripe/internal/resources/tax_rate"
 	"github.com/computomatic/terraform-provider-stripe/internal/resources/tax_registration"
 	"github.com/computomatic/terraform-provider-stripe/internal/resources/tax_settings"
+	"github.com/computomatic/terraform-provider-stripe/internal/resources/tax_transaction"
+	"github.com/computomatic/terraform-provider-stripe/internal/resources/tax_transaction_line_item"
 	"github.com/computomatic/terraform-provider-stripe/internal/resources/terminal_configuration"
 	"github.com/computomatic/terraform-provider-stripe/internal/resources/terminal_location"
 	"github.com/computomatic/terraform-provider-stripe/internal/resources/terminal_reader"
@@ -338,6 +352,20 @@ func (p *stripeProvider) DataSources(_ context.Context) []func() datasource.Data
 		must(quote_line_item.NewDataSource()),
 		must(quote_computed_upfront_line_item.NewDataSource()),
 		must(test_helpers_test_clock.NewDataSource()),
+		must(billing_credit_balance_transaction.NewDataSource()),
+		must(billing_meter_event_summary.NewDataSource()),
+		must(entitlements_active_entitlement.NewDataSource()),
+		must(invoice_rendering_template.NewDataSource()),
+		must(payment_intent_amount_details_line_item.NewDataSource()),
+		must(tax_transaction.NewDataSource()),
+		must(tax_transaction_line_item.NewDataSource()),
+		must(tax_location.NewDataSource()),
+		must(reporting_report_run.NewDataSource()),
+		must(core_event.NewDataSource()),
+		must(apps_secret.NewDataSource()),
+		must(identity_verification_report.NewDataSource()),
+		must(payment_record.NewDataSource()),
+		must(commerce_product_catalog_import.NewDataSource()),
 	}
 }
 

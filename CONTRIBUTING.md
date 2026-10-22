@@ -64,6 +64,8 @@ In this mode every test shares the one account, and the key stays in the environ
 
 Issuing and Treasury run on a connected account. Their tests get one from `tfacc.IssuingAccount`, which returns its configuration: `ConnectedProviderBlock` renders a second provider block, aliased `connected`, whose `stripe_account` is that account, and `tfacc.Client` on it sends the `Stripe-Account` header. Stripe verifies a new connected account for minutes, so in smoke mode the helper reuses one tagged `metadata[tfacc_role]=issuing` and never deletes it. The fake's request log does not hold the requests made through `Stripe-Account`, so these tests cannot assert on it.
 
+Stripe makes some objects in the background, such as credit balance transactions, meter event summaries and active entitlements, and lists them a moment, or up to a minute, after their cause. A test waits for them with `tfacc.AwaitListed` before it reads one. The fake makes them at once.
+
 ## CI
 
 CI (`.github/workflows/ci.yml`) runs the checks as the `unit` job, the docs check (`scripts/check-docs.sh`) as the `docs` job, and the acceptance tests as the `acceptance` job, under Terraform and then OpenTofu, against the released fake image named by `.fake-version`. To move to a newer fake, change that one line. The `acceptance` job is skipped for pull requests from forks, because the fake image is private.

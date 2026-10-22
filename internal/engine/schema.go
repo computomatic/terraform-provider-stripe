@@ -175,7 +175,7 @@ func (m *model) identitySchema() ischema.Schema {
 func (m *model) dataSourceSchema() dschema.Schema {
 	attrs := make(map[string]dschema.Attribute, len(m.nodes)+1)
 	lookups := map[string]bool{}
-	if !m.decl.Singleton {
+	if !m.decl.Singleton && len(m.decl.FindBy) == 0 {
 		lookups["id"] = true
 	}
 	for _, l := range m.decl.Lookups {
@@ -191,7 +191,15 @@ func (m *model) dataSourceSchema() dschema.Schema {
 			}
 			a = dschema.StringAttribute{Optional: true, Computed: true, MarkdownDescription: desc}
 		}
+		if m.findParam(n.Name) {
+			a = findAttribute(n)
+		}
 		attrs[n.AttrName()] = a
+	}
+	for _, p := range m.decl.FindBy {
+		if _, ok := m.top(p.Name); !ok {
+			attrs[p.Name] = dschema.StringAttribute{Required: true, MarkdownDescription: p.Description}
+		}
 	}
 	if m.decl.Parent != "" {
 		attrs[m.decl.Parent] = dschema.StringAttribute{Required: true, MarkdownDescription: "The ID of the parent object."}
@@ -233,6 +241,28 @@ func dataSourceAttribute(n *node) dschema.Attribute {
 		return dschema.SetAttribute{ElementType: scalarType(n.Elem), Computed: true, Sensitive: n.Sensitive, MarkdownDescription: desc}
 	default:
 		return dschema.StringAttribute{Computed: true, Sensitive: n.Sensitive, MarkdownDescription: desc}
+	}
+}
+
+// findAttribute is the Required attribute of a find parameter that names a field. The fields
+// of an object are Optional, because Stripe, not the schema, says which it needs.
+func findAttribute(n *node) dschema.Attribute {
+	desc := describe(n)
+	switch n.Shape {
+	case fields.Int:
+		return dschema.Int64Attribute{Required: true, MarkdownDescription: desc}
+	case fields.Object:
+		kids := make(map[string]dschema.Attribute, len(n.Kids))
+		for _, k := range n.Kids {
+			if k.Shape == fields.Int {
+				kids[k.AttrName()] = dschema.Int64Attribute{Optional: true, MarkdownDescription: describe(k)}
+			} else {
+				kids[k.AttrName()] = dschema.StringAttribute{Optional: true, MarkdownDescription: describe(k)}
+			}
+		}
+		return dschema.SingleNestedAttribute{Required: true, MarkdownDescription: desc, Attributes: kids}
+	default:
+		return dschema.StringAttribute{Required: true, MarkdownDescription: desc}
 	}
 }
 
