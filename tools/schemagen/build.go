@@ -22,6 +22,11 @@ type Resource struct {
 	// ReadPath is the `GET` path of an object that has no create operation, such as a
 	// singleton. Its 200 response is the object schema. Used only when CreatePath is empty.
 	ReadPath string
+	// ListPath is the `GET` path of an object that has neither a create nor a retrieve
+	// operation, only a list under its parent, such as an invoice's lines. The object schema
+	// is the element of the list's `data` array. Used only when CreatePath and ReadPath are
+	// empty.
+	ListPath string
 	// Omit lists dotted field paths the table leaves out: fields Stripe returns only when
 	// expanded, which the provider never requests, in shapes the engine does not model.
 	Omit []string
@@ -98,6 +103,9 @@ func Build(spec *Spec, res Resource) ([]fields.Field, error) {
 	if path == "" {
 		method, path = "GET", res.ReadPath
 	}
+	if path == "" {
+		method, path = "GET", res.ListPath
+	}
 	createOp, err := spec.operation(method, path)
 	if err != nil {
 		return nil, err
@@ -114,6 +122,11 @@ func Build(spec *Spec, res Resource) ([]fields.Field, error) {
 	resp, err := spec.responseSchema(createOp)
 	if err != nil {
 		return nil, err
+	}
+	if res.CreatePath == "" && res.ReadPath == "" {
+		if resp, err = spec.listElement(resp); err != nil {
+			return nil, fmt.Errorf("%s: %w", res.Package, err)
+		}
 	}
 	if res.Response != "" {
 		if resp, err = spec.resolve(&Schema{Ref: refPrefix + res.Response}); err != nil {

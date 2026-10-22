@@ -113,6 +113,9 @@ func (r *Resource) ModifyPlan(ctx context.Context, req resource.ModifyPlanReques
 	if r.requiresReplaceForCurrencyOptions(ctx, req, resp) || r.requiresReplaceForFixedKeys(ctx, req, resp) {
 		return
 	}
+	if r.refuseGoingBack(ctx, req, resp) {
+		return
+	}
 	// The refusal comes after every replace check of the engine: a plan any of them has made a
 	// replace creates the object anew, with the new value.
 	if r.refuseChanges(ctx, req, resp) {
@@ -144,6 +147,56 @@ func (r *Resource) ModifyPlan(ctx context.Context, req resource.ModifyPlanReques
 	}
 }
 
+// refuseGoingBack fails the plan that moves the declared advance field to an earlier value,
+// which Stripe refuses. A plan that also replaces the object is not refused: its create
+// starts at the new value. A value not known at plan time is left for apply.
+func (r *Resource) refuseGoingBack(ctx context.Context, req resource.ModifyPlanRequest, resp *resource.ModifyPlanResponse) bool {
+	a := r.m.decl.Advance
+	if a == nil {
+		return false
+	}
+	var plan, state, config basetypes.ObjectValue
+	diags := req.Plan.Get(ctx, &plan)
+	diags.Append(req.State.Get(ctx, &state)...)
+	diags.Append(req.Config.Get(ctx, &config)...)
+	if resp.Diagnostics.Append(diags...); diags.HasError() {
+		return true
+	}
+	if r.replaces(plan, state, config) {
+		return false
+	}
+	name := r.attrName(a.Field)
+	to, okTo := plan.Attributes()[name].(basetypes.Int64Value)
+	from, okFrom := state.Attributes()[name].(basetypes.Int64Value)
+	if !okTo || !okFrom || to.IsUnknown() || to.IsNull() || from.IsNull() || to.ValueInt64() >= from.ValueInt64() {
+		return false
+	}
+	resp.Diagnostics.AddAttributeError(path.Root(name), "Cannot move `"+name+"` backwards",
+		fmt.Sprintf("Stripe only advances `%s`, and this %s is at %d. Set a value of at least that, or replace the object to start again at an earlier time.", name, r.m.decl.TypeName, from.ValueInt64()))
+	return true
+}
+
+// replaces reports whether the plan changes a field that forces replacement, the parent or
+// the attached object.
+func (r *Resource) replaces(plan, state, config basetypes.ObjectValue) bool {
+	for _, n := range r.m.nodes {
+		if n.Replace && differs(plan.Attributes()[n.AttrName()], state.Attributes()[n.AttrName()], config.Attributes()[n.AttrName()]) {
+			return true
+		}
+	}
+	for _, name := range []string{r.m.decl.Parent, r.m.decl.Attach} {
+		if name != "" && differs(plan.Attributes()[name], state.Attributes()[name], config.Attributes()[name]) {
+			return true
+		}
+	}
+	return false
+}
+
+func (r *Resource) attrName(field string) string {
+	n, _ := r.m.top(field)
+	return n.AttrName()
+}
+
 // refuseChanges fails the plan when it changes a field the declaration lists in RefuseChange.
 // A value not fully known at plan time is left for apply. A plan that also changes a field
 // that forces replacement is a replace, whose create sends the new value, so it is not
@@ -163,15 +216,8 @@ func (r *Resource) refuseChanges(ctx context.Context, req resource.ModifyPlanReq
 	if resp.Diagnostics.Append(diags...); diags.HasError() {
 		return true
 	}
-	for _, n := range r.m.nodes {
-		if n.Replace && differs(plan.Attributes()[n.AttrName()], state.Attributes()[n.AttrName()], config.Attributes()[n.AttrName()]) {
-			return false
-		}
-	}
-	for _, name := range []string{r.m.decl.Parent, r.m.decl.Attach} {
-		if name != "" && differs(plan.Attributes()[name], state.Attributes()[name], config.Attributes()[name]) {
-			return false
-		}
+	if r.replaces(plan, state, config) {
+		return false
 	}
 	for _, name := range r.m.decl.RefuseChange {
 		n, _ := r.m.top(name)
@@ -353,6 +399,10 @@ func (r *Resource) Update(ctx context.Context, req resource.UpdateRequest, resp 
 			return
 		}
 		before = itemIDs(pre, r.m.decl.MatchBy)
+	}
+	if err := r.advance(ctx, plan, state, id, parent); err != nil {
+		r.api.fail(&resp.Diagnostics, err)
+		return
 	}
 	body, err := r.api.call(ctx, method, target, sent)
 	if err != nil {
@@ -576,6 +626,65 @@ func holds(body wire.Object, field string, value wire.Value, past bool, now time
 		return isInt && int64(at) <= now.Unix()
 	}
 	return sameWire(v, value)
+}
+
+// advance moves the declared time field to the planned value when it differs from the
+// state's. It is safe to repeat after a failed or timed-out update: it first waits for any
+// advance still running, skips the request when the object is already at or past the target,
+// and counts the object as done only when it is ready and has reached the target.
+func (r *Resource) advance(ctx context.Context, plan, state basetypes.ObjectValue, id, parent string) error {
+	a := r.m.decl.Advance
+	if a == nil {
+		return nil
+	}
+	name := r.attrName(a.Field)
+	to, ok := plan.Attributes()[name].(basetypes.Int64Value)
+	if !ok || to.IsNull() || to.IsUnknown() || to.Equal(state.Attributes()[name]) {
+		return nil
+	}
+	target := to.ValueInt64()
+	retrieve := r.m.expand(r.m.decl.Paths.Retrieve, id, parent)
+	body, err := r.awaitReady(ctx, id, retrieve, func(wire.Object) bool { return true })
+	if err != nil {
+		return err
+	}
+	if intField(body, a.Field) >= target {
+		return nil
+	}
+	if _, err := r.api.call(ctx, "POST", r.m.expand(a.Path, id, parent), wire.Object{{Name: a.Field, Value: wire.Int(target)}}); err != nil {
+		return err
+	}
+	_, err = r.awaitReady(ctx, id, retrieve, func(b wire.Object) bool {
+		return intField(b, a.Field) >= target
+	})
+	return err
+}
+
+// intField is the integer a response holds under name, or 0.
+func intField(o wire.Object, name string) int64 {
+	v, _ := o.Get(name)
+	n, _ := v.(wire.Int)
+	return int64(n)
+}
+
+// awaitReady reads the object until its status is the declared ready value and done accepts
+// it, and returns that body.
+func (r *Resource) awaitReady(ctx context.Context, id, retrieve string, done func(wire.Object) bool) (wire.Object, error) {
+	a := r.m.decl.Advance
+	for {
+		body, err := r.api.call(ctx, "GET", retrieve, nil)
+		if err != nil {
+			return nil, err
+		}
+		if status, _ := body.GetString(a.StatusField); status == a.ReadyValue && done(body) {
+			return body, nil
+		}
+		select {
+		case <-ctx.Done():
+			return nil, fmt.Errorf("waiting for %s to reach %s=%s: %w", id, a.StatusField, a.ReadyValue, ctx.Err())
+		case <-time.After(r.pollInterval):
+		}
+	}
 }
 
 // expire ends the object a few seconds ahead and waits for its status to say so.

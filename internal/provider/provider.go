@@ -37,6 +37,7 @@ import (
 	"github.com/computomatic/terraform-provider-stripe/internal/resources/country_spec"
 	"github.com/computomatic/terraform-provider-stripe/internal/resources/coupon"
 	"github.com/computomatic/terraform-provider-stripe/internal/resources/credit_note"
+	"github.com/computomatic/terraform-provider-stripe/internal/resources/credit_note_line"
 	"github.com/computomatic/terraform-provider-stripe/internal/resources/customer"
 	"github.com/computomatic/terraform-provider-stripe/internal/resources/customer_balance_transaction"
 	"github.com/computomatic/terraform-provider-stripe/internal/resources/customer_cash_balance_transaction"
@@ -48,12 +49,15 @@ import (
 	"github.com/computomatic/terraform-provider-stripe/internal/resources/file_link"
 	"github.com/computomatic/terraform-provider-stripe/internal/resources/identity_verification_session"
 	"github.com/computomatic/terraform-provider-stripe/internal/resources/invoice"
+	"github.com/computomatic/terraform-provider-stripe/internal/resources/invoice_line"
+	"github.com/computomatic/terraform-provider-stripe/internal/resources/invoice_payment"
 	"github.com/computomatic/terraform-provider-stripe/internal/resources/invoiceitem"
 	"github.com/computomatic/terraform-provider-stripe/internal/resources/mandate"
 	"github.com/computomatic/terraform-provider-stripe/internal/resources/payment_intent"
 	"github.com/computomatic/terraform-provider-stripe/internal/resources/payment_link"
 	"github.com/computomatic/terraform-provider-stripe/internal/resources/payment_method_configuration"
 	"github.com/computomatic/terraform-provider-stripe/internal/resources/payment_method_domain"
+	"github.com/computomatic/terraform-provider-stripe/internal/resources/payout"
 	"github.com/computomatic/terraform-provider-stripe/internal/resources/plan"
 	"github.com/computomatic/terraform-provider-stripe/internal/resources/price"
 	"github.com/computomatic/terraform-provider-stripe/internal/resources/product"
@@ -61,10 +65,14 @@ import (
 	"github.com/computomatic/terraform-provider-stripe/internal/resources/product_feature"
 	"github.com/computomatic/terraform-provider-stripe/internal/resources/promotion_code"
 	"github.com/computomatic/terraform-provider-stripe/internal/resources/quote"
+	"github.com/computomatic/terraform-provider-stripe/internal/resources/quote_computed_upfront_line_item"
+	"github.com/computomatic/terraform-provider-stripe/internal/resources/quote_line_item"
+	"github.com/computomatic/terraform-provider-stripe/internal/resources/radar_early_fraud_warning"
 	"github.com/computomatic/terraform-provider-stripe/internal/resources/radar_value_list"
 	"github.com/computomatic/terraform-provider-stripe/internal/resources/radar_value_list_item"
 	"github.com/computomatic/terraform-provider-stripe/internal/resources/refund"
 	"github.com/computomatic/terraform-provider-stripe/internal/resources/reporting_report_type"
+	"github.com/computomatic/terraform-provider-stripe/internal/resources/review"
 	"github.com/computomatic/terraform-provider-stripe/internal/resources/setup_intent"
 	"github.com/computomatic/terraform-provider-stripe/internal/resources/shipping_rate"
 	"github.com/computomatic/terraform-provider-stripe/internal/resources/subscription"
@@ -78,6 +86,8 @@ import (
 	"github.com/computomatic/terraform-provider-stripe/internal/resources/terminal_configuration"
 	"github.com/computomatic/terraform-provider-stripe/internal/resources/terminal_location"
 	"github.com/computomatic/terraform-provider-stripe/internal/resources/terminal_reader"
+	"github.com/computomatic/terraform-provider-stripe/internal/resources/test_helpers_test_clock"
+	"github.com/computomatic/terraform-provider-stripe/internal/resources/topup"
 	"github.com/computomatic/terraform-provider-stripe/internal/resources/webhook_endpoint"
 	"github.com/computomatic/terraform-provider-stripe/internal/stripeapi"
 )
@@ -218,6 +228,7 @@ func (p *stripeProvider) Resources(_ context.Context) []func() resource.Resource
 		must(terminal_configuration.NewResource()),
 		must(terminal_location.NewResource()),
 		must(webhook_endpoint.NewResource()),
+		must(test_helpers_test_clock.NewResource()),
 	}
 }
 
@@ -286,6 +297,16 @@ func (p *stripeProvider) DataSources(_ context.Context) []func() datasource.Data
 		must(identity_verification_session.NewDataSource()),
 		must(terminal_reader.NewDataSource()),
 		must(webhook_endpoint.NewDataSource()),
+		must(payout.NewDataSource()),
+		must(topup.NewDataSource()),
+		must(radar_early_fraud_warning.NewDataSource()),
+		must(review.NewDataSource()),
+		must(invoice_payment.NewDataSource()),
+		must(invoice_line.NewDataSource()),
+		must(credit_note_line.NewDataSource()),
+		must(quote_line_item.NewDataSource()),
+		must(quote_computed_upfront_line_item.NewDataSource()),
+		must(test_helpers_test_clock.NewDataSource()),
 	}
 }
 

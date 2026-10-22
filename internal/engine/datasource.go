@@ -127,6 +127,12 @@ func (d *DataSource) Read(ctx context.Context, req datasource.ReadRequest, resp 
 	var err error
 	if d.m.decl.Singleton {
 		body, err = d.api.call(ctx, "GET", d.m.decl.Paths.Retrieve, d.api.expanded(nil, ""))
+	} else if id != "" && d.m.decl.FindInList {
+		body, err = d.find(ctx, id, parent)
+		if err == nil && body == nil {
+			resp.Diagnostics.AddError("Not found", fmt.Sprintf("no %s found for id=%s", d.m.decl.TypeName, id))
+			return
+		}
 	} else if id != "" {
 		body, err = d.api.call(ctx, "GET", d.m.expand(d.m.decl.Paths.Retrieve, id, parent), d.api.expanded(nil, ""))
 		if d.m.gone(err, &resp.Diagnostics) || err == nil && isDeletedStub(body) {
@@ -164,6 +170,53 @@ func hasMore(page wire.Object, v2 bool) bool {
 	}
 	_, isNull := next.(wire.Null)
 	return !isNull
+}
+
+// maxFindPages caps the pages find reads, whatever the list answers.
+const maxFindPages = 200
+
+// find reads the parent's list page by page and returns the element with the ID, or nil when
+// no page holds it. A page with more to come that lists no ID not seen before means the list
+// is not moving on, which Stripe has been seen to do for some lists, so it ends the search
+// with an error instead of looping.
+func (d *DataSource) find(ctx context.Context, id, parent string) (wire.Object, error) {
+	after := ""
+	seen := map[string]bool{}
+	for pages := 0; pages < maxFindPages; pages++ {
+		params := wire.Object{{Name: "limit", Value: wire.Int(listLimit)}}
+		if after != "" {
+			params = append(params, wire.Field{Name: "starting_after", Value: wire.String(after)})
+		}
+		page, err := d.api.call(ctx, "GET", d.m.expand(d.m.decl.Paths.List, "", parent), d.api.expanded(params, "data."))
+		if err != nil {
+			return nil, err
+		}
+		data, _ := page.Get("data")
+		items, _ := data.(wire.Array)
+		last, fresh := "", false
+		for _, item := range items {
+			obj, ok := item.(wire.Object)
+			if !ok {
+				return nil, fmt.Errorf("list item is not an object")
+			}
+			got, _ := obj.GetString("id")
+			if got == id {
+				return obj, nil
+			}
+			if !seen[got] {
+				seen[got], fresh = true, true
+			}
+			last = got
+		}
+		if !hasMore(page, false) || last == "" {
+			return nil, nil
+		}
+		if !fresh {
+			return nil, fmt.Errorf("the list of %s did not move past %s", d.m.decl.TypeName, after)
+		}
+		after = last
+	}
+	return nil, fmt.Errorf("the list of %s has more than %d pages", d.m.decl.TypeName, maxFindPages)
 }
 
 // lookup finds the one object whose unique key matches the configured value, using the

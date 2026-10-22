@@ -1,6 +1,7 @@
 package customer_cash_balance_transaction_test
 
 import (
+	"errors"
 	"os"
 	"strings"
 	"testing"
@@ -34,7 +35,8 @@ func TestAccCustomerCashBalanceTransaction_read(t *testing.T) {
 			if strings.Contains(err.Error(), "Invalid currency") {
 				continue
 			}
-			if strings.Contains(err.Error(), "fake_") {
+			var apiErr *stripeapi.APIError
+			if errors.As(err, &apiErr) && strings.HasPrefix(apiErr.Code, "fake_") {
 				t.Skipf("the fake does not serve funding a cash balance in %s yet: %v", c, err)
 			}
 			t.Fatalf("funding the cash balance in %s: %v", c, err)
