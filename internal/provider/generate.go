@@ -4,4 +4,4 @@ package provider
 // the field tables under internal/generated. `go generate ./...` runs packages in
 // path order, which puts this directive after theirs.
 
-//go:generate go tool tfplugindocs generate --provider-dir ../.. --provider-name stripe --rendered-provider-name Stripe
+//go:generate go run ../../tools/docgen -root ../.. -out ../../docs

@@ -6,9 +6,11 @@ import (
 	"regexp"
 	"testing"
 
+	"github.com/hashicorp/go-version"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/hashicorp/terraform-plugin-testing/plancheck"
 	"github.com/hashicorp/terraform-plugin-testing/terraform"
+	"github.com/hashicorp/terraform-plugin-testing/tfversion"
 
 	"github.com/computomatic/terraform-provider-stripe/internal/acctest"
 	"github.com/computomatic/terraform-provider-stripe/internal/acctest/tfacc"
@@ -148,6 +150,26 @@ func TestAccCoupon_import(t *testing.T) {
 				ResourceName:    address,
 				ImportState:     true,
 				ImportStateKind: resource.ImportBlockWithID,
+				Config:          cfg,
+			},
+		},
+	})
+}
+
+// The identity form needs Terraform or OpenTofu 1.12.0 or later.
+func TestAccCoupon_importIdentity(t *testing.T) {
+	acct := acctest.NewAccount(t)
+	cfg := couponConfig(acct, "identity", named(acct, "Launch", ""))
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: tfacc.ProviderFactories,
+		ErrorCheck:               tfacc.SkipWhenFakeLacks(t, "expand["),
+		TerraformVersionChecks:   []tfversion.TerraformVersionCheck{tfversion.RequireAbove(version.Must(version.NewVersion("1.12.0")))},
+		Steps: []resource.TestStep{
+			{Config: cfg},
+			{
+				ResourceName:    address,
+				ImportState:     true,
+				ImportStateKind: resource.ImportBlockWithResourceIdentity,
 				Config:          cfg,
 			},
 		},
