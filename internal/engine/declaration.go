@@ -46,6 +46,9 @@ const (
 	DeleteOrArchive
 	// Expire sends a time a few seconds ahead and waits for the declared status.
 	Expire
+	// Retain means Stripe cannot remove the object and nothing archives it. Destroy sends
+	// nothing, warns with the declaration's RetainWarning and drops the object from state.
+	Retain
 	// NoDelete means Stripe offers no way to remove the object. There is no resource, only
 	// a data source.
 	NoDelete
@@ -126,6 +129,18 @@ type ExpireAction struct {
 	Start      wire.Object
 }
 
+// Transition is an action endpoint that sets a status-like field Stripe never takes on create
+// or update, such as an alert's `status`, which `/activate` and `/deactivate` change.
+type Transition struct {
+	// Field is the top-level string field the action sets.
+	Field string
+	// Value is what the field holds afterwards.
+	Value string
+	// Path is the action endpoint, such as `/v1/billing/alerts/{id}/activate`. It is sent as
+	// a bare POST.
+	Path string
+}
+
 // Lookup is a data source lookup key: a field Stripe documents as unique per account and
 // that the list endpoint filters by.
 type Lookup struct {
@@ -197,6 +212,13 @@ type Declaration struct {
 	// it from state. Any other failure, and a failed retrieve, fails the destroy.
 	KeepWhen *FieldIs
 	Expire   *ExpireAction
+	// RetainWarning is the sentence that tells a user what the Retain strategy leaves behind.
+	RetainWarning string
+	// Transitions make a response-only top-level string field, such as `status`, Optional and
+	// Computed: a configured value that differs from the object's calls the action endpoint
+	// that sets it, after create and on update. A value no transition sets is refused at
+	// validation. The field is never sent in a request body.
+	Transitions []Transition
 
 	// OnceReturned lists outputs Stripe returns only at creation. They are Computed and
 	// Sensitive, and read and update responses that omit them keep the prior value.

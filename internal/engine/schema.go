@@ -90,7 +90,7 @@ func (m *model) resourceSchema(ctx context.Context) rschema.Schema {
 	}
 	attrs["timeouts"] = timeouts.Attributes(ctx, timeouts.Opts{
 		Create: true,
-		Update: m.decl.Paths.Update != "",
+		Update: m.decl.Paths.Update != "" || len(m.decl.Transitions) > 0,
 		Delete: true,
 	})
 	return rschema.Schema{MarkdownDescription: m.decl.Description, Attributes: attrs}

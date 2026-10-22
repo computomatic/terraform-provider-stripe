@@ -106,6 +106,10 @@ func compile(decl Declaration, table []fields.Field) (*model, error) {
 		if !decl.archivable() {
 			return nil, fmt.Errorf("%s: the archive strategy needs an archive action and an update path or action endpoint", decl.TypeName)
 		}
+	case Retain:
+		if decl.RetainWarning == "" {
+			return nil, fmt.Errorf("%s: the retain strategy needs a warning that says what stays behind", decl.TypeName)
+		}
 	case Expire:
 		if decl.Expire == nil || decl.Paths.Update == "" {
 			return nil, fmt.Errorf("%s: the expire strategy needs an expire action and an update path", decl.TypeName)
@@ -146,6 +150,9 @@ func compile(decl Declaration, table []fields.Field) (*model, error) {
 		if n.AttrName() == "timeouts" || n.AttrName() == decl.Parent || decl.Attach != "" && n.AttrName() == decl.Attach {
 			return nil, fmt.Errorf("%s: field `%s` collides with a provider-added attribute; rename it", decl.TypeName, n.AttrName())
 		}
+	}
+	if err := m.openTransitions(); err != nil {
+		return nil, err
 	}
 	for _, e := range decl.Expand {
 		if n, ok := m.top(e); !ok || !n.Response {
@@ -204,6 +211,22 @@ func compile(decl Declaration, table []fields.Field) (*model, error) {
 	}
 	sort.Strings(m.sensitiveNames)
 	return m, nil
+}
+
+// openTransitions makes each transition's field configurable. The field stays out of every
+// request body, because it is not in a request schema.
+func (m *model) openTransitions() error {
+	for _, t := range m.decl.Transitions {
+		n, ok := m.top(t.Field)
+		if !ok || n.Shape != fields.String || !n.Response || n.Writable() {
+			return fmt.Errorf("%s: transition field `%s` is not a response-only top-level string", m.decl.TypeName, t.Field)
+		}
+		if t.Value == "" || t.Path == "" {
+			return fmt.Errorf("%s: a transition of `%s` needs a value and an action path", m.decl.TypeName, t.Field)
+		}
+		n.Optional = true
+	}
+	return nil
 }
 
 // checkListEntries rejects a MatchBy, Carry, SendWithUpdate or SendWithUpdateOn entry that
@@ -290,6 +313,9 @@ func namespaceOf(decl Declaration) (bool, error) {
 	paths := []string{decl.Paths.Create, decl.Paths.Retrieve, decl.Paths.Update, decl.Paths.Delete, decl.Paths.List}
 	if decl.Archive != nil {
 		paths = append(paths, decl.Archive.Path)
+	}
+	for _, t := range decl.Transitions {
+		paths = append(paths, t.Path)
 	}
 	v1, v2 := 0, 0
 	for _, p := range paths {

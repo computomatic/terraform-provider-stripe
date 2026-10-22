@@ -20,6 +20,7 @@ import (
 	"github.com/computomatic/terraform-provider-stripe/internal/resources/balance"
 	"github.com/computomatic/terraform-provider-stripe/internal/resources/balance_settings"
 	"github.com/computomatic/terraform-provider-stripe/internal/resources/balance_transaction"
+	"github.com/computomatic/terraform-provider-stripe/internal/resources/billing_alert"
 	"github.com/computomatic/terraform-provider-stripe/internal/resources/billing_credit_grant"
 	"github.com/computomatic/terraform-provider-stripe/internal/resources/billing_feedback_option"
 	"github.com/computomatic/terraform-provider-stripe/internal/resources/billing_meter"
@@ -34,6 +35,8 @@ import (
 	"github.com/computomatic/terraform-provider-stripe/internal/resources/coupon"
 	"github.com/computomatic/terraform-provider-stripe/internal/resources/credit_note"
 	"github.com/computomatic/terraform-provider-stripe/internal/resources/customer"
+	"github.com/computomatic/terraform-provider-stripe/internal/resources/customer_balance_transaction"
+	"github.com/computomatic/terraform-provider-stripe/internal/resources/customer_cash_balance_transaction"
 	"github.com/computomatic/terraform-provider-stripe/internal/resources/customer_payment_method"
 	"github.com/computomatic/terraform-provider-stripe/internal/resources/dispute"
 	"github.com/computomatic/terraform-provider-stripe/internal/resources/entitlements_feature"
@@ -65,6 +68,7 @@ import (
 	"github.com/computomatic/terraform-provider-stripe/internal/resources/subscription_item"
 	"github.com/computomatic/terraform-provider-stripe/internal/resources/subscription_schedule"
 	"github.com/computomatic/terraform-provider-stripe/internal/resources/tax_code"
+	"github.com/computomatic/terraform-provider-stripe/internal/resources/tax_id"
 	"github.com/computomatic/terraform-provider-stripe/internal/resources/tax_rate"
 	"github.com/computomatic/terraform-provider-stripe/internal/resources/tax_registration"
 	"github.com/computomatic/terraform-provider-stripe/internal/resources/tax_settings"
@@ -170,6 +174,7 @@ func (p *stripeProvider) Configure(ctx context.Context, req provider.ConfigureRe
 func (p *stripeProvider) Resources(_ context.Context) []func() resource.Resource {
 	return []func() resource.Resource{
 		must(apple_pay_domain.NewResource()),
+		must(billing_alert.NewResource()),
 		must(billing_credit_grant.NewResource()),
 		must(billing_feedback_option.NewResource()),
 		must(billing_meter.NewResource()),
@@ -177,6 +182,7 @@ func (p *stripeProvider) Resources(_ context.Context) []func() resource.Resource
 		must(core_event_destination.NewResource()),
 		must(coupon.NewResource()),
 		must(customer.NewResource()),
+		must(customer_balance_transaction.NewResource()),
 		must(customer_payment_method.NewResource()),
 		must(entitlements_feature.NewResource()),
 		must(file_link.NewResource()),
@@ -201,6 +207,7 @@ func (p *stripeProvider) Resources(_ context.Context) []func() resource.Resource
 		must(subscription_item.NewResource()),
 		must(subscription_schedule.NewResource()),
 		must(terminal_reader.NewResource()),
+		must(tax_id.NewResource()),
 		must(tax_rate.NewResource()),
 		must(tax_registration.NewResource()),
 		must(terminal_configuration.NewResource()),
@@ -215,6 +222,7 @@ func (p *stripeProvider) DataSources(_ context.Context) []func() datasource.Data
 		must(balance.NewDataSource()),
 		must(balance_settings.NewDataSource()),
 		must(balance_transaction.NewDataSource()),
+		must(billing_alert.NewDataSource()),
 		must(billing_credit_grant.NewDataSource()),
 		must(billing_feedback_option.NewDataSource()),
 		must(billing_meter.NewDataSource()),
@@ -224,6 +232,8 @@ func (p *stripeProvider) DataSources(_ context.Context) []func() datasource.Data
 		must(coupon.NewDataSource()),
 		must(credit_note.NewDataSource()),
 		must(customer.NewDataSource()),
+		must(customer_balance_transaction.NewDataSource()),
+		must(customer_cash_balance_transaction.NewDataSource()),
 		must(entitlements_feature.NewDataSource()),
 		must(event.NewDataSource()),
 		must(file.NewDataSource()),
@@ -247,6 +257,7 @@ func (p *stripeProvider) DataSources(_ context.Context) []func() datasource.Data
 		must(subscription_item.NewDataSource()),
 		must(subscription_schedule.NewDataSource()),
 		must(tax_code.NewDataSource()),
+		must(tax_id.NewDataSource()),
 		must(tax_rate.NewDataSource()),
 		must(tax_registration.NewDataSource()),
 		must(tax_settings.NewDataSource()),

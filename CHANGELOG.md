@@ -1,5 +1,8 @@
 ## Unreleased
 
+- New resources, each with a data source: `stripe_billing_alert`, `stripe_tax_id` and `stripe_customer_balance_transaction`. A tax ID is created through `/v1/tax_ids` with an `owner` of `self` or a customer. A customer balance transaction cannot be deleted, so destroying it only removes it from state and warns that it stays on the customer's balance.
+- New data source: `stripe_customer_cash_balance_transaction`.
+
 ## 0.1.0 (2026-10-22)
 
 The first release of the Stripe provider for Terraform and OpenTofu, published as `computomatic/stripe`.
