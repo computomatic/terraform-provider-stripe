@@ -6,7 +6,7 @@ Manage the objects in your Stripe account as code: products, prices, coupons, cu
 
 ## Installation
 
-The provider is not published to a registry yet. Until it is, build it from source and tell Terraform or OpenTofu to use the build with a `dev_overrides` entry in your CLI configuration.
+The provider is not published to a registry yet. Until it is, build it from source (Go 1.27 or later) and tell Terraform or OpenTofu to use the build with a `dev_overrides` entry in your CLI configuration.
 
 ```sh
 git clone https://github.com/computomatic/terraform-provider-stripe
@@ -14,7 +14,7 @@ cd terraform-provider-stripe
 GOBIN="$HOME/terraform-plugins" go install .
 ```
 
-Terraform reads `~/.terraformrc` (or the file named by `TF_CLI_CONFIG_FILE`), and OpenTofu reads `~/.tofurc` (or the same variable):
+Terraform reads `~/.terraformrc` (or the file named by `TF_CLI_CONFIG_FILE`), and OpenTofu reads `~/.tofurc` (or the same variable). Each tool matches the provider by its full registry address, and the two addresses differ. For Terraform:
 
 ```hcl
 provider_installation {
@@ -25,7 +25,9 @@ provider_installation {
 }
 ```
 
-With a `dev_overrides` entry, skip `terraform init` for the provider; `plan` and `apply` use the build directly. The path is the directory that holds the `terraform-provider-stripe` binary.
+For OpenTofu, use the same block in `~/.tofurc` with `registry.opentofu.org/computomatic/stripe` as the address.
+
+With a `dev_overrides` entry, skip `terraform init` (or `tofu init`) for the provider; `plan` and `apply` use the build directly. The path is the directory that holds the `terraform-provider-stripe` binary. Both tools print a warning that development overrides are in effect, which is expected with a local build.
 
 ## Usage
 
