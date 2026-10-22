@@ -3,12 +3,12 @@
 page_title: "stripe_file_link Data Source - Stripe"
 subcategory: ""
 description: |-
-  A link that lets anyone download a file. terraform destroy expires the link, because Stripe cannot delete one; it stays in the account. Stripe refuses to change an expired link.
+  A link that lets anyone download a file.
 ---
 
 # Data Source: stripe_file_link
 
-A link that lets anyone download a file. `terraform destroy` expires the link, because Stripe cannot delete one; it stays in the account. Stripe refuses to change an expired link.
+A link that lets anyone download a file.
 
 ## Example Usage
 
@@ -22,9 +22,7 @@ data "stripe_file_link" "report" {
 
 This data source supports the following arguments:
 
-Exactly one must be set.
-
-* `id` - (Optional) Unique identifier for the object.
+* `id` - (Required) The ID of the file link to read.
 
 ## Attribute Reference
 

@@ -5,14 +5,16 @@ import (
 	"flag"
 	"os"
 	"path/filepath"
+	"regexp"
+	"strings"
 	"testing"
 	"time"
 
-	"github.com/hashicorp/terraform-plugin-framework/providerserver"
+	"github.com/hashicorp/hcl/v2/hclwrite"
 	"github.com/hashicorp/terraform-plugin-go/tfprotov6"
 	"github.com/hashicorp/terraform-plugin-go/tftypes"
 
-	"github.com/computomatic/terraform-provider-stripe/internal/provider"
+	"github.com/computomatic/terraform-provider-stripe/internal/engine"
 )
 
 var update = flag.Bool("update", false, "rewrite the golden files")
@@ -99,6 +101,10 @@ func fixture(t *testing.T) *schemas {
 				str("name", "Name of the gadget.", computed),
 				nested("parts", "The parts of the gadget.", tfprotov6.SchemaObjectNestingModeList, computed,
 					str("label", "Label of the part.", computed))),
+			"widget_gadget_part": block("A part attached to a gadget.",
+				str("gadget", "The ID of the parent object.", required),
+				str("id", "The ID of the gadget part to read.", optionalComputed),
+				str("label", "Label of the part.", computed)),
 			"widget_settings": block("The account's settings.",
 				str("theme", "The theme.", computed)),
 		},
@@ -148,6 +154,9 @@ func TestGoldenPages(t *testing.T) {
 		{Code: "resource \"widget_gadget\" \"main\" {\n  name = \"Main\"\n}\n"},
 		{Title: "With parts", Code: "resource \"widget_gadget\" \"parts\" {\n  name = \"Parts\"\n}\n"},
 	}
+	byType(s.Resources, "widget_gadget").ImportNote = "An imported gadget has no `token`."
+	byType(s.Resources, "widget_gadget").ImportNoteLevel = engine.NoteWarning
+	byType(s.Resources, "widget_gadget_part").ImportNote = "Parts are matched by serial."
 	gadget, err := renderResource(byType(s.Resources, "widget_gadget"), pageInput{
 		Examples: ex,
 		Import:   &importExample{Name: "main", ID: "gad_123"},
@@ -180,6 +189,12 @@ func TestGoldenPages(t *testing.T) {
 		t.Fatal(err)
 	}
 	golden(t, "data_source", ds)
+
+	dsChild, err := renderDataSource(byType(s.DataSources, "widget_gadget_part"), pageInput{Examples: ex[:1]})
+	if err != nil {
+		t.Fatal(err)
+	}
+	golden(t, "data_source_child", dsChild)
 
 	dsSingleton, err := renderDataSource(byType(s.DataSources, "widget_settings"), pageInput{Examples: ex[:1]})
 	if err != nil {
@@ -253,11 +268,7 @@ func TestPagesStayUnderBudget(t *testing.T) {
 	check("fixture", map[string]string{"widget_gadget": page})
 
 	// The real provider.
-	server, err := providerserver.NewProtocol6WithError(provider.New("test")())()
-	if err != nil {
-		t.Fatal(err)
-	}
-	real, err := readSchemas(context.Background(), server)
+	real, err := loadSchemas(context.Background())
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -269,4 +280,60 @@ func TestPagesStayUnderBudget(t *testing.T) {
 		t.Errorf("got %d pages for %d resources, %d data sources and the index", len(all), len(real.Resources), len(real.DataSources))
 	}
 	check("provider", all)
+}
+
+var terraformFence = regexp.MustCompile("(?s)```terraform\n(.*?)```")
+
+// Every HCL sample in an Import section is what `terraform fmt` writes. `terraform fmt`
+// aligns the `=` of consecutive single-line attributes only, so `to` and a multi-line
+// `identity = {` stay apart while the attributes inside the identity line up.
+func TestImportSamplesAreFormatted(t *testing.T) {
+	check := func(name, page string) {
+		_, imp, ok := strings.Cut(page, "\n## Import\n")
+		if !ok {
+			t.Errorf("%s: no Import section", name)
+			return
+		}
+		for _, m := range terraformFence.FindAllStringSubmatch(imp, -1) {
+			if got := string(hclwrite.Format([]byte(m[1]))); got != m[1] {
+				t.Errorf("%s: sample is not formatted\n--- got\n%s--- want\n%s", name, m[1], got)
+			}
+		}
+	}
+	for _, name := range []string{"resource", "resource_child", "resource_singleton"} {
+		page, err := os.ReadFile(filepath.Join("testdata", name+".golden.md"))
+		if err != nil {
+			t.Fatal(err)
+		}
+		check(name, string(page))
+	}
+	real, err := loadSchemas(context.Background())
+	if err != nil {
+		t.Fatal(err)
+	}
+	all, err := renderAll(real, filepath.Join("..", ".."))
+	if err != nil {
+		t.Fatal(err)
+	}
+	for path, page := range all {
+		if strings.HasPrefix(path, "resources") {
+			check(path, page)
+		}
+	}
+}
+
+// A data source destroys, replaces and imports nothing, so its lead must not say what a
+// resource does (Declaration.DataSourceDescription).
+func TestDataSourceLeadsHaveNoLifecycleSentences(t *testing.T) {
+	real, err := loadSchemas(context.Background())
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, d := range real.DataSources {
+		for _, word := range []string{"terraform destroy", "replaces", "imported", "Importing", "Import with"} {
+			if strings.Contains(d.Description, word) {
+				t.Errorf("%s: the lead mentions %q: %s", d.Type, word, d.Description)
+			}
+		}
+	}
 }

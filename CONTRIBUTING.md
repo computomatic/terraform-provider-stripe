@@ -24,8 +24,8 @@ go generate ./internal/generated
 
 A resource is a short declaration in `internal/resources/<name>` that the generic engine in `internal/engine` turns into a resource and a data source. Each resource directory needs:
 
-- its declaration, with a `Description` that says what `terraform destroy` does and anything else a user must know;
-- `examples/resources/stripe_<name>/resource.tf` and `import.sh`, and `examples/data-sources/stripe_<name>/data-source.tf` when it has a data source;
+- its declaration, with a `Description` that says what `terraform destroy` does and anything else a user must know, a `DataSourceDescription` that says only what the object is (a data source destroys and imports nothing), and an `ImportNote` (with `ImportNoteLevel` `engine.NoteWarning` for a consequence) when an imported object differs from a configured one;
+- `examples/resources/stripe_<name>/resource.tf` and `import.sh`, whose last line is `terraform import stripe_<name>.<name> <id>` with a `<parent_id>/<id>` ID for a resource with a `Parent`, and `examples/data-sources/stripe_<name>/data-source.tf` when it has a data source;
 - the six acceptance tests `TestAcc<Name>_{create,update,replace,import,delete,drift}`;
 - its regenerated pages under `docs/`.
 

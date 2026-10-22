@@ -14,9 +14,10 @@ import (
 // shipping rate (DELETE answers with an error), so destroy archives it (`active = false`)
 // and drops it from state; the shipping rate stays in the account.
 var Declaration = engine.Declaration{
-	TypeName:    "stripe_shipping_rate",
-	IDPrefix:    "shr_",
-	Description: "What Checkout charges for shipping. `terraform destroy` archives the shipping rate, because Stripe cannot delete one.",
+	TypeName:              "stripe_shipping_rate",
+	IDPrefix:              "shr_",
+	Description:           "What Checkout charges for shipping. `terraform destroy` archives the shipping rate, because Stripe cannot delete one.",
+	DataSourceDescription: "What Checkout charges for shipping.",
 	Paths: engine.Paths{
 		Create:   "/v1/shipping_rates",
 		Retrieve: "/v1/shipping_rates/{id}",

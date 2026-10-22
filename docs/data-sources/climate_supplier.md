@@ -26,9 +26,7 @@ output "removal_pathway" {
 
 This data source supports the following arguments:
 
-Exactly one must be set.
-
-* `id` - (Optional) Unique identifier for the object.
+* `id` - (Required) The ID of the climate supplier to read.
 
 ## Attribute Reference
 

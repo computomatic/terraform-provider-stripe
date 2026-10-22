@@ -3,12 +3,12 @@
 page_title: "stripe_core_event_destination Data Source - Stripe"
 subcategory: ""
 description: |-
-  A destination for Stripe's events, delivered as thin or snapshot payloads: a webhook endpoint, an Amazon EventBridge partner event source or an Azure Event Grid partner topic. terraform destroy deletes the destination. The destination's signing secret is not available yet. status is read-only: Terraform cannot enable or disable a destination yet.
+  A destination for Stripe's events, delivered as thin or snapshot payloads: a webhook endpoint, an Amazon EventBridge partner event source or an Azure Event Grid partner topic.
 ---
 
 # Data Source: stripe_core_event_destination
 
-A destination for Stripe's events, delivered as thin or snapshot payloads: a webhook endpoint, an Amazon EventBridge partner event source or an Azure Event Grid partner topic. `terraform destroy` deletes the destination. The destination's signing secret is not available yet. `status` is read-only: Terraform cannot enable or disable a destination yet.
+A destination for Stripe's events, delivered as thin or snapshot payloads: a webhook endpoint, an Amazon EventBridge partner event source or an Azure Event Grid partner topic.
 
 ## Example Usage
 
@@ -22,9 +22,7 @@ data "stripe_core_event_destination" "billing" {
 
 This data source supports the following arguments:
 
-Exactly one must be set.
-
-* `id` - (Optional) Unique identifier for the object.
+* `id` - (Required) The ID of the core event destination to read.
 
 ## Attribute Reference
 

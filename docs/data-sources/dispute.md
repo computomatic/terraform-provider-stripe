@@ -22,9 +22,7 @@ data "stripe_dispute" "chargeback" {
 
 This data source supports the following arguments:
 
-Exactly one must be set.
-
-* `id` - (Optional) Unique identifier for the object.
+* `id` - (Required) The ID of the dispute to read.
 
 ## Attribute Reference
 

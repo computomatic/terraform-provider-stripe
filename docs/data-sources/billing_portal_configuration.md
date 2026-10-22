@@ -3,12 +3,12 @@
 page_title: "stripe_billing_portal_configuration Data Source - Stripe"
 subcategory: ""
 description: |-
-  How the customer portal looks and what customers can do in it. terraform destroy deactivates the configuration, because Stripe cannot delete one. Stripe refuses to deactivate the account's default configuration (the first one created), so destroy leaves that one active with a warning.
+  How the customer portal looks and what customers can do in it.
 ---
 
 # Data Source: stripe_billing_portal_configuration
 
-How the customer portal looks and what customers can do in it. `terraform destroy` deactivates the configuration, because Stripe cannot delete one. Stripe refuses to deactivate the account's default configuration (the first one created), so destroy leaves that one active with a warning.
+How the customer portal looks and what customers can do in it.
 
 ## Example Usage
 
@@ -22,9 +22,7 @@ data "stripe_billing_portal_configuration" "default" {
 
 This data source supports the following arguments:
 
-Exactly one must be set.
-
-* `id` - (Optional) Unique identifier for the object.
+* `id` - (Required) The ID of the billing portal configuration to read.
 
 ## Attribute Reference
 

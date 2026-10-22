@@ -3,12 +3,12 @@
 page_title: "stripe_product_catalog_trial_offer Data Source - Stripe"
 subcategory: ""
 description: |-
-  A trial period a price offers before it transitions to another price. terraform destroy archives the trial offer, because Stripe cannot delete one.
+  A trial period a price offers before it transitions to another price.
 ---
 
 # Data Source: stripe_product_catalog_trial_offer
 
-A trial period a price offers before it transitions to another price. `terraform destroy` archives the trial offer, because Stripe cannot delete one.
+A trial period a price offers before it transitions to another price.
 
 ## Example Usage
 
@@ -22,9 +22,7 @@ data "stripe_product_catalog_trial_offer" "first_month" {
 
 This data source supports the following arguments:
 
-Exactly one must be set.
-
-* `id` - (Optional) Unique identifier for the object.
+* `id` - (Required) The ID of the product catalog trial offer to read.
 
 ## Attribute Reference
 

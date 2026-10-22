@@ -3,12 +3,12 @@
 page_title: "stripe_radar_value_list Data Source - Stripe"
 subcategory: ""
 description: |-
-  A list of values that Radar rules refer to by alias. terraform destroy deletes the list and every item in it.
+  A list of values that Radar rules refer to by alias.
 ---
 
 # Data Source: stripe_radar_value_list
 
-A list of values that Radar rules refer to by `alias`. `terraform destroy` deletes the list and every item in it.
+A list of values that Radar rules refer to by `alias`.
 
 ## Example Usage
 
@@ -25,7 +25,7 @@ This data source supports the following arguments:
 Exactly one must be set.
 
 * `alias` - (Optional) The name of the value list for use in rules.
-* `id` - (Optional) Unique identifier for the object.
+* `id` - (Optional) The ID of the radar value list to read.
 
 ## Attribute Reference
 

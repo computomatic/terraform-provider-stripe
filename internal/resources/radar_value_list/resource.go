@@ -12,9 +12,10 @@ import (
 // Declaration is what the spec cannot say about a value list. Stripe deletes one with DELETE,
 // which deletes its items too, so destroy deletes it. The `alias` is unique in the account.
 var Declaration = engine.Declaration{
-	TypeName:    "stripe_radar_value_list",
-	IDPrefix:    "rsl_",
-	Description: "A list of values that Radar rules refer to by `alias`. `terraform destroy` deletes the list and every item in it.",
+	TypeName:              "stripe_radar_value_list",
+	IDPrefix:              "rsl_",
+	Description:           "A list of values that Radar rules refer to by `alias`. `terraform destroy` deletes the list and every item in it.",
+	DataSourceDescription: "A list of values that Radar rules refer to by `alias`.",
 	Paths: engine.Paths{
 		Create:   "/v1/radar/value_lists",
 		Retrieve: "/v1/radar/value_lists/{id}",

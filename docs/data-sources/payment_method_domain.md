@@ -3,12 +3,12 @@
 page_title: "stripe_payment_method_domain Data Source - Stripe"
 subcategory: ""
 description: |-
-  A domain on which payment methods such as Apple Pay and Google Pay are offered. terraform destroy disables the domain, because Stripe cannot delete one; the domain stays in the account.
+  A domain on which payment methods such as Apple Pay and Google Pay are offered.
 ---
 
 # Data Source: stripe_payment_method_domain
 
-A domain on which payment methods such as Apple Pay and Google Pay are offered. `terraform destroy` disables the domain, because Stripe cannot delete one; the domain stays in the account.
+A domain on which payment methods such as Apple Pay and Google Pay are offered.
 
 ## Example Usage
 
@@ -22,9 +22,7 @@ data "stripe_payment_method_domain" "checkout" {
 
 This data source supports the following arguments:
 
-Exactly one must be set.
-
-* `id` - (Optional) Unique identifier for the object.
+* `id` - (Required) The ID of the payment method domain to read.
 
 ## Attribute Reference
 

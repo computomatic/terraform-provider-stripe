@@ -3,12 +3,12 @@
 page_title: "stripe_apple_pay_domain Data Source - Stripe"
 subcategory: ""
 description: |-
-  A domain registered for Apple Pay. terraform destroy deletes the domain. Stripe accepts the same domain name more than once, so changing domain_name creates a new registration.
+  A domain registered for Apple Pay.
 ---
 
 # Data Source: stripe_apple_pay_domain
 
-A domain registered for Apple Pay. `terraform destroy` deletes the domain. Stripe accepts the same domain name more than once, so changing `domain_name` creates a new registration.
+A domain registered for Apple Pay.
 
 ## Example Usage
 
@@ -25,7 +25,7 @@ This data source supports the following arguments:
 Exactly one must be set.
 
 * `domain_name` - (Optional)
-* `id` - (Optional) Unique identifier for the object.
+* `id` - (Optional) The ID of the apple pay domain to read.
 
 ## Attribute Reference
 

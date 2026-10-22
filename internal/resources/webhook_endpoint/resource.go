@@ -12,9 +12,11 @@ import (
 // Declaration is what the spec cannot say about a webhook endpoint. Stripe returns the
 // signing `secret` once, when it creates the endpoint, so state keeps it from then on.
 var Declaration = engine.Declaration{
-	TypeName:    "stripe_webhook_endpoint",
-	IDPrefix:    "we_",
-	Description: "An endpoint Stripe sends events to. The signing `secret` is returned once, at creation, and is kept in state as a sensitive value. An imported endpoint has no `secret`, and neither has the data source, because Stripe returns it only at creation. `terraform destroy` deletes the endpoint.",
+	TypeName:              "stripe_webhook_endpoint",
+	IDPrefix:              "we_",
+	Description:           "An endpoint Stripe sends events to. The signing `secret` is returned once, at creation, and is kept in state as a sensitive value. `terraform destroy` deletes the endpoint.",
+	DataSourceDescription: "An endpoint Stripe sends events to. Stripe returns the signing `secret` only at creation, so the data source has none.",
+	ImportNote:            "An imported endpoint has no `secret`, because Stripe returns it only at creation.",
 	Paths: engine.Paths{
 		Create:   "/v1/webhook_endpoints",
 		Retrieve: "/v1/webhook_endpoints/{id}",

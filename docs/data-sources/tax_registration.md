@@ -3,12 +3,12 @@
 page_title: "stripe_tax_registration Data Source - Stripe"
 subcategory: ""
 description: |-
-  A place where you are registered to collect tax. terraform destroy ends the registration, because Stripe cannot delete one: it starts a scheduled registration, sets expires_at a few seconds ahead and waits for the status expired. The registration stays in the account. A country keeps one live registration, so a replacement can only be created once the old one has expired.
+  A place where you are registered to collect tax.
 ---
 
 # Data Source: stripe_tax_registration
 
-A place where you are registered to collect tax. `terraform destroy` ends the registration, because Stripe cannot delete one: it starts a scheduled registration, sets `expires_at` a few seconds ahead and waits for the status `expired`. The registration stays in the account. A country keeps one live registration, so a replacement can only be created once the old one has expired.
+A place where you are registered to collect tax.
 
 ## Example Usage
 
@@ -22,9 +22,7 @@ data "stripe_tax_registration" "gb" {
 
 This data source supports the following arguments:
 
-Exactly one must be set.
-
-* `id` - (Optional) Unique identifier for the object.
+* `id` - (Required) The ID of the tax registration to read.
 
 ## Attribute Reference
 

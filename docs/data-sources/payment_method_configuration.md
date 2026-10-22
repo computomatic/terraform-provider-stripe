@@ -3,12 +3,12 @@
 page_title: "stripe_payment_method_configuration Data Source - Stripe"
 subcategory: ""
 description: |-
-  Which payment methods are offered and how. terraform destroy deactivates the configuration, because Stripe cannot delete one; it stays in the account.
+  Which payment methods are offered and how.
 ---
 
 # Data Source: stripe_payment_method_configuration
 
-Which payment methods are offered and how. `terraform destroy` deactivates the configuration, because Stripe cannot delete one; it stays in the account.
+Which payment methods are offered and how.
 
 ## Example Usage
 
@@ -22,9 +22,7 @@ data "stripe_payment_method_configuration" "checkout" {
 
 This data source supports the following arguments:
 
-Exactly one must be set.
-
-* `id` - (Optional) Unique identifier for the object.
+* `id` - (Required) The ID of the payment method configuration to read.
 
 ## Attribute Reference
 

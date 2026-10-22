@@ -14,9 +14,10 @@ import (
 // rate (DELETE answers with an error), so destroy archives it (`active = false`) and drops
 // it from state; the tax rate stays in the account.
 var Declaration = engine.Declaration{
-	TypeName:    "stripe_tax_rate",
-	IDPrefix:    "txr_",
-	Description: "A rate of tax that invoices and subscriptions apply. `terraform destroy` archives the tax rate, because Stripe cannot delete one.",
+	TypeName:              "stripe_tax_rate",
+	IDPrefix:              "txr_",
+	Description:           "A rate of tax that invoices and subscriptions apply. `terraform destroy` archives the tax rate, because Stripe cannot delete one.",
+	DataSourceDescription: "A rate of tax that invoices and subscriptions apply.",
 	Paths: engine.Paths{
 		Create:   "/v1/tax_rates",
 		Retrieve: "/v1/tax_rates/{id}",

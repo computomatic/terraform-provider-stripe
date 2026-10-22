@@ -3,12 +3,12 @@
 page_title: "stripe_billing_meter Data Source - Stripe"
 subcategory: ""
 description: |-
-  Defines how usage events are aggregated into a billable quantity. terraform destroy deactivates the meter, because Stripe cannot delete one.
+  Defines how usage events are aggregated into a billable quantity.
 ---
 
 # Data Source: stripe_billing_meter
 
-Defines how usage events are aggregated into a billable quantity. `terraform destroy` deactivates the meter, because Stripe cannot delete one.
+Defines how usage events are aggregated into a billable quantity.
 
 ## Example Usage
 
@@ -22,9 +22,7 @@ data "stripe_billing_meter" "api_calls" {
 
 This data source supports the following arguments:
 
-Exactly one must be set.
-
-* `id` - (Optional) Unique identifier for the object.
+* `id` - (Required) The ID of the billing meter to read.
 
 ## Attribute Reference
 

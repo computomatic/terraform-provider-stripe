@@ -26,9 +26,7 @@ output "delivery_year" {
 
 This data source supports the following arguments:
 
-Exactly one must be set.
-
-* `id` - (Optional) Unique identifier for the object. For convenience, Climate product IDs are human-readable strings that start with `climsku_`. See [carbon removal inventory](https://stripe.com/docs/climate/orders/carbon-removal-inventory) for a list of available carbon removal products.
+* `id` - (Required) The ID of the climate product to read.
 
 ## Attribute Reference
 

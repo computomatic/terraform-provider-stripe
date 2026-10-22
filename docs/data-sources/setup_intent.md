@@ -3,12 +3,12 @@
 page_title: "stripe_setup_intent Data Source - Stripe"
 subcategory: ""
 description: |-
-  Collects a customer's payment method for later use. terraform destroy cancels the setup intent, because Stripe cannot delete one; the canceled intent stays in the account. An intent that already succeeded cannot be canceled and is left as it is. Confirming an intent is not a resource: confirm it with its client_secret from your front end, or from your server with Stripe's API, and status reports what happened. The resource has no confirm, mandate_data, payment_method_data or payment_method_options argument. Setting payment_method moves the intent to requires_confirmation. usage and on_behalf_of cannot change after creation, and neither can the other arguments that only a create takes, so changing one replaces the intent. The client_secret is sensitive and stays in the state.
+  Collects a customer's payment method for later use.
 ---
 
 # Data Source: stripe_setup_intent
 
-Collects a customer's payment method for later use. `terraform destroy` cancels the setup intent, because Stripe cannot delete one; the canceled intent stays in the account. An intent that already succeeded cannot be canceled and is left as it is. Confirming an intent is not a resource: confirm it with its `client_secret` from your front end, or from your server with Stripe's API, and `status` reports what happened. The resource has no `confirm`, `mandate_data`, `payment_method_data` or `payment_method_options` argument. Setting `payment_method` moves the intent to `requires_confirmation`. `usage` and `on_behalf_of` cannot change after creation, and neither can the other arguments that only a create takes, so changing one replaces the intent. The `client_secret` is sensitive and stays in the state.
+Collects a customer's payment method for later use.
 
 ## Example Usage
 
@@ -22,9 +22,7 @@ data "stripe_setup_intent" "card" {
 
 This data source supports the following arguments:
 
-Exactly one must be set.
-
-* `id` - (Optional) Unique identifier for the object.
+* `id` - (Required) The ID of the setup intent to read.
 
 ## Attribute Reference
 

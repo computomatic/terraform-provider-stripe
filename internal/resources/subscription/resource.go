@@ -14,9 +14,12 @@ import (
 // with the status `canceled`, so destroy deletes. Cancelling twice is a 404, which the
 // engine counts as done.
 var Declaration = engine.Declaration{
-	TypeName:    "stripe_subscription",
-	IDPrefix:    "sub_",
-	Description: "A customer's recurring purchase of one or more prices. `terraform destroy` cancels the subscription immediately, because Stripe cannot delete one: billing stops and the cancelled subscription stays in the account. `items` are matched by `price`: an item whose price stays keeps its ID and changes in place, a new price adds an item, a dropped price deletes it, and a reorder changes nothing. A price may appear once. An item added from outside, such as one that `stripe_subscription_item` created, is not part of `items` and is never changed or deleted by this resource. An update that changes `items` also takes `proration_behavior` and `payment_behavior`. An item that sets `price_data` has no price of its own to match by, so it is matched by its `price_data`: changing its quantity, metadata or other settings updates the item in place, and changing its `price_data` replaces the item, which gets a new item ID. Two items may not carry identical `price_data`. Importing a subscription adopts every item it has, so a configuration that lists fewer items deletes the rest on the next apply.",
+	TypeName:              "stripe_subscription",
+	IDPrefix:              "sub_",
+	Description:           "A customer's recurring purchase of one or more prices. `terraform destroy` cancels the subscription immediately, because Stripe cannot delete one: billing stops and the cancelled subscription stays in the account. `items` are matched by `price`: an item whose price stays keeps its ID and changes in place, a new price adds an item, a dropped price deletes it, and a reorder changes nothing. A price may appear once. An item added from outside, such as one that `stripe_subscription_item` created, is not part of `items` and is never changed or deleted by this resource. An update that changes `items` also takes `proration_behavior` and `payment_behavior`. An item that sets `price_data` has no price of its own to match by, so it is matched by its `price_data`: changing its quantity, metadata or other settings updates the item in place, and changing its `price_data` replaces the item, which gets a new item ID. Two items may not carry identical `price_data`.",
+	DataSourceDescription: "A customer's recurring purchase of one or more prices.",
+	ImportNote:            "Importing a subscription adopts every item it has, so a configuration that lists fewer items deletes the rest on the next apply.",
+	ImportNoteLevel:       engine.NoteWarning,
 	Paths: engine.Paths{
 		Create:   "/v1/subscriptions",
 		Retrieve: "/v1/subscriptions/{id}",

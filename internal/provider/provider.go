@@ -103,7 +103,7 @@ func (p *stripeProvider) Metadata(_ context.Context, _ provider.MetadataRequest,
 
 func (p *stripeProvider) Schema(_ context.Context, _ provider.SchemaRequest, resp *provider.SchemaResponse) {
 	resp.Schema = schema.Schema{
-		Description: "Manages Stripe objects. Every request is sent with Stripe API version `" + stripeapi.Version + "`.",
+		Description: "Every request is sent with Stripe API version `" + stripeapi.Version + "`.",
 		Attributes: map[string]schema.Attribute{
 			"api_key": schema.StringAttribute{
 				Optional:    true,

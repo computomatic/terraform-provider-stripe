@@ -13,9 +13,10 @@ import (
 // destroy expires it (`expires_at` set to now) and drops it from state. An expired link
 // cannot be modified, so destroy retrieves first.
 var Declaration = engine.Declaration{
-	TypeName:    "stripe_file_link",
-	IDPrefix:    "link_",
-	Description: "A link that lets anyone download a file. `terraform destroy` expires the link, because Stripe cannot delete one; it stays in the account. Stripe refuses to change an expired link.",
+	TypeName:              "stripe_file_link",
+	IDPrefix:              "link_",
+	Description:           "A link that lets anyone download a file. `terraform destroy` expires the link, because Stripe cannot delete one; it stays in the account. Stripe refuses to change an expired link.",
+	DataSourceDescription: "A link that lets anyone download a file.",
 	Paths: engine.Paths{
 		Create:   "/v1/file_links",
 		Retrieve: "/v1/file_links/{id}",

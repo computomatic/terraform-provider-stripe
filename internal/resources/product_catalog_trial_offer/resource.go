@@ -15,9 +15,10 @@ import (
 // (DELETE answers with an error), so destroy archives it (`active = false`) and drops it
 // from state; the trial offer stays in the account.
 var Declaration = engine.Declaration{
-	TypeName:    "stripe_product_catalog_trial_offer",
-	IDPrefix:    "to_",
-	Description: "A trial period a price offers before it transitions to another price. `terraform destroy` archives the trial offer, because Stripe cannot delete one.",
+	TypeName:              "stripe_product_catalog_trial_offer",
+	IDPrefix:              "to_",
+	Description:           "A trial period a price offers before it transitions to another price. `terraform destroy` archives the trial offer, because Stripe cannot delete one.",
+	DataSourceDescription: "A trial period a price offers before it transitions to another price.",
 	Paths: engine.Paths{
 		Create:   "/v1/product_catalog/trial_offers",
 		Retrieve: "/v1/product_catalog/trial_offers/{id}",

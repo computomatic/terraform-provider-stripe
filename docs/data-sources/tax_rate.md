@@ -3,12 +3,12 @@
 page_title: "stripe_tax_rate Data Source - Stripe"
 subcategory: ""
 description: |-
-  A rate of tax that invoices and subscriptions apply. terraform destroy archives the tax rate, because Stripe cannot delete one.
+  A rate of tax that invoices and subscriptions apply.
 ---
 
 # Data Source: stripe_tax_rate
 
-A rate of tax that invoices and subscriptions apply. `terraform destroy` archives the tax rate, because Stripe cannot delete one.
+A rate of tax that invoices and subscriptions apply.
 
 ## Example Usage
 
@@ -22,9 +22,7 @@ data "stripe_tax_rate" "vat" {
 
 This data source supports the following arguments:
 
-Exactly one must be set.
-
-* `id` - (Optional) Unique identifier for the object.
+* `id` - (Required) The ID of the tax rate to read.
 
 ## Attribute Reference
 

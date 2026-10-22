@@ -3,12 +3,12 @@
 page_title: "stripe_quote Data Source - Stripe"
 subcategory: ""
 description: |-
-  A proposal of prices to a customer. terraform destroy cancels the quote, because Stripe cannot delete one; the cancelled quote stays in the account. A quote that was accepted cannot be cancelled and is left as it is. Finalizing and accepting a quote are not resources: the quote stays a draft here, and status reports what happened to it elsewhere. Stripe lets only metadata and a few other fields change once the quote is finalized.
+  A proposal of prices to a customer.
 ---
 
 # Data Source: stripe_quote
 
-A proposal of prices to a customer. `terraform destroy` cancels the quote, because Stripe cannot delete one; the cancelled quote stays in the account. A quote that was accepted cannot be cancelled and is left as it is. Finalizing and accepting a quote are not resources: the quote stays a draft here, and `status` reports what happened to it elsewhere. Stripe lets only `metadata` and a few other fields change once the quote is finalized.
+A proposal of prices to a customer.
 
 ## Example Usage
 
@@ -22,9 +22,7 @@ data "stripe_quote" "onboarding" {
 
 This data source supports the following arguments:
 
-Exactly one must be set.
-
-* `id` - (Optional) Unique identifier for the object.
+* `id` - (Required) The ID of the quote to read.
 
 ## Attribute Reference
 

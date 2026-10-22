@@ -3,12 +3,12 @@
 page_title: "stripe_customer Data Source - Stripe"
 subcategory: ""
 description: |-
-  A person or business that pays you. terraform destroy deletes the customer, which also cancels their subscriptions.
+  A person or business that pays you.
 ---
 
 # Data Source: stripe_customer
 
-A person or business that pays you. `terraform destroy` deletes the customer, which also cancels their subscriptions.
+A person or business that pays you.
 
 ## Example Usage
 
@@ -22,9 +22,7 @@ data "stripe_customer" "acme" {
 
 This data source supports the following arguments:
 
-Exactly one must be set.
-
-* `id` - (Optional) Unique identifier for the object.
+* `id` - (Required) The ID of the customer to read.
 
 ## Attribute Reference
 

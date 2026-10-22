@@ -3,12 +3,12 @@
 page_title: "stripe_climate_order Resource - Stripe"
 subcategory: ""
 description: |-
-  A purchase of carbon removal from Stripe Climate. Set exactly one of metric_tons (a whole number of tons) and amount (the money to spend, in the smallest unit of the order's currency). The order spends the account's available balance in its settlement currency. terraform destroy cancels the order and refunds its amount_subtotal, but not its amount_fees; Stripe cannot delete an order, so a canceled order stays in the account. Stripe cancels only orders that are not yet delivered, so destroy leaves a delivered order as it is, with a warning. Only beneficiary and metadata change in place: changing any other argument cancels the order and buys a new one, and the fees of the canceled order are not refunded. Stripe does not return amount, so an imported order has none in state. Importing an order that was bought by amount and configuring amount plans a replacement.
+  A purchase of carbon removal from Stripe Climate. Set exactly one of metric_tons (a whole number of tons) and amount (the money to spend, in the smallest unit of the order's currency). The order spends the account's available balance in its settlement currency. terraform destroy cancels the order and refunds its amount_subtotal, but not its amount_fees; Stripe cannot delete an order, so a canceled order stays in the account. Stripe cancels only orders that are not yet delivered, so destroy leaves a delivered order as it is, with a warning. Only beneficiary and metadata change in place: changing any other argument cancels the order and buys a new one, and the fees of the canceled order are not refunded.
 ---
 
 # Resource: stripe_climate_order
 
-A purchase of carbon removal from Stripe Climate. Set exactly one of `metric_tons` (a whole number of tons) and `amount` (the money to spend, in the smallest unit of the order's currency). The order spends the account's available balance in its settlement currency. `terraform destroy` cancels the order and refunds its `amount_subtotal`, but not its `amount_fees`; Stripe cannot delete an order, so a canceled order stays in the account. Stripe cancels only orders that are not yet delivered, so destroy leaves a delivered order as it is, with a warning. Only `beneficiary` and `metadata` change in place: changing any other argument cancels the order and buys a new one, and the fees of the canceled order are not refunded. Stripe does not return `amount`, so an imported order has none in state. Importing an order that was bought by `amount` and configuring `amount` plans a replacement.
+A purchase of carbon removal from Stripe Climate. Set exactly one of `metric_tons` (a whole number of tons) and `amount` (the money to spend, in the smallest unit of the order's currency). The order spends the account's available balance in its settlement currency. `terraform destroy` cancels the order and refunds its `amount_subtotal`, but not its `amount_fees`; Stripe cannot delete an order, so a canceled order stays in the account. Stripe cancels only orders that are not yet delivered, so destroy leaves a delivered order as it is, with a warning. Only `beneficiary` and `metadata` change in place: changing any other argument cancels the order and buys a new one, and the fees of the canceled order are not refunded.
 
 ## Example Usage
 
@@ -158,3 +158,5 @@ Using `terraform import`, import a climate order using its ID. For example:
 ```console
 % terraform import stripe_climate_order.offset climorder_123
 ```
+
+~> Stripe does not return `amount`, so an imported order has none in state. Importing an order that was bought by `amount` and configuring `amount` plans a replacement.

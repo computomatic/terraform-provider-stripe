@@ -3,12 +3,12 @@
 page_title: "stripe_radar_value_list_item Data Source - Stripe"
 subcategory: ""
 description: |-
-  A value in a Radar value list. terraform destroy deletes the item.
+  A value in a Radar value list.
 ---
 
 # Data Source: stripe_radar_value_list_item
 
-A value in a Radar value list. `terraform destroy` deletes the item.
+A value in a Radar value list.
 
 ## Example Usage
 
@@ -22,9 +22,7 @@ data "stripe_radar_value_list_item" "spammer" {
 
 This data source supports the following arguments:
 
-Exactly one must be set.
-
-* `id` - (Optional) Unique identifier for the object.
+* `id` - (Required) The ID of the radar value list item to read.
 
 ## Attribute Reference
 

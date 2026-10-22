@@ -3,12 +3,12 @@
 page_title: "stripe_subscription_item Data Source - Stripe"
 subcategory: ""
 description: |-
-  A price on a subscription, with a quantity. terraform destroy removes the item from the subscription. Stripe refuses to remove a subscription's last item, so cancel the subscription instead. An item added here shows up in the subscription's items, so give a stripe_subscription that sets items lifecycle { ignore_changes = [items] }.
+  A price on a subscription, with a quantity.
 ---
 
 # Data Source: stripe_subscription_item
 
-A price on a subscription, with a quantity. `terraform destroy` removes the item from the subscription. Stripe refuses to remove a subscription's last item, so cancel the subscription instead. An item added here shows up in the subscription's `items`, so give a `stripe_subscription` that sets `items` `lifecycle { ignore_changes = [items] }`.
+A price on a subscription, with a quantity.
 
 ## Example Usage
 
@@ -22,9 +22,7 @@ data "stripe_subscription_item" "addon" {
 
 This data source supports the following arguments:
 
-Exactly one must be set.
-
-* `id` - (Optional) Unique identifier for the object.
+* `id` - (Required) The ID of the subscription item to read.
 
 ## Attribute Reference
 

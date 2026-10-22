@@ -22,9 +22,7 @@ data "stripe_reporting_report_type" "balance_summary" {
 
 This data source supports the following arguments:
 
-Exactly one must be set.
-
-* `id` - (Optional) The [ID of the Report Type](https://docs.stripe.com/reporting/statements/api#available-report-types), such as `balance.summary.1`.
+* `id` - (Required) The ID of the reporting report type to read.
 
 ## Attribute Reference
 

@@ -14,9 +14,10 @@ import (
 // Declaration is what the spec cannot say about a payment method configuration. Stripe
 // never deletes one, so destroy deactivates it (`active = false`) and drops it from state.
 var Declaration = engine.Declaration{
-	TypeName:    "stripe_payment_method_configuration",
-	IDPrefix:    "pmc_",
-	Description: "Which payment methods are offered and how. `terraform destroy` deactivates the configuration, because Stripe cannot delete one; it stays in the account.",
+	TypeName:              "stripe_payment_method_configuration",
+	IDPrefix:              "pmc_",
+	Description:           "Which payment methods are offered and how. `terraform destroy` deactivates the configuration, because Stripe cannot delete one; it stays in the account.",
+	DataSourceDescription: "Which payment methods are offered and how.",
 	Paths: engine.Paths{
 		Create:   "/v1/payment_method_configurations",
 		Retrieve: "/v1/payment_method_configurations/{id}",

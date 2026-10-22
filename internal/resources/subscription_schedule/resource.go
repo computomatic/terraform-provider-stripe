@@ -17,9 +17,10 @@ import (
 // so destroy leaves it as it is. Release would keep the subscription billing after
 // destroy, so it is not used.
 var Declaration = engine.Declaration{
-	TypeName:    "stripe_subscription_schedule",
-	IDPrefix:    "sub_sched_",
-	Description: "Changes a subscription over time, in phases. `terraform destroy` cancels the schedule, which also cancels the subscription it started, because Stripe cannot delete a schedule; the cancelled schedule stays in the account. Stripe replaces the phases as a whole on update and needs the current phase to keep its `start_date`, which an update sends back from the state.",
+	TypeName:              "stripe_subscription_schedule",
+	IDPrefix:              "sub_sched_",
+	Description:           "Changes a subscription over time, in phases. `terraform destroy` cancels the schedule, which also cancels the subscription it started, because Stripe cannot delete a schedule; the cancelled schedule stays in the account. Stripe replaces the phases as a whole on update and needs the current phase to keep its `start_date`, which an update sends back from the state.",
+	DataSourceDescription: "Changes a subscription over time, in phases.",
 	Paths: engine.Paths{
 		Create:   "/v1/subscription_schedules",
 		Retrieve: "/v1/subscription_schedules/{id}",

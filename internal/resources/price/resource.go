@@ -14,9 +14,10 @@ import (
 // destroy archives it (`active = false`) and drops it from state; the price stays in the
 // account.
 var Declaration = engine.Declaration{
-	TypeName:    "stripe_price",
-	IDPrefix:    "price_",
-	Description: "What a product costs and how often it is charged. `terraform destroy` archives the price, because Stripe cannot delete one.",
+	TypeName:              "stripe_price",
+	IDPrefix:              "price_",
+	Description:           "What a product costs and how often it is charged. `terraform destroy` archives the price, because Stripe cannot delete one.",
+	DataSourceDescription: "What a product costs and how often it is charged.",
 	Paths: engine.Paths{
 		Create:   "/v1/prices",
 		Retrieve: "/v1/prices/{id}",

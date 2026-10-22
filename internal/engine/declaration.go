@@ -15,6 +15,24 @@ type Client interface {
 	Do(ctx context.Context, req stripeapi.Request) (*stripeapi.Response, error)
 }
 
+// NoteLevel is how a documentation note is flagged on a page.
+type NoteLevel int
+
+const (
+	// NoteInfo is a `->` callout: something to know.
+	NoteInfo NoteLevel = iota
+	// NoteWarning is a `~>` callout: a consequence that can surprise.
+	NoteWarning
+)
+
+// Sigil is the Markdown that opens a callout paragraph of the level.
+func (l NoteLevel) Sigil() string {
+	if l == NoteWarning {
+		return "~>"
+	}
+	return "->"
+}
+
 // DeleteKind selects what `terraform destroy` does (ADR D2, "Delete versus archive").
 type DeleteKind int
 
@@ -139,6 +157,15 @@ type Declaration struct {
 	IDPrefix string
 	// Description is the resource's documentation lead.
 	Description string
+	// DataSourceDescription is the data source's documentation lead. A data source destroys,
+	// replaces and imports nothing, so it states what the object is and leaves out the
+	// lifecycle sentences of Description. It defaults to Description.
+	DataSourceDescription string
+	// ImportNote is a Markdown paragraph for the resource page's Import section: what an
+	// imported object lacks or does, when that differs from a configured one.
+	ImportNote string
+	// ImportNoteLevel is how strongly the page flags ImportNote. It defaults to NoteInfo.
+	ImportNoteLevel NoteLevel
 	// Paths say which namespace the object lives in: `/v2/` paths send JSON bodies and read
 	// `/v2` errors and lists, any other path is `/v1`. All of a declaration's paths share one
 	// namespace.

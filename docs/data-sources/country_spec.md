@@ -26,9 +26,7 @@ output "us_default_currency" {
 
 This data source supports the following arguments:
 
-Exactly one must be set.
-
-* `id` - (Optional) Unique identifier for the object. Represented as the ISO country code for this country.
+* `id` - (Required) The ID of the country spec to read.
 
 ## Attribute Reference
 

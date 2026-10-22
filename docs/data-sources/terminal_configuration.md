@@ -3,12 +3,12 @@
 page_title: "stripe_terminal_configuration Data Source - Stripe"
 subcategory: ""
 description: |-
-  How Stripe Terminal readers behave: tipping, splash screens, reboot window and Wi-Fi. terraform destroy deletes the configuration.
+  How Stripe Terminal readers behave: tipping, splash screens, reboot window and Wi-Fi.
 ---
 
 # Data Source: stripe_terminal_configuration
 
-How Stripe Terminal readers behave: tipping, splash screens, reboot window and Wi-Fi. `terraform destroy` deletes the configuration.
+How Stripe Terminal readers behave: tipping, splash screens, reboot window and Wi-Fi.
 
 ## Example Usage
 
@@ -22,9 +22,7 @@ data "stripe_terminal_configuration" "store" {
 
 This data source supports the following arguments:
 
-Exactly one must be set.
-
-* `id` - (Optional) Unique identifier for the object.
+* `id` - (Required) The ID of the terminal configuration to read.
 
 ## Attribute Reference
 

@@ -22,9 +22,7 @@ data "stripe_payment_intent" "order" {
 
 This data source supports the following arguments:
 
-Exactly one must be set.
-
-* `id` - (Optional) Unique identifier for the object.
+* `id` - (Required) The ID of the payment intent to read.
 
 ## Attribute Reference
 

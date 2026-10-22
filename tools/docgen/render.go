@@ -317,11 +317,20 @@ func renderDataSource(s *schema, in pageInput) (string, error) {
 	if len(args) > 0 {
 		m.add("## Argument Reference")
 		m.add("This data source supports the following arguments:")
-		if len(filter(args, func(a *attr) bool { return !a.Required })) > 0 {
-			m.add("Exactly one must be set.")
-		}
 		required := filter(args, func(a *attr) bool { return a.Required })
 		optional := filter(args, func(a *attr) bool { return !a.Required })
+		// The required arguments name a parent. Only the optional ones are lookup keys.
+		if len(optional) > 1 {
+			m.add("Exactly one must be set.")
+		} else {
+			// The schema marks the lone key Optional, but a block must set exactly one key.
+			for _, a := range optional {
+				c := *a
+				c.Required, c.Optional = true, false
+				required = append(required, &c)
+			}
+			optional = nil
+		}
 		m.add(lineList(append(required, optional...), true))
 		subsections(m, args, "", true)
 	}
@@ -387,6 +396,9 @@ func importSection(m *markdown, s *schema, imp importExample) error {
 	}
 	m.add(fmt.Sprintf("Using `terraform import`, import %s using its ID. For example:", indefinite))
 	m.add(fence("console", "% terraform import "+name+" "+id))
+	if s.ImportNote != "" {
+		m.add(s.ImportNoteLevel.Sigil() + " " + strings.TrimSpace(s.ImportNote))
+	}
 	return nil
 }
 

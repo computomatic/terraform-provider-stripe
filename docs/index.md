@@ -36,7 +36,7 @@ To manage a connected account with the key of its platform, set `stripe_account`
 
 ## Stripe API version
 
-Manages Stripe objects. Every request is sent with Stripe API version `2026-09-30.endive`. Attributes therefore mean what that version documents, and a change to your account's default API version does not change how the provider behaves. A later provider release may move to a newer API version and says so in its release notes.
+Every request is sent with Stripe API version `2026-09-30.endive`. Attributes therefore mean what that version documents, and a change to your account's default API version does not change how the provider behaves. A later provider release may move to a newer API version and says so in its release notes.
 
 ## Argument Reference
 

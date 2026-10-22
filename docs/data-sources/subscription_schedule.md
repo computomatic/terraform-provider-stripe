@@ -3,12 +3,12 @@
 page_title: "stripe_subscription_schedule Data Source - Stripe"
 subcategory: ""
 description: |-
-  Changes a subscription over time, in phases. terraform destroy cancels the schedule, which also cancels the subscription it started, because Stripe cannot delete a schedule; the cancelled schedule stays in the account. Stripe replaces the phases as a whole on update and needs the current phase to keep its start_date, which an update sends back from the state.
+  Changes a subscription over time, in phases.
 ---
 
 # Data Source: stripe_subscription_schedule
 
-Changes a subscription over time, in phases. `terraform destroy` cancels the schedule, which also cancels the subscription it started, because Stripe cannot delete a schedule; the cancelled schedule stays in the account. Stripe replaces the phases as a whole on update and needs the current phase to keep its `start_date`, which an update sends back from the state.
+Changes a subscription over time, in phases.
 
 ## Example Usage
 
@@ -22,9 +22,7 @@ data "stripe_subscription_schedule" "team" {
 
 This data source supports the following arguments:
 
-Exactly one must be set.
-
-* `id` - (Optional) Unique identifier for the object.
+* `id` - (Required) The ID of the subscription schedule to read.
 
 ## Attribute Reference
 

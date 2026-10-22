@@ -14,9 +14,10 @@ import (
 // which is a 400 without a code: that refusal is shown as it is, because a bare 400 does not
 // say why.
 var Declaration = engine.Declaration{
-	TypeName:    "stripe_subscription_item",
-	IDPrefix:    "si_",
-	Description: "A price on a subscription, with a quantity. `terraform destroy` removes the item from the subscription. Stripe refuses to remove a subscription's last item, so cancel the subscription instead. An item added here shows up in the subscription's `items`, so give a `stripe_subscription` that sets `items` `lifecycle { ignore_changes = [items] }`.",
+	TypeName:              "stripe_subscription_item",
+	IDPrefix:              "si_",
+	Description:           "A price on a subscription, with a quantity. `terraform destroy` removes the item from the subscription. Stripe refuses to remove a subscription's last item, so cancel the subscription instead. An item added here shows up in the subscription's `items`, so give a `stripe_subscription` that sets `items` `lifecycle { ignore_changes = [items] }`.",
+	DataSourceDescription: "A price on a subscription, with a quantity.",
 	Paths: engine.Paths{
 		Create:   "/v1/subscription_items",
 		Retrieve: "/v1/subscription_items/{id}",

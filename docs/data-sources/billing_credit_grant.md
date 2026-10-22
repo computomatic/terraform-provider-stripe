@@ -3,12 +3,12 @@
 page_title: "stripe_billing_credit_grant Data Source - Stripe"
 subcategory: ""
 description: |-
-  Billing credits given to a customer. terraform destroy voids the grant, because Stripe cannot delete one: the unused credits can no longer be applied, and the grant stays in the account. Only expires_at and metadata can change after creation.
+  Billing credits given to a customer.
 ---
 
 # Data Source: stripe_billing_credit_grant
 
-Billing credits given to a customer. `terraform destroy` voids the grant, because Stripe cannot delete one: the unused credits can no longer be applied, and the grant stays in the account. Only `expires_at` and `metadata` can change after creation.
+Billing credits given to a customer.
 
 ## Example Usage
 
@@ -22,9 +22,7 @@ data "stripe_billing_credit_grant" "welcome" {
 
 This data source supports the following arguments:
 
-Exactly one must be set.
-
-* `id` - (Optional) Unique identifier for the object.
+* `id` - (Required) The ID of the billing credit grant to read.
 
 ## Attribute Reference
 

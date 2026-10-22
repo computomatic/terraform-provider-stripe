@@ -13,9 +13,10 @@ import (
 // DELETE (suite: "Invoice items", `delete`), unless its invoice is finalized or void: that
 // is a 400 without a code, which is shown as it is because a bare 400 does not say why.
 var Declaration = engine.Declaration{
-	TypeName:    "stripe_invoiceitem",
-	IDPrefix:    "ii_",
-	Description: "A line to add to a customer's next invoice, or to a draft invoice. `terraform destroy` deletes the invoice item. Stripe refuses to delete or change one whose invoice is finalized or void; remove it from the state with `terraform state rm` then.",
+	TypeName:              "stripe_invoiceitem",
+	IDPrefix:              "ii_",
+	Description:           "A line to add to a customer's next invoice, or to a draft invoice. `terraform destroy` deletes the invoice item. Stripe refuses to delete or change one whose invoice is finalized or void; remove it from the state with `terraform state rm` then.",
+	DataSourceDescription: "A line to add to a customer's next invoice, or to a draft invoice.",
 	Paths: engine.Paths{
 		Create:   "/v1/invoiceitems",
 		Retrieve: "/v1/invoiceitems/{id}",

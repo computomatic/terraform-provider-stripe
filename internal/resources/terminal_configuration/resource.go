@@ -12,9 +12,10 @@ import (
 // Declaration is what the spec cannot say about a terminal configuration. Stripe deletes one
 // with DELETE and answers a later GET with a deleted stub, so destroy deletes it.
 var Declaration = engine.Declaration{
-	TypeName:    "stripe_terminal_configuration",
-	IDPrefix:    "tmc_",
-	Description: "How Stripe Terminal readers behave: tipping, splash screens, reboot window and Wi-Fi. `terraform destroy` deletes the configuration.",
+	TypeName:              "stripe_terminal_configuration",
+	IDPrefix:              "tmc_",
+	Description:           "How Stripe Terminal readers behave: tipping, splash screens, reboot window and Wi-Fi. `terraform destroy` deletes the configuration.",
+	DataSourceDescription: "How Stripe Terminal readers behave: tipping, splash screens, reboot window and Wi-Fi.",
 	Paths: engine.Paths{
 		Create:   "/v1/terminal/configurations",
 		Retrieve: "/v1/terminal/configurations/{id}",

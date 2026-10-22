@@ -18,9 +18,12 @@ import (
 // still requires input, so when the cancel fails and a retrieve shows the session verified,
 // destroy warns, leaves it and drops it from state. Any other failure fails the destroy.
 var Declaration = engine.Declaration{
-	TypeName:    "stripe_identity_verification_session",
-	IDPrefix:    "vs_",
-	Description: "A Stripe Identity check of one person's document or ID number. `terraform destroy` cancels the session, because Stripe cannot delete one; the canceled session stays in the account, and a session that is already verified cannot be canceled and is left as it is, with a warning. The `client_secret` and `url` that start the check are sensitive and stay in the state. Redacting a session is not a resource: redact it with Stripe's API, after which Stripe no longer serves it. Verification flows and related persons are not available, so `type` is required. `type` and `metadata` change in place; changing `options` or `provided_details`, or any argument that only a create takes, creates a new session. Stripe does not return `provided_details`, so an imported session has none in state and the next plan replaces it if the configuration sets some.",
+	TypeName:              "stripe_identity_verification_session",
+	IDPrefix:              "vs_",
+	Description:           "A Stripe Identity check of one person's document or ID number. `terraform destroy` cancels the session, because Stripe cannot delete one; the canceled session stays in the account, and a session that is already verified cannot be canceled and is left as it is, with a warning. The `client_secret` and `url` that start the check are sensitive and stay in the state. Redacting a session is not a resource: redact it with Stripe's API, after which Stripe no longer serves it. Verification flows and related persons are not available, so `type` is required. `type` and `metadata` change in place; changing `options` or `provided_details`, or any argument that only a create takes, creates a new session.",
+	DataSourceDescription: "A Stripe Identity check of one person's document or ID number.",
+	ImportNote:            "Stripe does not return `provided_details`, so an imported session has none in state and the next plan replaces it if the configuration sets some.",
+	ImportNoteLevel:       engine.NoteWarning,
 	Paths: engine.Paths{
 		Create:   "/v1/identity/verification_sessions",
 		Retrieve: "/v1/identity/verification_sessions/{id}",
