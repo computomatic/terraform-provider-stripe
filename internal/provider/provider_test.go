@@ -88,11 +88,11 @@ func TestResolveConfigErrors(t *testing.T) {
 
 func TestEveryDeclarationBuilds(t *testing.T) {
 	p := &stripeProvider{}
-	if got := len(p.Resources(t.Context())); got != 40 {
-		t.Errorf("%d resources, want 37", got)
+	if got := len(p.Resources(t.Context())); got != 42 {
+		t.Errorf("%d resources, want 42", got)
 	}
-	if got := len(p.DataSources(t.Context())); got != 60 {
-		t.Errorf("%d data sources, want 56", got)
+	if got := len(p.DataSources(t.Context())); got != 63 {
+		t.Errorf("%d data sources, want 63", got)
 	}
 }
 

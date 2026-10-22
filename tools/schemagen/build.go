@@ -41,6 +41,21 @@ type Resource struct {
 	// left out (a payment link line item takes `price` or `price_data`, and the suite proves
 	// only `price`).
 	Require []string
+	// Response names the component schema that is the object's response, when the operation's
+	// 200 is a union of kinds and the resource is one of them (an external account is a bank
+	// account or a card).
+	Response string
+	// CreateHash names a create request property that holds the object as a hash, such as
+	// `bank_account`. The table takes the hash's fields as create fields in place of the
+	// property, and the engine's CreateWrap sends them back under it. The request's other
+	// properties stay top-level fields. An `external_account` string beside it is an
+	// alternative form of the same property, so list it in Omit.
+	CreateHash string
+	// NoResponse lists dotted field paths whose response has another shape than the request's,
+	// such as an account's `capabilities` (a hash of `requested` flags on the way in, of status
+	// strings on the way out). The table counts them as request-only: the state keeps what the
+	// configuration says.
+	NoResponse []string
 }
 
 // view is a schema classified into one of the engine's shapes.
@@ -63,7 +78,7 @@ func (v *view) scalar() bool {
 
 // Build derives the field table of one resource from the spec.
 func Build(spec *Spec, res Resource) ([]fields.Field, error) {
-	b := builder{spec: spec, omit: map[string]bool{}, createOnly: map[string]bool{}, readOnly: map[string]bool{}, require: map[string]bool{}}
+	b := builder{spec: spec, omit: map[string]bool{}, createOnly: map[string]bool{}, readOnly: map[string]bool{}, require: map[string]bool{}, noResponse: map[string]bool{}}
 	for _, p := range res.Omit {
 		b.omit[p] = false
 	}
@@ -75,6 +90,9 @@ func Build(spec *Spec, res Resource) ([]fields.Field, error) {
 	}
 	for _, p := range res.Require {
 		b.require[p] = false
+	}
+	for _, p := range res.NoResponse {
+		b.noResponse[p] = false
 	}
 	method, path := "POST", res.CreatePath
 	if path == "" {
@@ -88,9 +106,21 @@ func Build(spec *Spec, res Resource) ([]fields.Field, error) {
 	if err != nil {
 		return nil, err
 	}
+	if res.CreateHash != "" {
+		if create, err = spec.flattenHash(create, res.CreateHash); err != nil {
+			return nil, fmt.Errorf("%s: %w", res.Package, err)
+		}
+	}
 	resp, err := spec.responseSchema(createOp)
 	if err != nil {
 		return nil, err
+	}
+	if res.Response != "" {
+		if resp, err = spec.resolve(&Schema{Ref: refPrefix + res.Response}); err != nil {
+			return nil, fmt.Errorf("%s: %w", res.Package, err)
+		}
+	} else if resp != nil && len(resp.Properties) == 0 && len(resp.AnyOf)+len(resp.OneOf) > 0 {
+		return nil, fmt.Errorf("%s: the response is a union of kinds; name the one the resource is", res.Package)
 	}
 	var update *Schema
 	if res.UpdatePath != "" {
@@ -126,6 +156,11 @@ func Build(spec *Spec, res Resource) ([]fields.Field, error) {
 			return nil, fmt.Errorf("%s: read-only entry %q names no field", res.Package, p)
 		}
 	}
+	for _, p := range res.NoResponse {
+		if !b.noResponse[p] {
+			return nil, fmt.Errorf("%s: no-response entry %q names no field", res.Package, p)
+		}
+	}
 	return table, nil
 }
 
@@ -139,6 +174,8 @@ type builder struct {
 	readOnly map[string]bool
 	// require maps each path of Resource.Require to whether the build met it.
 	require map[string]bool
+	// noResponse maps each path of Resource.NoResponse to whether the build met it.
+	noResponse map[string]bool
 }
 
 func prop(s *Schema, name string) *Schema {
@@ -203,6 +240,10 @@ func (b *builder) object(create, update, resp *Schema, where string, depth int) 
 		rv, err := b.classify(prop(resp, name), at, depth)
 		if err != nil {
 			return nil, err
+		}
+		if _, none := b.noResponse[at]; none {
+			b.noResponse[at] = true
+			rv = nil
 		}
 		if rv, err = b.unwrapList(rv, cv, uv, at, depth); err != nil {
 			return nil, err

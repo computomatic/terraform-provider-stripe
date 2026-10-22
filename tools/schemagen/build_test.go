@@ -396,3 +396,94 @@ func TestListEnvelopeNeedsTheListObject(t *testing.T) {
 		t.Error("an object with a `data` array that is not a list must not stand for the request's list of objects")
 	}
 }
+
+// holderSpec is a collection whose create request holds the object as a hash under `bank`
+// (next to an `account` string, the alternative form) and whose 200 response is a union of
+// two kinds. The update request is flat. `caps` is a hash of flags on the way in and of
+// strings on the way out.
+const holderSpec = `{
+  "openapi": "3.0.0",
+  "info": {"version": "v"},
+  "paths": {
+    "/v1/holders": {"post": {
+      "operationId": "PostHolders",
+      "requestBody": {"content": {"application/x-www-form-urlencoded": {"schema": {"type": "object", "required": ["top"], "properties": {
+        "bank": {"anyOf": [{"type": "object", "required": ["number"], "properties": {
+          "number": {"type": "string"}, "label": {"type": "string"}, "object": {"type": "string", "enum": ["bank"]}}}, {"type": "string"}]},
+        "account": {"type": "string"},
+        "top": {"type": "string"},
+        "caps": {"type": "object", "properties": {"a": {"type": "object", "properties": {"requested": {"type": "boolean"}}}}}
+      }}}}},
+      "responses": {"200": {"content": {"application/json": {"schema": {"$ref": "#/components/schemas/poly"}}}}}
+    }},
+    "/v1/holders/{id}": {"post": {
+      "operationId": "PostHoldersId",
+      "requestBody": {"content": {"application/x-www-form-urlencoded": {"schema": {"type": "object", "properties": {
+        "label": {"type": "string"}, "top": {"type": "string"}}}}}},
+      "responses": {"200": {"content": {"application/json": {"schema": {"$ref": "#/components/schemas/poly"}}}}}
+    }}
+  },
+  "components": {"schemas": {
+    "poly": {"anyOf": [{"$ref": "#/components/schemas/bank"}, {"$ref": "#/components/schemas/card"}]},
+    "bank": {"type": "object", "properties": {"id": {"type": "string"}, "label": {"type": "string"}, "top": {"type": "string"}, "last4": {"type": "string"},
+      "caps": {"type": "object", "properties": {"a": {"type": "string", "enum": ["active", "inactive"]}}}}},
+    "card": {"type": "object", "properties": {"id": {"type": "string"}, "brand": {"type": "string"}}}
+  }}
+}`
+
+// A response union is built from the kind the resource names, the hash of a create request
+// becomes create fields in place of the property, and a path whose response has another shape
+// is request-only.
+func TestHashRequestUnionResponseAndNoResponse(t *testing.T) {
+	spec, err := ParseSpec([]byte(holderSpec))
+	if err != nil {
+		t.Fatal(err)
+	}
+	res := Resource{Package: "holder", CreatePath: "/v1/holders", UpdatePath: "/v1/holders/{id}", Omit: []string{"account"}}
+	if _, err := Build(spec, res); err == nil {
+		t.Fatal("a response that is a union of kinds must fail unless the resource names one")
+	}
+	res.Response = "bank"
+	res.CreateHash = "bank"
+	res.NoResponse = []string{"caps"}
+	table, err := Build(spec, res)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, ok := fields.Find(table, "bank"); ok {
+		t.Error("the hash property itself is not a field")
+	}
+	if f := lookup(t, table, "number"); !f.Required || !f.CreateOnly() || f.Response {
+		t.Errorf("number comes from the hash, required and create-only: %+v", f)
+	}
+	if f := lookup(t, table, "label"); !f.Create || !f.Update || !f.Response {
+		t.Errorf("label is in the hash, the update and the response: %+v", f)
+	}
+	if f := lookup(t, table, "top"); !f.Required || !f.Create || !f.Update {
+		t.Errorf("a top-level create field stays a field: %+v", f)
+	}
+	if _, ok := fields.Find(table, "brand"); ok {
+		t.Error("the other kind's fields must not be in the table")
+	}
+	if f := lookup(t, table, "last4"); !f.Response || f.Writable() {
+		t.Errorf("last4: %+v", f)
+	}
+	if f := lookup(t, table, "caps", "a", "requested"); !f.Create || f.Response {
+		t.Errorf("caps is request-only: %+v", f)
+	}
+	if f := lookup(t, table, "caps"); f.Response {
+		t.Errorf("caps must not be a response field: %+v", f)
+	}
+
+	for name, bad := range map[string]Resource{
+		"unknown response":    {Response: "nothing", CreateHash: "bank", NoResponse: []string{"caps"}, Omit: []string{"account"}},
+		"unknown hash":        {Response: "bank", CreateHash: "nothing", NoResponse: []string{"caps"}, Omit: []string{"account"}},
+		"string, not a hash":  {Response: "bank", CreateHash: "account", NoResponse: []string{"caps"}, Omit: []string{"bank"}},
+		"unknown no-response": {Response: "bank", CreateHash: "bank", NoResponse: []string{"caps", "nothing"}, Omit: []string{"account"}},
+	} {
+		bad.Package, bad.CreatePath, bad.UpdatePath = "holder", "/v1/holders", "/v1/holders/{id}"
+		if _, err := Build(spec, bad); err == nil {
+			t.Errorf("%s: must fail", name)
+		}
+	}
+}

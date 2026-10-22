@@ -85,8 +85,22 @@ func fillObject(t *testing.T, typ tftypes.Type, set map[string]tftypes.Value) tf
 }
 
 // plan sends one PlanResourceChange and returns the planned state and the paths that force
-// replacement.
+// replacement. A diagnostic fails the test.
 func (p *planner) plan(prior, proposed, config tftypes.Value) (tftypes.Value, []*tftypes.AttributePath) {
+	p.t.Helper()
+	resp := p.planResponse(prior, proposed, config)
+	for _, d := range resp.Diagnostics {
+		p.t.Fatalf("plan: %s %s", d.Summary, d.Detail)
+	}
+	planned, err := resp.PlannedState.Unmarshal(p.typ)
+	if err != nil {
+		p.t.Fatal(err)
+	}
+	return planned, resp.RequiresReplace
+}
+
+// planResponse sends one PlanResourceChange and returns the whole response.
+func (p *planner) planResponse(prior, proposed, config tftypes.Value) *tfprotov6.PlanResourceChangeResponse {
 	p.t.Helper()
 	dv := func(v tftypes.Value) *tfprotov6.DynamicValue {
 		d, err := tfprotov6.NewDynamicValue(p.typ, v)
@@ -104,14 +118,7 @@ func (p *planner) plan(prior, proposed, config tftypes.Value) (tftypes.Value, []
 	if err != nil {
 		p.t.Fatal(err)
 	}
-	for _, d := range resp.Diagnostics {
-		p.t.Fatalf("plan: %s %s", d.Summary, d.Detail)
-	}
-	planned, err := resp.PlannedState.Unmarshal(p.typ)
-	if err != nil {
-		p.t.Fatal(err)
-	}
-	return planned, resp.RequiresReplace
+	return resp
 }
 
 func tfString(s string) tftypes.Value { return tftypes.NewValue(tftypes.String, s) }

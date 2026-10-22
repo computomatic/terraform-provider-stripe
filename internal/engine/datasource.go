@@ -13,7 +13,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 
 	"github.com/computomatic/terraform-provider-stripe/internal/fields"
-	"github.com/computomatic/terraform-provider-stripe/internal/stripeapi"
 	"github.com/computomatic/terraform-provider-stripe/internal/wire"
 )
 
@@ -130,7 +129,7 @@ func (d *DataSource) Read(ctx context.Context, req datasource.ReadRequest, resp 
 		body, err = d.api.call(ctx, "GET", d.m.decl.Paths.Retrieve, d.api.expanded(nil, ""))
 	} else if id != "" {
 		body, err = d.api.call(ctx, "GET", d.m.expand(d.m.decl.Paths.Retrieve, id, parent), d.api.expanded(nil, ""))
-		if stripeapi.IsNotFound(err) || err == nil && isDeletedStub(body) {
+		if d.m.gone(err, &resp.Diagnostics) || err == nil && isDeletedStub(body) {
 			resp.Diagnostics.AddError("Not found", fmt.Sprintf("no %s found for id=%s", d.m.decl.TypeName, id))
 			return
 		}

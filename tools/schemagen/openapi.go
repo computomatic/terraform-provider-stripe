@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"slices"
 	"strings"
 )
 
@@ -153,4 +154,44 @@ func (s *Spec) responseSchema(op *Operation) (*Schema, error) {
 		return nil, fmt.Errorf("%s has no JSON 200 response", op.OperationID)
 	}
 	return s.resolve(m.Schema)
+}
+
+// flattenHash returns the create request with the hash held by property name spread into
+// its top level: the hash's fields and required list replace the property. The hash is the
+// object variant of the property's anyOf.
+func (s *Spec) flattenHash(create *Schema, name string) (*Schema, error) {
+	if create == nil || create.Properties[name] == nil {
+		return nil, fmt.Errorf("the create request has no property %q", name)
+	}
+	holder, err := s.resolve(create.Properties[name])
+	if err != nil {
+		return nil, err
+	}
+	var hash *Schema
+	for _, v := range slices.Concat(holder.AnyOf, holder.OneOf) {
+		sc, err := s.resolve(v)
+		if err != nil {
+			return nil, err
+		}
+		if len(sc.Properties) > 0 {
+			hash = sc
+			break
+		}
+	}
+	if hash == nil {
+		return nil, fmt.Errorf("property %q has no variant that is a hash", name)
+	}
+	flat := &Schema{Type: create.Type, Properties: map[string]*Schema{}, Required: slices.Concat(create.Required, hash.Required)}
+	for k, v := range create.Properties {
+		if k != name {
+			flat.Properties[k] = v
+		}
+	}
+	for k, v := range hash.Properties {
+		if flat.Properties[k] != nil {
+			return nil, fmt.Errorf("property %q of the hash %q is also a top-level property", k, name)
+		}
+		flat.Properties[k] = v
+	}
+	return flat, nil
 }

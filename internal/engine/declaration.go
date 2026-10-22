@@ -162,6 +162,18 @@ type Carry struct {
 	WhenPast bool
 }
 
+// CreateWrap says Stripe's create takes the object's fields as a hash under one key, such as
+// `external_account[routing_number]`, while the object's own fields are flat.
+type CreateWrap struct {
+	// Key is the request parameter that holds the hash.
+	Key string
+	// Fixed are the hash's fields that no attribute sets, such as `object`.
+	Fixed wire.Object
+	// Outside lists the create fields that stay beside the hash, such as `metadata`. Every
+	// other create field goes into it.
+	Outside []string
+}
+
 // Declaration is what the spec cannot say about a resource. It holds no CRUD logic.
 // Paths in the lists are dotted Stripe field names, such as `tax_details.tax_code`.
 type Declaration struct {
@@ -188,6 +200,14 @@ type Declaration struct {
 	// Singleton marks an object with no ID that Stripe serves from one path, such as the
 	// balance. It has a data source only: no `id` attribute, no lookups.
 	Singleton bool
+	// CreateWrap nests the create fields under one request parameter. The update request is flat.
+	CreateWrap *CreateWrap
+	// GoneOnForbidden is the error code of a 403 that Stripe answers for an object, or the
+	// parent it lives under, that no longer exists, such as `account_invalid` for a connected
+	// account. Read and destroy treat that answer as a 404, and a data source lookup by ID as
+	// not found, each with a warning, because the code does not tell a deleted object from one
+	// the key may no longer reach.
+	GoneOnForbidden string
 	// Parent names the path parameter, and the required attribute of that name, for an
 	// object addressed under a parent. Its import ID is `<parent_id>/<child_id>`.
 	Parent string
@@ -206,10 +226,12 @@ type Declaration struct {
 	// ArchiveOn is the refusal of DELETE after which DeleteOrArchive archives. Any other
 	// error fails the destroy.
 	ArchiveOn *Refusal
-	// KeepWhen names the object Stripe protects from the Archive strategy, such as the
-	// account's default portal configuration. When the archive update fails and a retrieve
-	// afterwards shows the object so, destroy warns, leaves the object as it is and removes
-	// it from state. Any other failure, and a failed retrieve, fails the destroy.
+	// KeepWhen names the object Stripe protects from the Archive or Delete strategy, such as the
+	// account's default portal configuration or the default bank account of a currency. When
+	// the archive or delete fails and a retrieve afterwards shows the object so, destroy warns,
+	// leaves the object as it is and removes it from state. Any other failure, and a failed
+	// retrieve, fails the destroy. For the Delete strategy the failure must also be a 400
+	// `invalid_request_error`, the refusal; a 403 or a server error fails the destroy.
 	KeepWhen *FieldIs
 	Expire   *ExpireAction
 	// RetainWarning is the sentence that tells a user what the Retain strategy leaves behind.
@@ -305,6 +327,15 @@ type Declaration struct {
 	// `amount` or `metric_tons`. A plan that sets none or several is refused before Stripe is
 	// called. A value unknown at plan time is left for apply.
 	ExactlyOneOf [][]string
+	// RefuseChange lists top-level fields that Stripe's update takes but that nothing proves it
+	// applies as asked, such as an account's `capabilities`. A plan that changes one on an
+	// existing object fails before Stripe is called, and the error says to revert, to ignore the
+	// change or to taint the object. The field is sent on create only. A plan that is a replace is not
+	// refused when a top-level create-only or replace-on field, the parent, the attached object,
+	// a currency options change or a fixed keys change forces it. compile refuses a declaration
+	// with a replace source below the top level, which is not checked. Nor is a value not fully
+	// known at plan time. `-replace` cannot be told from an update at plan time.
+	RefuseChange []string
 	// Sets lists scalar arrays that are sets of values.
 	Sets []string
 	// Rename maps a Stripe field path to the attribute name used instead, for names

@@ -25,10 +25,31 @@ import (
 // collection configured empty means the same as one left out.
 func (m *model) encodeCreate(plan basetypes.ObjectValue) (wire.Object, error) {
 	body, err := encodeObject(m.nodes, plan.Attributes(), func(n *node) bool { return n.Create })
-	if err != nil || !m.v2 {
-		return body, err
+	if err != nil {
+		return nil, err
 	}
-	return pruneEmpty(m.nodes, body), nil
+	if m.v2 {
+		body = pruneEmpty(m.nodes, body)
+	}
+	return m.wrapCreate(body), nil
+}
+
+// wrapCreate moves the create fields that belong in the declaration's hash under its key.
+func (m *model) wrapCreate(body wire.Object) wire.Object {
+	wrap := m.decl.CreateWrap
+	if wrap == nil {
+		return body
+	}
+	var outer wire.Object
+	inner := append(wire.Object(nil), wrap.Fixed...)
+	for _, f := range body {
+		if slices.Contains(wrap.Outside, f.Name) {
+			outer = append(outer, f)
+		} else {
+			inner = append(inner, f)
+		}
+	}
+	return append(outer, wire.Field{Name: wrap.Key, Value: inner})
 }
 
 // pruneEmpty drops, at every depth, the empty arrays and objects of fields that are not

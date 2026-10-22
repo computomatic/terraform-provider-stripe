@@ -1,12 +1,15 @@
 package engine
 
 import (
+	"errors"
 	"fmt"
+	"net/http"
 	"slices"
 	"sort"
 	"strings"
 
 	"github.com/hashicorp/terraform-plugin-framework/attr"
+	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 
 	"github.com/computomatic/terraform-provider-stripe/internal/fields"
@@ -179,6 +182,28 @@ func compile(decl Declaration, table []fields.Field) (*model, error) {
 			return nil, fmt.Errorf("%s: currency options need a top-level string field `currency` the response returns", decl.TypeName)
 		}
 	}
+	if w := decl.CreateWrap; w != nil {
+		if w.Key == "" {
+			return nil, fmt.Errorf("%s: create wrap has no key", decl.TypeName)
+		}
+		for _, name := range w.Outside {
+			if n, ok := m.top(name); !ok || !n.Create {
+				return nil, fmt.Errorf("%s: create wrap outside entry `%s` is not a top-level create field", decl.TypeName, name)
+			}
+		}
+	}
+	for _, name := range decl.RefuseChange {
+		if n, ok := m.top(name); !ok || !n.Optional {
+			return nil, fmt.Errorf("%s: refuse-change entry `%s` is not an optional top-level field", decl.TypeName, name)
+		}
+	}
+	if len(decl.RefuseChange) > 0 {
+		for _, n := range m.nodes {
+			if below := nestedReplaceSource(n.Kids); below != "" {
+				return nil, fmt.Errorf("%s: field `%s.%s` forces replacement, and RefuseChange supports only top-level replace sources", decl.TypeName, n.Name, below)
+			}
+		}
+	}
 	for _, group := range decl.ExactlyOneOf {
 		if len(group) < 2 {
 			return nil, fmt.Errorf("%s: an exactly-one-of group needs at least two fields", decl.TypeName)
@@ -339,6 +364,37 @@ func namespaceOf(decl Declaration) (bool, error) {
 // an update to send or an action endpoint to call.
 func (d Declaration) archivable() bool {
 	return d.Archive != nil && (d.Archive.Path != "" || d.Paths.Update != "")
+}
+
+// gone reports that err says the object does not exist: a 404, or the 403 the declaration
+// names. The 403 is also what Stripe answers when the key can no longer reach the object, so
+// it adds a warning to diags that says so.
+func (m *model) gone(err error, diags *diag.Diagnostics) bool {
+	if stripeapi.IsNotFound(err) {
+		return true
+	}
+	var apiErr *stripeapi.APIError
+	code := m.decl.GoneOnForbidden
+	if code == "" || !errors.As(err, &apiErr) || apiErr.Status != http.StatusForbidden || apiErr.Code != code {
+		return false
+	}
+	diags.AddWarning("Treated as gone: Stripe answered 403 "+code,
+		fmt.Sprintf("Stripe answered 403 `%s` for a %s. The account is either deleted or no longer reachable with this key (for example because access was revoked). Terraform treats it as gone.", code, m.decl.TypeName))
+	return true
+}
+
+// nestedReplaceSource returns the dotted path, below its parent, of the first node in kids
+// that forces replacement, or "".
+func nestedReplaceSource(kids []*node) string {
+	for _, k := range kids {
+		if k.Replace || k.ReplaceIfSet {
+			return k.Name
+		}
+		if below := nestedReplaceSource(k.Kids); below != "" {
+			return k.Name + "." + below
+		}
+	}
+	return ""
 }
 
 // top returns the top-level node with the given Stripe field name.
