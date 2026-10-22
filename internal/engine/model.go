@@ -11,6 +11,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/types"
+	"github.com/hashicorp/terraform-plugin-go/tftypes"
 
 	"github.com/computomatic/terraform-provider-stripe/internal/fields"
 	"github.com/computomatic/terraform-provider-stripe/internal/stripeapi"
@@ -209,9 +210,19 @@ func compile(decl Declaration, table []fields.Field) (*model, error) {
 			}
 		}
 	}
+	for source, filled := range decl.FilledFrom {
+		if n, _, ok := m.at(source); !ok || !n.Optional && !n.Required {
+			return nil, fmt.Errorf("%s: filled-from source `%s` is not a configurable field outside a list", decl.TypeName, source)
+		}
+		for _, f := range filled {
+			if n, _, ok := m.at(f); !ok || !n.Optional || !n.Computed {
+				return nil, fmt.Errorf("%s: filled-from entry `%s` is not a server-defaulted field outside a list", decl.TypeName, f)
+			}
+		}
+	}
 	for _, name := range decl.RefuseChange {
-		if n, ok := m.top(name); !ok || !n.Optional {
-			return nil, fmt.Errorf("%s: refuse-change entry `%s` is not an optional top-level field", decl.TypeName, name)
+		if n, ok := m.top(name); !ok || !n.Optional && !n.Required {
+			return nil, fmt.Errorf("%s: refuse-change entry `%s` is not a configurable top-level field", decl.TypeName, name)
 		}
 	}
 	if len(decl.RefuseChange) > 0 {
@@ -457,6 +468,30 @@ func (m *model) top(name string) (*node, bool) {
 		}
 	}
 	return nil, false
+}
+
+// at returns the node at a dotted Stripe field path and its attribute path, through nested
+// objects only.
+func (m *model) at(dotted string) (*node, *tftypes.AttributePath, bool) {
+	kids, p := m.nodes, tftypes.NewAttributePath()
+	var n *node
+	for i, name := range strings.Split(dotted, ".") {
+		if i > 0 && n.Shape != fields.Object {
+			return nil, nil, false
+		}
+		n = nil
+		for _, k := range kids {
+			if k.Name == name {
+				n = k
+			}
+		}
+		if n == nil {
+			return nil, nil, false
+		}
+		p = p.WithAttributeName(n.AttrName())
+		kids = n.Kids
+	}
+	return n, p, true
 }
 
 type compiler struct {

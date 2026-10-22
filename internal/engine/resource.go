@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+	"slices"
 	"strconv"
 	"strings"
 	"time"
@@ -121,6 +122,9 @@ func (r *Resource) ModifyPlan(ctx context.Context, req resource.ModifyPlanReques
 	if r.refuseChanges(ctx, req, resp) {
 		return
 	}
+	if r.forgetFilled(req, resp) {
+		return
+	}
 	configured := false
 	filled, err := tftypes.Transform(req.Plan.Raw, func(p *tftypes.AttributePath, v tftypes.Value) (tftypes.Value, error) {
 		if v.IsKnown() {
@@ -145,6 +149,51 @@ func (r *Resource) ModifyPlan(ctx context.Context, req resource.ModifyPlanReques
 	if err == nil && !configured && filled.Equal(req.State.Raw) {
 		resp.Plan.Raw = req.State.Raw
 	}
+}
+
+// forgetFilled marks unknown in the plan the fields Stripe fills in from a FilledFrom source
+// whose planned value differs from the state's, where the configuration leaves them unset, and
+// reports whether it did. The state's values belong to the old value of the source.
+func (r *Resource) forgetFilled(req resource.ModifyPlanRequest, resp *resource.ModifyPlanResponse) bool {
+	var forget []*tftypes.AttributePath
+	for source, filled := range r.m.decl.FilledFrom {
+		_, p, _ := r.m.at(source)
+		if valueAt(resp.Plan.Raw, p).Equal(valueAt(req.State.Raw, p)) {
+			continue
+		}
+		for _, f := range filled {
+			_, fp, _ := r.m.at(f)
+			if v := valueAt(req.Config.Raw, fp); !v.IsKnown() || v.IsNull() {
+				forget = append(forget, fp)
+			}
+		}
+	}
+	if len(forget) == 0 {
+		return false
+	}
+	plan, err := tftypes.Transform(resp.Plan.Raw, func(p *tftypes.AttributePath, v tftypes.Value) (tftypes.Value, error) {
+		if slices.ContainsFunc(forget, p.Equal) {
+			return tftypes.NewValue(v.Type(), tftypes.UnknownValue), nil
+		}
+		return v, nil
+	})
+	if err != nil {
+		resp.Diagnostics.AddError("Planning the filled-in fields", err.Error())
+		return true
+	}
+	resp.Plan.Raw = plan
+	return true
+}
+
+// valueAt is the value at p, or a null one when p does not reach a value, such as below a
+// null object.
+func valueAt(root tftypes.Value, p *tftypes.AttributePath) tftypes.Value {
+	if v, _, err := tftypes.WalkAttributePath(root, p); err == nil {
+		if tv, ok := v.(tftypes.Value); ok {
+			return tv
+		}
+	}
+	return tftypes.NewValue(tftypes.DynamicPseudoType, nil)
 }
 
 // refuseGoingBack fails the plan that moves the declared advance field to an earlier value,

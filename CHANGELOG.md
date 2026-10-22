@@ -10,6 +10,8 @@
 - New data sources: `stripe_billing_credit_balance_transaction`, `stripe_entitlements_active_entitlement`, `stripe_invoice_rendering_template`, `stripe_tax_transaction`, `stripe_tax_location`, `stripe_reporting_report_run`, `stripe_core_event` (a `/v2` event), `stripe_identity_verification_report`, `stripe_payment_record` and `stripe_commerce_product_catalog_import`, each looked up by `id`, and `stripe_payment_intent_amount_details_line_item` and `stripe_tax_transaction_line_item`, which find a line item by its `id` among the items of its `payment_intent` or `transaction`.
 - New data source: `stripe_billing_meter_event_summary`, the usage a meter recorded for a customer over a window, looked up by `meter`, `customer`, `start_time` and `end_time`, because Stripe lists summaries only by those.
 - New data source: `stripe_apps_secret`, a Secret Store secret looked up by `name` and `scope`. Its `payload` is sensitive. A verification report's identity data and a catalog import's upload and error file URLs are sensitive too.
+- The rest of Issuing, on a connected account. New resources, each with a data source: `stripe_issuing_personalization_design` and `stripe_issuing_dispute`. A design takes its card logo as the ID of a file uploaded with the purpose `issuing_logo`, and a plan that changes its `physical_bundle`, `card_logo` or `carrier_text` fails. Setting a dispute's `status` to `submitted` submits it. Stripe deletes neither, so destroying one leaves it on the connected account and warns, and a destroyed design keeps its `lookup_key`.
+- New data sources: `stripe_issuing_physical_bundle`, `stripe_issuing_authorization`, `stripe_issuing_transaction` and `stripe_issuing_token`.
 
 ## 0.1.0 (2026-10-22)
 

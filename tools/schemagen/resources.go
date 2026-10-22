@@ -145,6 +145,20 @@ var Resources = []Resource{
 	{Package: "treasury_inbound_transfer", ReadPath: "/v1/treasury/inbound_transfers/{id}"},
 	{Package: "treasury_outbound_transfer", ReadPath: "/v1/treasury/outbound_transfers/{outbound_transfer}"},
 	{Package: "treasury_outbound_payment", ReadPath: "/v1/treasury/outbound_payments/{id}"},
+	// The rest of Issuing. A design's `transfer_lookup_key` is an instruction, not a field of the
+	// design, and nothing proves it; nothing proves setting a design's `preferences` either, so
+	// they are read-only. A dispute's `treasury` names the received debit Stripe disputes in
+	// place of a transaction, which nothing proves, and Stripe fills it in on a Treasury-backed
+	// card, so it is read-only too, and the dispute needs its `transaction`. Stripe refuses a
+	// dispute without `evidence` and evidence without its `reason` (suite: "Issuing disputes
+	// (first run)"), although the spec leaves both optional. Authorizations, transactions,
+	// physical bundles and tokens are read-only objects.
+	{Package: "issuing_personalization_design", CreatePath: "/v1/issuing/personalization_designs", UpdatePath: "/v1/issuing/personalization_designs/{personalization_design}", Omit: []string{"transfer_lookup_key"}, ReadOnly: []string{"preferences"}},
+	{Package: "issuing_dispute", CreatePath: "/v1/issuing/disputes", UpdatePath: "/v1/issuing/disputes/{dispute}", ReadOnly: []string{"treasury"}, Require: []string{"transaction", "evidence", "evidence.reason"}},
+	{Package: "issuing_physical_bundle", ReadPath: "/v1/issuing/physical_bundles/{physical_bundle}"},
+	{Package: "issuing_authorization", ReadPath: "/v1/issuing/authorizations/{authorization}"},
+	{Package: "issuing_transaction", ReadPath: "/v1/issuing/transactions/{transaction}"},
+	{Package: "issuing_token", ReadPath: "/v1/issuing/tokens/{token}"},
 	{Package: "financial_connections_account", ReadPath: "/v1/financial_connections/accounts/{account}"},
 	{Package: "financial_connections_session", ReadPath: "/v1/financial_connections/sessions/{session}"},
 	// Wave 8 batches e, f, h and i: read-only objects. A meter event summary, a payment intent's
