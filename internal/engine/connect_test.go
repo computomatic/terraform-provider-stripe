@@ -331,8 +331,32 @@ func TestRefuseChangeFailsThePlan(t *testing.T) {
 	}
 }
 
-func TestRefuseChangeMustNameAnOptionalField(t *testing.T) {
-	for name, field := range map[string]string{"unknown": "nothing", "required": "name", "output only": "created"} {
+// A required field, such as a personalization design's `physical_bundle`, is refused as an
+// optional one is.
+func TestRefuseChangeTakesARequiredField(t *testing.T) {
+	decl := fixtureDeclaration()
+	decl.RefuseChange = []string{"name"}
+	r := configured(t, decl, refuseTable(), newStub())
+	state, _ := r.create(t, createPlan(r))
+	attrs := map[string]attr.Value{}
+	for k, v := range state.Attributes() {
+		attrs[k] = v
+	}
+	attrs["name"] = types.StringValue("Renamed")
+	plan := r.fill(attrs)
+	resp := &resource.ModifyPlanResponse{Plan: tfsdk.Plan{Schema: r.schema, Raw: raw(t, plan)}}
+	r.ModifyPlan(context.Background(), resource.ModifyPlanRequest{
+		Config: tfsdk.Config{Schema: r.schema, Raw: raw(t, plan)},
+		Plan:   tfsdk.Plan{Schema: r.schema, Raw: raw(t, plan)},
+		State:  tfsdk.State{Schema: r.schema, Raw: raw(t, state)},
+	}, resp)
+	if !resp.Diagnostics.HasError() || !strings.Contains(resp.Diagnostics.Errors()[0].Summary(), "`name`") {
+		t.Errorf("a changed required value must fail the plan: %v", resp.Diagnostics)
+	}
+}
+
+func TestRefuseChangeMustNameAConfigurableField(t *testing.T) {
+	for name, field := range map[string]string{"unknown": "nothing", "output only": "created", "nested": "address.line1"} {
 		decl := fixtureDeclaration()
 		decl.RefuseChange = []string{field}
 		if _, err := NewResource(decl, fixtureTable()); err == nil {

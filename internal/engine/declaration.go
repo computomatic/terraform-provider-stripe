@@ -293,6 +293,12 @@ type Declaration struct {
 	// response schema is nullable, such as `unit_amount_decimal` from `unit_amount`. They are
 	// Optional and Computed.
 	ServerDefaulted []string
+	// FilledFrom maps a field, by dotted path, to the server-defaulted fields Stripe fills in
+	// according to its value, such as a dispute's `evidence.reason` to the evidence hash of each
+	// reason. When the planned value differs from the state's, each of those fields that the
+	// configuration leaves unset is unknown in the plan instead of kept from the state, because
+	// Stripe answers with the fields of the new value. No path may cross a list.
+	FilledFrom map[string][]string
 	// NotServerDefaulted prunes fields the generator marked as server-defaulted.
 	NotServerDefaulted []string
 	// Sensitive marks attributes Sensitive and masks them in logs.
@@ -346,10 +352,10 @@ type Declaration struct {
 	// `amount` or `metric_tons`. A plan that sets none or several is refused before Stripe is
 	// called. A value unknown at plan time is left for apply.
 	ExactlyOneOf [][]string
-	// RefuseChange lists top-level fields that Stripe's update takes but that nothing proves it
-	// applies as asked, such as an account's `capabilities`. A plan that changes one on an
-	// existing object fails before Stripe is called, and the error says to revert, to ignore the
-	// change or to taint the object. The field is sent on create only. A plan that is a replace is not
+	// RefuseChange lists top-level fields, optional or required, that Stripe's update takes but
+	// that nothing proves it applies as asked, such as an account's `capabilities`. A plan that
+	// changes one on an existing object fails before Stripe is called, and the error says to
+	// revert, to ignore the change or to taint the object. The field is sent on create only. A plan that is a replace is not
 	// refused when a top-level create-only or replace-on field, the parent, the attached object,
 	// a currency options change or a fixed keys change forces it. compile refuses a declaration
 	// with a replace source below the top level, which is not checked. Nor is a value not fully

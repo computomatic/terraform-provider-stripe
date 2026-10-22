@@ -62,8 +62,14 @@ import (
 	"github.com/computomatic/terraform-provider-stripe/internal/resources/invoice_payment"
 	"github.com/computomatic/terraform-provider-stripe/internal/resources/invoice_rendering_template"
 	"github.com/computomatic/terraform-provider-stripe/internal/resources/invoiceitem"
+	"github.com/computomatic/terraform-provider-stripe/internal/resources/issuing_authorization"
 	"github.com/computomatic/terraform-provider-stripe/internal/resources/issuing_card"
 	"github.com/computomatic/terraform-provider-stripe/internal/resources/issuing_cardholder"
+	"github.com/computomatic/terraform-provider-stripe/internal/resources/issuing_dispute"
+	"github.com/computomatic/terraform-provider-stripe/internal/resources/issuing_personalization_design"
+	"github.com/computomatic/terraform-provider-stripe/internal/resources/issuing_physical_bundle"
+	"github.com/computomatic/terraform-provider-stripe/internal/resources/issuing_token"
+	"github.com/computomatic/terraform-provider-stripe/internal/resources/issuing_transaction"
 	"github.com/computomatic/terraform-provider-stripe/internal/resources/mandate"
 	"github.com/computomatic/terraform-provider-stripe/internal/resources/payment_intent"
 	"github.com/computomatic/terraform-provider-stripe/internal/resources/payment_intent_amount_details_line_item"
@@ -259,6 +265,8 @@ func (p *stripeProvider) Resources(_ context.Context) []func() resource.Resource
 		must(test_helpers_test_clock.NewResource()),
 		must(issuing_card.NewResource()),
 		must(issuing_cardholder.NewResource()),
+		must(issuing_personalization_design.NewResource()),
+		must(issuing_dispute.NewResource()),
 		must(treasury_financial_account.NewResource()),
 	}
 }
@@ -331,6 +339,12 @@ func (p *stripeProvider) DataSources(_ context.Context) []func() datasource.Data
 		must(payout.NewDataSource()),
 		must(issuing_card.NewDataSource()),
 		must(issuing_cardholder.NewDataSource()),
+		must(issuing_personalization_design.NewDataSource()),
+		must(issuing_dispute.NewDataSource()),
+		must(issuing_physical_bundle.NewDataSource()),
+		must(issuing_authorization.NewDataSource()),
+		must(issuing_transaction.NewDataSource()),
+		must(issuing_token.NewDataSource()),
 		must(treasury_financial_account.NewDataSource()),
 		must(treasury_transaction.NewDataSource()),
 		must(treasury_transaction_entry.NewDataSource()),
