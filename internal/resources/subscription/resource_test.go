@@ -265,7 +265,6 @@ func TestAccSubscription_priceDataItems(t *testing.T) {
 	var first string
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: tfacc.ProviderFactories,
-		ErrorCheck:               tfacc.SkipWhenFakeLacks(t, "price_data"),
 		Steps: []resource.TestStep{
 			{Config: subscriptionConfig(acct, oneItem, "")},
 			{

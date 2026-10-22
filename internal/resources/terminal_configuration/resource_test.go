@@ -102,7 +102,6 @@ func TestAccTerminalConfiguration_wifi(t *testing.T) {
 `)
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: tfacc.ProviderFactories,
-		ErrorCheck:               tfacc.SkipWhenFakeLacks(t, "wifi"),
 		Steps: []resource.TestStep{
 			{Config: cfg, Check: resource.TestCheckResourceAttr(address, "wifi.personal_psk.ssid", "store")},
 			{Config: cfg, PlanOnly: true},
@@ -139,13 +138,48 @@ func TestAccTerminalConfiguration_update(t *testing.T) {
 	})
 }
 
-// Removing an object from the configuration unsets it. The fake does not prove clearing
-// tipping yet (fake_unproven), so this test skips until it does. Any other error fails it.
+// Stripe replaces the whole tipping object on update and drops the currencies the request
+// leaves out, so a change to one currency must restate the other.
+func TestAccTerminalConfiguration_tippingKeepsOtherCurrencies(t *testing.T) {
+	acct := acctest.NewAccount(t)
+	tippingOf := func(usdPercentages string) string {
+		return fmt.Sprintf(`
+  tipping = {
+    usd = {
+      percentages         = %s
+      fixed_amounts       = [100, 200, 300]
+      smart_tip_threshold = 1000
+    }
+    eur = {
+      percentages         = [5, 10, 15]
+      fixed_amounts       = [50, 100, 150]
+      smart_tip_threshold = 500
+    }
+  }
+`, usdPercentages)
+	}
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: tfacc.ProviderFactories,
+		Steps: []resource.TestStep{
+			{Config: configurationConfig(acct, "Store readers", tippingOf("[10, 15, 20]"))},
+			{
+				Config: configurationConfig(acct, "Store readers", tippingOf("[12, 18, 25]")),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr(address, "tipping.usd.percentages.0", "12"),
+					resource.TestCheckResourceAttr(address, "tipping.eur.percentages.#", "3"),
+					resource.TestCheckResourceAttr(address, "tipping.eur.smart_tip_threshold", "500"),
+				),
+			},
+			{Config: configurationConfig(acct, "Store readers", tippingOf("[12, 18, 25]")), PlanOnly: true},
+		},
+	})
+}
+
+// Removing an object from the configuration unsets it.
 func TestAccTerminalConfiguration_unsetTipping(t *testing.T) {
 	acct := acctest.NewAccount(t)
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: tfacc.ProviderFactories,
-		ErrorCheck:               tfacc.SkipWhenFakeLacks(t, "clearing tipping"),
 		Steps: []resource.TestStep{
 			{Config: configurationConfig(acct, "Store readers", tipping), Check: resource.TestCheckResourceAttr(address, "tipping.usd.smart_tip_threshold", "1000")},
 			{Config: configurationConfig(acct, "Store readers", ""), Check: resource.TestCheckNoResourceAttr(address, "tipping.usd.smart_tip_threshold")},
