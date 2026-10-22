@@ -55,7 +55,39 @@ func layoutProblems(root, name string) []string {
 		}
 	}
 
-	return append(problems, missingTests(dir, name, requiredTests)...)
+	problems = append(problems, missingTests(dir, name, requiredTests)...)
+	return append(problems, missingImportBlock(dir, name)...)
+}
+
+// missingImportBlock reports a resource whose `import` test never uses
+// `resource.ImportBlockWithID`, so the `import` block the docs show is not proven (docs ADR D5).
+// A resource without an import test is already reported by missingTests.
+func missingImportBlock(dir, name string) []string {
+	want := "TestAcc" + pascal(name) + "_import"
+	files, _ := filepath.Glob(filepath.Join(dir, "*_test.go"))
+	for _, file := range files {
+		parsed, err := parser.ParseFile(token.NewFileSet(), file, nil, 0)
+		if err != nil {
+			continue
+		}
+		for _, decl := range parsed.Decls {
+			fn, ok := decl.(*ast.FuncDecl)
+			if !ok || fn.Recv != nil || fn.Name.Name != want {
+				continue
+			}
+			found := false
+			ast.Inspect(fn.Body, func(n ast.Node) bool {
+				if sel, ok := n.(*ast.SelectorExpr); ok && sel.Sel.Name == "ImportBlockWithID" {
+					found = true
+				}
+				return !found
+			})
+			if !found {
+				return []string{fmt.Sprintf("%s: %s has no ImportStateKind: resource.ImportBlockWithID step", name, want)}
+			}
+		}
+	}
+	return nil
 }
 
 // dataSourceOnlyProblems checks a directory with a data source declaration and no
@@ -125,7 +157,11 @@ func TestLayoutCheckFindsGaps(t *testing.T) {
 	var tests strings.Builder
 	tests.WriteString("package billing_meter\n")
 	for _, suffix := range requiredTests {
-		tests.WriteString("func TestAccBillingMeter_" + suffix + "() {}\n")
+		body := "{}"
+		if suffix == "import" {
+			body = "{ _ = resource.ImportBlockWithID }"
+		}
+		tests.WriteString("func TestAccBillingMeter_" + suffix + "() " + body + "\n")
 	}
 	write("internal/resources/billing_meter/resource_test.go", tests.String())
 	write("examples/resources/stripe_billing_meter/resource.tf", "")
@@ -137,6 +173,18 @@ func TestLayoutCheckFindsGaps(t *testing.T) {
 	write("internal/resources/billing_meter/datasource.go", "package billing_meter\n")
 	if got := layoutProblems(root, "billing_meter"); len(got) != 1 {
 		t.Fatalf("a data source needs its example: %v", got)
+	}
+
+	write("internal/resources/billing_meter/datasource.go", "package billing_meter\n")
+	write("examples/data-sources/stripe_billing_meter/data-source.tf", "")
+	tests.Reset()
+	tests.WriteString("package billing_meter\n")
+	for _, suffix := range requiredTests {
+		tests.WriteString("func TestAccBillingMeter_" + suffix + "() {}\n")
+	}
+	write("internal/resources/billing_meter/resource_test.go", tests.String())
+	if got := layoutProblems(root, "billing_meter"); len(got) != 1 {
+		t.Fatalf("an import test without ImportBlockWithID is one problem: %v", got)
 	}
 }
 
