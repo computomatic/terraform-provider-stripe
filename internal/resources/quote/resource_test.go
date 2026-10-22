@@ -128,7 +128,6 @@ resource "stripe_quote" "source_b" {
 }
 
 resource "stripe_quote" "revision" {
-  customer = stripe_customer.test.id
   from_quote = {
     quote = stripe_quote.source_%s.id
   }
@@ -138,9 +137,7 @@ resource "stripe_quote" "revision" {
 	const revision = "stripe_quote.revision"
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: tfacc.ProviderFactories,
-		ErrorCheck: func(err error) error {
-			return tfacc.SkipWhenFakeLacks(t, "from_quote")(tfacc.SkipWhenFakeLacks(t, "line_items")(err))
-		},
+		ErrorCheck:               tfacc.SkipWhenFakeLacks(t, "line_items"),
 		Steps: []resource.TestStep{
 			{
 				Config: cfg("a"),

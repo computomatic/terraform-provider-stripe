@@ -122,15 +122,12 @@ func TestAccClimateOrder_defaultBeneficiary(t *testing.T) {
 	})
 }
 
-// An order can be sized by money instead of tons. The suite proves the refusals of an
-// `amount` ("create errors") but no order that Stripe accepts, so the fake answers
-// `fake_unproven` and the test waits for it.
+// An order can be sized by money instead of tons.
 func TestAccClimateOrder_createByAmount(t *testing.T) {
 	acct := fundedAccount(t)
 	cfg := orderConfig(acct, product(t, acct), "  amount = 60000\n")
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: tfacc.ProviderFactories,
-		ErrorCheck:               tfacc.SkipWhenFakeLacks(t, "amount"),
 		Steps: []resource.TestStep{
 			{
 				Config: cfg,

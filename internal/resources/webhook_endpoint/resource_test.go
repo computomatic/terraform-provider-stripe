@@ -120,15 +120,12 @@ func TestAccWebhookEndpoint_update(t *testing.T) {
 	})
 }
 
-// api_version is accepted on create only, so changing it replaces the endpoint. The fake
-// serves neither create-only parameter (api_version, connect) yet, so the test skips on
-// its fake_not_implemented reply and runs once the fake serves api_version.
+// api_version is accepted on create only, so changing it replaces the endpoint.
 func TestAccWebhookEndpoint_replace(t *testing.T) {
 	acct := acctest.NewAccount(t)
 	var first string
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: tfacc.ProviderFactories,
-		ErrorCheck:               tfacc.SkipWhenFakeLacks(t, "api_version"),
 		Steps: []resource.TestStep{
 			{Config: endpointConfig(acct, basic+"  api_version = \"2020-08-27\"\n"), Check: idOf(&first)},
 			{

@@ -97,9 +97,7 @@ func TestAccCustomer_update(t *testing.T) {
 	})
 }
 
-// tax_id_data is accepted on create only, so changing it replaces the customer. The fake
-// serves no create-only customer parameter yet, so the test skips on its
-// fake_not_implemented reply and runs once the fake serves tax_id_data.
+// tax_id_data is accepted on create only, so changing it replaces the customer.
 func TestAccCustomer_replace(t *testing.T) {
 	acct := acctest.NewAccount(t)
 	var first string
@@ -108,7 +106,6 @@ func TestAccCustomer_replace(t *testing.T) {
 	}
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: tfacc.ProviderFactories,
-		ErrorCheck:               tfacc.SkipWhenFakeLacks(t, "tax_id_data"),
 		Steps: []resource.TestStep{
 			{Config: customerConfig(acct, taxID("DE123456789")), Check: idOf(&first)},
 			{
