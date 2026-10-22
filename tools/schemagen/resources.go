@@ -104,4 +104,21 @@ var Resources = []Resource{
 	{Package: "tax_id", CreatePath: "/v1/tax_ids", ReadOnly: []string{"owner.account", "owner.customer_account"}},
 	{Package: "customer_balance_transaction", CreatePath: "/v1/customers/{customer}/balance_transactions", UpdatePath: "/v1/customers/{customer}/balance_transactions/{transaction}", Omit: []string{"customer"}},
 	{Package: "customer_cash_balance_transaction", ReadPath: "/v1/customers/{customer}/cash_balance_transactions/{transaction}", Omit: []string{"customer"}},
+	// Wave 8 batch b. Test clocks advance by an action endpoint, so the table sees `frozen_time`
+	// as create-only and the declaration moves it. Payouts, top-ups, early fraud warnings and
+	// reviews are read-only: the suite cannot create them on its account. An invoice payment is
+	// retrieved by its own ID.
+	{Package: "test_helpers_test_clock", CreatePath: "/v1/test_helpers/test_clocks", Omit: []string{"customer"}},
+	{Package: "payout", ReadPath: "/v1/payouts/{payout}"},
+	{Package: "topup", ReadPath: "/v1/topups/{topup}"},
+	{Package: "radar_early_fraud_warning", ReadPath: "/v1/radar/early_fraud_warnings/{early_fraud_warning}"},
+	{Package: "review", ReadPath: "/v1/reviews/{review}"},
+	{Package: "invoice_payment", ReadPath: "/v1/invoice_payments/{invoice_payment}"},
+	// Wave 8 batch c. Stripe has no retrieve for a line, only the list under its invoice,
+	// credit note or quote, so the table is the list element's. The invoice line's `invoice` is
+	// the parent the engine adds.
+	{Package: "invoice_line", ListPath: "/v1/invoices/{invoice}/lines", Omit: []string{"invoice"}},
+	{Package: "credit_note_line", ListPath: "/v1/credit_notes/{credit_note}/lines"},
+	{Package: "quote_line_item", ListPath: "/v1/quotes/{quote}/line_items"},
+	{Package: "quote_computed_upfront_line_item", ListPath: "/v1/quotes/{quote}/computed_upfront_line_items"},
 }

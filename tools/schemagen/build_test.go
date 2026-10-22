@@ -196,6 +196,7 @@ const readOnlySpec = `{
   "info": {"version": "v"},
   "paths": {
     "/v1/gauge": {"get": {"operationId": "GetGauge", "responses": {"200": {"content": {"application/json": {"schema": {"$ref": "#/components/schemas/gauge"}}}}}}},
+    "/v1/gauges/{gauge}/readings": {"get": {"operationId": "GetGaugeReadings", "responses": {"200": {"content": {"application/json": {"schema": {"type": "object", "properties": {"data": {"type": "array", "items": {"$ref": "#/components/schemas/gauge"}}, "has_more": {"type": "boolean"}}}}}}}}},
     "/v1/gauges": {"post": {
       "operationId": "PostGauges",
       "requestBody": {"content": {"application/x-www-form-urlencoded": {"schema": {"type": "object", "properties": {
@@ -254,6 +255,26 @@ func TestReadPathIntMapUnionAndOmit(t *testing.T) {
 	// A reference sent as an ID and returned as the whole object is a string.
 	if f := lookup(t, table, "owner"); f.Shape != fields.String || !f.Create || !f.Response || len(f.Fields) != 0 {
 		t.Errorf("owner: %+v", f)
+	}
+}
+
+func TestListPathTakesTheElementOfTheListedData(t *testing.T) {
+	spec, err := ParseSpec([]byte(readOnlySpec))
+	if err != nil {
+		t.Fatal(err)
+	}
+	table, err := Build(spec, Resource{Package: "reading", ListPath: "/v1/gauges/{gauge}/readings", Omit: []string{"sources"}})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got := lookup(t, table, "by_currency").Shape; got != fields.IntMap {
+		t.Errorf("the table is the list element's, a map of integers is an IntMap, got %d", got)
+	}
+	if _, ok := fields.Find(table, "data"); ok {
+		t.Error("the list envelope must not be in the table")
+	}
+	if _, err := Build(spec, Resource{Package: "gauge", ListPath: "/v1/gauge", Omit: []string{"sources"}}); err == nil {
+		t.Error("a list path whose response has no data array must fail")
 	}
 }
 

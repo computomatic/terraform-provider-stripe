@@ -141,6 +141,22 @@ type Transition struct {
 	Path string
 }
 
+// AdvanceAction moves a required time field forward in place through an action endpoint, as a
+// test clock's `frozen_time` is advanced. Stripe takes the field on create only, so without
+// the action a change would replace the object. Going backwards is refused at plan time,
+// because Stripe refuses it.
+type AdvanceAction struct {
+	// Field is the top-level Int field, which the table must mark required on create.
+	Field string
+	// Path is the action endpoint, such as `/v1/test_helpers/test_clocks/{id}/advance`. It is
+	// sent the new value of Field and answers at once, before the object has moved.
+	Path string
+	// StatusField and ReadyValue name the status that says the object has moved. Update waits
+	// for it, within the update timeout.
+	StatusField string
+	ReadyValue  string
+}
+
 // Lookup is a data source lookup key: a field Stripe documents as unique per account and
 // that the list endpoint filters by.
 type Lookup struct {
@@ -236,6 +252,9 @@ type Declaration struct {
 	Expire   *ExpireAction
 	// RetainWarning is the sentence that tells a user what the Retain strategy leaves behind.
 	RetainWarning string
+	// Advance makes a change to a create-only time field an update that moves the object
+	// forward, and a change backwards a plan error.
+	Advance *AdvanceAction
 	// Transitions make a response-only top-level string field, such as `status`, Optional and
 	// Computed: a configured value that differs from the object's calls the action endpoint
 	// that sets it, after create and on update. A value no transition sets is refused at
@@ -341,6 +360,10 @@ type Declaration struct {
 	// Rename maps a Stripe field path to the attribute name used instead, for names
 	// Terraform reserves.
 	Rename map[string]string
+	// FindInList says Stripe has no retrieve for the object, only a list under its Parent, such
+	// as an invoice's lines. A data source finds it by `id` among the parent's list, following
+	// pages. There is no resource and no retrieve path.
+	FindInList bool
 	// Lookups are the data source lookup keys besides `id`.
 	Lookups []Lookup
 }

@@ -83,7 +83,11 @@ func compile(decl Declaration, table []fields.Field) (*model, error) {
 	if decl.TypeName == "" {
 		return nil, fmt.Errorf("declaration has no type name")
 	}
-	if decl.Paths.Retrieve == "" {
+	if decl.FindInList {
+		if decl.Paths.Retrieve != "" || decl.Paths.List == "" || decl.Parent == "" || decl.Delete != NoDelete || len(decl.Lookups) > 0 {
+			return nil, fmt.Errorf("%s: an object found in a list has a parent, a list path, no retrieve path, no lookups and no delete strategy", decl.TypeName)
+		}
+	} else if decl.Paths.Retrieve == "" {
 		return nil, fmt.Errorf("%s: declaration has no retrieve path", decl.TypeName)
 	}
 	v2, err := namespaceOf(decl)
@@ -152,6 +156,15 @@ func compile(decl Declaration, table []fields.Field) (*model, error) {
 		}
 		if n.AttrName() == "timeouts" || n.AttrName() == decl.Parent || decl.Attach != "" && n.AttrName() == decl.Attach {
 			return nil, fmt.Errorf("%s: field `%s` collides with a provider-added attribute; rename it", decl.TypeName, n.AttrName())
+		}
+	}
+	if a := decl.Advance; a != nil {
+		n, ok := m.top(a.Field)
+		if !ok || n.Shape != fields.Int || !n.Required || a.Path == "" || a.StatusField == "" || a.ReadyValue == "" || decl.Delete == NoDelete {
+			return nil, fmt.Errorf("%s: the advance action needs a required top-level integer field `%s` on a resource, an action path and a ready status", decl.TypeName, a.Field)
+		}
+		if st, ok := m.top(a.StatusField); !ok || st.Shape != fields.String || !st.Response {
+			return nil, fmt.Errorf("%s: advance status `%s` is not a top-level string field the response returns", decl.TypeName, a.StatusField)
 		}
 	}
 	if err := m.openTransitions(); err != nil {
@@ -524,7 +537,7 @@ func (c *compiler) build(table []fields.Field, prefix string, top, parentOutput,
 		// when the configuration sets a value that differs from the state's.
 		serverFilledInList := inList && n.Computed && f.CreateOnly() && !replaceOn
 		n.ReplaceIfSet = serverFilledInList && !parentReplace && !nestedShape(f.Shape)
-		n.Replace = (f.CreateOnly() || replaceOn) && !parentReplace && !n.computedOnly() && !serverFilledInList
+		n.Replace = (f.CreateOnly() || replaceOn) && !parentReplace && !n.computedOnly() && !serverFilledInList && !(top && c.decl.Advance != nil && f.Name == c.decl.Advance.Field)
 		// Below a field that forces replacement nothing changes in place, so a computed
 		// value there stays as it is: an unknown one would read as a change of the parent.
 		// Terraform proposes null for an unset nested attribute even when it is Computed

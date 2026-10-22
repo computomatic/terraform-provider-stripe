@@ -3,6 +3,8 @@
 - Connect: the `stripe_account` resource and data source for connected accounts, the `stripe_account_external_account` resource and data source for their bank accounts, and the `stripe_account_capability` data source.
 - New resources, each with a data source: `stripe_billing_alert`, `stripe_tax_id` and `stripe_customer_balance_transaction`. A tax ID is created through `/v1/tax_ids` with an `owner` of `self` or a customer. A customer balance transaction cannot be deleted, so destroying it only removes it from state and warns that it stays on the customer's balance.
 - New data source: `stripe_customer_cash_balance_transaction`.
+- New resource with a data source: `stripe_test_helpers_test_clock`. Setting a later `frozen_time` advances the clock in place and waits until it is ready; setting an earlier one fails at plan time. Destroying a clock deletes the customers on it and cancels their subscriptions.
+- New data sources: `stripe_payout`, `stripe_topup`, `stripe_radar_early_fraud_warning`, `stripe_review` and `stripe_invoice_payment`, and `stripe_invoice_line`, `stripe_credit_note_line`, `stripe_quote_line_item` and `stripe_quote_computed_upfront_line_item`. Stripe has no retrieve for a line, so the line data sources find a line by its `id` among the lines of its parent, which they take as `invoice`, `credit_note` or `quote`.
 
 ## 0.1.0 (2026-10-22)
 

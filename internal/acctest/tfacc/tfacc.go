@@ -5,6 +5,7 @@
 package tfacc
 
 import (
+	"errors"
 	"strings"
 	"testing"
 
@@ -53,5 +54,21 @@ func SkipWhenFakeLacks(t *testing.T, needle string) func(error) error {
 			t.Skipf("the fake does not serve %s yet: %v", needle, err)
 		}
 		return err
+	}
+}
+
+// SkipUnlessFakeAnswers skips the test when the fake replies `fake_not_implemented` or
+// `fake_unproven` to a GET of path, for a test whose step expects Stripe's own answer to it
+// (an ErrorCheck cannot skip a step that has an ExpectError). Any other outcome, an error from
+// Stripe included, lets the test run.
+func SkipUnlessFakeAnswers(t *testing.T, c acctest.Config, path string) {
+	t.Helper()
+	if acctest.Smoke() {
+		return
+	}
+	_, err := Client(c).Do(t.Context(), stripeapi.Request{Method: "GET", Path: path})
+	var apiErr *stripeapi.APIError
+	if errors.As(err, &apiErr) && (apiErr.Code == "fake_not_implemented" || apiErr.Code == "fake_unproven") {
+		t.Skipf("the fake does not serve GET %s yet: %v", path, err)
 	}
 }

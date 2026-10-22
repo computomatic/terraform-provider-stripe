@@ -156,6 +156,15 @@ func (s *Spec) responseSchema(op *Operation) (*Schema, error) {
 	return s.resolve(m.Schema)
 }
 
+// listElement returns the resolved schema of the elements of a list response's `data` array.
+func (s *Spec) listElement(list *Schema) (*Schema, error) {
+	data := prop(list, "data")
+	if data == nil || data.Items == nil {
+		return nil, fmt.Errorf("the response is not a list: it has no `data` array")
+	}
+	return s.resolve(data.Items)
+}
+
 // flattenHash returns the create request with the hash held by property name spread into
 // its top level: the hash's fields and required list replace the property. The hash is the
 // object variant of the property's anyOf.
