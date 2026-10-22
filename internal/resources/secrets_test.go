@@ -14,7 +14,10 @@ import (
 	"github.com/hashicorp/terraform-plugin-go/tftypes"
 	"github.com/hashicorp/terraform-plugin-log/tflogtest"
 
+	"github.com/computomatic/terraform-provider-stripe/internal/resources/apps_secret"
 	"github.com/computomatic/terraform-provider-stripe/internal/resources/checkout_session"
+	"github.com/computomatic/terraform-provider-stripe/internal/resources/commerce_product_catalog_import"
+	"github.com/computomatic/terraform-provider-stripe/internal/resources/identity_verification_report"
 	"github.com/computomatic/terraform-provider-stripe/internal/resources/identity_verification_session"
 	"github.com/computomatic/terraform-provider-stripe/internal/resources/invoice"
 	"github.com/computomatic/terraform-provider-stripe/internal/resources/payment_intent"
@@ -23,22 +26,31 @@ import (
 
 const secret = "pi_1_secret_SHOULD_NOT_BE_LOGGED"
 
-// A client secret finishes a payment, and a verification session's secret and URL start a
-// check, so the data sources that return one mark it sensitive in the schema and mask it in
-// the trace log of the response body.
+// clientSecrets are the members of a response that hold a client secret.
+const clientSecrets = `,"client_secret":"` + secret + `","confirmation_secret":{"client_secret":"` + secret + `"}`
+
+// A client secret finishes a payment, a verification session's secret and URL start a check,
+// an app secret's payload is the secret itself, a verification report holds the person's
+// identity data and a catalog import's upload URL grants access to its file, so the data
+// sources that return one mark it sensitive in the schema and mask it in the trace log of the
+// response body.
 func TestClientSecretsAreSensitive(t *testing.T) {
 	for name, tc := range map[string]struct {
 		ctor func() (func() datasource.DataSource, error)
 		path []string
-		// extra is more members of the response body.
+		// extra is the members of the response body besides `id` and `object`.
 		extra string
 	}{
-		"payment intent":   {payment_intent.NewDataSource, []string{"client_secret"}, ""},
-		"checkout session": {checkout_session.NewDataSource, []string{"client_secret"}, ""},
-		"invoice":          {invoice.NewDataSource, []string{"confirmation_secret", "client_secret"}, ""},
-		"verification":     {identity_verification_session.NewDataSource, []string{"client_secret"}, ""},
-		"verification url": {identity_verification_session.NewDataSource, []string{"url"}, `,"url":"` + secret + `"`},
-		"verified outputs": {identity_verification_session.NewDataSource, []string{"verified_outputs"}, `,"verified_outputs":{"id_number":"` + secret + `"}`},
+		"payment intent":   {payment_intent.NewDataSource, []string{"client_secret"}, clientSecrets},
+		"checkout session": {checkout_session.NewDataSource, []string{"client_secret"}, clientSecrets},
+		"invoice":          {invoice.NewDataSource, []string{"confirmation_secret", "client_secret"}, clientSecrets},
+		"verification":     {identity_verification_session.NewDataSource, []string{"client_secret"}, clientSecrets},
+		"verification url": {identity_verification_session.NewDataSource, []string{"url"}, clientSecrets + `,"url":"` + secret + `"`},
+		"verified outputs": {identity_verification_session.NewDataSource, []string{"verified_outputs"}, clientSecrets + `,"verified_outputs":{"id_number":"` + secret + `"}`},
+		"app secret":       {apps_secret.NewDataSource, []string{"payload"}, `,"payload":"` + secret + `"`},
+		"report id number": {identity_verification_report.NewDataSource, []string{"id_number"}, `,"id_number":{"id_number":"` + secret + `"}`},
+		"import upload url": {commerce_product_catalog_import.NewDataSource, []string{"status_details", "awaiting_upload", "upload_url", "url"},
+			`,"status_details":{"awaiting_upload":{"upload_url":{"url":"` + secret + `"}}}`},
 	} {
 		t.Run(name, func(t *testing.T) {
 			ctor, err := tc.ctor()
@@ -53,7 +65,7 @@ func TestClientSecretsAreSensitive(t *testing.T) {
 				t.Errorf("%v is not sensitive in the schema", tc.path)
 			}
 
-			body := `{"id":"x_1","object":"x","client_secret":"` + secret + `","confirmation_secret":{"client_secret":"` + secret + `"}` + tc.extra + `}`
+			body := `{"id":"x_1","object":"x"` + tc.extra + `}`
 			srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 				w.Header().Set("Content-Type", "application/json")
 				_, _ = w.Write([]byte(body))

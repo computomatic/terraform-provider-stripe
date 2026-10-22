@@ -84,8 +84,12 @@ func compile(decl Declaration, table []fields.Field) (*model, error) {
 		return nil, fmt.Errorf("declaration has no type name")
 	}
 	if decl.FindInList {
-		if decl.Paths.Retrieve != "" || decl.Paths.List == "" || decl.Parent == "" || decl.Delete != NoDelete || len(decl.Lookups) > 0 {
-			return nil, fmt.Errorf("%s: an object found in a list has a parent, a list path, no retrieve path, no lookups and no delete strategy", decl.TypeName)
+		if decl.Paths.Retrieve != "" || decl.Paths.List == "" || decl.Parent == "" || decl.Delete != NoDelete || len(decl.Lookups) > 0 || len(decl.FindBy) > 0 {
+			return nil, fmt.Errorf("%s: an object found in a list has a parent, a list path, no retrieve path, no lookups, no find parameters and no delete strategy", decl.TypeName)
+		}
+	} else if len(decl.FindBy) > 0 {
+		if (decl.Paths.Retrieve == "") == (decl.Paths.List == "") || decl.Singleton || decl.Delete != NoDelete || len(decl.Lookups) > 0 {
+			return nil, fmt.Errorf("%s: an object found by parameters has a retrieve path or a list path, not both, no lookups and no delete strategy", decl.TypeName)
 		}
 	} else if decl.Paths.Retrieve == "" {
 		return nil, fmt.Errorf("%s: declaration has no retrieve path", decl.TypeName)
@@ -239,6 +243,11 @@ func compile(decl Declaration, table []fields.Field) (*model, error) {
 			return nil, fmt.Errorf("%s: lookup keys need a list path", decl.TypeName)
 		}
 	}
+	for _, p := range decl.FindBy {
+		if err := m.checkFindParam(p); err != nil {
+			return nil, fmt.Errorf("%s: %w", decl.TypeName, err)
+		}
+	}
 
 	names := map[string]bool{}
 	for p := range c.sensitiveSet {
@@ -249,6 +258,36 @@ func compile(decl Declaration, table []fields.Field) (*model, error) {
 	}
 	sort.Strings(m.sensitiveNames)
 	return m, nil
+}
+
+// checkFindParam refuses a find parameter the engine cannot send: a field that is not a
+// string, an integer or an object of those, one the response does not return, and a name
+// that collides with the parent or has no description.
+func (m *model) checkFindParam(p FindParam) error {
+	n, ok := m.top(p.Name)
+	if !ok {
+		if p.Description == "" || p.Name == m.decl.Parent || p.Name == "id" {
+			return fmt.Errorf("find parameter `%s` names no field, so it needs a description and a name of its own", p.Name)
+		}
+		return nil
+	}
+	scalar := func(s fields.Shape) bool { return s == fields.String || s == fields.Int }
+	fits := n.Response && n.Name != "id" && scalar(n.Shape)
+	if n.Response && n.Shape == fields.Object {
+		fits = true
+		for _, k := range n.Kids {
+			fits = fits && scalar(k.Shape)
+		}
+	}
+	if !fits {
+		return fmt.Errorf("find parameter `%s` is not a top-level string, integer or object of those that the response returns", p.Name)
+	}
+	return nil
+}
+
+// findParam reports whether the Stripe field is a find parameter.
+func (m *model) findParam(name string) bool {
+	return slices.ContainsFunc(m.decl.FindBy, func(p FindParam) bool { return p.Name == name })
 }
 
 // openTransitions makes each transition's field configurable. The field stays out of every

@@ -196,6 +196,7 @@ provider "stripe" {
   - Lookups use the List endpoint's filter, never the Search API, because search results lag writes (search lag is a known divergence of the fake).
   - Zero matches is an error "no <type> found for <key>=<value>". More than one match is an error naming how many. The provider never picks the first of many.
   - A key that is not unique in Stripe (`name`, `email`) is not offered. A user who needs those uses `id`.
+  - An object Stripe reads only by required parameters in place of an ID has no `id` lookup: its data source takes the parameters as required attributes, and the answer must be exactly one object. An app secret is found by `name` and `scope` through `/v1/apps/secrets/find`; a meter event summary is listed under its meter by `customer`, `start_time` and `end_time`, which without a grouping window list one summary.
   - Data sources return every readable field of the object, same attribute names as the resource, all Computed.
 - **Plural data sources** (`stripe_products`) are out of scope for this ADR. The names `stripe_<plural>` are reserved for them.
 

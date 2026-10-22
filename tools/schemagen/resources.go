@@ -147,4 +147,23 @@ var Resources = []Resource{
 	{Package: "treasury_outbound_payment", ReadPath: "/v1/treasury/outbound_payments/{id}"},
 	{Package: "financial_connections_account", ReadPath: "/v1/financial_connections/accounts/{account}"},
 	{Package: "financial_connections_session", ReadPath: "/v1/financial_connections/sessions/{session}"},
+	// Wave 8 batches e, f, h and i: read-only objects. A meter event summary, a payment intent's
+	// line item and a tax transaction's line item have no retrieve, only a list under their
+	// parent; the summary's `meter` is the parent the engine adds. A secret is read through
+	// `find`. A tax transaction's `line_items` is returned only when expanded, which the fake
+	// does not serve; the line item data source reads them.
+	{Package: "billing_credit_balance_transaction", ReadPath: "/v1/billing/credit_balance_transactions/{id}"},
+	{Package: "billing_meter_event_summary", ListPath: "/v1/billing/meters/{id}/event_summaries", Omit: []string{"meter"}},
+	{Package: "entitlements_active_entitlement", ReadPath: "/v1/entitlements/active_entitlements/{id}"},
+	{Package: "invoice_rendering_template", ReadPath: "/v1/invoice_rendering_templates/{template}"},
+	{Package: "payment_intent_amount_details_line_item", ListPath: "/v1/payment_intents/{intent}/amount_details_line_items"},
+	{Package: "tax_transaction", ReadPath: "/v1/tax/transactions/{transaction}", Omit: []string{"line_items"}},
+	{Package: "tax_transaction_line_item", ListPath: "/v1/tax/transactions/{transaction}/line_items"},
+	{Package: "tax_location", ReadPath: "/v1/tax/locations/{location}"},
+	{Package: "reporting_report_run", ReadPath: "/v1/reporting/report_runs/{report_run}"},
+	{Package: "core_event", ReadPath: "/v2/core/events/{id}"},
+	{Package: "apps_secret", ReadPath: "/v1/apps/secrets/find"},
+	{Package: "identity_verification_report", ReadPath: "/v1/identity/verification_reports/{report}"},
+	{Package: "payment_record", ReadPath: "/v1/payment_records/{id}"},
+	{Package: "commerce_product_catalog_import", ReadPath: "/v2/commerce/product_catalog/imports/{id}"},
 }

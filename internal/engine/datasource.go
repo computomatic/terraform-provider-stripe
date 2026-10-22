@@ -87,15 +87,15 @@ func (d *DataSource) attrName(field string) string {
 	return n.AttrName()
 }
 
-// ValidateConfig requires exactly one lookup form per block. Unknown values are left for
-// apply time.
+// ValidateConfig requires exactly one lookup form per block, except for a singleton and an
+// object found by parameters, which have none. Unknown values are left for apply time.
 func (d *DataSource) ValidateConfig(ctx context.Context, req datasource.ValidateConfigRequest, resp *datasource.ValidateConfigResponse) {
 	var config basetypes.ObjectValue
 	resp.Diagnostics.Append(req.Config.Get(ctx, &config)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
-	if d.m.decl.Singleton {
+	if d.m.decl.Singleton || len(d.m.decl.FindBy) > 0 {
 		return
 	}
 	set := 0
@@ -127,6 +127,8 @@ func (d *DataSource) Read(ctx context.Context, req datasource.ReadRequest, resp 
 	var err error
 	if d.m.decl.Singleton {
 		body, err = d.api.call(ctx, "GET", d.m.decl.Paths.Retrieve, d.api.expanded(nil, ""))
+	} else if len(d.m.decl.FindBy) > 0 {
+		body, err = d.findBy(ctx, config, parent, resp)
 	} else if id != "" && d.m.decl.FindInList {
 		body, err = d.find(ctx, id, parent)
 		if err == nil && body == nil {
@@ -249,27 +251,91 @@ func (d *DataSource) lookup(ctx context.Context, config basetypes.ObjectValue, p
 		if err != nil {
 			return nil, err
 		}
-		data, _ := page.Get("data")
-		items, _ := data.(wire.Array)
-		more := hasMore(page, d.m.v2)
-		label := fmt.Sprintf("%s=%s", l.Field, value)
-		switch {
-		case len(items) == 0:
-			resp.Diagnostics.AddError("Not found", fmt.Sprintf("no %s found for %s", d.m.decl.TypeName, label))
-		case len(items) > 1 || more:
-			count := strconv.Itoa(len(items))
-			if more {
-				count = "more than " + count
-			}
-			resp.Diagnostics.AddError("Ambiguous lookup", fmt.Sprintf("%s matches %s objects for %s; use `id`", d.m.decl.TypeName, count, label))
-		default:
-			if obj, ok := items[0].(wire.Object); ok {
-				return obj, nil
-			}
-			resp.Diagnostics.AddError("Unexpected Stripe response", "list item is not an object")
-		}
-		return nil, nil
+		return d.only(page, fmt.Sprintf("%s=%s", l.Field, value), "; use `id`", resp), nil
 	}
 	resp.Diagnostics.AddError("Invalid lookup", "no lookup value is set")
 	return nil, nil
+}
+
+// only returns the one object a list page holds. Zero objects, or more than one, adds an error
+// diagnostic that names label and returns nil. hint ends the error for more than one.
+func (d *DataSource) only(page wire.Object, label, hint string, resp *datasource.ReadResponse) wire.Object {
+	data, _ := page.Get("data")
+	items, _ := data.(wire.Array)
+	more := hasMore(page, d.m.v2)
+	switch {
+	case len(items) == 0:
+		resp.Diagnostics.AddError("Not found", fmt.Sprintf("no %s found for %s", d.m.decl.TypeName, label))
+	case len(items) > 1 || more:
+		count := strconv.Itoa(len(items))
+		if more {
+			count = "more than " + count
+		}
+		resp.Diagnostics.AddError("Ambiguous lookup", fmt.Sprintf("%s matches %s objects for %s%s", d.m.decl.TypeName, count, label, hint))
+	default:
+		if obj, ok := items[0].(wire.Object); ok {
+			return obj
+		}
+		resp.Diagnostics.AddError("Unexpected Stripe response", "list item is not an object")
+	}
+	return nil
+}
+
+// findBy reads the object by the declaration's find parameters, sent with their configured
+// values: from the retrieve path, where a 404 is not found, or from the list path, which must
+// list exactly one. A nil body with no error means an error diagnostic was added.
+func (d *DataSource) findBy(ctx context.Context, config basetypes.ObjectValue, parent string, resp *datasource.ReadResponse) (wire.Object, error) {
+	var params wire.Object
+	var labels []string
+	for _, p := range d.m.decl.FindBy {
+		n, ok := d.m.top(p.Name)
+		if !ok {
+			n = &node{Field: fields.Field{Name: p.Name, Shape: fields.String}}
+		}
+		value, set, err := encodeValue(n, config.Attributes()[n.AttrName()], func(*node) bool { return true })
+		if err != nil {
+			return nil, err
+		}
+		if !set {
+			continue
+		}
+		params = append(params, wire.Field{Name: p.Name, Value: value})
+		labels = appendLabels(labels, p.Name, value)
+	}
+	label := strings.Join(labels, ", ")
+	if d.m.decl.Paths.Retrieve != "" {
+		body, err := d.api.call(ctx, "GET", d.m.expand(d.m.decl.Paths.Retrieve, "", parent), d.api.expanded(params, ""))
+		if d.m.gone(err, &resp.Diagnostics) {
+			resp.Diagnostics.AddError("Not found", fmt.Sprintf("no %s found for %s", d.m.decl.TypeName, label))
+			return nil, nil
+		}
+		return body, err
+	}
+	limit := wire.Int(listLimit)
+	if d.m.v2 {
+		limit = listLimitV2
+	}
+	params = append(params, wire.Field{Name: "limit", Value: limit})
+	page, err := d.api.call(ctx, "GET", d.m.expand(d.m.decl.Paths.List, "", parent), d.api.expanded(params, "data."))
+	if err != nil {
+		return nil, err
+	}
+	return d.only(page, label, "", resp), nil
+}
+
+// appendLabels adds `name=value` for a scalar, and one `name.field=value` for each field of an
+// object, to labels.
+func appendLabels(labels []string, name string, value wire.Value) []string {
+	switch v := value.(type) {
+	case wire.Object:
+		for _, f := range v {
+			labels = appendLabels(labels, name+"."+f.Name, f.Value)
+		}
+		return labels
+	case wire.Int:
+		return append(labels, name+"="+strconv.FormatInt(int64(v), 10))
+	default:
+		s, _ := v.(wire.String)
+		return append(labels, name+"="+string(s))
+	}
 }

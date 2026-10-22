@@ -66,3 +66,41 @@ func FirstListed(t *testing.T, c acctest.Config, path string) string {
 	id, _ := items[0].(wire.Object).GetString("id")
 	return id
 }
+
+// AwaitListed reads a list until ready accepts its items and returns them, for objects Stripe
+// makes in the background, such as credit balance transactions. It fails the test when the
+// wait runs out.
+func AwaitListed(t *testing.T, c acctest.Config, path string, params wire.Object, ready func([]wire.Object) bool) []wire.Object {
+	t.Helper()
+	var items []wire.Object
+	if !poll(func() bool {
+		resp, err := Client(c).Do(t.Context(), stripeapi.Request{Method: "GET", Path: path, Params: params})
+		if err != nil {
+			t.Fatalf("GET %s: %v", path, err)
+		}
+		data, _ := resp.Body.(wire.Object).Get("data")
+		list, _ := data.(wire.Array)
+		items = items[:0]
+		for _, item := range list {
+			obj, _ := item.(wire.Object)
+			items = append(items, obj)
+		}
+		return ready(items)
+	}) {
+		t.Fatalf("GET %s: still not ready after %s: %v", path, activationLimit, items)
+	}
+	return items
+}
+
+// AlteredID changes one character of a real ID, which is how the suite makes an unknown ID
+// that is still well formed ("alteredID").
+func AlteredID(id string) string {
+	b := []byte(id)
+	i := len(b) - 4
+	if b[i] == 'a' {
+		b[i] = 'b'
+	} else {
+		b[i] = 'a'
+	}
+	return string(b)
+}
