@@ -74,4 +74,13 @@ var Resources = []Resource{
 	{Package: "identity_verification_session", CreatePath: "/v1/identity/verification_sessions", UpdatePath: "/v1/identity/verification_sessions/{session}", Omit: []string{"verification_flow", "related_person"}, Require: []string{"type"}},
 	{Package: "climate_product", ReadPath: "/v1/climate/products/{product}"},
 	{Package: "climate_supplier", ReadPath: "/v1/climate/suppliers/{supplier}"},
+	// Wave 8 batch a. A billing alert is never updated: its status moves by action endpoints
+	// the declaration names. A tax ID takes only `self` and `customer` owners, which the suite
+	// proves; the other owners' arguments stay out of reach. The customer's balance
+	// transactions are addressed under their customer, so the engine adds `customer` as the
+	// parent and the response's copy is left out. Cash balance transactions are read-only.
+	{Package: "billing_alert", CreatePath: "/v1/billing/alerts"},
+	{Package: "tax_id", CreatePath: "/v1/tax_ids", ReadOnly: []string{"owner.account", "owner.customer_account"}},
+	{Package: "customer_balance_transaction", CreatePath: "/v1/customers/{customer}/balance_transactions", UpdatePath: "/v1/customers/{customer}/balance_transactions/{transaction}", Omit: []string{"customer"}},
+	{Package: "customer_cash_balance_transaction", ReadPath: "/v1/customers/{customer}/cash_balance_transactions/{transaction}", Omit: []string{"customer"}},
 }

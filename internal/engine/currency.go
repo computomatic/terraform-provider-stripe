@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"regexp"
+	"slices"
 	"strings"
 
 	"github.com/hashicorp/terraform-plugin-framework/attr"
@@ -138,6 +139,7 @@ var currencyCode = regexp.MustCompile(`^[a-z]{3}$`)
 // for the object's own currency, which Stripe adds by itself and refuses to be given.
 func (r *Resource) ValidateConfig(ctx context.Context, req resource.ValidateConfigRequest, resp *resource.ValidateConfigResponse) {
 	r.validateExactlyOneOf(ctx, req, resp)
+	r.validateTransitions(ctx, req, resp)
 	name := r.m.currencyOptionsAttr()
 	if name == "" {
 		return
@@ -203,5 +205,24 @@ func (r *Resource) validateExactlyOneOf(ctx context.Context, req resource.Valida
 		if set > 1 || set == 0 && unknown == 0 {
 			resp.Diagnostics.AddError("Invalid configuration", fmt.Sprintf("exactly one of %s must be set, got %d", strings.Join(names, ", "), set))
 		}
+	}
+}
+
+// validateTransitions refuses a configured value of a transition field that no transition
+// sets, such as an alert's `archived`, which only destroy reaches.
+func (r *Resource) validateTransitions(ctx context.Context, req resource.ValidateConfigRequest, resp *resource.ValidateConfigResponse) {
+	byField := map[string][]string{}
+	for _, t := range r.m.decl.Transitions {
+		byField[t.Field] = append(byField[t.Field], t.Value)
+	}
+	for field, values := range byField {
+		n, _ := r.m.top(field)
+		var v types.String
+		resp.Diagnostics.Append(req.Config.GetAttribute(ctx, path.Root(n.AttrName()), &v)...)
+		if resp.Diagnostics.HasError() || v.IsNull() || v.IsUnknown() || slices.Contains(values, v.ValueString()) {
+			continue
+		}
+		resp.Diagnostics.AddAttributeError(path.Root(n.AttrName()), "Unsupported value",
+			fmt.Sprintf("`%s` can be set to %s; got %q.", n.AttrName(), "`"+strings.Join(values, "` or `")+"`", v.ValueString()))
 	}
 }

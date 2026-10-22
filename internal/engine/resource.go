@@ -198,6 +198,11 @@ func (r *Resource) Create(ctx context.Context, req resource.CreateRequest, resp 
 			body = mergeBodies(body, updated)
 		}
 	}
+	body, err = r.applyTransitions(ctx, body, plan, id, parent)
+	if err != nil {
+		r.api.fail(&resp.Diagnostics, err)
+		return
+	}
 
 	state, diags := r.m.decodeState(body, plan, r.objType, false, nil)
 	resp.Diagnostics.Append(diags...)
@@ -291,6 +296,11 @@ func (r *Resource) Update(ctx context.Context, req resource.UpdateRequest, resp 
 		r.api.fail(&resp.Diagnostics, err)
 		return
 	}
+	body, err = r.applyTransitions(ctx, body, plan, id, parent)
+	if err != nil {
+		r.api.fail(&resp.Diagnostics, err)
+		return
+	}
 	for list, ids := range itemIDs(body, r.m.decl.MatchBy) {
 		for id := range ids {
 			if before != nil && !before[list][id] && keep[list] != nil {
@@ -352,12 +362,40 @@ func (r *Resource) Delete(ctx context.Context, req resource.DeleteRequest, resp 
 			)
 			err = nil
 		}
+	case Retain:
+		resp.Diagnostics.AddWarning(
+			"Left in the Stripe account",
+			fmt.Sprintf("Stripe cannot delete %s %s. %s\n\nIt is out of Terraform's state and still exists in the Stripe account.", r.m.decl.TypeName, id, r.m.decl.RetainWarning),
+		)
 	case Expire:
 		err = r.expire(ctx, id, parent)
 	}
 	if err != nil && !stripeapi.IsNotFound(err) {
 		r.api.fail(&resp.Diagnostics, err)
 	}
+}
+
+// applyTransitions calls the action endpoint of each transition whose planned value is known
+// and differs from the object's, and returns the body with each action's response laid over it. A value the object already
+// holds sends nothing.
+func (r *Resource) applyTransitions(ctx context.Context, body wire.Object, plan basetypes.ObjectValue, id, parent string) (wire.Object, error) {
+	for _, t := range r.m.decl.Transitions {
+		n, _ := r.m.top(t.Field)
+		want, ok := plan.Attributes()[n.AttrName()].(basetypes.StringValue)
+		if !ok || want.IsNull() || want.IsUnknown() || want.ValueString() != t.Value {
+			continue
+		}
+		if have, _ := body.GetString(t.Field); have == t.Value {
+			continue
+		}
+		next, err := r.api.call(ctx, "POST", r.m.expand(t.Path, id, parent), r.api.expanded(nil, ""))
+		if err != nil {
+			return nil, err
+		}
+		// A once-returned field is in the create response only, so the action's does not replace it.
+		body = mergeBodies(body, next)
+	}
+	return body, nil
 }
 
 // isDeletedStub reports the `{id, object, deleted: true}` Stripe returns for an object it

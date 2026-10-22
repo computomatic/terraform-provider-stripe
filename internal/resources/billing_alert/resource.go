@@ -1,0 +1,49 @@
+// Package billing_alert declares the stripe_billing_alert resource and data source.
+package billing_alert
+
+import (
+	"github.com/hashicorp/terraform-plugin-framework/datasource"
+	"github.com/hashicorp/terraform-plugin-framework/resource"
+
+	"github.com/computomatic/terraform-provider-stripe/internal/engine"
+	"github.com/computomatic/terraform-provider-stripe/internal/generated/billing_alert"
+	"github.com/computomatic/terraform-provider-stripe/internal/wire"
+)
+
+// Declaration is what the spec cannot say about a billing alert. Stripe never updates an
+// alert, so every argument but `status` forces replacement. `status` moves between `active`
+// and `inactive` through action endpoints (suite: "deactivate and activate"), each a no-op
+// when the alert is already there. Destroy archives the alert, which is permanent (suite:
+// "archived alert cannot be reactivated"); an archived alert can still be retrieved. A
+// missing alert is a 404 with no error code, which the engine reads as gone by its status.
+var Declaration = engine.Declaration{
+	TypeName:              "stripe_billing_alert",
+	IDPrefix:              "alrt_",
+	Description:           "Notifies you when the usage a billing meter records crosses a threshold. `terraform destroy` archives the alert, which is permanent: an archived alert never triggers or activates again, and it stays in the Stripe account. Stripe does not update alerts, so every argument except `status` forces replacement. `status` can be set to `active` or `inactive`; `archived` is reached by destroy only.",
+	DataSourceDescription: "Notifies you when the usage a billing meter records crosses a threshold.",
+	Paths: engine.Paths{
+		Create:   "/v1/billing/alerts",
+		Retrieve: "/v1/billing/alerts/{id}",
+		List:     "/v1/billing/alerts",
+	},
+	Delete: engine.Archive,
+	Archive: &engine.ArchiveAction{
+		Field: "status",
+		Value: wire.String("archived"),
+		Path:  "/v1/billing/alerts/{id}/archive",
+	},
+	Transitions: []engine.Transition{
+		{Field: "status", Value: "active", Path: "/v1/billing/alerts/{id}/activate"},
+		{Field: "status", Value: "inactive", Path: "/v1/billing/alerts/{id}/deactivate"},
+	},
+}
+
+// NewResource returns the resource constructor the provider registers.
+func NewResource() (func() resource.Resource, error) {
+	return engine.NewResource(Declaration, billing_alert.Table)
+}
+
+// NewDataSource returns the data source constructor. Stripe documents no alert field as unique, so the data source looks up by `id` only.
+func NewDataSource() (func() datasource.DataSource, error) {
+	return engine.NewDataSource(Declaration, billing_alert.Table)
+}
