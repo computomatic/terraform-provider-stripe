@@ -51,13 +51,6 @@ func paymentMethod(t *testing.T, acct acctest.Config) string {
 	return id
 }
 
-func idOf(dst *string) resource.TestCheckFunc {
-	return resource.TestCheckResourceAttrWith(address, "id", func(v string) error {
-		*dst = v
-		return nil
-	})
-}
-
 func importID(s *terraform.State) (string, error) {
 	rs, ok := s.RootModule().Resources[address]
 	if !ok {
@@ -66,23 +59,12 @@ func importID(s *terraform.State) (string, error) {
 	return rs.Primary.Attributes["customer"] + "/" + rs.Primary.ID, nil
 }
 
-// customerOf reads a payment method's customer straight from Stripe.
-func customerOf(t *testing.T, acct acctest.Config, pm string) (string, error) {
-	t.Helper()
-	resp, err := tfacc.Client(acct).Do(t.Context(), stripeapi.Request{Method: "GET", Path: "/v1/payment_methods/" + pm})
-	if err != nil {
-		return "", err
-	}
-	customer, _ := resp.Body.(wire.Object).GetString("customer")
-	return customer, nil
-}
-
 func TestAccCustomerPaymentMethod_create(t *testing.T) {
 	acct := acctest.NewAccount(t)
 	pm := paymentMethod(t, acct)
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: tfacc.ProviderFactories,
-		Steps: []resource.TestStep{{
+		Steps: acctest.Forget(t, []resource.TestStep{{
 			Config: attachmentConfig(acct, pm, "") + `
 data "stripe_customer_payment_method" "by_id" {
   customer = stripe_customer.test.id
@@ -99,7 +81,7 @@ data "stripe_customer_payment_method" "by_id" {
 				resource.TestCheckResourceAttrPair("data.stripe_customer_payment_method.by_id", "id", address, "id"),
 				resource.TestCheckResourceAttr("data.stripe_customer_payment_method.by_id", "card.last4", "4242"),
 			),
-		}},
+		}}, nil, "stripe_customer_payment_method"),
 	})
 }
 
@@ -110,7 +92,7 @@ func TestAccCustomerPaymentMethod_testPaymentMethod(t *testing.T) {
 	cfg := attachmentConfig(acct, "pm_card_visa", "")
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: tfacc.ProviderFactories,
-		Steps: []resource.TestStep{
+		Steps: acctest.Forget(t, []resource.TestStep{
 			{
 				Config: cfg,
 				Check: resource.ComposeAggregateTestCheckFunc(
@@ -120,7 +102,7 @@ func TestAccCustomerPaymentMethod_testPaymentMethod(t *testing.T) {
 				),
 			},
 			{Config: cfg, PlanOnly: true},
-		},
+		}, nil, "stripe_customer_payment_method"),
 	})
 }
 
@@ -129,7 +111,7 @@ func TestAccCustomerPaymentMethod_update(t *testing.T) {
 	pm := paymentMethod(t, acct)
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: tfacc.ProviderFactories,
-		Steps: []resource.TestStep{
+		Steps: acctest.Forget(t, []resource.TestStep{
 			{Config: attachmentConfig(acct, pm, "  metadata = { keep = \"me\", drop = \"me\" }\n")},
 			{
 				Config: attachmentConfig(acct, pm, `  metadata = { keep = "me", new = "v" }
@@ -161,37 +143,23 @@ func TestAccCustomerPaymentMethod_update(t *testing.T) {
 					resource.TestCheckResourceAttr(address, "metadata.new", "v"),
 				),
 			},
-		},
+		}, nil, "stripe_customer_payment_method"),
 	})
 }
 
-// A payment method is attached once and never again after a detach (suite: "detached cannot
-// be reattached"), so naming another payment method replaces the attachment: the old method
-// is detached and the new one attached.
+// Changing the attached payment method would replace the attachment, which Stripe can only
+// detach, for good: the plan fails, and so does a taint, at apply.
 func TestAccCustomerPaymentMethod_replace(t *testing.T) {
 	acct := acctest.NewAccount(t)
 	first, second := paymentMethod(t, acct), paymentMethod(t, acct)
-	var id string
+	cfg := attachmentConfig(acct, first, "")
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: tfacc.ProviderFactories,
-		Steps: []resource.TestStep{
-			{Config: attachmentConfig(acct, first, ""), Check: idOf(&id)},
-			{
-				Config: attachmentConfig(acct, second, ""),
-				ConfigPlanChecks: resource.ConfigPlanChecks{PreApply: []plancheck.PlanCheck{
-					plancheck.ExpectResourceAction(address, plancheck.ResourceActionReplace),
-				}},
-				Check: resource.ComposeAggregateTestCheckFunc(
-					resource.TestCheckResourceAttr(address, "id", second),
-					func(*terraform.State) error {
-						if customer, err := customerOf(t, acct, first); err != nil || customer != "" {
-							return fmt.Errorf("the replaced payment method %s is still attached to %q (%v)", first, customer, err)
-						}
-						return nil
-					},
-				),
-			},
-		},
+		Steps: acctest.Forget(t, []resource.TestStep{
+			{Config: cfg},
+			{Config: attachmentConfig(acct, second, ""), PlanOnly: true, ExpectError: tfacc.RefusedReplace},
+			{Config: cfg, Taint: []string{address}, ExpectError: tfacc.RefusedDestroy},
+		}, nil, "stripe_customer_payment_method"),
 	})
 }
 
@@ -200,7 +168,7 @@ func TestAccCustomerPaymentMethod_import(t *testing.T) {
 	cfg := attachmentConfig(acct, paymentMethod(t, acct), "  metadata = { team = \"a\" }\n")
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: tfacc.ProviderFactories,
-		Steps: []resource.TestStep{
+		Steps: acctest.Forget(t, []resource.TestStep{
 			{Config: cfg},
 			{
 				ResourceName:      address,
@@ -221,28 +189,32 @@ func TestAccCustomerPaymentMethod_import(t *testing.T) {
 				ImportStateId: "not-a-compound-id",
 				ExpectError:   regexpInvalidImportID,
 			},
-		},
+		}, nil, "stripe_customer_payment_method"),
 	})
 }
 
-// Destroy detaches the payment method (suite: "detach"); the method stays in the account,
-// with no customer.
+// Stripe can only detach a payment method, which is final, so dropping the attachment from the
+// configuration, and `terraform destroy`, fail at plan time, and the payment method stays
+// attached to the customer.
 func TestAccCustomerPaymentMethod_delete(t *testing.T) {
 	acct := acctest.NewAccount(t)
 	pm := paymentMethod(t, acct)
+	path := "/v1/payment_methods/" + pm
+	var customer string
+	var mark int
+	cfg := attachmentConfig(acct, pm, "")
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: tfacc.ProviderFactories,
-		CheckDestroy: func(*terraform.State) error {
-			customer, err := customerOf(t, acct, pm)
-			if err != nil {
-				return fmt.Errorf("a detached payment method still retrieves: %w", err)
-			}
-			if customer != "" {
-				return fmt.Errorf("payment method %s is still attached to %s after destroy", pm, customer)
-			}
-			return nil
-		},
-		Steps: []resource.TestStep{{Config: attachmentConfig(acct, pm, "")}},
+		Steps: acctest.Forget(t, []resource.TestStep{
+			{Config: cfg, Check: resource.ComposeTestCheckFunc(
+				resource.TestCheckResourceAttrWith(address, "customer", func(v string) error { customer = v; return nil }),
+				tfacc.LogMark(t, acct, &mark),
+			)},
+			{Config: acctest.Without(t, cfg, "stripe_customer_payment_method"), PlanOnly: true, ExpectError: tfacc.RefusedDestroy},
+			{Config: cfg, Destroy: true, ExpectError: tfacc.RefusedDestroy},
+		}, func(s *terraform.State) error {
+			return tfacc.Untouched(t, acct, &path, &mark, "customer", wire.String(customer))(s)
+		}, "stripe_customer_payment_method"),
 	})
 }
 
@@ -252,7 +224,7 @@ func TestAccCustomerPaymentMethod_drift(t *testing.T) {
 	cfg := attachmentConfig(acct, pm, "  billing_details = {\n    name = \"Ada Lovelace\"\n  }\n")
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: tfacc.ProviderFactories,
-		Steps: []resource.TestStep{
+		Steps: acctest.Forget(t, []resource.TestStep{
 			{Config: cfg},
 			{
 				PreConfig: func() {
@@ -273,6 +245,6 @@ func TestAccCustomerPaymentMethod_drift(t *testing.T) {
 				PlanOnly:           true,
 				ExpectNonEmptyPlan: true,
 			},
-		},
+		}, nil, "stripe_customer_payment_method"),
 	})
 }

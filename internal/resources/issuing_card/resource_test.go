@@ -156,7 +156,7 @@ func TestAccIssuingCard_update(t *testing.T) {
 	})
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: tfacc.ProviderFactories,
-		Steps: []resource.TestStep{
+		Steps: acctest.Forget(t, []resource.TestStep{
 			{
 				Config: cardConfig(s, "first", "  metadata = { a = \"1\" }\n"),
 				Check: resource.ComposeTestCheckFunc(
@@ -196,13 +196,21 @@ func TestAccIssuingCard_update(t *testing.T) {
 					resource.TestCheckResourceAttr(address, "cancellation_reason", "lost"),
 				),
 			},
+			// Stripe cannot deactivate a canceled card, so its destroy fails at plan time, and so
+			// does a change that would replace it.
+			{Config: acctest.Without(t, cardConfig(s, "first", ""), "stripe_issuing_card"), PlanOnly: true, ExpectError: tfacc.RefusedDestroy},
+			{
+				Config:      cardConfig(s, "second", "  status              = \"canceled\"\n  cancellation_reason = \"lost\"\n"),
+				PlanOnly:    true,
+				ExpectError: tfacc.RefusedReplace,
+			},
 			// Canceling is final: Stripe refuses to activate the card again (suite: "canceled
 			// card cannot be reactivated").
 			{
 				Config:      cardConfig(s, "first", "  status              = \"active\"\n  cancellation_reason = \"lost\"\n"),
 				ExpectError: regexp.MustCompile(`Stripe API error: invalid_request_error`),
 			},
-		},
+		}, nil, "stripe_issuing_card"),
 	})
 }
 
@@ -226,8 +234,8 @@ func TestAccIssuingCard_replace(t *testing.T) {
 						if v == first {
 							return fmt.Errorf("the replacement kept the card %s", v)
 						}
-						if got := status(t, s.conn, first); got != "canceled" {
-							return fmt.Errorf("the replaced card %s is %s, want canceled", first, got)
+						if got := status(t, s.conn, first); got != "inactive" {
+							return fmt.Errorf("the replaced card %s is %s, want inactive", first, got)
 						}
 						return nil
 					}),
@@ -279,20 +287,31 @@ func TestAccIssuingCard_importIdentity(t *testing.T) {
 	})
 }
 
-// Stripe cannot delete a card (suite: "delete is not a route"), so destroy cancels it, and the
-// canceled card stays retrievable.
+// Stripe cannot delete a card, so destroy deactivates it, which `status` can undo; the card
+// stays on the connected account.
 func TestAccIssuingCard_delete(t *testing.T) {
 	s := issuing(t)
-	var id string
+	var id, cardholder string
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: tfacc.ProviderFactories,
 		CheckDestroy: func(*terraform.State) error {
-			if got := status(t, s.conn, id); got != "canceled" {
-				return fmt.Errorf("card %s is %s after destroy, want canceled", id, got)
+			if got := status(t, s.conn, id); got != "inactive" {
+				return fmt.Errorf("card %s is %s after destroy, want inactive", id, got)
 			}
 			return nil
 		},
-		Steps: []resource.TestStep{{Config: cardConfig(s, "first", ""), Check: idOf(&id)}},
+		Steps: []resource.TestStep{
+			{
+				Config: cardConfig(s, "first", ""),
+				Check: resource.ComposeTestCheckFunc(idOf(&id),
+					resource.TestCheckResourceAttrWith("stripe_issuing_cardholder.first", "id", func(v string) error { cardholder = v; return nil })),
+			},
+			{
+				PreConfig: func() { tfacc.AwaitCardholderReview(t, s.conn, cardholder) },
+				Config:    cardConfig(s, "first", "  status = \"active\"\n"),
+				Check:     resource.TestCheckResourceAttr(address, "status", "active"),
+			},
+		},
 	})
 }
 

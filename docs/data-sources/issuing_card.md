@@ -62,7 +62,7 @@ This data source exports the following attributes in addition to the arguments a
 * `replacement_for` - The card this is meant to be a replacement for (if any).
 * `replacement_reason` - If `replacement_for` is specified, this should indicate why that card is being replaced. Possible values: `damaged`, `expired`, `lost`, `stolen`.
 * `spending_controls` - Rules that control spending for this card. Refer to our [documentation](https://docs.stripe.com/issuing/controls/spending-controls) for more details. See [`spending_controls`](#spending_controls) below.
-* `status` - Whether authorizations can be approved on this card. May be blocked from activating cards depending on past-due Cardholder requirements. Defaults to `inactive`. Possible values: `active`, `inactive`.
+* `status` - Whether authorizations can be approved on this card. May be blocked from activating cards depending on past-due Cardholder requirements. Defaults to `inactive`. Possible values: `active`, `inactive`, `canceled`.
 * `type` - The type of card to issue. Possible values are `physical` or `virtual`. Possible values: `physical`, `virtual`.
 * `wallets` - Information relating to digital wallets (like Apple Pay and Google Pay). See [`wallets`](#wallets) below.
 

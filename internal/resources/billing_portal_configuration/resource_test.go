@@ -7,11 +7,9 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/hashicorp/terraform-plugin-testing/plancheck"
-	"github.com/hashicorp/terraform-plugin-testing/terraform"
 
 	"github.com/computomatic/terraform-provider-stripe/internal/acctest"
 	"github.com/computomatic/terraform-provider-stripe/internal/acctest/tfacc"
-	"github.com/computomatic/terraform-provider-stripe/internal/stripeapi"
 	"github.com/computomatic/terraform-provider-stripe/internal/wire"
 )
 
@@ -45,7 +43,7 @@ func TestAccBillingPortalConfiguration_create(t *testing.T) {
 	acct := acctest.NewAccount(t)
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: tfacc.ProviderFactories,
-		Steps: []resource.TestStep{{
+		Steps: acctest.Forget(t, []resource.TestStep{{
 			Config: configurationConfig(acct, "Manage your plan", `
     customer_update = {
       enabled         = true
@@ -75,7 +73,7 @@ data "stripe_billing_portal_configuration" "test" {
 				resource.TestCheckResourceAttrPair("data.stripe_billing_portal_configuration.test", "id", address, "id"),
 				resource.TestCheckResourceAttr("data.stripe_billing_portal_configuration.test", "name", "Default portal"),
 			),
-		}},
+		}}, nil, "stripe_billing_portal_configuration"),
 	})
 }
 
@@ -97,7 +95,7 @@ func TestAccBillingPortalConfiguration_update(t *testing.T) {
 	acct := acctest.NewAccount(t)
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: tfacc.ProviderFactories,
-		Steps: []resource.TestStep{
+		Steps: acctest.Forget(t, []resource.TestStep{
 			{
 				Config: withDefault(acct, "Manage your plan", "", "  metadata = { team = \"a\", tier = \"1\" }\n"),
 				Check:  resource.TestCheckResourceAttr(address, "business_profile.headline", "Manage your plan"),
@@ -125,18 +123,18 @@ func TestAccBillingPortalConfiguration_update(t *testing.T) {
 					resource.TestCheckResourceAttr(address, "metadata.team", "b"),
 				),
 			},
-		},
+		}, nil, "stripe_billing_portal_configuration.default"),
 	})
 }
 
-// Stripe accepts every create field on update, so no argument forces a replacement. A
-// replacement forced from outside (a changed trigger) destroys the configuration, which
-// leaves the default one active with a warning, and creates another.
+// A configuration has no field that forces replacement; `replace_triggered_by` replaces an
+// ordinary one by deactivating it, and a taint of the default fails at apply, because Stripe
+// refuses to deactivate the default.
 func TestAccBillingPortalConfiguration_replace(t *testing.T) {
 	acct := acctest.NewAccount(t)
 	var first string
 	config := func(trigger string) string {
-		return configurationConfig(acct, "Manage your plan", "", `
+		return withDefault(acct, "Manage your plan", "", `
   lifecycle {
     replace_triggered_by = [terraform_data.trigger]
   }
@@ -148,7 +146,7 @@ resource "terraform_data" "trigger" {
 	}
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: tfacc.ProviderFactories,
-		Steps: []resource.TestStep{
+		Steps: acctest.Forget(t, []resource.TestStep{
 			{Config: config("one"), Check: idOf(&first)},
 			{
 				Config: config("two"),
@@ -162,7 +160,8 @@ resource "terraform_data" "trigger" {
 					return nil
 				}),
 			},
-		},
+			{Config: config("two"), Taint: []string{"stripe_billing_portal_configuration.default"}, ExpectError: tfacc.RefusedDestroy},
+		}, nil, "stripe_billing_portal_configuration.default"),
 	})
 }
 
@@ -176,7 +175,7 @@ func TestAccBillingPortalConfiguration_import(t *testing.T) {
 `, "  name = \"Default portal\"\n  metadata = { team = \"a\" }\n")
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: tfacc.ProviderFactories,
-		Steps: []resource.TestStep{
+		Steps: acctest.Forget(t, []resource.TestStep{
 			{Config: cfg},
 			{
 				ResourceName:      address,
@@ -189,48 +188,44 @@ func TestAccBillingPortalConfiguration_import(t *testing.T) {
 				ImportStateKind: resource.ImportBlockWithID,
 				Config:          cfg,
 			},
-		},
+		}, nil, "stripe_billing_portal_configuration"),
 	})
 }
 
-// Stripe cannot delete a portal configuration, so destroy deactivates it (suite:
-// billing_portal_configuration_test.go). It refuses to deactivate the account's default,
-// the first one created (suite: "The first portal configuration an account creates becomes
-// its default"): destroy then leaves that one active and says so in a warning.
+// Stripe cannot delete a configuration, so destroy deactivates an ordinary one. It refuses to
+// deactivate the account's default, so dropping the default from the configuration, and
+// `terraform destroy`, fail at plan time, and the default stays active.
 func TestAccBillingPortalConfiguration_delete(t *testing.T) {
 	acct := acctest.NewAccount(t)
 	var ordinary, def string
-	active := func(id string) (bool, error) {
-		resp, err := tfacc.Client(acct).Do(t.Context(), stripeapi.Request{Method: "GET", Path: "/v1/billing_portal/configurations/" + id})
-		if err != nil {
-			return false, fmt.Errorf("a portal configuration is never deleted: %w", err)
-		}
-		isActive, _ := resp.Body.(wire.Object).GetBool("active")
-		return isActive, nil
+	var mark int
+	cfg := withDefault(acct, "Manage your plan", "", "")
+	pathOf := func(dst *string, at string) resource.TestCheckFunc {
+		return resource.TestCheckResourceAttrWith(at, "id", func(v string) error {
+			*dst = "/v1/billing_portal/configurations/" + v
+			return nil
+		})
 	}
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: tfacc.ProviderFactories,
-		CheckDestroy: func(*terraform.State) error {
-			if on, err := active(ordinary); err != nil || on {
-				return fmt.Errorf("configuration %s should be deactivated after destroy (err %v)", ordinary, err)
-			}
-			if on, err := active(def); err != nil || !on {
-				return fmt.Errorf("the default configuration %s should stay active after destroy (err %v)", def, err)
-			}
-			return nil
-		},
-		Steps: []resource.TestStep{{
-			Config: withDefault(acct, "Manage your plan", "", ""),
-			Check: resource.ComposeAggregateTestCheckFunc(
-				idOf(&ordinary),
-				resource.TestCheckResourceAttrWith("stripe_billing_portal_configuration.default", "id", func(v string) error {
-					def = v
-					return nil
-				}),
-				resource.TestCheckResourceAttr("stripe_billing_portal_configuration.default", "is_default", "true"),
-				resource.TestCheckResourceAttr(address, "is_default", "false"),
-			),
-		}},
+		Steps: acctest.Forget(t, []resource.TestStep{
+			{
+				Config: cfg,
+				Check: resource.ComposeAggregateTestCheckFunc(
+					pathOf(&ordinary, address),
+					pathOf(&def, "stripe_billing_portal_configuration.default"),
+					resource.TestCheckResourceAttr("stripe_billing_portal_configuration.default", "is_default", "true"),
+					resource.TestCheckResourceAttr(address, "is_default", "false"),
+					tfacc.LogMark(t, acct, &mark),
+				),
+			},
+			{Config: acctest.Without(t, cfg, "stripe_billing_portal_configuration.default"), PlanOnly: true, ExpectError: tfacc.RefusedDestroy},
+			{Config: cfg, Destroy: true, ExpectError: tfacc.RefusedDestroy},
+		}, resource.ComposeAggregateTestCheckFunc(
+			// The ordinary configuration depends on the default, so the last step destroys it.
+			tfacc.Holds(t, acct, &ordinary, "active", wire.Bool(false)),
+			tfacc.Untouched(t, acct, &def, &mark, "active", wire.Bool(true)),
+		), "stripe_billing_portal_configuration.default"),
 	})
 }
 
@@ -240,7 +235,7 @@ func TestAccBillingPortalConfiguration_drift(t *testing.T) {
 	cfg := configurationConfig(acct, "Manage your plan", "", "  name = \"Default portal\"\n")
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: tfacc.ProviderFactories,
-		Steps: []resource.TestStep{
+		Steps: acctest.Forget(t, []resource.TestStep{
 			{Config: cfg, Check: idOf(&id)},
 			{
 				PreConfig: func() {
@@ -255,6 +250,6 @@ func TestAccBillingPortalConfiguration_drift(t *testing.T) {
 				}},
 				Check: resource.TestCheckResourceAttr(address, "name", "Default portal"),
 			},
-		},
+		}, nil, "stripe_billing_portal_configuration"),
 	})
 }

@@ -7,20 +7,16 @@ import (
 
 	"github.com/computomatic/terraform-provider-stripe/internal/engine"
 	"github.com/computomatic/terraform-provider-stripe/internal/generated/climate_order"
-	"github.com/computomatic/terraform-provider-stripe/internal/wire"
 )
 
 // Declaration is what the spec cannot say about a Climate order. Stripe never deletes one,
-// so destroy cancels it (suite: "ClimateOrder", `cancel`) and drops it from state. A
-// canceled order stays readable and canceling twice is refused ("cancel again"), so destroy
-// reads the status first. Stripe refuses to cancel a delivered order ("Order can not be
-// canceled", the fake models it): when the cancel fails and a retrieve shows the order
-// delivered, destroy warns, leaves it and drops it from state. Any other failure fails the
-// destroy.
+// and canceling one is final ("cancel again"), so destroy is refused. Setting `status` to
+// `canceled` cancels it (suite: "ClimateOrder", `cancel`); Stripe refuses to cancel a
+// delivered order ("Order can not be canceled", the fake models it).
 var Declaration = engine.Declaration{
 	TypeName:              "stripe_climate_order",
 	IDPrefix:              "climorder_",
-	Description:           "A purchase of carbon removal from Stripe Climate. Set exactly one of `metric_tons` (a whole number of tons) and `amount` (the money to spend, in the smallest unit of the order's currency). The order spends the account's available balance in its settlement currency. `terraform destroy` cancels the order and refunds its `amount_subtotal`, but not its `amount_fees`; Stripe cannot delete an order, so a canceled order stays in the account. Stripe cancels only orders that are not yet delivered, so destroy leaves a delivered order as it is, with a warning. Only `beneficiary` and `metadata` change in place: changing any other argument cancels the order and buys a new one, and the fees of the canceled order are not refunded.",
+	Description:           "A purchase of carbon removal from Stripe Climate. Set exactly one of `metric_tons` (a whole number of tons) and `amount` (the money to spend, in the smallest unit of the order's currency). The order spends the account's available balance in its settlement currency. Set `status` to `canceled` to cancel an order that is not yet delivered, which refunds its `amount_subtotal` but not its `amount_fees`. Only `beneficiary` and `metadata` change in place: changing any other argument fails the plan.",
 	DataSourceDescription: "A purchase of carbon removal from Stripe Climate.",
 	ImportNote:            "Stripe does not return `amount`, so an imported order has none in state. Importing an order that was bought by `amount` and configuring `amount` plans a replacement.",
 	ImportNoteLevel:       engine.NoteWarning,
@@ -30,13 +26,9 @@ var Declaration = engine.Declaration{
 		Update:   "/v1/climate/orders/{id}",
 		List:     "/v1/climate/orders",
 	},
-	Delete: engine.Archive,
-	Archive: &engine.ArchiveAction{
-		Field: "status",
-		Value: wire.String("canceled"),
-		Path:  "/v1/climate/orders/{id}/cancel",
-	},
-	KeepWhen: &engine.FieldIs{Field: "status", Value: wire.String("delivered")},
+	Delete:       engine.Refuse,
+	RefuseReason: "Stripe cannot delete a Climate order; set `status` to `canceled` to cancel one that is not yet delivered.",
+	Transitions:  []engine.Transition{{Field: "status", Value: "canceled", Path: "/v1/climate/orders/{id}/cancel"}},
 	// An order without a beneficiary is attributed to the account (suite: "A climate order
 	// without a beneficiary is attributed to the account").
 	ServerDefaulted: []string{"beneficiary"},

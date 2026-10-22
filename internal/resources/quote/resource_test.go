@@ -3,15 +3,14 @@ package quote_test
 import (
 	"fmt"
 	"os"
+	"regexp"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/hashicorp/terraform-plugin-testing/plancheck"
-	"github.com/hashicorp/terraform-plugin-testing/terraform"
 
 	"github.com/computomatic/terraform-provider-stripe/internal/acctest"
 	"github.com/computomatic/terraform-provider-stripe/internal/acctest/tfacc"
-	"github.com/computomatic/terraform-provider-stripe/internal/stripeapi"
 	"github.com/computomatic/terraform-provider-stripe/internal/wire"
 )
 
@@ -48,6 +47,14 @@ resource "stripe_quote" "test" {
 
 const oneLine = `[{ price = stripe_price.test.id, quantity = 1 }]`
 
+// pathOf records the quote's API path.
+func pathOf(dst *string) resource.TestCheckFunc {
+	return resource.TestCheckResourceAttrWith(address, "id", func(v string) error {
+		*dst = "/v1/quotes/" + v
+		return nil
+	})
+}
+
 func idOf(dst *string) resource.TestCheckFunc {
 	return resource.TestCheckResourceAttrWith(address, "id", func(v string) error {
 		*dst = v
@@ -60,7 +67,7 @@ func TestAccQuote_create(t *testing.T) {
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: tfacc.ProviderFactories,
 		ErrorCheck:               tfacc.SkipWhenFakeLacks(t, "line_items"),
-		Steps: []resource.TestStep{{
+		Steps: acctest.Forget(t, []resource.TestStep{{
 			Config: quoteConfig(acct, `[{ price = stripe_price.test.id, quantity = 3 }]`, "  description = \"Package\"\n  header = \"Hello\"\n  metadata = { team = \"a\" }\n") + `
 data "stripe_quote" "by_id" {
   id = stripe_quote.test.id
@@ -81,7 +88,7 @@ data "stripe_quote" "by_id" {
 				resource.TestCheckResourceAttrPair("data.stripe_quote.by_id", "id", address, "id"),
 				resource.TestCheckResourceAttr("data.stripe_quote.by_id", "line_items.0.quantity", "3"),
 			),
-		}},
+		}}, nil, "stripe_quote"),
 	})
 }
 
@@ -90,7 +97,7 @@ func TestAccQuote_update(t *testing.T) {
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: tfacc.ProviderFactories,
 		ErrorCheck:               tfacc.SkipWhenFakeLacks(t, "line_items"),
-		Steps: []resource.TestStep{
+		Steps: acctest.Forget(t, []resource.TestStep{
 			{Config: quoteConfig(acct, oneLine, "  metadata = { team = \"a\", tier = \"1\" }\n")},
 			{
 				// The line items are replaced as a whole (suite: "line items are replaced").
@@ -108,15 +115,15 @@ func TestAccQuote_update(t *testing.T) {
 					resource.TestCheckResourceAttr(address, "metadata.team", "b"),
 				),
 			},
-		},
+		}, nil, "stripe_quote"),
 	})
 }
 
-// from_quote is accepted on create only (suite: "`from_quote` and `test_clock` on update are
-// `parameter_unknown`"), so pointing a quote at another quote replaces it.
+// A quote created from another one takes `from_quote` on create only (suite: "`from_quote` and
+// `test_clock` on update are `parameter_unknown`"), so changing it would replace the revision,
+// which Stripe cannot delete: the plan fails, and so does a taint, at apply.
 func TestAccQuote_replace(t *testing.T) {
 	acct := acctest.NewAccount(t)
-	var first string
 	cfg := func(from string) string {
 		return quoteConfig(acct, oneLine, "") + fmt.Sprintf(`
 resource "stripe_quote" "source_a" {
@@ -134,28 +141,14 @@ resource "stripe_quote" "revision" {
 }
 `, from)
 	}
-	const revision = "stripe_quote.revision"
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: tfacc.ProviderFactories,
 		ErrorCheck:               tfacc.SkipWhenFakeLacks(t, "line_items"),
-		Steps: []resource.TestStep{
-			{
-				Config: cfg("a"),
-				Check:  resource.TestCheckResourceAttrWith(revision, "id", func(v string) error { first = v; return nil }),
-			},
-			{
-				Config: cfg("b"),
-				ConfigPlanChecks: resource.ConfigPlanChecks{PreApply: []plancheck.PlanCheck{
-					plancheck.ExpectResourceAction(revision, plancheck.ResourceActionReplace),
-				}},
-				Check: resource.TestCheckResourceAttrWith(revision, "id", func(v string) error {
-					if v == first {
-						return fmt.Errorf("the replacement kept the quote ID %s", v)
-					}
-					return nil
-				}),
-			},
-		},
+		Steps: acctest.Forget(t, []resource.TestStep{
+			{Config: cfg("a")},
+			{Config: cfg("b"), PlanOnly: true, ExpectError: tfacc.RefusedReplace},
+			{Config: cfg("a"), Taint: []string{"stripe_quote.revision"}, ExpectError: tfacc.RefusedDestroy},
+		}, nil, "stripe_quote"),
 	})
 }
 
@@ -165,7 +158,7 @@ func TestAccQuote_import(t *testing.T) {
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: tfacc.ProviderFactories,
 		ErrorCheck:               tfacc.SkipWhenFakeLacks(t, "line_items"),
-		Steps: []resource.TestStep{
+		Steps: acctest.Forget(t, []resource.TestStep{
 			{Config: cfg},
 			{
 				ResourceName:      address,
@@ -178,33 +171,25 @@ func TestAccQuote_import(t *testing.T) {
 				ImportStateKind: resource.ImportBlockWithID,
 				Config:          cfg,
 			},
-		},
+		}, nil, "stripe_quote"),
 	})
 }
 
-// Stripe cannot delete a quote; a draft quote cancels (suite: "Quotes", "Draft and open
-// quotes cancel"), so destroy cancels it and the quote stays in the account.
+// Stripe cannot delete a quote, so dropping it from the configuration, and `terraform
+// destroy`, fail at plan time, and the quote stays as it was.
 func TestAccQuote_delete(t *testing.T) {
 	acct := acctest.NewAccount(t)
-	var id string
+	var path string
+	var mark int
+	cfg := quoteConfig(acct, oneLine, "")
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: tfacc.ProviderFactories,
 		ErrorCheck:               tfacc.SkipWhenFakeLacks(t, "line_items"),
-		CheckDestroy: func(*terraform.State) error {
-			// The test skipped before it created a quote.
-			if id == "" {
-				return nil
-			}
-			resp, err := tfacc.Client(acct).Do(t.Context(), stripeapi.Request{Method: "GET", Path: "/v1/quotes/" + id})
-			if err != nil {
-				return fmt.Errorf("a cancelled quote still retrieves: %w", err)
-			}
-			if status, _ := resp.Body.(wire.Object).GetString("status"); status != "canceled" {
-				return fmt.Errorf("quote %s is %q after destroy, want canceled", id, status)
-			}
-			return nil
-		},
-		Steps: []resource.TestStep{{Config: quoteConfig(acct, oneLine, ""), Check: idOf(&id)}},
+		Steps: acctest.Forget(t, []resource.TestStep{
+			{Config: cfg, Check: resource.ComposeTestCheckFunc(pathOf(&path), tfacc.LogMark(t, acct, &mark))},
+			{Config: acctest.Without(t, cfg, "stripe_quote"), PlanOnly: true, ExpectError: tfacc.RefusedDestroy},
+			{Config: cfg, Destroy: true, ExpectError: tfacc.RefusedDestroy},
+		}, tfacc.Untouched(t, acct, &path, &mark, "status", wire.String("draft")), "stripe_quote"),
 	})
 }
 
@@ -215,7 +200,7 @@ func TestAccQuote_drift(t *testing.T) {
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: tfacc.ProviderFactories,
 		ErrorCheck:               tfacc.SkipWhenFakeLacks(t, "line_items"),
-		Steps: []resource.TestStep{
+		Steps: acctest.Forget(t, []resource.TestStep{
 			{Config: cfg, Check: idOf(&id)},
 			{
 				PreConfig: func() {
@@ -228,20 +213,44 @@ func TestAccQuote_drift(t *testing.T) {
 				}},
 				Check: resource.TestCheckResourceAttr(address, "description", "Package"),
 			},
-		},
+		}, nil, "stripe_quote"),
 	})
 }
 
-// An accepted quote cannot be cancelled (suite: `quote_cancellation_already_accepted`) and
-// has become an invoice, so destroy leaves it as it is.
-func TestAccQuote_deleteAfterAccept(t *testing.T) {
+// Setting `status` to `canceled` cancels the quote through its action endpoint (suite:
+// "cancel"), after which it reads back canceled.
+func TestAccQuote_cancel(t *testing.T) {
+	acct := acctest.NewAccount(t)
+	var path string
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: tfacc.ProviderFactories,
+		ErrorCheck:               tfacc.SkipWhenFakeLacks(t, "line_items"),
+		Steps: acctest.Forget(t, []resource.TestStep{
+			{Config: quoteConfig(acct, oneLine, ""), Check: pathOf(&path)},
+			{
+				Config: quoteConfig(acct, oneLine, "  status = \"canceled\"\n"),
+				ConfigPlanChecks: resource.ConfigPlanChecks{PreApply: []plancheck.PlanCheck{
+					plancheck.ExpectResourceAction(address, plancheck.ResourceActionUpdate),
+				}},
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr(address, "status", "canceled"),
+					tfacc.Holds(t, acct, &path, "status", wire.String("canceled")),
+				),
+			},
+		}, nil, "stripe_quote"),
+	})
+}
+
+// An accepted quote cannot be cancelled (suite: "cancel once accepted"), so a configuration
+// that sets `status` to `canceled` fails at plan time.
+func TestAccQuote_cancelAccepted(t *testing.T) {
 	acct := acctest.NewAccount(t)
 	var id string
 	cfg := quoteConfig(acct, oneLine, "")
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: tfacc.ProviderFactories,
 		ErrorCheck:               tfacc.SkipWhenFakeLacks(t, "line_items"),
-		Steps: []resource.TestStep{
+		Steps: acctest.Forget(t, []resource.TestStep{
 			{Config: cfg, Check: idOf(&id)},
 			{
 				PreConfig: func() {
@@ -249,9 +258,13 @@ func TestAccQuote_deleteAfterAccept(t *testing.T) {
 					tfacc.Post(t, acct, "/v1/quotes/"+id+"/accept", nil)
 				},
 				Config: cfg,
-				// The refresh reads the accepted status; destroy then has nothing to cancel.
-				Check: resource.TestCheckResourceAttr(address, "status", "accepted"),
+				Check:  resource.TestCheckResourceAttr(address, "status", "accepted"),
 			},
-		},
+			{
+				Config:      quoteConfig(acct, oneLine, "  status = \"canceled\"\n"),
+				PlanOnly:    true,
+				ExpectError: regexp.MustCompile("Cannot change `status` from `accepted`"),
+			},
+		}, nil, "stripe_quote"),
 	})
 }

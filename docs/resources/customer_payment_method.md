@@ -3,12 +3,14 @@
 page_title: "stripe_customer_payment_method Resource - Stripe"
 subcategory: ""
 description: |-
-  A payment method attached to a customer. The resource is the attachment: terraform destroy detaches the payment method from the customer, and Stripe never lets a detached payment method be attached again. The payment method itself is not created here, because creating one takes raw card data: create it with Stripe.js or a SetupIntent, or use a Stripe test payment method such as pm_card_visa, and give its ID as payment_method. Attaching a test payment method returns a new payment method, so the id can differ from payment_method. Only billing_details, metadata and card.exp_year change in place; Stripe's other updatable payment method fields are read-only here.
+  A payment method attached to a customer. The resource is the attachment. The payment method itself is not created here, because creating one takes raw card data: create it with Stripe.js or a SetupIntent, or use a Stripe test payment method such as pm_card_visa, and give its ID as payment_method. Attaching a test payment method returns a new payment method, so the id can differ from payment_method. Only billing_details, metadata and card.exp_year change in place; Stripe's other updatable payment method fields are read-only here.
 ---
 
 # Resource: stripe_customer_payment_method
 
-A payment method attached to a customer. The resource is the attachment: `terraform destroy` detaches the payment method from the customer, and Stripe never lets a detached payment method be attached again. The payment method itself is not created here, because creating one takes raw card data: create it with Stripe.js or a SetupIntent, or use a Stripe test payment method such as `pm_card_visa`, and give its ID as `payment_method`. Attaching a test payment method returns a new payment method, so the `id` can differ from `payment_method`. Only `billing_details`, `metadata` and `card.exp_year` change in place; Stripe's other updatable payment method fields are read-only here.
+A payment method attached to a customer. The resource is the attachment. The payment method itself is not created here, because creating one takes raw card data: create it with Stripe.js or a SetupIntent, or use a Stripe test payment method such as `pm_card_visa`, and give its ID as `payment_method`. Attaching a test payment method returns a new payment method, so the `id` can differ from `payment_method`. Only `billing_details`, `metadata` and `card.exp_year` change in place; Stripe's other updatable payment method fields are read-only here.
+
+~> Stripe has no delete for the attachment of a payment method to a customer, only a detach, which is final: a detached payment method cannot be attached again. `terraform destroy`, and a change that would replace the customer payment method, fail at plan time. To stop managing a customer payment method, remove it from the state as [Removing from State](#removing-from-state) shows; it stays in the Stripe account.
 
 ## Example Usage
 
@@ -38,8 +40,8 @@ resource "stripe_customer_payment_method" "acme" {
 
 The following arguments are required:
 
-* `customer` - (Required) The ID of the parent object. Changing it replaces the resource.
-* `payment_method` - (Required) The ID of the existing object to attach to the parent. Changing it replaces the resource. The resource's `id` is the ID Stripe returns, which differs from this when a test ID is attached.
+* `customer` - (Required) The ID of the parent object. Changing it fails the plan, because this resource cannot be replaced.
+* `payment_method` - (Required) The ID of the existing object to attach to the parent. Changing it fails the plan, because this resource cannot be replaced. The resource's `id` is the ID Stripe returns, which differs from this when a test ID is attached.
 
 The following arguments are optional:
 
@@ -646,6 +648,28 @@ The `us_bank_account.status_details.blocked` attribute supports:
 * `create` - (Default `20m`)
 * `delete` - (Default `20m`)
 * `update` - (Default `20m`)
+
+## Removing from State
+
+To stop managing a customer payment method whose destroy is refused, remove it from the state without destroying it. In Terraform 1.7 and later, and OpenTofu 1.10 and later, replace the `resource` block with a [`removed` block](https://developer.hashicorp.com/terraform/language/block/removed) and apply:
+
+```terraform
+removed {
+  from = stripe_customer_payment_method.acme
+
+  lifecycle {
+    destroy = false
+  }
+}
+```
+
+Using `terraform state rm`:
+
+```console
+% terraform state rm stripe_customer_payment_method.acme
+```
+
+The customer payment method stays in the Stripe account. Replacing one with `terraform apply -replace` or `terraform taint` fails in the same way, at apply.
 
 ## Import
 

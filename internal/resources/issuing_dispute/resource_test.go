@@ -9,7 +9,6 @@ import (
 	"github.com/hashicorp/go-version"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/hashicorp/terraform-plugin-testing/plancheck"
-	"github.com/hashicorp/terraform-plugin-testing/terraform"
 	"github.com/hashicorp/terraform-plugin-testing/tfjsonpath"
 	"github.com/hashicorp/terraform-plugin-testing/tfversion"
 
@@ -79,6 +78,17 @@ resource "stripe_issuing_dispute" "test" {
 // otherReasons is the fake's answer to a reason other than `fraudulent`, the one it takes.
 const otherReasons = "dispute reasons other than fraudulent"
 
+// skipOtherReasons skips a test that changes a dispute to another reason before it creates
+// one, when the fake does not take other reasons yet: a test that skipped later would leave a
+// dispute its closing destroy refuses. The probe disputes a transaction of its own.
+func skipOtherReasons(t *testing.T, s scope) {
+	t.Helper()
+	tfacc.SkipUnlessFakeServes(t, s.conn, "POST", "/v1/issuing/disputes", wire.Object{
+		{Name: "transaction", Value: wire.String(s.transaction(t))},
+		{Name: "evidence", Value: wire.Object{{Name: "reason", Value: wire.String("other")}}},
+	})
+}
+
 func idOf(dst *string) resource.TestCheckFunc {
 	return resource.TestCheckResourceAttrWith(address, "id", func(v string) error {
 		*dst = v
@@ -86,14 +96,12 @@ func idOf(dst *string) resource.TestCheckFunc {
 	})
 }
 
-func status(t *testing.T, conn acctest.Config, id string) string {
-	t.Helper()
-	resp, err := tfacc.Client(conn).Do(t.Context(), stripeapi.Request{Method: "GET", Path: "/v1/issuing/disputes/" + id})
-	if err != nil {
-		t.Fatalf("reading dispute %s: %v", id, err)
-	}
-	s, _ := resp.Body.(wire.Object).GetString("status")
-	return s
+// pathOf records the dispute's API path.
+func pathOf(dst *string) resource.TestCheckFunc {
+	return resource.TestCheckResourceAttrWith(address, "id", func(v string) error {
+		*dst = "/v1/issuing/disputes/" + v
+		return nil
+	})
 }
 
 // A new dispute is unsubmitted, for the whole transaction, with the evidence given, and the
@@ -103,7 +111,7 @@ func TestAccIssuingDispute_create(t *testing.T) {
 	txn := s.transaction(t)
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: tfacc.ProviderFactories,
-		Steps: []resource.TestStep{{
+		Steps: acctest.Forget(t, []resource.TestStep{{
 			Config: disputeConfig(s, txn, "The cardholder did not make this purchase.", "  metadata = { env = \"test\" }\n") + `
 data "stripe_issuing_dispute" "test" {
   provider = stripe.connected
@@ -136,7 +144,7 @@ data "stripe_issuing_dispute" "test" {
 					return nil
 				}),
 			),
-		}},
+		}}, nil, "stripe_issuing_dispute"),
 	})
 }
 
@@ -148,7 +156,7 @@ func TestAccIssuingDispute_submitOnCreate(t *testing.T) {
 	txn := s.transaction(t)
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: tfacc.ProviderFactories,
-		Steps: []resource.TestStep{{
+		Steps: acctest.Forget(t, []resource.TestStep{{
 			Config: disputeConfig(s, txn, "", "  status = \"submitted\"\n"),
 			Check: resource.ComposeAggregateTestCheckFunc(
 				resource.TestCheckResourceAttr(address, "status", "submitted"),
@@ -157,7 +165,7 @@ func TestAccIssuingDispute_submitOnCreate(t *testing.T) {
 				resource.TestCheckResourceAttrSet(address, "treasury.received_debit"),
 				resource.TestCheckResourceAttrSet(address, "treasury.debit_reversal"),
 			),
-		}},
+		}}, nil, "stripe_issuing_dispute"),
 	})
 }
 
@@ -170,14 +178,14 @@ func TestAccIssuingDispute_otherReason(t *testing.T) {
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: tfacc.ProviderFactories,
 		ErrorCheck:               tfacc.SkipWhenFakeLacks(t, otherReasons),
-		Steps: []resource.TestStep{{
+		Steps: acctest.Forget(t, []resource.TestStep{{
 			Config: reasonConfig(s, txn, "other"),
 			Check: resource.ComposeAggregateTestCheckFunc(
 				resource.TestCheckResourceAttr(address, "status", "unsubmitted"),
 				resource.TestCheckResourceAttr(address, "evidence.reason", "other"),
 				resource.TestCheckNoResourceAttr(address, "evidence.other.explanation"),
 			),
-		}},
+		}}, nil, "stripe_issuing_dispute"),
 	})
 }
 
@@ -185,12 +193,12 @@ func TestAccIssuingDispute_otherReason(t *testing.T) {
 // explanation is not planned from the state, and the new reason's hash is read back.
 func TestAccIssuingDispute_changeReason(t *testing.T) {
 	s := issuing(t)
+	skipOtherReasons(t, s)
 	txn := s.transaction(t)
 	var first string
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: tfacc.ProviderFactories,
-		ErrorCheck:               tfacc.SkipWhenFakeLacks(t, otherReasons),
-		Steps: []resource.TestStep{
+		Steps: acctest.Forget(t, []resource.TestStep{
 			{Config: disputeConfig(s, txn, "Not made by the cardholder.", ""), Check: idOf(&first)},
 			{
 				Config: reasonConfig(s, txn, "other"),
@@ -209,7 +217,7 @@ func TestAccIssuingDispute_changeReason(t *testing.T) {
 					resource.TestCheckNoResourceAttr(address, "evidence.fraudulent.explanation"),
 				),
 			},
-		},
+		}, nil, "stripe_issuing_dispute"),
 	})
 }
 
@@ -232,7 +240,7 @@ func TestAccIssuingDispute_update(t *testing.T) {
 	})
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: tfacc.ProviderFactories,
-		Steps: []resource.TestStep{
+		Steps: acctest.Forget(t, []resource.TestStep{
 			{
 				Config: disputeConfig(s, txn, "The cardholder did not make this purchase.", "  metadata = { a = \"1\" }\n"),
 				Check:  idOf(&first),
@@ -267,39 +275,23 @@ func TestAccIssuingDispute_update(t *testing.T) {
 				Config:      disputeConfig(s, txn, "Changed after submitting.", "  amount   = 400\n  metadata = { c = \"3\" }\n  status   = \"submitted\"\n"),
 				ExpectError: regexp.MustCompile(`Evidence can only be modified while the dispute is unsubmitted`),
 			},
-		},
+		}, nil, "stripe_issuing_dispute"),
 	})
 }
 
-// Stripe takes the transaction on create only, so another transaction replaces the dispute,
-// and the old dispute stays as it was.
+// `transaction` is create-only, so changing it would replace the dispute, which Stripe cannot
+// delete or withdraw: the plan fails, and so does a taint, at apply.
 func TestAccIssuingDispute_replace(t *testing.T) {
 	s := issuing(t)
 	firstTxn, secondTxn := s.transaction(t), s.transaction(t)
-	var first string
+	cfg := disputeConfig(s, firstTxn, "Not made by the cardholder.", "")
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: tfacc.ProviderFactories,
-		Steps: []resource.TestStep{
-			{Config: disputeConfig(s, firstTxn, "Not made by the cardholder.", ""), Check: idOf(&first)},
-			{
-				Config: disputeConfig(s, secondTxn, "Not made by the cardholder.", ""),
-				ConfigPlanChecks: resource.ConfigPlanChecks{PreApply: []plancheck.PlanCheck{
-					plancheck.ExpectResourceAction(address, plancheck.ResourceActionReplace),
-				}},
-				Check: resource.ComposeAggregateTestCheckFunc(
-					resource.TestCheckResourceAttr(address, "transaction", secondTxn),
-					resource.TestCheckResourceAttrWith(address, "id", func(v string) error {
-						if v == first {
-							return fmt.Errorf("the replacement kept the dispute %s", v)
-						}
-						if got := status(t, s.conn, first); got != "unsubmitted" {
-							return fmt.Errorf("the replaced dispute %s is %s, want unsubmitted", first, got)
-						}
-						return nil
-					}),
-				),
-			},
-		},
+		Steps: acctest.Forget(t, []resource.TestStep{
+			{Config: cfg},
+			{Config: disputeConfig(s, secondTxn, "Not made by the cardholder.", ""), PlanOnly: true, ExpectError: tfacc.RefusedReplace},
+			{Config: cfg, Taint: []string{address}, ExpectError: tfacc.RefusedDestroy},
+		}, nil, "stripe_issuing_dispute"),
 	})
 }
 
@@ -308,7 +300,7 @@ func TestAccIssuingDispute_import(t *testing.T) {
 	cfg := disputeConfig(s, s.transaction(t), "Not made by the cardholder.", "  metadata = { env = \"test\" }\n")
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: tfacc.ProviderFactories,
-		Steps: []resource.TestStep{
+		Steps: acctest.Forget(t, []resource.TestStep{
 			{Config: cfg},
 			{
 				Config:            cfg,
@@ -322,7 +314,7 @@ func TestAccIssuingDispute_import(t *testing.T) {
 				ImportStateKind: resource.ImportBlockWithID,
 				Config:          cfg,
 			},
-		},
+		}, nil, "stripe_issuing_dispute"),
 	})
 }
 
@@ -333,7 +325,7 @@ func TestAccIssuingDispute_importIdentity(t *testing.T) {
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: tfacc.ProviderFactories,
 		TerraformVersionChecks:   []tfversion.TerraformVersionCheck{tfversion.RequireAbove(version.Must(version.NewVersion("1.12.0")))},
-		Steps: []resource.TestStep{
+		Steps: acctest.Forget(t, []resource.TestStep{
 			{Config: cfg},
 			{
 				ResourceName:    address,
@@ -341,24 +333,24 @@ func TestAccIssuingDispute_importIdentity(t *testing.T) {
 				ImportStateKind: resource.ImportBlockWithResourceIdentity,
 				Config:          cfg,
 			},
-		},
+		}, nil, "stripe_issuing_dispute"),
 	})
 }
 
-// Stripe cannot delete or withdraw a dispute, so destroy leaves it unsubmitted.
+// Stripe cannot delete or withdraw a dispute, so dropping it from the configuration, and
+// `terraform destroy`, fail at plan time, and the dispute stays unsubmitted.
 func TestAccIssuingDispute_delete(t *testing.T) {
 	s := issuing(t)
-	txn := s.transaction(t)
-	var id string
+	var path string
+	var mark int
+	cfg := disputeConfig(s, s.transaction(t), "Not made by the cardholder.", "")
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: tfacc.ProviderFactories,
-		CheckDestroy: func(*terraform.State) error {
-			if got := status(t, s.conn, id); got != "unsubmitted" {
-				return fmt.Errorf("dispute %s is %s after destroy, want unsubmitted", id, got)
-			}
-			return nil
-		},
-		Steps: []resource.TestStep{{Config: disputeConfig(s, txn, "Not made by the cardholder.", ""), Check: idOf(&id)}},
+		Steps: acctest.Forget(t, []resource.TestStep{
+			{Config: cfg, Check: resource.ComposeTestCheckFunc(pathOf(&path), tfacc.LogMark(t, s.conn, &mark))},
+			{Config: acctest.Without(t, cfg, "stripe_issuing_dispute"), PlanOnly: true, ExpectError: tfacc.RefusedDestroy},
+			{Config: cfg, Destroy: true, ExpectError: tfacc.RefusedDestroy},
+		}, tfacc.Untouched(t, s.conn, &path, &mark, "status", wire.String("unsubmitted")), "stripe_issuing_dispute"),
 	})
 }
 
@@ -370,7 +362,7 @@ func TestAccIssuingDispute_drift(t *testing.T) {
 	cfg := disputeConfig(s, s.transaction(t), "Not made by the cardholder.", "  metadata = { env = \"test\" }\n")
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: tfacc.ProviderFactories,
-		Steps: []resource.TestStep{
+		Steps: acctest.Forget(t, []resource.TestStep{
 			{Config: cfg, Check: idOf(&id)},
 			{
 				PreConfig: func() {
@@ -392,6 +384,6 @@ func TestAccIssuingDispute_drift(t *testing.T) {
 					resource.TestCheckResourceAttr(address, "evidence.fraudulent.explanation", "Not made by the cardholder."),
 				),
 			},
-		},
+		}, nil, "stripe_issuing_dispute"),
 	})
 }

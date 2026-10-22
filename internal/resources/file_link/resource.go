@@ -9,13 +9,13 @@ import (
 	"github.com/computomatic/terraform-provider-stripe/internal/generated/file_link"
 )
 
-// Declaration is what the spec cannot say about a file link. Stripe never deletes one, so
-// destroy expires it (`expires_at` set to now) and drops it from state. An expired link
-// cannot be modified, so destroy retrieves first.
+// Declaration is what the spec cannot say about a file link. Stripe never deletes one, and an
+// expired link cannot be modified, so expiring one is final and destroy is refused.
+// `expires_at` ends a link at a time.
 var Declaration = engine.Declaration{
 	TypeName:              "stripe_file_link",
 	IDPrefix:              "link_",
-	Description:           "A link that lets anyone download a file. `terraform destroy` expires the link, because Stripe cannot delete one; it stays in the account. Stripe refuses to change an expired link.",
+	Description:           "A link that lets anyone download a file. Stripe refuses to change an expired link.",
 	DataSourceDescription: "A link that lets anyone download a file.",
 	Paths: engine.Paths{
 		Create:   "/v1/file_links",
@@ -23,8 +23,8 @@ var Declaration = engine.Declaration{
 		Update:   "/v1/file_links/{id}",
 		List:     "/v1/file_links",
 	},
-	Delete:  engine.Archive,
-	Archive: &engine.ArchiveAction{Field: "expires_at", Now: true},
+	Delete:       engine.Refuse,
+	RefuseReason: "Stripe cannot delete a file link, and it serves the file until `expires_at`; set `expires_at` to end one.",
 }
 
 // NewResource returns the resource constructor the provider registers.

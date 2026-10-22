@@ -3,12 +3,14 @@
 page_title: "stripe_climate_order Resource - Stripe"
 subcategory: ""
 description: |-
-  A purchase of carbon removal from Stripe Climate. Set exactly one of metric_tons (a whole number of tons) and amount (the money to spend, in the smallest unit of the order's currency). The order spends the account's available balance in its settlement currency. terraform destroy cancels the order and refunds its amount_subtotal, but not its amount_fees; Stripe cannot delete an order, so a canceled order stays in the account. Stripe cancels only orders that are not yet delivered, so destroy leaves a delivered order as it is, with a warning. Only beneficiary and metadata change in place: changing any other argument cancels the order and buys a new one, and the fees of the canceled order are not refunded.
+  A purchase of carbon removal from Stripe Climate. Set exactly one of metric_tons (a whole number of tons) and amount (the money to spend, in the smallest unit of the order's currency). The order spends the account's available balance in its settlement currency. Set status to canceled to cancel an order that is not yet delivered, which refunds its amount_subtotal but not its amount_fees. Only beneficiary and metadata change in place: changing any other argument fails the plan.
 ---
 
 # Resource: stripe_climate_order
 
-A purchase of carbon removal from Stripe Climate. Set exactly one of `metric_tons` (a whole number of tons) and `amount` (the money to spend, in the smallest unit of the order's currency). The order spends the account's available balance in its settlement currency. `terraform destroy` cancels the order and refunds its `amount_subtotal`, but not its `amount_fees`; Stripe cannot delete an order, so a canceled order stays in the account. Stripe cancels only orders that are not yet delivered, so destroy leaves a delivered order as it is, with a warning. Only `beneficiary` and `metadata` change in place: changing any other argument cancels the order and buys a new one, and the fees of the canceled order are not refunded.
+A purchase of carbon removal from Stripe Climate. Set exactly one of `metric_tons` (a whole number of tons) and `amount` (the money to spend, in the smallest unit of the order's currency). The order spends the account's available balance in its settlement currency. Set `status` to `canceled` to cancel an order that is not yet delivered, which refunds its `amount_subtotal` but not its `amount_fees`. Only `beneficiary` and `metadata` change in place: changing any other argument fails the plan.
+
+~> Stripe cannot delete a Climate order; set `status` to `canceled` to cancel one that is not yet delivered. `terraform destroy`, and a change that would replace the climate order, fail at plan time. To stop managing a climate order, remove it from the state as [Removing from State](#removing-from-state) shows; it stays in the Stripe account.
 
 ## Example Usage
 
@@ -17,8 +19,8 @@ data "stripe_climate_product" "removal" {
   id = "climsku_123"
 }
 
-# Spends your available balance. Destroying the order cancels it and refunds the removal,
-# but not Stripe's fees.
+# Spends your available balance. Setting `status = "canceled"` cancels the order and refunds
+# the removal, but not Stripe's fees. Stripe cannot delete an order, so destroy is refused.
 resource "stripe_climate_order" "offset" {
   product     = data.stripe_climate_product.removal.id
   metric_tons = "1"
@@ -33,15 +35,16 @@ resource "stripe_climate_order" "offset" {
 
 The following arguments are required:
 
-* `product` - (Required) Unique identifier of the Climate product. Changing it replaces the resource.
+* `product` - (Required) Unique identifier of the Climate product. Changing it fails the plan, because this resource cannot be replaced.
 
 The following arguments are optional:
 
-* `amount` - (Optional) Requested amount of carbon removal units. Either this or `metric_tons` must be specified. Changing it replaces the resource.
+* `amount` - (Optional) Requested amount of carbon removal units. Either this or `metric_tons` must be specified. Changing it fails the plan, because this resource cannot be replaced.
 * `beneficiary` - (Optional) Publicly sharable reference for the end beneficiary of carbon removal. Assumed to be the Stripe account if not set. See [`beneficiary`](#beneficiary) below.
-* `currency` - (Optional) Request currency for the order as a three-letter [ISO currency code](https://www.iso.org/iso-4217-currency-codes.html), in lowercase. Must be a supported [settlement currency for your account](https://stripe.com/docs/currencies). If omitted, the account's default currency will be used. Changing it replaces the resource.
+* `currency` - (Optional) Request currency for the order as a three-letter [ISO currency code](https://www.iso.org/iso-4217-currency-codes.html), in lowercase. Must be a supported [settlement currency for your account](https://stripe.com/docs/currencies). If omitted, the account's default currency will be used. Changing it fails the plan, because this resource cannot be replaced.
 * `metadata` - (Optional) Set of [key-value pairs](https://docs.stripe.com/api/metadata) that you can attach to an object. This can be useful for storing additional information about the object in a structured format. Individual keys can be unset by posting an empty value to them. All keys can be unset by posting an empty value to `metadata`.
-* `metric_tons` - (Optional) Requested number of tons for the order. Either this or `amount` must be specified. Changing it replaces the resource.
+* `metric_tons` - (Optional) Requested number of tons for the order. Either this or `amount` must be specified. Changing it fails the plan, because this resource cannot be replaced.
+* `status` - (Optional) The current status of this order. Possible values: `canceled`.
 
 <a id="beneficiary"></a>
 ### `beneficiary`
@@ -69,7 +72,6 @@ This resource exports the following attributes in addition to the arguments abov
 * `expected_delivery_year` - The year this order is expected to be delivered. If the year is in the past, the order is a spot purchase and will be delivered within 30 days of purchase.
 * `livemode` - Has the value `true` if the object exists in live mode or the value `false` if the object exists in test mode.
 * `product_substituted_at` - Time at which the order's product was substituted for a different product. Measured in seconds since the Unix epoch.
-* `status` - The current status of this order. Possible values: `awaiting_funds`, `canceled`, `confirmed`, `delivered`, `open`.
 
 <a id="delivery_details"></a>
 ### `delivery_details`
@@ -124,6 +126,28 @@ The `delivery_details.supplier.locations` attribute is a list. Each element supp
 * `create` - (Default `20m`)
 * `delete` - (Default `20m`)
 * `update` - (Default `20m`)
+
+## Removing from State
+
+To stop managing a climate order whose destroy is refused, remove it from the state without destroying it. In Terraform 1.7 and later, and OpenTofu 1.10 and later, replace the `resource` block with a [`removed` block](https://developer.hashicorp.com/terraform/language/block/removed) and apply:
+
+```terraform
+removed {
+  from = stripe_climate_order.offset
+
+  lifecycle {
+    destroy = false
+  }
+}
+```
+
+Using `terraform state rm`:
+
+```console
+% terraform state rm stripe_climate_order.offset
+```
+
+The climate order stays in the Stripe account. Replacing one with `terraform apply -replace` or `terraform taint` fails in the same way, at apply.
 
 ## Import
 

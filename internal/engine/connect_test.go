@@ -177,7 +177,7 @@ func TestCreateWrapMustNameCreateFields(t *testing.T) {
 func deleteKeepDeclaration() Declaration {
 	decl := fixtureDeclaration()
 	decl.Delete = Delete
-	decl.KeepWhen = &FieldIs{Field: "is_default", Value: wire.Bool(true)}
+	decl.RefuseWhen = &RefuseWhen{Field: "is_default", Value: wire.Bool(true), Reason: "Stripe refuses to delete the default widget."}
 	return decl
 }
 
@@ -198,21 +198,20 @@ func deleteRefusing(stub *stubStripe, err error, isDefault bool) clientFunc {
 
 var deleteRefusal = &stripeapi.APIError{Status: 400, Type: "invalid_request_error", Message: "You cannot delete the default external account for a currency."}
 
-// A refused DELETE of an object the retrieve shows is protected is left in place with a
-// warning, as a refused archive is.
-func TestDeleteKeepsTheProtectedObject(t *testing.T) {
+// A refused DELETE of an object the retrieve shows is protected fails with Stripe's error and
+// the guidance, as a refused archive does; one that is not protected fails with Stripe's
+// error only.
+func TestDeleteRefusedForTheProtectedObject(t *testing.T) {
 	stub := newStub()
-	r := configured(t, deleteKeepDeclaration(), fixtureTable(), deleteRefusing(stub, deleteRefusal, true))
+	r := configured(t, deleteKeepDeclaration(), defaultTable(), deleteRefusing(stub, deleteRefusal, true))
 	state, _ := r.create(t, createPlan(r))
-	diags := r.destroy(t, state)
-	noErrors(t, diags)
-	if len(diags.Warnings()) != 1 || diags.Warnings()[0].Summary() != "Left in place instead of deleted" {
-		t.Errorf("want one warning: %v", diags)
+	if diags := r.destroy(t, state); !refusedDestroy(diags) || len(diags.Errors()) != 2 {
+		t.Errorf("want Stripe's error and the refusal: %v", diags)
 	}
 
-	r = configured(t, deleteKeepDeclaration(), fixtureTable(), deleteRefusing(stub, deleteRefusal, false))
-	if diags := r.destroy(t, state); !diags.HasError() {
-		t.Error("a refused DELETE of an object that is not protected must fail the destroy")
+	r = configured(t, deleteKeepDeclaration(), defaultTable(), deleteRefusing(stub, deleteRefusal, false))
+	if diags := r.destroy(t, state); !diags.HasError() || refusedDestroy(diags) {
+		t.Errorf("a refused DELETE of an object that is not protected fails with Stripe's error only: %v", diags)
 	}
 }
 
@@ -365,20 +364,20 @@ func TestRefuseChangeMustNameAConfigurableField(t *testing.T) {
 	}
 }
 
-// DELETE of a protected object is kept only when it was refused with a 400
-// invalid_request_error. A 403 from a read-only key or a server error fails the destroy
-// even when the retrieve shows the object is protected.
-func TestDeleteKeepsOnlyOnARefusal(t *testing.T) {
+// DELETE of a protected object gets the guidance only when it was refused with a 400
+// invalid_request_error. A 403 from a read-only key or a server error fails the destroy with
+// Stripe's error alone, even when the retrieve shows the object is protected.
+func TestDeleteRefusesOnlyOnARefusal(t *testing.T) {
 	for name, err := range map[string]error{
 		"server error":  &stripeapi.APIError{Status: 500, Type: "api_error", Message: "down"},
 		"read-only key": &stripeapi.APIError{Status: 403, Type: "invalid_request_error", Code: "permission_denied", Message: "no"},
 		"other type":    &stripeapi.APIError{Status: 400, Type: "card_error", Message: "no"},
 	} {
 		stub := newStub()
-		r := configured(t, deleteKeepDeclaration(), fixtureTable(), deleteRefusing(stub, err, true))
+		r := configured(t, deleteKeepDeclaration(), defaultTable(), deleteRefusing(stub, err, true))
 		state, _ := r.create(t, createPlan(r))
-		if diags := r.destroy(t, state); !diags.HasError() {
-			t.Errorf("%s: must fail the destroy", name)
+		if diags := r.destroy(t, state); !diags.HasError() || refusedDestroy(diags) {
+			t.Errorf("%s: must fail the destroy with Stripe's error only: %v", name, diags)
 		}
 	}
 }

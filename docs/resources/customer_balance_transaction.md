@@ -3,12 +3,14 @@
 page_title: "stripe_customer_balance_transaction Resource - Stripe"
 subcategory: ""
 description: |-
-  An adjustment to a customer's credit balance: a negative amount credits the customer, a positive one debits them. Stripe cannot delete or reverse a transaction, so terraform destroy only removes it from Terraform's state and the adjustment stays on the customer's balance. Changing amount or currency replaces the resource, which adds a second transaction and does not undo the first.
+  An adjustment to a customer's credit balance: a negative amount credits the customer, a positive one debits them. Only description and metadata change after creation.
 ---
 
 # Resource: stripe_customer_balance_transaction
 
-An adjustment to a customer's credit balance: a negative `amount` credits the customer, a positive one debits them. Stripe cannot delete or reverse a transaction, so `terraform destroy` only removes it from Terraform's state and the adjustment stays on the customer's balance. Changing `amount` or `currency` replaces the resource, which adds a second transaction and does not undo the first.
+An adjustment to a customer's credit balance: a negative `amount` credits the customer, a positive one debits them. Only `description` and `metadata` change after creation.
+
+~> Stripe cannot delete or reverse a customer balance transaction; it stays on the customer's balance. `terraform destroy`, and a change that would replace the customer balance transaction, fail at plan time. To stop managing a customer balance transaction, remove it from the state as [Removing from State](#removing-from-state) shows; it stays in the Stripe account.
 
 ## Example Usage
 
@@ -30,9 +32,9 @@ resource "stripe_customer_balance_transaction" "goodwill" {
 
 The following arguments are required:
 
-* `amount` - (Required) The integer amount in **cents (or local equivalent)** to apply to the customer's credit balance. Changing it replaces the resource.
-* `currency` - (Required) Three-letter [ISO currency code](https://www.iso.org/iso-4217-currency-codes.html), in lowercase. Must be a [supported currency](https://stripe.com/docs/currencies). Specifies the [`invoice_credit_balance`](https://docs.stripe.com/api/customers/object#customer_object-invoice_credit_balance) that this transaction will apply to. If the customer's `currency` is not set, it will be updated to this value. Changing it replaces the resource.
-* `customer` - (Required) The ID of the parent object. Changing it replaces the resource.
+* `amount` - (Required) The integer amount in **cents (or local equivalent)** to apply to the customer's credit balance. Changing it fails the plan, because this resource cannot be replaced.
+* `currency` - (Required) Three-letter [ISO currency code](https://www.iso.org/iso-4217-currency-codes.html), in lowercase. Must be a [supported currency](https://stripe.com/docs/currencies). Specifies the [`invoice_credit_balance`](https://docs.stripe.com/api/customers/object#customer_object-invoice_credit_balance) that this transaction will apply to. If the customer's `currency` is not set, it will be updated to this value. Changing it fails the plan, because this resource cannot be replaced.
+* `customer` - (Required) The ID of the parent object. Changing it fails the plan, because this resource cannot be replaced.
 
 The following arguments are optional:
 
@@ -60,6 +62,28 @@ This resource exports the following attributes in addition to the arguments abov
 * `create` - (Default `20m`)
 * `delete` - (Default `20m`)
 * `update` - (Default `20m`)
+
+## Removing from State
+
+To stop managing a customer balance transaction whose destroy is refused, remove it from the state without destroying it. In Terraform 1.7 and later, and OpenTofu 1.10 and later, replace the `resource` block with a [`removed` block](https://developer.hashicorp.com/terraform/language/block/removed) and apply:
+
+```terraform
+removed {
+  from = stripe_customer_balance_transaction.goodwill
+
+  lifecycle {
+    destroy = false
+  }
+}
+```
+
+Using `terraform state rm`:
+
+```console
+% terraform state rm stripe_customer_balance_transaction.goodwill
+```
+
+The customer balance transaction stays in the Stripe account. Replacing one with `terraform apply -replace` or `terraform taint` fails in the same way, at apply.
 
 ## Import
 

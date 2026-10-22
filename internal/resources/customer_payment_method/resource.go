@@ -8,15 +8,15 @@ import (
 
 	"github.com/computomatic/terraform-provider-stripe/internal/engine"
 	"github.com/computomatic/terraform-provider-stripe/internal/generated/customer_payment_method"
-	"github.com/computomatic/terraform-provider-stripe/internal/wire"
 )
 
 // Declaration is what the spec cannot say about the attachment of a payment method to a
 // customer. The ADR names a nested object by its universe entry, `customers.payment_methods`,
 // so the type is `stripe_customer_payment_method`, as `products.features` is
 // `stripe_product_feature`. The resource is the attachment: creating it attaches an existing
-// payment method (suite: "attach"), and destroy detaches it (suite: "detach"). A detached
-// payment method cannot be attached again (suite: "detached cannot be reattached"). Stripe
+// payment method (suite: "attach"). Stripe has no DELETE for it, only a detach (suite:
+// "detach"), which is final: a detached payment method cannot be attached again (suite:
+// "detached cannot be reattached"). So destroy is refused. Stripe
 // answers the customer-scoped retrieve with a 404 for a method that is detached or belongs
 // to another customer (suite: "retrieve customer payment method errors"), which the engine
 // reads as gone. Detaching a method that is not attached is refused, and the engine reads the
@@ -24,7 +24,7 @@ import (
 var Declaration = engine.Declaration{
 	TypeName:              "stripe_customer_payment_method",
 	IDPrefix:              "pm_",
-	Description:           "A payment method attached to a customer. The resource is the attachment: `terraform destroy` detaches the payment method from the customer, and Stripe never lets a detached payment method be attached again. The payment method itself is not created here, because creating one takes raw card data: create it with Stripe.js or a SetupIntent, or use a Stripe test payment method such as `pm_card_visa`, and give its ID as `payment_method`. Attaching a test payment method returns a new payment method, so the `id` can differ from `payment_method`. Only `billing_details`, `metadata` and `card.exp_year` change in place; Stripe's other updatable payment method fields are read-only here.",
+	Description:           "A payment method attached to a customer. The resource is the attachment. The payment method itself is not created here, because creating one takes raw card data: create it with Stripe.js or a SetupIntent, or use a Stripe test payment method such as `pm_card_visa`, and give its ID as `payment_method`. Attaching a test payment method returns a new payment method, so the `id` can differ from `payment_method`. Only `billing_details`, `metadata` and `card.exp_year` change in place; Stripe's other updatable payment method fields are read-only here.",
 	DataSourceDescription: "A payment method attached to a customer.",
 	Parent:                "customer",
 	Attach:                "payment_method",
@@ -34,12 +34,8 @@ var Declaration = engine.Declaration{
 		Update:   "/v1/payment_methods/{id}",
 		List:     "/v1/customers/{customer}/payment_methods",
 	},
-	Delete: engine.Archive,
-	Archive: &engine.ArchiveAction{
-		Field: "customer",
-		Value: wire.Null{},
-		Path:  "/v1/payment_methods/{id}/detach",
-	},
+	Delete:       engine.Refuse,
+	RefuseReason: "Stripe has no delete for the attachment of a payment method to a customer, only a detach, which is final: a detached payment method cannot be attached again.",
 }
 
 // NewResource returns the resource constructor the provider registers.

@@ -13,13 +13,15 @@ import (
 // Declaration is what the spec cannot say about a billing alert. Stripe never updates an
 // alert, so every argument but `status` forces replacement. `status` moves between `active`
 // and `inactive` through action endpoints (suite: "deactivate and activate"), each a no-op
-// when the alert is already there. Destroy archives the alert, which is permanent (suite:
-// "archived alert cannot be reactivated"); an archived alert can still be retrieved. A
+// when the alert is already there. Destroy deactivates the alert, which is reversible. Setting
+// `status` to `archived` archives it (suite: "archive"), which is final (suite: "archived alert
+// cannot be reactivated"), so destroy and replacement of an archived alert are refused; an
+// archived alert can still be retrieved. A
 // missing alert is a 404 with no error code, which the engine reads as gone by its status.
 var Declaration = engine.Declaration{
 	TypeName:              "stripe_billing_alert",
 	IDPrefix:              "alrt_",
-	Description:           "Notifies you when the usage a billing meter records crosses a threshold. `terraform destroy` archives the alert, which is permanent: an archived alert never triggers or activates again, and it stays in the Stripe account. Stripe does not update alerts, so every argument except `status` forces replacement. `status` can be set to `active` or `inactive`; `archived` is reached by destroy only.",
+	Description:           "Notifies you when the usage a billing meter records crosses a threshold. `terraform destroy` deactivates the alert, because Stripe cannot delete one; it stays in the Stripe account. Stripe does not update alerts, so every argument except `status` forces replacement. `status` can be set to `active`, `inactive` or `archived`; an archived alert never triggers or activates again.",
 	DataSourceDescription: "Notifies you when the usage a billing meter records crosses a threshold.",
 	Paths: engine.Paths{
 		Create:   "/v1/billing/alerts",
@@ -29,12 +31,18 @@ var Declaration = engine.Declaration{
 	Delete: engine.Archive,
 	Archive: &engine.ArchiveAction{
 		Field: "status",
-		Value: wire.String("archived"),
-		Path:  "/v1/billing/alerts/{id}/archive",
+		Value: wire.String("inactive"),
+		Path:  "/v1/billing/alerts/{id}/deactivate",
+	},
+	RefuseWhen: &engine.RefuseWhen{
+		Field:  "status",
+		Value:  wire.String("archived"),
+		Reason: "Stripe cannot deactivate an archived alert, because archiving one is final.",
 	},
 	Transitions: []engine.Transition{
-		{Field: "status", Value: "active", Path: "/v1/billing/alerts/{id}/activate"},
-		{Field: "status", Value: "inactive", Path: "/v1/billing/alerts/{id}/deactivate"},
+		{Field: "status", Value: "active", Path: "/v1/billing/alerts/{id}/activate", Final: []string{"archived"}},
+		{Field: "status", Value: "inactive", Path: "/v1/billing/alerts/{id}/deactivate", Final: []string{"archived"}},
+		{Field: "status", Value: "archived", Path: "/v1/billing/alerts/{id}/archive"},
 	},
 }
 

@@ -5,11 +5,14 @@ import (
 	"regexp"
 	"strings"
 	"time"
+
+	"github.com/computomatic/terraform-provider-stripe/internal/engine"
 )
 
 const (
-	importBlockURL = "https://developer.hashicorp.com/terraform/language/import"
-	timeoutsURL    = "https://developer.hashicorp.com/terraform/language/resources/syntax#operation-timeouts"
+	importBlockURL  = "https://developer.hashicorp.com/terraform/language/import"
+	timeoutsURL     = "https://developer.hashicorp.com/terraform/language/resources/syntax#operation-timeouts"
+	removedBlockURL = "https://developer.hashicorp.com/terraform/language/block/removed"
 )
 
 var (
@@ -81,14 +84,6 @@ func frontMatter(title, description string) string {
 // noun is the resource's name in words, such as `product feature`.
 func noun(typeName string) string {
 	return strings.ReplaceAll(strings.TrimPrefix(typeName, "stripe_"), "_", " ")
-}
-
-// withArticle is noun with `a` or `an` before it.
-func withArticle(n string) string {
-	if strings.ContainsAny(n[:1], "aeiou") {
-		return "an " + n
-	}
-	return "a " + n
 }
 
 // markers is the parenthesised prefix of a line: the kind (when labelled) and the flags.
@@ -286,6 +281,9 @@ func renderResource(s *schema, in pageInput, defaultTimeout time.Duration) (stri
 	m.add(frontMatter(s.Type+" Resource - Stripe", s.Description))
 	m.add("# Resource: " + s.Type)
 	m.add(strings.TrimSpace(s.Description))
+	if s.DestroyNote != "" {
+		m.add(engine.NoteWarning.Sigil() + " " + s.DestroyNote)
+	}
 	if err := exampleUsage(m, in.Examples); err != nil {
 		return "", err
 	}
@@ -299,6 +297,9 @@ func renderResource(s *schema, in pageInput, defaultTimeout time.Duration) (stri
 	})...)
 	attributeSections(m, "resource", exported, len(args) > 0)
 	timeoutsSection(m, s, defaultTimeout)
+	if s.DestroyNote != "" {
+		removingSection(m, s, in.Import.Name)
+	}
 	if err := importSection(m, s, *in.Import); err != nil {
 		return "", err
 	}
@@ -362,10 +363,23 @@ func renderProvider(s *schema, prose providerProse, examples []example) (string,
 	return m.String(), nil
 }
 
+// removingSection shows how to stop managing an object whose destroy is refused: a `removed`
+// block, or `terraform state rm`. name is the resource name the Import section uses.
+func removingSection(m *markdown, s *schema, name string) {
+	subject := noun(s.Type)
+	address := s.Type + "." + name
+	m.add("## Removing from State")
+	m.add(fmt.Sprintf("To stop managing %s whose destroy is refused, remove it from the state without destroying it. In Terraform 1.7 and later, and OpenTofu 1.10 and later, replace the `resource` block with a [`removed` block](%s) and apply:", engine.WithArticle(subject), removedBlockURL))
+	m.add(fence("terraform", fmt.Sprintf("removed {\n  from = %s\n\n  lifecycle {\n    destroy = false\n  }\n}", address)))
+	m.add("Using `terraform state rm`:")
+	m.add(fence("console", "% terraform state rm "+address))
+	m.add(fmt.Sprintf("The %s stays in the Stripe account. Replacing one with `terraform apply -replace` or `terraform taint` fails in the same way, at apply.", subject))
+}
+
 func importSection(m *markdown, s *schema, imp importExample) error {
 	name := s.Type + "." + imp.Name
 	subject := noun(s.Type)
-	indefinite := withArticle(subject)
+	indefinite := engine.WithArticle(subject)
 	id := imp.ID
 	m.add("## Import")
 	if imp.Lead != "" {

@@ -3,14 +3,14 @@
 page_title: "stripe_issuing_personalization_design Resource - Stripe"
 subcategory: ""
 description: |-
-  The look of a physical Issuing card: its physical bundle, card logo and carrier letter. Stripe issues cards only for a platform's connected accounts, so manage designs through a provider configuration whose stripe_account is a connected account with the card_issuing capability active. card_logo is the ID of a file uploaded with the purpose issuing_logo, which a bundle whose features.card_logo is required needs; Terraform cannot upload files. Stripe reviews a new design: status reads review until Stripe makes it active or rejected, with its reasons in rejection_reasons. A plan that changes physical_bundle, card_logo or carrier_text of an existing design fails: create a new design instead.
+  The look of a physical Issuing card: its physical bundle, card logo and carrier letter. Stripe issues cards only for a platform's connected accounts, so manage designs through a provider configuration whose stripe_account is a connected account with the card_issuing capability active. card_logo is the ID of a file uploaded with the purpose issuing_logo, which a bundle whose features.card_logo is required needs; Terraform cannot upload files. Stripe reviews a new design: status reads review until Stripe makes it active or rejected, with its reasons in rejection_reasons. A plan that changes physical_bundle, card_logo or carrier_text of an existing design fails.
 ---
 
 # Resource: stripe_issuing_personalization_design
 
-The look of a physical Issuing card: its physical bundle, card logo and carrier letter. Stripe issues cards only for a platform's connected accounts, so manage designs through a provider configuration whose `stripe_account` is a connected account with the `card_issuing` capability active. `card_logo` is the ID of a file uploaded with the purpose `issuing_logo`, which a bundle whose `features.card_logo` is `required` needs; Terraform cannot upload files. Stripe reviews a new design: `status` reads `review` until Stripe makes it `active` or `rejected`, with its reasons in `rejection_reasons`. A plan that changes `physical_bundle`, `card_logo` or `carrier_text` of an existing design fails: create a new design instead.
+The look of a physical Issuing card: its physical bundle, card logo and carrier letter. Stripe issues cards only for a platform's connected accounts, so manage designs through a provider configuration whose `stripe_account` is a connected account with the `card_issuing` capability active. `card_logo` is the ID of a file uploaded with the purpose `issuing_logo`, which a bundle whose `features.card_logo` is `required` needs; Terraform cannot upload files. Stripe reviews a new design: `status` reads `review` until Stripe makes it `active` or `rejected`, with its reasons in `rejection_reasons`. A plan that changes `physical_bundle`, `card_logo` or `carrier_text` of an existing design fails.
 
-~> Stripe cannot delete a personalization design, so `terraform destroy` leaves it on the connected account, and its `lookup_key` stays taken. A replacement that keeps the `lookup_key` therefore fails: give the new design another key in the same change.
+~> Stripe cannot delete a personalization design, and only Stripe's review ends one; it keeps its `lookup_key`, so a new design needs another key. `terraform destroy`, and a change that would replace the issuing personalization design, fail at plan time. To stop managing an issuing personalization design, remove it from the state as [Removing from State](#removing-from-state) shows; it stays in the Stripe account.
 
 ## Example Usage
 
@@ -110,6 +110,28 @@ The `rejection_reasons` attribute supports:
 * `create` - (Default `20m`)
 * `delete` - (Default `20m`)
 * `update` - (Default `20m`)
+
+## Removing from State
+
+To stop managing an issuing personalization design whose destroy is refused, remove it from the state without destroying it. In Terraform 1.7 and later, and OpenTofu 1.10 and later, replace the `resource` block with a [`removed` block](https://developer.hashicorp.com/terraform/language/block/removed) and apply:
+
+```terraform
+removed {
+  from = stripe_issuing_personalization_design.standard
+
+  lifecycle {
+    destroy = false
+  }
+}
+```
+
+Using `terraform state rm`:
+
+```console
+% terraform state rm stripe_issuing_personalization_design.standard
+```
+
+The issuing personalization design stays in the Stripe account. Replacing one with `terraform apply -replace` or `terraform taint` fails in the same way, at apply.
 
 ## Import
 

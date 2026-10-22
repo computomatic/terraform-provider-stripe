@@ -93,7 +93,7 @@ func TestAccAccountExternalAccount_create(t *testing.T) {
 	acct := acctest.NewAccount(t)
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: tfacc.ProviderFactories,
-		Steps: []resource.TestStep{{
+		Steps: acctest.Forget(t, []resource.TestStep{{
 			Config: config(acct, "") + `
 data "stripe_account_external_account" "test" {
   account = stripe_account.test.id
@@ -150,7 +150,7 @@ data "stripe_account_external_account" "test" {
 					return nil
 				},
 			),
-		}},
+		}}, nil, "stripe_account_external_account.test"),
 	})
 }
 
@@ -162,7 +162,7 @@ func TestAccAccountExternalAccount_update(t *testing.T) {
 	var account, first, other string
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: tfacc.ProviderFactories,
-		Steps: []resource.TestStep{
+		Steps: acctest.Forget(t, []resource.TestStep{
 			{
 				Config: accountBlock(acct) + bankBlock("test", number, "") + bankBlock("second", otherNumber, after),
 				Check: resource.ComposeAggregateTestCheckFunc(
@@ -218,39 +218,23 @@ func TestAccAccountExternalAccount_update(t *testing.T) {
 					bankBlock("second", otherNumber, after+"  default_for_currency = true\n"),
 				Check: resource.TestCheckResourceAttr(address, "default_for_currency", "false"),
 			},
-		},
+		}, nil, "stripe_account_external_account"),
 	})
 }
 
 // The routing number, account number, country and currency are create-only (suite: "update
-// immutable fields"), so changing one replaces the bank account. The replaced bank account is
-// the default, which Stripe will not delete, so destroy leaves it on the account and the
-// replacement is added next to it; setting `default_for_currency` on the replacement makes
-// it the default.
+// immutable fields"), so changing one would replace the bank account. This one is the default,
+// which Stripe will not delete, so the plan fails, and so does a taint, at apply.
 func TestAccAccountExternalAccount_replace(t *testing.T) {
 	acct := acctest.NewAccount(t)
-	var account, first string
+	cfg := config(acct, "  default_for_currency = true\n")
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: tfacc.ProviderFactories,
-		Steps: []resource.TestStep{
-			{Config: config(acct, "  default_for_currency = true\n"), Check: ids(address, &account, &first)},
-			{
-				Config: accountBlock(acct) + bankBlock("test", otherNumber, "  default_for_currency = true\n"),
-				ConfigPlanChecks: resource.ConfigPlanChecks{PreApply: []plancheck.PlanCheck{
-					plancheck.ExpectResourceAction(address, plancheck.ResourceActionReplace),
-				}},
-				Check: resource.ComposeAggregateTestCheckFunc(
-					resource.TestCheckResourceAttr(address, "last4", "1116"),
-					resource.TestCheckResourceAttr(address, "default_for_currency", "true"),
-					resource.TestCheckResourceAttrWith(address, "id", func(v string) error {
-						if v == first {
-							return fmt.Errorf("the replacement kept the bank account ID %s", v)
-						}
-						return nil
-					}),
-				),
-			},
-		},
+		Steps: acctest.Forget(t, []resource.TestStep{
+			{Config: cfg},
+			{Config: accountBlock(acct) + bankBlock("test", otherNumber, "  default_for_currency = true\n"), PlanOnly: true, ExpectError: tfacc.RefusedReplace},
+			{Config: cfg, Taint: []string{address}, ExpectError: tfacc.RefusedDestroy},
+		}, nil, address),
 	})
 }
 
@@ -263,7 +247,7 @@ func TestAccAccountExternalAccount_import(t *testing.T) {
 	imported := config(acct, extra+"  lifecycle {\n    ignore_changes = [account_number]\n  }\n")
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: tfacc.ProviderFactories,
-		Steps: []resource.TestStep{
+		Steps: acctest.Forget(t, []resource.TestStep{
 			{Config: cfg},
 			{
 				ResourceName:            address,
@@ -285,7 +269,7 @@ func TestAccAccountExternalAccount_import(t *testing.T) {
 				ImportStateId: "not-a-compound-id",
 				ExpectError:   regexpInvalidImportID,
 			},
-		},
+		}, nil, "stripe_account_external_account.test"),
 	})
 }
 
@@ -297,7 +281,7 @@ func TestAccAccountExternalAccount_importIdentity(t *testing.T) {
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: tfacc.ProviderFactories,
 		TerraformVersionChecks:   []tfversion.TerraformVersionCheck{tfversion.RequireAbove(version.Must(version.NewVersion("1.12.0")))},
-		Steps: []resource.TestStep{
+		Steps: acctest.Forget(t, []resource.TestStep{
 			{Config: cfg},
 			{
 				ResourceName:    address,
@@ -305,7 +289,7 @@ func TestAccAccountExternalAccount_importIdentity(t *testing.T) {
 				ImportStateKind: resource.ImportBlockWithResourceIdentity,
 				Config:          cfg,
 			},
-		},
+		}, nil, "stripe_account_external_account.test"),
 	})
 }
 
@@ -317,7 +301,7 @@ func TestAccAccountExternalAccount_delete(t *testing.T) {
 	both := accountBlock(acct) + bankBlock("test", number, "") + bankBlock("second", otherNumber, after)
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: tfacc.ProviderFactories,
-		Steps: []resource.TestStep{
+		Steps: acctest.Forget(t, []resource.TestStep{
 			{Config: both, Check: ids(second, &account, &id)},
 			// Removing the second bank account deletes it and leaves the first.
 			{
@@ -330,33 +314,28 @@ func TestAccAccountExternalAccount_delete(t *testing.T) {
 					return nil
 				},
 			},
-		},
+		}, nil, "stripe_account_external_account.test"),
 	})
 }
 
-// Stripe refuses to delete the default bank account of a currency. Destroy then leaves it on
-// the account, warns and drops it from state, so the account can still be destroyed after it.
+// Stripe refuses to delete the default bank account of a currency, so dropping it from the
+// configuration, and `terraform destroy`, fail at plan time, and it stays the default. Once it
+// is out of the state, destroying the account deletes it.
 func TestAccAccountExternalAccount_deleteDefault(t *testing.T) {
 	acct := acctest.NewAccount(t)
-	var account, id string
+	var account, id, path string
+	var mark int
+	cfg := config(acct, "")
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: tfacc.ProviderFactories,
-		Steps: []resource.TestStep{
-			{Config: config(acct, ""), Check: ids(address, &account, &id)},
-			{
-				Config: accountBlock(acct),
-				Check: func(*terraform.State) error {
-					resp, err := tfacc.Client(acct).Do(t.Context(), stripeapi.Request{Method: "GET", Path: bankPath(account, id)})
-					if err != nil {
-						return fmt.Errorf("the default bank account %s should stay on the account: %w", id, err)
-					}
-					if def, _ := resp.Body.(wire.Object).GetBool("default_for_currency"); !def {
-						return fmt.Errorf("the bank account that stayed should be the default")
-					}
-					return nil
-				},
-			},
-		},
+		Steps: acctest.Forget(t, []resource.TestStep{
+			{Config: cfg, Check: resource.ComposeTestCheckFunc(ids(address, &account, &id), func(*terraform.State) error {
+				path = bankPath(account, id)
+				return nil
+			}, tfacc.LogMark(t, acct, &mark))},
+			{Config: accountBlock(acct), PlanOnly: true, ExpectError: tfacc.RefusedDestroy},
+			{Config: cfg, Destroy: true, ExpectError: tfacc.RefusedDestroy},
+		}, tfacc.Untouched(t, acct, &path, &mark, "default_for_currency", wire.Bool(true)), address),
 	})
 }
 
@@ -366,7 +345,7 @@ func TestAccAccountExternalAccount_drift(t *testing.T) {
 	cfg := config(acct, fmt.Sprintf("  account_holder_name = %q\n", acct.Name("Acme Holdings")))
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: tfacc.ProviderFactories,
-		Steps: []resource.TestStep{
+		Steps: acctest.Forget(t, []resource.TestStep{
 			{Config: cfg, Check: ids(address, &account, &id)},
 			{
 				PreConfig: func() {
@@ -379,7 +358,7 @@ func TestAccAccountExternalAccount_drift(t *testing.T) {
 				}},
 				Check: resource.TestCheckResourceAttr(address, "account_holder_name", acct.Name("Acme Holdings")),
 			},
-		},
+		}, nil, "stripe_account_external_account.test"),
 	})
 }
 
@@ -390,7 +369,7 @@ func TestAccAccountExternalAccount_driftDeleted(t *testing.T) {
 	cfg := accountBlock(acct) + bankBlock("test", number, "") + bankBlock("second", otherNumber, after)
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: tfacc.ProviderFactories,
-		Steps: []resource.TestStep{
+		Steps: acctest.Forget(t, []resource.TestStep{
 			{Config: cfg, Check: ids(second, &account, &id)},
 			{
 				PreConfig: func() {
@@ -410,7 +389,7 @@ func TestAccAccountExternalAccount_driftDeleted(t *testing.T) {
 					return nil
 				}),
 			},
-		},
+		}, nil, "stripe_account_external_account.test"),
 	})
 }
 
@@ -422,7 +401,7 @@ func TestAccAccountExternalAccount_driftAccountDeleted(t *testing.T) {
 	cfg := config(acct, "")
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: tfacc.ProviderFactories,
-		Steps: []resource.TestStep{
+		Steps: acctest.Forget(t, []resource.TestStep{
 			{Config: cfg, Check: ids(address, &account, &id)},
 			{
 				PreConfig: func() {
@@ -437,7 +416,7 @@ func TestAccAccountExternalAccount_driftAccountDeleted(t *testing.T) {
 					plancheck.ExpectResourceAction(address, plancheck.ResourceActionCreate),
 				}},
 			},
-		},
+		}, nil, "stripe_account_external_account.test"),
 	})
 }
 

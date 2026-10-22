@@ -7,19 +7,16 @@ import (
 
 	"github.com/computomatic/terraform-provider-stripe/internal/engine"
 	"github.com/computomatic/terraform-provider-stripe/internal/generated/setup_intent"
-	"github.com/computomatic/terraform-provider-stripe/internal/wire"
 )
 
-// Declaration is what the spec cannot say about a setup intent. Stripe never deletes one, so
-// destroy cancels it (suite: "SetupIntent", `cancel`) and drops it from state. A canceled
-// intent stays readable and cancelling twice is refused (`already canceled`), so destroy
-// reads the status first. A succeeded intent cannot be cancelled (`already succeeded`,
-// `setup_intent_unexpected_state`), has done its work and is left as it is. An intent in
-// another state that Stripe refuses to cancel fails the destroy with Stripe's error.
+// Declaration is what the spec cannot say about a setup intent. Stripe never deletes one, and
+// cancelling one is final, so destroy is refused. Setting `status` to `canceled` cancels it
+// (suite: "SetupIntent", `cancel`); a canceled intent stays readable, and a succeeded one
+// cannot be cancelled (`already succeeded`, `setup_intent_unexpected_state`).
 var Declaration = engine.Declaration{
 	TypeName:              "stripe_setup_intent",
 	IDPrefix:              "seti_",
-	Description:           "Collects a customer's payment method for later use. `terraform destroy` cancels the setup intent, because Stripe cannot delete one; the canceled intent stays in the account. An intent that already succeeded cannot be canceled and is left as it is. Confirming an intent is not a resource: confirm it with its `client_secret` from your front end, or from your server with Stripe's API, and `status` reports what happened. The resource has no `confirm`, `mandate_data`, `payment_method_data` or `payment_method_options` argument. Setting `payment_method` moves the intent to `requires_confirmation`. `usage` and `on_behalf_of` cannot change after creation, and neither can the other arguments that only a create takes, so changing one replaces the intent. The `client_secret` is sensitive and stays in the state.",
+	Description:           "Collects a customer's payment method for later use. Set `status` to `canceled` to cancel the intent; one that already succeeded cannot be canceled. Confirming an intent is not a resource: confirm it with its `client_secret` from your front end, or from your server with Stripe's API, and `status` reports what happened. The resource has no `confirm`, `mandate_data`, `payment_method_data` or `payment_method_options` argument. Setting `payment_method` moves the intent to `requires_confirmation`. `usage` and `on_behalf_of` cannot change after creation, and neither can the other arguments that only a create takes, so changing one fails the plan. The `client_secret` is sensitive and stays in the state.",
 	DataSourceDescription: "Collects a customer's payment method for later use.",
 	Paths: engine.Paths{
 		Create:   "/v1/setup_intents",
@@ -33,18 +30,15 @@ var Declaration = engine.Declaration{
 	ServerDefaulted: []string{"attach_to_self"},
 	// The suite proves updates of `description`, `customer`, `payment_method` and `metadata`
 	// ("update", "update payment method moves status"). The other fields the spec takes on
-	// update are not proven, so changing one replaces the intent.
+	// update are not proven, so they are treated as create-only.
 	ReplaceOn: []string{
 		"allowed_payment_method_types", "attach_to_self", "customer_account", "excluded_payment_method_types",
 		"flow_directions", "payment_method_configuration",
 	},
-	Delete: engine.Archive,
-	Archive: &engine.ArchiveAction{
-		Field: "status",
-		Value: wire.String("canceled"),
-		Path:  "/v1/setup_intents/{id}/cancel",
-		Ended: []engine.Ended{{Field: "status", Value: wire.String("succeeded")}},
-	},
+	Delete:       engine.Refuse,
+	RefuseReason: "Stripe cannot delete a setup intent; set `status` to `canceled` to cancel one.",
+	// A succeeded intent cannot be cancelled (suite: "cancel errors", "already succeeded").
+	Transitions: []engine.Transition{{Field: "status", Value: "canceled", Path: "/v1/setup_intents/{id}/cancel", Final: []string{"succeeded"}}},
 }
 
 // NewResource returns the resource constructor the provider registers.

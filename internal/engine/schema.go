@@ -2,6 +2,8 @@ package engine
 
 import (
 	"context"
+	"regexp"
+	"slices"
 	"strings"
 
 	"github.com/hashicorp/terraform-plugin-framework-timeouts/resource/timeouts"
@@ -24,10 +26,14 @@ import (
 
 // describe is the description of a data source attribute.
 func describe(n *node) string {
-	d := n.Description
-	if len(n.Enum) > 0 {
-		quoted := make([]string, len(n.Enum))
-		for i, e := range n.Enum {
+	return describeValues(n.Description, n.Enum)
+}
+
+// describeValues is a description followed by the values the attribute can hold.
+func describeValues(d string, values []string) string {
+	if len(values) > 0 {
+		quoted := make([]string, len(values))
+		for i, e := range values {
 			quoted[i] = "`" + e + "`"
 		}
 		d += " Possible values: " + strings.Join(quoted, ", ") + "."
@@ -36,28 +42,120 @@ func describe(n *node) string {
 }
 
 // describeResource is describe plus what a resource user must know: a change to a field that
-// Stripe cannot update replaces the resource.
-func describeResource(n *node) string {
-	d := describe(n)
+// Stripe cannot update replaces the resource, or fails the plan where destroy is refused. A
+// transition field lists only the values its transitions set, the ones a configuration takes,
+// without the spec's own sentence that lists every value Stripe returns.
+func (m *model) describeResource(n *node) string {
+	desc, values := n.Description, n.Enum
+	if set := m.transitionValues(n); len(set) > 0 {
+		desc, values = specValues.ReplaceAllString(desc, ""), set
+	}
+	d := describeValues(desc, values)
 	if n.Replace {
-		d += " Changing it replaces the resource."
+		d += m.changingIt()
 	}
 	return strings.TrimSpace(d)
 }
 
-// planMods builds a node's plan modifiers from the framework constructors of one type.
-func planMods[M comparable](n *node, useState, replace func() M, replaceIfSet ...func() M) []M {
+// specValues is the sentence in which Stripe's reference lists a field's values, such as a
+// schedule's "Possible values are `not_started`, `active`, ... and `canceled`."
+var specValues = regexp.MustCompile(` ?Possible values are [^.]*\.`)
+
+// transitionValues lists the values the declaration's transitions set on a top-level node, in
+// declaration order.
+func (m *model) transitionValues(n *node) []string {
+	var values []string
+	for _, t := range m.decl.Transitions {
+		if t.Field == n.Path && !slices.Contains(values, t.Value) {
+			values = append(values, t.Value)
+		}
+	}
+	return values
+}
+
+// changingIt is the sentence that ends the description of a field whose change would replace
+// the resource.
+func (m *model) changingIt() string {
+	if m.decl.Delete == Refuse {
+		return " Changing it fails the plan, because this resource cannot be replaced."
+	}
+	return " Changing it replaces the resource."
+}
+
+// planMods builds a node's plan modifiers from the framework constructors of one type. refuse
+// wraps the modifiers that force a replacement, so that a resource whose destroy is refused
+// fails the plan instead.
+func planMods[M comparable](n *node, refuse func(M) M, useState, replace func() M, replaceIfSet ...func() M) []M {
 	var mods []M
 	if n.UseState {
 		mods = append(mods, useState())
 	}
 	if n.Replace {
-		mods = append(mods, replace())
+		mods = append(mods, refuse(replace()))
 	}
 	if n.ReplaceIfSet && len(replaceIfSet) > 0 {
-		mods = append(mods, replaceIfSet[0]())
+		mods = append(mods, refuse(replaceIfSet[0]()))
 	}
 	return mods
+}
+
+// The refuse wrappers of planMods, one per framework modifier type. A resource that never
+// refuses destroy keeps the framework's modifiers as they are.
+
+func (m *model) refuseBool(mod planmodifier.Bool) planmodifier.Bool {
+	if !m.refuses() {
+		return mod
+	}
+	return refuseBool{refuser{m}, mod}
+}
+
+func (m *model) refuseInt64(mod planmodifier.Int64) planmodifier.Int64 {
+	if !m.refuses() {
+		return mod
+	}
+	return refuseInt64{refuser{m}, mod}
+}
+
+func (m *model) refuseFloat64(mod planmodifier.Float64) planmodifier.Float64 {
+	if !m.refuses() {
+		return mod
+	}
+	return refuseFloat64{refuser{m}, mod}
+}
+
+func (m *model) refuseString(mod planmodifier.String) planmodifier.String {
+	if !m.refuses() {
+		return mod
+	}
+	return refuseString{refuser{m}, mod}
+}
+
+func (m *model) refuseObject(mod planmodifier.Object) planmodifier.Object {
+	if !m.refuses() {
+		return mod
+	}
+	return refuseObject{refuser{m}, mod}
+}
+
+func (m *model) refuseList(mod planmodifier.List) planmodifier.List {
+	if !m.refuses() {
+		return mod
+	}
+	return refuseList{refuser{m}, mod}
+}
+
+func (m *model) refuseMap(mod planmodifier.Map) planmodifier.Map {
+	if !m.refuses() {
+		return mod
+	}
+	return refuseMap{refuser{m}, mod}
+}
+
+func (m *model) refuseSet(mod planmodifier.Set) planmodifier.Set {
+	if !m.refuses() {
+		return mod
+	}
+	return refuseSet{refuser{m}, mod}
 }
 
 // changedByConfig reports whether the configuration sets a value that differs from the
@@ -72,20 +170,20 @@ const replaceIfSetDescription = "Changing the configured value replaces the reso
 func (m *model) resourceSchema(ctx context.Context) rschema.Schema {
 	attrs := make(map[string]rschema.Attribute, len(m.nodes)+2)
 	for _, n := range m.nodes {
-		attrs[n.AttrName()] = resourceAttribute(n)
+		attrs[n.AttrName()] = m.resourceAttribute(n)
 	}
 	if m.decl.Parent != "" {
 		attrs[m.decl.Parent] = rschema.StringAttribute{
 			Required:            true,
-			MarkdownDescription: "The ID of the parent object. Changing it replaces the resource.",
-			PlanModifiers:       []planmodifier.String{stringplanmodifier.RequiresReplace()},
+			MarkdownDescription: "The ID of the parent object." + m.changingIt(),
+			PlanModifiers:       []planmodifier.String{m.refuseString(stringplanmodifier.RequiresReplace())},
 		}
 	}
 	if m.decl.Attach != "" {
 		attrs[m.decl.Attach] = rschema.StringAttribute{
 			Required:            true,
-			MarkdownDescription: "The ID of the existing object to attach to the parent. Changing it replaces the resource. The resource's `id` is the ID Stripe returns, which differs from this when a test ID is attached.",
-			PlanModifiers:       []planmodifier.String{stringplanmodifier.RequiresReplace()},
+			MarkdownDescription: "The ID of the existing object to attach to the parent." + m.changingIt() + " The resource's `id` is the ID Stripe returns, which differs from this when a test ID is attached.",
+			PlanModifiers:       []planmodifier.String{m.refuseString(stringplanmodifier.RequiresReplace())},
 		}
 	}
 	attrs["timeouts"] = timeouts.Attributes(ctx, timeouts.Opts{
@@ -96,57 +194,57 @@ func (m *model) resourceSchema(ctx context.Context) rschema.Schema {
 	return rschema.Schema{MarkdownDescription: m.decl.Description, Attributes: attrs}
 }
 
-func resourceAttribute(n *node) rschema.Attribute {
-	desc := describeResource(n)
+func (m *model) resourceAttribute(n *node) rschema.Attribute {
+	desc := m.describeResource(n)
 	switch n.Shape {
 	case fields.Bool:
 		return rschema.BoolAttribute{Required: n.Required, Optional: n.Optional, Computed: n.Computed, Sensitive: n.Sensitive, MarkdownDescription: desc,
-			PlanModifiers: planMods(n, boolplanmodifier.UseStateForUnknown, boolplanmodifier.RequiresReplace, func() planmodifier.Bool {
+			PlanModifiers: planMods(n, m.refuseBool, boolplanmodifier.UseStateForUnknown, boolplanmodifier.RequiresReplace, func() planmodifier.Bool {
 				return boolplanmodifier.RequiresReplaceIf(func(_ context.Context, req planmodifier.BoolRequest, resp *boolplanmodifier.RequiresReplaceIfFuncResponse) {
 					resp.RequiresReplace = changedByConfig(req.ConfigValue, req.StateValue)
 				}, replaceIfSetDescription, replaceIfSetDescription)
 			})}
 	case fields.Int:
 		return rschema.Int64Attribute{Required: n.Required, Optional: n.Optional, Computed: n.Computed, Sensitive: n.Sensitive, MarkdownDescription: desc,
-			PlanModifiers: planMods(n, int64planmodifier.UseStateForUnknown, int64planmodifier.RequiresReplace, func() planmodifier.Int64 {
+			PlanModifiers: planMods(n, m.refuseInt64, int64planmodifier.UseStateForUnknown, int64planmodifier.RequiresReplace, func() planmodifier.Int64 {
 				return int64planmodifier.RequiresReplaceIf(func(_ context.Context, req planmodifier.Int64Request, resp *int64planmodifier.RequiresReplaceIfFuncResponse) {
 					resp.RequiresReplace = changedByConfig(req.ConfigValue, req.StateValue)
 				}, replaceIfSetDescription, replaceIfSetDescription)
 			})}
 	case fields.Float:
 		return rschema.Float64Attribute{Required: n.Required, Optional: n.Optional, Computed: n.Computed, Sensitive: n.Sensitive, MarkdownDescription: desc,
-			PlanModifiers: planMods(n, float64planmodifier.UseStateForUnknown, float64planmodifier.RequiresReplace, func() planmodifier.Float64 {
+			PlanModifiers: planMods(n, m.refuseFloat64, float64planmodifier.UseStateForUnknown, float64planmodifier.RequiresReplace, func() planmodifier.Float64 {
 				return float64planmodifier.RequiresReplaceIf(func(_ context.Context, req planmodifier.Float64Request, resp *float64planmodifier.RequiresReplaceIfFuncResponse) {
 					resp.RequiresReplace = changedByConfig(req.ConfigValue, req.StateValue)
 				}, replaceIfSetDescription, replaceIfSetDescription)
 			})}
 	case fields.Object:
 		return rschema.SingleNestedAttribute{Required: n.Required, Optional: n.Optional, Computed: n.Computed, Sensitive: n.Sensitive, MarkdownDescription: desc,
-			Attributes:    resourceAttributes(n.Kids),
-			PlanModifiers: planMods(n, objectplanmodifier.UseStateForUnknown, objectplanmodifier.RequiresReplace)}
+			Attributes:    m.resourceAttributes(n.Kids),
+			PlanModifiers: planMods(n, m.refuseObject, objectplanmodifier.UseStateForUnknown, objectplanmodifier.RequiresReplace)}
 	case fields.ObjectList:
 		return rschema.ListNestedAttribute{Required: n.Required, Optional: n.Optional, Computed: n.Computed, Sensitive: n.Sensitive, MarkdownDescription: desc,
-			NestedObject:  rschema.NestedAttributeObject{Attributes: resourceAttributes(n.Kids)},
-			PlanModifiers: planMods(n, listplanmodifier.UseStateForUnknown, listplanmodifier.RequiresReplace)}
+			NestedObject:  rschema.NestedAttributeObject{Attributes: m.resourceAttributes(n.Kids)},
+			PlanModifiers: planMods(n, m.refuseList, listplanmodifier.UseStateForUnknown, listplanmodifier.RequiresReplace)}
 	case fields.ObjectMap:
 		return rschema.MapNestedAttribute{Required: n.Required, Optional: n.Optional, Computed: n.Computed, Sensitive: n.Sensitive, MarkdownDescription: desc,
-			NestedObject:  rschema.NestedAttributeObject{Attributes: resourceAttributes(n.Kids)},
-			PlanModifiers: planMods(n, mapplanmodifier.UseStateForUnknown, mapplanmodifier.RequiresReplace)}
+			NestedObject:  rschema.NestedAttributeObject{Attributes: m.resourceAttributes(n.Kids)},
+			PlanModifiers: planMods(n, m.refuseMap, mapplanmodifier.UseStateForUnknown, mapplanmodifier.RequiresReplace)}
 	case fields.StringMap:
 		return rschema.MapAttribute{ElementType: scalarType(fields.String), Required: n.Required, Optional: n.Optional, Computed: n.Computed, Sensitive: n.Sensitive, MarkdownDescription: desc,
-			PlanModifiers: planMods(n, mapplanmodifier.UseStateForUnknown, mapplanmodifier.RequiresReplace)}
+			PlanModifiers: planMods(n, m.refuseMap, mapplanmodifier.UseStateForUnknown, mapplanmodifier.RequiresReplace)}
 	case fields.IntMap:
 		return rschema.MapAttribute{ElementType: scalarType(fields.Int), Required: n.Required, Optional: n.Optional, Computed: n.Computed, Sensitive: n.Sensitive, MarkdownDescription: desc,
-			PlanModifiers: planMods(n, mapplanmodifier.UseStateForUnknown, mapplanmodifier.RequiresReplace)}
+			PlanModifiers: planMods(n, m.refuseMap, mapplanmodifier.UseStateForUnknown, mapplanmodifier.RequiresReplace)}
 	case fields.ScalarList:
 		return rschema.ListAttribute{ElementType: scalarType(n.Elem), Required: n.Required, Optional: n.Optional, Computed: n.Computed, Sensitive: n.Sensitive, MarkdownDescription: desc,
-			PlanModifiers: planMods(n, listplanmodifier.UseStateForUnknown, listplanmodifier.RequiresReplace)}
+			PlanModifiers: planMods(n, m.refuseList, listplanmodifier.UseStateForUnknown, listplanmodifier.RequiresReplace)}
 	case fields.ScalarSet:
 		return rschema.SetAttribute{ElementType: scalarType(n.Elem), Required: n.Required, Optional: n.Optional, Computed: n.Computed, Sensitive: n.Sensitive, MarkdownDescription: desc,
-			PlanModifiers: planMods(n, setplanmodifier.UseStateForUnknown, setplanmodifier.RequiresReplace)}
+			PlanModifiers: planMods(n, m.refuseSet, setplanmodifier.UseStateForUnknown, setplanmodifier.RequiresReplace)}
 	default:
 		return rschema.StringAttribute{Required: n.Required, Optional: n.Optional, Computed: n.Computed, Sensitive: n.Sensitive, MarkdownDescription: desc,
-			PlanModifiers: planMods(n, stringplanmodifier.UseStateForUnknown, stringplanmodifier.RequiresReplace, func() planmodifier.String {
+			PlanModifiers: planMods(n, m.refuseString, stringplanmodifier.UseStateForUnknown, stringplanmodifier.RequiresReplace, func() planmodifier.String {
 				return stringplanmodifier.RequiresReplaceIf(func(_ context.Context, req planmodifier.StringRequest, resp *stringplanmodifier.RequiresReplaceIfFuncResponse) {
 					resp.RequiresReplace = changedByConfig(req.ConfigValue, req.StateValue)
 				}, replaceIfSetDescription, replaceIfSetDescription)
@@ -154,10 +252,10 @@ func resourceAttribute(n *node) rschema.Attribute {
 	}
 }
 
-func resourceAttributes(kids []*node) map[string]rschema.Attribute {
+func (m *model) resourceAttributes(kids []*node) map[string]rschema.Attribute {
 	attrs := make(map[string]rschema.Attribute, len(kids))
 	for _, k := range kids {
-		attrs[k.AttrName()] = resourceAttribute(k)
+		attrs[k.AttrName()] = m.resourceAttribute(k)
 	}
 	return attrs
 }
@@ -214,6 +312,15 @@ func (m *model) dataSourceSchema() dschema.Schema {
 // noun is a type name in words, such as `product feature` for `stripe_product_feature`.
 func noun(typeName string) string {
 	return strings.ReplaceAll(strings.TrimPrefix(typeName, "stripe_"), "_", " ")
+}
+
+// WithArticle is a noun with `a` or `an` before it, by its first letter. tools/docgen writes
+// the pages with the same rule.
+func WithArticle(n string) string {
+	if strings.ContainsAny(n[:1], "aeiou") {
+		return "an " + n
+	}
+	return "a " + n
 }
 
 func dataSourceAttribute(n *node) dschema.Attribute {

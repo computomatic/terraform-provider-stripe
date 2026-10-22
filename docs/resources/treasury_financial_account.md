@@ -3,14 +3,14 @@
 page_title: "stripe_treasury_financial_account Resource - Stripe"
 subcategory: ""
 description: |-
-  A Treasury financial account that holds money on a connected account and that Issuing cards draw on. Treasury runs on a platform's connected accounts, so manage financial accounts through a provider configuration whose stripe_account is a connected account with the treasury capability active. features requests features when the account is created; active_features, pending_features and restricted_features say how Stripe answered. A plan that changes features afterwards fails: create a new financial account instead.
+  A Treasury financial account that holds money on a connected account and that Issuing cards draw on. Treasury runs on a platform's connected accounts, so manage financial accounts through a provider configuration whose stripe_account is a connected account with the treasury capability active. features requests features when the account is created; active_features, pending_features and restricted_features say how Stripe answered. A plan that changes features afterwards fails.
 ---
 
 # Resource: stripe_treasury_financial_account
 
-A Treasury financial account that holds money on a connected account and that Issuing cards draw on. Treasury runs on a platform's connected accounts, so manage financial accounts through a provider configuration whose `stripe_account` is a connected account with the `treasury` capability active. `features` requests features when the account is created; `active_features`, `pending_features` and `restricted_features` say how Stripe answered. A plan that changes `features` afterwards fails: create a new financial account instead.
+A Treasury financial account that holds money on a connected account and that Issuing cards draw on. Treasury runs on a platform's connected accounts, so manage financial accounts through a provider configuration whose `stripe_account` is a connected account with the `treasury` capability active. `features` requests features when the account is created; `active_features`, `pending_features` and `restricted_features` say how Stripe answered. A plan that changes `features` afterwards fails.
 
-~> Stripe can close a financial account, but the provider does not do so yet: `terraform destroy` leaves the financial account open on the connected account and removes it from state. Changing `supported_currencies` replaces it, which leaves the old one open too.
+~> Stripe cannot delete a financial account, and the provider does not close one. `terraform destroy`, and a change that would replace the treasury financial account, fail at plan time. To stop managing a treasury financial account, remove it from the state as [Removing from State](#removing-from-state) shows; it stays in the Stripe account.
 
 ## Example Usage
 
@@ -46,7 +46,7 @@ output "active_features" {
 
 The following arguments are required:
 
-* `supported_currencies` - (Required) The currencies the FinancialAccount can hold a balance in. Changing it replaces the resource.
+* `supported_currencies` - (Required) The currencies the FinancialAccount can hold a balance in. Changing it fails the plan, because this resource cannot be replaced.
 
 The following arguments are optional:
 
@@ -236,6 +236,28 @@ The `status_details.closed` attribute supports:
 * `create` - (Default `20m`)
 * `delete` - (Default `20m`)
 * `update` - (Default `20m`)
+
+## Removing from State
+
+To stop managing a treasury financial account whose destroy is refused, remove it from the state without destroying it. In Terraform 1.7 and later, and OpenTofu 1.10 and later, replace the `resource` block with a [`removed` block](https://developer.hashicorp.com/terraform/language/block/removed) and apply:
+
+```terraform
+removed {
+  from = stripe_treasury_financial_account.operating
+
+  lifecycle {
+    destroy = false
+  }
+}
+```
+
+Using `terraform state rm`:
+
+```console
+% terraform state rm stripe_treasury_financial_account.operating
+```
+
+The treasury financial account stays in the Stripe account. Replacing one with `terraform apply -replace` or `terraform taint` fails in the same way, at apply.
 
 ## Import
 

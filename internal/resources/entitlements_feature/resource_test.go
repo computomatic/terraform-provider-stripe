@@ -7,11 +7,9 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/hashicorp/terraform-plugin-testing/plancheck"
-	"github.com/hashicorp/terraform-plugin-testing/terraform"
 
 	"github.com/computomatic/terraform-provider-stripe/internal/acctest"
 	"github.com/computomatic/terraform-provider-stripe/internal/acctest/tfacc"
-	"github.com/computomatic/terraform-provider-stripe/internal/stripeapi"
 	"github.com/computomatic/terraform-provider-stripe/internal/wire"
 )
 
@@ -36,11 +34,19 @@ func idOf(dst *string) resource.TestCheckFunc {
 	})
 }
 
+// pathOf records the feature's API path.
+func pathOf(dst *string) resource.TestCheckFunc {
+	return resource.TestCheckResourceAttrWith(address, "id", func(v string) error {
+		*dst = "/v1/entitlements/features/" + v
+		return nil
+	})
+}
+
 func TestAccEntitlementsFeature_create(t *testing.T) {
 	acct := acctest.NewAccount(t)
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: tfacc.ProviderFactories,
-		Steps: []resource.TestStep{{
+		Steps: acctest.Forget(t, []resource.TestStep{{
 			Config: featureConfig(acct, "advanced_search", "Advanced search", "  metadata = { team = \"a\" }\n") + `
 data "stripe_entitlements_feature" "by_id" {
   id = stripe_entitlements_feature.test.id
@@ -60,7 +66,7 @@ data "stripe_entitlements_feature" "by_lookup_key" {
 				resource.TestCheckResourceAttr("data.stripe_entitlements_feature.by_id", "name", "Advanced search"),
 				resource.TestCheckResourceAttrPair("data.stripe_entitlements_feature.by_lookup_key", "id", address, "id"),
 			),
-		}},
+		}}, nil, "stripe_entitlements_feature"),
 	})
 }
 
@@ -70,7 +76,7 @@ func TestAccEntitlementsFeature_update(t *testing.T) {
 	acct := acctest.NewAccount(t)
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: tfacc.ProviderFactories,
-		Steps: []resource.TestStep{
+		Steps: acctest.Forget(t, []resource.TestStep{
 			{
 				Config: featureConfig(acct, "advanced_search", "Advanced search", "  metadata = { team = \"a\", tier = \"1\" }\n"),
 				Check:  resource.TestCheckResourceAttr(address, "name", "Advanced search"),
@@ -90,35 +96,22 @@ func TestAccEntitlementsFeature_update(t *testing.T) {
 				Config: featureConfig(acct, "advanced_search", "Search", "  metadata = { team = \"b\" }\n  active = false\n"),
 				Check:  resource.TestCheckResourceAttr(address, "active", "false"),
 			},
-		},
+		}, nil, "stripe_entitlements_feature"),
 	})
 }
 
-// lookup_key is accepted on create only, so changing it replaces the feature. The archived
-// feature keeps its key, which is why the replacement needs a new one.
+// `lookup_key` is create-only, so changing it would replace the feature, which Stripe cannot
+// delete: the plan fails, and so does a taint, at apply.
 func TestAccEntitlementsFeature_replace(t *testing.T) {
 	acct := acctest.NewAccount(t)
-	var first string
+	cfg := featureConfig(acct, "advanced_search", "Search", "")
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: tfacc.ProviderFactories,
-		Steps: []resource.TestStep{
-			{Config: featureConfig(acct, "advanced_search", "Search", ""), Check: idOf(&first)},
-			{
-				Config: featureConfig(acct, "search_v2", "Search", ""),
-				ConfigPlanChecks: resource.ConfigPlanChecks{PreApply: []plancheck.PlanCheck{
-					plancheck.ExpectResourceAction(address, plancheck.ResourceActionReplace),
-				}},
-				Check: resource.ComposeAggregateTestCheckFunc(
-					resource.TestCheckResourceAttr(address, "lookup_key", "search_v2"),
-					resource.TestCheckResourceAttrWith(address, "id", func(v string) error {
-						if v == first {
-							return fmt.Errorf("the replacement kept the feature ID %s", v)
-						}
-						return nil
-					}),
-				),
-			},
-		},
+		Steps: acctest.Forget(t, []resource.TestStep{
+			{Config: cfg},
+			{Config: featureConfig(acct, "search_v2", "Search", ""), PlanOnly: true, ExpectError: tfacc.RefusedReplace},
+			{Config: cfg, Taint: []string{address}, ExpectError: tfacc.RefusedDestroy},
+		}, nil, "stripe_entitlements_feature"),
 	})
 }
 
@@ -127,7 +120,7 @@ func TestAccEntitlementsFeature_import(t *testing.T) {
 	cfg := featureConfig(acct, "advanced_search", "Search", "  metadata = { team = \"a\" }\n")
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: tfacc.ProviderFactories,
-		Steps: []resource.TestStep{
+		Steps: acctest.Forget(t, []resource.TestStep{
 			{Config: cfg},
 			{
 				ResourceName:      address,
@@ -140,28 +133,44 @@ func TestAccEntitlementsFeature_import(t *testing.T) {
 				ImportStateKind: resource.ImportBlockWithID,
 				Config:          cfg,
 			},
-		},
+		}, nil, "stripe_entitlements_feature"),
 	})
 }
 
-// Stripe cannot delete a feature (suite: "Archived entitlement features are frozen"), so
-// destroy archives it and the feature stays in the account.
+// Stripe cannot delete a feature, and archiving one is final, so dropping it from the
+// configuration, and `terraform destroy`, fail at plan time, and the feature stays active.
 func TestAccEntitlementsFeature_delete(t *testing.T) {
 	acct := acctest.NewAccount(t)
-	var id string
+	var path string
+	var mark int
+	cfg := featureConfig(acct, "advanced_search", "Search", "")
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: tfacc.ProviderFactories,
-		CheckDestroy: func(*terraform.State) error {
-			resp, err := tfacc.Client(acct).Do(t.Context(), stripeapi.Request{Method: "GET", Path: "/v1/entitlements/features/" + id})
-			if err != nil {
-				return fmt.Errorf("an archived feature still retrieves: %w", err)
-			}
-			if active, _ := resp.Body.(wire.Object).GetBool("active"); active {
-				return fmt.Errorf("feature %s should be archived after destroy", id)
-			}
-			return nil
-		},
-		Steps: []resource.TestStep{{Config: featureConfig(acct, "advanced_search", "Search", ""), Check: idOf(&id)}},
+		Steps: acctest.Forget(t, []resource.TestStep{
+			{Config: cfg, Check: resource.ComposeTestCheckFunc(pathOf(&path), tfacc.LogMark(t, acct, &mark))},
+			{Config: acctest.Without(t, cfg, "stripe_entitlements_feature"), PlanOnly: true, ExpectError: tfacc.RefusedDestroy},
+			{Config: cfg, Destroy: true, ExpectError: tfacc.RefusedDestroy},
+		}, tfacc.Untouched(t, acct, &path, &mark, "active", wire.Bool(true)), "stripe_entitlements_feature"),
+	})
+}
+
+// Setting `active` to `false` archives the feature, which Stripe then freezes (suite: "update
+// archives").
+func TestAccEntitlementsFeature_archive(t *testing.T) {
+	acct := acctest.NewAccount(t)
+	var path string
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: tfacc.ProviderFactories,
+		Steps: acctest.Forget(t, []resource.TestStep{
+			{Config: featureConfig(acct, "advanced_search", "Search", ""), Check: pathOf(&path)},
+			{
+				Config: featureConfig(acct, "advanced_search", "Search", "  active = false\n"),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr(address, "active", "false"),
+					tfacc.Holds(t, acct, &path, "active", wire.Bool(false)),
+				),
+			},
+		}, nil, "stripe_entitlements_feature"),
 	})
 }
 
@@ -171,7 +180,7 @@ func TestAccEntitlementsFeature_drift(t *testing.T) {
 	cfg := featureConfig(acct, "advanced_search", "Search", "")
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: tfacc.ProviderFactories,
-		Steps: []resource.TestStep{
+		Steps: acctest.Forget(t, []resource.TestStep{
 			{Config: cfg, Check: idOf(&id)},
 			{
 				PreConfig: func() {
@@ -186,6 +195,6 @@ func TestAccEntitlementsFeature_drift(t *testing.T) {
 				}},
 				Check: resource.TestCheckResourceAttr(address, "name", "Search"),
 			},
-		},
+		}, nil, "stripe_entitlements_feature"),
 	})
 }

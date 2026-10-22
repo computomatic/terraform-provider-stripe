@@ -3,12 +3,14 @@
 page_title: "stripe_file_link Resource - Stripe"
 subcategory: ""
 description: |-
-  A link that lets anyone download a file. terraform destroy expires the link, because Stripe cannot delete one; it stays in the account. Stripe refuses to change an expired link.
+  A link that lets anyone download a file. Stripe refuses to change an expired link.
 ---
 
 # Resource: stripe_file_link
 
-A link that lets anyone download a file. `terraform destroy` expires the link, because Stripe cannot delete one; it stays in the account. Stripe refuses to change an expired link.
+A link that lets anyone download a file. Stripe refuses to change an expired link.
+
+~> Stripe cannot delete a file link, and it serves the file until `expires_at`; set `expires_at` to end one. `terraform destroy`, and a change that would replace the file link, fail at plan time. To stop managing a file link, remove it from the state as [Removing from State](#removing-from-state) shows; it stays in the Stripe account.
 
 ## Example Usage
 
@@ -28,7 +30,7 @@ resource "stripe_file_link" "report" {
 
 The following arguments are required:
 
-* `file` - (Required) The ID of the file. The file's `purpose` must be one of the following: `business_icon`, `business_logo`, `customer_signature`, `dispute_evidence`, `finance_report_run`, `financial_account_statement`, `identity_document_downloadable`, `issuing_regulatory_reporting`, `pci_document`, `selfie`, `sigma_scheduled_query`, `tax_document_user_upload`, `terminal_android_apk`, or `terminal_reader_splashscreen`. Changing it replaces the resource.
+* `file` - (Required) The ID of the file. The file's `purpose` must be one of the following: `business_icon`, `business_logo`, `customer_signature`, `dispute_evidence`, `finance_report_run`, `financial_account_statement`, `identity_document_downloadable`, `issuing_regulatory_reporting`, `pci_document`, `selfie`, `sigma_scheduled_query`, `tax_document_user_upload`, `terminal_android_apk`, or `terminal_reader_splashscreen`. Changing it fails the plan, because this resource cannot be replaced.
 
 The following arguments are optional:
 
@@ -52,6 +54,28 @@ This resource exports the following attributes in addition to the arguments abov
 * `create` - (Default `20m`)
 * `delete` - (Default `20m`)
 * `update` - (Default `20m`)
+
+## Removing from State
+
+To stop managing a file link whose destroy is refused, remove it from the state without destroying it. In Terraform 1.7 and later, and OpenTofu 1.10 and later, replace the `resource` block with a [`removed` block](https://developer.hashicorp.com/terraform/language/block/removed) and apply:
+
+```terraform
+removed {
+  from = stripe_file_link.report
+
+  lifecycle {
+    destroy = false
+  }
+}
+```
+
+Using `terraform state rm`:
+
+```console
+% terraform state rm stripe_file_link.report
+```
+
+The file link stays in the Stripe account. Replacing one with `terraform apply -replace` or `terraform taint` fails in the same way, at apply.
 
 ## Import
 

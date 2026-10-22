@@ -9,12 +9,10 @@ import (
 	"github.com/hashicorp/go-version"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/hashicorp/terraform-plugin-testing/plancheck"
-	"github.com/hashicorp/terraform-plugin-testing/terraform"
 	"github.com/hashicorp/terraform-plugin-testing/tfversion"
 
 	"github.com/computomatic/terraform-provider-stripe/internal/acctest"
 	"github.com/computomatic/terraform-provider-stripe/internal/acctest/tfacc"
-	"github.com/computomatic/terraform-provider-stripe/internal/stripeapi"
 	"github.com/computomatic/terraform-provider-stripe/internal/wire"
 )
 
@@ -66,13 +64,12 @@ func idOf(dst *string) resource.TestCheckFunc {
 	})
 }
 
-func read(t *testing.T, conn acctest.Config, id string) wire.Object {
-	t.Helper()
-	resp, err := tfacc.Client(conn).Do(t.Context(), stripeapi.Request{Method: "GET", Path: "/v1/issuing/personalization_designs/" + id})
-	if err != nil {
-		t.Fatalf("reading design %s: %v", id, err)
-	}
-	return resp.Body.(wire.Object)
+// pathOf records the design's API path.
+func pathOf(dst *string) resource.TestCheckFunc {
+	return resource.TestCheckResourceAttrWith(address, "id", func(v string) error {
+		*dst = "/v1/issuing/personalization_designs/" + v
+		return nil
+	})
 }
 
 // helper moves a design through Stripe's review with a test helper, as the suite does
@@ -90,7 +87,7 @@ func TestAccIssuingPersonalizationDesign_create(t *testing.T) {
 	key := s.acct.Unique("design_create")
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: tfacc.ProviderFactories,
-		Steps: []resource.TestStep{{
+		Steps: acctest.Forget(t, []resource.TestStep{{
 			Config: designConfig(s, fmt.Sprintf("  name       = %q\n  lookup_key = %q\n  metadata   = { env = \"test\" }\n", s.acct.Name("Standard card"), key)+carrierText) + `
 data "stripe_issuing_personalization_design" "by_id" {
   provider = stripe.connected
@@ -124,7 +121,7 @@ data "stripe_issuing_personalization_design" "by_lookup_key" {
 				resource.TestCheckResourceAttrPair("data.stripe_issuing_personalization_design.by_lookup_key", "id", address, "id"),
 				resource.TestCheckResourceAttrPair("data.stripe_issuing_personalization_design.by_lookup_key", "physical_bundle", address, "physical_bundle"),
 			),
-		}},
+		}}, nil, "stripe_issuing_personalization_design"),
 	})
 }
 
@@ -146,7 +143,7 @@ func TestAccIssuingPersonalizationDesign_update(t *testing.T) {
 	firstKey, secondKey := s.acct.Unique("design_update_first"), s.acct.Unique("design_update_second")
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: tfacc.ProviderFactories,
-		Steps: []resource.TestStep{
+		Steps: acctest.Forget(t, []resource.TestStep{
 			{
 				Config: designConfig(s, fmt.Sprintf("  name       = %q\n  lookup_key = %q\n  metadata   = { a = \"1\" }\n", s.acct.Name("First design"), firstKey)+carrierText),
 				Check:  idOf(&first),
@@ -186,7 +183,7 @@ resource "stripe_issuing_personalization_design" "test" {
 `, tfacc.AlteredID(s.bundle), s.logo, secondKey, carrierText),
 				ExpectError: regexp.MustCompile("Changing `physical_bundle` is not supported yet"),
 			},
-		},
+		}, nil, "stripe_issuing_personalization_design"),
 	})
 }
 
@@ -206,7 +203,7 @@ resource "stripe_issuing_personalization_design" "rejected" {
 	unchanged := resource.ConfigPlanChecks{PreApply: []plancheck.PlanCheck{plancheck.ExpectEmptyPlan()}}
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: tfacc.ProviderFactories,
-		Steps: []resource.TestStep{
+		Steps: acctest.Forget(t, []resource.TestStep{
 			{
 				Config: cfg,
 				Check: resource.ComposeAggregateTestCheckFunc(
@@ -237,63 +234,21 @@ resource "stripe_issuing_personalization_design" "rejected" {
 				ConfigPlanChecks: unchanged,
 				Check:            resource.TestCheckResourceAttr(address, "status", "inactive"),
 			},
-		},
+		}, nil, "stripe_issuing_personalization_design"),
 	})
 }
 
-// Every argument changes in place or is refused, so the test replaces the design with taint.
-// The old design stays in review with its lookup key, so a replacement that gives the new
-// design a new key succeeds and one that keeps the key fails (suite: "lookup key in use").
+// A design has no field that forces replacement, but a taint plans one, and Stripe cannot
+// delete a design: the apply fails before anything is created.
 func TestAccIssuingPersonalizationDesign_replace(t *testing.T) {
 	s := issuing(t)
-	var first, second string
-	replaced := resource.ConfigPlanChecks{PreApply: []plancheck.PlanCheck{
-		plancheck.ExpectResourceAction(address, plancheck.ResourceActionReplace),
-	}}
-	firstKey, secondKey := s.acct.Unique("design_replace_first"), s.acct.Unique("design_replace_second")
-	keyed := func(key string) string { return designConfig(s, fmt.Sprintf("  lookup_key = %q\n", key)) }
+	cfg := designConfig(s, "")
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: tfacc.ProviderFactories,
-		Steps: []resource.TestStep{
-			{Config: designConfig(s, ""), Check: idOf(&first)},
-			{
-				Config:           designConfig(s, ""),
-				Taint:            []string{address},
-				ConfigPlanChecks: replaced,
-				Check: resource.ComposeAggregateTestCheckFunc(
-					idOf(&second),
-					resource.TestCheckResourceAttrWith(address, "id", func(v string) error {
-						if v == first {
-							return fmt.Errorf("the replacement kept the design %s", v)
-						}
-						if got, _ := read(t, s.conn, first).GetString("status"); !unreviewed.MatchString(got) {
-							return fmt.Errorf("the replaced design %s is %s, want it left as it was", first, got)
-						}
-						return nil
-					}),
-				),
-			},
-			{Config: keyed(firstKey)},
-			{
-				Config:           keyed(secondKey),
-				Taint:            []string{address},
-				ConfigPlanChecks: replaced,
-				Check: resource.ComposeAggregateTestCheckFunc(
-					resource.TestCheckResourceAttr(address, "lookup_key", secondKey),
-					resource.TestCheckResourceAttrWith(address, "id", func(v string) error {
-						if v == second {
-							return fmt.Errorf("the replacement kept the design %s", v)
-						}
-						return nil
-					}),
-				),
-			},
-			{
-				Config:      keyed(secondKey),
-				Taint:       []string{address},
-				ExpectError: regexp.MustCompile(`lookup_key provided is already in use`),
-			},
-		},
+		Steps: acctest.Forget(t, []resource.TestStep{
+			{Config: cfg},
+			{Config: cfg, Taint: []string{address}, ExpectError: tfacc.RefusedDestroy},
+		}, nil, "stripe_issuing_personalization_design"),
 	})
 }
 
@@ -302,7 +257,7 @@ func TestAccIssuingPersonalizationDesign_import(t *testing.T) {
 	cfg := designConfig(s, fmt.Sprintf("  name       = %q\n  lookup_key = %q\n  metadata   = { env = \"test\" }\n", s.acct.Name("Imported design"), s.acct.Unique("design_import"))+carrierText)
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: tfacc.ProviderFactories,
-		Steps: []resource.TestStep{
+		Steps: acctest.Forget(t, []resource.TestStep{
 			{Config: cfg},
 			{
 				Config:            cfg,
@@ -316,7 +271,7 @@ func TestAccIssuingPersonalizationDesign_import(t *testing.T) {
 				ImportStateKind: resource.ImportBlockWithID,
 				Config:          cfg,
 			},
-		},
+		}, nil, "stripe_issuing_personalization_design"),
 	})
 }
 
@@ -327,7 +282,7 @@ func TestAccIssuingPersonalizationDesign_importIdentity(t *testing.T) {
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: tfacc.ProviderFactories,
 		TerraformVersionChecks:   []tfversion.TerraformVersionCheck{tfversion.RequireAbove(version.Must(version.NewVersion("1.12.0")))},
-		Steps: []resource.TestStep{
+		Steps: acctest.Forget(t, []resource.TestStep{
 			{Config: cfg},
 			{
 				ResourceName:    address,
@@ -335,29 +290,26 @@ func TestAccIssuingPersonalizationDesign_importIdentity(t *testing.T) {
 				ImportStateKind: resource.ImportBlockWithResourceIdentity,
 				Config:          cfg,
 			},
-		},
+		}, nil, "stripe_issuing_personalization_design"),
 	})
 }
 
-// Stripe cannot delete a design (suite: "delete is not a route"), so destroy leaves it as it
-// was, still holding its lookup key.
+// Stripe cannot delete a design (suite: "delete is not a route"), so dropping it from the
+// configuration, and `terraform destroy`, fail at plan time, and the design stays as it was,
+// with its lookup key.
 func TestAccIssuingPersonalizationDesign_delete(t *testing.T) {
 	s := issuing(t)
-	var id string
+	var path string
+	var mark int
 	key := s.acct.Unique("design_delete")
+	cfg := designConfig(s, fmt.Sprintf("  lookup_key = %q\n", key))
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: tfacc.ProviderFactories,
-		CheckDestroy: func(*terraform.State) error {
-			design := read(t, s.conn, id)
-			if got, _ := design.GetString("status"); !unreviewed.MatchString(got) {
-				return fmt.Errorf("design %s is %s after destroy, want it left as it was", id, got)
-			}
-			if got, _ := design.GetString("lookup_key"); got != key {
-				return fmt.Errorf("design %s has lookup key %q after destroy, want %q", id, got, key)
-			}
-			return nil
-		},
-		Steps: []resource.TestStep{{Config: designConfig(s, fmt.Sprintf("  lookup_key = %q\n", key)), Check: idOf(&id)}},
+		Steps: acctest.Forget(t, []resource.TestStep{
+			{Config: cfg, Check: resource.ComposeTestCheckFunc(pathOf(&path), tfacc.LogMark(t, s.conn, &mark))},
+			{Config: acctest.Without(t, cfg, "stripe_issuing_personalization_design"), PlanOnly: true, ExpectError: tfacc.RefusedDestroy},
+			{Config: cfg, Destroy: true, ExpectError: tfacc.RefusedDestroy},
+		}, tfacc.Untouched(t, s.conn, &path, &mark, "lookup_key", wire.String(key)), "stripe_issuing_personalization_design"),
 	})
 }
 
@@ -369,7 +321,7 @@ func TestAccIssuingPersonalizationDesign_drift(t *testing.T) {
 	cfg := designConfig(s, fmt.Sprintf("  name     = %q\n  metadata = { env = \"test\" }\n", s.acct.Name("Standard design")))
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: tfacc.ProviderFactories,
-		Steps: []resource.TestStep{
+		Steps: acctest.Forget(t, []resource.TestStep{
 			{Config: cfg, Check: idOf(&id)},
 			{
 				PreConfig: func() {
@@ -388,6 +340,6 @@ func TestAccIssuingPersonalizationDesign_drift(t *testing.T) {
 					resource.TestCheckResourceAttr(address, "metadata.env", "test"),
 				),
 			},
-		},
+		}, nil, "stripe_issuing_personalization_design"),
 	})
 }

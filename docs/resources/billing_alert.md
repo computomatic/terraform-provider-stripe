@@ -3,12 +3,14 @@
 page_title: "stripe_billing_alert Resource - Stripe"
 subcategory: ""
 description: |-
-  Notifies you when the usage a billing meter records crosses a threshold. terraform destroy archives the alert, which is permanent: an archived alert never triggers or activates again, and it stays in the Stripe account. Stripe does not update alerts, so every argument except status forces replacement. status can be set to active or inactive; archived is reached by destroy only.
+  Notifies you when the usage a billing meter records crosses a threshold. terraform destroy deactivates the alert, because Stripe cannot delete one; it stays in the Stripe account. Stripe does not update alerts, so every argument except status forces replacement. status can be set to active, inactive or archived; an archived alert never triggers or activates again.
 ---
 
 # Resource: stripe_billing_alert
 
-Notifies you when the usage a billing meter records crosses a threshold. `terraform destroy` archives the alert, which is permanent: an archived alert never triggers or activates again, and it stays in the Stripe account. Stripe does not update alerts, so every argument except `status` forces replacement. `status` can be set to `active` or `inactive`; `archived` is reached by destroy only.
+Notifies you when the usage a billing meter records crosses a threshold. `terraform destroy` deactivates the alert, because Stripe cannot delete one; it stays in the Stripe account. Stripe does not update alerts, so every argument except `status` forces replacement. `status` can be set to `active`, `inactive` or `archived`; an archived alert never triggers or activates again.
+
+~> Stripe cannot deactivate an archived alert, because archiving one is final. `terraform destroy`, and a change that would replace it, fail at plan time for such a billing alert. To stop managing one, remove it from the state as [Removing from State](#removing-from-state) shows; it stays in the Stripe account.
 
 ## Example Usage
 
@@ -52,7 +54,7 @@ The following arguments are required:
 
 The following arguments are optional:
 
-* `status` - (Optional) Status of the alert. This can be active, inactive or archived. Possible values: `active`, `archived`, `inactive`.
+* `status` - (Optional) Status of the alert. This can be active, inactive or archived. Possible values: `active`, `inactive`, `archived`.
 * `usage_threshold` - (Optional) The configuration of the usage threshold. Changing it replaces the resource. See [`usage_threshold`](#usage_threshold) below.
 
 <a id="usage_threshold"></a>
@@ -87,6 +89,28 @@ This resource exports the following attributes in addition to the arguments abov
 * `create` - (Default `20m`)
 * `delete` - (Default `20m`)
 * `update` - (Default `20m`)
+
+## Removing from State
+
+To stop managing a billing alert whose destroy is refused, remove it from the state without destroying it. In Terraform 1.7 and later, and OpenTofu 1.10 and later, replace the `resource` block with a [`removed` block](https://developer.hashicorp.com/terraform/language/block/removed) and apply:
+
+```terraform
+removed {
+  from = stripe_billing_alert.heavy_usage
+
+  lifecycle {
+    destroy = false
+  }
+}
+```
+
+Using `terraform state rm`:
+
+```console
+% terraform state rm stripe_billing_alert.heavy_usage
+```
+
+The billing alert stays in the Stripe account. Replacing one with `terraform apply -replace` or `terraform taint` fails in the same way, at apply.
 
 ## Import
 

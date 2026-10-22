@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"net/http"
 	"net/url"
 	"slices"
 	"strconv"
@@ -71,6 +70,10 @@ func (r *Resource) ImportNote() (string, NoteLevel) {
 	return r.m.decl.ImportNote, r.m.decl.ImportNoteLevel
 }
 
+// DestroyNote is the documentation page's callout for a resource that refuses destroy,
+// without its sigil, or "" for one that never does.
+func (r *Resource) DestroyNote() string { return r.m.destroyNote() }
+
 func (r *Resource) Schema(_ context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
 	resp.Schema = r.schema
 }
@@ -104,11 +107,23 @@ func (r *Resource) Configure(ctx context.Context, req resource.ConfigureRequest,
 // leaves unset, no configured value changed, and the plan is the state. An unknown that the
 // configuration sets, such as a reference to an object being replaced, is a pending change
 // and leaves the plan alone.
+//
+// A destroy plan of an object whose destroy is refused fails here, so that `terraform destroy`
+// and a resource dropped from the configuration stop at plan time.
 func (r *Resource) ModifyPlan(ctx context.Context, req resource.ModifyPlanRequest, resp *resource.ModifyPlanResponse) {
+	if !req.State.Raw.IsNull() && req.Plan.Raw.IsNull() {
+		if reason := r.m.refusal(req.State.Raw); reason != "" {
+			resp.Diagnostics.AddError("Cannot destroy "+r.m.decl.TypeName, r.m.destroyRefusal(reason))
+		}
+		return
+	}
 	if !req.Plan.Raw.IsNull() {
 		r.refuseDuplicateKeys(ctx, req, resp)
 	}
 	if req.State.Raw.IsNull() || req.Plan.Raw.IsNull() {
+		return
+	}
+	if r.refuseLeavingFinal(req, resp) {
 		return
 	}
 	if r.requiresReplaceForCurrencyOptions(ctx, req, resp) || r.requiresReplaceForFixedKeys(ctx, req, resp) {
@@ -196,6 +211,33 @@ func valueAt(root tftypes.Value, p *tftypes.AttributePath) tftypes.Value {
 	return tftypes.NewValue(tftypes.DynamicPseudoType, nil)
 }
 
+// refuseLeavingFinal fails the plan that sets a transition field, out of a value the transition
+// declares Final, to the transition's value, such as an archived alert's `status` to `active`:
+// Stripe would refuse the action at apply.
+func (r *Resource) refuseLeavingFinal(req resource.ModifyPlanRequest, resp *resource.ModifyPlanResponse) bool {
+	for _, t := range r.m.decl.Transitions {
+		name := r.attrName(t.Field)
+		p := tftypes.NewAttributePath().WithAttributeName(name)
+		planned, okPlan := knownString(valueAt(resp.Plan.Raw, p))
+		prior, okState := knownString(valueAt(req.State.Raw, p))
+		if !okPlan || !okState || planned != t.Value || !slices.Contains(t.Final, prior) {
+			continue
+		}
+		resp.Diagnostics.AddAttributeError(path.Root(name), "Cannot change `"+name+"` from `"+prior+"`",
+			fmt.Sprintf("Stripe cannot move this %s out of `%s`. Remove `%s` from the configuration.", noun(r.m.decl.TypeName), prior, name))
+	}
+	return resp.Diagnostics.HasError()
+}
+
+// knownString is a known, non-null string value.
+func knownString(v tftypes.Value) (string, bool) {
+	var s string
+	if !v.IsKnown() || v.IsNull() || !v.Type().Is(tftypes.String) || v.As(&s) != nil {
+		return "", false
+	}
+	return s, true
+}
+
 // refuseGoingBack fails the plan that moves the declared advance field to an earlier value,
 // which Stripe refuses. A plan that also replaces the object is not refused: its create
 // starts at the new value. A value not known at plan time is left for apply.
@@ -277,8 +319,12 @@ func (r *Resource) refuseChanges(ctx context.Context, req resource.ModifyPlanReq
 		if v, err := pv.ToTerraformValue(ctx); err != nil || !v.IsFullyKnown() {
 			continue
 		}
+		recreate := "recreate the object deliberately with `terraform taint` (`tofu taint` in OpenTofu)."
+		if r.m.refusal(req.State.Raw) != "" {
+			recreate = "remove the object from the state with a removed block or `terraform state rm` and apply again to create a new one."
+		}
 		resp.Diagnostics.AddAttributeError(path.Root(n.AttrName()), "Changing `"+n.AttrName()+"` is not supported yet",
-			"Changing the "+n.AttrName()+" of an existing "+r.m.decl.TypeName+" is not supported yet. Revert the configuration, add `lifecycle { ignore_changes = ["+n.AttrName()+"] }` to leave it as it is, or recreate the object deliberately with `terraform taint` (`tofu taint` in OpenTofu).")
+			"Changing the "+n.AttrName()+" of an existing "+r.m.decl.TypeName+" is not supported yet. Revert the configuration, add `lifecycle { ignore_changes = ["+n.AttrName()+"] }` to leave it as it is, or "+recreate)
 	}
 	return resp.Diagnostics.HasError()
 }
@@ -497,15 +543,17 @@ func (r *Resource) Delete(ctx context.Context, req resource.DeleteRequest, resp 
 	if id == "" {
 		return
 	}
+	// The backstop of the plan-time refusal: `-replace`, taint and `replace_triggered_by`
+	// plan a replacement the provider cannot see, and a plan without refresh can hold a
+	// stale state.
+	if reason := r.m.refusal(req.State.Raw); reason != "" {
+		resp.Diagnostics.AddError("Cannot destroy "+r.m.decl.TypeName, r.m.destroyRefusal(reason))
+		return
+	}
 	var err error
 	switch r.m.decl.Delete {
 	case Delete:
 		_, err = r.api.call(ctx, "DELETE", r.m.expand(r.m.decl.Paths.Delete, id, parent), nil)
-		// Only a refusal can mean the object is protected: a 403 from a read-only key or a
-		// server error says nothing about why, whatever the retrieve shows.
-		if refused(err, &Refusal{Status: http.StatusBadRequest, Type: "invalid_request_error"}) {
-			err = r.keepIfProtected(ctx, id, parent, err)
-		}
 	case DeleteOrArchive:
 		_, err = r.api.call(ctx, "DELETE", r.m.expand(r.m.decl.Paths.Delete, id, parent), nil)
 		if refused(err, r.m.decl.ArchiveOn) {
@@ -520,26 +568,11 @@ func (r *Resource) Delete(ctx context.Context, req resource.DeleteRequest, resp 
 		}
 	case Archive:
 		err = r.archive(ctx, id, parent)
-	case Retain:
-		resp.Diagnostics.AddWarning(
-			"Left in the Stripe account",
-			fmt.Sprintf("Stripe cannot delete %s %s. %s\n\nIt is out of Terraform's state and still exists in the Stripe account.", r.m.decl.TypeName, id, r.m.decl.RetainWarning),
-		)
-	case Expire:
-		err = r.expire(ctx, id, parent)
 	}
-	var kept *keptError
-	if errors.As(err, &kept) {
-		verb, left, still := "archive", "Left active instead of archived", "active"
-		if r.m.decl.Delete == Delete {
-			verb, left, still = "delete", "Left in place instead of deleted", "in place"
-		}
-		resp.Diagnostics.AddWarning(
-			left,
-			fmt.Sprintf("Stripe refused to %s %s %s: %v\n\nThe object is protected (%s). It is out of Terraform's state and still %s in the Stripe account.",
-				verb, r.m.decl.TypeName, id, kept.refusal, r.m.decl.KeepWhen.Field, still),
-		)
-		err = nil
+	if err != nil && r.refusedByStripe(ctx, id, parent, err) {
+		r.api.fail(&resp.Diagnostics, err)
+		resp.Diagnostics.AddError("Cannot destroy "+r.m.decl.TypeName, r.m.destroyRefusal(r.m.decl.RefuseWhen.Reason))
+		return
 	}
 	if err != nil && !r.m.gone(err, &resp.Diagnostics) {
 		r.api.fail(&resp.Diagnostics, err)
@@ -608,73 +641,21 @@ func (r *Resource) archive(ctx context.Context, id, parent string) error {
 		return err
 	}
 	a := r.m.decl.Archive
-	if archived(body, a, time.Now()) {
+	if v, ok := body.Get(a.Field); ok && sameWire(v, a.Value) {
 		return nil
 	}
 	if a.Path != "" {
 		_, err = r.api.call(ctx, "POST", r.m.expand(a.Path, id, parent), nil)
-		return r.keepIfProtected(ctx, id, parent, err)
+		return err
 	}
-	value := a.Value
-	if a.Now {
-		value = wire.String("now")
-	}
-	_, err = r.api.call(ctx, "POST", r.m.expand(r.m.decl.Paths.Update, id, parent), wire.Object{{Name: a.Field, Value: value}})
-	return r.keepIfProtected(ctx, id, parent, err)
-}
-
-// keptError is an archive that Stripe refused for an object the declaration protects.
-type keptError struct{ refusal error }
-
-func (e *keptError) Error() string { return e.refusal.Error() }
-
-// keepIfProtected turns a failed archive into a keptError when the object is the one the
-// declaration says Stripe protects. It reads the object after the failure; a failed read
-// leaves the archive error as it is.
-func (r *Resource) keepIfProtected(ctx context.Context, id, parent string, archiveErr error) error {
-	keep := r.m.decl.KeepWhen
-	if archiveErr == nil || keep == nil {
-		return archiveErr
-	}
-	body, err := r.api.call(ctx, "GET", r.m.expand(r.m.decl.Paths.Retrieve, id, parent), nil)
-	if err != nil {
-		return archiveErr
-	}
-	if v, ok := body.Get(keep.Field); ok && sameWire(v, keep.Value) {
-		return &keptError{refusal: archiveErr}
-	}
-	return archiveErr
+	_, err = r.api.call(ctx, "POST", r.m.expand(r.m.decl.Paths.Update, id, parent), wire.Object{{Name: a.Field, Value: a.Value}})
+	return err
 }
 
 func sameWire(a, b wire.Value) bool {
 	have, errHave := wire.EncodeJSON(a)
 	want, errWant := wire.EncodeJSON(b)
 	return errHave == nil && errWant == nil && string(have) == string(want)
-}
-
-func archived(body wire.Object, a *ArchiveAction, now time.Time) bool {
-	if holds(body, a.Field, a.Value, a.Now, now) {
-		return true
-	}
-	for _, e := range a.Ended {
-		if holds(body, e.Field, e.Value, e.Past, now) {
-			return true
-		}
-	}
-	return false
-}
-
-// holds reports whether field has the value, or with past a Unix time that has passed.
-func holds(body wire.Object, field string, value wire.Value, past bool, now time.Time) bool {
-	v, ok := body.Get(field)
-	if !ok {
-		return false
-	}
-	if past {
-		at, isInt := v.(wire.Int)
-		return isInt && int64(at) <= now.Unix()
-	}
-	return sameWire(v, value)
 }
 
 // advance moves the declared time field to the planned value when it differs from the
@@ -734,46 +715,6 @@ func (r *Resource) awaitReady(ctx context.Context, id, retrieve string, done fun
 		case <-time.After(r.pollInterval):
 		}
 	}
-}
-
-// expire ends the object a few seconds ahead and waits for its status to say so.
-func (r *Resource) expire(ctx context.Context, id, parent string) error {
-	e := r.m.decl.Expire
-	retrieve := r.m.expand(r.m.decl.Paths.Retrieve, id, parent)
-	body, err := r.api.call(ctx, "GET", retrieve, nil)
-	if err != nil {
-		return err
-	}
-	if !expired(body, e) {
-		update := r.m.expand(r.m.decl.Paths.Update, id, parent)
-		if status, _ := body.GetString(e.StatusField); e.NotStarted != "" && status == e.NotStarted {
-			if _, err := r.api.call(ctx, "POST", update, e.Start); err != nil {
-				return err
-			}
-		}
-		at := wire.Int(time.Now().Unix() + e.Seconds)
-		if _, err := r.api.call(ctx, "POST", update, wire.Object{{Name: e.Field, Value: at}}); err != nil {
-			return err
-		}
-	}
-	for {
-		if body, err = r.api.call(ctx, "GET", retrieve, nil); err != nil {
-			return err
-		}
-		if expired(body, e) {
-			return nil
-		}
-		select {
-		case <-ctx.Done():
-			return fmt.Errorf("waiting for %s to reach %s=%s: %w", id, e.StatusField, e.StatusValue, ctx.Err())
-		case <-time.After(r.pollInterval):
-		}
-	}
-}
-
-func expired(body wire.Object, e *ExpireAction) bool {
-	status, _ := body.GetString(e.StatusField)
-	return status == e.StatusValue
 }
 
 func (r *Resource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {

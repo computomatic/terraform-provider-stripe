@@ -3,12 +3,14 @@
 page_title: "stripe_entitlements_feature Resource - Stripe"
 subcategory: ""
 description: |-
-  A feature a product can grant, identified by a unique lookup_key. terraform destroy archives the feature, because Stripe cannot delete one. An archived feature cannot be updated or reactivated, and its lookup_key cannot be used again.
+  A feature a product can grant, identified by a unique lookup_key. Set active to false to archive the feature; an archived feature cannot be updated or reactivated, and its lookup_key cannot be used again.
 ---
 
 # Resource: stripe_entitlements_feature
 
-A feature a product can grant, identified by a unique `lookup_key`. `terraform destroy` archives the feature, because Stripe cannot delete one. An archived feature cannot be updated or reactivated, and its `lookup_key` cannot be used again.
+A feature a product can grant, identified by a unique `lookup_key`. Set `active` to `false` to archive the feature; an archived feature cannot be updated or reactivated, and its `lookup_key` cannot be used again.
+
+~> Stripe cannot delete an entitlement feature; set `active` to `false` to archive one, which cannot be undone. `terraform destroy`, and a change that would replace the entitlements feature, fail at plan time. To stop managing an entitlements feature, remove it from the state as [Removing from State](#removing-from-state) shows; it stays in the Stripe account.
 
 ## Example Usage
 
@@ -23,7 +25,7 @@ resource "stripe_entitlements_feature" "advanced_search" {
 
 The following arguments are required:
 
-* `lookup_key` - (Required) A unique key you provide as your own system identifier. This may be up to 80 characters. Changing it replaces the resource.
+* `lookup_key` - (Required) A unique key you provide as your own system identifier. This may be up to 80 characters. Changing it fails the plan, because this resource cannot be replaced.
 * `name` - (Required) The feature's name, for your own purpose, not meant to be displayable to the customer.
 
 The following arguments are optional:
@@ -45,6 +47,28 @@ This resource exports the following attributes in addition to the arguments abov
 * `create` - (Default `20m`)
 * `delete` - (Default `20m`)
 * `update` - (Default `20m`)
+
+## Removing from State
+
+To stop managing an entitlements feature whose destroy is refused, remove it from the state without destroying it. In Terraform 1.7 and later, and OpenTofu 1.10 and later, replace the `resource` block with a [`removed` block](https://developer.hashicorp.com/terraform/language/block/removed) and apply:
+
+```terraform
+removed {
+  from = stripe_entitlements_feature.advanced_search
+
+  lifecycle {
+    destroy = false
+  }
+}
+```
+
+Using `terraform state rm`:
+
+```console
+% terraform state rm stripe_entitlements_feature.advanced_search
+```
+
+The entitlements feature stays in the Stripe account. Replacing one with `terraform apply -replace` or `terraform taint` fails in the same way, at apply.
 
 ## Import
 

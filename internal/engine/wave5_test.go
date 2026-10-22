@@ -22,31 +22,6 @@ import (
 	"github.com/computomatic/terraform-provider-stripe/internal/wire"
 )
 
-// An object that has ended by another route is already as destroy leaves it: Stripe would
-// refuse the archive, so destroy sends none.
-func TestArchivedCountsTheOtherEndedStates(t *testing.T) {
-	now := time.Unix(1000, 0)
-	a := &ArchiveAction{
-		Field: "status", Value: wire.String("canceled"),
-		Ended: []Ended{{Field: "status", Value: wire.String("accepted")}, {Field: "expires_at", Past: true}},
-	}
-	for name, tc := range map[string]struct {
-		body wire.Object
-		want bool
-	}{
-		"archived":        {wire.Object{{Name: "status", Value: wire.String("canceled")}}, true},
-		"ended by status": {wire.Object{{Name: "status", Value: wire.String("accepted")}}, true},
-		"ended by time":   {wire.Object{{Name: "status", Value: wire.String("open")}, {Name: "expires_at", Value: wire.Int(999)}}, true},
-		"expires later":   {wire.Object{{Name: "status", Value: wire.String("open")}, {Name: "expires_at", Value: wire.Int(2000)}}, false},
-		"never expires":   {wire.Object{{Name: "status", Value: wire.String("open")}, {Name: "expires_at", Value: wire.Null{}}}, false},
-		"live":            {wire.Object{{Name: "status", Value: wire.String("open")}}, false},
-	} {
-		if got := archived(tc.body, a, now); got != tc.want {
-			t.Errorf("%s: archived = %v, want %v", name, got, tc.want)
-		}
-	}
-}
-
 func listTable() []fields.Field {
 	return []fields.Field{
 		{Name: "id", Shape: fields.String, Response: true},

@@ -60,6 +60,9 @@ type schema struct {
 	// ImportNote is a resource's note for the Import section, from its declaration.
 	ImportNote      string
 	ImportNoteLevel engine.NoteLevel
+	// DestroyNote is the callout of a resource whose destroy is refused, from the engine. It
+	// also adds the Removing from State section.
+	DestroyNote string
 }
 
 func (s *schema) find(name string) *attr {

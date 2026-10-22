@@ -3,12 +3,14 @@
 page_title: "stripe_billing_feedback_option Resource - Stripe"
 subcategory: ""
 description: |-
-  A reason a customer can pick when canceling a subscription. terraform destroy deactivates the option, because Stripe cannot delete one; it stays in the account.
+  A reason a customer can pick when canceling a subscription. Set status to inactive to deactivate the option, which cannot be undone.
 ---
 
 # Resource: stripe_billing_feedback_option
 
-A reason a customer can pick when canceling a subscription. `terraform destroy` deactivates the option, because Stripe cannot delete one; it stays in the account.
+A reason a customer can pick when canceling a subscription. Set `status` to `inactive` to deactivate the option, which cannot be undone.
+
+~> Stripe cannot delete a feedback option; set `status` to `inactive` to deactivate one, which cannot be undone. `terraform destroy`, and a change that would replace the billing feedback option, fail at plan time. To stop managing a billing feedback option, remove it from the state as [Removing from State](#removing-from-state) shows; it stays in the Stripe account.
 
 ## Example Usage
 
@@ -24,13 +26,16 @@ The following arguments are required:
 
 * `description` - (Required) The text of the feedback option, which customers see when canceling. Maximum 100 characters.
 
+The following arguments are optional:
+
+* `status` - (Optional) The feedback option's status. Possible values: `inactive`.
+
 ## Attribute Reference
 
 This resource exports the following attributes in addition to the arguments above:
 
 * `id` - Unique identifier for the object.
 * `livemode` - If the object exists in live mode, the value is `true`. If the object exists in test mode, the value is `false`.
-* `status` - The feedback option's status. Possible values: `active`, `inactive`.
 * `status_transitions` - See [`status_transitions`](#status_transitions) below.
 
 <a id="status_transitions"></a>
@@ -47,6 +52,28 @@ The `status_transitions` attribute supports:
 * `create` - (Default `20m`)
 * `delete` - (Default `20m`)
 * `update` - (Default `20m`)
+
+## Removing from State
+
+To stop managing a billing feedback option whose destroy is refused, remove it from the state without destroying it. In Terraform 1.7 and later, and OpenTofu 1.10 and later, replace the `resource` block with a [`removed` block](https://developer.hashicorp.com/terraform/language/block/removed) and apply:
+
+```terraform
+removed {
+  from = stripe_billing_feedback_option.too_expensive
+
+  lifecycle {
+    destroy = false
+  }
+}
+```
+
+Using `terraform state rm`:
+
+```console
+% terraform state rm stripe_billing_feedback_option.too_expensive
+```
+
+The billing feedback option stays in the Stripe account. Replacing one with `terraform apply -replace` or `terraform taint` fails in the same way, at apply.
 
 ## Import
 

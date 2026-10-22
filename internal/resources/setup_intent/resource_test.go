@@ -8,7 +8,6 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/hashicorp/terraform-plugin-testing/plancheck"
-	"github.com/hashicorp/terraform-plugin-testing/terraform"
 
 	"github.com/computomatic/terraform-provider-stripe/internal/acctest"
 	"github.com/computomatic/terraform-provider-stripe/internal/acctest/tfacc"
@@ -41,6 +40,14 @@ func idOf(dst *string) resource.TestCheckFunc {
 	})
 }
 
+// pathOf records the setup intent's API path.
+func pathOf(dst *string) resource.TestCheckFunc {
+	return resource.TestCheckResourceAttrWith(address, "id", func(v string) error {
+		*dst = "/v1/setup_intents/" + v
+		return nil
+	})
+}
+
 // paymentMethod creates a card payment method from a test token, as the suite does
 // ("PaymentMethod", "create card from token"), and returns its ID.
 func paymentMethod(t *testing.T, acct acctest.Config) string {
@@ -60,7 +67,7 @@ func TestAccSetupIntent_create(t *testing.T) {
 	acct := acctest.NewAccount(t)
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: tfacc.ProviderFactories,
-		Steps: []resource.TestStep{{
+		Steps: acctest.Forget(t, []resource.TestStep{{
 			Config: intentConfig(acct, "  customer = stripe_customer.test.id\n  description = \"Card on file\"\n  usage = \"on_session\"\n  metadata = { env = \"test\" }\n") + `
 data "stripe_setup_intent" "by_id" {
   id = stripe_setup_intent.test.id
@@ -79,7 +86,7 @@ data "stripe_setup_intent" "by_id" {
 				resource.TestCheckResourceAttrPair("data.stripe_setup_intent.by_id", "id", address, "id"),
 				resource.TestCheckResourceAttr("data.stripe_setup_intent.by_id", "status", "requires_payment_method"),
 			),
-		}},
+		}}, nil, "stripe_setup_intent"),
 	})
 }
 
@@ -91,7 +98,7 @@ func TestAccSetupIntent_update(t *testing.T) {
 	var id, secret string
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: tfacc.ProviderFactories,
-		Steps: []resource.TestStep{
+		Steps: acctest.Forget(t, []resource.TestStep{
 			{
 				Config: intentConfig(acct, "  description = \"one\"\n  metadata = { keep = \"me\", drop = \"me\" }\n"),
 				Check: resource.ComposeAggregateTestCheckFunc(idOf(&id),
@@ -130,32 +137,22 @@ func TestAccSetupIntent_update(t *testing.T) {
 					resource.TestCheckResourceAttr(address, "status", "requires_payment_method"),
 				),
 			},
-		},
+		}, nil, "stripe_setup_intent"),
 	})
 }
 
-// `usage` is accepted on create only (suite: "update immutable fields rejected"), so changing
-// it replaces the intent.
+// `usage` is create-only, so changing it would replace the intent, which Stripe cannot
+// delete: the plan fails, and so does a taint, at apply.
 func TestAccSetupIntent_replace(t *testing.T) {
 	acct := acctest.NewAccount(t)
-	var first string
+	cfg := intentConfig(acct, "  usage = \"on_session\"\n")
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: tfacc.ProviderFactories,
-		Steps: []resource.TestStep{
-			{Config: intentConfig(acct, "  usage = \"on_session\"\n"), Check: idOf(&first)},
-			{
-				Config: intentConfig(acct, "  usage = \"off_session\"\n"),
-				ConfigPlanChecks: resource.ConfigPlanChecks{PreApply: []plancheck.PlanCheck{
-					plancheck.ExpectResourceAction(address, plancheck.ResourceActionReplace),
-				}},
-				Check: resource.TestCheckResourceAttrWith(address, "id", func(v string) error {
-					if v == first {
-						return fmt.Errorf("the replacement kept the setup intent %s", v)
-					}
-					return nil
-				}),
-			},
-		},
+		Steps: acctest.Forget(t, []resource.TestStep{
+			{Config: cfg},
+			{Config: intentConfig(acct, "  usage = \"off_session\"\n"), PlanOnly: true, ExpectError: tfacc.RefusedReplace},
+			{Config: cfg, Taint: []string{address}, ExpectError: tfacc.RefusedDestroy},
+		}, nil, "stripe_setup_intent"),
 	})
 }
 
@@ -164,7 +161,7 @@ func TestAccSetupIntent_import(t *testing.T) {
 	cfg := intentConfig(acct, "  customer = stripe_customer.test.id\n  description = \"Card on file\"\n  metadata = { team = \"a\" }\n")
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: tfacc.ProviderFactories,
-		Steps: []resource.TestStep{
+		Steps: acctest.Forget(t, []resource.TestStep{
 			{Config: cfg},
 			{
 				ResourceName:            address,
@@ -178,85 +175,47 @@ func TestAccSetupIntent_import(t *testing.T) {
 				ImportStateKind: resource.ImportBlockWithID,
 				Config:          cfg,
 			},
-		},
+		}, nil, "stripe_setup_intent"),
 	})
 }
 
-func status(t *testing.T, acct acctest.Config, id string) (string, error) {
-	t.Helper()
-	resp, err := tfacc.Client(acct).Do(t.Context(), stripeapi.Request{Method: "GET", Path: "/v1/setup_intents/" + id})
-	if err != nil {
-		return "", err
-	}
-	s, _ := resp.Body.(wire.Object).GetString("status")
-	return s, nil
-}
-
-// Stripe cannot delete a setup intent; one that is not finished cancels (suite: "cancel"), so
-// destroy cancels it and the intent stays in the account.
+// Stripe cannot delete a setup intent, so dropping it from the configuration, and `terraform
+// destroy`, fail at plan time, and the intent stays as it was.
 func TestAccSetupIntent_delete(t *testing.T) {
 	acct := acctest.NewAccount(t)
-	var id string
-	resource.ParallelTest(t, resource.TestCase{
-		ProtoV6ProviderFactories: tfacc.ProviderFactories,
-		CheckDestroy: func(*terraform.State) error {
-			got, err := status(t, acct, id)
-			if err != nil {
-				return fmt.Errorf("a canceled setup intent still retrieves: %w", err)
-			}
-			if got != "canceled" {
-				return fmt.Errorf("setup intent %s is %q after destroy, want canceled", id, got)
-			}
-			return nil
-		},
-		Steps: []resource.TestStep{{Config: intentConfig(acct, ""), Check: idOf(&id)}},
-	})
-}
-
-// A succeeded intent cannot be canceled (suite: "cancel errors", "already succeeded"), so
-// destroy leaves it as it is.
-func TestAccSetupIntent_deleteAfterSuccess(t *testing.T) {
-	acct := acctest.NewAccount(t)
-	pm := paymentMethod(t, acct)
-	var id string
-	cfg := intentConfig(acct, fmt.Sprintf("  payment_method = %q\n", pm))
-	resource.ParallelTest(t, resource.TestCase{
-		ProtoV6ProviderFactories: tfacc.ProviderFactories,
-		CheckDestroy: func(*terraform.State) error {
-			if got, err := status(t, acct, id); err != nil || got != "succeeded" {
-				return fmt.Errorf("setup intent %s is %q (%v) after destroy, want succeeded", id, got, err)
-			}
-			return nil
-		},
-		Steps: []resource.TestStep{
-			{Config: cfg, Check: idOf(&id)},
-			{
-				PreConfig: func() {
-					tfacc.Post(t, acct, "/v1/setup_intents/"+id+"/confirm", nil)
-				},
-				Config: cfg,
-				Check:  resource.TestCheckResourceAttr(address, "status", "succeeded"),
-			},
-		},
-	})
-}
-
-// An intent canceled out of band reads as canceled, and destroy does not cancel it again
-// (suite: "cancel errors", "already canceled").
-func TestAccSetupIntent_deleteAfterCancel(t *testing.T) {
-	acct := acctest.NewAccount(t)
-	var id string
+	var path string
+	var mark int
 	cfg := intentConfig(acct, "")
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: tfacc.ProviderFactories,
-		Steps: []resource.TestStep{
-			{Config: cfg, Check: idOf(&id)},
+		Steps: acctest.Forget(t, []resource.TestStep{
+			{Config: cfg, Check: resource.ComposeTestCheckFunc(pathOf(&path), tfacc.LogMark(t, acct, &mark))},
+			{Config: acctest.Without(t, cfg, "stripe_setup_intent"), PlanOnly: true, ExpectError: tfacc.RefusedDestroy},
+			{Config: cfg, Destroy: true, ExpectError: tfacc.RefusedDestroy},
+		}, tfacc.Untouched(t, acct, &path, &mark, "status", wire.String("requires_payment_method")), "stripe_setup_intent"),
+	})
+}
+
+// Setting `status` to `canceled` cancels the intent through its action endpoint (suite:
+// "cancel"), after which it reads back canceled.
+func TestAccSetupIntent_cancel(t *testing.T) {
+	acct := acctest.NewAccount(t)
+	var path string
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: tfacc.ProviderFactories,
+		Steps: acctest.Forget(t, []resource.TestStep{
+			{Config: intentConfig(acct, ""), Check: pathOf(&path)},
 			{
-				PreConfig: func() { tfacc.Post(t, acct, "/v1/setup_intents/"+id+"/cancel", nil) },
-				Config:    cfg,
-				Check:     resource.TestCheckResourceAttr(address, "status", "canceled"),
+				Config: intentConfig(acct, "  status = \"canceled\"\n"),
+				ConfigPlanChecks: resource.ConfigPlanChecks{PreApply: []plancheck.PlanCheck{
+					plancheck.ExpectResourceAction(address, plancheck.ResourceActionUpdate),
+				}},
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr(address, "status", "canceled"),
+					tfacc.Holds(t, acct, &path, "status", wire.String("canceled")),
+				),
 			},
-		},
+		}, nil, "stripe_setup_intent"),
 	})
 }
 
@@ -266,7 +225,7 @@ func TestAccSetupIntent_drift(t *testing.T) {
 	cfg := intentConfig(acct, "  description = \"Card on file\"\n")
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: tfacc.ProviderFactories,
-		Steps: []resource.TestStep{
+		Steps: acctest.Forget(t, []resource.TestStep{
 			{Config: cfg, Check: idOf(&id)},
 			{
 				PreConfig: func() {
@@ -279,6 +238,31 @@ func TestAccSetupIntent_drift(t *testing.T) {
 				}},
 				Check: resource.TestCheckResourceAttr(address, "description", "Card on file"),
 			},
-		},
+		}, nil, "stripe_setup_intent"),
+	})
+}
+
+// A succeeded intent cannot be cancelled (suite: "cancel errors", "already succeeded"), so a
+// configuration that sets `status` to `canceled` fails at plan time.
+func TestAccSetupIntent_cancelSucceeded(t *testing.T) {
+	acct := acctest.NewAccount(t)
+	var id string
+	pm := fmt.Sprintf("  payment_method = %q\n", paymentMethod(t, acct))
+	cfg := intentConfig(acct, pm)
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: tfacc.ProviderFactories,
+		Steps: acctest.Forget(t, []resource.TestStep{
+			{Config: cfg, Check: idOf(&id)},
+			{
+				PreConfig: func() { tfacc.Post(t, acct, "/v1/setup_intents/"+id+"/confirm", nil) },
+				Config:    cfg,
+				Check:     resource.TestCheckResourceAttr(address, "status", "succeeded"),
+			},
+			{
+				Config:      intentConfig(acct, pm+"  status = \"canceled\"\n"),
+				PlanOnly:    true,
+				ExpectError: regexp.MustCompile("Cannot change `status` from `succeeded`"),
+			},
+		}, nil, "stripe_setup_intent"),
 	})
 }

@@ -3,12 +3,14 @@
 page_title: "stripe_subscription_schedule Resource - Stripe"
 subcategory: ""
 description: |-
-  Changes a subscription over time, in phases. terraform destroy cancels the schedule, which also cancels the subscription it started, because Stripe cannot delete a schedule; the cancelled schedule stays in the account. Stripe replaces the phases as a whole on update and needs the current phase to keep its start_date, which an update sends back from the state.
+  Changes a subscription over time, in phases. Set status to canceled to cancel the schedule and the subscription it started, or to released to end the schedule and keep the subscription billing on its own. Stripe replaces the phases as a whole on update and needs the current phase to keep its start_date, which an update sends back from the state.
 ---
 
 # Resource: stripe_subscription_schedule
 
-Changes a subscription over time, in phases. `terraform destroy` cancels the schedule, which also cancels the subscription it started, because Stripe cannot delete a schedule; the cancelled schedule stays in the account. Stripe replaces the phases as a whole on update and needs the current phase to keep its `start_date`, which an update sends back from the state.
+Changes a subscription over time, in phases. Set `status` to `canceled` to cancel the schedule and the subscription it started, or to `released` to end the schedule and keep the subscription billing on its own. Stripe replaces the phases as a whole on update and needs the current phase to keep its `start_date`, which an update sends back from the state.
+
+~> Stripe cannot delete a subscription schedule; set `status` to `canceled` to cancel one and the subscription it started, or to `released` to release the subscription from it. `terraform destroy`, and a change that would replace the subscription schedule, fail at plan time. To stop managing a subscription schedule, remove it from the state as [Removing from State](#removing-from-state) shows; it stays in the Stripe account.
 
 ## Example Usage
 
@@ -73,15 +75,16 @@ resource "stripe_subscription_schedule" "team" {
 
 The following arguments are optional:
 
-* `billing_mode` - (Optional) Controls how prorations and invoices for subscriptions are calculated and orchestrated. Changing it replaces the resource. See [`billing_mode`](#billing_mode) below.
-* `customer` - (Optional) The identifier of the customer to create the subscription schedule for. Changing it replaces the resource.
-* `customer_account` - (Optional) The identifier of the account to create the subscription schedule for. Changing it replaces the resource.
+* `billing_mode` - (Optional) Controls how prorations and invoices for subscriptions are calculated and orchestrated. Changing it fails the plan, because this resource cannot be replaced. See [`billing_mode`](#billing_mode) below.
+* `customer` - (Optional) The identifier of the customer to create the subscription schedule for. Changing it fails the plan, because this resource cannot be replaced.
+* `customer_account` - (Optional) The identifier of the account to create the subscription schedule for. Changing it fails the plan, because this resource cannot be replaced.
 * `default_settings` - (Optional) Object representing the subscription schedule's default settings. See [`default_settings`](#default_settings) below.
 * `end_behavior` - (Optional) Behavior of the subscription schedule and underlying subscription when it ends. Possible values are `release` or `cancel` with the default being `release`. `release` will end the subscription schedule and keep the underlying subscription running. `cancel` will end the subscription schedule and cancel the underlying subscription. Possible values: `cancel`, `none`, `release`, `renew`.
 * `metadata` - (Optional) Set of [key-value pairs](https://docs.stripe.com/api/metadata) that you can attach to an object. This can be useful for storing additional information about the object in a structured format. Individual keys can be unset by posting an empty value to them. All keys can be unset by posting an empty value to `metadata`.
 * `phases` - (Optional) List representing phases of the subscription schedule. Each phase can be customized to have different durations, plans, and coupons. If there are multiple phases, the `end_date` of one phase will always equal the `start_date` of the next phase. See [`phases`](#phases) below.
 * `proration_behavior` - (Optional) If the update changes the billing configuration (item price, quantity, etc.) of the current phase, indicates how prorations from this change should be handled. The default value is `create_prorations`. Possible values: `always_invoice`, `create_prorations`, `none`.
-* `start_date` - (Optional) When the subscription schedule starts. We recommend using `now` so that it starts the subscription immediately, and to avoid unexpected behavior due to request delays or clock skew resulting in a slightly backdated or postdated start. You can also use a Unix timestamp to backdate the subscription so that it starts on a past date, or set a future date for the subscription to start on. Changing it replaces the resource.
+* `start_date` - (Optional) When the subscription schedule starts. We recommend using `now` so that it starts the subscription immediately, and to avoid unexpected behavior due to request delays or clock skew resulting in a slightly backdated or postdated start. You can also use a Unix timestamp to backdate the subscription so that it starts on a past date, or set a future date for the subscription to start on. Changing it fails the plan, because this resource cannot be replaced.
+* `status` - (Optional) The present status of the subscription schedule. You can read more about the different states in our [behavior guide](https://docs.stripe.com/billing/subscriptions/subscription-schedules). Possible values: `canceled`, `released`.
 
 <a id="billing_mode"></a>
 ### `billing_mode`
@@ -402,7 +405,6 @@ This resource exports the following attributes in addition to the arguments abov
 * `livemode` - If the object exists in live mode, the value is `true`. If the object exists in test mode, the value is `false`.
 * `released_at` - Time at which the subscription schedule was released. Measured in seconds since the Unix epoch.
 * `released_subscription` - ID of the subscription once managed by the subscription schedule (if it is released).
-* `status` - The present status of the subscription schedule. Possible values are `not_started`, `active`, `completed`, `released`, and `canceled`. You can read more about the different states in our [behavior guide](https://docs.stripe.com/billing/subscriptions/subscription-schedules). Possible values: `active`, `canceled`, `completed`, `not_started`, `released`.
 * `subscription` - ID of the subscription managed by the subscription schedule.
 * `test_clock` - ID of the test clock this subscription schedule belongs to.
 
@@ -421,6 +423,28 @@ The `current_phase` attribute supports:
 * `create` - (Default `20m`)
 * `delete` - (Default `20m`)
 * `update` - (Default `20m`)
+
+## Removing from State
+
+To stop managing a subscription schedule whose destroy is refused, remove it from the state without destroying it. In Terraform 1.7 and later, and OpenTofu 1.10 and later, replace the `resource` block with a [`removed` block](https://developer.hashicorp.com/terraform/language/block/removed) and apply:
+
+```terraform
+removed {
+  from = stripe_subscription_schedule.team
+
+  lifecycle {
+    destroy = false
+  }
+}
+```
+
+Using `terraform state rm`:
+
+```console
+% terraform state rm stripe_subscription_schedule.team
+```
+
+The subscription schedule stays in the Stripe account. Replacing one with `terraform apply -replace` or `terraform taint` fails in the same way, at apply.
 
 ## Import
 

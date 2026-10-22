@@ -7,19 +7,16 @@ import (
 
 	"github.com/computomatic/terraform-provider-stripe/internal/engine"
 	"github.com/computomatic/terraform-provider-stripe/internal/generated/subscription_schedule"
-	"github.com/computomatic/terraform-provider-stripe/internal/wire"
 )
 
 // Declaration is what the spec cannot say about a subscription schedule. Stripe never
-// deletes one, so destroy cancels it (suite: "Subscription schedules", `cancel`, which also
-// cancels the subscription the schedule started) and drops it from state. A schedule that
-// was already released or completed cannot be cancelled, and has nothing left to cancel,
-// so destroy leaves it as it is. Release would keep the subscription billing after
-// destroy, so it is not used.
+// deletes one, and cancelling or releasing one is final, so destroy is refused. Setting
+// `status` to `canceled` cancels the schedule and the subscription it started, and `released`
+// releases the subscription from it (suite: "Subscription schedules", "cancel", "release").
 var Declaration = engine.Declaration{
 	TypeName:              "stripe_subscription_schedule",
 	IDPrefix:              "sub_sched_",
-	Description:           "Changes a subscription over time, in phases. `terraform destroy` cancels the schedule, which also cancels the subscription it started, because Stripe cannot delete a schedule; the cancelled schedule stays in the account. Stripe replaces the phases as a whole on update and needs the current phase to keep its `start_date`, which an update sends back from the state.",
+	Description:           "Changes a subscription over time, in phases. Set `status` to `canceled` to cancel the schedule and the subscription it started, or to `released` to end the schedule and keep the subscription billing on its own. Stripe replaces the phases as a whole on update and needs the current phase to keep its `start_date`, which an update sends back from the state.",
 	DataSourceDescription: "Changes a subscription over time, in phases.",
 	Paths: engine.Paths{
 		Create:   "/v1/subscription_schedules",
@@ -35,15 +32,13 @@ var Declaration = engine.Declaration{
 	// How to prorate a change goes with a change to the phases.
 	SendWithUpdate:   []string{"proration_behavior"},
 	SendWithUpdateOn: []string{"phases"},
-	Delete:           engine.Archive,
-	Archive: &engine.ArchiveAction{
-		Field: "status",
-		Value: wire.String("canceled"),
-		Path:  "/v1/subscription_schedules/{id}/cancel",
-		Ended: []engine.Ended{
-			{Field: "status", Value: wire.String("released")},
-			{Field: "status", Value: wire.String("completed")},
-		},
+	Delete:           engine.Refuse,
+	RefuseReason:     "Stripe cannot delete a subscription schedule; set `status` to `canceled` to cancel one and the subscription it started, or to `released` to release the subscription from it.",
+	// A released, canceled or completed schedule cannot be released or canceled (suite: "Release
+	// and cancel of a schedule not in `not_started` or `active` are 400").
+	Transitions: []engine.Transition{
+		{Field: "status", Value: "canceled", Path: "/v1/subscription_schedules/{id}/cancel", Final: []string{"released", "completed"}},
+		{Field: "status", Value: "released", Path: "/v1/subscription_schedules/{id}/release", Final: []string{"canceled", "completed"}},
 	},
 }
 

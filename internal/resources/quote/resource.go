@@ -7,17 +7,16 @@ import (
 
 	"github.com/computomatic/terraform-provider-stripe/internal/engine"
 	"github.com/computomatic/terraform-provider-stripe/internal/generated/quote"
-	"github.com/computomatic/terraform-provider-stripe/internal/wire"
 )
 
-// Declaration is what the spec cannot say about a quote. Stripe never deletes one, so
-// destroy cancels it (suite: "Quotes", draft and open quotes cancel) and drops it from
-// state. An accepted quote cannot be cancelled (`quote_cancellation_already_accepted`) and
-// has become an invoice or subscription, so destroy leaves it as it is.
+// Declaration is what the spec cannot say about a quote. Stripe never deletes one, and
+// cancelling one is final (suite: "Quotes", "already canceled"), so destroy is refused.
+// Setting `status` to `canceled` cancels a draft or open quote (suite: "cancel"); an accepted
+// quote cannot be cancelled (`quote_cancellation_already_accepted`).
 var Declaration = engine.Declaration{
 	TypeName:              "stripe_quote",
 	IDPrefix:              "qt_",
-	Description:           "A proposal of prices to a customer. `terraform destroy` cancels the quote, because Stripe cannot delete one; the cancelled quote stays in the account. A quote that was accepted cannot be cancelled and is left as it is. Finalizing and accepting a quote are not resources: the quote stays a draft here, and `status` reports what happened to it elsewhere. Stripe lets only `metadata` and a few other fields change once the quote is finalized.",
+	Description:           "A proposal of prices to a customer. Set `status` to `canceled` to cancel the quote; a quote that was accepted cannot be cancelled. Finalizing and accepting a quote are not resources: the quote stays a draft here, and `status` reports what happened to it elsewhere. Stripe lets only `metadata` and a few other fields change once the quote is finalized.",
 	DataSourceDescription: "A proposal of prices to a customer.",
 	Paths: engine.Paths{
 		Create:   "/v1/quotes",
@@ -29,13 +28,10 @@ var Declaration = engine.Declaration{
 	Expand: []string{"line_items"},
 	// A quote created from another one takes its customer from the source.
 	ServerDefaulted: []string{"customer"},
-	Delete:          engine.Archive,
-	Archive: &engine.ArchiveAction{
-		Field: "status",
-		Value: wire.String("canceled"),
-		Path:  "/v1/quotes/{id}/cancel",
-		Ended: []engine.Ended{{Field: "status", Value: wire.String("accepted")}},
-	},
+	Delete:          engine.Refuse,
+	RefuseReason:    "Stripe cannot delete a quote; set `status` to `canceled` to cancel one.",
+	// An accepted quote cannot be cancelled (suite: "cancel once accepted").
+	Transitions: []engine.Transition{{Field: "status", Value: "canceled", Path: "/v1/quotes/{id}/cancel", Final: []string{"accepted"}}},
 }
 
 // NewResource returns the resource constructor the provider registers.

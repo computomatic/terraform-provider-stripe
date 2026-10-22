@@ -4,7 +4,6 @@ import (
 	"context"
 	"strings"
 	"testing"
-	"time"
 
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
@@ -328,110 +327,6 @@ func TestArchiveStrategy(t *testing.T) {
 	}
 }
 
-func TestArchiveNow(t *testing.T) {
-	now := time.Unix(1000, 0)
-	a := &ArchiveAction{Field: "expires_at", Now: true}
-	if archived(wire.Object{{Name: "expires_at", Value: wire.Int(2000)}}, a, now) {
-		t.Error("a future expiry is not archived")
-	}
-	if !archived(wire.Object{{Name: "expires_at", Value: wire.Int(900)}}, a, now) {
-		t.Error("a past expiry is archived")
-	}
-	if archived(wire.Object{{Name: "expires_at", Value: wire.Null{}}}, a, now) {
-		t.Error("no expiry is not archived")
-	}
-}
-
-// The archive request carries the literal `now`: a Unix time can be a second behind Stripe's
-// clock by the time it arrives, and Stripe refuses a time that is not in the future.
-func TestArchiveNowSendsTheLiteral(t *testing.T) {
-	decl := fixtureDeclaration()
-	decl.Delete = Archive
-	decl.Archive = &ArchiveAction{Field: "expires_at", Now: true}
-	var sent wire.Object
-	client := clientFunc(func(_ context.Context, req stripeapi.Request) (*stripeapi.Response, error) {
-		if req.Method == "POST" {
-			sent = req.Params
-		}
-		return &stripeapi.Response{Body: wire.Object{{Name: "expires_at", Value: wire.Null{}}}}, nil
-	})
-	r := configured(t, decl, fixtureTable(), client)
-	noErrors(t, r.destroy(t, r.fill(map[string]attr.Value{"id": types.StringValue("wid_1")})))
-	if v, ok := sent.Get("expires_at"); !ok || v != wire.Value(wire.String("now")) {
-		t.Errorf("archive request: %v", sent)
-	}
-}
-
-func TestExpireStrategy(t *testing.T) {
-	decl := fixtureDeclaration()
-	decl.Delete = Expire
-	decl.Expire = &ExpireAction{Field: "expires_at", Seconds: 5, StatusField: "status", StatusValue: "expired"}
-	polls := 0
-	var sent wire.Object
-	client := clientFunc(func(_ context.Context, req stripeapi.Request) (*stripeapi.Response, error) {
-		if req.Method == "POST" {
-			sent = req.Params
-			return &stripeapi.Response{Body: wire.Object{}}, nil
-		}
-		polls++
-		status := "active"
-		if polls >= 3 {
-			status = "expired"
-		}
-		return &stripeapi.Response{Body: wire.Object{{Name: "status", Value: wire.String(status)}}}, nil
-	})
-	r := configured(t, decl, fixtureTable(), client)
-	r.pollInterval = time.Millisecond
-
-	state := r.fill(map[string]attr.Value{"id": types.StringValue("wid_1")})
-	noErrors(t, r.destroy(t, state))
-	at, ok := sent.Get("expires_at")
-	if !ok || int64(at.(wire.Int)) < time.Now().Unix() {
-		t.Errorf("expiry sent: %v", sent)
-	}
-	if polls < 3 {
-		t.Errorf("did not wait for the status: %d reads", polls)
-	}
-}
-
-// An object that has not started cannot end before it starts, so destroy starts it first.
-func TestExpireStartsAnObjectThatHasNotStarted(t *testing.T) {
-	decl := fixtureDeclaration()
-	decl.Delete = Expire
-	decl.Expire = &ExpireAction{
-		Field: "expires_at", Seconds: 5, StatusField: "status", StatusValue: "expired",
-		NotStarted: "scheduled", Start: wire.Object{{Name: "active_from", Value: wire.String("now")}},
-	}
-	for _, c := range []struct {
-		status string
-		want   []string
-	}{
-		{"scheduled", []string{"active_from", "expires_at"}},
-		{"active", []string{"expires_at"}},
-	} {
-		t.Run(c.status, func(t *testing.T) {
-			var posts []string
-			client := clientFunc(func(_ context.Context, req stripeapi.Request) (*stripeapi.Response, error) {
-				if req.Method == "POST" {
-					posts = append(posts, req.Params[0].Name)
-					return &stripeapi.Response{Body: wire.Object{}}, nil
-				}
-				status := c.status
-				if len(posts) > 0 && posts[len(posts)-1] == "expires_at" {
-					status = "expired"
-				}
-				return &stripeapi.Response{Body: wire.Object{{Name: "status", Value: wire.String(status)}}}, nil
-			})
-			r := configured(t, decl, fixtureTable(), client)
-			r.pollInterval = time.Millisecond
-			noErrors(t, r.destroy(t, r.fill(map[string]attr.Value{"id": types.StringValue("wid_1")})))
-			if strings.Join(posts, ",") != strings.Join(c.want, ",") {
-				t.Errorf("updates sent: %v, want %v", posts, c.want)
-			}
-		})
-	}
-}
-
 func TestCreateFailureKeepsID(t *testing.T) {
 	stub := newStub()
 	failing := clientFunc(func(ctx context.Context, req stripeapi.Request) (*stripeapi.Response, error) {
@@ -703,44 +598,46 @@ func protectedStripe(stub *stubStripe, refusal, getErr error, isDefault bool) cl
 	}
 }
 
-func keepWhenDeclaration() Declaration {
+func refuseWhenDeclaration() Declaration {
 	decl := fixtureDeclaration()
 	decl.Delete = Archive
 	decl.Archive = &ArchiveAction{Field: "active", Value: wire.Bool(false)}
-	decl.KeepWhen = &FieldIs{Field: "is_default", Value: wire.Bool(true)}
+	decl.RefuseWhen = &RefuseWhen{Field: "is_default", Value: wire.Bool(true), Reason: "Stripe refuses to deactivate the default widget."}
 	return decl
 }
 
 var archiveRefusal = &stripeapi.APIError{Status: 400, Type: "invalid_request_error", Message: "You cannot deactivate your default configuration."}
 
-func TestArchiveKeepsTheProtectedObject(t *testing.T) {
+// The state says the widget is not the default, but Stripe refuses the archive and a retrieve
+// shows it is: destroy fails with Stripe's error and the guidance, and the object stays in
+// state.
+func TestArchiveRefusedForTheProtectedObject(t *testing.T) {
 	stub := newStub()
-	r := configured(t, keepWhenDeclaration(), fixtureTable(), protectedStripe(stub, archiveRefusal, nil, true))
+	r := configured(t, refuseWhenDeclaration(), defaultTable(), protectedStripe(stub, archiveRefusal, nil, true))
 	state, _ := r.create(t, createPlan(r))
 	diags := r.destroy(t, state)
-	noErrors(t, diags)
-	if len(diags.Warnings()) != 1 || diags.Warnings()[0].Summary() != "Left active instead of archived" {
-		t.Errorf("want one warning: %v", diags)
+	if !refusedDestroy(diags) || len(diags.Errors()) != 2 || !strings.Contains(diags.Errors()[0].Detail()+diags.Errors()[0].Summary(), "default configuration") {
+		t.Errorf("want Stripe's error and the refusal: %v", diags)
 	}
 }
 
 func TestArchiveFailsForAnObjectThatIsNotProtected(t *testing.T) {
 	stub := newStub()
-	r := configured(t, keepWhenDeclaration(), fixtureTable(), protectedStripe(stub, archiveRefusal, nil, false))
+	r := configured(t, refuseWhenDeclaration(), defaultTable(), protectedStripe(stub, archiveRefusal, nil, false))
 	state, _ := r.create(t, createPlan(r))
-	if diags := r.destroy(t, state); !diags.HasError() {
-		t.Fatal("a refused archive of an ordinary object must fail the destroy")
+	if diags := r.destroy(t, state); !diags.HasError() || refusedDestroy(diags) {
+		t.Fatalf("a refused archive of an ordinary object fails with Stripe's error only: %v", diags)
 	}
 }
 
 func TestArchiveFailsWhenTheObjectCannotBeRead(t *testing.T) {
 	stub := newStub()
-	r := configured(t, keepWhenDeclaration(), fixtureTable(), protectedStripe(stub, archiveRefusal, nil, true))
+	r := configured(t, refuseWhenDeclaration(), defaultTable(), protectedStripe(stub, archiveRefusal, nil, true))
 	state, _ := r.create(t, createPlan(r))
 	// The retrieve that precedes the archive fails with the same 400.
-	r = configured(t, keepWhenDeclaration(), fixtureTable(), protectedStripe(stub, archiveRefusal, archiveRefusal, true))
-	if diags := r.destroy(t, state); !diags.HasError() {
-		t.Fatal("a failed retrieve must fail the destroy, not keep the object")
+	r = configured(t, refuseWhenDeclaration(), defaultTable(), protectedStripe(stub, archiveRefusal, archiveRefusal, true))
+	if diags := r.destroy(t, state); !diags.HasError() || refusedDestroy(diags) {
+		t.Fatalf("a failed retrieve fails the destroy with Stripe's error: %v", diags)
 	}
 }
 
@@ -748,7 +645,7 @@ func TestArchiveFailsWhenTheRetrieveAfterTheRefusalFails(t *testing.T) {
 	stub := newStub()
 	inner := protectedStripe(stub, archiveRefusal, nil, true)
 	gets := 0
-	r := configured(t, keepWhenDeclaration(), fixtureTable(), clientFunc(func(ctx context.Context, req stripeapi.Request) (*stripeapi.Response, error) {
+	r := configured(t, refuseWhenDeclaration(), defaultTable(), clientFunc(func(ctx context.Context, req stripeapi.Request) (*stripeapi.Response, error) {
 		if req.Method == "GET" {
 			if gets++; gets == 2 {
 				return nil, &stripeapi.APIError{Status: 500, Type: "api_error", Message: "down"}
@@ -758,8 +655,8 @@ func TestArchiveFailsWhenTheRetrieveAfterTheRefusalFails(t *testing.T) {
 	}))
 	state, _ := r.create(t, createPlan(r))
 	gets = 0
-	if diags := r.destroy(t, state); !diags.HasError() {
-		t.Fatal("a failed retrieve after the refusal must fail the destroy")
+	if diags := r.destroy(t, state); !diags.HasError() || refusedDestroy(diags) {
+		t.Fatalf("a failed retrieve after the refusal fails the destroy with Stripe's error: %v", diags)
 	}
 }
 

@@ -3,14 +3,16 @@
 page_title: "stripe_issuing_card Resource - Stripe"
 subcategory: ""
 description: |-
-  A virtual card issued to a cardholder. Stripe issues cards only for a platform's connected accounts, so manage cards through a provider configuration whose stripe_account is a connected account with the card_issuing capability active, and set financial_account to a Treasury financial account of that account with its card_issuing feature active. A new card is inactive. Set status to active once the cardholder's review has finished, and back to inactive to pause it. number and cvc hold the full card number and CVC, which Stripe returns on request for a virtual card; they are sensitive.
+  A virtual card issued to a cardholder. Stripe issues cards only for a platform's connected accounts, so manage cards through a provider configuration whose stripe_account is a connected account with the card_issuing capability active, and set financial_account to a Treasury financial account of that account with its card_issuing feature active. A new card is inactive. Set status to active once the cardholder's review has finished, back to inactive to pause it, or to canceled to cancel it, which is final: a canceled card cannot be activated again. number and cvc hold the full card number and CVC, which Stripe returns on request for a virtual card; they are sensitive.
 ---
 
 # Resource: stripe_issuing_card
 
-A virtual card issued to a cardholder. Stripe issues cards only for a platform's connected accounts, so manage cards through a provider configuration whose `stripe_account` is a connected account with the `card_issuing` capability active, and set `financial_account` to a Treasury financial account of that account with its `card_issuing` feature active. A new card is `inactive`. Set `status` to `active` once the cardholder's review has finished, and back to `inactive` to pause it. `number` and `cvc` hold the full card number and CVC, which Stripe returns on request for a virtual card; they are sensitive.
+A virtual card issued to a cardholder. Stripe issues cards only for a platform's connected accounts, so manage cards through a provider configuration whose `stripe_account` is a connected account with the `card_issuing` capability active, and set `financial_account` to a Treasury financial account of that account with its `card_issuing` feature active. A new card is `inactive`. Set `status` to `active` once the cardholder's review has finished, back to `inactive` to pause it, or to `canceled` to cancel it, which is final: a canceled card cannot be activated again. `number` and `cvc` hold the full card number and CVC, which Stripe returns on request for a virtual card; they are sensitive.
 
-~> Stripe cannot delete a card, so `terraform destroy` cancels it, and the canceled card stays on the connected account. Canceling is final: a card whose `status` is `canceled` cannot be activated again, and Stripe refuses the change. Changing `cardholder`, `currency`, `type`, `financial_account` or any other field Stripe takes only on create replaces the card, which cancels the old one and issues a new number.
+~> Stripe cannot delete a card, so `terraform destroy` deactivates it (`status = inactive`), and the card stays on the connected account. Changing `cardholder`, `currency`, `type`, `financial_account` or any other field Stripe takes only on create replaces the card, which deactivates the old one and issues a new number.
+
+~> Stripe cannot deactivate a canceled card, because canceling one is final. `terraform destroy`, and a change that would replace it, fail at plan time for such an issuing card. To stop managing one, remove it from the state as [Removing from State](#removing-from-state) shows; it stays in the Stripe account.
 
 ## Example Usage
 
@@ -74,7 +76,7 @@ The following arguments are optional:
 * `replacement_for` - (Optional) The card this is meant to be a replacement for (if any). Changing it replaces the resource.
 * `replacement_reason` - (Optional) If `replacement_for` is specified, this should indicate why that card is being replaced. Possible values: `damaged`, `expired`, `lost`, `stolen`. Changing it replaces the resource.
 * `spending_controls` - (Optional) Rules that control spending for this card. Refer to our [documentation](https://docs.stripe.com/issuing/controls/spending-controls) for more details. See [`spending_controls`](#spending_controls) below.
-* `status` - (Optional) Whether authorizations can be approved on this card. May be blocked from activating cards depending on past-due Cardholder requirements. Defaults to `inactive`. Possible values: `active`, `inactive`.
+* `status` - (Optional) Whether authorizations can be approved on this card. May be blocked from activating cards depending on past-due Cardholder requirements. Defaults to `inactive`. Possible values: `active`, `inactive`, `canceled`.
 
 <a id="lifecycle_controls"></a>
 ### `lifecycle_controls`
@@ -168,6 +170,28 @@ The `wallets.google_pay` attribute supports:
 * `create` - (Default `20m`)
 * `delete` - (Default `20m`)
 * `update` - (Default `20m`)
+
+## Removing from State
+
+To stop managing an issuing card whose destroy is refused, remove it from the state without destroying it. In Terraform 1.7 and later, and OpenTofu 1.10 and later, replace the `resource` block with a [`removed` block](https://developer.hashicorp.com/terraform/language/block/removed) and apply:
+
+```terraform
+removed {
+  from = stripe_issuing_card.travel
+
+  lifecycle {
+    destroy = false
+  }
+}
+```
+
+Using `terraform state rm`:
+
+```console
+% terraform state rm stripe_issuing_card.travel
+```
+
+The issuing card stays in the Stripe account. Replacing one with `terraform apply -replace` or `terraform taint` fails in the same way, at apply.
 
 ## Import
 

@@ -311,7 +311,14 @@ func (b *builder) object(create, update, resp *Schema, where string, depth int) 
 				f.Description = cleanDescription(v.desc)
 			}
 			if f.Enum == nil && len(v.enum) > 0 {
-				f.Enum = v.enum
+				f.Enum = slices.Clone(v.enum)
+			} else if v == uv {
+				// An update can take values a create does not, such as a card's `canceled`.
+				for _, e := range v.enum {
+					if !slices.Contains(f.Enum, e) {
+						f.Enum = append(f.Enum, e)
+					}
+				}
 			}
 		}
 		if cv != nil && create != nil {

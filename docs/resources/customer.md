@@ -145,7 +145,7 @@ The `tax` attribute supports:
 * `ip_address` - (Optional) A recent IP address of the customer used for tax reporting and tax location inference.
 * `location` - (Read-Only) The identified tax location of the customer. See [`tax.location`](#tax.location) below.
 * `provider` - (Read-Only) The tax calculation provider used for location resolution. Defaults to `stripe` when not using a [third-party provider](https://docs.stripe.com/tax/third-party-apps). Possible values: `anrok`, `avalara`, `sphere`, `stripe`.
-* `validate_location` - (Optional) Possible values: `deferred`, `immediately`.
+* `validate_location` - (Optional) Possible values: `deferred`, `immediately`, `auto`.
 
 <a id="tax.location"></a>
 ### `tax.location`

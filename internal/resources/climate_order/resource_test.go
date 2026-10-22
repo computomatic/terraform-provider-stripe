@@ -8,7 +8,6 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/hashicorp/terraform-plugin-testing/plancheck"
-	"github.com/hashicorp/terraform-plugin-testing/terraform"
 
 	"github.com/computomatic/terraform-provider-stripe/internal/acctest"
 	"github.com/computomatic/terraform-provider-stripe/internal/acctest/tfacc"
@@ -72,14 +71,12 @@ func idOf(dst *string) resource.TestCheckFunc {
 	})
 }
 
-func status(t *testing.T, acct acctest.Config, id string) (string, error) {
-	t.Helper()
-	resp, err := tfacc.Client(acct).Do(t.Context(), stripeapi.Request{Method: "GET", Path: "/v1/climate/orders/" + id})
-	if err != nil {
-		return "", err
-	}
-	s, _ := resp.Body.(wire.Object).GetString("status")
-	return s, nil
+// pathOf records the order's API path.
+func pathOf(dst *string) resource.TestCheckFunc {
+	return resource.TestCheckResourceAttrWith(address, "id", func(v string) error {
+		*dst = "/v1/climate/orders/" + v
+		return nil
+	})
 }
 
 func TestAccClimateOrder_create(t *testing.T) {
@@ -87,7 +84,7 @@ func TestAccClimateOrder_create(t *testing.T) {
 	p := product(t, acct)
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: tfacc.ProviderFactories,
-		Steps: []resource.TestStep{{
+		Steps: acctest.Forget(t, []resource.TestStep{{
 			Config: orderConfig(acct, p, "  metric_tons = \"1\"\n  beneficiary = { public_name = \"Conformance Beneficiary\" }\n  metadata = { env = \"test\" }\n") + `
 data "stripe_climate_order" "test" {
   id = stripe_climate_order.test.id
@@ -106,7 +103,7 @@ data "stripe_climate_order" "test" {
 				resource.TestCheckResourceAttrPair("data.stripe_climate_order.test", "amount_total", address, "amount_total"),
 				resource.TestCheckResourceAttr("data.stripe_climate_order.test", "status", "confirmed"),
 			),
-		}},
+		}}, nil, "stripe_climate_order"),
 	})
 }
 
@@ -117,10 +114,10 @@ func TestAccClimateOrder_defaultBeneficiary(t *testing.T) {
 	cfg := orderConfig(acct, product(t, acct), "  metric_tons = \"1\"\n")
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: tfacc.ProviderFactories,
-		Steps: []resource.TestStep{
+		Steps: acctest.Forget(t, []resource.TestStep{
 			{Config: cfg, Check: resource.TestCheckResourceAttrSet(address, "beneficiary.public_name")},
 			{Config: cfg, PlanOnly: true},
-		},
+		}, nil, "stripe_climate_order"),
 	})
 }
 
@@ -130,7 +127,7 @@ func TestAccClimateOrder_createByAmount(t *testing.T) {
 	cfg := orderConfig(acct, product(t, acct), "  amount = 60000\n")
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: tfacc.ProviderFactories,
-		Steps: []resource.TestStep{
+		Steps: acctest.Forget(t, []resource.TestStep{
 			{
 				Config: cfg,
 				Check: resource.ComposeAggregateTestCheckFunc(
@@ -140,7 +137,7 @@ func TestAccClimateOrder_createByAmount(t *testing.T) {
 				),
 			},
 			{Config: cfg, PlanOnly: true},
-		},
+		}, nil, "stripe_climate_order"),
 	})
 }
 
@@ -165,7 +162,7 @@ func TestAccClimateOrder_update(t *testing.T) {
 	var first string
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: tfacc.ProviderFactories,
-		Steps: []resource.TestStep{
+		Steps: acctest.Forget(t, []resource.TestStep{
 			{
 				Config: orderConfig(acct, p, "  metric_tons = \"1\"\n  beneficiary = { public_name = \"Before\" }\n  metadata = { keep = \"me\", drop = \"me\" }\n"),
 				Check:  idOf(&first),
@@ -188,40 +185,23 @@ func TestAccClimateOrder_update(t *testing.T) {
 					}),
 				),
 			},
-		},
+		}, nil, "stripe_climate_order"),
 	})
 }
 
-// A confirmed order cannot be resized (suite: "update errors", "metric tons on a confirmed
-// order"), so new tons cancel the order and buy another.
+// `metric_tons` is create-only, so changing it would replace the order, which Stripe cannot
+// delete: the plan fails, and so does a taint, at apply.
 func TestAccClimateOrder_replace(t *testing.T) {
 	acct := fundedAccount(t)
 	p := product(t, acct)
-	var first string
+	cfg := orderConfig(acct, p, "  metric_tons = \"1\"\n")
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: tfacc.ProviderFactories,
-		Steps: []resource.TestStep{
-			{Config: orderConfig(acct, p, "  metric_tons = \"1\"\n"), Check: idOf(&first)},
-			{
-				Config: orderConfig(acct, p, "  metric_tons = \"2\"\n"),
-				ConfigPlanChecks: resource.ConfigPlanChecks{PreApply: []plancheck.PlanCheck{
-					plancheck.ExpectResourceAction(address, plancheck.ResourceActionReplace),
-				}},
-				Check: resource.ComposeAggregateTestCheckFunc(
-					resource.TestCheckResourceAttr(address, "metric_tons", "2"),
-					resource.TestCheckResourceAttrWith(address, "id", func(v string) error {
-						if v == first {
-							return fmt.Errorf("the replacement kept the order %s", v)
-						}
-						got, err := status(t, acct, first)
-						if err != nil || got != "canceled" {
-							return fmt.Errorf("the replaced order %s is %q (%v), want canceled", first, got, err)
-						}
-						return nil
-					}),
-				),
-			},
-		},
+		Steps: acctest.Forget(t, []resource.TestStep{
+			{Config: cfg},
+			{Config: orderConfig(acct, p, "  metric_tons = \"2\"\n"), PlanOnly: true, ExpectError: tfacc.RefusedReplace},
+			{Config: cfg, Taint: []string{address}, ExpectError: tfacc.RefusedDestroy},
+		}, nil, "stripe_climate_order"),
 	})
 }
 
@@ -230,7 +210,7 @@ func TestAccClimateOrder_import(t *testing.T) {
 	cfg := orderConfig(acct, product(t, acct), "  metric_tons = \"1\"\n  beneficiary = { public_name = \"Conformance Beneficiary\" }\n  metadata = { env = \"test\" }\n")
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: tfacc.ProviderFactories,
-		Steps: []resource.TestStep{
+		Steps: acctest.Forget(t, []resource.TestStep{
 			{Config: cfg},
 			{
 				ResourceName:      address,
@@ -243,94 +223,45 @@ func TestAccClimateOrder_import(t *testing.T) {
 				ImportStateKind: resource.ImportBlockWithID,
 				Config:          cfg,
 			},
-		},
+		}, nil, "stripe_climate_order"),
 	})
 }
 
-// Stripe cannot delete an order; a confirmed one cancels (suite: "cancel"), so destroy
-// cancels it and the order stays in the account.
+// Stripe cannot delete an order, so dropping it from the configuration, and `terraform
+// destroy`, fail at plan time, and the order stays as it was.
 func TestAccClimateOrder_delete(t *testing.T) {
 	acct := fundedAccount(t)
-	var id string
-	resource.ParallelTest(t, resource.TestCase{
-		ProtoV6ProviderFactories: tfacc.ProviderFactories,
-		CheckDestroy: func(*terraform.State) error {
-			got, err := status(t, acct, id)
-			if err != nil {
-				return fmt.Errorf("a canceled order still retrieves: %w", err)
-			}
-			if got != "canceled" {
-				return fmt.Errorf("order %s is %q after destroy, want canceled", id, got)
-			}
-			return nil
-		},
-		Steps: []resource.TestStep{{Config: orderConfig(acct, product(t, acct), "  metric_tons = \"1\"\n"), Check: idOf(&id)}},
-	})
-}
-
-// An order canceled out of band reads as canceled, and destroy does not cancel it again
-// (suite: "cancel again" is refused).
-func TestAccClimateOrder_deleteAfterCancel(t *testing.T) {
-	acct := fundedAccount(t)
-	var id string
+	var path string
+	var mark int
 	cfg := orderConfig(acct, product(t, acct), "  metric_tons = \"1\"\n")
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: tfacc.ProviderFactories,
-		Steps: []resource.TestStep{
-			{Config: cfg, Check: idOf(&id)},
-			{
-				PreConfig: func() { tfacc.Post(t, acct, "/v1/climate/orders/"+id+"/cancel", nil) },
-				Config:    cfg,
-				Check:     resource.TestCheckResourceAttr(address, "status", "canceled"),
-			},
-		},
+		Steps: acctest.Forget(t, []resource.TestStep{
+			{Config: cfg, Check: resource.ComposeTestCheckFunc(pathOf(&path), tfacc.LogMark(t, acct, &mark))},
+			{Config: acctest.Without(t, cfg, "stripe_climate_order"), PlanOnly: true, ExpectError: tfacc.RefusedDestroy},
+			{Config: cfg, Destroy: true, ExpectError: tfacc.RefusedDestroy},
+		}, tfacc.Untouched(t, acct, &path, &mark, "status", wire.String("confirmed")), "stripe_climate_order"),
 	})
 }
 
-// Stripe refuses to cancel a delivered order (the fake answers "Order can not be canceled"
-// for any status but confirmed), so destroy leaves it as it is after a retrieve shows it
-// delivered. Only an admin seed reaches a delivered order.
-func TestAccClimateOrder_deleteDelivered(t *testing.T) {
+// Setting `status` to `canceled` cancels the order through its action endpoint (suite:
+// "cancel"), after which it reads back canceled.
+func TestAccClimateOrder_cancel(t *testing.T) {
 	acct := fundedAccount(t)
 	p := product(t, acct)
-	id := acctest.Seed(t, acct, wire.Object{
-		{Name: "object", Value: wire.String("climate.order")},
-		{Name: "amount_fees", Value: wire.Int(4700)},
-		{Name: "amount_subtotal", Value: wire.Int(47000)},
-		{Name: "amount_total", Value: wire.Int(51700)},
-		{Name: "beneficiary", Value: wire.Object{{Name: "public_name", Value: wire.String("Seeded")}}},
-		{Name: "canceled_at", Value: wire.Null{}},
-		{Name: "cancellation_reason", Value: wire.Null{}},
-		{Name: "certificate", Value: wire.String("https://example.com/certificate")},
-		{Name: "confirmed_at", Value: wire.Int(1700000000)},
-		{Name: "created", Value: wire.Int(1700000000)},
-		{Name: "currency", Value: wire.String(tfacc.AccountCurrency(t, acct))},
-		{Name: "delayed_at", Value: wire.Null{}},
-		{Name: "delivered_at", Value: wire.Int(1700000100)},
-		{Name: "delivery_details", Value: wire.Array{}},
-		{Name: "expected_delivery_year", Value: wire.Int(2027)},
-		{Name: "livemode", Value: wire.Bool(false)},
-		{Name: "metadata", Value: wire.Object{}},
-		{Name: "metric_tons", Value: wire.String("1")},
-		{Name: "product", Value: wire.String(p)},
-		{Name: "product_substituted_at", Value: wire.Null{}},
-		{Name: "status", Value: wire.String("delivered")},
-	})[0]
+	var path string
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: tfacc.ProviderFactories,
-		CheckDestroy: func(*terraform.State) error {
-			if got, err := status(t, acct, id); err != nil || got != "delivered" {
-				return fmt.Errorf("order %s is %q (%v) after destroy, want delivered", id, got, err)
-			}
-			return nil
-		},
-		Steps: []resource.TestStep{{
-			Config:             orderConfig(acct, p, "  metric_tons = \"1\"\n"),
-			ResourceName:       address,
-			ImportState:        true,
-			ImportStateId:      id,
-			ImportStatePersist: true,
-		}},
+		Steps: acctest.Forget(t, []resource.TestStep{
+			{Config: orderConfig(acct, p, "  metric_tons = \"1\"\n"), Check: pathOf(&path)},
+			{
+				Config: orderConfig(acct, p, "  metric_tons = \"1\"\n  status      = \"canceled\"\n"),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr(address, "status", "canceled"),
+					tfacc.Holds(t, acct, &path, "status", wire.String("canceled")),
+				),
+			},
+		}, nil, "stripe_climate_order"),
 	})
 }
 
@@ -340,7 +271,7 @@ func TestAccClimateOrder_drift(t *testing.T) {
 	cfg := orderConfig(acct, product(t, acct), "  metric_tons = \"1\"\n  metadata = { env = \"test\" }\n")
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: tfacc.ProviderFactories,
-		Steps: []resource.TestStep{
+		Steps: acctest.Forget(t, []resource.TestStep{
 			{Config: cfg, Check: idOf(&id)},
 			{
 				PreConfig: func() {
@@ -353,6 +284,6 @@ func TestAccClimateOrder_drift(t *testing.T) {
 				}},
 				Check: resource.TestCheckResourceAttr(address, "metadata.env", "test"),
 			},
-		},
+		}, nil, "stripe_climate_order"),
 	})
 }

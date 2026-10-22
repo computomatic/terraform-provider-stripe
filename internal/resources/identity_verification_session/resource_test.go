@@ -8,11 +8,9 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/hashicorp/terraform-plugin-testing/plancheck"
-	"github.com/hashicorp/terraform-plugin-testing/terraform"
 
 	"github.com/computomatic/terraform-provider-stripe/internal/acctest"
 	"github.com/computomatic/terraform-provider-stripe/internal/acctest/tfacc"
-	"github.com/computomatic/terraform-provider-stripe/internal/stripeapi"
 	"github.com/computomatic/terraform-provider-stripe/internal/wire"
 )
 
@@ -36,21 +34,19 @@ func idOf(dst *string) resource.TestCheckFunc {
 	})
 }
 
-func status(t *testing.T, acct acctest.Config, id string) (string, error) {
-	t.Helper()
-	resp, err := tfacc.Client(acct).Do(t.Context(), stripeapi.Request{Method: "GET", Path: "/v1/identity/verification_sessions/" + id})
-	if err != nil {
-		return "", err
-	}
-	s, _ := resp.Body.(wire.Object).GetString("status")
-	return s, nil
+// pathOf records the session's API path.
+func pathOf(dst *string) resource.TestCheckFunc {
+	return resource.TestCheckResourceAttrWith(address, "id", func(v string) error {
+		*dst = "/v1/identity/verification_sessions/" + v
+		return nil
+	})
 }
 
 func TestAccIdentityVerificationSession_create(t *testing.T) {
 	acct := acctest.NewAccount(t)
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: tfacc.ProviderFactories,
-		Steps: []resource.TestStep{{
+		Steps: acctest.Forget(t, []resource.TestStep{{
 			Config: sessionConfig(acct, "document", fmt.Sprintf(`  client_reference_id = %q
   metadata            = { env = "test" }
   options = {
@@ -79,7 +75,7 @@ data "stripe_identity_verification_session" "test" {
 				resource.TestCheckResourceAttr("data.stripe_identity_verification_session.test", "status", "requires_input"),
 				resource.TestCheckResourceAttrPair("data.stripe_identity_verification_session.test", "client_secret", address, "client_secret"),
 			),
-		}},
+		}}, nil, "stripe_identity_verification_session"),
 	})
 }
 
@@ -90,10 +86,10 @@ func TestAccIdentityVerificationSession_providedDetails(t *testing.T) {
 	cfg := sessionConfig(acct, "document", "  provided_details = { email = \"person@example.com\" }\n")
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: tfacc.ProviderFactories,
-		Steps: []resource.TestStep{
+		Steps: acctest.Forget(t, []resource.TestStep{
 			{Config: cfg, Check: resource.TestCheckResourceAttr(address, "provided_details.email", "person@example.com")},
 			{Config: cfg, PlanOnly: true},
-		},
+		}, nil, "stripe_identity_verification_session"),
 	})
 }
 
@@ -104,7 +100,7 @@ func TestAccIdentityVerificationSession_update(t *testing.T) {
 	var first, secret string
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: tfacc.ProviderFactories,
-		Steps: []resource.TestStep{
+		Steps: acctest.Forget(t, []resource.TestStep{
 			{
 				Config: sessionConfig(acct, "document", "  metadata = { keep = \"me\", drop = \"me\" }\n"),
 				Check: resource.ComposeAggregateTestCheckFunc(idOf(&first),
@@ -133,46 +129,26 @@ func TestAccIdentityVerificationSession_update(t *testing.T) {
 					}),
 				),
 			},
-		},
+		}, nil, "stripe_identity_verification_session"),
 	})
 }
 
-// `client_reference_id` is accepted on create only (suite: "update errors", "not updatable"),
-// so changing it replaces the session, and so does a change to the options, which the suite
-// shows accepted on update but not applied.
+// `client_reference_id` is create-only and `options` replaces too, so changing either would
+// replace the session, which Stripe cannot delete: the plan fails, and so does a taint, at
+// apply.
 func TestAccIdentityVerificationSession_replace(t *testing.T) {
 	acct := acctest.NewAccount(t)
-	var first, second string
-	replaced := func(prev *string) resource.TestCheckFunc {
-		return resource.TestCheckResourceAttrWith(address, "id", func(v string) error {
-			if v == *prev {
-				return fmt.Errorf("the replacement kept the session %s", v)
-			}
-			return nil
-		})
+	cfg := func(reference string, liveCapture bool) string {
+		return sessionConfig(acct, "document", fmt.Sprintf("  client_reference_id = %q\n  options = { document = { require_live_capture = %t } }\n", acct.Unique(reference), liveCapture))
 	}
-	expectReplace := resource.ConfigPlanChecks{PreApply: []plancheck.PlanCheck{
-		plancheck.ExpectResourceAction(address, plancheck.ResourceActionReplace),
-	}}
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: tfacc.ProviderFactories,
-		Steps: []resource.TestStep{
-			{
-				Config: sessionConfig(acct, "document", fmt.Sprintf("  client_reference_id = %q\n  options = { document = { require_live_capture = false } }\n", acct.Unique("kyc-one"))),
-				Check:  idOf(&first),
-			},
-			{
-				Config:           sessionConfig(acct, "document", fmt.Sprintf("  client_reference_id = %q\n  options = { document = { require_live_capture = false } }\n", acct.Unique("kyc-two"))),
-				ConfigPlanChecks: expectReplace,
-				Check:            resource.ComposeAggregateTestCheckFunc(replaced(&first), idOf(&second)),
-			},
-			{
-				Config:           sessionConfig(acct, "document", fmt.Sprintf("  client_reference_id = %q\n  options = { document = { require_live_capture = true } }\n", acct.Unique("kyc-two"))),
-				ConfigPlanChecks: expectReplace,
-				Check: resource.ComposeAggregateTestCheckFunc(replaced(&second),
-					resource.TestCheckResourceAttr(address, "options.document.require_live_capture", "true")),
-			},
-		},
+		Steps: acctest.Forget(t, []resource.TestStep{
+			{Config: cfg("kyc-one", false)},
+			{Config: cfg("kyc-two", false), PlanOnly: true, ExpectError: tfacc.RefusedReplace},
+			{Config: cfg("kyc-one", true), PlanOnly: true, ExpectError: tfacc.RefusedReplace},
+			{Config: cfg("kyc-one", false), Taint: []string{address}, ExpectError: tfacc.RefusedDestroy},
+		}, nil, "stripe_identity_verification_session"),
 	})
 }
 
@@ -183,7 +159,7 @@ func TestAccIdentityVerificationSession_import(t *testing.T) {
 	cfg := sessionConfig(acct, "document", "  metadata = { team = \"a\" }\n")
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: tfacc.ProviderFactories,
-		Steps: []resource.TestStep{
+		Steps: acctest.Forget(t, []resource.TestStep{
 			{Config: cfg},
 			{
 				ResourceName:            address,
@@ -197,92 +173,45 @@ func TestAccIdentityVerificationSession_import(t *testing.T) {
 				ImportStateKind: resource.ImportBlockWithID,
 				Config:          cfg,
 			},
-		},
+		}, nil, "stripe_identity_verification_session"),
 	})
 }
 
-// Stripe cannot delete a session; one that requires input cancels (suite: "cancel"), so
-// destroy cancels it and the session stays in the account.
+// Stripe cannot delete a session, so dropping it from the configuration, and `terraform
+// destroy`, fail at plan time, and the session stays as it was.
 func TestAccIdentityVerificationSession_delete(t *testing.T) {
 	acct := acctest.NewAccount(t)
-	var id string
-	resource.ParallelTest(t, resource.TestCase{
-		ProtoV6ProviderFactories: tfacc.ProviderFactories,
-		CheckDestroy: func(*terraform.State) error {
-			got, err := status(t, acct, id)
-			if err != nil {
-				return fmt.Errorf("a canceled session still retrieves: %w", err)
-			}
-			if got != "canceled" {
-				return fmt.Errorf("session %s is %q after destroy, want canceled", id, got)
-			}
-			return nil
-		},
-		Steps: []resource.TestStep{{Config: sessionConfig(acct, "document", ""), Check: idOf(&id)}},
-	})
-}
-
-// A session canceled out of band reads as canceled, with the client secret and URL that
-// Stripe now nulls still in state, and destroy has nothing to cancel (suite: "cancel", "already
-// canceled is idempotent").
-func TestAccIdentityVerificationSession_deleteAfterCancel(t *testing.T) {
-	acct := acctest.NewAccount(t)
-	var id string
+	var path string
+	var mark int
 	cfg := sessionConfig(acct, "document", "")
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: tfacc.ProviderFactories,
-		Steps: []resource.TestStep{
-			{Config: cfg, Check: idOf(&id)},
-			{
-				PreConfig: func() { tfacc.Post(t, acct, "/v1/identity/verification_sessions/"+id+"/cancel", nil) },
-				Config:    cfg,
-				Check: resource.ComposeAggregateTestCheckFunc(
-					resource.TestCheckResourceAttr(address, "status", "canceled"),
-					resource.TestMatchResourceAttr(address, "client_secret", regexp.MustCompile(`^vs_.+_secret_`)),
-				),
-			},
-		},
+		Steps: acctest.Forget(t, []resource.TestStep{
+			{Config: cfg, Check: resource.ComposeTestCheckFunc(pathOf(&path), tfacc.LogMark(t, acct, &mark))},
+			{Config: acctest.Without(t, cfg, "stripe_identity_verification_session"), PlanOnly: true, ExpectError: tfacc.RefusedDestroy},
+			{Config: cfg, Destroy: true, ExpectError: tfacc.RefusedDestroy},
+		}, tfacc.Untouched(t, acct, &path, &mark, "status", wire.String("requires_input")), "stripe_identity_verification_session"),
 	})
 }
 
-// A verified session can no longer be canceled, so destroy leaves it as it is after a
-// retrieve shows it verified. Only an admin seed reaches a verified session, and the suite
-// does not prove what Stripe answers to the cancel: the fake answers `fake_unproven`, which
-// the destroy treats as a refusal because the retrieve proves the status.
-func TestAccIdentityVerificationSession_deleteVerified(t *testing.T) {
-	acctest.RequireFake(t)
+// Setting `status` to `canceled` cancels the session through its action endpoint (suite:
+// "cancel"). It reads back canceled, with the client secret Stripe now nulls still in state.
+func TestAccIdentityVerificationSession_cancel(t *testing.T) {
 	acct := acctest.NewAccount(t)
-	id := acctest.Seed(t, acct, wire.Object{
-		{Name: "object", Value: wire.String("identity.verification_session")},
-		{Name: "type", Value: wire.String("document")},
-		{Name: "status", Value: wire.String("verified")},
-		{Name: "livemode", Value: wire.Bool(false)},
-		{Name: "metadata", Value: wire.Object{}},
-		{Name: "client_reference_id", Value: wire.Null{}},
-		{Name: "client_secret", Value: wire.Null{}},
-		{Name: "last_error", Value: wire.Null{}},
-		{Name: "last_verification_report", Value: wire.Null{}},
-		{Name: "options", Value: wire.Object{}},
-		{Name: "redaction", Value: wire.Null{}},
-		{Name: "related_customer", Value: wire.Null{}},
-		{Name: "related_customer_account", Value: wire.Null{}},
-		{Name: "url", Value: wire.Null{}},
-	})[0]
+	var path string
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: tfacc.ProviderFactories,
-		CheckDestroy: func(*terraform.State) error {
-			if got, err := status(t, acct, id); err != nil || got != "verified" {
-				return fmt.Errorf("session %s is %q (%v) after destroy, want verified", id, got, err)
-			}
-			return nil
-		},
-		Steps: []resource.TestStep{{
-			Config:             sessionConfig(acct, "document", ""),
-			ResourceName:       address,
-			ImportState:        true,
-			ImportStateId:      id,
-			ImportStatePersist: true,
-		}},
+		Steps: acctest.Forget(t, []resource.TestStep{
+			{Config: sessionConfig(acct, "document", ""), Check: pathOf(&path)},
+			{
+				Config: sessionConfig(acct, "document", "  status = \"canceled\"\n"),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr(address, "status", "canceled"),
+					resource.TestMatchResourceAttr(address, "client_secret", regexp.MustCompile(`^vs_.+_secret_`)),
+					tfacc.Holds(t, acct, &path, "status", wire.String("canceled")),
+				),
+			},
+		}, nil, "stripe_identity_verification_session"),
 	})
 }
 
@@ -292,7 +221,7 @@ func TestAccIdentityVerificationSession_drift(t *testing.T) {
 	cfg := sessionConfig(acct, "document", "  metadata = { env = \"test\" }\n")
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: tfacc.ProviderFactories,
-		Steps: []resource.TestStep{
+		Steps: acctest.Forget(t, []resource.TestStep{
 			{Config: cfg, Check: idOf(&id)},
 			{
 				PreConfig: func() {
@@ -305,6 +234,6 @@ func TestAccIdentityVerificationSession_drift(t *testing.T) {
 				}},
 				Check: resource.TestCheckResourceAttr(address, "metadata.env", "test"),
 			},
-		},
+		}, nil, "stripe_identity_verification_session"),
 	})
 }

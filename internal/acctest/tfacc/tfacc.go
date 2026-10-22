@@ -64,12 +64,20 @@ func SkipWhenFakeLacks(t *testing.T, needle string) func(error) error {
 // Stripe included, lets the test run.
 func SkipUnlessFakeAnswers(t *testing.T, c acctest.Config, path string) {
 	t.Helper()
+	SkipUnlessFakeServes(t, c, "GET", path, nil)
+}
+
+// SkipUnlessFakeServes is SkipUnlessFakeAnswers for any method and parameters. A test of a
+// resource whose destroy is refused probes this way before it creates anything, because a test
+// that skips after the create leaves the object in state, and the closing destroy fails on it.
+func SkipUnlessFakeServes(t *testing.T, c acctest.Config, method, path string, params wire.Object) {
+	t.Helper()
 	if acctest.Smoke() {
 		return
 	}
-	_, err := Client(c).Do(t.Context(), stripeapi.Request{Method: "GET", Path: path})
+	_, err := Client(c).Do(t.Context(), stripeapi.Request{Method: method, Path: path, Params: params})
 	var apiErr *stripeapi.APIError
 	if errors.As(err, &apiErr) && (apiErr.Code == "fake_not_implemented" || apiErr.Code == "fake_unproven") {
-		t.Skipf("the fake does not serve GET %s yet: %v", path, err)
+		t.Skipf("the fake does not serve %s %s yet: %v", method, path, err)
 	}
 }

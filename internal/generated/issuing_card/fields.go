@@ -47,7 +47,7 @@ var Table = []fields.Field{
 		}},
 		{Name: "spending_limits_currency", Shape: fields.String, Response: true, Description: "Currency of the amounts within `spending_limits`. Always the same as the currency of the card."},
 	}},
-	{Name: "status", Shape: fields.String, Create: true, Update: true, Response: true, ServerDefaulted: true, Enum: []string{"active", "inactive"}, Description: "Whether authorizations can be approved on this card. May be blocked from activating cards depending on past-due Cardholder requirements. Defaults to `inactive`."},
+	{Name: "status", Shape: fields.String, Create: true, Update: true, Response: true, ServerDefaulted: true, Enum: []string{"active", "inactive", "canceled"}, Description: "Whether authorizations can be approved on this card. May be blocked from activating cards depending on past-due Cardholder requirements. Defaults to `inactive`."},
 	{Name: "type", Shape: fields.String, Required: true, Create: true, Response: true, Enum: []string{"physical", "virtual"}, Description: "The type of card to issue. Possible values are `physical` or `virtual`."},
 	{Name: "wallets", Shape: fields.Object, Response: true, Description: "Information relating to digital wallets (like Apple Pay and Google Pay).", Fields: []fields.Field{
 		{Name: "apple_pay", Shape: fields.Object, Response: true, Fields: []fields.Field{

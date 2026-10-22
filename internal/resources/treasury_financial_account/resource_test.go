@@ -11,7 +11,6 @@ import (
 	"github.com/hashicorp/go-version"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/hashicorp/terraform-plugin-testing/plancheck"
-	"github.com/hashicorp/terraform-plugin-testing/terraform"
 	"github.com/hashicorp/terraform-plugin-testing/tfversion"
 
 	"github.com/computomatic/terraform-provider-stripe/internal/acctest"
@@ -47,10 +46,12 @@ resource "stripe_treasury_financial_account" "test" {
 `, currencies, extra)
 }
 
-// skipUpdate skips the test when the fake does not serve updating a financial account yet:
-// nothing in the suite proves it.
-func skipUpdate(t *testing.T) func(error) error {
-	return tfacc.SkipWhenFakeLacks(t, "PostTreasuryFinancialAccountsFinancialAccount")
+// skipUpdate skips the test before it creates anything when the fake does not serve updating
+// a financial account yet: nothing in the suite proves it, and a test that skipped after the
+// create would leave a financial account its closing destroy refuses.
+func skipUpdate(t *testing.T, conn acctest.Config) {
+	t.Helper()
+	tfacc.SkipUnlessFakeServes(t, conn, "POST", "/v1/treasury/financial_accounts/fa_probe", nil)
 }
 
 func idOf(dst *string) resource.TestCheckFunc {
@@ -60,14 +61,12 @@ func idOf(dst *string) resource.TestCheckFunc {
 	})
 }
 
-func status(t *testing.T, conn acctest.Config, id string) string {
-	t.Helper()
-	resp, err := tfacc.Client(conn).Do(t.Context(), stripeapi.Request{Method: "GET", Path: "/v1/treasury/financial_accounts/" + id})
-	if err != nil {
-		t.Fatalf("reading financial account %s: %v", id, err)
-	}
-	s, _ := resp.Body.(wire.Object).GetString("status")
-	return s
+// pathOf records the financial account's API path.
+func pathOf(dst *string) resource.TestCheckFunc {
+	return resource.TestCheckResourceAttrWith(address, "id", func(v string) error {
+		*dst = "/v1/treasury/financial_accounts/" + v
+		return nil
+	})
 }
 
 // A new financial account is open, holds nothing yet and has its `card_issuing` feature active
@@ -76,7 +75,7 @@ func TestAccTreasuryFinancialAccount_create(t *testing.T) {
 	acct, conn := treasury(t)
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: tfacc.ProviderFactories,
-		Steps: []resource.TestStep{{
+		Steps: acctest.Forget(t, []resource.TestStep{{
 			Config: accountConfig(acct, conn, `"usd"`, fmt.Sprintf("  metadata = { run = %q }\n", acct.Name("create"))) + `
 data "stripe_treasury_financial_account" "test" {
   provider = stripe.connected
@@ -98,20 +97,19 @@ data "stripe_treasury_financial_account" "test" {
 				resource.TestCheckResourceAttr("data.stripe_treasury_financial_account.test", "status", "open"),
 				resource.TestCheckTypeSetElemAttr("data.stripe_treasury_financial_account.test", "active_features.*", "card_issuing"),
 			),
-		}},
+		}}, nil, "stripe_treasury_financial_account"),
 	})
 }
 
 // A change to the requested features is refused at plan time, because nothing proves Stripe
-// applies one on update. Metadata changes in place; the fake does not serve that update yet.
-func TestAccTreasuryFinancialAccount_update(t *testing.T) {
+// applies one on update. The error says to remove the financial account from the state, not
+// to taint it, because its destroy is refused too.
+func TestAccTreasuryFinancialAccount_refuseFeatures(t *testing.T) {
 	acct, conn := treasury(t)
-	var first string
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: tfacc.ProviderFactories,
-		ErrorCheck:               skipUpdate(t),
-		Steps: []resource.TestStep{
-			{Config: accountConfig(acct, conn, `"usd"`, "  metadata = { a = \"1\" }\n"), Check: idOf(&first)},
+		Steps: acctest.Forget(t, []resource.TestStep{
+			{Config: accountConfig(acct, conn, `"usd"`, "")},
 			{
 				Config: acct.ProviderBlock() + conn.ConnectedProviderBlock() + `
 resource "stripe_treasury_financial_account" "test" {
@@ -121,12 +119,24 @@ resource "stripe_treasury_financial_account" "test" {
     card_issuing      = { requested = true }
     deposit_insurance = { requested = true }
   }
-  metadata = { a = "1" }
 }
 `,
 				PlanOnly:    true,
-				ExpectError: regexp.MustCompile(`(?s)not supported yet.*ignore_changes`),
+				ExpectError: regexp.MustCompile(`(?s)not supported yet.*ignore_changes.*removed block`),
 			},
+		}, nil, "stripe_treasury_financial_account"),
+	})
+}
+
+// Metadata changes in place; the fake does not serve that update yet.
+func TestAccTreasuryFinancialAccount_update(t *testing.T) {
+	acct, conn := treasury(t)
+	skipUpdate(t, conn)
+	var first string
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: tfacc.ProviderFactories,
+		Steps: acctest.Forget(t, []resource.TestStep{
+			{Config: accountConfig(acct, conn, `"usd"`, "  metadata = { a = \"1\" }\n"), Check: idOf(&first)},
 			{
 				Config: accountConfig(acct, conn, `"usd"`, "  metadata = { b = \"2\" }\n"),
 				ConfigPlanChecks: resource.ConfigPlanChecks{PreApply: []plancheck.PlanCheck{
@@ -143,53 +153,22 @@ resource "stripe_treasury_financial_account" "test" {
 					}),
 				),
 			},
-		},
+		}, nil, "stripe_treasury_financial_account"),
 	})
 }
 
-// A replacement leaves the old financial account open, because destroy does not close it.
-// `supported_currencies` is create-only, so a change replaces the account; the fake does not
-// serve a currency other than `usd` yet, so that step skips there.
+// `supported_currencies` is create-only, so changing it would replace the financial account,
+// which Stripe cannot delete: the plan fails, and so does a taint, at apply.
 func TestAccTreasuryFinancialAccount_replace(t *testing.T) {
 	acct, conn := treasury(t)
-	var first, second string
+	cfg := accountConfig(acct, conn, `"usd"`, "")
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: tfacc.ProviderFactories,
-		ErrorCheck:               tfacc.SkipWhenFakeLacks(t, "other than usd"),
-		Steps: []resource.TestStep{
-			{Config: accountConfig(acct, conn, `"usd"`, ""), Check: idOf(&first)},
-			{
-				Config: accountConfig(acct, conn, `"usd"`, ""),
-				Taint:  []string{address},
-				ConfigPlanChecks: resource.ConfigPlanChecks{PreApply: []plancheck.PlanCheck{
-					plancheck.ExpectResourceAction(address, plancheck.ResourceActionReplace),
-				}},
-				Check: resource.ComposeAggregateTestCheckFunc(
-					idOf(&second),
-					resource.TestCheckResourceAttrWith(address, "id", func(v string) error {
-						if v == first {
-							return fmt.Errorf("the replacement kept the financial account %s", v)
-						}
-						if got := status(t, conn, first); got != "open" {
-							return fmt.Errorf("the replaced financial account %s is %s, want open", first, got)
-						}
-						return nil
-					}),
-				),
-			},
-			{
-				Config: accountConfig(acct, conn, `"usd", "eur"`, ""),
-				ConfigPlanChecks: resource.ConfigPlanChecks{PreApply: []plancheck.PlanCheck{
-					plancheck.ExpectResourceAction(address, plancheck.ResourceActionReplace),
-				}},
-				Check: resource.TestCheckResourceAttrWith(address, "id", func(v string) error {
-					if v == second {
-						return fmt.Errorf("the currency change kept the financial account %s", v)
-					}
-					return nil
-				}),
-			},
-		},
+		Steps: acctest.Forget(t, []resource.TestStep{
+			{Config: cfg},
+			{Config: accountConfig(acct, conn, `"usd", "eur"`, ""), PlanOnly: true, ExpectError: tfacc.RefusedReplace},
+			{Config: cfg, Taint: []string{address}, ExpectError: tfacc.RefusedDestroy},
+		}, nil, "stripe_treasury_financial_account"),
 	})
 }
 
@@ -202,7 +181,7 @@ func TestAccTreasuryFinancialAccount_import(t *testing.T) {
 	imported := accountConfig(acct, conn, `"usd"`, extra+"  lifecycle {\n    ignore_changes = [features]\n  }\n")
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: tfacc.ProviderFactories,
-		Steps: []resource.TestStep{
+		Steps: acctest.Forget(t, []resource.TestStep{
 			{Config: cfg},
 			{
 				Config:                  cfg,
@@ -217,7 +196,7 @@ func TestAccTreasuryFinancialAccount_import(t *testing.T) {
 				ImportStateKind: resource.ImportBlockWithID,
 				Config:          imported,
 			},
-		},
+		}, nil, "stripe_treasury_financial_account"),
 	})
 }
 
@@ -228,7 +207,7 @@ func TestAccTreasuryFinancialAccount_importIdentity(t *testing.T) {
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: tfacc.ProviderFactories,
 		TerraformVersionChecks:   []tfversion.TerraformVersionCheck{tfversion.RequireAbove(version.Must(version.NewVersion("1.12.0")))},
-		Steps: []resource.TestStep{
+		Steps: acctest.Forget(t, []resource.TestStep{
 			{Config: cfg},
 			{
 				ResourceName:    address,
@@ -236,24 +215,24 @@ func TestAccTreasuryFinancialAccount_importIdentity(t *testing.T) {
 				ImportStateKind: resource.ImportBlockWithResourceIdentity,
 				Config:          cfg,
 			},
-		},
+		}, nil, "stripe_treasury_financial_account"),
 	})
 }
 
-// Destroy leaves the financial account open on the connected account, with a warning: nothing
-// proves closing one.
+// Stripe cannot delete a financial account and the provider does not close one, so dropping
+// it from the configuration, and `terraform destroy`, fail at plan time, and it stays open.
 func TestAccTreasuryFinancialAccount_delete(t *testing.T) {
 	acct, conn := treasury(t)
-	var id string
+	var path string
+	var mark int
+	cfg := accountConfig(acct, conn, `"usd"`, "")
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: tfacc.ProviderFactories,
-		CheckDestroy: func(*terraform.State) error {
-			if got := status(t, conn, id); got != "open" {
-				return fmt.Errorf("financial account %s is %s after destroy, want open", id, got)
-			}
-			return nil
-		},
-		Steps: []resource.TestStep{{Config: accountConfig(acct, conn, `"usd"`, ""), Check: idOf(&id)}},
+		Steps: acctest.Forget(t, []resource.TestStep{
+			{Config: cfg, Check: resource.ComposeTestCheckFunc(pathOf(&path), tfacc.LogMark(t, conn, &mark))},
+			{Config: acctest.Without(t, cfg, "stripe_treasury_financial_account"), PlanOnly: true, ExpectError: tfacc.RefusedDestroy},
+			{Config: cfg, Destroy: true, ExpectError: tfacc.RefusedDestroy},
+		}, tfacc.Untouched(t, conn, &path, &mark, "status", wire.String("open")), "stripe_treasury_financial_account"),
 	})
 }
 
@@ -261,12 +240,12 @@ func TestAccTreasuryFinancialAccount_delete(t *testing.T) {
 // serve updating a financial account yet, so the test skips there.
 func TestAccTreasuryFinancialAccount_drift(t *testing.T) {
 	acct, conn := treasury(t)
+	skipUpdate(t, conn)
 	var id string
 	cfg := accountConfig(acct, conn, `"usd"`, "  metadata = { env = \"test\" }\n")
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: tfacc.ProviderFactories,
-		ErrorCheck:               skipUpdate(t),
-		Steps: []resource.TestStep{
+		Steps: acctest.Forget(t, []resource.TestStep{
 			{Config: cfg, Check: idOf(&id)},
 			{
 				PreConfig: func() {
@@ -288,6 +267,6 @@ func TestAccTreasuryFinancialAccount_drift(t *testing.T) {
 				}},
 				Check: resource.TestCheckResourceAttr(address, "metadata.env", "test"),
 			},
-		},
+		}, nil, "stripe_treasury_financial_account"),
 	})
 }
