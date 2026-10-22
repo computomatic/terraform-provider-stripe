@@ -27,6 +27,12 @@ const onePhase = `[{
 // scheduleConfig is a customer, two prices and a schedule invoiced by email. phases and
 // extra land inside the schedule.
 func scheduleConfig(c acctest.Config, customer string, phases string, extra string) string {
+	return scheduleConfigFrom(c, customer, `  start_date   = "now"
+`, phases, extra)
+}
+
+// scheduleConfigFrom is scheduleConfig with the start line in the caller's hands.
+func scheduleConfigFrom(c acctest.Config, customer string, start string, phases string, extra string) string {
 	return c.ProviderBlock() + fmt.Sprintf(`
 resource "stripe_customer" "a" {}
 resource "stripe_customer" "b" {}
@@ -55,8 +61,7 @@ resource "stripe_price" "two" {
 
 resource "stripe_subscription_schedule" "test" {
   customer     = stripe_customer.%s.id
-  start_date   = "now"
-  end_behavior = "cancel"
+%s  end_behavior = "cancel"
   default_settings = {
     collection_method = "send_invoice"
     invoice_settings = {
@@ -65,7 +70,7 @@ resource "stripe_subscription_schedule" "test" {
   }
   phases = %s
 %s}
-`, customer, phases, extra)
+`, customer, start, phases, extra)
 }
 
 func idOf(dst *string) resource.TestCheckFunc {
@@ -205,6 +210,16 @@ func TestAccSubscriptionSchedule_import(t *testing.T) {
 				// Stripe returns the start and end of each phase, not the `start_date` the
 				// schedule was created with or the `duration` of a phase.
 				ImportStateVerifyIgnore: []string{"start_date", "phases.0.duration"},
+			},
+			// The block step checks the plan, so its configuration omits the two fields
+			// Stripe does not return.
+			{
+				ResourceName:    address,
+				ImportState:     true,
+				ImportStateKind: resource.ImportBlockWithID,
+				Config: scheduleConfigFrom(acct, "a", "", `[{
+    items = [{ price = stripe_price.one.id }]
+  }]`, "  metadata = { team = \"a\" }\n"),
 			},
 		},
 	})
