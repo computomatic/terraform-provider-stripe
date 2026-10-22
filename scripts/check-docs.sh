@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Fails when docs/ is not what `go generate ./...` produces from the schema and the
 # examples. Compares against a copy taken before regenerating, so it works on uncommitted
-# changes. Needs a terraform (or tofu) binary on the path.
+# changes.
 set -euo pipefail
 
 cd "$(dirname "$0")/.."
