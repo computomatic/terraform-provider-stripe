@@ -17,9 +17,10 @@ import (
 // signing secret is left out of the table until the conformance suite and the fake prove
 // it (ADR adrs/1-pending/2026-10-17-v2-support).
 var Declaration = engine.Declaration{
-	TypeName:    "stripe_core_event_destination",
-	IDPrefix:    "ed_",
-	Description: "A destination for Stripe's events, delivered as thin or snapshot payloads: a webhook endpoint, an Amazon EventBridge partner event source or an Azure Event Grid partner topic. `terraform destroy` deletes the destination. The destination's signing secret is not available yet. `status` is read-only: Terraform cannot enable or disable a destination yet.",
+	TypeName:              "stripe_core_event_destination",
+	IDPrefix:              "ed_",
+	Description:           "A destination for Stripe's events, delivered as thin or snapshot payloads: a webhook endpoint, an Amazon EventBridge partner event source or an Azure Event Grid partner topic. `terraform destroy` deletes the destination. The destination's signing secret is not available yet. `status` is read-only: Terraform cannot enable or disable a destination yet.",
+	DataSourceDescription: "A destination for Stripe's events, delivered as thin or snapshot payloads: a webhook endpoint, an Amazon EventBridge partner event source or an Azure Event Grid partner topic.",
 	Paths: engine.Paths{
 		Create:   "/v2/core/event_destinations",
 		Retrieve: "/v2/core/event_destinations/{id}",

@@ -12,9 +12,10 @@ import (
 // Declaration is what the spec cannot say about a value list item. Stripe never updates one,
 // so every argument forces replacement. Destroy deletes the item.
 var Declaration = engine.Declaration{
-	TypeName:    "stripe_radar_value_list_item",
-	IDPrefix:    "rsli_",
-	Description: "A value in a Radar value list. `terraform destroy` deletes the item.",
+	TypeName:              "stripe_radar_value_list_item",
+	IDPrefix:              "rsli_",
+	Description:           "A value in a Radar value list. `terraform destroy` deletes the item.",
+	DataSourceDescription: "A value in a Radar value list.",
 	Paths: engine.Paths{
 		Create:   "/v1/radar/value_list_items",
 		Retrieve: "/v1/radar/value_list_items/{id}",

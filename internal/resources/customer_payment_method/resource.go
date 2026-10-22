@@ -22,11 +22,12 @@ import (
 // reads as gone. Detaching a method that is not attached is refused, and the engine reads the
 // 404 first, so destroy of an attachment that is already gone succeeds.
 var Declaration = engine.Declaration{
-	TypeName:    "stripe_customer_payment_method",
-	IDPrefix:    "pm_",
-	Description: "A payment method attached to a customer. The resource is the attachment: `terraform destroy` detaches the payment method from the customer, and Stripe never lets a detached payment method be attached again. The payment method itself is not created here, because creating one takes raw card data: create it with Stripe.js or a SetupIntent, or use a Stripe test payment method such as `pm_card_visa`, and give its ID as `payment_method`. Attaching a test payment method returns a new payment method, so the `id` can differ from `payment_method`. Only `billing_details`, `metadata` and `card.exp_year` change in place; Stripe's other updatable payment method fields are read-only here. Import with `<customer_id>/<payment_method_id>`.",
-	Parent:      "customer",
-	Attach:      "payment_method",
+	TypeName:              "stripe_customer_payment_method",
+	IDPrefix:              "pm_",
+	Description:           "A payment method attached to a customer. The resource is the attachment: `terraform destroy` detaches the payment method from the customer, and Stripe never lets a detached payment method be attached again. The payment method itself is not created here, because creating one takes raw card data: create it with Stripe.js or a SetupIntent, or use a Stripe test payment method such as `pm_card_visa`, and give its ID as `payment_method`. Attaching a test payment method returns a new payment method, so the `id` can differ from `payment_method`. Only `billing_details`, `metadata` and `card.exp_year` change in place; Stripe's other updatable payment method fields are read-only here.",
+	DataSourceDescription: "A payment method attached to a customer.",
+	Parent:                "customer",
+	Attach:                "payment_method",
 	Paths: engine.Paths{
 		Create:   "/v1/payment_methods/{payment_method}/attach",
 		Retrieve: "/v1/customers/{customer}/payment_methods/{id}",

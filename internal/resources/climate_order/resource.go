@@ -18,9 +18,12 @@ import (
 // delivered, destroy warns, leaves it and drops it from state. Any other failure fails the
 // destroy.
 var Declaration = engine.Declaration{
-	TypeName:    "stripe_climate_order",
-	IDPrefix:    "climorder_",
-	Description: "A purchase of carbon removal from Stripe Climate. Set exactly one of `metric_tons` (a whole number of tons) and `amount` (the money to spend, in the smallest unit of the order's currency). The order spends the account's available balance in its settlement currency. `terraform destroy` cancels the order and refunds its `amount_subtotal`, but not its `amount_fees`; Stripe cannot delete an order, so a canceled order stays in the account. Stripe cancels only orders that are not yet delivered, so destroy leaves a delivered order as it is, with a warning. Only `beneficiary` and `metadata` change in place: changing any other argument cancels the order and buys a new one, and the fees of the canceled order are not refunded. Stripe does not return `amount`, so an imported order has none in state. Importing an order that was bought by `amount` and configuring `amount` plans a replacement.",
+	TypeName:              "stripe_climate_order",
+	IDPrefix:              "climorder_",
+	Description:           "A purchase of carbon removal from Stripe Climate. Set exactly one of `metric_tons` (a whole number of tons) and `amount` (the money to spend, in the smallest unit of the order's currency). The order spends the account's available balance in its settlement currency. `terraform destroy` cancels the order and refunds its `amount_subtotal`, but not its `amount_fees`; Stripe cannot delete an order, so a canceled order stays in the account. Stripe cancels only orders that are not yet delivered, so destroy leaves a delivered order as it is, with a warning. Only `beneficiary` and `metadata` change in place: changing any other argument cancels the order and buys a new one, and the fees of the canceled order are not refunded.",
+	DataSourceDescription: "A purchase of carbon removal from Stripe Climate.",
+	ImportNote:            "Stripe does not return `amount`, so an imported order has none in state. Importing an order that was bought by `amount` and configuring `amount` plans a replacement.",
+	ImportNoteLevel:       engine.NoteWarning,
 	Paths: engine.Paths{
 		Create:   "/v1/climate/orders",
 		Retrieve: "/v1/climate/orders/{id}",

@@ -12,8 +12,9 @@ import (
 // Declaration is what the spec cannot say about a coupon. Stripe offers DELETE, which stops
 // new redemptions and leaves existing discounts in place.
 var Declaration = engine.Declaration{
-	TypeName:    "stripe_coupon",
-	Description: "A discount that can be applied to a customer or subscription. `terraform destroy` deletes the coupon, which stops new redemptions and leaves existing discounts in place.",
+	TypeName:              "stripe_coupon",
+	Description:           "A discount that can be applied to a customer or subscription. `terraform destroy` deletes the coupon, which stops new redemptions and leaves existing discounts in place.",
+	DataSourceDescription: "A discount that can be applied to a customer or subscription.",
 	Paths: engine.Paths{
 		Create:   "/v1/coupons",
 		Retrieve: "/v1/coupons/{id}",

@@ -3,12 +3,12 @@
 page_title: "stripe_payment_link Data Source - Stripe"
 subcategory: ""
 description: |-
-  A shareable link to a Stripe-hosted page that takes a payment. terraform destroy deactivates the link (active = false), because Stripe cannot delete one: the link stays in the account and stops taking payments. active is an ordinary argument, so a link can be deactivated and activated again. line_items are matched by price, never by position: a reorder changes nothing, and a changed quantity updates the item in place. Adding a price, dropping one or changing an item's other settings replaces the link, and so does a change to any argument other than active, allow_promotion_codes, billing_address_collection, submit_type, metadata and the quantity of a line item. A replaced link has a new url. A price may appear once. A line item names its price: price_data, which would create the price with the link, is not available, because an item without a price of its own cannot be told from another when Stripe returns them, so create the price with stripe_price first. A link takes at most 20 line items, and the provider reads at most the first 10 of them: a link with more is an error.
+  A shareable link to a Stripe-hosted page that takes a payment.
 ---
 
 # Data Source: stripe_payment_link
 
-A shareable link to a Stripe-hosted page that takes a payment. `terraform destroy` deactivates the link (`active = false`), because Stripe cannot delete one: the link stays in the account and stops taking payments. `active` is an ordinary argument, so a link can be deactivated and activated again. `line_items` are matched by `price`, never by position: a reorder changes nothing, and a changed `quantity` updates the item in place. Adding a price, dropping one or changing an item's other settings replaces the link, and so does a change to any argument other than `active`, `allow_promotion_codes`, `billing_address_collection`, `submit_type`, `metadata` and the quantity of a line item. A replaced link has a new `url`. A price may appear once. A line item names its `price`: `price_data`, which would create the price with the link, is not available, because an item without a price of its own cannot be told from another when Stripe returns them, so create the price with `stripe_price` first. A link takes at most 20 line items, and the provider reads at most the first 10 of them: a link with more is an error.
+A shareable link to a Stripe-hosted page that takes a payment.
 
 ## Example Usage
 
@@ -22,9 +22,7 @@ data "stripe_payment_link" "course" {
 
 This data source supports the following arguments:
 
-Exactly one must be set.
-
-* `id` - (Optional) Unique identifier for the object.
+* `id` - (Required) The ID of the payment link to read.
 
 ## Attribute Reference
 

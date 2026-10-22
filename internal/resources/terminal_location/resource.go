@@ -13,9 +13,10 @@ import (
 // DELETE and answers a later GET with a deleted stub, so destroy deletes it. Stripe refuses
 // to change a location's country after creation.
 var Declaration = engine.Declaration{
-	TypeName:    "stripe_terminal_location",
-	IDPrefix:    "tml_",
-	Description: "A place where you use Stripe Terminal readers. `terraform destroy` deletes the location. Changing the country of `address` creates a new location, because Stripe cannot change it.",
+	TypeName:              "stripe_terminal_location",
+	IDPrefix:              "tml_",
+	Description:           "A place where you use Stripe Terminal readers. `terraform destroy` deletes the location. Changing the country of `address` creates a new location, because Stripe cannot change it.",
+	DataSourceDescription: "A place where you use Stripe Terminal readers.",
 	Paths: engine.Paths{
 		Create:   "/v1/terminal/locations",
 		Retrieve: "/v1/terminal/locations/{id}",

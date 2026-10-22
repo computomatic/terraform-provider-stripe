@@ -11,9 +11,10 @@ import (
 
 // Declaration is what the spec cannot say about a customer.
 var Declaration = engine.Declaration{
-	TypeName:    "stripe_customer",
-	IDPrefix:    "cus_",
-	Description: "A person or business that pays you. `terraform destroy` deletes the customer, which also cancels their subscriptions.",
+	TypeName:              "stripe_customer",
+	IDPrefix:              "cus_",
+	Description:           "A person or business that pays you. `terraform destroy` deletes the customer, which also cancels their subscriptions.",
+	DataSourceDescription: "A person or business that pays you.",
 	Paths: engine.Paths{
 		Create:   "/v1/customers",
 		Retrieve: "/v1/customers/{id}",

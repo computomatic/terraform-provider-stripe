@@ -3,12 +3,12 @@
 page_title: "stripe_product_feature Resource - Stripe"
 subcategory: ""
 description: |-
-  An entitlement feature attached to a product. terraform destroy detaches the feature from the product and leaves the stripe_entitlements_feature in place. Import with <product_id>/<product_feature_id>.
+  An entitlement feature attached to a product. terraform destroy detaches the feature from the product and leaves the stripe_entitlements_feature in place.
 ---
 
 # Resource: stripe_product_feature
 
-An entitlement feature attached to a product. `terraform destroy` detaches the feature from the product and leaves the `stripe_entitlements_feature` in place. Import with `<product_id>/<product_feature_id>`.
+An entitlement feature attached to a product. `terraform destroy` detaches the feature from the product and leaves the `stripe_entitlements_feature` in place.
 
 ## Example Usage
 

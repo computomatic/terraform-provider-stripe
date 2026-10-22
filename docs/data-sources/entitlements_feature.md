@@ -3,12 +3,12 @@
 page_title: "stripe_entitlements_feature Data Source - Stripe"
 subcategory: ""
 description: |-
-  A feature a product can grant, identified by a unique lookup_key. terraform destroy archives the feature, because Stripe cannot delete one. An archived feature cannot be updated or reactivated, and its lookup_key cannot be used again.
+  A feature a product can grant, identified by a unique lookup_key.
 ---
 
 # Data Source: stripe_entitlements_feature
 
-A feature a product can grant, identified by a unique `lookup_key`. `terraform destroy` archives the feature, because Stripe cannot delete one. An archived feature cannot be updated or reactivated, and its `lookup_key` cannot be used again.
+A feature a product can grant, identified by a unique `lookup_key`.
 
 ## Example Usage
 
@@ -28,7 +28,7 @@ This data source supports the following arguments:
 
 Exactly one must be set.
 
-* `id` - (Optional) Unique identifier for the object.
+* `id` - (Optional) The ID of the entitlements feature to read.
 * `lookup_key` - (Optional) A unique key you provide as your own system identifier. This may be up to 80 characters.
 
 ## Attribute Reference

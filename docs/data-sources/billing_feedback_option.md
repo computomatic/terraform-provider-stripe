@@ -3,12 +3,12 @@
 page_title: "stripe_billing_feedback_option Data Source - Stripe"
 subcategory: ""
 description: |-
-  A reason a customer can pick when canceling a subscription. terraform destroy deactivates the option, because Stripe cannot delete one; it stays in the account.
+  A reason a customer can pick when canceling a subscription.
 ---
 
 # Data Source: stripe_billing_feedback_option
 
-A reason a customer can pick when canceling a subscription. `terraform destroy` deactivates the option, because Stripe cannot delete one; it stays in the account.
+A reason a customer can pick when canceling a subscription.
 
 ## Example Usage
 
@@ -22,9 +22,7 @@ data "stripe_billing_feedback_option" "too_expensive" {
 
 This data source supports the following arguments:
 
-Exactly one must be set.
-
-* `id` - (Optional) Unique identifier for the object.
+* `id` - (Required) The ID of the billing feedback option to read.
 
 ## Attribute Reference
 

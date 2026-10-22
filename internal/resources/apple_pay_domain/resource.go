@@ -13,9 +13,10 @@ import (
 // DELETE and answers 404 afterwards, so destroy deletes it. A domain name can be registered
 // more than once, so `domain_name` is a lookup key that fails on an ambiguous match.
 var Declaration = engine.Declaration{
-	TypeName:    "stripe_apple_pay_domain",
-	IDPrefix:    "apwc_",
-	Description: "A domain registered for Apple Pay. `terraform destroy` deletes the domain. Stripe accepts the same domain name more than once, so changing `domain_name` creates a new registration.",
+	TypeName:              "stripe_apple_pay_domain",
+	IDPrefix:              "apwc_",
+	Description:           "A domain registered for Apple Pay. `terraform destroy` deletes the domain. Stripe accepts the same domain name more than once, so changing `domain_name` creates a new registration.",
+	DataSourceDescription: "A domain registered for Apple Pay.",
 	Paths: engine.Paths{
 		Create:   "/v1/apple_pay/domains",
 		Retrieve: "/v1/apple_pay/domains/{id}",

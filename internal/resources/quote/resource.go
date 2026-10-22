@@ -15,9 +15,10 @@ import (
 // state. An accepted quote cannot be cancelled (`quote_cancellation_already_accepted`) and
 // has become an invoice or subscription, so destroy leaves it as it is.
 var Declaration = engine.Declaration{
-	TypeName:    "stripe_quote",
-	IDPrefix:    "qt_",
-	Description: "A proposal of prices to a customer. `terraform destroy` cancels the quote, because Stripe cannot delete one; the cancelled quote stays in the account. A quote that was accepted cannot be cancelled and is left as it is. Finalizing and accepting a quote are not resources: the quote stays a draft here, and `status` reports what happened to it elsewhere. Stripe lets only `metadata` and a few other fields change once the quote is finalized.",
+	TypeName:              "stripe_quote",
+	IDPrefix:              "qt_",
+	Description:           "A proposal of prices to a customer. `terraform destroy` cancels the quote, because Stripe cannot delete one; the cancelled quote stays in the account. A quote that was accepted cannot be cancelled and is left as it is. Finalizing and accepting a quote are not resources: the quote stays a draft here, and `status` reports what happened to it elsewhere. Stripe lets only `metadata` and a few other fields change once the quote is finalized.",
+	DataSourceDescription: "A proposal of prices to a customer.",
 	Paths: engine.Paths{
 		Create:   "/v1/quotes",
 		Retrieve: "/v1/quotes/{id}",

@@ -7,6 +7,8 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-go/tfprotov6"
 	"github.com/hashicorp/terraform-plugin-go/tftypes"
+
+	"github.com/computomatic/terraform-provider-stripe/internal/engine"
 )
 
 // nesting is how a nested attribute holds its objects.
@@ -55,6 +57,9 @@ type schema struct {
 	Attrs []*attr
 	// Identity is empty for a data source and the provider.
 	Identity []*identityAttr
+	// ImportNote is a resource's note for the Import section, from its declaration.
+	ImportNote      string
+	ImportNoteLevel engine.NoteLevel
 }
 
 func (s *schema) find(name string) *attr {

@@ -3,12 +3,12 @@
 page_title: "stripe_shipping_rate Data Source - Stripe"
 subcategory: ""
 description: |-
-  What Checkout charges for shipping. terraform destroy archives the shipping rate, because Stripe cannot delete one.
+  What Checkout charges for shipping.
 ---
 
 # Data Source: stripe_shipping_rate
 
-What Checkout charges for shipping. `terraform destroy` archives the shipping rate, because Stripe cannot delete one.
+What Checkout charges for shipping.
 
 ## Example Usage
 
@@ -22,9 +22,7 @@ data "stripe_shipping_rate" "ground" {
 
 This data source supports the following arguments:
 
-Exactly one must be set.
-
-* `id` - (Optional) Unique identifier for the object.
+* `id` - (Required) The ID of the shipping rate to read.
 
 ## Attribute Reference
 

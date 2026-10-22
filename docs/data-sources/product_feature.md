@@ -3,12 +3,12 @@
 page_title: "stripe_product_feature Data Source - Stripe"
 subcategory: ""
 description: |-
-  An entitlement feature attached to a product. terraform destroy detaches the feature from the product and leaves the stripe_entitlements_feature in place. Import with <product_id>/<product_feature_id>.
+  An entitlement feature attached to a product.
 ---
 
 # Data Source: stripe_product_feature
 
-An entitlement feature attached to a product. `terraform destroy` detaches the feature from the product and leaves the `stripe_entitlements_feature` in place. Import with `<product_id>/<product_feature_id>`.
+An entitlement feature attached to a product.
 
 ## Example Usage
 
@@ -23,10 +23,8 @@ data "stripe_product_feature" "gold_search" {
 
 This data source supports the following arguments:
 
-Exactly one must be set.
-
 * `product` - (Required) The ID of the parent object.
-* `id` - (Optional) Unique identifier for the object.
+* `id` - (Required) The ID of the product feature to read.
 
 ## Attribute Reference
 

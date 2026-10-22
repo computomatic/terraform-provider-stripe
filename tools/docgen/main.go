@@ -16,6 +16,7 @@ import (
 	"strings"
 
 	"github.com/hashicorp/terraform-plugin-framework/providerserver"
+	"github.com/hashicorp/terraform-plugin-framework/resource"
 
 	"github.com/computomatic/terraform-provider-stripe/internal/engine"
 	"github.com/computomatic/terraform-provider-stripe/internal/provider"
@@ -40,11 +41,7 @@ func main() {
 }
 
 func run(root, out string) error {
-	server, err := providerserver.NewProtocol6WithError(provider.New("dev")())()
-	if err != nil {
-		return err
-	}
-	s, err := readSchemas(context.Background(), server)
+	s, err := loadSchemas(context.Background())
 	if err != nil {
 		return err
 	}
@@ -53,6 +50,37 @@ func run(root, out string) error {
 		return err
 	}
 	return writePages(out, pages)
+}
+
+// loadSchemas reads the provider's schemas and attaches the import notes of its
+// declarations to the resources.
+func loadSchemas(ctx context.Context) (*schemas, error) {
+	p := provider.New("dev")()
+	server, err := providerserver.NewProtocol6WithError(p)()
+	if err != nil {
+		return nil, err
+	}
+	s, err := readSchemas(ctx, server)
+	if err != nil {
+		return nil, err
+	}
+	for _, newResource := range p.Resources(ctx) {
+		r := newResource()
+		var meta resource.MetadataResponse
+		r.Metadata(ctx, resource.MetadataRequest{ProviderTypeName: "stripe"}, &meta)
+		noted, ok := r.(interface {
+			ImportNote() (string, engine.NoteLevel)
+		})
+		if !ok {
+			continue
+		}
+		for _, rs := range s.Resources {
+			if rs.Type == meta.TypeName {
+				rs.ImportNote, rs.ImportNoteLevel = noted.ImportNote()
+			}
+		}
+	}
+	return s, nil
 }
 
 // renderAll renders every page, keyed by its path relative to the output directory.

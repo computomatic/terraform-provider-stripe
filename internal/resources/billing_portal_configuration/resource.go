@@ -18,9 +18,10 @@ import (
 // (`is_default`), destroy warns, leaves it active and drops it from state. Any other
 // failure fails the destroy.
 var Declaration = engine.Declaration{
-	TypeName:    "stripe_billing_portal_configuration",
-	IDPrefix:    "bpc_",
-	Description: "How the customer portal looks and what customers can do in it. `terraform destroy` deactivates the configuration, because Stripe cannot delete one. Stripe refuses to deactivate the account's default configuration (the first one created), so destroy leaves that one active with a warning.",
+	TypeName:              "stripe_billing_portal_configuration",
+	IDPrefix:              "bpc_",
+	Description:           "How the customer portal looks and what customers can do in it. `terraform destroy` deactivates the configuration, because Stripe cannot delete one. Stripe refuses to deactivate the account's default configuration (the first one created), so destroy leaves that one active with a warning.",
+	DataSourceDescription: "How the customer portal looks and what customers can do in it.",
 	Paths: engine.Paths{
 		Create:   "/v1/billing_portal/configurations",
 		Retrieve: "/v1/billing_portal/configurations/{id}",

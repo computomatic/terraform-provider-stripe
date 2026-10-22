@@ -3,12 +3,12 @@
 page_title: "stripe_terminal_reader Data Source - Stripe"
 subcategory: ""
 description: |-
-  A Stripe Terminal card reader registered at a location. terraform destroy deletes the reader. Only label and metadata change in place: changing the location or the registration_code creates a new reader. Stripe never returns the registration_code, so an imported reader has none in state: a configuration that sets it plans a replacement unless it ignores changes to it with lifecycle { ignore_changes = [registration_code] }. In test mode the registration code simulated-wpe registers a simulated reader. The reader's action reports the most recent action it performed; the resource does not start actions, and the nested objects of an action's API error are not available.
+  A Stripe Terminal card reader registered at a location.
 ---
 
 # Data Source: stripe_terminal_reader
 
-A Stripe Terminal card reader registered at a location. `terraform destroy` deletes the reader. Only `label` and `metadata` change in place: changing the `location` or the `registration_code` creates a new reader. Stripe never returns the `registration_code`, so an imported reader has none in state: a configuration that sets it plans a replacement unless it ignores changes to it with `lifecycle { ignore_changes = [registration_code] }`. In test mode the registration code `simulated-wpe` registers a simulated reader. The reader's `action` reports the most recent action it performed; the resource does not start actions, and the nested objects of an action's API error are not available.
+A Stripe Terminal card reader registered at a location.
 
 ## Example Usage
 
@@ -26,9 +26,7 @@ output "reader_status" {
 
 This data source supports the following arguments:
 
-Exactly one must be set.
-
-* `id` - (Optional) Unique identifier for the object.
+* `id` - (Required) The ID of the terminal reader to read.
 
 ## Attribute Reference
 

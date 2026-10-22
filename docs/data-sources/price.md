@@ -3,12 +3,12 @@
 page_title: "stripe_price Data Source - Stripe"
 subcategory: ""
 description: |-
-  What a product costs and how often it is charged. terraform destroy archives the price, because Stripe cannot delete one.
+  What a product costs and how often it is charged.
 ---
 
 # Data Source: stripe_price
 
-What a product costs and how often it is charged. `terraform destroy` archives the price, because Stripe cannot delete one.
+What a product costs and how often it is charged.
 
 ## Example Usage
 
@@ -28,7 +28,7 @@ This data source supports the following arguments:
 
 Exactly one must be set.
 
-* `id` - (Optional) Unique identifier for the object.
+* `id` - (Optional) The ID of the price to read.
 * `lookup_key` - (Optional) A lookup key used to retrieve prices dynamically from a static string. This may be up to 200 characters.
 
 ## Attribute Reference

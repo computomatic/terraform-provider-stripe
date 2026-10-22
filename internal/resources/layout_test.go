@@ -7,6 +7,7 @@ import (
 	"go/token"
 	"os"
 	"path/filepath"
+	"regexp"
 	"strings"
 	"testing"
 )
@@ -55,8 +56,62 @@ func layoutProblems(root, name string) []string {
 		}
 	}
 
+	problems = append(problems, importScriptProblems(root, dir, name, typeName)...)
 	problems = append(problems, missingTests(dir, name, requiredTests)...)
 	return append(problems, missingImportBlock(dir, name)...)
+}
+
+var importCommand = regexp.MustCompile(`^terraform import (\S+)\.(\S+) (\S+)$`)
+
+// importScriptProblems checks that import.sh, which the docs show as the import example, is
+// `terraform import <type>.<name> <id>` with the resource's own type name, and that its ID
+// has the shape the declaration implies: a slash for a child resource with a Parent, none
+// otherwise (docs ADR D4, D5). A missing file is reported by the caller.
+func importScriptProblems(root, dir, name, typeName string) []string {
+	data, err := os.ReadFile(filepath.Join(root, "examples", "resources", typeName, "import.sh"))
+	if err != nil {
+		return nil
+	}
+	var command string
+	for _, l := range strings.Split(strings.TrimSpace(string(data)), "\n") {
+		if !strings.HasPrefix(l, "#") {
+			command = l
+		}
+	}
+	m := importCommand.FindStringSubmatch(command)
+	if m == nil {
+		return []string{fmt.Sprintf("%s: import.sh must end in `terraform import %s.<name> <id>`, got %q", name, typeName, command)}
+	}
+	var problems []string
+	if m[1] != typeName {
+		problems = append(problems, fmt.Sprintf("%s: import.sh imports %s, want %s", name, m[1], typeName))
+	}
+	if child, hasSlash := hasParent(dir), strings.Contains(m[3], "/"); child != hasSlash {
+		if child {
+			problems = append(problems, fmt.Sprintf("%s: the declaration has a Parent, so the import ID %q must be <parent_id>/<id>", name, m[3]))
+		} else {
+			problems = append(problems, fmt.Sprintf("%s: the declaration has no Parent, so the import ID %q must have no slash", name, m[3]))
+		}
+	}
+	return problems
+}
+
+// hasParent reports whether the directory's resource.go sets `Parent` in a composite literal.
+func hasParent(dir string) bool {
+	parsed, err := parser.ParseFile(token.NewFileSet(), filepath.Join(dir, "resource.go"), nil, 0)
+	if err != nil {
+		return false
+	}
+	found := false
+	ast.Inspect(parsed, func(n ast.Node) bool {
+		if kv, ok := n.(*ast.KeyValueExpr); ok {
+			if key, ok := kv.Key.(*ast.Ident); ok && key.Name == "Parent" {
+				found = true
+			}
+		}
+		return !found
+	})
+	return found
 }
 
 // missingImportBlock reports a resource whose `import` test never uses
@@ -165,10 +220,29 @@ func TestLayoutCheckFindsGaps(t *testing.T) {
 	}
 	write("internal/resources/billing_meter/resource_test.go", tests.String())
 	write("examples/resources/stripe_billing_meter/resource.tf", "")
-	write("examples/resources/stripe_billing_meter/import.sh", "")
+	write("examples/resources/stripe_billing_meter/import.sh", "terraform import stripe_billing_meter.example mtr_123\n")
 	if got := layoutProblems(root, "billing_meter"); len(got) != 0 {
 		t.Fatalf("a complete resource has no problems: %v", got)
 	}
+
+	write("examples/resources/stripe_billing_meter/import.sh", "terraform import stripe_coupon.example mtr_123\n")
+	if got := layoutProblems(root, "billing_meter"); len(got) != 1 {
+		t.Fatalf("an import.sh of another type is one problem: %v", got)
+	}
+	write("examples/resources/stripe_billing_meter/import.sh", "terraform import stripe_billing_meter.example cus_1/mtr_123\n")
+	if got := layoutProblems(root, "billing_meter"); len(got) != 1 {
+		t.Fatalf("a slash in the ID of a resource without a Parent is one problem: %v", got)
+	}
+	write("internal/resources/billing_meter/resource.go", "package billing_meter\nvar _ = Declaration{Parent: \"customer\"}\n")
+	if got := layoutProblems(root, "billing_meter"); len(got) != 0 {
+		t.Fatalf("a slash in the ID of a child resource is right: %v", got)
+	}
+	write("examples/resources/stripe_billing_meter/import.sh", "terraform import stripe_billing_meter.example mtr_123\n")
+	if got := layoutProblems(root, "billing_meter"); len(got) != 1 {
+		t.Fatalf("no slash in the ID of a child resource is one problem: %v", got)
+	}
+	write("internal/resources/billing_meter/resource.go", "package billing_meter\n")
+	write("examples/resources/stripe_billing_meter/import.sh", "terraform import stripe_billing_meter.example mtr_123\n")
 
 	write("internal/resources/billing_meter/datasource.go", "package billing_meter\n")
 	if got := layoutProblems(root, "billing_meter"); len(got) != 1 {

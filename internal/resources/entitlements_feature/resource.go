@@ -16,9 +16,10 @@ import (
 // archived feature is frozen: it cannot be updated or reactivated, and its `lookup_key`
 // stays taken.
 var Declaration = engine.Declaration{
-	TypeName:    "stripe_entitlements_feature",
-	IDPrefix:    "feat_",
-	Description: "A feature a product can grant, identified by a unique `lookup_key`. `terraform destroy` archives the feature, because Stripe cannot delete one. An archived feature cannot be updated or reactivated, and its `lookup_key` cannot be used again.",
+	TypeName:              "stripe_entitlements_feature",
+	IDPrefix:              "feat_",
+	Description:           "A feature a product can grant, identified by a unique `lookup_key`. `terraform destroy` archives the feature, because Stripe cannot delete one. An archived feature cannot be updated or reactivated, and its `lookup_key` cannot be used again.",
+	DataSourceDescription: "A feature a product can grant, identified by a unique `lookup_key`.",
 	Paths: engine.Paths{
 		Create:   "/v1/entitlements/features",
 		Retrieve: "/v1/entitlements/features/{id}",

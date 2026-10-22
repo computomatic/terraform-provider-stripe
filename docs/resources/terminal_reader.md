@@ -3,12 +3,12 @@
 page_title: "stripe_terminal_reader Resource - Stripe"
 subcategory: ""
 description: |-
-  A Stripe Terminal card reader registered at a location. terraform destroy deletes the reader. Only label and metadata change in place: changing the location or the registration_code creates a new reader. Stripe never returns the registration_code, so an imported reader has none in state: a configuration that sets it plans a replacement unless it ignores changes to it with lifecycle { ignore_changes = [registration_code] }. In test mode the registration code simulated-wpe registers a simulated reader. The reader's action reports the most recent action it performed; the resource does not start actions, and the nested objects of an action's API error are not available.
+  A Stripe Terminal card reader registered at a location. terraform destroy deletes the reader. Only label and metadata change in place: changing the location or the registration_code creates a new reader. In test mode the registration code simulated-wpe registers a simulated reader. The reader's action reports the most recent action it performed; the resource does not start actions, and the nested objects of an action's API error are not available.
 ---
 
 # Resource: stripe_terminal_reader
 
-A Stripe Terminal card reader registered at a location. `terraform destroy` deletes the reader. Only `label` and `metadata` change in place: changing the `location` or the `registration_code` creates a new reader. Stripe never returns the `registration_code`, so an imported reader has none in state: a configuration that sets it plans a replacement unless it ignores changes to it with `lifecycle { ignore_changes = [registration_code] }`. In test mode the registration code `simulated-wpe` registers a simulated reader. The reader's `action` reports the most recent action it performed; the resource does not start actions, and the nested objects of an action's API error are not available.
+A Stripe Terminal card reader registered at a location. `terraform destroy` deletes the reader. Only `label` and `metadata` change in place: changing the `location` or the `registration_code` creates a new reader. In test mode the registration code `simulated-wpe` registers a simulated reader. The reader's `action` reports the most recent action it performed; the resource does not start actions, and the nested objects of an action's API error are not available.
 
 ## Example Usage
 
@@ -1586,3 +1586,5 @@ Using `terraform import`, import a terminal reader using its ID. For example:
 ```console
 % terraform import stripe_terminal_reader.counter tmr_123
 ```
+
+~> Stripe never returns the `registration_code`, so an imported reader has none in state: a configuration that sets it plans a replacement unless it ignores changes to it with `lifecycle { ignore_changes = [registration_code] }`.

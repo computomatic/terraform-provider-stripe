@@ -67,3 +67,5 @@ Using `terraform import`, import a widget gadget part using its ID. For example:
 ```console
 % terraform import widget_gadget_part.main gad_123/part_456
 ```
+
+-> Parts are matched by serial.

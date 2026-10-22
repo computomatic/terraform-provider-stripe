@@ -3,12 +3,12 @@
 page_title: "stripe_promotion_code Data Source - Stripe"
 subcategory: ""
 description: |-
-  A customer-facing code that redeems a coupon. terraform destroy archives the promotion code, because Stripe cannot delete one. An archived code keeps its code, so it cannot be used for another promotion code.
+  A customer-facing code that redeems a coupon.
 ---
 
 # Data Source: stripe_promotion_code
 
-A customer-facing code that redeems a coupon. `terraform destroy` archives the promotion code, because Stripe cannot delete one. An archived code keeps its `code`, so it cannot be used for another promotion code.
+A customer-facing code that redeems a coupon.
 
 ## Example Usage
 
@@ -29,7 +29,7 @@ This data source supports the following arguments:
 Exactly one must be set.
 
 * `code` - (Optional) The customer-facing code. Regardless of case, this code must be unique across all active promotion codes for a specific customer. Valid characters are lower case letters (a-z), upper case letters (A-Z), digits (0-9), and dashes (-). If left blank, we will generate one automatically.
-* `id` - (Optional) Unique identifier for the object.
+* `id` - (Optional) The ID of the promotion code to read.
 
 ## Attribute Reference
 

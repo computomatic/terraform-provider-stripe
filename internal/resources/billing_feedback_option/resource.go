@@ -14,9 +14,10 @@ import (
 // a bare POST to its deactivate endpoint makes it inactive, and a second deactivate is an
 // error, so destroy retrieves first.
 var Declaration = engine.Declaration{
-	TypeName:    "stripe_billing_feedback_option",
-	IDPrefix:    "fo_",
-	Description: "A reason a customer can pick when canceling a subscription. `terraform destroy` deactivates the option, because Stripe cannot delete one; it stays in the account.",
+	TypeName:              "stripe_billing_feedback_option",
+	IDPrefix:              "fo_",
+	Description:           "A reason a customer can pick when canceling a subscription. `terraform destroy` deactivates the option, because Stripe cannot delete one; it stays in the account.",
+	DataSourceDescription: "A reason a customer can pick when canceling a subscription.",
 	Paths: engine.Paths{
 		Create:   "/v1/billing/feedback_options",
 		Retrieve: "/v1/billing/feedback_options/{id}",

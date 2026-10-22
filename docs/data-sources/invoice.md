@@ -23,9 +23,7 @@ data "stripe_invoice" "latest" {
 
 This data source supports the following arguments:
 
-Exactly one must be set.
-
-* `id` - (Optional) Unique identifier for the object. For preview invoices created using the [create preview](https://stripe.com/docs/api/invoices/create_preview) endpoint, this id will be prefixed with `upcoming_in`.
+* `id` - (Required) The ID of the invoice to read.
 
 ## Attribute Reference
 

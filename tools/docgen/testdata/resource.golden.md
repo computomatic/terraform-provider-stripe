@@ -121,3 +121,5 @@ Using `terraform import`, import a widget gadget using its ID. For example:
 ```console
 % terraform import widget_gadget.main gad_123
 ```
+
+~> An imported gadget has no `token`.

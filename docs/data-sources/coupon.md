@@ -3,12 +3,12 @@
 page_title: "stripe_coupon Data Source - Stripe"
 subcategory: ""
 description: |-
-  A discount that can be applied to a customer or subscription. terraform destroy deletes the coupon, which stops new redemptions and leaves existing discounts in place.
+  A discount that can be applied to a customer or subscription.
 ---
 
 # Data Source: stripe_coupon
 
-A discount that can be applied to a customer or subscription. `terraform destroy` deletes the coupon, which stops new redemptions and leaves existing discounts in place.
+A discount that can be applied to a customer or subscription.
 
 ## Example Usage
 
@@ -22,9 +22,7 @@ data "stripe_coupon" "launch" {
 
 This data source supports the following arguments:
 
-Exactly one must be set.
-
-* `id` - (Optional) Unique string of your choice that will be used to identify this coupon when applying it to a customer. If you don't want to specify a particular code, you can leave the ID blank and we'll generate a random code for you.
+* `id` - (Required) The ID of the coupon to read.
 
 ## Attribute Reference
 

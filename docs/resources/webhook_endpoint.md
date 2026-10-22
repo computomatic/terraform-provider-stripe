@@ -3,12 +3,12 @@
 page_title: "stripe_webhook_endpoint Resource - Stripe"
 subcategory: ""
 description: |-
-  An endpoint Stripe sends events to. The signing secret is returned once, at creation, and is kept in state as a sensitive value. An imported endpoint has no secret, and neither has the data source, because Stripe returns it only at creation. terraform destroy deletes the endpoint.
+  An endpoint Stripe sends events to. The signing secret is returned once, at creation, and is kept in state as a sensitive value. terraform destroy deletes the endpoint.
 ---
 
 # Resource: stripe_webhook_endpoint
 
-An endpoint Stripe sends events to. The signing `secret` is returned once, at creation, and is kept in state as a sensitive value. An imported endpoint has no `secret`, and neither has the data source, because Stripe returns it only at creation. `terraform destroy` deletes the endpoint.
+An endpoint Stripe sends events to. The signing `secret` is returned once, at creation, and is kept in state as a sensitive value. `terraform destroy` deletes the endpoint.
 
 ## Example Usage
 
@@ -92,3 +92,5 @@ Using `terraform import`, import a webhook endpoint using its ID. For example:
 ```console
 % terraform import stripe_webhook_endpoint.events we_123
 ```
+
+-> An imported endpoint has no `secret`, because Stripe returns it only at creation.

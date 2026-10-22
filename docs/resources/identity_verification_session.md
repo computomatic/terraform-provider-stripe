@@ -3,12 +3,12 @@
 page_title: "stripe_identity_verification_session Resource - Stripe"
 subcategory: ""
 description: |-
-  A Stripe Identity check of one person's document or ID number. terraform destroy cancels the session, because Stripe cannot delete one; the canceled session stays in the account, and a session that is already verified cannot be canceled and is left as it is, with a warning. The client_secret and url that start the check are sensitive and stay in the state. Redacting a session is not a resource: redact it with Stripe's API, after which Stripe no longer serves it. Verification flows and related persons are not available, so type is required. type and metadata change in place; changing options or provided_details, or any argument that only a create takes, creates a new session. Stripe does not return provided_details, so an imported session has none in state and the next plan replaces it if the configuration sets some.
+  A Stripe Identity check of one person's document or ID number. terraform destroy cancels the session, because Stripe cannot delete one; the canceled session stays in the account, and a session that is already verified cannot be canceled and is left as it is, with a warning. The client_secret and url that start the check are sensitive and stay in the state. Redacting a session is not a resource: redact it with Stripe's API, after which Stripe no longer serves it. Verification flows and related persons are not available, so type is required. type and metadata change in place; changing options or provided_details, or any argument that only a create takes, creates a new session.
 ---
 
 # Resource: stripe_identity_verification_session
 
-A Stripe Identity check of one person's document or ID number. `terraform destroy` cancels the session, because Stripe cannot delete one; the canceled session stays in the account, and a session that is already verified cannot be canceled and is left as it is, with a warning. The `client_secret` and `url` that start the check are sensitive and stay in the state. Redacting a session is not a resource: redact it with Stripe's API, after which Stripe no longer serves it. Verification flows and related persons are not available, so `type` is required. `type` and `metadata` change in place; changing `options` or `provided_details`, or any argument that only a create takes, creates a new session. Stripe does not return `provided_details`, so an imported session has none in state and the next plan replaces it if the configuration sets some.
+A Stripe Identity check of one person's document or ID number. `terraform destroy` cancels the session, because Stripe cannot delete one; the canceled session stays in the account, and a session that is already verified cannot be canceled and is left as it is, with a warning. The `client_secret` and `url` that start the check are sensitive and stay in the state. Redacting a session is not a resource: redact it with Stripe's API, after which Stripe no longer serves it. Verification flows and related persons are not available, so `type` is required. `type` and `metadata` change in place; changing `options` or `provided_details`, or any argument that only a create takes, creates a new session.
 
 ## Example Usage
 
@@ -211,3 +211,5 @@ Using `terraform import`, import an identity verification session using its ID. 
 ```console
 % terraform import stripe_identity_verification_session.kyc vs_123
 ```
+
+~> Stripe does not return `provided_details`, so an imported session has none in state and the next plan replaces it if the configuration sets some.

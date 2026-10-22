@@ -15,9 +15,10 @@ import (
 // and drops it from state. An archived code keeps its `code`, so a new promotion code
 // cannot reuse it.
 var Declaration = engine.Declaration{
-	TypeName:    "stripe_promotion_code",
-	IDPrefix:    "promo_",
-	Description: "A customer-facing code that redeems a coupon. `terraform destroy` archives the promotion code, because Stripe cannot delete one. An archived code keeps its `code`, so it cannot be used for another promotion code.",
+	TypeName:              "stripe_promotion_code",
+	IDPrefix:              "promo_",
+	Description:           "A customer-facing code that redeems a coupon. `terraform destroy` archives the promotion code, because Stripe cannot delete one. An archived code keeps its `code`, so it cannot be used for another promotion code.",
+	DataSourceDescription: "A customer-facing code that redeems a coupon.",
 	Paths: engine.Paths{
 		Create:   "/v1/promotion_codes",
 		Retrieve: "/v1/promotion_codes/{id}",

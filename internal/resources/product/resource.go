@@ -16,9 +16,10 @@ import (
 // products and refuses it (400, `invalid_request_error`) once the product has a price. Destroy
 // then archives the product (`active = false`) and warns.
 var Declaration = engine.Declaration{
-	TypeName:    "stripe_product",
-	IDPrefix:    "prod_",
-	Description: "A product Stripe sells: a good or a service that prices attach to. `terraform destroy` deletes the product, or archives it with a warning when Stripe refuses because a price exists for it.",
+	TypeName:              "stripe_product",
+	IDPrefix:              "prod_",
+	Description:           "A product Stripe sells: a good or a service that prices attach to. `terraform destroy` deletes the product, or archives it with a warning when Stripe refuses because a price exists for it.",
+	DataSourceDescription: "A product Stripe sells: a good or a service that prices attach to.",
 	Paths: engine.Paths{
 		Create:   "/v1/products",
 		Retrieve: "/v1/products/{id}",

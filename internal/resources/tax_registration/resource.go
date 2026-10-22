@@ -17,9 +17,10 @@ import (
 // `active_from = now` (suite: "update active from on a scheduled registration").
 // `active_from` takes `now`, which Stripe answers with a timestamp, so the configured value is kept.
 var Declaration = engine.Declaration{
-	TypeName:    "stripe_tax_registration",
-	IDPrefix:    "taxreg_",
-	Description: "A place where you are registered to collect tax. `terraform destroy` ends the registration, because Stripe cannot delete one: it starts a scheduled registration, sets `expires_at` a few seconds ahead and waits for the status `expired`. The registration stays in the account. A country keeps one live registration, so a replacement can only be created once the old one has expired.",
+	TypeName:              "stripe_tax_registration",
+	IDPrefix:              "taxreg_",
+	Description:           "A place where you are registered to collect tax. `terraform destroy` ends the registration, because Stripe cannot delete one: it starts a scheduled registration, sets `expires_at` a few seconds ahead and waits for the status `expired`. The registration stays in the account. A country keeps one live registration, so a replacement can only be created once the old one has expired.",
+	DataSourceDescription: "A place where you are registered to collect tax.",
 	Paths: engine.Paths{
 		Create:   "/v1/tax/registrations",
 		Retrieve: "/v1/tax/registrations/{id}",

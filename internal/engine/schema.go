@@ -184,14 +184,28 @@ func (m *model) dataSourceSchema() dschema.Schema {
 	for _, n := range m.nodes {
 		a := dataSourceAttribute(n)
 		if lookups[n.Name] {
-			a = dschema.StringAttribute{Optional: true, Computed: true, MarkdownDescription: describe(n)}
+			desc := describe(n)
+			if n.Name == "id" {
+				// The create-time description tells a resource user how to choose an ID.
+				desc = "The ID of the " + noun(m.decl.TypeName) + " to read."
+			}
+			a = dschema.StringAttribute{Optional: true, Computed: true, MarkdownDescription: desc}
 		}
 		attrs[n.AttrName()] = a
 	}
 	if m.decl.Parent != "" {
 		attrs[m.decl.Parent] = dschema.StringAttribute{Required: true, MarkdownDescription: "The ID of the parent object."}
 	}
-	return dschema.Schema{MarkdownDescription: m.decl.Description, Attributes: attrs}
+	desc := m.decl.DataSourceDescription
+	if desc == "" {
+		desc = m.decl.Description
+	}
+	return dschema.Schema{MarkdownDescription: desc, Attributes: attrs}
+}
+
+// noun is a type name in words, such as `product feature` for `stripe_product_feature`.
+func noun(typeName string) string {
+	return strings.ReplaceAll(strings.TrimPrefix(typeName, "stripe_"), "_", " ")
 }
 
 func dataSourceAttribute(n *node) dschema.Attribute {

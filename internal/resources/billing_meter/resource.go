@@ -13,9 +13,10 @@ import (
 // Declaration is what the spec cannot say about a billing meter. Stripe never deletes a
 // meter, so destroy deactivates it and drops it from state; the meter stays in the account.
 var Declaration = engine.Declaration{
-	TypeName:    "stripe_billing_meter",
-	IDPrefix:    "mtr_",
-	Description: "Defines how usage events are aggregated into a billable quantity. `terraform destroy` deactivates the meter, because Stripe cannot delete one.",
+	TypeName:              "stripe_billing_meter",
+	IDPrefix:              "mtr_",
+	Description:           "Defines how usage events are aggregated into a billable quantity. `terraform destroy` deactivates the meter, because Stripe cannot delete one.",
+	DataSourceDescription: "Defines how usage events are aggregated into a billable quantity.",
 	Paths: engine.Paths{
 		Create:   "/v1/billing/meters",
 		Retrieve: "/v1/billing/meters/{id}",

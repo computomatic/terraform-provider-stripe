@@ -13,8 +13,9 @@ import (
 // price: Stripe offers DELETE for it, which removes the plan and leaves existing
 // subscriptions on it.
 var Declaration = engine.Declaration{
-	TypeName:    "stripe_plan",
-	Description: "A legacy recurring price. Prefer `stripe_price` for new work. `terraform destroy` deletes the plan, which stops new subscriptions to it and leaves existing ones in place.",
+	TypeName:              "stripe_plan",
+	Description:           "A legacy recurring price. Prefer `stripe_price` for new work. `terraform destroy` deletes the plan, which stops new subscriptions to it and leaves existing ones in place.",
+	DataSourceDescription: "A legacy recurring price. Prefer `stripe_price` for new work.",
 	Paths: engine.Paths{
 		Create:   "/v1/plans",
 		Retrieve: "/v1/plans/{id}",

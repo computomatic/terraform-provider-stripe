@@ -14,9 +14,10 @@ import (
 // state; the voided grant stays in the account. Stripe refuses to void a grant that already
 // expired or was voided, so destroy leaves those as they are.
 var Declaration = engine.Declaration{
-	TypeName:    "stripe_billing_credit_grant",
-	IDPrefix:    "credgr_",
-	Description: "Billing credits given to a customer. `terraform destroy` voids the grant, because Stripe cannot delete one: the unused credits can no longer be applied, and the grant stays in the account. Only `expires_at` and `metadata` can change after creation.",
+	TypeName:              "stripe_billing_credit_grant",
+	IDPrefix:              "credgr_",
+	Description:           "Billing credits given to a customer. `terraform destroy` voids the grant, because Stripe cannot delete one: the unused credits can no longer be applied, and the grant stays in the account. Only `expires_at` and `metadata` can change after creation.",
+	DataSourceDescription: "Billing credits given to a customer.",
 	Paths: engine.Paths{
 		Create:   "/v1/billing/credit_grants",
 		Retrieve: "/v1/billing/credit_grants/{id}",

@@ -3,12 +3,12 @@
 page_title: "stripe_customer_payment_method Data Source - Stripe"
 subcategory: ""
 description: |-
-  A payment method attached to a customer. The resource is the attachment: terraform destroy detaches the payment method from the customer, and Stripe never lets a detached payment method be attached again. The payment method itself is not created here, because creating one takes raw card data: create it with Stripe.js or a SetupIntent, or use a Stripe test payment method such as pm_card_visa, and give its ID as payment_method. Attaching a test payment method returns a new payment method, so the id can differ from payment_method. Only billing_details, metadata and card.exp_year change in place; Stripe's other updatable payment method fields are read-only here. Import with <customer_id>/<payment_method_id>.
+  A payment method attached to a customer.
 ---
 
 # Data Source: stripe_customer_payment_method
 
-A payment method attached to a customer. The resource is the attachment: `terraform destroy` detaches the payment method from the customer, and Stripe never lets a detached payment method be attached again. The payment method itself is not created here, because creating one takes raw card data: create it with Stripe.js or a SetupIntent, or use a Stripe test payment method such as `pm_card_visa`, and give its ID as `payment_method`. Attaching a test payment method returns a new payment method, so the `id` can differ from `payment_method`. Only `billing_details`, `metadata` and `card.exp_year` change in place; Stripe's other updatable payment method fields are read-only here. Import with `<customer_id>/<payment_method_id>`.
+A payment method attached to a customer.
 
 ## Example Usage
 
@@ -23,10 +23,8 @@ data "stripe_customer_payment_method" "acme" {
 
 This data source supports the following arguments:
 
-Exactly one must be set.
-
 * `customer` - (Required) The ID of the parent object.
-* `id` - (Optional) Unique identifier for the object.
+* `id` - (Required) The ID of the customer payment method to read.
 
 ## Attribute Reference
 

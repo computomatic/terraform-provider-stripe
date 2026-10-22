@@ -3,12 +3,12 @@
 page_title: "stripe_terminal_location Data Source - Stripe"
 subcategory: ""
 description: |-
-  A place where you use Stripe Terminal readers. terraform destroy deletes the location. Changing the country of address creates a new location, because Stripe cannot change it.
+  A place where you use Stripe Terminal readers.
 ---
 
 # Data Source: stripe_terminal_location
 
-A place where you use Stripe Terminal readers. `terraform destroy` deletes the location. Changing the country of `address` creates a new location, because Stripe cannot change it.
+A place where you use Stripe Terminal readers.
 
 ## Example Usage
 
@@ -22,9 +22,7 @@ data "stripe_terminal_location" "store" {
 
 This data source supports the following arguments:
 
-Exactly one must be set.
-
-* `id` - (Optional) Unique identifier for the object.
+* `id` - (Required) The ID of the terminal location to read.
 
 ## Attribute Reference
 

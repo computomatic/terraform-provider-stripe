@@ -3,12 +3,12 @@
 page_title: "stripe_invoiceitem Data Source - Stripe"
 subcategory: ""
 description: |-
-  A line to add to a customer's next invoice, or to a draft invoice. terraform destroy deletes the invoice item. Stripe refuses to delete or change one whose invoice is finalized or void; remove it from the state with terraform state rm then.
+  A line to add to a customer's next invoice, or to a draft invoice.
 ---
 
 # Data Source: stripe_invoiceitem
 
-A line to add to a customer's next invoice, or to a draft invoice. `terraform destroy` deletes the invoice item. Stripe refuses to delete or change one whose invoice is finalized or void; remove it from the state with `terraform state rm` then.
+A line to add to a customer's next invoice, or to a draft invoice.
 
 ## Example Usage
 
@@ -22,9 +22,7 @@ data "stripe_invoiceitem" "setup_fee" {
 
 This data source supports the following arguments:
 
-Exactly one must be set.
-
-* `id` - (Optional) Unique identifier for the object.
+* `id` - (Required) The ID of the invoiceitem to read.
 
 ## Attribute Reference
 

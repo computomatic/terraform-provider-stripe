@@ -64,6 +64,11 @@ func (r *Resource) Metadata(_ context.Context, _ resource.MetadataRequest, resp 
 	resp.TypeName = r.m.decl.TypeName
 }
 
+// ImportNote is the declaration's note for the documentation page's Import section.
+func (r *Resource) ImportNote() (string, NoteLevel) {
+	return r.m.decl.ImportNote, r.m.decl.ImportNoteLevel
+}
+
 func (r *Resource) Schema(_ context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
 	resp.Schema = r.schema
 }

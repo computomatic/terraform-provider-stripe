@@ -22,9 +22,7 @@ data "stripe_checkout_session" "order" {
 
 This data source supports the following arguments:
 
-Exactly one must be set.
-
-* `id` - (Optional) Unique identifier for the object.
+* `id` - (Required) The ID of the checkout session to read.
 
 ## Attribute Reference
 
