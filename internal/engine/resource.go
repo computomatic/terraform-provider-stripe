@@ -15,6 +15,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	rschema "github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/tfsdk"
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 	"github.com/hashicorp/terraform-plugin-go/tftypes"
 
@@ -114,7 +115,8 @@ func (r *Resource) Configure(ctx context.Context, req resource.ConfigureRequest,
 // the plan does know equal the state, and every unknown one is a value the configuration
 // leaves unset, no configured value changed, and the plan is the state. An unknown that the
 // configuration sets, such as a reference to an object being replaced, is a pending change
-// and leaves the plan alone.
+// and leaves the plan alone. A transition field whose state holds a value the transition
+// declares Reached keeps it first, so the field takes part in that comparison unchanged.
 //
 // A destroy plan of an object whose destroy is refused fails here, so that `terraform destroy`
 // and a resource dropped from the configuration stop at plan time.
@@ -163,6 +165,9 @@ func (r *Resource) planChange(ctx context.Context, req resource.ModifyPlanReques
 	if req.State.Raw.IsNull() || req.Plan.Raw.IsNull() {
 		return
 	}
+	if r.keepReached(ctx, req, resp) {
+		return
+	}
 	if r.refuseLeavingFinal(req, resp) {
 		return
 	}
@@ -181,7 +186,7 @@ func (r *Resource) planChange(ctx context.Context, req resource.ModifyPlanReques
 		return
 	}
 	configured := false
-	filled, err := tftypes.Transform(req.Plan.Raw, func(p *tftypes.AttributePath, v tftypes.Value) (tftypes.Value, error) {
+	filled, err := tftypes.Transform(resp.Plan.Raw, func(p *tftypes.AttributePath, v tftypes.Value) (tftypes.Value, error) {
 		if v.IsKnown() {
 			return v, nil
 		}
@@ -249,6 +254,48 @@ func valueAt(root tftypes.Value, p *tftypes.AttributePath) tftypes.Value {
 		}
 	}
 	return tftypes.NewValue(tftypes.DynamicPseudoType, nil)
+}
+
+// keepReached plans the state's value of a transition field that holds a value the
+// transition declares Reached where the plan sets the transition's value, such as a decided
+// dispute's `won` for a configured `submitted`: the configuration is satisfied, so the field
+// shows no change and the action is not sent. It reports whether it failed.
+func (r *Resource) keepReached(ctx context.Context, req resource.ModifyPlanRequest, resp *resource.ModifyPlanResponse) bool {
+	for _, t := range r.m.decl.Transitions {
+		name := r.attrName(t.Field)
+		p := tftypes.NewAttributePath().WithAttributeName(name)
+		planned, okPlan := knownString(valueAt(resp.Plan.Raw, p))
+		prior, okState := knownString(valueAt(req.State.Raw, p))
+		if !okPlan || !okState || !r.satisfies(t.Field, planned, prior) {
+			continue
+		}
+		resp.Diagnostics.Append(resp.Plan.SetAttribute(ctx, path.Root(name), prior)...)
+	}
+	return resp.Diagnostics.HasError()
+}
+
+// satisfies reports whether got, a value of the transition field, satisfies want, because a
+// transition to want declares got Reached.
+func (r *Resource) satisfies(field, want, got string) bool {
+	return slices.ContainsFunc(r.m.decl.Transitions, func(t Transition) bool {
+		return t.Field == field && t.Value == want && slices.Contains(t.Reached, got)
+	})
+}
+
+// keepPlannedOverReached writes into the new state the planned value of each transition field
+// whose response holds a value that satisfies it, such as a dispute Stripe decided before its
+// update or submit answered: the state then equals the plan, and the next refresh reads
+// Stripe's value, which keepReached plans as no change.
+func (r *Resource) keepPlannedOverReached(ctx context.Context, state *tfsdk.State, body wire.Object, plan basetypes.ObjectValue) diag.Diagnostics {
+	var diags diag.Diagnostics
+	for _, t := range r.m.decl.Transitions {
+		name := r.attrName(t.Field)
+		want, ok := transitionValue(plan.Attributes()[name])
+		if ok && r.satisfies(t.Field, want, wireScalar(body, t.Field)) {
+			diags.Append(state.SetAttribute(ctx, path.Root(name), plan.Attributes()[name])...)
+		}
+	}
+	return diags
 }
 
 // refuseLeavingFinal fails the plan that sets a transition field, out of a value the transition
@@ -485,14 +532,16 @@ func (r *Resource) Create(ctx context.Context, req resource.CreateRequest, resp 
 		return
 	}
 	resp.Diagnostics.Append(resp.State.Set(ctx, state)...)
+	resp.Diagnostics.Append(r.keepPlannedOverReached(ctx, &resp.State, body, plan)...)
 	resp.Diagnostics.Append(r.m.setIdentity(ctx, resp.Identity, id, parent)...)
 	if r.unreached(&resp.Diagnostics, body, plan) {
 		r.taintedAfterCreate(&resp.Diagnostics, id)
 	}
 }
 
-// unreached fails the apply when a transition field the plan sets is not at the planned value
-// once the actions have run, and reports whether it did. The state keeps what Stripe left.
+// unreached fails the apply when a transition field the plan sets is not at the planned value,
+// or at a value that satisfies it, once the actions have run, and reports whether it did. The
+// state keeps what Stripe left.
 func (r *Resource) unreached(diags *diag.Diagnostics, body wire.Object, plan basetypes.ObjectValue) bool {
 	failed := false
 	seen := map[string]bool{}
@@ -501,7 +550,7 @@ func (r *Resource) unreached(diags *diag.Diagnostics, body wire.Object, plan bas
 		name := n.AttrName()
 		want, ok := transitionValue(plan.Attributes()[name])
 		got := wireScalar(body, t.Field)
-		if seen[name] || !ok || got == want {
+		if seen[name] || !ok || got == want || r.satisfies(t.Field, want, got) {
 			continue
 		}
 		seen[name] = true
@@ -631,6 +680,7 @@ func (r *Resource) Update(ctx context.Context, req resource.UpdateRequest, resp 
 		return
 	}
 	resp.Diagnostics.Append(resp.State.Set(ctx, next)...)
+	resp.Diagnostics.Append(r.keepPlannedOverReached(ctx, &resp.State, body, plan)...)
 	resp.Diagnostics.Append(r.m.setIdentity(ctx, resp.Identity, id, parent)...)
 	r.unreached(&resp.Diagnostics, body, plan)
 }
@@ -691,12 +741,12 @@ func (r *Resource) Delete(ctx context.Context, req resource.DeleteRequest, resp 
 
 // applyTransitions calls the action endpoint of each transition whose planned value is known
 // and differs from the object's, and returns the body with each action's response laid over it. A value the object already
-// holds sends nothing.
+// holds, or one that satisfies it, sends nothing.
 func (r *Resource) applyTransitions(ctx context.Context, body wire.Object, plan basetypes.ObjectValue, id, parent string) (wire.Object, error) {
 	for _, t := range r.m.decl.Transitions {
 		n, _ := r.m.top(t.Field)
 		current := wireScalar(body, t.Field)
-		if want, ok := transitionValue(plan.Attributes()[n.AttrName()]); !ok || want != t.Value || current == t.Value {
+		if want, ok := transitionValue(plan.Attributes()[n.AttrName()]); !ok || want != t.Value || current == t.Value || r.satisfies(t.Field, t.Value, current) {
 			continue
 		}
 		if len(t.From) > 0 && !slices.Contains(t.From, current) {

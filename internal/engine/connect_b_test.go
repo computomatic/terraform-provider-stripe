@@ -113,12 +113,13 @@ func TestBoolTransitionSendsTheObjectsFieldsAndKeepsIncludedOnes(t *testing.T) {
 	}
 }
 
-// A bool transition takes `true` or `false` only and has no final value, the configuration takes only the value a
+// A bool transition takes `true` or `false` only and has no final or reached value, the configuration takes only the value a
 // transition sets, and a sent field must be a top-level field.
 func TestBoolTransitionRules(t *testing.T) {
 	for name, transition := range map[string]Transition{
 		"not a bool value": {Field: "closed", Value: "yes", Path: "/v2/core/widgets/{id}/close"},
 		"a final value":    {Field: "closed", Value: "true", Path: "/v2/core/widgets/{id}/close", Final: []string{"false"}},
+		"a reached value":  {Field: "closed", Value: "true", Path: "/v2/core/widgets/{id}/close", Reached: []string{"false"}},
 		"sends no field":   {Field: "closed", Value: "true", Path: "/v2/core/widgets/{id}/close", Send: []string{"nothing"}},
 	} {
 		decl := v2Declaration()

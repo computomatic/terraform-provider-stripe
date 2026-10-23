@@ -127,6 +127,13 @@ type Transition struct {
 	// such as an alert's `archived`. A plan that moves the field from one of them to Value fails, because Stripe
 	// refuses the action. A bool field has none. Transitions that share a Value share it.
 	Final []string
+	// Reached lists the values of Field, other than Value, that satisfy a configured Value,
+	// such as the outcome a dispute reads once Stripe decides it after `submitted`. While the
+	// object holds one, the plan keeps it, so a configured Value shows no change and the
+	// action is not sent. An apply that plans Value and gets one back, because Stripe moved
+	// the object on while the request ran, keeps Value in the state, as planned. A bool field
+	// has none. Transitions that share a Value share it.
+	Reached []string
 	// From lists the values of Field from which the action is sent; from any other value it is
 	// skipped. Empty means any value. Transitions that share a Value run in declaration order,
 	// each from what the one before left, so a payment intent's `succeeded` confirms it from

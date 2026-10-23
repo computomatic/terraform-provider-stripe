@@ -21,15 +21,22 @@ import (
 // server-filled, and a change of reason leaves the hashes the configuration does not set to
 // Stripe's answer instead of the state. Submitting is an action endpoint that moves `status` from
 // `unsubmitted` to `submitted`, after which evidence is fixed and metadata still changes
-// ("submit"); Stripe then decides the dispute, which the suite does not prove. A dispute cannot
-// be deleted or withdrawn, so destroy is refused.
+// ("submit"). Stripe then decides the dispute, in test mode about two seconds later by the
+// fraudulent explanation `winning_evidence` or `losing_evidence` ("Decided Issuing disputes in
+// test mode"), and `status` reads `won` or `lost`, which satisfies a configured `submitted`, so
+// the plan keeps it and the submit, which Stripe would refuse, is not sent again. Stripe's
+// dispute lifecycle also moves a dispute left unsubmitted for 110 days, or rejected, to
+// `expired` (docs.stripe.com/issuing/purchases/disputes, unproven by the suite), so `expired` is
+// final rather than reached: it may never have been submitted. A dispute cannot be deleted or
+// withdrawn, so destroy is refused.
 var Declaration = engine.Declaration{
 	TypeName: "stripe_issuing_dispute",
 	IDPrefix: "idp_",
 	Description: "A dispute of an Issuing transaction, with the evidence for it. " +
 		"Stripe issues cards only for a platform's connected accounts, so manage disputes through a provider configuration whose `stripe_account` is a connected account with the `card_issuing` capability active. " +
 		"A new dispute is `unsubmitted`, for the whole transaction unless `amount` says less, and `amount`, `evidence` and `metadata` change in place until it is submitted. " +
-		"Set `status` to `submitted` to submit it to the card network, on create or later. After that Stripe refuses a change to `evidence` or `amount`, and decides the dispute: `status` then reads `won`, `lost` or `expired`, and a configuration that still sets `submitted` plans a change Stripe refuses, so remove `status` from it then.",
+		"Set `status` to `submitted` to submit it to the card network, on create or later. After that Stripe refuses a change to `evidence` or `amount`, and decides the dispute: `status` then keeps reading its outcome, `won` or `lost`, which satisfies a configured `submitted`, so the plan shows no change. " +
+		"A dispute that Stripe expires, such as one left unsubmitted too long, reads `expired` and cannot be submitted: a configuration that sets `submitted` then fails the plan, so remove `status` from it.",
 	DataSourceDescription: "A dispute of an Issuing transaction, on a connected account, with the evidence for it. Look one up by its `id`.",
 	Paths: engine.Paths{
 		Create:   "/v1/issuing/disputes",
@@ -39,7 +46,7 @@ var Declaration = engine.Declaration{
 	},
 	Delete:          engine.Refuse,
 	RefuseReason:    "Stripe cannot delete or withdraw a dispute.",
-	Transitions:     []engine.Transition{{Field: "status", Value: "submitted", Path: "/v1/issuing/disputes/{id}/submit"}},
+	Transitions:     []engine.Transition{{Field: "status", Value: "submitted", Path: "/v1/issuing/disputes/{id}/submit", Final: []string{"expired"}, Reached: []string{"won", "lost"}}},
 	ServerDefaulted: evidenceHashes,
 	FilledFrom:      map[string][]string{"evidence.reason": evidenceHashes},
 }
