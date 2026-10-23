@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/hashicorp/terraform-plugin-framework/attr"
+	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	rschema "github.com/hashicorp/terraform-plugin-framework/resource/schema"
@@ -49,6 +50,8 @@ type Resource struct {
 	schema  rschema.Schema
 	objType basetypes.ObjectType
 	api     api
+	// live is the provider configuration's live-mode check, nil until the provider is configured.
+	live *LiveCheck
 	// pollInterval is how often expire checks the status.
 	pollInterval time.Duration
 }
@@ -74,6 +77,10 @@ func (r *Resource) ImportNote() (string, NoteLevel) {
 // without its sigil, or "" for one that never does.
 func (r *Resource) DestroyNote() string { return r.m.destroyNote() }
 
+// MoneyNote is the documentation page's callout for a resource that moves money, without its
+// sigil, or "" for one that does not.
+func (r *Resource) MoneyNote() string { return r.m.moneyNote() }
+
 func (r *Resource) Schema(_ context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
 	resp.Schema = r.schema
 }
@@ -86,12 +93,13 @@ func (r *Resource) Configure(ctx context.Context, req resource.ConfigureRequest,
 	if req.ProviderData == nil {
 		return
 	}
-	client, ok := req.ProviderData.(Client)
+	data, ok := req.ProviderData.(*ProviderData)
 	if !ok {
-		resp.Diagnostics.AddError("Unexpected provider data", fmt.Sprintf("expected a Stripe client, got %T", req.ProviderData))
+		resp.Diagnostics.AddError("Unexpected provider data", fmt.Sprintf("expected the provider's data, got %T", req.ProviderData))
 		return
 	}
-	r.api = api{m: r.m, client: client, typeAt: func(p path.Path) (attr.Type, bool) {
+	r.live = data.Live
+	r.api = api{m: r.m, client: data.Client, typeAt: func(p path.Path) (attr.Type, bool) {
 		a, diags := r.schema.AttributeAtPath(ctx, p)
 		if diags.HasError() {
 			return nil, false
@@ -110,7 +118,39 @@ func (r *Resource) Configure(ctx context.Context, req resource.ConfigureRequest,
 //
 // A destroy plan of an object whose destroy is refused fails here, so that `terraform destroy`
 // and a resource dropped from the configuration stop at plan time.
+//
+// A create, or a plan that still differs from the state, of a resource that moves money is
+// then checked against the account's mode, last, so a plan that changes nothing or that
+// another check refused asks Stripe nothing.
 func (r *Resource) ModifyPlan(ctx context.Context, req resource.ModifyPlanRequest, resp *resource.ModifyPlanResponse) {
+	r.planChange(ctx, req, resp)
+	if resp.Diagnostics.HasError() || req.Plan.Raw.IsNull() {
+		return
+	}
+	if req.State.Raw.IsNull() || !resp.Plan.Raw.Equal(req.State.Raw) {
+		r.refuseLiveMoney(ctx, &resp.Diagnostics)
+	}
+}
+
+// refuseLiveMoney fails a change of a resource that moves money unless the provider's
+// live-mode check allows it, and reports whether it did. It never assumes test mode: a
+// resource the provider has not configured is refused.
+func (r *Resource) refuseLiveMoney(ctx context.Context, diags *diag.Diagnostics) bool {
+	if !r.m.decl.MovesMoney {
+		return false
+	}
+	if r.live == nil {
+		diags.AddError(cannotTellSummary, "The provider is not configured.")
+		return true
+	}
+	if d := r.live.refusal(ctx, r.m.decl.TypeName); d != nil {
+		diags.Append(d)
+		return true
+	}
+	return false
+}
+
+func (r *Resource) planChange(ctx context.Context, req resource.ModifyPlanRequest, resp *resource.ModifyPlanResponse) {
 	if !req.State.Raw.IsNull() && req.Plan.Raw.IsNull() {
 		if reason := r.m.refusal(req.State.Raw); reason != "" {
 			resp.Diagnostics.AddError("Cannot destroy "+r.m.decl.TypeName, r.m.destroyRefusal(reason))
@@ -377,7 +417,7 @@ func (r *Resource) Create(ctx context.Context, req resource.CreateRequest, resp 
 	ctx, cancel, diags := operationContext(ctx, plan, "create")
 	defer cancel()
 	resp.Diagnostics.Append(diags...)
-	if resp.Diagnostics.HasError() {
+	if resp.Diagnostics.HasError() || r.refuseLiveMoney(ctx, &resp.Diagnostics) {
 		return
 	}
 
@@ -415,12 +455,14 @@ func (r *Resource) Create(ctx context.Context, req resource.CreateRequest, resp 
 		followUp, err := r.m.encodeFollowUp(plan)
 		if err != nil {
 			resp.Diagnostics.AddError("Cannot build the follow-up update", err.Error())
+			r.taintedAfterCreate(&resp.Diagnostics, id)
 			return
 		}
 		if len(followUp) > 0 {
 			updated, err := r.api.call(ctx, "POST", r.m.expand(r.m.decl.Paths.Update, id, parent), r.api.expanded(followUp, ""))
 			if err != nil {
 				r.api.fail(&resp.Diagnostics, err)
+				r.taintedAfterCreate(&resp.Diagnostics, id)
 				return
 			}
 			// Stripe sends once-returned fields, such as a webhook secret, on the create
@@ -431,16 +473,56 @@ func (r *Resource) Create(ctx context.Context, req resource.CreateRequest, resp 
 	body, err = r.applyTransitions(ctx, body, plan, id, parent)
 	if err != nil {
 		r.api.fail(&resp.Diagnostics, err)
+		r.taintedAfterCreate(&resp.Diagnostics, id)
 		return
 	}
 
 	state, diags := r.m.decodeState(body, plan, r.objType, false, nil)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
+		r.taintedAfterCreate(&resp.Diagnostics, id)
 		return
 	}
 	resp.Diagnostics.Append(resp.State.Set(ctx, state)...)
 	resp.Diagnostics.Append(r.m.setIdentity(ctx, resp.Identity, id, parent)...)
+	if r.unreached(&resp.Diagnostics, body, plan) {
+		r.taintedAfterCreate(&resp.Diagnostics, id)
+	}
+}
+
+// unreached fails the apply when a transition field the plan sets is not at the planned value
+// once the actions have run, and reports whether it did. The state keeps what Stripe left.
+func (r *Resource) unreached(diags *diag.Diagnostics, body wire.Object, plan basetypes.ObjectValue) bool {
+	failed := false
+	seen := map[string]bool{}
+	for _, t := range r.m.decl.Transitions {
+		n, _ := r.m.top(t.Field)
+		name := n.AttrName()
+		want, ok := transitionValue(plan.Attributes()[name])
+		got := wireScalar(body, t.Field)
+		if seen[name] || !ok || got == want {
+			continue
+		}
+		seen[name] = true
+		thing := noun(r.m.decl.TypeName)
+		diags.AddAttributeError(path.Root(name), fmt.Sprintf("Stripe left the %s at `%s`", thing, got),
+			fmt.Sprintf("Setting `%s` to `%s` stopped at `%s`: no action moves %s from `%s` to `%s`.", name, want, got, WithArticle(thing), got, want))
+		failed = true
+	}
+	return failed
+}
+
+// taintedAfterCreate adds, on a resource whose destroy is refused, the way out of the taint
+// Terraform puts on an object whose create failed after Stripe made it: the next apply would
+// destroy it, which is refused.
+func (r *Resource) taintedAfterCreate(diags *diag.Diagnostics, id string) {
+	if r.m.decl.Delete != Refuse {
+		return
+	}
+	thing := noun(r.m.decl.TypeName)
+	diags.AddError("The "+thing+" exists and is tainted", fmt.Sprintf(
+		"The %s `%s` exists in Stripe and Terraform has marked it tainted. Because it cannot be destroyed, run `terraform untaint <address>` once the configuration is fixed, or remove it from the state.",
+		thing, id))
 }
 
 func (r *Resource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
@@ -487,7 +569,7 @@ func (r *Resource) Update(ctx context.Context, req resource.UpdateRequest, resp 
 	ctx, cancel, diags := operationContext(ctx, plan, "update")
 	defer cancel()
 	resp.Diagnostics.Append(diags...)
-	if resp.Diagnostics.HasError() {
+	if resp.Diagnostics.HasError() || r.refuseLiveMoney(ctx, &resp.Diagnostics) {
 		return
 	}
 
@@ -549,6 +631,7 @@ func (r *Resource) Update(ctx context.Context, req resource.UpdateRequest, resp 
 	}
 	resp.Diagnostics.Append(resp.State.Set(ctx, next)...)
 	resp.Diagnostics.Append(r.m.setIdentity(ctx, resp.Identity, id, parent)...)
+	r.unreached(&resp.Diagnostics, body, plan)
 }
 
 func (r *Resource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
@@ -611,7 +694,11 @@ func (r *Resource) Delete(ctx context.Context, req resource.DeleteRequest, resp 
 func (r *Resource) applyTransitions(ctx context.Context, body wire.Object, plan basetypes.ObjectValue, id, parent string) (wire.Object, error) {
 	for _, t := range r.m.decl.Transitions {
 		n, _ := r.m.top(t.Field)
-		if want, ok := transitionValue(plan.Attributes()[n.AttrName()]); !ok || want != t.Value || wireScalar(body, t.Field) == t.Value {
+		current := wireScalar(body, t.Field)
+		if want, ok := transitionValue(plan.Attributes()[n.AttrName()]); !ok || want != t.Value || current == t.Value {
+			continue
+		}
+		if len(t.From) > 0 && !slices.Contains(t.From, current) {
 			continue
 		}
 		var params wire.Object

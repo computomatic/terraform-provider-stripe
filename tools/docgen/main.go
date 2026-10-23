@@ -71,6 +71,7 @@ func loadSchemas(ctx context.Context) (*schemas, error) {
 		noted, ok := r.(interface {
 			ImportNote() (string, engine.NoteLevel)
 			DestroyNote() string
+			MoneyNote() string
 		})
 		if !ok {
 			continue
@@ -79,6 +80,7 @@ func loadSchemas(ctx context.Context) (*schemas, error) {
 			if rs.Type == meta.TypeName {
 				rs.ImportNote, rs.ImportNoteLevel = noted.ImportNote()
 				rs.DestroyNote = noted.DestroyNote()
+				rs.MoneyNote = noted.MoneyNote()
 			}
 		}
 	}
@@ -125,6 +127,13 @@ func renderAll(s *schemas, root string) (map[string]string, error) {
 	if pages["index.md"], err = renderProvider(s.Provider, prose, ex); err != nil {
 		return nil, fmt.Errorf("provider: %w", err)
 	}
+	guides, err := readGuides(filepath.Join(root, "docs-src", "guides"))
+	if err != nil {
+		return nil, err
+	}
+	for path, page := range guides {
+		pages[path] = page
+	}
 	for path, page := range pages {
 		if len(page) > maxPageBytes {
 			return nil, fmt.Errorf("%s is %d bytes, over the Registry limit of %d", path, len(page), maxPageBytes)
@@ -137,7 +146,30 @@ func pagePath(dir, typeName string) string {
 	return filepath.Join(dir, strings.TrimPrefix(typeName, "stripe_")+".md")
 }
 
-// writePages writes the pages and deletes any other page under resources/ and data-sources/.
+// readGuides reads the hand-written guides, keyed by their path under docs/. A guide is copied
+// as it is, and must open with front matter that gives its `page_title`, which the Registry
+// requires of guides (documentation layout ADR, D3a).
+func readGuides(dir string) (map[string]string, error) {
+	files, err := filepath.Glob(filepath.Join(dir, "*.md"))
+	if err != nil {
+		return nil, err
+	}
+	guides := map[string]string{}
+	for _, f := range files {
+		data, err := os.ReadFile(f)
+		if err != nil {
+			return nil, err
+		}
+		if !strings.HasPrefix(string(data), "---\npage_title: ") {
+			return nil, fmt.Errorf("guide %s must open with front matter whose first line is page_title", filepath.Base(f))
+		}
+		guides[filepath.Join("guides", filepath.Base(f))] = string(data)
+	}
+	return guides, nil
+}
+
+// writePages writes the pages and deletes any other page under resources/, data-sources/ and
+// guides/.
 func writePages(out string, pages map[string]string) error {
 	for path, page := range pages {
 		full := filepath.Join(out, path)
@@ -148,7 +180,7 @@ func writePages(out string, pages map[string]string) error {
 			return err
 		}
 	}
-	for _, dir := range []string{"resources", "data-sources"} {
+	for _, dir := range []string{"resources", "data-sources", "guides"} {
 		entries, err := os.ReadDir(filepath.Join(out, dir))
 		if err != nil {
 			if os.IsNotExist(err) {

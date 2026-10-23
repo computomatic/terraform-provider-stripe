@@ -3,12 +3,12 @@
 page_title: "stripe_transfer Data Source - Stripe"
 subcategory: ""
 description: |-
-  Money moved from the platform's balance to a connected account. Look one up by its id. Read one of its reversals with the stripe_transfer_reversal data source.
+  Money moved from the platform's balance to a connected account. Read one of its reversals with the stripe_transfer_reversal data source.
 ---
 
 # Data Source: stripe_transfer
 
-Money moved from the platform's balance to a connected account. Look one up by its `id`. Read one of its reversals with the `stripe_transfer_reversal` data source.
+Money moved from the platform's balance to a connected account. Read one of its reversals with the `stripe_transfer_reversal` data source.
 
 ## Example Usage
 
@@ -32,20 +32,20 @@ This data source supports the following arguments:
 
 This data source exports the following attributes in addition to the arguments above:
 
-* `amount` - Amount in cents (or local equivalent) to be transferred.
+* `amount` - A positive integer in cents (or local equivalent) representing how much to transfer.
 * `amount_reversed` - Amount in cents (or local equivalent) reversed (can be less than the amount attribute on the transfer if a partial reversal was issued).
 * `balance_transaction` - Balance transaction that describes the impact of this transfer on your account balance.
 * `created` - Time that this record of the transfer was first created.
-* `currency` - Three-letter [ISO currency code](https://www.iso.org/iso-4217-currency-codes.html), in lowercase. Must be a [supported currency](https://stripe.com/docs/currencies).
+* `currency` - Three-letter [ISO code for currency](https://www.iso.org/iso-4217-currency-codes.html) in lowercase. Must be a [supported currency](https://docs.stripe.com/currencies).
 * `description` - An arbitrary string attached to the object. Often useful for displaying to users.
-* `destination` - ID of the Stripe account the transfer was sent to.
+* `destination` - The ID of a connected Stripe account. <a href="/docs/connect/separate-charges-and-transfers">See the Connect documentation</a> for details.
 * `destination_payment` - If the destination is a Stripe account, this will be the ID of the payment that the destination account received for the transfer.
 * `livemode` - If the object exists in live mode, the value is `true`. If the object exists in test mode, the value is `false`.
-* `metadata` - Set of [key-value pairs](https://docs.stripe.com/api/metadata) that you can attach to an object. This can be useful for storing additional information about the object in a structured format.
+* `metadata` - Set of [key-value pairs](https://docs.stripe.com/api/metadata) that you can attach to an object. This can be useful for storing additional information about the object in a structured format. Individual keys can be unset by posting an empty value to them. All keys can be unset by posting an empty value to `metadata`.
 * `reversals` - A list of reversals that have been applied to the transfer. See [`reversals`](#reversals) below.
 * `reversed` - Whether the transfer has been fully reversed. If the transfer is only partially reversed, this attribute will still be false.
-* `source_transaction` - ID of the charge that was used to fund the transfer. If null, the transfer was funded from the available balance.
-* `source_type` - The source balance this transfer came from. One of `card`, `fpx`, or `bank_account`.
+* `source_transaction` - You can use this parameter to transfer funds from a charge before they are added to your available balance. A pending balance will transfer immediately but the funds will not become available until the original charge becomes available. [See the Connect documentation](https://docs.stripe.com/connect/separate-charges-and-transfers#transfer-availability) for details.
+* `source_type` - The source balance to use for this transfer. One of `bank_account`, `card`, or `fpx`. For most users, this will default to `card`. Possible values: `bank_account`, `card`, `fpx`.
 * `transfer_group` - A string that identifies this transaction as part of a group. See the [Connect documentation](https://docs.stripe.com/connect/separate-charges-and-transfers#transfer-options) for details.
 
 <a id="reversals"></a>

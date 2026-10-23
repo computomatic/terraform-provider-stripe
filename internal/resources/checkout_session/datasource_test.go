@@ -46,8 +46,8 @@ data "stripe_checkout_session" "test" {
 				resource.TestCheckResourceAttr("data.stripe_checkout_session.test", "payment_status", "unpaid"),
 				resource.TestCheckResourceAttr("data.stripe_checkout_session.test", "mode", "payment"),
 				resource.TestCheckResourceAttr("data.stripe_checkout_session.test", "amount_total", "4000"),
-				resource.TestCheckResourceAttr("data.stripe_checkout_session.test", "line_items.data.#", "1"),
-				resource.TestCheckResourceAttr("data.stripe_checkout_session.test", "line_items.data.0.quantity", "2"),
+				resource.TestCheckResourceAttr("data.stripe_checkout_session.test", "line_items.#", "1"),
+				resource.TestCheckResourceAttr("data.stripe_checkout_session.test", "line_items.0.quantity", "2"),
 			),
 		}},
 	})

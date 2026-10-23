@@ -122,8 +122,13 @@ type Transition struct {
 	Send []string
 	// Final lists the values of Field, other than Value, that the transition cannot leave,
 	// such as an alert's `archived`. A plan that moves the field from one of them to Value fails, because Stripe
-	// refuses the action. A bool field has none.
+	// refuses the action. A bool field has none. Transitions that share a Value share it.
 	Final []string
+	// From lists the values of Field from which the action is sent; from any other value it is
+	// skipped. Empty means any value. Transitions that share a Value run in declaration order,
+	// each from what the one before left, so a payment intent's `succeeded` confirms it from
+	// `requires_confirmation` and then captures it from `requires_capture`.
+	From []string
 }
 
 // AdvanceAction moves a required time field forward in place through an action endpoint, as a
@@ -242,8 +247,14 @@ type Declaration struct {
 	// Transitions make a response-only top-level string or bool field, such as `status`, Optional and
 	// Computed: a configured value that differs from the object's calls the action endpoint
 	// that sets it, after create and on update. A value no transition sets is refused at
-	// validation. The field is never sent in a request body.
+	// validation. The field is never sent in a request body. An apply that leaves the field at
+	// another value than the planned one fails, naming the value Stripe left.
 	Transitions []Transition
+	// MovesMoney marks a resource whose create, update or transition can move real money. In a
+	// live-mode account such a change fails at plan time, and again at apply, unless the
+	// provider sets `allow_live_money_movement` (adrs/1-pending/2026-10-22-money-moving-resources).
+	// Reads, imports and destroy are never checked.
+	MovesMoney bool
 
 	// OnceReturned lists outputs Stripe returns only at creation. They are Computed and
 	// Sensitive, and read and update responses that omit them keep the prior value.

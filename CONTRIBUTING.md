@@ -29,6 +29,8 @@ A resource is a short declaration in `internal/resources/<name>` that the generi
 - the six acceptance tests `TestAcc<Name>_{create,update,replace,import,delete,drift}`. Destroy deletes where Stripe has a `DELETE`, archives where Stripe has a reversible deactivation, and is refused otherwise (`engine.Refuse`). Every test of a resource whose destroy is refused ends with `acctest.Forget`, which removes the object from the state with a `removed` block, because the harness's closing destroy would fail; its `_delete` test proves the refusal at plan time and with `tfacc.Untouched` that nothing was sent, and its `_replace` test proves that a replacement is refused at plan time and a taint at apply. Such a test that may skip for a gap in the fake probes the fake before it creates anything, with `tfacc.SkipUnlessFakeServes`;
 - its regenerated pages under `docs/`.
 
+A resource whose create, update or `status` change can move money sets `MovesMoney` in its declaration and joins the list in `TestMoneyMovingResources` (`internal/provider`). In a live-mode account its changes then fail unless the provider sets `allow_live_money_movement`; its acceptance tests need nothing more, because the fake's balance is in test mode.
+
 A read-only object, such as the balance or the tax code catalogue, has a `datasource.go`, a data source example and one `TestAcc<Name>_read` instead. `internal/resources` checks the declaration, the examples and the tests.
 
 ## Docs

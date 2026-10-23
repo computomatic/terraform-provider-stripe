@@ -16,6 +16,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 
+	"github.com/computomatic/terraform-provider-stripe/internal/engine"
 	"github.com/computomatic/terraform-provider-stripe/internal/resources/account"
 	"github.com/computomatic/terraform-provider-stripe/internal/resources/account_capability"
 	"github.com/computomatic/terraform-provider-stripe/internal/resources/account_external_account"
@@ -157,6 +158,9 @@ type stripeProviderModel struct {
 	FilesBaseURL  types.String `tfsdk:"files_base_url"`
 	StripeAccount types.String `tfsdk:"stripe_account"`
 	MaxRetries    types.Int64  `tfsdk:"max_retries"`
+	// AllowLiveMoneyMovement has no environment fallback: a switch that moves live money
+	// belongs in the configuration, where review sees it.
+	AllowLiveMoneyMovement types.Bool `tfsdk:"allow_live_money_movement"`
 }
 
 func (p *stripeProvider) Metadata(_ context.Context, _ provider.MetadataRequest, resp *provider.MetadataResponse) {
@@ -189,6 +193,10 @@ func (p *stripeProvider) Schema(_ context.Context, _ provider.SchemaRequest, res
 				Optional:    true,
 				Description: fmt.Sprintf("Retries per request on transport errors, 429 and 5xx responses. Defaults to %d.", stripeapi.DefaultMaxRetries),
 			},
+			"allow_live_money_movement": schema.BoolAttribute{
+				Optional:    true,
+				Description: "Allows the resources that move money, such as `stripe_payment_intent` and `stripe_transfer`, to create and change objects in a live-mode Stripe account. Defaults to false: they then work in sandboxes and test mode, and fail at plan time in live mode. The provider asks Stripe for the account's mode; it never infers it from the key.",
+			},
 		},
 	}
 }
@@ -215,6 +223,10 @@ func (p *stripeProvider) Configure(ctx context.Context, req provider.ConfigureRe
 		resp.Diagnostics.AddAttributeError(path.Root("max_retries"), "Unknown value",
 			"The provider cannot be configured while max_retries is unknown. Set it statically or apply its source first.")
 	}
+	if config.AllowLiveMoneyMovement.IsUnknown() {
+		resp.Diagnostics.AddAttributeError(path.Root("allow_live_money_movement"), "Unknown value",
+			"The provider cannot be configured while allow_live_money_movement is unknown. Set it statically or apply its source first.")
+	}
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -226,8 +238,12 @@ func (p *stripeProvider) Configure(ctx context.Context, req provider.ConfigureRe
 	}
 
 	client := stripeapi.New(cfg, stripeapi.Options{Version: p.version})
-	resp.DataSourceData = client
-	resp.ResourceData = client
+	data := &engine.ProviderData{
+		Client: client,
+		Live:   engine.NewLiveCheck(client, config.AllowLiveMoneyMovement.ValueBool(), cfg.StripeAccount),
+	}
+	resp.DataSourceData = data
+	resp.ResourceData = data
 }
 
 func (p *stripeProvider) Resources(_ context.Context) []func() resource.Resource {
@@ -283,6 +299,14 @@ func (p *stripeProvider) Resources(_ context.Context) []func() resource.Resource
 		must(account_person.NewResource()),
 		must(core_account.NewResource()),
 		must(core_account_person.NewResource()),
+		// The resources that move money (adrs/1-pending/2026-10-22-money-moving-resources).
+		must(payment_intent.NewResource()),
+		must(refund.NewResource()),
+		must(checkout_session.NewResource()),
+		must(topup.NewResource()),
+		must(transfer.NewResource()),
+		must(transfer_reversal.NewResource()),
+		must(application_fee_refund.NewResource()),
 	}
 }
 

@@ -7,12 +7,12 @@ import "github.com/computomatic/terraform-provider-stripe/internal/fields"
 
 // Table lists every request and response field of the object.
 var Table = []fields.Field{
-	{Name: "amount", Shape: fields.Int, Response: true, Description: "Amount, in cents (or local equivalent)."},
+	{Name: "amount", Shape: fields.Int, Create: true, Response: true, ServerDefaulted: true, Description: "Amount, in cents (or local equivalent)."},
 	{Name: "balance_transaction", Shape: fields.String, Response: true, Description: "Balance transaction that describes the impact on your account balance."},
 	{Name: "charge", Shape: fields.String, Response: true, Description: "ID of the charge that's refunded."},
 	{Name: "created", Shape: fields.Int, Response: true, Description: "Time at which the object was created. Measured in seconds since the Unix epoch."},
-	{Name: "currency", Shape: fields.String, Response: true, Description: "Three-letter [ISO currency code](https://www.iso.org/iso-4217-currency-codes.html), in lowercase. Must be a [supported currency](https://stripe.com/docs/currencies)."},
-	{Name: "customer", Shape: fields.String, Response: true, Description: "ID of the customer of this refund."},
+	{Name: "currency", Shape: fields.String, Create: true, Response: true, ServerDefaulted: true, Description: "Three-letter [ISO currency code](https://www.iso.org/iso-4217-currency-codes.html), in lowercase. Must be a [supported currency](https://stripe.com/docs/currencies)."},
+	{Name: "customer", Shape: fields.String, Create: true, Response: true, Description: "Customer whose customer balance to refund from."},
 	{Name: "customer_account", Shape: fields.String, Response: true, Description: "ID of the account of this refund."},
 	{Name: "description", Shape: fields.String, Response: true, Description: "An arbitrary string attached to the object. You can use this for displaying to users (available on non-card refunds only)."},
 	{Name: "destination_details", Shape: fields.Object, Response: true, Fields: []fields.Field{
@@ -83,8 +83,8 @@ var Table = []fields.Field{
 	{Name: "failure_balance_transaction", Shape: fields.String, Response: true, Description: "After the refund fails, this balance transaction describes the adjustment made on your account balance that reverses the initial balance transaction."},
 	{Name: "failure_reason", Shape: fields.String, Response: true, Description: "Provides the reason for the refund failure. Possible values are: `lost_or_stolen_card`, `expired_or_canceled_card`, `charge_for_pending_refund_disputed`, `insufficient_funds`, `declined`, `merchant_request`, or `unknown`."},
 	{Name: "id", Shape: fields.String, Response: true, Description: "Unique identifier for the object."},
-	{Name: "instructions_email", Shape: fields.String, Response: true, Description: "For payment methods without native refund support (for example, Konbini, PromptPay), provide an email address for the customer to receive refund instructions."},
-	{Name: "metadata", Shape: fields.StringMap, Response: true, Description: "Set of [key-value pairs](https://docs.stripe.com/api/metadata) that you can attach to an object. This can be useful for storing additional information about the object in a structured format."},
+	{Name: "instructions_email", Shape: fields.String, Create: true, Response: true, Description: "For payment methods without native refund support (e.g., Konbini, PromptPay), use this email from the customer to receive refund instructions."},
+	{Name: "metadata", Shape: fields.StringMap, Create: true, Update: true, Response: true, Description: "Set of [key-value pairs](https://docs.stripe.com/api/metadata) that you can attach to an object. This can be useful for storing additional information about the object in a structured format. Individual keys can be unset by posting an empty value to them. All keys can be unset by posting an empty value to `metadata`."},
 	{Name: "next_action", Shape: fields.Object, Response: true, Fields: []fields.Field{
 		{Name: "display_details", Shape: fields.Object, Response: true, Fields: []fields.Field{
 			{Name: "email_sent", Shape: fields.Object, Response: true, Fields: []fields.Field{
@@ -95,15 +95,18 @@ var Table = []fields.Field{
 		}},
 		{Name: "type", Shape: fields.String, Response: true, Description: "Type of the next action to perform."},
 	}},
-	{Name: "payment_intent", Shape: fields.String, Response: true, Description: "ID of the PaymentIntent that's refunded."},
+	{Name: "origin", Shape: fields.String, Create: true, Enum: []string{"customer_balance"}, Description: "Origin of the refund"},
+	{Name: "payment_intent", Shape: fields.String, Required: true, Create: true, Response: true, Description: "The identifier of the PaymentIntent to refund."},
 	{Name: "payment_method", Shape: fields.String, Response: true, Description: "ID of the payment method associated with this refund."},
 	{Name: "pending_reason", Shape: fields.String, Response: true, Enum: []string{"charge_pending", "insufficient_funds", "processing"}, Description: "Provides the reason for why the refund is pending. Possible values are: `processing`, `insufficient_funds`, or `charge_pending`."},
 	{Name: "presentment_details", Shape: fields.Object, Response: true, Fields: []fields.Field{
 		{Name: "presentment_amount", Shape: fields.Int, Response: true, Description: "Amount intended to be collected by this payment, denominated in `presentment_currency`."},
 		{Name: "presentment_currency", Shape: fields.String, Response: true, Description: "Currency presented to the customer during payment."},
 	}},
-	{Name: "reason", Shape: fields.String, Response: true, Enum: []string{"duplicate", "expired_uncaptured_charge", "fraudulent", "requested_by_customer"}, Description: "Reason for the refund, which is either user-provided (`duplicate`, `fraudulent`, or `requested_by_customer`) or generated by Stripe internally (`expired_uncaptured_charge`)."},
+	{Name: "reason", Shape: fields.String, Create: true, Response: true, Enum: []string{"duplicate", "fraudulent", "requested_by_customer"}, Description: "String indicating the reason for the refund. If set, possible values are `duplicate`, `fraudulent`, and `requested_by_customer`. If you believe the charge to be fraudulent, specifying `fraudulent` as the reason will add the associated card and email to your [block lists](https://docs.stripe.com/radar/lists), and will also help us improve our fraud detection algorithms."},
 	{Name: "receipt_number", Shape: fields.String, Response: true, Description: "This is the transaction number that appears on email receipts sent for this refund."},
+	{Name: "refund_application_fee", Shape: fields.Bool, Create: true, Description: "Boolean indicating whether the application fee should be refunded when refunding this charge. If a full charge refund is given, the full application fee will be refunded. Otherwise, the application fee will be refunded in an amount proportional to the amount of the charge refunded. An application fee can be refunded only by the application that created the charge."},
+	{Name: "reverse_transfer", Shape: fields.Bool, Create: true, Description: "Boolean indicating whether the transfer should be reversed when refunding this charge. The transfer will be reversed proportionally to the amount being refunded (either the entire or partial amount).<br><br>A transfer can be reversed only by the application that created the charge."},
 	{Name: "source_transfer_reversal", Shape: fields.String, Response: true, Description: "The transfer reversal that's associated with the refund. Only present if the charge came from another Stripe account."},
 	{Name: "status", Shape: fields.String, Response: true, Description: "Status of the refund. This can be `pending`, `requires_action`, `succeeded`, `failed`, or `canceled`. Learn more about [failed refunds](https://docs.stripe.com/refunds#failed-refunds)."},
 	{Name: "transfer_reversal", Shape: fields.String, Response: true, Description: "This refers to the transfer reversal object if the accompanying transfer reverses. This is only applicable if the charge was created using the destination parameter."},

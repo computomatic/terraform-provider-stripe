@@ -56,12 +56,12 @@ func (d *DataSource) Configure(ctx context.Context, req datasource.ConfigureRequ
 	if req.ProviderData == nil {
 		return
 	}
-	client, ok := req.ProviderData.(Client)
+	data, ok := req.ProviderData.(*ProviderData)
 	if !ok {
-		resp.Diagnostics.AddError("Unexpected provider data", fmt.Sprintf("expected a Stripe client, got %T", req.ProviderData))
+		resp.Diagnostics.AddError("Unexpected provider data", fmt.Sprintf("expected the provider's data, got %T", req.ProviderData))
 		return
 	}
-	d.api = api{m: d.m, client: client, typeAt: func(p path.Path) (attr.Type, bool) {
+	d.api = api{m: d.m, client: data.Client, typeAt: func(p path.Path) (attr.Type, bool) {
 		a, diags := d.schema.AttributeAtPath(ctx, p)
 		if diags.HasError() {
 			return nil, false

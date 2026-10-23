@@ -4,6 +4,8 @@ This is an independent provider. It is not affiliated with or endorsed by Stripe
 
 Manage the objects in your Stripe account as code: products, prices, coupons, customers, webhook endpoints, tax rates, billing meters and more. Each resource has a matching data source, and Stripe's read-only objects, such as the account balance and the tax code catalogue, are data sources.
 
+Resources that move money, such as payment intents, refunds and transfers, are for managing test data in a sandbox: they refuse to change a live-mode account unless the provider sets `allow_live_money_movement = true`. See the guide in [`docs/guides/test-data.md`](docs/guides/test-data.md).
+
 ## Installation
 
 The provider is not published to a registry yet. Until it is, build it from source (Go 1.27 or later) and tell Terraform or OpenTofu to use the build with a `dev_overrides` entry in your CLI configuration.

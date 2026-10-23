@@ -1,0 +1,1 @@
+terraform import stripe_transfer.payout_share tr_123

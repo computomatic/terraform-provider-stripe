@@ -60,11 +60,22 @@ var Resources = []Resource{
 	{Package: "payment_link", CreatePath: "/v1/payment_links", UpdatePath: "/v1/payment_links/{payment_link}", Omit: []string{"line_items.price_data"}, Require: []string{"line_items.price"}},
 	{Package: "setup_intent", CreatePath: "/v1/setup_intents", UpdatePath: "/v1/setup_intents/{intent}", Omit: []string{"last_setup_error.payment_intent", "last_setup_error.setup_intent", "last_setup_error.source", "confirm", "mandate_data", "payment_method_data", "return_url", "use_stripe_sdk", "single_use", "payment_method_options", "confirmation_token"}},
 	{Package: "customer_payment_method", CreatePath: "/v1/payment_methods/{payment_method}/attach", UpdatePath: "/v1/payment_methods/{payment_method}", Omit: []string{"customer", "customer_account"}, ReadOnly: []string{"allow_redisplay", "card.exp_month", "card.networks", "us_bank_account"}},
-	{Package: "payment_intent", ReadPath: "/v1/payment_intents/{intent}", Omit: []string{"payment_method_options", "amount_details", "last_payment_error.payment_intent", "last_payment_error.setup_intent", "last_payment_error.source"}},
+	// Confirming is the resource's `status`, so the confirm-time parameters are left out, as
+	// they are for setup intents. `hooks` is in the response, so it stays readable but is not
+	// an argument, which the suite has not proven.
+	{Package: "payment_intent", CreatePath: "/v1/payment_intents", UpdatePath: "/v1/payment_intents/{intent}", Omit: []string{
+		"payment_method_options", "amount_details", "last_payment_error.payment_intent", "last_payment_error.setup_intent", "last_payment_error.source",
+		"confirm", "confirmation_token", "error_on_requires_action", "mandate", "mandate_data", "off_session", "payment_method_data", "return_url",
+		"use_stripe_sdk", "radar_options",
+	}, ReadOnly: []string{"hooks"}},
 	{Package: "charge", ReadPath: "/v1/charges/{charge}"},
-	{Package: "refund", ReadPath: "/v1/refunds/{refund}"},
+	// A refund of a charge waits for the conformance suite to prove `charge` on /v1/refunds, so
+	// it stays readable and the resource refunds a payment intent.
+	{Package: "refund", CreatePath: "/v1/refunds", UpdatePath: "/v1/refunds/{refund}", ReadOnly: []string{"charge"}, Require: []string{"payment_intent"}},
 	{Package: "dispute", ReadPath: "/v1/disputes/{dispute}"},
-	{Package: "checkout_session", ReadPath: "/v1/checkout/sessions/{session}"},
+	// `collected_information` is set only by an update, which the suite has not proven, so it
+	// stays readable.
+	{Package: "checkout_session", CreatePath: "/v1/checkout/sessions", UpdatePath: "/v1/checkout/sessions/{session}", Omit: []string{"payment_method_options.pay_by_bank"}, ReadOnly: []string{"collected_information"}},
 	{Package: "mandate", ReadPath: "/v1/mandates/{mandate}"},
 	// Wave 7 batch a. The Climate catalogue is read-only. The identity session leaves out
 	// verification flows and related persons, which the suite does not prove, so it takes a
@@ -138,7 +149,9 @@ var Resources = []Resource{
 	// retrieved by its own ID.
 	{Package: "test_helpers_test_clock", CreatePath: "/v1/test_helpers/test_clocks", Omit: []string{"customer"}},
 	{Package: "payout", ReadPath: "/v1/payouts/{payout}"},
-	{Package: "topup", ReadPath: "/v1/topups/{topup}"},
+	// The create's `source` is the ID of a legacy source, which the suite has not proven; the
+	// response's is the source object, which stays readable.
+	{Package: "topup", CreatePath: "/v1/topups", UpdatePath: "/v1/topups/{topup}", ReadOnly: []string{"source"}},
 	{Package: "radar_early_fraud_warning", ReadPath: "/v1/radar/early_fraud_warnings/{early_fraud_warning}"},
 	{Package: "review", ReadPath: "/v1/reviews/{review}"},
 	{Package: "invoice_payment", ReadPath: "/v1/invoice_payments/{invoice_payment}"},
@@ -209,13 +222,14 @@ var Resources = []Resource{
 	{Package: "payment_record", ReadPath: "/v1/payment_records/{id}"},
 	{Package: "commerce_product_catalog_import", ReadPath: "/v2/commerce/product_catalog/imports/{id}"},
 	// Wave 8 batches d and k: Connect money movement and a customer's legacy cards and bank
-	// accounts, read-only for now. A reversal is addressed under its transfer, a fee refund
-	// under its fee and a card or bank account under its customer, so the engine adds each
-	// parent and the response's copy is left out.
-	{Package: "transfer", ReadPath: "/v1/transfers/{transfer}"},
-	{Package: "transfer_reversal", ReadPath: "/v1/transfers/{transfer}/reversals/{id}", Omit: []string{"transfer"}},
+	// accounts. A reversal is addressed under its transfer, a fee refund under its fee and a
+	// card or bank account under its customer, so the engine adds each parent and the
+	// response's copy is left out.
+	// Stripe requires a transfer's `amount`, which the spec leaves optional (suite: "missing amount").
+	{Package: "transfer", CreatePath: "/v1/transfers", UpdatePath: "/v1/transfers/{transfer}", Require: []string{"amount"}},
+	{Package: "transfer_reversal", CreatePath: "/v1/transfers/{id}/reversals", UpdatePath: "/v1/transfers/{transfer}/reversals/{id}", Omit: []string{"transfer"}},
 	{Package: "application_fee", ReadPath: "/v1/application_fees/{id}"},
-	{Package: "application_fee_refund", ReadPath: "/v1/application_fees/{fee}/refunds/{id}", Omit: []string{"fee"}},
+	{Package: "application_fee_refund", CreatePath: "/v1/application_fees/{id}/refunds", UpdatePath: "/v1/application_fees/{fee}/refunds/{id}", Omit: []string{"fee"}},
 	{Package: "customer_card", ReadPath: "/v1/customers/{customer}/cards/{id}", Omit: []string{"customer"}},
 	{Package: "customer_bank_account", ReadPath: "/v1/customers/{customer}/bank_accounts/{id}", Omit: []string{"customer"}},
 	// The line items of a checkout session and of a payment link have no retrieve, only the

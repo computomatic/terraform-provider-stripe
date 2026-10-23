@@ -27,7 +27,7 @@ func (f clientFunc) Do(ctx context.Context, req stripeapi.Request) (*stripeapi.R
 func configureResource(t *testing.T, r *Resource, client Client) {
 	t.Helper()
 	var resp resource.ConfigureResponse
-	r.Configure(context.Background(), resource.ConfigureRequest{ProviderData: client}, &resp)
+	r.Configure(context.Background(), resource.ConfigureRequest{ProviderData: &ProviderData{Client: client}}, &resp)
 	noErrors(t, resp.Diagnostics)
 }
 

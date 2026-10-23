@@ -175,7 +175,7 @@ func dataSource(t *testing.T, decl Declaration, client Client) *DataSource {
 	}
 	ds := ctor().(*DataSource)
 	var resp datasource.ConfigureResponse
-	ds.Configure(context.Background(), datasource.ConfigureRequest{ProviderData: client}, &resp)
+	ds.Configure(context.Background(), datasource.ConfigureRequest{ProviderData: &ProviderData{Client: client}}, &resp)
 	noErrors(t, resp.Diagnostics)
 	return ds
 }

@@ -14,6 +14,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-go/tftypes"
 	"github.com/hashicorp/terraform-plugin-log/tflogtest"
 
+	"github.com/computomatic/terraform-provider-stripe/internal/engine"
 	"github.com/computomatic/terraform-provider-stripe/internal/resources/apps_secret"
 	"github.com/computomatic/terraform-provider-stripe/internal/resources/checkout_session"
 	"github.com/computomatic/terraform-provider-stripe/internal/resources/commerce_product_catalog_import"
@@ -73,7 +74,7 @@ func TestClientSecretsAreSensitive(t *testing.T) {
 			defer srv.Close()
 			client := stripeapi.New(stripeapi.Config{APIKey: "sk_test_x", BaseURL: srv.URL}, stripeapi.Options{Version: "test"})
 			var cr datasource.ConfigureResponse
-			ds.(datasource.DataSourceWithConfigure).Configure(ctx, datasource.ConfigureRequest{ProviderData: client}, &cr)
+			ds.(datasource.DataSourceWithConfigure).Configure(ctx, datasource.ConfigureRequest{ProviderData: &engine.ProviderData{Client: client}}, &cr)
 
 			var logs bytes.Buffer
 			ctx = tflogtest.RootLogger(ctx, &logs)

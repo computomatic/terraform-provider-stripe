@@ -124,6 +124,9 @@ func compile(decl Declaration, table []fields.Field) (*model, error) {
 			return nil, fmt.Errorf("%s: the refuse strategy needs a reason and has no archive action, refusal, delete path or refuse-when state", decl.TypeName)
 		}
 	}
+	if decl.MovesMoney && decl.Delete == NoDelete {
+		return nil, fmt.Errorf("%s: only a resource can move money; a declaration without a delete strategy has none", decl.TypeName)
+	}
 	if decl.Delete == Refuse || decl.RefuseWhen != nil {
 		// Those two force a replacement in ModifyPlan, which the refusal does not cover; no
 		// refusing resource has either.
@@ -337,6 +340,14 @@ func (m *model) openTransitions() error {
 			if _, ok := m.top(name); !ok {
 				return fmt.Errorf("%s: a transition of `%s` sends `%s`, which is no top-level field", m.decl.TypeName, t.Field, name)
 			}
+		}
+		for _, other := range m.decl.Transitions {
+			if other.Field == t.Field && other.Value == t.Value && !slices.Equal(other.Final, t.Final) {
+				return fmt.Errorf("%s: the transitions of `%s` to `%s` must declare the same final values", m.decl.TypeName, t.Field, t.Value)
+			}
+		}
+		if slices.Contains(t.From, t.Value) {
+			return fmt.Errorf("%s: a transition of `%s` to `%s` cannot start from that value", m.decl.TypeName, t.Field, t.Value)
 		}
 		n.Optional = true
 	}

@@ -26,6 +26,9 @@ var Declaration = engine.Declaration{
 		Update:   "/v1/climate/orders/{id}",
 		List:     "/v1/climate/orders",
 	},
+	// Its create spends the account's balance, so the live-mode guard applies (ADR
+	// 2026-10-22-money-moving-resources).
+	MovesMoney:   true,
 	Delete:       engine.Refuse,
 	RefuseReason: "Stripe cannot delete a Climate order; set `status` to `canceled` to cancel one that is not yet delivered.",
 	Transitions:  []engine.Transition{{Field: "status", Value: "canceled", Path: "/v1/climate/orders/{id}/cancel"}},

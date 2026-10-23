@@ -10,6 +10,8 @@ description: |-
 
 A purchase of carbon removal from Stripe Climate. Set exactly one of `metric_tons` (a whole number of tons) and `amount` (the money to spend, in the smallest unit of the order's currency). The order spends the account's available balance in its settlement currency. Set `status` to `canceled` to cancel an order that is not yet delivered, which refunds its `amount_subtotal` but not its `amount_fees`. Only `beneficiary` and `metadata` change in place: changing any other argument fails the plan.
 
+~> A climate order can move real money. In a live-mode Stripe account, creating or changing one, including setting its `status`, fails at plan time unless the provider sets `allow_live_money_movement = true`. Reading or importing one never does. The provider asks Stripe for the account's mode. See the Managing Test Data guide.
+
 ~> Stripe cannot delete a Climate order; set `status` to `canceled` to cancel one that is not yet delivered. `terraform destroy`, and a change that would replace the climate order, fail at plan time. To stop managing a climate order, remove it from the state as [Removing from State](#removing-from-state) shows; it stays in the Stripe account.
 
 ## Example Usage
