@@ -218,4 +218,8 @@ var Resources = []Resource{
 	{Package: "application_fee_refund", ReadPath: "/v1/application_fees/{fee}/refunds/{id}", Omit: []string{"fee"}},
 	{Package: "customer_card", ReadPath: "/v1/customers/{customer}/cards/{id}", Omit: []string{"customer"}},
 	{Package: "customer_bank_account", ReadPath: "/v1/customers/{customer}/bank_accounts/{id}", Omit: []string{"customer"}},
+	// The line items of a checkout session and of a payment link have no retrieve, only the
+	// list under their parent, so the table is the list element's.
+	{Package: "checkout_session_line_item", ListPath: "/v1/checkout/sessions/{session}/line_items"},
+	{Package: "payment_link_line_item", ListPath: "/v1/payment_links/{payment_link}/line_items"},
 }
