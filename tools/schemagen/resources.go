@@ -149,11 +149,11 @@ var Resources = []Resource{
 	{Package: "customer_balance_transaction", CreatePath: "/v1/customers/{customer}/balance_transactions", UpdatePath: "/v1/customers/{customer}/balance_transactions/{transaction}", Omit: []string{"customer"}},
 	{Package: "customer_cash_balance_transaction", ReadPath: "/v1/customers/{customer}/cash_balance_transactions/{transaction}", Omit: []string{"customer"}},
 	// Wave 8 batch b. Test clocks advance by an action endpoint, so the table sees `frozen_time`
-	// as create-only and the declaration moves it. Payouts, top-ups, early fraud warnings and
-	// reviews are read-only: the suite cannot create them on its account. An invoice payment is
-	// retrieved by its own ID.
+	// as create-only and the declaration moves it. Early fraud warnings and reviews are
+	// read-only: the suite cannot create them on its account. An invoice payment is retrieved by
+	// its own ID.
 	{Package: "test_helpers_test_clock", CreatePath: "/v1/test_helpers/test_clocks", Omit: []string{"customer"}},
-	{Package: "payout", ReadPath: "/v1/payouts/{payout}"},
+	{Package: "payout", CreatePath: "/v1/payouts", UpdatePath: "/v1/payouts/{payout}"},
 	// The create's `source` is the ID of a legacy source, which the suite has not proven; the
 	// response's is the source object, which stays readable.
 	{Package: "topup", CreatePath: "/v1/topups", UpdatePath: "/v1/topups/{topup}", ReadOnly: []string{"source"}},

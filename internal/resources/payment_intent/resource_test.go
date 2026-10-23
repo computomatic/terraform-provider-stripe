@@ -46,6 +46,17 @@ func idOf(dst *string) resource.TestCheckFunc {
 	})
 }
 
+// sameIntent checks that the payment intent is still the one whose ID is *want, so an update
+// did not replace it.
+func sameIntent(want *string) resource.TestCheckFunc {
+	return resource.TestCheckResourceAttrWith(address, "id", func(v string) error {
+		if v != *want {
+			return fmt.Errorf("the update replaced the payment intent %s with %s", *want, v)
+		}
+		return nil
+	})
+}
+
 // pathOf records the payment intent's API path.
 func pathOf(dst *string) resource.TestCheckFunc {
 	return resource.TestCheckResourceAttrWith(address, "id", func(v string) error {
@@ -98,12 +109,7 @@ func TestAccPaymentIntent_update(t *testing.T) {
 					plancheck.ExpectResourceAction(address, plancheck.ResourceActionUpdate),
 				}},
 				Check: resource.ComposeAggregateTestCheckFunc(
-					resource.TestCheckResourceAttrWith(address, "id", func(v string) error {
-						if v != id {
-							return fmt.Errorf("the update replaced the payment intent %s with %s", id, v)
-						}
-						return nil
-					}),
+					sameIntent(&id),
 					resource.TestCheckResourceAttr(address, "amount", "2500"),
 					resource.TestCheckResourceAttr(address, "description", "two"),
 					resource.TestCheckResourceAttr(address, "status", "requires_confirmation"),
@@ -115,8 +121,8 @@ func TestAccPaymentIntent_update(t *testing.T) {
 	})
 }
 
-// `currency` is not proven to update, so changing it would replace the intent, which Stripe
-// cannot delete: the plan fails, and so does a taint, at apply.
+// `statement_descriptor` is not proven to update, so setting it would replace the intent, which
+// Stripe cannot delete: the plan fails, and so does a taint, at apply.
 func TestAccPaymentIntent_replace(t *testing.T) {
 	acct := acctest.NewAccount(t)
 	cfg := intentConfig(acct, "")
@@ -124,8 +130,123 @@ func TestAccPaymentIntent_replace(t *testing.T) {
 		ProtoV6ProviderFactories: tfacc.ProviderFactories,
 		Steps: acctest.Forget(t, []resource.TestStep{
 			{Config: cfg},
-			{Config: strings.Replace(cfg, `currency = "usd"`, `currency = "eur"`, 1), PlanOnly: true, ExpectError: tfacc.RefusedReplace},
+			{Config: intentConfig(acct, "  statement_descriptor = \"ORDER\"\n"), PlanOnly: true, ExpectError: tfacc.RefusedReplace},
 			{Config: cfg, Taint: []string{address}, ExpectError: tfacc.RefusedDestroy},
+		}, nil, "stripe_payment_intent"),
+	})
+}
+
+// Before confirmation, `currency`, `receipt_email`, `statement_descriptor_suffix`,
+// `setup_future_usage`, `capture_method`, `transfer_group` and `shipping` change in place, and
+// removing `receipt_email`, `setup_future_usage` and `shipping` clears them (suite: "update
+// further fields", "clearing optional fields").
+func TestAccPaymentIntent_updateFurtherFields(t *testing.T) {
+	acct := acctest.NewAccount(t)
+	var id string
+	kept := `  description = "kept"
+  statement_descriptor_suffix = "UPDATED"
+  capture_method = "manual"
+  transfer_group = "group-1"
+`
+	further := kept + `  receipt_email = "receipt@example.com"
+  setup_future_usage = "off_session"
+
+  shipping = {
+    name = "Shipping name"
+    address = {
+      line1   = "1 Main St"
+      country = "US"
+    }
+  }
+`
+	inEuros := func(extra string) string {
+		return strings.Replace(intentConfig(acct, extra), `currency = "usd"`, `currency = "eur"`, 1)
+	}
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: tfacc.ProviderFactories,
+		Steps: acctest.Forget(t, []resource.TestStep{
+			{Config: intentConfig(acct, "  description = \"kept\"\n"), Check: idOf(&id)},
+			{
+				Config: inEuros(further),
+				ConfigPlanChecks: resource.ConfigPlanChecks{PreApply: []plancheck.PlanCheck{
+					plancheck.ExpectResourceAction(address, plancheck.ResourceActionUpdate),
+				}},
+				Check: resource.ComposeAggregateTestCheckFunc(
+					sameIntent(&id),
+					resource.TestCheckResourceAttr(address, "currency", "eur"),
+					resource.TestCheckResourceAttr(address, "receipt_email", "receipt@example.com"),
+					resource.TestCheckResourceAttr(address, "statement_descriptor_suffix", "UPDATED"),
+					resource.TestCheckResourceAttr(address, "setup_future_usage", "off_session"),
+					resource.TestCheckResourceAttr(address, "capture_method", "manual"),
+					resource.TestCheckResourceAttr(address, "transfer_group", "group-1"),
+					resource.TestCheckResourceAttr(address, "shipping.name", "Shipping name"),
+					resource.TestCheckResourceAttr(address, "shipping.address.line1", "1 Main St"),
+					resource.TestCheckResourceAttr(address, "status", "requires_payment_method"),
+					resource.TestCheckResourceAttr(address, "amount", "2000"),
+				),
+			},
+			{
+				Config: inEuros(kept),
+				ConfigPlanChecks: resource.ConfigPlanChecks{PreApply: []plancheck.PlanCheck{
+					plancheck.ExpectResourceAction(address, plancheck.ResourceActionUpdate),
+				}},
+				Check: resource.ComposeAggregateTestCheckFunc(
+					sameIntent(&id),
+					resource.TestCheckNoResourceAttr(address, "receipt_email"),
+					resource.TestCheckNoResourceAttr(address, "setup_future_usage"),
+					resource.TestCheckNoResourceAttr(address, "shipping"),
+				),
+			},
+			{Config: inEuros(kept), PlanOnly: true},
+		}, nil, "stripe_payment_intent"),
+	})
+}
+
+// Once the intent has succeeded, `receipt_email` and `description` still change in place, but
+// Stripe refuses a change of `currency`, `setup_future_usage`, `statement_descriptor_suffix` or
+// `capture_method`, and the apply fails (suite: "update once succeeded").
+func TestAccPaymentIntent_updateOnceSucceeded(t *testing.T) {
+	acct := acctest.NewAccount(t)
+	succeeded := "  payment_method = \"pm_card_visa\"\n  status = \"succeeded\"\n"
+	updated := succeeded + "  description = \"succeeded\"\n  receipt_email = \"receipt@example.com\"\n"
+	refused := func(field string) *regexp.Regexp {
+		return regexp.MustCompile(strings.ReplaceAll("PaymentIntent's "+field+" could not be updated because it has a status of succeeded", " ", `\s+`))
+	}
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: tfacc.ProviderFactories,
+		Steps: acctest.Forget(t, []resource.TestStep{
+			{Config: intentConfig(acct, succeeded)},
+			{
+				Config: intentConfig(acct, updated),
+				ConfigPlanChecks: resource.ConfigPlanChecks{PreApply: []plancheck.PlanCheck{
+					plancheck.ExpectResourceAction(address, plancheck.ResourceActionUpdate),
+				}},
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr(address, "status", "succeeded"),
+					resource.TestCheckResourceAttr(address, "description", "succeeded"),
+					resource.TestCheckResourceAttr(address, "receipt_email", "receipt@example.com"),
+				),
+			},
+			{
+				Config:      strings.Replace(intentConfig(acct, updated), `currency = "usd"`, `currency = "eur"`, 1),
+				ExpectError: refused("currency"),
+			},
+			{
+				Config:      intentConfig(acct, updated+"  setup_future_usage = \"off_session\"\n"),
+				ExpectError: refused("setup_future_usage"),
+			},
+			{
+				Config:      intentConfig(acct, updated+"  statement_descriptor_suffix = \"LATE\"\n"),
+				ExpectError: refused("statement_descriptor_suffix"),
+			},
+			{
+				Config:      intentConfig(acct, updated+"  capture_method = \"manual\"\n"),
+				ExpectError: refused("capture_method"),
+			},
+			{
+				Config:   intentConfig(acct, updated),
+				PlanOnly: true,
+			},
 		}, nil, "stripe_payment_intent"),
 	})
 }

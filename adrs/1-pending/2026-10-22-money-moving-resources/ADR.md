@@ -438,17 +438,17 @@ Three rules apply to all of them:
 - **Sensitive:** `client_secret`, as the data source has it. `line_items` is in `Expand`, as on the data source.
 - **Destroy:** refused. "Stripe cannot delete a checkout session; set `status` to `expired` to expire an open one."
 
-#### D6.7 `stripe_payout` (waits on F4)
+#### D6.7 `stripe_payout`
 
 - **Create arguments.**
-  - Proven: `amount`, `currency`, `description`, `metadata` ("create"). The account needs an external bank account in the currency, which only the Dashboard adds ("create without an external account", BD:121; the US sandbox has one, BD:187).
+  - Proven: `amount`, `currency`, `description`, `metadata` ("create"). The account needs an external bank account in the currency, which only the Dashboard adds ("create without an external account", BD:121; the US sandbox has one, BD:187). The fake takes one through its admin seed (F4).
   - The spec's other create parameters ship.
 - **Updates.**
   - Proven: `metadata` only ("update").
   - `description` is `parameter_unknown` ("description is not updatable", BD:187), and the spec's update agrees, so it is create-only.
-- **Lifecycle:** none (Q5). `/reverse` makes a second payout, which is not the provider's to do (the owner on reversing transfers).
+- **Lifecycle:** none (Q5). `/reverse` makes a second payout, which is not the provider's to do (the owner on reversing transfers). The fake serves `/cancel` of a pending payout from Stripe's documentation, and the suite's "cancel" subtest accepts a 200 `canceled` (the owner's decision), but a sandbox payout leaves `pending` within seconds (BD:187), so Q5 stands.
 - **Destroy:** refused. "Stripe cannot delete a payout."
-- **Fake gap F4:** every create is refused with "Sorry, you don't have any external accounts in that currency" (`payout.go:84-88`). Until the fake serves a platform external account, the tests skip before they create anything, with `tfacc.SkipUnlessFakeServes`.
+- **Fake:** at `v0.15.0` (fake #53) serves create with `amount`, `currency`, `description`, `destination`, `metadata` and `method` to a platform bank account seeded through the admin API, and retrieve, update of `metadata`, list and cancel. A create needs the payout's amount available. The tests seed a US bank account in `usd` on the fake only (F4).
 
 #### D6.8 `stripe_topup`
 
@@ -620,7 +620,7 @@ The bullet names the resources the build actually ships. `stripe_charge`, `strip
 | F1 | `POST /v1/charges` (with `source`) and `POST /v1/charges/{id}/capture` (`charge.go:30-35`) | `stripe_charge` |
 | F2 | `POST /v1/invoices/{id}`, `/send`, `/mark_uncollectible` (`invoice.go:60-76`); delete of a draft that holds items is `fake_unproven`; pay takes only `payment_method` (`internal/resources/invoice/payment.go`), and `pay` with none, from `default_payment_method`, is needed | `stripe_invoice` |
 | F3 | `POST /v1/credit_notes/{id}` (`memo`, `metadata`) (`creditnote.go:68-76`) | credit note updates |
-| F4 | A platform external bank account, so `POST /v1/payouts` succeeds (`payout.go:84-88`); cancel of a pending payout is `fake_unproven` | `stripe_payout` tests |
+| F4 | A platform external bank account, so `POST /v1/payouts` succeeds (`payout.go:84-88`). **Served** at `v0.15.0` (fake #53): the admin seed takes a US `bank_account` in `usd`, the platform's default for the currency. Cancel of a pending payout is served from Stripe's documentation, not `fake_unproven`: the suite's "cancel" subtest accepts a 200 `canceled` (the owner's decision) | `stripe_payout` tests |
 | F5 | Checkout session update of `line_items`, `shipping_options`, `collected_information` (only `metadata`: `checkoutsession.go:70-83`) | moving those out of `ReplaceOn` |
 | F6 | Transfer `source_transaction`; transfer reversal `description`, `refund_application_fee` (`fake_not_implemented`) | tests of those arguments only |
 | F7 | Nothing needed if the admin seed accepts a balance with `livemode: true`, which the handler serves (`balance_test.go:55-77`). The guard's acceptance test confirms it. If the seed refuses, the fake must accept one | the guard's acceptance test |
@@ -681,6 +681,12 @@ Answered by the owner on 2026-10-22. Each question and recommendation as asked, 
 - `stripe_payout` is not built: the fake at `v0.14.0` still refuses every payout create (F4).
 - The engine gained `RefuseWhen.Except`, keeps the values Stripe fills in for the elements of a list that forces replacement (a credit note's `lines`), and no longer counts an unset computed field as a change for `RefuseChange`.
 
+**As built in stage C**, against the fake at `v0.15.0`, which pins the suite at `1e27512`:
+
+- `stripe_payout` is built as D6.7 says. `destination` is server-defaulted, because Stripe fills in the currency's default bank account; the generator marks `method` and `source_type` server-defaulted too. The tests seed a US bank account in `usd` through `acctest.Seed` after an `acct.Smoke` check, so a smoke run seeds nothing and uses the sandbox's own bank account, and fund the available balance with `tfacc.FundAvailableBalance`. `TestAccPayout_liveMode` seeds the bank account and a live balance with funds in one call.
+- A checkout session's `shipping_options` updates in place ("update shipping options"), so only `line_items` is in `ReplaceOn`. The fake serves the update with one `shipping_rate_data` entry on an open session, and that is what the test sets. Its create with `shipping_options` is `fake_not_implemented`, so no test creates a session with them.
+- A payment intent's `currency`, `receipt_email`, `statement_descriptor_suffix`, `setup_future_usage`, `capture_method`, `transfer_group` and `shipping` update in place, and removing `receipt_email`, `setup_future_usage` or `shipping` clears it (S6: "update further fields", "clearing optional fields"). Stripe refuses `currency` and `setup_future_usage` outside `requires_payment_method`, `requires_confirmation` and `requires_action`, `statement_descriptor_suffix` outside `requires_payment_method`, `requires_confirmation` and `requires_capture`, and `capture_method` outside `requires_payment_method` and `requires_confirmation` ("update once authorized", "update once succeeded"). As for `amount` in D6.1, the error is Stripe's, at apply, and the description lists the limits. The rest of D6.1's `ReplaceOn` stays, as S6 proves none of it.
+
 
 ### Step 1: The guard in the engine and provider
 
@@ -728,7 +734,7 @@ Build `stripe_invoice` (after S3 and F2), with `RefuseWhen.Except`, `stripe_payo
 
 Acceptance criteria: as Step 4 for each resource; the invoice's draft tests destroy normally and its finalized tests end with `Forget`.
 
-Status: DONE (stage B), except `stripe_payout`, which waits for F4
+Status: DONE (stage B; `stripe_payout` in stage C)
 
 Dependencies: Step 4, and the follow-ups named for each resource.
 
@@ -738,7 +744,7 @@ Apply the D10 changelog bullet (naming the resources shipped), the `CONTRIBUTING
 
 Acceptance criteria: the changelog names every money-moving resource that ships; the architecture ADR's D3 lists `allow_live_money_movement`.
 
-Status: DONE for the resources of stages A and B
+Status: DONE for the resources of stages A to C
 
 Dependencies: Step 4 (and Step 5 for its resources).
 

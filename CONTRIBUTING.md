@@ -68,6 +68,8 @@ Issuing and Treasury run on a connected account. Their tests get one from `tfacc
 
 Transfers and application fees need a connected account that can receive money. `tfacc.TransfersAccount` returns one whose `transfers` capability is active, reused in smoke mode by its tag `metadata[tfacc_role]=transfers`. `tfacc.Transfer` funds the platform's available balance (`tfacc.FundAvailableBalance` charges the Stripe test card whose funds are available at once) and transfers to it, and in smoke mode reverses what remains of the transfer afterwards. `tfacc.DestinationCharge` makes a charge for the connected account with an application fee.
 
+A payout needs a bank account of the platform's own in its currency, which Stripe adds only in the Dashboard. The payout tests seed a US bank account in `usd` into the fake account with `acctest.Seed`, after an `acct.Smoke` check, and fund the available balance with `tfacc.FundAvailableBalance`.
+
 Stripe makes some objects in the background, such as credit balance transactions, meter event summaries and active entitlements, and lists them a moment, or up to a minute, after their cause. A test waits for them with `tfacc.AwaitListed` before it reads one. The fake makes them at once.
 
 ## CI
