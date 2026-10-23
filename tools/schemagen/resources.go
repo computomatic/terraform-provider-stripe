@@ -95,6 +95,34 @@ var Resources = []Resource{
 		Omit:     []string{"external_account", "account", "documents", "address_city", "address_country", "address_line1", "address_line2", "address_state", "address_zip", "exp_month", "exp_year", "name"},
 		ReadOnly: []string{"account_type"}, Require: []string{"currency", "routing_number"}},
 	{Package: "account_capability", ReadPath: "/v1/accounts/{account}/capabilities/{capability}", Omit: []string{"account"}},
+	// Wave 4 batch b Connect. Each table keeps what the conformance suite and the fake prove,
+	// among many fields that need files, other countries or onboarding flows. A v1 person's
+	// `account` and a v2 person's `account` are the parent the engine adds. The `authorizer`
+	// and `legal_guardian` roles and a v1 person's verification documents are read-only: no
+	// suite test sets them. A v2 account requests the one capability of each configuration
+	// the suite requests; the balance capabilities Stripe adds to it, and whether a
+	// configuration is applied, are read-only. Its country and entity type are create-only,
+	// because the suite updates only the registered name of an identity. App installs are
+	// read-only: no suite test can install an app.
+	{Package: "account_person", CreatePath: "/v1/accounts/{account}/persons", UpdatePath: "/v1/accounts/{account}/persons/{person}",
+		Keep: []string{"address", "created", "dob", "email", "first_name", "future_requirements", "id", "id_number", "id_number_provided", "last_name", "metadata", "phone",
+			"relationship", "requirements", "ssn_last_4", "ssn_last_4_provided", "verification"},
+		ReadOnly: []string{"relationship.authorizer", "relationship.legal_guardian", "verification"}},
+	{Package: "core_account", CreatePath: "/v2/core/accounts", UpdatePath: "/v2/core/accounts/{id}",
+		Keep: []string{"applied_configurations", "closed",
+			"configuration.customer.applied", "configuration.customer.capabilities.automatic_indirect_tax",
+			"configuration.merchant.applied", "configuration.merchant.capabilities.card_payments", "configuration.merchant.capabilities.stripe_balance.payouts",
+			"configuration.recipient.applied", "configuration.recipient.capabilities.stripe_balance.payouts", "configuration.recipient.capabilities.stripe_balance.stripe_transfers",
+			"contact_email", "created", "dashboard", "defaults.currency", "defaults.responsibilities", "display_name", "future_requirements", "id",
+			"identity.business_details.registered_name", "identity.country", "identity.entity_type", "livemode", "metadata", "requirements"},
+		ReadOnly: []string{"configuration.customer.applied", "configuration.merchant.applied", "configuration.recipient.applied",
+			"configuration.merchant.capabilities.stripe_balance", "configuration.recipient.capabilities.stripe_balance.payouts"},
+		CreateOnly: []string{"identity.country", "identity.entity_type"}},
+	{Package: "core_account_person", CreatePath: "/v2/core/accounts/{account_id}/persons", UpdatePath: "/v2/core/accounts/{account_id}/persons/{id}",
+		Keep: []string{"address.city", "address.country", "address.line1", "address.line2", "address.postal_code", "address.state", "created", "date_of_birth", "email",
+			"given_name", "id", "id_numbers", "livemode", "metadata", "phone", "relationship", "surname", "updated"},
+		ReadOnly: []string{"relationship.authorizer", "relationship.legal_guardian"}},
+	{Package: "apps_install", ReadPath: "/v1/apps/installs/{id}"},
 	// Wave 8 batch a. A billing alert is never updated: its status moves by action endpoints
 	// the declaration names. A tax ID takes only `self` and `customer` owners, which the suite
 	// proves; the other owners' arguments stay out of reach. The customer's balance

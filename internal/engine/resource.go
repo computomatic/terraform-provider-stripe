@@ -238,6 +238,27 @@ func knownString(v tftypes.Value) (string, bool) {
 	return s, true
 }
 
+// transitionValue is a known, non-null value of a transition field: a string, or a bool as
+// `true` or `false`.
+func transitionValue(v attr.Value) (string, bool) {
+	switch t := v.(type) {
+	case basetypes.StringValue:
+		return t.ValueString(), known(t)
+	case basetypes.BoolValue:
+		return strconv.FormatBool(t.ValueBool()), known(t)
+	}
+	return "", false
+}
+
+// wireScalar is a response's string field, or its bool field as `true` or `false`.
+func wireScalar(body wire.Object, name string) string {
+	if b, ok := body.GetBool(name); ok {
+		return strconv.FormatBool(b)
+	}
+	s, _ := body.GetString(name)
+	return s
+}
+
 // refuseGoingBack fails the plan that moves the declared advance field to an earlier value,
 // which Stripe refuses. A plan that also replaces the object is not refused: its create
 // starts at the new value. A value not known at plan time is left for apply.
@@ -289,9 +310,11 @@ func (r *Resource) attrName(field string) string {
 }
 
 // refuseChanges fails the plan when it changes a field the declaration lists in RefuseChange.
-// A value not fully known at plan time is left for apply. A plan that also changes a field
-// that forces replacement is a replace, whose create sends the new value, so it is not
-// refused. The framework gives ModifyPlan no RequiresReplace for the attributes' own plan
+// A configured value not fully known at plan time is left for apply. Computed members the
+// configuration leaves unset are unknown on every change of the field, so a planned value
+// that is unknown only there is compared by what the configuration sets. A plan that also
+// changes a field that forces replacement is a replace, whose create sends the new value, so
+// it is not refused. The framework gives ModifyPlan no RequiresReplace for the attributes' own plan
 // modifiers, so the declaration decides it: the top-level create-only and replace-on fields,
 // the parent and the attached object. The engine's own checks (currency options, fixed keys)
 // have run before, and a plan they replace never gets here. compile refuses a declaration
@@ -317,7 +340,10 @@ func (r *Resource) refuseChanges(ctx context.Context, req resource.ModifyPlanReq
 			continue
 		}
 		if v, err := pv.ToTerraformValue(ctx); err != nil || !v.IsFullyKnown() {
-			continue
+			cv, err := config.Attributes()[n.AttrName()].ToTerraformValue(ctx)
+			if err != nil || !cv.IsFullyKnown() || unchangedBesidesComputed(n, pv, sv, req.Config.Raw) {
+				continue
+			}
 		}
 		recreate := "recreate the object deliberately with `terraform taint` (`tofu taint` in OpenTofu)."
 		if r.m.refusal(req.State.Raw) != "" {
@@ -585,21 +611,47 @@ func (r *Resource) Delete(ctx context.Context, req resource.DeleteRequest, resp 
 func (r *Resource) applyTransitions(ctx context.Context, body wire.Object, plan basetypes.ObjectValue, id, parent string) (wire.Object, error) {
 	for _, t := range r.m.decl.Transitions {
 		n, _ := r.m.top(t.Field)
-		want, ok := plan.Attributes()[n.AttrName()].(basetypes.StringValue)
-		if !ok || want.IsNull() || want.IsUnknown() || want.ValueString() != t.Value {
+		if want, ok := transitionValue(plan.Attributes()[n.AttrName()]); !ok || want != t.Value || wireScalar(body, t.Field) == t.Value {
 			continue
 		}
-		if have, _ := body.GetString(t.Field); have == t.Value {
-			continue
+		var params wire.Object
+		for _, name := range t.Send {
+			if v, ok := body.Get(name); ok {
+				params = append(params, wire.Field{Name: name, Value: v})
+			}
 		}
-		next, err := r.api.call(ctx, "POST", r.m.expand(t.Path, id, parent), r.api.expanded(nil, ""))
+		if !r.m.v2 {
+			params = r.api.expanded(params, "")
+		}
+		next, err := r.api.call(ctx, "POST", r.m.expand(t.Path, id, parent), params)
 		if err != nil {
 			return nil, err
 		}
+		next = withoutIncluded(next, r.m.decl.Include)
 		// A once-returned field is in the create response only, so the action's does not replace it.
 		body = mergeBodies(body, next)
 	}
 	return body, nil
+}
+
+// withoutIncluded drops from a `/v2` action's response the top-level fields the declaration
+// includes, which the action, sent no `include`, returns as null.
+func withoutIncluded(body wire.Object, include []string) wire.Object {
+	if len(include) == 0 {
+		return body
+	}
+	tops := map[string]bool{}
+	for _, v := range include {
+		top, _, _ := strings.Cut(v, ".")
+		tops[top] = true
+	}
+	var out wire.Object
+	for _, f := range body {
+		if !tops[f.Name] {
+			out = append(out, f)
+		}
+	}
+	return out
 }
 
 // isDeletedStub reports the `{id, object, deleted: true}` Stripe returns for an object it
