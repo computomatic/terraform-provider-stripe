@@ -3,11 +3,13 @@ package checkout_session_test
 import (
 	"fmt"
 	"regexp"
+	"slices"
 	"strings"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/hashicorp/terraform-plugin-testing/plancheck"
+	"github.com/hashicorp/terraform-plugin-testing/terraform"
 
 	"github.com/computomatic/terraform-provider-stripe/internal/acctest"
 	"github.com/computomatic/terraform-provider-stripe/internal/acctest/tfacc"
@@ -99,38 +101,72 @@ func TestAccCheckoutSession_update(t *testing.T) {
 	})
 }
 
-// A shipping option added to an open session changes it in place, and Stripe makes a shipping
-// rate from its data (suite: "update shipping options").
-func TestAccCheckoutSession_shippingOptions(t *testing.T) {
-	acct := acctest.NewAccount(t)
-	cfg := sessionConfig(acct, `
-  shipping_options = [{
+// shippingOption is a fixed-amount shipping option in usd, for a `shipping_options` list.
+func shippingOption(name string, amount int) string {
+	return fmt.Sprintf(`{
     shipping_rate_data = {
-      display_name = "Ground"
+      display_name = %q
       type         = "fixed_amount"
       fixed_amount = {
-        amount   = 500
+        amount   = %d
         currency = "usd"
       }
     }
-  }]
-`)
+  }`, name, amount)
+}
+
+// shippingRates checks that each shipping option, by index, has a shipping rate Stripe made
+// and the amount given, and records the rates in ids.
+func shippingRates(ids []string, amounts ...string) resource.TestCheckFunc {
+	checks := []resource.TestCheckFunc{resource.TestCheckResourceAttr(resAddress, "shipping_options.#", fmt.Sprint(len(amounts)))}
+	for i, amount := range amounts {
+		checks = append(checks,
+			resource.TestCheckResourceAttrWith(resAddress, fmt.Sprintf("shipping_options.%d.shipping_rate", i), func(v string) error {
+				if !strings.HasPrefix(v, "shr_") {
+					return fmt.Errorf("shipping option %d has shipping rate %q, want a shr_ ID", i, v)
+				}
+				ids[i] = v
+				return nil
+			}),
+			resource.TestCheckResourceAttr(resAddress, fmt.Sprintf("shipping_options.%d.shipping_amount", i), amount),
+		)
+	}
+	return resource.ComposeAggregateTestCheckFunc(checks...)
+}
+
+// Shipping options set on create, and reordered on an open session, change it in place.
+// Stripe makes a shipping rate from each option's data on every request, so the reordered
+// options have new rates (suite: "create with shipping options", "update shipping options with
+// the whole list").
+func TestAccCheckoutSession_shippingOptions(t *testing.T) {
+	acct := acctest.NewAccount(t)
+	ground, express := shippingOption("Ground", 500), shippingOption("Express", 1500)
+	created := sessionConfig(acct, "\n  shipping_options = ["+ground+", "+express+"]\n")
+	reordered := sessionConfig(acct, "\n  shipping_options = ["+express+", "+ground+"]\n")
+	first, second := make([]string, 2), make([]string, 2)
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: tfacc.ProviderFactories,
 		Steps: acctest.Forget(t, []resource.TestStep{
-			{Config: sessionConfig(acct, "")},
+			{Config: created, Check: shippingRates(first, "500", "1500")},
+			{Config: created, PlanOnly: true},
 			{
-				Config: cfg,
+				Config: reordered,
 				ConfigPlanChecks: resource.ConfigPlanChecks{PreApply: []plancheck.PlanCheck{
 					plancheck.ExpectResourceAction(resAddress, plancheck.ResourceActionUpdate),
 				}},
 				Check: resource.ComposeAggregateTestCheckFunc(
-					resource.TestCheckResourceAttr(resAddress, "shipping_options.#", "1"),
-					resource.TestMatchResourceAttr(resAddress, "shipping_options.0.shipping_rate", regexp.MustCompile(`^shr_`)),
-					resource.TestCheckResourceAttr(resAddress, "shipping_options.0.shipping_amount", "500"),
+					shippingRates(second, "1500", "500"),
+					func(*terraform.State) error {
+						for _, id := range second {
+							if slices.Contains(first, id) {
+								return fmt.Errorf("the update kept shipping rate %s, want a new rate for every option", id)
+							}
+						}
+						return nil
+					},
 				),
 			},
-			{Config: cfg, PlanOnly: true},
+			{Config: reordered, PlanOnly: true},
 		}, nil, "stripe_checkout_session"),
 	})
 }

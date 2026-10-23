@@ -202,6 +202,78 @@ func TestAccPaymentIntent_updateFurtherFields(t *testing.T) {
 	})
 }
 
+// Stripe refuses to unset `transfer_group` (suite: "transfer_group cannot be unset"), so
+// removing it from the configuration plans no change and the intent keeps its group, while a
+// new group still changes in place. The fake takes `transfer_group` on update only, so the
+// intent is created without one.
+func TestAccPaymentIntent_transferGroupKept(t *testing.T) {
+	acct := acctest.NewAccount(t)
+	var id, path string
+	cfg := intentConfig(acct, "  description = \"grouped\"\n")
+	grouped := func(group string) resource.TestStep {
+		return resource.TestStep{
+			Config: intentConfig(acct, "  description = \"grouped\"\n  transfer_group = \""+group+"\"\n"),
+			ConfigPlanChecks: resource.ConfigPlanChecks{PreApply: []plancheck.PlanCheck{
+				plancheck.ExpectResourceAction(address, plancheck.ResourceActionUpdate),
+			}},
+			Check: resource.ComposeAggregateTestCheckFunc(
+				sameIntent(&id),
+				resource.TestCheckResourceAttr(address, "transfer_group", group),
+				tfacc.Holds(t, acct, &path, "transfer_group", wire.String(group)),
+			),
+		}
+	}
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: tfacc.ProviderFactories,
+		Steps: acctest.Forget(t, []resource.TestStep{
+			{Config: cfg, Check: resource.ComposeAggregateTestCheckFunc(idOf(&id), pathOf(&path))},
+			grouped("group-1"),
+			{
+				Config: cfg,
+				ConfigPlanChecks: resource.ConfigPlanChecks{PreApply: []plancheck.PlanCheck{
+					plancheck.ExpectEmptyPlan(),
+				}},
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr(address, "transfer_group", "group-1"),
+					tfacc.Holds(t, acct, &path, "transfer_group", wire.String("group-1")),
+				),
+			},
+			grouped("group-2"),
+		}, nil, "stripe_payment_intent"),
+	})
+}
+
+// Removing `statement_descriptor_suffix` from the configuration clears it (suite: "clearing
+// optional fields").
+func TestAccPaymentIntent_clearStatementDescriptorSuffix(t *testing.T) {
+	acct := acctest.NewAccount(t)
+	var path string
+	cfg := intentConfig(acct, "  description = \"suffixed\"\n")
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: tfacc.ProviderFactories,
+		Steps: acctest.Forget(t, []resource.TestStep{
+			{
+				Config: intentConfig(acct, "  description = \"suffixed\"\n  statement_descriptor_suffix = \"ORDER1\"\n"),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					pathOf(&path),
+					resource.TestCheckResourceAttr(address, "statement_descriptor_suffix", "ORDER1"),
+				),
+			},
+			{
+				Config: cfg,
+				ConfigPlanChecks: resource.ConfigPlanChecks{PreApply: []plancheck.PlanCheck{
+					plancheck.ExpectResourceAction(address, plancheck.ResourceActionUpdate),
+				}},
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckNoResourceAttr(address, "statement_descriptor_suffix"),
+					tfacc.Holds(t, acct, &path, "statement_descriptor_suffix", wire.Null{}),
+				),
+			},
+			{Config: cfg, PlanOnly: true},
+		}, nil, "stripe_payment_intent"),
+	})
+}
+
 // Once the intent has succeeded, `receipt_email` and `description` still change in place, but
 // Stripe refuses a change of `currency`, `setup_future_usage`, `statement_descriptor_suffix` or
 // `capture_method`, and the apply fails (suite: "update once succeeded").
