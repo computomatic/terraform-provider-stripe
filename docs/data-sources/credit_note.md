@@ -3,12 +3,12 @@
 page_title: "stripe_credit_note Data Source - Stripe"
 subcategory: ""
 description: |-
-  A reduction of an invoice's amount. Look one up by its id.
+  A reduction of an invoice's amount.
 ---
 
 # Data Source: stripe_credit_note
 
-A reduction of an invoice's amount. Look one up by its `id`.
+A reduction of an invoice's amount.
 
 ## Example Usage
 
@@ -28,9 +28,10 @@ This data source supports the following arguments:
 
 This data source exports the following attributes in addition to the arguments above:
 
-* `amount` - The integer amount in cents (or local equivalent) representing the total amount of the credit note, including tax.
+* `amount` - The integer amount in cents (or local equivalent) representing the total amount of the credit note. One of `amount`, `lines`, or `shipping_cost` must be provided.
 * `amount_shipping` - This is the sum of all the shipping amounts.
 * `created` - Time at which the object was created. Measured in seconds since the Unix epoch.
+* `credit_amount` - The integer amount in cents (or local equivalent) representing the amount to credit the customer's balance, which will be automatically applied to their next invoice.
 * `currency` - Three-letter [ISO currency code](https://www.iso.org/iso-4217-currency-codes.html), in lowercase. Must be a [supported currency](https://stripe.com/docs/currencies).
 * `customer` - ID of the customer.
 * `customer_account` - ID of the account representing the customer.
@@ -38,20 +39,22 @@ This data source exports the following attributes in addition to the arguments a
 * `discount_amount` - The integer amount in cents (or local equivalent) representing the total amount of discount that was credited.
 * `discount_amounts` - The aggregate amounts calculated per discount for all line items. See [`discount_amounts`](#discount_amounts) below.
 * `effective_at` - The date when this credit note is in effect. Same as `created` unless overwritten. When defined, this value replaces the system-generated 'Date of issue' printed on the credit note PDF.
+* `email_type` - Type of email to send to the customer, one of `credit_note` or `none` and the default is `credit_note`. Possible values: `credit_note`, `none`.
 * `invoice` - ID of the invoice.
-* `lines` - Line items that make up the credit note See [`lines`](#lines) below.
+* `lines` - Line items that make up the credit note. One of `amount`, `lines`, or `shipping_cost` must be provided. See [`lines`](#lines) below.
 * `livemode` - If the object exists in live mode, the value is `true`. If the object exists in test mode, the value is `false`.
-* `memo` - Customer-facing text that appears on the credit note PDF.
-* `metadata` - Set of [key-value pairs](https://docs.stripe.com/api/metadata) that you can attach to an object. This can be useful for storing additional information about the object in a structured format.
+* `memo` - The credit note's memo appears on the credit note PDF.
+* `metadata` - Set of [key-value pairs](https://docs.stripe.com/api/metadata) that you can attach to an object. This can be useful for storing additional information about the object in a structured format. Individual keys can be unset by posting an empty value to them. All keys can be unset by posting an empty value to `metadata`.
 * `number` - A unique number that identifies this particular credit note and appears on the PDF of the credit note and its associated invoice.
-* `out_of_band_amount` - Amount that was credited outside of Stripe.
+* `out_of_band_amount` - The integer amount in cents (or local equivalent) representing the amount that is credited outside of Stripe.
 * `pdf` - The link to download the PDF of the credit note.
 * `post_payment_amount` - The amount of the credit note that was refunded to the customer, credited to the customer's balance, credited outside of Stripe, or any combination thereof.
 * `pre_payment_amount` - The amount of the credit note by which the invoice's `amount_remaining` and `amount_due` were reduced.
 * `pretax_credit_amounts` - The pretax credit amounts (ex: discount, credit grants, etc) for all line items. See [`pretax_credit_amounts`](#pretax_credit_amounts) below.
 * `reason` - Reason for issuing this credit note, one of `duplicate`, `fraudulent`, `order_change`, or `product_unsatisfactory` Possible values: `duplicate`, `fraudulent`, `order_change`, `product_unsatisfactory`.
-* `refunds` - Refunds related to this credit note. See [`refunds`](#refunds) below.
-* `shipping_cost` - The details of the cost of shipping, including the ShippingRate applied to the invoice. See [`shipping_cost`](#shipping_cost) below.
+* `refund_amount` - The integer amount in cents (or local equivalent) representing the amount to refund. If set, a refund will be created for the charge associated with the invoice.
+* `refunds` - Refunds to link to this credit note. See [`refunds`](#refunds) below.
+* `shipping_cost` - When shipping_cost contains the shipping_rate from the invoice, the shipping_cost is included in the credit note. One of `amount`, `lines`, or `shipping_cost` must be provided. See [`shipping_cost`](#shipping_cost) below.
 * `status` - Status of this credit note, one of `issued` or `void`. Learn more about [voiding credit notes](https://docs.stripe.com/billing/invoices/credit-notes#voiding). Possible values: `issued`, `void`.
 * `subtotal` - The integer amount in cents (or local equivalent) representing the amount of the credit note, excluding exclusive tax and invoice level discounts.
 * `subtotal_excluding_tax` - The integer amount in cents (or local equivalent) representing the amount of the credit note, excluding all tax and invoice level discounts.
@@ -72,101 +75,69 @@ The `discount_amounts` attribute is a list. Each element supports:
 <a id="lines"></a>
 ### `lines`
 
-The `lines` attribute supports:
-
-* `data` - Details about each object. See [`lines.data`](#lines.data) below.
-* `has_more` - True if this list has another page of items after this one that can be fetched.
-* `object` - String representing the object's type. Objects of the same type share the same value. Always has the value `list`. Possible values: `list`.
-* `url` - The URL where this list can be accessed.
-
-<a id="lines.data"></a>
-### `lines.data`
-
-The `lines.data` attribute is a list. Each element supports:
+The `lines` attribute is a list. Each element supports:
 
 * `amount` - The integer amount in cents (or local equivalent) representing the gross amount being credited for this line item, excluding (exclusive) tax and discounts.
 * `description` - Description of the item being credited.
 * `discount_amount` - The integer amount in cents (or local equivalent) representing the discount being credited for this line item.
-* `discount_amounts` - The amount of discount calculated per discount for this line item See [`lines.data.discount_amounts`](#lines.data.discount_amounts) below.
+* `discount_amounts` - The amount of discount calculated per discount for this line item See [`lines.discount_amounts`](#lines.discount_amounts) below.
 * `id` - Unique identifier for the object.
 * `invoice_line_item` - ID of the invoice line item being credited
 * `livemode` - If the object exists in live mode, the value is `true`. If the object exists in test mode, the value is `false`.
 * `metadata` - Set of [key-value pairs](https://docs.stripe.com/api/metadata) that you can attach to an object. This can be useful for storing additional information about the object in a structured format.
 * `object` - String representing the object's type. Objects of the same type share the same value. Possible values: `credit_note_line_item`.
-* `pretax_credit_amounts` - The pretax credit amounts (ex: discount, credit grants, etc) for this line item. See [`lines.data.pretax_credit_amounts`](#lines.data.pretax_credit_amounts) below.
+* `pretax_credit_amounts` - The pretax credit amounts (ex: discount, credit grants, etc) for this line item. See [`lines.pretax_credit_amounts`](#lines.pretax_credit_amounts) below.
 * `quantity` - The number of units of product being credited.
-* `tax_rates` - The tax rates which apply to the line item. See [`lines.data.tax_rates`](#lines.data.tax_rates) below.
-* `taxes` - The tax information of the line item. See [`lines.data.taxes`](#lines.data.taxes) below.
+* `tax_amounts` - See [`lines.tax_amounts`](#lines.tax_amounts) below.
+* `tax_rates` - The tax rates which apply to the line item.
+* `taxes` - The tax information of the line item. See [`lines.taxes`](#lines.taxes) below.
 * `type` - The type of the credit note line item, one of `invoice_line_item` or `custom_line_item`. When the type is `invoice_line_item` there is an additional `invoice_line_item` property on the resource the value of which is the id of the credited line item on the invoice. Possible values: `custom_line_item`, `invoice_line_item`.
 * `unit_amount` - The cost of each unit of product being credited.
 * `unit_amount_decimal` - Same as `unit_amount`, but contains a decimal value with at most 12 decimal places.
 
-<a id="lines.data.discount_amounts"></a>
-### `lines.data.discount_amounts`
+<a id="lines.discount_amounts"></a>
+### `lines.discount_amounts`
 
-The `lines.data.discount_amounts` attribute is a list. Each element supports:
+The `lines.discount_amounts` attribute is a list. Each element supports:
 
 * `amount` - The amount, in cents (or local equivalent), of the discount.
 * `discount` - The discount that was applied to get this discount amount.
 
-<a id="lines.data.pretax_credit_amounts"></a>
-### `lines.data.pretax_credit_amounts`
+<a id="lines.pretax_credit_amounts"></a>
+### `lines.pretax_credit_amounts`
 
-The `lines.data.pretax_credit_amounts` attribute is a list. Each element supports:
+The `lines.pretax_credit_amounts` attribute is a list. Each element supports:
 
 * `amount` - The amount, in cents (or local equivalent), of the pretax credit amount.
 * `credit_balance_transaction` - The credit balance transaction that was applied to get this pretax credit amount.
 * `discount` - The discount that was applied to get this pretax credit amount.
 * `type` - Type of the pretax credit amount referenced. Possible values: `credit_balance_transaction`, `discount`.
 
-<a id="lines.data.tax_rates"></a>
-### `lines.data.tax_rates`
+<a id="lines.tax_amounts"></a>
+### `lines.tax_amounts`
 
-The `lines.data.tax_rates` attribute is a list. Each element supports:
+The `lines.tax_amounts` attribute is a list. Each element supports:
 
-* `active` - Defaults to `true`. When set to `false`, this tax rate cannot be used with new applications or Checkout Sessions, but will still work for subscriptions and invoices that already have it set.
-* `country` - Two-letter country code ([ISO 3166-1 alpha-2](https://en.wikipedia.org/wiki/ISO_3166-1_alpha-2)).
-* `created` - Time at which the object was created. Measured in seconds since the Unix epoch.
-* `description` - An arbitrary string attached to the tax rate for your internal use only. It will not be visible to your customers.
-* `display_name` - The display name of the tax rates as it will appear to your customer on their receipt email, PDF, and the hosted invoice page.
-* `effective_percentage` - Actual/effective tax rate percentage out of 100. For tax calculations with automatic_tax[enabled]=true, this percentage reflects the rate actually used to calculate tax based on the product's taxability and whether the user is registered to collect taxes in the corresponding jurisdiction.
-* `flat_amount` - The amount of the tax rate when the `rate_type` is `flat_amount`. Tax rates with `rate_type` `percentage` can vary based on the transaction, resulting in this field being `null`. This field exposes the amount and currency of the flat tax rate. See [`lines.data.tax_rates.flat_amount`](#lines.data.tax_rates.flat_amount) below.
-* `id` - Unique identifier for the object.
-* `inclusive` - This specifies if the tax rate is inclusive or exclusive.
-* `jurisdiction` - The jurisdiction for the tax rate. You can use this label field for tax reporting purposes. It also appears on your customer’s invoice.
-* `jurisdiction_level` - The level of the jurisdiction that imposes this tax rate. Will be `null` for manually defined tax rates. Possible values: `city`, `country`, `county`, `district`, `multiple`, `state`.
-* `livemode` - If the object exists in live mode, the value is `true`. If the object exists in test mode, the value is `false`.
-* `metadata` - Set of [key-value pairs](https://docs.stripe.com/api/metadata) that you can attach to an object. This can be useful for storing additional information about the object in a structured format.
-* `object` - String representing the object's type. Objects of the same type share the same value. Possible values: `tax_rate`.
-* `percentage` - Tax rate percentage out of 100. For tax calculations with automatic_tax[enabled]=true, this percentage includes the statutory tax rate of non-taxable jurisdictions.
-* `rate_type` - Indicates the type of tax rate applied to the taxable amount. This value can be `null` when no tax applies to the location. This field is only present for TaxRates created by Stripe Tax. Possible values: `flat_amount`, `percentage`.
-* `state` - [ISO 3166-2 subdivision code](https://en.wikipedia.org/wiki/ISO_3166-2), without country prefix. For example, "NY" for New York, United States.
-* `tax_type` - The high-level tax type, such as `vat` or `sales_tax`. Possible values: `amusement_tax`, `communications_tax`, `digital_excise_tax`, `gst`, `hst`, `igst`, `jct`, `lease_tax`, `mass_transit_parking_tax`, `parking_tax`, `pst`, `qst`, `retail_delivery_fee`, `rst`, `sales_tax`, `service_tax`, `utility_users_tax`, `vat`.
+* `amount` -
+* `tax_rate` -
+* `taxable_amount` -
 
-<a id="lines.data.tax_rates.flat_amount"></a>
-### `lines.data.tax_rates.flat_amount`
+<a id="lines.taxes"></a>
+### `lines.taxes`
 
-The `lines.data.tax_rates.flat_amount` attribute supports:
-
-* `amount` - Amount of the tax when the `rate_type` is `flat_amount`. This positive integer represents how much to charge in the smallest currency unit (e.g., 100 cents to charge $1.00 or 100 to charge ¥100, a zero-decimal currency). The amount value supports up to eight digits (e.g., a value of 99999999 for a USD charge of $999,999.99).
-* `currency` - Three-letter ISO currency code, in lowercase.
-
-<a id="lines.data.taxes"></a>
-### `lines.data.taxes`
-
-The `lines.data.taxes` attribute is a list. Each element supports:
+The `lines.taxes` attribute is a list. Each element supports:
 
 * `amount` - The amount of the tax, in cents (or local equivalent).
 * `tax_behavior` - Whether this tax is inclusive or exclusive. Possible values: `exclusive`, `inclusive`.
-* `tax_rate_details` - Additional details about the tax rate. Only present when `type` is `tax_rate_details`. See [`lines.data.taxes.tax_rate_details`](#lines.data.taxes.tax_rate_details) below.
+* `tax_rate_details` - Additional details about the tax rate. Only present when `type` is `tax_rate_details`. See [`lines.taxes.tax_rate_details`](#lines.taxes.tax_rate_details) below.
 * `taxability_reason` - The reasoning behind this tax, for example, if the product is tax exempt. The possible values for this field may be extended as new tax rules are supported. Possible values: `customer_exempt`, `not_available`, `not_collecting`, `not_subject_to_tax`, `not_supported`, `portion_product_exempt`, `portion_reduced_rated`, `portion_standard_rated`, `product_exempt`, `product_exempt_holiday`, `proportionally_rated`, `reduced_rated`, `reverse_charge`, `standard_rated`, `taxable_basis_reduced`, `zero_rated`.
 * `taxable_amount` - The amount on which tax is calculated, in cents (or local equivalent).
 * `type` - The type of tax information. Possible values: `tax_rate_details`.
 
-<a id="lines.data.taxes.tax_rate_details"></a>
-### `lines.data.taxes.tax_rate_details`
+<a id="lines.taxes.tax_rate_details"></a>
+### `lines.taxes.tax_rate_details`
 
-The `lines.data.taxes.tax_rate_details` attribute supports:
+The `lines.taxes.tax_rate_details` attribute supports:
 
 * `tax_rate` - ID of the tax rate
 

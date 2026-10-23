@@ -268,6 +268,73 @@ func TestRefuseWhenFollowsTheState(t *testing.T) {
 	}
 }
 
+// draftOnlyDeclaration deletes a widget only while its status is `draft`, as Stripe deletes
+// only a draft invoice.
+func draftOnlyDeclaration() Declaration {
+	d := planDecl()
+	d.RefuseWhen = &RefuseWhen{Field: "status", Value: wire.String("draft"), Except: true, Reason: "Stripe deletes only a draft widget."}
+	return d
+}
+
+// RefuseWhen with Except refuses destroy and replacement of an object in any state but the
+// named one, at plan time from the state and at apply when Stripe refuses the delete of an
+// object the state still shows in it.
+func TestRefuseWhenExceptRefusesEveryOtherState(t *testing.T) {
+	p := newPlanner(t, draftOnlyDeclaration(), lifecycleTable())
+	draft, open := p.lifecycleState("draft", nil), p.lifecycleState("open", nil)
+	change := map[string]tftypes.Value{"kind": tfString("b")}
+	if errs := errorsOf(p.destroyPlan(draft)); len(errs) != 0 {
+		t.Errorf("a draft plans its destroy: %+v", errs)
+	}
+	if errs := errorsOf(p.destroyPlan(open)); len(errs) != 1 || !strings.Contains(errs[0].Detail, "Stripe deletes only a draft widget.") {
+		t.Errorf("an open widget's destroy is refused: %+v", errs)
+	}
+	if resp := p.change(draft, change); len(errorsOf(resp)) != 0 || len(resp.RequiresReplace) != 1 {
+		t.Errorf("a draft is replaced: %+v %v", resp.Diagnostics, resp.RequiresReplace)
+	}
+	if resp := p.change(open, change); len(errorsOf(resp)) != 1 || len(resp.RequiresReplace) != 0 {
+		t.Errorf("an open widget's replacement is refused: %+v %v", resp.Diagnostics, resp.RequiresReplace)
+	}
+
+	r := configured(t, draftOnlyDeclaration(), lifecycleTable(), clientFunc(func(_ context.Context, req stripeapi.Request) (*stripeapi.Response, error) {
+		if req.Method == "DELETE" {
+			return nil, &stripeapi.APIError{Status: 400, Type: "invalid_request_error", Message: "This invoice is finalized and cannot be deleted."}
+		}
+		return &stripeapi.Response{Status: 200, Body: wire.Object{{Name: "id", Value: wire.String("wid_1")}, {Name: "status", Value: wire.String("open")}}}, nil
+	}))
+	if diags := r.destroy(t, r.fill(map[string]attr.Value{"id": types.StringValue("wid_1"), "status": types.StringValue("draft")})); !refusedDestroy(diags) {
+		t.Fatalf("a stale draft that Stripe has finalized: want the refusal: %v", diags)
+	}
+}
+
+// A create-only list keeps the values Stripe fills in for its elements while another field
+// changes, so the change is an update and not a replacement, which a refusing resource would
+// fail.
+func TestCreateOnlyListKeepsWhatStripeFillsIn(t *testing.T) {
+	table := append(lifecycleTable(), fields.Field{Name: "lines", Shape: fields.ObjectList, Create: true, Response: true, Fields: []fields.Field{
+		{Name: "kind", Shape: fields.String, Create: true, Response: true},
+		{Name: "amount", Shape: fields.Int, Create: true, Response: true, ServerDefaulted: true},
+	}})
+	p := newPlanner(t, refusingDeclaration(), table)
+	line := func(amount tftypes.Value) tftypes.Value {
+		return tftypes.NewValue(p.typ.(tftypes.Object).AttributeTypes["lines"], []tftypes.Value{
+			obj(p.attrTypes("lines"), map[string]tftypes.Value{"kind": tfString("credit"), "amount": amount}),
+		})
+	}
+	state := p.lifecycleState("open", map[string]tftypes.Value{"lines": line(tftypes.NewValue(tftypes.Number, 500))})
+	proposed := clone(state, map[string]tftypes.Value{"name": tfString("renamed")})
+	config := clone(proposed, map[string]tftypes.Value{
+		"id": tftypes.NewValue(tftypes.String, nil), "status": tftypes.NewValue(tftypes.String, nil),
+		"lines": line(tftypes.NewValue(tftypes.Number, nil)),
+	})
+	// The list's own modifier runs before its elements' and names it for replacement, which
+	// Terraform drops when the planned list equals the state's.
+	planned, _ := p.plan(p.value(state), p.value(proposed), p.value(config))
+	if got := valueAt(planned, tftypes.NewAttributePath().WithAttributeName("lines")); !got.Equal(line(tftypes.NewValue(tftypes.Number, 500))) {
+		t.Errorf("planned lines %v, want the state's", got)
+	}
+}
+
 // topLevelTable is lifecycleTable with its nested create-only fields updatable, as
 // RefuseChange requires.
 func topLevelTable() []fields.Field {

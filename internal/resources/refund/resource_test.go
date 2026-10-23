@@ -2,6 +2,8 @@ package refund_test
 
 import (
 	"fmt"
+	"regexp"
+	"strings"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
@@ -161,4 +163,117 @@ func TestAccRefund_drift(t *testing.T) {
 			},
 		}, nil, "stripe_refund"),
 	})
+}
+
+// A refund made with `charge` behaves as one made with `payment_intent`, and Stripe fills in
+// the charge's payment intent (suite: "by charge" / "create partial", "create the rest").
+func TestAccRefund_byCharge(t *testing.T) {
+	acct := acctest.NewAccount(t)
+	intent, charge := tfacc.SucceededPaymentIntent(t, acct, "pm_card_visa")
+	cfg := acct.ProviderBlock() + fmt.Sprintf(`
+resource "stripe_refund" "test" {
+  charge = %q
+  amount = 500
+  reason = "duplicate"
+}
+
+resource "stripe_refund" "rest" {
+  charge = %q
+
+  depends_on = [stripe_refund.test]
+}
+`, charge, charge)
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: tfacc.ProviderFactories,
+		Steps: acctest.Forget(t, []resource.TestStep{
+			{
+				Config: cfg,
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr(resAddress, "amount", "500"),
+					resource.TestCheckResourceAttr(resAddress, "charge", charge),
+					resource.TestCheckResourceAttr(resAddress, "payment_intent", intent),
+					resource.TestCheckResourceAttr(resAddress, "status", "succeeded"),
+					resource.TestCheckResourceAttr("stripe_refund.rest", "amount", "1500"),
+					resource.TestCheckResourceAttr("stripe_refund.rest", "payment_intent", intent),
+				),
+			},
+			{Config: cfg, PlanOnly: true},
+		}, nil, "stripe_refund"),
+	})
+}
+
+// A direct charge has no payment intent, and a refund of it has none either.
+func TestAccRefund_directCharge(t *testing.T) {
+	acct := acctest.NewAccount(t)
+	cfg := acct.ProviderBlock() + `
+resource "stripe_charge" "test" {
+  amount   = 1000
+  currency = "usd"
+  source   = "tok_visa"
+}
+
+resource "stripe_refund" "test" {
+  charge = stripe_charge.test.id
+}
+`
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: tfacc.ProviderFactories,
+		Steps: acctest.Forget(t, []resource.TestStep{
+			{
+				Config: cfg,
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr(resAddress, "amount", "1000"),
+					resource.TestCheckResourceAttrPair(resAddress, "charge", "stripe_charge.test", "id"),
+					resource.TestCheckNoResourceAttr(resAddress, "payment_intent"),
+				),
+			},
+			{Config: cfg, Check: resource.TestCheckResourceAttr("stripe_charge.test", "refunded", "true")},
+		}, nil, "stripe_refund", "stripe_charge"),
+	})
+}
+
+// A refund takes exactly one of `charge` and `payment_intent`, which the plan checks before
+// Stripe is called.
+func TestAccRefund_chargeOrPaymentIntent(t *testing.T) {
+	acct := acctest.NewAccount(t)
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: tfacc.ProviderFactories,
+		Steps: []resource.TestStep{
+			{Config: acct.ProviderBlock() + "resource \"stripe_refund\" \"test\" {\n  amount = 500\n}\n", PlanOnly: true, ExpectError: regexp.MustCompile(`exactly one of .charge., .payment_intent. must be set, got 0`)},
+			{Config: refundConfig(acct, "pi_123", "  charge = \"ch_123\"\n"), PlanOnly: true, ExpectError: regexp.MustCompile(`exactly one of .charge., .payment_intent. must be set, got 2`)},
+		},
+	})
+}
+
+// In a live-mode account, refunding a charge and changing the refund fail at plan time
+// unless the provider allows live money movement.
+func TestAccRefund_liveMode(t *testing.T) {
+	acctest.RequireFake(t)
+	acct := acctest.NewAccount(t)
+	_, charge := tfacc.SucceededPaymentIntent(t, acct, "pm_card_visa")
+	acctest.Seed(t, acct, liveBalance())
+	refused := regexp.MustCompile(`Live-mode money movement is not allowed`)
+	cfg := func(extra string) string {
+		return acct.ProviderBlock() + fmt.Sprintf("resource \"stripe_refund\" \"test\" {\n  charge = %q\n%s}\n", charge, extra)
+	}
+	allow := strings.Replace(cfg(""), "provider \"stripe\" {\n", "provider \"stripe\" {\n  allow_live_money_movement = true\n", 1)
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: tfacc.ProviderFactories,
+		Steps: acctest.Forget(t, []resource.TestStep{
+			{Config: cfg(""), PlanOnly: true, ExpectError: refused},
+			{Config: allow, Check: resource.TestCheckResourceAttr(resAddress, "status", "succeeded")},
+			{Config: cfg("  metadata = { env = \"live\" }\n"), PlanOnly: true, ExpectError: refused},
+		}, nil, "stripe_refund"),
+	})
+}
+
+// liveBalance is a balance that reports live mode, for the guard's tests.
+func liveBalance() wire.Object {
+	zero := wire.Array{wire.Object{{Name: "amount", Value: wire.Int(0)}, {Name: "currency", Value: wire.String("usd")}}}
+	return wire.Object{
+		{Name: "object", Value: wire.String("balance")},
+		{Name: "livemode", Value: wire.Bool(true)},
+		{Name: "available", Value: zero},
+		{Name: "pending", Value: zero},
+	}
 }

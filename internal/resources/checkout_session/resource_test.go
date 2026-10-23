@@ -99,8 +99,9 @@ func TestAccCheckoutSession_update(t *testing.T) {
 	})
 }
 
-// `success_url` is create-only and the line items are not proven to update, and a session
-// cannot be destroyed, so changing either fails the plan, and a taint fails at apply.
+// `success_url` is create-only, Stripe refuses to change a hosted session's line items (suite:
+// "update errors" / "line items"), and a session cannot be destroyed, so changing either fails
+// the plan, and a taint fails at apply.
 func TestAccCheckoutSession_replace(t *testing.T) {
 	acct := acctest.NewAccount(t)
 	cfg := sessionConfig(acct, "")

@@ -36,7 +36,9 @@ var Declaration = engine.Declaration{
 		"currency", "customer_creation", "payment_method_collection", "phone_number_collection",
 		"redirect_on_completion", "tax_id_collection", "ui_mode",
 	},
-	// The spec's update takes these, which the suite has not proven.
+	// The spec's update takes these. Stripe refuses any change of a hosted session's line
+	// items (suite: "update errors" / "line items"). The suite proves a shipping options update
+	// ("update shipping options"), which the resource does not take yet.
 	ReplaceOn:    []string{"line_items", "shipping_options"},
 	Delete:       engine.Refuse,
 	RefuseReason: "Stripe cannot delete a checkout session; set `status` to `expired` to expire an open one.",

@@ -42,10 +42,10 @@ var Resources = []Resource{
 	// The Omit entries of the billing objects: `discounts` is sent as objects and returned as
 	// IDs, which no attribute holds both ways, so discounts wait for a decision on them.
 	{Package: "billing_credit_grant", CreatePath: "/v1/billing/credit_grants", UpdatePath: "/v1/billing/credit_grants/{id}"},
-	{Package: "credit_note", ReadPath: "/v1/credit_notes/{id}"},
+	{Package: "credit_note", CreatePath: "/v1/credit_notes", UpdatePath: "/v1/credit_notes/{id}"},
 	// An invoice's payment error is a nested payment intent that repeats without end, and
 	// three payment method options are empty objects in the response.
-	{Package: "invoice", ReadPath: "/v1/invoices/{invoice}", Omit: []string{"last_finalization_error", "payment_settings.payment_method_options.blik", "payment_settings.payment_method_options.konbini", "payment_settings.payment_method_options.sepa_debit"}},
+	{Package: "invoice", CreatePath: "/v1/invoices", UpdatePath: "/v1/invoices/{invoice}", Omit: []string{"discounts", "last_finalization_error", "payment_settings.payment_method_options.blik", "payment_settings.payment_method_options.konbini", "payment_settings.payment_method_options.sepa_debit"}},
 	{Package: "invoiceitem", CreatePath: "/v1/invoiceitems", UpdatePath: "/v1/invoiceitems/{invoiceitem}", Omit: []string{"discounts"}},
 	{Package: "quote", CreatePath: "/v1/quotes", UpdatePath: "/v1/quotes/{quote}", Omit: []string{"discounts"}},
 	{Package: "subscription", CreatePath: "/v1/subscriptions", UpdatePath: "/v1/subscriptions/{subscription_exposed_id}", Omit: []string{"discounts", "payment_settings.payment_method_options.konbini", "payment_settings.payment_method_options.sepa_debit", "items.discounts"}, CreateOnly: []string{"billing_cycle_anchor"}},
@@ -68,10 +68,15 @@ var Resources = []Resource{
 		"confirm", "confirmation_token", "error_on_requires_action", "mandate", "mandate_data", "off_session", "payment_method_data", "return_url",
 		"use_stripe_sdk", "radar_options",
 	}, ReadOnly: []string{"hooks"}},
-	{Package: "charge", ReadPath: "/v1/charges/{charge}"},
-	// A refund of a charge waits for the conformance suite to prove `charge` on /v1/refunds, so
-	// it stays readable and the resource refunds a payment intent.
-	{Package: "refund", CreatePath: "/v1/refunds", UpdatePath: "/v1/refunds/{refund}", ReadOnly: []string{"charge"}, Require: []string{"payment_intent"}},
+	// A direct charge (ADR 2026-10-22-money-moving-resources, D6.2). The spec deprecates the
+	// create in favour of payment intents, but Stripe serves it. Its deprecated `card` and
+	// `destination` are left out; `application_fee` is also the response's fee ID, and
+	// `radar_options` is set by a front end, as for payment intents, so both stay readable, as
+	// does `fraud_details`, which only the update takes and the suite has not proven. Stripe
+	// requires `amount` and `currency`, which the spec leaves optional (suite: "missing amount",
+	// "missing currency").
+	{Package: "charge", CreatePath: "/v1/charges", UpdatePath: "/v1/charges/{charge}", Omit: []string{"card", "destination"}, ReadOnly: []string{"application_fee", "fraud_details", "radar_options"}, Require: []string{"amount", "currency"}},
+	{Package: "refund", CreatePath: "/v1/refunds", UpdatePath: "/v1/refunds/{refund}"},
 	{Package: "dispute", ReadPath: "/v1/disputes/{dispute}"},
 	// `collected_information` is set only by an update, which the suite has not proven, so it
 	// stays readable.

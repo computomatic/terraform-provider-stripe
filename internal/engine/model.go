@@ -645,9 +645,11 @@ func (c *compiler) build(table []fields.Field, prefix string, top, parentOutput,
 		// A create-only value Stripe fills in for an element of a list (a schedule phase's
 		// `currency`) cannot be told from a new element's: the element has no prior value to
 		// keep, and an unknown one would force replacement. It is computed, and replaces only
-		// when the configuration sets a value that differs from the state's.
-		serverFilledInList := inList && n.Computed && f.CreateOnly() && !replaceOn
-		n.ReplaceIfSet = serverFilledInList && !parentReplace && !nestedShape(f.Shape)
+		// when the configuration sets a value that differs from the state's. Below a list that
+		// forces replacement the element is the state's own until the list changes, which
+		// replaces the object, so the value keeps its prior one as any child of such a field does.
+		serverFilledInList := inList && n.Computed && f.CreateOnly() && !replaceOn && !parentReplace
+		n.ReplaceIfSet = serverFilledInList && !nestedShape(f.Shape)
 		n.Replace = (f.CreateOnly() || replaceOn) && !parentReplace && !n.computedOnly() && !serverFilledInList && !(top && c.decl.Advance != nil && f.Name == c.decl.Advance.Field)
 		// Below a field that forces replacement nothing changes in place, so a computed
 		// value there stays as it is: an unknown one would read as a change of the parent.

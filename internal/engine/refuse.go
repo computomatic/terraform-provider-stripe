@@ -28,7 +28,8 @@ func (m *model) refusal(state tftypes.Value) string {
 	}
 	if w := m.decl.RefuseWhen; w != nil && !state.IsNull() {
 		n, _ := m.top(w.Field)
-		if holdsValue(valueAt(state, tftypes.NewAttributePath().WithAttributeName(n.AttrName())), w.Value) {
+		v := valueAt(state, tftypes.NewAttributePath().WithAttributeName(n.AttrName()))
+		if v.IsKnown() && !v.IsNull() && holdsValue(v, w.Value) != w.Except {
 			return w.Reason
 		}
 	}
@@ -95,7 +96,7 @@ func (r *Resource) refusedByStripe(ctx context.Context, id, parent string, err e
 		return false
 	}
 	v, ok := body.Get(w.Field)
-	return ok && sameWire(v, w.Value)
+	return ok && sameWire(v, w.Value) != w.Except
 }
 
 // refuser fails a replacement of an object whose destroy is refused. It wraps the plan

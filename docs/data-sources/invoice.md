@@ -3,12 +3,12 @@
 page_title: "stripe_invoice Data Source - Stripe"
 subcategory: ""
 description: |-
-  A bill sent to a customer, such as the latest_invoice of a subscription. Look one up by its id. The invoice's last_finalization_error is not available.
+  A bill sent to a customer, such as the latest_invoice of a subscription. The invoice's last_finalization_error is not available.
 ---
 
 # Data Source: stripe_invoice
 
-A bill sent to a customer, such as the `latest_invoice` of a subscription. Look one up by its `id`. The invoice's `last_finalization_error` is not available.
+A bill sent to a customer, such as the `latest_invoice` of a subscription. The invoice's `last_finalization_error` is not available.
 
 ## Example Usage
 
@@ -39,19 +39,20 @@ This data source exports the following attributes in addition to the arguments a
 * `amount_remaining` - The difference between amount_due and amount_paid, in cents (or local equivalent).
 * `amount_shipping` - This is the sum of all the shipping amounts.
 * `application` - ID of the Connect Application that created the invoice.
+* `application_fee_amount` - A fee in cents (or local equivalent) that will be applied to the invoice and transferred to the application owner's Stripe account. The request must be made with an OAuth key or the Stripe-Account header in order to take an application fee. For more information, see the application fees [documentation](https://docs.stripe.com/billing/invoices/connect#collecting-fees).
 * `attempt_count` - Number of payment attempts made for this invoice, from the perspective of the payment retry schedule. Any payment attempt counts as the first attempt, and subsequently only automatic retries increment the attempt count. In other words, manual payment attempts after the first attempt do not affect the retry schedule. If a failure is returned with a non-retryable return code, the invoice can no longer be retried unless a new payment method is obtained. Retries will continue to be scheduled, and attempt_count will continue to increment, but retries will only be executed if a new payment method is obtained.
 * `attempted` - Whether an attempt has been made to pay the invoice. An invoice is not attempted until 1 hour after the `invoice.created` webhook, for example, so you might not want to display that invoice as unpaid to your users.
-* `auto_advance` - Controls whether Stripe performs [automatic collection](https://docs.stripe.com/invoicing/integration/automatic-advancement-collection) of the invoice. If `false`, the invoice's state doesn't automatically advance without an explicit action.
-* `automatic_tax` - See [`automatic_tax`](#automatic_tax) below.
-* `automatically_finalizes_at` - The time when this invoice is currently scheduled to be automatically finalized. The field will be `null` if the invoice is not scheduled to finalize in the future. If the invoice is not in the draft state, this field will always be `null` - see `finalized_at` for the time when an already-finalized invoice was finalized.
+* `auto_advance` - Controls whether Stripe performs [automatic collection](https://docs.stripe.com/invoicing/integration/automatic-advancement-collection) of the invoice. If `false`, the invoice's state doesn't automatically advance without an explicit action. Defaults to false.
+* `automatic_tax` - Settings for automatic tax lookup for this invoice. See [`automatic_tax`](#automatic_tax) below.
+* `automatically_finalizes_at` - The time when this invoice should be scheduled to finalize (up to 5 years in the future). The invoice is finalized at this time if it's still in draft state.
 * `billing_reason` - Indicates the reason why the invoice was created. * `manual`: Unrelated to a subscription, for example, created via the invoice editor. * `subscription`: No longer in use. Applies to subscriptions from before May 2018 where no distinction was made between updates, cycles, and thresholds. * `subscription_create`: A new subscription was created. * `subscription_cycle`: A subscription advanced into a new period. * `subscription_threshold`: A subscription reached a billing threshold. * `subscription_update`: A subscription was updated. * `upcoming`: Reserved for upcoming invoices created through the Create Preview Invoice API or when an `invoice.upcoming` event is generated for an upcoming invoice on a subscription. Possible values: `automatic_pending_invoice_item_invoice`, `manual`, `quote_accept`, `subscription`, `subscription_create`, `subscription_cycle`, `subscription_threshold`, `subscription_update`, `upcoming`.
-* `collection_method` - Either `charge_automatically`, or `send_invoice`. When charging automatically, Stripe will attempt to pay this invoice using the default source attached to the customer. When sending an invoice, Stripe will email this invoice to the customer with payment instructions. Possible values: `charge_automatically`, `send_invoice`.
+* `collection_method` - Either `charge_automatically`, or `send_invoice`. When charging automatically, Stripe will attempt to pay this invoice using the default source attached to the customer. When sending an invoice, Stripe will email this invoice to the customer with payment instructions. Defaults to `charge_automatically`. Possible values: `charge_automatically`, `send_invoice`.
 * `confirmation_secret` - The confirmation secret associated with this invoice. Currently, this contains the client_secret of the PaymentIntent that Stripe creates during invoice finalization. See [`confirmation_secret`](#confirmation_secret) below.
 * `created` - Time at which the object was created. Measured in seconds since the Unix epoch.
-* `currency` - Three-letter [ISO currency code](https://www.iso.org/iso-4217-currency-codes.html), in lowercase. Must be a [supported currency](https://stripe.com/docs/currencies).
-* `custom_fields` - Custom fields displayed on the invoice. See [`custom_fields`](#custom_fields) below.
+* `currency` - The currency to create this invoice in. Defaults to that of `customer` if not specified.
+* `custom_fields` - A list of up to 4 custom fields to be displayed on the invoice. See [`custom_fields`](#custom_fields) below.
 * `customer` - The ID of the customer to bill.
-* `customer_account` - The ID of the account representing the customer to bill.
+* `customer_account` - The ID of the account to bill.
 * `customer_address` - The customer's address. Until the invoice is finalized, this field will equal `customer.address`. Once the invoice is finalized, this field will no longer be updated. See [`customer_address`](#customer_address) below.
 * `customer_email` - The customer's email. Until the invoice is finalized, this field will equal `customer.email`. Once the invoice is finalized, this field will no longer be updated.
 * `customer_name` - The customer's name. Until the invoice is finalized, this field will equal `customer.name`. Once the invoice is finalized, this field will no longer be updated.
@@ -59,42 +60,44 @@ This data source exports the following attributes in addition to the arguments a
 * `customer_shipping` - The customer's shipping information. Until the invoice is finalized, this field will equal `customer.shipping`. Once the invoice is finalized, this field will no longer be updated. See [`customer_shipping`](#customer_shipping) below.
 * `customer_tax_exempt` - The customer's tax exempt status. Until the invoice is finalized, this field will equal `customer.tax_exempt`. Once the invoice is finalized, this field will no longer be updated. Possible values: `exempt`, `none`, `reverse`.
 * `customer_tax_ids` - The customer's tax IDs. Until the invoice is finalized, this field will contain the same tax IDs as `customer.tax_ids`. Once the invoice is finalized, this field will no longer be updated. See [`customer_tax_ids`](#customer_tax_ids) below.
+* `days_until_due` - The number of days from when the invoice is created until it is due. Valid only for invoices where `collection_method=send_invoice`.
 * `default_payment_method` - ID of the default payment method for the invoice. It must belong to the customer associated with the invoice. If not set, defaults to the subscription's default payment method, if any, or to the default payment method in the customer's invoice settings.
 * `default_source` - ID of the default payment source for the invoice. It must belong to the customer associated with the invoice and be in a chargeable state. If not set, defaults to the subscription's default source, if any, or to the customer's default source.
-* `default_tax_rates` - The tax rates applied to this invoice, if any. See [`default_tax_rates`](#default_tax_rates) below.
+* `default_tax_rates` - The tax rates that will apply to any line item that does not have `tax_rates` set.
 * `description` - An arbitrary string attached to the object. Often useful for displaying to users. Referenced as 'memo' in the Dashboard.
-* `discounts` - The discounts applied to the invoice. Line item discounts are applied before invoice discounts. Use `expand[]=discounts` to expand each discount.
-* `due_date` - The date on which payment for this invoice is due. This value will be `null` for invoices where `collection_method=charge_automatically`.
+* `due_date` - The date on which payment for this invoice is due. Valid only for invoices where `collection_method=send_invoice`.
 * `effective_at` - The date when this invoice is in effect. Same as `finalized_at` unless overwritten. When defined, this value replaces the system-generated 'Date of issue' printed on the invoice PDF and receipt.
 * `ending_balance` - Ending customer balance after the invoice is finalized. Invoices are finalized approximately an hour after successful webhook delivery or when payment collection is attempted for the invoice. If the invoice has not been finalized yet, this will be null.
-* `footer` - Footer displayed on the invoice.
-* `from_invoice` - Details of the invoice that was cloned. See the [revision documentation](https://docs.stripe.com/invoicing/invoice-revisions) for more details. See [`from_invoice`](#from_invoice) below.
+* `footer` - Footer to be displayed on the invoice.
+* `from_invoice` - Revise an existing invoice. The new invoice will be created in `status=draft`. See the [revision documentation](https://docs.stripe.com/invoicing/invoice-revisions) for more details. See [`from_invoice`](#from_invoice) below.
 * `hosted_invoice_url` - The URL for the hosted invoice page, which allows customers to view and pay an invoice. If the invoice has not been finalized yet, this will be null.
 * `invoice_pdf` - The link to download the PDF for the invoice. If the invoice has not been finalized yet, this will be null.
-* `issuer` - See [`issuer`](#issuer) below.
+* `issuer` - The connected account that issues the invoice. The invoice is presented with the branding and support information of the specified account. See [`issuer`](#issuer) below.
 * `latest_revision` - The ID of the most recent non-draft revision of this invoice
 * `lines` - The individual line items that make up the invoice. `lines` is sorted as follows: (1) pending invoice items (including prorations) in reverse chronological order, (2) subscription items in reverse chronological order, and (3) invoice items added after invoice creation in chronological order. See [`lines`](#lines) below.
 * `livemode` - If the object exists in live mode, the value is `true`. If the object exists in test mode, the value is `false`.
-* `metadata` - Set of [key-value pairs](https://docs.stripe.com/api/metadata) that you can attach to an object. This can be useful for storing additional information about the object in a structured format.
+* `metadata` - Set of [key-value pairs](https://docs.stripe.com/api/metadata) that you can attach to an object. This can be useful for storing additional information about the object in a structured format. Individual keys can be unset by posting an empty value to them. All keys can be unset by posting an empty value to `metadata`.
 * `next_payment_attempt` - The time at which payment will next be attempted. This value will be `null` for invoices where `collection_method=send_invoice`.
-* `number` - A unique, identifying string that appears on emails sent to the customer for this invoice. This starts with the customer's unique invoice_prefix if it is specified.
+* `number` - Set the number for this invoice. If no number is present then a number will be assigned automatically when the invoice is finalized. In many markets, regulations require invoices to be unique, sequential and / or gapless. You are responsible for ensuring this is true across all your different invoicing systems in the event that you edit the invoice number using our API. If you use only Stripe for your invoices and do not change invoice numbers, Stripe handles this aspect of compliance for you automatically.
 * `on_behalf_of` - The account (if any) for which the funds of the invoice payment are intended. If set, the invoice will be presented with the branding and support information of the specified account. See the [Invoices with Connect](https://docs.stripe.com/billing/invoices/connect) documentation for details.
 * `parent` - The parent that generated this invoice See [`parent`](#parent) below.
-* `payment_settings` - See [`payment_settings`](#payment_settings) below.
+* `payment_settings` - Configuration settings for the PaymentIntent that is generated when the invoice is finalized. See [`payment_settings`](#payment_settings) below.
 * `payments` - Payments for this invoice. Use [invoice payment](https://docs.stripe.com/api/invoice-payment) to get more details. See [`payments`](#payments) below.
+* `pending_invoice_items_behavior` - How to handle pending invoice items on invoice creation. Defaults to `exclude` if the parameter is omitted. Possible values: `exclude`, `include`.
 * `period_end` - The latest timestamp at which invoice items can be associated with this invoice. Use the [line item period](https://docs.stripe.com/api/invoices/line_item#invoice_line_item_object-period) to get the service period for each price.
 * `period_start` - The earliest timestamp at which invoice items can be associated with this invoice. Use the [line item period](https://docs.stripe.com/api/invoices/line_item#invoice_line_item_object-period) to get the service period for each price.
 * `post_payment_credit_notes_amount` - Total amount of all post-payment credit notes issued for this invoice.
 * `pre_payment_credit_notes_amount` - Total amount of all pre-payment credit notes issued for this invoice.
 * `receipt_number` - This is the transaction number that appears on email receipts sent for this invoice.
 * `rendering` - The rendering-related settings that control how invoices render in customer-facing interfaces such as the PDF or hosted invoice page. See [`rendering`](#rendering) below.
-* `shipping_cost` - The details of the cost of shipping, including the ShippingRate applied on the invoice. See [`shipping_cost`](#shipping_cost) below.
+* `shipping_cost` - Settings for the cost of shipping for this invoice. See [`shipping_cost`](#shipping_cost) below.
 * `shipping_details` - Shipping details for the invoice. The Invoice PDF will use the `shipping_details` value if it is set, otherwise the PDF will render the shipping address from the customer. See [`shipping_details`](#shipping_details) below.
 * `starting_balance` - Starting customer balance before the invoice is finalized. If the invoice has not been finalized yet, this will be the current customer balance. For revision invoices, this also includes any customer balance that was applied to the original invoice.
-* `statement_descriptor` - Extra information about an invoice for the customer's credit card statement.
+* `statement_descriptor` - Extra information about a charge for the customer's credit card statement. It must contain at least one letter. If not specified and this invoice is part of a subscription, the default `statement_descriptor` will be set to the first subscription item's product's `statement_descriptor`.
 * `status` - The status of the invoice, one of `draft`, `open`, `paid`, `uncollectible`, or `void`. [Learn more](https://docs.stripe.com/billing/invoices/workflow#workflow-overview) Possible values: `draft`, `open`, `paid`, `uncollectible`, `void`.
 * `status_details` - See [`status_details`](#status_details) below.
 * `status_transitions` - See [`status_transitions`](#status_transitions) below.
+* `subscription` - The ID of the subscription to invoice, if any. If set, the created invoice will only include pending invoice items for that subscription. The subscription's billing cycle and regular subscription events won't be affected.
 * `subtotal` - Total of all subscriptions, invoice items, and prorations on the invoice before any invoice level discount or exclusive tax is applied. Item discounts are already incorporated
 * `subtotal_excluding_tax` - The integer amount in cents (or local equivalent) representing the subtotal of the invoice before any invoice level discount or tax is applied. Item discounts are already incorporated
 * `test_clock` - ID of the test clock this invoice belongs to.
@@ -104,6 +107,7 @@ This data source exports the following attributes in addition to the arguments a
 * `total_excluding_tax` - The integer amount in cents (or local equivalent) representing the total amount of the invoice including all discounts but excluding all tax.
 * `total_pretax_credit_amounts` - Contains pretax credit amounts (ex: discount, credit grants, etc) that apply to this invoice. This is a combined list of total_pretax_credit_amounts across all invoice line items. See [`total_pretax_credit_amounts`](#total_pretax_credit_amounts) below.
 * `total_taxes` - The aggregate tax information of all line items. See [`total_taxes`](#total_taxes) below.
+* `transfer_data` - If specified, the funds from the invoice will be transferred to the destination and the ID of the resulting transfer will be found on the invoice's charge. See [`transfer_data`](#transfer_data) below.
 * `webhooks_delivered_at` - Invoices are automatically paid or sent 1 hour after webhooks are delivered, or until all webhook delivery attempts have [been exhausted](https://docs.stripe.com/billing/webhooks#understand). This field tracks the time when webhooks for this invoice were successfully delivered. If the invoice had no webhooks to deliver, this will be set while the invoice is being created.
 
 <a id="automatic_tax"></a>
@@ -184,44 +188,12 @@ The `customer_tax_ids` attribute is a list. Each element supports:
 * `type` - The type of the tax ID, one of `ad_nrt`, `ar_cuit`, `eu_vat`, `bo_tin`, `br_cnpj`, `br_cpf`, `cn_tin`, `co_nit`, `cr_tin`, `do_rcn`, `ec_ruc`, `eu_oss_vat`, `hr_oib`, `pe_ruc`, `ro_tin`, `rs_pib`, `sv_nit`, `uy_ruc`, `ve_rif`, `vn_tin`, `gb_vat`, `nz_gst`, `au_abn`, `au_arn`, `in_gst`, `no_vat`, `no_voec`, `za_vat`, `ch_vat`, `mx_rfc`, `sg_uen`, `ru_inn`, `ru_kpp`, `ca_bn`, `hk_br`, `es_cif`, `pl_nip`, `it_cf`, `fo_vat`, `gi_tin`, `py_ruc`, `tw_vat`, `th_vat`, `jp_cn`, `jp_rn`, `jp_trn`, `li_uid`, `li_vat`, `lk_vat`, `my_itn`, `us_ein`, `kr_brn`, `ca_qst`, `ca_gst_hst`, `ca_pst_bc`, `ca_pst_mb`, `ca_pst_sk`, `my_sst`, `sg_gst`, `ae_trn`, `cl_tin`, `sa_vat`, `id_npwp`, `my_frp`, `il_vat`, `ge_vat`, `ua_vat`, `is_vat`, `bg_uic`, `hu_tin`, `si_tin`, `ke_pin`, `tr_tin`, `eg_tin`, `ph_tin`, `al_tin`, `bh_vat`, `kz_bin`, `ng_tin`, `om_vat`, `de_stn`, `ch_uid`, `tz_vat`, `uz_vat`, `uz_tin`, `md_vat`, `ma_vat`, `by_tin`, `ao_tin`, `bs_tin`, `bb_tin`, `cd_nif`, `mr_nif`, `me_pib`, `zw_tin`, `ba_tin`, `gn_nif`, `mk_vat`, `sr_fin`, `sn_ninea`, `am_tin`, `np_pan`, `tj_tin`, `ug_tin`, `zm_tin`, `kh_tin`, `aw_tin`, `az_tin`, `bd_bin`, `bj_ifu`, `et_tin`, `kg_tin`, `la_tin`, `cm_niu`, `cv_nif`, `bf_ifu`, `ic_nif`, or `unknown` Possible values: `ad_nrt`, `ae_trn`, `al_tin`, `am_tin`, `ao_tin`, `ar_cuit`, `au_abn`, `au_arn`, `aw_tin`, `az_tin`, `ba_tin`, `bb_tin`, `bd_bin`, `bf_ifu`, `bg_uic`, `bh_vat`, `bj_ifu`, `bo_tin`, `br_cnpj`, `br_cpf`, `bs_tin`, `by_tin`, `ca_bn`, `ca_gst_hst`, `ca_pst_bc`, `ca_pst_mb`, `ca_pst_sk`, `ca_qst`, `cd_nif`, `ch_uid`, `ch_vat`, `cl_tin`, `cm_niu`, `cn_tin`, `co_nit`, `cr_tin`, `cv_nif`, `de_stn`, `do_rcn`, `ec_ruc`, `eg_tin`, `es_cif`, `et_tin`, `eu_oss_vat`, `eu_vat`, `fo_vat`, `gb_vat`, `ge_vat`, `gi_tin`, `gn_nif`, `hk_br`, `hr_oib`, `hu_tin`, `ic_nif`, `id_npwp`, `il_vat`, `in_gst`, `is_vat`, `it_cf`, `jp_cn`, `jp_rn`, `jp_trn`, `ke_pin`, `kg_tin`, `kh_tin`, `kr_brn`, `kz_bin`, `la_tin`, `li_uid`, `li_vat`, `lk_vat`, `ma_vat`, `md_vat`, `me_pib`, `mk_vat`, `mr_nif`, `mx_rfc`, `my_frp`, `my_itn`, `my_sst`, `ng_tin`, `no_vat`, `no_voec`, `np_pan`, `nz_gst`, `om_vat`, `pe_ruc`, `ph_tin`, `pl_nip`, `py_ruc`, `ro_tin`, `rs_pib`, `ru_inn`, `ru_kpp`, `sa_vat`, `sg_gst`, `sg_uen`, `si_tin`, `sn_ninea`, `sr_fin`, `sv_nit`, `th_vat`, `tj_tin`, `tr_tin`, `tw_vat`, `tz_vat`, `ua_vat`, `ug_tin`, `unknown`, `us_ein`, `uy_ruc`, `uz_tin`, `uz_vat`, `ve_rif`, `vn_tin`, `za_vat`, `zm_tin`, `zw_tin`.
 * `value` - The value of the tax ID.
 
-<a id="default_tax_rates"></a>
-### `default_tax_rates`
-
-The `default_tax_rates` attribute is a list. Each element supports:
-
-* `active` - Defaults to `true`. When set to `false`, this tax rate cannot be used with new applications or Checkout Sessions, but will still work for subscriptions and invoices that already have it set.
-* `country` - Two-letter country code ([ISO 3166-1 alpha-2](https://en.wikipedia.org/wiki/ISO_3166-1_alpha-2)).
-* `created` - Time at which the object was created. Measured in seconds since the Unix epoch.
-* `description` - An arbitrary string attached to the tax rate for your internal use only. It will not be visible to your customers.
-* `display_name` - The display name of the tax rates as it will appear to your customer on their receipt email, PDF, and the hosted invoice page.
-* `effective_percentage` - Actual/effective tax rate percentage out of 100. For tax calculations with automatic_tax[enabled]=true, this percentage reflects the rate actually used to calculate tax based on the product's taxability and whether the user is registered to collect taxes in the corresponding jurisdiction.
-* `flat_amount` - The amount of the tax rate when the `rate_type` is `flat_amount`. Tax rates with `rate_type` `percentage` can vary based on the transaction, resulting in this field being `null`. This field exposes the amount and currency of the flat tax rate. See [`default_tax_rates.flat_amount`](#default_tax_rates.flat_amount) below.
-* `id` - Unique identifier for the object.
-* `inclusive` - This specifies if the tax rate is inclusive or exclusive.
-* `jurisdiction` - The jurisdiction for the tax rate. You can use this label field for tax reporting purposes. It also appears on your customer’s invoice.
-* `jurisdiction_level` - The level of the jurisdiction that imposes this tax rate. Will be `null` for manually defined tax rates. Possible values: `city`, `country`, `county`, `district`, `multiple`, `state`.
-* `livemode` - If the object exists in live mode, the value is `true`. If the object exists in test mode, the value is `false`.
-* `metadata` - Set of [key-value pairs](https://docs.stripe.com/api/metadata) that you can attach to an object. This can be useful for storing additional information about the object in a structured format.
-* `object` - String representing the object's type. Objects of the same type share the same value. Possible values: `tax_rate`.
-* `percentage` - Tax rate percentage out of 100. For tax calculations with automatic_tax[enabled]=true, this percentage includes the statutory tax rate of non-taxable jurisdictions.
-* `rate_type` - Indicates the type of tax rate applied to the taxable amount. This value can be `null` when no tax applies to the location. This field is only present for TaxRates created by Stripe Tax. Possible values: `flat_amount`, `percentage`.
-* `state` - [ISO 3166-2 subdivision code](https://en.wikipedia.org/wiki/ISO_3166-2), without country prefix. For example, "NY" for New York, United States.
-* `tax_type` - The high-level tax type, such as `vat` or `sales_tax`. Possible values: `amusement_tax`, `communications_tax`, `digital_excise_tax`, `gst`, `hst`, `igst`, `jct`, `lease_tax`, `mass_transit_parking_tax`, `parking_tax`, `pst`, `qst`, `retail_delivery_fee`, `rst`, `sales_tax`, `service_tax`, `utility_users_tax`, `vat`.
-
-<a id="default_tax_rates.flat_amount"></a>
-### `default_tax_rates.flat_amount`
-
-The `default_tax_rates.flat_amount` attribute supports:
-
-* `amount` - Amount of the tax when the `rate_type` is `flat_amount`. This positive integer represents how much to charge in the smallest currency unit (e.g., 100 cents to charge $1.00 or 100 to charge ¥100, a zero-decimal currency). The amount value supports up to eight digits (e.g., a value of 99999999 for a USD charge of $999,999.99).
-* `currency` - Three-letter ISO currency code, in lowercase.
-
 <a id="from_invoice"></a>
 ### `from_invoice`
 
 The `from_invoice` attribute supports:
 
-* `action` - The relation between this invoice and the cloned invoice
+* `action` - The relation between this invoice and the cloned invoice Possible values: `revision`.
 * `invoice` - The invoice that was cloned.
 
 <a id="issuer"></a>
@@ -506,6 +478,16 @@ The `payment_settings.payment_method_options.card` attribute supports:
 The `payment_settings.payment_method_options.card.installments` attribute supports:
 
 * `enabled` - Whether Installments are enabled for this Invoice.
+* `plan` - See [`payment_settings.payment_method_options.card.installments.plan`](#payment_settings.payment_method_options.card.installments.plan) below.
+
+<a id="payment_settings.payment_method_options.card.installments.plan"></a>
+### `payment_settings.payment_method_options.card.installments.plan`
+
+The `payment_settings.payment_method_options.card.installments.plan` attribute supports:
+
+* `count` -
+* `interval` - Possible values: `month`.
+* `type` - Possible values: `bonus`, `fixed_count`, `revolving`.
 
 <a id="payment_settings.payment_method_options.customer_balance"></a>
 ### `payment_settings.payment_method_options.customer_balance`
@@ -646,7 +628,7 @@ The `payments.data.status_transitions` attribute supports:
 
 The `rendering` attribute supports:
 
-* `amount_tax_display` - How line-item prices and amounts will be displayed with respect to tax on invoice PDFs.
+* `amount_tax_display` - How line-item prices and amounts will be displayed with respect to tax on invoice PDFs. Possible values: `exclude_tax`, `include_inclusive_tax`.
 * `pdf` - Invoice pdf rendering options See [`rendering.pdf`](#rendering.pdf) below.
 * `template` - ID of the rendering template that the invoice is formatted by.
 * `template_version` - Version of the rendering template that the invoice is using.
@@ -667,7 +649,62 @@ The `shipping_cost` attribute supports:
 * `amount_tax` - Total tax amount applied due to shipping costs. If no tax was applied, defaults to 0.
 * `amount_total` - Total shipping cost after taxes are applied.
 * `shipping_rate` - The ID of the ShippingRate for this invoice.
+* `shipping_rate_data` - See [`shipping_cost.shipping_rate_data`](#shipping_cost.shipping_rate_data) below.
 * `taxes` - The taxes applied to the shipping rate. See [`shipping_cost.taxes`](#shipping_cost.taxes) below.
+
+<a id="shipping_cost.shipping_rate_data"></a>
+### `shipping_cost.shipping_rate_data`
+
+The `shipping_cost.shipping_rate_data` attribute supports:
+
+* `delivery_estimate` - See [`shipping_cost.shipping_rate_data.delivery_estimate`](#shipping_cost.shipping_rate_data.delivery_estimate) below.
+* `display_name` -
+* `fixed_amount` - See [`shipping_cost.shipping_rate_data.fixed_amount`](#shipping_cost.shipping_rate_data.fixed_amount) below.
+* `metadata` -
+* `tax_behavior` - Possible values: `exclusive`, `inclusive`, `unspecified`.
+* `tax_code` -
+* `type` - Possible values: `fixed_amount`.
+
+<a id="shipping_cost.shipping_rate_data.delivery_estimate"></a>
+### `shipping_cost.shipping_rate_data.delivery_estimate`
+
+The `shipping_cost.shipping_rate_data.delivery_estimate` attribute supports:
+
+* `maximum` - See [`shipping_cost.shipping_rate_data.delivery_estimate.maximum`](#shipping_cost.shipping_rate_data.delivery_estimate.maximum) below.
+* `minimum` - See [`shipping_cost.shipping_rate_data.delivery_estimate.minimum`](#shipping_cost.shipping_rate_data.delivery_estimate.minimum) below.
+
+<a id="shipping_cost.shipping_rate_data.delivery_estimate.maximum"></a>
+### `shipping_cost.shipping_rate_data.delivery_estimate.maximum`
+
+The `shipping_cost.shipping_rate_data.delivery_estimate.maximum` attribute supports:
+
+* `unit` - Possible values: `business_day`, `day`, `hour`, `month`, `week`.
+* `value` -
+
+<a id="shipping_cost.shipping_rate_data.delivery_estimate.minimum"></a>
+### `shipping_cost.shipping_rate_data.delivery_estimate.minimum`
+
+The `shipping_cost.shipping_rate_data.delivery_estimate.minimum` attribute supports:
+
+* `unit` - Possible values: `business_day`, `day`, `hour`, `month`, `week`.
+* `value` -
+
+<a id="shipping_cost.shipping_rate_data.fixed_amount"></a>
+### `shipping_cost.shipping_rate_data.fixed_amount`
+
+The `shipping_cost.shipping_rate_data.fixed_amount` attribute supports:
+
+* `amount` -
+* `currency` -
+* `currency_options` - See [`shipping_cost.shipping_rate_data.fixed_amount.currency_options`](#shipping_cost.shipping_rate_data.fixed_amount.currency_options) below.
+
+<a id="shipping_cost.shipping_rate_data.fixed_amount.currency_options"></a>
+### `shipping_cost.shipping_rate_data.fixed_amount.currency_options`
+
+The `shipping_cost.shipping_rate_data.fixed_amount.currency_options` attribute is a map. Each value supports:
+
+* `amount` -
+* `tax_behavior` - Possible values: `exclusive`, `inclusive`, `unspecified`.
 
 <a id="shipping_cost.taxes"></a>
 ### `shipping_cost.taxes`
@@ -810,3 +847,11 @@ The `total_taxes` attribute is a list. Each element supports:
 The `total_taxes.tax_rate_details` attribute supports:
 
 * `tax_rate` - ID of the tax rate
+
+<a id="transfer_data"></a>
+### `transfer_data`
+
+The `transfer_data` attribute supports:
+
+* `amount` -
+* `destination` -

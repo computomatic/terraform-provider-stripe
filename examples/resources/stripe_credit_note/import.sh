@@ -1,0 +1,1 @@
+terraform import stripe_credit_note.goodwill cn_123

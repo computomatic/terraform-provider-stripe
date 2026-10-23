@@ -19,7 +19,7 @@ import (
 // flag on another resource, fails here.
 func TestMoneyMovingResources(t *testing.T) {
 	want := []string{
-		"stripe_application_fee_refund", "stripe_checkout_session", "stripe_climate_order", "stripe_payment_intent", "stripe_refund",
+		"stripe_application_fee_refund", "stripe_charge", "stripe_checkout_session", "stripe_climate_order", "stripe_credit_note", "stripe_invoice", "stripe_payment_intent", "stripe_refund",
 		"stripe_topup", "stripe_transfer", "stripe_transfer_reversal",
 	}
 	ctx := context.Background()

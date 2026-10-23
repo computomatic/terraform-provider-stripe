@@ -25,8 +25,10 @@ var Declaration = engine.Declaration{
 		List:     "/v1/invoiceitems",
 	},
 	// Stripe reports the price an item was made from, or a one-off amount stood for, in
-	// `pricing` (suite: "the object has `pricing`"), although the request may name none.
-	ServerDefaulted: []string{"pricing"},
+	// `pricing` (suite: "the object has `pricing`"), although the request may name none. A
+	// pending item names the draft invoice that sweeps it up (suite: "draft produced by a
+	// pending invoice item").
+	ServerDefaulted: []string{"invoice", "pricing"},
 	Delete:          engine.Delete,
 }
 

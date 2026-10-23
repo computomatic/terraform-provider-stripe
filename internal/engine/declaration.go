@@ -99,6 +99,9 @@ type RefuseWhen struct {
 	Field string
 	// Value is the refused value, a wire.Bool or a wire.String.
 	Value wire.Value
+	// Except refuses every value of Field but Value, such as an invoice in any status but
+	// `draft`. A value not known or null is never refused.
+	Except bool
 	// Reason is the sentence that says why, such as "Stripe refuses to deactivate the
 	// account's default portal configuration."
 	Reason string

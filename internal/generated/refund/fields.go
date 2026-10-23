@@ -9,7 +9,7 @@ import "github.com/computomatic/terraform-provider-stripe/internal/fields"
 var Table = []fields.Field{
 	{Name: "amount", Shape: fields.Int, Create: true, Response: true, ServerDefaulted: true, Description: "Amount, in cents (or local equivalent)."},
 	{Name: "balance_transaction", Shape: fields.String, Response: true, Description: "Balance transaction that describes the impact on your account balance."},
-	{Name: "charge", Shape: fields.String, Response: true, Description: "ID of the charge that's refunded."},
+	{Name: "charge", Shape: fields.String, Create: true, Response: true, Description: "The identifier of the charge to refund."},
 	{Name: "created", Shape: fields.Int, Response: true, Description: "Time at which the object was created. Measured in seconds since the Unix epoch."},
 	{Name: "currency", Shape: fields.String, Create: true, Response: true, ServerDefaulted: true, Description: "Three-letter [ISO currency code](https://www.iso.org/iso-4217-currency-codes.html), in lowercase. Must be a [supported currency](https://stripe.com/docs/currencies)."},
 	{Name: "customer", Shape: fields.String, Create: true, Response: true, Description: "Customer whose customer balance to refund from."},
@@ -96,7 +96,7 @@ var Table = []fields.Field{
 		{Name: "type", Shape: fields.String, Response: true, Description: "Type of the next action to perform."},
 	}},
 	{Name: "origin", Shape: fields.String, Create: true, Enum: []string{"customer_balance"}, Description: "Origin of the refund"},
-	{Name: "payment_intent", Shape: fields.String, Required: true, Create: true, Response: true, Description: "The identifier of the PaymentIntent to refund."},
+	{Name: "payment_intent", Shape: fields.String, Create: true, Response: true, Description: "The identifier of the PaymentIntent to refund."},
 	{Name: "payment_method", Shape: fields.String, Response: true, Description: "ID of the payment method associated with this refund."},
 	{Name: "pending_reason", Shape: fields.String, Response: true, Enum: []string{"charge_pending", "insufficient_funds", "processing"}, Description: "Provides the reason for why the refund is pending. Possible values are: `processing`, `insufficient_funds`, or `charge_pending`."},
 	{Name: "presentment_details", Shape: fields.Object, Response: true, Fields: []fields.Field{
