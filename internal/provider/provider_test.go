@@ -91,8 +91,8 @@ func TestEveryDeclarationBuilds(t *testing.T) {
 	if got := len(p.Resources(t.Context())); got != 51 {
 		t.Errorf("%d resources, want 51", got)
 	}
-	if got := len(p.DataSources(t.Context())); got != 111 {
-		t.Errorf("%d data sources, want 111", got)
+	if got := len(p.DataSources(t.Context())); got != 117 {
+		t.Errorf("%d data sources, want 117", got)
 	}
 }
 

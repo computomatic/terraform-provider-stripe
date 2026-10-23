@@ -33,11 +33,20 @@ const (
 // test; one with requirements due fails it.
 func IssuingAccount(t *testing.T, c acctest.Config) acctest.Config {
 	t.Helper()
-	id := tagged(t, c, "/v1/accounts")
+	id := tagged(t, c, "/v1/accounts", issuingRole)
 	if id == "" {
 		id = Create(t, c, "/v1/accounts", issuingAccountParams(c))
 	}
-	for _, capability := range []string{"card_issuing", "treasury"} {
+	awaitCapabilities(t, c, id, "card_issuing", "treasury")
+	return c.Connected(id)
+}
+
+// awaitCapabilities waits for each capability of the connected account id to become active.
+// A capability still verifying after the wait skips the test; one with requirements due fails
+// it.
+func awaitCapabilities(t *testing.T, c acctest.Config, id string, capabilities ...string) {
+	t.Helper()
+	for _, capability := range capabilities {
 		var account wire.Object
 		active := poll(func() bool {
 			account = get(t, c, "/v1/accounts/"+id)
@@ -53,7 +62,6 @@ func IssuingAccount(t *testing.T, c acctest.Config) acctest.Config {
 			t.Skipf("connected account %s is still verifying %s after %s, requirements: %v", id, capability, activationLimit, requirements)
 		}
 	}
-	return c.Connected(id)
 }
 
 func issuingAccountParams(c acctest.Config) wire.Object {
@@ -80,22 +88,7 @@ func issuingAccountParams(c acctest.Config) wire.Object {
 			}},
 			{Name: "estimated_worker_count", Value: wire.Int(1)},
 		}},
-		{Name: "individual", Value: wire.Object{
-			{Name: "first_name", Value: wire.String("Jenny")},
-			{Name: "last_name", Value: wire.String("Rosen")},
-			{Name: "email", Value: wire.String(c.Name("issuing-individual") + "@example.com")},
-			{Name: "phone", Value: wire.String("0000000000")},
-			{Name: "id_number", Value: wire.String("000000000")},
-			{Name: "ssn_last_4", Value: wire.String("0000")},
-			{Name: "dob", Value: wire.Object{{Name: "day", Value: wire.Int(1)}, {Name: "month", Value: wire.Int(1)}, {Name: "year", Value: wire.Int(1901)}}},
-			{Name: "address", Value: wire.Object{
-				{Name: "line1", Value: wire.String("address_full_match")},
-				{Name: "city", Value: wire.String("South San Francisco")},
-				{Name: "state", Value: wire.String("CA")},
-				{Name: "postal_code", Value: wire.String("94080")},
-			}},
-			{Name: "verification", Value: wire.Object{{Name: "document", Value: wire.Object{{Name: "front", Value: wire.String("file_identity_document_success")}}}}},
-		}},
+		{Name: "individual", Value: verifiedIndividual(c, "issuing-individual")},
 		{Name: "external_account", Value: wire.String("btok_us_verified")},
 		{Name: "tos_acceptance", Value: terms},
 		{Name: "settings", Value: wire.Object{
@@ -106,12 +99,34 @@ func issuingAccountParams(c acctest.Config) wire.Object {
 	}
 }
 
+// verifiedIndividual is the `individual` hash of a US account with the onboarding values
+// Stripe documents as always verifying, which the suite sends ("verifiedIndividualForm"). base
+// names its email.
+func verifiedIndividual(c acctest.Config, base string) wire.Object {
+	return wire.Object{
+		{Name: "first_name", Value: wire.String("Jenny")},
+		{Name: "last_name", Value: wire.String("Rosen")},
+		{Name: "email", Value: wire.String(c.Name(base) + "@example.com")},
+		{Name: "phone", Value: wire.String("0000000000")},
+		{Name: "id_number", Value: wire.String("000000000")},
+		{Name: "ssn_last_4", Value: wire.String("0000")},
+		{Name: "dob", Value: wire.Object{{Name: "day", Value: wire.Int(1)}, {Name: "month", Value: wire.Int(1)}, {Name: "year", Value: wire.Int(1901)}}},
+		{Name: "address", Value: wire.Object{
+			{Name: "line1", Value: wire.String("address_full_match")},
+			{Name: "city", Value: wire.String("South San Francisco")},
+			{Name: "state", Value: wire.String("CA")},
+			{Name: "postal_code", Value: wire.String("94080")},
+		}},
+		{Name: "verification", Value: wire.Object{{Name: "document", Value: wire.Object{{Name: "front", Value: wire.String("file_identity_document_success")}}}}},
+	}
+}
+
 // IssuingFinancialAccount returns a `usd` Treasury financial account of the connected account
 // conn names, with its `card_issuing` feature active, for cards to draw on. The fake activates
 // the feature at once (suite: "Issuing answers from the first card runs").
 func IssuingFinancialAccount(t *testing.T, conn acctest.Config) string {
 	t.Helper()
-	id := tagged(t, conn, "/v1/treasury/financial_accounts")
+	id := tagged(t, conn, "/v1/treasury/financial_accounts", issuingRole)
 	if id == "" {
 		id = Create(t, conn, "/v1/treasury/financial_accounts", wire.Object{
 			{Name: "supported_currencies", Value: wire.Array{wire.String("usd")}},
@@ -194,8 +209,8 @@ func AwaitCardholderReview(t *testing.T, conn acctest.Config, cardholder string)
 }
 
 // tagged returns the ID of the first object of the list path whose `metadata[tfacc_role]` is
-// issuingRole, following pages, or "".
-func tagged(t *testing.T, c acctest.Config, path string) string {
+// role, following pages, or "".
+func tagged(t *testing.T, c acctest.Config, path, role string) string {
 	t.Helper()
 	params := wire.Object{{Name: "limit", Value: wire.Int(100)}}
 	for range 20 {
@@ -211,7 +226,7 @@ func tagged(t *testing.T, c acctest.Config, path string) string {
 			obj, _ := item.(wire.Object)
 			last, _ = obj.GetString("id")
 			metadata, _ := obj.GetObject("metadata")
-			if role, _ := metadata.GetString("tfacc_role"); role == issuingRole {
+			if tag, _ := metadata.GetString("tfacc_role"); tag == role {
 				return last
 			}
 		}

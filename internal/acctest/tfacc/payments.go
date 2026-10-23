@@ -28,16 +28,25 @@ func Create(t *testing.T, c acctest.Config, path string, params wire.Object) str
 // returns the intent's ID and its charge's.
 func SucceededPaymentIntent(t *testing.T, c acctest.Config, paymentMethod string) (intent, charge string) {
 	t.Helper()
-	resp, err := Client(c).Do(t.Context(), stripeapi.Request{Method: "POST", Path: "/v1/payment_intents", Params: wire.Object{
+	return succeededIntent(t, c, wire.Object{
 		{Name: "amount", Value: wire.Int(2000)},
 		{Name: "currency", Value: wire.String("usd")},
-		{Name: "payment_method", Value: wire.String(paymentMethod)},
-		{Name: "confirm", Value: wire.Bool(true)},
-		{Name: "automatic_payment_methods", Value: wire.Object{
+	}, paymentMethod)
+}
+
+// succeededIntent creates and confirms a payment intent of params with paymentMethod, and
+// returns the intent's ID and its charge's.
+func succeededIntent(t *testing.T, c acctest.Config, params wire.Object, paymentMethod string) (intent, charge string) {
+	t.Helper()
+	params = append(params,
+		wire.Field{Name: "payment_method", Value: wire.String(paymentMethod)},
+		wire.Field{Name: "confirm", Value: wire.Bool(true)},
+		wire.Field{Name: "automatic_payment_methods", Value: wire.Object{
 			{Name: "enabled", Value: wire.Bool(true)},
 			{Name: "allow_redirects", Value: wire.String("never")},
 		}},
-	}})
+	)
+	resp, err := Client(c).Do(t.Context(), stripeapi.Request{Method: "POST", Path: "/v1/payment_intents", Params: params})
 	if err != nil {
 		t.Fatalf("creating a payment intent: %v", err)
 	}
