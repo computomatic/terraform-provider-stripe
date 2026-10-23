@@ -40,7 +40,7 @@ sweep before
 export TF_ACC=1
 for binary in /smoke/acc/*.test; do
   name=$(basename "$binary" .test)
-  run "$name" "$binary" -test.run '^TestAcc' -test.parallel 1 -test.timeout 40m -test.v
+  run "$name" "$binary" -test.run '^TestAcc' -test.parallel 1 -test.timeout 10m -test.v
 done
 sweep after
 
