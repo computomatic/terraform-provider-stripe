@@ -74,6 +74,15 @@ Stripe links a Financial Connections account only through its hosted flow. `tfac
 
 Stripe makes some objects in the background, such as credit balance transactions, meter event summaries and active entitlements, and lists them a moment, or up to a minute, after their cause. A test waits for them with `tfacc.AwaitListed` before it reads one. The fake makes them at once.
 
+### When the sandbox and the fake disagree
+
+The fake is checked against the project's conformance suite, and the suite against Stripe. So when a change passes against the fake but fails against the sandbox, the fix is never only in the provider:
+
+- Stripe showed a behaviour the suite has no test for. The suite gets the test first, then the fake serves the behaviour, then the provider changes.
+- The provider's test assumed something Stripe does not do. Fix the test, and make sure the suite pins what Stripe really does.
+
+A sandbox problem, such as a rate limit or objects left by a cancelled run, is rerun, not coded around.
+
 ## CI
 
 CI (`.github/workflows/ci.yml`) runs the checks as the `unit` job, the docs check (`scripts/check-docs.sh`) as the `docs` job, and the acceptance tests as the `acceptance` job, under Terraform and then OpenTofu, against the released fake image named by `.fake-version`. To move to a newer fake, change that one line. The `acceptance` job is skipped for pull requests from forks, because the fake image is private.
