@@ -34,6 +34,10 @@ Set the key in the `STRIPE_API_KEY` environment variable. The `api_key` argument
 
 To manage a connected account with the key of its platform, set `stripe_account` to the connected account's ID.
 
+## Live mode and money movement
+
+The resources that move money (`stripe_payment_intent`, `stripe_refund`, `stripe_checkout_session`, `stripe_topup`, `stripe_transfer`, `stripe_transfer_reversal` and `stripe_application_fee_refund`, and `stripe_climate_order`, whose create spends the account's balance) are meant for test data in sandboxes and test mode. Before one creates or changes anything, the provider reads the account's balance and checks Stripe's `livemode` flag. In live mode the change fails at plan time unless the provider block sets `allow_live_money_movement = true`. The key's prefix is never used. A restricted key needs the Balance read permission for this check. Reads, imports and data sources are never checked. The Managing Test Data guide explains how to create, move on and stop managing these objects.
+
 ## Stripe API version
 
 Every request is sent with Stripe API version `2026-09-30.endive`. Attributes therefore mean what that version documents, and a change to your account's default API version does not change how the provider behaves. A later provider release may move to a newer API version and says so in its release notes.
@@ -42,6 +46,7 @@ Every request is sent with Stripe API version `2026-09-30.endive`. Attributes th
 
 This provider supports the following arguments:
 
+* `allow_live_money_movement` - (Optional) Allows the resources that move money, such as `stripe_payment_intent` and `stripe_transfer`, to create and change objects in a live-mode Stripe account. Defaults to false: they then work in sandboxes and test mode, and fail at plan time in live mode. The provider asks Stripe for the account's mode; it never infers it from the key.
 * `api_key` - (Optional, Sensitive) A Stripe secret or restricted key (`sk_` or `rk_`). Defaults to the `STRIPE_API_KEY` environment variable.
 * `base_url` - (Optional) Base URL of the Stripe API, without a path. Defaults to the `STRIPE_API_BASE` environment variable, then `https://api.stripe.com`.
 * `files_base_url` - (Optional) Base URL of the Stripe Files API, without a path. Defaults to the `STRIPE_FILES_BASE_URL` environment variable, then `base_url` when that is set, then `https://files.stripe.com`.

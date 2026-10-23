@@ -63,6 +63,8 @@ type schema struct {
 	// DestroyNote is the callout of a resource whose destroy is refused, from the engine. It
 	// also adds the Removing from State section.
 	DestroyNote string
+	// MoneyNote is the callout of a resource that moves money, from the engine.
+	MoneyNote string
 }
 
 func (s *schema) find(name string) *attr {

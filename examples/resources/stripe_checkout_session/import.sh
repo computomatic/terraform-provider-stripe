@@ -1,0 +1,1 @@
+terraform import stripe_checkout_session.order cs_test_123

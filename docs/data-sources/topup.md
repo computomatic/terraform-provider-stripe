@@ -3,12 +3,12 @@
 page_title: "stripe_topup Data Source - Stripe"
 subcategory: ""
 description: |-
-  A top-up of your Stripe balance from a bank account or source. Look one up by its id.
+  A top-up of your Stripe balance from a bank account or source.
 ---
 
 # Data Source: stripe_topup
 
-A top-up of your Stripe balance from a bank account or source. Look one up by its `id`.
+A top-up of your Stripe balance from a bank account or source.
 
 ## Example Usage
 
@@ -32,7 +32,7 @@ This data source supports the following arguments:
 
 This data source exports the following attributes in addition to the arguments above:
 
-* `amount` - Amount transferred.
+* `amount` - A positive integer representing how much to transfer.
 * `balance_transaction` - ID of the balance transaction that describes the impact of this top-up on your account balance. May not be specified depending on status of top-up.
 * `created` - Time at which the object was created. Measured in seconds since the Unix epoch.
 * `currency` - Three-letter [ISO currency code](https://www.iso.org/iso-4217-currency-codes.html), in lowercase. Must be a [supported currency](https://stripe.com/docs/currencies).
@@ -42,11 +42,11 @@ This data source exports the following attributes in addition to the arguments a
 * `failure_message` - Message to user further explaining reason for top-up failure if available.
 * `initiated_by` - Indicates whether the top-up was initiated by Stripe or by the user. Possible values: `stripe`, `user`.
 * `livemode` - If the object exists in live mode, the value is `true`. If the object exists in test mode, the value is `false`.
-* `metadata` - Set of [key-value pairs](https://docs.stripe.com/api/metadata) that you can attach to an object. This can be useful for storing additional information about the object in a structured format.
-* `payment_method` - The ID of a PaymentMethod representing the payment method used for the top-up. A PaymentMethod of type `us_bank_account` can be used.
-* `payment_method_options` - Payment-method-specific configuration for this top-up. See [`payment_method_options`](#payment_method_options) below.
+* `metadata` - Set of [key-value pairs](https://docs.stripe.com/api/metadata) that you can attach to an object. This can be useful for storing additional information about the object in a structured format. Individual keys can be unset by posting an empty value to them. All keys can be unset by posting an empty value to `metadata`.
+* `payment_method` - The ID of a PaymentMethod representing the payment method to be used for the top-up. A PaymentMethod of type `us_bank_account` can be used.
+* `payment_method_options` - Payment method-specific configuration for this top-up. See [`payment_method_options`](#payment_method_options) below.
 * `source` - The source field is deprecated. It might not always be present in the API response. See [`source`](#source) below.
-* `statement_descriptor` - Extra information about a top-up. This will appear on your source's bank statement. It must contain at least one letter.
+* `statement_descriptor` - Extra information about a top-up for the source's bank statement. Limited to 15 ASCII characters.
 * `status` - The status of the top-up is either `canceled`, `failed`, `pending`, `reversed`, or `succeeded`. Possible values: `canceled`, `failed`, `pending`, `reversed`, `succeeded`.
 * `transfer_group` - A string that identifies this top-up as part of a group.
 

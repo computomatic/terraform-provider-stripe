@@ -10,6 +10,8 @@ description: |-
 
 A gadget. `terraform destroy` deletes it.
 
+~> A gadget can move real money. In a live-mode account, creating or changing one fails at plan time.
+
 ~> Gadgets cannot be deleted. `terraform destroy`, and a change that would replace the gadget, fail at plan time. To stop managing a gadget, remove it from the state as [Removing from State](#removing-from-state) shows; it stays in the account.
 
 ## Example Usage

@@ -281,6 +281,9 @@ func renderResource(s *schema, in pageInput, defaultTimeout time.Duration) (stri
 	m.add(frontMatter(s.Type+" Resource - Stripe", s.Description))
 	m.add("# Resource: " + s.Type)
 	m.add(strings.TrimSpace(s.Description))
+	if s.MoneyNote != "" {
+		m.add(engine.NoteWarning.Sigil() + " " + s.MoneyNote)
+	}
 	if s.DestroyNote != "" {
 		m.add(engine.NoteWarning.Sigil() + " " + s.DestroyNote)
 	}

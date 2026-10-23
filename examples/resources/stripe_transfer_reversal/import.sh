@@ -1,0 +1,1 @@
+terraform import stripe_transfer_reversal.returned_item tr_123/trr_456

@@ -7,22 +7,22 @@ import "github.com/computomatic/terraform-provider-stripe/internal/fields"
 
 // Table lists every request and response field of the object.
 var Table = []fields.Field{
-	{Name: "amount", Shape: fields.Int, Response: true, Description: "Amount transferred."},
+	{Name: "amount", Shape: fields.Int, Required: true, Create: true, Response: true, Description: "A positive integer representing how much to transfer."},
 	{Name: "balance_transaction", Shape: fields.String, Response: true, Description: "ID of the balance transaction that describes the impact of this top-up on your account balance. May not be specified depending on status of top-up."},
 	{Name: "created", Shape: fields.Int, Response: true, Description: "Time at which the object was created. Measured in seconds since the Unix epoch."},
-	{Name: "currency", Shape: fields.String, Response: true, Description: "Three-letter [ISO currency code](https://www.iso.org/iso-4217-currency-codes.html), in lowercase. Must be a [supported currency](https://stripe.com/docs/currencies)."},
-	{Name: "description", Shape: fields.String, Response: true, Description: "An arbitrary string attached to the object. Often useful for displaying to users."},
+	{Name: "currency", Shape: fields.String, Required: true, Create: true, Response: true, Description: "Three-letter [ISO currency code](https://www.iso.org/iso-4217-currency-codes.html), in lowercase. Must be a [supported currency](https://stripe.com/docs/currencies)."},
+	{Name: "description", Shape: fields.String, Create: true, Update: true, Response: true, Description: "An arbitrary string attached to the object. Often useful for displaying to users."},
 	{Name: "expected_availability_date", Shape: fields.Int, Response: true, Description: "Date the funds are expected to arrive in your Stripe account for payouts. This factors in delays like weekends or bank holidays. May not be specified depending on status of top-up."},
 	{Name: "failure_code", Shape: fields.String, Response: true, Description: "Error code explaining reason for top-up failure if available (see [the errors section](https://docs.stripe.com/api/errors) for a list of codes)."},
 	{Name: "failure_message", Shape: fields.String, Response: true, Description: "Message to user further explaining reason for top-up failure if available."},
 	{Name: "id", Shape: fields.String, Response: true, Description: "Unique identifier for the object."},
 	{Name: "initiated_by", Shape: fields.String, Response: true, Enum: []string{"stripe", "user"}, Description: "Indicates whether the top-up was initiated by Stripe or by the user."},
 	{Name: "livemode", Shape: fields.Bool, Response: true, Description: "If the object exists in live mode, the value is `true`. If the object exists in test mode, the value is `false`."},
-	{Name: "metadata", Shape: fields.StringMap, Response: true, Description: "Set of [key-value pairs](https://docs.stripe.com/api/metadata) that you can attach to an object. This can be useful for storing additional information about the object in a structured format."},
-	{Name: "payment_method", Shape: fields.String, Response: true, Description: "The ID of a PaymentMethod representing the payment method used for the top-up. A PaymentMethod of type `us_bank_account` can be used."},
-	{Name: "payment_method_options", Shape: fields.Object, Response: true, Description: "Payment-method-specific configuration for this top-up.", Fields: []fields.Field{
-		{Name: "us_bank_account", Shape: fields.Object, Response: true, Description: "If this top-up is to be used with a `us_bank_account` payment method, this sub-hash contains configuration for it.", Fields: []fields.Field{
-			{Name: "network", Shape: fields.String, Response: true, Enum: []string{"ach"}, Description: "The US bank transfer network used for this top-up. The default is `ach`."},
+	{Name: "metadata", Shape: fields.StringMap, Create: true, Update: true, Response: true, ServerDefaulted: true, Description: "Set of [key-value pairs](https://docs.stripe.com/api/metadata) that you can attach to an object. This can be useful for storing additional information about the object in a structured format. Individual keys can be unset by posting an empty value to them. All keys can be unset by posting an empty value to `metadata`."},
+	{Name: "payment_method", Shape: fields.String, Create: true, Response: true, Description: "The ID of a PaymentMethod representing the payment method to be used for the top-up. A PaymentMethod of type `us_bank_account` can be used."},
+	{Name: "payment_method_options", Shape: fields.Object, Create: true, Response: true, Description: "Payment method-specific configuration for this top-up.", Fields: []fields.Field{
+		{Name: "us_bank_account", Shape: fields.Object, Create: true, Response: true, Description: "If this top-up is to be used with a `us_bank_account` payment method, this sub-hash contains configuration for it.", Fields: []fields.Field{
+			{Name: "network", Shape: fields.String, Required: true, Create: true, Response: true, Enum: []string{"ach"}, Description: "The US bank transfer network used for this top-up. The default is `ach`."},
 		}},
 	}},
 	{Name: "source", Shape: fields.Object, Response: true, Description: "The source field is deprecated. It might not always be present in the API response.", Fields: []fields.Field{
@@ -301,7 +301,7 @@ var Table = []fields.Field{
 			{Name: "statement_descriptor", Shape: fields.String, Response: true},
 		}},
 	}},
-	{Name: "statement_descriptor", Shape: fields.String, Response: true, Description: "Extra information about a top-up. This will appear on your source's bank statement. It must contain at least one letter."},
+	{Name: "statement_descriptor", Shape: fields.String, Create: true, Response: true, Description: "Extra information about a top-up for the source's bank statement. Limited to 15 ASCII characters."},
 	{Name: "status", Shape: fields.String, Response: true, Enum: []string{"canceled", "failed", "pending", "reversed", "succeeded"}, Description: "The status of the top-up is either `canceled`, `failed`, `pending`, `reversed`, or `succeeded`."},
-	{Name: "transfer_group", Shape: fields.String, Response: true, Description: "A string that identifies this top-up as part of a group."},
+	{Name: "transfer_group", Shape: fields.String, Create: true, Response: true, Description: "A string that identifies this top-up as part of a group."},
 }

@@ -1,0 +1,1 @@
+terraform import stripe_application_fee_refund.goodwill fee_123/fr_456

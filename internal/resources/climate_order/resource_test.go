@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"regexp"
+	"strings"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
@@ -26,12 +27,18 @@ const address = "stripe_climate_order.test"
 // no seed, and the order is not in the smoke selection.
 func fundedAccount(t *testing.T) acctest.Config {
 	t.Helper()
+	return seededAccount(t, false)
+}
+
+// seededAccount is fundedAccount with the balance reporting live mode when live is set.
+func seededAccount(t *testing.T, live bool) acctest.Config {
+	t.Helper()
 	acctest.RequireFake(t)
 	acct := acctest.NewAccount(t)
 	currency := tfacc.AccountCurrency(t, acct)
 	acctest.Seed(t, acct, wire.Object{
 		{Name: "object", Value: wire.String("balance")},
-		{Name: "livemode", Value: wire.Bool(false)},
+		{Name: "livemode", Value: wire.Bool(live)},
 		{Name: "available", Value: wire.Array{wire.Object{{Name: "amount", Value: wire.Int(10_000_000)}, {Name: "currency", Value: wire.String(currency)}}}},
 		{Name: "pending", Value: wire.Array{wire.Object{{Name: "amount", Value: wire.Int(0)}, {Name: "currency", Value: wire.String(currency)}}}},
 	})
@@ -104,6 +111,25 @@ data "stripe_climate_order" "test" {
 				resource.TestCheckResourceAttr("data.stripe_climate_order.test", "status", "confirmed"),
 			),
 		}}, nil, "stripe_climate_order"),
+	})
+}
+
+// An order spends the account's balance, so in an account whose balance reports live mode it is
+// refused at plan time until the provider allows live money movement, and so is a change to it
+// (ADR 2026-10-22-money-moving-resources).
+func TestAccClimateOrder_liveMode(t *testing.T) {
+	acct := seededAccount(t, true)
+	p := product(t, acct)
+	refused := regexp.MustCompile(`Live-mode money movement is not allowed`)
+	allow := strings.Replace(acct.ProviderBlock(), "provider \"stripe\" {\n", "provider \"stripe\" {\n  allow_live_money_movement = true\n", 1)
+	order := strings.TrimPrefix(orderConfig(acct, p, "  metric_tons = \"1\"\n"), acct.ProviderBlock())
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: tfacc.ProviderFactories,
+		Steps: acctest.Forget(t, []resource.TestStep{
+			{Config: orderConfig(acct, p, "  metric_tons = \"1\"\n"), PlanOnly: true, ExpectError: refused},
+			{Config: allow + order, Check: resource.TestCheckResourceAttr(address, "status", "confirmed")},
+			{Config: orderConfig(acct, p, "  metric_tons = \"1\"\n  metadata = { env = \"live\" }\n"), PlanOnly: true, ExpectError: refused},
+		}, nil, "stripe_climate_order"),
 	})
 }
 

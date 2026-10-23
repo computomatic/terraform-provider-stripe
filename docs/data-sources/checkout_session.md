@@ -3,12 +3,12 @@
 page_title: "stripe_checkout_session Data Source - Stripe"
 subcategory: ""
 description: |-
-  A customer's session on a Stripe-hosted checkout page. Look one up by its id. The session's line_items are included.
+  A customer's session on a Stripe-hosted checkout page. The session's line_items are included.
 ---
 
 # Data Source: stripe_checkout_session
 
-A customer's session on a Stripe-hosted checkout page. Look one up by its `id`. The session's `line_items` are included.
+A customer's session on a Stripe-hosted checkout page. The session's `line_items` are included.
 
 ## Example Usage
 
@@ -29,72 +29,78 @@ This data source supports the following arguments:
 This data source exports the following attributes in addition to the arguments above:
 
 * `adaptive_pricing` - Settings for price localization with [Adaptive Pricing](https://docs.stripe.com/payments/checkout/adaptive-pricing). See [`adaptive_pricing`](#adaptive_pricing) below.
-* `after_expiration` - When set, provides configuration for actions to take if this Checkout Session expires. See [`after_expiration`](#after_expiration) below.
+* `after_expiration` - Configure actions after a Checkout Session has expired. You can't set this parameter if `ui_mode` is `elements`. See [`after_expiration`](#after_expiration) below.
 * `allow_promotion_codes` - Enables user redeemable promotion codes.
-* `allowed_payment_method_types` - A list of the types of payment methods (e.g., `card`) this Checkout Session can accept.
+* `allowed_payment_method_types` - A list of the types of payment methods (e.g., `card`) this Checkout Session can accept. Unlike `payment_method_types`, this acts as a filter on the dynamically computed set of eligible payment methods rather than an explicit static list. Only payment methods that are both dynamically eligible and present in this list will be offered to the customer.
 * `amount_subtotal` - Total of all items before discounts or taxes are applied.
 * `amount_total` - Total of all items after discounts and taxes are applied.
-* `automatic_tax` - See [`automatic_tax`](#automatic_tax) below.
-* `billing_address_collection` - Describes whether Checkout should collect the customer's billing address. Defaults to `auto`. Possible values: `auto`, `required`.
-* `branding_settings` - See [`branding_settings`](#branding_settings) below.
-* `cancel_url` - If set, Checkout displays a back button and customers will be directed to this URL if they decide to cancel payment and return to your website.
-* `client_reference_id` - A unique string to reference the Checkout Session. This can be a customer ID, a cart ID, or similar, and can be used to reconcile the Session with your internal systems.
+* `automatic_tax` - Settings for automatic tax lookup for this session and resulting payments, invoices, and subscriptions. See [`automatic_tax`](#automatic_tax) below.
+* `billing_address_collection` - Specify whether Checkout should collect the customer's billing address. Defaults to `auto`. Possible values: `auto`, `required`.
+* `branding_settings` - The branding settings for the Checkout Session. This parameter is not allowed if ui_mode is `elements`. See [`branding_settings`](#branding_settings) below.
+* `cancel_url` - If set, Checkout displays a back button and customers will be directed to this URL if they decide to cancel payment and return to your website. This parameter is not allowed if ui_mode is `embedded_page` or `elements`.
+* `client_reference_id` - A unique string to reference the Checkout Session. This can be a customer ID, a cart ID, or similar, and can be used to reconcile the session with your internal systems.
 * `client_secret` - (Sensitive) The client secret of your Checkout Session. Applies to Checkout Sessions with `ui_mode: embedded_page` or `ui_mode: elements`. For `ui_mode: embedded_page`, the client secret is to be used when initializing Stripe.js embedded checkout. For `ui_mode: elements`, use the client secret with [initCheckout](https://docs.stripe.com/js/custom_checkout/init) on your front end.
 * `collected_information` - Information about the customer collected within the Checkout Session. See [`collected_information`](#collected_information) below.
 * `consent` - Results of `consent_collection` for this session. See [`consent`](#consent) below.
-* `consent_collection` - When set, provides configuration for the Checkout Session to gather active consent from customers. See [`consent_collection`](#consent_collection) below.
+* `consent_collection` - Configure fields for the Checkout Session to gather active consent from customers. See [`consent_collection`](#consent_collection) below.
 * `created` - Time at which the object was created. Measured in seconds since the Unix epoch.
-* `currency` - Three-letter [ISO currency code](https://www.iso.org/iso-4217-currency-codes.html), in lowercase. Must be a [supported currency](https://stripe.com/docs/currencies).
+* `currency` - Three-letter [ISO currency code](https://www.iso.org/iso-4217-currency-codes.html), in lowercase. Must be a [supported currency](https://stripe.com/docs/currencies). Required in `setup` mode when `payment_method_types` is not set.
 * `currency_conversion` - Currency conversion details for [Adaptive Pricing](https://docs.stripe.com/payments/checkout/adaptive-pricing) sessions created before 2025-03-31. See [`currency_conversion`](#currency_conversion) below.
 * `custom_fields` - Collect additional information from your customer using custom fields. Up to 3 fields are supported. You can't set this parameter if `ui_mode` is `elements`. See [`custom_fields`](#custom_fields) below.
-* `custom_text` - See [`custom_text`](#custom_text) below.
-* `customer` - The ID of the customer for this Session. For Checkout Sessions in `subscription` mode or Checkout Sessions with `customer_creation` set as `always` in `payment` mode, Checkout will create a new customer object based on information provided during the payment flow unless an existing customer was provided when the Session was created.
-* `customer_account` - The ID of the account for this Session.
-* `customer_creation` - Configure whether a Checkout Session creates a Customer when the Checkout Session completes. Possible values: `always`, `if_required`.
+* `custom_text` - Display additional text for your customers using custom text. You can't set this parameter if `ui_mode` is `elements`. See [`custom_text`](#custom_text) below.
+* `customer` - ID of an existing Customer, if one exists. In `payment` mode, the customer’s most recently saved card payment method will be used to prefill the email, name, card details, and billing address on the Checkout page. In `subscription` mode, the customer’s [default payment method](https://docs.stripe.com/api/customers/update#update_customer-invoice_settings-default_payment_method) will be used if it’s a card, otherwise the most recently saved card will be used. A valid billing address, billing name and billing email are required on the payment method for Checkout to prefill the customer's card details. If the Customer already has a valid [email](https://docs.stripe.com/api/customers/object#customer_object-email) set, the email will be prefilled and not editable in Checkout. If the Customer does not have a valid `email`, Checkout will set the email entered during the session on the Customer. If blank for Checkout Sessions in `subscription` mode or with `customer_creation` set as `always` in `payment` mode, Checkout will create a new Customer object based on information provided during the payment flow. You can set [`payment_intent_data.setup_future_usage`](https://docs.stripe.com/api/checkout/sessions/create#create_checkout_session-payment_intent_data-setup_future_usage) to have Checkout automatically attach the payment method to the Customer you pass in for future reuse.
+* `customer_account` - ID of an existing Account, if one exists. Has the same behavior as `customer`.
+* `customer_creation` - Configure whether a Checkout Session creates a [Customer](https://docs.stripe.com/api/customers) during Session confirmation. When a Customer is not created, you can still retrieve email, address, and other customer data entered in Checkout with [customer_details](https://docs.stripe.com/api/checkout/sessions/object#checkout_session_object-customer_details). Sessions that don't create Customers instead are grouped by [guest customers](https://docs.stripe.com/payments/checkout/guest-customers) in the Dashboard. Promotion codes limited to first time customers will return invalid for these Sessions. Can only be set in `payment` and `setup` mode. Possible values: `always`, `if_required`.
 * `customer_details` - The customer details including the customer's tax exempt status and the customer's tax IDs. Customer's address details are not present on Sessions in `setup` mode. See [`customer_details`](#customer_details) below.
-* `customer_email` - If provided, this value will be used when the Customer object is created. If not provided, customers will be asked to enter their email address. Use this parameter to prefill customer data if you already have an email on file. To access information about the customer once the payment flow is complete, use the `customer` attribute.
-* `discounts` - List of coupons and promotion codes attached to the Checkout Session. See [`discounts`](#discounts) below.
+* `customer_email` - If provided, this value will be used when the Customer object is created. If not provided, customers will be asked to enter their email address. Use this parameter to prefill customer data if you already have an email on file. To access information about the customer once a session is complete, use the `customer` field.
+* `customer_update` - Controls what fields on Customer can be updated by the Checkout Session. Can only be provided when `customer` is provided. See [`customer_update`](#customer_update) below.
+* `discounts` - The coupon or promotion code to apply to this Session. Currently, only up to one may be specified. See [`discounts`](#discounts) below.
 * `excluded_payment_method_types` - A list of the types of payment methods (e.g., `card`) that should be excluded from this Checkout Session. This should only be used when payment methods for this Checkout Session are managed through the [Stripe Dashboard](https://dashboard.stripe.com/settings/payment_methods).
-* `expires_at` - The timestamp at which the Checkout Session will expire.
+* `expires_at` - The Epoch time in seconds at which the Checkout Session will expire. It can be anywhere from 30 minutes to 24 hours after Checkout Session creation. By default, this value is 24 hours from creation.
 * `integration_identifier` - The integration identifier for this Checkout Session. Multiple Checkout Sessions can have the same integration identifier.
 * `invoice` - ID of the invoice created by the Checkout Session, if it exists.
-* `invoice_creation` - Details on the state of invoice creation for the Checkout Session. See [`invoice_creation`](#invoice_creation) below.
-* `line_items` - The line items purchased by the customer. See [`line_items`](#line_items) below.
+* `invoice_creation` - Generate a post-purchase Invoice for one-time payments. See [`invoice_creation`](#invoice_creation) below.
+* `line_items` - A list of items the customer is purchasing. Use this parameter to pass one-time or recurring [Prices](https://docs.stripe.com/api/prices). The parameter is required for `payment` and `subscription` mode. For `payment` mode, there is a maximum of 100 line items, however it is recommended to consolidate line items if there are more than a few dozen. For `subscription` mode, there is a maximum of 20 line items with recurring Prices and 20 line items with one-time Prices. Line items with one-time Prices will be on the initial invoice only. See [`line_items`](#line_items) below.
 * `livemode` - If the object exists in live mode, the value is `true`. If the object exists in test mode, the value is `false`.
 * `locale` - The IETF language tag of the locale Checkout is displayed in. If blank or `auto`, the browser's locale is used. Possible values: `auto`, `bg`, `cs`, `da`, `de`, `el`, `en`, `en-GB`, `es`, `es-419`, `et`, `fi`, `fil`, `fr`, `fr-CA`, `hr`, `hu`, `id`, `it`, `ja`, `ko`, `lt`, `lv`, `ms`, `mt`, `nb`, `nl`, `pl`, `pt`, `pt-BR`, `ro`, `ru`, `sk`, `sl`, `sv`, `th`, `tr`, `vi`, `zh`, `zh-HK`, `zh-TW`.
 * `managed_payments` - Settings for Managed Payments for this Checkout Session and resulting [PaymentIntents](https://docs.stripe.com/api/payment_intents/object), [Invoices](https://docs.stripe.com/api/invoices/object), and [Subscriptions](https://docs.stripe.com/api/subscriptions/object). See [`managed_payments`](#managed_payments) below.
-* `metadata` - Set of [key-value pairs](https://docs.stripe.com/api/metadata) that you can attach to an object. This can be useful for storing additional information about the object in a structured format.
-* `mode` - The mode of the Checkout Session. Possible values: `payment`, `setup`, `subscription`.
-* `name_collection` - See [`name_collection`](#name_collection) below.
-* `optional_items` - The optional items presented to the customer at checkout. See [`optional_items`](#optional_items) below.
-* `origin_context` - Where the user is coming from. This informs the optimizations that are applied to the session. Possible values: `mobile_app`, `web`.
+* `metadata` - Set of [key-value pairs](https://docs.stripe.com/api/metadata) that you can attach to an object. This can be useful for storing additional information about the object in a structured format. Individual keys can be unset by posting an empty value to them. All keys can be unset by posting an empty value to `metadata`.
+* `mode` - The mode of the Checkout Session. Pass `subscription` if the Checkout Session includes at least one recurring item. Possible values: `payment`, `setup`, `subscription`.
+* `name_collection` - Controls name collection settings for the session. You can configure Checkout to collect your customers' business names, individual names, or both. Each name field can be either required or optional. If a [Customer](https://docs.stripe.com/api/customers) is created or provided, the names can be saved to the Customer object as well. See [`name_collection`](#name_collection) below.
+* `optional_items` - A list of optional items the customer can add to their order at checkout. Use this parameter to pass one-time or recurring [Prices](https://docs.stripe.com/api/prices). There is a maximum of 10 optional items allowed on a Checkout Session, and the existing limits on the number of line items allowed on a Checkout Session apply to the combined number of line items and optional items. For `payment` mode, there is a maximum of 100 combined line items and optional items, however it is recommended to consolidate items if there are more than a few dozen. For `subscription` mode, there is a maximum of 20 line items and optional items with recurring Prices and 20 line items and optional items with one-time Prices. You can't set this parameter if `ui_mode` is `elements` or `form`. See [`optional_items`](#optional_items) below.
+* `origin_context` - Where the user is coming from. This informs the optimizations that are applied to the session. You can't set this parameter if `ui_mode` is `elements`. Possible values: `mobile_app`, `web`.
 * `payment_intent` - The ID of the PaymentIntent for Checkout Sessions in `payment` mode. You can't confirm or cancel the PaymentIntent for a Checkout Session. To cancel, [expire the Checkout Session](https://docs.stripe.com/api/checkout/sessions/expire) instead.
+* `payment_intent_data` - A subset of parameters to be passed to PaymentIntent creation for Checkout Sessions in `payment` mode. See [`payment_intent_data`](#payment_intent_data) below.
 * `payment_link` - The ID of the Payment Link that created this Session.
-* `payment_method_collection` - Configure whether a Checkout Session should collect a payment method for sessions with mode `payment`. Defaults to `always`. Possible values: `always`, `if_required`.
+* `payment_method_collection` - Specify whether Checkout should collect a payment method. When set to `if_required`, Checkout will not collect a payment method when the total due for the session is 0. This may occur if the Checkout Session includes a free trial or a discount. Can only be set in `subscription` mode. Defaults to `always`. If you'd like information on how to collect a payment method outside of Checkout, read the guide on configuring [subscriptions with a free trial](https://docs.stripe.com/payments/checkout/free-trials). Possible values: `always`, `if_required`.
+* `payment_method_configuration` - The ID of the payment method configuration to use with this Checkout session.
 * `payment_method_configuration_details` - Information about the payment method configuration used for this Checkout session if using dynamic payment methods. See [`payment_method_configuration_details`](#payment_method_configuration_details) below.
-* `payment_method_options` - Payment-method-specific configuration for the PaymentIntent or SetupIntent of this CheckoutSession. See [`payment_method_options`](#payment_method_options) below.
+* `payment_method_data` - This parameter allows you to set some attributes on the payment method created during a Checkout session. See [`payment_method_data`](#payment_method_data) below.
+* `payment_method_options` - Payment-method-specific configuration. See [`payment_method_options`](#payment_method_options) below.
 * `payment_method_types` - A list of the types of payment methods (e.g. card) this Checkout Session is allowed to accept.
 * `payment_status` - The payment status of the Checkout Session, one of `paid`, `unpaid`, or `no_payment_required`. You can use this value to decide when to fulfill your customer's order. Possible values: `no_payment_required`, `paid`, `unpaid`.
-* `permissions` - This property is used to set up permissions for various actions (e.g., update) on the CheckoutSession object. For specific permissions, please refer to their dedicated subsections, such as `permissions.update_shipping_details`. See [`permissions`](#permissions) below.
-* `phone_number_collection` - See [`phone_number_collection`](#phone_number_collection) below.
+* `permissions` - This property is used to set up permissions for various actions (for example, update) on the CheckoutSession object. Can only be set when creating `embedded_page` or `elements` sessions. For specific permissions, please refer to their dedicated subsections, such as `permissions.update_shipping_details`. See [`permissions`](#permissions) below.
+* `phone_number_collection` - Controls phone number collection settings for the session. We recommend that you review your privacy policy and check with your legal contacts before using this feature. Learn more about [collecting phone numbers with Checkout](https://docs.stripe.com/payments/checkout/phone-numbers). See [`phone_number_collection`](#phone_number_collection) below.
 * `presentment_details` - See [`presentment_details`](#presentment_details) below.
 * `recovered_from` - The ID of the original expired Checkout Session that triggered the recovery flow.
 * `redirect_on_completion` - This parameter applies to `ui_mode: embedded_page`. Learn more about the [redirect behavior](https://docs.stripe.com/payments/checkout/custom-success-page?payment-ui=embedded-form) of embedded sessions. Defaults to `always`. Possible values: `always`, `if_required`, `never`.
-* `return_url` - Applies to Checkout Sessions with `ui_mode: embedded_page` or `ui_mode: elements`. The URL to redirect your customer back to after they authenticate or cancel their payment on the payment method's app or site.
+* `return_url` - The URL to redirect your customer back to after they authenticate or cancel their payment on the payment method's app or site. This parameter is required if `ui_mode` is `embedded_page` or `elements` and redirect-based payment methods are enabled on the session.
 * `saved_payment_method_options` - Controls saved payment method settings for the session. Only available in `payment` and `subscription` mode. See [`saved_payment_method_options`](#saved_payment_method_options) below.
 * `setup_intent` - The ID of the SetupIntent for Checkout Sessions in `setup` mode. You can't confirm or cancel the SetupIntent for a Checkout Session. To cancel, [expire the Checkout Session](https://docs.stripe.com/api/checkout/sessions/expire) instead.
+* `setup_intent_data` - A subset of parameters to be passed to SetupIntent creation for Checkout Sessions in `setup` mode. See [`setup_intent_data`](#setup_intent_data) below.
 * `shipping_address_collection` - When set, provides configuration for Checkout to collect a shipping address from a customer. See [`shipping_address_collection`](#shipping_address_collection) below.
 * `shipping_cost` - The details of the customer cost of shipping, including the customer chosen ShippingRate. See [`shipping_cost`](#shipping_cost) below.
-* `shipping_options` - The shipping rate options applied to this Session. See [`shipping_options`](#shipping_options) below.
+* `shipping_options` - The shipping rate options to apply to this Session. Up to a maximum of 5. See [`shipping_options`](#shipping_options) below.
 * `status` - The status of the Checkout Session, one of `open`, `complete`, or `expired`. Possible values: `complete`, `expired`, `open`.
-* `submit_type` - Describes the type of transaction being performed by Checkout in order to customize relevant text on the page, such as the submit button. `submit_type` can only be specified on Checkout Sessions in `payment` mode. If blank or `auto`, `pay` is used. Possible values: `auto`, `book`, `donate`, `pay`, `subscribe`.
+* `submit_type` - Describes the type of transaction being performed by Checkout in order to customize relevant text on the page, such as the submit button. `submit_type` can only be specified on Checkout Sessions in `payment` or `subscription` mode. If blank or `auto`, `pay` is used. You can't set this parameter if `ui_mode` is `elements`. Possible values: `auto`, `book`, `donate`, `pay`, `subscribe`.
 * `subscription` - The ID of the [Subscription](https://docs.stripe.com/api/subscriptions) for Checkout Sessions in `subscription` mode.
-* `success_url` - The URL the customer will be directed to after the payment or subscription creation is successful.
-* `tax_id_collection` - See [`tax_id_collection`](#tax_id_collection) below.
+* `subscription_data` - A subset of parameters to be passed to subscription creation for Checkout Sessions in `subscription` mode. See [`subscription_data`](#subscription_data) below.
+* `success_url` - The URL to which Stripe should send customers when payment or setup is complete. This parameter is not allowed if ui_mode is `embedded_page` or `elements`. If you'd like to use information from the successful Checkout Session on your page, read the guide on [customizing your success page](https://docs.stripe.com/payments/checkout/custom-success-page).
+* `tax_id_collection` - Controls tax ID collection during checkout. See [`tax_id_collection`](#tax_id_collection) below.
 * `total_details` - Tax and discount details for the computed total amount. See [`total_details`](#total_details) below.
 * `ui_mode` - The UI mode of the Session. Defaults to `hosted_page`. Possible values: `elements`, `embedded_page`, `form`, `hosted_page`.
 * `url` - The URL to the Checkout Session. Applies to Checkout Sessions with `ui_mode: hosted_page`. Redirect customers to this URL to take them to Checkout. If you’re using [Custom Domains](https://docs.stripe.com/payments/checkout/custom-domains), the URL will use your subdomain. Otherwise, it’ll use `checkout.stripe.com.` This value is only present when the session is active.
-* `wallet_options` - Wallet-specific configuration for this Checkout Session. See [`wallet_options`](#wallet_options) below.
+* `wallet_options` - Wallet-specific configuration. See [`wallet_options`](#wallet_options) below.
 
 <a id="adaptive_pricing"></a>
 ### `adaptive_pricing`
@@ -147,7 +153,7 @@ The `branding_settings` attribute supports:
 * `border_style` - The border style for the Checkout Session. Must be one of `rounded`, `rectangular`, or `pill`. Possible values: `pill`, `rectangular`, `rounded`.
 * `button_color` - A hex color value starting with `#` representing the button color for the Checkout Session.
 * `display_name` - The display name shown on the Checkout Session.
-* `font_family` - The font family for the Checkout Session. Must be one of the [supported font families](https://docs.stripe.com/payments/checkout/customization/appearance?payment-ui=stripe-hosted#font-compatibility).
+* `font_family` - The font family for the Checkout Session. Must be one of the [supported font families](https://docs.stripe.com/payments/checkout/customization/appearance?payment-ui=stripe-hosted#font-compatibility). Possible values: `be_vietnam_pro`, `bitter`, `chakra_petch`, `default`, `hahmlet`, `inconsolata`, `inter`, `lato`, `lora`, `m_plus_1_code`, `montserrat`, `noto_sans`, `noto_sans_jp`, `noto_serif`, `nunito`, `open_sans`, `pridi`, `pt_sans`, `pt_serif`, `raleway`, `roboto`, `roboto_slab`, `source_sans_pro`, `titillium_web`, `ubuntu_mono`, `zen_maru_gothic`.
 * `icon` - The icon for the Checkout Session. You cannot set both `logo` and `icon`. See [`branding_settings.icon`](#branding_settings.icon) below.
 * `logo` - The logo for the Checkout Session. You cannot set both `logo` and `icon`. See [`branding_settings.logo`](#branding_settings.logo) below.
 
@@ -362,6 +368,15 @@ The `customer_details.tax_ids` attribute is a list. Each element supports:
 * `type` - The type of the tax ID, one of `ad_nrt`, `ar_cuit`, `eu_vat`, `bo_tin`, `br_cnpj`, `br_cpf`, `cn_tin`, `co_nit`, `cr_tin`, `do_rcn`, `ec_ruc`, `eu_oss_vat`, `hr_oib`, `pe_ruc`, `ro_tin`, `rs_pib`, `sv_nit`, `uy_ruc`, `ve_rif`, `vn_tin`, `gb_vat`, `nz_gst`, `au_abn`, `au_arn`, `in_gst`, `no_vat`, `no_voec`, `za_vat`, `ch_vat`, `mx_rfc`, `sg_uen`, `ru_inn`, `ru_kpp`, `ca_bn`, `hk_br`, `es_cif`, `pl_nip`, `it_cf`, `fo_vat`, `gi_tin`, `py_ruc`, `tw_vat`, `th_vat`, `jp_cn`, `jp_rn`, `jp_trn`, `li_uid`, `li_vat`, `lk_vat`, `my_itn`, `us_ein`, `kr_brn`, `ca_qst`, `ca_gst_hst`, `ca_pst_bc`, `ca_pst_mb`, `ca_pst_sk`, `my_sst`, `sg_gst`, `ae_trn`, `cl_tin`, `sa_vat`, `id_npwp`, `my_frp`, `il_vat`, `ge_vat`, `ua_vat`, `is_vat`, `bg_uic`, `hu_tin`, `si_tin`, `ke_pin`, `tr_tin`, `eg_tin`, `ph_tin`, `al_tin`, `bh_vat`, `kz_bin`, `ng_tin`, `om_vat`, `de_stn`, `ch_uid`, `tz_vat`, `uz_vat`, `uz_tin`, `md_vat`, `ma_vat`, `by_tin`, `ao_tin`, `bs_tin`, `bb_tin`, `cd_nif`, `mr_nif`, `me_pib`, `zw_tin`, `ba_tin`, `gn_nif`, `mk_vat`, `sr_fin`, `sn_ninea`, `am_tin`, `np_pan`, `tj_tin`, `ug_tin`, `zm_tin`, `kh_tin`, `aw_tin`, `az_tin`, `bd_bin`, `bj_ifu`, `et_tin`, `kg_tin`, `la_tin`, `cm_niu`, `cv_nif`, `bf_ifu`, `ic_nif`, or `unknown` Possible values: `ad_nrt`, `ae_trn`, `al_tin`, `am_tin`, `ao_tin`, `ar_cuit`, `au_abn`, `au_arn`, `aw_tin`, `az_tin`, `ba_tin`, `bb_tin`, `bd_bin`, `bf_ifu`, `bg_uic`, `bh_vat`, `bj_ifu`, `bo_tin`, `br_cnpj`, `br_cpf`, `bs_tin`, `by_tin`, `ca_bn`, `ca_gst_hst`, `ca_pst_bc`, `ca_pst_mb`, `ca_pst_sk`, `ca_qst`, `cd_nif`, `ch_uid`, `ch_vat`, `cl_tin`, `cm_niu`, `cn_tin`, `co_nit`, `cr_tin`, `cv_nif`, `de_stn`, `do_rcn`, `ec_ruc`, `eg_tin`, `es_cif`, `et_tin`, `eu_oss_vat`, `eu_vat`, `fo_vat`, `gb_vat`, `ge_vat`, `gi_tin`, `gn_nif`, `hk_br`, `hr_oib`, `hu_tin`, `ic_nif`, `id_npwp`, `il_vat`, `in_gst`, `is_vat`, `it_cf`, `jp_cn`, `jp_rn`, `jp_trn`, `ke_pin`, `kg_tin`, `kh_tin`, `kr_brn`, `kz_bin`, `la_tin`, `li_uid`, `li_vat`, `lk_vat`, `ma_vat`, `md_vat`, `me_pib`, `mk_vat`, `mr_nif`, `mx_rfc`, `my_frp`, `my_itn`, `my_sst`, `ng_tin`, `no_vat`, `no_voec`, `np_pan`, `nz_gst`, `om_vat`, `pe_ruc`, `ph_tin`, `pl_nip`, `py_ruc`, `ro_tin`, `rs_pib`, `ru_inn`, `ru_kpp`, `sa_vat`, `sg_gst`, `sg_uen`, `si_tin`, `sn_ninea`, `sr_fin`, `sv_nit`, `th_vat`, `tj_tin`, `tr_tin`, `tw_vat`, `tz_vat`, `ua_vat`, `ug_tin`, `unknown`, `us_ein`, `uy_ruc`, `uz_tin`, `uz_vat`, `ve_rif`, `vn_tin`, `za_vat`, `zm_tin`, `zw_tin`.
 * `value` - The value of the tax ID.
 
+<a id="customer_update"></a>
+### `customer_update`
+
+The `customer_update` attribute supports:
+
+* `address` - Possible values: `auto`, `never`.
+* `name` - Possible values: `auto`, `never`.
+* `shipping` - Possible values: `auto`, `never`.
+
 <a id="discounts"></a>
 ### `discounts`
 
@@ -412,60 +427,52 @@ The `invoice_creation.invoice_data.issuer` attribute supports:
 
 The `invoice_creation.invoice_data.rendering_options` attribute supports:
 
-* `amount_tax_display` - How line-item prices and amounts will be displayed with respect to tax on invoice PDFs.
+* `amount_tax_display` - How line-item prices and amounts will be displayed with respect to tax on invoice PDFs. Possible values: `exclude_tax`, `include_inclusive_tax`.
 * `template` - ID of the invoice rendering template to be used for the generated invoice.
 
 <a id="line_items"></a>
 ### `line_items`
 
-The `line_items` attribute supports:
+The `line_items` attribute is a list. Each element supports:
 
-* `data` - Details about each object. See [`line_items.data`](#line_items.data) below.
-* `has_more` - True if this list has another page of items after this one that can be fetched.
-* `object` - String representing the object's type. Objects of the same type share the same value. Always has the value `list`. Possible values: `list`.
-* `url` - The URL where this list can be accessed.
-
-<a id="line_items.data"></a>
-### `line_items.data`
-
-The `line_items.data` attribute is a list. Each element supports:
-
-* `adjustable_quantity` - See [`line_items.data.adjustable_quantity`](#line_items.data.adjustable_quantity) below.
+* `adjustable_quantity` - See [`line_items.adjustable_quantity`](#line_items.adjustable_quantity) below.
 * `amount_discount` - Total discount amount applied. If no discounts were applied, defaults to 0.
 * `amount_subtotal` - Total before any discounts or taxes are applied.
 * `amount_tax` - Total tax amount applied. If no tax was applied, defaults to 0.
 * `amount_total` - Total after discounts and taxes.
 * `currency` - Three-letter [ISO currency code](https://www.iso.org/iso-4217-currency-codes.html), in lowercase. Must be a [supported currency](https://stripe.com/docs/currencies).
 * `description` - An arbitrary string attached to the object. Often useful for displaying to users. Defaults to product name.
-* `discounts` - The discounts applied to the line item. See [`line_items.data.discounts`](#line_items.data.discounts) below.
+* `discounts` - The discounts applied to the line item. See [`line_items.discounts`](#line_items.discounts) below.
 * `id` - Unique identifier for the object.
 * `metadata` - Set of [key-value pairs](https://docs.stripe.com/api/metadata) that you can attach to an object. This can be useful for storing additional information about the object in a structured format.
 * `object` - String representing the object's type. Objects of the same type share the same value. Possible values: `item`.
-* `price` - The price used to generate the line item. See [`line_items.data.price`](#line_items.data.price) below.
+* `price` - The price used to generate the line item.
+* `price_data` - See [`line_items.price_data`](#line_items.price_data) below.
 * `quantity` - The quantity of products being purchased.
-* `taxes` - The taxes applied to the line item. See [`line_items.data.taxes`](#line_items.data.taxes) below.
+* `tax_rates` -
+* `taxes` - The taxes applied to the line item. See [`line_items.taxes`](#line_items.taxes) below.
 
-<a id="line_items.data.adjustable_quantity"></a>
-### `line_items.data.adjustable_quantity`
+<a id="line_items.adjustable_quantity"></a>
+### `line_items.adjustable_quantity`
 
-The `line_items.data.adjustable_quantity` attribute supports:
+The `line_items.adjustable_quantity` attribute supports:
 
 * `enabled` -
 * `maximum` -
 * `minimum` -
 
-<a id="line_items.data.discounts"></a>
-### `line_items.data.discounts`
+<a id="line_items.discounts"></a>
+### `line_items.discounts`
 
-The `line_items.data.discounts` attribute is a list. Each element supports:
+The `line_items.discounts` attribute is a list. Each element supports:
 
 * `amount` - The amount discounted.
-* `discount` - A discount represents the actual application of a [coupon](https://docs.stripe.com/api#coupons) or [promotion code](https://docs.stripe.com/api#promotion_codes). It contains information about when the discount began, when it will end, and what it is applied to. Related guide: [Applying discounts to subscriptions](https://docs.stripe.com/billing/subscriptions/discounts) See [`line_items.data.discounts.discount`](#line_items.data.discounts.discount) below.
+* `discount` - A discount represents the actual application of a [coupon](https://docs.stripe.com/api#coupons) or [promotion code](https://docs.stripe.com/api#promotion_codes). It contains information about when the discount began, when it will end, and what it is applied to. Related guide: [Applying discounts to subscriptions](https://docs.stripe.com/billing/subscriptions/discounts) See [`line_items.discounts.discount`](#line_items.discounts.discount) below.
 
-<a id="line_items.data.discounts.discount"></a>
-### `line_items.data.discounts.discount`
+<a id="line_items.discounts.discount"></a>
+### `line_items.discounts.discount`
 
-The `line_items.data.discounts.discount` attribute supports:
+The `line_items.discounts.discount` attribute supports:
 
 * `checkout_session` - The Checkout session that this coupon is applied to, if it is applied to a particular session in payment mode. Not present for subscription mode.
 * `customer` - The ID of the customer associated with this discount.
@@ -476,129 +483,75 @@ The `line_items.data.discounts.discount` attribute supports:
 * `invoice_item` - The invoice item `id` (or invoice line item `id` for invoice line items of type='subscription') that the discount's coupon was applied to, if it was applied directly to a particular invoice item or invoice line item.
 * `object` - String representing the object's type. Objects of the same type share the same value. Possible values: `discount`.
 * `promotion_code` - The promotion code applied to create this discount.
-* `source` - See [`line_items.data.discounts.discount.source`](#line_items.data.discounts.discount.source) below.
+* `source` - See [`line_items.discounts.discount.source`](#line_items.discounts.discount.source) below.
 * `start` - Date that the coupon was applied.
 * `subscription` - The subscription that this coupon is applied to, if it is applied to a particular subscription.
 * `subscription_item` - The subscription item that this coupon is applied to, if it is applied to a particular subscription item.
 
-<a id="line_items.data.discounts.discount.source"></a>
-### `line_items.data.discounts.discount.source`
+<a id="line_items.discounts.discount.source"></a>
+### `line_items.discounts.discount.source`
 
-The `line_items.data.discounts.discount.source` attribute supports:
+The `line_items.discounts.discount.source` attribute supports:
 
 * `coupon` - The coupon that was redeemed to create this discount.
 * `type` - The source type of the discount. Possible values: `coupon`.
 
-<a id="line_items.data.price"></a>
-### `line_items.data.price`
+<a id="line_items.price_data"></a>
+### `line_items.price_data`
 
-The `line_items.data.price` attribute supports:
+The `line_items.price_data` attribute supports:
 
-* `active` - Whether the price can be used for new purchases.
-* `billing_scheme` - Describes how to compute the price per period. Either `per_unit` or `tiered`. `per_unit` indicates that the fixed amount (specified in `unit_amount` or `unit_amount_decimal`) will be charged per unit in `quantity` (for prices with `usage_type=licensed`), or per unit of total usage (for prices with `usage_type=metered`). `tiered` indicates that the unit pricing will be computed using a tiering strategy as defined using the `tiers` and `tiers_mode` attributes. Possible values: `per_unit`, `tiered`.
-* `created` - Time at which the object was created. Measured in seconds since the Unix epoch.
-* `currency` - Three-letter [ISO currency code](https://www.iso.org/iso-4217-currency-codes.html), in lowercase. Must be a [supported currency](https://stripe.com/docs/currencies).
-* `currency_options` - Prices defined in each available currency option. Each key must be a three-letter [ISO currency code](https://www.iso.org/iso-4217-currency-codes.html) and a [supported currency](https://stripe.com/docs/currencies). See [`line_items.data.price.currency_options`](#line_items.data.price.currency_options) below.
-* `custom_unit_amount` - When set, provides configuration for the amount to be adjusted by the customer during Checkout Sessions and Payment Links. See [`line_items.data.price.custom_unit_amount`](#line_items.data.price.custom_unit_amount) below.
-* `id` - Unique identifier for the object.
-* `livemode` - If the object exists in live mode, the value is `true`. If the object exists in test mode, the value is `false`.
-* `lookup_key` - A lookup key used to retrieve prices dynamically from a static string. This may be up to 200 characters.
-* `metadata` - Set of [key-value pairs](https://docs.stripe.com/api/metadata) that you can attach to an object. This can be useful for storing additional information about the object in a structured format.
-* `nickname` - A brief description of the price, hidden from customers.
-* `object` - String representing the object's type. Objects of the same type share the same value. Possible values: `price`.
-* `product` - The ID of the product this price is associated with.
-* `recurring` - The recurring components of a price such as `interval` and `usage_type`. See [`line_items.data.price.recurring`](#line_items.data.price.recurring) below.
-* `tax_behavior` - Only required if a [default tax behavior](https://docs.stripe.com/tax/products-prices-tax-categories-tax-behavior#setting-a-default-tax-behavior-(recommended)) was not provided in the Stripe Tax settings. Specifies whether the price is considered inclusive of taxes or exclusive of taxes. One of `inclusive`, `exclusive`, or `unspecified`. Once specified as either `inclusive` or `exclusive`, it cannot be changed. Possible values: `exclusive`, `inclusive`, `unspecified`.
-* `tiers` - Each element represents a pricing tier. This parameter requires `billing_scheme` to be set to `tiered`. See also the documentation for `billing_scheme`. See [`line_items.data.price.tiers`](#line_items.data.price.tiers) below.
-* `tiers_mode` - Defines if the tiering price should be `graduated` or `volume` based. In `volume`-based tiering, the maximum quantity within a period determines the per unit price. In `graduated` tiering, pricing can change as the quantity grows. Possible values: `graduated`, `volume`.
-* `transform_quantity` - Apply a transformation to the reported usage or set quantity before computing the amount billed. Cannot be combined with `tiers`. See [`line_items.data.price.transform_quantity`](#line_items.data.price.transform_quantity) below.
-* `type` - One of `one_time` or `recurring` depending on whether the price is for a one-time purchase or a recurring (subscription) purchase. Possible values: `one_time`, `recurring`.
-* `unit_amount` - The unit amount in cents (or local equivalent) to be charged, represented as a whole integer if possible. Only set if `billing_scheme=per_unit`.
-* `unit_amount_decimal` - The unit amount in cents (or local equivalent) to be charged, represented as a decimal string with at most 12 decimal places. Only set if `billing_scheme=per_unit`.
+* `currency` -
+* `product` -
+* `product_data` - See [`line_items.price_data.product_data`](#line_items.price_data.product_data) below.
+* `recurring` - See [`line_items.price_data.recurring`](#line_items.price_data.recurring) below.
+* `tax_behavior` - Possible values: `exclusive`, `inclusive`, `unspecified`.
+* `unit_amount` -
+* `unit_amount_decimal` -
 
-<a id="line_items.data.price.currency_options"></a>
-### `line_items.data.price.currency_options`
+<a id="line_items.price_data.product_data"></a>
+### `line_items.price_data.product_data`
 
-The `line_items.data.price.currency_options` attribute is a map. Each value supports:
+The `line_items.price_data.product_data` attribute supports:
 
-* `custom_unit_amount` - When set, provides configuration for the amount to be adjusted by the customer during Checkout Sessions and Payment Links. See [`line_items.data.price.currency_options.custom_unit_amount`](#line_items.data.price.currency_options.custom_unit_amount) below.
-* `tax_behavior` - Only required if a [default tax behavior](https://docs.stripe.com/tax/products-prices-tax-categories-tax-behavior#setting-a-default-tax-behavior-(recommended)) was not provided in the Stripe Tax settings. Specifies whether the price is considered inclusive of taxes or exclusive of taxes. One of `inclusive`, `exclusive`, or `unspecified`. Once specified as either `inclusive` or `exclusive`, it cannot be changed. Possible values: `exclusive`, `inclusive`, `unspecified`.
-* `tiers` - Each element represents a pricing tier. This parameter requires `billing_scheme` to be set to `tiered`. See also the documentation for `billing_scheme`. See [`line_items.data.price.currency_options.tiers`](#line_items.data.price.currency_options.tiers) below.
-* `unit_amount` - The unit amount in cents (or local equivalent) to be charged, represented as a whole integer if possible. Only set if `billing_scheme=per_unit`.
-* `unit_amount_decimal` - The unit amount in cents (or local equivalent) to be charged, represented as a decimal string with at most 12 decimal places. Only set if `billing_scheme=per_unit`.
+* `description` -
+* `images` -
+* `metadata` -
+* `name` -
+* `tax_code` -
+* `tax_details` - See [`line_items.price_data.product_data.tax_details`](#line_items.price_data.product_data.tax_details) below.
+* `unit_label` -
 
-<a id="line_items.data.price.currency_options.custom_unit_amount"></a>
-### `line_items.data.price.currency_options.custom_unit_amount`
+<a id="line_items.price_data.product_data.tax_details"></a>
+### `line_items.price_data.product_data.tax_details`
 
-The `line_items.data.price.currency_options.custom_unit_amount` attribute supports:
+The `line_items.price_data.product_data.tax_details` attribute supports:
 
-* `maximum` - The maximum unit amount the customer can specify for this item.
-* `minimum` - The minimum unit amount the customer can specify for this item. Must be at least the minimum charge amount.
-* `preset` - The starting unit amount which can be updated by the customer.
+* `performance_location` -
+* `tax_code` -
 
-<a id="line_items.data.price.currency_options.tiers"></a>
-### `line_items.data.price.currency_options.tiers`
+<a id="line_items.price_data.recurring"></a>
+### `line_items.price_data.recurring`
 
-The `line_items.data.price.currency_options.tiers` attribute is a list. Each element supports:
+The `line_items.price_data.recurring` attribute supports:
 
-* `flat_amount` - Price for the entire tier.
-* `flat_amount_decimal` - Same as `flat_amount`, but contains a decimal value with at most 12 decimal places.
-* `unit_amount` - Per unit price for units relevant to the tier.
-* `unit_amount_decimal` - Same as `unit_amount`, but contains a decimal value with at most 12 decimal places.
-* `up_to` - Up to and including to this quantity will be contained in the tier.
+* `interval` - Possible values: `day`, `month`, `week`, `year`.
+* `interval_count` -
 
-<a id="line_items.data.price.custom_unit_amount"></a>
-### `line_items.data.price.custom_unit_amount`
+<a id="line_items.taxes"></a>
+### `line_items.taxes`
 
-The `line_items.data.price.custom_unit_amount` attribute supports:
-
-* `maximum` - The maximum unit amount the customer can specify for this item.
-* `minimum` - The minimum unit amount the customer can specify for this item. Must be at least the minimum charge amount.
-* `preset` - The starting unit amount which can be updated by the customer.
-
-<a id="line_items.data.price.recurring"></a>
-### `line_items.data.price.recurring`
-
-The `line_items.data.price.recurring` attribute supports:
-
-* `interval` - The frequency at which a subscription is billed. One of `day`, `week`, `month` or `year`. Possible values: `day`, `month`, `week`, `year`.
-* `interval_count` - The number of intervals (specified in the `interval` attribute) between subscription billings. For example, `interval=month` and `interval_count=3` bills every 3 months.
-* `meter` - The meter tracking the usage of a metered price
-* `usage_type` - Configures how the quantity per period should be determined. Can be either `metered` or `licensed`. `licensed` automatically bills the `quantity` set when adding it to a subscription. `metered` aggregates the total usage based on usage records. Defaults to `licensed`. Possible values: `licensed`, `metered`.
-
-<a id="line_items.data.price.tiers"></a>
-### `line_items.data.price.tiers`
-
-The `line_items.data.price.tiers` attribute is a list. Each element supports:
-
-* `flat_amount` - Price for the entire tier.
-* `flat_amount_decimal` - Same as `flat_amount`, but contains a decimal value with at most 12 decimal places.
-* `unit_amount` - Per unit price for units relevant to the tier.
-* `unit_amount_decimal` - Same as `unit_amount`, but contains a decimal value with at most 12 decimal places.
-* `up_to` - Up to and including to this quantity will be contained in the tier.
-
-<a id="line_items.data.price.transform_quantity"></a>
-### `line_items.data.price.transform_quantity`
-
-The `line_items.data.price.transform_quantity` attribute supports:
-
-* `divide_by` - Divide usage by this number.
-* `round` - After division, either round the result `up` or `down`. Possible values: `down`, `up`.
-
-<a id="line_items.data.taxes"></a>
-### `line_items.data.taxes`
-
-The `line_items.data.taxes` attribute is a list. Each element supports:
+The `line_items.taxes` attribute is a list. Each element supports:
 
 * `amount` - Amount of tax applied for this rate.
-* `rate` - Tax rates can be applied to [invoices](https://docs.stripe.com/invoicing/taxes/tax-rates), [subscriptions](https://docs.stripe.com/billing/taxes/tax-rates) and [Checkout Sessions](https://docs.stripe.com/payments/checkout/use-manual-tax-rates) to collect tax. Related guide: [Tax rates](https://docs.stripe.com/billing/taxes/tax-rates) See [`line_items.data.taxes.rate`](#line_items.data.taxes.rate) below.
+* `rate` - Tax rates can be applied to [invoices](https://docs.stripe.com/invoicing/taxes/tax-rates), [subscriptions](https://docs.stripe.com/billing/taxes/tax-rates) and [Checkout Sessions](https://docs.stripe.com/payments/checkout/use-manual-tax-rates) to collect tax. Related guide: [Tax rates](https://docs.stripe.com/billing/taxes/tax-rates) See [`line_items.taxes.rate`](#line_items.taxes.rate) below.
 * `taxability_reason` - The reasoning behind this tax, for example, if the product is tax exempt. The possible values for this field may be extended as new tax rules are supported. Possible values: `customer_exempt`, `not_collecting`, `not_subject_to_tax`, `not_supported`, `portion_product_exempt`, `portion_reduced_rated`, `portion_standard_rated`, `product_exempt`, `product_exempt_holiday`, `proportionally_rated`, `reduced_rated`, `reverse_charge`, `standard_rated`, `taxable_basis_reduced`, `zero_rated`.
 * `taxable_amount` - The amount on which tax is calculated, in cents (or local equivalent).
 
-<a id="line_items.data.taxes.rate"></a>
-### `line_items.data.taxes.rate`
+<a id="line_items.taxes.rate"></a>
+### `line_items.taxes.rate`
 
-The `line_items.data.taxes.rate` attribute supports:
+The `line_items.taxes.rate` attribute supports:
 
 * `active` - Defaults to `true`. When set to `false`, this tax rate cannot be used with new applications or Checkout Sessions, but will still work for subscriptions and invoices that already have it set.
 * `country` - Two-letter country code ([ISO 3166-1 alpha-2](https://en.wikipedia.org/wiki/ISO_3166-1_alpha-2)).
@@ -606,7 +559,7 @@ The `line_items.data.taxes.rate` attribute supports:
 * `description` - An arbitrary string attached to the tax rate for your internal use only. It will not be visible to your customers.
 * `display_name` - The display name of the tax rates as it will appear to your customer on their receipt email, PDF, and the hosted invoice page.
 * `effective_percentage` - Actual/effective tax rate percentage out of 100. For tax calculations with automatic_tax[enabled]=true, this percentage reflects the rate actually used to calculate tax based on the product's taxability and whether the user is registered to collect taxes in the corresponding jurisdiction.
-* `flat_amount` - The amount of the tax rate when the `rate_type` is `flat_amount`. Tax rates with `rate_type` `percentage` can vary based on the transaction, resulting in this field being `null`. This field exposes the amount and currency of the flat tax rate. See [`line_items.data.taxes.rate.flat_amount`](#line_items.data.taxes.rate.flat_amount) below.
+* `flat_amount` - The amount of the tax rate when the `rate_type` is `flat_amount`. Tax rates with `rate_type` `percentage` can vary based on the transaction, resulting in this field being `null`. This field exposes the amount and currency of the flat tax rate. See [`line_items.taxes.rate.flat_amount`](#line_items.taxes.rate.flat_amount) below.
 * `id` - Unique identifier for the object.
 * `inclusive` - This specifies if the tax rate is inclusive or exclusive.
 * `jurisdiction` - The jurisdiction for the tax rate. You can use this label field for tax reporting purposes. It also appears on your customer’s invoice.
@@ -619,10 +572,10 @@ The `line_items.data.taxes.rate` attribute supports:
 * `state` - [ISO 3166-2 subdivision code](https://en.wikipedia.org/wiki/ISO_3166-2), without country prefix. For example, "NY" for New York, United States.
 * `tax_type` - The high-level tax type, such as `vat` or `sales_tax`. Possible values: `amusement_tax`, `communications_tax`, `digital_excise_tax`, `gst`, `hst`, `igst`, `jct`, `lease_tax`, `mass_transit_parking_tax`, `parking_tax`, `pst`, `qst`, `retail_delivery_fee`, `rst`, `sales_tax`, `service_tax`, `utility_users_tax`, `vat`.
 
-<a id="line_items.data.taxes.rate.flat_amount"></a>
-### `line_items.data.taxes.rate.flat_amount`
+<a id="line_items.taxes.rate.flat_amount"></a>
+### `line_items.taxes.rate.flat_amount`
 
-The `line_items.data.taxes.rate.flat_amount` attribute supports:
+The `line_items.taxes.rate.flat_amount` attribute supports:
 
 * `amount` - Amount of the tax when the `rate_type` is `flat_amount`. This positive integer represents how much to charge in the smallest currency unit (e.g., 100 cents to charge $1.00 or 100 to charge ¥100, a zero-decimal currency). The amount value supports up to eight digits (e.g., a value of 99999999 for a USD charge of $999,999.99).
 * `currency` - Three-letter ISO currency code, in lowercase.
@@ -676,6 +629,55 @@ The `optional_items.adjustable_quantity` attribute supports:
 * `maximum` - The maximum quantity of this item the customer can purchase. By default this value is 99. You can specify a value up to 999999.
 * `minimum` - The minimum quantity of this item the customer must purchase, if they choose to purchase it. Because this item is optional, the customer will always be able to remove it from their order, even if the `minimum` configured here is greater than 0. By default this value is 0.
 
+<a id="payment_intent_data"></a>
+### `payment_intent_data`
+
+The `payment_intent_data` attribute supports:
+
+* `application_fee_amount` -
+* `capture_method` - Possible values: `automatic`, `automatic_async`, `manual`.
+* `description` -
+* `metadata` -
+* `on_behalf_of` -
+* `receipt_email` -
+* `setup_future_usage` - Possible values: `off_session`, `on_session`.
+* `shipping` - See [`payment_intent_data.shipping`](#payment_intent_data.shipping) below.
+* `statement_descriptor` -
+* `statement_descriptor_suffix` -
+* `transfer_data` - See [`payment_intent_data.transfer_data`](#payment_intent_data.transfer_data) below.
+* `transfer_group` -
+
+<a id="payment_intent_data.shipping"></a>
+### `payment_intent_data.shipping`
+
+The `payment_intent_data.shipping` attribute supports:
+
+* `address` - See [`payment_intent_data.shipping.address`](#payment_intent_data.shipping.address) below.
+* `carrier` -
+* `name` -
+* `phone` -
+* `tracking_number` -
+
+<a id="payment_intent_data.shipping.address"></a>
+### `payment_intent_data.shipping.address`
+
+The `payment_intent_data.shipping.address` attribute supports:
+
+* `city` -
+* `country` -
+* `line1` -
+* `line2` -
+* `postal_code` -
+* `state` -
+
+<a id="payment_intent_data.transfer_data"></a>
+### `payment_intent_data.transfer_data`
+
+The `payment_intent_data.transfer_data` attribute supports:
+
+* `amount` -
+* `destination` -
+
 <a id="payment_method_configuration_details"></a>
 ### `payment_method_configuration_details`
 
@@ -683,6 +685,13 @@ The `payment_method_configuration_details` attribute supports:
 
 * `id` - ID of the payment method configuration used.
 * `parent` - ID of the parent payment method configuration used.
+
+<a id="payment_method_data"></a>
+### `payment_method_data`
+
+The `payment_method_data` attribute supports:
+
+* `allow_redisplay` - Possible values: `always`, `limited`, `unspecified`.
 
 <a id="payment_method_options"></a>
 ### `payment_method_options`
@@ -699,10 +708,13 @@ The `payment_method_options` attribute supports:
 * `bacs_debit` - See [`payment_method_options.bacs_debit`](#payment_method_options.bacs_debit) below.
 * `bancontact` - See [`payment_method_options.bancontact`](#payment_method_options.bancontact) below.
 * `billie` - See [`payment_method_options.billie`](#payment_method_options.billie) below.
+* `blik` - See [`payment_method_options.blik`](#payment_method_options.blik) below.
 * `boleto` - See [`payment_method_options.boleto`](#payment_method_options.boleto) below.
 * `card` - See [`payment_method_options.card`](#payment_method_options.card) below.
 * `cashapp` - See [`payment_method_options.cashapp`](#payment_method_options.cashapp) below.
+* `crypto` - See [`payment_method_options.crypto`](#payment_method_options.crypto) below.
 * `customer_balance` - See [`payment_method_options.customer_balance`](#payment_method_options.customer_balance) below.
+* `demo_pay` - See [`payment_method_options.demo_pay`](#payment_method_options.demo_pay) below.
 * `eps` - See [`payment_method_options.eps`](#payment_method_options.eps) below.
 * `fpx` - See [`payment_method_options.fpx`](#payment_method_options.fpx) below.
 * `giropay` - See [`payment_method_options.giropay`](#payment_method_options.giropay) below.
@@ -835,6 +847,21 @@ The `payment_method_options.billie` attribute supports:
 
 * `capture_method` - Controls when the funds will be captured from the customer's account. Possible values: `manual`.
 
+<a id="payment_method_options.blik"></a>
+### `payment_method_options.blik`
+
+The `payment_method_options.blik` attribute supports:
+
+* `mandate_options` - See [`payment_method_options.blik.mandate_options`](#payment_method_options.blik.mandate_options) below.
+* `setup_future_usage` - Possible values: `none`, `off_session`.
+
+<a id="payment_method_options.blik.mandate_options"></a>
+### `payment_method_options.blik.mandate_options`
+
+The `payment_method_options.blik.mandate_options` attribute supports:
+
+* `expires_at` -
+
 <a id="payment_method_options.boleto"></a>
 ### `payment_method_options.boleto`
 
@@ -856,7 +883,7 @@ The `payment_method_options.card` attribute supports:
 * `request_overcapture` - Request ability to [overcapture](https://docs.stripe.com/payments/overcapture) for this CheckoutSession. Possible values: `if_available`, `never`.
 * `request_three_d_secure` - We strongly recommend that you rely on our SCA Engine to automatically prompt your customers for authentication based on risk level and [other requirements](https://docs.stripe.com/strong-customer-authentication). However, if you wish to request 3D Secure based on logic from your own fraud engine, provide this option. If not provided, this value defaults to `automatic`. Read our guide on [manually requesting 3D Secure](https://docs.stripe.com/payments/3d-secure/authentication-flow#manual-three-ds) for more information on how this configuration interacts with Radar and our SCA Engine. Possible values: `any`, `automatic`, `challenge`.
 * `restrictions` - See [`payment_method_options.card.restrictions`](#payment_method_options.card.restrictions) below.
-* `setup_future_usage` - Indicates that you intend to make future payments with this PaymentIntent's payment method. If you provide a Customer with the PaymentIntent, you can use this parameter to [attach the payment method](https://docs.stripe.com/payments/save-during-payment) to the Customer after the PaymentIntent is confirmed and the customer completes any required actions. If you don't provide a Customer, you can still [attach](https://docs.stripe.com/api/payment_methods/attach) the payment method to a Customer after the transaction completes. If the payment method is `card_present` and isn't a digital wallet, Stripe creates and attaches a [generated_card](https://docs.stripe.com/api/charges/object#charge_object-payment_method_details-card_present-generated_card) payment method representing the card to the Customer instead. When processing card payments, Stripe uses `setup_future_usage` to help you comply with regional legislation and network rules, such as [SCA](https://docs.stripe.com/strong-customer-authentication). Possible values: `none`, `off_session`, `on_session`.
+* `setup_future_usage` - Indicates that you intend to make future payments with this PaymentIntent's payment method. If you provide a Customer with the PaymentIntent, you can use this parameter to [attach the payment method](https://docs.stripe.com/payments/save-during-payment) to the Customer after the PaymentIntent is confirmed and the customer completes any required actions. If you don't provide a Customer, you can still [attach](https://docs.stripe.com/api/payment_methods/attach) the payment method to a Customer after the transaction completes. If the payment method is `card_present` and isn't a digital wallet, Stripe creates and attaches a [generated_card](https://docs.stripe.com/api/charges/object#charge_object-payment_method_details-card_present-generated_card) payment method representing the card to the Customer instead. When processing card payments, Stripe uses `setup_future_usage` to help you comply with regional legislation and network rules, such as [SCA](https://docs.stripe.com/strong-customer-authentication). Possible values: `off_session`, `on_session`.
 * `statement_descriptor_suffix_kana` - Provides information about a card payment that customers see on their statements. Concatenated with the Kana prefix (shortened Kana descriptor) or Kana statement descriptor that’s set on the account to form the complete statement descriptor. Maximum 22 characters. On card statements, the *concatenation* of both prefix and suffix (including separators) will appear truncated to 22 characters.
 * `statement_descriptor_suffix_kanji` - Provides information about a card payment that customers see on their statements. Concatenated with the Kanji prefix (shortened Kanji descriptor) or Kanji statement descriptor that’s set on the account to form the complete statement descriptor. Maximum 17 characters. On card statements, the *concatenation* of both prefix and suffix (including separators) will appear truncated to 17 characters.
 
@@ -881,7 +908,14 @@ The `payment_method_options.card.restrictions` attribute supports:
 The `payment_method_options.cashapp` attribute supports:
 
 * `capture_method` - Controls when the funds will be captured from the customer's account. Possible values: `manual`.
-* `setup_future_usage` - Indicates that you intend to make future payments with this PaymentIntent's payment method. If you provide a Customer with the PaymentIntent, you can use this parameter to [attach the payment method](https://docs.stripe.com/payments/save-during-payment) to the Customer after the PaymentIntent is confirmed and the customer completes any required actions. If you don't provide a Customer, you can still [attach](https://docs.stripe.com/api/payment_methods/attach) the payment method to a Customer after the transaction completes. If the payment method is `card_present` and isn't a digital wallet, Stripe creates and attaches a [generated_card](https://docs.stripe.com/api/charges/object#charge_object-payment_method_details-card_present-generated_card) payment method representing the card to the Customer instead. When processing card payments, Stripe uses `setup_future_usage` to help you comply with regional legislation and network rules, such as [SCA](https://docs.stripe.com/strong-customer-authentication). Possible values: `none`.
+* `setup_future_usage` - Indicates that you intend to make future payments with this PaymentIntent's payment method. If you provide a Customer with the PaymentIntent, you can use this parameter to [attach the payment method](https://docs.stripe.com/payments/save-during-payment) to the Customer after the PaymentIntent is confirmed and the customer completes any required actions. If you don't provide a Customer, you can still [attach](https://docs.stripe.com/api/payment_methods/attach) the payment method to a Customer after the transaction completes. If the payment method is `card_present` and isn't a digital wallet, Stripe creates and attaches a [generated_card](https://docs.stripe.com/api/charges/object#charge_object-payment_method_details-card_present-generated_card) payment method representing the card to the Customer instead. When processing card payments, Stripe uses `setup_future_usage` to help you comply with regional legislation and network rules, such as [SCA](https://docs.stripe.com/strong-customer-authentication). Possible values: `none`, `off_session`, `on_session`.
+
+<a id="payment_method_options.crypto"></a>
+### `payment_method_options.crypto`
+
+The `payment_method_options.crypto` attribute supports:
+
+* `setup_future_usage` - Possible values: `none`.
 
 <a id="payment_method_options.customer_balance"></a>
 ### `payment_method_options.customer_balance`
@@ -907,6 +941,13 @@ The `payment_method_options.customer_balance.bank_transfer` attribute supports:
 The `payment_method_options.customer_balance.bank_transfer.eu_bank_transfer` attribute supports:
 
 * `country` - The desired country code of the bank account information. Permitted values include: `DE`, `FR`, `IE`, or `NL`. Possible values: `BE`, `DE`, `ES`, `FR`, `IE`, `NL`.
+
+<a id="payment_method_options.demo_pay"></a>
+### `payment_method_options.demo_pay`
+
+The `payment_method_options.demo_pay` attribute supports:
+
+* `setup_future_usage` - Possible values: `none`, `off_session`.
 
 <a id="payment_method_options.eps"></a>
 ### `payment_method_options.eps`
@@ -957,7 +998,27 @@ The `payment_method_options.kakao_pay` attribute supports:
 The `payment_method_options.klarna` attribute supports:
 
 * `capture_method` - Controls when the funds will be captured from the customer's account. Possible values: `manual`.
-* `setup_future_usage` - Indicates that you intend to make future payments with this PaymentIntent's payment method. If you provide a Customer with the PaymentIntent, you can use this parameter to [attach the payment method](https://docs.stripe.com/payments/save-during-payment) to the Customer after the PaymentIntent is confirmed and the customer completes any required actions. If you don't provide a Customer, you can still [attach](https://docs.stripe.com/api/payment_methods/attach) the payment method to a Customer after the transaction completes. If the payment method is `card_present` and isn't a digital wallet, Stripe creates and attaches a [generated_card](https://docs.stripe.com/api/charges/object#charge_object-payment_method_details-card_present-generated_card) payment method representing the card to the Customer instead. When processing card payments, Stripe uses `setup_future_usage` to help you comply with regional legislation and network rules, such as [SCA](https://docs.stripe.com/strong-customer-authentication). Possible values: `none`, `off_session`, `on_session`.
+* `setup_future_usage` - Indicates that you intend to make future payments with this PaymentIntent's payment method. If you provide a Customer with the PaymentIntent, you can use this parameter to [attach the payment method](https://docs.stripe.com/payments/save-during-payment) to the Customer after the PaymentIntent is confirmed and the customer completes any required actions. If you don't provide a Customer, you can still [attach](https://docs.stripe.com/api/payment_methods/attach) the payment method to a Customer after the transaction completes. If the payment method is `card_present` and isn't a digital wallet, Stripe creates and attaches a [generated_card](https://docs.stripe.com/api/charges/object#charge_object-payment_method_details-card_present-generated_card) payment method representing the card to the Customer instead. When processing card payments, Stripe uses `setup_future_usage` to help you comply with regional legislation and network rules, such as [SCA](https://docs.stripe.com/strong-customer-authentication). Possible values: `none`.
+* `subscriptions` - See [`payment_method_options.klarna.subscriptions`](#payment_method_options.klarna.subscriptions) below.
+
+<a id="payment_method_options.klarna.subscriptions"></a>
+### `payment_method_options.klarna.subscriptions`
+
+The `payment_method_options.klarna.subscriptions` attribute is a list. Each element supports:
+
+* `interval` - Possible values: `day`, `month`, `week`, `year`.
+* `interval_count` -
+* `name` -
+* `next_billing` - See [`payment_method_options.klarna.subscriptions.next_billing`](#payment_method_options.klarna.subscriptions.next_billing) below.
+* `reference` -
+
+<a id="payment_method_options.klarna.subscriptions.next_billing"></a>
+### `payment_method_options.klarna.subscriptions.next_billing`
+
+The `payment_method_options.klarna.subscriptions.next_billing` attribute supports:
+
+* `amount` -
+* `date` -
 
 <a id="payment_method_options.konbini"></a>
 ### `payment_method_options.konbini`
@@ -1020,6 +1081,7 @@ The `payment_method_options.oxxo` attribute supports:
 The `payment_method_options.p24` attribute supports:
 
 * `setup_future_usage` - Indicates that you intend to make future payments with this PaymentIntent's payment method. If you provide a Customer with the PaymentIntent, you can use this parameter to [attach the payment method](https://docs.stripe.com/payments/save-during-payment) to the Customer after the PaymentIntent is confirmed and the customer completes any required actions. If you don't provide a Customer, you can still [attach](https://docs.stripe.com/api/payment_methods/attach) the payment method to a Customer after the transaction completes. If the payment method is `card_present` and isn't a digital wallet, Stripe creates and attaches a [generated_card](https://docs.stripe.com/api/charges/object#charge_object-payment_method_details-card_present-generated_card) payment method representing the card to the Customer instead. When processing card payments, Stripe uses `setup_future_usage` to help you comply with regional legislation and network rules, such as [SCA](https://docs.stripe.com/strong-customer-authentication). Possible values: `none`.
+* `tos_shown_and_accepted` -
 
 <a id="payment_method_options.payco"></a>
 ### `payment_method_options.payco`
@@ -1042,8 +1104,9 @@ The `payment_method_options.paynow` attribute supports:
 The `payment_method_options.paypal` attribute supports:
 
 * `capture_method` - Controls when the funds will be captured from the customer's account. Possible values: `manual`.
-* `preferred_locale` - Preferred locale of the PayPal checkout page that the customer is redirected to.
+* `preferred_locale` - Preferred locale of the PayPal checkout page that the customer is redirected to. Possible values: `cs-CZ`, `da-DK`, `de-AT`, `de-DE`, `de-LU`, `el-GR`, `en-GB`, `en-US`, `es-ES`, `fi-FI`, `fr-BE`, `fr-FR`, `fr-LU`, `hu-HU`, `it-IT`, `nl-BE`, `nl-NL`, `pl-PL`, `pt-PT`, `sk-SK`, `sv-SE`.
 * `reference` - A reference of the PayPal transaction visible to customer which is mapped to PayPal's invoice ID. This must be a globally unique ID if you have configured in your PayPal settings to block multiple payments per invoice ID.
+* `risk_correlation_id` -
 * `setup_future_usage` - Indicates that you intend to make future payments with this PaymentIntent's payment method. If you provide a Customer with the PaymentIntent, you can use this parameter to [attach the payment method](https://docs.stripe.com/payments/save-during-payment) to the Customer after the PaymentIntent is confirmed and the customer completes any required actions. If you don't provide a Customer, you can still [attach](https://docs.stripe.com/api/payment_methods/attach) the payment method to a Customer after the transaction completes. If the payment method is `card_present` and isn't a digital wallet, Stripe creates and attaches a [generated_card](https://docs.stripe.com/api/charges/object#charge_object-payment_method_details-card_present-generated_card) payment method representing the card to the Customer instead. When processing card payments, Stripe uses `setup_future_usage` to help you comply with regional legislation and network rules, such as [SCA](https://docs.stripe.com/strong-customer-authentication). Possible values: `none`, `off_session`.
 
 <a id="payment_method_options.payto"></a>
@@ -1258,6 +1321,15 @@ The `saved_payment_method_options` attribute supports:
 * `payment_method_remove` - Enable customers to choose if they wish to remove their saved payment methods. Disabled by default. Possible values: `disabled`, `enabled`.
 * `payment_method_save` - Enable customers to choose if they wish to save their payment method for future use. Disabled by default. Possible values: `disabled`, `enabled`.
 
+<a id="setup_intent_data"></a>
+### `setup_intent_data`
+
+The `setup_intent_data` attribute supports:
+
+* `description` -
+* `metadata` -
+* `on_behalf_of` -
+
 <a id="shipping_address_collection"></a>
 ### `shipping_address_collection`
 
@@ -1325,6 +1397,153 @@ The `shipping_options` attribute is a list. Each element supports:
 
 * `shipping_amount` - A non-negative integer in cents representing how much to charge.
 * `shipping_rate` - The shipping rate.
+* `shipping_rate_data` - See [`shipping_options.shipping_rate_data`](#shipping_options.shipping_rate_data) below.
+
+<a id="shipping_options.shipping_rate_data"></a>
+### `shipping_options.shipping_rate_data`
+
+The `shipping_options.shipping_rate_data` attribute supports:
+
+* `delivery_estimate` - See [`shipping_options.shipping_rate_data.delivery_estimate`](#shipping_options.shipping_rate_data.delivery_estimate) below.
+* `display_name` -
+* `fixed_amount` - See [`shipping_options.shipping_rate_data.fixed_amount`](#shipping_options.shipping_rate_data.fixed_amount) below.
+* `metadata` -
+* `tax_behavior` - Possible values: `exclusive`, `inclusive`, `unspecified`.
+* `tax_code` -
+* `type` - Possible values: `fixed_amount`.
+
+<a id="shipping_options.shipping_rate_data.delivery_estimate"></a>
+### `shipping_options.shipping_rate_data.delivery_estimate`
+
+The `shipping_options.shipping_rate_data.delivery_estimate` attribute supports:
+
+* `maximum` - See [`shipping_options.shipping_rate_data.delivery_estimate.maximum`](#shipping_options.shipping_rate_data.delivery_estimate.maximum) below.
+* `minimum` - See [`shipping_options.shipping_rate_data.delivery_estimate.minimum`](#shipping_options.shipping_rate_data.delivery_estimate.minimum) below.
+
+<a id="shipping_options.shipping_rate_data.delivery_estimate.maximum"></a>
+### `shipping_options.shipping_rate_data.delivery_estimate.maximum`
+
+The `shipping_options.shipping_rate_data.delivery_estimate.maximum` attribute supports:
+
+* `unit` - Possible values: `business_day`, `day`, `hour`, `month`, `week`.
+* `value` -
+
+<a id="shipping_options.shipping_rate_data.delivery_estimate.minimum"></a>
+### `shipping_options.shipping_rate_data.delivery_estimate.minimum`
+
+The `shipping_options.shipping_rate_data.delivery_estimate.minimum` attribute supports:
+
+* `unit` - Possible values: `business_day`, `day`, `hour`, `month`, `week`.
+* `value` -
+
+<a id="shipping_options.shipping_rate_data.fixed_amount"></a>
+### `shipping_options.shipping_rate_data.fixed_amount`
+
+The `shipping_options.shipping_rate_data.fixed_amount` attribute supports:
+
+* `amount` -
+* `currency` -
+* `currency_options` - See [`shipping_options.shipping_rate_data.fixed_amount.currency_options`](#shipping_options.shipping_rate_data.fixed_amount.currency_options) below.
+
+<a id="shipping_options.shipping_rate_data.fixed_amount.currency_options"></a>
+### `shipping_options.shipping_rate_data.fixed_amount.currency_options`
+
+The `shipping_options.shipping_rate_data.fixed_amount.currency_options` attribute is a map. Each value supports:
+
+* `amount` -
+* `tax_behavior` - Possible values: `exclusive`, `inclusive`, `unspecified`.
+
+<a id="subscription_data"></a>
+### `subscription_data`
+
+The `subscription_data` attribute supports:
+
+* `application_fee_percent` -
+* `billing_cycle_anchor` -
+* `billing_cycle_anchor_config` - See [`subscription_data.billing_cycle_anchor_config`](#subscription_data.billing_cycle_anchor_config) below.
+* `billing_mode` - See [`subscription_data.billing_mode`](#subscription_data.billing_mode) below.
+* `default_tax_rates` -
+* `description` -
+* `invoice_settings` - See [`subscription_data.invoice_settings`](#subscription_data.invoice_settings) below.
+* `metadata` -
+* `on_behalf_of` -
+* `pending_invoice_item_interval` - See [`subscription_data.pending_invoice_item_interval`](#subscription_data.pending_invoice_item_interval) below.
+* `proration_behavior` - Possible values: `create_prorations`, `none`.
+* `transfer_data` - See [`subscription_data.transfer_data`](#subscription_data.transfer_data) below.
+* `trial_end` -
+* `trial_period_days` -
+* `trial_settings` - See [`subscription_data.trial_settings`](#subscription_data.trial_settings) below.
+
+<a id="subscription_data.billing_cycle_anchor_config"></a>
+### `subscription_data.billing_cycle_anchor_config`
+
+The `subscription_data.billing_cycle_anchor_config` attribute supports:
+
+* `day_of_month` -
+* `hour` -
+* `minute` -
+* `month` -
+* `second` -
+
+<a id="subscription_data.billing_mode"></a>
+### `subscription_data.billing_mode`
+
+The `subscription_data.billing_mode` attribute supports:
+
+* `flexible` - See [`subscription_data.billing_mode.flexible`](#subscription_data.billing_mode.flexible) below.
+* `type` - Possible values: `classic`, `flexible`.
+
+<a id="subscription_data.billing_mode.flexible"></a>
+### `subscription_data.billing_mode.flexible`
+
+The `subscription_data.billing_mode.flexible` attribute supports:
+
+* `proration_discounts` - Possible values: `included`, `itemized`.
+
+<a id="subscription_data.invoice_settings"></a>
+### `subscription_data.invoice_settings`
+
+The `subscription_data.invoice_settings` attribute supports:
+
+* `issuer` - See [`subscription_data.invoice_settings.issuer`](#subscription_data.invoice_settings.issuer) below.
+
+<a id="subscription_data.invoice_settings.issuer"></a>
+### `subscription_data.invoice_settings.issuer`
+
+The `subscription_data.invoice_settings.issuer` attribute supports:
+
+* `account` -
+* `type` - Possible values: `account`, `self`.
+
+<a id="subscription_data.pending_invoice_item_interval"></a>
+### `subscription_data.pending_invoice_item_interval`
+
+The `subscription_data.pending_invoice_item_interval` attribute supports:
+
+* `interval` - Possible values: `day`, `month`, `week`, `year`.
+* `interval_count` -
+
+<a id="subscription_data.transfer_data"></a>
+### `subscription_data.transfer_data`
+
+The `subscription_data.transfer_data` attribute supports:
+
+* `amount_percent` -
+* `destination` -
+
+<a id="subscription_data.trial_settings"></a>
+### `subscription_data.trial_settings`
+
+The `subscription_data.trial_settings` attribute supports:
+
+* `end_behavior` - See [`subscription_data.trial_settings.end_behavior`](#subscription_data.trial_settings.end_behavior) below.
+
+<a id="subscription_data.trial_settings.end_behavior"></a>
+### `subscription_data.trial_settings.end_behavior`
+
+The `subscription_data.trial_settings.end_behavior` attribute supports:
+
+* `missing_payment_method` - Possible values: `cancel`, `create_invoice`, `pause`.
 
 <a id="tax_id_collection"></a>
 ### `tax_id_collection`

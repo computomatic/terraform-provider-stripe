@@ -156,6 +156,7 @@ func TestGoldenPages(t *testing.T) {
 	}
 	byType(s.Resources, "widget_gadget").ImportNote = "An imported gadget has no `token`."
 	byType(s.Resources, "widget_gadget").ImportNoteLevel = engine.NoteWarning
+	byType(s.Resources, "widget_gadget").MoneyNote = "A gadget can move real money. In a live-mode account, creating or changing one fails at plan time."
 	byType(s.Resources, "widget_gadget").DestroyNote = "Gadgets cannot be deleted. `terraform destroy`, and a change that would replace the gadget, fail at plan time. To stop managing a gadget, remove it from the state as [Removing from State](#removing-from-state) shows; it stays in the account."
 	byType(s.Resources, "widget_gadget_part").ImportNote = "Parts are matched by serial."
 	gadget, err := renderResource(byType(s.Resources, "widget_gadget"), pageInput{
@@ -226,20 +227,46 @@ func TestConvertRejectsUnknownNesting(t *testing.T) {
 	}
 }
 
-func TestStalePagesAreDeleted(t *testing.T) {
-	out := t.TempDir()
-	stale := filepath.Join(out, "resources", "gone.md")
-	if err := os.MkdirAll(filepath.Dir(stale), 0o755); err != nil {
+// A guide is copied as written, and one without a page title is refused.
+func TestGuidesAreCopied(t *testing.T) {
+	dir := t.TempDir()
+	guide := "---\npage_title: \"Managing Widgets\"\n---\n\n# Managing Widgets\n"
+	if err := os.WriteFile(filepath.Join(dir, "widgets.md"), []byte(guide), 0o644); err != nil {
 		t.Fatal(err)
 	}
-	if err := os.WriteFile(stale, []byte("old"), 0o644); err != nil {
+	got, err := readGuides(dir)
+	if err != nil {
 		t.Fatal(err)
+	}
+	if len(got) != 1 || got[filepath.Join("guides", "widgets.md")] != guide {
+		t.Errorf("guides: %v", got)
+	}
+	if err := os.WriteFile(filepath.Join(dir, "untitled.md"), []byte("# Untitled\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := readGuides(dir); err == nil {
+		t.Error("a guide without a page title must be refused")
+	}
+}
+
+func TestStalePagesAreDeleted(t *testing.T) {
+	out := t.TempDir()
+	stale := []string{filepath.Join(out, "resources", "gone.md"), filepath.Join(out, "guides", "gone.md")}
+	for _, path := range stale {
+		if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
+			t.Fatal(err)
+		}
+		if err := os.WriteFile(path, []byte("old"), 0o644); err != nil {
+			t.Fatal(err)
+		}
 	}
 	if err := writePages(out, map[string]string{filepath.Join("resources", "kept.md"): "new\n"}); err != nil {
 		t.Fatal(err)
 	}
-	if _, err := os.Stat(stale); !os.IsNotExist(err) {
-		t.Errorf("stale page still exists: %v", err)
+	for _, path := range stale {
+		if _, err := os.Stat(path); !os.IsNotExist(err) {
+			t.Errorf("stale page %s still exists: %v", path, err)
+		}
 	}
 	if _, err := os.Stat(filepath.Join(out, "resources", "kept.md")); err != nil {
 		t.Error(err)
@@ -277,8 +304,12 @@ func TestPagesStayUnderBudget(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(all) != len(real.Resources)+len(real.DataSources)+1 {
-		t.Errorf("got %d pages for %d resources, %d data sources and the index", len(all), len(real.Resources), len(real.DataSources))
+	guides, err := readGuides(filepath.Join("..", "..", "docs-src", "guides"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(all) != len(real.Resources)+len(real.DataSources)+len(guides)+1 {
+		t.Errorf("got %d pages for %d resources, %d data sources, %d guides and the index", len(all), len(real.Resources), len(real.DataSources), len(guides))
 	}
 	check("provider", all)
 }

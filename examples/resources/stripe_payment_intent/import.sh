@@ -1,0 +1,1 @@
+terraform import stripe_payment_intent.order pi_123

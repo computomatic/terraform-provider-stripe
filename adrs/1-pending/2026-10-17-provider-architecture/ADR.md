@@ -139,16 +139,18 @@ provider "stripe" {
   files_base_url  = null                     # or STRIPE_FILES_BASE_URL
   stripe_account  = null                     # or STRIPE_ACCOUNT, a connected account ID
   max_retries     = 3                        # default
+  allow_live_money_movement = false          # default
 }
 ```
 
 |Attribute|Required|Notes|
 |-|-|-|
-|`api_key`|Yes, by attribute or `STRIPE_API_KEY`|Sensitive. A secret or restricted key (`sk_` or `rk_`). The provider does not refuse live keys: users own that choice. Empty or missing is an error at configure time, not at validate, so `terraform validate` works with unknown values|
+|`api_key`|Yes, by attribute or `STRIPE_API_KEY`|Sensitive. A secret or restricted key (`sk_` or `rk_`). The provider does not refuse live keys: users own that choice. The resources that move money refuse live mode unless `allow_live_money_movement` is set (amended 2026-10-22 by `adrs/1-pending/2026-10-22-money-moving-resources/ADR.md`). Empty or missing is an error at configure time, not at validate, so `terraform validate` works with unknown values|
 |`base_url`|No|Default `https://api.stripe.com`. `http` is accepted only when set explicitly, which is how the provider targets the fake. The path must be empty|
 |`files_base_url`|No|Default `https://files.stripe.com` when `base_url` is unset. When `base_url` is set and this is not, files use `base_url`, because the fake serves everything on one port. `POST /v1/files` is the only call to this host (`docs/stripe-api-behaviour.md:78`)|
 |`stripe_account`|No|Sent as the `Stripe-Account` header for Connect platforms acting on a connected account. Not needed for a standalone account|
 |`max_retries`|No|Retries per request (D5)|
+|`allow_live_money_movement`|No|Bool, default false. When false, the resources that move money refuse to create or change an object, or set a lifecycle attribute, in a Stripe account in live mode, which the provider reads from `GET /v1/balance`, never from the key. No environment variable sets it (`adrs/1-pending/2026-10-22-money-moving-resources/ADR.md`, D1)|
 
 - **No account ID is required.** The secret key identifies the account. The conformance suite uses an account ID only as a test configuration input, and the provider has no use for one. A read-only `stripe_account` data source (the account the key belongs to) may come with the Connect wave.
 - The API version is not configurable (D4). There is no `api_version` attribute.
