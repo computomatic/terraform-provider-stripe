@@ -3,12 +3,12 @@
 page_title: "stripe_checkout_session Resource - Stripe"
 subcategory: ""
 description: |-
-  A customer's session on a Stripe-hosted checkout page. Set status to expired to expire an open session. Stripe expires a session by itself at expires_at, 24 hours after creation unless set, and completes it when the customer pays. Only metadata changes after creation. The client_secret is sensitive.
+  A customer's session on a Stripe-hosted checkout page. Set status to expired to expire an open session. Stripe expires a session by itself at expires_at, 24 hours after creation unless set, and completes it when the customer pays. Only metadata and shipping_options change after creation. The client_secret is sensitive.
 ---
 
 # Resource: stripe_checkout_session
 
-A customer's session on a Stripe-hosted checkout page. Set `status` to `expired` to expire an open session. Stripe expires a session by itself at `expires_at`, 24 hours after creation unless set, and completes it when the customer pays. Only `metadata` changes after creation. The `client_secret` is sensitive.
+A customer's session on a Stripe-hosted checkout page. Set `status` to `expired` to expire an open session. Stripe expires a session by itself at `expires_at`, 24 hours after creation unless set, and completes it when the customer pays. Only `metadata` and `shipping_options` change after creation. The `client_secret` is sensitive.
 
 ~> A checkout session can move real money. In a live-mode Stripe account, creating or changing one, including setting its `status`, fails at plan time unless the provider sets `allow_live_money_movement = true`. Reading or importing one never does. The provider asks Stripe for the account's mode. See the Managing Test Data guide.
 
@@ -91,7 +91,7 @@ The following arguments are optional:
 * `saved_payment_method_options` - (Optional) Controls saved payment method settings for the session. Only available in `payment` and `subscription` mode. Changing it fails the plan, because this resource cannot be replaced. See [`saved_payment_method_options`](#saved_payment_method_options) below.
 * `setup_intent_data` - (Optional) A subset of parameters to be passed to SetupIntent creation for Checkout Sessions in `setup` mode. Changing it fails the plan, because this resource cannot be replaced. See [`setup_intent_data`](#setup_intent_data) below.
 * `shipping_address_collection` - (Optional) When set, provides configuration for Checkout to collect a shipping address from a customer. Changing it fails the plan, because this resource cannot be replaced. See [`shipping_address_collection`](#shipping_address_collection) below.
-* `shipping_options` - (Optional) The shipping rate options to apply to this Session. Up to a maximum of 5. Changing it fails the plan, because this resource cannot be replaced. See [`shipping_options`](#shipping_options) below.
+* `shipping_options` - (Optional) The shipping rate options to apply to this Session. Up to a maximum of 5. See [`shipping_options`](#shipping_options) below.
 * `status` - (Optional) The status of the Checkout Session, one of `open`, `complete`, or `expired`. Possible values: `expired`.
 * `submit_type` - (Optional) Describes the type of transaction being performed by Checkout in order to customize relevant text on the page, such as the submit button. `submit_type` can only be specified on Checkout Sessions in `payment` or `subscription` mode. If blank or `auto`, `pay` is used. You can't set this parameter if `ui_mode` is `elements`. Possible values: `auto`, `book`, `donate`, `pay`, `subscribe`. Changing it fails the plan, because this resource cannot be replaced.
 * `subscription_data` - (Optional) A subset of parameters to be passed to subscription creation for Checkout Sessions in `subscription` mode. Changing it fails the plan, because this resource cannot be replaced. See [`subscription_data`](#subscription_data) below.

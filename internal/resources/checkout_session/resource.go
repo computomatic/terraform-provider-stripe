@@ -12,12 +12,12 @@ import (
 // Declaration is what the spec cannot say about a checkout session (ADR
 // 2026-10-22-money-moving-resources, D6.6). It takes payments, so the live-mode guard applies.
 // Stripe cannot delete one, so destroy is refused. `status` expires an open session (suite:
-// "expire"); a completed one cannot be expired (suite: "already expired"). Only `metadata` is
-// proven to update ("update metadata").
+// "expire"); a completed one cannot be expired (suite: "already expired"). `metadata` and
+// `shipping_options` are proven to update ("update metadata", "update shipping options").
 var Declaration = engine.Declaration{
 	TypeName:              "stripe_checkout_session",
 	IDPrefix:              "cs_",
-	Description:           "A customer's session on a Stripe-hosted checkout page. Set `status` to `expired` to expire an open session. Stripe expires a session by itself at `expires_at`, 24 hours after creation unless set, and completes it when the customer pays. Only `metadata` changes after creation. The `client_secret` is sensitive.",
+	Description:           "A customer's session on a Stripe-hosted checkout page. Set `status` to `expired` to expire an open session. Stripe expires a session by itself at `expires_at`, 24 hours after creation unless set, and completes it when the customer pays. Only `metadata` and `shipping_options` change after creation. The `client_secret` is sensitive.",
 	DataSourceDescription: "A customer's session on a Stripe-hosted checkout page. The session's `line_items` are included.",
 	Paths: engine.Paths{
 		Create:   "/v1/checkout/sessions",
@@ -36,10 +36,9 @@ var Declaration = engine.Declaration{
 		"currency", "customer_creation", "payment_method_collection", "phone_number_collection",
 		"redirect_on_completion", "tax_id_collection", "ui_mode",
 	},
-	// The spec's update takes these. Stripe refuses any change of a hosted session's line
-	// items (suite: "update errors" / "line items"). The suite proves a shipping options update
-	// ("update shipping options"), which the resource does not take yet.
-	ReplaceOn:    []string{"line_items", "shipping_options"},
+	// The spec's update takes them, but Stripe refuses any change of a hosted session's line
+	// items (suite: "update errors" / "line items").
+	ReplaceOn:    []string{"line_items"},
 	Delete:       engine.Refuse,
 	RefuseReason: "Stripe cannot delete a checkout session; set `status` to `expired` to expire an open one.",
 	Transitions: []engine.Transition{

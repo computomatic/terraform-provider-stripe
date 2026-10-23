@@ -310,6 +310,7 @@ func (p *stripeProvider) Resources(_ context.Context) []func() resource.Resource
 		must(credit_note.NewResource()),
 		must(invoice.NewResource()),
 		must(charge.NewResource()),
+		must(payout.NewResource()),
 	}
 }
 

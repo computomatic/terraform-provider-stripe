@@ -32,7 +32,7 @@ This data source supports the following arguments:
 
 This data source exports the following attributes in addition to the arguments above:
 
-* `amount` - The amount (in cents (or local equivalent)) that transfers to your bank account or debit card.
+* `amount` - A positive integer in cents representing how much to pay out.
 * `application_fee` - The application fee (if any) for the payout. [See the Connect documentation](https://docs.stripe.com/connect/instant-payouts#monetization-and-fees) for details.
 * `application_fee_amount` - The amount of the application fee (if any) requested for the payout. [See the Connect documentation](https://docs.stripe.com/connect/instant-payouts#monetization-and-fees) for details.
 * `arrival_date` - Date that you can expect the payout to arrive in the bank. This factors in delays to account for weekends or bank holidays.
@@ -41,19 +41,19 @@ This data source exports the following attributes in addition to the arguments a
 * `created` - Time at which the object was created. Measured in seconds since the Unix epoch.
 * `currency` - Three-letter [ISO currency code](https://www.iso.org/iso-4217-currency-codes.html), in lowercase. Must be a [supported currency](https://stripe.com/docs/currencies).
 * `description` - An arbitrary string attached to the object. Often useful for displaying to users.
-* `destination` - ID of the bank account or card the payout is sent to.
+* `destination` - The ID of a bank account or a card to send the payout to. If you don't provide a destination, we use the default external account for the specified currency.
 * `failure_balance_transaction` - If the payout fails or cancels, this is the ID of the balance transaction that reverses the initial balance transaction and returns the funds from the failed payout back in your balance.
 * `failure_code` - Error code that provides a reason for a payout failure, if available. View our [list of failure codes](https://docs.stripe.com/api#payout_failures).
 * `failure_message` - Message that provides the reason for a payout failure, if available.
 * `livemode` - If the object exists in live mode, the value is `true`. If the object exists in test mode, the value is `false`.
-* `metadata` - Set of [key-value pairs](https://docs.stripe.com/api/metadata) that you can attach to an object. This can be useful for storing additional information about the object in a structured format.
-* `method` - The method used to send this payout, which can be `standard` or `instant`. `instant` is supported for payouts to debit cards and bank accounts in certain countries. Learn more about [bank support for Instant Payouts](https://stripe.com/docs/payouts/instant-payouts-banks).
+* `metadata` - Set of [key-value pairs](https://docs.stripe.com/api/metadata) that you can attach to an object. This can be useful for storing additional information about the object in a structured format. Individual keys can be unset by posting an empty value to them. All keys can be unset by posting an empty value to `metadata`.
+* `method` - The method used to send this payout, which is `standard` or `instant`. We support `instant` for payouts to debit cards and bank accounts in certain countries. Learn more about [bank support for Instant Payouts](https://stripe.com/docs/payouts/instant-payouts-banks). Possible values: `instant`, `standard`.
 * `original_payout` - If the payout reverses another, this is the ID of the original payout.
-* `payout_method` - ID of the v2 FinancialAccount the funds are sent to.
+* `payout_method` - The ID of a v2 FinancialAccount to send funds to.
 * `reconciliation_status` - If `completed`, you can use the [Balance Transactions API](https://docs.stripe.com/api/balance_transactions/list#balance_transaction_list-payout) to list all balance transactions that are paid out in this payout. Possible values: `completed`, `in_progress`, `not_applicable`.
 * `reversed_by` - If the payout reverses, this is the ID of the payout that reverses this payout.
-* `source_type` - The source balance this payout came from, which can be one of the following: `card`, `fpx`, or `bank_account`.
-* `statement_descriptor` - Extra information about a payout that displays on the user's bank statement.
+* `source_type` - The balance type of your Stripe balance to draw this payout from. Balances for different payment sources are kept separately. You can find the amounts with the Balances API. One of `bank_account`, `card`, or `fpx`. Possible values: `bank_account`, `card`, `fpx`.
+* `statement_descriptor` - A string that displays on the recipient's bank or card statement (up to 22 characters). A `statement_descriptor` that's longer than 22 characters return an error. Most banks truncate this information and display it inconsistently. Some banks might not display it at all. For US ACH payouts, this maps to the ACH Company Entry Description field, which the NACHA standard limits to 10 characters. Stripe truncates descriptors longer than 10 characters for US ACH payouts.
 * `status` - Current status of the payout: `paid`, `pending`, `in_transit`, `canceled` or `failed`. A payout is `pending` until it's submitted to the bank, when it becomes `in_transit`. The status changes to `paid` if the transaction succeeds, or to `failed` or `canceled` (within 5 business days). Some payouts that fail might initially show as `paid`, then change to `failed`.
 * `trace_id` - A value that generates from the beneficiary's bank that allows users to track payouts with their bank. Banks might call this a "reference number" or something similar. See [`trace_id`](#trace_id) below.
 * `type` - Can be `bank_account` or `card`. Possible values: `bank_account`, `card`.

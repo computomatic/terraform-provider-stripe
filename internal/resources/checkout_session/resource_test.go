@@ -99,6 +99,42 @@ func TestAccCheckoutSession_update(t *testing.T) {
 	})
 }
 
+// A shipping option added to an open session changes it in place, and Stripe makes a shipping
+// rate from its data (suite: "update shipping options").
+func TestAccCheckoutSession_shippingOptions(t *testing.T) {
+	acct := acctest.NewAccount(t)
+	cfg := sessionConfig(acct, `
+  shipping_options = [{
+    shipping_rate_data = {
+      display_name = "Ground"
+      type         = "fixed_amount"
+      fixed_amount = {
+        amount   = 500
+        currency = "usd"
+      }
+    }
+  }]
+`)
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: tfacc.ProviderFactories,
+		Steps: acctest.Forget(t, []resource.TestStep{
+			{Config: sessionConfig(acct, "")},
+			{
+				Config: cfg,
+				ConfigPlanChecks: resource.ConfigPlanChecks{PreApply: []plancheck.PlanCheck{
+					plancheck.ExpectResourceAction(resAddress, plancheck.ResourceActionUpdate),
+				}},
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr(resAddress, "shipping_options.#", "1"),
+					resource.TestMatchResourceAttr(resAddress, "shipping_options.0.shipping_rate", regexp.MustCompile(`^shr_`)),
+					resource.TestCheckResourceAttr(resAddress, "shipping_options.0.shipping_amount", "500"),
+				),
+			},
+			{Config: cfg, PlanOnly: true},
+		}, nil, "stripe_checkout_session"),
+	})
+}
+
 // `success_url` is create-only, Stripe refuses to change a hosted session's line items (suite:
 // "update errors" / "line items"), and a session cannot be destroyed, so changing either fails
 // the plan, and a taint fails at apply.

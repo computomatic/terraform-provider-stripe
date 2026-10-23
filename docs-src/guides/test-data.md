@@ -2,12 +2,12 @@
 page_title: "Managing Test Data"
 subcategory: ""
 description: |-
-  Create payments, refunds, invoices, top-ups and transfers in a Stripe sandbox, and keep the provider from moving live money.
+  Create payments, refunds, invoices, payouts, top-ups and transfers in a Stripe sandbox, and keep the provider from moving live money.
 ---
 
 # Managing Test Data
 
-Some Stripe objects move money: payment intents, charges, refunds, invoices, credit notes, checkout sessions, top-ups, transfers, transfer reversals, application fee refunds and Climate orders, which spend the account's balance. The provider manages them so you can seed a sandbox or a test-mode account with the payments your application's tests and demos read. This guide explains the safety switch that keeps them out of live mode, how to move them through their states, how they change on their own, and why `terraform destroy` does not remove them.
+Some Stripe objects move money: payment intents, charges, refunds, invoices, credit notes, checkout sessions, payouts, top-ups, transfers, transfer reversals, application fee refunds and Climate orders, which spend the account's balance. The provider manages them so you can seed a sandbox or a test-mode account with the payments your application's tests and demos read. This guide explains the safety switch that keeps them out of live mode, how to move them through their states, how they change on their own, and why `terraform destroy` does not remove them.
 
 ## The live-mode guard
 
@@ -61,6 +61,15 @@ A refund can name the payment's `charge` instead of its `payment_intent`. A `str
 
 Stripe turns a test payment method such as `pm_card_visa` into a new payment method, and the state keeps the value you configured. With `capture_method = "manual"`, setting `status` to `succeeded` confirms the intent and captures it in the same apply. A card that Stripe declines, or that needs a further step such as 3D Secure, leaves the intent where Stripe put it, and the apply fails with Stripe's error. Terraform then marks the intent tainted; because it cannot be destroyed, run `terraform untaint` once the configuration is fixed.
 
+A `stripe_payout` sends money from the available balance to the account's default bank account in the payout's currency, or to the bank account its `destination` names. Stripe adds a platform's own bank account only in the Dashboard, so an account without one in that currency, or without enough available balance, has the payout refused at apply.
+
+```terraform
+resource "stripe_payout" "weekly" {
+  amount   = 5000
+  currency = "usd"
+}
+```
+
 ## Moving objects through their states
 
 Stripe ends these objects by an action, not by deleting them. Where Stripe's API proves the action, it is a value of the resource's `status`:
@@ -76,7 +85,7 @@ Stripe ends these objects by an action, not by deleting them. Where Stripe's API
 
 A charge made with `capture = false` only authorizes the payment. Set its `captured` to `true` to capture it in full.
 
-Leave `status` out to let the object stay where Stripe has it. A value Stripe cannot reach from the object's state fails at plan time: a succeeded payment intent cannot be canceled, a completed session cannot be expired, and a paid invoice cannot be voided. A value no action reaches from where the object is, such as voiding a draft invoice, fails the apply and names the status Stripe left. Refunds, transfers, transfer reversals and application fee refunds have no `status` to set: a refund cannot be canceled once a card refund has succeeded, and a transfer is undone by a new object, a `stripe_transfer_reversal`.
+Leave `status` out to let the object stay where Stripe has it. A value Stripe cannot reach from the object's state fails at plan time: a succeeded payment intent cannot be canceled, a completed session cannot be expired, and a paid invoice cannot be voided. A value no action reaches from where the object is, such as voiding a draft invoice, fails the apply and names the status Stripe left. Refunds, payouts, transfers, transfer reversals and application fee refunds have no `status` to set: a refund cannot be canceled once a card refund has succeeded, a payout can be canceled only while it is pending, which lasts seconds, and a transfer is undone by a new object, a `stripe_transfer_reversal`.
 
 ### Invoices and their items
 
@@ -106,13 +115,13 @@ To pay it, attach a test card to the customer with a `stripe_customer_payment_me
 
 ## Objects that change on their own
 
-Stripe moves some of these objects on without Terraform. A checkout session expires at its `expires_at`, 24 hours after creation unless set, and completes when a customer pays. A top-up moves from `pending` to `succeeded`. A refund of a non-card payment can move from `pending` to `succeeded` or `failed`. A transfer's `amount_reversed` grows with its reversals, and a charge's `amount_refunded` with its refunds. An invoice with `auto_advance = true` is finalized by Stripe about an hour after it is created, and Stripe then tries to collect it.
+Stripe moves some of these objects on without Terraform. A checkout session expires at its `expires_at`, 24 hours after creation unless set, and completes when a customer pays. A top-up moves from `pending` to `succeeded`. A payout moves from `pending` through `in_transit` to `paid`, within seconds in a sandbox, and can still fail after that. A refund of a non-card payment can move from `pending` to `succeeded` or `failed`. A transfer's `amount_reversed` grows with its reversals, and a charge's `amount_refunded` with its refunds. An invoice with `auto_advance = true` is finalized by Stripe about an hour after it is created, and Stripe then tries to collect it.
 
 The provider reads those changes and plans nothing for them, as long as the configuration leaves `status` unset or sets it to the value the object stays at. The values a `status` takes are ones Stripe does not leave by itself, so a configuration that sets one keeps planning nothing once it is reached. The exception is an invoice set to `open` that Stripe collects by itself, a `charge_automatically` invoice with `auto_advance = true`: once Stripe has paid it, the next plan fails until `status` is removed or set to `paid`. For an invoice meant to stay open, use `collection_method = "send_invoice"` or `auto_advance = false`.
 
 ## Why destroy is refused
 
-Stripe cannot delete a payment, a refund or a transfer, and the provider never cancels, refunds or reverses something on its own to make it go away. So `terraform destroy`, removing one of these resources from the configuration, and a change that would replace one, fail at plan time with `Cannot destroy`. Each resource page says which arguments cannot change.
+Stripe cannot delete a payment, a refund, a payout or a transfer, and the provider never cancels, refunds or reverses something on its own to make it go away. So `terraform destroy`, removing one of these resources from the configuration, and a change that would replace one, fail at plan time with `Cannot destroy`. Each resource page says which arguments cannot change.
 
 A draft invoice is the exception: Stripe deletes a draft, and `terraform destroy` does. Stripe also deletes the invoice items the draft holds, so a configuration that keeps those items plans to create them again. Once an invoice is finalized, by its `status` or by Stripe, it is refused like the others.
 
