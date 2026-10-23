@@ -208,4 +208,14 @@ var Resources = []Resource{
 	{Package: "identity_verification_report", ReadPath: "/v1/identity/verification_reports/{report}"},
 	{Package: "payment_record", ReadPath: "/v1/payment_records/{id}"},
 	{Package: "commerce_product_catalog_import", ReadPath: "/v2/commerce/product_catalog/imports/{id}"},
+	// Wave 8 batches d and k: Connect money movement and a customer's legacy cards and bank
+	// accounts, read-only for now. A reversal is addressed under its transfer, a fee refund
+	// under its fee and a card or bank account under its customer, so the engine adds each
+	// parent and the response's copy is left out.
+	{Package: "transfer", ReadPath: "/v1/transfers/{transfer}"},
+	{Package: "transfer_reversal", ReadPath: "/v1/transfers/{transfer}/reversals/{id}", Omit: []string{"transfer"}},
+	{Package: "application_fee", ReadPath: "/v1/application_fees/{id}"},
+	{Package: "application_fee_refund", ReadPath: "/v1/application_fees/{fee}/refunds/{id}", Omit: []string{"fee"}},
+	{Package: "customer_card", ReadPath: "/v1/customers/{customer}/cards/{id}", Omit: []string{"customer"}},
+	{Package: "customer_bank_account", ReadPath: "/v1/customers/{customer}/bank_accounts/{id}", Omit: []string{"customer"}},
 }

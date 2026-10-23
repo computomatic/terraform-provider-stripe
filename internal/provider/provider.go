@@ -21,6 +21,8 @@ import (
 	"github.com/computomatic/terraform-provider-stripe/internal/resources/account_external_account"
 	"github.com/computomatic/terraform-provider-stripe/internal/resources/account_person"
 	"github.com/computomatic/terraform-provider-stripe/internal/resources/apple_pay_domain"
+	"github.com/computomatic/terraform-provider-stripe/internal/resources/application_fee"
+	"github.com/computomatic/terraform-provider-stripe/internal/resources/application_fee_refund"
 	"github.com/computomatic/terraform-provider-stripe/internal/resources/apps_install"
 	"github.com/computomatic/terraform-provider-stripe/internal/resources/apps_secret"
 	"github.com/computomatic/terraform-provider-stripe/internal/resources/balance"
@@ -49,6 +51,8 @@ import (
 	"github.com/computomatic/terraform-provider-stripe/internal/resources/credit_note_line"
 	"github.com/computomatic/terraform-provider-stripe/internal/resources/customer"
 	"github.com/computomatic/terraform-provider-stripe/internal/resources/customer_balance_transaction"
+	"github.com/computomatic/terraform-provider-stripe/internal/resources/customer_bank_account"
+	"github.com/computomatic/terraform-provider-stripe/internal/resources/customer_card"
 	"github.com/computomatic/terraform-provider-stripe/internal/resources/customer_cash_balance_transaction"
 	"github.com/computomatic/terraform-provider-stripe/internal/resources/customer_payment_method"
 	"github.com/computomatic/terraform-provider-stripe/internal/resources/dispute"
@@ -116,6 +120,8 @@ import (
 	"github.com/computomatic/terraform-provider-stripe/internal/resources/terminal_reader"
 	"github.com/computomatic/terraform-provider-stripe/internal/resources/test_helpers_test_clock"
 	"github.com/computomatic/terraform-provider-stripe/internal/resources/topup"
+	"github.com/computomatic/terraform-provider-stripe/internal/resources/transfer"
+	"github.com/computomatic/terraform-provider-stripe/internal/resources/transfer_reversal"
 	"github.com/computomatic/terraform-provider-stripe/internal/resources/treasury_credit_reversal"
 	"github.com/computomatic/terraform-provider-stripe/internal/resources/treasury_debit_reversal"
 	"github.com/computomatic/terraform-provider-stripe/internal/resources/treasury_financial_account"
@@ -391,6 +397,12 @@ func (p *stripeProvider) DataSources(_ context.Context) []func() datasource.Data
 		must(core_account.NewDataSource()),
 		must(core_account_person.NewDataSource()),
 		must(apps_install.NewDataSource()),
+		must(transfer.NewDataSource()),
+		must(transfer_reversal.NewDataSource()),
+		must(application_fee.NewDataSource()),
+		must(application_fee_refund.NewDataSource()),
+		must(customer_card.NewDataSource()),
+		must(customer_bank_account.NewDataSource()),
 	}
 }
 
