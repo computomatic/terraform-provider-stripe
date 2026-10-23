@@ -333,8 +333,11 @@ func (m *model) openTransitions() error {
 		if t.Value == "" || t.Path == "" {
 			return fmt.Errorf("%s: a transition of `%s` needs a value and an action path", m.decl.TypeName, t.Field)
 		}
-		if n.Shape == fields.Bool && (t.Value != "true" && t.Value != "false" || len(t.Final) > 0) {
-			return fmt.Errorf("%s: a transition of the bool `%s` sets `true` or `false` and has no final value", m.decl.TypeName, t.Field)
+		if n.Shape == fields.Bool && (t.Value != "true" && t.Value != "false" || len(t.Final) > 0 || len(t.Reached) > 0) {
+			return fmt.Errorf("%s: a transition of the bool `%s` sets `true` or `false` and has no final or reached value", m.decl.TypeName, t.Field)
+		}
+		if slices.Contains(t.Reached, t.Value) || slices.ContainsFunc(t.Reached, func(v string) bool { return slices.Contains(t.Final, v) }) {
+			return fmt.Errorf("%s: a transition of `%s` to `%s` cannot reach that value or a final one", m.decl.TypeName, t.Field, t.Value)
 		}
 		for _, name := range t.Send {
 			if _, ok := m.top(name); !ok {
@@ -342,8 +345,8 @@ func (m *model) openTransitions() error {
 			}
 		}
 		for _, other := range m.decl.Transitions {
-			if other.Field == t.Field && other.Value == t.Value && !slices.Equal(other.Final, t.Final) {
-				return fmt.Errorf("%s: the transitions of `%s` to `%s` must declare the same final values", m.decl.TypeName, t.Field, t.Value)
+			if other.Field == t.Field && other.Value == t.Value && (!slices.Equal(other.Final, t.Final) || !slices.Equal(other.Reached, t.Reached)) {
+				return fmt.Errorf("%s: the transitions of `%s` to `%s` must declare the same final and reached values", m.decl.TypeName, t.Field, t.Value)
 			}
 		}
 		if slices.Contains(t.From, t.Value) {

@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"regexp"
+	"slices"
 	"testing"
 
 	"github.com/hashicorp/go-version"
@@ -274,6 +275,79 @@ func TestAccIssuingDispute_update(t *testing.T) {
 			{
 				Config:      disputeConfig(s, txn, "Changed after submitting.", "  amount   = 400\n  metadata = { c = \"3\" }\n  status   = \"submitted\"\n"),
 				ExpectError: regexp.MustCompile(`Evidence can only be modified while the dispute is unsubmitted`),
+			},
+		}, nil, "stripe_issuing_dispute"),
+	})
+}
+
+// submitted disputes the transaction as fraudulent with explanation and submits it. extra lands
+// inside the dispute.
+func submitted(s scope, transaction, explanation, extra string) string {
+	return disputeConfig(s, transaction, explanation, "  status = \"submitted\"\n"+extra)
+}
+
+// awaitDecided waits until the dispute reads status, which Stripe decides about two seconds
+// after the submit and the fake in it (suite: "Decided Issuing disputes in test mode").
+func (s scope) awaitDecided(t *testing.T, id *string, status string) func() {
+	return func() {
+		tfacc.AwaitListed(t, s.conn, "/v1/issuing/disputes", wire.Object{{Name: "status", Value: wire.String(status)}}, func(items []wire.Object) bool {
+			return slices.ContainsFunc(items, func(d wire.Object) bool { got, _ := d.GetString("id"); return got == *id })
+		})
+	}
+}
+
+// decided submits a dispute whose explanation decides it in test mode and proves that, once
+// `status` reads the outcome, the configuration's `submitted` plans no change, and a change of
+// metadata updates the dispute in place without submitting it again, which Stripe refuses
+// (suite: "Decided Issuing disputes in test mode").
+func decided(t *testing.T, explanation, outcome string) {
+	s := issuing(t)
+	txn := s.transaction(t)
+	var id string
+	cfg := submitted(s, txn, explanation, "")
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: tfacc.ProviderFactories,
+		Steps: acctest.Forget(t, []resource.TestStep{
+			{Config: cfg, Check: resource.ComposeAggregateTestCheckFunc(idOf(&id), resource.TestCheckResourceAttr(address, "status", "submitted"))},
+			{
+				PreConfig:        s.awaitDecided(t, &id, outcome),
+				Config:           cfg,
+				ConfigPlanChecks: resource.ConfigPlanChecks{PreApply: []plancheck.PlanCheck{plancheck.ExpectEmptyPlan()}},
+				Check:            resource.TestCheckResourceAttr(address, "status", outcome),
+			},
+			{
+				Config: submitted(s, txn, explanation, "  metadata = { decided = \"yes\" }\n"),
+				ConfigPlanChecks: resource.ConfigPlanChecks{PreApply: []plancheck.PlanCheck{
+					plancheck.ExpectResourceAction(address, plancheck.ResourceActionUpdate),
+				}},
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr(address, "status", outcome),
+					resource.TestCheckResourceAttr(address, "metadata.decided", "yes"),
+				),
+			},
+		}, nil, "stripe_issuing_dispute"),
+	})
+}
+
+func TestAccIssuingDispute_won(t *testing.T) { decided(t, "winning_evidence", "won") }
+
+func TestAccIssuingDispute_lost(t *testing.T) { decided(t, "losing_evidence", "lost") }
+
+// A decided dispute cannot go back to `unsubmitted`, which no action sets, so the plan fails
+// before anything reaches Stripe.
+func TestAccIssuingDispute_unsubmitDecided(t *testing.T) {
+	s := issuing(t)
+	txn := s.transaction(t)
+	var id string
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: tfacc.ProviderFactories,
+		Steps: acctest.Forget(t, []resource.TestStep{
+			{Config: submitted(s, txn, "winning_evidence", ""), Check: idOf(&id)},
+			{
+				PreConfig:   s.awaitDecided(t, &id, "won"),
+				Config:      disputeConfig(s, txn, "winning_evidence", "  status = \"unsubmitted\"\n"),
+				PlanOnly:    true,
+				ExpectError: regexp.MustCompile("`status` can be set to `submitted`; got \"unsubmitted\""),
 			},
 		}, nil, "stripe_issuing_dispute"),
 	})

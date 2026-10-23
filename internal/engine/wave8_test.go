@@ -297,6 +297,138 @@ func TestTransitionRefusesLeavingAFinalValue(t *testing.T) {
 	}
 }
 
+// A value a transition declares Reached satisfies the transition's value: while the state holds
+// it, a configuration that sets the transition's value plans the state's, so an unchanged
+// object plans no change, a change elsewhere keeps it, and the update sends no action. Another
+// value, or another transition's, plans as before.
+func TestTransitionKeepsAReachedValue(t *testing.T) {
+	decl := transitionDeclaration()
+	decl.Transitions[0].Reached = []string{"gone"}
+	p := newPlanner(t, decl, transitionTable())
+	plan := func(from, to, name string) (prior, planned tftypes.Value) {
+		state := map[string]tftypes.Value{"id": tfString("wid_1"), "name": tfString("w"), "phase": tfString(from)}
+		proposed := clone(state, map[string]tftypes.Value{"name": tfString(name), "phase": tfString(to)})
+		config := clone(proposed, map[string]tftypes.Value{"id": tftypes.NewValue(tftypes.String, nil)})
+		planned, _ = p.plan(p.value(state), p.value(proposed), p.value(config))
+		return p.value(state), planned
+	}
+	phaseOf := func(v tftypes.Value) string {
+		s, _ := knownString(valueAt(v, tftypes.NewAttributePath().WithAttributeName("phase")))
+		return s
+	}
+	if prior, planned := plan("gone", "on", "w"); !planned.Equal(prior) {
+		t.Errorf("a reached value must plan no change: %s", planned)
+	}
+	if _, planned := plan("gone", "on", "renamed"); phaseOf(planned) != "gone" {
+		t.Errorf("a change elsewhere must keep the reached value: %s", planned)
+	}
+	if _, planned := plan("off", "on", "w"); phaseOf(planned) != "on" {
+		t.Errorf("a value not reached must plan the transition's: %s", planned)
+	}
+	if _, planned := plan("gone", "off", "w"); phaseOf(planned) != "off" {
+		t.Errorf("another transition's value must plan as configured: %s", planned)
+	}
+
+	phase, log := "gone", []string{}
+	r := configured(t, decl, transitionTable(), phaseClient(&phase, &log))
+	state := r.fill(map[string]attr.Value{"id": types.StringValue("wid_1"), "name": types.StringValue("w"), "phase": types.StringValue("gone")})
+	r.update(t, r.fill(map[string]attr.Value{"id": types.StringValue("wid_1"), "name": types.StringValue("renamed"), "phase": types.StringValue("gone")}), state)
+	if got := strings.Join(log, ";"); got != "POST /v1/widgets/wid_1" {
+		t.Errorf("an update that keeps the reached value must send no action: %s", got)
+	}
+
+	disagree := transitionDeclaration()
+	disagree.Transitions = append(disagree.Transitions, Transition{Field: "phase", Value: "on", Path: "/v1/widgets/{id}/resume", Reached: []string{"gone"}})
+	itself, final := transitionDeclaration(), transitionDeclaration()
+	itself.Transitions[0].Reached = []string{"on"}
+	final.Transitions[0].Final, final.Transitions[0].Reached = []string{"gone"}, []string{"gone"}
+	for name, decl := range map[string]Declaration{"reached disagrees": disagree, "reaches its own value": itself, "reaches a final value": final} {
+		if _, err := compile(decl, transitionTable()); err == nil {
+			t.Errorf("%s: want an error", name)
+		}
+	}
+}
+
+// reachingClient serves one widget whose phase moves with its action endpoints and reads `gone`
+// from the response to the request reaches on, as a dispute Stripe decides while its update or
+// submit runs.
+func reachingClient(reaches string, log *[]string) Client {
+	name, phase := "", "off"
+	return clientFunc(func(_ context.Context, req stripeapi.Request) (*stripeapi.Response, error) {
+		*log = append(*log, req.Method+" "+req.Path)
+		if v, ok := req.Params.GetString("name"); ok {
+			name = v
+		}
+		switch req.Path {
+		case "/v1/widgets/wid_1/start":
+			phase = "on"
+		case "/v1/widgets/wid_1/stop":
+			phase = "off"
+		}
+		if req.Method+" "+req.Path == reaches {
+			phase = "gone"
+		}
+		return &stripeapi.Response{Body: wire.Object{
+			{Name: "id", Value: wire.String("wid_1")},
+			{Name: "name", Value: wire.String(name)},
+			{Name: "phase", Value: wire.String(phase)},
+		}}, nil
+	})
+}
+
+// A response can already hold a Reached value where the plan sets the transition's value, when
+// Stripe moves the object on while the update or the action runs. The apply succeeds with the
+// planned value in the state, as Terraform requires, and once a refresh reads Stripe's value the
+// unchanged configuration plans no change.
+func TestTransitionAcceptsAReachedValueInTheResponse(t *testing.T) {
+	decl := transitionDeclaration()
+	decl.Transitions[0].Reached = []string{"gone"}
+	p := newPlanner(t, decl, transitionTable())
+	phasePath := tftypes.NewAttributePath().WithAttributeName("phase")
+	for name, c := range map[string]struct{ from, reaches, sent string }{
+		"the update":           {from: "on", reaches: "POST /v1/widgets/wid_1", sent: "POST /v1/widgets/wid_1"},
+		"the action on update": {from: "off", reaches: "POST /v1/widgets/wid_1/start", sent: "POST /v1/widgets/wid_1;POST /v1/widgets/wid_1/start"},
+		"the action on create": {reaches: "POST /v1/widgets/wid_1/start", sent: "POST /v1/widgets;POST /v1/widgets/wid_1/start"},
+	} {
+		t.Run(name, func(t *testing.T) {
+			var log []string
+			r := configured(t, decl, transitionTable(), reachingClient(c.reaches, &log))
+			var state basetypes.ObjectValue
+			if c.from == "" {
+				state, _ = r.create(t, r.fill(map[string]attr.Value{"name": types.StringValue("renamed"), "phase": types.StringValue("on")}))
+			} else {
+				prior := r.fill(map[string]attr.Value{"id": types.StringValue("wid_1"), "name": types.StringValue("w"), "phase": types.StringValue(c.from)})
+				state = r.update(t, r.fill(map[string]attr.Value{"id": types.StringValue("wid_1"), "name": types.StringValue("renamed"), "phase": types.StringValue("on")}), prior)
+			}
+			if got := str(t, state, "phase"); got != "on" {
+				t.Errorf("the state must hold the planned value: %s", got)
+			}
+			if got := strings.Join(log, ";"); got != c.sent {
+				t.Errorf("requests: %s", got)
+			}
+
+			refreshed, _ := r.read(t, state)
+			if got := str(t, refreshed, "phase"); got != "gone" {
+				t.Fatalf("the refresh must read Stripe's value: %s", got)
+			}
+			prior := raw(t, refreshed)
+			proposed, err := tftypes.Transform(prior, func(at *tftypes.AttributePath, v tftypes.Value) (tftypes.Value, error) {
+				if at.Equal(phasePath) {
+					return tfString("on"), nil
+				}
+				return v, nil
+			})
+			if err != nil {
+				t.Fatal(err)
+			}
+			planned, _ := p.plan(prior, proposed, p.value(map[string]tftypes.Value{"name": tfString("renamed"), "phase": tfString("on")}))
+			if !planned.Equal(prior) {
+				t.Errorf("the plan after the refresh must be empty: %s", planned)
+			}
+		})
+	}
+}
+
 // A resource page lists the values a configuration can set on a transition field, without the
 // spec's sentence that lists them all; the data source, which only reads it, keeps both.
 func TestTransitionFieldListsTheValuesItSets(t *testing.T) {
