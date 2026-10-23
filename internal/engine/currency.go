@@ -217,12 +217,13 @@ func (r *Resource) validateTransitions(ctx context.Context, req resource.Validat
 	}
 	for field, values := range byField {
 		n, _ := r.m.top(field)
-		var v types.String
+		var v attr.Value
 		resp.Diagnostics.Append(req.Config.GetAttribute(ctx, path.Root(n.AttrName()), &v)...)
-		if resp.Diagnostics.HasError() || v.IsNull() || v.IsUnknown() || slices.Contains(values, v.ValueString()) {
+		got, ok := transitionValue(v)
+		if resp.Diagnostics.HasError() || !ok || slices.Contains(values, got) {
 			continue
 		}
 		resp.Diagnostics.AddAttributeError(path.Root(n.AttrName()), "Unsupported value",
-			fmt.Sprintf("`%s` can be set to %s; got %q.", n.AttrName(), "`"+strings.Join(values, "` or `")+"`", v.ValueString()))
+			fmt.Sprintf("`%s` can be set to %s; got %q.", n.AttrName(), "`"+strings.Join(values, "` or `")+"`", got))
 	}
 }

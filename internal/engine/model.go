@@ -240,7 +240,10 @@ func compile(decl Declaration, table []fields.Field) (*model, error) {
 			return nil, fmt.Errorf("%s: refuse-change entry `%s` is not a configurable top-level field", decl.TypeName, name)
 		}
 	}
-	if len(decl.RefuseChange) > 0 {
+	// refuseChanges tells a replace only by its top-level sources. A resource that refuses
+	// destroy fails every real replacement in the attribute plan modifier, before refuseChanges
+	// runs, so a source below the top level needs no telling there.
+	if len(decl.RefuseChange) > 0 && decl.Delete != Refuse {
 		for _, n := range m.nodes {
 			if below := nestedReplaceSource(n.Kids); below != "" {
 				return nil, fmt.Errorf("%s: field `%s.%s` forces replacement, and RefuseChange supports only top-level replace sources", decl.TypeName, n.Name, below)
@@ -321,11 +324,19 @@ func (m *model) findParam(name string) bool {
 func (m *model) openTransitions() error {
 	for _, t := range m.decl.Transitions {
 		n, ok := m.top(t.Field)
-		if !ok || n.Shape != fields.String || !n.Response || n.Writable() {
-			return fmt.Errorf("%s: transition field `%s` is not a response-only top-level string", m.decl.TypeName, t.Field)
+		if !ok || n.Shape != fields.String && n.Shape != fields.Bool || !n.Response || n.Writable() {
+			return fmt.Errorf("%s: transition field `%s` is not a response-only top-level string or bool", m.decl.TypeName, t.Field)
 		}
 		if t.Value == "" || t.Path == "" {
 			return fmt.Errorf("%s: a transition of `%s` needs a value and an action path", m.decl.TypeName, t.Field)
+		}
+		if n.Shape == fields.Bool && (t.Value != "true" && t.Value != "false" || len(t.Final) > 0) {
+			return fmt.Errorf("%s: a transition of the bool `%s` sets `true` or `false` and has no final value", m.decl.TypeName, t.Field)
+		}
+		for _, name := range t.Send {
+			if _, ok := m.top(name); !ok {
+				return fmt.Errorf("%s: a transition of `%s` sends `%s`, which is no top-level field", m.decl.TypeName, t.Field, name)
+			}
 		}
 		n.Optional = true
 	}

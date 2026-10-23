@@ -19,7 +19,9 @@ import (
 	"github.com/computomatic/terraform-provider-stripe/internal/resources/account"
 	"github.com/computomatic/terraform-provider-stripe/internal/resources/account_capability"
 	"github.com/computomatic/terraform-provider-stripe/internal/resources/account_external_account"
+	"github.com/computomatic/terraform-provider-stripe/internal/resources/account_person"
 	"github.com/computomatic/terraform-provider-stripe/internal/resources/apple_pay_domain"
+	"github.com/computomatic/terraform-provider-stripe/internal/resources/apps_install"
 	"github.com/computomatic/terraform-provider-stripe/internal/resources/apps_secret"
 	"github.com/computomatic/terraform-provider-stripe/internal/resources/balance"
 	"github.com/computomatic/terraform-provider-stripe/internal/resources/balance_settings"
@@ -37,6 +39,8 @@ import (
 	"github.com/computomatic/terraform-provider-stripe/internal/resources/climate_product"
 	"github.com/computomatic/terraform-provider-stripe/internal/resources/climate_supplier"
 	"github.com/computomatic/terraform-provider-stripe/internal/resources/commerce_product_catalog_import"
+	"github.com/computomatic/terraform-provider-stripe/internal/resources/core_account"
+	"github.com/computomatic/terraform-provider-stripe/internal/resources/core_account_person"
 	"github.com/computomatic/terraform-provider-stripe/internal/resources/core_event"
 	"github.com/computomatic/terraform-provider-stripe/internal/resources/core_event_destination"
 	"github.com/computomatic/terraform-provider-stripe/internal/resources/country_spec"
@@ -268,6 +272,9 @@ func (p *stripeProvider) Resources(_ context.Context) []func() resource.Resource
 		must(issuing_personalization_design.NewResource()),
 		must(issuing_dispute.NewResource()),
 		must(treasury_financial_account.NewResource()),
+		must(account_person.NewResource()),
+		must(core_account.NewResource()),
+		must(core_account_person.NewResource()),
 	}
 }
 
@@ -380,6 +387,10 @@ func (p *stripeProvider) DataSources(_ context.Context) []func() datasource.Data
 		must(identity_verification_report.NewDataSource()),
 		must(payment_record.NewDataSource()),
 		must(commerce_product_catalog_import.NewDataSource()),
+		must(account_person.NewDataSource()),
+		must(core_account.NewDataSource()),
+		must(core_account_person.NewDataSource()),
+		must(apps_install.NewDataSource()),
 	}
 }
 

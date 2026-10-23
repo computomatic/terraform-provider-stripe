@@ -14,6 +14,7 @@
 - New data source: `stripe_apps_secret`, a Secret Store secret looked up by `name` and `scope`. Its `payload` is sensitive. A verification report's identity data and a catalog import's upload and error file URLs are sensitive too.
 - The rest of Issuing, on a connected account. New resources, each with a data source: `stripe_issuing_personalization_design` and `stripe_issuing_dispute`. A design takes its card logo as the ID of a file uploaded with the purpose `issuing_logo`, and a plan that changes its `physical_bundle`, `card_logo` or `carrier_text` fails. Setting a dispute's `status` to `submitted` submits it. Stripe deletes neither, so destroying or replacing one fails at plan time; a design keeps its `lookup_key`.
 - New data sources: `stripe_issuing_physical_bundle`, `stripe_issuing_authorization`, `stripe_issuing_transaction` and `stripe_issuing_token`.
+- More of Connect. New resources, each with a data source: `stripe_account_person`, a person of a connected account's business, whose `id_number` and `ssn_last_4` are sensitive and stay as configured because Stripe never returns them; `stripe_core_account`, an account created through Stripe's `/v2` Accounts API with its customer, merchant and recipient configurations; and `stripe_core_account_person`, a person of such an account. Stripe cannot delete a `/v2` account, so destroying or replacing one fails at plan time; set `closed` to `true` to close it. New data source: `stripe_apps_install`.
 
 ## 0.1.0 (2026-10-22)
 

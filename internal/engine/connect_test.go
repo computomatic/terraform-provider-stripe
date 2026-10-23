@@ -568,8 +568,8 @@ func TestRefuseChangeLeavesAnUnknownReplaceField(t *testing.T) {
 }
 
 // RefuseChange checks only top-level replace sources, so a declaration with one below the top
-// level, in an object, a list element or a map, does not compile; one with only top-level
-// sources does.
+// level, in an object, a list element or a map, does not compile unless it refuses destroy; one
+// with only top-level sources does.
 func TestRefuseChangeRefusesNestedReplaceSources(t *testing.T) {
 	decl := fixtureDeclaration()
 	decl.RefuseChange = []string{"url"}
@@ -579,6 +579,12 @@ func TestRefuseChangeRefusesNestedReplaceSources(t *testing.T) {
 	}
 	if _, err := NewResource(decl, refuseTable()); err != nil {
 		t.Errorf("top-level replace sources only must compile: %v", err)
+	}
+	// A resource that refuses destroy fails the replacement in the attribute plan modifier,
+	// before the RefuseChange check, so a nested source compiles there.
+	decl.Delete, decl.RefuseReason, decl.Paths.Delete = Refuse, "Stripe cannot delete a widget.", ""
+	if _, err := NewResource(decl, fixtureTable()); err != nil {
+		t.Errorf("a refusing resource may have a nested replace source: %v", err)
 	}
 
 	list := listDeclaration()

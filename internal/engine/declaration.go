@@ -107,16 +107,22 @@ type RefuseWhen struct {
 // Transition is an action endpoint that sets a status-like field Stripe never takes on create
 // or update, such as an alert's `status`, which `/activate` and `/deactivate` change.
 type Transition struct {
-	// Field is the top-level string field the action sets.
+	// Field is the top-level string or bool field the action sets.
 	Field string
-	// Value is what the field holds afterwards.
+	// Value is what the field holds afterwards: a string field's value, or `true` or `false`
+	// for a bool field.
 	Value string
 	// Path is the action endpoint, such as `/v1/billing/alerts/{id}/activate`. It is sent as
-	// a bare POST.
+	// a bare POST, unless Send names fields. A `/v2` action is sent no `include`, which no
+	// `/v2` action takes, and the object keeps the included fields its response leaves null.
 	Path string
+	// Send lists top-level fields whose values the action is sent, as the object holds them
+	// when it is called, such as the `applied_configurations` a v2 account's close must name
+	// exactly.
+	Send []string
 	// Final lists the values of Field, other than Value, that the transition cannot leave,
 	// such as an alert's `archived`. A plan that moves the field from one of them to Value fails, because Stripe
-	// refuses the action.
+	// refuses the action. A bool field has none.
 	Final []string
 }
 
@@ -233,7 +239,7 @@ type Declaration struct {
 	// Advance makes a change to a create-only time field an update that moves the object
 	// forward, and a change backwards a plan error.
 	Advance *AdvanceAction
-	// Transitions make a response-only top-level string field, such as `status`, Optional and
+	// Transitions make a response-only top-level string or bool field, such as `status`, Optional and
 	// Computed: a configured value that differs from the object's calls the action endpoint
 	// that sets it, after create and on update. A value no transition sets is refused at
 	// validation. The field is never sent in a request body.
@@ -337,8 +343,8 @@ type Declaration struct {
 	// destroy to remove it from state. The field is sent on create only. A plan that is a replace is not
 	// refused when a top-level create-only or replace-on field, the parent, the attached object,
 	// a currency options change or a fixed keys change forces it. compile refuses a declaration
-	// with a replace source below the top level, which is not checked. Nor is a value not fully
-	// known at plan time. `-replace` cannot be told from an update at plan time.
+	// with a replace source below the top level, which is not checked, unless it refuses
+	// destroy, which fails every replacement first. Nor is a value not fully known at plan time. `-replace` cannot be told from an update at plan time.
 	RefuseChange []string
 	// Sets lists scalar arrays that are sets of values.
 	Sets []string

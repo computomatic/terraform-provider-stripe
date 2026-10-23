@@ -152,6 +152,34 @@ func TestReadOnlyFieldsAreResponseOnly(t *testing.T) {
 	}
 }
 
+func TestKeepHoldsOnlyTheKeptPaths(t *testing.T) {
+	spec := fixtureSpec(t)
+	table, err := Build(spec, Resource{Package: "widget", CreatePath: "/v1/widgets", UpdatePath: "/v1/widgets/{id}", Keep: []string{"id", "name", "address.zip"}})
+	if err != nil {
+		t.Fatal(err)
+	}
+	var names []string
+	for _, f := range table {
+		names = append(names, f.Name)
+	}
+	if got := strings.Join(names, ","); got != "address,id,name" {
+		t.Errorf("kept top-level fields: %s, want address,id,name", got)
+	}
+	if address := lookup(t, table, "address"); len(address.Fields) != 1 || address.Fields[0].Name != "zip" {
+		t.Errorf("an object above a kept path holds only the kept fields: %+v", address.Fields)
+	}
+	table, err = Build(spec, Resource{Package: "widget", CreatePath: "/v1/widgets", Keep: []string{"address"}})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if address := lookup(t, table, "address"); len(address.Fields) != 2 {
+		t.Errorf("a kept object holds every field below it: %+v", address.Fields)
+	}
+	if _, err := Build(spec, Resource{Package: "widget", CreatePath: "/v1/widgets", Keep: []string{"name", "nothing"}}); err == nil {
+		t.Error("a keep entry that names no field must fail")
+	}
+}
+
 func TestRequireMakesACreateFieldRequired(t *testing.T) {
 	spec := fixtureSpec(t)
 	base := Resource{Package: "widget", CreatePath: "/v1/widgets", UpdatePath: "/v1/widgets/{id}"}

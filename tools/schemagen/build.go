@@ -6,6 +6,7 @@ import (
 	"regexp"
 	"slices"
 	"sort"
+	"strings"
 
 	"github.com/computomatic/terraform-provider-stripe/internal/fields"
 )
@@ -30,6 +31,11 @@ type Resource struct {
 	// Omit lists dotted field paths the table leaves out: fields Stripe returns only when
 	// expanded, which the provider never requests, in shapes the engine does not model.
 	Omit []string
+	// Keep, when set, lists the dotted field paths the table holds: a field on, below or
+	// above a kept path stays and every other is left out, as Omit leaves one out. It suits
+	// an object of which the conformance suite proves a few fields among many, such as a v2
+	// account's one requested capability among dozens.
+	Keep []string
 	// UpdatePath is the `POST` path that updates the object, or empty when there is none.
 	UpdatePath string
 	// CreateOnly lists dotted field paths whose update request takes another shape than the
@@ -83,7 +89,10 @@ func (v *view) scalar() bool {
 
 // Build derives the field table of one resource from the spec.
 func Build(spec *Spec, res Resource) ([]fields.Field, error) {
-	b := builder{spec: spec, omit: map[string]bool{}, createOnly: map[string]bool{}, readOnly: map[string]bool{}, require: map[string]bool{}, noResponse: map[string]bool{}}
+	b := builder{spec: spec, omit: map[string]bool{}, keep: map[string]bool{}, createOnly: map[string]bool{}, readOnly: map[string]bool{}, require: map[string]bool{}, noResponse: map[string]bool{}}
+	for _, p := range res.Keep {
+		b.keep[p] = false
+	}
 	for _, p := range res.Omit {
 		b.omit[p] = false
 	}
@@ -154,6 +163,11 @@ func Build(spec *Spec, res Resource) ([]fields.Field, error) {
 			return nil, fmt.Errorf("%s: omit entry %q names no field", res.Package, p)
 		}
 	}
+	for _, p := range res.Keep {
+		if !b.keep[p] {
+			return nil, fmt.Errorf("%s: keep entry %q names no field", res.Package, p)
+		}
+	}
 	for _, p := range res.CreateOnly {
 		if !b.createOnly[p] {
 			return nil, fmt.Errorf("%s: create-only entry %q names no field", res.Package, p)
@@ -181,6 +195,8 @@ type builder struct {
 	spec *Spec
 	// omit maps each omitted path to whether the build met it.
 	omit map[string]bool
+	// keep maps each path of Resource.Keep to whether the build met it.
+	keep map[string]bool
 	// createOnly maps each path of Resource.CreateOnly to whether the build met it.
 	createOnly map[string]bool
 	// readOnly maps each path of Resource.ReadOnly to whether the build met it.
@@ -189,6 +205,24 @@ type builder struct {
 	require map[string]bool
 	// noResponse maps each path of Resource.NoResponse to whether the build met it.
 	noResponse map[string]bool
+}
+
+// kept reports whether a field path is on, below or above a path of Resource.Keep, and marks
+// a kept path met. Every path is kept when Keep is empty.
+func (b *builder) kept(at string) bool {
+	if len(b.keep) == 0 {
+		return true
+	}
+	if _, ok := b.keep[at]; ok {
+		b.keep[at] = true
+		return true
+	}
+	for k := range b.keep {
+		if strings.HasPrefix(at, k+".") || strings.HasPrefix(k, at+".") {
+			return true
+		}
+	}
+	return false
 }
 
 func prop(s *Schema, name string) *Schema {
@@ -226,6 +260,9 @@ func (b *builder) object(create, update, resp *Schema, where string, depth int) 
 		at := where + name
 		if _, omitted := b.omit[at]; omitted {
 			b.omit[at] = true
+			continue
+		}
+		if !b.kept(at) {
 			continue
 		}
 		// A hash with no keys in the response only says its payment method type is in use,
