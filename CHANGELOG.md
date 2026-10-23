@@ -16,6 +16,7 @@
 - New data sources: `stripe_issuing_physical_bundle`, `stripe_issuing_authorization`, `stripe_issuing_transaction` and `stripe_issuing_token`.
 - More of Connect. New resources, each with a data source: `stripe_account_person`, a person of a connected account's business, whose `id_number` and `ssn_last_4` are sensitive and stay as configured because Stripe never returns them; `stripe_core_account`, an account created through Stripe's `/v2` Accounts API with its customer, merchant and recipient configurations; and `stripe_core_account_person`, a person of such an account. Stripe cannot delete a `/v2` account, so destroying or replacing one fails at plan time; set `closed` to `true` to close it. New data source: `stripe_apps_install`.
 - Connect money movement and a customer's legacy payment sources. New data sources: `stripe_transfer` and `stripe_application_fee`, looked up by `id`; `stripe_transfer_reversal`, `stripe_application_fee_refund`, `stripe_customer_card` and `stripe_customer_bank_account`, looked up by their parent (`transfer`, `fee` or `customer`) and `id`.
+- New data sources: `stripe_checkout_session_line_item` and `stripe_payment_link_line_item`, which find a line item by its `id` among the items of its `checkout_session` or `payment_link`, because Stripe has no retrieve for one.
 
 ## 0.1.0 (2026-10-22)
 

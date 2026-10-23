@@ -37,6 +37,7 @@ import (
 	"github.com/computomatic/terraform-provider-stripe/internal/resources/billing_portal_configuration"
 	"github.com/computomatic/terraform-provider-stripe/internal/resources/charge"
 	"github.com/computomatic/terraform-provider-stripe/internal/resources/checkout_session"
+	"github.com/computomatic/terraform-provider-stripe/internal/resources/checkout_session_line_item"
 	"github.com/computomatic/terraform-provider-stripe/internal/resources/climate_order"
 	"github.com/computomatic/terraform-provider-stripe/internal/resources/climate_product"
 	"github.com/computomatic/terraform-provider-stripe/internal/resources/climate_supplier"
@@ -82,6 +83,7 @@ import (
 	"github.com/computomatic/terraform-provider-stripe/internal/resources/payment_intent"
 	"github.com/computomatic/terraform-provider-stripe/internal/resources/payment_intent_amount_details_line_item"
 	"github.com/computomatic/terraform-provider-stripe/internal/resources/payment_link"
+	"github.com/computomatic/terraform-provider-stripe/internal/resources/payment_link_line_item"
 	"github.com/computomatic/terraform-provider-stripe/internal/resources/payment_method_configuration"
 	"github.com/computomatic/terraform-provider-stripe/internal/resources/payment_method_domain"
 	"github.com/computomatic/terraform-provider-stripe/internal/resources/payment_record"
@@ -403,6 +405,8 @@ func (p *stripeProvider) DataSources(_ context.Context) []func() datasource.Data
 		must(application_fee_refund.NewDataSource()),
 		must(customer_card.NewDataSource()),
 		must(customer_bank_account.NewDataSource()),
+		must(checkout_session_line_item.NewDataSource()),
+		must(payment_link_line_item.NewDataSource()),
 	}
 }
 
