@@ -24,6 +24,7 @@ This data source supports the following arguments:
 
 * `gadget` - (Required) The ID of the parent object.
 * `id` - (Required) The ID of the gadget part to read.
+* `revision` - (Optional) The revision whose parts to read. Defaults to the gadget's latest.
 
 ## Attribute Reference
 

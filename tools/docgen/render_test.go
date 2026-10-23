@@ -104,7 +104,8 @@ func fixture(t *testing.T) *schemas {
 			"widget_gadget_part": block("A part attached to a gadget.",
 				str("gadget", "The ID of the parent object.", required),
 				str("id", "The ID of the gadget part to read.", optionalComputed),
-				str("label", "Label of the part.", computed)),
+				str("label", "Label of the part.", computed),
+				str("revision", "The revision whose parts to read. Defaults to the gadget's latest.", optionalComputed)),
 			"widget_settings": block("The account's settings.",
 				str("theme", "The theme.", computed)),
 		},
@@ -192,6 +193,7 @@ func TestGoldenPages(t *testing.T) {
 	}
 	golden(t, "data_source", ds)
 
+	byType(s.DataSources, "widget_gadget_part").ListParams = []string{"revision"}
 	dsChild, err := renderDataSource(byType(s.DataSources, "widget_gadget_part"), pageInput{Examples: ex[:1]})
 	if err != nil {
 		t.Fatal(err)

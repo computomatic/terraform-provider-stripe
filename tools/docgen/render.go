@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"regexp"
+	"slices"
 	"strings"
 	"time"
 
@@ -322,8 +323,10 @@ func renderDataSource(s *schema, in pageInput) (string, error) {
 		m.add("## Argument Reference")
 		m.add("This data source supports the following arguments:")
 		required := filter(args, func(a *attr) bool { return a.Required })
-		optional := filter(args, func(a *attr) bool { return !a.Required })
-		// The required arguments name a parent. Only the optional ones are lookup keys.
+		listParams := filter(args, func(a *attr) bool { return slices.Contains(s.ListParams, a.Name) })
+		optional := filter(args, func(a *attr) bool { return !a.Required && !slices.Contains(s.ListParams, a.Name) })
+		// The required arguments name a parent and the list parameters choose the parent's list.
+		// Only the other optional ones are lookup keys.
 		if len(optional) > 1 {
 			m.add("Exactly one must be set.")
 		} else {
@@ -335,7 +338,7 @@ func renderDataSource(s *schema, in pageInput) (string, error) {
 			}
 			optional = nil
 		}
-		m.add(lineList(append(required, optional...), true))
+		m.add(lineList(append(append(required, optional...), listParams...), true))
 		subsections(m, args, "", true)
 	}
 	exported := filter(s.Attrs, func(a *attr) bool { return !a.argument() })

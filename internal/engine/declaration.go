@@ -376,6 +376,9 @@ type Declaration struct {
 	// as an invoice's lines. A data source finds it by `id` among the parent's list, following
 	// pages. There is no resource and no retrieve path.
 	FindInList bool
+	// ListParams are parameters the parent's list requires on every page, for a FindInList
+	// object, such as the `ownership` whose owners an account's list holds.
+	ListParams []ListParam
 	// Lookups are the data source lookup keys besides `id`.
 	Lookups []Lookup
 	// FindBy says Stripe reads the object by required parameters in place of an ID, such as a
@@ -384,6 +387,25 @@ type Declaration struct {
 	// retrieve path, which answers the object, or of the list path when there is no retrieve
 	// path, which must list exactly one. There is no resource.
 	FindBy []FindParam
+}
+
+// ListParam is a parameter of the parent's list that a FindInList data source sends (ListParams).
+// Its attribute is the top-level string field of the same name, which the list's elements
+// return. It is Optional and Computed: when the configuration leaves it unset, the data source
+// reads the parent and sends the parent's field of the same name, such as an account's latest
+// `ownership`.
+type ListParam struct {
+	// Name is the request parameter, the attribute and the parent's field.
+	Name string
+	// ParentPath is the parent's retrieve path, such as
+	// `/v1/financial_connections/accounts/{account}`. The parent's field may be an ID or an
+	// expanded object with one.
+	ParentPath string
+	// Description is the attribute's description, which says what an unset value sends.
+	Description string
+	// Unset is the error detail when the parent's field is null, which says what gives the
+	// parent a value.
+	Unset string
 }
 
 // FindParam is a parameter a data source reads its object by (FindBy).

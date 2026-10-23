@@ -241,4 +241,8 @@ var Resources = []Resource{
 	// list under their parent, so the table is the list element's.
 	{Package: "checkout_session_line_item", ListPath: "/v1/checkout/sessions/{session}/line_items"},
 	{Package: "payment_link_line_item", ListPath: "/v1/payment_links/{payment_link}/line_items"},
+	// A Financial Connections account's owners have no retrieve, only the list under the
+	// account, so the table is the list element's.
+	{Package: "financial_connections_account_owner", ListPath: "/v1/financial_connections/accounts/{account}/owners"},
+	{Package: "financial_connections_transaction", ReadPath: "/v1/financial_connections/transactions/{transaction}"},
 }

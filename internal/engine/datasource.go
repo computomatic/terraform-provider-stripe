@@ -70,6 +70,16 @@ func (d *DataSource) Configure(ctx context.Context, req datasource.ConfigureRequ
 	}}
 }
 
+// ListParamNames lists the attributes of the declaration's list parameters, which are optional
+// arguments but no lookup keys. tools/docgen documents them apart from the keys.
+func (d *DataSource) ListParamNames() []string {
+	var names []string
+	for _, p := range d.m.decl.ListParams {
+		names = append(names, d.attrName(p.Name))
+	}
+	return names
+}
+
 // lookupNames lists the attributes a block may use to find its object, `id` first.
 func (d *DataSource) lookupNames() []string {
 	if d.m.decl.Singleton {
@@ -130,7 +140,14 @@ func (d *DataSource) Read(ctx context.Context, req datasource.ReadRequest, resp 
 	} else if len(d.m.decl.FindBy) > 0 {
 		body, err = d.findBy(ctx, config, parent, resp)
 	} else if id != "" && d.m.decl.FindInList {
-		body, err = d.find(ctx, id, parent)
+		var params wire.Object
+		params, err = d.listParams(ctx, config, parent, resp)
+		if err == nil && params == nil {
+			return
+		}
+		if err == nil {
+			body, err = d.find(ctx, id, parent, params)
+		}
 		if err == nil && body == nil {
 			resp.Diagnostics.AddError("Not found", fmt.Sprintf("no %s found for id=%s", d.m.decl.TypeName, id))
 			return
@@ -177,15 +194,56 @@ func hasMore(page wire.Object, v2 bool) bool {
 // maxFindPages caps the pages find reads, whatever the list answers.
 const maxFindPages = 200
 
-// find reads the parent's list page by page and returns the element with the ID, or nil when
-// no page holds it. A page with more to come that lists no ID not seen before means the list
+// listParams returns the declaration's list parameters with their configured values, and with
+// the parent's for those left unset. A nil result with no error means an error diagnostic was
+// added.
+func (d *DataSource) listParams(ctx context.Context, config basetypes.ObjectValue, parent string, resp *datasource.ReadResponse) (wire.Object, error) {
+	params := wire.Object{}
+	var parentBody wire.Object
+	for _, p := range d.m.decl.ListParams {
+		value := stringAttr(config, d.attrName(p.Name))
+		if value == "" {
+			if parentBody == nil {
+				body, err := d.api.call(ctx, "GET", d.m.expand(p.ParentPath, "", parent), nil)
+				if err != nil {
+					return nil, err
+				}
+				parentBody = body
+			}
+			value = idOf(parentBody, p.Name)
+		}
+		if value == "" {
+			resp.Diagnostics.AddError("No "+p.Name, fmt.Sprintf("%s %s has no `%s`: %s", d.m.decl.Parent, parent, p.Name, p.Unset))
+			return nil, nil
+		}
+		params = append(params, wire.Field{Name: p.Name, Value: wire.String(value)})
+	}
+	return params, nil
+}
+
+// idOf returns the ID a field of body holds, as a string or as an expanded object, or "" when
+// it holds none.
+func idOf(body wire.Object, field string) string {
+	v, _ := body.Get(field)
+	switch v := v.(type) {
+	case wire.String:
+		return string(v)
+	case wire.Object:
+		id, _ := v.GetString("id")
+		return id
+	}
+	return ""
+}
+
+// find reads the parent's list page by page, sending params with each, and returns the element
+// with the ID, or nil when no page holds it. A page with more to come that lists no ID not seen before means the list
 // is not moving on, which Stripe has been seen to do for some lists, so it ends the search
 // with an error instead of looping.
-func (d *DataSource) find(ctx context.Context, id, parent string) (wire.Object, error) {
+func (d *DataSource) find(ctx context.Context, id, parent string, listParams wire.Object) (wire.Object, error) {
 	after := ""
 	seen := map[string]bool{}
 	for pages := 0; pages < maxFindPages; pages++ {
-		params := wire.Object{{Name: "limit", Value: wire.Int(listLimit)}}
+		params := append(wire.Object{{Name: "limit", Value: wire.Int(listLimit)}}, listParams...)
 		if after != "" {
 			params = append(params, wire.Field{Name: "starting_after", Value: wire.String(after)})
 		}

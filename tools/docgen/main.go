@@ -15,6 +15,7 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/providerserver"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 
@@ -81,6 +82,20 @@ func loadSchemas(ctx context.Context) (*schemas, error) {
 				rs.ImportNote, rs.ImportNoteLevel = noted.ImportNote()
 				rs.DestroyNote = noted.DestroyNote()
 				rs.MoneyNote = noted.MoneyNote()
+			}
+		}
+	}
+	for _, newDataSource := range p.DataSources(ctx) {
+		d := newDataSource()
+		var meta datasource.MetadataResponse
+		d.Metadata(ctx, datasource.MetadataRequest{ProviderTypeName: "stripe"}, &meta)
+		listed, ok := d.(interface{ ListParamNames() []string })
+		if !ok {
+			continue
+		}
+		for _, ds := range s.DataSources {
+			if ds.Type == meta.TypeName {
+				ds.ListParams = listed.ListParamNames()
 			}
 		}
 	}
