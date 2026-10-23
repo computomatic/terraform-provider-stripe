@@ -65,6 +65,9 @@ type schema struct {
 	DestroyNote string
 	// MoneyNote is the callout of a resource that moves money, from the engine.
 	MoneyNote string
+	// ListParams are the optional arguments of a data source that are list parameters, not
+	// lookup keys, from the engine.
+	ListParams []string
 }
 
 func (s *schema) find(name string) *attr {

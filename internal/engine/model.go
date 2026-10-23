@@ -280,6 +280,11 @@ func compile(decl Declaration, table []fields.Field) (*model, error) {
 			return nil, fmt.Errorf("%s: %w", decl.TypeName, err)
 		}
 	}
+	for _, p := range decl.ListParams {
+		if err := m.checkListParam(p); err != nil {
+			return nil, fmt.Errorf("%s: %w", decl.TypeName, err)
+		}
+	}
 
 	names := map[string]bool{}
 	for p := range c.sensitiveSet {
@@ -315,6 +320,32 @@ func (m *model) checkFindParam(p FindParam) error {
 		return fmt.Errorf("find parameter `%s` is not a top-level string, integer or object of those that the response returns", p.Name)
 	}
 	return nil
+}
+
+// checkListParam refuses a list parameter the engine cannot send or default: one of an object
+// not found in a list, a field that is not a top-level string the response returns, the `id`,
+// and one with no parent path under the parent, description or unset error.
+func (m *model) checkListParam(p ListParam) error {
+	if !m.decl.FindInList {
+		return fmt.Errorf("list parameter `%s` needs an object found in a list", p.Name)
+	}
+	n, ok := m.top(p.Name)
+	if !ok || n.Shape != fields.String || !n.Response || n.Name == "id" {
+		return fmt.Errorf("list parameter `%s` is not a top-level string field the response returns", p.Name)
+	}
+	if !strings.Contains(p.ParentPath, "{"+m.decl.Parent+"}") || p.Description == "" || p.Unset == "" {
+		return fmt.Errorf("list parameter `%s` needs a parent path under `{%s}`, a description and an unset error", p.Name, m.decl.Parent)
+	}
+	return nil
+}
+
+// listParam returns the list parameter the Stripe field is, if it is one.
+func (m *model) listParam(name string) (ListParam, bool) {
+	i := slices.IndexFunc(m.decl.ListParams, func(p ListParam) bool { return p.Name == name })
+	if i < 0 {
+		return ListParam{}, false
+	}
+	return m.decl.ListParams[i], true
 }
 
 // findParam reports whether the Stripe field is a find parameter.

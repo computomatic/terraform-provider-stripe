@@ -292,6 +292,9 @@ func (m *model) dataSourceSchema() dschema.Schema {
 		if m.findParam(n.Name) {
 			a = findAttribute(n)
 		}
+		if p, ok := m.listParam(n.Name); ok {
+			a = dschema.StringAttribute{Optional: true, Computed: true, MarkdownDescription: p.Description}
+		}
 		attrs[n.AttrName()] = a
 	}
 	for _, p := range m.decl.FindBy {

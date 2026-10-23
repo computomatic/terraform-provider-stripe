@@ -70,6 +70,8 @@ Transfers and application fees need a connected account that can receive money. 
 
 A payout needs a bank account of the platform's own in its currency, which Stripe adds only in the Dashboard. The payout tests seed a US bank account in `usd` into the fake account with `acctest.Seed`, after an `acct.Smoke` check, and fund the available balance with `tfacc.FundAvailableBalance`.
 
+Stripe links a Financial Connections account only through its hosted flow. `tfacc.LinkedAccount` seeds one, held by a new customer, into the fake account, and skips the test in smoke mode. `tfacc.RefreshedOwnership` and `tfacc.SubscribedTransactions` start an ownership refresh or a subscription to transactions through the API and wait for the refresh to succeed, which the owner and transaction data sources need, because a data source never starts one.
+
 Stripe makes some objects in the background, such as credit balance transactions, meter event summaries and active entitlements, and lists them a moment, or up to a minute, after their cause. A test waits for them with `tfacc.AwaitListed` before it reads one. The fake makes them at once.
 
 ## CI

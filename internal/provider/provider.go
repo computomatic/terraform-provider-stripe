@@ -64,7 +64,9 @@ import (
 	"github.com/computomatic/terraform-provider-stripe/internal/resources/file"
 	"github.com/computomatic/terraform-provider-stripe/internal/resources/file_link"
 	"github.com/computomatic/terraform-provider-stripe/internal/resources/financial_connections_account"
+	"github.com/computomatic/terraform-provider-stripe/internal/resources/financial_connections_account_owner"
 	"github.com/computomatic/terraform-provider-stripe/internal/resources/financial_connections_session"
+	"github.com/computomatic/terraform-provider-stripe/internal/resources/financial_connections_transaction"
 	"github.com/computomatic/terraform-provider-stripe/internal/resources/identity_verification_report"
 	"github.com/computomatic/terraform-provider-stripe/internal/resources/identity_verification_session"
 	"github.com/computomatic/terraform-provider-stripe/internal/resources/invoice"
@@ -399,7 +401,9 @@ func (p *stripeProvider) DataSources(_ context.Context) []func() datasource.Data
 		must(treasury_outbound_transfer.NewDataSource()),
 		must(treasury_outbound_payment.NewDataSource()),
 		must(financial_connections_account.NewDataSource()),
+		must(financial_connections_account_owner.NewDataSource()),
 		must(financial_connections_session.NewDataSource()),
+		must(financial_connections_transaction.NewDataSource()),
 		must(topup.NewDataSource()),
 		must(radar_early_fraud_warning.NewDataSource()),
 		must(review.NewDataSource()),
