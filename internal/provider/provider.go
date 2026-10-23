@@ -307,6 +307,9 @@ func (p *stripeProvider) Resources(_ context.Context) []func() resource.Resource
 		must(transfer.NewResource()),
 		must(transfer_reversal.NewResource()),
 		must(application_fee_refund.NewResource()),
+		must(credit_note.NewResource()),
+		must(invoice.NewResource()),
+		must(charge.NewResource()),
 	}
 }
 

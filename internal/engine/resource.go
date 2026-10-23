@@ -380,8 +380,9 @@ func (r *Resource) refuseChanges(ctx context.Context, req resource.ModifyPlanReq
 			continue
 		}
 		if v, err := pv.ToTerraformValue(ctx); err != nil || !v.IsFullyKnown() {
+			// A computed value the configuration leaves unset is Stripe's to fill in.
 			cv, err := config.Attributes()[n.AttrName()].ToTerraformValue(ctx)
-			if err != nil || !cv.IsFullyKnown() || unchangedBesidesComputed(n, pv, sv, req.Config.Raw) {
+			if err != nil || !cv.IsFullyKnown() || cv.IsNull() && n.Computed || unchangedBesidesComputed(n, pv, sv, req.Config.Raw) {
 				continue
 			}
 		}

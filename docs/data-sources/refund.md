@@ -30,7 +30,7 @@ This data source exports the following attributes in addition to the arguments a
 
 * `amount` - Amount, in cents (or local equivalent).
 * `balance_transaction` - Balance transaction that describes the impact on your account balance.
-* `charge` - ID of the charge that's refunded.
+* `charge` - The identifier of the charge to refund.
 * `created` - Time at which the object was created. Measured in seconds since the Unix epoch.
 * `currency` - Three-letter [ISO currency code](https://www.iso.org/iso-4217-currency-codes.html), in lowercase. Must be a [supported currency](https://stripe.com/docs/currencies).
 * `customer` - Customer whose customer balance to refund from.

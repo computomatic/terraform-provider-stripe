@@ -168,3 +168,20 @@ func TestRefuseChangeSeesThroughUnknownComputedMembers(t *testing.T) {
 		t.Errorf("a configured value not known yet is left for apply: %v", resp.Diagnostics)
 	}
 }
+
+// A field Stripe fills in that the configuration leaves unset is unknown on every change of
+// the object, such as an invoice's `number`, which finalizing sets. That is no change of it,
+// whether the state holds a value or none.
+func TestRefuseChangeLeavesAnUnsetServerDefault(t *testing.T) {
+	table := append(refuseTable(), fields.Field{Name: "number", Shape: fields.String, Create: true, Update: true, Response: true, ServerDefaulted: true})
+	decl := fixtureDeclaration()
+	decl.RefuseChange = []string{"number"}
+	r := configured(t, decl, table, noCalls(t))
+	for name, prior := range map[string]attr.Value{"none": types.StringNull(), "a value": types.StringValue("INV-1")} {
+		state := r.fill(map[string]attr.Value{"id": types.StringValue("wid_1"), "name": types.StringValue("w"), "number": prior})
+		resp := r.modifyPlan(t, r.fill(with(state, map[string]attr.Value{"number": types.StringUnknown()})), state, r.fill(with(state, map[string]attr.Value{"number": types.StringNull()})))
+		if resp.Diagnostics.HasError() {
+			t.Errorf("%s in state: an unset server default is no change: %v", name, resp.Diagnostics)
+		}
+	}
+}

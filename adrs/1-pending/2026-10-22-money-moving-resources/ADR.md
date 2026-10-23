@@ -670,6 +670,17 @@ Answered by the owner on 2026-10-22. Each question and recommendation as asked, 
 - `LiveCheck` keeps Stripe's answer and Stripe's errors, but not a read that ended with its caller's context, and a change waiting for another's read gives up when its own context ends.
 - The guard's acceptance test confirmed F7: the fake's admin seed accepts a balance with `livemode: true`.
 
+**As built in stage B**, against the fake at `v0.14.0` and the suite at `acf2eaf`, which proves S1 to S4:
+
+- A credit note's `memo` and `metadata` update in place (suite: "update", "update a voided note"), so neither is in `ReplaceOn`.
+- An invoice's `paid` finalizes a draft and then pays it, as D6.4 says. Stripe pays a draft in one call ("pay a draft finalizes it"), but the suite proves that only out of band. `void` runs from `open` and `uncollectible` with `Final: paid`, and `uncollectible` from `open` with `Final: paid, void`. Sending is not a status, because it leaves the invoice `open`.
+- An invoice's draft-proven fields update in place, and Stripe refuses most of them once the invoice is finalized, at apply. `number`, `effective_at` and `automatically_finalizes_at`, which Stripe sets when it finalizes, are in `RefuseChange` rather than `ReplaceOn`, because a field that replaces keeps its prior value, which finalizing changes in the same apply. The spec's other unproven update fields are in `ReplaceOn`.
+- A `stripe_invoiceitem`'s `invoice` is server-defaulted, because Stripe fills it in when a draft sweeps the item up, which would otherwise plan the item's replacement.
+- A charge's `amount` and `currency` are required (`Require`), as Stripe requires them (suite: "missing amount", "missing currency"). `application_fee` and `radar_options` are `ReadOnly` rather than omitted, so the data source keeps them, and `fraud_details`, which only the update takes, is `ReadOnly` rather than in `ReplaceOn`. `captured` has no `From`: a bool's only other value is `false`.
+- A refund takes `charge` or `payment_intent` in an `ExactlyOneOf`, both server-defaulted, because Stripe fills in each from the other.
+- `stripe_payout` is not built: the fake at `v0.14.0` still refuses every payout create (F4).
+- The engine gained `RefuseWhen.Except`, keeps the values Stripe fills in for the elements of a list that forces replacement (a credit note's `lines`), and no longer counts an unset computed field as a change for `RefuseChange`.
+
 
 ### Step 1: The guard in the engine and provider
 
@@ -687,7 +698,7 @@ Add `Transition.From`, the end-state check, the taint guidance on refusing resou
 
 Acceptance criteria: the transition unit tests of D8 pass; existing resources' acceptance tests pass on both CLIs; their pages are unchanged.
 
-Status: DONE (stage A), except `RefuseWhen.Except`, which waits for `stripe_invoice` (Step 5)
+Status: DONE (`RefuseWhen.Except` in stage B)
 
 Dependencies: (none)
 
@@ -707,7 +718,7 @@ Build `stripe_payment_intent`, `stripe_refund` (with `payment_intent`; `charge` 
 
 Acceptance criteria: the acceptance suite passes against the pinned fake with Terraform and with OpenTofu; each page has the money callout and, where destroy is refused, the destroy callout; `TestAccBalance_liveModeCheck` passes against the fake.
 
-Status: DONE (stage A), except `stripe_credit_note`, which moves to Step 5, and the refund's `charge`, which waits for S2
+Status: DONE (stage A; `stripe_credit_note` and the refund's `charge` in stage B)
 
 Dependencies: Steps 1 to 3.
 
@@ -717,7 +728,7 @@ Build `stripe_invoice` (after S3 and F2), with `RefuseWhen.Except`, `stripe_payo
 
 Acceptance criteria: as Step 4 for each resource; the invoice's draft tests destroy normally and its finalized tests end with `Forget`.
 
-Status: PENDING
+Status: DONE (stage B), except `stripe_payout`, which waits for F4
 
 Dependencies: Step 4, and the follow-ups named for each resource.
 
@@ -727,7 +738,7 @@ Apply the D10 changelog bullet (naming the resources shipped), the `CONTRIBUTING
 
 Acceptance criteria: the changelog names every money-moving resource that ships; the architecture ADR's D3 lists `allow_live_money_movement`.
 
-Status: DONE for the resources of stage A
+Status: DONE for the resources of stages A and B
 
 Dependencies: Step 4 (and Step 5 for its resources).
 

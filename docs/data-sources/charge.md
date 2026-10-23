@@ -3,12 +3,12 @@
 page_title: "stripe_charge Data Source - Stripe"
 subcategory: ""
 description: |-
-  A single attempt to move money from a customer. Look one up by its id.
+  A single attempt to move money from a customer.
 ---
 
 # Data Source: stripe_charge
 
-A single attempt to move money from a customer. Look one up by its `id`.
+A single attempt to move money from a customer.
 
 ## Example Usage
 
@@ -37,23 +37,24 @@ This data source exports the following attributes in addition to the arguments a
 * `amount_refunded` - Amount in cents (or local equivalent) refunded (can be less than the amount attribute on the charge if a partial refund was issued).
 * `application` - ID of the Connect application that created the charge.
 * `application_fee` - The application fee (if any) for the charge. [See the Connect documentation](https://docs.stripe.com/connect/direct-charges#collect-fees) for details.
-* `application_fee_amount` - The amount of the application fee (if any) requested for the charge. [See the Connect documentation](https://docs.stripe.com/connect/direct-charges#collect-fees) for details.
+* `application_fee_amount` - A fee in cents (or local equivalent) that will be applied to the charge and transferred to the application owner's Stripe account. The request must be made with an OAuth key or the `Stripe-Account` header in order to take an application fee. For more information, see the application fees [documentation](https://docs.stripe.com/connect/direct-charges#collect-fees).
 * `balance_transaction` - ID of the balance transaction that describes the impact of this charge on your account balance (not including refunds or disputes).
 * `billing_details` - See [`billing_details`](#billing_details) below.
 * `calculated_statement_descriptor` - The full statement descriptor that is passed to card networks, and that is displayed on your customers' credit card and bank statements. Allows you to see what the statement descriptor looks like after the static and dynamic portions are combined. This value only exists for card payments.
+* `capture` - Whether to immediately capture the charge. Defaults to `true`. When `false`, the charge issues an authorization (or pre-authorization), and will need to be [captured](https://docs.stripe.com/api#capture_charge) later. Uncaptured charges expire after a set number of days (7 by default). For more information, see the [authorizing charges and settling later](https://docs.stripe.com/charges/placing-a-hold) documentation.
 * `captured` - If the charge was created without capturing, this Boolean represents whether it is still uncaptured or has since been captured.
 * `created` - Time at which the object was created. Measured in seconds since the Unix epoch.
 * `currency` - Three-letter [ISO currency code](https://www.iso.org/iso-4217-currency-codes.html), in lowercase. Must be a [supported currency](https://stripe.com/docs/currencies).
-* `customer` - ID of the customer this charge is for if one exists.
-* `description` - An arbitrary string attached to the object. Often useful for displaying to users.
+* `customer` - The ID of an existing customer that will be charged in this request.
+* `description` - An arbitrary string which you can attach to a `Charge` object. It is displayed when in the web interface alongside the charge. Note that if you use Stripe to send automatic email receipts to your customers, your receipt emails will include the `description` of the charge(s) that they are describing.
 * `disputed` - Whether the charge has been disputed.
 * `failure_balance_transaction` - ID of the balance transaction that describes the reversal of the balance on your account due to payment failure.
 * `failure_code` - Error code explaining reason for charge failure if available (see [the errors section](https://docs.stripe.com/error-codes) for a list of codes).
 * `failure_message` - Message to user further explaining reason for charge failure if available.
 * `fraud_details` - Information on fraud assessments for the charge. See [`fraud_details`](#fraud_details) below.
 * `livemode` - If the object exists in live mode, the value is `true`. If the object exists in test mode, the value is `false`.
-* `metadata` - Set of [key-value pairs](https://docs.stripe.com/api/metadata) that you can attach to an object. This can be useful for storing additional information about the object in a structured format.
-* `on_behalf_of` - The account (if any) the charge was made on behalf of without triggering an automatic transfer. See the [Connect documentation](https://docs.stripe.com/connect/separate-charges-and-transfers) for details.
+* `metadata` - Set of [key-value pairs](https://docs.stripe.com/api/metadata) that you can attach to an object. This can be useful for storing additional information about the object in a structured format. Individual keys can be unset by posting an empty value to them. All keys can be unset by posting an empty value to `metadata`.
+* `on_behalf_of` - The Stripe account ID for which these funds are intended. You can specify the business of record as the connected account using the `on_behalf_of` attribute on the charge. For details, see [Creating Separate Charges and Transfers](https://docs.stripe.com/connect/separate-charges-and-transfers#settlement-merchant).
 * `outcome` - Details about whether the payment was accepted, and why. See [understanding declines](https://docs.stripe.com/declines) for details. See [`outcome`](#outcome) below.
 * `paid` - `true` if the charge succeeded, or was successfully authorized for later capture.
 * `payment_intent` - ID of the PaymentIntent associated with this charge, if one exists.
@@ -61,20 +62,21 @@ This data source exports the following attributes in addition to the arguments a
 * `payment_method_details` - Details about the payment method at the time of the transaction. See [`payment_method_details`](#payment_method_details) below.
 * `presentment_details` - See [`presentment_details`](#presentment_details) below.
 * `radar_options` - Options to configure Radar. See [Radar Session](https://docs.stripe.com/radar/radar-session) for more information. See [`radar_options`](#radar_options) below.
-* `receipt_email` - This is the email address that the receipt for this charge was sent to.
+* `receipt_email` - The email address to which this charge's [receipt](https://docs.stripe.com/dashboard/receipts) will be sent. The receipt will not be sent until the charge is paid, and no receipts will be sent for test mode charges. If this charge is for a [Customer](https://docs.stripe.com/api/customers/object), the email address specified here will override the customer's email address. If `receipt_email` is specified for a charge in live mode, a receipt will be sent regardless of your [email settings](https://dashboard.stripe.com/account/emails).
 * `receipt_number` - This is the transaction number that appears on email receipts sent for this charge. This attribute will be `null` until a receipt has been sent.
 * `receipt_url` - This is the URL to view the receipt for this charge. The receipt is kept up-to-date to the latest state of the charge, including any refunds. If the charge is for an Invoice, the receipt will be stylized as an Invoice receipt.
 * `refunded` - Whether the charge has been fully refunded. If the charge is only partially refunded, this attribute will still be false.
 * `refunds` - A list of refunds that have been applied to the charge. See [`refunds`](#refunds) below.
 * `review` - ID of the review associated with this charge if one exists.
-* `shipping` - Shipping information for the charge. See [`shipping`](#shipping) below.
+* `shipping` - Shipping information for the charge. Helps prevent fraud on charges for physical goods. See [`shipping`](#shipping) below.
+* `source` - A payment source to be charged. This can be the ID of a [card](https://docs.stripe.com/api#cards) (i.e., credit or debit card), a [bank account](https://docs.stripe.com/api#bank_accounts), a [source](https://docs.stripe.com/api#sources), a [token](https://docs.stripe.com/api#tokens), or a [connected account](https://docs.stripe.com/connect/account-debits#charging-a-connected-account). For certain sources---namely, [cards](https://docs.stripe.com/api#cards), [bank accounts](https://docs.stripe.com/api#bank_accounts), and attached [sources](https://docs.stripe.com/api#sources)---you must also pass the ID of the associated customer.
 * `source_transfer` - The transfer ID which created this charge. Only present if the charge came from another Stripe account. [See the Connect documentation](https://docs.stripe.com/connect/destination-charges) for details.
 * `statement_descriptor` - For a non-card charge, text that appears on the customer's statement as the statement descriptor. This value overrides the account's default statement descriptor. For information about requirements, including the 22-character limit, see [the Statement Descriptor docs](https://docs.stripe.com/get-started/account/statement-descriptors). For a card charge, this value is ignored unless you don't specify a `statement_descriptor_suffix`, in which case this value is used as the suffix.
 * `statement_descriptor_suffix` - Provides information about a card charge. Concatenated to the account's [statement descriptor prefix](https://docs.stripe.com/get-started/account/statement-descriptors#static) to form the complete statement descriptor that appears on the customer's statement. If the account has no prefix value, the suffix is concatenated to the account's statement descriptor.
 * `status` - The status of the payment is either `succeeded`, `pending`, or `failed`. Possible values: `failed`, `pending`, `succeeded`.
 * `transfer` - ID of the transfer to the `destination` account (only applicable if the charge was created using the `destination` parameter).
 * `transfer_data` - An optional dictionary including the account to automatically transfer to as part of a destination charge. [See the Connect documentation](https://docs.stripe.com/connect/destination-charges) for details. See [`transfer_data`](#transfer_data) below.
-* `transfer_group` - A string that identifies this transaction as part of a group. See the [Connect documentation](https://docs.stripe.com/connect/separate-charges-and-transfers#transfer-options) for details.
+* `transfer_group` - A string that identifies this transaction as part of a group. For details, see [Grouping transactions](https://docs.stripe.com/connect/separate-charges-and-transfers#transfer-options).
 
 <a id="billing_details"></a>
 ### `billing_details`
@@ -1305,4 +1307,5 @@ The `shipping.address` attribute supports:
 The `transfer_data` attribute supports:
 
 * `amount` - The amount transferred to the destination account, if specified. By default, the entire charge amount is transferred to the destination account.
+* `description` -
 * `destination` - ID of an existing, connected Stripe account to transfer funds to if `transfer_data` was specified in the charge request.
