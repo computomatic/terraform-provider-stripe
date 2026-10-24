@@ -43,7 +43,7 @@ The following arguments are optional:
 * `delivery_estimate` - (Optional) The estimated range for how long shipping will take, meant to be displayable to the customer. This will appear on CheckoutSessions. Changing it replaces the resource. See [`delivery_estimate`](#delivery_estimate) below.
 * `fixed_amount` - (Optional) Describes a fixed amount to charge for shipping. Must be present if type is `fixed_amount`. See [`fixed_amount`](#fixed_amount) below.
 * `metadata` - (Optional) Set of [key-value pairs](https://docs.stripe.com/api/metadata) that you can attach to an object. This can be useful for storing additional information about the object in a structured format. Individual keys can be unset by posting an empty value to them. All keys can be unset by posting an empty value to `metadata`.
-* `tax_behavior` - (Optional) Specifies whether the rate is considered inclusive of taxes or exclusive of taxes. One of `inclusive`, `exclusive`, or `unspecified`. Possible values: `exclusive`, `inclusive`, `unspecified`.
+* `tax_behavior` - (Optional) Specifies whether the rate is considered inclusive of taxes or exclusive of taxes. One of `inclusive`, `exclusive`, or `unspecified`. Possible values: `exclusive`, `inclusive`, `unspecified`. Stripe changes it only from `unspecified`, so changing it from any other value replaces the resource.
 * `tax_code` - (Optional) A [tax code](https://docs.stripe.com/tax/tax-categories) ID. The Shipping tax code is `txcd_92010001`. Changing it replaces the resource.
 
 <a id="delivery_estimate"></a>

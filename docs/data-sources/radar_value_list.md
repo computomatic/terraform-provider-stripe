@@ -24,7 +24,7 @@ This data source supports the following arguments:
 
 Exactly one must be set.
 
-* `alias` - (Optional) The name of the value list for use in rules.
+* `alias` - (Optional) The name of the value list for use in rules. Stripe stores it in lower case, so it must be written in lower case.
 * `id` - (Optional) The ID of the radar value list to read.
 
 ## Attribute Reference

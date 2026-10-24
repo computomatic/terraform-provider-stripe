@@ -3,12 +3,12 @@
 page_title: "stripe_billing_credit_grant Resource - Stripe"
 subcategory: ""
 description: |-
-  Billing credits given to a customer. Only expires_at and metadata can change after creation.
+  Billing credits given to a customer. Only expires_at and metadata can change after creation. Stripe cannot remove a key from a credit grant's metadata, so a plan that drops one fails: set the key to "" to clear its value instead.
 ---
 
 # Resource: stripe_billing_credit_grant
 
-Billing credits given to a customer. Only `expires_at` and `metadata` can change after creation.
+Billing credits given to a customer. Only `expires_at` and `metadata` can change after creation. Stripe cannot remove a key from a credit grant's `metadata`, so a plan that drops one fails: set the key to `""` to clear its value instead.
 
 ~> Stripe cannot delete a credit grant; set `expires_at` to end one. `terraform destroy`, and a change that would replace the billing credit grant, fail at plan time. To stop managing a billing credit grant, remove it from the state as [Removing from State](#removing-from-state) shows; it stays in the Stripe account.
 

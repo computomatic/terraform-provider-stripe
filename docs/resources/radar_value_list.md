@@ -24,7 +24,7 @@ resource "stripe_radar_value_list" "blocked_emails" {
 
 The following arguments are required:
 
-* `alias` - (Required) The name of the value list for use in rules.
+* `alias` - (Required) The name of the value list for use in rules. Stripe stores it in lower case, so it must be written in lower case.
 * `name` - (Required) The human-readable name of the value list.
 
 The following arguments are optional:

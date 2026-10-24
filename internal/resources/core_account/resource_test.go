@@ -415,7 +415,8 @@ func TestAccCoreAccount_drift(t *testing.T) {
 // Setting `closed` closes the account through its action endpoint, which must name exactly the
 // account's applied configurations (suite: "close", "close without the applied
 // configurations"), so the engine sends the ones the account holds. A closed account keeps
-// them.
+// them. Its identity no longer returns the country and entity type (suite: "close"), so state
+// keeps them and the next plan replaces nothing.
 func TestAccCoreAccount_close(t *testing.T) {
 	acct := acctest.NewAccount(t)
 	var path string
@@ -430,6 +431,7 @@ func TestAccCoreAccount_close(t *testing.T) {
 					resource.TestCheckResourceAttr(address, "applied_configurations.#", "2"),
 					resource.TestCheckResourceAttr(address, "configuration.merchant.applied", "true"),
 					resource.TestCheckResourceAttr(address, "identity.entity_type", "company"),
+					resource.TestCheckResourceAttr(address, "identity.country", "us"),
 					tfacc.Holds(t, acct, &path, "closed", wire.Bool(true)),
 					func(*terraform.State) error {
 						if acct.Smoke {
@@ -448,7 +450,8 @@ func TestAccCoreAccount_close(t *testing.T) {
 					},
 				),
 			},
-			// The configuration that says closed plans nothing more.
+			// The configuration that says closed plans nothing more, after a refresh that
+			// reads the identity without its country and entity type.
 			{Config: merchantConfig(acct, "  closed = true\n"), PlanOnly: true},
 			{
 				Config:      merchantConfig(acct, "  closed = false\n"),

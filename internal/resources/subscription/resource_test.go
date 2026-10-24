@@ -121,6 +121,10 @@ func TestAccSubscription_update(t *testing.T) {
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr(address, "days_until_due", "14"),
 					resource.TestCheckResourceAttr(address, "cancel_at_period_end", "true"),
+					// Stripe records why, although the configuration gives no details (suite:
+					// update "cancel_at_period_end").
+					resource.TestCheckResourceAttr(address, "cancellation_details.reason", "cancellation_requested"),
+					resource.TestCheckNoResourceAttr(address, "cancellation_details.feedback_option"),
 					resource.TestCheckResourceAttr(address, "description", "Updated"),
 					resource.TestCheckResourceAttr(address, "metadata.%", "1"),
 					resource.TestCheckResourceAttr(address, "metadata.team", "b"),
@@ -128,7 +132,10 @@ func TestAccSubscription_update(t *testing.T) {
 			},
 			{
 				Config: subscriptionDue(acct, 14, oneItem, "  cancel_at_period_end = false\n  description = \"Updated\"\n  metadata = { team = \"b\" }\n"),
-				Check:  resource.TestCheckResourceAttr(address, "cancel_at_period_end", "false"),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr(address, "cancel_at_period_end", "false"),
+					resource.TestCheckNoResourceAttr(address, "cancellation_details.reason"),
+				),
 			},
 		},
 	})

@@ -105,6 +105,7 @@ func (d *DataSource) ValidateConfig(ctx context.Context, req datasource.Validate
 	if resp.Diagnostics.HasError() {
 		return
 	}
+	d.m.validateLowerCase(ctx, req.Config, &resp.Diagnostics)
 	if d.m.decl.Singleton || len(d.m.decl.FindBy) > 0 {
 		return
 	}
@@ -153,7 +154,7 @@ func (d *DataSource) Read(ctx context.Context, req datasource.ReadRequest, resp 
 			return
 		}
 	} else if id != "" {
-		body, err = d.api.call(ctx, "GET", d.m.expand(d.m.decl.Paths.Retrieve, id, parent), d.api.expanded(nil, ""))
+		body, err = d.api.call(ctx, "GET", d.m.expand(d.m.decl.Paths.Retrieve, id, parent), d.api.retrieved(nil))
 		if d.m.gone(err, &resp.Diagnostics) || err == nil && isDeletedStub(body) {
 			resp.Diagnostics.AddError("Not found", fmt.Sprintf("no %s found for id=%s", d.m.decl.TypeName, id))
 			return

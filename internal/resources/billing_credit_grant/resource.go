@@ -15,7 +15,7 @@ import (
 var Declaration = engine.Declaration{
 	TypeName:              "stripe_billing_credit_grant",
 	IDPrefix:              "credgr_",
-	Description:           "Billing credits given to a customer. Only `expires_at` and `metadata` can change after creation.",
+	Description:           "Billing credits given to a customer. Only `expires_at` and `metadata` can change after creation. Stripe cannot remove a key from a credit grant's `metadata`, so a plan that drops one fails: set the key to `\"\"` to clear its value instead.",
 	DataSourceDescription: "Billing credits given to a customer.",
 	Paths: engine.Paths{
 		Create:   "/v1/billing/credit_grants",
@@ -25,8 +25,11 @@ var Declaration = engine.Declaration{
 	},
 	// Stripe starts a grant at once, with priority 50.
 	ServerDefaulted: []string{"effective_at", "priority"},
-	Delete:          engine.Refuse,
-	RefuseReason:    "Stripe cannot delete a credit grant; set `expires_at` to end one.",
+	// A metadata key sent with an empty value stays, with the value "" (suite: update
+	// "metadata empty value", "metadata empty value with expires_at").
+	MetadataKeysStay: true,
+	Delete:           engine.Refuse,
+	RefuseReason:     "Stripe cannot delete a credit grant; set `expires_at` to end one.",
 }
 
 // NewResource returns the resource constructor the provider registers.

@@ -31,7 +31,7 @@ import (
 var Declaration = engine.Declaration{
 	TypeName:              "stripe_invoice",
 	IDPrefix:              "in_",
-	Description:           "A bill for a customer. With `pending_invoice_items_behavior = \"include\"` it takes the customer's pending invoice items when it is created. `terraform destroy` deletes a draft invoice, and Stripe deletes the invoice items on it too. Set `status` to `open` to finalize a draft, to `paid` to finalize it if need be and charge its `default_payment_method`, to `void` to void an open or uncollectible invoice, or to `uncollectible` to mark an open one uncollectible. With `auto_advance`, Stripe finalizes a draft and collects payment by itself. Once an invoice is finalized Stripe refuses changes to most arguments, but `metadata` still changes. The invoice's `last_finalization_error` is not available.",
+	Description:           "A bill for a customer. With `pending_invoice_items_behavior = \"include\"` it takes the customer's pending invoice items when it is created. `terraform destroy` deletes a draft invoice, and Stripe deletes the invoice items on it too. Set `status` to `open` to finalize a draft, to `paid` to finalize it if need be and charge its `default_payment_method`, to `void` to void an open or uncollectible invoice, or to `uncollectible` to mark an open one uncollectible. With `auto_advance`, Stripe finalizes a draft and collects payment by itself. Once an invoice is finalized Stripe refuses changes to most arguments, but `metadata` still changes. Finalizing turns a `rendering.pdf.page_size` of `auto` into the page size Stripe picks, such as `letter`, so set `a4` or `letter` on an invoice you finalize, or leave `rendering` unset. The invoice's `last_finalization_error` is not available.",
 	DataSourceDescription: "A bill sent to a customer, such as the `latest_invoice` of a subscription. The invoice's `last_finalization_error` is not available.",
 	ImportNote:            "Stripe does not return `days_until_due`, `pending_invoice_items_behavior`, `application_fee_amount`, `subscription` or `transfer_data`, so an imported invoice has them null. Leave them out of its configuration: setting one is a change, which Stripe refuses once the invoice is finalized.",
 	Paths: engine.Paths{
@@ -49,6 +49,9 @@ var Declaration = engine.Declaration{
 	// fills in `rendering` when the request leaves it out (suite: "draft produced by a pending
 	// invoice item").
 	ServerDefaulted: []string{"automatically_finalizes_at", "due_date", "effective_at", "number", "rendering"},
+	// Finalizing resolves a page size of `auto` to a size of its own (suite: "finalize",
+	// "finalize resolves a page size set to auto").
+	FilledFrom: map[string][]string{"status": {"rendering"}},
 	// The spec's update takes these, which the suite has not proven.
 	ReplaceOn: []string{
 		"account_tax_ids", "application_fee_amount", "automatic_tax", "default_source", "default_tax_rates", "issuer",

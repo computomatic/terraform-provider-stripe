@@ -101,10 +101,12 @@ func TestAccShippingRate_update(t *testing.T) {
 	})
 }
 
-// display_name is accepted on create only, so changing it replaces the shipping rate.
+// display_name is accepted on create only, so changing it replaces the shipping rate, and so
+// does a `tax_behavior` changed once it is set, which Stripe refuses (suite: "update tax
+// behavior once specified"); from `unspecified` it changes in place.
 func TestAccShippingRate_replace(t *testing.T) {
 	acct := acctest.NewAccount(t)
-	var first string
+	var first, second string
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: tfacc.ProviderFactories,
 		Steps: []resource.TestStep{
@@ -118,6 +120,28 @@ func TestAccShippingRate_replace(t *testing.T) {
 					resource.TestCheckResourceAttr(address, "display_name", acct.Name("Express")),
 					resource.TestCheckResourceAttrWith(address, "id", func(v string) error {
 						if v == first {
+							return fmt.Errorf("the replacement kept the shipping rate ID %s", v)
+						}
+						return nil
+					}),
+				),
+			},
+			{
+				Config: rateConfig(acct, "Express", "  tax_behavior = \"exclusive\"\n"),
+				ConfigPlanChecks: resource.ConfigPlanChecks{PreApply: []plancheck.PlanCheck{
+					plancheck.ExpectResourceAction(address, plancheck.ResourceActionUpdate),
+				}},
+				Check: resource.ComposeAggregateTestCheckFunc(resource.TestCheckResourceAttr(address, "tax_behavior", "exclusive"), idOf(&second)),
+			},
+			{
+				Config: rateConfig(acct, "Express", "  tax_behavior = \"inclusive\"\n"),
+				ConfigPlanChecks: resource.ConfigPlanChecks{PreApply: []plancheck.PlanCheck{
+					plancheck.ExpectResourceAction(address, plancheck.ResourceActionReplace),
+				}},
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr(address, "tax_behavior", "inclusive"),
+					resource.TestCheckResourceAttrWith(address, "id", func(v string) error {
+						if v == second {
 							return fmt.Errorf("the replacement kept the shipping rate ID %s", v)
 						}
 						return nil

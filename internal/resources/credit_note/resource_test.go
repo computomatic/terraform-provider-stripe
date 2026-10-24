@@ -41,7 +41,7 @@ func notePath(dst *string) resource.TestCheckFunc {
 }
 
 // A credit note on an open invoice is issued, and takes its amount off what the invoice asks
-// for (suite: "setup note", "void").
+// for (suite: "setup note", "void"). Stripe dates it in effect from its creation.
 func TestAccCreditNote_create(t *testing.T) {
 	acct := acctest.NewAccount(t)
 	customer, invoice := tfacc.OpenInvoice(t, acct, "usd")
@@ -65,6 +65,7 @@ data "stripe_credit_note" "by_id" {
 				resource.TestCheckResourceAttr(resAddress, "lines.#", "1"),
 				resource.TestCheckResourceAttr(resAddress, "lines.0.amount", "500"),
 				resource.TestCheckResourceAttrSet(resAddress, "number"),
+				resource.TestCheckResourceAttrPair(resAddress, "effective_at", resAddress, "created"),
 				resource.TestCheckResourceAttrPair("data.stripe_credit_note.by_id", "id", resAddress, "id"),
 				tfacc.Holds(t, acct, &invoicePath, "amount_remaining", wire.Int(1000)),
 			),
@@ -123,7 +124,8 @@ func TestAccCreditNote_import(t *testing.T) {
 		ProtoV6ProviderFactories: tfacc.ProviderFactories,
 		Steps: acctest.Forget(t, []resource.TestStep{
 			{Config: cfg},
-			{ResourceName: resAddress, ImportState: true, ImportStateVerify: true},
+			// The PDF link carries a token Stripe changes on every read.
+			{ResourceName: resAddress, ImportState: true, ImportStateVerify: true, ImportStateVerifyIgnore: []string{"pdf"}},
 			{ResourceName: resAddress, ImportState: true, ImportStateKind: resource.ImportBlockWithID, Config: cfg},
 		}, nil, "stripe_credit_note"),
 	})

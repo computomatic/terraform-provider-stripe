@@ -110,9 +110,11 @@ func TestAccPrice_update(t *testing.T) {
 	})
 }
 
+// A new amount replaces the price, and so does a `tax_behavior` changed once it is set, which
+// Stripe refuses (suite: "update tax behavior"); from `unspecified` it changes in place.
 func TestAccPrice_replace(t *testing.T) {
 	acct := acctest.NewAccount(t)
-	var first string
+	var first, second string
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: tfacc.ProviderFactories,
 		ErrorCheck:               tfacc.SkipWhenFakeLacks(t, "expand["),
@@ -127,6 +129,28 @@ func TestAccPrice_replace(t *testing.T) {
 					resource.TestCheckResourceAttr(address, "unit_amount", "2500"),
 					resource.TestCheckResourceAttrWith(address, "id", func(v string) error {
 						if v == first {
+							return fmt.Errorf("the replacement kept the price ID %s", v)
+						}
+						return nil
+					}),
+				),
+			},
+			{
+				Config: priceConfig(acct, 2500, "  tax_behavior = \"exclusive\"\n"),
+				ConfigPlanChecks: resource.ConfigPlanChecks{PreApply: []plancheck.PlanCheck{
+					plancheck.ExpectResourceAction(address, plancheck.ResourceActionUpdate),
+				}},
+				Check: resource.ComposeAggregateTestCheckFunc(resource.TestCheckResourceAttr(address, "tax_behavior", "exclusive"), idOf(&second)),
+			},
+			{
+				Config: priceConfig(acct, 2500, "  tax_behavior = \"inclusive\"\n"),
+				ConfigPlanChecks: resource.ConfigPlanChecks{PreApply: []plancheck.PlanCheck{
+					plancheck.ExpectResourceAction(address, plancheck.ResourceActionReplace),
+				}},
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr(address, "tax_behavior", "inclusive"),
+					resource.TestCheckResourceAttrWith(address, "id", func(v string) error {
+						if v == second {
 							return fmt.Errorf("the replacement kept the price ID %s", v)
 						}
 						return nil

@@ -179,7 +179,7 @@ func (r *Resource) planChange(ctx context.Context, req resource.ModifyPlanReques
 	}
 	// The refusal comes after every replace check of the engine: a plan any of them has made a
 	// replace creates the object anew, with the new value.
-	if r.refuseChanges(ctx, req, resp) {
+	if r.refuseChanges(ctx, req, resp) || r.refuseDroppingMetadataKeys(ctx, req, resp) {
 		return
 	}
 	if r.forgetFilled(req, resp) {
@@ -213,12 +213,15 @@ func (r *Resource) planChange(ctx context.Context, req resource.ModifyPlanReques
 
 // forgetFilled marks unknown in the plan the fields Stripe fills in from a FilledFrom source
 // whose planned value differs from the state's, where the configuration leaves them unset, and
-// reports whether it did. The state's values belong to the old value of the source.
+// reports whether it did. The state's values belong to the old value of the source. A source
+// that is unknown only because the framework marks every unset computed value unknown on a
+// change, and that the configuration leaves unset, is no change: the update does not send it.
 func (r *Resource) forgetFilled(req resource.ModifyPlanRequest, resp *resource.ModifyPlanResponse) bool {
 	var forget []*tftypes.AttributePath
 	for source, filled := range r.m.decl.FilledFrom {
 		_, p, _ := r.m.at(source)
-		if valueAt(resp.Plan.Raw, p).Equal(valueAt(req.State.Raw, p)) {
+		planned := valueAt(resp.Plan.Raw, p)
+		if planned.Equal(valueAt(req.State.Raw, p)) || !planned.IsKnown() && valueAt(req.Config.Raw, p).IsNull() {
 			continue
 		}
 		for _, f := range filled {
@@ -382,6 +385,14 @@ func (r *Resource) replaces(plan, state, config basetypes.ObjectValue) bool {
 		if n.Replace && differs(plan.Attributes()[n.AttrName()], state.Attributes()[n.AttrName()], config.Attributes()[n.AttrName()]) {
 			return true
 		}
+		if n.FixedOnceSet == "" {
+			continue
+		}
+		cv, okConfig := config.Attributes()[n.AttrName()].(basetypes.StringValue)
+		sv, okState := state.Attributes()[n.AttrName()].(basetypes.StringValue)
+		if okConfig && okState && changedFromFixed(cv, sv, n.FixedOnceSet) {
+			return true
+		}
 	}
 	for _, name := range []string{r.m.decl.Parent, r.m.decl.Attach} {
 		if name != "" && differs(plan.Attributes()[name], state.Attributes()[name], config.Attributes()[name]) {
@@ -448,6 +459,47 @@ func (r *Resource) refuseChanges(ctx context.Context, req resource.ModifyPlanReq
 			"Changing the "+attrName+" of an existing "+r.m.decl.TypeName+" is not supported yet. Revert the configuration, add `lifecycle { ignore_changes = ["+attrName+"] }` to leave it as it is, or "+recreate)
 	}
 	return resp.Diagnostics.HasError()
+}
+
+// refuseDroppingMetadataKeys fails the plan that drops a `metadata` key the object holds, for a
+// declaration whose MetadataKeysStay says Stripe keeps a key sent with an empty value. A plan
+// that replaces the object creates it with the new metadata, so it is not refused, and a map
+// not known at plan time is left for apply.
+func (r *Resource) refuseDroppingMetadataKeys(ctx context.Context, req resource.ModifyPlanRequest, resp *resource.ModifyPlanResponse) bool {
+	if !r.m.decl.MetadataKeysStay {
+		return false
+	}
+	var plan, state, config basetypes.ObjectValue
+	diags := req.Plan.Get(ctx, &plan)
+	diags.Append(req.State.Get(ctx, &state)...)
+	diags.Append(req.Config.Get(ctx, &config)...)
+	if resp.Diagnostics.Append(diags...); diags.HasError() {
+		return true
+	}
+	name := r.attrName("metadata")
+	planned, ok := plan.Attributes()[name].(basetypes.MapValue)
+	if !ok || planned.IsUnknown() || r.replaces(plan, state, config) {
+		return false
+	}
+	have, err := stringMap(state.Attributes()[name])
+	if err != nil {
+		resp.Diagnostics.AddError("Planning the metadata", err.Error())
+		return true
+	}
+	var dropped []string
+	for k := range have {
+		if _, kept := planned.Elements()[k]; !kept {
+			dropped = append(dropped, "`"+k+"`")
+		}
+	}
+	if len(dropped) == 0 {
+		return false
+	}
+	slices.Sort(dropped)
+	resp.Diagnostics.AddAttributeError(path.Root(name), "Cannot remove a metadata key",
+		fmt.Sprintf("Stripe keeps a key sent with an empty value in the metadata of %s, so it cannot remove %s. Set each key to \"\" to clear its value instead.",
+			WithArticle(noun(r.m.decl.TypeName)), strings.Join(dropped, ", ")))
+	return true
 }
 
 // attrAt returns the value at the attribute names below obj. Below a null or unknown object
@@ -554,6 +606,9 @@ func (r *Resource) Create(ctx context.Context, req resource.CreateRequest, resp 
 		}
 	}
 	body, err = r.applyTransitions(ctx, body, plan, id, parent)
+	if err == nil {
+		body, err = r.retrieveExpandOnRetrieve(ctx, body, id, parent)
+	}
 	if err != nil {
 		r.api.fail(&resp.Diagnostics, err)
 		r.taintedAfterCreate(&resp.Diagnostics, id)
@@ -626,7 +681,7 @@ func (r *Resource) Read(ctx context.Context, req resource.ReadRequest, resp *res
 		resp.State.RemoveResource(ctx)
 		return
 	}
-	body, err := r.api.call(ctx, "GET", r.m.expand(r.m.decl.Paths.Retrieve, id, parent), r.api.expanded(nil, ""))
+	body, err := r.api.call(ctx, "GET", r.m.expand(r.m.decl.Paths.Retrieve, id, parent), r.api.retrieved(nil))
 	if r.m.gone(err, &resp.Diagnostics) || err == nil && isDeletedStub(body) {
 		resp.State.RemoveResource(ctx)
 		return
@@ -665,11 +720,10 @@ func (r *Resource) Update(ctx context.Context, req resource.UpdateRequest, resp 
 	}
 	id, parent := r.m.ids(state)
 	// With nothing to send (only `timeouts` changed) a read refreshes the computed values.
-	method, target, sent := "GET", r.m.expand(r.m.decl.Paths.Retrieve, id, parent), wire.Object(nil)
+	method, target, sent := "GET", r.m.expand(r.m.decl.Paths.Retrieve, id, parent), r.api.retrieved(nil)
 	if len(params) > 0 {
-		method, target, sent = "POST", r.m.expand(r.m.decl.Paths.Update, id, parent), params
+		method, target, sent = "POST", r.m.expand(r.m.decl.Paths.Update, id, parent), r.api.expanded(params, "")
 	}
-	sent = r.api.expanded(sent, "")
 	keep := r.m.managedKeys(state, plan)
 	hints, addsKeyless := r.m.keyedHints(plan, state, req.Config.Raw)
 	for list, ids := range hints {
@@ -681,7 +735,7 @@ func (r *Resource) Update(ctx context.Context, req resource.UpdateRequest, resp 
 	// items that exist before the request tell the new ones from the old.
 	var before map[string]map[string]bool
 	if addsKeyless && len(params) > 0 {
-		pre, err := r.api.call(ctx, "GET", r.m.expand(r.m.decl.Paths.Retrieve, id, parent), r.api.expanded(nil, ""))
+		pre, err := r.api.call(ctx, "GET", r.m.expand(r.m.decl.Paths.Retrieve, id, parent), r.api.retrieved(nil))
 		if err != nil {
 			r.api.fail(&resp.Diagnostics, err)
 			return
@@ -698,6 +752,9 @@ func (r *Resource) Update(ctx context.Context, req resource.UpdateRequest, resp 
 		return
 	}
 	body, err = r.applyTransitions(ctx, body, plan, id, parent)
+	if err == nil {
+		body, err = r.retrieveExpandOnRetrieve(ctx, body, id, parent)
+	}
 	if err != nil {
 		r.api.fail(&resp.Diagnostics, err)
 		return
@@ -811,6 +868,19 @@ func (r *Resource) applyTransitions(ctx context.Context, body wire.Object, plan 
 		body = mergeBodies(body, next)
 	}
 	return body, nil
+}
+
+// retrieveExpandOnRetrieve lays a retrieve's answer over body, for a declaration with fields
+// Stripe expands only on a retrieve, which the requests before it could not ask for.
+func (r *Resource) retrieveExpandOnRetrieve(ctx context.Context, body wire.Object, id, parent string) (wire.Object, error) {
+	if len(r.m.decl.ExpandOnRetrieve) == 0 {
+		return body, nil
+	}
+	got, err := r.api.call(ctx, "GET", r.m.expand(r.m.decl.Paths.Retrieve, id, parent), r.api.retrieved(nil))
+	if err != nil {
+		return nil, err
+	}
+	return mergeBodies(body, got), nil
 }
 
 // withoutIncluded drops from a `/v2` action's response the top-level fields the declaration

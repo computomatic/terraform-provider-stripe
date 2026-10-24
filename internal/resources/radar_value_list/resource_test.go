@@ -3,6 +3,7 @@ package radar_value_list_test
 import (
 	"fmt"
 	"os"
+	"regexp"
 	"strings"
 	"testing"
 
@@ -33,7 +34,7 @@ resource "stripe_radar_value_list" "test" {
 
 // alias is c.Unique(base) as a snake case alias, the form the suite gives every alias
 // ("uniqueSnake"), so the smoke prefix's hyphens become underscores. A base is lower case,
-// because Stripe stores an alias in lower case.
+// because the provider refuses an alias with capitals.
 func alias(c acctest.Config, base string) string {
 	return strings.ReplaceAll(c.Unique(base), "-", "_")
 }
@@ -69,6 +70,38 @@ data "stripe_radar_value_list" "by_alias" {
 				resource.TestCheckResourceAttrPair("data.stripe_radar_value_list.by_alias", "id", address, "id"),
 			),
 		}},
+	})
+}
+
+// Stripe stores an alias lower-cased and finds a list only by that form (suite: "alias with
+// capitals is stored lower-cased"), so an alias with capitals is refused before anything is
+// sent, in the resource and in a lookup.
+func TestAccRadarValueList_upperCaseAlias(t *testing.T) {
+	acct := acctest.NewAccount(t)
+	refused := regexp.MustCompile("Upper-case letters in `alias`")
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: tfacc.ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: acct.ProviderBlock() + fmt.Sprintf(`
+resource "stripe_radar_value_list" "test" {
+  alias = "Blocked_Emails"
+  name  = %q
+}
+`, acct.Name("Blocked emails")),
+				PlanOnly:    true,
+				ExpectError: refused,
+			},
+			{
+				Config: acct.ProviderBlock() + `
+data "stripe_radar_value_list" "by_alias" {
+  alias = "Blocked_Emails"
+}
+`,
+				PlanOnly:    true,
+				ExpectError: refused,
+			},
+		},
 	})
 }
 

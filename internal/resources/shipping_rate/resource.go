@@ -26,8 +26,12 @@ var Declaration = engine.Declaration{
 	},
 	// Stripe reports an unset `tax_behavior` as `unspecified`.
 	ServerDefaulted: []string{"tax_behavior"},
-	Delete:          engine.Archive,
-	Archive:         &engine.ArchiveAction{Field: "active", Value: wire.Bool(false)},
+	// Stripe refuses to change a `tax_behavior` once it is set (suite: "update tax behavior once
+	// specified"). A shipping rate is archived on destroy, so a change replaces it, as a change
+	// to its amount does.
+	FixedOnceSet: map[string]string{"tax_behavior": "unspecified"},
+	Delete:       engine.Archive,
+	Archive:      &engine.ArchiveAction{Field: "active", Value: wire.Bool(false)},
 }
 
 // NewResource returns the resource constructor the provider registers.
