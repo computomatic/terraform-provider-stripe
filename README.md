@@ -1,6 +1,6 @@
 # Stripe provider for Terraform and OpenTofu
 
-This is an independent provider. It is not affiliated with or endorsed by Stripe, Inc. It is written and maintained by AI coding agents, and owned by Computomatic.
+This is an independent provider. It is not affiliated with or endorsed by Stripe, Inc. It is written and maintained by AI coding agents, and owned by Toby Sullivan.
 
 Manage the objects in your Stripe account as code: products, prices, coupons, customers, webhook endpoints, tax rates, billing meters and more. Each resource has a matching data source, and Stripe's read-only objects, such as the account balance and the tax code catalogue, are data sources.
 
@@ -78,3 +78,7 @@ The provider sends every request with Stripe API version `2026-09-30.endive`, wh
 `docs/` has a page for the provider and for every resource and data source, with the arguments, the attributes, an example and how to import.
 
 Working on the provider itself? See [CONTRIBUTING.md](CONTRIBUTING.md).
+
+## Licence
+
+Licensed under the Mozilla Public License 2.0 (`LICENSE`).
