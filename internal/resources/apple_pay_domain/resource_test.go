@@ -19,12 +19,14 @@ func TestMain(m *testing.M) { os.Exit(acctest.Main(m)) }
 
 const address = "stripe_apple_pay_domain.test"
 
-func domainConfig(c acctest.Config, name string, extra string) string {
+// domainConfig registers the domain c.Unique(base): an account holds a domain once, so each
+// test gives a base of its own.
+func domainConfig(c acctest.Config, base string, extra string) string {
 	return c.ProviderBlock() + fmt.Sprintf(`
 resource "stripe_apple_pay_domain" "test" {
   domain_name = %q
 %s}
-`, name, extra)
+`, c.Unique(base), extra)
 }
 
 func idOf(dst *string) resource.TestCheckFunc {
@@ -39,7 +41,7 @@ func TestAccApplePayDomain_create(t *testing.T) {
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: tfacc.ProviderFactories,
 		Steps: []resource.TestStep{{
-			Config: domainConfig(acct, "pay.example.com", "") + `
+			Config: domainConfig(acct, "apd-create.example.com", "") + `
 data "stripe_apple_pay_domain" "by_id" {
   id = stripe_apple_pay_domain.test.id
 }
@@ -50,7 +52,7 @@ data "stripe_apple_pay_domain" "by_name" {
 `,
 			Check: resource.ComposeAggregateTestCheckFunc(
 				resource.TestMatchResourceAttr(address, "id", regexp.MustCompile(`^apwc_`)),
-				resource.TestCheckResourceAttr(address, "domain_name", "pay.example.com"),
+				resource.TestCheckResourceAttr(address, "domain_name", acct.Unique("apd-create.example.com")),
 				resource.TestCheckResourceAttr(address, "livemode", "false"),
 				resource.TestCheckResourceAttrSet(address, "created"),
 				resource.TestCheckResourceAttrPair("data.stripe_apple_pay_domain.by_id", "domain_name", address, "domain_name"),
@@ -68,9 +70,9 @@ func TestAccApplePayDomain_update(t *testing.T) {
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: tfacc.ProviderFactories,
 		Steps: []resource.TestStep{
-			{Config: domainConfig(acct, "pay.example.com", ""), Check: idOf(&first)},
+			{Config: domainConfig(acct, "apd-update.example.com", ""), Check: idOf(&first)},
 			{
-				Config: domainConfig(acct, "pay.example.com", "  timeouts = { create = \"10m\" }\n"),
+				Config: domainConfig(acct, "apd-update.example.com", "  timeouts = { create = \"10m\" }\n"),
 				ConfigPlanChecks: resource.ConfigPlanChecks{PreApply: []plancheck.PlanCheck{
 					plancheck.ExpectResourceAction(address, plancheck.ResourceActionUpdate),
 				}},
@@ -92,14 +94,14 @@ func TestAccApplePayDomain_replace(t *testing.T) {
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: tfacc.ProviderFactories,
 		Steps: []resource.TestStep{
-			{Config: domainConfig(acct, "pay.example.com", ""), Check: idOf(&first)},
+			{Config: domainConfig(acct, "apd-replace.example.com", ""), Check: idOf(&first)},
 			{
-				Config: domainConfig(acct, "shop.example.com", ""),
+				Config: domainConfig(acct, "apd-replace-2.example.com", ""),
 				ConfigPlanChecks: resource.ConfigPlanChecks{PreApply: []plancheck.PlanCheck{
 					plancheck.ExpectResourceAction(address, plancheck.ResourceActionReplace),
 				}},
 				Check: resource.ComposeAggregateTestCheckFunc(
-					resource.TestCheckResourceAttr(address, "domain_name", "shop.example.com"),
+					resource.TestCheckResourceAttr(address, "domain_name", acct.Unique("apd-replace-2.example.com")),
 					resource.TestCheckResourceAttrWith(address, "id", func(v string) error {
 						if v == first {
 							return fmt.Errorf("the replacement kept the ID %s", v)
@@ -114,7 +116,7 @@ func TestAccApplePayDomain_replace(t *testing.T) {
 
 func TestAccApplePayDomain_import(t *testing.T) {
 	acct := acctest.NewAccount(t)
-	cfg := domainConfig(acct, "pay.example.com", "")
+	cfg := domainConfig(acct, "apd-import.example.com", "")
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: tfacc.ProviderFactories,
 		Steps: []resource.TestStep{
@@ -148,7 +150,7 @@ func TestAccApplePayDomain_delete(t *testing.T) {
 			}
 			return nil
 		},
-		Steps: []resource.TestStep{{Config: domainConfig(acct, "pay.example.com", ""), Check: idOf(&id)}},
+		Steps: []resource.TestStep{{Config: domainConfig(acct, "apd-delete.example.com", ""), Check: idOf(&id)}},
 	})
 }
 
@@ -156,7 +158,7 @@ func TestAccApplePayDomain_delete(t *testing.T) {
 func TestAccApplePayDomain_drift(t *testing.T) {
 	acct := acctest.NewAccount(t)
 	var id string
-	cfg := domainConfig(acct, "pay.example.com", "")
+	cfg := domainConfig(acct, "apd-drift.example.com", "")
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: tfacc.ProviderFactories,
 		Steps: []resource.TestStep{

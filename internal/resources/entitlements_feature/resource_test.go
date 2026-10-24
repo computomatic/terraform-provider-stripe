@@ -17,14 +17,15 @@ func TestMain(m *testing.M) { os.Exit(acctest.Main(m)) }
 
 const address = "stripe_entitlements_feature.test"
 
-// featureConfig is a feature. extra lands inside the resource block.
+// featureConfig is a feature with the unique lookup key and the name made from the bases key
+// and name. extra lands inside the resource block.
 func featureConfig(c acctest.Config, key, name, extra string) string {
 	return c.ProviderBlock() + fmt.Sprintf(`
 resource "stripe_entitlements_feature" "test" {
   lookup_key = %q
   name       = %q
 %s}
-`, key, name, extra)
+`, c.Unique(key), c.Name(name), extra)
 }
 
 func idOf(dst *string) resource.TestCheckFunc {
@@ -47,7 +48,7 @@ func TestAccEntitlementsFeature_create(t *testing.T) {
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: tfacc.ProviderFactories,
 		Steps: acctest.Forget(t, []resource.TestStep{{
-			Config: featureConfig(acct, "advanced_search", "Advanced search", "  metadata = { team = \"a\" }\n") + `
+			Config: featureConfig(acct, "entitlements_feature_create", "Advanced search", "  metadata = { team = \"a\" }\n") + `
 data "stripe_entitlements_feature" "by_id" {
   id = stripe_entitlements_feature.test.id
 }
@@ -58,12 +59,12 @@ data "stripe_entitlements_feature" "by_lookup_key" {
 `,
 			Check: resource.ComposeAggregateTestCheckFunc(
 				resource.TestCheckResourceAttrSet(address, "id"),
-				resource.TestCheckResourceAttr(address, "lookup_key", "advanced_search"),
-				resource.TestCheckResourceAttr(address, "name", "Advanced search"),
+				resource.TestCheckResourceAttr(address, "lookup_key", acct.Unique("entitlements_feature_create")),
+				resource.TestCheckResourceAttr(address, "name", acct.Name("Advanced search")),
 				resource.TestCheckResourceAttr(address, "active", "true"),
 				resource.TestCheckResourceAttr(address, "metadata.team", "a"),
 				resource.TestCheckResourceAttrPair("data.stripe_entitlements_feature.by_id", "id", address, "id"),
-				resource.TestCheckResourceAttr("data.stripe_entitlements_feature.by_id", "name", "Advanced search"),
+				resource.TestCheckResourceAttr("data.stripe_entitlements_feature.by_id", "name", acct.Name("Advanced search")),
 				resource.TestCheckResourceAttrPair("data.stripe_entitlements_feature.by_lookup_key", "id", address, "id"),
 			),
 		}}, nil, "stripe_entitlements_feature"),
@@ -78,22 +79,22 @@ func TestAccEntitlementsFeature_update(t *testing.T) {
 		ProtoV6ProviderFactories: tfacc.ProviderFactories,
 		Steps: acctest.Forget(t, []resource.TestStep{
 			{
-				Config: featureConfig(acct, "advanced_search", "Advanced search", "  metadata = { team = \"a\", tier = \"1\" }\n"),
-				Check:  resource.TestCheckResourceAttr(address, "name", "Advanced search"),
+				Config: featureConfig(acct, "entitlements_feature_update", "Advanced search", "  metadata = { team = \"a\", tier = \"1\" }\n"),
+				Check:  resource.TestCheckResourceAttr(address, "name", acct.Name("Advanced search")),
 			},
 			{
-				Config: featureConfig(acct, "advanced_search", "Search", "  metadata = { team = \"b\" }\n"),
+				Config: featureConfig(acct, "entitlements_feature_update", "Search", "  metadata = { team = \"b\" }\n"),
 				ConfigPlanChecks: resource.ConfigPlanChecks{PreApply: []plancheck.PlanCheck{
 					plancheck.ExpectResourceAction(address, plancheck.ResourceActionUpdate),
 				}},
 				Check: resource.ComposeAggregateTestCheckFunc(
-					resource.TestCheckResourceAttr(address, "name", "Search"),
+					resource.TestCheckResourceAttr(address, "name", acct.Name("Search")),
 					resource.TestCheckResourceAttr(address, "metadata.%", "1"),
 					resource.TestCheckResourceAttr(address, "metadata.team", "b"),
 				),
 			},
 			{
-				Config: featureConfig(acct, "advanced_search", "Search", "  metadata = { team = \"b\" }\n  active = false\n"),
+				Config: featureConfig(acct, "entitlements_feature_update", "Search", "  metadata = { team = \"b\" }\n  active = false\n"),
 				Check:  resource.TestCheckResourceAttr(address, "active", "false"),
 			},
 		}, nil, "stripe_entitlements_feature"),
@@ -104,12 +105,12 @@ func TestAccEntitlementsFeature_update(t *testing.T) {
 // delete: the plan fails, and so does a taint, at apply.
 func TestAccEntitlementsFeature_replace(t *testing.T) {
 	acct := acctest.NewAccount(t)
-	cfg := featureConfig(acct, "advanced_search", "Search", "")
+	cfg := featureConfig(acct, "entitlements_feature_replace", "Search", "")
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: tfacc.ProviderFactories,
 		Steps: acctest.Forget(t, []resource.TestStep{
 			{Config: cfg},
-			{Config: featureConfig(acct, "search_v2", "Search", ""), PlanOnly: true, ExpectError: tfacc.RefusedReplace},
+			{Config: featureConfig(acct, "entitlements_feature_replace_v2", "Search", ""), PlanOnly: true, ExpectError: tfacc.RefusedReplace},
 			{Config: cfg, Taint: []string{address}, ExpectError: tfacc.RefusedDestroy},
 		}, nil, "stripe_entitlements_feature"),
 	})
@@ -117,7 +118,7 @@ func TestAccEntitlementsFeature_replace(t *testing.T) {
 
 func TestAccEntitlementsFeature_import(t *testing.T) {
 	acct := acctest.NewAccount(t)
-	cfg := featureConfig(acct, "advanced_search", "Search", "  metadata = { team = \"a\" }\n")
+	cfg := featureConfig(acct, "entitlements_feature_import", "Search", "  metadata = { team = \"a\" }\n")
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: tfacc.ProviderFactories,
 		Steps: acctest.Forget(t, []resource.TestStep{
@@ -143,7 +144,7 @@ func TestAccEntitlementsFeature_delete(t *testing.T) {
 	acct := acctest.NewAccount(t)
 	var path string
 	var mark int
-	cfg := featureConfig(acct, "advanced_search", "Search", "")
+	cfg := featureConfig(acct, "entitlements_feature_delete", "Search", "")
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: tfacc.ProviderFactories,
 		Steps: acctest.Forget(t, []resource.TestStep{
@@ -162,9 +163,9 @@ func TestAccEntitlementsFeature_archive(t *testing.T) {
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: tfacc.ProviderFactories,
 		Steps: acctest.Forget(t, []resource.TestStep{
-			{Config: featureConfig(acct, "advanced_search", "Search", ""), Check: pathOf(&path)},
+			{Config: featureConfig(acct, "entitlements_feature_archive", "Search", ""), Check: pathOf(&path)},
 			{
-				Config: featureConfig(acct, "advanced_search", "Search", "  active = false\n"),
+				Config: featureConfig(acct, "entitlements_feature_archive", "Search", "  active = false\n"),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(address, "active", "false"),
 					tfacc.Holds(t, acct, &path, "active", wire.Bool(false)),
@@ -177,7 +178,7 @@ func TestAccEntitlementsFeature_archive(t *testing.T) {
 func TestAccEntitlementsFeature_drift(t *testing.T) {
 	acct := acctest.NewAccount(t)
 	var id string
-	cfg := featureConfig(acct, "advanced_search", "Search", "")
+	cfg := featureConfig(acct, "entitlements_feature_drift", "Search", "")
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: tfacc.ProviderFactories,
 		Steps: acctest.Forget(t, []resource.TestStep{
@@ -193,7 +194,7 @@ func TestAccEntitlementsFeature_drift(t *testing.T) {
 					plancheck.ExpectNonEmptyPlan(),
 					plancheck.ExpectResourceAction(address, plancheck.ResourceActionUpdate),
 				}},
-				Check: resource.TestCheckResourceAttr(address, "name", "Search"),
+				Check: resource.TestCheckResourceAttr(address, "name", acct.Name("Search")),
 			},
 		}, nil, "stripe_entitlements_feature"),
 	})

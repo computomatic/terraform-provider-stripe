@@ -23,7 +23,7 @@ func TestAccInvoice_read(t *testing.T) {
 resource "stripe_customer" "test" {}
 
 resource "stripe_product" "test" {
-  name = "Plan"
+  name = "` + acct.Name("Plan") + `"
 }
 
 resource "stripe_price" "test" {

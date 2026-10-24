@@ -25,7 +25,7 @@ func configurationConfig(c acctest.Config, name string, extra string) string {
 resource "stripe_terminal_configuration" "test" {
   name = %q
 %s}
-`, name, extra)
+`, c.Name(name), extra)
 }
 
 func idOf(dst *string) resource.TestCheckFunc {
@@ -60,7 +60,7 @@ data "stripe_terminal_configuration" "test" {
 `,
 			Check: resource.ComposeAggregateTestCheckFunc(
 				resource.TestCheckResourceAttrSet(address, "id"),
-				resource.TestCheckResourceAttr(address, "name", "Store readers"),
+				resource.TestCheckResourceAttr(address, "name", acct.Name("Store readers")),
 				resource.TestCheckResourceAttr(address, "offline.enabled", "true"),
 				resource.TestCheckResourceAttr(address, "reboot_window.end_hour", "5"),
 				resource.TestCheckResourceAttr(address, "tipping.usd.percentages.#", "3"),
@@ -122,7 +122,7 @@ func TestAccTerminalConfiguration_update(t *testing.T) {
 					plancheck.ExpectResourceAction(address, plancheck.ResourceActionUpdate),
 				}},
 				Check: resource.ComposeAggregateTestCheckFunc(
-					resource.TestCheckResourceAttr(address, "name", "Flagship readers"),
+					resource.TestCheckResourceAttr(address, "name", acct.Name("Flagship readers")),
 					resource.TestCheckResourceAttr(address, "offline.enabled", "false"),
 					resource.TestCheckResourceAttr(address, "reboot_window.start_hour", "1"),
 					resource.TestCheckResourceAttr(address, "tipping.usd.percentages.#", "3"),

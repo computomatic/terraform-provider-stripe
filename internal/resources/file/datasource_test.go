@@ -15,6 +15,7 @@ func TestMain(m *testing.M) { os.Exit(acctest.Main(m)) }
 
 // A file cannot be uploaded through Terraform, so the test seeds one.
 func TestAccFile_read(t *testing.T) {
+	acctest.RequireFake(t)
 	acct := acctest.NewAccount(t)
 	id := acctest.Seed(t, acct, wire.Object{
 		{Name: "object", Value: wire.String("file")},

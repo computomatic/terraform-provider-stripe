@@ -23,7 +23,7 @@ const address = "stripe_plan.test"
 func planConfig(c acctest.Config, amount int, extra string) string {
 	return c.ProviderBlock() + fmt.Sprintf(`
 resource "stripe_product" "test" {
-  name = "Gold plan"
+  name = %q
 }
 
 resource "stripe_plan" "test" {
@@ -32,7 +32,7 @@ resource "stripe_plan" "test" {
   interval = "month"
   amount   = %d
 %s}
-`, amount, extra)
+`, c.Name("Gold plan"), amount, extra)
 }
 
 func idOf(dst *string) resource.TestCheckFunc {
@@ -77,12 +77,13 @@ data "stripe_plan" "test" {
 // A plan may be created with an ID of the caller's choosing.
 func TestAccPlan_chosenID(t *testing.T) {
 	acct := acctest.NewAccount(t)
+	id := acct.ID("", "gold_monthly")
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: tfacc.ProviderFactories,
 		ErrorCheck:               tfacc.SkipWhenFakeLacks(t, "expand["),
 		Steps: []resource.TestStep{{
-			Config: planConfig(acct, 2000, "  id = \"gold_monthly\"\n"),
-			Check:  resource.TestCheckResourceAttr(address, "id", "gold_monthly"),
+			Config: planConfig(acct, 2000, fmt.Sprintf("  id = %q\n", id)),
+			Check:  resource.TestCheckResourceAttr(address, "id", id),
 		}},
 	})
 }
@@ -214,9 +215,9 @@ func TestAccPlan_drift(t *testing.T) {
 // decimal amounts.
 func TestAccPlan_tiers(t *testing.T) {
 	acct := acctest.NewAccount(t)
-	cfg := acct.ProviderBlock() + `
+	cfg := acct.ProviderBlock() + fmt.Sprintf(`
 resource "stripe_product" "test" {
-  name = "Metered plan"
+  name = %q
 }
 
 resource "stripe_plan" "test" {
@@ -230,7 +231,7 @@ resource "stripe_plan" "test" {
     { up_to = "inf", unit_amount = 500 },
   ]
 }
-`
+`, acct.Name("Metered plan"))
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: tfacc.ProviderFactories,
 		Steps: []resource.TestStep{

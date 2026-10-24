@@ -19,7 +19,8 @@ func TestMain(m *testing.M) { os.Exit(acctest.Main(m)) }
 
 const address = "stripe_shipping_rate.test"
 
-// rateConfig is a fixed-amount shipping rate. extra lands inside the resource block.
+// rateConfig is a fixed-amount shipping rate named c.Name(name). extra lands inside the
+// resource block.
 func rateConfig(c acctest.Config, name string, extra string) string {
 	return c.ProviderBlock() + fmt.Sprintf(`
 resource "stripe_shipping_rate" "test" {
@@ -29,7 +30,7 @@ resource "stripe_shipping_rate" "test" {
     currency = "usd"
   }
 %s}
-`, name, extra)
+`, c.Name(name), extra)
 }
 
 func idOf(dst *string) resource.TestCheckFunc {
@@ -58,7 +59,7 @@ data "stripe_shipping_rate" "test" {
 `,
 			Check: resource.ComposeAggregateTestCheckFunc(
 				resource.TestCheckResourceAttrSet(address, "id"),
-				resource.TestCheckResourceAttr(address, "display_name", "Ground"),
+				resource.TestCheckResourceAttr(address, "display_name", acct.Name("Ground")),
 				resource.TestCheckResourceAttr(address, "type", "fixed_amount"),
 				resource.TestCheckResourceAttr(address, "active", "true"),
 				resource.TestCheckResourceAttr(address, "fixed_amount.amount", "500"),
@@ -67,7 +68,7 @@ data "stripe_shipping_rate" "test" {
 				resource.TestCheckResourceAttr(address, "delivery_estimate.maximum.value", "5"),
 				resource.TestCheckResourceAttr(address, "metadata.team", "a"),
 				resource.TestCheckResourceAttrPair("data.stripe_shipping_rate.test", "id", address, "id"),
-				resource.TestCheckResourceAttr("data.stripe_shipping_rate.test", "display_name", "Ground"),
+				resource.TestCheckResourceAttr("data.stripe_shipping_rate.test", "display_name", acct.Name("Ground")),
 				resource.TestCheckResourceAttr("data.stripe_shipping_rate.test", "fixed_amount.amount", "500"),
 			),
 		}},
@@ -113,7 +114,7 @@ func TestAccShippingRate_replace(t *testing.T) {
 					plancheck.ExpectResourceAction(address, plancheck.ResourceActionReplace),
 				}},
 				Check: resource.ComposeAggregateTestCheckFunc(
-					resource.TestCheckResourceAttr(address, "display_name", "Express"),
+					resource.TestCheckResourceAttr(address, "display_name", acct.Name("Express")),
 					resource.TestCheckResourceAttrWith(address, "id", func(v string) error {
 						if v == first {
 							return fmt.Errorf("the replacement kept the shipping rate ID %s", v)

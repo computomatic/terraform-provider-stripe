@@ -23,11 +23,11 @@ const address = "stripe_tax_rate.test"
 func rateConfig(c acctest.Config, percentage string, extra string) string {
 	return c.ProviderBlock() + fmt.Sprintf(`
 resource "stripe_tax_rate" "test" {
-  display_name = "VAT"
+  display_name = %q
   inclusive    = false
   percentage   = %s
 %s}
-`, percentage, extra)
+`, c.Name("VAT"), percentage, extra)
 }
 
 func idOf(dst *string) resource.TestCheckFunc {
@@ -55,7 +55,7 @@ data "stripe_tax_rate" "test" {
 `,
 			Check: resource.ComposeAggregateTestCheckFunc(
 				resource.TestCheckResourceAttrSet(address, "id"),
-				resource.TestCheckResourceAttr(address, "display_name", "VAT"),
+				resource.TestCheckResourceAttr(address, "display_name", acct.Name("VAT")),
 				resource.TestCheckResourceAttr(address, "percentage", "20"),
 				resource.TestCheckResourceAttr(address, "inclusive", "false"),
 				resource.TestCheckResourceAttr(address, "active", "true"),

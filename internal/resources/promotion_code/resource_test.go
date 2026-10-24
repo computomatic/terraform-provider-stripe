@@ -46,10 +46,11 @@ func idOf(dst *string) resource.TestCheckFunc {
 
 func TestAccPromotionCode_create(t *testing.T) {
 	acct := acctest.NewAccount(t)
+	code := acct.Unique("SAVE10-create")
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: tfacc.ProviderFactories,
 		Steps: []resource.TestStep{{
-			Config: codeConfig(acct, "SAVE10", `
+			Config: codeConfig(acct, code, `
   max_redemptions = 5
   metadata        = { team = "a" }
   restrictions = {
@@ -68,7 +69,7 @@ data "stripe_promotion_code" "by_code" {
 `,
 			Check: resource.ComposeAggregateTestCheckFunc(
 				resource.TestCheckResourceAttrSet(address, "id"),
-				resource.TestCheckResourceAttr(address, "code", "SAVE10"),
+				resource.TestCheckResourceAttr(address, "code", code),
 				resource.TestCheckResourceAttr(address, "active", "true"),
 				resource.TestCheckResourceAttrPair(address, "promotion.coupon", "stripe_coupon.test", "id"),
 				resource.TestCheckResourceAttr(address, "promotion.type", "coupon"),
@@ -86,16 +87,17 @@ data "stripe_promotion_code" "by_code" {
 
 func TestAccPromotionCode_update(t *testing.T) {
 	acct := acctest.NewAccount(t)
+	code := acct.Unique("SAVE10-update")
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: tfacc.ProviderFactories,
 		Steps: []resource.TestStep{
 			{
-				Config: codeConfig(acct, "SAVE10", "  metadata = { team = \"a\", tier = \"1\" }\n"),
+				Config: codeConfig(acct, code, "  metadata = { team = \"a\", tier = \"1\" }\n"),
 				// Stripe fills `restrictions` in when the request omits it.
 				Check: resource.TestCheckResourceAttr(address, "restrictions.first_time_transaction", "false"),
 			},
 			{
-				Config: codeConfig(acct, "SAVE10", "  metadata = { team = \"b\" }\n  active = false\n"),
+				Config: codeConfig(acct, code, "  metadata = { team = \"b\" }\n  active = false\n"),
 				ConfigPlanChecks: resource.ConfigPlanChecks{PreApply: []plancheck.PlanCheck{
 					plancheck.ExpectResourceAction(address, plancheck.ResourceActionUpdate),
 				}},
@@ -113,18 +115,19 @@ func TestAccPromotionCode_update(t *testing.T) {
 // archived code keeps its `code`, but the replacement uses a new one.
 func TestAccPromotionCode_replace(t *testing.T) {
 	acct := acctest.NewAccount(t)
+	code, other := acct.Unique("SAVE10-replace"), acct.Unique("SAVE20-replace")
 	var first string
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: tfacc.ProviderFactories,
 		Steps: []resource.TestStep{
-			{Config: codeConfig(acct, "SAVE10", ""), Check: idOf(&first)},
+			{Config: codeConfig(acct, code, ""), Check: idOf(&first)},
 			{
-				Config: codeConfig(acct, "SAVE20", ""),
+				Config: codeConfig(acct, other, ""),
 				ConfigPlanChecks: resource.ConfigPlanChecks{PreApply: []plancheck.PlanCheck{
 					plancheck.ExpectResourceAction(address, plancheck.ResourceActionReplace),
 				}},
 				Check: resource.ComposeAggregateTestCheckFunc(
-					resource.TestCheckResourceAttr(address, "code", "SAVE20"),
+					resource.TestCheckResourceAttr(address, "code", other),
 					resource.TestCheckResourceAttrWith(address, "id", func(v string) error {
 						if v == first {
 							return fmt.Errorf("the replacement kept the promotion code ID %s", v)
@@ -139,7 +142,8 @@ func TestAccPromotionCode_replace(t *testing.T) {
 
 func TestAccPromotionCode_import(t *testing.T) {
 	acct := acctest.NewAccount(t)
-	cfg := codeConfig(acct, "SAVE10", "  max_redemptions = 5\n  metadata = { team = \"a\" }\n")
+	code := acct.Unique("SAVE10-import")
+	cfg := codeConfig(acct, code, "  max_redemptions = 5\n  metadata = { team = \"a\" }\n")
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: tfacc.ProviderFactories,
 		Steps: []resource.TestStep{
@@ -163,6 +167,7 @@ func TestAccPromotionCode_import(t *testing.T) {
 // codes cannot be deleted"), so destroy archives it and the code stays in the account.
 func TestAccPromotionCode_delete(t *testing.T) {
 	acct := acctest.NewAccount(t)
+	code := acct.Unique("SAVE10-delete")
 	var id string
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: tfacc.ProviderFactories,
@@ -176,14 +181,15 @@ func TestAccPromotionCode_delete(t *testing.T) {
 			}
 			return nil
 		},
-		Steps: []resource.TestStep{{Config: codeConfig(acct, "SAVE10", ""), Check: idOf(&id)}},
+		Steps: []resource.TestStep{{Config: codeConfig(acct, code, ""), Check: idOf(&id)}},
 	})
 }
 
 func TestAccPromotionCode_drift(t *testing.T) {
 	acct := acctest.NewAccount(t)
+	code := acct.Unique("SAVE10-drift")
 	var id string
-	cfg := codeConfig(acct, "SAVE10", "  metadata = { team = \"a\" }\n")
+	cfg := codeConfig(acct, code, "  metadata = { team = \"a\" }\n")
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: tfacc.ProviderFactories,
 		Steps: []resource.TestStep{

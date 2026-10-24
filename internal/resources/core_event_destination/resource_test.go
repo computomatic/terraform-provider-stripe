@@ -38,8 +38,9 @@ func idOf(dst *string) resource.TestCheckFunc {
 }
 
 // basic is a thin webhook endpoint destination.
-const basic = `
-  name           = "billing"
+func basic(c acctest.Config) string {
+	return `
+  name           = "` + c.Name("billing") + `"
   type           = "webhook_endpoint"
   event_payload  = "thin"
   enabled_events = ["` + thinEvent + `"]
@@ -47,6 +48,7 @@ const basic = `
     url = "https://example.com/hook"
   }
 `
+}
 
 func TestAccCoreEventDestination_create(t *testing.T) {
 	acct := acctest.NewAccount(t)
@@ -54,7 +56,7 @@ func TestAccCoreEventDestination_create(t *testing.T) {
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: tfacc.ProviderFactories,
 		Steps: []resource.TestStep{{
-			Config: destinationConfig(acct, basic+"  description = \"Billing events\"\n  metadata = { team = \"a\" }\n") + `
+			Config: destinationConfig(acct, basic(acct)+"  description = \"Billing events\"\n  metadata = { team = \"a\" }\n") + `
 data "stripe_core_event_destination" "test" {
   id = stripe_core_event_destination.test.id
 }
@@ -66,7 +68,7 @@ data "stripe_core_event_destination" "test" {
 					}
 					return nil
 				}),
-				resource.TestCheckResourceAttr(address, "name", "billing"),
+				resource.TestCheckResourceAttr(address, "name", acct.Name("billing")),
 				resource.TestCheckResourceAttr(address, "type", "webhook_endpoint"),
 				resource.TestCheckResourceAttr(address, "event_payload", "thin"),
 				resource.TestCheckResourceAttr(address, "description", "Billing events"),
@@ -99,12 +101,12 @@ func TestAccCoreEventDestination_update(t *testing.T) {
 		ProtoV6ProviderFactories: tfacc.ProviderFactories,
 		Steps: []resource.TestStep{
 			{
-				Config: destinationConfig(acct, basic+"  description = \"one\"\n  metadata = { keep = \"me\", drop = \"me\" }\n"),
+				Config: destinationConfig(acct, basic(acct)+"  description = \"one\"\n  metadata = { keep = \"me\", drop = \"me\" }\n"),
 				Check:  idOf(&id),
 			},
 			{
 				Config: destinationConfig(acct, `
-  name           = "billing 2"
+  name           = "`+acct.Name("billing 2")+`"
   type           = "webhook_endpoint"
   event_payload  = "thin"
   enabled_events = ["`+thinEvent+`", "`+otherThin+`"]
@@ -124,7 +126,7 @@ func TestAccCoreEventDestination_update(t *testing.T) {
 						}
 						return nil
 					}),
-					resource.TestCheckResourceAttr(address, "name", "billing 2"),
+					resource.TestCheckResourceAttr(address, "name", acct.Name("billing 2")),
 					resource.TestCheckResourceAttr(address, "description", "two"),
 					resource.TestCheckResourceAttr(address, "enabled_events.#", "2"),
 					resource.TestCheckResourceAttr(address, "metadata.%", "2"),
@@ -137,7 +139,7 @@ func TestAccCoreEventDestination_update(t *testing.T) {
 			{
 				// Shrinking the list sends the whole new array.
 				Config: destinationConfig(acct, `
-  name           = "billing 2"
+  name           = "`+acct.Name("billing 2")+`"
   type           = "webhook_endpoint"
   event_payload  = "thin"
   enabled_events = ["`+otherThin+`"]
@@ -155,8 +157,12 @@ func TestAccCoreEventDestination_update(t *testing.T) {
 
 // checkUpdateRequests reads the fake's request log: the create is JSON with the include,
 // the update never sends a create-only field, sends the removed metadata key as null and
-// the whole `enabled_events` array, and every POST carries an idempotency key.
+// the whole `enabled_events` array, and every POST carries an idempotency key. It checks
+// nothing in smoke mode, where there is no log.
 func checkUpdateRequests(t *testing.T, acct acctest.Config, id string) error {
+	if acct.Smoke {
+		return nil
+	}
 	log := acctest.RequestLog(t, acct)
 	slices.Reverse(log)
 	var sawCreate, sawUpdate, sawIncludedRead bool
@@ -216,10 +222,10 @@ func TestAccCoreEventDestination_replace(t *testing.T) {
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: tfacc.ProviderFactories,
 		Steps: []resource.TestStep{
-			{Config: destinationConfig(acct, basic), Check: idOf(&first)},
+			{Config: destinationConfig(acct, basic(acct)), Check: idOf(&first)},
 			{
 				Config: destinationConfig(acct, `
-  name           = "billing"
+  name           = "`+acct.Name("billing")+`"
   type           = "webhook_endpoint"
   event_payload  = "snapshot"
   snapshot_api_version = "`+stripeapi.Version+`"
@@ -248,7 +254,7 @@ func TestAccCoreEventDestination_replace(t *testing.T) {
 
 func TestAccCoreEventDestination_import(t *testing.T) {
 	acct := acctest.NewAccount(t)
-	cfg := destinationConfig(acct, basic+"  description = \"Billing\"\n  metadata = { team = \"a\" }\n")
+	cfg := destinationConfig(acct, basic(acct)+"  description = \"Billing\"\n  metadata = { team = \"a\" }\n")
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: tfacc.ProviderFactories,
 		Steps: []resource.TestStep{
@@ -281,7 +287,7 @@ func TestAccCoreEventDestination_delete(t *testing.T) {
 			return nil
 		},
 		Steps: []resource.TestStep{
-			{Config: destinationConfig(acct, basic), Check: idOf(&id)},
+			{Config: destinationConfig(acct, basic(acct)), Check: idOf(&id)},
 			{
 				// A destination deleted out of band leaves the state at the next plan, and
 				// destroying the then-empty configuration has nothing to do.
@@ -290,7 +296,7 @@ func TestAccCoreEventDestination_delete(t *testing.T) {
 						t.Fatal(err)
 					}
 				},
-				Config: destinationConfig(acct, basic),
+				Config: destinationConfig(acct, basic(acct)),
 				ConfigPlanChecks: resource.ConfigPlanChecks{PreApply: []plancheck.PlanCheck{
 					plancheck.ExpectResourceAction(address, plancheck.ResourceActionCreate),
 				}},
@@ -303,7 +309,7 @@ func TestAccCoreEventDestination_delete(t *testing.T) {
 func TestAccCoreEventDestination_drift(t *testing.T) {
 	acct := acctest.NewAccount(t)
 	var id string
-	cfg := destinationConfig(acct, basic+"  description = \"Billing\"\n")
+	cfg := destinationConfig(acct, basic(acct)+"  description = \"Billing\"\n")
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: tfacc.ProviderFactories,
 		Steps: []resource.TestStep{
@@ -320,7 +326,7 @@ func TestAccCoreEventDestination_drift(t *testing.T) {
 					plancheck.ExpectNonEmptyPlan(),
 					plancheck.ExpectResourceAction(address, plancheck.ResourceActionUpdate),
 				}},
-				Check: resource.TestCheckResourceAttr(address, "name", "billing"),
+				Check: resource.TestCheckResourceAttr(address, "name", acct.Name("billing")),
 			},
 			{
 				// The URL is redacted unless asked for. Because the provider asks, a URL
@@ -349,7 +355,7 @@ func TestAccCoreEventDestination_rejectedWithContext(t *testing.T) {
 		ProtoV6ProviderFactories: tfacc.ProviderFactories,
 		Steps: []resource.TestStep{{
 			Config: destinationConfig(acct, `
-  name           = "billing"
+  name           = "`+acct.Name("billing")+`"
   type           = "webhook_endpoint"
   event_payload  = "thin"
   enabled_events = ["v1.not.an.event"]
@@ -378,7 +384,7 @@ func TestAccCoreEventDestination_dataSourceNotFound(t *testing.T) {
 // whether Stripe returns it empty or leaves it out.
 func TestAccCoreEventDestination_emptyMetadata(t *testing.T) {
 	acct := acctest.NewAccount(t)
-	cfg := destinationConfig(acct, basic+"  metadata = {}\n")
+	cfg := destinationConfig(acct, basic(acct)+"  metadata = {}\n")
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: tfacc.ProviderFactories,
 		Steps: []resource.TestStep{

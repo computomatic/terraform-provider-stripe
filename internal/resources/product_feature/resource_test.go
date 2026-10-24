@@ -25,28 +25,30 @@ func TestMain(m *testing.M) { os.Exit(acctest.Main(m)) }
 const address = "stripe_product_feature.test"
 
 // featureConfig is a product, two entitlement features and a product feature that attaches
-// the feature named by attach ("a" or "b"). extra lands inside the product feature.
-func featureConfig(c acctest.Config, attach, extra string) string {
+// the feature named by attach ("a" or "b"). The features' lookup keys are the test's own,
+// named by test. extra lands inside the product feature.
+func featureConfig(c acctest.Config, test, attach, extra string) string {
 	return c.ProviderBlock() + fmt.Sprintf(`
 resource "stripe_product" "test" {
-  name = "Gold plan"
+  name = %q
 }
 
 resource "stripe_entitlements_feature" "a" {
-  lookup_key = "feature_a"
-  name       = "Feature A"
+  lookup_key = %q
+  name       = %q
 }
 
 resource "stripe_entitlements_feature" "b" {
-  lookup_key = "feature_b"
-  name       = "Feature B"
+  lookup_key = %q
+  name       = %q
 }
 
 resource "stripe_product_feature" "test" {
   product             = stripe_product.test.id
   entitlement_feature = stripe_entitlements_feature.%s.id
 %s}
-`, attach, extra)
+`, c.Name("Gold plan"), c.Unique("product-feature-"+test+"-a"), c.Name("Feature A"),
+		c.Unique("product-feature-"+test+"-b"), c.Name("Feature B"), attach, extra)
 }
 
 // importID is the product ID and the product feature ID, as the import ID wants them.
@@ -75,7 +77,7 @@ func TestAccProductFeature_create(t *testing.T) {
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: tfacc.ProviderFactories,
 		Steps: acctest.Forget(t, []resource.TestStep{{
-			Config: featureConfig(acct, "a", "") + `
+			Config: featureConfig(acct, "create", "a", "") + `
 data "stripe_product_feature" "test" {
   product = stripe_product.test.id
   id      = stripe_product_feature.test.id
@@ -102,11 +104,11 @@ func TestAccProductFeature_update(t *testing.T) {
 		ProtoV6ProviderFactories: tfacc.ProviderFactories,
 		Steps: acctest.Forget(t, []resource.TestStep{
 			{
-				Config: featureConfig(acct, "a", ""),
+				Config: featureConfig(acct, "update", "a", ""),
 				Check:  resource.TestCheckResourceAttrWith(address, "id", func(v string) error { first = v; return nil }),
 			},
 			{
-				Config: featureConfig(acct, "a", "  timeouts = { create = \"10m\" }\n"),
+				Config: featureConfig(acct, "update", "a", "  timeouts = { create = \"10m\" }\n"),
 				ConfigPlanChecks: resource.ConfigPlanChecks{PreApply: []plancheck.PlanCheck{
 					plancheck.ExpectResourceAction(address, plancheck.ResourceActionUpdate),
 				}},
@@ -130,11 +132,11 @@ func TestAccProductFeature_replace(t *testing.T) {
 		ProtoV6ProviderFactories: tfacc.ProviderFactories,
 		Steps: acctest.Forget(t, []resource.TestStep{
 			{
-				Config: featureConfig(acct, "a", ""),
+				Config: featureConfig(acct, "replace", "a", ""),
 				Check:  resource.TestCheckResourceAttrWith(address, "id", func(v string) error { first = v; return nil }),
 			},
 			{
-				Config: featureConfig(acct, "b", ""),
+				Config: featureConfig(acct, "replace", "b", ""),
 				ConfigPlanChecks: resource.ConfigPlanChecks{PreApply: []plancheck.PlanCheck{
 					plancheck.ExpectResourceAction(address, plancheck.ResourceActionReplace),
 				}},
@@ -149,7 +151,7 @@ func TestAccProductFeature_replace(t *testing.T) {
 				),
 			},
 			// Attaching the first feature again works because the replacement detached it.
-			{Config: featureConfig(acct, "a", ""), Check: resource.TestCheckResourceAttrPair(address, "entitlement_feature", "stripe_entitlements_feature.a", "id")},
+			{Config: featureConfig(acct, "replace", "a", ""), Check: resource.TestCheckResourceAttrPair(address, "entitlement_feature", "stripe_entitlements_feature.a", "id")},
 		}, nil, "stripe_entitlements_feature"),
 	})
 }
@@ -157,7 +159,7 @@ func TestAccProductFeature_replace(t *testing.T) {
 // The import ID is `<product_id>/<product_feature_id>`.
 func TestAccProductFeature_import(t *testing.T) {
 	acct := acctest.NewAccount(t)
-	cfg := featureConfig(acct, "a", "")
+	cfg := featureConfig(acct, "import", "a", "")
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: tfacc.ProviderFactories,
 		Steps: acctest.Forget(t, []resource.TestStep{
@@ -189,7 +191,7 @@ func TestAccProductFeature_import(t *testing.T) {
 // product as well as the feature ID.
 func TestAccProductFeature_importIdentity(t *testing.T) {
 	acct := acctest.NewAccount(t)
-	cfg := featureConfig(acct, "a", "")
+	cfg := featureConfig(acct, "importIdentity", "a", "")
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: tfacc.ProviderFactories,
 		TerraformVersionChecks:   []tfversion.TerraformVersionCheck{tfversion.RequireAbove(version.Must(version.NewVersion("1.12.0")))},
@@ -225,7 +227,7 @@ func TestAccProductFeature_delete(t *testing.T) {
 			}
 			return nil
 		},
-		Steps: acctest.Forget(t, []resource.TestStep{{Config: featureConfig(acct, "a", ""), Check: ids(&product, &id)}}, nil, "stripe_entitlements_feature"),
+		Steps: acctest.Forget(t, []resource.TestStep{{Config: featureConfig(acct, "delete", "a", ""), Check: ids(&product, &id)}}, nil, "stripe_entitlements_feature"),
 	})
 }
 
@@ -234,7 +236,7 @@ func TestAccProductFeature_delete(t *testing.T) {
 func TestAccProductFeature_drift(t *testing.T) {
 	acct := acctest.NewAccount(t)
 	var product, id string
-	cfg := featureConfig(acct, "a", "")
+	cfg := featureConfig(acct, "drift", "a", "")
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: tfacc.ProviderFactories,
 		Steps: acctest.Forget(t, []resource.TestStep{

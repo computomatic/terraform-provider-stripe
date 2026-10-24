@@ -18,7 +18,7 @@ func TestMain(m *testing.M) { os.Exit(acctest.Main(m)) }
 // checkout, so the test makes one behind the provider's back.
 func TestAccCheckoutSession_read(t *testing.T) {
 	acct := acctest.NewAccount(t)
-	product := tfacc.Create(t, acct, "/v1/products", wire.Object{{Name: "name", Value: wire.String("Course")}})
+	product := tfacc.Create(t, acct, "/v1/products", wire.Object{{Name: "name", Value: wire.String(acct.Name("Course"))}})
 	price := tfacc.Create(t, acct, "/v1/prices", wire.Object{
 		{Name: "product", Value: wire.String(product)},
 		{Name: "currency", Value: wire.String("usd")},

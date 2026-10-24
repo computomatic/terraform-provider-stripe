@@ -21,7 +21,7 @@ func TestMain(m *testing.M) { os.Exit(acctest.Main(m)) }
 func TestAccMandate_read(t *testing.T) {
 	acct := acctest.NewAccount(t)
 	config := tfacc.Create(t, acct, "/v1/payment_method_configurations", wire.Object{
-		{Name: "name", Value: wire.String("sepa")},
+		{Name: "name", Value: wire.String(acct.Name("sepa"))},
 		{Name: "sepa_debit", Value: wire.Object{{Name: "display_preference", Value: wire.Object{{Name: "preference", Value: wire.String("on")}}}}},
 	})
 	customer := tfacc.Create(t, acct, "/v1/customers", nil)

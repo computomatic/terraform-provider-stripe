@@ -37,7 +37,7 @@ resource "stripe_customer" "a" {}
 resource "stripe_customer" "b" {}
 
 resource "stripe_product" "test" {
-  name = "Plan"
+  name = %q
 }
 
 resource "stripe_price" "one" {
@@ -69,7 +69,7 @@ resource "stripe_subscription_schedule" "test" {
   }
   phases = %s
 %s}
-`, customer, start, phases, extra)
+`, c.Name("Plan"), customer, start, phases, extra)
 }
 
 func idOf(dst *string) resource.TestCheckFunc {

@@ -32,7 +32,7 @@ resource "stripe_terminal_location" "test" {
     country     = %q
   }
 %s}
-`, name, line1, country, extra)
+`, c.Name(name), line1, country, extra)
 }
 
 func idOf(dst *string) resource.TestCheckFunc {
@@ -54,7 +54,7 @@ data "stripe_terminal_location" "test" {
 `,
 			Check: resource.ComposeAggregateTestCheckFunc(
 				resource.TestCheckResourceAttrSet(address, "id"),
-				resource.TestCheckResourceAttr(address, "display_name", "Main store"),
+				resource.TestCheckResourceAttr(address, "display_name", acct.Name("Main store")),
 				resource.TestCheckResourceAttr(address, "address.line1", "1 Main St"),
 				resource.TestCheckResourceAttr(address, "address.country", "US"),
 				resource.TestCheckResourceAttr(address, "phone", "+15555550100"),
@@ -79,7 +79,7 @@ func TestAccTerminalLocation_update(t *testing.T) {
 					plancheck.ExpectResourceAction(address, plancheck.ResourceActionUpdate),
 				}},
 				Check: resource.ComposeAggregateTestCheckFunc(
-					resource.TestCheckResourceAttr(address, "display_name", "Flagship"),
+					resource.TestCheckResourceAttr(address, "display_name", acct.Name("Flagship")),
 					resource.TestCheckResourceAttr(address, "address.line1", "2 Main St"),
 					resource.TestCheckResourceAttr(address, "metadata.%", "1"),
 					resource.TestCheckResourceAttr(address, "metadata.team", "b"),
@@ -187,7 +187,7 @@ func TestAccTerminalLocation_drift(t *testing.T) {
 					plancheck.ExpectNonEmptyPlan(),
 					plancheck.ExpectResourceAction(address, plancheck.ResourceActionUpdate),
 				}},
-				Check: resource.TestCheckResourceAttr(address, "display_name", "Main store"),
+				Check: resource.TestCheckResourceAttr(address, "display_name", acct.Name("Main store")),
 			},
 		},
 	})

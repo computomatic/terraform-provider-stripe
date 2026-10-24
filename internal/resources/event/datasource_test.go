@@ -15,6 +15,7 @@ func TestMain(m *testing.M) { os.Exit(acctest.Main(m)) }
 
 // Events come from things that happen in the account, so the test seeds one.
 func TestAccEvent_read(t *testing.T) {
+	acctest.RequireFake(t)
 	acct := acctest.NewAccount(t)
 	id := acctest.Seed(t, acct, wire.Object{
 		{Name: "object", Value: wire.String("event")},

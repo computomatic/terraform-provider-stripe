@@ -24,7 +24,7 @@ const address = "stripe_climate_order.test"
 // spends a balance in the account's currency (suite: "Climate orders spend the available
 // balance", "Climate products price only in the account's currency"), which a fresh account on
 // the fake lacks, so the test seeds one. It runs on the fake only: real Stripe has
-// no seed, and the order is not in the smoke selection.
+// no seed.
 func fundedAccount(t *testing.T) acctest.Config {
 	t.Helper()
 	return seededAccount(t, false)
