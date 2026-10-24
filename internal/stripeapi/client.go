@@ -233,6 +233,9 @@ func (c *Client) attempt(ctx context.Context, req Request, target string, body [
 	if c.cfg.StripeAccount != "" {
 		httpReq.Header.Set("Stripe-Account", c.cfg.StripeAccount)
 	}
+	if c.cfg.StripeContext != "" {
+		httpReq.Header.Set("Stripe-Context", c.cfg.StripeContext)
+	}
 	if idempotencyKey != "" {
 		httpReq.Header.Set("Idempotency-Key", idempotencyKey)
 	}

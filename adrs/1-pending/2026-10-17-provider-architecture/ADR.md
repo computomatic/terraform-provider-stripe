@@ -138,6 +138,7 @@ provider "stripe" {
   base_url        = "http://127.0.0.1:12111" # or STRIPE_API_BASE, default https://api.stripe.com
   files_base_url  = null                     # or STRIPE_FILES_BASE_URL
   stripe_account  = null                     # or STRIPE_ACCOUNT, a connected account ID
+  stripe_context  = null                     # or STRIPE_CONTEXT, sent as Stripe-Context
   max_retries     = 3                        # default
   allow_live_money_movement = false          # default
 }
@@ -149,6 +150,7 @@ provider "stripe" {
 |`base_url`|No|Default `https://api.stripe.com`. `http` is accepted only when set explicitly, which is how the provider targets the fake. The path must be empty|
 |`files_base_url`|No|Default `https://files.stripe.com` when `base_url` is unset. When `base_url` is set and this is not, files use `base_url`, because the fake serves everything on one port. `POST /v1/files` is the only call to this host (`docs/stripe-api-behaviour.md:78`)|
 |`stripe_account`|No|Sent as the `Stripe-Account` header for Connect platforms acting on a connected account. Not needed for a standalone account|
+|`stripe_context`|No|Sent unchanged as the `Stripe-Context` header of every request, which organization keys need. Its shape is not validated beyond non-empty. Setting it and `stripe_account` together, from attributes or environment variables, is an error at configure time. Nothing is inferred from the key's prefix (amended 2026-10-24 by the owner's decision on organization keys)|
 |`max_retries`|No|Retries per request (D5)|
 |`allow_live_money_movement`|No|Bool, default false. When false, the resources that move money refuse to create or change an object, or set a lifecycle attribute, in a Stripe account in live mode, which the provider reads from `GET /v1/balance`, never from the key. No environment variable sets it (`adrs/1-pending/2026-10-22-money-moving-resources/ADR.md`, D1)|
 

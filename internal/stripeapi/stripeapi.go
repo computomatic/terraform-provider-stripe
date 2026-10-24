@@ -16,5 +16,7 @@ type Config struct {
 	BaseURL       string
 	FilesBaseURL  string
 	StripeAccount string
+	// StripeContext is sent verbatim as the `Stripe-Context` header of every request when set.
+	StripeContext string
 	MaxRetries    int64
 }

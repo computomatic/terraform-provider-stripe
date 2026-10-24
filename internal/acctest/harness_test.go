@@ -94,6 +94,14 @@ func TestProviderBlock(t *testing.T) {
 	}
 }
 
+func TestProviderBlockWith(t *testing.T) {
+	c := Config{Key: "sk_test_k", BaseURL: "http://127.0.0.1:1"}
+	want := "provider \"stripe\" {\n  api_key  = \"sk_test_k\"\n  base_url = \"http://127.0.0.1:1\"\n  stripe_context = \"acct_1\"\n  max_retries = 1\n}\n"
+	if got := c.ProviderBlockWith(`stripe_context = "acct_1"`, "max_retries = 1"); got != want {
+		t.Fatalf("got %q", got)
+	}
+}
+
 func TestRemoved(t *testing.T) {
 	want := "removed {\n  from = stripe_quote.a\n\n  lifecycle {\n    destroy = false\n  }\n}\n" +
 		"removed {\n  from = stripe_quote.b\n\n  lifecycle {\n    destroy = false\n  }\n}\n"

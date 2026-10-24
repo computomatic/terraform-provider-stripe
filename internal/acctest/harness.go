@@ -193,6 +193,16 @@ func (c Config) ProviderBlock() string {
 	return fmt.Sprintf("provider \"stripe\" {\n  api_key  = %q\n  base_url = %q\n}\n", c.Key, c.BaseURL)
 }
 
+// ProviderBlockWith renders ProviderBlock with more arguments, each one line such as
+// `stripe_context = "acct_1"`.
+func (c Config) ProviderBlockWith(arguments ...string) string {
+	block := strings.TrimSuffix(c.ProviderBlock(), "}\n")
+	for _, a := range arguments {
+		block += "  " + a + "\n"
+	}
+	return block + "}\n"
+}
+
 // Connected returns the configuration for acting on a connected account of c's account.
 func (c Config) Connected(account string) Config {
 	c.StripeAccount = account

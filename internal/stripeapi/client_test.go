@@ -314,6 +314,40 @@ func TestRequestShape(t *testing.T) {
 	}
 }
 
+// A configured context goes verbatim on every request, whatever its path, method or host; an
+// unset one sends no header.
+func TestStripeContextOnEveryRequest(t *testing.T) {
+	srv, seen := testServer(t, scripted{200, nil, okBody})
+	c, _ := testClient(srv, 0)
+	if _, err := c.Do(context.Background(), Request{Method: "GET", Path: "/v1/balance"}); err != nil {
+		t.Fatal(err)
+	}
+	if got := seen()[0].header.Values("Stripe-Context"); len(got) != 0 {
+		t.Fatalf("unset context sent %q", got)
+	}
+
+	c.cfg.StripeContext = "acct_org/acct_child"
+	for _, req := range []Request{
+		{Method: "GET", Path: "/v1/balance"},
+		{Method: "POST", Path: "/v1/customers", Params: wire.Object{{Name: "name", Value: wire.String("A")}}},
+		{Method: "DELETE", Path: "/v1/customers/cus_1"},
+		{Method: "POST", Path: "/v2/core/event_destinations", Params: wire.Object{{Name: "name", Value: wire.String("A")}}},
+		{Method: "POST", Path: "/v1/files", Host: FilesHost},
+	} {
+		if _, err := c.Do(context.Background(), req); err != nil {
+			t.Fatal(err)
+		}
+	}
+	for _, r := range seen()[1:] {
+		if got := r.header.Values("Stripe-Context"); len(got) != 1 || got[0] != "acct_org/acct_child" {
+			t.Errorf("%s %s: Stripe-Context %q", r.method, r.uri, got)
+		}
+		if got := r.header.Get("Stripe-Account"); got != "" {
+			t.Errorf("%s %s: Stripe-Account %q", r.method, r.uri, got)
+		}
+	}
+}
+
 func TestFilesHost(t *testing.T) {
 	apiSrv, apiSeen := testServer(t, scripted{200, nil, okBody})
 	filesSrv, filesSeen := testServer(t, scripted{200, nil, okBody})
