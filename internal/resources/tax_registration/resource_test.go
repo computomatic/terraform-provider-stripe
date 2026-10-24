@@ -75,8 +75,11 @@ func clearRegistrations(t *testing.T, c acctest.Config, country string) {
 	for _, id := range ids {
 		path := "/v1/tax/registrations/" + id
 		expiry := wire.String(strconv.FormatInt(time.Now().Add(5*time.Second).Unix(), 10))
+		// The requests run in a cleanup too, after the test's own context is canceled.
 		if _, err := client.Do(context.Background(), stripeapi.Request{Method: "POST", Path: path, Params: wire.Object{{Name: "expires_at", Value: expiry}}}); err != nil {
-			tfacc.Post(t, c, path, wire.Object{{Name: "active_from", Value: wire.String("now")}, {Name: "expires_at", Value: expiry}})
+			if _, startErr := client.Do(context.Background(), stripeapi.Request{Method: "POST", Path: path, Params: wire.Object{{Name: "active_from", Value: wire.String("now")}, {Name: "expires_at", Value: expiry}}}); startErr != nil {
+				t.Fatalf("expiring tax registration %s: %v; starting it first: %v", id, err, startErr)
+			}
 		}
 	}
 	for _, id := range ids {

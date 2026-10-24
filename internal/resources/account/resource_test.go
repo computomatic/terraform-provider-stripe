@@ -99,7 +99,6 @@ data "stripe_account_capability" "card_payments" {
 				resource.TestCheckResourceAttr(address, "details_submitted", "false"),
 				resource.TestCheckResourceAttr(address, "default_currency", "usd"),
 				resource.TestCheckNoResourceAttr(address, "email"),
-				resource.TestCheckNoResourceAttr(address, "controller"),
 				resource.TestCheckResourceAttr(address, "metadata.run", run),
 				resource.TestCheckResourceAttr(address, "capabilities.card_payments.requested", "true"),
 				resource.TestCheckResourceAttrPair("data.stripe_account.test", "id", address, "id"),

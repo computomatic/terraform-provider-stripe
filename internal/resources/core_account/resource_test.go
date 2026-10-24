@@ -192,9 +192,9 @@ func TestAccCoreAccount_recipient(t *testing.T) {
 	})
 }
 
-// An account that is only a customer has no dashboard and no responsibilities (suite: "create
-// customer only"), and Stripe refuses a dashboard on one (suite: "dashboard on a customer only
-// account").
+// An account that is only a customer has no dashboard (suite: "create customer only"), and
+// Stripe refuses a dashboard on one (suite: "dashboard on a customer only account"). Stripe
+// fills its `defaults.responsibilities`, which the fake leaves out.
 func TestAccCoreAccount_customerOnly(t *testing.T) {
 	acct := acctest.NewAccount(t)
 	resource.ParallelTest(t, resource.TestCase{
@@ -209,7 +209,6 @@ func TestAccCoreAccount_customerOnly(t *testing.T) {
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr(address, "applied_configurations.#", "1"),
 					resource.TestCheckNoResourceAttr(address, "dashboard"),
-					resource.TestCheckNoResourceAttr(address, "defaults.responsibilities"),
 				),
 			},
 		}, nil, "stripe_core_account"),

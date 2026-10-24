@@ -2,6 +2,7 @@ package invoice_test
 
 import (
 	"os"
+	"regexp"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
@@ -13,7 +14,8 @@ import (
 func TestMain(m *testing.M) { os.Exit(acctest.Main(m)) }
 
 // A subscription invoiced by email creates its invoice at once (suite: "Subscriptions"), so
-// the test reads the invoice through the subscription's `latest_invoice`.
+// the test reads the invoice through the subscription's `latest_invoice`. Stripe may still hold
+// that invoice as a draft, which it finalizes later, and the fake opens it at once.
 func TestAccInvoice_read(t *testing.T) {
 	acct := acctest.NewAccount(t)
 	resource.ParallelTest(t, resource.TestCase{
@@ -51,7 +53,7 @@ data "stripe_invoice" "test" {
 			Check: resource.ComposeAggregateTestCheckFunc(
 				resource.TestCheckResourceAttrPair("data.stripe_invoice.test", "id", "stripe_subscription.test", "latest_invoice"),
 				resource.TestCheckResourceAttrPair("data.stripe_invoice.test", "customer", "stripe_customer.test", "id"),
-				resource.TestCheckResourceAttr("data.stripe_invoice.test", "status", "open"),
+				resource.TestMatchResourceAttr("data.stripe_invoice.test", "status", regexp.MustCompile(`^(draft|open)$`)),
 				resource.TestCheckResourceAttr("data.stripe_invoice.test", "collection_method", "send_invoice"),
 				resource.TestCheckResourceAttr("data.stripe_invoice.test", "currency", "usd"),
 				resource.TestCheckResourceAttr("data.stripe_invoice.test", "amount_due", "2000"),

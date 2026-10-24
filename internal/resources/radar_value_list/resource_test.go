@@ -32,7 +32,8 @@ resource "stripe_radar_value_list" "test" {
 }
 
 // alias is c.Unique(base) as a snake case alias, the form the suite gives every alias
-// ("uniqueSnake"), so the smoke prefix's hyphens become underscores.
+// ("uniqueSnake"), so the smoke prefix's hyphens become underscores. A base is lower case,
+// because Stripe stores an alias in lower case.
 func alias(c acctest.Config, base string) string {
 	return strings.ReplaceAll(c.Unique(base), "-", "_")
 }
@@ -77,8 +78,8 @@ func TestAccRadarValueList_serverDefault(t *testing.T) {
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: tfacc.ProviderFactories,
 		Steps: []resource.TestStep{
-			{Config: listConfig(acct, "serverDefault", "Anything", ""), Check: resource.TestCheckResourceAttr(address, "item_type", "string")},
-			{Config: listConfig(acct, "serverDefault", "Anything", ""), PlanOnly: true},
+			{Config: listConfig(acct, "server_default", "Anything", ""), Check: resource.TestCheckResourceAttr(address, "item_type", "string")},
+			{Config: listConfig(acct, "server_default", "Anything", ""), PlanOnly: true},
 		},
 	})
 }

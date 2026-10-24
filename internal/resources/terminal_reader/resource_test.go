@@ -174,10 +174,11 @@ func TestAccTerminalReader_import(t *testing.T) {
 		Steps: []resource.TestStep{
 			{Config: cfg},
 			{
-				ResourceName:            address,
-				ImportState:             true,
-				ImportStateVerify:       true,
-				ImportStateVerifyIgnore: []string{"registration_code"},
+				ResourceName:      address,
+				ImportState:       true,
+				ImportStateVerify: true,
+				// A simulated reader reports in to Stripe between reads.
+				ImportStateVerifyIgnore: []string{"registration_code", "last_seen_at"},
 			},
 			{
 				ResourceName:    address,

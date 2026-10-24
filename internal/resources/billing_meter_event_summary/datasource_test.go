@@ -74,8 +74,15 @@ func TestAccBillingMeterEventSummary_read(t *testing.T) {
 		if len(items) != 1 {
 			return false
 		}
-		v, _ := items[0].Get("aggregated_value")
-		return v == wire.Int(7) || v == wire.Decimal("7")
+		// Stripe writes the sum as `7.0`.
+		switch v, _ := items[0].Get("aggregated_value"); v := v.(type) {
+		case wire.Int:
+			return v == 7
+		case wire.Decimal:
+			f, err := strconv.ParseFloat(string(v), 64)
+			return err == nil && f == 7
+		}
+		return false
 	})
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: tfacc.ProviderFactories,

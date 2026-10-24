@@ -171,10 +171,12 @@ func TestAccShippingRate_delete(t *testing.T) {
 	})
 }
 
+// The drift is in `metadata`, because Stripe refuses to change a `tax_behavior` once it is
+// specified.
 func TestAccShippingRate_drift(t *testing.T) {
 	acct := acctest.NewAccount(t)
 	var id string
-	cfg := rateConfig(acct, "Ground", "  tax_behavior = \"exclusive\"\n")
+	cfg := rateConfig(acct, "Ground", "  metadata = { team = \"a\" }\n")
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: tfacc.ProviderFactories,
 		Steps: []resource.TestStep{
@@ -182,7 +184,7 @@ func TestAccShippingRate_drift(t *testing.T) {
 			{
 				PreConfig: func() {
 					tfacc.Post(t, acct, "/v1/shipping_rates/"+id, wire.Object{
-						{Name: "tax_behavior", Value: wire.String("inclusive")},
+						{Name: "metadata", Value: wire.Object{{Name: "team", Value: wire.String("b")}}},
 					})
 				},
 				Config: cfg,
@@ -190,7 +192,7 @@ func TestAccShippingRate_drift(t *testing.T) {
 					plancheck.ExpectNonEmptyPlan(),
 					plancheck.ExpectResourceAction(address, plancheck.ResourceActionUpdate),
 				}},
-				Check: resource.TestCheckResourceAttr(address, "tax_behavior", "exclusive"),
+				Check: resource.TestCheckResourceAttr(address, "metadata.team", "a"),
 			},
 		},
 	})

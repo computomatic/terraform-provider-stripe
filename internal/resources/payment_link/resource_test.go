@@ -113,7 +113,8 @@ data "stripe_payment_link" "by_id" {
 `,
 			Check: resource.ComposeAggregateTestCheckFunc(
 				resource.TestCheckResourceAttrSet(address, "id"),
-				resource.TestMatchResourceAttr(address, "url", regexp.MustCompile(`^https://buy\.stripe\.com/`)),
+				// Stripe serves a donation link from donate.stripe.com.
+				resource.TestMatchResourceAttr(address, "url", regexp.MustCompile(`^https://(buy|donate)\.stripe\.com/`)),
 				resource.TestCheckResourceAttr(address, "active", "true"),
 				resource.TestCheckResourceAttr(address, "currency", "usd"),
 				resource.TestCheckResourceAttr(address, "allow_promotion_codes", "true"),
