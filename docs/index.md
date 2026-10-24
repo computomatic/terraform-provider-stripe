@@ -28,9 +28,15 @@ provider "stripe" {}
 
 ## Authentication
 
-The provider authenticates with a Stripe secret key (`sk_live_...` or `sk_test_...`) or a restricted key (`rk_...`). A test-mode key manages your sandbox, and a live-mode key manages your live account. A restricted key needs the permissions of the resources you manage.
+Use a Stripe restricted API key (`rk_test_...` or `rk_live_...`). A test-mode key manages your sandbox, and a live-mode key manages your live account.
 
-Set the key in the `STRIPE_API_KEY` environment variable. The `api_key` argument also takes it, but a key written in a configuration ends up in version control, so prefer the environment variable and never commit a key.
+- Create one restricted key for each workspace or pipeline, with only the permissions its configuration needs: Write for each resource it manages and Read for each data source it reads. The Using Restricted Keys guide lists the permission of every resource and data source.
+- Attach an access policy to every live-mode key, so that Stripe accepts the key only from your IP addresses, or from your cloud provider's ASN and your countries.
+- Rotate each key on a schedule and when someone who could read it leaves, and expire a key nothing uses any more.
+
+Keep the key in a secrets store and give it to the provider in the `STRIPE_API_KEY` environment variable. The `api_key` argument also takes it, but a key written in a configuration ends up in version control, so prefer the environment variable and never commit a key.
+
+A secret key (`sk_test_...` or `sk_live_...`) also works, but it can do anything in the account, and Stripe advises against secret keys for new uses.
 
 To manage a connected account with the key of its platform, set `stripe_account` to the connected account's ID.
 
@@ -47,7 +53,7 @@ Every request is sent with Stripe API version `2026-09-30.endive`. Attributes th
 This provider supports the following arguments:
 
 * `allow_live_money_movement` - (Optional) Allows the resources that move money, such as `stripe_payment_intent` and `stripe_transfer`, to create and change objects in a live-mode Stripe account. Defaults to false: they then work in sandboxes and test mode, and fail at plan time in live mode. The provider asks Stripe for the account's mode; it never infers it from the key.
-* `api_key` - (Optional, Sensitive) A Stripe secret or restricted key (`sk_` or `rk_`). Defaults to the `STRIPE_API_KEY` environment variable.
+* `api_key` - (Optional, Sensitive) A Stripe restricted key (`rk_`), or a secret key (`sk_`), which Stripe advises against for new uses. Defaults to the `STRIPE_API_KEY` environment variable.
 * `base_url` - (Optional) Base URL of the Stripe API, without a path. Defaults to the `STRIPE_API_BASE` environment variable, then `https://api.stripe.com`.
 * `files_base_url` - (Optional) Base URL of the Stripe Files API, without a path. Defaults to the `STRIPE_FILES_BASE_URL` environment variable, then `base_url` when that is set, then `https://files.stripe.com`.
 * `max_retries` - (Optional) Retries per request on transport errors, 429 and 5xx responses. Defaults to 3.

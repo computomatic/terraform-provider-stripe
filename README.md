@@ -61,10 +61,10 @@ resource "stripe_price" "monthly" {
 
 ## Authentication
 
-The provider uses a Stripe secret key (`sk_test_...` or `sk_live_...`) or a restricted key (`rk_...`). Export it as `STRIPE_API_KEY` and leave `api_key` out of the configuration:
+Use a Stripe restricted API key (`rk_test_...` or `rk_live_...`) with only the permissions your configuration needs; the Using Restricted Keys guide lists the permission of every resource and data source. A secret key (`sk_...`) also works, but Stripe advises against secret keys for new uses. Keep the key in a secrets store, export it as `STRIPE_API_KEY` and leave `api_key` out of the configuration:
 
 ```sh
-export STRIPE_API_KEY=sk_test_...
+export STRIPE_API_KEY=rk_test_...
 ```
 
 A test-mode key manages your sandbox and a live-mode key your live account. Never commit a key: a key written into a configuration ends up in version control.

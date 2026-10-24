@@ -371,3 +371,37 @@ func TestDataSourceLeadsHaveNoLifecycleSentences(t *testing.T) {
 		}
 	}
 }
+
+// Every shipped type needs a permissions entry, and an entry with no permission for a part of
+// its type must say which endpoints the reference leaves out.
+func TestPermissionTable(t *testing.T) {
+	s := &schemas{
+		Resources:   []*schema{{Type: "stripe_widget", MoneyNote: "Moves money."}},
+		DataSources: []*schema{{Type: "stripe_widget"}, {Type: "stripe_gauge"}},
+	}
+	entries := map[string]permission{
+		"stripe_widget": {Read: []string{"widget_read"}, Write: []string{"widget_write"}},
+		"stripe_gauge":  {Unverified: []string{"GET /v1/gauges/{id}"}},
+	}
+	got, err := permissionTable(s, entries)
+	if err != nil {
+		t.Fatal(err)
+	}
+	want := "| Type | Data source | Resource | Notes |\n| --- | --- | --- | --- |\n" +
+		"| `stripe_gauge` | Unverified | No resource | Unverified: the reference does not list `GET /v1/gauges/{id}`. |\n" +
+		"| `stripe_widget` | `widget_read` | `widget_write`, `balance_read` | `balance_read` is for the live-mode check. |"
+	if got != want {
+		t.Errorf("got\n%s\nwant\n%s", got, want)
+	}
+
+	for name, bad := range map[string]map[string]permission{
+		"missing type":       {"stripe_widget": entries["stripe_widget"]},
+		"unshipped type":     {"stripe_widget": entries["stripe_widget"], "stripe_gauge": entries["stripe_gauge"], "stripe_gone": {Read: []string{"gone_read"}}},
+		"silent gap":         {"stripe_widget": {Read: []string{"widget_read"}}, "stripe_gauge": entries["stripe_gauge"]},
+		"write, no resource": {"stripe_widget": entries["stripe_widget"], "stripe_gauge": {Read: []string{"gauge_read"}, Write: []string{"gauge_write"}}},
+	} {
+		if _, err := permissionTable(s, bad); err == nil {
+			t.Errorf("%s: want an error", name)
+		}
+	}
+}

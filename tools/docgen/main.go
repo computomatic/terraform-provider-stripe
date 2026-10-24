@@ -146,8 +146,20 @@ func renderAll(s *schemas, root string) (map[string]string, error) {
 	if err != nil {
 		return nil, err
 	}
+	table, err := permissionTable(s, permissions)
+	if err != nil {
+		return nil, err
+	}
+	placed := false
 	for path, page := range guides {
+		if strings.Contains(page, permissionsMarker) {
+			page = strings.ReplaceAll(page, permissionsMarker, table)
+			placed = true
+		}
 		pages[path] = page
+	}
+	if !placed {
+		return nil, fmt.Errorf("no guide holds %s, so the permissions table has no page", permissionsMarker)
 	}
 	for path, page := range pages {
 		if len(page) > maxPageBytes {
@@ -162,7 +174,7 @@ func pagePath(dir, typeName string) string {
 }
 
 // readGuides reads the hand-written guides, keyed by their path under docs/. A guide is copied
-// as it is, and must open with front matter that gives its `page_title`, which the Registry
+// as it is, but for the permissions table renderAll puts in place of permissionsMarker, and must open with front matter that gives its `page_title`, which the Registry
 // requires of guides (documentation layout ADR, D3a).
 func readGuides(dir string) (map[string]string, error) {
 	files, err := filepath.Glob(filepath.Join(dir, "*.md"))
