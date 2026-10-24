@@ -19,7 +19,9 @@ var Resources = []Resource{
 	{Package: "product_catalog_trial_offer", CreatePath: "/v1/product_catalog/trial_offers", UpdatePath: "/v1/product_catalog/trial_offers/{id}"},
 	{Package: "product_feature", CreatePath: "/v1/products/{product}/features"},
 	{Package: "promotion_code", CreatePath: "/v1/promotion_codes", UpdatePath: "/v1/promotion_codes/{promotion_code}"},
-	{Package: "shipping_rate", CreatePath: "/v1/shipping_rates", UpdatePath: "/v1/shipping_rates/{shipping_rate_token}"},
+	// The spec leaves `type` optional, but Stripe refuses a create without it and has no
+	// default (suite: "create without type").
+	{Package: "shipping_rate", CreatePath: "/v1/shipping_rates", UpdatePath: "/v1/shipping_rates/{shipping_rate_token}", Require: []string{"type"}},
 	{Package: "tax_code", ReadPath: "/v1/tax_codes/{id}"},
 	{Package: "tax_rate", CreatePath: "/v1/tax_rates", UpdatePath: "/v1/tax_rates/{tax_rate}"},
 	{Package: "webhook_endpoint", CreatePath: "/v1/webhook_endpoints", UpdatePath: "/v1/webhook_endpoints/{webhook_endpoint}"},

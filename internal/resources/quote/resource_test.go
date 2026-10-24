@@ -22,7 +22,9 @@ const address = "stripe_quote.test"
 // inside the quote.
 func quoteConfig(c acctest.Config, lines string, extra string) string {
 	return c.ProviderBlock() + fmt.Sprintf(`
-resource "stripe_customer" "test" {}
+resource "stripe_customer" "test" {
+  email = "quote@example.com"
+}
 
 resource "stripe_product" "test" {
   name = %q

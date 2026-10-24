@@ -16,7 +16,7 @@ import (
 var Declaration = engine.Declaration{
 	TypeName:              "stripe_subscription",
 	IDPrefix:              "sub_",
-	Description:           "A customer's recurring purchase of one or more prices. `terraform destroy` cancels the subscription immediately, because Stripe cannot delete one: billing stops and the cancelled subscription stays in the account. `items` are matched by `price`: an item whose price stays keeps its ID and changes in place, a new price adds an item, a dropped price deletes it, and a reorder changes nothing. A price may appear once. An item added from outside, such as one that `stripe_subscription_item` created, is not part of `items` and is never changed or deleted by this resource. An update that changes `items` also takes `proration_behavior` and `payment_behavior`. An item that sets `price_data` has no price of its own to match by, so it is matched by its `price_data`: changing its quantity, metadata or other settings updates the item in place, and changing its `price_data` replaces the item, which gets a new item ID. Two items may not carry identical `price_data`.",
+	Description:           "A customer's recurring purchase of one or more prices. `terraform destroy` cancels the subscription immediately, because Stripe cannot delete one: billing stops and the cancelled subscription stays in the account. `items` are matched by `price`: an item whose price stays keeps its ID and changes in place, a new price adds an item, a dropped price deletes it, and a reorder changes nothing. A price may appear once. An item added from outside, such as one that `stripe_subscription_item` created, is not part of `items` and is never changed or deleted by this resource. An update that changes `items` also takes `proration_behavior` and `payment_behavior`. An item that sets `price_data` has no price of its own to match by, so it is matched by its `price_data`: changing its quantity, metadata or other settings updates the item in place, and changing its `price_data` replaces the item, which gets a new item ID. Two items may not carry identical `price_data`. With `collection_method = \"send_invoice\"` the customer needs an email address, or Stripe refuses the create.",
 	DataSourceDescription: "A customer's recurring purchase of one or more prices.",
 	ImportNote:            "Importing a subscription adopts every item it has, so a configuration that lists fewer items deletes the rest on the next apply.",
 	ImportNoteLevel:       engine.NoteWarning,
@@ -28,8 +28,10 @@ var Declaration = engine.Declaration{
 		List:     "/v1/subscriptions",
 	},
 	// Stripe starts an item at quantity 1 and gives it empty metadata, and sets `cancel_at` to
-	// the end of the period when `cancel_at_period_end` is true.
-	ServerDefaulted: []string{"cancel_at", "items.quantity", "items.metadata"},
+	// the end of the period when `cancel_at_period_end` is true. It fills in `payment_settings`
+	// and `trial_settings` when the request leaves them out, even with no trial (suite:
+	// "create/invoiced subscription").
+	ServerDefaulted: []string{"cancel_at", "items.quantity", "items.metadata", "payment_settings", "trial_settings"},
 	// Items are matched by price: an item whose price stays keeps its ID and changes in
 	// place, a new price adds an item and a dropped one deletes it (suite: "swap item price"
 	// names an item by ID).

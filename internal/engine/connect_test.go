@@ -439,6 +439,58 @@ func TestDeleteRefusesOnlyOnARefusal(t *testing.T) {
 	}
 }
 
+// A refused DELETE of an object that the retrieve right after it finds gone, such as an
+// invoice item Stripe deleted along with its draft invoice, succeeds. One the retrieve still
+// finds, or cannot read, fails with Stripe's error.
+func TestDeleteOfAnObjectAlreadyGoneSucceeds(t *testing.T) {
+	refusal := &stripeapi.APIError{Status: 400, Type: "invalid_request_error", Message: "Can't delete an invoice item that is attached to an invoice that is no longer editable"}
+	for name, c := range map[string]struct {
+		retrieve func(stub *stubStripe, ctx context.Context, req stripeapi.Request) (*stripeapi.Response, error)
+		gone     bool
+		warnings int
+	}{
+		"not found": {func(*stubStripe, context.Context, stripeapi.Request) (*stripeapi.Response, error) {
+			return nil, notFound()
+		}, true, 0},
+		"deleted stub": {func(*stubStripe, context.Context, stripeapi.Request) (*stripeapi.Response, error) {
+			return &stripeapi.Response{Status: 200, Body: wire.Object{{Name: "id", Value: wire.String("wid_1")}, {Name: "deleted", Value: wire.Bool(true)}}}, nil
+		}, true, 0},
+		"gone on forbidden": {func(*stubStripe, context.Context, stripeapi.Request) (*stripeapi.Response, error) {
+			return nil, accountInvalid()
+		}, true, 1},
+		"still there": {func(stub *stubStripe, ctx context.Context, req stripeapi.Request) (*stripeapi.Response, error) {
+			return stub.Do(ctx, req)
+		}, false, 0},
+		"retrieve fails": {func(*stubStripe, context.Context, stripeapi.Request) (*stripeapi.Response, error) {
+			return nil, &stripeapi.APIError{Status: 500, Type: "api_error", Message: "down"}
+		}, false, 0},
+	} {
+		stub := newStub()
+		created := false
+		r := configured(t, goneDeclaration(), fixtureTable(), clientFunc(func(ctx context.Context, req stripeapi.Request) (*stripeapi.Response, error) {
+			switch {
+			case req.Method == "DELETE":
+				return nil, refusal
+			case req.Method == "GET" && created:
+				return c.retrieve(stub, ctx, req)
+			}
+			return stub.Do(ctx, req)
+		}))
+		state, _ := r.create(t, createPlan(r))
+		created = true
+		diags := r.destroy(t, state)
+		if c.gone && diags.HasError() {
+			t.Errorf("%s: the destroy must succeed: %v", name, diags)
+		}
+		if !c.gone && (len(diags.Errors()) != 1 || !strings.Contains(diags.Errors()[0].Detail(), "no longer editable")) {
+			t.Errorf("%s: the destroy must fail with Stripe's error: %v", name, diags)
+		}
+		if len(diags.Warnings()) != c.warnings {
+			t.Errorf("%s: want %d warnings: %v", name, c.warnings, diags)
+		}
+	}
+}
+
 // A plan that changes a field that forces replacement together with a refused field is a
 // replace, and the new object is created with the new value, so it is not refused.
 func TestRefuseChangeLetsAReplaceThrough(t *testing.T) {

@@ -3,12 +3,12 @@
 page_title: "stripe_subscription_schedule Resource - Stripe"
 subcategory: ""
 description: |-
-  Changes a subscription over time, in phases. Set status to canceled to cancel the schedule and the subscription it started, or to released to end the schedule and keep the subscription billing on its own. Stripe replaces the phases as a whole on update and needs the current phase to keep its start_date, which an update sends back from the state.
+  Changes a subscription over time, in phases. Set status to canceled to cancel the schedule and the subscription it started, or to released to end the schedule and keep the subscription billing on its own. Stripe replaces the phases as a whole on update and needs the current phase to keep its start_date, which an update sends back from the state. With collection_method = "send_invoice" the customer needs an email address, or Stripe refuses the create.
 ---
 
 # Resource: stripe_subscription_schedule
 
-Changes a subscription over time, in phases. Set `status` to `canceled` to cancel the schedule and the subscription it started, or to `released` to end the schedule and keep the subscription billing on its own. Stripe replaces the phases as a whole on update and needs the current phase to keep its `start_date`, which an update sends back from the state.
+Changes a subscription over time, in phases. Set `status` to `canceled` to cancel the schedule and the subscription it started, or to `released` to end the schedule and keep the subscription billing on its own. Stripe replaces the phases as a whole on update and needs the current phase to keep its `start_date`, which an update sends back from the state. With `collection_method = "send_invoice"` the customer needs an email address, or Stripe refuses the create.
 
 ~> Stripe cannot delete a subscription schedule; set `status` to `canceled` to cancel one and the subscription it started, or to `released` to release the subscription from it. `terraform destroy`, and a change that would replace the subscription schedule, fail at plan time. To stop managing a subscription schedule, remove it from the state as [Removing from State](#removing-from-state) shows; it stays in the Stripe account.
 

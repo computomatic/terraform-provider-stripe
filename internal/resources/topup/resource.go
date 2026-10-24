@@ -13,7 +13,8 @@ import (
 // 2026-10-22-money-moving-resources, D6.8). It moves money, so the live-mode guard applies.
 // Stripe cannot delete one, so destroy is refused. `status` cancels a pending top-up (suite:
 // "cancel", "already canceled"). `description` and `metadata` update (suite: "update"), as the
-// spec's update says.
+// spec's update says. Stripe fills in `payment_method` and `payment_method_options` from the
+// account's bank account when the request leaves them out (suite: "create").
 var Declaration = engine.Declaration{
 	TypeName:              "stripe_topup",
 	IDPrefix:              "tu_",
@@ -25,9 +26,10 @@ var Declaration = engine.Declaration{
 		Update:   "/v1/topups/{id}",
 		List:     "/v1/topups",
 	},
-	MovesMoney:   true,
-	Delete:       engine.Refuse,
-	RefuseReason: "Stripe cannot delete a top-up; set `status` to `canceled` to cancel a pending one.",
+	MovesMoney:      true,
+	Delete:          engine.Refuse,
+	RefuseReason:    "Stripe cannot delete a top-up; set `status` to `canceled` to cancel a pending one.",
+	ServerDefaulted: []string{"payment_method", "payment_method_options"},
 	Transitions: []engine.Transition{
 		{Field: "status", Value: "canceled", Path: "/v1/topups/{id}/cancel", From: []string{"pending"}, Final: []string{"succeeded", "failed", "reversed"}},
 	},

@@ -29,9 +29,10 @@ const (
 func accountBlock(c acctest.Config, name, run string) string {
 	return fmt.Sprintf(`
 resource "stripe_account" %q {
-  type     = "custom"
-  country  = "US"
-  metadata = { run = %q }
+  type         = "custom"
+  country      = "US"
+  capabilities = { transfers = { requested = true } }
+  metadata     = { run = %q }
 }
 `, name, c.Name(run))
 }

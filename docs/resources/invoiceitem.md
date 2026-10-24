@@ -3,12 +3,12 @@
 page_title: "stripe_invoiceitem Resource - Stripe"
 subcategory: ""
 description: |-
-  A line to add to a customer's next invoice, or to a draft invoice. terraform destroy deletes the invoice item. Stripe refuses to delete or change one whose invoice is finalized or void; remove it from the state with terraform state rm then.
+  A line to add to a customer's next invoice, or to a draft invoice. terraform destroy deletes the invoice item; one that Stripe deleted along with its draft invoice is already gone, and its destroy succeeds. Stripe refuses to delete or change one whose invoice is finalized or void; remove it from the state with terraform state rm then.
 ---
 
 # Resource: stripe_invoiceitem
 
-A line to add to a customer's next invoice, or to a draft invoice. `terraform destroy` deletes the invoice item. Stripe refuses to delete or change one whose invoice is finalized or void; remove it from the state with `terraform state rm` then.
+A line to add to a customer's next invoice, or to a draft invoice. `terraform destroy` deletes the invoice item; one that Stripe deleted along with its draft invoice is already gone, and its destroy succeeds. Stripe refuses to delete or change one whose invoice is finalized or void; remove it from the state with `terraform state rm` then.
 
 ## Example Usage
 

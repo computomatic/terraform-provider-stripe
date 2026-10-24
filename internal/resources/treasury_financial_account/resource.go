@@ -21,6 +21,8 @@ import (
 // `restricted_features`. Nothing proves that an update requests or drops a feature, so a change
 // to `features` is refused. Stripe has a close endpoint, but nothing proves closing, and Stripe
 // cannot delete a financial account, so destroy is refused. The suite reads `supported_currencies` as a set of currencies.
+// Stripe fills in `platform_restrictions`, unrestricted, when the request leaves it out
+// ("TestTreasuryFinancialAccount", "list").
 var Declaration = engine.Declaration{
 	TypeName: "stripe_treasury_financial_account",
 	IDPrefix: "fa_",
@@ -36,11 +38,12 @@ var Declaration = engine.Declaration{
 		Update:   "/v1/treasury/financial_accounts/{id}",
 		List:     "/v1/treasury/financial_accounts",
 	},
-	Delete:       engine.Refuse,
-	RefuseReason: "Stripe cannot delete a financial account, and the provider does not close one.",
-	RefuseChange: []string{"features"},
-	Sets:         []string{"supported_currencies"},
-	Sensitive:    []string{"financial_addresses.aba.account_number"},
+	Delete:          engine.Refuse,
+	RefuseReason:    "Stripe cannot delete a financial account, and the provider does not close one.",
+	RefuseChange:    []string{"features"},
+	ServerDefaulted: []string{"platform_restrictions"},
+	Sets:            []string{"supported_currencies"},
+	Sensitive:       []string{"financial_addresses.aba.account_number"},
 }
 
 // NewResource returns the resource constructor the provider registers.

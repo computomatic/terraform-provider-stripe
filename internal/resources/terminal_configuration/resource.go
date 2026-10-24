@@ -10,7 +10,8 @@ import (
 )
 
 // Declaration is what the spec cannot say about a terminal configuration. Stripe deletes one
-// with DELETE and answers a later GET with a deleted stub, so destroy deletes it.
+// with DELETE and answers a later GET with a deleted stub, so destroy deletes it. It answers
+// an omitted `name` with `""` (suite: "create with no parameters").
 var Declaration = engine.Declaration{
 	TypeName:              "stripe_terminal_configuration",
 	IDPrefix:              "tmc_",
@@ -23,7 +24,8 @@ var Declaration = engine.Declaration{
 		Delete:   "/v1/terminal/configurations/{id}",
 		List:     "/v1/terminal/configurations",
 	},
-	Delete: engine.Delete,
+	Delete:          engine.Delete,
+	ServerDefaulted: []string{"name"},
 	Sensitive: []string{
 		"wifi.enterprise_eap_peap.password",
 		"wifi.enterprise_eap_tls.private_key_file_password",

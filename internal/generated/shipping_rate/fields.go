@@ -33,5 +33,5 @@ var Table = []fields.Field{
 	{Name: "metadata", Shape: fields.StringMap, Create: true, Update: true, Response: true, ServerDefaulted: true, Description: "Set of [key-value pairs](https://docs.stripe.com/api/metadata) that you can attach to an object. This can be useful for storing additional information about the object in a structured format. Individual keys can be unset by posting an empty value to them. All keys can be unset by posting an empty value to `metadata`."},
 	{Name: "tax_behavior", Shape: fields.String, Create: true, Update: true, Response: true, Enum: []string{"exclusive", "inclusive", "unspecified"}, Description: "Specifies whether the rate is considered inclusive of taxes or exclusive of taxes. One of `inclusive`, `exclusive`, or `unspecified`."},
 	{Name: "tax_code", Shape: fields.String, Create: true, Response: true, Description: "A [tax code](https://docs.stripe.com/tax/tax-categories) ID. The Shipping tax code is `txcd_92010001`."},
-	{Name: "type", Shape: fields.String, Create: true, Response: true, ServerDefaulted: true, Enum: []string{"fixed_amount"}, Description: "The type of calculation to use on the shipping rate."},
+	{Name: "type", Shape: fields.String, Required: true, Create: true, Response: true, Enum: []string{"fixed_amount"}, Description: "The type of calculation to use on the shipping rate."},
 }

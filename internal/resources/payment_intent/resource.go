@@ -18,7 +18,7 @@ import (
 var Declaration = engine.Declaration{
 	TypeName:              "stripe_payment_intent",
 	IDPrefix:              "pi_",
-	Description:           "A customer payment. Set `status` to `succeeded` to confirm the intent with its `payment_method` and, when `capture_method` is `manual`, to capture it in the same apply; set it to `canceled` to cancel one that has not succeeded. Confirming with a card that needs a further action, or that is declined, leaves the intent where Stripe put it and fails the apply. Setting `payment_method` moves the intent to `requires_confirmation`; a test payment method such as `pm_card_visa`, which Stripe turns into a new one, stays in the state as configured. Stripe changes `amount`, `currency` and `setup_future_usage` only before the intent is confirmed (`requires_payment_method`, `requires_confirmation` or `requires_action`), `statement_descriptor_suffix` also while it is `requires_capture`, and `capture_method` only while it is `requires_payment_method` or `requires_confirmation`; it refuses such a change in any other status, and the apply fails. `description`, `metadata` and `receipt_email` still change once it has succeeded. Stripe cannot unset a transfer group, so removing `transfer_group` from the configuration keeps the current value. The `client_secret` is sensitive.",
+	Description:           "A customer payment. Set `status` to `succeeded` to confirm the intent with its `payment_method` and, when `capture_method` is `manual`, to capture it in the same apply; set it to `canceled` to cancel one that has not succeeded. Confirming with a card that needs a further action, or that is declined, leaves the intent where Stripe put it and fails the apply. Setting `payment_method` moves the intent to `requires_confirmation`; a test payment method such as `pm_card_visa`, which Stripe turns into a new one, stays in the state as configured. Stripe changes `amount`, `currency` and `setup_future_usage` only before the intent is confirmed (`requires_payment_method`, `requires_confirmation` or `requires_action`), `statement_descriptor_suffix` also while it is `requires_capture`, and `capture_method` only while it is `requires_payment_method` or `requires_confirmation`; it refuses such a change in any other status, and the apply fails. `description`, `metadata` and `receipt_email` still change once it has succeeded. `transfer_group` is sent on creation only: Stripe refuses to change a transfer group once set, so a plan that sets or changes it on an existing payment intent fails, and removing it from the configuration keeps the current value. The `client_secret` is sensitive.",
 	DataSourceDescription: "A customer payment, such as the one behind an invoice. The intent's `amount_details`, `payment_method_options` and the nested objects of its last payment error are not available.",
 	Paths: engine.Paths{
 		Create:   "/v1/payment_intents",
@@ -37,10 +37,14 @@ var Declaration = engine.Declaration{
 	// `transfer_group` (suite: "transfer_group cannot be unset"), so it is computed too: removing
 	// it from the configuration keeps the current value and sends nothing.
 	ServerDefaulted: []string{"capture_method", "confirmation_method", "transfer_group"},
+	// Stripe refuses to change `transfer_group` once set (suite: "update transfer_group once
+	// set"), and a payment intent cannot be replaced, so a change fails the plan. It is sent on
+	// create only.
+	RefuseChange: []string{"transfer_group"},
 	// The suite proves updates of `amount`, `customer`, `description`, `metadata` and
 	// `payment_method` ("update", "update payment method moves status"), and of `currency`,
-	// `receipt_email`, `statement_descriptor_suffix`, `setup_future_usage`, `capture_method`,
-	// `transfer_group` and `shipping` before confirmation ("update further fields"). Stripe
+	// `receipt_email`, `statement_descriptor_suffix`, `setup_future_usage`, `capture_method`
+	// and `shipping` before confirmation ("update further fields"). Stripe
 	// refuses some of them in later statuses ("update once authorized", "update once
 	// succeeded"), at apply. The other fields the spec takes on update are not proven, so they
 	// are treated as create-only.

@@ -3,12 +3,12 @@
 page_title: "stripe_terminal_location Resource - Stripe"
 subcategory: ""
 description: |-
-  A place where you use Stripe Terminal readers. terraform destroy deletes the location. Changing the country of address creates a new location, because Stripe cannot change it.
+  A place where you use Stripe Terminal readers. terraform destroy deletes the location. Changing the country of address creates a new location, because Stripe cannot change it. A location in the US needs address.state.
 ---
 
 # Resource: stripe_terminal_location
 
-A place where you use Stripe Terminal readers. `terraform destroy` deletes the location. Changing the country of `address` creates a new location, because Stripe cannot change it.
+A place where you use Stripe Terminal readers. `terraform destroy` deletes the location. Changing the country of `address` creates a new location, because Stripe cannot change it. A location in the US needs `address.state`.
 
 ## Example Usage
 

@@ -1,5 +1,6 @@
 resource "stripe_shipping_rate" "ground" {
   display_name = "Ground shipping"
+  type         = "fixed_amount"
   tax_behavior = "exclusive"
 
   fixed_amount = {

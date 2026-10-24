@@ -36,9 +36,11 @@ var Declaration = engine.Declaration{
 		Update:   "/v1/issuing/cardholders/{id}",
 		List:     "/v1/issuing/cardholders",
 	},
-	Delete:          engine.Archive,
-	Archive:         &engine.ArchiveAction{Field: "status", Value: wire.String("inactive")},
-	ServerDefaulted: []string{"spending_controls"},
+	Delete:  engine.Archive,
+	Archive: &engine.ArchiveAction{Field: "status", Value: wire.String("inactive")},
+	// Stripe fills in an individual's `verification` with no document, and the limits'
+	// currency from the account's when limits are set without one (suite: "TestIssuingCardholder").
+	ServerDefaulted: []string{"individual.verification", "spending_controls", "spending_controls.spending_limits_currency"},
 	Sensitive:       []string{"company.tax_id"},
 }
 

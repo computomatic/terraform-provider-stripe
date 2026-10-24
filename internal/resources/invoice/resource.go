@@ -45,8 +45,10 @@ var Declaration = engine.Declaration{
 	// The confirmation secret is the client secret of the invoice's payment.
 	Sensitive: []string{"confirmation_secret.client_secret"},
 	// Stripe numbers an invoice, dates it and sets when it is due when it finalizes it
-	// (suite: "finalize"), and schedules a draft's finalization when it auto-advances.
-	ServerDefaulted: []string{"automatically_finalizes_at", "due_date", "effective_at", "number"},
+	// (suite: "finalize"), and schedules a draft's finalization when it auto-advances. It
+	// fills in `rendering` when the request leaves it out (suite: "draft produced by a pending
+	// invoice item").
+	ServerDefaulted: []string{"automatically_finalizes_at", "due_date", "effective_at", "number", "rendering"},
 	// The spec's update takes these, which the suite has not proven.
 	ReplaceOn: []string{
 		"account_tax_ids", "application_fee_amount", "automatic_tax", "default_source", "default_tax_rates", "issuer",

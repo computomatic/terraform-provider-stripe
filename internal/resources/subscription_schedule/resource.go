@@ -16,7 +16,7 @@ import (
 var Declaration = engine.Declaration{
 	TypeName:              "stripe_subscription_schedule",
 	IDPrefix:              "sub_sched_",
-	Description:           "Changes a subscription over time, in phases. Set `status` to `canceled` to cancel the schedule and the subscription it started, or to `released` to end the schedule and keep the subscription billing on its own. Stripe replaces the phases as a whole on update and needs the current phase to keep its `start_date`, which an update sends back from the state.",
+	Description:           "Changes a subscription over time, in phases. Set `status` to `canceled` to cancel the schedule and the subscription it started, or to `released` to end the schedule and keep the subscription billing on its own. Stripe replaces the phases as a whole on update and needs the current phase to keep its `start_date`, which an update sends back from the state. With `collection_method = \"send_invoice\"` the customer needs an email address, or Stripe refuses the create.",
 	DataSourceDescription: "Changes a subscription over time, in phases.",
 	Paths: engine.Paths{
 		Create:   "/v1/subscription_schedules",

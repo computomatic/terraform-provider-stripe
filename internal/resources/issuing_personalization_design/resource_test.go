@@ -39,6 +39,8 @@ func issuing(t *testing.T) scope {
 }
 
 // designConfig is a design on the scope's bundle with its logo. extra lands inside the design.
+// A bundle may require carrier text (suite: "no carrier text on a bundle that requires it"),
+// so every design that is created sets it.
 func designConfig(s scope, extra string) string {
 	return s.acct.ProviderBlock() + s.conn.ConnectedProviderBlock() + fmt.Sprintf(`
 resource "stripe_issuing_personalization_design" "test" {
@@ -242,7 +244,7 @@ resource "stripe_issuing_personalization_design" "rejected" {
 // delete a design: the apply fails before anything is created.
 func TestAccIssuingPersonalizationDesign_replace(t *testing.T) {
 	s := issuing(t)
-	cfg := designConfig(s, "")
+	cfg := designConfig(s, carrierText)
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: tfacc.ProviderFactories,
 		Steps: acctest.Forget(t, []resource.TestStep{
@@ -278,7 +280,7 @@ func TestAccIssuingPersonalizationDesign_import(t *testing.T) {
 // The identity form needs Terraform or OpenTofu 1.12.0 or later.
 func TestAccIssuingPersonalizationDesign_importIdentity(t *testing.T) {
 	s := issuing(t)
-	cfg := designConfig(s, "")
+	cfg := designConfig(s, carrierText)
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: tfacc.ProviderFactories,
 		TerraformVersionChecks:   []tfversion.TerraformVersionCheck{tfversion.RequireAbove(version.Must(version.NewVersion("1.12.0")))},
@@ -302,7 +304,7 @@ func TestAccIssuingPersonalizationDesign_delete(t *testing.T) {
 	var path string
 	var mark int
 	key := s.acct.Unique("design_delete")
-	cfg := designConfig(s, fmt.Sprintf("  lookup_key = %q\n", key))
+	cfg := designConfig(s, fmt.Sprintf("  lookup_key = %q\n", key)+carrierText)
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: tfacc.ProviderFactories,
 		Steps: acctest.Forget(t, []resource.TestStep{
@@ -318,7 +320,7 @@ func TestAccIssuingPersonalizationDesign_delete(t *testing.T) {
 func TestAccIssuingPersonalizationDesign_drift(t *testing.T) {
 	s := issuing(t)
 	var id string
-	cfg := designConfig(s, fmt.Sprintf("  name     = %q\n  metadata = { env = \"test\" }\n", s.acct.Name("Standard design")))
+	cfg := designConfig(s, fmt.Sprintf("  name     = %q\n  metadata = { env = \"test\" }\n", s.acct.Name("Standard design"))+carrierText)
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: tfacc.ProviderFactories,
 		Steps: acctest.Forget(t, []resource.TestStep{

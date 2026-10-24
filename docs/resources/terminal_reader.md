@@ -17,9 +17,10 @@ resource "stripe_terminal_location" "store" {
   display_name = "Main Street store"
 
   address = {
-    line1       = "1 Main St"
-    city        = "Springfield"
-    postal_code = "12345"
+    line1       = "354 Oyster Point Blvd"
+    city        = "South San Francisco"
+    state       = "CA"
+    postal_code = "94080"
     country     = "US"
   }
 }

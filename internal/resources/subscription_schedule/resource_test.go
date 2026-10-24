@@ -33,8 +33,12 @@ func scheduleConfig(c acctest.Config, customer string, phases string, extra stri
 // scheduleConfigFrom is scheduleConfig with the start line in the caller's hands.
 func scheduleConfigFrom(c acctest.Config, customer string, start string, phases string, extra string) string {
 	return c.ProviderBlock() + fmt.Sprintf(`
-resource "stripe_customer" "a" {}
-resource "stripe_customer" "b" {}
+resource "stripe_customer" "a" {
+  email = "schedule-a@example.com"
+}
+resource "stripe_customer" "b" {
+  email = "schedule-b@example.com"
+}
 
 resource "stripe_product" "test" {
   name = %q

@@ -84,15 +84,10 @@ func (m *model) destroyNote() string {
 }
 
 // refusedByStripe reports whether err is Stripe refusing to delete or archive an object
-// that a retrieve afterwards shows in the declaration's RefuseWhen state. A failed retrieve
-// leaves err as Stripe's.
-func (r *Resource) refusedByStripe(ctx context.Context, id, parent string, err error) bool {
+// that body, the retrieve afterwards, shows in the declaration's RefuseWhen state.
+func (r *Resource) refusedByStripe(err error, body wire.Object) bool {
 	w := r.m.decl.RefuseWhen
 	if w == nil || !refused(err, &Refusal{Status: http.StatusBadRequest, Type: "invalid_request_error"}) {
-		return false
-	}
-	body, getErr := r.api.call(ctx, "GET", r.m.expand(r.m.decl.Paths.Retrieve, id, parent), nil)
-	if getErr != nil {
 		return false
 	}
 	v, ok := body.Get(w.Field)

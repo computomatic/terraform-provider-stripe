@@ -27,8 +27,8 @@ var Declaration = engine.Declaration{
 	},
 	// Stripe returns the line items only when asked for (suite: "create minimal").
 	Expand: []string{"line_items"},
-	// Stripe fills in `managed_payments` when the request leaves it out.
-	ServerDefaulted: []string{"managed_payments"},
+	// Stripe fills these in when the request leaves them out (suite: "create minimal").
+	ServerDefaulted: []string{"invoice_creation", "managed_payments"},
 	// Line items are matched by price. The suite proves only a quantity change on an item named
 	// by its `id`; adding, removing or repricing an item is not proven, so it replaces the link.
 	// Line items cannot exist outside a payment link, so the resource manages them all.

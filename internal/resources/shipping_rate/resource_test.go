@@ -25,6 +25,7 @@ func rateConfig(c acctest.Config, name string, extra string) string {
 	return c.ProviderBlock() + fmt.Sprintf(`
 resource "stripe_shipping_rate" "test" {
   display_name = %q
+  type         = "fixed_amount"
   fixed_amount = {
     amount   = 500
     currency = "usd"

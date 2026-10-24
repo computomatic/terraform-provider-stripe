@@ -137,7 +137,7 @@ func TestAccPaymentIntent_replace(t *testing.T) {
 }
 
 // Before confirmation, `currency`, `receipt_email`, `statement_descriptor_suffix`,
-// `setup_future_usage`, `capture_method`, `transfer_group` and `shipping` change in place, and
+// `setup_future_usage`, `capture_method` and `shipping` change in place, and
 // removing `receipt_email`, `setup_future_usage` and `shipping` clears them (suite: "update
 // further fields", "clearing optional fields").
 func TestAccPaymentIntent_updateFurtherFields(t *testing.T) {
@@ -146,7 +146,6 @@ func TestAccPaymentIntent_updateFurtherFields(t *testing.T) {
 	kept := `  description = "kept"
   statement_descriptor_suffix = "UPDATED"
   capture_method = "manual"
-  transfer_group = "group-1"
 `
 	further := kept + `  receipt_email = "receipt@example.com"
   setup_future_usage = "off_session"
@@ -178,7 +177,6 @@ func TestAccPaymentIntent_updateFurtherFields(t *testing.T) {
 					resource.TestCheckResourceAttr(address, "statement_descriptor_suffix", "UPDATED"),
 					resource.TestCheckResourceAttr(address, "setup_future_usage", "off_session"),
 					resource.TestCheckResourceAttr(address, "capture_method", "manual"),
-					resource.TestCheckResourceAttr(address, "transfer_group", "group-1"),
 					resource.TestCheckResourceAttr(address, "shipping.name", "Shipping name"),
 					resource.TestCheckResourceAttr(address, "shipping.address.line1", "1 Main St"),
 					resource.TestCheckResourceAttr(address, "status", "requires_payment_method"),
@@ -202,32 +200,28 @@ func TestAccPaymentIntent_updateFurtherFields(t *testing.T) {
 	})
 }
 
-// Stripe refuses to unset `transfer_group` (suite: "transfer_group cannot be unset"), so
+// `transfer_group` is sent on create. Stripe refuses to unset it (suite: "transfer_group
+// cannot be unset") or to change it once set (suite: "update transfer_group once set"), so
 // removing it from the configuration plans no change and the intent keeps its group, while a
-// new group still changes in place. The fake takes `transfer_group` on update only, so the
-// intent is created without one.
+// new group fails the plan.
 func TestAccPaymentIntent_transferGroupKept(t *testing.T) {
 	acct := acctest.NewAccount(t)
-	var id, path string
+	var path string
 	cfg := intentConfig(acct, "  description = \"grouped\"\n")
-	grouped := func(group string) resource.TestStep {
-		return resource.TestStep{
-			Config: intentConfig(acct, "  description = \"grouped\"\n  transfer_group = \""+group+"\"\n"),
-			ConfigPlanChecks: resource.ConfigPlanChecks{PreApply: []plancheck.PlanCheck{
-				plancheck.ExpectResourceAction(address, plancheck.ResourceActionUpdate),
-			}},
-			Check: resource.ComposeAggregateTestCheckFunc(
-				sameIntent(&id),
-				resource.TestCheckResourceAttr(address, "transfer_group", group),
-				tfacc.Holds(t, acct, &path, "transfer_group", wire.String(group)),
-			),
-		}
+	grouped := func(group string) string {
+		return intentConfig(acct, "  description = \"grouped\"\n  transfer_group = \""+group+"\"\n")
 	}
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: tfacc.ProviderFactories,
 		Steps: acctest.Forget(t, []resource.TestStep{
-			{Config: cfg, Check: resource.ComposeAggregateTestCheckFunc(idOf(&id), pathOf(&path))},
-			grouped("group-1"),
+			{
+				Config: grouped("group-1"),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					pathOf(&path),
+					resource.TestCheckResourceAttr(address, "transfer_group", "group-1"),
+					tfacc.Holds(t, acct, &path, "transfer_group", wire.String("group-1")),
+				),
+			},
 			{
 				Config: cfg,
 				ConfigPlanChecks: resource.ConfigPlanChecks{PreApply: []plancheck.PlanCheck{
@@ -238,7 +232,11 @@ func TestAccPaymentIntent_transferGroupKept(t *testing.T) {
 					tfacc.Holds(t, acct, &path, "transfer_group", wire.String("group-1")),
 				),
 			},
-			grouped("group-2"),
+			{
+				Config:      grouped("group-2"),
+				PlanOnly:    true,
+				ExpectError: regexp.MustCompile("(?s)Changing `transfer_group` is not supported yet.*removed block"),
+			},
 		}, nil, "stripe_payment_intent"),
 	})
 }

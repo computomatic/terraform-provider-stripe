@@ -1,6 +1,11 @@
 resource "stripe_account" "seller" {
   type    = "custom"
   country = "US"
+
+  # A custom account must request at least one capability.
+  capabilities = {
+    transfers = { requested = true }
+  }
 }
 
 # Stripe's test values for a person who always verifies. In live mode, pass the person's
