@@ -33,7 +33,8 @@ var Declaration = engine.Declaration{
 	// Stripe fills these in from the mode and the account when the request leaves them out
 	// (suite: "create minimal").
 	ServerDefaulted: []string{
-		"currency", "customer_creation", "payment_method_collection", "phone_number_collection",
+		"adaptive_pricing", "branding_settings", "currency", "customer_creation", "invoice_creation",
+		"managed_payments", "payment_method_collection", "payment_method_options", "phone_number_collection",
 		"redirect_on_completion", "tax_id_collection", "ui_mode",
 	},
 	// The spec's update takes them, but Stripe refuses any change of a hosted session's line

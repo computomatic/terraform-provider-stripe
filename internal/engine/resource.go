@@ -764,13 +764,19 @@ func (r *Resource) Delete(ctx context.Context, req resource.DeleteRequest, resp 
 	case Archive:
 		err = r.archive(ctx, id, parent)
 	}
-	if err != nil && r.refusedByStripe(ctx, id, parent, err) {
-		r.api.fail(&resp.Diagnostics, err)
-		resp.Diagnostics.AddError("Cannot destroy "+r.m.decl.TypeName, r.m.destroyRefusal(r.m.decl.RefuseWhen.Reason))
+	if err == nil || r.m.gone(err, &resp.Diagnostics) {
 		return
 	}
-	if err != nil && !r.m.gone(err, &resp.Diagnostics) {
-		r.api.fail(&resp.Diagnostics, err)
+	// A failed delete of an object that is already gone, such as an invoice item Stripe
+	// deleted along with its draft invoice, has done what destroy asks. A failed retrieve
+	// leaves err as Stripe's.
+	body, getErr := r.api.call(ctx, "GET", r.m.expand(r.m.decl.Paths.Retrieve, id, parent), nil)
+	if r.m.gone(getErr, &resp.Diagnostics) || getErr == nil && isDeletedStub(body) {
+		return
+	}
+	r.api.fail(&resp.Diagnostics, err)
+	if getErr == nil && r.refusedByStripe(err, body) {
+		resp.Diagnostics.AddError("Cannot destroy "+r.m.decl.TypeName, r.m.destroyRefusal(r.m.decl.RefuseWhen.Reason))
 	}
 }
 

@@ -38,10 +38,16 @@ import (
 // the fake does not show, so `individual` and `company` keep what the configuration says,
 // as `external_account` does, and the two numbers are sensitive. The business type, the
 // business profile values and the acceptances are read back and server-filled, like `email`.
+//
+// Stripe fills the settings' display name, statement descriptor and descriptor prefix in from
+// a new account's business name (suite: "create with a business name fills settings"), and
+// the sandbox has answered other settings too. What an update of the name does to them is not
+// proven, so a plan that changes the name leaves `settings` unknown where the configuration
+// does not set it, and the apply takes what Stripe answers.
 var Declaration = engine.Declaration{
 	TypeName:              "stripe_account",
 	IDPrefix:              "acct_",
-	Description:           "A connected account of the platform. `terraform destroy` deletes the account and, with it, its bank accounts. Set exactly one of `type` (a custom account) or `controller` (an account whose controller properties you choose), together with `country`. `type`, `controller` and `country` cannot change on an existing account, so changing one replaces it. The resource requests the capabilities it lists on creation only: a plan that changes `capabilities` on an existing account fails, because changing requested capabilities is not supported yet: revert the configuration, ignore the change, or recreate the account deliberately with `terraform taint` (`tofu taint` in OpenTofu). Read their status with the `stripe_account_capability` data source. The onboarding arguments (`business_type`, `individual`, `company`, `external_account`, `tos_acceptance`, `settings.card_issuing.tos_acceptance`, `settings.treasury.tos_acceptance` and the business profile's `mcc`, `url`, `product_description`, `annual_revenue` and `estimated_worker_count`) are sent on creation only, and a plan that changes one on an existing account fails in the same way. Stripe never returns `individual.id_number` or `individual.ssn_last_4`, and the provider does not read `individual`, `company` or `external_account` back, so state keeps the values you configured, and the two identity numbers are sensitive. Removing `email`, `business_type`, `tos_acceptance` or a `business_profile` or `settings` argument from the configuration leaves the value on the account. A refresh that finds the account gone (Stripe answers 403 `account_invalid`) removes it from state.",
+	Description:           "A connected account of the platform. `terraform destroy` deletes the account and, with it, its bank accounts. Set exactly one of `type` (a custom account) or `controller` (an account whose controller properties you choose), together with `country`. `type`, `controller` and `country` cannot change on an existing account, so changing one replaces it. Stripe refuses a custom account that requests no capability: one in the US must request at least `transfers`. The resource requests the capabilities it lists on creation only: a plan that changes `capabilities` on an existing account fails, because changing requested capabilities is not supported yet: revert the configuration, ignore the change, or recreate the account deliberately with `terraform taint` (`tofu taint` in OpenTofu). Read their status with the `stripe_account_capability` data source. The onboarding arguments (`business_type`, `individual`, `company`, `external_account`, `tos_acceptance`, `settings.card_issuing.tos_acceptance`, `settings.treasury.tos_acceptance` and the business profile's `mcc`, `url`, `product_description`, `annual_revenue` and `estimated_worker_count`) are sent on creation only, and a plan that changes one on an existing account fails in the same way. Stripe never returns `individual.id_number` or `individual.ssn_last_4`, and the provider does not read `individual`, `company` or `external_account` back, so state keeps the values you configured, and the two identity numbers are sensitive. Removing `email`, `business_type`, `tos_acceptance` or a `business_profile` or `settings` argument from the configuration leaves the value on the account. A refresh that finds the account gone (Stripe answers 403 `account_invalid`) removes it from state.",
 	DataSourceDescription: "A connected account of the platform.",
 	ImportNote:            "Stripe does not return which capabilities were requested, and the provider does not read back `individual`, `company` or `external_account`, so an imported account has none of them in state. Add `lifecycle { ignore_changes = [capabilities, individual, company, external_account] }`, listing those the configuration sets, because a plan that changes one of them fails.",
 	ImportNoteLevel:       engine.NoteWarning,
@@ -61,7 +67,8 @@ var Declaration = engine.Declaration{
 		"business_profile.annual_revenue", "business_profile.estimated_worker_count",
 		"settings.card_issuing.tos_acceptance", "settings.treasury.tos_acceptance",
 	},
-	Sensitive: []string{"individual.id_number", "individual.ssn_last_4"},
+	Sensitive:  []string{"individual.id_number", "individual.ssn_last_4"},
+	FilledFrom: map[string][]string{"business_profile.name": {"settings"}},
 	ServerDefaulted: []string{
 		"type", "email", "business_type", "business_profile", "business_profile.name",
 		"business_profile.mcc", "business_profile.url", "business_profile.product_description",

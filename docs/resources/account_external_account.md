@@ -3,12 +3,12 @@
 page_title: "stripe_account_external_account Resource - Stripe"
 subcategory: ""
 description: |-
-  A bank account that a connected account is paid out to. terraform destroy deletes it. The first bank account added in a currency is its default: bank accounts created in one apply are added in no fixed order, so order them with depends_on or set default_for_currency. The bank account is also served as bank_accounts in Stripe's API: it is the same object. Stripe never returns the account_number, so state keeps the value you configured and treats it as sensitive. Only account_holder_name, account_holder_type, default_for_currency and metadata change in place; changing anything else creates a new bank account.
+  A bank account that a connected account is paid out to. terraform destroy deletes it. The first bank account added in a currency is its default: bank accounts created in one apply are added in no fixed order, so order them with depends_on or set default_for_currency. Stripe refuses default_for_currency = false on an account's first bank account in a currency. The bank account is also served as bank_accounts in Stripe's API: it is the same object. Stripe never returns the account_number, so state keeps the value you configured and treats it as sensitive. Only account_holder_name, account_holder_type, default_for_currency and metadata change in place; changing anything else creates a new bank account.
 ---
 
 # Resource: stripe_account_external_account
 
-A bank account that a connected account is paid out to. `terraform destroy` deletes it. The first bank account added in a currency is its default: bank accounts created in one apply are added in no fixed order, so order them with `depends_on` or set `default_for_currency`. The bank account is also served as `bank_accounts` in Stripe's API: it is the same object. Stripe never returns the `account_number`, so state keeps the value you configured and treats it as sensitive. Only `account_holder_name`, `account_holder_type`, `default_for_currency` and `metadata` change in place; changing anything else creates a new bank account.
+A bank account that a connected account is paid out to. `terraform destroy` deletes it. The first bank account added in a currency is its default: bank accounts created in one apply are added in no fixed order, so order them with `depends_on` or set `default_for_currency`. Stripe refuses `default_for_currency = false` on an account's first bank account in a currency. The bank account is also served as `bank_accounts` in Stripe's API: it is the same object. Stripe never returns the `account_number`, so state keeps the value you configured and treats it as sensitive. Only `account_holder_name`, `account_holder_type`, `default_for_currency` and `metadata` change in place; changing anything else creates a new bank account.
 
 ~> Stripe refuses to delete the default bank account of a currency; make another bank account the default first, or remove this one from the state before destroying the account, which deletes its bank accounts. `terraform destroy`, and a change that would replace it, fail at plan time for such an account external account. To stop managing one, remove it from the state as [Removing from State](#removing-from-state) shows; it stays in the Stripe account.
 
@@ -18,6 +18,11 @@ A bank account that a connected account is paid out to. `terraform destroy` dele
 resource "stripe_account" "seller" {
   type    = "custom"
   country = "US"
+
+  # A custom account must request at least one capability.
+  capabilities = {
+    transfers = { requested = true }
+  }
 }
 
 # Stripe's test bank account for the United States. In live mode, pass the seller's own

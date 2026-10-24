@@ -25,7 +25,9 @@ const address = "stripe_subscription_item.test"
 // the added item.
 func itemConfig(c acctest.Config, price string, extra string) string {
 	return c.ProviderBlock() + fmt.Sprintf(`
-resource "stripe_customer" "test" {}
+resource "stripe_customer" "test" {
+  email = "subscription-item@example.com"
+}
 
 resource "stripe_product" "test" {
   name = %q
@@ -145,7 +147,9 @@ func TestAccSubscriptionItem_replace(t *testing.T) {
 	acct := acctest.NewAccount(t)
 	var first string
 	other := acct.ProviderBlock() + `
-resource "stripe_customer" "test" {}
+resource "stripe_customer" "test" {
+  email = "subscription-item@example.com"
+}
 
 resource "stripe_product" "test" {
   name = %q

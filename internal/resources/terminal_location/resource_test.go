@@ -20,19 +20,28 @@ func TestMain(m *testing.M) { os.Exit(acctest.Main(m)) }
 const address = "stripe_terminal_location.test"
 
 // locationConfig is a location in the given country with the given street line. extra
-// lands inside the resource block.
+// lands inside the resource block. A location in the US has the suite's city, state and
+// postal code, because Stripe requires its state (suite: "create in the US without address
+// state").
 func locationConfig(c acctest.Config, name, country, line1, extra string) string {
+	place := `    city        = "Springfield"
+    postal_code = "12345"
+`
+	if country == "US" {
+		place = `    city        = "South San Francisco"
+    state       = "CA"
+    postal_code = "94080"
+`
+	}
 	return c.ProviderBlock() + fmt.Sprintf(`
 resource "stripe_terminal_location" "test" {
   display_name = %q
   address = {
     line1       = %q
-    city        = "Springfield"
-    postal_code = "12345"
-    country     = %q
+%s    country     = %q
   }
 %s}
-`, c.Name(name), line1, country, extra)
+`, c.Name(name), line1, place, country, extra)
 }
 
 func idOf(dst *string) resource.TestCheckFunc {
@@ -60,7 +69,9 @@ data "stripe_terminal_location" "test" {
 				resource.TestCheckResourceAttr(address, "phone", "+15555550100"),
 				resource.TestCheckResourceAttr(address, "metadata.team", "a"),
 				resource.TestCheckResourceAttrPair("data.stripe_terminal_location.test", "id", address, "id"),
-				resource.TestCheckResourceAttr("data.stripe_terminal_location.test", "address.city", "Springfield"),
+				resource.TestCheckResourceAttr("data.stripe_terminal_location.test", "address.city", "South San Francisco"),
+				// Stripe answers an omitted second line with an empty string.
+				resource.TestCheckResourceAttr(address, "address.line2", ""),
 			),
 		}},
 	})

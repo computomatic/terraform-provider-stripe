@@ -30,8 +30,9 @@ resource "stripe_terminal_location" "test" {
   display_name = %q
   address = {
     line1       = "1 Main St"
-    city        = "Springfield"
-    postal_code = "12345"
+    city        = "South San Francisco"
+    state       = "CA"
+    postal_code = "94080"
     country     = "US"
   }
 }
@@ -40,8 +41,9 @@ resource "stripe_terminal_location" "other" {
   display_name = %q
   address = {
     line1       = "2 Main St"
-    city        = "Springfield"
-    postal_code = "12345"
+    city        = "South San Francisco"
+    state       = "CA"
+    postal_code = "94080"
     country     = "US"
   }
 }

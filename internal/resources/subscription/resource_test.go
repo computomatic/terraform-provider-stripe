@@ -28,7 +28,9 @@ func subscriptionConfig(c acctest.Config, items string, extra string) string {
 
 func subscriptionDue(c acctest.Config, days int, items string, extra string) string {
 	return c.ProviderBlock() + fmt.Sprintf(`
-resource "stripe_customer" "test" {}
+resource "stripe_customer" "test" {
+  email = "subscription@example.com"
+}
 
 resource "stripe_product" "test" {
   name = %q
@@ -394,8 +396,12 @@ func TestAccSubscription_replace(t *testing.T) {
 	var first string
 	cfg := func(customer string) string {
 		return acct.ProviderBlock() + fmt.Sprintf(`
-resource "stripe_customer" "a" {}
-resource "stripe_customer" "b" {}
+resource "stripe_customer" "a" {
+  email = "subscription-a@example.com"
+}
+resource "stripe_customer" "b" {
+  email = "subscription-b@example.com"
+}
 
 resource "stripe_product" "test" {
   name = %q

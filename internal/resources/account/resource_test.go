@@ -163,7 +163,7 @@ resource "stripe_account" "test" {
 // metadata; it refuses country, type and controller there, so the provider never sends them.
 func TestAccAccount_update(t *testing.T) {
 	acct := acctest.NewAccount(t)
-	name := acct.Name("Acme Supplies")
+	name := "Acme Supplies"
 	var first string
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: tfacc.ProviderFactories,
@@ -338,7 +338,7 @@ func TestAccAccount_import(t *testing.T) {
 // The identity form needs Terraform or OpenTofu 1.12.0 or later.
 func TestAccAccount_importIdentity(t *testing.T) {
 	acct := acctest.NewAccount(t)
-	cfg := customConfig(acct, "  lifecycle {\n    ignore_changes = [capabilities]\n  }\n")
+	cfg := customConfig(acct, capabilities+"  lifecycle {\n    ignore_changes = [capabilities]\n  }\n")
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: tfacc.ProviderFactories,
 		TerraformVersionChecks:   []tfversion.TerraformVersionCheck{tfversion.RequireAbove(version.Must(version.NewVersion("1.12.0")))},
@@ -449,7 +449,10 @@ type onboarding struct {
 }
 
 // verified is the onboarding Stripe documents as always verifying, which the suite sends
-// ("verifiedIndividualForm", "issuingAccountForm").
+// ("verifiedIndividualForm", "issuingAccountForm"). Stripe fills an account's settings in from
+// its business name, and the suite proves that only for a name of 10 to 22 letters, digits and
+// single spaces ("create with a business name fills settings"), so a business name never
+// carries the smoke prefix: nothing finds an account by its name.
 var verified = onboarding{name: "Rosen Software", mcc: "5734", firstName: "Jenny", idNumber: "000000000", issuingIP: "8.8.8.8"}
 
 // onboardedConfig is a US Custom individual account onboarded through the resource alone. It
@@ -488,7 +491,7 @@ func onboardedConfig(c acctest.Config, o onboarding, extra string) string {
     card_issuing = { tos_acceptance = { date = 1609459200, ip = %[5]q } }
     treasury     = { tos_acceptance = { date = 1609459200, ip = "8.8.8.8" } }
   }
-%[6]s`, c.Name("jenny")+"@example.com", o.mcc, o.firstName, o.idNumber, o.issuingIP, extra, c.Name(o.name)))
+%[6]s`, c.Name("jenny")+"@example.com", o.mcc, o.firstName, o.idNumber, o.issuingIP, extra, o.name))
 }
 
 // capabilityData reads the status of each onboarded capability.
@@ -546,6 +549,9 @@ func TestAccAccount_onboard(t *testing.T) {
 					resource.TestCheckResourceAttr(address, "tos_acceptance.ip", "8.8.8.8"),
 					resource.TestCheckResourceAttr(address, "settings.card_issuing.tos_acceptance.ip", "8.8.8.8"),
 					resource.TestCheckResourceAttr(address, "settings.treasury.tos_acceptance.date", "1609459200"),
+					// Stripe fills these in from the business name.
+					resource.TestCheckResourceAttr(address, "settings.dashboard.display_name", verified.name),
+					resource.TestCheckResourceAttr(address, "settings.payments.statement_descriptor", "ROSEN SOFTWARE"),
 					resource.TestCheckResourceAttr(address, "individual.first_name", "Jenny"),
 					resource.TestCheckResourceAttr(address, "individual.id_number", "000000000"),
 					resource.TestCheckResourceAttr(address, "external_account", "btok_us_verified"),
@@ -568,7 +574,7 @@ func TestAccAccount_refuseOnboardingChange(t *testing.T) {
 	acct := acctest.NewAccount(t)
 	var first string
 	otherMCC, otherName, otherIP, renamed := verified, verified, verified, verified
-	otherMCC.mcc, otherName.firstName, otherIP.issuingIP, renamed.name = "5045", "Jane", "8.8.4.4", "Renamed"
+	otherMCC.mcc, otherName.firstName, otherIP.issuingIP, renamed.name = "5045", "Jane", "8.8.4.4", "Jenny Rosen Studio"
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: tfacc.ProviderFactories,
 		Steps: []resource.TestStep{
@@ -602,7 +608,7 @@ func TestAccAccount_refuseOnboardingChange(t *testing.T) {
 					plancheck.ExpectResourceAction(address, plancheck.ResourceActionUpdate),
 				}},
 				Check: resource.ComposeAggregateTestCheckFunc(
-					resource.TestCheckResourceAttr(address, "business_profile.name", acct.Name("Renamed")),
+					resource.TestCheckResourceAttr(address, "business_profile.name", renamed.name),
 					resource.TestCheckResourceAttrWith(address, "id", func(v string) error {
 						if v != first {
 							return fmt.Errorf("the account ID changed from %s to %s", first, v)
@@ -620,7 +626,7 @@ func TestAccAccount_refuseOnboardingChange(t *testing.T) {
 								continue
 							}
 							updates++
-							if got, want := fmt.Sprint(entry.Params), fmt.Sprint(wire.Object{{Name: "business_profile", Value: wire.Object{{Name: "name", Value: wire.String("Renamed")}}}}); got != want {
+							if got, want := fmt.Sprint(entry.Params), fmt.Sprint(wire.Object{{Name: "business_profile", Value: wire.Object{{Name: "name", Value: wire.String(renamed.name)}}}}); got != want {
 								return fmt.Errorf("the update sent %s, want only business_profile[name]: %s", got, want)
 							}
 						}

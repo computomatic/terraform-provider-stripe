@@ -29,6 +29,11 @@ resource "stripe_account" "marketplace_seller" {
     requirement_collection = "stripe"
     stripe_dashboard       = { type = "express" }
   }
+
+  capabilities = {
+    card_payments = { requested = true }
+    transfers     = { requested = true }
+  }
 }
 
 # A custom account onboarded for Issuing and Treasury. The values are the test values

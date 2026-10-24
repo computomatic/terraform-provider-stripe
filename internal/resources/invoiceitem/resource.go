@@ -15,7 +15,7 @@ import (
 var Declaration = engine.Declaration{
 	TypeName:              "stripe_invoiceitem",
 	IDPrefix:              "ii_",
-	Description:           "A line to add to a customer's next invoice, or to a draft invoice. `terraform destroy` deletes the invoice item. Stripe refuses to delete or change one whose invoice is finalized or void; remove it from the state with `terraform state rm` then.",
+	Description:           "A line to add to a customer's next invoice, or to a draft invoice. `terraform destroy` deletes the invoice item; one that Stripe deleted along with its draft invoice is already gone, and its destroy succeeds. Stripe refuses to delete or change one whose invoice is finalized or void; remove it from the state with `terraform state rm` then.",
 	DataSourceDescription: "A line to add to a customer's next invoice, or to a draft invoice.",
 	Paths: engine.Paths{
 		Create:   "/v1/invoiceitems",

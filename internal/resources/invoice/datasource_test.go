@@ -20,7 +20,9 @@ func TestAccInvoice_read(t *testing.T) {
 		ProtoV6ProviderFactories: tfacc.ProviderFactories,
 		Steps: []resource.TestStep{{
 			Config: acct.ProviderBlock() + `
-resource "stripe_customer" "test" {}
+resource "stripe_customer" "test" {
+  email = "invoice-read@example.com"
+}
 
 resource "stripe_product" "test" {
   name = "` + acct.Name("Plan") + `"

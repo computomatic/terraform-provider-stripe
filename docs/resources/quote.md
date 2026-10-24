@@ -3,12 +3,12 @@
 page_title: "stripe_quote Resource - Stripe"
 subcategory: ""
 description: |-
-  A proposal of prices to a customer. Set status to canceled to cancel the quote; a quote that was accepted cannot be cancelled. Finalizing and accepting a quote are not resources: the quote stays a draft here, and status reports what happened to it elsewhere. Stripe lets only metadata and a few other fields change once the quote is finalized.
+  A proposal of prices to a customer. Set status to canceled to cancel the quote; a quote that was accepted cannot be cancelled. Finalizing and accepting a quote are not resources: the quote stays a draft here, and status reports what happened to it elsewhere. Stripe lets only metadata and a few other fields change once the quote is finalized. With collection_method = "send_invoice" the customer needs an email address, or Stripe refuses the create.
 ---
 
 # Resource: stripe_quote
 
-A proposal of prices to a customer. Set `status` to `canceled` to cancel the quote; a quote that was accepted cannot be cancelled. Finalizing and accepting a quote are not resources: the quote stays a draft here, and `status` reports what happened to it elsewhere. Stripe lets only `metadata` and a few other fields change once the quote is finalized.
+A proposal of prices to a customer. Set `status` to `canceled` to cancel the quote; a quote that was accepted cannot be cancelled. Finalizing and accepting a quote are not resources: the quote stays a draft here, and `status` reports what happened to it elsewhere. Stripe lets only `metadata` and a few other fields change once the quote is finalized. With `collection_method = "send_invoice"` the customer needs an email address, or Stripe refuses the create.
 
 ~> Stripe cannot delete a quote; set `status` to `canceled` to cancel one. `terraform destroy`, and a change that would replace the quote, fail at plan time. To stop managing a quote, remove it from the state as [Removing from State](#removing-from-state) shows; it stays in the Stripe account.
 

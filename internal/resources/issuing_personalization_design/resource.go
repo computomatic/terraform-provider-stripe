@@ -29,7 +29,7 @@ var Declaration = engine.Declaration{
 	IDPrefix: "ipcd_",
 	Description: "The look of a physical Issuing card: its physical bundle, card logo and carrier letter. " +
 		"Stripe issues cards only for a platform's connected accounts, so manage designs through a provider configuration whose `stripe_account` is a connected account with the `card_issuing` capability active. " +
-		"`card_logo` is the ID of a file uploaded with the purpose `issuing_logo`, which a bundle whose `features.card_logo` is `required` needs; Terraform cannot upload files. " +
+		"`card_logo` is the ID of a file uploaded with the purpose `issuing_logo`, which a bundle whose `features.card_logo` is `required` needs; Terraform cannot upload files. A bundle whose `features.carrier_text` is `required` needs `carrier_text`. " +
 		"Stripe reviews a new design: `status` reads `review` until Stripe makes it `active` or `rejected`, with its reasons in `rejection_reasons`. " +
 		"A plan that changes `physical_bundle`, `card_logo` or `carrier_text` of an existing design fails.",
 	DataSourceDescription: "The look of a physical Issuing card, on a connected account: its physical bundle, card logo and carrier letter. Look one up by its `id` or its `lookup_key`.",
