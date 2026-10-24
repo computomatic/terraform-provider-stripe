@@ -38,7 +38,7 @@ resource "stripe_billing_credit_grant" "test" {
     }
   }
 %s}
-`, name, extra)
+`, c.Name(name), extra)
 }
 
 func idOf(dst *string) resource.TestCheckFunc {
@@ -68,7 +68,7 @@ data "stripe_billing_credit_grant" "by_id" {
 `,
 			Check: resource.ComposeAggregateTestCheckFunc(
 				resource.TestCheckResourceAttrSet(address, "id"),
-				resource.TestCheckResourceAttr(address, "name", "Welcome"),
+				resource.TestCheckResourceAttr(address, "name", acct.Name("Welcome")),
 				resource.TestCheckResourceAttrPair(address, "customer", "stripe_customer.test", "id"),
 				resource.TestCheckResourceAttr(address, "amount.monetary.value", "1000"),
 				resource.TestCheckResourceAttr(address, "amount.monetary.currency", "usd"),

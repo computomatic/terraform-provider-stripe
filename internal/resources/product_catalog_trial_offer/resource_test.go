@@ -24,7 +24,7 @@ const address = "stripe_product_catalog_trial_offer.test"
 func offerConfig(c acctest.Config, iterations int, extra string) string {
 	return c.ProviderBlock() + fmt.Sprintf(`
 resource "stripe_product" "test" {
-  name = "Gold plan"
+  name = %q
 }
 
 resource "stripe_price" "trial" {
@@ -55,7 +55,7 @@ resource "stripe_product_catalog_trial_offer" "test" {
     transition = { price = stripe_price.full.id }
   }
 %s}
-`, iterations, extra)
+`, c.Name("Gold plan"), iterations, extra)
 }
 
 func idOf(dst *string) resource.TestCheckFunc {

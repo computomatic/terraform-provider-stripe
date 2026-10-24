@@ -25,7 +25,7 @@ func quoteConfig(c acctest.Config, lines string, extra string) string {
 resource "stripe_customer" "test" {}
 
 resource "stripe_product" "test" {
-  name = "Package"
+  name = %q
 }
 
 resource "stripe_price" "test" {
@@ -42,7 +42,7 @@ resource "stripe_quote" "test" {
   }
   line_items = %s
 %s}
-`, lines, extra)
+`, c.Name("Package"), lines, extra)
 }
 
 const oneLine = `[{ price = stripe_price.test.id, quantity = 1 }]`

@@ -19,14 +19,14 @@ func TestMain(m *testing.M) { os.Exit(acctest.Main(m)) }
 
 const address = "stripe_payment_method_configuration.test"
 
-// configurationConfig is a payment method configuration. extra lands inside the resource
-// block.
+// configurationConfig is a payment method configuration named c.Name(name). extra lands
+// inside the resource block.
 func configurationConfig(c acctest.Config, name string, extra string) string {
 	return c.ProviderBlock() + fmt.Sprintf(`
 resource "stripe_payment_method_configuration" "test" {
   name = %q
 %s}
-`, name, extra)
+`, c.Name(name), extra)
 }
 
 func idOf(dst *string) resource.TestCheckFunc {
@@ -52,13 +52,13 @@ data "stripe_payment_method_configuration" "test" {
 `,
 			Check: resource.ComposeAggregateTestCheckFunc(
 				resource.TestCheckResourceAttrSet(address, "id"),
-				resource.TestCheckResourceAttr(address, "name", "Checkout"),
+				resource.TestCheckResourceAttr(address, "name", acct.Name("Checkout")),
 				resource.TestCheckResourceAttr(address, "active", "true"),
 				resource.TestCheckResourceAttr(address, "is_default", "false"),
 				resource.TestCheckResourceAttr(address, "card.display_preference.preference", "on"),
 				resource.TestCheckResourceAttrSet(address, "card.display_preference.value"),
 				resource.TestCheckResourceAttrPair("data.stripe_payment_method_configuration.test", "id", address, "id"),
-				resource.TestCheckResourceAttr("data.stripe_payment_method_configuration.test", "name", "Checkout"),
+				resource.TestCheckResourceAttr("data.stripe_payment_method_configuration.test", "name", acct.Name("Checkout")),
 			),
 		}},
 	})
@@ -104,7 +104,7 @@ func TestAccPaymentMethodConfiguration_update(t *testing.T) {
 					plancheck.ExpectResourceAction(address, plancheck.ResourceActionUpdate),
 				}},
 				Check: resource.ComposeAggregateTestCheckFunc(
-					resource.TestCheckResourceAttr(address, "name", "Checkout v2"),
+					resource.TestCheckResourceAttr(address, "name", acct.Name("Checkout v2")),
 					resource.TestCheckResourceAttr(address, "active", "false"),
 					resource.TestCheckResourceAttr(address, "card.display_preference.preference", "off"),
 					resource.TestCheckResourceAttrWith(address, "id", func(v string) error {

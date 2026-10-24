@@ -29,10 +29,14 @@ func create(t *testing.T, acct acctest.Config, path string, params wire.Object) 
 }
 
 // A credit note is issued against an open invoice (suite: "Credit notes"): a custom line
-// item on an invoice invoiced by email needs no card.
+// item on an invoice invoiced by email needs no card. Stripe sends such an invoice to the
+// customer, so the customer has an email.
 func TestAccCreditNote_read(t *testing.T) {
 	acct := acctest.NewAccount(t)
-	customer := create(t, acct, "/v1/customers", nil)
+	customer := create(t, acct, "/v1/customers", wire.Object{
+		{Name: "name", Value: wire.String(acct.Name("credit-note-read"))},
+		{Name: "email", Value: wire.String(acct.Name("credit-note-read") + "@example.com")},
+	})
 	invoice := create(t, acct, "/v1/invoices", wire.Object{
 		{Name: "customer", Value: wire.String(customer)},
 		{Name: "currency", Value: wire.String("usd")},

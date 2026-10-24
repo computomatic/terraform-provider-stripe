@@ -36,22 +36,23 @@ func idOf(dst *string) resource.TestCheckFunc {
 
 func TestAccPaymentMethodDomain_create(t *testing.T) {
 	acct := acctest.NewAccount(t)
+	domain := acct.Unique("pmd-create.example.com")
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: tfacc.ProviderFactories,
 		Steps: []resource.TestStep{{
-			Config: domainConfig(acct, "pay.example.com", "") + `
+			Config: domainConfig(acct, domain, "") + `
 data "stripe_payment_method_domain" "test" {
   id = stripe_payment_method_domain.test.id
 }
 `,
 			Check: resource.ComposeAggregateTestCheckFunc(
 				resource.TestCheckResourceAttrSet(address, "id"),
-				resource.TestCheckResourceAttr(address, "domain_name", "pay.example.com"),
+				resource.TestCheckResourceAttr(address, "domain_name", domain),
 				resource.TestCheckResourceAttr(address, "enabled", "true"),
 				resource.TestCheckResourceAttr(address, "apple_pay.status", "active"),
 				resource.TestCheckResourceAttr(address, "link.status", "active"),
 				resource.TestCheckResourceAttrPair("data.stripe_payment_method_domain.test", "id", address, "id"),
-				resource.TestCheckResourceAttr("data.stripe_payment_method_domain.test", "domain_name", "pay.example.com"),
+				resource.TestCheckResourceAttr("data.stripe_payment_method_domain.test", "domain_name", domain),
 				resource.TestCheckResourceAttr("data.stripe_payment_method_domain.test", "google_pay.status", "active"),
 			),
 		}},
@@ -60,13 +61,14 @@ data "stripe_payment_method_domain" "test" {
 
 func TestAccPaymentMethodDomain_update(t *testing.T) {
 	acct := acctest.NewAccount(t)
+	domain := acct.Unique("pmd-update.example.com")
 	var first string
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: tfacc.ProviderFactories,
 		Steps: []resource.TestStep{
-			{Config: domainConfig(acct, "pay.example.com", ""), Check: idOf(&first)},
+			{Config: domainConfig(acct, domain, ""), Check: idOf(&first)},
 			{
-				Config: domainConfig(acct, "pay.example.com", "  enabled = false\n"),
+				Config: domainConfig(acct, domain, "  enabled = false\n"),
 				ConfigPlanChecks: resource.ConfigPlanChecks{PreApply: []plancheck.PlanCheck{
 					plancheck.ExpectResourceAction(address, plancheck.ResourceActionUpdate),
 				}},
@@ -81,7 +83,7 @@ func TestAccPaymentMethodDomain_update(t *testing.T) {
 				),
 			},
 			{
-				Config: domainConfig(acct, "pay.example.com", "  enabled = true\n"),
+				Config: domainConfig(acct, domain, "  enabled = true\n"),
 				Check:  resource.TestCheckResourceAttr(address, "enabled", "true"),
 			},
 		},
@@ -91,18 +93,19 @@ func TestAccPaymentMethodDomain_update(t *testing.T) {
 // domain_name is accepted on create only, so a new name replaces the domain.
 func TestAccPaymentMethodDomain_replace(t *testing.T) {
 	acct := acctest.NewAccount(t)
+	domain, other := acct.Unique("pmd-replace.example.com"), acct.Unique("pmd-replaced.example.com")
 	var first string
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: tfacc.ProviderFactories,
 		Steps: []resource.TestStep{
-			{Config: domainConfig(acct, "pay.example.com", ""), Check: idOf(&first)},
+			{Config: domainConfig(acct, domain, ""), Check: idOf(&first)},
 			{
-				Config: domainConfig(acct, "shop.example.com", ""),
+				Config: domainConfig(acct, other, ""),
 				ConfigPlanChecks: resource.ConfigPlanChecks{PreApply: []plancheck.PlanCheck{
 					plancheck.ExpectResourceAction(address, plancheck.ResourceActionReplace),
 				}},
 				Check: resource.ComposeAggregateTestCheckFunc(
-					resource.TestCheckResourceAttr(address, "domain_name", "shop.example.com"),
+					resource.TestCheckResourceAttr(address, "domain_name", other),
 					resource.TestCheckResourceAttrWith(address, "id", func(v string) error {
 						if v == first {
 							return fmt.Errorf("the replacement kept the ID %s", v)
@@ -117,7 +120,8 @@ func TestAccPaymentMethodDomain_replace(t *testing.T) {
 
 func TestAccPaymentMethodDomain_import(t *testing.T) {
 	acct := acctest.NewAccount(t)
-	cfg := domainConfig(acct, "pay.example.com", "")
+	domain := acct.Unique("pmd-import.example.com")
+	cfg := domainConfig(acct, domain, "")
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: tfacc.ProviderFactories,
 		Steps: []resource.TestStep{
@@ -142,6 +146,7 @@ func TestAccPaymentMethodDomain_import(t *testing.T) {
 // stays in the account.
 func TestAccPaymentMethodDomain_delete(t *testing.T) {
 	acct := acctest.NewAccount(t)
+	domain := acct.Unique("pmd-delete.example.com")
 	var id string
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: tfacc.ProviderFactories,
@@ -155,14 +160,15 @@ func TestAccPaymentMethodDomain_delete(t *testing.T) {
 			}
 			return nil
 		},
-		Steps: []resource.TestStep{{Config: domainConfig(acct, "pay.example.com", ""), Check: idOf(&id)}},
+		Steps: []resource.TestStep{{Config: domainConfig(acct, domain, ""), Check: idOf(&id)}},
 	})
 }
 
 func TestAccPaymentMethodDomain_drift(t *testing.T) {
 	acct := acctest.NewAccount(t)
+	domain := acct.Unique("pmd-drift.example.com")
 	var id string
-	cfg := domainConfig(acct, "pay.example.com", "  enabled = true\n")
+	cfg := domainConfig(acct, domain, "  enabled = true\n")
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: tfacc.ProviderFactories,
 		Steps: []resource.TestStep{

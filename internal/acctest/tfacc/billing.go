@@ -25,14 +25,18 @@ func AccountCurrency(t *testing.T, c acctest.Config) string {
 }
 
 // OpenInvoice creates a customer with one invoice item of 1500 and a finalized `send_invoice`
-// invoice for it, which needs no payment method (suite: "Invoices"). An empty currency is the
-// account's. It returns the customer's ID and the invoice's.
+// invoice for it, which needs no payment method (suite: "Invoices"). Stripe sends such an
+// invoice to the customer, so the customer has an email ("newInvoiceCustomer"). An empty
+// currency is the account's. It returns the customer's ID and the invoice's.
 func OpenInvoice(t *testing.T, c acctest.Config, currency string) (customer, invoice string) {
 	t.Helper()
 	if currency == "" {
 		currency = AccountCurrency(t, c)
 	}
-	customer = Create(t, c, "/v1/customers", nil)
+	customer = Create(t, c, "/v1/customers", wire.Object{
+		{Name: "name", Value: wire.String(c.Name("tfacc-invoice-customer"))},
+		{Name: "email", Value: wire.String(c.Name("tfacc-invoice-customer") + "@example.com")},
+	})
 	Create(t, c, "/v1/invoiceitems", wire.Object{
 		{Name: "customer", Value: wire.String(customer)},
 		{Name: "amount", Value: wire.Int(1500)},

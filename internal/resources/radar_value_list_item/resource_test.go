@@ -3,6 +3,7 @@ package radar_value_list_item_test
 import (
 	"fmt"
 	"os"
+	"strings"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
@@ -18,12 +19,13 @@ func TestMain(m *testing.M) { os.Exit(acctest.Main(m)) }
 
 const address = "stripe_radar_value_list_item.test"
 
-// itemConfig is an email list and an item in it. extra lands inside the item.
-func itemConfig(c acctest.Config, value string, extra string) string {
+// itemConfig is an email list, with the test's own alias named by test, and an item in it.
+// extra lands inside the item.
+func itemConfig(c acctest.Config, test, value string, extra string) string {
 	return c.ProviderBlock() + fmt.Sprintf(`
 resource "stripe_radar_value_list" "test" {
-  alias     = "blocked_emails"
-  name      = "Blocked emails"
+  alias     = %q
+  name      = %q
   item_type = "email"
 }
 
@@ -31,7 +33,13 @@ resource "stripe_radar_value_list_item" "test" {
   value_list = stripe_radar_value_list.test.id
   value      = %q
 %s}
-`, value, extra)
+`, alias(c, "radar_item_"+test), c.Name("Blocked emails"), value, extra)
+}
+
+// alias is c.Unique(base) as a snake case alias, the form the suite gives every alias
+// ("uniqueSnake"), so the smoke prefix's hyphens become underscores.
+func alias(c acctest.Config, base string) string {
+	return strings.ReplaceAll(c.Unique(base), "-", "_")
 }
 
 func idOf(dst *string) resource.TestCheckFunc {
@@ -46,7 +54,7 @@ func TestAccRadarValueListItem_create(t *testing.T) {
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: tfacc.ProviderFactories,
 		Steps: []resource.TestStep{{
-			Config: itemConfig(acct, "spammer@example.com", "") + `
+			Config: itemConfig(acct, "create", "spammer@example.com", "") + `
 data "stripe_radar_value_list_item" "test" {
   id = stripe_radar_value_list_item.test.id
 }
@@ -71,9 +79,9 @@ func TestAccRadarValueListItem_update(t *testing.T) {
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: tfacc.ProviderFactories,
 		Steps: []resource.TestStep{
-			{Config: itemConfig(acct, "spammer@example.com", ""), Check: idOf(&first)},
+			{Config: itemConfig(acct, "update", "spammer@example.com", ""), Check: idOf(&first)},
 			{
-				Config: itemConfig(acct, "spammer@example.com", "  timeouts = { create = \"10m\" }\n"),
+				Config: itemConfig(acct, "update", "spammer@example.com", "  timeouts = { create = \"10m\" }\n"),
 				ConfigPlanChecks: resource.ConfigPlanChecks{PreApply: []plancheck.PlanCheck{
 					plancheck.ExpectResourceAction(address, plancheck.ResourceActionUpdate),
 				}},
@@ -95,9 +103,9 @@ func TestAccRadarValueListItem_replace(t *testing.T) {
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: tfacc.ProviderFactories,
 		Steps: []resource.TestStep{
-			{Config: itemConfig(acct, "spammer@example.com", ""), Check: idOf(&first)},
+			{Config: itemConfig(acct, "replace", "spammer@example.com", ""), Check: idOf(&first)},
 			{
-				Config: itemConfig(acct, "scammer@example.com", ""),
+				Config: itemConfig(acct, "replace", "scammer@example.com", ""),
 				ConfigPlanChecks: resource.ConfigPlanChecks{PreApply: []plancheck.PlanCheck{
 					plancheck.ExpectResourceAction(address, plancheck.ResourceActionReplace),
 				}},
@@ -117,7 +125,7 @@ func TestAccRadarValueListItem_replace(t *testing.T) {
 
 func TestAccRadarValueListItem_import(t *testing.T) {
 	acct := acctest.NewAccount(t)
-	cfg := itemConfig(acct, "spammer@example.com", "")
+	cfg := itemConfig(acct, "import", "spammer@example.com", "")
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: tfacc.ProviderFactories,
 		Steps: []resource.TestStep{
@@ -150,7 +158,7 @@ func TestAccRadarValueListItem_delete(t *testing.T) {
 			}
 			return nil
 		},
-		Steps: []resource.TestStep{{Config: itemConfig(acct, "spammer@example.com", ""), Check: idOf(&id)}},
+		Steps: []resource.TestStep{{Config: itemConfig(acct, "delete", "spammer@example.com", ""), Check: idOf(&id)}},
 	})
 }
 
@@ -158,7 +166,7 @@ func TestAccRadarValueListItem_delete(t *testing.T) {
 func TestAccRadarValueListItem_drift(t *testing.T) {
 	acct := acctest.NewAccount(t)
 	var id string
-	cfg := itemConfig(acct, "spammer@example.com", "")
+	cfg := itemConfig(acct, "drift", "spammer@example.com", "")
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: tfacc.ProviderFactories,
 		Steps: []resource.TestStep{

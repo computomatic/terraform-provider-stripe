@@ -488,7 +488,7 @@ func onboardedConfig(c acctest.Config, o onboarding, extra string) string {
     card_issuing = { tos_acceptance = { date = 1609459200, ip = %[5]q } }
     treasury     = { tos_acceptance = { date = 1609459200, ip = "8.8.8.8" } }
   }
-%[6]s`, c.Name("jenny")+"@example.com", o.mcc, o.firstName, o.idNumber, o.issuingIP, extra, o.name))
+%[6]s`, c.Name("jenny")+"@example.com", o.mcc, o.firstName, o.idNumber, o.issuingIP, extra, c.Name(o.name)))
 }
 
 // capabilityData reads the status of each onboarded capability.
@@ -602,7 +602,7 @@ func TestAccAccount_refuseOnboardingChange(t *testing.T) {
 					plancheck.ExpectResourceAction(address, plancheck.ResourceActionUpdate),
 				}},
 				Check: resource.ComposeAggregateTestCheckFunc(
-					resource.TestCheckResourceAttr(address, "business_profile.name", "Renamed"),
+					resource.TestCheckResourceAttr(address, "business_profile.name", acct.Name("Renamed")),
 					resource.TestCheckResourceAttrWith(address, "id", func(v string) error {
 						if v != first {
 							return fmt.Errorf("the account ID changed from %s to %s", first, v)

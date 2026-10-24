@@ -140,7 +140,7 @@ func shippingRates(ids []string, amounts ...string) resource.TestCheckFunc {
 // the whole list").
 func TestAccCheckoutSession_shippingOptions(t *testing.T) {
 	acct := acctest.NewAccount(t)
-	ground, express := shippingOption("Ground", 500), shippingOption("Express", 1500)
+	ground, express := shippingOption(acct.Name("Ground"), 500), shippingOption(acct.Name("Express"), 1500)
 	created := sessionConfig(acct, "\n  shipping_options = ["+ground+", "+express+"]\n")
 	reordered := sessionConfig(acct, "\n  shipping_options = ["+express+", "+ground+"]\n")
 	first, second := make([]string, 2), make([]string, 2)

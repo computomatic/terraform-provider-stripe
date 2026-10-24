@@ -15,6 +15,7 @@ func TestMain(m *testing.M) { os.Exit(acctest.Main(m)) }
 
 // Balance transactions come from charges and payouts, so the test seeds one.
 func TestAccBalanceTransaction_read(t *testing.T) {
+	acctest.RequireFake(t)
 	acct := acctest.NewAccount(t)
 	id := acctest.Seed(t, acct, wire.Object{
 		{Name: "object", Value: wire.String("balance_transaction")},

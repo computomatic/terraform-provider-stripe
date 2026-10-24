@@ -26,13 +26,15 @@ var regexpInvalidImportID = regexp.MustCompile(`expected .<customer id>/<id>.`)
 // lands inside the attachment.
 func attachmentConfig(c acctest.Config, pm string, extra string) string {
 	return c.ProviderBlock() + fmt.Sprintf(`
-resource "stripe_customer" "test" {}
+resource "stripe_customer" "test" {
+  name = %q
+}
 
 resource "stripe_customer_payment_method" "test" {
   customer       = stripe_customer.test.id
   payment_method = %q
 %s}
-`, pm, extra)
+`, c.Name("Payment method customer"), pm, extra)
 }
 
 // paymentMethod creates an unattached card payment method from a test token (suite:

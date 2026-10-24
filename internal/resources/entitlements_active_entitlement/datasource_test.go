@@ -44,7 +44,11 @@ func entitled(t *testing.T, acct acctest.Config, base string) (feature, lookupKe
 		{Name: "product", Value: wire.String(product)},
 		{Name: "recurring", Value: wire.Object{{Name: "interval", Value: wire.String("month")}}},
 	})
-	customer := tfacc.Create(t, acct, "/v1/customers", nil)
+	// Stripe sends a `send_invoice` subscription's invoices, so the customer needs an email.
+	customer := tfacc.Create(t, acct, "/v1/customers", wire.Object{
+		{Name: "name", Value: wire.String(acct.Name(base))},
+		{Name: "email", Value: wire.String(acct.Name(base) + "@example.com")},
+	})
 	subscription := tfacc.Create(t, acct, "/v1/subscriptions", wire.Object{
 		{Name: "customer", Value: wire.String(customer)},
 		{Name: "items", Value: wire.Array{wire.Object{{Name: "price", Value: wire.String(price)}}}},

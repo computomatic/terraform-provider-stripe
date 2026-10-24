@@ -8,9 +8,6 @@ import (
 	"testing"
 )
 
-// wave1 are the packages the smoke run executes.
-var wave1 = []string{"product", "price", "coupon", "customer", "webhook_endpoint", "billing_meter", "balance"}
-
 // fakeOnly are the calls that have no meaning on real Stripe.
 var fakeOnly = map[string]bool{"RequestLog": true, "Seed": true}
 
@@ -97,23 +94,29 @@ func TestBranch(t *testing.T) {
 	}
 }
 
-// A new wave 1 test that reaches for a fake-only aid without RequireFake would break the
-// smoke run, so it fails here first.
-func TestWave1FakeOnlyCallsAreGuarded(t *testing.T) {
-	for _, pkg := range wave1 {
-		files, err := filepath.Glob(filepath.Join("..", "resources", pkg, "*_test.go"))
-		if err != nil || len(files) == 0 {
-			t.Fatalf("no test files for %s: %v", pkg, err)
+// A test that reaches for a fake-only aid without RequireFake would break a smoke run of
+// its package, so it fails here first. Every resource package and the shared helpers are
+// held to the rule, so any of them can join the smoke selection.
+func TestFakeOnlyCallsAreGuarded(t *testing.T) {
+	var files []string
+	for _, pattern := range []string{
+		filepath.Join("..", "resources", "*", "*_test.go"),
+		filepath.Join("tfacc", "*.go"),
+	} {
+		matches, err := filepath.Glob(pattern)
+		if err != nil || len(matches) == 0 {
+			t.Fatalf("no files match %s: %v", pattern, err)
 		}
-		for _, name := range files {
-			fset := token.NewFileSet()
-			file, err := parser.ParseFile(fset, name, nil, 0)
-			if err != nil {
-				t.Fatal(err)
-			}
-			for _, pos := range unguarded(fset, file) {
-				t.Errorf("%s: a fake-only call without acctest.RequireFake (or a Config.Smoke check) before it", pos)
-			}
+		files = append(files, matches...)
+	}
+	for _, name := range files {
+		fset := token.NewFileSet()
+		file, err := parser.ParseFile(fset, name, nil, 0)
+		if err != nil {
+			t.Fatal(err)
+		}
+		for _, pos := range unguarded(fset, file) {
+			t.Errorf("%s: a fake-only call without acctest.RequireFake (or a Config.Smoke check) before it", pos)
 		}
 	}
 }

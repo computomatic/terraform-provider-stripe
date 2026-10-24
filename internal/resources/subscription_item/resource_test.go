@@ -28,7 +28,7 @@ func itemConfig(c acctest.Config, price string, extra string) string {
 resource "stripe_customer" "test" {}
 
 resource "stripe_product" "test" {
-  name = "Plan"
+  name = %q
 }
 
 resource "stripe_price" "base" {
@@ -74,7 +74,7 @@ resource "stripe_subscription_item" "test" {
   price        = stripe_price.%s.id
   proration_behavior = "none"
 %s}
-`, price, extra)
+`, c.Name("Plan"), price, extra)
 }
 
 func idOf(dst *string) resource.TestCheckFunc {
@@ -148,7 +148,7 @@ func TestAccSubscriptionItem_replace(t *testing.T) {
 resource "stripe_customer" "test" {}
 
 resource "stripe_product" "test" {
-  name = "Plan"
+  name = %q
 }
 
 resource "stripe_price" "base" {
@@ -198,9 +198,9 @@ resource "stripe_subscription_item" "test" {
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: tfacc.ProviderFactories,
 		Steps: []resource.TestStep{
-			{Config: fmt.Sprintf(other, "a"), Check: idOf(&first)},
+			{Config: fmt.Sprintf(other, acct.Name("Plan"), "a"), Check: idOf(&first)},
 			{
-				Config: fmt.Sprintf(other, "b"),
+				Config: fmt.Sprintf(other, acct.Name("Plan"), "b"),
 				ConfigPlanChecks: resource.ConfigPlanChecks{PreApply: []plancheck.PlanCheck{
 					plancheck.ExpectResourceAction(address, plancheck.ResourceActionReplace),
 				}},

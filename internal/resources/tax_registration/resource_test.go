@@ -1,6 +1,7 @@
 package tax_registration_test
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"strconv"
@@ -12,6 +13,7 @@ import (
 
 	"github.com/computomatic/terraform-provider-stripe/internal/acctest"
 	"github.com/computomatic/terraform-provider-stripe/internal/acctest/tfacc"
+	"github.com/computomatic/terraform-provider-stripe/internal/stripeapi"
 	"github.com/computomatic/terraform-provider-stripe/internal/wire"
 )
 
@@ -21,8 +23,12 @@ const address = "stripe_tax_registration.test"
 
 // withHeadOffice gives the account the head office address Stripe requires before it
 // serves any tax registration (suite: tax_registration_test.go, "An account without a head
-// office address").
-func withHeadOffice(t *testing.T) acctest.Config {
+// office address"). A country holds one live registration at a time and Stripe cannot
+// delete one, so each test registers in a country of its own, which neither another test
+// nor the suite (GB, AU and NZ) uses. In smoke mode the shared sandbox may still hold a live
+// registration there from an earlier run, so the country is cleared before the test and
+// again after it, as the suite does ("clearTaxRegistrations").
+func withHeadOffice(t *testing.T, country string) acctest.Config {
 	t.Helper()
 	acct := acctest.NewAccount(t)
 	tfacc.Post(t, acct, "/v1/tax/settings", wire.Object{
@@ -34,7 +40,61 @@ func withHeadOffice(t *testing.T) acctest.Config {
 			{Name: "country", Value: wire.String("US")},
 		}}}},
 	})
+	if acct.Smoke {
+		clearRegistrations(t, acct, country)
+		t.Cleanup(func() { clearRegistrations(t, acct, country) })
+	}
 	return acct
+}
+
+// clearRegistrations expires every live registration in country and waits until Stripe
+// reports it expired. Stripe refuses an expiry of `now`, so each expires a few seconds
+// ahead, and a scheduled one is started first, because it cannot end before it starts.
+func clearRegistrations(t *testing.T, c acctest.Config, country string) {
+	t.Helper()
+	client := tfacc.Client(c)
+	var ids []string
+	for _, status := range []string{"active", "scheduled"} {
+		resp, err := client.Do(context.Background(), stripeapi.Request{Method: "GET", Path: "/v1/tax/registrations", Params: wire.Object{
+			{Name: "status", Value: wire.String(status)},
+			{Name: "limit", Value: wire.Int(100)},
+		}})
+		if err != nil {
+			t.Fatalf("listing %s tax registrations: %v", status, err)
+		}
+		data, _ := resp.Body.(wire.Object).Get("data")
+		items, _ := data.(wire.Array)
+		for _, item := range items {
+			obj, _ := item.(wire.Object)
+			if cc, _ := obj.GetString("country"); cc == country {
+				id, _ := obj.GetString("id")
+				ids = append(ids, id)
+			}
+		}
+	}
+	for _, id := range ids {
+		path := "/v1/tax/registrations/" + id
+		expiry := wire.String(strconv.FormatInt(time.Now().Add(5*time.Second).Unix(), 10))
+		if _, err := client.Do(context.Background(), stripeapi.Request{Method: "POST", Path: path, Params: wire.Object{{Name: "expires_at", Value: expiry}}}); err != nil {
+			tfacc.Post(t, c, path, wire.Object{{Name: "active_from", Value: wire.String("now")}, {Name: "expires_at", Value: expiry}})
+		}
+	}
+	for _, id := range ids {
+		deadline := time.Now().Add(time.Minute)
+		for {
+			resp, err := client.Do(context.Background(), stripeapi.Request{Method: "GET", Path: "/v1/tax/registrations/" + id})
+			if err != nil {
+				t.Fatalf("reading tax registration %s: %v", id, err)
+			}
+			if status, _ := resp.Body.(wire.Object).GetString("status"); status == "expired" {
+				break
+			}
+			if time.Now().After(deadline) {
+				t.Fatalf("tax registration %s in %s did not expire within a minute", id, country)
+			}
+			time.Sleep(2 * time.Second)
+		}
+	}
 }
 
 func inHours(h int) string {
@@ -81,23 +141,23 @@ func pathOf(dst *string) resource.TestCheckFunc {
 }
 
 func TestAccTaxRegistration_create(t *testing.T) {
-	acct := withHeadOffice(t)
+	acct := withHeadOffice(t, "CH")
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: tfacc.ProviderFactories,
 		Steps: acctest.Forget(t, []resource.TestStep{{
-			Config: registrationConfig(acct, "GB", "") + `
+			Config: registrationConfig(acct, "CH", "") + `
 data "stripe_tax_registration" "test" {
   id = stripe_tax_registration.test.id
 }
 `,
 			Check: resource.ComposeAggregateTestCheckFunc(
 				resource.TestCheckResourceAttrSet(address, "id"),
-				resource.TestCheckResourceAttr(address, "country", "GB"),
+				resource.TestCheckResourceAttr(address, "country", "CH"),
 				resource.TestCheckResourceAttr(address, "active_from", "now"),
 				resource.TestCheckResourceAttr(address, "status", "active"),
-				resource.TestCheckResourceAttr(address, "country_options.gb.type", "standard"),
+				resource.TestCheckResourceAttr(address, "country_options.ch.type", "standard"),
 				resource.TestCheckResourceAttrPair("data.stripe_tax_registration.test", "id", address, "id"),
-				resource.TestCheckResourceAttr("data.stripe_tax_registration.test", "country", "GB"),
+				resource.TestCheckResourceAttr("data.stripe_tax_registration.test", "country", "CH"),
 				resource.TestCheckResourceAttr("data.stripe_tax_registration.test", "status", "active"),
 			),
 		}}, nil, "stripe_tax_registration"),
@@ -107,15 +167,15 @@ data "stripe_tax_registration" "test" {
 // A registration that starts later is scheduled, and an end date is accepted on create.
 // Destroy starts it first, because it cannot end before it starts.
 func TestAccTaxRegistration_scheduled(t *testing.T) {
-	acct := withHeadOffice(t)
+	acct := withHeadOffice(t, "NO")
 	start, end := inHours(24), inHours(48)
 	cfg := acct.ProviderBlock() + fmt.Sprintf(`
 resource "stripe_tax_registration" "test" {
-  country     = "GB"
+  country     = "NO"
   active_from = %q
   expires_at  = %q
   country_options = {
-    gb = { type = "standard" }
+    no = { type = "standard" }
   }
 }
 `, start, end)
@@ -133,22 +193,22 @@ resource "stripe_tax_registration" "test" {
 }
 
 func TestAccTaxRegistration_update(t *testing.T) {
-	acct := withHeadOffice(t)
+	acct := withHeadOffice(t, "IS")
 	var first string
 	later := inHours(72)
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: tfacc.ProviderFactories,
 		Steps: acctest.Forget(t, []resource.TestStep{
-			{Config: registrationConfig(acct, "GB", ""), Check: idOf(&first)},
+			{Config: registrationConfig(acct, "IS", ""), Check: idOf(&first)},
 			{
-				Config: registrationConfig(acct, "GB", fmt.Sprintf("  expires_at = %q\n", inHours(48))),
+				Config: registrationConfig(acct, "IS", fmt.Sprintf("  expires_at = %q\n", inHours(48))),
 				ConfigPlanChecks: resource.ConfigPlanChecks{PreApply: []plancheck.PlanCheck{
 					plancheck.ExpectResourceAction(address, plancheck.ResourceActionUpdate),
 				}},
 				Check: resource.TestCheckResourceAttrSet(address, "expires_at"),
 			},
 			{
-				Config: registrationConfig(acct, "GB", fmt.Sprintf("  expires_at = %q\n", later)),
+				Config: registrationConfig(acct, "IS", fmt.Sprintf("  expires_at = %q\n", later)),
 				ConfigPlanChecks: resource.ConfigPlanChecks{PreApply: []plancheck.PlanCheck{
 					plancheck.ExpectResourceAction(address, plancheck.ResourceActionUpdate),
 				}},
@@ -169,8 +229,8 @@ func TestAccTaxRegistration_update(t *testing.T) {
 // `country` is create-only, so changing it would replace the registration, which Stripe
 // cannot delete: the plan fails, and so does a taint, at apply.
 func TestAccTaxRegistration_replace(t *testing.T) {
-	acct := withHeadOffice(t)
-	cfg := registrationConfig(acct, "GB", "")
+	acct := withHeadOffice(t, "SG")
+	cfg := registrationConfig(acct, "SG", "")
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: tfacc.ProviderFactories,
 		Steps: acctest.Forget(t, []resource.TestStep{
@@ -185,14 +245,14 @@ func TestAccTaxRegistration_replace(t *testing.T) {
 // it could say `now`. The registration is scheduled, which destroy has to start before it
 // can end it.
 func TestAccTaxRegistration_import(t *testing.T) {
-	acct := withHeadOffice(t)
+	acct := withHeadOffice(t, "ZA")
 	cfg := acct.ProviderBlock() + fmt.Sprintf(`
 resource "stripe_tax_registration" "test" {
-  country     = "GB"
+  country     = "ZA"
   active_from = %q
   expires_at  = %q
   country_options = {
-    gb = { type = "standard" }
+    za = { type = "standard" }
   }
 }
 `, inHours(24), inHours(48))
@@ -218,10 +278,10 @@ resource "stripe_tax_registration" "test" {
 // Stripe cannot delete a tax registration, so dropping it from the configuration, and `terraform
 // destroy`, fail at plan time, and the tax registration stays as it was.
 func TestAccTaxRegistration_delete(t *testing.T) {
-	acct := withHeadOffice(t)
+	acct := withHeadOffice(t, "AE")
 	var path string
 	var mark int
-	cfg := registrationConfig(acct, "GB", "")
+	cfg := registrationConfig(acct, "AE", "")
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: tfacc.ProviderFactories,
 		Steps: acctest.Forget(t, []resource.TestStep{
@@ -233,10 +293,10 @@ func TestAccTaxRegistration_delete(t *testing.T) {
 }
 
 func TestAccTaxRegistration_drift(t *testing.T) {
-	acct := withHeadOffice(t)
+	acct := withHeadOffice(t, "JP")
 	var id string
 	expires := inHours(48)
-	cfg := registrationConfig(acct, "GB", fmt.Sprintf("  expires_at = %q\n", expires))
+	cfg := registrationConfig(acct, "JP", fmt.Sprintf("  expires_at = %q\n", expires))
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: tfacc.ProviderFactories,
 		Steps: acctest.Forget(t, []resource.TestStep{

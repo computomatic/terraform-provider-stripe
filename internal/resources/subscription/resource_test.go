@@ -31,7 +31,7 @@ func subscriptionDue(c acctest.Config, days int, items string, extra string) str
 resource "stripe_customer" "test" {}
 
 resource "stripe_product" "test" {
-  name = "Plan"
+  name = %q
 }
 
 resource "stripe_price" "one" {
@@ -58,7 +58,7 @@ resource "stripe_subscription" "test" {
   days_until_due    = %d
   items             = %s
 %s}
-`, days, items, extra)
+`, c.Name("Plan"), days, items, extra)
 }
 
 const oneItem = `[{ price = stripe_price.one.id }]`
@@ -239,6 +239,9 @@ func TestAccSubscription_reorderItems(t *testing.T) {
 			{
 				Config: subscriptionConfig(acct, ba, ""),
 				Check: func(*terraform.State) error {
+					if acct.Smoke {
+						return nil // the request log is the fake's; the plan-only step below still runs
+					}
 					for _, r := range acctest.RequestLog(t, acct) {
 						if r.Method == "POST" && r.Path == "/v1/subscriptions/"+id {
 							return fmt.Errorf("a reorder sent an update: %v", r.Params)
@@ -395,7 +398,7 @@ resource "stripe_customer" "a" {}
 resource "stripe_customer" "b" {}
 
 resource "stripe_product" "test" {
-  name = "Plan"
+  name = %q
 }
 
 resource "stripe_price" "one" {
@@ -413,7 +416,7 @@ resource "stripe_subscription" "test" {
   days_until_due    = 30
   items             = [{ price = stripe_price.one.id }]
 }
-`, customer)
+`, acct.Name("Plan"), customer)
 	}
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: tfacc.ProviderFactories,

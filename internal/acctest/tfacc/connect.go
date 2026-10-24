@@ -44,19 +44,25 @@ func TransfersAccount(t *testing.T, c acctest.Config) string {
 }
 
 // FundAvailableBalance makes sure c's account has at least need available in currency, which a
-// transfer draws on. When it has less, it charges the shortfall, with the card fee on top, to
+// transfer or payout draws on. It charges what is missing, with the card fee on top, to
 // `pm_card_bypassPending`, whose funds are available at once, as the suite does
-// ("fundAvailableBalance").
+// ("fundAvailableBalance"). Against the fake what is missing is the shortfall. In smoke mode
+// it is all of need plus any deficit, because the sandbox's balance is shared: tests that run
+// at once each check it and then spend it, so each brings its own funds.
 func FundAvailableBalance(t *testing.T, c acctest.Config, currency string, need int64) {
 	t.Helper()
 	have := availableBalance(t, c, currency)
-	if have >= need {
+	missing := need - have
+	if c.Smoke {
+		missing = need - min(have, 0)
+	}
+	if missing <= 0 {
 		return
 	}
-	// The card fee is 2.9% and 30 cents, so the charge is enough that what it nets covers the
-	// shortfall, with a margin for rounding.
+	// The card fee is 2.9% and 30 cents, so the charge is enough that what it nets covers what
+	// is missing, with a margin for rounding.
 	succeededIntent(t, c, wire.Object{
-		{Name: "amount", Value: wire.Int(max((need-have+30)*100/97+20, 1000))},
+		{Name: "amount", Value: wire.Int(max((missing+30)*100/97+20, 1000))},
 		{Name: "currency", Value: wire.String(currency)},
 	}, "pm_card_bypassPending")
 	if !poll(func() bool { have = availableBalance(t, c, currency); return have >= need }) {
@@ -64,18 +70,28 @@ func FundAvailableBalance(t *testing.T, c acctest.Config, currency string, need 
 	}
 }
 
+// availableBalance is c's available balance in currency from cards, which a payout or transfer
+// without a `source_type` draws on. Stripe breaks the balance down by source type ("Your card
+// balance is too low"); the fake does not, so its whole balance counts.
 func availableBalance(t *testing.T, c acctest.Config, currency string) int64 {
 	t.Helper()
 	available, _ := get(t, c, "/v1/balance").Get("available")
 	items, _ := available.(wire.Array)
 	for _, item := range items {
 		obj, _ := item.(wire.Object)
-		if cur, _ := obj.GetString("currency"); cur == currency {
-			amount, _ := obj.Get("amount")
-			if n, ok := amount.(wire.Int); ok {
-				return int64(n)
+		if cur, _ := obj.GetString("currency"); cur != currency {
+			continue
+		}
+		amount, _ := obj.Get("amount")
+		if types, ok := obj.Get("source_types"); ok {
+			if sources, ok := types.(wire.Object); ok {
+				amount, _ = sources.Get("card")
 			}
 		}
+		if n, ok := amount.(wire.Int); ok {
+			return int64(n)
+		}
+		return 0
 	}
 	return 0
 }

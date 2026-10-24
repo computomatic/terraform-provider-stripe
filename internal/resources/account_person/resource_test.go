@@ -111,8 +111,12 @@ func personPath(account, id string) string {
 	return "/v1/accounts/" + account + "/persons/" + id
 }
 
-// sent returns the form parameters of the fake's logged POSTs to path, oldest first.
+// sent returns the form parameters of the fake's logged POSTs to path, oldest first. There is
+// no log in smoke mode, so it returns none.
 func sent(t *testing.T, c acctest.Config, path string) []wire.Object {
+	if c.Smoke {
+		return nil
+	}
 	var out []wire.Object
 	log := acctest.RequestLog(t, c)
 	for i := len(log) - 1; i >= 0; i-- {

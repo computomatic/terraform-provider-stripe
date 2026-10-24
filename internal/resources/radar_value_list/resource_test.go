@@ -3,6 +3,7 @@ package radar_value_list_test
 import (
 	"fmt"
 	"os"
+	"strings"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
@@ -19,14 +20,21 @@ func TestMain(m *testing.M) { os.Exit(acctest.Main(m)) }
 
 const address = "stripe_radar_value_list.test"
 
-// listConfig is a value list. extra lands inside the resource block.
-func listConfig(c acctest.Config, name string, extra string) string {
+// listConfig is a value list with the test's own alias, named by test. extra lands inside
+// the resource block.
+func listConfig(c acctest.Config, test, name string, extra string) string {
 	return c.ProviderBlock() + fmt.Sprintf(`
 resource "stripe_radar_value_list" "test" {
-  alias = "blocked_emails"
+  alias = %q
   name  = %q
 %s}
-`, name, extra)
+`, alias(c, "radar_list_"+test), c.Name(name), extra)
+}
+
+// alias is c.Unique(base) as a snake case alias, the form the suite gives every alias
+// ("uniqueSnake"), so the smoke prefix's hyphens become underscores.
+func alias(c acctest.Config, base string) string {
+	return strings.ReplaceAll(c.Unique(base), "-", "_")
 }
 
 func idOf(dst *string) resource.TestCheckFunc {
@@ -41,7 +49,7 @@ func TestAccRadarValueList_create(t *testing.T) {
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: tfacc.ProviderFactories,
 		Steps: []resource.TestStep{{
-			Config: listConfig(acct, "Blocked emails", "  item_type = \"email\"\n  metadata  = { team = \"risk\" }\n") + `
+			Config: listConfig(acct, "create", "Blocked emails", "  item_type = \"email\"\n  metadata  = { team = \"risk\" }\n") + `
 data "stripe_radar_value_list" "by_id" {
   id = stripe_radar_value_list.test.id
 }
@@ -52,8 +60,8 @@ data "stripe_radar_value_list" "by_alias" {
 `,
 			Check: resource.ComposeAggregateTestCheckFunc(
 				resource.TestCheckResourceAttrSet(address, "id"),
-				resource.TestCheckResourceAttr(address, "alias", "blocked_emails"),
-				resource.TestCheckResourceAttr(address, "name", "Blocked emails"),
+				resource.TestCheckResourceAttr(address, "alias", alias(acct, "radar_list_create")),
+				resource.TestCheckResourceAttr(address, "name", acct.Name("Blocked emails")),
 				resource.TestCheckResourceAttr(address, "item_type", "email"),
 				resource.TestCheckResourceAttr(address, "metadata.team", "risk"),
 				resource.TestCheckResourceAttrPair("data.stripe_radar_value_list.by_id", "name", address, "name"),
@@ -69,8 +77,8 @@ func TestAccRadarValueList_serverDefault(t *testing.T) {
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: tfacc.ProviderFactories,
 		Steps: []resource.TestStep{
-			{Config: listConfig(acct, "Anything", ""), Check: resource.TestCheckResourceAttr(address, "item_type", "string")},
-			{Config: listConfig(acct, "Anything", ""), PlanOnly: true},
+			{Config: listConfig(acct, "serverDefault", "Anything", ""), Check: resource.TestCheckResourceAttr(address, "item_type", "string")},
+			{Config: listConfig(acct, "serverDefault", "Anything", ""), PlanOnly: true},
 		},
 	})
 }
@@ -81,14 +89,14 @@ func TestAccRadarValueList_update(t *testing.T) {
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: tfacc.ProviderFactories,
 		Steps: []resource.TestStep{
-			{Config: listConfig(acct, "One", "  metadata = { team = \"a\", tier = \"1\" }\n"), Check: idOf(&first)},
+			{Config: listConfig(acct, "update", "One", "  metadata = { team = \"a\", tier = \"1\" }\n"), Check: idOf(&first)},
 			{
-				Config: listConfig(acct, "Two", "  metadata = { team = \"b\" }\n"),
+				Config: listConfig(acct, "update", "Two", "  metadata = { team = \"b\" }\n"),
 				ConfigPlanChecks: resource.ConfigPlanChecks{PreApply: []plancheck.PlanCheck{
 					plancheck.ExpectResourceAction(address, plancheck.ResourceActionUpdate),
 				}},
 				Check: resource.ComposeAggregateTestCheckFunc(
-					resource.TestCheckResourceAttr(address, "name", "Two"),
+					resource.TestCheckResourceAttr(address, "name", acct.Name("Two")),
 					resource.TestCheckResourceAttr(address, "metadata.%", "1"),
 					resource.TestCheckResourceAttr(address, "metadata.team", "b"),
 					resource.TestCheckResourceAttrWith(address, "id", func(v string) error {
@@ -110,9 +118,9 @@ func TestAccRadarValueList_replace(t *testing.T) {
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: tfacc.ProviderFactories,
 		Steps: []resource.TestStep{
-			{Config: listConfig(acct, "Blocked", "  item_type = \"email\"\n"), Check: idOf(&first)},
+			{Config: listConfig(acct, "replace", "Blocked", "  item_type = \"email\"\n"), Check: idOf(&first)},
 			{
-				Config: listConfig(acct, "Blocked", "  item_type = \"ip_address\"\n"),
+				Config: listConfig(acct, "replace", "Blocked", "  item_type = \"ip_address\"\n"),
 				ConfigPlanChecks: resource.ConfigPlanChecks{PreApply: []plancheck.PlanCheck{
 					plancheck.ExpectResourceAction(address, plancheck.ResourceActionDestroyBeforeCreate),
 				}},
@@ -132,7 +140,7 @@ func TestAccRadarValueList_replace(t *testing.T) {
 
 func TestAccRadarValueList_import(t *testing.T) {
 	acct := acctest.NewAccount(t)
-	cfg := listConfig(acct, "Blocked emails", "  item_type = \"email\"\n  metadata  = { team = \"risk\" }\n")
+	cfg := listConfig(acct, "import", "Blocked emails", "  item_type = \"email\"\n  metadata  = { team = \"risk\" }\n")
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: tfacc.ProviderFactories,
 		Steps: []resource.TestStep{
@@ -166,14 +174,14 @@ func TestAccRadarValueList_delete(t *testing.T) {
 			}
 			return nil
 		},
-		Steps: []resource.TestStep{{Config: listConfig(acct, "Blocked emails", ""), Check: idOf(&id)}},
+		Steps: []resource.TestStep{{Config: listConfig(acct, "delete", "Blocked emails", ""), Check: idOf(&id)}},
 	})
 }
 
 func TestAccRadarValueList_drift(t *testing.T) {
 	acct := acctest.NewAccount(t)
 	var id string
-	cfg := listConfig(acct, "Blocked emails", "")
+	cfg := listConfig(acct, "drift", "Blocked emails", "")
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: tfacc.ProviderFactories,
 		Steps: []resource.TestStep{
@@ -189,7 +197,7 @@ func TestAccRadarValueList_drift(t *testing.T) {
 					plancheck.ExpectNonEmptyPlan(),
 					plancheck.ExpectResourceAction(address, plancheck.ResourceActionUpdate),
 				}},
-				Check: resource.TestCheckResourceAttr(address, "name", "Blocked emails"),
+				Check: resource.TestCheckResourceAttr(address, "name", acct.Name("Blocked emails")),
 			},
 		},
 	})

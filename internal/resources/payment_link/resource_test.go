@@ -25,7 +25,7 @@ const address = "stripe_payment_link.test"
 func linkConfig(c acctest.Config, items string, extra string) string {
 	return c.ProviderBlock() + fmt.Sprintf(`
 resource "stripe_product" "test" {
-  name = "Course"
+  name = %q
 }
 
 resource "stripe_price" "a" {
@@ -43,7 +43,7 @@ resource "stripe_price" "b" {
 resource "stripe_payment_link" "test" {
   line_items = %s
 %s}
-`, items, extra)
+`, c.Name("Course"), items, extra)
 }
 
 const oneItem = `[{ price = stripe_price.a.id, quantity = 2 }]`
@@ -55,9 +55,13 @@ func idOf(dst *string) resource.TestCheckFunc {
 	})
 }
 
-// updatesOf counts the updates the provider has sent to the payment link.
+// updatesOf counts the updates the provider has sent to the payment link. The count is the
+// fake's, so in smoke mode it is always 0 and the plan-only step after a reorder is the check.
 func updatesOf(t *testing.T, acct acctest.Config, id string) int {
 	t.Helper()
+	if acct.Smoke {
+		return 0
+	}
 	n := 0
 	for _, r := range acctest.RequestLog(t, acct) {
 		if r.Method == "POST" && r.Path == "/v1/payment_links/"+id {

@@ -22,8 +22,10 @@ func TestMain(m *testing.M) { os.Exit(acctest.Main(m)) }
 
 const address = "stripe_billing_alert.test"
 
-// alertConfig is a meter and a usage threshold alert on it. extra lands inside the alert.
-func alertConfig(c acctest.Config, title string, gte int, extra string) string {
+// alertConfig is a meter and a usage threshold alert on it. events is the base of the meter's
+// event name, which Stripe keeps unique, so each test gives its own. extra lands inside the
+// alert.
+func alertConfig(c acctest.Config, events, title string, gte int, extra string) string {
 	return c.ProviderBlock() + fmt.Sprintf(`
 resource "stripe_billing_meter" "test" {
   display_name = %q
@@ -44,7 +46,7 @@ resource "stripe_billing_alert" "test" {
     recurrence = "one_time"
   }
 %s}
-`, c.Name("Alert meter"), c.Unique("alert_events"), c.Name(title), gte, extra)
+`, c.Name("Alert meter"), c.Unique(events), c.Name(title), gte, extra)
 }
 
 // idOf records the alert's ID.
@@ -67,18 +69,18 @@ func TestAccBillingAlert_create(t *testing.T) {
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: tfacc.ProviderFactories,
 		Steps: []resource.TestStep{{
-			Config: alertConfig(acct, "Heavy usage", 100, "") + `
+			Config: alertConfig(acct, "alert_create", "Heavy usage", 100, "") + fmt.Sprintf(`
 data "stripe_billing_alert" "test" {
   id = stripe_billing_alert.test.id
 }
 
 resource "stripe_customer" "test" {
-  name = "Alert customer"
+  name = %q
 }
 
 resource "stripe_billing_alert" "filtered" {
   alert_type = "usage_threshold"
-  title      = "Filtered"
+  title      = %q
 
   usage_threshold = {
     gte        = 5
@@ -91,7 +93,7 @@ resource "stripe_billing_alert" "filtered" {
   }
   status = "inactive"
 }
-`,
+`, acct.Name("Alert customer"), acct.Name("Filtered")),
 			Check: resource.ComposeAggregateTestCheckFunc(
 				resource.TestCheckResourceAttrSet(address, "id"),
 				resource.TestCheckResourceAttr(address, "alert_type", "usage_threshold"),
@@ -128,24 +130,24 @@ func TestAccBillingAlert_update(t *testing.T) {
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: tfacc.ProviderFactories,
 		Steps: []resource.TestStep{
-			{Config: alertConfig(acct, "Heavy usage", 100, ""), Check: idOf(&first)},
+			{Config: alertConfig(acct, "alert_update", "Heavy usage", 100, ""), Check: idOf(&first)},
 			{
-				Config:           alertConfig(acct, "Heavy usage", 100, "  status = \"inactive\"\n"),
+				Config:           alertConfig(acct, "alert_update", "Heavy usage", 100, "  status = \"inactive\"\n"),
 				ConfigPlanChecks: inPlace,
 				Check:            resource.ComposeAggregateTestCheckFunc(resource.TestCheckResourceAttr(address, "status", "inactive"), sameID),
 			},
 			// Inactive again changes nothing.
 			{
-				Config:   alertConfig(acct, "Heavy usage", 100, "  status = \"inactive\"\n"),
+				Config:   alertConfig(acct, "alert_update", "Heavy usage", 100, "  status = \"inactive\"\n"),
 				PlanOnly: true,
 			},
 			{
-				Config:           alertConfig(acct, "Heavy usage", 100, "  status = \"active\"\n"),
+				Config:           alertConfig(acct, "alert_update", "Heavy usage", 100, "  status = \"active\"\n"),
 				ConfigPlanChecks: inPlace,
 				Check:            resource.ComposeAggregateTestCheckFunc(resource.TestCheckResourceAttr(address, "status", "active"), sameID),
 			},
 			// Leaving status out keeps the value.
-			{Config: alertConfig(acct, "Heavy usage", 100, ""), PlanOnly: true},
+			{Config: alertConfig(acct, "alert_update", "Heavy usage", 100, ""), PlanOnly: true},
 		},
 	})
 }
@@ -157,12 +159,12 @@ func TestAccBillingAlert_archive(t *testing.T) {
 	acct := acctest.NewAccount(t)
 	var id string
 	path := func() string { return "/v1/billing/alerts/" + id }
-	archived := alertConfig(acct, "Heavy usage", 100, "  status = \"archived\"\n")
+	archived := alertConfig(acct, "alert_archive", "Heavy usage", 100, "  status = \"archived\"\n")
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: tfacc.ProviderFactories,
 		Steps: acctest.Forget(t, []resource.TestStep{
-			{Config: alertConfig(acct, "Heavy usage", 100, "  status = \"paused\"\n"), PlanOnly: true, ExpectError: regexp.MustCompile("can be set to `active` or `inactive` or `archived`")},
-			{Config: alertConfig(acct, "Heavy usage", 100, ""), Check: idOf(&id)},
+			{Config: alertConfig(acct, "alert_archive", "Heavy usage", 100, "  status = \"paused\"\n"), PlanOnly: true, ExpectError: regexp.MustCompile("can be set to `active` or `inactive` or `archived`")},
+			{Config: alertConfig(acct, "alert_archive", "Heavy usage", 100, ""), Check: idOf(&id)},
 			{
 				Config: archived,
 				Check: resource.ComposeTestCheckFunc(
@@ -173,9 +175,9 @@ func TestAccBillingAlert_archive(t *testing.T) {
 					},
 				),
 			},
-			{Config: alertConfig(acct, "Heavy usage", 100, "  status = \"active\"\n"), PlanOnly: true, ExpectError: regexp.MustCompile("Cannot change `status` from `archived`")},
+			{Config: alertConfig(acct, "alert_archive", "Heavy usage", 100, "  status = \"active\"\n"), PlanOnly: true, ExpectError: regexp.MustCompile("Cannot change `status` from `archived`")},
 			{Config: acctest.Without(t, archived, "stripe_billing_alert"), PlanOnly: true, ExpectError: tfacc.RefusedDestroy},
-			{Config: alertConfig(acct, "Heavier usage", 100, "  status = \"archived\"\n"), PlanOnly: true, ExpectError: tfacc.RefusedReplace},
+			{Config: alertConfig(acct, "alert_archive", "Heavier usage", 100, "  status = \"archived\"\n"), PlanOnly: true, ExpectError: tfacc.RefusedReplace},
 		}, nil, "stripe_billing_alert"),
 	})
 }
@@ -190,9 +192,9 @@ func TestAccBillingAlert_replace(t *testing.T) {
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: tfacc.ProviderFactories,
 		Steps: []resource.TestStep{
-			{Config: alertConfig(acct, "Heavy usage", 100, ""), Check: idOf(&first)},
+			{Config: alertConfig(acct, "alert_replace", "Heavy usage", 100, ""), Check: idOf(&first)},
 			{
-				Config:           alertConfig(acct, "Heavier usage", 100, ""),
+				Config:           alertConfig(acct, "alert_replace", "Heavier usage", 100, ""),
 				ConfigPlanChecks: replaced,
 				Check: resource.TestCheckResourceAttrWith(address, "id", func(v string) error {
 					if v == first {
@@ -202,7 +204,7 @@ func TestAccBillingAlert_replace(t *testing.T) {
 				}),
 			},
 			{
-				Config:           alertConfig(acct, "Heavier usage", 200, ""),
+				Config:           alertConfig(acct, "alert_replace", "Heavier usage", 200, ""),
 				ConfigPlanChecks: replaced,
 				Check:            resource.TestCheckResourceAttr(address, "usage_threshold.gte", "200"),
 			},
@@ -212,7 +214,7 @@ func TestAccBillingAlert_replace(t *testing.T) {
 
 func TestAccBillingAlert_import(t *testing.T) {
 	acct := acctest.NewAccount(t)
-	cfg := alertConfig(acct, "Heavy usage", 100, "")
+	cfg := alertConfig(acct, "alert_import", "Heavy usage", 100, "")
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: tfacc.ProviderFactories,
 		Steps: []resource.TestStep{
@@ -235,7 +237,7 @@ func TestAccBillingAlert_import(t *testing.T) {
 // The identity form needs Terraform or OpenTofu 1.12.0 or later.
 func TestAccBillingAlert_importIdentity(t *testing.T) {
 	acct := acctest.NewAccount(t)
-	cfg := alertConfig(acct, "Heavy usage", 100, "")
+	cfg := alertConfig(acct, "alert_importidentity", "Heavy usage", 100, "")
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: tfacc.ProviderFactories,
 		TerraformVersionChecks:   []tfversion.TerraformVersionCheck{tfversion.RequireAbove(version.Must(version.NewVersion("1.12.0")))},
@@ -268,7 +270,7 @@ func TestAccBillingAlert_delete(t *testing.T) {
 			}
 			return nil
 		},
-		Steps: []resource.TestStep{{Config: alertConfig(acct, "Heavy usage", 100, ""), Check: resource.ComposeTestCheckFunc(
+		Steps: []resource.TestStep{{Config: alertConfig(acct, "alert_delete", "Heavy usage", 100, ""), Check: resource.ComposeTestCheckFunc(
 			idOf(&id), resource.TestCheckResourceAttr(address, "status", "active"))}},
 	})
 }
@@ -277,7 +279,7 @@ func TestAccBillingAlert_delete(t *testing.T) {
 func TestAccBillingAlert_drift(t *testing.T) {
 	acct := acctest.NewAccount(t)
 	var id string
-	cfg := alertConfig(acct, "Heavy usage", 100, "  status = \"active\"\n")
+	cfg := alertConfig(acct, "alert_drift", "Heavy usage", 100, "  status = \"active\"\n")
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: tfacc.ProviderFactories,
 		Steps: []resource.TestStep{

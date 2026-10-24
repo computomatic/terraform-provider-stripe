@@ -19,9 +19,11 @@ func TestMain(m *testing.M) { os.Exit(acctest.Main(m)) }
 
 const address = "stripe_file_link.test"
 
-// seedFile puts a file in the account, which Terraform cannot upload.
+// seedFile puts a file in the account, which Terraform cannot upload. Only the fake can seed
+// one, so it skips the test in smoke mode before the test creates anything.
 func seedFile(t *testing.T, acct acctest.Config) string {
 	t.Helper()
+	acctest.RequireFake(t)
 	return acctest.Seed(t, acct, wire.Object{
 		{Name: "object", Value: wire.String("file")},
 		{Name: "filename", Value: wire.String("report.png")},
