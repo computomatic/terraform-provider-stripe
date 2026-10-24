@@ -355,11 +355,68 @@ func TestRefuseChangeTakesARequiredField(t *testing.T) {
 }
 
 func TestRefuseChangeMustNameAConfigurableField(t *testing.T) {
-	for name, field := range map[string]string{"unknown": "nothing", "output only": "created", "nested": "address.line1"} {
+	for name, field := range map[string]string{"unknown": "nothing", "output only": "created", "in a list": "items.sku", "in a map": "options.amount"} {
 		decl := fixtureDeclaration()
 		decl.RefuseChange = []string{field}
-		if _, err := NewResource(decl, fixtureTable()); err == nil {
+		if _, err := NewResource(decl, refuseTable()); err == nil {
 			t.Errorf("%s: must not compile", name)
+		}
+	}
+}
+
+// A field below the top level, such as an account's `business_profile.mcc`, is refused on its
+// own: a change beside it in the same object passes, and removing the object that holds it is
+// a change of it.
+func TestRefuseChangeTakesANestedField(t *testing.T) {
+	decl := fixtureDeclaration()
+	decl.RefuseChange = []string{"address.zip"}
+	r := configured(t, decl, refuseTable(), noCalls(t))
+	addressType := r.objType.AttrTypes["address"].(basetypes.ObjectType).AttrTypes
+	address := func(line1, zip string) attr.Value {
+		return types.ObjectValueMust(addressType, map[string]attr.Value{"line1": types.StringValue(line1), "zip": types.StringValue(zip)})
+	}
+	state := r.fill(map[string]attr.Value{"id": types.StringValue("wid_1"), "name": types.StringValue("w"), "address": address("1 Main St", "94080")})
+	modify := func(planned attr.Value) *resource.ModifyPlanResponse {
+		return r.modifyPlan(t, r.fill(with(state, map[string]attr.Value{"address": planned})), state)
+	}
+	if resp := modify(address("1 Main St", "10001")); !resp.Diagnostics.HasError() || !strings.Contains(resp.Diagnostics.Errors()[0].Summary(), "`address.zip`") ||
+		!strings.Contains(resp.Diagnostics.Errors()[0].Detail(), "ignore_changes = [address.zip]") {
+		t.Errorf("a changed nested value must fail the plan and name its path: %v", resp.Diagnostics)
+	}
+	if resp := modify(address("2 Main St", "94080")); resp.Diagnostics.HasError() {
+		t.Errorf("a change beside the refused field must pass: %v", resp.Diagnostics)
+	}
+	if resp := modify(types.ObjectNull(addressType)); !resp.Diagnostics.HasError() {
+		t.Error("removing the object that holds the refused field is a change of it")
+	}
+	if resp := modify(types.ObjectUnknown(addressType)); resp.Diagnostics.HasError() {
+		t.Errorf("an object not known yet is left for apply: %v", resp.Diagnostics)
+	}
+}
+
+// A refused field is sent on create only: an update that changes a field beside it in the same
+// object, such as an account's `business_profile.name` beside its `mcc`, sends the changed
+// field alone, and neither a nested nor a top-level refused field is ever in the body.
+func TestRefuseChangeKeepsRefusedFieldsOutOfTheUpdate(t *testing.T) {
+	decl := fixtureDeclaration()
+	decl.RefuseChange = []string{"address.zip", "url"}
+	r := configured(t, decl, refuseTable(), noCalls(t))
+	addressType := r.objType.AttrTypes["address"].(basetypes.ObjectType).AttrTypes
+	address := func(line1, zip string) attr.Value {
+		return types.ObjectValueMust(addressType, map[string]attr.Value{"line1": types.StringValue(line1), "zip": types.StringValue(zip)})
+	}
+	state := r.fill(map[string]attr.Value{"id": types.StringValue("wid_1"), "name": types.StringValue("w"), "url": types.StringValue("https://a.example"), "address": address("1 Main St", "94080")})
+	for name, tc := range map[string]struct{ zip, url string }{
+		"unchanged": {"94080", "https://a.example"},
+		"changed":   {"10001", "https://b.example"},
+	} {
+		plan := r.fill(with(state, map[string]attr.Value{"url": types.StringValue(tc.url), "address": address("2 Main St", tc.zip)}))
+		params, err := r.m.encodeUpdate(plan, state, tftypes.Value{})
+		if err != nil {
+			t.Fatal(err)
+		}
+		if got, want := wireOf(t, params), `{"address":{"line1":"2 Main St"}}`; got != want {
+			t.Errorf("%s refused fields: update body %s, want %s", name, got, want)
 		}
 	}
 }

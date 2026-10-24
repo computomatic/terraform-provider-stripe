@@ -540,3 +540,69 @@ func TestHashRequestUnionResponseAndNoResponse(t *testing.T) {
 		}
 	}
 }
+
+// ownerSpec is a collection whose request holds a `person` and `caps` without descriptions.
+// The response documents the person's `name` and nested `kind.x`, and has `caps.a` as a
+// string. A person's own create documents its `name` and `secret`.
+const ownerSpec = `{
+  "openapi": "3.0.0",
+  "info": {"version": "v"},
+  "paths": {
+    "/v1/owners": {"post": {
+      "operationId": "PostOwners",
+      "requestBody": {"content": {"application/x-www-form-urlencoded": {"schema": {"type": "object", "properties": {
+        "person": {"type": "object", "properties": {"name": {"type": "string"}, "secret": {"type": "string"},
+          "kind": {"type": "object", "properties": {"x": {"type": "string"}}}}},
+        "caps": {"type": "object", "properties": {"a": {"type": "object", "properties": {"requested": {"type": "boolean"}}}}}
+      }}}}},
+      "responses": {"200": {"content": {"application/json": {"schema": {"$ref": "#/components/schemas/owner"}}}}}
+    }},
+    "/v1/people": {"post": {
+      "operationId": "PostPeople",
+      "requestBody": {"content": {"application/x-www-form-urlencoded": {"schema": {"type": "object", "properties": {
+        "name": {"type": "string", "description": "The person's name, from the person's create."},
+        "secret": {"type": "string", "description": "The person's secret."}
+      }}}}},
+      "responses": {"200": {"content": {"application/json": {"schema": {"$ref": "#/components/schemas/owner"}}}}}
+    }}
+  },
+  "components": {"schemas": {
+    "owner": {"type": "object", "properties": {"id": {"type": "string"},
+      "person": {"type": "object", "properties": {"name": {"type": "string", "description": "The person's name."},
+        "kind": {"type": "object", "properties": {"x": {"type": "string", "description": "The kind's x."}}}}},
+      "caps": {"type": "object", "properties": {"a": {"type": "string", "description": "The status of a."}}}}}
+  }}
+}`
+
+// A request-only field without a description takes the response's description at the same
+// path, then a DocsFrom operation's, but never one of another shape.
+func TestNoResponseFieldsTakeOtherSchemasDescriptions(t *testing.T) {
+	spec, err := ParseSpec([]byte(ownerSpec))
+	if err != nil {
+		t.Fatal(err)
+	}
+	res := Resource{Package: "owner", CreatePath: "/v1/owners", NoResponse: []string{"person", "caps"}, DocsFrom: map[string]string{"person": "/v1/people"}}
+	table, err := Build(spec, res)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for path, want := range map[string]string{
+		"person.name":   "The person's name.",
+		"person.secret": "The person's secret.",
+		"person.kind.x": "The kind's x.",
+		"caps.a":        "",
+	} {
+		if got := lookup(t, table, strings.Split(path, ".")...).Description; got != want {
+			t.Errorf("%s: description %q, want %q", path, got, want)
+		}
+	}
+	for name, docs := range map[string]map[string]string{
+		"unknown field":     {"nothing": "/v1/people"},
+		"unknown operation": {"person": "/v1/nothing"},
+	} {
+		res.DocsFrom = docs
+		if _, err := Build(spec, res); err == nil {
+			t.Errorf("%s: must fail", name)
+		}
+	}
+}

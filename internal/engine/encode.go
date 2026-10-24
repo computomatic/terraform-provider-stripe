@@ -121,7 +121,8 @@ func (m *model) encodeFollowUp(plan basetypes.ObjectValue) (wire.Object, error) 
 // encodeUpdate builds the update request body: the updatable fields whose planned value
 // differs from state. A removed field is sent as null, which both codecs render as
 // Stripe's way of unsetting it, except a SendWithUpdate field, which is never sent as null.
-// Create-only fields are never sent, even unchanged.
+// Create-only fields are never sent, even unchanged, nor is a RefuseChange field, top-level or
+// nested, whatever else in its object changes.
 // Metadata sends only the keys that changed (ADR D2). A field whose plan differs from the
 // state only in computed values the configuration leaves unset is unchanged: Terraform marks
 // those unknown on every update, and sending the field again would, for a list of
@@ -130,8 +131,9 @@ func (m *model) encodeFollowUp(plan basetypes.ObjectValue) (wire.Object, error) 
 func (m *model) encodeUpdate(plan, state basetypes.ObjectValue, config tftypes.Value) (wire.Object, error) {
 	var out wire.Object
 	planAttrs, stateAttrs := plan.Attributes(), state.Attributes()
+	updatable := func(k *node) bool { return k.Update && !slices.Contains(m.decl.RefuseChange, k.Path) }
 	for _, n := range m.nodes {
-		if !n.Update || slices.Contains(m.decl.SendWithUpdate, n.Name) {
+		if !updatable(n) || slices.Contains(m.decl.SendWithUpdate, n.Name) {
 			continue
 		}
 		pv, sv := planAttrs[n.AttrName()], stateAttrs[n.AttrName()]
@@ -174,7 +176,7 @@ func (m *model) encodeUpdate(plan, state basetypes.ObjectValue, config tftypes.V
 		case pv.IsNull():
 			out = append(out, wire.Field{Name: n.Name, Value: wire.Null{}})
 		case n.Name == m.decl.CurrencyOptions:
-			v, ok, err := encodeValue(n, addedKeys(pv, sv), func(k *node) bool { return k.Update })
+			v, ok, err := encodeValue(n, addedKeys(pv, sv), updatable)
 			if err != nil {
 				return nil, err
 			}
@@ -182,7 +184,7 @@ func (m *model) encodeUpdate(plan, state basetypes.ObjectValue, config tftypes.V
 				out = append(out, wire.Field{Name: n.Name, Value: v})
 			}
 		default:
-			v, ok, err := encodeValue(n, withoutUnchangedDefaults(n, pv, sv), func(k *node) bool { return k.Update })
+			v, ok, err := encodeValue(n, withoutUnchangedDefaults(n, pv, sv), updatable)
 			if err != nil {
 				return nil, err
 			}
@@ -196,10 +198,10 @@ func (m *model) encodeUpdate(plan, state basetypes.ObjectValue, config tftypes.V
 		return out, nil
 	}
 	for _, n := range m.nodes {
-		if !n.Update || !slices.Contains(m.decl.SendWithUpdate, n.Name) {
+		if !updatable(n) || !slices.Contains(m.decl.SendWithUpdate, n.Name) {
 			continue
 		}
-		v, ok, err := encodeValue(n, planAttrs[n.AttrName()], func(k *node) bool { return k.Update })
+		v, ok, err := encodeValue(n, planAttrs[n.AttrName()], updatable)
 		if err != nil {
 			return nil, err
 		}

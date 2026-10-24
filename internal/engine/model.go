@@ -239,8 +239,8 @@ func compile(decl Declaration, table []fields.Field) (*model, error) {
 		}
 	}
 	for _, name := range decl.RefuseChange {
-		if n, ok := m.top(name); !ok || !n.Optional && !n.Required {
-			return nil, fmt.Errorf("%s: refuse-change entry `%s` is not a configurable top-level field", decl.TypeName, name)
+		if n, _, ok := m.at(name); !ok || !n.Optional && !n.Required {
+			return nil, fmt.Errorf("%s: refuse-change entry `%s` is not a configurable field outside a list", decl.TypeName, name)
 		}
 	}
 	// refuseChanges tells a replace only by its top-level sources. A resource that refuses

@@ -421,26 +421,61 @@ func (r *Resource) refuseChanges(ctx context.Context, req resource.ModifyPlanReq
 		return false
 	}
 	for _, name := range r.m.decl.RefuseChange {
-		n, _ := r.m.top(name)
-		pv, sv := plan.Attributes()[n.AttrName()], state.Attributes()[n.AttrName()]
+		n, at, _ := r.m.at(name)
+		var names []string
+		where := path.Empty()
+		for _, step := range at.Steps() {
+			names = append(names, string(step.(tftypes.AttributeName)))
+			where = where.AtName(names[len(names)-1])
+		}
+		pv, sv := attrAt(ctx, plan, names), attrAt(ctx, state, names)
 		if pv == nil || pv.Equal(sv) {
 			continue
 		}
 		if v, err := pv.ToTerraformValue(ctx); err != nil || !v.IsFullyKnown() {
 			// A computed value the configuration leaves unset is Stripe's to fill in.
-			cv, err := config.Attributes()[n.AttrName()].ToTerraformValue(ctx)
-			if err != nil || !cv.IsFullyKnown() || cv.IsNull() && n.Computed || unchangedBesidesComputed(n, pv, sv, req.Config.Raw) {
+			cv, err := attrAt(ctx, config, names).ToTerraformValue(ctx)
+			if err != nil || !cv.IsFullyKnown() || cv.IsNull() && n.Computed || sameBesidesComputed(at, pv, sv, req.Config.Raw) {
 				continue
 			}
 		}
+		attrName := strings.Join(names, ".")
 		recreate := "recreate the object deliberately with `terraform taint` (`tofu taint` in OpenTofu)."
 		if r.m.refusal(req.State.Raw) != "" {
 			recreate = "remove the object from the state with a removed block or `terraform state rm` and apply again to create a new one."
 		}
-		resp.Diagnostics.AddAttributeError(path.Root(n.AttrName()), "Changing `"+n.AttrName()+"` is not supported yet",
-			"Changing the "+n.AttrName()+" of an existing "+r.m.decl.TypeName+" is not supported yet. Revert the configuration, add `lifecycle { ignore_changes = ["+n.AttrName()+"] }` to leave it as it is, or "+recreate)
+		resp.Diagnostics.AddAttributeError(where, "Changing `"+attrName+"` is not supported yet",
+			"Changing the "+attrName+" of an existing "+r.m.decl.TypeName+" is not supported yet. Revert the configuration, add `lifecycle { ignore_changes = ["+attrName+"] }` to leave it as it is, or "+recreate)
 	}
 	return resp.Diagnostics.HasError()
+}
+
+// attrAt returns the value at the attribute names below obj. Below a null or unknown object
+// it is a null or unknown value of its own type, so that a refused field under an object the
+// plan removes is a change and one under an object not known yet is left for apply.
+func attrAt(ctx context.Context, obj basetypes.ObjectValue, names []string) attr.Value {
+	var v attr.Value = obj
+	for _, name := range names {
+		o, ok := v.(basetypes.ObjectValue)
+		if !ok {
+			return nil
+		}
+		if o.IsNull() || o.IsUnknown() {
+			t := o.AttributeTypes(ctx)[name]
+			raw := tftypes.NewValue(t.TerraformType(ctx), tftypes.UnknownValue)
+			if o.IsNull() {
+				raw = tftypes.NewValue(t.TerraformType(ctx), nil)
+			}
+			below, err := t.ValueFromTerraform(ctx, raw)
+			if err != nil {
+				return nil
+			}
+			v = below
+			continue
+		}
+		v = o.Attributes()[name]
+	}
+	return v
 }
 
 // differs reports whether a planned value is a change from the state's. An unknown planned

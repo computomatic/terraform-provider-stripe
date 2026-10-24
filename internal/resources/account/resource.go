@@ -25,12 +25,25 @@ import (
 // their statuses in the same attribute, so the attribute keeps what the configuration says and
 // the stripe_account_capability data source reads the statuses. Nothing proves that an account
 // update applies a capability request, so a plan that changes `capabilities` is refused.
+//
+// The onboarding values a US Custom individual account is created with, so that Stripe
+// verifies it and activates `card_issuing`, `transfers` and `treasury`, are the suite's
+// ("verifiedIndividualForm", "issuingAccountForm"): the business type, the individual, the
+// business profile's MCC, URL, product description, annual revenue and worker count, the
+// external account token, and the terms of service of the account, of Issuing and of
+// Treasury. The suite also creates a company account with `company[name]`. All are proven on
+// create only, and replacing an account deletes a business's account, so a change to any of
+// them is refused, never a replacement. Stripe never returns the individual's ID number or
+// SSN, and returns the individual and company as far larger objects than the request, which
+// the fake does not show, so `individual` and `company` keep what the configuration says,
+// as `external_account` does, and the two numbers are sensitive. The business type, the
+// business profile values and the acceptances are read back and server-filled, like `email`.
 var Declaration = engine.Declaration{
 	TypeName:              "stripe_account",
 	IDPrefix:              "acct_",
-	Description:           "A connected account of the platform. `terraform destroy` deletes the account and, with it, its bank accounts. Set exactly one of `type` (a custom account) or `controller` (an account whose controller properties you choose), together with `country`. `type`, `controller` and `country` cannot change on an existing account, so changing one replaces it. The resource requests the capabilities it lists on creation only: a plan that changes `capabilities` on an existing account fails, because changing requested capabilities is not supported yet: revert the configuration, ignore the change, or recreate the account deliberately with `terraform taint` (`tofu taint` in OpenTofu). Read their status with the `stripe_account_capability` data source. Removing `email` or `business_profile.name` from the configuration leaves the value on the account. A refresh that finds the account gone (Stripe answers 403 `account_invalid`) removes it from state.",
+	Description:           "A connected account of the platform. `terraform destroy` deletes the account and, with it, its bank accounts. Set exactly one of `type` (a custom account) or `controller` (an account whose controller properties you choose), together with `country`. `type`, `controller` and `country` cannot change on an existing account, so changing one replaces it. The resource requests the capabilities it lists on creation only: a plan that changes `capabilities` on an existing account fails, because changing requested capabilities is not supported yet: revert the configuration, ignore the change, or recreate the account deliberately with `terraform taint` (`tofu taint` in OpenTofu). Read their status with the `stripe_account_capability` data source. The onboarding arguments (`business_type`, `individual`, `company`, `external_account`, `tos_acceptance`, `settings.card_issuing.tos_acceptance`, `settings.treasury.tos_acceptance` and the business profile's `mcc`, `url`, `product_description`, `annual_revenue` and `estimated_worker_count`) are sent on creation only, and a plan that changes one on an existing account fails in the same way. Stripe never returns `individual.id_number` or `individual.ssn_last_4`, and the provider does not read `individual`, `company` or `external_account` back, so state keeps the values you configured, and the two identity numbers are sensitive. Removing `email`, `business_type`, `tos_acceptance` or a `business_profile` or `settings` argument from the configuration leaves the value on the account. A refresh that finds the account gone (Stripe answers 403 `account_invalid`) removes it from state.",
 	DataSourceDescription: "A connected account of the platform.",
-	ImportNote:            "Stripe does not return which capabilities were requested, so an imported account has no `capabilities` in state. Add `lifecycle { ignore_changes = [capabilities] }` to a configuration that sets it, because a plan that changes `capabilities` fails.",
+	ImportNote:            "Stripe does not return which capabilities were requested, and the provider does not read back `individual`, `company` or `external_account`, so an imported account has none of them in state. Add `lifecycle { ignore_changes = [capabilities, individual, company, external_account] }`, listing those the configuration sets, because a plan that changes one of them fails.",
 	ImportNoteLevel:       engine.NoteWarning,
 	Paths: engine.Paths{
 		Create:   "/v1/accounts",
@@ -42,9 +55,22 @@ var Declaration = engine.Declaration{
 	Delete:          engine.Delete,
 	GoneOnForbidden: "account_invalid",
 	ExactlyOneOf:    [][]string{{"type", "controller"}},
-	RefuseChange:    []string{"capabilities"},
+	RefuseChange: []string{
+		"capabilities", "business_type", "individual", "company", "external_account", "tos_acceptance",
+		"business_profile.mcc", "business_profile.url", "business_profile.product_description",
+		"business_profile.annual_revenue", "business_profile.estimated_worker_count",
+		"settings.card_issuing.tos_acceptance", "settings.treasury.tos_acceptance",
+	},
+	Sensitive: []string{"individual.id_number", "individual.ssn_last_4"},
 	ServerDefaulted: []string{
-		"type", "email", "business_profile", "business_profile.name",
+		"type", "email", "business_type", "business_profile", "business_profile.name",
+		"business_profile.mcc", "business_profile.url", "business_profile.product_description",
+		"business_profile.annual_revenue", "business_profile.estimated_worker_count",
+		"tos_acceptance", "tos_acceptance.date", "tos_acceptance.ip",
+		"settings", "settings.card_issuing", "settings.card_issuing.tos_acceptance",
+		"settings.card_issuing.tos_acceptance.date", "settings.card_issuing.tos_acceptance.ip",
+		"settings.treasury", "settings.treasury.tos_acceptance",
+		"settings.treasury.tos_acceptance.date", "settings.treasury.tos_acceptance.ip",
 		"controller", "controller.fees", "controller.fees.payer", "controller.losses", "controller.losses.payments",
 		"controller.requirement_collection", "controller.stripe_dashboard", "controller.stripe_dashboard.type",
 	},
