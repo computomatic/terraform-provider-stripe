@@ -16,39 +16,39 @@ var Table = []fields.Field{
 	{Name: "country", Shape: fields.String, Response: true, Description: "Two-letter country code ([ISO 3166-1 alpha-2](https://en.wikipedia.org/wiki/ISO_3166-1_alpha-2))."},
 	{Name: "created", Shape: fields.Int, Response: true, Description: "Time at which the object was created. Measured in seconds since the Unix epoch."},
 	{Name: "features", Shape: fields.Object, Create: true, Update: true, Description: "Encodes whether a FinancialAccount has access to a particular feature. Stripe or the platform can control features via the requested field.", Fields: []fields.Field{
-		{Name: "card_issuing", Shape: fields.Object, Create: true, Update: true, Fields: []fields.Field{
-			{Name: "requested", Shape: fields.Bool, Required: true, Create: true, Update: true},
+		{Name: "card_issuing", Shape: fields.Object, Create: true, Update: true, Description: "Toggle settings for enabling/disabling a feature", Fields: []fields.Field{
+			{Name: "requested", Shape: fields.Bool, Required: true, Create: true, Update: true, Description: "Whether the FinancialAccount should have the Feature."},
 		}},
-		{Name: "deposit_insurance", Shape: fields.Object, Create: true, Update: true, Fields: []fields.Field{
-			{Name: "requested", Shape: fields.Bool, Required: true, Create: true, Update: true},
+		{Name: "deposit_insurance", Shape: fields.Object, Create: true, Update: true, Description: "Toggle settings for enabling/disabling a feature", Fields: []fields.Field{
+			{Name: "requested", Shape: fields.Bool, Required: true, Create: true, Update: true, Description: "Whether the FinancialAccount should have the Feature."},
 		}},
-		{Name: "financial_addresses", Shape: fields.Object, Create: true, Update: true, Fields: []fields.Field{
-			{Name: "aba", Shape: fields.Object, Create: true, Update: true, Fields: []fields.Field{
-				{Name: "requested", Shape: fields.Bool, Required: true, Create: true, Update: true},
+		{Name: "financial_addresses", Shape: fields.Object, Create: true, Update: true, Description: "Settings related to Financial Addresses features on a Financial Account", Fields: []fields.Field{
+			{Name: "aba", Shape: fields.Object, Create: true, Update: true, Description: "Toggle settings for enabling/disabling the ABA address feature", Fields: []fields.Field{
+				{Name: "requested", Shape: fields.Bool, Required: true, Create: true, Update: true, Description: "Whether the FinancialAccount should have the Feature."},
 			}},
 		}},
-		{Name: "inbound_transfers", Shape: fields.Object, Create: true, Update: true, Fields: []fields.Field{
-			{Name: "ach", Shape: fields.Object, Create: true, Update: true, Fields: []fields.Field{
-				{Name: "requested", Shape: fields.Bool, Required: true, Create: true, Update: true},
+		{Name: "inbound_transfers", Shape: fields.Object, Create: true, Update: true, Description: "InboundTransfers contains inbound transfers features for a FinancialAccount.", Fields: []fields.Field{
+			{Name: "ach", Shape: fields.Object, Create: true, Update: true, Description: "Toggle settings for enabling/disabling an inbound ACH specific feature", Fields: []fields.Field{
+				{Name: "requested", Shape: fields.Bool, Required: true, Create: true, Update: true, Description: "Whether the FinancialAccount should have the Feature."},
 			}},
 		}},
-		{Name: "intra_stripe_flows", Shape: fields.Object, Create: true, Update: true, Fields: []fields.Field{
-			{Name: "requested", Shape: fields.Bool, Required: true, Create: true, Update: true},
+		{Name: "intra_stripe_flows", Shape: fields.Object, Create: true, Update: true, Description: "Toggle settings for enabling/disabling a feature", Fields: []fields.Field{
+			{Name: "requested", Shape: fields.Bool, Required: true, Create: true, Update: true, Description: "Whether the FinancialAccount should have the Feature."},
 		}},
-		{Name: "outbound_payments", Shape: fields.Object, Create: true, Update: true, Fields: []fields.Field{
-			{Name: "ach", Shape: fields.Object, Create: true, Update: true, Fields: []fields.Field{
-				{Name: "requested", Shape: fields.Bool, Required: true, Create: true, Update: true},
+		{Name: "outbound_payments", Shape: fields.Object, Create: true, Update: true, Description: "Settings related to Outbound Payments features on a Financial Account", Fields: []fields.Field{
+			{Name: "ach", Shape: fields.Object, Create: true, Update: true, Description: "Toggle settings for enabling/disabling an outbound ACH specific feature", Fields: []fields.Field{
+				{Name: "requested", Shape: fields.Bool, Required: true, Create: true, Update: true, Description: "Whether the FinancialAccount should have the Feature."},
 			}},
-			{Name: "us_domestic_wire", Shape: fields.Object, Create: true, Update: true, Fields: []fields.Field{
-				{Name: "requested", Shape: fields.Bool, Required: true, Create: true, Update: true},
+			{Name: "us_domestic_wire", Shape: fields.Object, Create: true, Update: true, Description: "Toggle settings for enabling/disabling a feature", Fields: []fields.Field{
+				{Name: "requested", Shape: fields.Bool, Required: true, Create: true, Update: true, Description: "Whether the FinancialAccount should have the Feature."},
 			}},
 		}},
-		{Name: "outbound_transfers", Shape: fields.Object, Create: true, Update: true, Fields: []fields.Field{
-			{Name: "ach", Shape: fields.Object, Create: true, Update: true, Fields: []fields.Field{
-				{Name: "requested", Shape: fields.Bool, Required: true, Create: true, Update: true},
+		{Name: "outbound_transfers", Shape: fields.Object, Create: true, Update: true, Description: "OutboundTransfers contains outbound transfers features for a FinancialAccount.", Fields: []fields.Field{
+			{Name: "ach", Shape: fields.Object, Create: true, Update: true, Description: "Toggle settings for enabling/disabling an outbound ACH specific feature", Fields: []fields.Field{
+				{Name: "requested", Shape: fields.Bool, Required: true, Create: true, Update: true, Description: "Whether the FinancialAccount should have the Feature."},
 			}},
-			{Name: "us_domestic_wire", Shape: fields.Object, Create: true, Update: true, Fields: []fields.Field{
-				{Name: "requested", Shape: fields.Bool, Required: true, Create: true, Update: true},
+			{Name: "us_domestic_wire", Shape: fields.Object, Create: true, Update: true, Description: "Toggle settings for enabling/disabling a feature", Fields: []fields.Field{
+				{Name: "requested", Shape: fields.Bool, Required: true, Create: true, Update: true, Description: "Whether the FinancialAccount should have the Feature."},
 			}},
 		}},
 	}},

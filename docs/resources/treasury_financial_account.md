@@ -60,106 +60,106 @@ The following arguments are optional:
 
 The `features` attribute supports:
 
-* `card_issuing` - (Optional) See [`features.card_issuing`](#features.card_issuing) below.
-* `deposit_insurance` - (Optional) See [`features.deposit_insurance`](#features.deposit_insurance) below.
-* `financial_addresses` - (Optional) See [`features.financial_addresses`](#features.financial_addresses) below.
-* `inbound_transfers` - (Optional) See [`features.inbound_transfers`](#features.inbound_transfers) below.
-* `intra_stripe_flows` - (Optional) See [`features.intra_stripe_flows`](#features.intra_stripe_flows) below.
-* `outbound_payments` - (Optional) See [`features.outbound_payments`](#features.outbound_payments) below.
-* `outbound_transfers` - (Optional) See [`features.outbound_transfers`](#features.outbound_transfers) below.
+* `card_issuing` - (Optional) Toggle settings for enabling/disabling a feature See [`features.card_issuing`](#features.card_issuing) below.
+* `deposit_insurance` - (Optional) Toggle settings for enabling/disabling a feature See [`features.deposit_insurance`](#features.deposit_insurance) below.
+* `financial_addresses` - (Optional) Settings related to Financial Addresses features on a Financial Account See [`features.financial_addresses`](#features.financial_addresses) below.
+* `inbound_transfers` - (Optional) InboundTransfers contains inbound transfers features for a FinancialAccount. See [`features.inbound_transfers`](#features.inbound_transfers) below.
+* `intra_stripe_flows` - (Optional) Toggle settings for enabling/disabling a feature See [`features.intra_stripe_flows`](#features.intra_stripe_flows) below.
+* `outbound_payments` - (Optional) Settings related to Outbound Payments features on a Financial Account See [`features.outbound_payments`](#features.outbound_payments) below.
+* `outbound_transfers` - (Optional) OutboundTransfers contains outbound transfers features for a FinancialAccount. See [`features.outbound_transfers`](#features.outbound_transfers) below.
 
 <a id="features.card_issuing"></a>
 ### `features.card_issuing`
 
 The `features.card_issuing` attribute supports:
 
-* `requested` - (Required)
+* `requested` - (Required) Whether the FinancialAccount should have the Feature.
 
 <a id="features.deposit_insurance"></a>
 ### `features.deposit_insurance`
 
 The `features.deposit_insurance` attribute supports:
 
-* `requested` - (Required)
+* `requested` - (Required) Whether the FinancialAccount should have the Feature.
 
 <a id="features.financial_addresses"></a>
 ### `features.financial_addresses`
 
 The `features.financial_addresses` attribute supports:
 
-* `aba` - (Optional) See [`features.financial_addresses.aba`](#features.financial_addresses.aba) below.
+* `aba` - (Optional) Toggle settings for enabling/disabling the ABA address feature See [`features.financial_addresses.aba`](#features.financial_addresses.aba) below.
 
 <a id="features.financial_addresses.aba"></a>
 ### `features.financial_addresses.aba`
 
 The `features.financial_addresses.aba` attribute supports:
 
-* `requested` - (Required)
+* `requested` - (Required) Whether the FinancialAccount should have the Feature.
 
 <a id="features.inbound_transfers"></a>
 ### `features.inbound_transfers`
 
 The `features.inbound_transfers` attribute supports:
 
-* `ach` - (Optional) See [`features.inbound_transfers.ach`](#features.inbound_transfers.ach) below.
+* `ach` - (Optional) Toggle settings for enabling/disabling an inbound ACH specific feature See [`features.inbound_transfers.ach`](#features.inbound_transfers.ach) below.
 
 <a id="features.inbound_transfers.ach"></a>
 ### `features.inbound_transfers.ach`
 
 The `features.inbound_transfers.ach` attribute supports:
 
-* `requested` - (Required)
+* `requested` - (Required) Whether the FinancialAccount should have the Feature.
 
 <a id="features.intra_stripe_flows"></a>
 ### `features.intra_stripe_flows`
 
 The `features.intra_stripe_flows` attribute supports:
 
-* `requested` - (Required)
+* `requested` - (Required) Whether the FinancialAccount should have the Feature.
 
 <a id="features.outbound_payments"></a>
 ### `features.outbound_payments`
 
 The `features.outbound_payments` attribute supports:
 
-* `ach` - (Optional) See [`features.outbound_payments.ach`](#features.outbound_payments.ach) below.
-* `us_domestic_wire` - (Optional) See [`features.outbound_payments.us_domestic_wire`](#features.outbound_payments.us_domestic_wire) below.
+* `ach` - (Optional) Toggle settings for enabling/disabling an outbound ACH specific feature See [`features.outbound_payments.ach`](#features.outbound_payments.ach) below.
+* `us_domestic_wire` - (Optional) Toggle settings for enabling/disabling a feature See [`features.outbound_payments.us_domestic_wire`](#features.outbound_payments.us_domestic_wire) below.
 
 <a id="features.outbound_payments.ach"></a>
 ### `features.outbound_payments.ach`
 
 The `features.outbound_payments.ach` attribute supports:
 
-* `requested` - (Required)
+* `requested` - (Required) Whether the FinancialAccount should have the Feature.
 
 <a id="features.outbound_payments.us_domestic_wire"></a>
 ### `features.outbound_payments.us_domestic_wire`
 
 The `features.outbound_payments.us_domestic_wire` attribute supports:
 
-* `requested` - (Required)
+* `requested` - (Required) Whether the FinancialAccount should have the Feature.
 
 <a id="features.outbound_transfers"></a>
 ### `features.outbound_transfers`
 
 The `features.outbound_transfers` attribute supports:
 
-* `ach` - (Optional) See [`features.outbound_transfers.ach`](#features.outbound_transfers.ach) below.
-* `us_domestic_wire` - (Optional) See [`features.outbound_transfers.us_domestic_wire`](#features.outbound_transfers.us_domestic_wire) below.
+* `ach` - (Optional) Toggle settings for enabling/disabling an outbound ACH specific feature See [`features.outbound_transfers.ach`](#features.outbound_transfers.ach) below.
+* `us_domestic_wire` - (Optional) Toggle settings for enabling/disabling a feature See [`features.outbound_transfers.us_domestic_wire`](#features.outbound_transfers.us_domestic_wire) below.
 
 <a id="features.outbound_transfers.ach"></a>
 ### `features.outbound_transfers.ach`
 
 The `features.outbound_transfers.ach` attribute supports:
 
-* `requested` - (Required)
+* `requested` - (Required) Whether the FinancialAccount should have the Feature.
 
 <a id="features.outbound_transfers.us_domestic_wire"></a>
 ### `features.outbound_transfers.us_domestic_wire`
 
 The `features.outbound_transfers.us_domestic_wire` attribute supports:
 
-* `requested` - (Required)
+* `requested` - (Required) Whether the FinancialAccount should have the Feature.
 
 <a id="platform_restrictions"></a>
 ### `platform_restrictions`

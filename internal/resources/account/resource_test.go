@@ -11,6 +11,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/hashicorp/terraform-plugin-testing/plancheck"
 	"github.com/hashicorp/terraform-plugin-testing/terraform"
+	"github.com/hashicorp/terraform-plugin-testing/tfjsonpath"
 	"github.com/hashicorp/terraform-plugin-testing/tfversion"
 
 	"github.com/computomatic/terraform-provider-stripe/internal/acctest"
@@ -440,4 +441,230 @@ data "stripe_account" "test" {
 			ExpectError: regexp.MustCompile(`no stripe_account found for id=acct_1DoesNotExist0000`),
 		}},
 	})
+}
+
+// onboarding holds the onboarding values a test varies between steps.
+type onboarding struct {
+	name, mcc, firstName, idNumber, issuingIP string
+}
+
+// verified is the onboarding Stripe documents as always verifying, which the suite sends
+// ("verifiedIndividualForm", "issuingAccountForm").
+var verified = onboarding{name: "Rosen Software", mcc: "5734", firstName: "Jenny", idNumber: "000000000", issuingIP: "8.8.8.8"}
+
+// onboardedConfig is a US Custom individual account onboarded through the resource alone. It
+// requests card_issuing, transfers and treasury and accepts the Stripe Services Agreement and
+// the Issuing and Treasury terms. extra lands inside the account.
+func onboardedConfig(c acctest.Config, o onboarding, extra string) string {
+	return customConfig(c, fmt.Sprintf(`  business_type = "individual"
+  email         = %[1]q
+  capabilities = {
+    card_issuing = { requested = true }
+    transfers    = { requested = true }
+    treasury     = { requested = true }
+  }
+  business_profile = {
+    name                   = %[7]q
+    mcc                    = %[2]q
+    url                    = "https://accessible.stripe.com"
+    product_description    = "Acceptance test onboarding"
+    estimated_worker_count = 1
+    annual_revenue         = { amount = 10000000, currency = "usd", fiscal_year_end = "2025-12-31" }
+  }
+  individual = {
+    first_name   = %[3]q
+    last_name    = "Rosen"
+    email        = %[1]q
+    phone        = "0000000000"
+    id_number    = %[4]q
+    ssn_last_4   = "0000"
+    dob          = { day = 1, month = 1, year = 1901 }
+    address      = { line1 = "address_full_match", city = "South San Francisco", state = "CA", postal_code = "94080" }
+    verification = { document = { front = "file_identity_document_success" } }
+  }
+  external_account = "btok_us_verified"
+  tos_acceptance   = { date = 1609459200, ip = "8.8.8.8" }
+  settings = {
+    card_issuing = { tos_acceptance = { date = 1609459200, ip = %[5]q } }
+    treasury     = { tos_acceptance = { date = 1609459200, ip = "8.8.8.8" } }
+  }
+%[6]s`, c.Name("jenny")+"@example.com", o.mcc, o.firstName, o.idNumber, o.issuingIP, extra, o.name))
+}
+
+// capabilityData reads the status of each onboarded capability.
+const capabilityData = `
+data "stripe_account_capability" "card_issuing" {
+  account = stripe_account.test.id
+  id      = "card_issuing"
+}
+
+data "stripe_account_capability" "transfers" {
+  account = stripe_account.test.id
+  id      = "transfers"
+}
+
+data "stripe_account_capability" "treasury" {
+  account = stripe_account.test.id
+  id      = "treasury"
+}
+`
+
+// An account created with the onboarding values through the resource alone has card_issuing,
+// transfers and treasury active (suite: "Treasury reads on a US connected account (first
+// run)", "A transfers-only connected account activates at once"); the fake activates them in
+// the create. Stripe verifies card_issuing for minutes, so a smoke run checks the request
+// only. The plan after apply is empty. An import reads the business type, the profile and the
+// acceptances back, and leaves out what Stripe does not return.
+func TestAccAccount_onboard(t *testing.T) {
+	acct := acctest.NewAccount(t)
+	cfg := onboardedConfig(acct, verified, "")
+	active := func(*terraform.State) error { return nil }
+	if !acct.Smoke {
+		active = resource.ComposeAggregateTestCheckFunc(
+			resource.TestCheckResourceAttr("data.stripe_account_capability.card_issuing", "status", "active"),
+			resource.TestCheckResourceAttr("data.stripe_account_capability.transfers", "status", "active"),
+			resource.TestCheckResourceAttr("data.stripe_account_capability.treasury", "status", "active"),
+		)
+	}
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: tfacc.ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: cfg + capabilityData,
+				ConfigPlanChecks: resource.ConfigPlanChecks{PostApplyPostRefresh: []plancheck.PlanCheck{
+					plancheck.ExpectEmptyPlan(),
+				}},
+				Check: resource.ComposeAggregateTestCheckFunc(
+					active,
+					resource.TestCheckResourceAttr("data.stripe_account_capability.card_issuing", "requested", "true"),
+					resource.TestCheckResourceAttr("data.stripe_account_capability.treasury", "requested", "true"),
+					resource.TestCheckResourceAttr(address, "business_type", "individual"),
+					resource.TestCheckResourceAttr(address, "business_profile.mcc", "5734"),
+					resource.TestCheckResourceAttr(address, "business_profile.annual_revenue.currency", "usd"),
+					resource.TestCheckResourceAttr(address, "business_profile.estimated_worker_count", "1"),
+					resource.TestCheckResourceAttr(address, "tos_acceptance.date", "1609459200"),
+					resource.TestCheckResourceAttr(address, "tos_acceptance.ip", "8.8.8.8"),
+					resource.TestCheckResourceAttr(address, "settings.card_issuing.tos_acceptance.ip", "8.8.8.8"),
+					resource.TestCheckResourceAttr(address, "settings.treasury.tos_acceptance.date", "1609459200"),
+					resource.TestCheckResourceAttr(address, "individual.first_name", "Jenny"),
+					resource.TestCheckResourceAttr(address, "individual.id_number", "000000000"),
+					resource.TestCheckResourceAttr(address, "external_account", "btok_us_verified"),
+				),
+			},
+			{
+				ResourceName:            address,
+				ImportState:             true,
+				ImportStateVerify:       true,
+				ImportStateVerifyIgnore: []string{"capabilities", "individual", "external_account"},
+			},
+		},
+	})
+}
+
+// The onboarding values are proven on create only, and replacing an account deletes it, so a
+// plan that changes one fails, field by field: the profile's MCC beside its updatable name,
+// the individual, and the Issuing terms. A change to the name alone is an update.
+func TestAccAccount_refuseOnboardingChange(t *testing.T) {
+	acct := acctest.NewAccount(t)
+	var first string
+	otherMCC, otherName, otherIP, renamed := verified, verified, verified, verified
+	otherMCC.mcc, otherName.firstName, otherIP.issuingIP, renamed.name = "5045", "Jane", "8.8.4.4", "Renamed"
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: tfacc.ProviderFactories,
+		Steps: []resource.TestStep{
+			{Config: onboardedConfig(acct, verified, ""), Check: idOf(&first)},
+			{
+				Config:      onboardedConfig(acct, otherMCC, ""),
+				ExpectError: regexp.MustCompile(refused("business_profile.mcc") + `(?s).*ignore_changes`),
+			},
+			{
+				Config:      onboardedConfig(acct, otherName, ""),
+				ExpectError: regexp.MustCompile(refused("individual")),
+			},
+			{
+				Config:      onboardedConfig(acct, otherIP, ""),
+				ExpectError: regexp.MustCompile(refused("settings.card_issuing.tos_acceptance")),
+			},
+			// Removing the onboarding arguments is a change of those Stripe does not return.
+			{
+				Config:      customConfig(acct, "  lifecycle {\n    ignore_changes = [capabilities]\n  }\n"),
+				ExpectError: regexp.MustCompile(refused("external_account")),
+			},
+			{
+				Config: onboardedConfig(acct, otherMCC, "  lifecycle {\n    ignore_changes = [business_profile.mcc]\n  }\n"),
+				ConfigPlanChecks: resource.ConfigPlanChecks{PreApply: []plancheck.PlanCheck{
+					plancheck.ExpectEmptyPlan(),
+				}},
+			},
+			{
+				Config: onboardedConfig(acct, renamed, ""),
+				ConfigPlanChecks: resource.ConfigPlanChecks{PreApply: []plancheck.PlanCheck{
+					plancheck.ExpectResourceAction(address, plancheck.ResourceActionUpdate),
+				}},
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr(address, "business_profile.name", "Renamed"),
+					resource.TestCheckResourceAttrWith(address, "id", func(v string) error {
+						if v != first {
+							return fmt.Errorf("the account ID changed from %s to %s", first, v)
+						}
+						return nil
+					}),
+					// The update sends the name alone, never the refused profile fields beside it.
+					func(*terraform.State) error {
+						if acct.Smoke {
+							return nil
+						}
+						var updates int
+						for _, entry := range acctest.RequestLog(t, acct) {
+							if entry.Method != "POST" || entry.Path != "/v1/accounts/"+first {
+								continue
+							}
+							updates++
+							if got, want := fmt.Sprint(entry.Params), fmt.Sprint(wire.Object{{Name: "business_profile", Value: wire.Object{{Name: "name", Value: wire.String("Renamed")}}}}); got != want {
+								return fmt.Errorf("the update sent %s, want only business_profile[name]: %s", got, want)
+							}
+						}
+						if updates != 1 {
+							return fmt.Errorf("%d updates of %s, want 1", updates, first)
+						}
+						return nil
+					},
+				),
+			},
+		},
+	})
+}
+
+// Stripe never returns the individual's ID number or SSN, so state keeps the configured
+// values: they are sensitive in the plan, the plan after apply is empty, and a refused change
+// to one says which attribute without its value.
+func TestAccAccount_onboardingSensitive(t *testing.T) {
+	acct := acctest.NewAccount(t)
+	otherID := verified
+	otherID.idNumber = "111111111"
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: tfacc.ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: onboardedConfig(acct, verified, ""),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectSensitiveValue(address, tfjsonpath.New("individual").AtMapKey("id_number")),
+						plancheck.ExpectSensitiveValue(address, tfjsonpath.New("individual").AtMapKey("ssn_last_4")),
+					},
+					PostApplyPostRefresh: []plancheck.PlanCheck{plancheck.ExpectEmptyPlan()},
+				},
+			},
+			{
+				Config:      onboardedConfig(acct, otherID, ""),
+				ExpectError: regexp.MustCompile(refused("individual")),
+			},
+		},
+	})
+}
+
+// refused matches the plan error for a change to the attribute at path, which Terraform may
+// wrap across lines.
+func refused(path string) string {
+	return "Changing\\s+`" + regexp.QuoteMeta(path) + "`\\s+is\\s+not\\s+supported\\s+yet"
 }

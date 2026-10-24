@@ -8,20 +8,20 @@ import "github.com/computomatic/terraform-provider-stripe/internal/fields"
 // Table lists every request and response field of the object.
 var Table = []fields.Field{
 	{Name: "business_profile", Shape: fields.Object, Create: true, Update: true, Response: true, Description: "Business information about the account.", Fields: []fields.Field{
-		{Name: "annual_revenue", Shape: fields.Object, Response: true, Description: "The applicant's gross annual revenue for its preceding fiscal year.", Fields: []fields.Field{
-			{Name: "amount", Shape: fields.Int, Response: true, Description: "A non-negative integer representing the amount in the [smallest currency unit](https://docs.stripe.com/currencies#zero-decimal)."},
-			{Name: "currency", Shape: fields.String, Response: true, Description: "Three-letter [ISO currency code](https://www.iso.org/iso-4217-currency-codes.html), in lowercase. Must be a [supported currency](https://stripe.com/docs/currencies)."},
-			{Name: "fiscal_year_end", Shape: fields.String, Response: true, Description: "The close-out date of the preceding fiscal year in ISO 8601 format. E.g. 2023-12-31 for the 31st of December, 2023."},
+		{Name: "annual_revenue", Shape: fields.Object, Create: true, Update: true, Response: true, Description: "The applicant's gross annual revenue for its preceding fiscal year.", Fields: []fields.Field{
+			{Name: "amount", Shape: fields.Int, Required: true, Create: true, Update: true, Response: true, Description: "A non-negative integer representing the amount in the [smallest currency unit](https://docs.stripe.com/currencies#zero-decimal)."},
+			{Name: "currency", Shape: fields.String, Required: true, Create: true, Update: true, Response: true, Description: "Three-letter [ISO currency code](https://www.iso.org/iso-4217-currency-codes.html), in lowercase. Must be a [supported currency](https://stripe.com/docs/currencies)."},
+			{Name: "fiscal_year_end", Shape: fields.String, Required: true, Create: true, Update: true, Response: true, Description: "The close-out date of the preceding fiscal year in ISO 8601 format. E.g. 2023-12-31 for the 31st of December, 2023."},
 		}},
-		{Name: "estimated_worker_count", Shape: fields.Int, Response: true, Description: "An estimated upper bound of employees, contractors, vendors, etc. currently working for the business."},
-		{Name: "mcc", Shape: fields.String, Response: true, Description: "[The merchant category code for the account](https://docs.stripe.com/connect/setting-mcc). MCCs are used to classify businesses based on the goods or services they provide."},
+		{Name: "estimated_worker_count", Shape: fields.Int, Create: true, Update: true, Response: true, Description: "An estimated upper bound of employees, contractors, vendors, etc. currently working for the business."},
+		{Name: "mcc", Shape: fields.String, Create: true, Update: true, Response: true, Description: "[The merchant category code for the account](https://docs.stripe.com/connect/setting-mcc). MCCs are used to classify businesses based on the goods or services they provide."},
 		{Name: "minority_owned_business_designation", Shape: fields.ScalarList, Elem: fields.String, Response: true, Description: "Whether the business is a minority-owned, women-owned, and/or LGBTQI+ -owned business."},
 		{Name: "monthly_estimated_revenue", Shape: fields.Object, Response: true, Fields: []fields.Field{
 			{Name: "amount", Shape: fields.Int, Response: true, Description: "A non-negative integer representing how much to charge in the [smallest currency unit](https://docs.stripe.com/currencies#zero-decimal)."},
 			{Name: "currency", Shape: fields.String, Response: true, Description: "Three-letter [ISO currency code](https://www.iso.org/iso-4217-currency-codes.html), in lowercase. Must be a [supported currency](https://stripe.com/docs/currencies)."},
 		}},
 		{Name: "name", Shape: fields.String, Create: true, Update: true, Response: true, Description: "The customer-facing business name."},
-		{Name: "product_description", Shape: fields.String, Response: true, Description: "Internal-only description of the product sold or service provided by the business. It's used by Stripe for risk and underwriting purposes."},
+		{Name: "product_description", Shape: fields.String, Create: true, Update: true, Response: true, Description: "Internal-only description of the product sold or service provided by the business. It's used by Stripe for risk and underwriting purposes."},
 		{Name: "specified_commercial_transactions_act_url", Shape: fields.String, Response: true, Description: "A link to the business's publicly available terms related to the Specified Commercial Transaction Act. Only used for accounts in Japan."},
 		{Name: "support_address", Shape: fields.Object, Response: true, Description: "A publicly available mailing address for sending support issues to.", Fields: []fields.Field{
 			{Name: "city", Shape: fields.String, Response: true, Description: "City, district, suburb, town, or village."},
@@ -34,9 +34,9 @@ var Table = []fields.Field{
 		{Name: "support_email", Shape: fields.String, Response: true, Description: "A publicly available email address for sending support issues to."},
 		{Name: "support_phone", Shape: fields.String, Response: true, Description: "A publicly available phone number to call with support issues."},
 		{Name: "support_url", Shape: fields.String, Response: true, Description: "A publicly available website for handling support issues."},
-		{Name: "url", Shape: fields.String, Response: true, Description: "The business's publicly available website."},
+		{Name: "url", Shape: fields.String, Create: true, Update: true, Response: true, Description: "The business's publicly available website."},
 	}},
-	{Name: "business_type", Shape: fields.String, Response: true, Enum: []string{"company", "government_entity", "individual", "non_profit"}, Description: "The business type."},
+	{Name: "business_type", Shape: fields.String, Create: true, Update: true, Response: true, Enum: []string{"company", "government_entity", "individual", "non_profit"}, Description: "The business type. Once you create an [Account Link](https://docs.stripe.com/api/account_links) or [Account Session](https://docs.stripe.com/api/account_sessions), this property can only be updated for accounts where [controller.requirement_collection](https://docs.stripe.com/api/accounts/object#account_object-controller-requirement_collection) is `application`, which includes Custom accounts."},
 	{Name: "capabilities", Shape: fields.Object, Create: true, Update: true, Description: "Each key of the dictionary represents a capability, and each capability\nmaps to its settings (for example, whether it has been requested or not). Each\ncapability is inactive until you have provided its specific\nrequirements and Stripe has verified them. An account might have some\nof its requested capabilities be active and some be inactive. Required when [account.controller.stripe_dashboard.type](https://docs.stripe.com/api/accounts/create#create_account-controller-dashboard-type)\nis `none`, which includes Custom accounts.", Fields: []fields.Field{
 		{Name: "acss_debit_payments", Shape: fields.Object, Create: true, Update: true, Fields: []fields.Field{
 			{Name: "requested", Shape: fields.Bool, Create: true, Update: true},
@@ -247,6 +247,9 @@ var Table = []fields.Field{
 		}},
 	}},
 	{Name: "charges_enabled", Shape: fields.Bool, Response: true, Description: "Whether the account can process charges."},
+	{Name: "company", Shape: fields.Object, Create: true, Update: true, Description: "Information about the company or business. This field is available for any `business_type`. Once you create an [Account Link](https://docs.stripe.com/api/account_links) or [Account Session](https://docs.stripe.com/api/account_sessions), this property can only be updated for accounts where [controller.requirement_collection](https://docs.stripe.com/api/accounts/object#account_object-controller-requirement_collection) is `application`, which includes Custom accounts.", Fields: []fields.Field{
+		{Name: "name", Shape: fields.String, Create: true, Update: true, Description: "The company's legal name. Also available for accounts where [controller.requirement_collection](https://docs.stripe.com/api/accounts/object#account_object-controller-requirement_collection) is `stripe`."},
+	}},
 	{Name: "controller", Shape: fields.Object, Create: true, Response: true, Description: "A hash of configuration describing the account controller's attributes.", Fields: []fields.Field{
 		{Name: "fees", Shape: fields.Object, Create: true, Response: true, Fields: []fields.Field{
 			{Name: "payer", Shape: fields.String, Create: true, Response: true, ServerDefaulted: true, Enum: []string{"account", "application"}, Description: "A value indicating the responsible payer of a bundle of Stripe fees for pricing-control eligible products on this account. Learn more about [fee behavior on connected accounts](https://docs.stripe.com/connect/direct-charges-fee-payer-behavior)."},
@@ -266,6 +269,7 @@ var Table = []fields.Field{
 	{Name: "default_currency", Shape: fields.String, Response: true, Description: "Three-letter ISO currency code representing the default currency for the account. This must be a currency that [Stripe supports in the account's country](https://stripe.com/docs/payouts)."},
 	{Name: "details_submitted", Shape: fields.Bool, Response: true, Description: "Whether account details have been submitted. Accounts with Stripe Dashboard access, which includes Standard accounts, cannot receive payouts before this is true. Accounts where this is false should be directed to [an onboarding flow](https://docs.stripe.com/connect/onboarding) to finish submitting account details."},
 	{Name: "email", Shape: fields.String, Create: true, Update: true, Response: true, Description: "The email address of the account holder. This is only to make the account easier to identify to you. If [controller.requirement_collection](https://docs.stripe.com/api/accounts/object#account_object-controller-requirement_collection) is `application`, which includes Custom accounts, Stripe doesn't email the account without your consent."},
+	{Name: "external_account", Shape: fields.String, Create: true, Update: true, Description: "A card or bank account to attach to the account for receiving [payouts](https://docs.stripe.com/connect/bank-debit-card-payouts) (you won’t be able to use it for top-ups). You can provide either a token, like the ones returned by [Stripe.js](https://docs.stripe.com/js), or a dictionary, as documented in the `external_account` parameter for [bank account](https://docs.stripe.com/api#account_create_bank_account) creation. <br><br>By default, providing an external account sets it as the new default external account for its currency, and deletes the old default if one exists. To add additional external accounts without replacing the existing default for the currency, use the [bank account](https://docs.stripe.com/api#account_create_bank_account) or [card creation](https://docs.stripe.com/api#account_create_card) APIs. After you create an [Account Link](https://docs.stripe.com/api/account_links) or [Account Session](https://docs.stripe.com/api/account_sessions), this property can only be updated for accounts where [controller.requirement_collection](https://docs.stripe.com/api/accounts/object#account_object-controller-requirement_collection) is `application`, which includes Custom accounts."},
 	{Name: "future_requirements", Shape: fields.Object, Response: true, Fields: []fields.Field{
 		{Name: "alternatives", Shape: fields.ObjectList, Response: true, Description: "Fields that are due and can be resolved by providing the corresponding alternative fields instead. Many alternatives can list the same `original_fields_due`, and any of these alternatives can serve as a pathway for attempting to resolve the fields again. Re-providing `original_fields_due` also serves as a pathway for attempting to resolve the fields again.", Fields: []fields.Field{
 			{Name: "alternative_fields_due", Shape: fields.ScalarList, Elem: fields.String, Response: true, Description: "Fields that can be provided to resolve all fields in `original_fields_due`."},
@@ -284,6 +288,30 @@ var Table = []fields.Field{
 		{Name: "pending_verification", Shape: fields.ScalarList, Elem: fields.String, Response: true, Description: "Fields that are being reviewed, or might become required depending on the results of a review. If the review fails, these fields can move to `eventually_due`, `currently_due`, `past_due` or `alternatives`. Fields might appear in `eventually_due`, `currently_due`, `past_due` or `alternatives` and in `pending_verification` if one verification fails but another is still pending."},
 	}},
 	{Name: "id", Shape: fields.String, Response: true, Description: "Unique identifier for the object."},
+	{Name: "individual", Shape: fields.Object, Create: true, Update: true, Description: "Information about the person represented by the account. This field is null unless `business_type` is set to `individual`. Once you create an [Account Link](https://docs.stripe.com/api/account_links) or [Account Session](https://docs.stripe.com/api/account_sessions), this property can only be updated for accounts where [controller.requirement_collection](https://docs.stripe.com/api/accounts/object#account_object-controller-requirement_collection) is `application`, which includes Custom accounts.", Fields: []fields.Field{
+		{Name: "address", Shape: fields.Object, Create: true, Update: true, Description: "The person's address.", Fields: []fields.Field{
+			{Name: "city", Shape: fields.String, Create: true, Update: true, Description: "City, district, suburb, town, or village."},
+			{Name: "line1", Shape: fields.String, Create: true, Update: true, Description: "Address line 1, such as the street, PO Box, or company name."},
+			{Name: "postal_code", Shape: fields.String, Create: true, Update: true, Description: "ZIP or postal code."},
+			{Name: "state", Shape: fields.String, Create: true, Update: true, Description: "State, county, province, or region ([ISO 3166-2](https://en.wikipedia.org/wiki/ISO_3166-2))."},
+		}},
+		{Name: "dob", Shape: fields.Object, Create: true, Update: true, Description: "The person's date of birth.", Fields: []fields.Field{
+			{Name: "day", Shape: fields.Int, Required: true, Create: true, Update: true, Description: "The day of birth, between 1 and 31."},
+			{Name: "month", Shape: fields.Int, Required: true, Create: true, Update: true, Description: "The month of birth, between 1 and 12."},
+			{Name: "year", Shape: fields.Int, Required: true, Create: true, Update: true, Description: "The four-digit year of birth."},
+		}},
+		{Name: "email", Shape: fields.String, Create: true, Update: true, Description: "The person's email address. Also available for accounts where [controller.requirement_collection](https://docs.stripe.com/api/accounts/object#account_object-controller-requirement_collection) is `stripe`."},
+		{Name: "first_name", Shape: fields.String, Create: true, Update: true, Description: "The person's first name. Also available for accounts where [controller.requirement_collection](https://docs.stripe.com/api/accounts/object#account_object-controller-requirement_collection) is `stripe`."},
+		{Name: "id_number", Shape: fields.String, Create: true, Update: true, Description: "The person's ID number, as appropriate for their country. For example, a social security number in the U.S., social insurance number in Canada, etc. Instead of the number itself, you can also provide a [PII token provided by Stripe.js](https://docs.stripe.com/js/tokens/create_token?type=pii). Changing this value for the account's representative requires that the account re-accept the [terms of service](https://docs.stripe.com/api/accounts/object#account_object-tos_acceptance)."},
+		{Name: "last_name", Shape: fields.String, Create: true, Update: true, Description: "The person's last name. Also available for accounts where [controller.requirement_collection](https://docs.stripe.com/api/accounts/object#account_object-controller-requirement_collection) is `stripe`."},
+		{Name: "phone", Shape: fields.String, Create: true, Update: true, Description: "The person's phone number."},
+		{Name: "ssn_last_4", Shape: fields.String, Create: true, Update: true, Description: "The last four digits of the person's Social Security number (U.S. only). Changing this value for the account's representative requires that the account re-accept the [terms of service](https://docs.stripe.com/api/accounts/object#account_object-tos_acceptance)."},
+		{Name: "verification", Shape: fields.Object, Create: true, Update: true, Description: "The person's verification status.", Fields: []fields.Field{
+			{Name: "document", Shape: fields.Object, Create: true, Update: true, Fields: []fields.Field{
+				{Name: "front", Shape: fields.String, Create: true, Update: true, Description: "The front of an ID returned by a [file upload](https://docs.stripe.com/api#create_file) with a `purpose` value of `identity_document`."},
+			}},
+		}},
+	}},
 	{Name: "metadata", Shape: fields.StringMap, Create: true, Update: true, Response: true, Description: "Set of [key-value pairs](https://docs.stripe.com/api/metadata) that you can attach to an object. This can be useful for storing additional information about the object in a structured format. Individual keys can be unset by posting an empty value to them. All keys can be unset by posting an empty value to `metadata`."},
 	{Name: "payouts_enabled", Shape: fields.Bool, Response: true, Description: "Whether the funds in this account can be paid out."},
 	{Name: "requirements", Shape: fields.Object, Response: true, Fields: []fields.Field{
@@ -303,7 +331,7 @@ var Table = []fields.Field{
 		{Name: "past_due", Shape: fields.ScalarList, Elem: fields.String, Response: true, Description: "Fields that haven't been resolved by `current_deadline`. These fields need to be resolved to enable the account."},
 		{Name: "pending_verification", Shape: fields.ScalarList, Elem: fields.String, Response: true, Description: "Fields that are being reviewed, or might become required depending on the results of a review. If the review fails, these fields can move to `eventually_due`, `currently_due`, `past_due` or `alternatives`. Fields might appear in `eventually_due`, `currently_due`, `past_due` or `alternatives` and in `pending_verification` if one verification fails but another is still pending."},
 	}},
-	{Name: "settings", Shape: fields.Object, Response: true, Description: "Options for customizing how the account functions within Stripe.", Fields: []fields.Field{
+	{Name: "settings", Shape: fields.Object, Create: true, Update: true, Response: true, Description: "Options for customizing how the account functions within Stripe.", Fields: []fields.Field{
 		{Name: "bacs_debit_payments", Shape: fields.Object, Response: true, Fields: []fields.Field{
 			{Name: "display_name", Shape: fields.String, Response: true, Description: "The Bacs Direct Debit display name for this account. For payments made with Bacs Direct Debit, this name appears on the mandate as the statement descriptor. Mobile banking apps display it as the name of the business. To use custom branding, set the Bacs Direct Debit Display Name during or right after creation. Custom branding incurs an additional monthly fee for the platform. The fee appears 5 business days after requesting Bacs. If you don't set the display name before requesting Bacs capability, it's automatically set as \"Stripe\" and the account is onboarded to Stripe branding, which is free."},
 			{Name: "service_user_number", Shape: fields.String, Response: true, Description: "The Bacs Direct Debit Service user number for this account. For payments made with Bacs Direct Debit, this number is a unique identifier of the account with our banking partners."},
@@ -314,10 +342,10 @@ var Table = []fields.Field{
 			{Name: "primary_color", Shape: fields.String, Response: true, Description: "A CSS hex color value representing the primary branding color for this account"},
 			{Name: "secondary_color", Shape: fields.String, Response: true, Description: "A CSS hex color value representing the secondary branding color for this account"},
 		}},
-		{Name: "card_issuing", Shape: fields.Object, Response: true, Fields: []fields.Field{
-			{Name: "tos_acceptance", Shape: fields.Object, Response: true, Fields: []fields.Field{
-				{Name: "date", Shape: fields.Int, Response: true, Description: "The Unix timestamp marking when the account representative accepted the service agreement."},
-				{Name: "ip", Shape: fields.String, Response: true, Description: "The IP address from which the account representative accepted the service agreement."},
+		{Name: "card_issuing", Shape: fields.Object, Create: true, Update: true, Response: true, Fields: []fields.Field{
+			{Name: "tos_acceptance", Shape: fields.Object, Create: true, Update: true, Response: true, Fields: []fields.Field{
+				{Name: "date", Shape: fields.Int, Create: true, Update: true, Response: true, Description: "The Unix timestamp marking when the account representative accepted the service agreement."},
+				{Name: "ip", Shape: fields.String, Create: true, Update: true, Response: true, Description: "The IP address from which the account representative accepted the service agreement."},
 				{Name: "user_agent", Shape: fields.String, Response: true, Description: "The user agent of the browser from which the account representative accepted the service agreement."},
 			}},
 		}},
@@ -372,13 +400,17 @@ var Table = []fields.Field{
 		{Name: "sepa_debit_payments", Shape: fields.Object, Response: true, Fields: []fields.Field{
 			{Name: "creditor_id", Shape: fields.String, Response: true, Description: "SEPA creditor identifier that identifies the company making the payment."},
 		}},
-		{Name: "treasury", Shape: fields.Object, Response: true, Fields: []fields.Field{
-			{Name: "tos_acceptance", Shape: fields.Object, Response: true, Fields: []fields.Field{
-				{Name: "date", Shape: fields.Int, Response: true, Description: "The Unix timestamp marking when the account representative accepted the service agreement."},
-				{Name: "ip", Shape: fields.String, Response: true, Description: "The IP address from which the account representative accepted the service agreement."},
+		{Name: "treasury", Shape: fields.Object, Create: true, Update: true, Response: true, Fields: []fields.Field{
+			{Name: "tos_acceptance", Shape: fields.Object, Create: true, Update: true, Response: true, Fields: []fields.Field{
+				{Name: "date", Shape: fields.Int, Create: true, Update: true, Response: true, Description: "The Unix timestamp marking when the account representative accepted the service agreement."},
+				{Name: "ip", Shape: fields.String, Create: true, Update: true, Response: true, Description: "The IP address from which the account representative accepted the service agreement."},
 				{Name: "user_agent", Shape: fields.String, Response: true, Description: "The user agent of the browser from which the account representative accepted the service agreement."},
 			}},
 		}},
+	}},
+	{Name: "tos_acceptance", Shape: fields.Object, Create: true, Update: true, Response: true, Description: "Details on the account's acceptance of the [Stripe Services Agreement](https://docs.stripe.com/connect/updating-accounts#tos-acceptance). This property can only be updated for accounts where [controller.requirement_collection](https://docs.stripe.com/api/accounts/object#account_object-controller-requirement_collection) is `application`, which includes Custom accounts. This property defaults to a `full` service agreement when empty.", Fields: []fields.Field{
+		{Name: "date", Shape: fields.Int, Create: true, Update: true, Response: true, Description: "The Unix timestamp marking when the account representative accepted their service agreement"},
+		{Name: "ip", Shape: fields.String, Create: true, Update: true, Response: true, Description: "The IP address from which the account representative accepted their service agreement"},
 	}},
 	{Name: "type", Shape: fields.String, Create: true, Response: true, Enum: []string{"custom", "express", "standard"}, Description: "The `type` parameter is deprecated. Use [`controller`](https://docs.stripe.com/api/accounts/create#create_account-controller) instead to configure dashboard access, fee payer, loss liability, and requirement collection."},
 }

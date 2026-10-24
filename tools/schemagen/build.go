@@ -67,6 +67,11 @@ type Resource struct {
 	// strings on the way out). The table counts them as request-only: the state keeps what the
 	// configuration says.
 	NoResponse []string
+	// DocsFrom maps a dotted field path to the `POST` path of another operation whose request
+	// documents the same object, such as an account's `individual` and a person's create. A
+	// field below the path that the spec leaves undescribed here takes the description of the
+	// field at the same place there.
+	DocsFrom map[string]string
 }
 
 // view is a schema classified into one of the engine's shapes.
@@ -154,7 +159,17 @@ func Build(spec *Spec, res Resource) ([]fields.Field, error) {
 			return nil, err
 		}
 	}
-	table, err := b.object(create, update, resp, "", 0)
+	b.docsFrom = map[string]*Schema{}
+	for at, path := range res.DocsFrom {
+		op, err := spec.operation("POST", path)
+		if err != nil {
+			return nil, err
+		}
+		if b.docsFrom[at], err = spec.requestSchema(op, path); err != nil {
+			return nil, err
+		}
+	}
+	table, err := b.object(create, update, resp, nil, "", 0)
 	if err != nil {
 		return nil, fmt.Errorf("%s: %w", res.Package, err)
 	}
@@ -188,6 +203,11 @@ func Build(spec *Spec, res Resource) ([]fields.Field, error) {
 			return nil, fmt.Errorf("%s: no-response entry %q names no field", res.Package, p)
 		}
 	}
+	for p := range res.DocsFrom {
+		if b.docsFrom[p] != nil {
+			return nil, fmt.Errorf("%s: docs-from entry %q names no object", res.Package, p)
+		}
+	}
 	return table, nil
 }
 
@@ -205,6 +225,9 @@ type builder struct {
 	require map[string]bool
 	// noResponse maps each path of Resource.NoResponse to whether the build met it.
 	noResponse map[string]bool
+	// docsFrom maps each path of Resource.DocsFrom to its request schema until the build
+	// meets it.
+	docsFrom map[string]*Schema
 }
 
 // kept reports whether a field path is on, below or above a path of Resource.Keep, and marks
@@ -233,8 +256,11 @@ func prop(s *Schema, name string) *Schema {
 }
 
 // object merges the create, update and response schemas of one object level into fields.
-// Any of the three may be nil.
-func (b *builder) object(create, update, resp *Schema, where string, depth int) ([]fields.Field, error) {
+// Any of the three may be nil. docs are other schemas of the same object level, in order: the
+// response of a NoResponse object, and the request of a DocsFrom operation. A field without a
+// description of its own takes the first description of a field at the same place in them
+// that has the same shape.
+func (b *builder) object(create, update, resp *Schema, docs []*Schema, where string, depth int) ([]fields.Field, error) {
 	if depth > maxDepth {
 		return nil, fmt.Errorf("%s: nesting deeper than %d levels", where, maxDepth)
 	}
@@ -291,9 +317,26 @@ func (b *builder) object(create, update, resp *Schema, where string, depth int) 
 		if err != nil {
 			return nil, err
 		}
+		var dvs []*view
+		for _, d := range docs {
+			dv, err := b.classify(prop(d, name), at, depth)
+			if err != nil {
+				return nil, err
+			}
+			if dv != nil {
+				dvs = append(dvs, dv)
+			}
+		}
 		if _, none := b.noResponse[at]; none {
 			b.noResponse[at] = true
+			if rv != nil {
+				dvs = append([]*view{rv}, dvs...)
+			}
 			rv = nil
+		}
+		if other := b.docsFrom[at]; other != nil {
+			delete(b.docsFrom, at)
+			dvs = append(dvs, &view{shape: fields.Object, obj: other})
 		}
 		if rv, err = b.unwrapList(rv, cv, uv, at, depth); err != nil {
 			return nil, err
@@ -358,6 +401,18 @@ func (b *builder) object(create, update, resp *Schema, where string, depth int) 
 				}
 			}
 		}
+		var kidDocs []*Schema
+		for _, dv := range dvs {
+			if dv.shape != base.shape {
+				continue
+			}
+			if f.Description == "" {
+				f.Description = cleanDescription(dv.desc)
+			}
+			if dv.obj != nil {
+				kidDocs = append(kidDocs, dv.obj)
+			}
+		}
 		if cv != nil && create != nil {
 			f.Required = slices.Contains(create.Required, name)
 		}
@@ -370,7 +425,7 @@ func (b *builder) object(create, update, resp *Schema, where string, depth int) 
 		}
 		switch base.shape {
 		case fields.Object, fields.ObjectList, fields.ObjectMap:
-			f.Fields, err = b.object(objOf(cv), objOf(uv), objOf(rv), at+".", depth+1)
+			f.Fields, err = b.object(objOf(cv), objOf(uv), objOf(rv), kidDocs, at+".", depth+1)
 			if err != nil {
 				return nil, err
 			}

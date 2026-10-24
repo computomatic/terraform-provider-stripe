@@ -92,15 +92,30 @@ var Resources = []Resource{
 	{Package: "climate_supplier", ReadPath: "/v1/climate/suppliers/{supplier}"},
 	// Wave 8a Connect. The account table keeps what the conformance suite and the fake prove: its
 	// type or controller, country, email, business profile name, metadata and the capabilities
-	// it requests. The rest of its create and update parameters, and the objects it only
-	// returns when onboarding fills them in, are left out or read-only. `external_accounts` is
-	// the child resource's. The response's `capabilities` is a hash of statuses, which a request
-	// does not send, so the attribute is request-only and the capability data source reads the
-	// statuses. The resource refuses a change to it.
+	// it requests, and the onboarding values a US Custom individual account is created with
+	// ("verifiedIndividualForm", "issuingAccountForm", "company[name]" of the persons tests).
+	// The rest of its create and update parameters, and the objects it only returns when
+	// onboarding fills them in, are left out or read-only. `external_accounts` is the child
+	// resource's. The response's `capabilities` is a hash of statuses, which a request does not
+	// send, and its `individual` and `company` hold far more than the request, which the fake
+	// does not show, so the three attributes are request-only and keep what the configuration
+	// says. Their descriptions come from the response, and the individual's identity numbers,
+	// which the person object does not return, from a person's create. The capability data
+	// source reads the statuses.
 	{Package: "account", CreatePath: "/v1/accounts", UpdatePath: "/v1/accounts/{account}",
-		Omit:       []string{"account_token", "bank_account", "external_account", "documents", "company", "individual", "groups", "tos_acceptance", "external_accounts"},
-		ReadOnly:   []string{"business_type", "default_currency", "settings", "business_profile.annual_revenue", "business_profile.estimated_worker_count", "business_profile.mcc", "business_profile.minority_owned_business_designation", "business_profile.monthly_estimated_revenue", "business_profile.product_description", "business_profile.specified_commercial_transactions_act_url", "business_profile.support_address", "business_profile.support_email", "business_profile.support_phone", "business_profile.support_url", "business_profile.url"},
-		NoResponse: []string{"capabilities"},
+		Keep: []string{"business_profile", "business_type", "capabilities", "charges_enabled", "company.name", "controller", "country", "created",
+			"default_currency", "details_submitted", "email", "external_account", "future_requirements", "id",
+			"individual.address.city", "individual.address.line1", "individual.address.postal_code", "individual.address.state",
+			"individual.dob", "individual.email", "individual.first_name", "individual.id_number", "individual.last_name", "individual.phone",
+			"individual.ssn_last_4", "individual.verification.document.front",
+			"metadata", "payouts_enabled", "requirements", "settings", "tos_acceptance.date", "tos_acceptance.ip", "type"},
+		ReadOnly: []string{"default_currency",
+			"settings.bacs_debit_payments", "settings.branding", "settings.card_payments", "settings.invoices", "settings.payments", "settings.payouts",
+			"settings.paypay_payments", "settings.sepa_debit_payments", "settings.card_issuing.tos_acceptance.user_agent", "settings.treasury.tos_acceptance.user_agent",
+			"business_profile.minority_owned_business_designation", "business_profile.monthly_estimated_revenue", "business_profile.specified_commercial_transactions_act_url",
+			"business_profile.support_address", "business_profile.support_email", "business_profile.support_phone", "business_profile.support_url"},
+		NoResponse: []string{"capabilities", "company", "individual"},
+		DocsFrom:   map[string]string{"individual": "/v1/accounts/{account}/persons"},
 		Require:    []string{"country"}},
 	// The external account is a bank account here (a card is a different object), created from
 	// the hash the spec documents under `bank_account`. Its `account` is the parent ID. The

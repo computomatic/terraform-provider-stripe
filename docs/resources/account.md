@@ -3,12 +3,12 @@
 page_title: "stripe_account Resource - Stripe"
 subcategory: ""
 description: |-
-  A connected account of the platform. terraform destroy deletes the account and, with it, its bank accounts. Set exactly one of type (a custom account) or controller (an account whose controller properties you choose), together with country. type, controller and country cannot change on an existing account, so changing one replaces it. The resource requests the capabilities it lists on creation only: a plan that changes capabilities on an existing account fails, because changing requested capabilities is not supported yet: revert the configuration, ignore the change, or recreate the account deliberately with terraform taint (tofu taint in OpenTofu). Read their status with the stripe_account_capability data source. Removing email or business_profile.name from the configuration leaves the value on the account. A refresh that finds the account gone (Stripe answers 403 account_invalid) removes it from state.
+  A connected account of the platform. terraform destroy deletes the account and, with it, its bank accounts. Set exactly one of type (a custom account) or controller (an account whose controller properties you choose), together with country. type, controller and country cannot change on an existing account, so changing one replaces it. The resource requests the capabilities it lists on creation only: a plan that changes capabilities on an existing account fails, because changing requested capabilities is not supported yet: revert the configuration, ignore the change, or recreate the account deliberately with terraform taint (tofu taint in OpenTofu). Read their status with the stripe_account_capability data source. The onboarding arguments (business_type, individual, company, external_account, tos_acceptance, settings.card_issuing.tos_acceptance, settings.treasury.tos_acceptance and the business profile's mcc, url, product_description, annual_revenue and estimated_worker_count) are sent on creation only, and a plan that changes one on an existing account fails in the same way. Stripe never returns individual.id_number or individual.ssn_last_4, and the provider does not read individual, company or external_account back, so state keeps the values you configured, and the two identity numbers are sensitive. Removing email, business_type, tos_acceptance or a business_profile or settings argument from the configuration leaves the value on the account. A refresh that finds the account gone (Stripe answers 403 account_invalid) removes it from state.
 ---
 
 # Resource: stripe_account
 
-A connected account of the platform. `terraform destroy` deletes the account and, with it, its bank accounts. Set exactly one of `type` (a custom account) or `controller` (an account whose controller properties you choose), together with `country`. `type`, `controller` and `country` cannot change on an existing account, so changing one replaces it. The resource requests the capabilities it lists on creation only: a plan that changes `capabilities` on an existing account fails, because changing requested capabilities is not supported yet: revert the configuration, ignore the change, or recreate the account deliberately with `terraform taint` (`tofu taint` in OpenTofu). Read their status with the `stripe_account_capability` data source. Removing `email` or `business_profile.name` from the configuration leaves the value on the account. A refresh that finds the account gone (Stripe answers 403 `account_invalid`) removes it from state.
+A connected account of the platform. `terraform destroy` deletes the account and, with it, its bank accounts. Set exactly one of `type` (a custom account) or `controller` (an account whose controller properties you choose), together with `country`. `type`, `controller` and `country` cannot change on an existing account, so changing one replaces it. The resource requests the capabilities it lists on creation only: a plan that changes `capabilities` on an existing account fails, because changing requested capabilities is not supported yet: revert the configuration, ignore the change, or recreate the account deliberately with `terraform taint` (`tofu taint` in OpenTofu). Read their status with the `stripe_account_capability` data source. The onboarding arguments (`business_type`, `individual`, `company`, `external_account`, `tos_acceptance`, `settings.card_issuing.tos_acceptance`, `settings.treasury.tos_acceptance` and the business profile's `mcc`, `url`, `product_description`, `annual_revenue` and `estimated_worker_count`) are sent on creation only, and a plan that changes one on an existing account fails in the same way. Stripe never returns `individual.id_number` or `individual.ssn_last_4`, and the provider does not read `individual`, `company` or `external_account` back, so state keeps the values you configured, and the two identity numbers are sensitive. Removing `email`, `business_type`, `tos_acceptance` or a `business_profile` or `settings` argument from the configuration leaves the value on the account. A refresh that finds the account gone (Stripe answers 403 `account_invalid`) removes it from state.
 
 ## Example Usage
 
@@ -45,6 +45,67 @@ resource "stripe_account" "marketplace_seller" {
     stripe_dashboard       = { type = "express" }
   }
 }
+
+# A custom account onboarded for Issuing and Treasury. The values are the test values
+# Stripe verifies at once in a sandbox. The onboarding arguments are sent when the account
+# is created, and a plan that changes one of them later fails.
+resource "stripe_account" "card_programme" {
+  type          = "custom"
+  country       = "US"
+  business_type = "individual"
+  email         = "jenny.rosen@example.com"
+
+  capabilities = {
+    card_issuing = { requested = true }
+    transfers    = { requested = true }
+    treasury     = { requested = true }
+  }
+
+  business_profile = {
+    name                   = "Rosen Software"
+    mcc                    = "5734"
+    url                    = "https://accessible.stripe.com"
+    product_description    = "Accounting software for small businesses"
+    estimated_worker_count = 1
+    annual_revenue = {
+      amount          = 10000000
+      currency        = "usd"
+      fiscal_year_end = "2025-12-31"
+    }
+  }
+
+  individual = {
+    first_name = "Jenny"
+    last_name  = "Rosen"
+    email      = "jenny.rosen@example.com"
+    phone      = "0000000000"
+    # Sensitive: shown as (sensitive value) in plans.
+    id_number  = "000000000"
+    ssn_last_4 = "0000"
+    dob        = { day = 1, month = 1, year = 1901 }
+    address = {
+      line1       = "address_full_match"
+      city        = "South San Francisco"
+      state       = "CA"
+      postal_code = "94080"
+    }
+    # The ID of an identity document file uploaded with the purpose identity_document.
+    verification = {
+      document = { front = "file_identity_document_success" }
+    }
+  }
+
+  # A bank account token, which becomes the account's default bank account for payouts.
+  external_account = "btok_us_verified"
+
+  # The Stripe Services Agreement, and the Issuing and Treasury terms, each accepted by
+  # the account holder at this time from this IP address.
+  tos_acceptance = { date = 1609459200, ip = "8.8.8.8" }
+  settings = {
+    card_issuing = { tos_acceptance = { date = 1609459200, ip = "8.8.8.8" } }
+    treasury     = { tos_acceptance = { date = 1609459200, ip = "8.8.8.8" } }
+  }
+}
 ```
 
 ## Argument Reference
@@ -56,10 +117,16 @@ The following arguments are required:
 The following arguments are optional:
 
 * `business_profile` - (Optional) Business information about the account. See [`business_profile`](#business_profile) below.
+* `business_type` - (Optional) The business type. Once you create an [Account Link](https://docs.stripe.com/api/account_links) or [Account Session](https://docs.stripe.com/api/account_sessions), this property can only be updated for accounts where [controller.requirement_collection](https://docs.stripe.com/api/accounts/object#account_object-controller-requirement_collection) is `application`, which includes Custom accounts. Possible values: `company`, `government_entity`, `individual`, `non_profit`.
 * `capabilities` - (Optional) Each key of the dictionary represents a capability, and each capability maps to its settings (for example, whether it has been requested or not). Each capability is inactive until you have provided its specific requirements and Stripe has verified them. An account might have some of its requested capabilities be active and some be inactive. Required when [account.controller.stripe_dashboard.type](https://docs.stripe.com/api/accounts/create#create_account-controller-dashboard-type) is `none`, which includes Custom accounts. See [`capabilities`](#capabilities) below.
+* `company` - (Optional) Information about the company or business. This field is available for any `business_type`. Once you create an [Account Link](https://docs.stripe.com/api/account_links) or [Account Session](https://docs.stripe.com/api/account_sessions), this property can only be updated for accounts where [controller.requirement_collection](https://docs.stripe.com/api/accounts/object#account_object-controller-requirement_collection) is `application`, which includes Custom accounts. See [`company`](#company) below.
 * `controller` - (Optional) A hash of configuration describing the account controller's attributes. Changing it replaces the resource. See [`controller`](#controller) below.
 * `email` - (Optional) The email address of the account holder. This is only to make the account easier to identify to you. If [controller.requirement_collection](https://docs.stripe.com/api/accounts/object#account_object-controller-requirement_collection) is `application`, which includes Custom accounts, Stripe doesn't email the account without your consent.
+* `external_account` - (Optional) A card or bank account to attach to the account for receiving [payouts](https://docs.stripe.com/connect/bank-debit-card-payouts) (you won’t be able to use it for top-ups). You can provide either a token, like the ones returned by [Stripe.js](https://docs.stripe.com/js), or a dictionary, as documented in the `external_account` parameter for [bank account](https://docs.stripe.com/api#account_create_bank_account) creation. <br><br>By default, providing an external account sets it as the new default external account for its currency, and deletes the old default if one exists. To add additional external accounts without replacing the existing default for the currency, use the [bank account](https://docs.stripe.com/api#account_create_bank_account) or [card creation](https://docs.stripe.com/api#account_create_card) APIs. After you create an [Account Link](https://docs.stripe.com/api/account_links) or [Account Session](https://docs.stripe.com/api/account_sessions), this property can only be updated for accounts where [controller.requirement_collection](https://docs.stripe.com/api/accounts/object#account_object-controller-requirement_collection) is `application`, which includes Custom accounts.
+* `individual` - (Optional) Information about the person represented by the account. This field is null unless `business_type` is set to `individual`. Once you create an [Account Link](https://docs.stripe.com/api/account_links) or [Account Session](https://docs.stripe.com/api/account_sessions), this property can only be updated for accounts where [controller.requirement_collection](https://docs.stripe.com/api/accounts/object#account_object-controller-requirement_collection) is `application`, which includes Custom accounts. See [`individual`](#individual) below.
 * `metadata` - (Optional) Set of [key-value pairs](https://docs.stripe.com/api/metadata) that you can attach to an object. This can be useful for storing additional information about the object in a structured format. Individual keys can be unset by posting an empty value to them. All keys can be unset by posting an empty value to `metadata`.
+* `settings` - (Optional) Options for customizing how the account functions within Stripe. See [`settings`](#settings) below.
+* `tos_acceptance` - (Optional) Details on the account's acceptance of the [Stripe Services Agreement](https://docs.stripe.com/connect/updating-accounts#tos-acceptance). This property can only be updated for accounts where [controller.requirement_collection](https://docs.stripe.com/api/accounts/object#account_object-controller-requirement_collection) is `application`, which includes Custom accounts. This property defaults to a `full` service agreement when empty. See [`tos_acceptance`](#tos_acceptance) below.
 * `type` - (Optional) The `type` parameter is deprecated. Use [`controller`](https://docs.stripe.com/api/accounts/create#create_account-controller) instead to configure dashboard access, fee payer, loss liability, and requirement collection. Possible values: `custom`, `express`, `standard`. Changing it replaces the resource.
 
 <a id="business_profile"></a>
@@ -67,28 +134,28 @@ The following arguments are optional:
 
 The `business_profile` attribute supports:
 
-* `annual_revenue` - (Read-Only) The applicant's gross annual revenue for its preceding fiscal year. See [`business_profile.annual_revenue`](#business_profile.annual_revenue) below.
-* `estimated_worker_count` - (Read-Only) An estimated upper bound of employees, contractors, vendors, etc. currently working for the business.
-* `mcc` - (Read-Only) [The merchant category code for the account](https://docs.stripe.com/connect/setting-mcc). MCCs are used to classify businesses based on the goods or services they provide.
+* `annual_revenue` - (Optional) The applicant's gross annual revenue for its preceding fiscal year. See [`business_profile.annual_revenue`](#business_profile.annual_revenue) below.
+* `estimated_worker_count` - (Optional) An estimated upper bound of employees, contractors, vendors, etc. currently working for the business.
+* `mcc` - (Optional) [The merchant category code for the account](https://docs.stripe.com/connect/setting-mcc). MCCs are used to classify businesses based on the goods or services they provide.
 * `minority_owned_business_designation` - (Read-Only) Whether the business is a minority-owned, women-owned, and/or LGBTQI+ -owned business.
 * `monthly_estimated_revenue` - (Read-Only) See [`business_profile.monthly_estimated_revenue`](#business_profile.monthly_estimated_revenue) below.
 * `name` - (Optional) The customer-facing business name.
-* `product_description` - (Read-Only) Internal-only description of the product sold or service provided by the business. It's used by Stripe for risk and underwriting purposes.
+* `product_description` - (Optional) Internal-only description of the product sold or service provided by the business. It's used by Stripe for risk and underwriting purposes.
 * `specified_commercial_transactions_act_url` - (Read-Only) A link to the business's publicly available terms related to the Specified Commercial Transaction Act. Only used for accounts in Japan.
 * `support_address` - (Read-Only) A publicly available mailing address for sending support issues to. See [`business_profile.support_address`](#business_profile.support_address) below.
 * `support_email` - (Read-Only) A publicly available email address for sending support issues to.
 * `support_phone` - (Read-Only) A publicly available phone number to call with support issues.
 * `support_url` - (Read-Only) A publicly available website for handling support issues.
-* `url` - (Read-Only) The business's publicly available website.
+* `url` - (Optional) The business's publicly available website.
 
 <a id="business_profile.annual_revenue"></a>
 ### `business_profile.annual_revenue`
 
 The `business_profile.annual_revenue` attribute supports:
 
-* `amount` - A non-negative integer representing the amount in the [smallest currency unit](https://docs.stripe.com/currencies#zero-decimal).
-* `currency` - Three-letter [ISO currency code](https://www.iso.org/iso-4217-currency-codes.html), in lowercase. Must be a [supported currency](https://stripe.com/docs/currencies).
-* `fiscal_year_end` - The close-out date of the preceding fiscal year in ISO 8601 format. E.g. 2023-12-31 for the 31st of December, 2023.
+* `amount` - (Required) A non-negative integer representing the amount in the [smallest currency unit](https://docs.stripe.com/currencies#zero-decimal).
+* `currency` - (Required) Three-letter [ISO currency code](https://www.iso.org/iso-4217-currency-codes.html), in lowercase. Must be a [supported currency](https://stripe.com/docs/currencies).
+* `fiscal_year_end` - (Required) The close-out date of the preceding fiscal year in ISO 8601 format. E.g. 2023-12-31 for the 31st of December, 2023.
 
 <a id="business_profile.monthly_estimated_revenue"></a>
 ### `business_profile.monthly_estimated_revenue`
@@ -668,6 +735,13 @@ The `capabilities.zip_payments` attribute supports:
 
 * `requested` - (Optional)
 
+<a id="company"></a>
+### `company`
+
+The `company` attribute supports:
+
+* `name` - (Optional) The company's legal name. Also available for accounts where [controller.requirement_collection](https://docs.stripe.com/api/accounts/object#account_object-controller-requirement_collection) is `stripe`.
+
 <a id="controller"></a>
 ### `controller`
 
@@ -701,99 +775,70 @@ The `controller.stripe_dashboard` attribute supports:
 
 * `type` - (Optional) A value indicating the Stripe dashboard this account has access to independent of the Connect application. Possible values: `express`, `full`, `none`.
 
-## Attribute Reference
+<a id="individual"></a>
+### `individual`
 
-This resource exports the following attributes in addition to the arguments above:
+The `individual` attribute supports:
 
-* `id` - Unique identifier for the object.
-* `business_type` - The business type. Possible values: `company`, `government_entity`, `individual`, `non_profit`.
-* `charges_enabled` - Whether the account can process charges.
-* `created` - Time at which the account was connected. Measured in seconds since the Unix epoch.
-* `default_currency` - Three-letter ISO currency code representing the default currency for the account. This must be a currency that [Stripe supports in the account's country](https://stripe.com/docs/payouts).
-* `details_submitted` - Whether account details have been submitted. Accounts with Stripe Dashboard access, which includes Standard accounts, cannot receive payouts before this is true. Accounts where this is false should be directed to [an onboarding flow](https://docs.stripe.com/connect/onboarding) to finish submitting account details.
-* `future_requirements` - See [`future_requirements`](#future_requirements) below.
-* `payouts_enabled` - Whether the funds in this account can be paid out.
-* `requirements` - See [`requirements`](#requirements) below.
-* `settings` - Options for customizing how the account functions within Stripe. See [`settings`](#settings) below.
+* `address` - (Optional) The person's address. See [`individual.address`](#individual.address) below.
+* `dob` - (Optional) The person's date of birth. See [`individual.dob`](#individual.dob) below.
+* `email` - (Optional) The person's email address. Also available for accounts where [controller.requirement_collection](https://docs.stripe.com/api/accounts/object#account_object-controller-requirement_collection) is `stripe`.
+* `first_name` - (Optional) The person's first name. Also available for accounts where [controller.requirement_collection](https://docs.stripe.com/api/accounts/object#account_object-controller-requirement_collection) is `stripe`.
+* `id_number` - (Optional, Sensitive) The person's ID number, as appropriate for their country. For example, a social security number in the U.S., social insurance number in Canada, etc. Instead of the number itself, you can also provide a [PII token provided by Stripe.js](https://docs.stripe.com/js/tokens/create_token?type=pii). Changing this value for the account's representative requires that the account re-accept the [terms of service](https://docs.stripe.com/api/accounts/object#account_object-tos_acceptance).
+* `last_name` - (Optional) The person's last name. Also available for accounts where [controller.requirement_collection](https://docs.stripe.com/api/accounts/object#account_object-controller-requirement_collection) is `stripe`.
+* `phone` - (Optional) The person's phone number.
+* `ssn_last_4` - (Optional, Sensitive) The last four digits of the person's Social Security number (U.S. only). Changing this value for the account's representative requires that the account re-accept the [terms of service](https://docs.stripe.com/api/accounts/object#account_object-tos_acceptance).
+* `verification` - (Optional) The person's verification status. See [`individual.verification`](#individual.verification) below.
 
-<a id="future_requirements"></a>
-### `future_requirements`
+<a id="individual.address"></a>
+### `individual.address`
 
-The `future_requirements` attribute supports:
+The `individual.address` attribute supports:
 
-* `alternatives` - Fields that are due and can be resolved by providing the corresponding alternative fields instead. Many alternatives can list the same `original_fields_due`, and any of these alternatives can serve as a pathway for attempting to resolve the fields again. Re-providing `original_fields_due` also serves as a pathway for attempting to resolve the fields again. See [`future_requirements.alternatives`](#future_requirements.alternatives) below.
-* `current_deadline` - Date on which `future_requirements` becomes the main `requirements` hash and `future_requirements` becomes empty. After the transition, `currently_due` requirements may immediately become `past_due`, but the account may also be given a grace period depending on its enablement state prior to transitioning.
-* `currently_due` - Fields that need to be resolved to keep the account enabled. If not resolved by `future_requirements[current_deadline]`, these fields will transition to the main `requirements` hash.
-* `disabled_reason` - This is typed as an enum for consistency with `requirements.disabled_reason`. Possible values: `action_required.requested_capabilities`, `listed`, `other`, `platform_paused`, `rejected.fraud`, `rejected.incomplete_verification`, `rejected.listed`, `rejected.other`, `rejected.platform_fraud`, `rejected.platform_other`, `rejected.platform_terms_of_service`, `rejected.terms_of_service`, `requirements.past_due`, `requirements.pending_verification`, `under_review`.
-* `errors` - Fields that are `currently_due` and need to be collected again because validation or verification failed. See [`future_requirements.errors`](#future_requirements.errors) below.
-* `eventually_due` - Fields you must collect when all thresholds are reached. As they become required, they appear in `currently_due` as well.
-* `past_due` - Fields that haven't been resolved by `requirements.current_deadline`. These fields need to be resolved to enable the capability on the account. `future_requirements.past_due` is a subset of `requirements.past_due`.
-* `pending_verification` - Fields that are being reviewed, or might become required depending on the results of a review. If the review fails, these fields can move to `eventually_due`, `currently_due`, `past_due` or `alternatives`. Fields might appear in `eventually_due`, `currently_due`, `past_due` or `alternatives` and in `pending_verification` if one verification fails but another is still pending.
+* `city` - (Optional) City, district, suburb, town, or village.
+* `line1` - (Optional) Address line 1, such as the street, PO Box, or company name.
+* `postal_code` - (Optional) ZIP or postal code.
+* `state` - (Optional) State, county, province, or region ([ISO 3166-2](https://en.wikipedia.org/wiki/ISO_3166-2)).
 
-<a id="future_requirements.alternatives"></a>
-### `future_requirements.alternatives`
+<a id="individual.dob"></a>
+### `individual.dob`
 
-The `future_requirements.alternatives` attribute is a list. Each element supports:
+The `individual.dob` attribute supports:
 
-* `alternative_fields_due` - Fields that can be provided to resolve all fields in `original_fields_due`.
-* `original_fields_due` - Fields that are due and can be resolved by providing all fields in `alternative_fields_due`.
+* `day` - (Required) The day of birth, between 1 and 31.
+* `month` - (Required) The month of birth, between 1 and 12.
+* `year` - (Required) The four-digit year of birth.
 
-<a id="future_requirements.errors"></a>
-### `future_requirements.errors`
+<a id="individual.verification"></a>
+### `individual.verification`
 
-The `future_requirements.errors` attribute is a list. Each element supports:
+The `individual.verification` attribute supports:
 
-* `code` - The code for the type of error. Possible values: `external_request`, `information_missing`, `invalid_address_city_state_postal_code`, `invalid_address_cmra_address`, `invalid_address_highway_contract_box`, `invalid_address_private_mailbox`, `invalid_address_registered_agent_address`, `invalid_business_profile_name`, `invalid_business_profile_name_denylisted`, `invalid_company_name_denylisted`, `invalid_dob_age_over_maximum`, `invalid_dob_age_under_18`, `invalid_dob_age_under_minimum`, `invalid_product_description_length`, `invalid_product_description_url_match`, `invalid_representative_country`, `invalid_signator`, `invalid_statement_descriptor_business_mismatch`, `invalid_statement_descriptor_denylisted`, `invalid_statement_descriptor_length`, `invalid_statement_descriptor_prefix_denylisted`, `invalid_statement_descriptor_prefix_mismatch`, `invalid_street_address`, `invalid_tax_id`, `invalid_tax_id_format`, `invalid_tos_acceptance`, `invalid_url_denylisted`, `invalid_url_format`, `invalid_url_web_presence_detected`, `invalid_url_website_business_information_mismatch`, `invalid_url_website_empty`, `invalid_url_website_inaccessible`, `invalid_url_website_inaccessible_geoblocked`, `invalid_url_website_inaccessible_password_protected`, `invalid_url_website_incomplete`, `invalid_url_website_incomplete_cancellation_policy`, `invalid_url_website_incomplete_customer_service_details`, `invalid_url_website_incomplete_legal_restrictions`, `invalid_url_website_incomplete_refund_policy`, `invalid_url_website_incomplete_return_policy`, `invalid_url_website_incomplete_terms_and_conditions`, `invalid_url_website_incomplete_under_construction`, `invalid_url_website_other`, `invalid_value_other`, `unsupported_business_type`, `verification_directors_mismatch`, `verification_document_address_mismatch`, `verification_document_address_missing`, `verification_document_corrupt`, `verification_document_country_not_supported`, `verification_document_directors_mismatch`, `verification_document_dob_mismatch`, `verification_document_duplicate_type`, `verification_document_expired`, `verification_document_failed_copy`, `verification_document_failed_greyscale`, `verification_document_failed_other`, `verification_document_failed_test_mode`, `verification_document_fraudulent`, `verification_document_id_number_mismatch`, `verification_document_id_number_missing`, `verification_document_incomplete`, `verification_document_invalid`, `verification_document_issue_or_expiry_date_missing`, `verification_document_manipulated`, `verification_document_missing_back`, `verification_document_missing_front`, `verification_document_name_mismatch`, `verification_document_name_missing`, `verification_document_nationality_mismatch`, `verification_document_not_readable`, `verification_document_not_signed`, `verification_document_not_uploaded`, `verification_document_photo_mismatch`, `verification_document_too_large`, `verification_document_type_not_supported`, `verification_extraneous_directors`, `verification_failed_address_match`, `verification_failed_authorizer_authority`, `verification_failed_business_iec_number`, `verification_failed_document_match`, `verification_failed_id_number_match`, `verification_failed_keyed_identity`, `verification_failed_keyed_match`, `verification_failed_name_match`, `verification_failed_other`, `verification_failed_representative_authority`, `verification_failed_residential_address`, `verification_failed_tax_id_match`, `verification_failed_tax_id_not_issued`, `verification_legal_entity_structure_mismatch`, `verification_missing_directors`, `verification_missing_executives`, `verification_missing_owners`, `verification_rejected_ownership_exemption_reason`, `verification_requires_additional_memorandum_of_associations`, `verification_requires_additional_proof_of_registration`, `verification_supportability`.
-* `reason` - An informative message that indicates the error type and provides additional details about the error.
-* `requirement` - The specific user onboarding requirement field (in the requirements hash) that needs to be resolved.
+* `document` - (Optional) See [`individual.verification.document`](#individual.verification.document) below.
 
-<a id="requirements"></a>
-### `requirements`
+<a id="individual.verification.document"></a>
+### `individual.verification.document`
 
-The `requirements` attribute supports:
+The `individual.verification.document` attribute supports:
 
-* `alternatives` - Fields that are due and can be resolved by providing the corresponding alternative fields instead. Many alternatives can list the same `original_fields_due`, and any of these alternatives can serve as a pathway for attempting to resolve the fields again. Re-providing `original_fields_due` also serves as a pathway for attempting to resolve the fields again. See [`requirements.alternatives`](#requirements.alternatives) below.
-* `current_deadline` - Date by which the fields in `currently_due` must be collected to keep the account enabled. These fields may disable the account sooner if the next threshold is reached before they are collected.
-* `currently_due` - Fields that need to be resolved to keep the account enabled. If not resolved by `current_deadline`, these fields will appear in `past_due` as well, and the account will be disabled.
-* `disabled_reason` - If the account is disabled, this enum describes why. [Learn more about handling verification issues](https://docs.stripe.com/connect/handling-api-verification). Possible values: `action_required.requested_capabilities`, `listed`, `other`, `platform_paused`, `rejected.fraud`, `rejected.incomplete_verification`, `rejected.listed`, `rejected.other`, `rejected.platform_fraud`, `rejected.platform_other`, `rejected.platform_terms_of_service`, `rejected.terms_of_service`, `requirements.past_due`, `requirements.pending_verification`, `under_review`.
-* `errors` - Fields that are `currently_due` and need to be collected again because validation or verification failed. See [`requirements.errors`](#requirements.errors) below.
-* `eventually_due` - Fields you must collect when all thresholds are reached. As they become required, they appear in `currently_due` as well, and `current_deadline` becomes set.
-* `past_due` - Fields that haven't been resolved by `current_deadline`. These fields need to be resolved to enable the account.
-* `pending_verification` - Fields that are being reviewed, or might become required depending on the results of a review. If the review fails, these fields can move to `eventually_due`, `currently_due`, `past_due` or `alternatives`. Fields might appear in `eventually_due`, `currently_due`, `past_due` or `alternatives` and in `pending_verification` if one verification fails but another is still pending.
-
-<a id="requirements.alternatives"></a>
-### `requirements.alternatives`
-
-The `requirements.alternatives` attribute is a list. Each element supports:
-
-* `alternative_fields_due` - Fields that can be provided to resolve all fields in `original_fields_due`.
-* `original_fields_due` - Fields that are due and can be resolved by providing all fields in `alternative_fields_due`.
-
-<a id="requirements.errors"></a>
-### `requirements.errors`
-
-The `requirements.errors` attribute is a list. Each element supports:
-
-* `code` - The code for the type of error. Possible values: `external_request`, `information_missing`, `invalid_address_city_state_postal_code`, `invalid_address_cmra_address`, `invalid_address_highway_contract_box`, `invalid_address_private_mailbox`, `invalid_address_registered_agent_address`, `invalid_business_profile_name`, `invalid_business_profile_name_denylisted`, `invalid_company_name_denylisted`, `invalid_dob_age_over_maximum`, `invalid_dob_age_under_18`, `invalid_dob_age_under_minimum`, `invalid_product_description_length`, `invalid_product_description_url_match`, `invalid_representative_country`, `invalid_signator`, `invalid_statement_descriptor_business_mismatch`, `invalid_statement_descriptor_denylisted`, `invalid_statement_descriptor_length`, `invalid_statement_descriptor_prefix_denylisted`, `invalid_statement_descriptor_prefix_mismatch`, `invalid_street_address`, `invalid_tax_id`, `invalid_tax_id_format`, `invalid_tos_acceptance`, `invalid_url_denylisted`, `invalid_url_format`, `invalid_url_web_presence_detected`, `invalid_url_website_business_information_mismatch`, `invalid_url_website_empty`, `invalid_url_website_inaccessible`, `invalid_url_website_inaccessible_geoblocked`, `invalid_url_website_inaccessible_password_protected`, `invalid_url_website_incomplete`, `invalid_url_website_incomplete_cancellation_policy`, `invalid_url_website_incomplete_customer_service_details`, `invalid_url_website_incomplete_legal_restrictions`, `invalid_url_website_incomplete_refund_policy`, `invalid_url_website_incomplete_return_policy`, `invalid_url_website_incomplete_terms_and_conditions`, `invalid_url_website_incomplete_under_construction`, `invalid_url_website_other`, `invalid_value_other`, `unsupported_business_type`, `verification_directors_mismatch`, `verification_document_address_mismatch`, `verification_document_address_missing`, `verification_document_corrupt`, `verification_document_country_not_supported`, `verification_document_directors_mismatch`, `verification_document_dob_mismatch`, `verification_document_duplicate_type`, `verification_document_expired`, `verification_document_failed_copy`, `verification_document_failed_greyscale`, `verification_document_failed_other`, `verification_document_failed_test_mode`, `verification_document_fraudulent`, `verification_document_id_number_mismatch`, `verification_document_id_number_missing`, `verification_document_incomplete`, `verification_document_invalid`, `verification_document_issue_or_expiry_date_missing`, `verification_document_manipulated`, `verification_document_missing_back`, `verification_document_missing_front`, `verification_document_name_mismatch`, `verification_document_name_missing`, `verification_document_nationality_mismatch`, `verification_document_not_readable`, `verification_document_not_signed`, `verification_document_not_uploaded`, `verification_document_photo_mismatch`, `verification_document_too_large`, `verification_document_type_not_supported`, `verification_extraneous_directors`, `verification_failed_address_match`, `verification_failed_authorizer_authority`, `verification_failed_business_iec_number`, `verification_failed_document_match`, `verification_failed_id_number_match`, `verification_failed_keyed_identity`, `verification_failed_keyed_match`, `verification_failed_name_match`, `verification_failed_other`, `verification_failed_representative_authority`, `verification_failed_residential_address`, `verification_failed_tax_id_match`, `verification_failed_tax_id_not_issued`, `verification_legal_entity_structure_mismatch`, `verification_missing_directors`, `verification_missing_executives`, `verification_missing_owners`, `verification_rejected_ownership_exemption_reason`, `verification_requires_additional_memorandum_of_associations`, `verification_requires_additional_proof_of_registration`, `verification_supportability`.
-* `reason` - An informative message that indicates the error type and provides additional details about the error.
-* `requirement` - The specific user onboarding requirement field (in the requirements hash) that needs to be resolved.
+* `front` - (Optional) The front of an ID returned by a [file upload](https://docs.stripe.com/api#create_file) with a `purpose` value of `identity_document`.
 
 <a id="settings"></a>
 ### `settings`
 
 The `settings` attribute supports:
 
-* `bacs_debit_payments` - See [`settings.bacs_debit_payments`](#settings.bacs_debit_payments) below.
-* `branding` - See [`settings.branding`](#settings.branding) below.
-* `card_issuing` - See [`settings.card_issuing`](#settings.card_issuing) below.
-* `card_payments` - See [`settings.card_payments`](#settings.card_payments) below.
-* `dashboard` - See [`settings.dashboard`](#settings.dashboard) below.
-* `invoices` - See [`settings.invoices`](#settings.invoices) below.
-* `payments` - See [`settings.payments`](#settings.payments) below.
-* `payouts` - See [`settings.payouts`](#settings.payouts) below.
-* `paypay_payments` - See [`settings.paypay_payments`](#settings.paypay_payments) below.
-* `sepa_debit_payments` - See [`settings.sepa_debit_payments`](#settings.sepa_debit_payments) below.
-* `treasury` - See [`settings.treasury`](#settings.treasury) below.
+* `bacs_debit_payments` - (Read-Only) See [`settings.bacs_debit_payments`](#settings.bacs_debit_payments) below.
+* `branding` - (Read-Only) See [`settings.branding`](#settings.branding) below.
+* `card_issuing` - (Optional) See [`settings.card_issuing`](#settings.card_issuing) below.
+* `card_payments` - (Read-Only) See [`settings.card_payments`](#settings.card_payments) below.
+* `dashboard` - (Read-Only) See [`settings.dashboard`](#settings.dashboard) below.
+* `invoices` - (Read-Only) See [`settings.invoices`](#settings.invoices) below.
+* `payments` - (Read-Only) See [`settings.payments`](#settings.payments) below.
+* `payouts` - (Read-Only) See [`settings.payouts`](#settings.payouts) below.
+* `paypay_payments` - (Read-Only) See [`settings.paypay_payments`](#settings.paypay_payments) below.
+* `sepa_debit_payments` - (Read-Only) See [`settings.sepa_debit_payments`](#settings.sepa_debit_payments) below.
+* `treasury` - (Optional) See [`settings.treasury`](#settings.treasury) below.
 
 <a id="settings.bacs_debit_payments"></a>
 ### `settings.bacs_debit_payments`
@@ -818,16 +863,16 @@ The `settings.branding` attribute supports:
 
 The `settings.card_issuing` attribute supports:
 
-* `tos_acceptance` - See [`settings.card_issuing.tos_acceptance`](#settings.card_issuing.tos_acceptance) below.
+* `tos_acceptance` - (Optional) See [`settings.card_issuing.tos_acceptance`](#settings.card_issuing.tos_acceptance) below.
 
 <a id="settings.card_issuing.tos_acceptance"></a>
 ### `settings.card_issuing.tos_acceptance`
 
 The `settings.card_issuing.tos_acceptance` attribute supports:
 
-* `date` - The Unix timestamp marking when the account representative accepted the service agreement.
-* `ip` - The IP address from which the account representative accepted the service agreement.
-* `user_agent` - The user agent of the browser from which the account representative accepted the service agreement.
+* `date` - (Optional) The Unix timestamp marking when the account representative accepted the service agreement.
+* `ip` - (Optional) The IP address from which the account representative accepted the service agreement.
+* `user_agent` - (Read-Only) The user agent of the browser from which the account representative accepted the service agreement.
 
 <a id="settings.card_payments"></a>
 ### `settings.card_payments`
@@ -938,16 +983,99 @@ The `settings.sepa_debit_payments` attribute supports:
 
 The `settings.treasury` attribute supports:
 
-* `tos_acceptance` - See [`settings.treasury.tos_acceptance`](#settings.treasury.tos_acceptance) below.
+* `tos_acceptance` - (Optional) See [`settings.treasury.tos_acceptance`](#settings.treasury.tos_acceptance) below.
 
 <a id="settings.treasury.tos_acceptance"></a>
 ### `settings.treasury.tos_acceptance`
 
 The `settings.treasury.tos_acceptance` attribute supports:
 
-* `date` - The Unix timestamp marking when the account representative accepted the service agreement.
-* `ip` - The IP address from which the account representative accepted the service agreement.
-* `user_agent` - The user agent of the browser from which the account representative accepted the service agreement.
+* `date` - (Optional) The Unix timestamp marking when the account representative accepted the service agreement.
+* `ip` - (Optional) The IP address from which the account representative accepted the service agreement.
+* `user_agent` - (Read-Only) The user agent of the browser from which the account representative accepted the service agreement.
+
+<a id="tos_acceptance"></a>
+### `tos_acceptance`
+
+The `tos_acceptance` attribute supports:
+
+* `date` - (Optional) The Unix timestamp marking when the account representative accepted their service agreement
+* `ip` - (Optional) The IP address from which the account representative accepted their service agreement
+
+## Attribute Reference
+
+This resource exports the following attributes in addition to the arguments above:
+
+* `id` - Unique identifier for the object.
+* `charges_enabled` - Whether the account can process charges.
+* `created` - Time at which the account was connected. Measured in seconds since the Unix epoch.
+* `default_currency` - Three-letter ISO currency code representing the default currency for the account. This must be a currency that [Stripe supports in the account's country](https://stripe.com/docs/payouts).
+* `details_submitted` - Whether account details have been submitted. Accounts with Stripe Dashboard access, which includes Standard accounts, cannot receive payouts before this is true. Accounts where this is false should be directed to [an onboarding flow](https://docs.stripe.com/connect/onboarding) to finish submitting account details.
+* `future_requirements` - See [`future_requirements`](#future_requirements) below.
+* `payouts_enabled` - Whether the funds in this account can be paid out.
+* `requirements` - See [`requirements`](#requirements) below.
+
+<a id="future_requirements"></a>
+### `future_requirements`
+
+The `future_requirements` attribute supports:
+
+* `alternatives` - Fields that are due and can be resolved by providing the corresponding alternative fields instead. Many alternatives can list the same `original_fields_due`, and any of these alternatives can serve as a pathway for attempting to resolve the fields again. Re-providing `original_fields_due` also serves as a pathway for attempting to resolve the fields again. See [`future_requirements.alternatives`](#future_requirements.alternatives) below.
+* `current_deadline` - Date on which `future_requirements` becomes the main `requirements` hash and `future_requirements` becomes empty. After the transition, `currently_due` requirements may immediately become `past_due`, but the account may also be given a grace period depending on its enablement state prior to transitioning.
+* `currently_due` - Fields that need to be resolved to keep the account enabled. If not resolved by `future_requirements[current_deadline]`, these fields will transition to the main `requirements` hash.
+* `disabled_reason` - This is typed as an enum for consistency with `requirements.disabled_reason`. Possible values: `action_required.requested_capabilities`, `listed`, `other`, `platform_paused`, `rejected.fraud`, `rejected.incomplete_verification`, `rejected.listed`, `rejected.other`, `rejected.platform_fraud`, `rejected.platform_other`, `rejected.platform_terms_of_service`, `rejected.terms_of_service`, `requirements.past_due`, `requirements.pending_verification`, `under_review`.
+* `errors` - Fields that are `currently_due` and need to be collected again because validation or verification failed. See [`future_requirements.errors`](#future_requirements.errors) below.
+* `eventually_due` - Fields you must collect when all thresholds are reached. As they become required, they appear in `currently_due` as well.
+* `past_due` - Fields that haven't been resolved by `requirements.current_deadline`. These fields need to be resolved to enable the capability on the account. `future_requirements.past_due` is a subset of `requirements.past_due`.
+* `pending_verification` - Fields that are being reviewed, or might become required depending on the results of a review. If the review fails, these fields can move to `eventually_due`, `currently_due`, `past_due` or `alternatives`. Fields might appear in `eventually_due`, `currently_due`, `past_due` or `alternatives` and in `pending_verification` if one verification fails but another is still pending.
+
+<a id="future_requirements.alternatives"></a>
+### `future_requirements.alternatives`
+
+The `future_requirements.alternatives` attribute is a list. Each element supports:
+
+* `alternative_fields_due` - Fields that can be provided to resolve all fields in `original_fields_due`.
+* `original_fields_due` - Fields that are due and can be resolved by providing all fields in `alternative_fields_due`.
+
+<a id="future_requirements.errors"></a>
+### `future_requirements.errors`
+
+The `future_requirements.errors` attribute is a list. Each element supports:
+
+* `code` - The code for the type of error. Possible values: `external_request`, `information_missing`, `invalid_address_city_state_postal_code`, `invalid_address_cmra_address`, `invalid_address_highway_contract_box`, `invalid_address_private_mailbox`, `invalid_address_registered_agent_address`, `invalid_business_profile_name`, `invalid_business_profile_name_denylisted`, `invalid_company_name_denylisted`, `invalid_dob_age_over_maximum`, `invalid_dob_age_under_18`, `invalid_dob_age_under_minimum`, `invalid_product_description_length`, `invalid_product_description_url_match`, `invalid_representative_country`, `invalid_signator`, `invalid_statement_descriptor_business_mismatch`, `invalid_statement_descriptor_denylisted`, `invalid_statement_descriptor_length`, `invalid_statement_descriptor_prefix_denylisted`, `invalid_statement_descriptor_prefix_mismatch`, `invalid_street_address`, `invalid_tax_id`, `invalid_tax_id_format`, `invalid_tos_acceptance`, `invalid_url_denylisted`, `invalid_url_format`, `invalid_url_web_presence_detected`, `invalid_url_website_business_information_mismatch`, `invalid_url_website_empty`, `invalid_url_website_inaccessible`, `invalid_url_website_inaccessible_geoblocked`, `invalid_url_website_inaccessible_password_protected`, `invalid_url_website_incomplete`, `invalid_url_website_incomplete_cancellation_policy`, `invalid_url_website_incomplete_customer_service_details`, `invalid_url_website_incomplete_legal_restrictions`, `invalid_url_website_incomplete_refund_policy`, `invalid_url_website_incomplete_return_policy`, `invalid_url_website_incomplete_terms_and_conditions`, `invalid_url_website_incomplete_under_construction`, `invalid_url_website_other`, `invalid_value_other`, `unsupported_business_type`, `verification_directors_mismatch`, `verification_document_address_mismatch`, `verification_document_address_missing`, `verification_document_corrupt`, `verification_document_country_not_supported`, `verification_document_directors_mismatch`, `verification_document_dob_mismatch`, `verification_document_duplicate_type`, `verification_document_expired`, `verification_document_failed_copy`, `verification_document_failed_greyscale`, `verification_document_failed_other`, `verification_document_failed_test_mode`, `verification_document_fraudulent`, `verification_document_id_number_mismatch`, `verification_document_id_number_missing`, `verification_document_incomplete`, `verification_document_invalid`, `verification_document_issue_or_expiry_date_missing`, `verification_document_manipulated`, `verification_document_missing_back`, `verification_document_missing_front`, `verification_document_name_mismatch`, `verification_document_name_missing`, `verification_document_nationality_mismatch`, `verification_document_not_readable`, `verification_document_not_signed`, `verification_document_not_uploaded`, `verification_document_photo_mismatch`, `verification_document_too_large`, `verification_document_type_not_supported`, `verification_extraneous_directors`, `verification_failed_address_match`, `verification_failed_authorizer_authority`, `verification_failed_business_iec_number`, `verification_failed_document_match`, `verification_failed_id_number_match`, `verification_failed_keyed_identity`, `verification_failed_keyed_match`, `verification_failed_name_match`, `verification_failed_other`, `verification_failed_representative_authority`, `verification_failed_residential_address`, `verification_failed_tax_id_match`, `verification_failed_tax_id_not_issued`, `verification_legal_entity_structure_mismatch`, `verification_missing_directors`, `verification_missing_executives`, `verification_missing_owners`, `verification_rejected_ownership_exemption_reason`, `verification_requires_additional_memorandum_of_associations`, `verification_requires_additional_proof_of_registration`, `verification_supportability`.
+* `reason` - An informative message that indicates the error type and provides additional details about the error.
+* `requirement` - The specific user onboarding requirement field (in the requirements hash) that needs to be resolved.
+
+<a id="requirements"></a>
+### `requirements`
+
+The `requirements` attribute supports:
+
+* `alternatives` - Fields that are due and can be resolved by providing the corresponding alternative fields instead. Many alternatives can list the same `original_fields_due`, and any of these alternatives can serve as a pathway for attempting to resolve the fields again. Re-providing `original_fields_due` also serves as a pathway for attempting to resolve the fields again. See [`requirements.alternatives`](#requirements.alternatives) below.
+* `current_deadline` - Date by which the fields in `currently_due` must be collected to keep the account enabled. These fields may disable the account sooner if the next threshold is reached before they are collected.
+* `currently_due` - Fields that need to be resolved to keep the account enabled. If not resolved by `current_deadline`, these fields will appear in `past_due` as well, and the account will be disabled.
+* `disabled_reason` - If the account is disabled, this enum describes why. [Learn more about handling verification issues](https://docs.stripe.com/connect/handling-api-verification). Possible values: `action_required.requested_capabilities`, `listed`, `other`, `platform_paused`, `rejected.fraud`, `rejected.incomplete_verification`, `rejected.listed`, `rejected.other`, `rejected.platform_fraud`, `rejected.platform_other`, `rejected.platform_terms_of_service`, `rejected.terms_of_service`, `requirements.past_due`, `requirements.pending_verification`, `under_review`.
+* `errors` - Fields that are `currently_due` and need to be collected again because validation or verification failed. See [`requirements.errors`](#requirements.errors) below.
+* `eventually_due` - Fields you must collect when all thresholds are reached. As they become required, they appear in `currently_due` as well, and `current_deadline` becomes set.
+* `past_due` - Fields that haven't been resolved by `current_deadline`. These fields need to be resolved to enable the account.
+* `pending_verification` - Fields that are being reviewed, or might become required depending on the results of a review. If the review fails, these fields can move to `eventually_due`, `currently_due`, `past_due` or `alternatives`. Fields might appear in `eventually_due`, `currently_due`, `past_due` or `alternatives` and in `pending_verification` if one verification fails but another is still pending.
+
+<a id="requirements.alternatives"></a>
+### `requirements.alternatives`
+
+The `requirements.alternatives` attribute is a list. Each element supports:
+
+* `alternative_fields_due` - Fields that can be provided to resolve all fields in `original_fields_due`.
+* `original_fields_due` - Fields that are due and can be resolved by providing all fields in `alternative_fields_due`.
+
+<a id="requirements.errors"></a>
+### `requirements.errors`
+
+The `requirements.errors` attribute is a list. Each element supports:
+
+* `code` - The code for the type of error. Possible values: `external_request`, `information_missing`, `invalid_address_city_state_postal_code`, `invalid_address_cmra_address`, `invalid_address_highway_contract_box`, `invalid_address_private_mailbox`, `invalid_address_registered_agent_address`, `invalid_business_profile_name`, `invalid_business_profile_name_denylisted`, `invalid_company_name_denylisted`, `invalid_dob_age_over_maximum`, `invalid_dob_age_under_18`, `invalid_dob_age_under_minimum`, `invalid_product_description_length`, `invalid_product_description_url_match`, `invalid_representative_country`, `invalid_signator`, `invalid_statement_descriptor_business_mismatch`, `invalid_statement_descriptor_denylisted`, `invalid_statement_descriptor_length`, `invalid_statement_descriptor_prefix_denylisted`, `invalid_statement_descriptor_prefix_mismatch`, `invalid_street_address`, `invalid_tax_id`, `invalid_tax_id_format`, `invalid_tos_acceptance`, `invalid_url_denylisted`, `invalid_url_format`, `invalid_url_web_presence_detected`, `invalid_url_website_business_information_mismatch`, `invalid_url_website_empty`, `invalid_url_website_inaccessible`, `invalid_url_website_inaccessible_geoblocked`, `invalid_url_website_inaccessible_password_protected`, `invalid_url_website_incomplete`, `invalid_url_website_incomplete_cancellation_policy`, `invalid_url_website_incomplete_customer_service_details`, `invalid_url_website_incomplete_legal_restrictions`, `invalid_url_website_incomplete_refund_policy`, `invalid_url_website_incomplete_return_policy`, `invalid_url_website_incomplete_terms_and_conditions`, `invalid_url_website_incomplete_under_construction`, `invalid_url_website_other`, `invalid_value_other`, `unsupported_business_type`, `verification_directors_mismatch`, `verification_document_address_mismatch`, `verification_document_address_missing`, `verification_document_corrupt`, `verification_document_country_not_supported`, `verification_document_directors_mismatch`, `verification_document_dob_mismatch`, `verification_document_duplicate_type`, `verification_document_expired`, `verification_document_failed_copy`, `verification_document_failed_greyscale`, `verification_document_failed_other`, `verification_document_failed_test_mode`, `verification_document_fraudulent`, `verification_document_id_number_mismatch`, `verification_document_id_number_missing`, `verification_document_incomplete`, `verification_document_invalid`, `verification_document_issue_or_expiry_date_missing`, `verification_document_manipulated`, `verification_document_missing_back`, `verification_document_missing_front`, `verification_document_name_mismatch`, `verification_document_name_missing`, `verification_document_nationality_mismatch`, `verification_document_not_readable`, `verification_document_not_signed`, `verification_document_not_uploaded`, `verification_document_photo_mismatch`, `verification_document_too_large`, `verification_document_type_not_supported`, `verification_extraneous_directors`, `verification_failed_address_match`, `verification_failed_authorizer_authority`, `verification_failed_business_iec_number`, `verification_failed_document_match`, `verification_failed_id_number_match`, `verification_failed_keyed_identity`, `verification_failed_keyed_match`, `verification_failed_name_match`, `verification_failed_other`, `verification_failed_representative_authority`, `verification_failed_residential_address`, `verification_failed_tax_id_match`, `verification_failed_tax_id_not_issued`, `verification_legal_entity_structure_mismatch`, `verification_missing_directors`, `verification_missing_executives`, `verification_missing_owners`, `verification_rejected_ownership_exemption_reason`, `verification_requires_additional_memorandum_of_associations`, `verification_requires_additional_proof_of_registration`, `verification_supportability`.
+* `reason` - An informative message that indicates the error type and provides additional details about the error.
+* `requirement` - The specific user onboarding requirement field (in the requirements hash) that needs to be resolved.
 
 ## Timeouts
 
@@ -991,4 +1119,4 @@ Using `terraform import`, import an account using its ID. For example:
 % terraform import stripe_account.seller acct_1Nv0FGQ9RKHgCVdK
 ```
 
-~> Stripe does not return which capabilities were requested, so an imported account has no `capabilities` in state. Add `lifecycle { ignore_changes = [capabilities] }` to a configuration that sets it, because a plan that changes `capabilities` fails.
+~> Stripe does not return which capabilities were requested, and the provider does not read back `individual`, `company` or `external_account`, so an imported account has none of them in state. Add `lifecycle { ignore_changes = [capabilities, individual, company, external_account] }`, listing those the configuration sets, because a plan that changes one of them fails.

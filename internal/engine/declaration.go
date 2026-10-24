@@ -357,8 +357,9 @@ type Declaration struct {
 	// `amount` or `metric_tons`. A plan that sets none or several is refused before Stripe is
 	// called. A value unknown at plan time is left for apply.
 	ExactlyOneOf [][]string
-	// RefuseChange lists top-level fields, optional or required, that Stripe's update takes but
-	// that nothing proves it applies as asked, such as an account's `capabilities`. A plan that
+	// RefuseChange lists fields, optional or required, by dotted path through nested objects,
+	// that Stripe's update takes but that nothing proves it applies as asked, such as an
+	// account's `capabilities` or its `business_profile.mcc`. A plan that
 	// changes one on an existing object fails before Stripe is called, and the error says to
 	// revert, to ignore the change or to taint the object, or for a resource that refuses
 	// destroy to remove it from state. The field is sent on create only. A plan that is a replace is not
