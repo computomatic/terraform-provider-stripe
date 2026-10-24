@@ -44,9 +44,9 @@ Keep the key in a secrets store, such as your CI system's secrets, HashiCorp Vau
 
 ## Connected accounts
 
-When the provider block sets `stripe_account`, every request is made on that connected account. The key then needs each permission at the level you allow it for connected accounts, which the Dashboard sets separately when you use Connect. The live-mode check reads the connected account's balance, so the money-moving resources need Balance read for connected accounts too.
+When the provider block sets `stripe_account`, or `stripe_context` to a connected account's ID, every request is made on that connected account. The key then needs each permission at the level you allow it for connected accounts, which the Dashboard sets separately when you use Connect. The live-mode check reads the connected account's balance, so the money-moving resources need Balance read for connected accounts too.
 
-Stripe marks some permissions (Direct) in the table: they cannot authorize a request made on a connected account, so a restricted key cannot use the types that need them with `stripe_account`. The connected-account resources, such as `stripe_account` and `stripe_account_person`, need the (Direct) `connected_account_read` or `connected_account_write`, so manage them from a provider block without `stripe_account`.
+Stripe marks some permissions (Direct) in the table: they cannot authorize a request made on a connected account, so a restricted key cannot use the types that need them on a connected account. The connected-account resources, such as `stripe_account` and `stripe_account_person`, need the (Direct) `connected_account_read` or `connected_account_write`, so manage them from a provider block that acts as the platform: one without `stripe_account`, whose `stripe_context`, if set, names the platform.
 
 ## Permissions by resource and data source
 

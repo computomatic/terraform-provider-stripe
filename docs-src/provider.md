@@ -24,6 +24,8 @@ A secret key (`sk_test_...` or `sk_live_...`) also works, but it can do anything
 
 To manage a connected account with the key of its platform, set `stripe_account` to the connected account's ID.
 
+Organization keys (`sk_org_...`) need `stripe_context`, or the `STRIPE_CONTEXT` environment variable, set to the account the provider acts on. The provider sends the value unchanged as the `Stripe-Context` header of every request, the balance read of the live-mode check included. `stripe_context` and `stripe_account` both name that account, so a configuration that sets both fails. This project does not test organization keys: its tests set `stripe_context` with a platform's key, to one of its connected accounts or to the platform itself. `/v2` requests with `stripe_context` are not tested.
+
 ## Live mode and money movement
 
 The resources that move money (`stripe_payment_intent`, `stripe_charge`, `stripe_refund`, `stripe_invoice`, `stripe_credit_note`, `stripe_checkout_session`, `stripe_payout`, `stripe_topup`, `stripe_transfer`, `stripe_transfer_reversal` and `stripe_application_fee_refund`, and `stripe_climate_order`, whose create spends the account's balance) are meant for test data in sandboxes and test mode. Before one creates or changes anything, the provider reads the account's balance and checks Stripe's `livemode` flag. In live mode the change fails at plan time unless the provider block sets `allow_live_money_movement = true`. The key's prefix is never used. A restricted key needs the Balance read permission for this check. Reads, imports and data sources are never checked. The Managing Test Data guide explains how to create, move on and stop managing these objects.

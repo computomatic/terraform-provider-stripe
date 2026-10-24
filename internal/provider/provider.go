@@ -159,6 +159,7 @@ type stripeProviderModel struct {
 	BaseURL       types.String `tfsdk:"base_url"`
 	FilesBaseURL  types.String `tfsdk:"files_base_url"`
 	StripeAccount types.String `tfsdk:"stripe_account"`
+	StripeContext types.String `tfsdk:"stripe_context"`
 	MaxRetries    types.Int64  `tfsdk:"max_retries"`
 	// AllowLiveMoneyMovement has no environment fallback: a switch that moves live money
 	// belongs in the configuration, where review sees it.
@@ -189,7 +190,11 @@ func (p *stripeProvider) Schema(_ context.Context, _ provider.SchemaRequest, res
 			},
 			"stripe_account": schema.StringAttribute{
 				Optional:    true,
-				Description: "A connected account ID, sent as the `Stripe-Account` header. Defaults to the `STRIPE_ACCOUNT` environment variable.",
+				Description: "A connected account ID, sent as the `Stripe-Account` header. Defaults to the `STRIPE_ACCOUNT` environment variable. Conflicts with `stripe_context`.",
+			},
+			"stripe_context": schema.StringAttribute{
+				Optional:    true,
+				Description: "The account the requests act on, sent unchanged as the `Stripe-Context` header of every request. An organization key (`sk_org_`) needs it. Defaults to the `STRIPE_CONTEXT` environment variable. Conflicts with `stripe_account`.",
 			},
 			"max_retries": schema.Int64Attribute{
 				Optional:    true,
@@ -215,6 +220,7 @@ func (p *stripeProvider) Configure(ctx context.Context, req provider.ConfigureRe
 		"base_url":       config.BaseURL,
 		"files_base_url": config.FilesBaseURL,
 		"stripe_account": config.StripeAccount,
+		"stripe_context": config.StripeContext,
 	} {
 		if value.IsUnknown() {
 			resp.Diagnostics.AddAttributeError(path.Root(name), "Unknown value",
@@ -492,11 +498,24 @@ func resolveConfig(config stripeProviderModel, getenv func(string) string) (stri
 		}
 	}
 
+	stripeAccount := stringOrEnv(config.StripeAccount, getenv, "STRIPE_ACCOUNT")
+	stripeContext := stringOrEnv(config.StripeContext, getenv, "STRIPE_CONTEXT")
+	switch {
+	case !config.StripeContext.IsNull() && stripeContext == "":
+		diags.AddAttributeError(path.Root("stripe_context"), "Empty stripe_context",
+			"stripe_context must not be empty. Remove it to send no Stripe-Context header.")
+	case stripeAccount != "" && stripeContext != "":
+		diags.AddAttributeError(path.Root("stripe_context"), "Conflicting account settings",
+			fmt.Sprintf("%s and %s both name the account the provider acts on. Set only one of them: stripe_context sends the Stripe-Context header, stripe_account the Stripe-Account header.",
+				source(config.StripeAccount, "stripe_account", "STRIPE_ACCOUNT"), source(config.StripeContext, "stripe_context", "STRIPE_CONTEXT")))
+	}
+
 	return stripeapi.Config{
 		APIKey:        apiKey,
 		BaseURL:       strings.TrimSuffix(baseURL, "/"),
 		FilesBaseURL:  strings.TrimSuffix(filesBaseURL, "/"),
-		StripeAccount: stringOrEnv(config.StripeAccount, getenv, "STRIPE_ACCOUNT"),
+		StripeAccount: stripeAccount,
+		StripeContext: stripeContext,
 		MaxRetries:    maxRetries,
 	}, diags
 }
@@ -506,6 +525,14 @@ func stringOrEnv(value types.String, getenv func(string) string, name string) st
 		return value.ValueString()
 	}
 	return getenv(name)
+}
+
+// source names where a stringOrEnv value came from, for an error message.
+func source(value types.String, attribute, env string) string {
+	if !value.IsNull() {
+		return attribute
+	}
+	return attribute + " (from the " + env + " environment variable)"
 }
 
 func validateBaseURL(diags *diag.Diagnostics, attribute, raw string) {
