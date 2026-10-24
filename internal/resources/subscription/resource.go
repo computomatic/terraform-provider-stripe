@@ -32,6 +32,10 @@ var Declaration = engine.Declaration{
 	// and `trial_settings` when the request leaves them out, even with no trial (suite:
 	// "create/invoiced subscription").
 	ServerDefaulted: []string{"cancel_at", "items.quantity", "items.metadata", "payment_settings", "trial_settings"},
+	// Stripe sets `cancellation_details.reason` to `cancellation_requested` when
+	// `cancel_at_period_end` turns true, and clears it when it turns false (suite: update
+	// "cancel_at_period_end").
+	FilledFrom: map[string][]string{"cancel_at_period_end": {"cancellation_details"}},
 	// Items are matched by price: an item whose price stays keeps its ID and changes in
 	// place, a new price adds an item and a dropped one deletes it (suite: "swap item price"
 	// names an item by ID).

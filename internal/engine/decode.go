@@ -81,10 +81,11 @@ func nullOf(t attr.Type) attr.Value {
 func known(v attr.Value) bool { return v != nil && !v.IsNull() && !v.IsUnknown() }
 
 // node decodes one field, applying the carry-forward rules of ADR D2: a field the response
-// never carries, a once-returned field the response omits and a preserved field all keep
-// the prior value. A data source has no prior value, so a field the response never carries
-// is null; Stripe may still send a key of that name in another shape, such as an account's
-// `capabilities` (statuses in the response, `requested` flags in the request).
+// never carries, a once-returned field the response omits, a kept field the response omits
+// or returns null and a preserved field all keep the prior value. A data source has no prior value, so a
+// field the response never carries is null; Stripe may still send a key of that name in
+// another shape, such as an account's `capabilities` (statuses in the response, `requested`
+// flags in the request).
 func (d *decoder) node(n *node, w wire.Value, prior attr.Value) attr.Value {
 	if d.dataSource && !n.Response && !n.Once {
 		return nullOf(attrType(n))
@@ -103,6 +104,8 @@ func (d *decoder) node(n *node, w wire.Value, prior attr.Value) attr.Value {
 				return prior
 			}
 			return nullOf(attrType(n))
+		case n.KeepOmitted && isAbsent(w) && known(prior) && fullyKnown(prior):
+			return prior
 		}
 	}
 	if n.NullAs != "" && isAbsent(w) {

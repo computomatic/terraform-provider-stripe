@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"regexp"
+	"strings"
 	"testing"
 
 	"github.com/hashicorp/go-version"
@@ -162,7 +163,7 @@ resource "stripe_account" "test" {
 // metadata; it refuses country, type and controller there, so the provider never sends them.
 func TestAccAccount_update(t *testing.T) {
 	acct := acctest.NewAccount(t)
-	name := "Acme Supplies"
+	name := acct.Name("Acme Supplies")
 	var first string
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: tfacc.ProviderFactories,
@@ -448,11 +449,20 @@ type onboarding struct {
 }
 
 // verified is the onboarding Stripe documents as always verifying, which the suite sends
-// ("verifiedIndividualForm", "issuingAccountForm"). Stripe fills an account's settings in from
-// its business name, and the suite proves that only for a name of 10 to 22 letters, digits and
-// single spaces ("create with a business name fills settings"), so a business name never
-// carries the smoke prefix: nothing finds an account by its name.
+// ("verifiedIndividualForm", "issuingAccountForm"). Its business name goes through Name.
 var verified = onboarding{name: "Rosen Software", mcc: "5734", firstName: "Jenny", idNumber: "000000000", issuingIP: "8.8.8.8"}
+
+// descriptor is the statement descriptor Stripe fills in from a business name (suite: "How a
+// business name becomes the account's descriptor settings"): the name trimmed, in capitals
+// and cut to 22 characters. The names here have no apostrophe or accent, which Stripe changes
+// too.
+func descriptor(name string) string {
+	d := strings.ToUpper(strings.TrimSpace(name))
+	if len(d) > 22 {
+		d = d[:22]
+	}
+	return d
+}
 
 // onboardedConfig is a US Custom individual account onboarded through the resource alone. It
 // requests card_issuing, transfers and treasury and accepts the Stripe Services Agreement and
@@ -490,7 +500,7 @@ func onboardedConfig(c acctest.Config, o onboarding, extra string) string {
     card_issuing = { tos_acceptance = { date = 1609459200, ip = %[5]q } }
     treasury     = { tos_acceptance = { date = 1609459200, ip = "8.8.8.8" } }
   }
-%[6]s`, c.Name("jenny")+"@example.com", o.mcc, o.firstName, o.idNumber, o.issuingIP, extra, o.name))
+%[6]s`, c.Name("jenny")+"@example.com", o.mcc, o.firstName, o.idNumber, o.issuingIP, extra, c.Name(o.name)))
 }
 
 // capabilityData reads the status of each onboarded capability.
@@ -549,8 +559,8 @@ func TestAccAccount_onboard(t *testing.T) {
 					resource.TestCheckResourceAttr(address, "settings.card_issuing.tos_acceptance.ip", "8.8.8.8"),
 					resource.TestCheckResourceAttr(address, "settings.treasury.tos_acceptance.date", "1609459200"),
 					// Stripe fills these in from the business name.
-					resource.TestCheckResourceAttr(address, "settings.dashboard.display_name", verified.name),
-					resource.TestCheckResourceAttr(address, "settings.payments.statement_descriptor", "ROSEN SOFTWARE"),
+					resource.TestCheckResourceAttr(address, "settings.dashboard.display_name", acct.Name(verified.name)),
+					resource.TestCheckResourceAttr(address, "settings.payments.statement_descriptor", descriptor(acct.Name(verified.name))),
 					resource.TestCheckResourceAttr(address, "individual.first_name", "Jenny"),
 					resource.TestCheckResourceAttr(address, "individual.id_number", "000000000"),
 					resource.TestCheckResourceAttr(address, "external_account", "btok_us_verified"),
@@ -573,7 +583,7 @@ func TestAccAccount_refuseOnboardingChange(t *testing.T) {
 	acct := acctest.NewAccount(t)
 	var first string
 	otherMCC, otherName, otherIP, renamed := verified, verified, verified, verified
-	otherMCC.mcc, otherName.firstName, otherIP.issuingIP, renamed.name = "5045", "Jane", "8.8.4.4", "Jenny Rosen Studio"
+	otherMCC.mcc, otherName.firstName, otherIP.issuingIP, renamed.name = "5045", "Jane", "8.8.4.4", "Renamed"
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: tfacc.ProviderFactories,
 		Steps: []resource.TestStep{
@@ -607,7 +617,7 @@ func TestAccAccount_refuseOnboardingChange(t *testing.T) {
 					plancheck.ExpectResourceAction(address, plancheck.ResourceActionUpdate),
 				}},
 				Check: resource.ComposeAggregateTestCheckFunc(
-					resource.TestCheckResourceAttr(address, "business_profile.name", renamed.name),
+					resource.TestCheckResourceAttr(address, "business_profile.name", acct.Name(renamed.name)),
 					resource.TestCheckResourceAttrWith(address, "id", func(v string) error {
 						if v != first {
 							return fmt.Errorf("the account ID changed from %s to %s", first, v)

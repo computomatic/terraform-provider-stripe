@@ -27,8 +27,9 @@ var Declaration = engine.Declaration{
 		List:     "/v1/credit_notes",
 	},
 	MovesMoney: true,
-	// Stripe fills a line's decimal amount in from `unit_amount` (suite: "setup note").
-	ServerDefaulted: []string{"lines.unit_amount_decimal"},
+	// Stripe fills a line's decimal amount in from `unit_amount`, and `effective_at` with the
+	// note's creation time when the request sets none (suite: "setup note").
+	ServerDefaulted: []string{"effective_at", "lines.unit_amount_decimal"},
 	Delete:          engine.Refuse,
 	RefuseReason:    "Stripe cannot delete a credit note; set `status` to `void` to void one.",
 	Transitions: []engine.Transition{

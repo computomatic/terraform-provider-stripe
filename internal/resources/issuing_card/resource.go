@@ -20,8 +20,10 @@ import (
 // Issuing cardholders start `under_review`"). The cardholder, currency, type and financial
 // account are create-only (`parameter_unknown` on update). There is no DELETE route, so destroy
 // deactivates the card, which is reversible, and refuses a canceled one. Stripe returns the full `number` and `cvc` only when asked with `expand[]`
-// on a single card (suite: "retrieve with number expanded"); the engine asks on every request
-// that returns the card, so state holds what Stripe last returned, and both are sensitive.
+// on a single card's retrieve (suite: "retrieve with number expanded"), and refuses the expand
+// on a create or an update (suite: "number and cvc expand only on retrieve"), so the engine
+// asks on every retrieve and retrieves the card after each create and update. State holds what
+// Stripe last returned, and both are sensitive.
 var Declaration = engine.Declaration{
 	TypeName: "stripe_issuing_card",
 	IDPrefix: "ic_",
@@ -44,8 +46,8 @@ var Declaration = engine.Declaration{
 		Value:  wire.String("canceled"),
 		Reason: "Stripe cannot deactivate a canceled card, because canceling one is final.",
 	},
-	Expand:    []string{"number", "cvc"},
-	Sensitive: []string{"number", "cvc"},
+	ExpandOnRetrieve: []string{"number", "cvc"},
+	Sensitive:        []string{"number", "cvc"},
 }
 
 // NewResource returns the resource constructor the provider registers.

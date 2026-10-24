@@ -8,8 +8,10 @@ import (
 	"strings"
 
 	"github.com/hashicorp/terraform-plugin-framework/attr"
+	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
+	"github.com/hashicorp/terraform-plugin-framework/tfsdk"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 
@@ -140,6 +142,7 @@ var currencyCode = regexp.MustCompile(`^[a-z]{3}$`)
 func (r *Resource) ValidateConfig(ctx context.Context, req resource.ValidateConfigRequest, resp *resource.ValidateConfigResponse) {
 	r.validateExactlyOneOf(ctx, req, resp)
 	r.validateTransitions(ctx, req, resp)
+	r.m.validateLowerCase(ctx, req.Config, &resp.Diagnostics)
 	name := r.m.currencyOptionsAttr()
 	if name == "" {
 		return
@@ -225,5 +228,22 @@ func (r *Resource) validateTransitions(ctx context.Context, req resource.Validat
 		}
 		resp.Diagnostics.AddAttributeError(path.Root(n.AttrName()), "Unsupported value",
 			fmt.Sprintf("`%s` can be set to %s; got %q.", n.AttrName(), "`"+strings.Join(values, "` or `")+"`", got))
+	}
+}
+
+// validateLowerCase refuses a configured value of a LowerCase field that has an upper-case
+// letter, which Stripe would store lower-cased.
+func (m *model) validateLowerCase(ctx context.Context, config tfsdk.Config, diags *diag.Diagnostics) {
+	for _, field := range m.decl.LowerCase {
+		n, _ := m.top(field)
+		var v types.String
+		diags.Append(config.GetAttribute(ctx, path.Root(n.AttrName()), &v)...)
+		if diags.HasError() || v.IsNull() || v.IsUnknown() {
+			continue
+		}
+		if lower := strings.ToLower(v.ValueString()); lower != v.ValueString() {
+			diags.AddAttributeError(path.Root(n.AttrName()), "Upper-case letters in `"+n.AttrName()+"`",
+				fmt.Sprintf("Stripe stores `%s` in lower case and finds it only that way, so %q would read back as %q. Write it as %q.", n.AttrName(), v.ValueString(), lower, lower))
+		}
 	}
 }

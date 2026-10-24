@@ -40,9 +40,12 @@ var Declaration = engine.Declaration{
 	},
 	// Stripe returns the price's own currency among the options and refuses it as one.
 	CurrencyOptions: "currency_options",
-	Delete:          engine.Archive,
-	Archive:         &engine.ArchiveAction{Field: "active", Value: wire.Bool(false)},
-	Lookups:         []engine.Lookup{{Field: "lookup_key", Param: "lookup_keys", Array: true}},
+	// Stripe refuses to change a `tax_behavior` once it is set (suite: "update tax behavior").
+	// A price is archived on destroy, so a change replaces it, as a change to its amount does.
+	FixedOnceSet: map[string]string{"tax_behavior": "unspecified"},
+	Delete:       engine.Archive,
+	Archive:      &engine.ArchiveAction{Field: "active", Value: wire.Bool(false)},
+	Lookups:      []engine.Lookup{{Field: "lookup_key", Param: "lookup_keys", Array: true}},
 }
 
 // NewResource returns the resource constructor the provider registers.

@@ -40,6 +40,11 @@ type node struct {
 	NullAs string
 	// Preserve keeps the configured value when the response redacts or reformats it.
 	Preserve bool
+	// KeepOmitted keeps the prior value when the response leaves the field out or null.
+	KeepOmitted bool
+	// FixedOnceSet is the one value Stripe lets the field change from. A configured change
+	// from any other value replaces the resource. Empty means none.
+	FixedOnceSet string
 	// ReplaceIfSet replaces the resource when the configuration sets a value that differs
 	// from the state's, and never for an unknown one: a create-only value Stripe fills in for
 	// a list element.
@@ -142,6 +147,7 @@ func compile(decl Declaration, table []fields.Field) (*model, error) {
 		unDefaulted:  newPathSet(decl.NotServerDefaulted),
 		sensitive:    newPathSet(decl.Sensitive),
 		preserve:     newPathSet(decl.PreserveConfig),
+		keepOmitted:  newPathSet(decl.KeepOmitted),
 		sets:         newPathSet(decl.Sets),
 		replaceOn:    newPathSet(decl.ReplaceOn),
 		used:         pathSet{},
@@ -198,8 +204,33 @@ func compile(decl Declaration, table []fields.Field) (*model, error) {
 			return nil, fmt.Errorf("%s: expand entry `%s` is not a top-level field the response returns", decl.TypeName, e)
 		}
 	}
-	if v2 && len(decl.Expand) > 0 {
+	for _, e := range decl.ExpandOnRetrieve {
+		if n, ok := m.top(e); !ok || !n.Response || slices.Contains(decl.Expand, e) {
+			return nil, fmt.Errorf("%s: expand-on-retrieve entry `%s` is not a top-level field the response returns, or is also in expand", decl.TypeName, e)
+		}
+	}
+	if len(decl.ExpandOnRetrieve) > 0 && (len(decl.Lookups) > 0 || decl.FindInList || len(decl.FindBy) > 0 || decl.Singleton) {
+		return nil, fmt.Errorf("%s: expand-on-retrieve needs an object read by its ID alone, with no lookups", decl.TypeName)
+	}
+	if v2 && len(decl.Expand)+len(decl.ExpandOnRetrieve) > 0 {
 		return nil, fmt.Errorf("%s: /v2 does not support expand; declare include values instead", decl.TypeName)
+	}
+	for _, name := range decl.LowerCase {
+		if n, ok := m.top(name); !ok || n.Shape != fields.String || !n.Optional && !n.Required {
+			return nil, fmt.Errorf("%s: lower-case entry `%s` is not a configurable top-level string field", decl.TypeName, name)
+		}
+	}
+	for name, from := range decl.FixedOnceSet {
+		n, ok := m.top(name)
+		if !ok || n.Shape != fields.String || !n.Update || n.Replace || from == "" {
+			return nil, fmt.Errorf("%s: fixed-once-set entry `%s` is not a top-level string field Stripe updates, with a value it changes from", decl.TypeName, name)
+		}
+		n.FixedOnceSet = from
+	}
+	if decl.MetadataKeysStay {
+		if n, ok := m.top("metadata"); !ok || n.Shape != fields.StringMap || !n.Update {
+			return nil, fmt.Errorf("%s: metadata-keys-stay needs an updatable top-level `metadata` map", decl.TypeName)
+		}
 	}
 	if !v2 && (len(decl.Include) > 0 || len(decl.ClearsWithNull) > 0) {
 		return nil, fmt.Errorf("%s: include and clears-with-null belong to /v2 declarations", decl.TypeName)
@@ -572,6 +603,7 @@ type compiler struct {
 	unDefaulted  pathSet
 	sensitive    pathSet
 	preserve     pathSet
+	keepOmitted  pathSet
 	sets         pathSet
 	replaceOn    pathSet
 	used         pathSet
@@ -597,6 +629,7 @@ func (c *compiler) unused() error {
 		{"not_server_defaulted", c.unDefaulted},
 		{"sensitive", c.sensitive},
 		{"preserve_config", c.preserve},
+		{"keep_omitted", c.keepOmitted},
 		{"sets", c.sets},
 		{"replace_on", c.replaceOn},
 	} {
@@ -647,6 +680,7 @@ func (c *compiler) build(table []fields.Field, prefix string, top, parentOutput,
 		once := c.mark("once_returned", c.once, path)
 		n.Sensitive = c.mark("sensitive", c.sensitive, path) || once
 		n.Preserve = c.mark("preserve_config", c.preserve, path)
+		n.KeepOmitted = c.mark("keep_omitted", c.keepOmitted, path)
 		notDefaulted := c.mark("not_server_defaulted", c.unDefaulted, path)
 		if c.mark("server_defaulted", c.defaulted, path) {
 			f.ServerDefaulted = true
@@ -656,6 +690,9 @@ func (c *compiler) build(table []fields.Field, prefix string, top, parentOutput,
 		}
 		if n.Preserve && !f.Writable() {
 			return nil, fmt.Errorf("preserve_config entry `%s` is not a writable field", path)
+		}
+		if n.KeepOmitted && (!f.Response || inList) {
+			return nil, fmt.Errorf("keep_omitted entry `%s` is not a field outside a list that the response returns", path)
 		}
 
 		switch {

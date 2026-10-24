@@ -3,6 +3,7 @@ package billing_credit_grant_test
 import (
 	"fmt"
 	"os"
+	"regexp"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
@@ -83,6 +84,8 @@ data "stripe_billing_credit_grant" "by_id" {
 	})
 }
 
+// Stripe keeps a metadata key sent with an empty value (suite: update "metadata empty value
+// with expires_at"), so dropping one fails the plan, and setting it to "" keeps it empty.
 func TestAccBillingCreditGrant_update(t *testing.T) {
 	acct := acctest.NewAccount(t)
 	resource.ParallelTest(t, resource.TestCase{
@@ -90,14 +93,20 @@ func TestAccBillingCreditGrant_update(t *testing.T) {
 		Steps: acctest.Forget(t, []resource.TestStep{
 			{Config: grantConfig(acct, "Welcome", "  metadata = { team = \"a\", tier = \"1\" }\n")},
 			{
-				Config: grantConfig(acct, "Welcome", "  metadata = { team = \"b\" }\n  expires_at = 4102444800\n"),
+				Config:      grantConfig(acct, "Welcome", "  metadata = { team = \"b\" }\n  expires_at = 4102444800\n"),
+				PlanOnly:    true,
+				ExpectError: regexp.MustCompile("Cannot remove a metadata key"),
+			},
+			{
+				Config: grantConfig(acct, "Welcome", "  metadata = { team = \"b\", tier = \"\" }\n  expires_at = 4102444800\n"),
 				ConfigPlanChecks: resource.ConfigPlanChecks{PreApply: []plancheck.PlanCheck{
 					plancheck.ExpectResourceAction(address, plancheck.ResourceActionUpdate),
 				}},
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr(address, "expires_at", "4102444800"),
-					resource.TestCheckResourceAttr(address, "metadata.%", "1"),
+					resource.TestCheckResourceAttr(address, "metadata.%", "2"),
 					resource.TestCheckResourceAttr(address, "metadata.team", "b"),
+					resource.TestCheckResourceAttr(address, "metadata.tier", ""),
 				),
 			},
 		}, nil, "stripe_billing_credit_grant"),

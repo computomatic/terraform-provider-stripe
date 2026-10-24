@@ -273,6 +273,12 @@ type Declaration struct {
 	// `expand[]`, such as a price's `tiers`. The engine asks for them on every request that
 	// returns the object, so they are read back and drift in them is detected.
 	Expand []string
+	// ExpandOnRetrieve lists top-level response fields Stripe expands only on a retrieve and
+	// refuses to expand on any other request, such as an Issuing card's `number` and `cvc`.
+	// Every retrieve asks for them, and a create or update retrieves the object at the end to
+	// read them. A declaration with a list lookup cannot have them, because the list does not
+	// return them.
+	ExpandOnRetrieve []string
 	// Include lists the values of the `include` parameter that `/v2` takes in place of
 	// `expand`, such as `webhook_endpoint.url`, which Stripe redacts unless asked. The engine
 	// sends them on every request that returns the object, so the value is read back and
@@ -302,7 +308,9 @@ type Declaration struct {
 	// according to its value, such as a dispute's `evidence.reason` to the evidence hash of each
 	// reason. When the planned value differs from the state's, each of those fields that the
 	// configuration leaves unset is unknown in the plan instead of kept from the state, because
-	// Stripe answers with the fields of the new value. No path may cross a list.
+	// Stripe answers with the fields of the new value. A computed field the configuration leaves
+	// unset, such as a transition's `status`, is no change while it is unknown in the plan. No
+	// path may cross a list.
 	FilledFrom map[string][]string
 	// NotServerDefaulted prunes fields the generator marked as server-defaulted.
 	NotServerDefaulted []string
@@ -311,10 +319,30 @@ type Declaration struct {
 	// PreserveConfig lists attributes whose response is a redacted or reformatted value.
 	// The configured value stays in state.
 	PreserveConfig []string
+	// KeepOmitted lists fields, by dotted path outside any list, that a response can leave out
+	// or return null although the object still has them, such as the identity of a closed
+	// `/v2` account. A response that omits one or returns it null keeps the prior value when that is fully
+	// known, so a kept object never carries an unknown member into state. A path
+	// below a list is refused, because prior elements pair with the response's by position.
+	KeepOmitted []string
+	// LowerCase lists top-level string fields Stripe stores lower-cased, such as a Radar value
+	// list's `alias`. A configured value with an upper-case letter is refused at validation,
+	// in the resource and in a data source lookup, because Stripe would return another value
+	// and its list filter would not find it.
+	LowerCase []string
 	// ReplaceOn lists updatable fields, by dotted path, that Stripe nevertheless refuses to
 	// change on update, such as a terminal location's `address.country`. A change forces
 	// replacement, as for a create-only field.
 	ReplaceOn []string
+	// FixedOnceSet maps a top-level updatable string field to the one value Stripe lets it
+	// change from, such as a price's `tax_behavior` to `unspecified`. Once the field holds any
+	// other value Stripe refuses to change it, so a configured change from such a value
+	// replaces the object, and a change from the named value is an update.
+	FixedOnceSet map[string]string
+	// MetadataKeysStay says Stripe keeps a `metadata` key sent with an empty value, with the
+	// value "", where most objects remove it, such as a credit grant. A plan that drops a key
+	// the object holds fails and says to set the key to "" instead.
+	MetadataKeysStay bool
 	// MatchBy maps the name of a top-level list of objects to the string field that identifies
 	// its elements, such as `items` to `price` for a subscription. Elements are matched by
 	// that key, never by position: a reorder is not a change, an element whose key is in both

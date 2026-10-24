@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net/url"
+	"slices"
 	"strings"
 	"time"
 
@@ -65,6 +66,16 @@ func (a *api) call(ctx context.Context, method, target string, params wire.Objec
 // values for a `/v2` object. prefix is `data.` for a `/v1` list response; `include` has no
 // prefix. A declaration that expands and includes nothing gets params back.
 func (a *api) expanded(params wire.Object, prefix string) wire.Object {
+	return a.withExpand(params, prefix, a.m.decl.Expand)
+}
+
+// retrieved is expanded for a retrieve, which also asks for the fields Stripe expands only
+// there.
+func (a *api) retrieved(params wire.Object) wire.Object {
+	return a.withExpand(params, "", slices.Concat(a.m.decl.Expand, a.m.decl.ExpandOnRetrieve))
+}
+
+func (a *api) withExpand(params wire.Object, prefix string, expand []string) wire.Object {
 	if len(a.m.decl.Include) > 0 {
 		values := make(wire.Array, len(a.m.decl.Include))
 		for i, v := range a.m.decl.Include {
@@ -72,11 +83,11 @@ func (a *api) expanded(params wire.Object, prefix string) wire.Object {
 		}
 		return append(append(wire.Object(nil), params...), wire.Field{Name: "include", Value: values})
 	}
-	if len(a.m.decl.Expand) == 0 {
+	if len(expand) == 0 {
 		return params
 	}
-	paths := make(wire.Array, len(a.m.decl.Expand))
-	for i, e := range a.m.decl.Expand {
+	paths := make(wire.Array, len(expand))
+	for i, e := range expand {
 		paths[i] = wire.String(prefix + e)
 	}
 	return append(append(wire.Object(nil), params...), wire.Field{Name: "expand", Value: paths})

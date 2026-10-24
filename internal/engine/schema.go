@@ -2,6 +2,7 @@ package engine
 
 import (
 	"context"
+	"fmt"
 	"regexp"
 	"slices"
 	"strings"
@@ -20,6 +21,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/setplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 
 	"github.com/computomatic/terraform-provider-stripe/internal/fields"
 )
@@ -50,11 +52,34 @@ func (m *model) describeResource(n *node) string {
 	if set := m.transitionValues(n); len(set) > 0 {
 		desc, values = specValues.ReplaceAllString(desc, ""), set
 	}
-	d := describeValues(desc, values)
+	d := describeValues(desc, values) + m.lowerCaseNote(n)
 	if n.Replace {
 		d += m.changingIt()
 	}
+	if n.FixedOnceSet != "" {
+		d += m.changingFixed(n)
+	}
 	return strings.TrimSpace(d)
+}
+
+// lowerCaseNote is the sentence that says a LowerCase field must be written in lower case.
+func (m *model) lowerCaseNote(n *node) string {
+	if !m.lowerCase(n) {
+		return ""
+	}
+	return " Stripe stores it in lower case, so it must be written in lower case."
+}
+
+func (m *model) lowerCase(n *node) bool {
+	return n.Path == n.Name && slices.Contains(m.decl.LowerCase, n.Name)
+}
+
+// changingFixed is the sentence that ends the description of a FixedOnceSet field.
+func (m *model) changingFixed(n *node) string {
+	if m.decl.Delete == Refuse {
+		return fmt.Sprintf(" Stripe changes it only from `%s`, so changing it from any other value fails the plan, because this resource cannot be replaced.", n.FixedOnceSet)
+	}
+	return fmt.Sprintf(" Stripe changes it only from `%s`, so changing it from any other value replaces the resource.", n.FixedOnceSet)
 }
 
 // specValues is the sentence in which Stripe's reference lists a field's values, such as a
@@ -243,14 +268,28 @@ func (m *model) resourceAttribute(n *node) rschema.Attribute {
 		return rschema.SetAttribute{ElementType: scalarType(n.Elem), Required: n.Required, Optional: n.Optional, Computed: n.Computed, Sensitive: n.Sensitive, MarkdownDescription: desc,
 			PlanModifiers: planMods(n, m.refuseSet, setplanmodifier.UseStateForUnknown, setplanmodifier.RequiresReplace)}
 	default:
+		mods := planMods(n, m.refuseString, stringplanmodifier.UseStateForUnknown, stringplanmodifier.RequiresReplace, func() planmodifier.String {
+			return stringplanmodifier.RequiresReplaceIf(func(_ context.Context, req planmodifier.StringRequest, resp *stringplanmodifier.RequiresReplaceIfFuncResponse) {
+				resp.RequiresReplace = changedByConfig(req.ConfigValue, req.StateValue)
+			}, replaceIfSetDescription, replaceIfSetDescription)
+		})
+		if from := n.FixedOnceSet; from != "" {
+			mods = append(mods, m.refuseString(stringplanmodifier.RequiresReplaceIf(func(_ context.Context, req planmodifier.StringRequest, resp *stringplanmodifier.RequiresReplaceIfFuncResponse) {
+				resp.RequiresReplace = changedFromFixed(req.ConfigValue, req.StateValue, from)
+			}, replaceFixedDescription, replaceFixedDescription)))
+		}
 		return rschema.StringAttribute{Required: n.Required, Optional: n.Optional, Computed: n.Computed, Sensitive: n.Sensitive, MarkdownDescription: desc,
-			PlanModifiers: planMods(n, m.refuseString, stringplanmodifier.UseStateForUnknown, stringplanmodifier.RequiresReplace, func() planmodifier.String {
-				return stringplanmodifier.RequiresReplaceIf(func(_ context.Context, req planmodifier.StringRequest, resp *stringplanmodifier.RequiresReplaceIfFuncResponse) {
-					resp.RequiresReplace = changedByConfig(req.ConfigValue, req.StateValue)
-				}, replaceIfSetDescription, replaceIfSetDescription)
-			})}
+			PlanModifiers: mods}
 	}
 }
+
+// changedFromFixed reports whether the configuration changes a FixedOnceSet field that holds
+// a value other than from, the one Stripe lets it change from.
+func changedFromFixed(config, state basetypes.StringValue, from string) bool {
+	return changedByConfig(config, state) && state.ValueString() != from
+}
+
+const replaceFixedDescription = "Changing a value Stripe has fixed replaces the resource."
 
 func (m *model) resourceAttributes(kids []*node) map[string]rschema.Attribute {
 	attrs := make(map[string]rschema.Attribute, len(kids))
@@ -282,7 +321,7 @@ func (m *model) dataSourceSchema() dschema.Schema {
 	for _, n := range m.nodes {
 		a := dataSourceAttribute(n)
 		if lookups[n.Name] {
-			desc := describe(n)
+			desc := strings.TrimSpace(describe(n) + m.lowerCaseNote(n))
 			if n.Name == "id" {
 				// The create-time description tells a resource user how to choose an ID.
 				desc = "The ID of the " + noun(m.decl.TypeName) + " to read."

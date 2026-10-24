@@ -13,6 +13,7 @@ import (
 	"github.com/hashicorp/go-version"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/hashicorp/terraform-plugin-testing/plancheck"
+	"github.com/hashicorp/terraform-plugin-testing/terraform"
 	"github.com/hashicorp/terraform-plugin-testing/tfversion"
 
 	"github.com/computomatic/terraform-provider-stripe/internal/acctest"
@@ -110,6 +111,22 @@ func skipUpdate(t *testing.T, conn acctest.Config) {
 	tfacc.SkipUnlessFakeServes(t, conn, "POST", "/v1/treasury/financial_accounts/fa_probe", nil)
 }
 
+// cardIssuingFeature checks that `card_issuing` is active, as the fake makes it at once. In
+// smoke mode Stripe may still be activating it, so a pending one passes too.
+func cardIssuingFeature(acct acctest.Config, addr string) resource.TestCheckFunc {
+	active := resource.TestCheckTypeSetElemAttr(addr, "active_features.*", "card_issuing")
+	if !acct.Smoke {
+		return active
+	}
+	pending := resource.TestCheckTypeSetElemAttr(addr, "pending_features.*", "card_issuing")
+	return func(s *terraform.State) error {
+		if active(s) == nil {
+			return nil
+		}
+		return pending(s)
+	}
+}
+
 func idOf(dst *string) resource.TestCheckFunc {
 	return resource.TestCheckResourceAttrWith(address, "id", func(v string) error {
 		*dst = v
@@ -126,7 +143,8 @@ func pathOf(dst *string) resource.TestCheckFunc {
 }
 
 // A new financial account is open, holds nothing yet and has its `card_issuing` feature active
-// at once (suite: "TestTreasuryFinancialAccount", "Issuing answers from the first card runs").
+// at once in the fake (suite: "TestTreasuryFinancialAccount", "Issuing answers from the first
+// card runs"); Stripe may still be activating it right after the create.
 func TestAccTreasuryFinancialAccount_create(t *testing.T) {
 	acct, conn := treasury(t)
 	resource.ParallelTest(t, resource.TestCase{
@@ -146,13 +164,13 @@ data "stripe_treasury_financial_account" "test" {
 				resource.TestCheckResourceAttr(address, "supported_currencies.#", "1"),
 				resource.TestCheckTypeSetElemAttr(address, "supported_currencies.*", "usd"),
 				resource.TestCheckResourceAttr(address, "features.card_issuing.requested", "true"),
-				resource.TestCheckTypeSetElemAttr(address, "active_features.*", "card_issuing"),
+				cardIssuingFeature(acct, address),
 				resource.TestCheckResourceAttr(address, "balance.cash.usd", "0"),
 				resource.TestCheckResourceAttr(address, "metadata.run", acct.Name("create")),
 				resource.TestCheckResourceAttr(address, "livemode", "false"),
 				resource.TestCheckResourceAttrPair("data.stripe_treasury_financial_account.test", "id", address, "id"),
 				resource.TestCheckResourceAttr("data.stripe_treasury_financial_account.test", "status", "open"),
-				resource.TestCheckTypeSetElemAttr("data.stripe_treasury_financial_account.test", "active_features.*", "card_issuing"),
+				cardIssuingFeature(acct, "data.stripe_treasury_financial_account.test"),
 			),
 		}}, nil, "stripe_treasury_financial_account"),
 	})

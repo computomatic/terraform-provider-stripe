@@ -272,7 +272,8 @@ func TestAccInvoice_drift(t *testing.T) {
 	})
 }
 
-// `open` finalizes the draft, which numbers it (suite: "finalize"); an open invoice still
+// `open` finalizes the draft, which numbers it and resolves its page size of `auto` (suite:
+// "finalize"), with nothing planned after; an open invoice still
 // takes `metadata` (suite: "update an open invoice's metadata"); `void` voids it (suite:
 // "void"), and a void invoice cannot be opened again, which the plan refuses.
 func TestAccInvoice_finalizeAndVoid(t *testing.T) {
@@ -292,6 +293,7 @@ func TestAccInvoice_finalizeAndVoid(t *testing.T) {
 					resource.TestCheckResourceAttrSet(resAddress, "number"),
 					resource.TestCheckResourceAttrSet(resAddress, "due_date"),
 					resource.TestCheckResourceAttr(resAddress, "amount_remaining", "1500"),
+					resource.TestCheckResourceAttr(resAddress, "rendering.pdf.page_size", "letter"),
 					tfacc.Holds(t, acct, &path, "status", wire.String("open")),
 				),
 			},

@@ -25,6 +25,9 @@ var Declaration = engine.Declaration{
 	},
 	Delete:  engine.Delete,
 	Lookups: []engine.Lookup{{Field: "alias"}},
+	// Stripe stores an alias lower-cased, and its alias filter is case sensitive (suite: "alias
+	// with capitals is stored lower-cased").
+	LowerCase: []string{"alias"},
 }
 
 // NewResource returns the resource constructor the provider registers.
