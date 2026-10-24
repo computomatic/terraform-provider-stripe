@@ -12,9 +12,15 @@ The Stripe provider manages the objects in a Stripe account: products, prices, c
 
 ## Authentication
 
-The provider authenticates with a Stripe secret key (`sk_live_...` or `sk_test_...`) or a restricted key (`rk_...`). A test-mode key manages your sandbox, and a live-mode key manages your live account. A restricted key needs the permissions of the resources you manage.
+Use a Stripe restricted API key (`rk_test_...` or `rk_live_...`). A test-mode key manages your sandbox, and a live-mode key manages your live account.
 
-Set the key in the `STRIPE_API_KEY` environment variable. The `api_key` argument also takes it, but a key written in a configuration ends up in version control, so prefer the environment variable and never commit a key.
+- Create one restricted key for each workspace or pipeline, with only the permissions its configuration needs: Write for each resource it manages and Read for each data source it reads. The Using Restricted Keys guide lists the permission of every resource and data source.
+- Attach an access policy to every live-mode key, so that Stripe accepts the key only from your IP addresses, or from your cloud provider's ASN and your countries.
+- Rotate each key on a schedule and when someone who could read it leaves, and expire a key nothing uses any more.
+
+Keep the key in a secrets store and give it to the provider in the `STRIPE_API_KEY` environment variable. The `api_key` argument also takes it, but a key written in a configuration ends up in version control, so prefer the environment variable and never commit a key.
+
+A secret key (`sk_test_...` or `sk_live_...`) also works, but it can do anything in the account, and Stripe advises against secret keys for new uses.
 
 To manage a connected account with the key of its platform, set `stripe_account` to the connected account's ID.
 

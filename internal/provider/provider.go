@@ -177,7 +177,7 @@ func (p *stripeProvider) Schema(_ context.Context, _ provider.SchemaRequest, res
 			"api_key": schema.StringAttribute{
 				Optional:    true,
 				Sensitive:   true,
-				Description: "A Stripe secret or restricted key (`sk_` or `rk_`). Defaults to the `STRIPE_API_KEY` environment variable.",
+				Description: "A Stripe restricted key (`rk_`), or a secret key (`sk_`), which Stripe advises against for new uses. Defaults to the `STRIPE_API_KEY` environment variable.",
 			},
 			"base_url": schema.StringAttribute{
 				Optional:    true,
