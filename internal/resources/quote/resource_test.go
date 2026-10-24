@@ -4,7 +4,9 @@ import (
 	"fmt"
 	"os"
 	"regexp"
+	"strconv"
 	"testing"
+	"time"
 
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/hashicorp/terraform-plugin-testing/plancheck"
@@ -96,6 +98,8 @@ data "stripe_quote" "by_id" {
 
 func TestAccQuote_update(t *testing.T) {
 	acct := acctest.NewAccount(t)
+	// Stripe takes an `expires_at` at most five years ahead.
+	expires := strconv.FormatInt(time.Now().AddDate(1, 0, 0).Unix(), 10)
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: tfacc.ProviderFactories,
 		ErrorCheck:               tfacc.SkipWhenFakeLacks(t, "line_items"),
@@ -103,14 +107,14 @@ func TestAccQuote_update(t *testing.T) {
 			{Config: quoteConfig(acct, oneLine, "  metadata = { team = \"a\", tier = \"1\" }\n")},
 			{
 				// The line items are replaced as a whole (suite: "line items are replaced").
-				Config: quoteConfig(acct, `[{ price = stripe_price.test.id, quantity = 5 }]`, "  description = \"Updated\"\n  footer = \"Thanks\"\n  expires_at = 4102444800\n  metadata = { team = \"b\" }\n"),
+				Config: quoteConfig(acct, `[{ price = stripe_price.test.id, quantity = 5 }]`, "  description = \"Updated\"\n  footer = \"Thanks\"\n  expires_at = "+expires+"\n  metadata = { team = \"b\" }\n"),
 				ConfigPlanChecks: resource.ConfigPlanChecks{PreApply: []plancheck.PlanCheck{
 					plancheck.ExpectResourceAction(address, plancheck.ResourceActionUpdate),
 				}},
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr(address, "description", "Updated"),
 					resource.TestCheckResourceAttr(address, "footer", "Thanks"),
-					resource.TestCheckResourceAttr(address, "expires_at", "4102444800"),
+					resource.TestCheckResourceAttr(address, "expires_at", expires),
 					resource.TestCheckResourceAttr(address, "line_items.0.quantity", "5"),
 					resource.TestCheckResourceAttr(address, "amount_total", "10000"),
 					resource.TestCheckResourceAttr(address, "metadata.%", "1"),

@@ -1,6 +1,7 @@
 package core_event_test
 
 import (
+	"context"
 	"os"
 	"regexp"
 	"testing"
@@ -39,7 +40,8 @@ func pinged(t *testing.T, acct acctest.Config, base string) (destination, event 
 		{Name: "webhook_endpoint", Value: wire.Object{{Name: "url", Value: wire.String("https://example.com/hook")}}},
 	})
 	t.Cleanup(func() {
-		_, _ = tfacc.Client(acct).Do(t.Context(), stripeapi.Request{Method: "DELETE", Path: "/v2/core/event_destinations/" + destination})
+		// The test's context is done by the time cleanups run.
+		_, _ = tfacc.Client(acct).Do(context.Background(), stripeapi.Request{Method: "DELETE", Path: "/v2/core/event_destinations/" + destination})
 	})
 	event = tfacc.Create(t, acct, "/v2/core/event_destinations/"+destination+"/ping", nil)
 	tfacc.AwaitListed(t, acct, "/v2/core/events", wire.Object{{Name: "object_id", Value: wire.String(destination)}}, func(items []wire.Object) bool {

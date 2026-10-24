@@ -1,6 +1,7 @@
 package entitlements_active_entitlement_test
 
 import (
+	"context"
 	"os"
 	"regexp"
 	"testing"
@@ -56,7 +57,8 @@ func entitled(t *testing.T, acct acctest.Config, base string) (feature, lookupKe
 		{Name: "days_until_due", Value: wire.Int(30)},
 	})
 	t.Cleanup(func() {
-		_, _ = tfacc.Client(acct).Do(t.Context(), stripeapi.Request{Method: "DELETE", Path: "/v1/subscriptions/" + subscription})
+		// The test's context is done by the time cleanups run.
+		_, _ = tfacc.Client(acct).Do(context.Background(), stripeapi.Request{Method: "DELETE", Path: "/v1/subscriptions/" + subscription})
 	})
 	items := tfacc.AwaitListed(t, acct, "/v1/entitlements/active_entitlements", wire.Object{{Name: "customer", Value: wire.String(customer)}},
 		func(items []wire.Object) bool { return len(items) > 0 })

@@ -1,11 +1,13 @@
 package treasury_financial_account_test
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"os"
 	"regexp"
 	"strings"
+	"sync"
 	"testing"
 
 	"github.com/hashicorp/go-version"
@@ -24,11 +26,65 @@ func TestMain(m *testing.M) { os.Exit(acctest.Main(m)) }
 const address = "stripe_treasury_financial_account.test"
 
 // treasury returns the test's account and the configuration for its connected account with
-// Treasury active, where financial accounts live.
+// Treasury active, where financial accounts live. Stripe keeps at most three open financial
+// accounts on a connected account, and the provider closes none, so in smoke mode, where every
+// test shares one connected account, the first test closes what earlier runs left open there,
+// and each test closes its own with closeAfter.
 func treasury(t *testing.T) (acct, conn acctest.Config) {
 	t.Helper()
 	acct = acctest.NewAccount(t)
-	return acct, tfacc.IssuingAccount(t, acct)
+	conn = tfacc.IssuingAccount(t, acct)
+	if conn.Smoke {
+		leftovers.Do(func() { closeLeftovers(t, conn) })
+	}
+	return acct, conn
+}
+
+// leftovers closes earlier runs' financial accounts once, before any test of this run makes one.
+var leftovers sync.Once
+
+// closeLeftovers closes every open financial account of the connected account but the one
+// tfacc.IssuingFinancialAccount keeps, tagged `metadata[tfacc_role]=issuing`.
+func closeLeftovers(t *testing.T, conn acctest.Config) {
+	t.Helper()
+	resp, err := tfacc.Client(conn).Do(t.Context(), stripeapi.Request{Method: "GET", Path: "/v1/treasury/financial_accounts", Params: wire.Object{
+		{Name: "status", Value: wire.String("open")},
+		{Name: "limit", Value: wire.Int(100)},
+	}})
+	if err != nil {
+		t.Fatalf("listing open financial accounts: %v", err)
+	}
+	data, _ := resp.Body.(wire.Object).Get("data")
+	items, _ := data.(wire.Array)
+	for _, item := range items {
+		account, _ := item.(wire.Object)
+		metadata, _ := account.GetObject("metadata")
+		role, _ := metadata.GetString("tfacc_role")
+		if role == "issuing" {
+			continue
+		}
+		id, _ := account.GetString("id")
+		closeAccount(t, conn, id)
+	}
+}
+
+// closeAfter is a check that, in smoke mode, closes the test's financial account once the test
+// is over, so that it no longer counts toward Stripe's limit. A first step checks with it.
+func closeAfter(t *testing.T, conn acctest.Config) resource.TestCheckFunc {
+	return resource.TestCheckResourceAttrWith(address, "id", func(id string) error {
+		if conn.Smoke {
+			t.Cleanup(func() { closeAccount(t, conn, id) })
+		}
+		return nil
+	})
+}
+
+func closeAccount(t *testing.T, conn acctest.Config, id string) {
+	t.Helper()
+	// It runs in a cleanup too, after the test's own context is canceled.
+	if _, err := tfacc.Client(conn).Do(context.Background(), stripeapi.Request{Method: "POST", Path: "/v1/treasury/financial_accounts/" + id + "/close"}); err != nil {
+		t.Errorf("closing financial account %s: %v", id, err)
+	}
 }
 
 // accountConfig is a financial account in the given currencies with the `card_issuing` feature
@@ -83,6 +139,7 @@ data "stripe_treasury_financial_account" "test" {
 }
 `,
 			Check: resource.ComposeAggregateTestCheckFunc(
+				closeAfter(t, conn),
 				resource.TestMatchResourceAttr(address, "id", regexp.MustCompile(`^fa_`)),
 				resource.TestCheckResourceAttr(address, "status", "open"),
 				resource.TestCheckResourceAttr(address, "country", "US"),
@@ -109,7 +166,7 @@ func TestAccTreasuryFinancialAccount_refuseFeatures(t *testing.T) {
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: tfacc.ProviderFactories,
 		Steps: acctest.Forget(t, []resource.TestStep{
-			{Config: accountConfig(acct, conn, `"usd"`, "")},
+			{Config: accountConfig(acct, conn, `"usd"`, ""), Check: closeAfter(t, conn)},
 			{
 				Config: acct.ProviderBlock() + conn.ConnectedProviderBlock() + `
 resource "stripe_treasury_financial_account" "test" {
@@ -136,7 +193,7 @@ func TestAccTreasuryFinancialAccount_update(t *testing.T) {
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: tfacc.ProviderFactories,
 		Steps: acctest.Forget(t, []resource.TestStep{
-			{Config: accountConfig(acct, conn, `"usd"`, "  metadata = { a = \"1\" }\n"), Check: idOf(&first)},
+			{Config: accountConfig(acct, conn, `"usd"`, "  metadata = { a = \"1\" }\n"), Check: resource.ComposeTestCheckFunc(idOf(&first), closeAfter(t, conn))},
 			{
 				Config: accountConfig(acct, conn, `"usd"`, "  metadata = { b = \"2\" }\n"),
 				ConfigPlanChecks: resource.ConfigPlanChecks{PreApply: []plancheck.PlanCheck{
@@ -165,7 +222,7 @@ func TestAccTreasuryFinancialAccount_replace(t *testing.T) {
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: tfacc.ProviderFactories,
 		Steps: acctest.Forget(t, []resource.TestStep{
-			{Config: cfg},
+			{Config: cfg, Check: closeAfter(t, conn)},
 			{Config: accountConfig(acct, conn, `"usd", "eur"`, ""), PlanOnly: true, ExpectError: tfacc.RefusedReplace},
 			{Config: cfg, Taint: []string{address}, ExpectError: tfacc.RefusedDestroy},
 		}, nil, "stripe_treasury_financial_account"),
@@ -182,7 +239,7 @@ func TestAccTreasuryFinancialAccount_import(t *testing.T) {
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: tfacc.ProviderFactories,
 		Steps: acctest.Forget(t, []resource.TestStep{
-			{Config: cfg},
+			{Config: cfg, Check: closeAfter(t, conn)},
 			{
 				Config:                  cfg,
 				ResourceName:            address,
@@ -208,7 +265,7 @@ func TestAccTreasuryFinancialAccount_importIdentity(t *testing.T) {
 		ProtoV6ProviderFactories: tfacc.ProviderFactories,
 		TerraformVersionChecks:   []tfversion.TerraformVersionCheck{tfversion.RequireAbove(version.Must(version.NewVersion("1.12.0")))},
 		Steps: acctest.Forget(t, []resource.TestStep{
-			{Config: cfg},
+			{Config: cfg, Check: closeAfter(t, conn)},
 			{
 				ResourceName:    address,
 				ImportState:     true,
@@ -229,7 +286,7 @@ func TestAccTreasuryFinancialAccount_delete(t *testing.T) {
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: tfacc.ProviderFactories,
 		Steps: acctest.Forget(t, []resource.TestStep{
-			{Config: cfg, Check: resource.ComposeTestCheckFunc(pathOf(&path), tfacc.LogMark(t, conn, &mark))},
+			{Config: cfg, Check: resource.ComposeTestCheckFunc(pathOf(&path), tfacc.LogMark(t, conn, &mark), closeAfter(t, conn))},
 			{Config: acctest.Without(t, cfg, "stripe_treasury_financial_account"), PlanOnly: true, ExpectError: tfacc.RefusedDestroy},
 			{Config: cfg, Destroy: true, ExpectError: tfacc.RefusedDestroy},
 		}, tfacc.Untouched(t, conn, &path, &mark, "status", wire.String("open")), "stripe_treasury_financial_account"),
@@ -246,7 +303,7 @@ func TestAccTreasuryFinancialAccount_drift(t *testing.T) {
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: tfacc.ProviderFactories,
 		Steps: acctest.Forget(t, []resource.TestStep{
-			{Config: cfg, Check: idOf(&id)},
+			{Config: cfg, Check: resource.ComposeTestCheckFunc(idOf(&id), closeAfter(t, conn))},
 			{
 				PreConfig: func() {
 					_, err := tfacc.Client(conn).Do(t.Context(), stripeapi.Request{Method: "POST", Path: "/v1/treasury/financial_accounts/" + id, Params: wire.Object{

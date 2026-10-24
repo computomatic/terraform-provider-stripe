@@ -171,7 +171,9 @@ func received(t *testing.T, conn acctest.Config, kind, financialAccount string, 
 		{Name: "amount", Value: wire.Int(amount)},
 		{Name: "currency", Value: wire.String("usd")},
 		{Name: "network", Value: wire.String("ach")},
-		{Name: "description", Value: wire.String(conn.Name("acceptance"))},
+		// Stripe takes at most 10 characters of description on an ACH transfer, too few for
+		// the smoke prefix, and no sweep finds received credits or debits by it.
+		{Name: "description", Value: wire.String("tfacc")},
 	}})
 	if err != nil {
 		t.Fatalf("POST /v1/test_helpers/treasury/%s: %v", kind, err)

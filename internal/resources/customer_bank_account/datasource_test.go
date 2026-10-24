@@ -33,8 +33,8 @@ func customer(t *testing.T, c acctest.Config, base string) string {
 }
 
 // `btok_us_verified` attaches a verified US dollar bank account ending 6789 with routing
-// number 110000000 (suite: "Legacy customer sources"). A holder name set afterwards reads back
-// ("update").
+// number 110000000 (suite: "Legacy customer sources"), which may carry a holder name. A holder
+// name set afterwards reads back ("update").
 func TestAccCustomerBankAccount_read(t *testing.T) {
 	acct := acctest.NewAccount(t)
 	cus := customer(t, acct, "tfacc-bank-read")
@@ -54,16 +54,15 @@ func TestAccCustomerBankAccount_read(t *testing.T) {
 					resource.TestCheckResourceAttr(address, "currency", "usd"),
 					resource.TestCheckResourceAttrSet(address, "bank_name"),
 					resource.TestCheckResourceAttrSet(address, "fingerprint"),
-					resource.TestCheckNoResourceAttr(address, "account_holder_name"),
 					resource.TestCheckResourceAttr(address, "metadata.%", "0"),
 				),
 			},
 			{
 				PreConfig: func() {
-					tfacc.Post(t, acct, "/v1/customers/"+cus+"/sources/"+id, wire.Object{{Name: "account_holder_name", Value: wire.String("Jenny Rosen")}})
+					tfacc.Post(t, acct, "/v1/customers/"+cus+"/sources/"+id, wire.Object{{Name: "account_holder_name", Value: wire.String("Jordan Lee")}})
 				},
 				Config: config(acct, cus, id),
-				Check:  resource.TestCheckResourceAttr(address, "account_holder_name", "Jenny Rosen"),
+				Check:  resource.TestCheckResourceAttr(address, "account_holder_name", "Jordan Lee"),
 			},
 		},
 	})

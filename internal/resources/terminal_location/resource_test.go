@@ -19,19 +19,26 @@ func TestMain(m *testing.M) { os.Exit(acctest.Main(m)) }
 
 const address = "stripe_terminal_location.test"
 
-// locationConfig is a location in the given country with the given street line. extra
-// lands inside the resource block. A location in the US has the suite's city, state and
-// postal code, because Stripe requires its state (suite: "create in the US without address
-// state").
-func locationConfig(c acctest.Config, name, country, line1, extra string) string {
-	place := `    city        = "Springfield"
-    postal_code = "12345"
-`
-	if country == "US" {
-		place = `    city        = "South San Francisco"
+// places are the city, state and postal code of a location in each country the tests use.
+// A location in the US has the suite's, because Stripe requires its state (suite: "create in
+// the US without address state"), and Stripe checks a Canadian postal code's form.
+var places = map[string]string{
+	"US": `    city        = "South San Francisco"
     state       = "CA"
     postal_code = "94080"
-`
+`,
+	"CA": `    city        = "Toronto"
+    state       = "ON"
+    postal_code = "M5V 3L9"
+`,
+}
+
+// locationConfig is a location in the given country, one of places, with the given street
+// line. extra lands inside the resource block.
+func locationConfig(c acctest.Config, name, country, line1, extra string) string {
+	place, ok := places[country]
+	if !ok {
+		panic("no place in " + country)
 	}
 	return c.ProviderBlock() + fmt.Sprintf(`
 resource "stripe_terminal_location" "test" {

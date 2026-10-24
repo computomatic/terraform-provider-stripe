@@ -133,9 +133,9 @@ func TestAccPayout_import(t *testing.T) {
 		ProtoV6ProviderFactories: tfacc.ProviderFactories,
 		Steps: acctest.Forget(t, []resource.TestStep{
 			{Config: cfg},
-			// Stripe settles a payout within seconds, so the imported `status` may be later than
-			// the state's.
-			{ResourceName: resAddress, ImportState: true, ImportStateVerify: true, ImportStateVerifyIgnore: []string{"status"}},
+			// Stripe settles a payout within seconds, so the imported `status` and `trace_id` may
+			// be later than the state's.
+			{ResourceName: resAddress, ImportState: true, ImportStateVerify: true, ImportStateVerifyIgnore: []string{"status", "trace_id"}},
 			{ResourceName: resAddress, ImportState: true, ImportStateKind: resource.ImportBlockWithID, Config: cfg},
 		}, nil, "stripe_payout"),
 	})

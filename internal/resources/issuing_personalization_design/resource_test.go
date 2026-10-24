@@ -200,8 +200,8 @@ resource "stripe_issuing_personalization_design" "rejected" {
   provider        = stripe.connected
   physical_bundle = %q
   card_logo       = %q
-}
-`, s.bundle, s.logo)
+%s}
+`, s.bundle, s.logo, carrierText)
 	unchanged := resource.ConfigPlanChecks{PreApply: []plancheck.PlanCheck{plancheck.ExpectEmptyPlan()}}
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: tfacc.ProviderFactories,

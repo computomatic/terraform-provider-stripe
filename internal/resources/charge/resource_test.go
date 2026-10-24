@@ -118,7 +118,8 @@ func TestAccCharge_import(t *testing.T) {
 		ProtoV6ProviderFactories: tfacc.ProviderFactories,
 		Steps: acctest.Forget(t, []resource.TestStep{
 			{Config: cfg},
-			{ResourceName: resAddress, ImportState: true, ImportStateVerify: true, ImportStateVerifyIgnore: []string{"source"}},
+			// Stripe signs `receipt_url` anew on every read.
+			{ResourceName: resAddress, ImportState: true, ImportStateVerify: true, ImportStateVerifyIgnore: []string{"source", "receipt_url"}},
 			// An imported charge has no `source`, so its configuration leaves it out.
 			{ResourceName: resAddress, ImportState: true, ImportStateKind: resource.ImportBlockWithID, Config: strings.Replace(cfg, "  source   = \"tok_visa\"\n", "", 1)},
 		}, nil, "stripe_charge"),

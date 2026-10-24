@@ -1,6 +1,7 @@
 package apps_secret_test
 
 import (
+	"context"
 	"os"
 	"regexp"
 	"testing"
@@ -42,7 +43,8 @@ func TestAccAppsSecret_read(t *testing.T) {
 		{Name: "scope", Value: accountScope},
 	})
 	t.Cleanup(func() {
-		_, _ = tfacc.Client(acct).Do(t.Context(), stripeapi.Request{Method: "POST", Path: "/v1/apps/secrets/delete", Params: wire.Object{
+		// The test's context is done by the time cleanups run.
+		_, _ = tfacc.Client(acct).Do(context.Background(), stripeapi.Request{Method: "POST", Path: "/v1/apps/secrets/delete", Params: wire.Object{
 			{Name: "name", Value: wire.String(name)},
 			{Name: "scope", Value: accountScope},
 		}})

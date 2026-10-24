@@ -117,7 +117,9 @@ func TestAccRefund_import(t *testing.T) {
 		ProtoV6ProviderFactories: tfacc.ProviderFactories,
 		Steps: acctest.Forget(t, []resource.TestStep{
 			{Config: cfg},
-			{ResourceName: resAddress, ImportState: true, ImportStateVerify: true},
+			// Stripe gives a card refund its network reference within seconds, so the imported
+			// one may be later than the state's.
+			{ResourceName: resAddress, ImportState: true, ImportStateVerify: true, ImportStateVerifyIgnore: []string{"destination_details.card.reference"}},
 			{ResourceName: resAddress, ImportState: true, ImportStateKind: resource.ImportBlockWithID, Config: cfg},
 		}, nil, "stripe_refund"),
 	})
