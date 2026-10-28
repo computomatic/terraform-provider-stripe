@@ -1,9 +1,19 @@
 package core_account_person_test
 
 import (
+	"bytes"
+	"encoding/json"
 	"fmt"
+	"io"
+	"net/http"
+	"net/http/httptest"
+	"net/http/httputil"
+	"net/url"
 	"os"
 	"regexp"
+	"strconv"
+	"strings"
+	"sync/atomic"
 	"testing"
 
 	"github.com/hashicorp/go-version"
@@ -268,6 +278,135 @@ func TestAccCoreAccountPerson_refuseIDNumbers(t *testing.T) {
 				Config:      config(acct, regexp.MustCompile(`"0000"`).ReplaceAllString(representative, `"1111"`)),
 				PlanOnly:    true,
 				ExpectError: regexp.MustCompile(`(?s)Changing .id_numbers. is not supported yet.*taint`),
+			},
+		}, nil, "stripe_core_account"),
+	})
+}
+
+// verifiedNumbers is a proxy in front of the fake that, once verified is set, lists a
+// `us_ssn` before each person's own ID numbers, if any, as Stripe does a few minutes after it
+// verifies a `us_ssn_last_4` (the validation tool's dev sandbox cycle, 2026-10-28). The fake
+// does not serve that, so the test makes the fake's answers say it.
+func verifiedNumbers(t *testing.T, fake string, verified *atomic.Bool) string {
+	t.Helper()
+	target, err := url.Parse(fake)
+	if err != nil {
+		t.Fatal(err)
+	}
+	proxy := httputil.NewSingleHostReverseProxy(target)
+	direct := proxy.Director
+	proxy.Director = func(r *http.Request) {
+		direct(r)
+		r.Header.Del("Accept-Encoding")
+	}
+	proxy.ModifyResponse = func(resp *http.Response) error {
+		if !verified.Load() || resp.Request.Method != "GET" || resp.StatusCode != http.StatusOK || !strings.Contains(resp.Request.URL.Path, "/persons/") {
+			return nil
+		}
+		raw, err := io.ReadAll(resp.Body)
+		if err != nil {
+			return err
+		}
+		var person map[string]json.RawMessage
+		if err := json.Unmarshal(raw, &person); err != nil {
+			return err
+		}
+		var numbers []json.RawMessage
+		if err := json.Unmarshal(person["id_numbers"], &numbers); err != nil {
+			return err
+		}
+		person["id_numbers"], _ = json.Marshal(append([]json.RawMessage{json.RawMessage(`{"type":"us_ssn"}`)}, numbers...))
+		if raw, err = json.Marshal(person); err != nil {
+			return err
+		}
+		resp.Body = io.NopCloser(bytes.NewReader(raw))
+		resp.ContentLength = int64(len(raw))
+		resp.Header.Set("Content-Length", strconv.Itoa(len(raw)))
+		return nil
+	}
+	server := httptest.NewServer(proxy)
+	t.Cleanup(server.Close)
+	return server.URL
+}
+
+// Once Stripe verifies the person it lists a `us_ssn` before the configured `us_ssn_last_4`.
+// State holds the configured number only, matched by type and with its value, so the unchanged
+// configuration plans no change and no refusal; the data source shows both. Before the
+// numbers were matched by type, the refresh gave the `us_ssn` the configured value and the
+// plan was refused.
+func TestAccCoreAccountPerson_stripeAddsANumber(t *testing.T) {
+	acctest.RequireFake(t)
+	acct := acctest.NewAccount(t)
+	var verified atomic.Bool
+	acct.BaseURL = verifiedNumbers(t, acct.BaseURL, &verified)
+	cfg := config(acct, representative) + `
+data "stripe_core_account_person" "test" {
+  account_id = stripe_core_account.test.id
+  id         = stripe_core_account_person.test.id
+}
+`
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: tfacc.ProviderFactories,
+		Steps: acctest.Forget(t, []resource.TestStep{
+			{Config: cfg, Check: func(*terraform.State) error { verified.Store(true); return nil }},
+			{
+				Config: cfg,
+				ConfigPlanChecks: resource.ConfigPlanChecks{PreApply: []plancheck.PlanCheck{
+					plancheck.ExpectEmptyPlan(),
+				}},
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr(address, "id_numbers.#", "1"),
+					resource.TestCheckResourceAttr(address, "id_numbers.0.type", "us_ssn_last_4"),
+					resource.TestCheckResourceAttr(address, "id_numbers.0.value", "0000"),
+					resource.TestCheckResourceAttr("data.stripe_core_account_person.test", "id_numbers.#", "2"),
+					resource.TestCheckResourceAttr("data.stripe_core_account_person.test", "id_numbers.0.type", "us_ssn"),
+				),
+			},
+			{Config: cfg, PlanOnly: true},
+		}, nil, "stripe_core_account"),
+	})
+}
+
+// A person created without ID numbers never takes one Stripe lists later: state keeps
+// `id_numbers` null, so the unchanged configuration plans no change and no refusal. Only an
+// import adopts the numbers Stripe lists.
+func TestAccCoreAccountPerson_stripeAddsANumberToNone(t *testing.T) {
+	acctest.RequireFake(t)
+	acct := acctest.NewAccount(t)
+	var verified atomic.Bool
+	acct.BaseURL = verifiedNumbers(t, acct.BaseURL, &verified)
+	cfg := config(acct, "") + `
+data "stripe_core_account_person" "test" {
+  account_id = stripe_core_account.test.id
+  id         = stripe_core_account_person.test.id
+}
+`
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: tfacc.ProviderFactories,
+		Steps: acctest.Forget(t, []resource.TestStep{
+			{Config: cfg, Check: func(*terraform.State) error { verified.Store(true); return nil }},
+			{
+				Config: cfg,
+				ConfigPlanChecks: resource.ConfigPlanChecks{PreApply: []plancheck.PlanCheck{
+					plancheck.ExpectEmptyPlan(),
+				}},
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckNoResourceAttr(address, "id_numbers.#"),
+					resource.TestCheckResourceAttr("data.stripe_core_account_person.test", "id_numbers.#", "1"),
+					resource.TestCheckResourceAttr("data.stripe_core_account_person.test", "id_numbers.0.type", "us_ssn"),
+				),
+			},
+			{Config: cfg, PlanOnly: true},
+			{
+				ResourceName:      address,
+				ImportState:       true,
+				ImportStateIdFunc: importID,
+				ImportStateCheck: func(states []*terraform.InstanceState) error {
+					if len(states) != 1 || states[0].Attributes["id_numbers.#"] != "1" || states[0].Attributes["id_numbers.0.type"] != "us_ssn" {
+						return fmt.Errorf("an import adopts the number Stripe lists: %v", states)
+					}
+					return nil
+				},
 			},
 		}, nil, "stripe_core_account"),
 	})

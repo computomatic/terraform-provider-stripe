@@ -414,9 +414,10 @@ func TestAccCoreAccount_drift(t *testing.T) {
 
 // Setting `closed` closes the account through its action endpoint, which must name exactly the
 // account's applied configurations (suite: "close", "close without the applied
-// configurations"), so the engine sends the ones the account holds. A closed account keeps
-// them. Its identity no longer returns the country and entity type (suite: "close"), so state
-// keeps them and the next plan replaces nothing.
+// configurations"), so the engine sends the ones the account holds. Stripe answers a closed
+// account's identity, configuration, defaults and requirements as null, and on later reads
+// its dashboard, contact email, display name and metadata too (suite: "close"), which the
+// data source shows; state keeps them all, so the next plans change and replace nothing.
 func TestAccCoreAccount_close(t *testing.T) {
 	acct := acctest.NewAccount(t)
 	var path string
@@ -451,7 +452,32 @@ func TestAccCoreAccount_close(t *testing.T) {
 				),
 			},
 			// The configuration that says closed plans nothing more, after a refresh that
-			// reads the identity without its country and entity type.
+			// reads every field Stripe nulls as null.
+			{Config: merchantConfig(acct, "  closed = true\n"), PlanOnly: true},
+			{
+				Config: merchantConfig(acct, "  closed = true\n") + `
+data "stripe_core_account" "test" {
+  id = stripe_core_account.test.id
+}
+`,
+				ConfigPlanChecks: resource.ConfigPlanChecks{PreApply: []plancheck.PlanCheck{
+					plancheck.ExpectEmptyPlan(),
+				}},
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr(address, "display_name", acct.Name("Acme Supplies")),
+					resource.TestCheckResourceAttr(address, "contact_email", "payments@example.com"),
+					resource.TestCheckResourceAttr(address, "dashboard", "none"),
+					resource.TestCheckResourceAttr(address, "metadata.stage", "created"),
+					resource.TestCheckResourceAttr(address, "defaults.currency", "usd"),
+					resource.TestCheckResourceAttr(address, "configuration.merchant.applied", "true"),
+					resource.TestCheckResourceAttr(address, "identity.country", "us"),
+					resource.TestCheckResourceAttr("data.stripe_core_account.test", "closed", "true"),
+					resource.TestCheckNoResourceAttr("data.stripe_core_account.test", "display_name"),
+					resource.TestCheckNoResourceAttr("data.stripe_core_account.test", "dashboard"),
+					resource.TestCheckNoResourceAttr("data.stripe_core_account.test", "identity.country"),
+					resource.TestCheckNoResourceAttr("data.stripe_core_account.test", "configuration.merchant.applied"),
+				),
+			},
 			{Config: merchantConfig(acct, "  closed = true\n"), PlanOnly: true},
 			{
 				Config:      merchantConfig(acct, "  closed = false\n"),

@@ -34,6 +34,19 @@ func SucceededPaymentIntent(t *testing.T, c acctest.Config, paymentMethod string
 	}, paymentMethod)
 }
 
+// CustomerPaymentIntent is SucceededPaymentIntent for a new customer named base, whose ID it
+// returns too (suite: "customer filled in from the payment intent").
+func CustomerPaymentIntent(t *testing.T, c acctest.Config, base, paymentMethod string) (customer, intent, charge string) {
+	t.Helper()
+	customer = Create(t, c, "/v1/customers", wire.Object{{Name: "name", Value: wire.String(c.Name(base))}})
+	intent, charge = succeededIntent(t, c, wire.Object{
+		{Name: "amount", Value: wire.Int(2000)},
+		{Name: "currency", Value: wire.String("usd")},
+		{Name: "customer", Value: wire.String(customer)},
+	}, paymentMethod)
+	return customer, intent, charge
+}
+
 // succeededIntent creates and confirms a payment intent of params with paymentMethod, and
 // returns the intent's ID and its charge's.
 func succeededIntent(t *testing.T, c acctest.Config, params wire.Object, paymentMethod string) (intent, charge string) {

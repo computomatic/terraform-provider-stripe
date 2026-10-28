@@ -204,6 +204,21 @@ resource "stripe_refund" "rest" {
 	})
 }
 
+// Stripe fills in `customer` from the payment intent's customer when the configuration leaves
+// it unset, and the next plan is empty (suite: "customer filled in from the payment intent").
+func TestAccRefund_customer(t *testing.T) {
+	acct := acctest.NewAccount(t)
+	customer, intent, _ := tfacc.CustomerPaymentIntent(t, acct, "Refund customer", "pm_card_visa")
+	cfg := refundConfig(acct, intent, "  amount = 500\n  reason = \"requested_by_customer\"\n")
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: tfacc.ProviderFactories,
+		Steps: acctest.Forget(t, []resource.TestStep{
+			{Config: cfg, Check: resource.TestCheckResourceAttr(resAddress, "customer", customer)},
+			{Config: cfg, PlanOnly: true},
+		}, nil, "stripe_refund"),
+	})
+}
+
 // A direct charge has no payment intent, and a refund of it has none either.
 func TestAccRefund_directCharge(t *testing.T) {
 	acct := acctest.NewAccount(t)
