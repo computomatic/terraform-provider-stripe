@@ -330,7 +330,9 @@ type Declaration struct {
 	// identity, configuration and display name, among others, as null. A response with the
 	// field true keeps the prior value of every field it leaves out or returns null, at any
 	// depth, as KeepOmitted does, so a closed object plans no change. A response with the field
-	// false reads as usual, so a null on an open object is still drift.
+	// false reads as usual, so a null on an open object is still drift. Stripe refuses every
+	// write to a closed object, so once the state holds the field true, a plan that changes
+	// anything, a replacement included, fails; a destroy plan keeps its own rules.
 	KeepWhenClosed string
 	// LowerCase lists top-level string fields Stripe stores lower-cased, such as a Radar value
 	// list's `alias`. A configured value with an upper-case letter is refused at validation,
@@ -376,8 +378,8 @@ type Declaration struct {
 	MatchData map[string]string
 	// MatchOnRead maps the name of a top-level list of objects that Stripe adds elements to on
 	// its own to the string field that identifies its elements, such as a v2 person's
-	// `id_numbers` to `type`: Stripe lists a `us_ssn` before the configured `us_ssn_last_4` once
-	// it verifies the person. A response pairs each element with the prior element of the same
+	// `id_numbers` to `type`: one to two minutes after it creates a person with a
+	// `us_ssn_last_4`, Stripe lists a `us_ssn` before it. A response pairs each element with the prior element of the same
 	// key, never by position, so a member Stripe never returns, such as the number's `value`,
 	// stays with its own element. Only the elements whose keys the prior list holds enter the
 	// state: one Stripe adds is neither shown nor a change, and one Stripe drops leaves the

@@ -76,7 +76,8 @@ func numbered(r *Resource, list attr.Value) basetypes.ObjectValue {
 	return r.fill(map[string]attr.Value{"id": sv("num_1"), "name": sv("n"), "numbers": list})
 }
 
-// Stripe lists a `us_ssn` before the configured `us_ssn_last_4` once it verifies a person.
+// One to two minutes after it creates a person with a `us_ssn_last_4`, Stripe lists a `us_ssn`
+// before it.
 // The refresh pairs by type, so the configured number keeps its value, the added one stays out
 // of the state, and the unchanged configuration plans no change and no refusal. The control, a
 // list paired by position, gives the value to the added number and is refused.
