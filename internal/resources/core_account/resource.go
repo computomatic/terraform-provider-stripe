@@ -33,11 +33,16 @@ import (
 // proven by the suite ("close"): it must name exactly the account's applied configurations
 // (`configs_must_match_to_close` otherwise), so the action is sent the account's own
 // `applied_configurations` as it stands. Closing cannot be undone, and nothing proves a write
-// to a closed account.
+// to a closed account. The close answers `identity`, `configuration`, `defaults`,
+// `requirements` and `future_requirements` null, and every read after it `dashboard`,
+// `contact_email`, `display_name` and `metadata` too (suite: "close"), so a closed account
+// keeps the state's value of every field Stripe nulls. What Stripe still returns, such as
+// `closed` and `applied_configurations`, is read as usual, and so is an open account, where a
+// null is drift. The close itself keeps the included fields its response nulls (Transition).
 var Declaration = engine.Declaration{
 	TypeName:              "stripe_core_account",
 	IDPrefix:              "acct_",
-	Description:           "A connected account created through Stripe's `/v2` Accounts API, whose configurations say how the platform uses it: as a customer, a merchant or a recipient. Each configuration requests one capability: `automatic_indirect_tax` for a customer, `card_payments` for a merchant and `stripe_balance.stripe_transfers` for a recipient; state holds every configuration the account has applied, with the status of each capability. Stripe refuses `dashboard` on an account that is only a customer. The account is also a v1 connected account with the same ID, which the `stripe_account` data source reads. Set `closed` to `true` to close the account, which cannot be undone; Stripe no longer returns a closed account's `identity`, so state keeps the values it had. Changing `identity.country` or `identity.entity_type` needs a new account. A plan that changes `configuration`, `dashboard` or `defaults` on an existing account fails, because changing them is not supported yet: revert the configuration, ignore the change, or remove the account from the state and apply again to create a new one. Stripe returns `identity.country` in upper case, so state keeps the country as you configured it. Stripe has no proven way to clear `display_name` or `contact_email`, so an apply that removes one from the configuration fails; removing the registered name leaves it on the account.",
+	Description:           "A connected account created through Stripe's `/v2` Accounts API, whose configurations say how the platform uses it: as a customer, a merchant or a recipient. Each configuration requests one capability: `automatic_indirect_tax` for a customer, `card_payments` for a merchant and `stripe_balance.stripe_transfers` for a recipient; state holds every configuration the account has applied, with the status of each capability. Stripe refuses `dashboard` on an account that is only a customer. The account is also a v1 connected account with the same ID, which the `stripe_account` data source reads. Set `closed` to `true` to close the account, which cannot be undone; Stripe returns most fields of a closed account as null, so state keeps the values they had before the close. Changing `identity.country` or `identity.entity_type` needs a new account. A plan that changes `configuration`, `dashboard` or `defaults` on an existing account fails, because changing them is not supported yet: revert the configuration, ignore the change, or remove the account from the state and apply again to create a new one. Stripe returns `identity.country` in upper case, so state keeps the country as you configured it. Stripe has no proven way to clear `display_name` or `contact_email`, so an apply that removes one from the configuration fails; removing the registered name leaves it on the account.",
 	DataSourceDescription: "A connected account created through Stripe's `/v2` Accounts API, whose configurations say how the platform uses it: as a customer, a merchant or a recipient.",
 	ImportNote:            "Stripe does not return the capabilities a configuration requested, so an imported account has no `requested` flags in `configuration`, and its `identity.country` is in upper case. Add `lifecycle { ignore_changes = [configuration] }` to a configuration that sets it, because a plan that changes `configuration` fails, and add `identity.country` to the list if the configuration writes the country in lower case, because a plan that changes it fails too.",
 	ImportNoteLevel:       engine.NoteWarning,
@@ -56,9 +61,7 @@ var Declaration = engine.Declaration{
 	},
 	RefuseChange:   []string{"configuration", "dashboard", "defaults"},
 	PreserveConfig: []string{"identity.country"},
-	// A closed account's identity has no country or entity type (suite: "close"); the sandbox
-	// sweep showed the whole identity null, which the suite's check cannot tell apart.
-	KeepOmitted: []string{"identity", "identity.country", "identity.entity_type"},
+	KeepWhenClosed: "closed",
 	ServerDefaulted: []string{
 		"defaults", "defaults.currency",
 		"identity", "identity.business_details", "identity.business_details.registered_name",

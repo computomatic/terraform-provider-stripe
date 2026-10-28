@@ -199,6 +199,11 @@ func compile(decl Declaration, table []fields.Field) (*model, error) {
 			return nil, fmt.Errorf("%s: refuse-when field `%s` is not a top-level bool or string field the response returns, with a value of its type", decl.TypeName, w.Field)
 		}
 	}
+	if f := decl.KeepWhenClosed; f != "" {
+		if n, ok := m.top(f); !ok || !n.Response || n.Shape != fields.Bool {
+			return nil, fmt.Errorf("%s: keep-when-closed field `%s` is not a top-level bool field the response returns", decl.TypeName, f)
+		}
+	}
 	for _, e := range decl.Expand {
 		if n, ok := m.top(e); !ok || !n.Response {
 			return nil, fmt.Errorf("%s: expand entry `%s` is not a top-level field the response returns", decl.TypeName, e)
@@ -419,8 +424,8 @@ func (m *model) openTransitions() error {
 	return nil
 }
 
-// checkListEntries rejects a MatchBy, Carry, SendWithUpdate or SendWithUpdateOn entry that
-// names no field of the kind it needs.
+// checkListEntries rejects a MatchBy, MatchOnRead, Carry, SendWithUpdate or SendWithUpdateOn
+// entry that names no field of the kind it needs.
 func kidNamed(n *node, name string) *node {
 	for _, k := range n.Kids {
 		if k.Name == name {
@@ -456,6 +461,18 @@ func (m *model) checkListEntries() error {
 		}
 		if id := kid(n, "id"); id == nil || id.Shape != fields.String || !id.Update {
 			return fmt.Errorf("match_by entry `%s` needs an updatable string `id` field in its elements", name)
+		}
+	}
+	for name, key := range m.decl.MatchOnRead {
+		n, ok := m.top(name)
+		if !ok || n.Shape != fields.ObjectList {
+			return fmt.Errorf("match_on_read entry `%s` is not a top-level list of objects", name)
+		}
+		if _, keyed := m.decl.MatchBy[name]; keyed {
+			return fmt.Errorf("match_on_read entry `%s` is a match_by list too", name)
+		}
+		if k := kid(n, key); k == nil || k.Shape != fields.String || !k.Response {
+			return fmt.Errorf("match_on_read entry `%s` names `%s`, which is not a string field Stripe returns in its elements", name, key)
 		}
 	}
 	for _, name := range m.decl.FixedKeys {

@@ -3,12 +3,12 @@
 page_title: "stripe_refund Resource - Stripe"
 subcategory: ""
 description: |-
-  A refund of a payment intent or a charge. Set one of payment_intent and charge; Stripe fills in the other when the charge belongs to a payment intent. Without amount, it refunds what remains of the payment. Only metadata changes after creation.
+  A refund of a payment intent or a charge. Set one of payment_intent and charge; Stripe fills in the other when the charge belongs to a payment intent, and fills in customer with the payment intent's customer. Without amount, it refunds what remains of the payment. Only metadata changes after creation.
 ---
 
 # Resource: stripe_refund
 
-A refund of a payment intent or a charge. Set one of `payment_intent` and `charge`; Stripe fills in the other when the charge belongs to a payment intent. Without `amount`, it refunds what remains of the payment. Only `metadata` changes after creation.
+A refund of a payment intent or a charge. Set one of `payment_intent` and `charge`; Stripe fills in the other when the charge belongs to a payment intent, and fills in `customer` with the payment intent's customer. Without `amount`, it refunds what remains of the payment. Only `metadata` changes after creation.
 
 ~> A refund can move real money. In a live-mode Stripe account, creating or changing one fails at plan time unless the provider sets `allow_live_money_movement = true`. Reading or importing one never does. The provider asks Stripe for the account's mode. See the Managing Test Data guide.
 

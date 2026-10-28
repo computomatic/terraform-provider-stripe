@@ -615,7 +615,9 @@ func (r *Resource) Create(ctx context.Context, req resource.CreateRequest, resp 
 		return
 	}
 
-	state, diags := r.m.decodeState(body, plan, r.objType, false, nil)
+	// A keyed list's elements may not be known before Stripe answers, as a price from
+	// `price_data`, so only the MatchOnRead lists are held to the plan's keys.
+	state, diags := r.m.decodeState(body, plan, r.objType, false, r.m.heldKeys(plan))
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		r.taintedAfterCreate(&resp.Diagnostics, id)
@@ -690,7 +692,19 @@ func (r *Resource) Read(ctx context.Context, req resource.ReadRequest, resp *res
 		r.api.fail(&resp.Diagnostics, err)
 		return
 	}
-	next, diags := r.m.decodeState(body, state, r.objType, false, r.m.managedKeys(state))
+	keep := r.m.managedKeys(state)
+	if len(r.m.decl.MatchOnRead) > 0 && req.Private != nil && resp.Private != nil {
+		imported, diags := req.Private.GetKey(ctx, importedKey)
+		resp.Diagnostics.Append(diags...)
+		if len(imported) > 0 {
+			// An import adopts every element Stripe lists, once.
+			for list := range r.m.decl.MatchOnRead {
+				delete(keep, list)
+			}
+			resp.Diagnostics.Append(resp.Private.SetKey(ctx, importedKey, nil)...)
+		}
+	}
+	next, diags := r.m.decodeState(body, state, r.objType, false, keep)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -1051,15 +1065,39 @@ func (r *Resource) ImportState(ctx context.Context, req resource.ImportStateRequ
 		resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root(r.m.decl.Attach), id)...)
 	}
 	resp.Diagnostics.Append(r.m.setIdentity(ctx, resp.Identity, id, parent)...)
+	if len(r.m.decl.MatchOnRead) > 0 && resp.Private != nil {
+		resp.Diagnostics.Append(resp.Private.SetKey(ctx, importedKey, []byte("true"))...)
+	}
 }
 
+// importedKey is the private state key ImportState sets for the read that follows, whose
+// MatchOnRead lists adopt every element Stripe lists. Every later read, of a state with or
+// without the list, holds only the elements the state holds. The read clears it.
+const importedKey = "imported"
+
 // refuseDuplicateKeys fails the plan of a keyed list that names one key twice: Stripe does
-// not allow the same price twice on a subscription, and the elements could not be told
-// apart.
+// not allow the same price twice on a subscription, and the elements, of a MatchOnRead list
+// too, could not be told apart.
 func (r *Resource) refuseDuplicateKeys(ctx context.Context, req resource.ModifyPlanRequest, resp *resource.ModifyPlanResponse) {
 	var plan basetypes.ObjectValue
 	if diags := req.Plan.Get(ctx, &plan); diags.HasError() {
 		return
+	}
+	for list, key := range r.m.decl.MatchOnRead {
+		n, ok := r.m.top(list)
+		if !ok {
+			continue
+		}
+		seen := map[string]bool{}
+		for i, e := range listElements(plan.Attributes()[n.AttrName()]) {
+			k, has := attrKey(e, key)
+			if has && seen[k] {
+				resp.Diagnostics.AddAttributeError(path.Root(n.AttrName()).AtListIndex(i),
+					"Duplicate "+key+" in "+n.AttrName(),
+					fmt.Sprintf("`%s` lists %s `%s` more than once. Stripe lists each %s once, so the elements could not be told apart.", n.AttrName(), key, k, key))
+			}
+			seen[k] = seen[k] || has
+		}
 	}
 	for list, key := range r.m.decl.MatchBy {
 		n, ok := r.m.top(list)

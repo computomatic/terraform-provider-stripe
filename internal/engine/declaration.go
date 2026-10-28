@@ -325,6 +325,13 @@ type Declaration struct {
 	// known, so a kept object never carries an unknown member into state. A path
 	// below a list is refused, because prior elements pair with the response's by position.
 	KeepOmitted []string
+	// KeepWhenClosed names a top-level bool field, such as a v2 account's `closed`, whose true
+	// value means Stripe stops returning what the object holds: it answers a closed account's
+	// identity, configuration and display name, among others, as null. A response with the
+	// field true keeps the prior value of every field it leaves out or returns null, at any
+	// depth, as KeepOmitted does, so a closed object plans no change. A response with the field
+	// false reads as usual, so a null on an open object is still drift.
+	KeepWhenClosed string
 	// LowerCase lists top-level string fields Stripe stores lower-cased, such as a Radar value
 	// list's `alias`. A configured value with an upper-case letter is refused at validation,
 	// in the resource and in a data source lookup, because Stripe would return another value
@@ -367,6 +374,18 @@ type Declaration struct {
 	// price) the data describes. Changing the data replaces the element. A plan that carries
 	// the same data twice is refused.
 	MatchData map[string]string
+	// MatchOnRead maps the name of a top-level list of objects that Stripe adds elements to on
+	// its own to the string field that identifies its elements, such as a v2 person's
+	// `id_numbers` to `type`: Stripe lists a `us_ssn` before the configured `us_ssn_last_4` once
+	// it verifies the person. A response pairs each element with the prior element of the same
+	// key, never by position, so a member Stripe never returns, such as the number's `value`,
+	// stays with its own element. Only the elements whose keys the prior list holds enter the
+	// state: one Stripe adds is neither shown nor a change, and one Stripe drops leaves the
+	// state. A null prior list holds none, so a configuration that leaves the list unset never
+	// takes what Stripe adds. The first read after an import, and a prior list with an element
+	// whose key is not known, keep every element. A plan that lists a key twice is refused.
+	// Unlike MatchBy, it changes nothing an update sends.
+	MatchOnRead map[string]string
 	// Carry lists fields of the elements of a top-level list that an update must send back to
 	// name what it keeps. When the plan leaves one unknown, the update sends the state's value
 	// for the matching element: the one with the same key in a MatchBy list, the one at the

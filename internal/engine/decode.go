@@ -3,6 +3,7 @@ package engine
 import (
 	"context"
 	"fmt"
+	"maps"
 	"slices"
 	"strconv"
 
@@ -27,6 +28,9 @@ type decoder struct {
 	// keep maps a keyed list's path to the elements the resource manages. A list with no
 	// entry keeps every element Stripe returns.
 	keep map[string]*managedSet
+	// closed is true when the response says the object is closed (KeepWhenClosed): every
+	// field it leaves out or returns null keeps the prior value.
+	closed bool
 	// fixed lists the keyed lists whose elements must all be matched by key.
 	fixed []string
 	diags diag.Diagnostics
@@ -39,7 +43,10 @@ type decoder struct {
 // keep limits each keyed list to the elements the resource manages (see managedKeys); nil
 // keeps all of them.
 func (m *model) decodeState(body wire.Object, prior basetypes.ObjectValue, objType basetypes.ObjectType, dataSource bool, keep map[string]*managedSet) (basetypes.ObjectValue, diag.Diagnostics) {
-	d := decoder{dataSource: dataSource, matchBy: m.decl.MatchBy, matchData: m.decl.MatchData, keep: keep, fixed: m.decl.FixedKeys}
+	d := decoder{dataSource: dataSource, matchBy: m.keyedLists(), matchData: m.decl.MatchData, keep: keep, fixed: m.decl.FixedKeys}
+	if f := m.decl.KeepWhenClosed; f != "" {
+		d.closed, _ = body.GetBool(f)
+	}
 	priorAttrs := prior.Attributes()
 	byAttr := make(map[string]*node, len(m.nodes))
 	for _, n := range m.nodes {
@@ -81,11 +88,11 @@ func nullOf(t attr.Type) attr.Value {
 func known(v attr.Value) bool { return v != nil && !v.IsNull() && !v.IsUnknown() }
 
 // node decodes one field, applying the carry-forward rules of ADR D2: a field the response
-// never carries, a once-returned field the response omits, a kept field the response omits
-// or returns null and a preserved field all keep the prior value. A data source has no prior value, so a
-// field the response never carries is null; Stripe may still send a key of that name in
-// another shape, such as an account's `capabilities` (statuses in the response, `requested`
-// flags in the request).
+// never carries, a once-returned field the response omits, a kept field, or any field of a
+// closed object, that the response omits or returns null and a preserved field all keep the
+// prior value. A data source has no prior value, so a field the response never carries is
+// null; Stripe may still send a key of that name in another shape, such as an account's
+// `capabilities` (statuses in the response, `requested` flags in the request).
 func (d *decoder) node(n *node, w wire.Value, prior attr.Value) attr.Value {
 	if d.dataSource && !n.Response && !n.Once {
 		return nullOf(attrType(n))
@@ -104,7 +111,7 @@ func (d *decoder) node(n *node, w wire.Value, prior attr.Value) attr.Value {
 				return prior
 			}
 			return nullOf(attrType(n))
-		case n.KeepOmitted && isAbsent(w) && known(prior) && fullyKnown(prior):
+		case (n.KeepOmitted || d.closed) && isAbsent(w) && known(prior) && fullyKnown(prior):
 			return prior
 		}
 	}
@@ -540,13 +547,24 @@ func attrKey(p attr.Value, key string) (string, bool) {
 	return s.ValueString(), true
 }
 
+// keyedLists maps every list whose elements a response pairs by key, MatchBy's and
+// MatchOnRead's, to that key.
+func (m *model) keyedLists() map[string]string {
+	if len(m.decl.MatchOnRead) == 0 {
+		return m.decl.MatchBy
+	}
+	out := maps.Clone(m.decl.MatchOnRead)
+	maps.Copy(out, m.decl.MatchBy)
+	return out
+}
+
 // managedKeys returns, for each keyed list, the keys and item IDs of the elements the objects
 // hold. The resource manages those elements and no others: an element added to the list from
 // outside, such as a subscription item that stripe_subscription_item created, never enters
 // the state and so is never changed or deleted by an update. A list that none of the objects
 // holds has no entry, which keeps every element (an import adopts what Stripe returns).
 func (m *model) managedKeys(objs ...basetypes.ObjectValue) map[string]*managedSet {
-	var out map[string]*managedSet
+	out := m.heldKeys(objs...)
 	for list, key := range m.decl.MatchBy {
 		n, ok := m.top(list)
 		if !ok || slices.Contains(m.decl.FixedKeys, list) {
@@ -571,6 +589,43 @@ func (m *model) managedKeys(objs ...basetypes.ObjectValue) map[string]*managedSe
 					out[list].ids[id] = true
 				}
 			}
+		}
+	}
+	return out
+}
+
+// heldKeys returns, for each MatchOnRead list, the keys of the elements the objects hold,
+// which are the elements the resource manages. A null list holds none, so a resource whose
+// configuration leaves the list unset never takes an element Stripe adds. A list not known
+// yet, or that holds an element whose key is not known, has no entry, which keeps every
+// element. The first read after an import keeps every element too (see Read).
+func (m *model) heldKeys(objs ...basetypes.ObjectValue) map[string]*managedSet {
+	var out map[string]*managedSet
+	for list, key := range m.decl.MatchOnRead {
+		n, ok := m.top(list)
+		if !ok {
+			continue
+		}
+		set := &managedSet{keys: map[string]bool{}, ids: map[string]bool{}}
+		held, keyless := false, false
+		for _, o := range objs {
+			l, isList := o.Attributes()[n.AttrName()].(basetypes.ListValue)
+			if !isList {
+				continue
+			}
+			held = true
+			keyless = keyless || l.IsUnknown()
+			for _, e := range l.Elements() {
+				k, ok := attrKey(e, key)
+				keyless = keyless || !ok
+				set.keys[k] = true
+			}
+		}
+		if held && !keyless {
+			if out == nil {
+				out = map[string]*managedSet{}
+			}
+			out[list] = set
 		}
 	}
 	return out
