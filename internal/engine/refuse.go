@@ -36,6 +36,15 @@ func (m *model) refusal(state tftypes.Value) string {
 	return ""
 }
 
+// closed reports whether the state shows the object closed: its KeepWhenClosed field is true.
+func (m *model) closed(state tftypes.Value) bool {
+	if m.decl.KeepWhenClosed == "" || state.IsNull() {
+		return false
+	}
+	n, _ := m.top(m.decl.KeepWhenClosed)
+	return holdsValue(valueAt(state, tftypes.NewAttributePath().WithAttributeName(n.AttrName())), wire.Bool(true))
+}
+
 // holdsValue reports whether a state value equals a wire.Bool or wire.String.
 func holdsValue(v tftypes.Value, want wire.Value) bool {
 	if !v.IsKnown() || v.IsNull() {
@@ -106,6 +115,14 @@ type refuser struct{ m *model }
 // is a change.
 func (r refuser) refuse(ctx context.Context, state tfsdk.State, p path.Path, plan, config, prior attr.Value, replace *bool, diags *diag.Diagnostics) {
 	if !*replace {
+		return
+	}
+	// A closed object refuses every change, a replacement included. A modifier's error would
+	// make the framework skip ModifyPlan and show the replacement's refusal instead, so the
+	// modifier drops the replacement and adds no error, and ModifyPlan then refuses the change
+	// as one to a closed object (refuseChangingClosed).
+	if r.m.closed(state.Raw) {
+		*replace = false
 		return
 	}
 	reason := r.m.refusal(state.Raw)

@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"regexp"
+	"strings"
 	"testing"
 
 	"github.com/hashicorp/go-version"
@@ -421,6 +422,8 @@ func TestAccCoreAccount_drift(t *testing.T) {
 func TestAccCoreAccount_close(t *testing.T) {
 	acct := acctest.NewAccount(t)
 	var path string
+	renamed := created(acct)
+	renamed.display = fmt.Sprintf("display_name  = %q\n", acct.Name("Renamed Supplies"))
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: tfacc.ProviderFactories,
 		Steps: acctest.Forget(t, []resource.TestStep{
@@ -483,6 +486,42 @@ data "stripe_core_account" "test" {
 				Config:      merchantConfig(acct, "  closed = false\n"),
 				PlanOnly:    true,
 				ExpectError: regexp.MustCompile("`closed` can be set to `true`"),
+			},
+			// Stripe refuses any update of a closed account (suite: "update a closed
+			// account"), so a change fails at plan time, and so does one that would replace it.
+			{Config: accountConfig(acct, renamed, customer+merchant, managed+"  closed = true\n"), PlanOnly: true, ExpectError: closedRefusal},
+			{Config: strings.Replace(merchantConfig(acct, "  closed = true\n"), `"us"`, `"gb"`, 1), PlanOnly: true, ExpectError: closedRefusal},
+		}, nil, "stripe_core_account"),
+	})
+}
+
+// closedRefusal is the plan-time refusal of a change to a closed account.
+var closedRefusal = regexp.MustCompile(`Cannot change a closed stripe_core_account`)
+
+// An import of a closed account has none of what Stripe nulls (suite: "close"), so the
+// configuration that made the account would change it, which fails at plan time like any change
+// to a closed account, instead of planning a replacement for the configured `identity.country`.
+// A configuration that ignores every change imports it (see the import note).
+func TestAccCoreAccount_importClosed(t *testing.T) {
+	acct := acctest.NewAccount(t)
+	cfg := merchantConfig(acct, "  closed = true\n")
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: tfacc.ProviderFactories,
+		Steps: acctest.Forget(t, []resource.TestStep{
+			{Config: merchantConfig(acct, "")},
+			{Config: cfg},
+			{
+				ResourceName:    address,
+				ImportState:     true,
+				ImportStateKind: resource.ImportBlockWithID,
+				Config:          cfg,
+				ExpectError:     closedRefusal,
+			},
+			{
+				ResourceName:    address,
+				ImportState:     true,
+				ImportStateKind: resource.ImportBlockWithID,
+				Config:          merchantConfig(acct, "  closed = true\n  lifecycle {\n    ignore_changes = all\n  }\n"),
 			},
 		}, nil, "stripe_core_account"),
 	})

@@ -119,7 +119,8 @@ func (r *Resource) Configure(ctx context.Context, req resource.ConfigureRequest,
 // declares Reached keeps it first, so the field takes part in that comparison unchanged.
 //
 // A destroy plan of an object whose destroy is refused fails here, so that `terraform destroy`
-// and a resource dropped from the configuration stop at plan time.
+// and a resource dropped from the configuration stop at plan time. So does any other plan
+// that changes an object the state shows closed, by the same comparison.
 //
 // A create, or a plan that still differs from the state, of a resource that moves money is
 // then checked against the account's mode, last, so a plan that changes nothing or that
@@ -165,6 +166,9 @@ func (r *Resource) planChange(ctx context.Context, req resource.ModifyPlanReques
 	if req.State.Raw.IsNull() || req.Plan.Raw.IsNull() {
 		return
 	}
+	if r.refuseChangingClosed(req, resp) {
+		return
+	}
 	if r.keepReached(ctx, req, resp) {
 		return
 	}
@@ -185,19 +189,29 @@ func (r *Resource) planChange(ctx context.Context, req resource.ModifyPlanReques
 	if r.forgetFilled(req, resp) {
 		return
 	}
+	if unchanged(resp.Plan.Raw, req.Config.Raw, req.State.Raw) {
+		resp.Plan.Raw = req.State.Raw
+	}
+}
+
+// unchanged reports whether the plan changes nothing: every value it holds equals the state's,
+// once each unknown value the configuration leaves unset is taken from the state. The framework
+// marks every unset computed value unknown when anything changes, so those are no change. A
+// configured value not known yet is a change.
+func unchanged(plan, config, state tftypes.Value) bool {
 	configured := false
-	filled, err := tftypes.Transform(resp.Plan.Raw, func(p *tftypes.AttributePath, v tftypes.Value) (tftypes.Value, error) {
+	filled, err := tftypes.Transform(plan, func(p *tftypes.AttributePath, v tftypes.Value) (tftypes.Value, error) {
 		if v.IsKnown() {
 			return v, nil
 		}
 		// A walk error means a parent is null in the configuration, so the value is unset.
-		if set, _, err := tftypes.WalkAttributePath(req.Config.Raw, p); err == nil {
+		if set, _, err := tftypes.WalkAttributePath(config, p); err == nil {
 			if cv, ok := set.(tftypes.Value); ok && !cv.IsNull() {
 				configured = true
 				return v, nil
 			}
 		}
-		prior, _, err := tftypes.WalkAttributePath(req.State.Raw, p)
+		prior, _, err := tftypes.WalkAttributePath(state, p)
 		if err != nil {
 			return v, nil
 		}
@@ -206,9 +220,24 @@ func (r *Resource) planChange(ctx context.Context, req resource.ModifyPlanReques
 		}
 		return v, nil
 	})
-	if err == nil && !configured && filled.Equal(req.State.Raw) {
-		resp.Plan.Raw = req.State.Raw
+	return err == nil && !configured && filled.Equal(state)
+}
+
+// refuseChangingClosed fails a plan that changes an object its state shows closed
+// (KeepWhenClosed), and reports whether it did: Stripe refuses every write to a closed `/v2`
+// account with a 403 that names only a permission (suite: "update a closed account"). It runs
+// before every other check, so a change that would replace the object, such as one an import
+// of a closed object plans for each field Stripe nulls, gets this refusal rather than the
+// replacement's (refuser leaves it here).
+func (r *Resource) refuseChangingClosed(req resource.ModifyPlanRequest, resp *resource.ModifyPlanResponse) bool {
+	if !r.m.closed(req.State.Raw) || unchanged(resp.Plan.Raw, req.Config.Raw, req.State.Raw) {
+		return false
 	}
+	thing := noun(r.m.decl.TypeName)
+	resp.Diagnostics.AddError("Cannot change a closed "+r.m.decl.TypeName,
+		fmt.Sprintf("This %[1]s is closed, and Stripe refuses any change to a closed %[1]s; it cannot be reopened either. Revert the configuration to what the state holds, or add `lifecycle { ignore_changes = all }` to leave the %[1]s as it is.\n\n%[2]s",
+			thing, fmt.Sprintf(removeFromState, r.m.decl.TypeName)))
+	return true
 }
 
 // forgetFilled marks unknown in the plan the fields Stripe fills in from a FilledFrom source

@@ -96,6 +96,21 @@ func AwaitListed(t *testing.T, c acctest.Config, path string, params wire.Object
 	return items
 }
 
+// AwaitRetrieved retrieves an object until ready accepts it and returns it, for a change Stripe
+// makes in the background, such as the `us_ssn` it adds to a `/v2` person. It fails the test
+// when the wait runs out.
+func AwaitRetrieved(t *testing.T, c acctest.Config, path string, ready func(wire.Object) bool) wire.Object {
+	t.Helper()
+	var obj wire.Object
+	if !poll(func() bool {
+		obj = get(t, c, path)
+		return ready(obj)
+	}) {
+		t.Fatalf("GET %s: still not ready after %s: %v", path, activationLimit, obj)
+	}
+	return obj
+}
+
 // AlteredID changes one character of a real ID, which is how the suite makes an unknown ID
 // that is still well formed ("alteredID").
 func AlteredID(id string) string {
