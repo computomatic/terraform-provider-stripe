@@ -77,7 +77,7 @@ The provider sends every request with Stripe API version `2026-09-30.endive`, wh
 
 `docs/` has a page for the provider and for every resource and data source, with the arguments, the attributes, an example and how to import.
 
-Working on the provider itself? See [CONTRIBUTING.md](CONTRIBUTING.md).
+Found a bug or need something the provider lacks? Open an [issue](https://github.com/computomatic/terraform-provider-stripe/issues) with steps to reproduce it. See [CONTRIBUTING.md](CONTRIBUTING.md) for what to include and for our pull request policy.
 
 ## Licence
 
