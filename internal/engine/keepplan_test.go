@@ -13,6 +13,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/tfsdk"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
+	"github.com/hashicorp/terraform-plugin-go/tfprotov6"
 	"github.com/hashicorp/terraform-plugin-go/tftypes"
 	"github.com/hashicorp/terraform-plugin-log/tflogtest"
 
@@ -162,5 +163,72 @@ func TestApplyKeepsAFractionalNumberWithoutADifference(t *testing.T) {
 	big2 := tftypes.NewValue(tftypes.Number, new(big.Float).SetInt64(1<<62+1))
 	if sameValue(big1, big2) {
 		t.Error("integers beyond float64's precision compare the same")
+	}
+}
+
+// E4 keeps the planned number itself where Stripe's answer matches it: the state the provider
+// sends back, through msgpack as on the wire, holds Terraform's 512-bit value exactly, for a
+// top-level number and one in a list element.
+func TestApplyKeepsThePlannedNumberExactly(t *testing.T) {
+	table := append(fixtureTable(), fields.Field{Name: "rates", Shape: fields.ObjectList, Create: true, Update: true, Response: true, Fields: []fields.Field{
+		{Name: "share", Shape: fields.Float, Create: true, Update: true, Response: true},
+	}})
+	ratio := tftypes.NewAttributePath().WithAttributeName("ratio")
+	share := tftypes.NewAttributePath().WithAttributeName("rates").WithElementKeyInt(0).WithAttributeName("share")
+	for _, value := range []string{"33.3", "0.1"} {
+		body := wire.Object{{Name: "id", Value: wire.String("wid_1")}, {Name: "name", Value: wire.String("w")}, {Name: "metadata", Value: wire.Object{}},
+			{Name: "ratio", Value: wire.Decimal(value)}, {Name: "rates", Value: wire.Array{wire.Object{{Name: "share", Value: wire.Decimal(value)}}}}}
+		r := configured(t, fixtureDeclaration(), table, answering(&body))
+		r.api.strict = true
+		rateType := r.objType.AttrTypes["rates"].(basetypes.ListType).ElemType.(basetypes.ObjectType)
+		rates := types.ListValueMust(rateType, []attr.Value{types.ObjectValueMust(rateType.AttrTypes, map[string]attr.Value{"share": types.Float64Value(0)})})
+		plan, err := tftypes.Transform(raw(t, r.fill(map[string]attr.Value{"name": types.StringValue("w"), "rates": rates})), func(p *tftypes.AttributePath, v tftypes.Value) (tftypes.Value, error) {
+			if p.Equal(ratio) || p.Equal(share) {
+				return fromTerraform(t, value), nil
+			}
+			return v, nil
+		})
+		if err != nil {
+			t.Fatal(err)
+		}
+		config, err := tftypes.Transform(plan, func(_ *tftypes.AttributePath, v tftypes.Value) (tftypes.Value, error) {
+			if !v.IsKnown() {
+				return tftypes.NewValue(v.Type(), nil), nil
+			}
+			return v, nil
+		})
+		if err != nil {
+			t.Fatal(err)
+		}
+		ctx := context.Background()
+		resp := resource.CreateResponse{State: tfsdk.State{Schema: r.schema, Raw: tftypes.NewValue(r.schema.Type().TerraformType(ctx), nil)}}
+		r.Create(ctx, resource.CreateRequest{Plan: tfsdk.Plan{Schema: r.schema, Raw: plan}, Config: tfsdk.Config{Schema: r.schema, Raw: config}}, &resp)
+		noErrors(t, resp.Diagnostics)
+
+		dv, err := tfprotov6.NewDynamicValue(resp.State.Raw.Type(), resp.State.Raw)
+		if err != nil {
+			t.Fatal(err)
+		}
+		sent, err := dv.Unmarshal(resp.State.Raw.Type())
+		if err != nil {
+			t.Fatal(err)
+		}
+		want := new(big.Float)
+		if err := fromTerraform(t, value).As(&want); err != nil {
+			t.Fatal(err)
+		}
+		for _, p := range []*tftypes.AttributePath{ratio, share} {
+			v, _, err := tftypes.WalkAttributePath(sent, p)
+			if err != nil {
+				t.Fatal(err)
+			}
+			got := new(big.Float)
+			if err := v.(tftypes.Value).As(&got); err != nil {
+				t.Fatal(err)
+			}
+			if got.Cmp(want) != 0 {
+				t.Errorf("%s %s: the state sends %s, not the planned %s", value, p, got.Text('g', 30), want.Text('g', 30))
+			}
+		}
 	}
 }

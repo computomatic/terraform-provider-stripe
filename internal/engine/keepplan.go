@@ -70,7 +70,7 @@ func keepPlanned(planned, given tftypes.Value, at path.Path, tfAt *tftypes.Attri
 	}
 	fully := planned.IsFullyKnown()
 	if fully && sameValue(planned, given) {
-		return given
+		return planned
 	}
 	keep := func() tftypes.Value {
 		*diffs = append(*diffs, planDiff{at: at, tfAt: tfAt, planned: planned, given: given})
@@ -126,6 +126,7 @@ func keepPlanned(planned, given tftypes.Value, at path.Path, tfAt *tftypes.Attri
 // sameValue reports whether two values are equal, comparing a fractional number at the float64
 // precision the decoder reads Stripe's numbers with: Terraform sends `33.3` parsed at 512 bits,
 // which as a big number differs from the float64 nearest to it. An integer is compared exactly.
+// Where they match, keepPlanned keeps the planned value, which is exactly what Terraform planned.
 func sameValue(a, b tftypes.Value) bool {
 	typ := a.Type()
 	if !typ.Equal(b.Type()) || a.IsKnown() != b.IsKnown() || a.IsNull() != b.IsNull() {
