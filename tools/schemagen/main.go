@@ -1,5 +1,6 @@
-// Command schemagen reads the pinned Stripe OpenAPI spec and writes the checked-in field
-// tables under internal/generated, plus the pinned API version constant.
+// Command schemagen reads the pinned Stripe OpenAPI spec and evidence and writes the
+// checked-in field tables under internal/generated, the coverage report beside them
+// (coverage.json and coverage.md), and the pinned API version constant.
 //
 // Run it through `go generate ./internal/generated`.
 package main
@@ -80,18 +81,49 @@ func Generate(root string, resources []Resource) ([]File, error) {
 	if err != nil {
 		return nil, err
 	}
+	ev, err := LoadEvidence(root, pin)
+	if err != nil {
+		return nil, err
+	}
 	files := []File{{Path: "internal/stripeapi/version.go", Content: version}}
+	var covered []*tableCoverage
+	var records []Record
 	for _, res := range resources {
-		table, err := Build(spec, res)
+		tc, err := coverTable(spec, res, ev)
 		if err != nil {
 			return nil, err
 		}
-		src, err := RenderTable(res.Package, table)
+		src, err := RenderTable(res.Package, tc.table)
 		if err != nil {
 			return nil, err
 		}
 		files = append(files, File{Path: filepath.Join("internal", "generated", res.Package, "fields.go"), Content: src})
+		covered = append(covered, tc)
+		records = append(records, tc.records...)
 	}
+	if ev != nil {
+		if err := checkVerifiedKeys(ev, covered); err != nil {
+			return nil, err
+		}
+	}
+	sortRecords(records)
+	if err := checkStates(records); err != nil {
+		return nil, err
+	}
+	h := coverageHeader{APIVersion: pin.APIVersion, SpecTag: pin.Tag}
+	if ev != nil {
+		h.Evidence = &ev.Pin
+	}
+	for _, r := range records {
+		h.Totals.add(r)
+	}
+	report, err := RenderCoverageJSON(h, records)
+	if err != nil {
+		return nil, err
+	}
+	files = append(files,
+		File{Path: filepath.Join("internal", "generated", "coverage.json"), Content: report},
+		File{Path: filepath.Join("internal", "generated", "coverage.md"), Content: RenderCoverageMarkdown(h, records)})
 	return files, nil
 }
 

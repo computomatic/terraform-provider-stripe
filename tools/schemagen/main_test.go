@@ -17,7 +17,7 @@ func TestGeneratedFilesAreCurrent(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(files) != len(Resources)+1 {
+	if len(files) != len(Resources)+3 {
 		t.Fatalf("%d files for %d resources", len(files), len(Resources))
 	}
 	for _, f := range files {

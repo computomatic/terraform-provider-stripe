@@ -1,0 +1,112 @@
+{
+  "openapi": "3.0.0",
+  "info": {"version": "2000-01-01.fixture"},
+  "paths": {
+    "/v1/gadgets": {
+      "post": {
+        "operationId": "PostGadgets",
+        "requestBody": {"content": {"application/x-www-form-urlencoded": {"schema": {
+          "type": "object",
+          "required": ["name"],
+          "properties": {
+            "name": {"type": "string"},
+            "color": {"type": "string"},
+            "confirm": {"type": "boolean"},
+            "expand": {"type": "array", "items": {"type": "string"}},
+            "owner": {"type": "object", "properties": {"email": {"type": "string"}, "phone": {"type": "string"}}},
+            "price": {"type": "string"},
+            "source": {"anyOf": [
+              {"type": "string"},
+              {"type": "object", "required": ["number"], "properties": {"number": {"type": "string"}, "cvc": {"type": "string"}}}
+            ]},
+            "settings": {"type": "object", "required": ["mode"], "properties": {"mode": {"type": "string"}, "limit": {"type": "integer"}}},
+            "tags": {"type": "array", "items": {"type": "string"}},
+            "options": {"type": "object", "additionalProperties": {"type": "object", "properties": {"amount": {"type": "integer"}}}}
+          }
+        }}}},
+        "responses": {"200": {"content": {"application/json": {"schema": {"$ref": "#/components/schemas/gadget"}}}}}
+      }
+    },
+    "/v1/gadgets/{id}": {
+      "post": {
+        "operationId": "PostGadgetsId",
+        "requestBody": {"content": {"application/x-www-form-urlencoded": {"schema": {
+          "type": "object",
+          "properties": {
+            "name": {"type": "string"},
+            "color": {"type": "string"},
+            "settings": {"type": "object", "required": ["mode"], "properties": {"mode": {"type": "string"}, "limit": {"type": "integer"}}},
+            "expand": {"type": "array", "items": {"type": "string"}}
+          }
+        }}}},
+        "responses": {"200": {"content": {"application/json": {"schema": {"$ref": "#/components/schemas/gadget"}}}}}
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "gadget": {
+        "type": "object",
+        "x-resourceId": "gadget",
+        "required": ["id", "object", "name", "parts"],
+        "properties": {
+          "id": {"type": "string"},
+          "object": {"type": "string", "enum": ["gadget"]},
+          "name": {"type": "string"},
+          "color": {"type": "string", "nullable": true},
+          "created": {"type": "integer"},
+          "owner": {"$ref": "#/components/schemas/gadget_owner"},
+          "price": {"$ref": "#/components/schemas/gadget_price"},
+          "customer": {"anyOf": [{"type": "string"}, {"$ref": "#/components/schemas/gadget_customer"}], "x-expansionResources": {"oneOf": [{"$ref": "#/components/schemas/gadget_customer"}]}},
+          "parts": {"type": "object", "properties": {
+            "object": {"type": "string", "enum": ["list"]},
+            "data": {"type": "array", "items": {"$ref": "#/components/schemas/gadget_part"}},
+            "has_more": {"type": "boolean"},
+            "url": {"type": "string"}
+          }},
+          "extras": {"type": "object", "properties": {
+            "object": {"type": "string", "enum": ["list"]},
+            "data": {"type": "array", "items": {"$ref": "#/components/schemas/gadget_part"}},
+            "has_more": {"type": "boolean"},
+            "url": {"type": "string"}
+          }},
+          "marker": {"type": "object", "properties": {}},
+          "parent": {"$ref": "#/components/schemas/gadget"},
+          "payment": {"oneOf": [{"$ref": "#/components/schemas/gadget_card"}, {"$ref": "#/components/schemas/gadget_bank"}]},
+          "settings": {"type": "object", "properties": {"mode": {"type": "string"}, "limit": {"type": "integer"}}},
+          "source": {"type": "string", "nullable": true},
+          "tags": {"type": "array", "items": {"type": "string"}},
+          "options": {"type": "object", "additionalProperties": {"type": "object", "properties": {"amount": {"type": "integer"}}}}
+        }
+      },
+      "gadget_owner": {
+        "type": "object",
+        "x-resourceId": "person",
+        "properties": {"email": {"type": "string"}, "phone": {"type": "string"}, "verified": {"type": "boolean"}}
+      },
+      "gadget_price": {
+        "type": "object",
+        "x-resourceId": "price",
+        "properties": {"id": {"type": "string"}, "unit_amount": {"type": "integer"}}
+      },
+      "gadget_customer": {
+        "type": "object",
+        "x-resourceId": "customer",
+        "properties": {"id": {"type": "string"}}
+      },
+      "gadget_part": {
+        "type": "object",
+        "x-resourceId": "part",
+        "properties": {"id": {"type": "string"}, "label": {"type": "string"}}
+      },
+      "gadget_card": {
+        "type": "object",
+        "properties": {"object": {"type": "string", "enum": ["card"]}, "brand": {"type": "string"}}
+      },
+      "gadget_bank": {
+        "type": "object",
+        "properties": {"object": {"type": "string", "enum": ["bank_account"]}, "bank_name": {"type": "string"}}
+      }
+    }
+  }
+}
