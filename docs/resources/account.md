@@ -1124,4 +1124,4 @@ Using `terraform import`, import an account using its ID. For example:
 % terraform import stripe_account.seller acct_1Nv0FGQ9RKHgCVdK
 ```
 
-~> Stripe does not return which capabilities were requested, and the provider does not read back `individual`, `company` or `external_account`, so an imported account has none of them in state. Add `lifecycle { ignore_changes = [capabilities, individual, company, external_account] }`, listing those the configuration sets, because a plan that changes one of them fails.
+~> Stripe does not return which `capabilities` were requested, and the provider does not read back `individual`, `company` or `external_account`, so an imported account has none of them in state. Add `lifecycle { ignore_changes = [capabilities, individual, company, external_account] }`, listing those the configuration sets, because a plan that changes one of them fails.

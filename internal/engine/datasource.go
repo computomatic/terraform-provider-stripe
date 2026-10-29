@@ -61,7 +61,7 @@ func (d *DataSource) Configure(ctx context.Context, req datasource.ConfigureRequ
 		resp.Diagnostics.AddError("Unexpected provider data", fmt.Sprintf("expected the provider's data, got %T", req.ProviderData))
 		return
 	}
-	d.api = api{m: d.m, client: data.Client, typeAt: func(p path.Path) (attr.Type, bool) {
+	d.api = api{m: d.m, client: data.Client, strict: data.Strict, typeAt: func(p path.Path) (attr.Type, bool) {
 		a, diags := d.schema.AttributeAtPath(ctx, p)
 		if diags.HasError() {
 			return nil, false
@@ -170,7 +170,7 @@ func (d *DataSource) Read(ctx context.Context, req datasource.ReadRequest, resp 
 		return
 	}
 	state, diags := d.m.decodeState(body, config, d.objType, true, nil)
-	resp.Diagnostics.Append(diags...)
+	resp.Diagnostics.Append(d.api.strictly(diags)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}

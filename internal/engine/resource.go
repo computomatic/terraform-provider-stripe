@@ -70,10 +70,9 @@ func (r *Resource) Metadata(_ context.Context, _ resource.MetadataRequest, resp 
 	resp.TypeName = r.m.decl.TypeName
 }
 
-// ImportNote is the declaration's note for the documentation page's Import section.
-func (r *Resource) ImportNote() (string, NoteLevel) {
-	return r.m.decl.ImportNote, r.m.decl.ImportNoteLevel
-}
+// ImportNote is the note for the documentation page's Import section: the declaration's, and
+// the arguments Stripe never returns.
+func (r *Resource) ImportNote() (string, NoteLevel) { return r.m.importNote() }
 
 // DestroyNote is the documentation page's callout for a resource that refuses destroy,
 // without its sigil, or "" for one that never does.
@@ -101,7 +100,7 @@ func (r *Resource) Configure(ctx context.Context, req resource.ConfigureRequest,
 		return
 	}
 	r.live = data.Live
-	r.api = api{m: r.m, client: data.Client, typeAt: func(p path.Path) (attr.Type, bool) {
+	r.api = api{m: r.m, client: data.Client, strict: data.Strict, typeAt: func(p path.Path) (attr.Type, bool) {
 		a, diags := r.schema.AttributeAtPath(ctx, p)
 		if diags.HasError() {
 			return nil, false
@@ -674,7 +673,7 @@ func (r *Resource) Create(ctx context.Context, req resource.CreateRequest, resp 
 	// A keyed list's elements may not be known before Stripe answers, as a price from
 	// `price_data`, so only the MatchOnRead lists are held to the plan's keys.
 	state, diags := r.m.decodeState(body, plan, r.objType, false, r.m.heldKeys(plan))
-	resp.Diagnostics.Append(diags...)
+	resp.Diagnostics.Append(r.api.strictly(diags)...)
 	if resp.Diagnostics.HasError() {
 		r.taintedAfterCreate(&resp.Diagnostics, id)
 		return
@@ -685,7 +684,15 @@ func (r *Resource) Create(ctx context.Context, req resource.CreateRequest, resp 
 	}
 	resp.Diagnostics.Append(r.keepPlannedOverReached(ctx, &resp.State, body, plan)...)
 	resp.Diagnostics.Append(r.m.setIdentity(ctx, resp.Identity, id, parent)...)
+	// A transition Stripe did not reach fails the apply with the state Stripe left; otherwise
+	// the state keeps the plan (E4).
 	if r.unreached(&resp.Diagnostics, body, plan, refusals) {
+		r.taintedAfterCreate(&resp.Diagnostics, id)
+		return
+	}
+	kept := r.keepPlan(ctx, &resp.State, req.Plan.Raw, req.Config.Raw)
+	resp.Diagnostics.Append(kept...)
+	if kept.HasError() {
 		r.taintedAfterCreate(&resp.Diagnostics, id)
 	}
 }
@@ -769,7 +776,7 @@ func (r *Resource) Read(ctx context.Context, req resource.ReadRequest, resp *res
 		}
 	}
 	next, diags := r.m.decodeState(body, state, r.objType, false, keep)
-	resp.Diagnostics.Append(diags...)
+	resp.Diagnostics.Append(r.api.strictly(diags)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -853,7 +860,7 @@ func (r *Resource) Update(ctx context.Context, req resource.UpdateRequest, resp 
 		}
 	}
 	next, diags := r.m.decodeState(body, plan, r.objType, false, keep)
-	resp.Diagnostics.Append(diags...)
+	resp.Diagnostics.Append(r.api.strictly(diags)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -863,7 +870,9 @@ func (r *Resource) Update(ctx context.Context, req resource.UpdateRequest, resp 
 	}
 	resp.Diagnostics.Append(r.keepPlannedOverReached(ctx, &resp.State, body, plan)...)
 	resp.Diagnostics.Append(r.m.setIdentity(ctx, resp.Identity, id, parent)...)
-	r.unreached(&resp.Diagnostics, body, plan, refusals)
+	if !r.unreached(&resp.Diagnostics, body, plan, refusals) {
+		resp.Diagnostics.Append(r.keepPlan(ctx, &resp.State, req.Plan.Raw, req.Config.Raw)...)
+	}
 }
 
 func (r *Resource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
@@ -1253,7 +1262,7 @@ func itemIDs(body wire.Object, lists map[string]string) map[string]map[string]bo
 	out := map[string]map[string]bool{}
 	for list := range lists {
 		w, _ := body.Get(list)
-		arr, problem := listItems(w)
+		arr, problem, _ := listItems(w)
 		if problem != "" {
 			continue
 		}

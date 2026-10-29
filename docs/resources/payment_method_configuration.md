@@ -1198,3 +1198,5 @@ Using `terraform import`, import a payment method configuration using its ID. Fo
 ```console
 % terraform import stripe_payment_method_configuration.checkout pmc_123
 ```
+
+-> Stripe does not return `apple_pay_later` or `fr_meal_voucher_conecs`, so an imported payment method configuration has them null: a configuration that sets one plans an update after the import.

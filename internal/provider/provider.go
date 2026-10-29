@@ -150,8 +150,18 @@ func New(version string) func() provider.Provider {
 	}
 }
 
+// NewStrict returns a factory for the provider in the engine's strict mode, which the
+// acceptance harness uses: an apply that Stripe answers otherwise than planned, or a field
+// Stripe returns in an unexpected shape, fails instead of warning.
+func NewStrict(version string) func() provider.Provider {
+	return func() provider.Provider {
+		return &stripeProvider{version: version, strict: true}
+	}
+}
+
 type stripeProvider struct {
 	version string
+	strict  bool
 }
 
 type stripeProviderModel struct {
@@ -249,6 +259,7 @@ func (p *stripeProvider) Configure(ctx context.Context, req provider.ConfigureRe
 	data := &engine.ProviderData{
 		Client: client,
 		Live:   engine.NewLiveCheck(client, config.AllowLiveMoneyMovement.ValueBool(), cfg.StripeAccount),
+		Strict: p.strict,
 	}
 	resp.DataSourceData = data
 	resp.ResourceData = data

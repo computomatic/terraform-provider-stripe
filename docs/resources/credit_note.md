@@ -342,3 +342,5 @@ Using `terraform import`, import a credit note using its ID. For example:
 ```console
 % terraform import stripe_credit_note.goodwill cn_123
 ```
+
+~> Stripe does not return `credit_amount`, `email_type`, `lines.tax_amounts` or `refund_amount`, so an imported credit note has them null: a configuration that sets one plans a replacement after the import.

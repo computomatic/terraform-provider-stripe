@@ -138,3 +138,5 @@ Using `terraform import`, import a v2 event destination using its ID. For exampl
 ```console
 % terraform import stripe_event_destination_v2.billing ed_123
 ```
+
+~> Stripe does not return `amazon_eventbridge.aws_region`, so an imported v2 event destination has it null: a configuration that sets it plans a replacement after the import.

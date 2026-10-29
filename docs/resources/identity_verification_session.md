@@ -236,4 +236,4 @@ Using `terraform import`, import an identity verification session using its ID. 
 % terraform import stripe_identity_verification_session.kyc vs_123
 ```
 
-~> Stripe does not return `provided_details`, so an imported session has none in state and the next plan replaces it if the configuration sets some.
+~> Stripe does not return `provided_details`, so an imported session has none in state and the next plan replaces it if the configuration sets some. Stripe does not return `return_url`, so an imported identity verification session has it null: a configuration that sets it plans a replacement after the import.

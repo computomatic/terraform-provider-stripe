@@ -226,7 +226,7 @@ func (p *shapeProvider) Metadata(_ context.Context, _ provider.MetadataRequest, 
 func (p *shapeProvider) Schema(context.Context, provider.SchemaRequest, *provider.SchemaResponse) {}
 
 func (p *shapeProvider) Configure(_ context.Context, _ provider.ConfigureRequest, resp *provider.ConfigureResponse) {
-	resp.ResourceData = &engine.ProviderData{Client: p.store}
+	resp.ResourceData = &engine.ProviderData{Client: p.store, Strict: true}
 }
 
 func (p *shapeProvider) Resources(context.Context) []func() resource.Resource {

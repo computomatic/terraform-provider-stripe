@@ -260,10 +260,17 @@ type builder struct {
 	docsFrom map[string]*Schema
 }
 
-// gate is the table paths that the pinned evidence verifies, per side. A create-only hash
-// (Resource.CreateHash) is already spread into the top level of its paths.
+// gate is the table paths that the pinned evidence verifies, per side, and what it shows about
+// them. A create-only hash (Resource.CreateHash) is already spread into the top level of its
+// paths.
 type gate struct {
 	create, update, response []string
+	// clears holds the request fields that Stripe leaves null on a minimal create and that an
+	// update unsets as the engine sends the unset (E2).
+	clears map[string]bool
+	// stable holds the response fields that no update the suite made changed as a side effect,
+	// nor fills from another field (E5).
+	stable map[string]bool
 }
 
 // near reports whether a table path is on, above or below a path of one side of the gate: on
@@ -527,6 +534,15 @@ func (b *builder) object(l level, where string, depth int) ([]fields.Field, erro
 		if cv != nil && !f.Required && rv != nil && !rv.nullable && l.resp != nil && slices.Contains(l.resp.Required, name) {
 			f.ServerDefaulted = true
 		}
+		// A request field the gate exposes that the response returns, in its shape or another,
+		// is Optional and Computed, unless the evidence shows Stripe leaves it null and unsets it
+		// (E2). Today's fields keep today's rule until Step 6 of the ADR changes them.
+		if readOnly && (cv != nil || uv != nil) && (rv != nil || split != nil) && !f.Required && !g.clears[at] {
+			f.ServerDefaulted = true
+		}
+		// Only an optional argument an update takes can be left unset across an update; a
+		// create-only one keeps its value already.
+		f.Stable = uv != nil && rv != nil && !f.Required && g.stable[at]
 		// A value Stripe never returns and reports only through a `<name>_provided` flag is
 		// Sensitive (E3). Today's such arguments are Sensitive by their declarations, so the
 		// table marks only those the gate exposes.

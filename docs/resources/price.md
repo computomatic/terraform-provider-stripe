@@ -198,3 +198,5 @@ Using `terraform import`, import a price using its ID. For example:
 ```console
 % terraform import stripe_price.monthly price_123
 ```
+
+~> Stripe does not return `currency_options.custom_unit_amount.enabled`, `transfer_lookup_key`, `custom_unit_amount.enabled` or `product_data`, so an imported price has them null: a configuration that sets `currency_options.custom_unit_amount.enabled` or `transfer_lookup_key` plans an update after the import, and one that sets `custom_unit_amount.enabled` or `product_data` plans a replacement.

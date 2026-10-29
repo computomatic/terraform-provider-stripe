@@ -880,4 +880,4 @@ Using `terraform import`, import a subscription using its ID. For example:
 % terraform import stripe_subscription.team sub_123
 ```
 
-~> Importing a subscription adopts every item it has, so a configuration that lists fewer items deletes the rest on the next apply.
+~> Importing a subscription adopts every item it has, so a configuration that lists fewer items deletes the rest on the next apply. Stripe does not return `add_invoice_items`, `items.clear_usage`, `items.deleted`, `items.price_data`, `off_session`, `payment_behavior`, `proration_behavior`, `proration_date`, `trial_from_plan`, `backdate_start_date` or `trial_period_days`, so an imported subscription has them null: a configuration that sets `add_invoice_items`, `items.clear_usage`, `items.deleted`, `items.price_data`, `off_session`, `payment_behavior`, `proration_behavior`, `proration_date` or `trial_from_plan` plans an update after the import, and one that sets `backdate_start_date` or `trial_period_days` plans a replacement.

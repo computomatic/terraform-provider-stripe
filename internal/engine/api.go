@@ -39,6 +39,8 @@ type api struct {
 	client Client
 	// typeAt gives the type of the attribute at a path, to attach errors to it.
 	typeAt stripeapi.AttributeType
+	// strict is the provider's strict mode (ProviderData.Strict).
+	strict bool
 }
 
 func (a *api) call(ctx context.Context, method, target string, params wire.Object) (wire.Object, error) {
@@ -62,8 +64,8 @@ func (a *api) call(ctx context.Context, method, target string, params wire.Objec
 	return obj, nil
 }
 
-// expanded returns params with the declaration's `expand[]` entries added, or its `include`
-// values for a `/v2` object. prefix is `data.` for a `/v1` list response; `include` has no
+// expanded returns params with the declaration's `expand[]` entries added, and `discounts`
+// where the resource maps them, or its `include` values for a `/v2` object. prefix is `data.` for a `/v1` list response; `include` has no
 // prefix. A declaration that expands and includes nothing gets params back.
 func (a *api) expanded(params wire.Object, prefix string) wire.Object {
 	return a.withExpand(params, prefix, a.m.decl.Expand)
@@ -76,6 +78,9 @@ func (a *api) retrieved(params wire.Object) wire.Object {
 }
 
 func (a *api) withExpand(params wire.Object, prefix string, expand []string) wire.Object {
+	if a.m.discounts != nil {
+		expand = append(slices.Clone(expand), "discounts")
+	}
 	if len(a.m.decl.Include) > 0 {
 		values := make(wire.Array, len(a.m.decl.Include))
 		for i, v := range a.m.decl.Include {

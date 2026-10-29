@@ -8,8 +8,10 @@ import (
 	"errors"
 	"fmt"
 	"io/fs"
+	"maps"
 	"os"
 	"path/filepath"
+	"reflect"
 	"slices"
 	"strings"
 )
@@ -65,41 +67,154 @@ type AttributeLeaf struct {
 	Class string `json:"class"`
 }
 
-// Evidence is the part of the suite's evidence record, format version 1, that the generator
-// reads (suite ADR 2026-10-29-attribute-coverage, A7). Other members are ignored.
+// Evidence is the suite's evidence record, format version 1 (suite ADR
+// 2026-10-29-attribute-coverage, A7; its JSON Schema is `internal/evidence/schema/v1.json` in
+// the suite). Every member the schema defines is declared, so that a member the generator does
+// not know fails the decode; those it does not read stay raw.
 type Evidence struct {
-	FormatVersion int    `json:"format_version"`
-	SuiteCommit   string `json:"suite_commit"`
-	APIVersion    string `json:"api_version"`
-	SpecSHA256    string `json:"spec_sha256"`
-	StripeRun     struct {
-		ID int64 `json:"id"`
-	} `json:"stripe_run"`
-	Leaves []EvidenceLeaf `json:"leaves"`
-	Rules  []EvidenceRule `json:"rules"`
+	FormatVersion  int             `json:"format_version"`
+	SuiteCommit    string          `json:"suite_commit"`
+	APIVersion     string          `json:"api_version"`
+	SpecSHA256     string          `json:"spec_sha256"`
+	StripeRun      StripeRun       `json:"stripe_run"`
+	Scope          json.RawMessage `json:"scope,omitempty"`
+	Leaves         []EvidenceLeaf  `json:"leaves"`
+	MinimalCreates json.RawMessage `json:"minimal_creates,omitempty"`
+	Rules          []EvidenceRule  `json:"rules"`
+	SideEffects    []SideEffect    `json:"side_effects"`
+	FilledFrom     []FilledFrom    `json:"filled_from"`
+	Families       json.RawMessage `json:"families,omitempty"`
+	EmbeddedCopies json.RawMessage `json:"embedded_copies,omitempty"`
+	PagedLists     json.RawMessage `json:"paged_lists,omitempty"`
+	Discounts      []Discount      `json:"discounts"`
+	Countries      json.RawMessage `json:"countries,omitempty"`
+}
+
+// StripeRun is the suite's run against Stripe that produced the record.
+type StripeRun struct {
+	ID              int64  `json:"id"`
+	Event           string `json:"event,omitempty"`
+	Time            string `json:"time,omitempty"`
+	Sandbox         string `json:"sandbox,omitempty"`
+	PlatformCountry string `json:"platform_country,omitempty"`
+	Passed          bool   `json:"passed,omitempty"`
 }
 
 // EvidenceLeaf is one leaf of the evidence record.
 type EvidenceLeaf struct {
 	Key
 	Status  string           `json:"status"`
-	Targets []string         `json:"targets"`
+	Reason  string           `json:"reason,omitempty"`
+	Targets []string         `json:"targets,omitempty"`
+	On      []string         `json:"on,omitempty"`
 	Tests   []string         `json:"tests"`
-	Default *EvidenceDefault `json:"default"`
+	Default *EvidenceDefault `json:"default,omitempty"`
+	// Unset is, on an update leaf, what an update that unsets the leaf did (P4).
+	Unset      *EvidenceUnset  `json:"unset,omitempty"`
+	Returned   json.RawMessage `json:"returned,omitempty"`
+	EnumValues json.RawMessage `json:"enum_values,omitempty"`
+	WriteOnly  json.RawMessage `json:"write_only,omitempty"`
+	AcceptedIn json.RawMessage `json:"accepted_in,omitempty"`
+	Refusals   json.RawMessage `json:"refusals,omitempty"`
+	Initial    json.RawMessage `json:"initial,omitempty"`
+	Nullable   json.RawMessage `json:"nullable,omitempty"`
+	Failure    json.RawMessage `json:"failure,omitempty"`
 }
 
 // EvidenceDefault is what Stripe set on a minimal create that left the leaf out: a value,
-// null, nothing, or a rule.
+// null, nothing, or a rule; and per variant of the minimal create (D-2), where they differ.
 type EvidenceDefault struct {
-	Kind    string          `json:"kind"`
-	Value   json.RawMessage `json:"value"`
-	RuleRef *int            `json:"rule_ref"`
+	Kind     string           `json:"kind"`
+	Value    json.RawMessage  `json:"value,omitempty"`
+	RuleRef  *int             `json:"rule_ref,omitempty"`
+	Variants []DefaultVariant `json:"variants,omitempty"`
+}
+
+// DefaultVariant is a leaf's default in one variant of the minimal create.
+type DefaultVariant struct {
+	Variant string          `json:"variant"`
+	Default EvidenceDefault `json:"default"`
+}
+
+// none reports a default of null or nothing, in the base create and every variant.
+func (d *EvidenceDefault) none() bool {
+	if d == nil || d.Kind != "null" && d.Kind != "absent" {
+		return false
+	}
+	for _, v := range d.Variants {
+		if !v.Default.none() {
+			return false
+		}
+	}
+	return true
+}
+
+// EvidenceUnset is how an update unset a leaf (`by`) and what Stripe then held (`result`), or
+// the error with which it refused.
+type EvidenceUnset struct {
+	By      string          `json:"by"`
+	Result  string          `json:"result"`
+	Matcher json.RawMessage `json:"matcher,omitempty"`
+	Error   json.RawMessage `json:"error,omitempty"`
 }
 
 // EvidenceRule is a default that depends on the account or another argument.
 type EvidenceRule struct {
-	Rule string `json:"rule"`
+	Object       string          `json:"object"`
+	Operation    string          `json:"operation"`
+	Path         string          `json:"path"`
+	Rule         string          `json:"rule"`
+	Observations json.RawMessage `json:"observations,omitempty"`
+	Tests        []string        `json:"tests"`
 }
+
+// SideEffect is one update of an update probe and the paths it did not name whose literal
+// value changed (P5).
+type SideEffect struct {
+	Object    string        `json:"object"`
+	Operation string        `json:"operation"`
+	Probe     string        `json:"probe"`
+	Changed   []ChangedPath `json:"changed"`
+	Tests     []string      `json:"tests"`
+}
+
+// ChangedPath is one path a side effect changed, with matchers of the values before and after.
+type ChangedPath struct {
+	Path   string          `json:"path"`
+	Before json.RawMessage `json:"before"`
+	After  json.RawMessage `json:"after"`
+}
+
+// FilledFrom is a field Stripe fills from another (P5).
+type FilledFrom struct {
+	Object string   `json:"object"`
+	Path   string   `json:"path"`
+	From   string   `json:"from"`
+	Tests  []string `json:"tests"`
+}
+
+// Discount is what one form of a `discounts` element sent to one operation returned (P11).
+type Discount struct {
+	Object    string   `json:"object"`
+	Operation string   `json:"operation"`
+	Form      string   `json:"form"`
+	Returned  string   `json:"returned"`
+	Expanded  string   `json:"expanded"`
+	Relation  string   `json:"relation"`
+	Tests     []string `json:"tests"`
+}
+
+// The values of the record's closed sets that the generator reads. A value outside them is a
+// format change the generator does not know, and fails the load.
+var (
+	leafStatuses  = []string{"proven", "failed", "not_reached", "unproven", "unreachable", "out_of_scope"}
+	leafTargets   = []string{"fake", "stripe"}
+	leafOn        = []string{"create", "update"}
+	defaultKinds  = []string{"value", "null", "absent", "rule"}
+	unsetBy       = []string{"empty_string", "null", "shorter_array"}
+	unsetResults  = []string{"null", "absent", "as_sent", "unchanged", "value", "refused"}
+	discountForms = []string{"coupon", "discount", "promotion_code"}
+)
 
 // Pinned is the vendored evidence, read and checked against its pin and the spec's.
 type Pinned struct {
@@ -179,18 +294,14 @@ func LoadEvidence(root string, spec Pin) (*Pinned, error) {
 	if err != nil {
 		return nil, err
 	}
-	p.Evidence = new(Evidence)
-	if err := json.Unmarshal(evData, p.Evidence); err != nil {
-		return nil, fmt.Errorf("decode spec/evidence.json: %w", err)
+	if p.Evidence, err = decodeEvidence(evData); err != nil {
+		return nil, fmt.Errorf("spec/evidence.json: %w", err)
 	}
 	e := p.Evidence
 	if err := namesRun("spec/evidence.json", e.SuiteCommit, e.StripeRun.ID); err != nil {
 		return nil, err
 	}
-	switch {
-	case e.FormatVersion != evidenceFormat:
-		return nil, fmt.Errorf("spec/evidence.json has format version %d; the generator reads %d", e.FormatVersion, evidenceFormat)
-	case e.SuiteCommit != a.SuiteRef || e.StripeRun.ID != a.RunID:
+	if e.SuiteCommit != a.SuiteRef || e.StripeRun.ID != a.RunID {
 		return nil, fmt.Errorf("spec/evidence.json is suite run %s/%d, spec/attributes.json names %s/%d", e.SuiteCommit, e.StripeRun.ID, a.SuiteRef, a.RunID)
 	}
 	if err := sameSpec("spec/evidence.json", e.APIVersion, e.SpecSHA256, spec); err != nil {
@@ -198,9 +309,6 @@ func LoadEvidence(root string, spec Pin) (*Pinned, error) {
 	}
 	proven := map[Key]bool{}
 	for _, l := range e.Leaves {
-		if d := l.Default; d != nil && d.Kind == "rule" && (d.RuleRef == nil || *d.RuleRef < 0 || *d.RuleRef >= len(e.Rules)) {
-			return nil, fmt.Errorf("spec/evidence.json: %s has a rule default with no rule", l.Key)
-		}
 		if _, dup := proven[l.Key]; dup {
 			return nil, fmt.Errorf("spec/evidence.json lists %s twice", l.Key)
 		}
@@ -218,6 +326,156 @@ func LoadEvidence(root string, spec Pin) (*Pinned, error) {
 		return nil, fmt.Errorf("spec/attributes.json verifies leaves that spec/evidence.json does not prove: %s", strings.Join(unproven, ", "))
 	}
 	return &p, nil
+}
+
+// decodeEvidence decodes an evidence record, refusing a member the format does not define and a
+// value outside a closed set the generator reads.
+func decodeEvidence(data []byte) (*Evidence, error) {
+	var version struct {
+		FormatVersion int `json:"format_version"`
+	}
+	if err := json.Unmarshal(data, &version); err != nil {
+		return nil, fmt.Errorf("decode: %w", err)
+	}
+	if version.FormatVersion != evidenceFormat {
+		return nil, fmt.Errorf("format version %d; the generator reads %d", version.FormatVersion, evidenceFormat)
+	}
+	e := new(Evidence)
+	d := json.NewDecoder(bytes.NewReader(data))
+	d.DisallowUnknownFields()
+	if err := d.Decode(e); err != nil {
+		if where := unknownMember(data, reflect.TypeFor[Evidence](), ""); where != "" {
+			return nil, fmt.Errorf("decode: %s is a member the format does not define: %w", where, err)
+		}
+		return nil, fmt.Errorf("decode: %w", err)
+	}
+	if err := e.check(); err != nil {
+		return nil, err
+	}
+	return e, nil
+}
+
+// unknownMember returns where in data the first member that t does not declare is, as a path
+// from the record's root such as `leaves[12] (request/PostCoupons/name).unset.since`, naming the
+// leaf an element of a list is, or "" when t declares every member.
+func unknownMember(data json.RawMessage, t reflect.Type, at string) string {
+	for t.Kind() == reflect.Pointer {
+		t = t.Elem()
+	}
+	switch t.Kind() {
+	case reflect.Struct:
+		var members map[string]json.RawMessage
+		if json.Unmarshal(data, &members) != nil {
+			return ""
+		}
+		declared := jsonMembers(t)
+		names := make([]string, 0, len(members))
+		for name := range members {
+			names = append(names, name)
+		}
+		slices.Sort(names)
+		for _, name := range names {
+			inner := name
+			if at != "" {
+				inner = at + "." + name
+			}
+			ft, ok := declared[name]
+			if !ok {
+				return inner
+			}
+			if where := unknownMember(members[name], ft, inner); where != "" {
+				return where
+			}
+		}
+	case reflect.Slice:
+		var elems []json.RawMessage
+		if t.Elem() == reflect.TypeFor[byte]() || json.Unmarshal(data, &elems) != nil {
+			return ""
+		}
+		for i, elem := range elems {
+			inner := fmt.Sprintf("%s[%d]", at, i)
+			var k Key
+			if json.Unmarshal(elem, &k) == nil && k.Side != "" {
+				inner += " (" + k.String() + ")"
+			}
+			if where := unknownMember(elem, t.Elem(), inner); where != "" {
+				return where
+			}
+		}
+	}
+	return ""
+}
+
+// jsonMembers maps the JSON member names a struct declares, those of embedded structs
+// included, to their types.
+func jsonMembers(t reflect.Type) map[string]reflect.Type {
+	out := map[string]reflect.Type{}
+	for f := range t.Fields() {
+		name, _, _ := strings.Cut(f.Tag.Get("json"), ",")
+		switch {
+		case name == "-":
+		case f.Anonymous && name == "":
+			maps.Copy(out, jsonMembers(f.Type))
+		case name == "":
+			out[f.Name] = f.Type
+		default:
+			out[name] = f.Type
+		}
+	}
+	return out
+}
+
+// check refuses a value outside a closed set the generator reads, and a rule default with no
+// rule.
+func (e *Evidence) check() error {
+	unknown := func(what, value string, known []string) error {
+		if slices.Contains(known, value) {
+			return nil
+		}
+		return fmt.Errorf("%s %q is not one the generator knows (%s)", what, value, strings.Join(known, ", "))
+	}
+	var checkDefault func(k Key, d *EvidenceDefault) error
+	checkDefault = func(k Key, d *EvidenceDefault) error {
+		if err := unknown(k.String()+": default kind", d.Kind, defaultKinds); err != nil {
+			return err
+		}
+		if d.Kind == "rule" && (d.RuleRef == nil || *d.RuleRef < 0 || *d.RuleRef >= len(e.Rules)) {
+			return fmt.Errorf("%s has a rule default with no rule", k)
+		}
+		for _, v := range d.Variants {
+			if err := checkDefault(k, &v.Default); err != nil {
+				return err
+			}
+		}
+		return nil
+	}
+	for _, l := range e.Leaves {
+		errs := []error{
+			unknown(l.Key.String()+": side", string(l.Side), []string{string(SideRequest), string(SideResponse)}),
+			unknown(l.Key.String()+": status", l.Status, leafStatuses),
+		}
+		for _, t := range l.Targets {
+			errs = append(errs, unknown(l.Key.String()+": target", t, leafTargets))
+		}
+		for _, o := range l.On {
+			errs = append(errs, unknown(l.Key.String()+": on", o, leafOn))
+		}
+		if l.Default != nil {
+			errs = append(errs, checkDefault(l.Key, l.Default))
+		}
+		if u := l.Unset; u != nil {
+			errs = append(errs, unknown(l.Key.String()+": unset by", u.By, unsetBy), unknown(l.Key.String()+": unset result", u.Result, unsetResults))
+		}
+		if err := errors.Join(errs...); err != nil {
+			return err
+		}
+	}
+	for _, d := range e.Discounts {
+		if err := unknown(d.Object+" "+d.Operation+": discounts form", d.Form, discountForms); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 // namesRun refuses a file that names no suite commit or run.

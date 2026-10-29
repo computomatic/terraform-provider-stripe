@@ -479,3 +479,5 @@ Using `terraform import`, import a subscription schedule using its ID. For examp
 ```console
 % terraform import stripe_subscription_schedule.team sub_sched_123
 ```
+
+~> Stripe does not return `phases.add_invoice_items.price_data`, `phases.duration`, `phases.items.price_data`, `proration_behavior` or `start_date`, so an imported subscription schedule has them null: a configuration that sets `phases.add_invoice_items.price_data`, `phases.duration`, `phases.items.price_data` or `proration_behavior` plans an update after the import, and one that sets `start_date` plans a replacement.

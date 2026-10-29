@@ -1,0 +1,220 @@
+package main
+
+import (
+	"bytes"
+	"encoding/json"
+	"fmt"
+	"os"
+	"path/filepath"
+	"reflect"
+	"slices"
+	"strings"
+	"testing"
+
+	"github.com/computomatic/terraform-provider-stripe/internal/fields"
+)
+
+// suiteFixture reads the suite's fixture evidence record, cut to two objects
+// (testdata/evidence/README.md).
+func suiteFixture(t *testing.T) []byte {
+	t.Helper()
+	data, err := os.ReadFile(filepath.Join("testdata", "evidence", "evidence.json"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	return data
+}
+
+// The reader takes the suite's own fixture record whole, and refuses a member the format does
+// not define, naming where in the record it is, and a value outside a closed set it reads.
+func TestEvidenceReaderTakesTheSuiteFixtureAndRefusesTheUnknown(t *testing.T) {
+	data := suiteFixture(t)
+	e, err := decodeEvidence(data)
+	if err != nil {
+		t.Fatalf("the suite's fixture: %v", err)
+	}
+	var unset *EvidenceUnset
+	for _, l := range e.Leaves {
+		if l.Object == "coupon" && l.Operation == "PostCouponsCoupon" && l.Path == "name" {
+			unset = l.Unset
+		}
+	}
+	if unset == nil || unset.By != "empty_string" || unset.Result != "refused" {
+		t.Errorf("coupon name's unset: %+v", unset)
+	}
+	for _, tc := range []struct {
+		name, old, new, want string
+	}{
+		{"an unknown top-level member", `"format_version": 1,`, `"format_version": 1, "verdicts": [],`, `decode: verdicts is a member the format does not define`},
+		{"an unknown leaf member", `"status": "proven",`, `"status": "proven", "since": "2026-10-01",`, `decode: leaves[0] (request/PostCoupons/amount_off).since is a member the format does not define`},
+		{"an unknown member of a leaf's fact", `"result": "refused"`, `"result": "refused", "retried": true`, `decode: leaves[14] (request/PostCouponsCoupon/name).unset.retried is a member the format does not define`},
+		{"an unknown unset result", `"result": "refused"`, `"result": "cleared"`, `unset result "cleared"`},
+		{"an unknown default kind", `"kind": "null"`, `"kind": "empty"`, `default kind "empty"`},
+		{"an unknown status", `"status": "unreachable"`, `"status": "skipped"`, `status "skipped"`},
+		{"another format", `"format_version": 1`, `"format_version": 2`, "format version 2"},
+	} {
+		changed := bytes.Replace(data, []byte(tc.old), []byte(tc.new), 1)
+		if bytes.Equal(changed, data) {
+			t.Fatalf("%s: the fixture has no %s", tc.name, tc.old)
+		}
+		if _, err := decodeEvidence(changed); err == nil || !strings.Contains(err.Error(), tc.want) {
+			t.Errorf("%s: %v, want %q", tc.name, err, tc.want)
+		}
+	}
+}
+
+// proven adds a proven evidence leaf for the key, with its facts.
+func proven(p *Pinned, key string, l EvidenceLeaf) {
+	side, rest, _ := strings.Cut(key, "/")
+	owner, path, _ := strings.Cut(rest, "/")
+	l.Key = Key{Object: "gadget", Side: Side(side), Path: path}
+	if l.Side == SideRequest {
+		l.Operation = owner
+	}
+	l.Status, l.Targets, l.Tests = "proven", []string{"fake", "stripe"}, []string{"TestGadgetAttributes/leaves/" + key}
+	p.Evidence.Leaves = append(p.Evidence.Leaves, l)
+}
+
+// color is the fixture's trimmed `color` as the gate exposes it with the given evidence facts.
+func color(t *testing.T, create, update EvidenceLeaf, effects ...SideEffect) fields.Field {
+	t.Helper()
+	res := trimmed()
+	p := pinned(t, res, map[string]string{
+		"request/PostGadgets/color":   ClassVerified,
+		"request/PostGadgetsId/color": ClassVerified,
+		"response/gadget/color":       ClassVerified,
+	})
+	proven(p, "request/PostGadgets/color", create)
+	proven(p, "request/PostGadgetsId/color", update)
+	proven(p, "response/gadget/color", EvidenceLeaf{})
+	p.Evidence.SideEffects = effects
+	f, ok := fields.Find(cover(t, res, p).table, "color")
+	if !ok {
+		t.Fatal("the gate did not expose color")
+	}
+	return f
+}
+
+// E2: a request field the gate exposes that the response returns is Optional and Computed
+// unless the evidence shows Stripe leaves it null on a minimal create and an update unsets it
+// with `""` on /v1.
+func TestGateMakesAnExposedArgumentComputedUnlessTheEvidenceShowsItClears(t *testing.T) {
+	none := &EvidenceDefault{Kind: "null"}
+	clears := &EvidenceUnset{By: "empty_string", Result: "null", Matcher: json.RawMessage(`{"kind":"null"}`)}
+	for _, tc := range []struct {
+		name     string
+		create   EvidenceLeaf
+		update   EvidenceLeaf
+		computed bool
+	}{
+		{"null and unset", EvidenceLeaf{Default: none}, EvidenceLeaf{Unset: clears}, false},
+		{"absent and unset to absent", EvidenceLeaf{Default: &EvidenceDefault{Kind: "absent"}}, EvidenceLeaf{Unset: &EvidenceUnset{By: "empty_string", Result: "absent"}}, false},
+		{"a default value", EvidenceLeaf{Default: &EvidenceDefault{Kind: "value", Value: json.RawMessage(`"red"`)}}, EvidenceLeaf{Unset: clears}, true},
+		{"a default value in a variant", EvidenceLeaf{Default: &EvidenceDefault{Kind: "null", Variants: []DefaultVariant{{Variant: "v", Default: EvidenceDefault{Kind: "value", Value: json.RawMessage(`"red"`)}}}}}, EvidenceLeaf{Unset: clears}, true},
+		{"no default recorded", EvidenceLeaf{}, EvidenceLeaf{Unset: clears}, true},
+		{"an unset Stripe refuses", EvidenceLeaf{Default: none}, EvidenceLeaf{Unset: &EvidenceUnset{By: "empty_string", Result: "refused"}}, true},
+		{"an unset Stripe ignores", EvidenceLeaf{Default: none}, EvidenceLeaf{Unset: &EvidenceUnset{By: "empty_string", Result: "unchanged"}}, true},
+		{"an unset by null on /v1", EvidenceLeaf{Default: none}, EvidenceLeaf{Unset: &EvidenceUnset{By: "null", Result: "null"}}, true},
+		{"no unset recorded", EvidenceLeaf{Default: none}, EvidenceLeaf{}, true},
+	} {
+		f := color(t, tc.create, tc.update)
+		if !f.Create || !f.Update || !f.Response {
+			t.Fatalf("%s: color is %+v", tc.name, f)
+		}
+		if f.ServerDefaulted != tc.computed {
+			t.Errorf("%s: ServerDefaulted %v, want %v", tc.name, f.ServerDefaulted, tc.computed)
+		}
+	}
+}
+
+// E5: a field the evidence verifies is stable when the suite proved an update of the object and
+// no update changed it as a side effect.
+func TestGateMarksAFieldStableUnlessAnUpdateChangedIt(t *testing.T) {
+	update := EvidenceLeaf{On: []string{"update"}}
+	if f := color(t, EvidenceLeaf{}, update); !f.Stable {
+		t.Error("no side effect: color is not stable")
+	}
+	effect := func(path string) SideEffect {
+		return SideEffect{Object: "gadget", Operation: "PostGadgetsId", Probe: "update/1",
+			Changed: []ChangedPath{{Path: path, Before: json.RawMessage(`{"kind":"null"}`), After: json.RawMessage(`{"kind":"value","value":"red"}`)}}}
+	}
+	if f := color(t, EvidenceLeaf{}, update, effect("color")); f.Stable {
+		t.Error("an update changed color, which is still stable")
+	}
+	if f := color(t, EvidenceLeaf{}, update, effect("name")); !f.Stable {
+		t.Error("an update changed another field, and color is not stable")
+	}
+
+	// Without a proven update leaf, no update was observed.
+	res := trimmed()
+	p := pinned(t, res, map[string]string{"request/PostGadgets/color": ClassVerified, "response/gadget/color": ClassVerified})
+	proven(p, "request/PostGadgets/color", EvidenceLeaf{})
+	proven(p, "response/gadget/color", EvidenceLeaf{})
+	if f, _ := fields.Find(cover(t, res, p).table, "color"); f.Stable {
+		t.Error("no update observed, and color is stable")
+	}
+}
+
+// The suite's fixture evidence, with every leaf it proves on both targets verified, builds the
+// coupon and v2 event destination tables of the pinned spec. It changes today's fields only by
+// E5, on the optional arguments an update takes, and exposes the one leaf today's table trims.
+func TestSuiteFixtureBuildsTheRealTables(t *testing.T) {
+	data, err := os.ReadFile(filepath.Join("..", "..", "spec", "openapi.json"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	spec, err := ParseSpec(data)
+	if err != nil {
+		t.Fatal(err)
+	}
+	e, err := decodeEvidence(suiteFixture(t))
+	if err != nil {
+		t.Fatal(err)
+	}
+	p := &Pinned{Attributes: &Attributes{}, Evidence: e}
+	for _, l := range e.Leaves {
+		if l.Status == "proven" && slices.Contains(l.Targets, "fake") {
+			p.Attributes.Leaves = append(p.Attributes.Leaves, AttributeLeaf{Key: l.Key, Class: ClassVerified})
+		}
+	}
+	for pkg, want := range map[string][]string{
+		"coupon":               {"~ metadata stable", "~ name stable"},
+		"event_destination_v2": {"~ description stable", "~ metadata stable", "+ webhook_endpoint.signing_secret"},
+	} {
+		i := slices.IndexFunc(Resources, func(r Resource) bool { return r.Package == pkg })
+		tc, err := coverTable(spec, Resources[i], p)
+		if err != nil {
+			t.Fatalf("%s: %v", pkg, err)
+		}
+		today, err := Build(spec, Resources[i])
+		if err != nil {
+			t.Fatal(err)
+		}
+		if got := tableDiff(today, tc.table, ""); !slices.Equal(got, want) {
+			t.Errorf("%s: %q, want %q", pkg, got, want)
+		}
+	}
+}
+
+// tableDiff lists the fields b adds to a, and those whose only difference is Stable.
+func tableDiff(a, b []fields.Field, prefix string) []string {
+	var out []string
+	for _, f := range b {
+		g, ok := fields.Find(a, f.Name)
+		switch {
+		case !ok:
+			out = append(out, "+ "+prefix+f.AttrName())
+			continue
+		case f.Stable && !g.Stable:
+			g.Stable = true
+			out = append(out, "~ "+prefix+f.AttrName()+" stable")
+		}
+		kids, todayKids := f.Fields, g.Fields
+		f.Fields, g.Fields = nil, nil
+		if !reflect.DeepEqual(f, g) {
+			out = append(out, fmt.Sprintf("~ %s%s: %+v, today %+v", prefix, f.AttrName(), f, g))
+		}
+		out = append(out, tableDiff(todayKids, kids, prefix+f.Name+".")...)
+	}
+	return out
+}

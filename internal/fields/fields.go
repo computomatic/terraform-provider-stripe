@@ -59,9 +59,16 @@ type Field struct {
 	Update bool
 	// Response is true when the field is in the object returned by Stripe.
 	Response bool
-	// ServerDefaulted is true for an Optional request field the response always carries
-	// (the response schema marks it required and not nullable): Stripe may fill it in.
+	// ServerDefaulted is true for an Optional request field that Stripe may fill in, so that
+	// it is Computed too: one the response always carries (the response schema marks it
+	// required and not nullable), or one the evidence gate exposes that the response returns,
+	// unless the evidence shows Stripe leaves it null and unsets it (ADR
+	// 2026-10-29-full-attribute-coverage, E2).
 	ServerDefaulted bool
+	// Stable is true for an optional field an update takes and the response returns that the
+	// evidence shows no update changes unless it names the field (E5): left unset, it keeps its
+	// state value.
+	Stable bool
 	// Sensitive is true for a value Stripe never returns and reports only as set, through a
 	// `<name>_provided` flag beside it in the response.
 	Sensitive bool

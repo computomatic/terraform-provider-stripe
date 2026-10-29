@@ -33,7 +33,9 @@ type decoder struct {
 	closed bool
 	// fixed lists the keyed lists whose elements must all be matched by key.
 	fixed []string
-	diags diag.Diagnostics
+	// discounts is the resource's `discounts`, mapped by key, or nil.
+	discounts *node
+	diags     diag.Diagnostics
 }
 
 // decodeState maps the response onto the top-level attribute object. prior is the plan
@@ -43,7 +45,7 @@ type decoder struct {
 // keep limits each keyed list to the elements the resource manages (see managedKeys); nil
 // keeps all of them.
 func (m *model) decodeState(body wire.Object, prior basetypes.ObjectValue, objType basetypes.ObjectType, dataSource bool, keep map[string]*managedSet) (basetypes.ObjectValue, diag.Diagnostics) {
-	d := decoder{dataSource: dataSource, matchBy: m.keyedLists(), matchData: m.decl.MatchData, keep: keep, fixed: m.decl.FixedKeys}
+	d := decoder{dataSource: dataSource, matchBy: m.keyedLists(), matchData: m.decl.MatchData, keep: keep, fixed: m.decl.FixedKeys, discounts: m.discounts}
 	if f := m.decl.KeepWhenClosed; f != "" {
 		d.closed, _ = body.GetBool(f)
 	}
@@ -96,6 +98,9 @@ func known(v attr.Value) bool { return v != nil && !v.IsNull() && !v.IsUnknown()
 func (d *decoder) node(n *node, w wire.Value, prior attr.Value) attr.Value {
 	if d.dataSource && !n.Response && !n.Once {
 		return nullOf(attrType(n))
+	}
+	if !d.dataSource && n == d.discounts {
+		return d.mapDiscounts(n, w, prior)
 	}
 	if !d.dataSource {
 		switch {
@@ -161,6 +166,22 @@ func (d *decoder) fail(n *node, problem string) attr.Value {
 	return nullOf(attrType(n))
 }
 
+// unexpectedShape is the summary of the warning for a field Stripe returned in another shape
+// than the schema's.
+const unexpectedShape = "Unexpected Stripe response"
+
+// wrongShape keeps the prior value of a field Stripe returned in another shape than the
+// schema's, and warns, naming the field and what came back (E6): one changed field never
+// stops every plan of a resource. A field with no prior value is null. In strict mode the
+// caller makes the warning an error.
+func (d *decoder) wrongShape(n *node, problem string, prior attr.Value) attr.Value {
+	d.diags.AddWarning(unexpectedShape, fmt.Sprintf("Stripe returned the field `%s` in a shape the provider does not read: %s. The state keeps its prior value.", n.Path, problem))
+	if known(prior) && fullyKnown(prior) {
+		return prior
+	}
+	return nullOf(attrType(n))
+}
+
 func (d *decoder) value(n *node, w wire.Value, prior attr.Value) attr.Value {
 	if isAbsent(w) {
 		return nullOf(attrType(n))
@@ -169,11 +190,14 @@ func (d *decoder) value(n *node, w wire.Value, prior attr.Value) attr.Value {
 	case fields.Object:
 		o, ok := w.(wire.Object)
 		if !ok {
-			return d.fail(n, fmt.Sprintf("expected an object, got %T", w))
+			return d.wrongShape(n, fmt.Sprintf("expected an object, got %s", wireLabel(w)), prior)
 		}
 		return d.object(n.Kids, o, objectAttrs(prior))
 	case fields.ObjectList:
-		arr, problem := listItems(w)
+		arr, problem, shape := listItems(w)
+		if shape {
+			return d.wrongShape(n, problem, prior)
+		}
 		if problem != "" {
 			return d.fail(n, problem)
 		}
@@ -185,7 +209,7 @@ func (d *decoder) value(n *node, w wire.Value, prior attr.Value) attr.Value {
 		for i, item := range arr {
 			o, ok := item.(wire.Object)
 			if !ok {
-				return d.fail(n, fmt.Sprintf("expected an array of objects, got %T", item))
+				return d.wrongShape(n, fmt.Sprintf("expected an array of objects, got an array holding %s", wireLabel(item)), prior)
 			}
 			items[i] = o
 		}
@@ -201,7 +225,7 @@ func (d *decoder) value(n *node, w wire.Value, prior attr.Value) attr.Value {
 	case fields.ObjectMap:
 		o, ok := w.(wire.Object)
 		if !ok {
-			return d.fail(n, fmt.Sprintf("expected an object, got %T", w))
+			return d.wrongShape(n, fmt.Sprintf("expected an object, got %s", wireLabel(w)), prior)
 		}
 		var priorElems map[string]attr.Value
 		if mv, isMap := prior.(basetypes.MapValue); isMap && known(mv) {
@@ -211,47 +235,44 @@ func (d *decoder) value(n *node, w wire.Value, prior attr.Value) attr.Value {
 		for _, f := range o {
 			inner, ok := f.Value.(wire.Object)
 			if !ok {
-				return d.fail(n, fmt.Sprintf("expected an object for key %q, got %T", f.Name, f.Value))
+				return d.wrongShape(n, fmt.Sprintf("expected an object for key %q, got %s", f.Name, wireLabel(f.Value)), prior)
 			}
 			elems[f.Name] = d.object(n.Kids, inner, objectAttrs(priorElems[f.Name]))
 		}
 		return d.mapOf(objectType(n.Kids), elems)
-	case fields.StringMap:
+	case fields.StringMap, fields.IntMap:
 		o, ok := w.(wire.Object)
 		if !ok {
-			return d.fail(n, fmt.Sprintf("expected an object, got %T", w))
+			return d.wrongShape(n, fmt.Sprintf("expected an object, got %s", wireLabel(w)), prior)
+		}
+		elem := fields.String
+		if n.Shape == fields.IntMap {
+			elem = fields.Int
 		}
 		elems := make(map[string]attr.Value, len(o))
 		for _, f := range o {
-			s, ok := d.scalar(n, fields.String, f.Value).(basetypes.StringValue)
-			if !ok || s.IsNull() {
+			v, problem := scalar(elem, f.Value)
+			if problem != "" {
+				return d.wrongShape(n, fmt.Sprintf("key %q: %s", f.Name, problem), prior)
+			}
+			if v.IsNull() {
 				return nullOf(attrType(n))
 			}
-			elems[f.Name] = s
+			elems[f.Name] = v
 		}
-		return d.mapOf(types.StringType, elems)
-	case fields.IntMap:
-		o, ok := w.(wire.Object)
-		if !ok {
-			return d.fail(n, fmt.Sprintf("expected an object, got %T", w))
-		}
-		elems := make(map[string]attr.Value, len(o))
-		for _, f := range o {
-			i, ok := d.scalar(n, fields.Int, f.Value).(basetypes.Int64Value)
-			if !ok || i.IsNull() {
-				return nullOf(attrType(n))
-			}
-			elems[f.Name] = i
-		}
-		return d.mapOf(types.Int64Type, elems)
+		return d.mapOf(scalarType(elem), elems)
 	case fields.ScalarList, fields.ScalarSet:
 		arr, ok := w.(wire.Array)
 		if !ok {
-			return d.fail(n, fmt.Sprintf("expected an array, got %T", w))
+			return d.wrongShape(n, fmt.Sprintf("expected an array, got %s", wireLabel(w)), prior)
 		}
 		elems := make([]attr.Value, len(arr))
 		for i, item := range arr {
-			elems[i] = d.scalar(n, n.Elem, item)
+			v, problem := scalar(n.Elem, item)
+			if problem != "" {
+				return d.wrongShape(n, fmt.Sprintf("element %d: %s", i, problem), prior)
+			}
+			elems[i] = v
 		}
 		if n.Shape == fields.ScalarSet {
 			v, diags := types.SetValue(scalarType(n.Elem), elems)
@@ -260,7 +281,11 @@ func (d *decoder) value(n *node, w wire.Value, prior attr.Value) attr.Value {
 		}
 		return d.list(scalarType(n.Elem), elems)
 	default:
-		return d.scalar(n, n.Shape, w)
+		v, problem := scalar(n.Shape, w)
+		if problem != "" {
+			return d.wrongShape(n, problem, prior)
+		}
+		return v
 	}
 }
 
@@ -298,46 +323,63 @@ func (d *decoder) mapOf(elem attr.Type, elems map[string]attr.Value) attr.Value 
 	return v
 }
 
-// scalar converts one wire value. A string field also accepts a number (a field that
-// takes either a word or a number, such as a tier's `up_to`) and an expanded object, whose
-// `id` is the reference.
-func (d *decoder) scalar(n *node, shape fields.Shape, w wire.Value) attr.Value {
+// scalar converts one wire value, or says why it cannot. A string field also accepts a
+// number (a field that takes either a word or a number, such as a tier's `up_to`) and an
+// expanded object, whose `id` is the reference.
+func scalar(shape fields.Shape, w wire.Value) (attr.Value, string) {
 	if isAbsent(w) {
-		return nullOf(scalarType(shape))
+		return nullOf(scalarType(shape)), ""
 	}
 	switch shape {
 	case fields.Bool:
 		if b, ok := w.(wire.Bool); ok {
-			return types.BoolValue(bool(b))
+			return types.BoolValue(bool(b)), ""
 		}
 	case fields.Int:
 		if i, ok := w.(wire.Int); ok {
-			return types.Int64Value(int64(i))
+			return types.Int64Value(int64(i)), ""
 		}
 	case fields.Float:
 		switch t := w.(type) {
 		case wire.Int:
-			return types.Float64Value(float64(t))
+			return types.Float64Value(float64(t)), ""
 		case wire.Decimal:
 			if f, err := strconv.ParseFloat(string(t), 64); err == nil {
-				return types.Float64Value(f)
+				return types.Float64Value(f), ""
 			}
 		}
 	default:
 		switch t := w.(type) {
 		case wire.String:
-			return types.StringValue(string(t))
+			return types.StringValue(string(t)), ""
 		case wire.Int:
-			return types.StringValue(strconv.FormatInt(int64(t), 10))
+			return types.StringValue(strconv.FormatInt(int64(t), 10)), ""
 		case wire.Decimal:
-			return types.StringValue(string(t))
+			return types.StringValue(string(t)), ""
 		case wire.Object:
 			if id, ok := t.GetString("id"); ok {
-				return types.StringValue(id)
+				return types.StringValue(id), ""
 			}
 		}
 	}
-	return d.fail(n, fmt.Sprintf("unexpected %T for a %s value", w, shapeLabel(shape)))
+	return nil, fmt.Sprintf("expected %s, got %s", WithArticle(shapeLabel(shape)), wireLabel(w))
+}
+
+// wireLabel names the JSON type of a wire value for a message.
+func wireLabel(w wire.Value) string {
+	switch w.(type) {
+	case wire.Object:
+		return "an object"
+	case wire.Array:
+		return "an array"
+	case wire.String:
+		return "a string"
+	case wire.Bool:
+		return "a boolean"
+	case wire.Int, wire.Decimal:
+		return "a number"
+	}
+	return fmt.Sprintf("%T", w)
 }
 
 func shapeLabel(s fields.Shape) string {
@@ -355,13 +397,14 @@ func shapeLabel(s fields.Shape) string {
 
 // listItems returns the elements of an array, or of a list envelope, `{object: "list",
 // data: [...]}`, which is how Stripe embeds a subscription's `items` or a quote's
-// `line_items`. problem says why the value cannot be read as a list; an envelope with
-// `has_more` is one, because the engine reads no further pages and would drop elements.
-func listItems(w wire.Value) (arr wire.Array, problem string) {
+// `line_items`. problem says why the value cannot be read as a list, and wrongShape whether
+// it is no array at all; an envelope with `has_more` is a problem of another kind, because the
+// engine reads no further pages and would drop elements.
+func listItems(w wire.Value) (arr wire.Array, problem string, wrongShape bool) {
 	if o, isObj := w.(wire.Object); isObj {
 		if kind, _ := o.GetString("object"); kind == "list" {
 			if more, _ := o.GetBool("has_more"); more {
-				return nil, "the embedded list has more elements than the response carries (`has_more` is true); the provider reads the first page only"
+				return nil, "the embedded list has more elements than the response carries (`has_more` is true); the provider reads the first page only", false
 			}
 			if data, has := o.Get("data"); has {
 				w = data
@@ -370,9 +413,9 @@ func listItems(w wire.Value) (arr wire.Array, problem string) {
 	}
 	arr, ok := w.(wire.Array)
 	if !ok {
-		return nil, fmt.Sprintf("expected an array, got %T", w)
+		return nil, fmt.Sprintf("expected an array, got %s", wireLabel(w)), true
 	}
-	return arr, ""
+	return arr, "", false
 }
 
 // pair is a response element and the prior element it continues.

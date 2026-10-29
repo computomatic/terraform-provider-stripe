@@ -944,4 +944,4 @@ Using `terraform import`, import an invoice using its ID. For example:
 % terraform import stripe_invoice.setup in_123
 ```
 
--> Stripe does not return `days_until_due`, `pending_invoice_items_behavior`, `application_fee_amount`, `subscription` or `transfer_data`, so an imported invoice has them null. Leave them out of its configuration: setting one is a change, which Stripe refuses once the invoice is finalized.
+~> Stripe does not return `days_until_due`, `pending_invoice_items_behavior`, `application_fee_amount`, `subscription` or `transfer_data`, so an imported invoice has them null. Leave them out of its configuration: setting one is a change, which Stripe refuses once the invoice is finalized. Stripe does not return `payment_settings.payment_method_options.card.installments.plan` or `shipping_cost.shipping_rate_data`, so an imported invoice has them null: a configuration that sets one plans a replacement after the import.
