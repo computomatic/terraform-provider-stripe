@@ -165,6 +165,9 @@ func compile(decl Declaration, table []fields.Field) (*model, error) {
 	if decl.Attach != "" && (decl.Parent == "" || !strings.Contains(decl.Paths.Create, "{"+decl.Attach+"}")) {
 		return nil, fmt.Errorf("%s: an attachment needs a parent and a create path that names `{%s}`", decl.TypeName, decl.Attach)
 	}
+	if decl.Upload != nil && (decl.Upload.Part == "" || decl.Paths.Create == "" || v2) {
+		return nil, fmt.Errorf("%s: an upload needs a part name and a /v1 create path", decl.TypeName)
+	}
 	if _, ok := m.top("id"); !ok && !decl.Singleton {
 		return nil, fmt.Errorf("%s: the table has no `id` field", decl.TypeName)
 	}
@@ -172,7 +175,8 @@ func compile(decl Declaration, table []fields.Field) (*model, error) {
 		if reservedNames[n.AttrName()] {
 			return nil, fmt.Errorf("%s: field `%s` is a name Terraform reserves; add a rename to the declaration", decl.TypeName, n.AttrName())
 		}
-		if n.AttrName() == "timeouts" || n.AttrName() == decl.Parent || decl.Attach != "" && n.AttrName() == decl.Attach {
+		if n.AttrName() == "timeouts" || n.AttrName() == decl.Parent || decl.Attach != "" && n.AttrName() == decl.Attach ||
+			decl.Upload != nil && (n.AttrName() == sourceAttr || n.AttrName() == sourceHashAttr) {
 			return nil, fmt.Errorf("%s: field `%s` collides with a provider-added attribute; rename it", decl.TypeName, n.AttrName())
 		}
 	}

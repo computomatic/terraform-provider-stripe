@@ -41,7 +41,8 @@ var directPermissions = map[string]bool{
 }
 
 // permissions is keyed by type name. Every shipped type needs an entry, or the docs do not
-// generate. Read the reference as of 2026-10-23.
+// generate. Read the reference as of 2026-10-23, and its file and Treasury money movement rows
+// as of 2026-10-28.
 var permissions = map[string]permission{
 	"stripe_account":                                 {Read: []string{"connected_account_read"}, Write: []string{"connected_account_write"}, Unverified: []string{"POST /v1/accounts"}},
 	"stripe_account_capability":                      {Read: []string{"connected_account_read"}},
@@ -87,7 +88,7 @@ var permissions = map[string]permission{
 	"stripe_entitlements_active_entitlement":         {Read: []string{"entitlement_read"}},
 	"stripe_entitlements_feature":                    {Read: []string{"feature_read"}, Write: []string{"feature_write"}},
 	"stripe_event":                                   {Read: []string{"event_read"}},
-	"stripe_file":                                    {Read: []string{"file_read"}},
+	"stripe_file":                                    {Read: []string{"file_read"}, Write: []string{"file_write"}},
 	"stripe_file_link":                               {Read: []string{"file_read"}, Write: []string{"file_write"}},
 	"stripe_financial_connections_account":           {Read: []string{"connections_api_accounts_list_read", "connections_api_accounts_retrieve_read"}},
 	"stripe_financial_connections_account_owner":     {Read: []string{"connections_api_accounts_ownership_read", "connections_api_accounts_retrieve_read"}, Note: "Also reads the account the owners belong to."},
@@ -153,12 +154,12 @@ var permissions = map[string]permission{
 	"stripe_topup":                                   {Read: []string{"top_up_read"}, Write: []string{"top_up_write"}},
 	"stripe_transfer":                                {Write: []string{"transfer_write"}, Unverified: []string{"GET /v1/transfers/{id}", "POST /v1/transfers/{id}", "GET /v1/transfers"}},
 	"stripe_transfer_reversal":                       {Read: []string{"transfer_read"}, Write: []string{"transfer_write"}, Unverified: []string{"POST /v1/transfers/{transfer}/reversals"}},
-	"stripe_treasury_credit_reversal":                {Read: []string{"treasury_credit_reversal_read"}},
-	"stripe_treasury_debit_reversal":                 {Read: []string{"treasury_debit_reversal_read"}},
+	"stripe_treasury_credit_reversal":                {Read: []string{"treasury_credit_reversal_read"}, Write: []string{"treasury_credit_reversal_write"}},
+	"stripe_treasury_debit_reversal":                 {Read: []string{"treasury_debit_reversal_read"}, Write: []string{"treasury_debit_reversal_write"}},
 	"stripe_treasury_financial_account":              {Read: []string{"financial_account_read_treasury"}, Write: []string{"financial_account_read_treasury", "treasury_financial_account_write"}},
-	"stripe_treasury_inbound_transfer":               {Read: []string{"treasury_inbound_transfer_read"}},
-	"stripe_treasury_outbound_payment":               {Read: []string{"treasury_outbound_payment_read"}},
-	"stripe_treasury_outbound_transfer":              {Read: []string{"treasury_outbound_transfer_read"}},
+	"stripe_treasury_inbound_transfer":               {Read: []string{"treasury_inbound_transfer_read"}, Write: []string{"treasury_inbound_transfer_write"}},
+	"stripe_treasury_outbound_payment":               {Read: []string{"treasury_outbound_payment_read"}, Write: []string{"treasury_outbound_payment_write"}},
+	"stripe_treasury_outbound_transfer":              {Read: []string{"treasury_outbound_transfer_read"}, Write: []string{"treasury_outbound_transfer_write"}},
 	"stripe_treasury_received_credit":                {Read: []string{"treasury_received_credit_read"}},
 	"stripe_treasury_received_debit":                 {Read: []string{"treasury_received_debit_read"}},
 	"stripe_treasury_transaction":                    {Read: []string{"treasury_transaction_read"}},

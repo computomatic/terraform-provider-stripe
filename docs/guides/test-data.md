@@ -2,12 +2,12 @@
 page_title: "Managing Test Data"
 subcategory: ""
 description: |-
-  Create payments, refunds, invoices, payouts, top-ups and transfers in a Stripe sandbox, and keep the provider from moving live money.
+  Create payments, refunds, invoices, payouts, top-ups, transfers and Treasury money movement in a Stripe sandbox, and keep the provider from moving live money.
 ---
 
 # Managing Test Data
 
-Some Stripe objects move money: payment intents, charges, refunds, invoices, credit notes, checkout sessions, payouts, top-ups, transfers, transfer reversals, application fee refunds and Climate orders, which spend the account's balance. The provider manages them so you can seed a sandbox or a test-mode account with the payments your application's tests and demos read. This guide explains the safety switch that keeps them out of live mode, how to move them through their states, how they change on their own, and why `terraform destroy` does not remove them.
+Some Stripe objects move money: payment intents, charges, refunds, invoices, credit notes, checkout sessions, payouts, top-ups, transfers, transfer reversals, application fee refunds, Climate orders, which spend the account's balance, and Treasury inbound transfers, outbound transfers, outbound payments and credit and debit reversals. The provider manages them so you can seed a sandbox or a test-mode account with the payments your application's tests and demos read. This guide explains the safety switch that keeps them out of live mode, how to move them through their states, how they change on their own, and why `terraform destroy` does not remove them.
 
 ## The live-mode guard
 
@@ -70,6 +70,40 @@ resource "stripe_payout" "weekly" {
 }
 ```
 
+## Treasury money movement
+
+Treasury runs on a platform's connected accounts, so its resources use a provider configuration whose `stripe_account` is a connected account with the `treasury` capability active, and money moves in and out of a `stripe_treasury_financial_account` of that account. Each kind of movement needs a feature of the financial account active: `inbound_transfers.ach` for a `stripe_treasury_inbound_transfer`, `intra_stripe_flows` or `outbound_transfers.ach` for a `stripe_treasury_outbound_transfer` to another financial account or to a bank account, and `outbound_payments.ach` for a `stripe_treasury_outbound_payment`.
+
+```terraform
+provider "stripe" {
+  alias          = "treasury"
+  stripe_account = var.treasury_account
+}
+
+resource "stripe_treasury_outbound_payment" "supplier" {
+  provider          = stripe.treasury
+  financial_account = var.financial_account
+  amount            = 2500
+  currency          = "usd"
+
+  destination_payment_method_data = {
+    type = "us_bank_account"
+    us_bank_account = {
+      routing_number      = "110000000"
+      account_number      = "000123456789"
+      account_holder_type = "company"
+    }
+    billing_details = {
+      name = "Supplier Ltd"
+    }
+  }
+}
+```
+
+An inbound transfer pulls from, and an outbound transfer can send to, a US bank account attached to the connected account itself. The provider does not attach one: attach it in the Dashboard, or with a setup intent made on the connected account that sets `attach_to_self`, `flow_directions` and an offline mandate, verified by microdeposits. Stripe refuses that setup intent on a Custom or Express connected account to platforms it considers new, with `Creating direct charges with type=express or type=custom is not supported for new platforms`, and links migration and exemption instructions in the platform's Dashboard. Until Stripe grants the exemption, such a platform cannot make an inbound transfer, or an outbound transfer to a bank account. An outbound transfer between two financial accounts of the connected account needs no bank account.
+
+A `stripe_treasury_credit_reversal` sends a received credit back, and a `stripe_treasury_debit_reversal` returns the money of a received debit. Stripe reverses each received credit or debit once, and refuses one sent by wire.
+
 ## Moving objects through their states
 
 Stripe ends these objects by an action, not by deleting them. Where Stripe's API proves the action, it is a value of the resource's `status`:
@@ -82,10 +116,13 @@ Stripe ends these objects by an action, not by deleting them. Where Stripe's API
 | `stripe_checkout_session` | `expired` | Expires an open session |
 | `stripe_topup` | `canceled` | Cancels a top-up that is still pending |
 | `stripe_climate_order` | `canceled` | Cancels an order that is not yet delivered, which refunds its subtotal but not its fees |
+| `stripe_treasury_inbound_transfer` | `canceled` | Cancels a transfer that is still processing |
+| `stripe_treasury_outbound_transfer` | `canceled` | Cancels a transfer that is still processing; Stripe posts most within a second |
+| `stripe_treasury_outbound_payment` | `canceled` | Cancels a payment that is still processing; Stripe posts one within about a second |
 
 A charge made with `capture = false` only authorizes the payment. Set its `captured` to `true` to capture it in full.
 
-Leave `status` out to let the object stay where Stripe has it. A value Stripe cannot reach from the object's state fails at plan time: a succeeded payment intent cannot be canceled, a completed session cannot be expired, and a paid invoice cannot be voided. A value no action reaches from where the object is, such as voiding a draft invoice, fails the apply and names the status Stripe left. Refunds, payouts, transfers, transfer reversals and application fee refunds have no `status` to set: a refund cannot be canceled once a card refund has succeeded, a payout can be canceled only while it is pending, which lasts seconds, and a transfer is undone by a new object, a `stripe_transfer_reversal`.
+Leave `status` out to let the object stay where Stripe has it. A value Stripe cannot reach from the object's state fails at plan time: a succeeded payment intent cannot be canceled, a completed session cannot be expired, and a paid invoice cannot be voided. A value no action reaches from where the object is, such as voiding a draft invoice, fails the apply and names the status Stripe left. Refunds, payouts, transfers, transfer reversals, application fee refunds and Treasury credit and debit reversals have no `status` to set: a refund cannot be canceled once a card refund has succeeded, a payout can be canceled only while it is pending, which lasts seconds, and a transfer is undone by a new object, a `stripe_transfer_reversal`.
 
 ### Invoices and their items
 
@@ -115,9 +152,11 @@ To pay it, attach a test card to the customer with a `stripe_customer_payment_me
 
 ## Objects that change on their own
 
-Stripe moves some of these objects on without Terraform. A checkout session expires at its `expires_at`, 24 hours after creation unless set, and completes when a customer pays. A top-up moves from `pending` to `succeeded`. A payout moves from `pending` through `in_transit` to `paid`, within seconds in a sandbox, and can still fail after that. A refund of a non-card payment can move from `pending` to `succeeded` or `failed`. A transfer's `amount_reversed` grows with its reversals, and a charge's `amount_refunded` with its refunds. An invoice with `auto_advance = true` is finalized by Stripe about an hour after it is created, and Stripe then tries to collect it.
+Stripe moves some of these objects on without Terraform. A checkout session expires at its `expires_at`, 24 hours after creation unless set, and completes when a customer pays. A top-up moves from `pending` to `succeeded`. A payout moves from `pending` through `in_transit` to `paid`, within seconds in a sandbox, and can still fail after that. A refund of a non-card payment can move from `pending` to `succeeded` or `failed`. A transfer's `amount_reversed` grows with its reversals, and a charge's `amount_refunded` with its refunds. An invoice with `auto_advance = true` is finalized by Stripe about an hour after it is created, and Stripe then tries to collect it. Stripe posts a Treasury outbound transfer to another financial account at once, and an outbound transfer to a bank account or an outbound payment within about a second; a credit reversal moves to `posted` and a debit reversal to `succeeded` within seconds.
 
 The provider reads those changes and plans nothing for them, as long as the configuration leaves `status` unset or sets it to the value the object stays at. The values a `status` takes are ones Stripe does not leave by itself, so a configuration that sets one keeps planning nothing once it is reached. The exception is an invoice set to `open` that Stripe collects by itself, a `charge_automatically` invoice with `auto_advance = true`: once Stripe has paid it, the next plan fails until `status` is removed or set to `paid`. For an invoice meant to stay open, use `collection_method = "send_invoice"` or `auto_advance = false`.
+
+A Treasury outbound transfer or payment that Stripe posts while an apply cancels it fails that apply with Stripe's refusal, and the state then reads `posted`; the next plan fails until `status` is removed from the configuration.
 
 ## Why destroy is refused
 

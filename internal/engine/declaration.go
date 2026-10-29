@@ -141,6 +141,12 @@ type Transition struct {
 	From []string
 }
 
+// Upload names the multipart part that carries an uploaded file (Declaration.Upload).
+type Upload struct {
+	// Part is the form field of the file, such as `file`.
+	Part string
+}
+
 // AdvanceAction moves a required time field forward in place through an action endpoint, as a
 // test clock's `frozen_time` is advanced. Stripe takes the field on create only, so without
 // the action a change would replace the object. Going backwards is refused at plan time,
@@ -236,6 +242,17 @@ type Declaration struct {
 	// payment method), so the attribute keeps the configured value. Changing it replaces the
 	// resource. Import sets it to the imported ID.
 	Attach string
+	// Upload makes the create a multipart upload, to the Files API host, of a local file that
+	// the attribute `source` names, such as a file's `POST /v1/files`. Terraform cannot send a
+	// file's content in a request, so the provider reads the file. Its SHA-256 is the computed
+	// attribute `source_sha256`, which the plan reads from the file, or the apply when the file
+	// does not exist yet at plan time. A file gone from the `source` the object was uploaded from
+	// keeps the recorded hash, with a warning that the content was not compared. A change of the
+	// content replaces the object, and an update
+	// that finds new content fails, because it cannot upload it. A change of `source` alone is an
+	// update that sends nothing. An imported object has neither until the first apply, which
+	// records them without uploading.
+	Upload *Upload
 
 	Delete  DeleteKind
 	Archive *ArchiveAction

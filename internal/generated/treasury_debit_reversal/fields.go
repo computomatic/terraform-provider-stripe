@@ -17,9 +17,9 @@ var Table = []fields.Field{
 		{Name: "issuing_dispute", Shape: fields.String, Response: true, Description: "Set if there is an Issuing dispute associated with the DebitReversal."},
 	}},
 	{Name: "livemode", Shape: fields.Bool, Response: true, Description: "If the object exists in live mode, the value is `true`. If the object exists in test mode, the value is `false`."},
-	{Name: "metadata", Shape: fields.StringMap, Response: true, Description: "Set of [key-value pairs](https://docs.stripe.com/api/metadata) that you can attach to an object. This can be useful for storing additional information about the object in a structured format."},
+	{Name: "metadata", Shape: fields.StringMap, Create: true, Response: true, ServerDefaulted: true, Description: "Set of [key-value pairs](https://docs.stripe.com/api/metadata) that you can attach to an object. This can be useful for storing additional information about the object in a structured format. Individual keys can be unset by posting an empty value to them. All keys can be unset by posting an empty value to `metadata`."},
 	{Name: "network", Shape: fields.String, Response: true, Enum: []string{"ach", "card"}, Description: "The rails used to reverse the funds."},
-	{Name: "received_debit", Shape: fields.String, Response: true, Description: "The ReceivedDebit being reversed."},
+	{Name: "received_debit", Shape: fields.String, Required: true, Create: true, Response: true, Description: "The ReceivedDebit to reverse."},
 	{Name: "status", Shape: fields.String, Response: true, Enum: []string{"failed", "processing", "succeeded"}, Description: "Status of the DebitReversal"},
 	{Name: "status_transitions", Shape: fields.Object, Response: true, Fields: []fields.Field{
 		{Name: "completed_at", Shape: fields.Int, Response: true, Description: "Timestamp describing when the DebitReversal changed status to `completed`."},

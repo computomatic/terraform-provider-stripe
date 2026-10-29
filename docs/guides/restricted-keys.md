@@ -100,7 +100,7 @@ Where Stripe's reference does not list an endpoint a type calls, the row says Un
 | `stripe_entitlements_active_entitlement` | `entitlement_read` | No resource |  |
 | `stripe_entitlements_feature` | `feature_read` | `feature_write` |  |
 | `stripe_event` | `event_read` | No resource |  |
-| `stripe_file` | `file_read` | No resource |  |
+| `stripe_file` | `file_read` | `file_write` |  |
 | `stripe_file_link` | `file_read` | `file_write` |  |
 | `stripe_financial_connections_account` | `connections_api_accounts_list_read`, `connections_api_accounts_retrieve_read` | No resource |  |
 | `stripe_financial_connections_account_owner` | `connections_api_accounts_ownership_read`, `connections_api_accounts_retrieve_read` | No resource | Also reads the account the owners belong to. |
@@ -166,12 +166,12 @@ Where Stripe's reference does not list an endpoint a type calls, the row says Un
 | `stripe_topup` | `top_up_read` (Direct) | `top_up_write` (Direct), `balance_read` | `balance_read` is for the live-mode check. |
 | `stripe_transfer` | Unverified | `transfer_write` (Direct), `balance_read` | `balance_read` is for the live-mode check. Unverified: the reference does not list `GET /v1/transfers/{id}`, `POST /v1/transfers/{id}` and `GET /v1/transfers`. |
 | `stripe_transfer_reversal` | `transfer_read` (Direct) | `transfer_write` (Direct), `balance_read` | `balance_read` is for the live-mode check. Unverified: the reference does not list `POST /v1/transfers/{transfer}/reversals`. |
-| `stripe_treasury_credit_reversal` | `treasury_credit_reversal_read` | No resource |  |
-| `stripe_treasury_debit_reversal` | `treasury_debit_reversal_read` | No resource |  |
+| `stripe_treasury_credit_reversal` | `treasury_credit_reversal_read` | `treasury_credit_reversal_write`, `balance_read` | `balance_read` is for the live-mode check. |
+| `stripe_treasury_debit_reversal` | `treasury_debit_reversal_read` | `treasury_debit_reversal_write`, `balance_read` | `balance_read` is for the live-mode check. |
 | `stripe_treasury_financial_account` | `financial_account_read_treasury` | `financial_account_read_treasury`, `treasury_financial_account_write` |  |
-| `stripe_treasury_inbound_transfer` | `treasury_inbound_transfer_read` | No resource |  |
-| `stripe_treasury_outbound_payment` | `treasury_outbound_payment_read` | No resource |  |
-| `stripe_treasury_outbound_transfer` | `treasury_outbound_transfer_read` | No resource |  |
+| `stripe_treasury_inbound_transfer` | `treasury_inbound_transfer_read` | `treasury_inbound_transfer_write`, `balance_read` | `balance_read` is for the live-mode check. |
+| `stripe_treasury_outbound_payment` | `treasury_outbound_payment_read` | `treasury_outbound_payment_write`, `balance_read` | `balance_read` is for the live-mode check. |
+| `stripe_treasury_outbound_transfer` | `treasury_outbound_transfer_read` | `treasury_outbound_transfer_write`, `balance_read` | `balance_read` is for the live-mode check. |
 | `stripe_treasury_received_credit` | `treasury_received_credit_read` | No resource |  |
 | `stripe_treasury_received_debit` | `treasury_received_debit_read` | No resource |  |
 | `stripe_treasury_transaction` | `treasury_transaction_read` | No resource |  |

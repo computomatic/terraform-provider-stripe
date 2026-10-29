@@ -30,7 +30,7 @@ var Resources = []Resource{
 	{Package: "balance_transaction", ReadPath: "/v1/balance_transactions/{id}"},
 	{Package: "billing_feedback_option", CreatePath: "/v1/billing/feedback_options", UpdatePath: "/v1/billing/feedback_options/{id}"},
 	{Package: "event", ReadPath: "/v1/events/{id}", Omit: []string{"data"}},
-	{Package: "file", ReadPath: "/v1/files/{file}"},
+	{Package: "file", CreatePath: "/v1/files", Omit: []string{"file", "file_link_data"}},
 	{Package: "file_link", CreatePath: "/v1/file_links", UpdatePath: "/v1/file_links/{link}"},
 	{Package: "payment_method_configuration", CreatePath: "/v1/payment_method_configurations", UpdatePath: "/v1/payment_method_configurations/{configuration}"},
 	{Package: "payment_method_domain", CreatePath: "/v1/payment_method_domains", UpdatePath: "/v1/payment_method_domains/{payment_method_domain}"},
@@ -203,11 +203,11 @@ var Resources = []Resource{
 	{Package: "treasury_transaction_entry", ReadPath: "/v1/treasury/transaction_entries/{id}"},
 	{Package: "treasury_received_credit", ReadPath: "/v1/treasury/received_credits/{id}"},
 	{Package: "treasury_received_debit", ReadPath: "/v1/treasury/received_debits/{id}"},
-	{Package: "treasury_credit_reversal", ReadPath: "/v1/treasury/credit_reversals/{credit_reversal}"},
-	{Package: "treasury_debit_reversal", ReadPath: "/v1/treasury/debit_reversals/{debit_reversal}"},
-	{Package: "treasury_inbound_transfer", ReadPath: "/v1/treasury/inbound_transfers/{id}"},
-	{Package: "treasury_outbound_transfer", ReadPath: "/v1/treasury/outbound_transfers/{outbound_transfer}"},
-	{Package: "treasury_outbound_payment", ReadPath: "/v1/treasury/outbound_payments/{id}"},
+	{Package: "treasury_credit_reversal", CreatePath: "/v1/treasury/credit_reversals"},
+	{Package: "treasury_debit_reversal", CreatePath: "/v1/treasury/debit_reversals"},
+	{Package: "treasury_inbound_transfer", CreatePath: "/v1/treasury/inbound_transfers"},
+	{Package: "treasury_outbound_transfer", CreatePath: "/v1/treasury/outbound_transfers"},
+	{Package: "treasury_outbound_payment", CreatePath: "/v1/treasury/outbound_payments"},
 	// The rest of Issuing. A design's `transfer_lookup_key` is an instruction, not a field of the
 	// design, and nothing proves it; nothing proves setting a design's `preferences` either, so
 	// they are read-only. A dispute's `treasury` names the received debit Stripe disputes in

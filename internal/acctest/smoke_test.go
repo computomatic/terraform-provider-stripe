@@ -68,7 +68,7 @@ func TestSmokeAccountHasNoKeyInHCL(t *testing.T) {
 	if strings.Contains(hcl, "api_key") || strings.Contains(hcl, key) {
 		t.Fatalf("the provider block carries the key: %q", hcl)
 	}
-	if want := "provider \"stripe\" {\n  base_url = \"http://127.0.0.1:1\"\n}\n"; hcl != want {
+	if want := "provider \"stripe\" {\n  base_url = \"http://127.0.0.1:1\"\n  files_base_url = \"https://files.stripe.com\"\n}\n"; hcl != want {
 		t.Fatalf("got %q", hcl)
 	}
 	if c.APIKey() != key {

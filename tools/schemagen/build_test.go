@@ -326,7 +326,9 @@ const v2Spec = `{"paths":{
  "/v2/core/forms":{"post":{"operationId":"PostForms","requestBody":{"content":{"application/x-www-form-urlencoded":{"schema":{"type":"object","properties":{"a":{"type":"string"}}}}}},
    "responses":{"200":{"content":{"application/json":{"schema":{"type":"object","properties":{"id":{"type":"string"}}}}}}}}},
  "/v1/jsonly":{"post":{"operationId":"PostJsonly","requestBody":{"content":{"application/json":{"schema":{"type":"object","properties":{"a":{"type":"string"}}}}}},
-   "responses":{"200":{"content":{"application/json":{"schema":{"type":"object","properties":{"id":{"type":"string"}}}}}}}}}
+   "responses":{"200":{"content":{"application/json":{"schema":{"type":"object","properties":{"id":{"type":"string"}}}}}}}}},
+ "/v1/uploads":{"post":{"operationId":"PostUploads","requestBody":{"content":{"multipart/form-data":{"schema":{"type":"object","required":["purpose"],"properties":{"purpose":{"type":"string"}}}}}},
+   "responses":{"200":{"content":{"application/json":{"schema":{"type":"object","properties":{"id":{"type":"string"},"purpose":{"type":"string"}}}}}}}}}
 }}`
 
 func TestV2TableFromJSONBodies(t *testing.T) {
@@ -377,6 +379,21 @@ func TestV2AndV1MustKeepTheirBodyEncodings(t *testing.T) {
 		if _, err := Build(spec, res); err == nil {
 			t.Errorf("%s: a body in the wrong encoding for its namespace must fail", res.Package)
 		}
+	}
+}
+
+// The Files API's upload takes a multipart form, which is a `/v1` form like any other.
+func TestV1MultipartFormIsAForm(t *testing.T) {
+	spec, err := ParseSpec([]byte(v2Spec))
+	if err != nil {
+		t.Fatal(err)
+	}
+	table, err := Build(spec, Resource{Package: "uploads", CreatePath: "/v1/uploads"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if purpose := lookup(t, table, "purpose"); !purpose.Required || !purpose.CreateOnly() {
+		t.Errorf("purpose: %+v", purpose)
 	}
 }
 

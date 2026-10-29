@@ -5,9 +5,12 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"io"
+	"mime"
+	"mime/multipart"
 	"net/http"
 	"net/http/httptest"
 	"regexp"
+	"slices"
 	"strings"
 	"sync"
 	"testing"
@@ -358,6 +361,50 @@ func TestFilesHost(t *testing.T) {
 	}
 	if len(apiSeen()) != 0 || len(filesSeen()) != 1 {
 		t.Fatalf("api %d, files %d", len(apiSeen()), len(filesSeen()))
+	}
+}
+
+// An upload is a multipart form: the params as text parts in bracket notation, then the file
+// part, and a retry sends the same bytes under the same idempotency key.
+func TestMultipartUpload(t *testing.T) {
+	srv, seen := testServer(t, scripted{500, nil, `{"error":{"type":"api_error"}}`}, scripted{200, nil, `{"id":"file_1","object":"file"}`})
+	c, _ := testClient(srv, 1)
+	content := []byte("\x89PNG binary")
+	_, err := c.Do(context.Background(), Request{
+		Method: "POST", Path: "/v1/files", Host: FilesHost,
+		Params: wire.Object{
+			{Name: "purpose", Value: wire.String("dispute_evidence")},
+			{Name: "file_link_data", Value: wire.Object{{Name: "create", Value: wire.Bool(true)}}},
+		},
+		File: &File{Part: "file", Name: "evidence.png", Content: content},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	requests := seen()
+	if len(requests) != 2 || requests[0].body != requests[1].body || requests[0].header.Get("Idempotency-Key") != requests[1].header.Get("Idempotency-Key") {
+		t.Fatalf("the retry must resend the same upload: %+v", requests)
+	}
+	mediaType, params, err := mime.ParseMediaType(requests[0].header.Get("Content-Type"))
+	if err != nil || mediaType != "multipart/form-data" {
+		t.Fatalf("content type %q: %v", requests[0].header.Get("Content-Type"), err)
+	}
+	r := multipart.NewReader(strings.NewReader(requests[0].body), params["boundary"])
+	var got []string
+	for {
+		part, err := r.NextPart()
+		if err == io.EOF {
+			break
+		}
+		if err != nil {
+			t.Fatal(err)
+		}
+		data, _ := io.ReadAll(part)
+		got = append(got, part.FormName()+"|"+part.FileName()+"|"+string(data))
+	}
+	want := []string{"purpose||dispute_evidence", "file_link_data[create]||true", "file|evidence.png|" + string(content)}
+	if !slices.Equal(got, want) {
+		t.Errorf("parts %q, want %q", got, want)
 	}
 }
 

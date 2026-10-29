@@ -186,7 +186,7 @@ func (p *stripeProvider) Schema(_ context.Context, _ provider.SchemaRequest, res
 			},
 			"files_base_url": schema.StringAttribute{
 				Optional:    true,
-				Description: "Base URL of the Stripe Files API, without a path. Defaults to the `STRIPE_FILES_BASE_URL` environment variable, then `base_url` when that is set, then `" + stripeapi.DefaultFilesBaseURL + "`.",
+				Description: "Base URL of the Stripe Files API, without a path, to which `stripe_file` uploads files. Defaults to the `STRIPE_FILES_BASE_URL` environment variable, then `base_url` when that is set, then `" + stripeapi.DefaultFilesBaseURL + "`.",
 			},
 			"stripe_account": schema.StringAttribute{
 				Optional:    true,
@@ -270,6 +270,7 @@ func (p *stripeProvider) Resources(_ context.Context) []func() resource.Resource
 		must(customer_balance_transaction.NewResource()),
 		must(customer_payment_method.NewResource()),
 		must(entitlements_feature.NewResource()),
+		must(file.NewResource()),
 		must(file_link.NewResource()),
 		must(invoiceitem.NewResource()),
 		must(payment_link.NewResource()),
@@ -319,6 +320,11 @@ func (p *stripeProvider) Resources(_ context.Context) []func() resource.Resource
 		must(invoice.NewResource()),
 		must(charge.NewResource()),
 		must(payout.NewResource()),
+		must(treasury_inbound_transfer.NewResource()),
+		must(treasury_outbound_transfer.NewResource()),
+		must(treasury_outbound_payment.NewResource()),
+		must(treasury_credit_reversal.NewResource()),
+		must(treasury_debit_reversal.NewResource()),
 	}
 }
 

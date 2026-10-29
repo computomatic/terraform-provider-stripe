@@ -211,6 +211,9 @@ func (m *model) resourceSchema(ctx context.Context) rschema.Schema {
 			PlanModifiers:       []planmodifier.String{m.refuseString(stringplanmodifier.RequiresReplace())},
 		}
 	}
+	if m.decl.Upload != nil {
+		m.uploadAttributes(attrs)
+	}
 	attrs["timeouts"] = timeouts.Attributes(ctx, timeouts.Opts{
 		Create: true,
 		Update: m.decl.Paths.Update != "" || len(m.decl.Transitions) > 0 || m.decl.Advance != nil,

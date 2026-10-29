@@ -14,9 +14,9 @@ var Table = []fields.Field{
 	{Name: "hosted_regulatory_receipt_url", Shape: fields.String, Response: true, Description: "A [hosted transaction receipt](https://docs.stripe.com/treasury/moving-money/regulatory-receipts) URL that is provided when money movement is considered regulated under Stripe's money transmission licenses."},
 	{Name: "id", Shape: fields.String, Response: true, Description: "Unique identifier for the object."},
 	{Name: "livemode", Shape: fields.Bool, Response: true, Description: "If the object exists in live mode, the value is `true`. If the object exists in test mode, the value is `false`."},
-	{Name: "metadata", Shape: fields.StringMap, Response: true, Description: "Set of [key-value pairs](https://docs.stripe.com/api/metadata) that you can attach to an object. This can be useful for storing additional information about the object in a structured format."},
+	{Name: "metadata", Shape: fields.StringMap, Create: true, Response: true, ServerDefaulted: true, Description: "Set of [key-value pairs](https://docs.stripe.com/api/metadata) that you can attach to an object. This can be useful for storing additional information about the object in a structured format. Individual keys can be unset by posting an empty value to them. All keys can be unset by posting an empty value to `metadata`."},
 	{Name: "network", Shape: fields.String, Response: true, Enum: []string{"ach", "stripe"}, Description: "The rails used to reverse the funds."},
-	{Name: "received_credit", Shape: fields.String, Response: true, Description: "The ReceivedCredit being reversed."},
+	{Name: "received_credit", Shape: fields.String, Required: true, Create: true, Response: true, Description: "The ReceivedCredit to reverse."},
 	{Name: "status", Shape: fields.String, Response: true, Enum: []string{"canceled", "posted", "processing"}, Description: "Status of the CreditReversal"},
 	{Name: "status_transitions", Shape: fields.Object, Response: true, Fields: []fields.Field{
 		{Name: "posted_at", Shape: fields.Int, Response: true, Description: "Timestamp describing when the CreditReversal changed status to `posted`"},

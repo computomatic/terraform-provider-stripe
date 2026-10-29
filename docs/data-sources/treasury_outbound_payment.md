@@ -43,26 +43,72 @@ This data source supports the following arguments:
 
 This data source exports the following attributes in addition to the arguments above:
 
-* `amount` - Amount (in cents) transferred.
+* `amount` - Amount (in cents) to be transferred.
 * `cancelable` - Returns `true` if the object can be canceled, and `false` otherwise.
 * `created` - Time at which the object was created. Measured in seconds since the Unix epoch.
 * `currency` - Three-letter [ISO currency code](https://www.iso.org/iso-4217-currency-codes.html), in lowercase. Must be a [supported currency](https://stripe.com/docs/currencies).
-* `customer` - ID of the [customer](https://docs.stripe.com/api/customers) to whom an OutboundPayment is sent.
+* `customer` - ID of the customer to whom the OutboundPayment is sent. Must match the Customer attached to the `destination_payment_method` passed in.
 * `description` - An arbitrary string attached to the object. Often useful for displaying to users.
-* `destination_payment_method` - The PaymentMethod via which an OutboundPayment is sent. This field can be empty if the OutboundPayment was created using `destination_payment_method_data`.
+* `destination_payment_method` - The PaymentMethod to use as the payment instrument for the OutboundPayment. Exclusive with `destination_payment_method_data`.
+* `destination_payment_method_data` - Hash used to generate the PaymentMethod to be used for this OutboundPayment. Exclusive with `destination_payment_method`. See [`destination_payment_method_data`](#destination_payment_method_data) below.
 * `destination_payment_method_details` - Details about the PaymentMethod for an OutboundPayment. See [`destination_payment_method_details`](#destination_payment_method_details) below.
-* `end_user_details` - Details about the end user. See [`end_user_details`](#end_user_details) below.
+* `destination_payment_method_options` - Payment method-specific configuration for this OutboundPayment. See [`destination_payment_method_options`](#destination_payment_method_options) below.
+* `end_user_details` - End user details. See [`end_user_details`](#end_user_details) below.
 * `expected_arrival_date` - The date when funds are expected to arrive in the destination account.
-* `financial_account` - The FinancialAccount that funds were pulled from.
+* `financial_account` - The FinancialAccount to pull funds from.
 * `hosted_regulatory_receipt_url` - A [hosted transaction receipt](https://docs.stripe.com/treasury/moving-money/regulatory-receipts) URL that is provided when money movement is considered regulated under Stripe's money transmission licenses.
 * `livemode` - If the object exists in live mode, the value is `true`. If the object exists in test mode, the value is `false`.
-* `metadata` - Set of [key-value pairs](https://docs.stripe.com/api/metadata) that you can attach to an object. This can be useful for storing additional information about the object in a structured format.
+* `metadata` - Set of [key-value pairs](https://docs.stripe.com/api/metadata) that you can attach to an object. This can be useful for storing additional information about the object in a structured format. Individual keys can be unset by posting an empty value to them. All keys can be unset by posting an empty value to `metadata`.
 * `returned_details` - Details about a returned OutboundPayment. Only set when the status is `returned`. See [`returned_details`](#returned_details) below.
-* `statement_descriptor` - The description that appears on the receiving end for an OutboundPayment (for example, bank statement for external bank transfer).
+* `statement_descriptor` - The description that appears on the receiving end for this OutboundPayment (for example, bank statement for external bank transfer). Maximum 10 characters for `ach` payments, 140 characters for `us_domestic_wire` payments, or 500 characters for `stripe` network transfers. Can only include -#.$&*, spaces, and alphanumeric characters. The default value is "payment".
 * `status` - Current status of the OutboundPayment: `processing`, `failed`, `posted`, `returned`, `canceled`. An OutboundPayment is `processing` if it has been created and is pending. The status changes to `posted` once the OutboundPayment has been "confirmed" and funds have left the account, or to `failed` or `canceled`. If an OutboundPayment fails to arrive at its destination, its status will change to `returned`. Possible values: `canceled`, `failed`, `posted`, `processing`, `returned`.
 * `status_transitions` - See [`status_transitions`](#status_transitions) below.
 * `tracking_details` - Details about network-specific tracking information if available. See [`tracking_details`](#tracking_details) below.
 * `transaction` - The Transaction associated with this object.
+
+<a id="destination_payment_method_data"></a>
+### `destination_payment_method_data`
+
+The `destination_payment_method_data` attribute supports:
+
+* `billing_details` - See [`destination_payment_method_data.billing_details`](#destination_payment_method_data.billing_details) below.
+* `financial_account` -
+* `metadata` -
+* `type` - Possible values: `financial_account`, `us_bank_account`.
+* `us_bank_account` - See [`destination_payment_method_data.us_bank_account`](#destination_payment_method_data.us_bank_account) below.
+
+<a id="destination_payment_method_data.billing_details"></a>
+### `destination_payment_method_data.billing_details`
+
+The `destination_payment_method_data.billing_details` attribute supports:
+
+* `address` - See [`destination_payment_method_data.billing_details.address`](#destination_payment_method_data.billing_details.address) below.
+* `email` -
+* `name` -
+* `phone` -
+
+<a id="destination_payment_method_data.billing_details.address"></a>
+### `destination_payment_method_data.billing_details.address`
+
+The `destination_payment_method_data.billing_details.address` attribute supports:
+
+* `city` -
+* `country` -
+* `line1` -
+* `line2` -
+* `postal_code` -
+* `state` -
+
+<a id="destination_payment_method_data.us_bank_account"></a>
+### `destination_payment_method_data.us_bank_account`
+
+The `destination_payment_method_data.us_bank_account` attribute supports:
+
+* `account_holder_type` - Possible values: `company`, `individual`.
+* `account_number` - (Sensitive)
+* `account_type` - Possible values: `checking`, `savings`.
+* `financial_connections_account` -
+* `routing_number` -
 
 <a id="destination_payment_method_details"></a>
 ### `destination_payment_method_details`
@@ -116,6 +162,20 @@ The `destination_payment_method_details.us_bank_account` attribute supports:
 * `mandate` - ID of the mandate used to make this payment.
 * `network` - The network rails used. See the [docs](https://docs.stripe.com/treasury/money-movement/timelines) to learn more about money movement timelines for each network type. Possible values: `ach`, `us_domestic_wire`.
 * `routing_number` - Routing number of the bank account.
+
+<a id="destination_payment_method_options"></a>
+### `destination_payment_method_options`
+
+The `destination_payment_method_options` attribute supports:
+
+* `us_bank_account` - See [`destination_payment_method_options.us_bank_account`](#destination_payment_method_options.us_bank_account) below.
+
+<a id="destination_payment_method_options.us_bank_account"></a>
+### `destination_payment_method_options.us_bank_account`
+
+The `destination_payment_method_options.us_bank_account` attribute supports:
+
+* `network` - Possible values: `ach`, `us_domestic_wire`.
 
 <a id="end_user_details"></a>
 ### `end_user_details`
