@@ -43,7 +43,7 @@ The following arguments are required:
 
 The following arguments are optional:
 
-* `active` - (Optional) Whether the promotion code is currently active. Removing it from the configuration leaves the current value.
+* `active` - (Optional) Whether the promotion code is currently active. Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
 * `code` - (Optional) The customer-facing code. Regardless of case, this code must be unique across all active promotion codes for a specific customer. Valid characters are lower case letters (a-z), upper case letters (A-Z), digits (0-9), and dashes (-). If left blank, we will generate one automatically. Changing it replaces the resource. Removing it from the configuration leaves the current value.
 * `customer` - (Optional) The customer who can use this promotion code. If not set, all customers can use the promotion code. Changing it replaces the resource.
 * `customer_account` - (Optional) The account representing the customer who can use this promotion code. If not set, all customers can use the promotion code. Changing it replaces the resource.
@@ -75,7 +75,7 @@ The `restrictions` attribute supports:
 
 The `restrictions.currency_options` attribute is a map. Each value supports:
 
-* `minimum_amount` - (Optional) Minimum amount required to redeem this Promotion Code into a Coupon (e.g., a purchase must be $100 or more to work). Removing it from the configuration leaves the current value.
+* `minimum_amount` - (Optional) Minimum amount required to redeem this Promotion Code into a Coupon (e.g., a purchase must be $100 or more to work). Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
 
 ## Attribute Reference
 

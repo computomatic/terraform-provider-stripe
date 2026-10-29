@@ -58,11 +58,11 @@ The following arguments are optional:
 * `metadata` - (Optional) Set of [key-value pairs](https://docs.stripe.com/api/metadata) that you can attach to an object. This can be useful for storing additional information about the object in a structured format. Individual keys can be unset by posting an empty value to them. All keys can be unset by posting an empty value to `metadata`.
 * `off_session` - (Optional) Indicates if a customer is on or off-session while an invoice payment is attempted. Defaults to `false` (on-session). Default: not sent.
 * `payment_behavior` - (Optional) Controls how Stripe handles payment when a subscription update requires payment and `collection_method=charge_automatically`. Possible values: `allow_incomplete`, `default_incomplete`, `error_if_incomplete`, `pending_if_incomplete`.
-* `price` - (Optional) The ID of the price object. Removing it from the configuration leaves the current value.
+* `price` - (Optional) The ID of the price object. Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
 * `price_data` - (Optional) Data used to generate a new [Price](https://docs.stripe.com/api/prices) object inline. See [`price_data`](#price_data) below.
 * `proration_behavior` - (Optional) Determines how to handle [prorations](https://docs.stripe.com/billing/subscriptions/prorations) when the billing cycle changes (e.g., when switching plans, resetting `billing_cycle_anchor=now`, or starting a trial), or if an item's `quantity` changes. The default value is `create_prorations`. Possible values: `always_invoice`, `create_prorations`, `none`.
 * `proration_date` - (Optional) If set, the proration will be calculated as though the subscription was updated at the given time. This can be used to apply the same proration that was previewed with the [upcoming invoice](https://docs.stripe.com/api/invoices/create_preview) endpoint.
-* `quantity` - (Optional) The quantity you'd like to apply to the subscription item you're creating. Removing it from the configuration leaves the current value.
+* `quantity` - (Optional) The quantity you'd like to apply to the subscription item you're creating. Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
 * `tax_rates` - (Optional) A list of [Tax Rate](https://docs.stripe.com/api/tax_rates) ids. These Tax Rates will override the [`default_tax_rates`](https://docs.stripe.com/api/subscriptions/create#create_subscription-default_tax_rates) on the Subscription. When updating, pass an empty string to remove previously-defined tax rates.
 
 <a id="billing_thresholds"></a>

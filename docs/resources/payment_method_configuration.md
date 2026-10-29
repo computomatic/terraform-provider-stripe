@@ -35,7 +35,7 @@ resource "stripe_payment_method_configuration" "checkout" {
 The following arguments are optional:
 
 * `acss_debit` - (Optional) Canadian pre-authorized debit payments, check this [page](https://docs.stripe.com/payments/acss-debit) for more details like country availability. Removing it from the configuration leaves the current value. See [`acss_debit`](#acss_debit) below.
-* `active` - (Optional) Whether the configuration can be used for new payments. Default: not sent. Removing it from the configuration leaves the current value.
+* `active` - (Optional) Whether the configuration can be used for new payments. Default: not sent. Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
 * `affirm` - (Optional) [Affirm](https://www.affirm.com/) gives your customers a way to split purchases over a series of payments. Depending on the purchase, they can pay with four interest-free payments (Split Pay) or pay over a longer term (Installments), which might include interest. Check this [page](https://docs.stripe.com/payments/affirm) for more details like country availability. Removing it from the configuration leaves the current value. See [`affirm`](#affirm) below.
 * `afterpay_clearpay` - (Optional) Afterpay gives your customers a way to pay for purchases in installments, check this [page](https://docs.stripe.com/payments/afterpay-clearpay) for more details like country availability. Afterpay is particularly popular among businesses selling fashion, beauty, and sports products. Removing it from the configuration leaves the current value. See [`afterpay_clearpay`](#afterpay_clearpay) below.
 * `alipay` - (Optional) Alipay is a digital wallet in China that has more than a billion active users worldwide. Alipay users can pay on the web or on a mobile device using login credentials or their Alipay app. Alipay has a low dispute rate and reduces fraud by authenticating payments using the customer's login credentials. Check this [page](https://docs.stripe.com/payments/alipay) for more details. Removing it from the configuration leaves the current value. See [`alipay`](#alipay) below.
@@ -71,7 +71,7 @@ The following arguments are optional:
 * `mb_way` - (Optional) MB WAY is the most popular wallet in Portugal. After entering their phone number in your checkout, customers approve the payment directly in their MB WAY app. Check this [page](https://docs.stripe.com/payments/mb-way) for more details. Removing it from the configuration leaves the current value. See [`mb_way`](#mb_way) below.
 * `mobilepay` - (Optional) MobilePay is a [single-use](https://docs.stripe.com/payments/payment-methods#usage) card wallet payment method used in Denmark and Finland. It allows customers to [authenticate and approve](https://docs.stripe.com/payments/payment-methods#customer-actions) payments using the MobilePay app. Check this [page](https://docs.stripe.com/payments/mobilepay) for more details. Removing it from the configuration leaves the current value. See [`mobilepay`](#mobilepay) below.
 * `multibanco` - (Optional) Stripe users in Europe and the United States can accept Multibanco payments from customers in Portugal using [Sources](https://stripe.com/docs/sources)—a single integration path for creating payments using any supported method. Removing it from the configuration leaves the current value. See [`multibanco`](#multibanco) below.
-* `name` - (Optional) Configuration name. Removing it from the configuration leaves the current value.
+* `name` - (Optional) Configuration name. Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
 * `naver_pay` - (Optional) Naver Pay is a popular local wallet available in South Korea. Removing it from the configuration leaves the current value. See [`naver_pay`](#naver_pay) below.
 * `nz_bank_account` - (Optional) Stripe users in New Zealand can accept Bulk Electronic Clearing System (BECS) direct debit payments from customers with a New Zeland bank account. Check this [page](https://docs.stripe.com/payments/nz-bank-account) for more details. Removing it from the configuration leaves the current value. See [`nz_bank_account`](#nz_bank_account) below.
 * `oxxo` - (Optional) OXXO is a Mexican chain of convenience stores with thousands of locations across Latin America and represents nearly 20% of online transactions in Mexico. OXXO allows customers to pay bills and online purchases in-store with cash. Check this [page](https://docs.stripe.com/payments/oxxo) for more details. Removing it from the configuration leaves the current value. See [`oxxo`](#oxxo) below.
@@ -114,7 +114,7 @@ The `acss_debit` attribute supports:
 The `acss_debit.display_preference` attribute supports:
 
 * `overridable` - (Read-Only) For child configs, whether or not the account's preference will be observed. If `false`, the parent configuration's default is used.
-* `preference` - (Optional) The account's display preference. Possible values: `none`, `off`, `on`. Removing it from the configuration leaves the current value.
+* `preference` - (Optional) The account's display preference. Possible values: `none`, `off`, `on`. Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
 * `value` - (Read-Only) The effective display preference value. Possible values: `off`, `on`.
 
 <a id="affirm"></a>
@@ -131,7 +131,7 @@ The `affirm` attribute supports:
 The `affirm.display_preference` attribute supports:
 
 * `overridable` - (Read-Only) For child configs, whether or not the account's preference will be observed. If `false`, the parent configuration's default is used.
-* `preference` - (Optional) The account's display preference. Possible values: `none`, `off`, `on`. Removing it from the configuration leaves the current value.
+* `preference` - (Optional) The account's display preference. Possible values: `none`, `off`, `on`. Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
 * `value` - (Read-Only) The effective display preference value. Possible values: `off`, `on`.
 
 <a id="afterpay_clearpay"></a>
@@ -148,7 +148,7 @@ The `afterpay_clearpay` attribute supports:
 The `afterpay_clearpay.display_preference` attribute supports:
 
 * `overridable` - (Read-Only) For child configs, whether or not the account's preference will be observed. If `false`, the parent configuration's default is used.
-* `preference` - (Optional) The account's display preference. Possible values: `none`, `off`, `on`. Removing it from the configuration leaves the current value.
+* `preference` - (Optional) The account's display preference. Possible values: `none`, `off`, `on`. Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
 * `value` - (Read-Only) The effective display preference value. Possible values: `off`, `on`.
 
 <a id="alipay"></a>
@@ -165,7 +165,7 @@ The `alipay` attribute supports:
 The `alipay.display_preference` attribute supports:
 
 * `overridable` - (Read-Only) For child configs, whether or not the account's preference will be observed. If `false`, the parent configuration's default is used.
-* `preference` - (Optional) The account's display preference. Possible values: `none`, `off`, `on`. Removing it from the configuration leaves the current value.
+* `preference` - (Optional) The account's display preference. Possible values: `none`, `off`, `on`. Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
 * `value` - (Read-Only) The effective display preference value. Possible values: `off`, `on`.
 
 <a id="alma"></a>
@@ -182,7 +182,7 @@ The `alma` attribute supports:
 The `alma.display_preference` attribute supports:
 
 * `overridable` - (Read-Only) For child configs, whether or not the account's preference will be observed. If `false`, the parent configuration's default is used.
-* `preference` - (Optional) The account's display preference. Possible values: `none`, `off`, `on`. Removing it from the configuration leaves the current value.
+* `preference` - (Optional) The account's display preference. Possible values: `none`, `off`, `on`. Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
 * `value` - (Read-Only) The effective display preference value. Possible values: `off`, `on`.
 
 <a id="amazon_pay"></a>
@@ -199,7 +199,7 @@ The `amazon_pay` attribute supports:
 The `amazon_pay.display_preference` attribute supports:
 
 * `overridable` - (Read-Only) For child configs, whether or not the account's preference will be observed. If `false`, the parent configuration's default is used.
-* `preference` - (Optional) The account's display preference. Possible values: `none`, `off`, `on`. Removing it from the configuration leaves the current value.
+* `preference` - (Optional) The account's display preference. Possible values: `none`, `off`, `on`. Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
 * `value` - (Read-Only) The effective display preference value. Possible values: `off`, `on`.
 
 <a id="apple_pay"></a>
@@ -216,7 +216,7 @@ The `apple_pay` attribute supports:
 The `apple_pay.display_preference` attribute supports:
 
 * `overridable` - (Read-Only) For child configs, whether or not the account's preference will be observed. If `false`, the parent configuration's default is used.
-* `preference` - (Optional) The account's display preference. Possible values: `none`, `off`, `on`. Removing it from the configuration leaves the current value.
+* `preference` - (Optional) The account's display preference. Possible values: `none`, `off`, `on`. Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
 * `value` - (Read-Only) The effective display preference value. Possible values: `off`, `on`.
 
 <a id="apple_pay_later"></a>
@@ -247,7 +247,7 @@ The `au_becs_debit` attribute supports:
 The `au_becs_debit.display_preference` attribute supports:
 
 * `overridable` - (Read-Only) For child configs, whether or not the account's preference will be observed. If `false`, the parent configuration's default is used.
-* `preference` - (Optional) The account's display preference. Possible values: `none`, `off`, `on`. Removing it from the configuration leaves the current value.
+* `preference` - (Optional) The account's display preference. Possible values: `none`, `off`, `on`. Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
 * `value` - (Read-Only) The effective display preference value. Possible values: `off`, `on`.
 
 <a id="bacs_debit"></a>
@@ -264,7 +264,7 @@ The `bacs_debit` attribute supports:
 The `bacs_debit.display_preference` attribute supports:
 
 * `overridable` - (Read-Only) For child configs, whether or not the account's preference will be observed. If `false`, the parent configuration's default is used.
-* `preference` - (Optional) The account's display preference. Possible values: `none`, `off`, `on`. Removing it from the configuration leaves the current value.
+* `preference` - (Optional) The account's display preference. Possible values: `none`, `off`, `on`. Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
 * `value` - (Read-Only) The effective display preference value. Possible values: `off`, `on`.
 
 <a id="bancontact"></a>
@@ -281,7 +281,7 @@ The `bancontact` attribute supports:
 The `bancontact.display_preference` attribute supports:
 
 * `overridable` - (Read-Only) For child configs, whether or not the account's preference will be observed. If `false`, the parent configuration's default is used.
-* `preference` - (Optional) The account's display preference. Possible values: `none`, `off`, `on`. Removing it from the configuration leaves the current value.
+* `preference` - (Optional) The account's display preference. Possible values: `none`, `off`, `on`. Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
 * `value` - (Read-Only) The effective display preference value. Possible values: `off`, `on`.
 
 <a id="billie"></a>
@@ -298,7 +298,7 @@ The `billie` attribute supports:
 The `billie.display_preference` attribute supports:
 
 * `overridable` - (Read-Only) For child configs, whether or not the account's preference will be observed. If `false`, the parent configuration's default is used.
-* `preference` - (Optional) The account's display preference. Possible values: `none`, `off`, `on`. Removing it from the configuration leaves the current value.
+* `preference` - (Optional) The account's display preference. Possible values: `none`, `off`, `on`. Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
 * `value` - (Read-Only) The effective display preference value. Possible values: `off`, `on`.
 
 <a id="bizum"></a>
@@ -315,7 +315,7 @@ The `bizum` attribute supports:
 The `bizum.display_preference` attribute supports:
 
 * `overridable` - (Read-Only) For child configs, whether or not the account's preference will be observed. If `false`, the parent configuration's default is used.
-* `preference` - (Optional) The account's display preference. Possible values: `none`, `off`, `on`. Removing it from the configuration leaves the current value.
+* `preference` - (Optional) The account's display preference. Possible values: `none`, `off`, `on`. Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
 * `value` - (Read-Only) The effective display preference value. Possible values: `off`, `on`.
 
 <a id="blik"></a>
@@ -332,7 +332,7 @@ The `blik` attribute supports:
 The `blik.display_preference` attribute supports:
 
 * `overridable` - (Read-Only) For child configs, whether or not the account's preference will be observed. If `false`, the parent configuration's default is used.
-* `preference` - (Optional) The account's display preference. Possible values: `none`, `off`, `on`. Removing it from the configuration leaves the current value.
+* `preference` - (Optional) The account's display preference. Possible values: `none`, `off`, `on`. Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
 * `value` - (Read-Only) The effective display preference value. Possible values: `off`, `on`.
 
 <a id="boleto"></a>
@@ -349,7 +349,7 @@ The `boleto` attribute supports:
 The `boleto.display_preference` attribute supports:
 
 * `overridable` - (Read-Only) For child configs, whether or not the account's preference will be observed. If `false`, the parent configuration's default is used.
-* `preference` - (Optional) The account's display preference. Possible values: `none`, `off`, `on`. Removing it from the configuration leaves the current value.
+* `preference` - (Optional) The account's display preference. Possible values: `none`, `off`, `on`. Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
 * `value` - (Read-Only) The effective display preference value. Possible values: `off`, `on`.
 
 <a id="card"></a>
@@ -366,7 +366,7 @@ The `card` attribute supports:
 The `card.display_preference` attribute supports:
 
 * `overridable` - (Read-Only) For child configs, whether or not the account's preference will be observed. If `false`, the parent configuration's default is used.
-* `preference` - (Optional) The account's display preference. Possible values: `none`, `off`, `on`. Removing it from the configuration leaves the current value.
+* `preference` - (Optional) The account's display preference. Possible values: `none`, `off`, `on`. Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
 * `value` - (Read-Only) The effective display preference value. Possible values: `off`, `on`.
 
 <a id="cartes_bancaires"></a>
@@ -383,7 +383,7 @@ The `cartes_bancaires` attribute supports:
 The `cartes_bancaires.display_preference` attribute supports:
 
 * `overridable` - (Read-Only) For child configs, whether or not the account's preference will be observed. If `false`, the parent configuration's default is used.
-* `preference` - (Optional) The account's display preference. Possible values: `none`, `off`, `on`. Removing it from the configuration leaves the current value.
+* `preference` - (Optional) The account's display preference. Possible values: `none`, `off`, `on`. Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
 * `value` - (Read-Only) The effective display preference value. Possible values: `off`, `on`.
 
 <a id="cashapp"></a>
@@ -400,7 +400,7 @@ The `cashapp` attribute supports:
 The `cashapp.display_preference` attribute supports:
 
 * `overridable` - (Read-Only) For child configs, whether or not the account's preference will be observed. If `false`, the parent configuration's default is used.
-* `preference` - (Optional) The account's display preference. Possible values: `none`, `off`, `on`. Removing it from the configuration leaves the current value.
+* `preference` - (Optional) The account's display preference. Possible values: `none`, `off`, `on`. Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
 * `value` - (Read-Only) The effective display preference value. Possible values: `off`, `on`.
 
 <a id="crypto"></a>
@@ -417,7 +417,7 @@ The `crypto` attribute supports:
 The `crypto.display_preference` attribute supports:
 
 * `overridable` - (Read-Only) For child configs, whether or not the account's preference will be observed. If `false`, the parent configuration's default is used.
-* `preference` - (Optional) The account's display preference. Possible values: `none`, `off`, `on`. Removing it from the configuration leaves the current value.
+* `preference` - (Optional) The account's display preference. Possible values: `none`, `off`, `on`. Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
 * `value` - (Read-Only) The effective display preference value. Possible values: `off`, `on`.
 
 <a id="customer_balance"></a>
@@ -434,7 +434,7 @@ The `customer_balance` attribute supports:
 The `customer_balance.display_preference` attribute supports:
 
 * `overridable` - (Read-Only) For child configs, whether or not the account's preference will be observed. If `false`, the parent configuration's default is used.
-* `preference` - (Optional) The account's display preference. Possible values: `none`, `off`, `on`. Removing it from the configuration leaves the current value.
+* `preference` - (Optional) The account's display preference. Possible values: `none`, `off`, `on`. Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
 * `value` - (Read-Only) The effective display preference value. Possible values: `off`, `on`.
 
 <a id="eps"></a>
@@ -451,7 +451,7 @@ The `eps` attribute supports:
 The `eps.display_preference` attribute supports:
 
 * `overridable` - (Read-Only) For child configs, whether or not the account's preference will be observed. If `false`, the parent configuration's default is used.
-* `preference` - (Optional) The account's display preference. Possible values: `none`, `off`, `on`. Removing it from the configuration leaves the current value.
+* `preference` - (Optional) The account's display preference. Possible values: `none`, `off`, `on`. Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
 * `value` - (Read-Only) The effective display preference value. Possible values: `off`, `on`.
 
 <a id="fpx"></a>
@@ -468,7 +468,7 @@ The `fpx` attribute supports:
 The `fpx.display_preference` attribute supports:
 
 * `overridable` - (Read-Only) For child configs, whether or not the account's preference will be observed. If `false`, the parent configuration's default is used.
-* `preference` - (Optional) The account's display preference. Possible values: `none`, `off`, `on`. Removing it from the configuration leaves the current value.
+* `preference` - (Optional) The account's display preference. Possible values: `none`, `off`, `on`. Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
 * `value` - (Read-Only) The effective display preference value. Possible values: `off`, `on`.
 
 <a id="fr_meal_voucher_conecs"></a>
@@ -499,7 +499,7 @@ The `giropay` attribute supports:
 The `giropay.display_preference` attribute supports:
 
 * `overridable` - (Read-Only) For child configs, whether or not the account's preference will be observed. If `false`, the parent configuration's default is used.
-* `preference` - (Optional) The account's display preference. Possible values: `none`, `off`, `on`. Removing it from the configuration leaves the current value.
+* `preference` - (Optional) The account's display preference. Possible values: `none`, `off`, `on`. Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
 * `value` - (Read-Only) The effective display preference value. Possible values: `off`, `on`.
 
 <a id="google_pay"></a>
@@ -516,7 +516,7 @@ The `google_pay` attribute supports:
 The `google_pay.display_preference` attribute supports:
 
 * `overridable` - (Read-Only) For child configs, whether or not the account's preference will be observed. If `false`, the parent configuration's default is used.
-* `preference` - (Optional) The account's display preference. Possible values: `none`, `off`, `on`. Removing it from the configuration leaves the current value.
+* `preference` - (Optional) The account's display preference. Possible values: `none`, `off`, `on`. Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
 * `value` - (Read-Only) The effective display preference value. Possible values: `off`, `on`.
 
 <a id="grabpay"></a>
@@ -533,7 +533,7 @@ The `grabpay` attribute supports:
 The `grabpay.display_preference` attribute supports:
 
 * `overridable` - (Read-Only) For child configs, whether or not the account's preference will be observed. If `false`, the parent configuration's default is used.
-* `preference` - (Optional) The account's display preference. Possible values: `none`, `off`, `on`. Removing it from the configuration leaves the current value.
+* `preference` - (Optional) The account's display preference. Possible values: `none`, `off`, `on`. Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
 * `value` - (Read-Only) The effective display preference value. Possible values: `off`, `on`.
 
 <a id="ideal"></a>
@@ -550,7 +550,7 @@ The `ideal` attribute supports:
 The `ideal.display_preference` attribute supports:
 
 * `overridable` - (Read-Only) For child configs, whether or not the account's preference will be observed. If `false`, the parent configuration's default is used.
-* `preference` - (Optional) The account's display preference. Possible values: `none`, `off`, `on`. Removing it from the configuration leaves the current value.
+* `preference` - (Optional) The account's display preference. Possible values: `none`, `off`, `on`. Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
 * `value` - (Read-Only) The effective display preference value. Possible values: `off`, `on`.
 
 <a id="jcb"></a>
@@ -567,7 +567,7 @@ The `jcb` attribute supports:
 The `jcb.display_preference` attribute supports:
 
 * `overridable` - (Read-Only) For child configs, whether or not the account's preference will be observed. If `false`, the parent configuration's default is used.
-* `preference` - (Optional) The account's display preference. Possible values: `none`, `off`, `on`. Removing it from the configuration leaves the current value.
+* `preference` - (Optional) The account's display preference. Possible values: `none`, `off`, `on`. Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
 * `value` - (Read-Only) The effective display preference value. Possible values: `off`, `on`.
 
 <a id="kakao_pay"></a>
@@ -584,7 +584,7 @@ The `kakao_pay` attribute supports:
 The `kakao_pay.display_preference` attribute supports:
 
 * `overridable` - (Read-Only) For child configs, whether or not the account's preference will be observed. If `false`, the parent configuration's default is used.
-* `preference` - (Optional) The account's display preference. Possible values: `none`, `off`, `on`. Removing it from the configuration leaves the current value.
+* `preference` - (Optional) The account's display preference. Possible values: `none`, `off`, `on`. Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
 * `value` - (Read-Only) The effective display preference value. Possible values: `off`, `on`.
 
 <a id="klarna"></a>
@@ -601,7 +601,7 @@ The `klarna` attribute supports:
 The `klarna.display_preference` attribute supports:
 
 * `overridable` - (Read-Only) For child configs, whether or not the account's preference will be observed. If `false`, the parent configuration's default is used.
-* `preference` - (Optional) The account's display preference. Possible values: `none`, `off`, `on`. Removing it from the configuration leaves the current value.
+* `preference` - (Optional) The account's display preference. Possible values: `none`, `off`, `on`. Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
 * `value` - (Read-Only) The effective display preference value. Possible values: `off`, `on`.
 
 <a id="konbini"></a>
@@ -618,7 +618,7 @@ The `konbini` attribute supports:
 The `konbini.display_preference` attribute supports:
 
 * `overridable` - (Read-Only) For child configs, whether or not the account's preference will be observed. If `false`, the parent configuration's default is used.
-* `preference` - (Optional) The account's display preference. Possible values: `none`, `off`, `on`. Removing it from the configuration leaves the current value.
+* `preference` - (Optional) The account's display preference. Possible values: `none`, `off`, `on`. Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
 * `value` - (Read-Only) The effective display preference value. Possible values: `off`, `on`.
 
 <a id="kr_card"></a>
@@ -635,7 +635,7 @@ The `kr_card` attribute supports:
 The `kr_card.display_preference` attribute supports:
 
 * `overridable` - (Read-Only) For child configs, whether or not the account's preference will be observed. If `false`, the parent configuration's default is used.
-* `preference` - (Optional) The account's display preference. Possible values: `none`, `off`, `on`. Removing it from the configuration leaves the current value.
+* `preference` - (Optional) The account's display preference. Possible values: `none`, `off`, `on`. Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
 * `value` - (Read-Only) The effective display preference value. Possible values: `off`, `on`.
 
 <a id="link"></a>
@@ -652,7 +652,7 @@ The `link` attribute supports:
 The `link.display_preference` attribute supports:
 
 * `overridable` - (Read-Only) For child configs, whether or not the account's preference will be observed. If `false`, the parent configuration's default is used.
-* `preference` - (Optional) The account's display preference. Possible values: `none`, `off`, `on`. Removing it from the configuration leaves the current value.
+* `preference` - (Optional) The account's display preference. Possible values: `none`, `off`, `on`. Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
 * `value` - (Read-Only) The effective display preference value. Possible values: `off`, `on`.
 
 <a id="mb_way"></a>
@@ -669,7 +669,7 @@ The `mb_way` attribute supports:
 The `mb_way.display_preference` attribute supports:
 
 * `overridable` - (Read-Only) For child configs, whether or not the account's preference will be observed. If `false`, the parent configuration's default is used.
-* `preference` - (Optional) The account's display preference. Possible values: `none`, `off`, `on`. Removing it from the configuration leaves the current value.
+* `preference` - (Optional) The account's display preference. Possible values: `none`, `off`, `on`. Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
 * `value` - (Read-Only) The effective display preference value. Possible values: `off`, `on`.
 
 <a id="mobilepay"></a>
@@ -686,7 +686,7 @@ The `mobilepay` attribute supports:
 The `mobilepay.display_preference` attribute supports:
 
 * `overridable` - (Read-Only) For child configs, whether or not the account's preference will be observed. If `false`, the parent configuration's default is used.
-* `preference` - (Optional) The account's display preference. Possible values: `none`, `off`, `on`. Removing it from the configuration leaves the current value.
+* `preference` - (Optional) The account's display preference. Possible values: `none`, `off`, `on`. Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
 * `value` - (Read-Only) The effective display preference value. Possible values: `off`, `on`.
 
 <a id="multibanco"></a>
@@ -703,7 +703,7 @@ The `multibanco` attribute supports:
 The `multibanco.display_preference` attribute supports:
 
 * `overridable` - (Read-Only) For child configs, whether or not the account's preference will be observed. If `false`, the parent configuration's default is used.
-* `preference` - (Optional) The account's display preference. Possible values: `none`, `off`, `on`. Removing it from the configuration leaves the current value.
+* `preference` - (Optional) The account's display preference. Possible values: `none`, `off`, `on`. Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
 * `value` - (Read-Only) The effective display preference value. Possible values: `off`, `on`.
 
 <a id="naver_pay"></a>
@@ -720,7 +720,7 @@ The `naver_pay` attribute supports:
 The `naver_pay.display_preference` attribute supports:
 
 * `overridable` - (Read-Only) For child configs, whether or not the account's preference will be observed. If `false`, the parent configuration's default is used.
-* `preference` - (Optional) The account's display preference. Possible values: `none`, `off`, `on`. Removing it from the configuration leaves the current value.
+* `preference` - (Optional) The account's display preference. Possible values: `none`, `off`, `on`. Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
 * `value` - (Read-Only) The effective display preference value. Possible values: `off`, `on`.
 
 <a id="nz_bank_account"></a>
@@ -737,7 +737,7 @@ The `nz_bank_account` attribute supports:
 The `nz_bank_account.display_preference` attribute supports:
 
 * `overridable` - (Read-Only) For child configs, whether or not the account's preference will be observed. If `false`, the parent configuration's default is used.
-* `preference` - (Optional) The account's display preference. Possible values: `none`, `off`, `on`. Removing it from the configuration leaves the current value.
+* `preference` - (Optional) The account's display preference. Possible values: `none`, `off`, `on`. Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
 * `value` - (Read-Only) The effective display preference value. Possible values: `off`, `on`.
 
 <a id="oxxo"></a>
@@ -754,7 +754,7 @@ The `oxxo` attribute supports:
 The `oxxo.display_preference` attribute supports:
 
 * `overridable` - (Read-Only) For child configs, whether or not the account's preference will be observed. If `false`, the parent configuration's default is used.
-* `preference` - (Optional) The account's display preference. Possible values: `none`, `off`, `on`. Removing it from the configuration leaves the current value.
+* `preference` - (Optional) The account's display preference. Possible values: `none`, `off`, `on`. Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
 * `value` - (Read-Only) The effective display preference value. Possible values: `off`, `on`.
 
 <a id="p24"></a>
@@ -771,7 +771,7 @@ The `p24` attribute supports:
 The `p24.display_preference` attribute supports:
 
 * `overridable` - (Read-Only) For child configs, whether or not the account's preference will be observed. If `false`, the parent configuration's default is used.
-* `preference` - (Optional) The account's display preference. Possible values: `none`, `off`, `on`. Removing it from the configuration leaves the current value.
+* `preference` - (Optional) The account's display preference. Possible values: `none`, `off`, `on`. Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
 * `value` - (Read-Only) The effective display preference value. Possible values: `off`, `on`.
 
 <a id="pay_by_bank"></a>
@@ -788,7 +788,7 @@ The `pay_by_bank` attribute supports:
 The `pay_by_bank.display_preference` attribute supports:
 
 * `overridable` - (Read-Only) For child configs, whether or not the account's preference will be observed. If `false`, the parent configuration's default is used.
-* `preference` - (Optional) The account's display preference. Possible values: `none`, `off`, `on`. Removing it from the configuration leaves the current value.
+* `preference` - (Optional) The account's display preference. Possible values: `none`, `off`, `on`. Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
 * `value` - (Read-Only) The effective display preference value. Possible values: `off`, `on`.
 
 <a id="payco"></a>
@@ -805,7 +805,7 @@ The `payco` attribute supports:
 The `payco.display_preference` attribute supports:
 
 * `overridable` - (Read-Only) For child configs, whether or not the account's preference will be observed. If `false`, the parent configuration's default is used.
-* `preference` - (Optional) The account's display preference. Possible values: `none`, `off`, `on`. Removing it from the configuration leaves the current value.
+* `preference` - (Optional) The account's display preference. Possible values: `none`, `off`, `on`. Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
 * `value` - (Read-Only) The effective display preference value. Possible values: `off`, `on`.
 
 <a id="paynow"></a>
@@ -822,7 +822,7 @@ The `paynow` attribute supports:
 The `paynow.display_preference` attribute supports:
 
 * `overridable` - (Read-Only) For child configs, whether or not the account's preference will be observed. If `false`, the parent configuration's default is used.
-* `preference` - (Optional) The account's display preference. Possible values: `none`, `off`, `on`. Removing it from the configuration leaves the current value.
+* `preference` - (Optional) The account's display preference. Possible values: `none`, `off`, `on`. Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
 * `value` - (Read-Only) The effective display preference value. Possible values: `off`, `on`.
 
 <a id="paypal"></a>
@@ -839,7 +839,7 @@ The `paypal` attribute supports:
 The `paypal.display_preference` attribute supports:
 
 * `overridable` - (Read-Only) For child configs, whether or not the account's preference will be observed. If `false`, the parent configuration's default is used.
-* `preference` - (Optional) The account's display preference. Possible values: `none`, `off`, `on`. Removing it from the configuration leaves the current value.
+* `preference` - (Optional) The account's display preference. Possible values: `none`, `off`, `on`. Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
 * `value` - (Read-Only) The effective display preference value. Possible values: `off`, `on`.
 
 <a id="paypay"></a>
@@ -856,7 +856,7 @@ The `paypay` attribute supports:
 The `paypay.display_preference` attribute supports:
 
 * `overridable` - (Read-Only) For child configs, whether or not the account's preference will be observed. If `false`, the parent configuration's default is used.
-* `preference` - (Optional) The account's display preference. Possible values: `none`, `off`, `on`. Removing it from the configuration leaves the current value.
+* `preference` - (Optional) The account's display preference. Possible values: `none`, `off`, `on`. Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
 * `value` - (Read-Only) The effective display preference value. Possible values: `off`, `on`.
 
 <a id="payto"></a>
@@ -873,7 +873,7 @@ The `payto` attribute supports:
 The `payto.display_preference` attribute supports:
 
 * `overridable` - (Read-Only) For child configs, whether or not the account's preference will be observed. If `false`, the parent configuration's default is used.
-* `preference` - (Optional) The account's display preference. Possible values: `none`, `off`, `on`. Removing it from the configuration leaves the current value.
+* `preference` - (Optional) The account's display preference. Possible values: `none`, `off`, `on`. Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
 * `value` - (Read-Only) The effective display preference value. Possible values: `off`, `on`.
 
 <a id="pix"></a>
@@ -890,7 +890,7 @@ The `pix` attribute supports:
 The `pix.display_preference` attribute supports:
 
 * `overridable` - (Read-Only) For child configs, whether or not the account's preference will be observed. If `false`, the parent configuration's default is used.
-* `preference` - (Optional) The account's display preference. Possible values: `none`, `off`, `on`. Removing it from the configuration leaves the current value.
+* `preference` - (Optional) The account's display preference. Possible values: `none`, `off`, `on`. Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
 * `value` - (Read-Only) The effective display preference value. Possible values: `off`, `on`.
 
 <a id="promptpay"></a>
@@ -907,7 +907,7 @@ The `promptpay` attribute supports:
 The `promptpay.display_preference` attribute supports:
 
 * `overridable` - (Read-Only) For child configs, whether or not the account's preference will be observed. If `false`, the parent configuration's default is used.
-* `preference` - (Optional) The account's display preference. Possible values: `none`, `off`, `on`. Removing it from the configuration leaves the current value.
+* `preference` - (Optional) The account's display preference. Possible values: `none`, `off`, `on`. Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
 * `value` - (Read-Only) The effective display preference value. Possible values: `off`, `on`.
 
 <a id="revolut_pay"></a>
@@ -924,7 +924,7 @@ The `revolut_pay` attribute supports:
 The `revolut_pay.display_preference` attribute supports:
 
 * `overridable` - (Read-Only) For child configs, whether or not the account's preference will be observed. If `false`, the parent configuration's default is used.
-* `preference` - (Optional) The account's display preference. Possible values: `none`, `off`, `on`. Removing it from the configuration leaves the current value.
+* `preference` - (Optional) The account's display preference. Possible values: `none`, `off`, `on`. Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
 * `value` - (Read-Only) The effective display preference value. Possible values: `off`, `on`.
 
 <a id="samsung_pay"></a>
@@ -941,7 +941,7 @@ The `samsung_pay` attribute supports:
 The `samsung_pay.display_preference` attribute supports:
 
 * `overridable` - (Read-Only) For child configs, whether or not the account's preference will be observed. If `false`, the parent configuration's default is used.
-* `preference` - (Optional) The account's display preference. Possible values: `none`, `off`, `on`. Removing it from the configuration leaves the current value.
+* `preference` - (Optional) The account's display preference. Possible values: `none`, `off`, `on`. Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
 * `value` - (Read-Only) The effective display preference value. Possible values: `off`, `on`.
 
 <a id="satispay"></a>
@@ -958,7 +958,7 @@ The `satispay` attribute supports:
 The `satispay.display_preference` attribute supports:
 
 * `overridable` - (Read-Only) For child configs, whether or not the account's preference will be observed. If `false`, the parent configuration's default is used.
-* `preference` - (Optional) The account's display preference. Possible values: `none`, `off`, `on`. Removing it from the configuration leaves the current value.
+* `preference` - (Optional) The account's display preference. Possible values: `none`, `off`, `on`. Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
 * `value` - (Read-Only) The effective display preference value. Possible values: `off`, `on`.
 
 <a id="scalapay"></a>
@@ -975,7 +975,7 @@ The `scalapay` attribute supports:
 The `scalapay.display_preference` attribute supports:
 
 * `overridable` - (Read-Only) For child configs, whether or not the account's preference will be observed. If `false`, the parent configuration's default is used.
-* `preference` - (Optional) The account's display preference. Possible values: `none`, `off`, `on`. Removing it from the configuration leaves the current value.
+* `preference` - (Optional) The account's display preference. Possible values: `none`, `off`, `on`. Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
 * `value` - (Read-Only) The effective display preference value. Possible values: `off`, `on`.
 
 <a id="sepa_debit"></a>
@@ -992,7 +992,7 @@ The `sepa_debit` attribute supports:
 The `sepa_debit.display_preference` attribute supports:
 
 * `overridable` - (Read-Only) For child configs, whether or not the account's preference will be observed. If `false`, the parent configuration's default is used.
-* `preference` - (Optional) The account's display preference. Possible values: `none`, `off`, `on`. Removing it from the configuration leaves the current value.
+* `preference` - (Optional) The account's display preference. Possible values: `none`, `off`, `on`. Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
 * `value` - (Read-Only) The effective display preference value. Possible values: `off`, `on`.
 
 <a id="sequra"></a>
@@ -1009,7 +1009,7 @@ The `sequra` attribute supports:
 The `sequra.display_preference` attribute supports:
 
 * `overridable` - (Read-Only) For child configs, whether or not the account's preference will be observed. If `false`, the parent configuration's default is used.
-* `preference` - (Optional) The account's display preference. Possible values: `none`, `off`, `on`. Removing it from the configuration leaves the current value.
+* `preference` - (Optional) The account's display preference. Possible values: `none`, `off`, `on`. Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
 * `value` - (Read-Only) The effective display preference value. Possible values: `off`, `on`.
 
 <a id="sofort"></a>
@@ -1026,7 +1026,7 @@ The `sofort` attribute supports:
 The `sofort.display_preference` attribute supports:
 
 * `overridable` - (Read-Only) For child configs, whether or not the account's preference will be observed. If `false`, the parent configuration's default is used.
-* `preference` - (Optional) The account's display preference. Possible values: `none`, `off`, `on`. Removing it from the configuration leaves the current value.
+* `preference` - (Optional) The account's display preference. Possible values: `none`, `off`, `on`. Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
 * `value` - (Read-Only) The effective display preference value. Possible values: `off`, `on`.
 
 <a id="sunbit"></a>
@@ -1043,7 +1043,7 @@ The `sunbit` attribute supports:
 The `sunbit.display_preference` attribute supports:
 
 * `overridable` - (Read-Only) For child configs, whether or not the account's preference will be observed. If `false`, the parent configuration's default is used.
-* `preference` - (Optional) The account's display preference. Possible values: `none`, `off`, `on`. Removing it from the configuration leaves the current value.
+* `preference` - (Optional) The account's display preference. Possible values: `none`, `off`, `on`. Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
 * `value` - (Read-Only) The effective display preference value. Possible values: `off`, `on`.
 
 <a id="swish"></a>
@@ -1060,7 +1060,7 @@ The `swish` attribute supports:
 The `swish.display_preference` attribute supports:
 
 * `overridable` - (Read-Only) For child configs, whether or not the account's preference will be observed. If `false`, the parent configuration's default is used.
-* `preference` - (Optional) The account's display preference. Possible values: `none`, `off`, `on`. Removing it from the configuration leaves the current value.
+* `preference` - (Optional) The account's display preference. Possible values: `none`, `off`, `on`. Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
 * `value` - (Read-Only) The effective display preference value. Possible values: `off`, `on`.
 
 <a id="twint"></a>
@@ -1077,7 +1077,7 @@ The `twint` attribute supports:
 The `twint.display_preference` attribute supports:
 
 * `overridable` - (Read-Only) For child configs, whether or not the account's preference will be observed. If `false`, the parent configuration's default is used.
-* `preference` - (Optional) The account's display preference. Possible values: `none`, `off`, `on`. Removing it from the configuration leaves the current value.
+* `preference` - (Optional) The account's display preference. Possible values: `none`, `off`, `on`. Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
 * `value` - (Read-Only) The effective display preference value. Possible values: `off`, `on`.
 
 <a id="upi"></a>
@@ -1094,7 +1094,7 @@ The `upi` attribute supports:
 The `upi.display_preference` attribute supports:
 
 * `overridable` - (Read-Only) For child configs, whether or not the account's preference will be observed. If `false`, the parent configuration's default is used.
-* `preference` - (Optional) The account's display preference. Possible values: `none`, `off`, `on`. Removing it from the configuration leaves the current value.
+* `preference` - (Optional) The account's display preference. Possible values: `none`, `off`, `on`. Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
 * `value` - (Read-Only) The effective display preference value. Possible values: `off`, `on`.
 
 <a id="us_bank_account"></a>
@@ -1111,7 +1111,7 @@ The `us_bank_account` attribute supports:
 The `us_bank_account.display_preference` attribute supports:
 
 * `overridable` - (Read-Only) For child configs, whether or not the account's preference will be observed. If `false`, the parent configuration's default is used.
-* `preference` - (Optional) The account's display preference. Possible values: `none`, `off`, `on`. Removing it from the configuration leaves the current value.
+* `preference` - (Optional) The account's display preference. Possible values: `none`, `off`, `on`. Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
 * `value` - (Read-Only) The effective display preference value. Possible values: `off`, `on`.
 
 <a id="wechat_pay"></a>
@@ -1128,7 +1128,7 @@ The `wechat_pay` attribute supports:
 The `wechat_pay.display_preference` attribute supports:
 
 * `overridable` - (Read-Only) For child configs, whether or not the account's preference will be observed. If `false`, the parent configuration's default is used.
-* `preference` - (Optional) The account's display preference. Possible values: `none`, `off`, `on`. Removing it from the configuration leaves the current value.
+* `preference` - (Optional) The account's display preference. Possible values: `none`, `off`, `on`. Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
 * `value` - (Read-Only) The effective display preference value. Possible values: `off`, `on`.
 
 <a id="zip"></a>
@@ -1145,7 +1145,7 @@ The `zip` attribute supports:
 The `zip.display_preference` attribute supports:
 
 * `overridable` - (Read-Only) For child configs, whether or not the account's preference will be observed. If `false`, the parent configuration's default is used.
-* `preference` - (Optional) The account's display preference. Possible values: `none`, `off`, `on`. Removing it from the configuration leaves the current value.
+* `preference` - (Optional) The account's display preference. Possible values: `none`, `off`, `on`. Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
 * `value` - (Read-Only) The effective display preference value. Possible values: `off`, `on`.
 
 ## Attribute Reference

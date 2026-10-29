@@ -49,10 +49,6 @@ type pageInput struct {
 	Guides map[string]string
 }
 
-// removalSentence follows the default statement of a resource's Optional and Computed argument
-// (ADR 2026-10-29-full-attribute-coverage, D4 and E2).
-const removalSentence = "Removing it from the configuration leaves the current value."
-
 // page writes the lines and subsections of one page.
 type page struct {
 	*markdown
@@ -131,7 +127,7 @@ func markers(a *attr, labelled bool) string {
 
 // line is one bullet. Its link to a nested attribute's subsection uses the dotted path. An
 // optional argument's line ends with its default statement and, on a resource page where it
-// is also Computed, the removal sentence (D4).
+// is also Computed, the engine's sentence on removing it (D4).
 func (p *page) line(a *attr, path string, labelled bool) string {
 	parts := []string{"*", "`" + a.Name + "`", "-"}
 	if m := markers(a, labelled); m != "" {
@@ -143,12 +139,11 @@ func (p *page) line(a *attr, path string, labelled bool) string {
 		if a.Default != "" {
 			after = append(after, a.Default)
 		}
-		if p.resource && a.Computed {
-			after = append(after, removalSentence)
+		if p.resource && a.Removal != "" {
+			after = append(after, a.Removal)
 		}
 	}
-	// A sentence that follows a description Stripe left without a full stop needs one.
-	if d != "" && len(after) > 0 && !strings.ContainsAny(d[len(d)-1:], ".!?") {
+	if len(after) > 0 && !endsSentence(d) {
 		d += "."
 	}
 	if d != "" {
@@ -163,6 +158,14 @@ func (p *page) line(a *attr, path string, labelled bool) string {
 		}
 	}
 	return strings.Join(parts, " ")
+}
+
+// endsSentence reports whether a description ends a sentence, as a following sentence needs:
+// with a full stop, question or exclamation mark, also inside a closing bracket or quote
+// (`(the default.)`, `"done."`). An empty one needs no full stop.
+func endsSentence(d string) bool {
+	d = strings.TrimRight(d, `)]}"'’”`)
+	return d == "" || strings.ContainsAny(d[len(d)-1:], ".!?")
 }
 
 func (p *page) lineList(attrs []*attr, labelled bool) string {

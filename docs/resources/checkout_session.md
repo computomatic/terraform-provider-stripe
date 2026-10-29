@@ -92,7 +92,7 @@ The following arguments are optional:
 * `setup_intent_data` - (Optional) A subset of parameters to be passed to SetupIntent creation for Checkout Sessions in `setup` mode. Changing it fails the plan, because this resource cannot be replaced. See [`setup_intent_data`](#setup_intent_data) below.
 * `shipping_address_collection` - (Optional) When set, provides configuration for Checkout to collect a shipping address from a customer. Changing it fails the plan, because this resource cannot be replaced. See [`shipping_address_collection`](#shipping_address_collection) below.
 * `shipping_options` - (Optional) The shipping rate options to apply to this Session. Up to a maximum of 5. Removing it from the configuration leaves the current value. See [`shipping_options`](#shipping_options) below.
-* `status` - (Optional) The status of the Checkout Session, one of `open`, `complete`, or `expired`. Possible values: `expired`. Removing it from the configuration leaves the current value.
+* `status` - (Optional) The status of the Checkout Session, one of `open`, `complete`, or `expired`. Possible values: `expired`. Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
 * `submit_type` - (Optional) Describes the type of transaction being performed by Checkout in order to customize relevant text on the page, such as the submit button. `submit_type` can only be specified on Checkout Sessions in `payment` or `subscription` mode. If blank or `auto`, `pay` is used. You can't set this parameter if `ui_mode` is `elements`. Possible values: `auto`, `book`, `donate`, `pay`, `subscribe`. Changing it fails the plan, because this resource cannot be replaced.
 * `subscription_data` - (Optional) A subset of parameters to be passed to subscription creation for Checkout Sessions in `subscription` mode. Changing it fails the plan, because this resource cannot be replaced. See [`subscription_data`](#subscription_data) below.
 * `success_url` - (Optional) The URL to which Stripe should send customers when payment or setup is complete. This parameter is not allowed if ui_mode is `embedded_page` or `elements`. If you'd like to use information from the successful Checkout Session on your page, read the guide on [customizing your success page](https://docs.stripe.com/payments/checkout/custom-success-page). Changing it fails the plan, because this resource cannot be replaced.
@@ -1244,7 +1244,7 @@ The `shipping_address_collection` attribute supports:
 The `shipping_options` attribute is a list. Each element supports:
 
 * `shipping_amount` - (Read-Only) A non-negative integer in cents representing how much to charge.
-* `shipping_rate` - (Optional) The shipping rate. Removing it from the configuration leaves the current value.
+* `shipping_rate` - (Optional) The shipping rate. Removing it from the configuration lets Stripe set it when the list is next sent.
 * `shipping_rate_data` - (Optional) See [`shipping_options.shipping_rate_data`](#shipping_options.shipping_rate_data) below.
 
 <a id="shipping_options.shipping_rate_data"></a>

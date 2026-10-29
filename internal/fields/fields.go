@@ -133,7 +133,7 @@ type Default struct {
 func (d Default) Statement() string {
 	switch d.Kind {
 	case DefaultValue:
-		return "Default (Stripe): " + code(d.Value) + "."
+		return "Default (Stripe): " + Code(d.Value) + "."
 	case DefaultRule:
 		s := "Default (Stripe): " + strings.TrimSuffix(d.Rule, ".")
 		if d.Observed != "" {
@@ -148,17 +148,32 @@ func (d Default) Statement() string {
 		if d.Rule != "" {
 			return "Default (provider): " + strings.TrimSuffix(d.Rule, ".") + "."
 		}
-		return "Default (provider): " + code(d.Value) + "."
+		return "Default (provider): " + Code(d.Value) + "."
 	}
 	return ""
 }
 
-// code is a value as a Markdown code span; the empty string shows as `""`.
-func code(v string) string {
+// Code is a value as a Markdown code span. The empty string shows as `""`, and a value that
+// holds backticks takes a fence one longer than its longest run of them, with a space on each
+// side, which Markdown strips, so that a backtick at either end stays in the value.
+func Code(v string) string {
 	if v == "" {
 		v = `""`
 	}
-	return "`" + v + "`"
+	longest, run := 0, 0
+	for _, r := range v {
+		if r != '`' {
+			run = 0
+			continue
+		}
+		run++
+		longest = max(longest, run)
+	}
+	fence := strings.Repeat("`", longest+1)
+	if longest > 0 {
+		return fence + " " + v + " " + fence
+	}
+	return fence + v + fence
 }
 
 // AttrName returns the Terraform attribute name.

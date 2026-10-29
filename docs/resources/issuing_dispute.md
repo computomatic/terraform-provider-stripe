@@ -56,9 +56,9 @@ The following arguments are required:
 
 The following arguments are optional:
 
-* `amount` - (Optional) The dispute amount in the card's currency and in the [smallest currency unit](https://docs.stripe.com/currencies#zero-decimal). If not set, defaults to the full transaction amount. Removing it from the configuration leaves the current value.
+* `amount` - (Optional) The dispute amount in the card's currency and in the [smallest currency unit](https://docs.stripe.com/currencies#zero-decimal). If not set, defaults to the full transaction amount. Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
 * `metadata` - (Optional) Set of [key-value pairs](https://docs.stripe.com/api/metadata) that you can attach to an object. This can be useful for storing additional information about the object in a structured format. Individual keys can be unset by posting an empty value to them. All keys can be unset by posting an empty value to `metadata`.
-* `status` - (Optional) Current status of the dispute. Possible values: `submitted`. Removing it from the configuration leaves the current value.
+* `status` - (Optional) Current status of the dispute. Possible values: `submitted`. Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
 
 <a id="evidence"></a>
 ### `evidence`

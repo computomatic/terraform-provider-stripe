@@ -73,7 +73,7 @@ The following arguments are optional:
 * `refund_amount` - (Optional) The integer amount in cents (or local equivalent) representing the amount to refund. If set, a refund will be created for the charge associated with the invoice. Changing it fails the plan, because this resource cannot be replaced.
 * `refunds` - (Optional) Refunds to link to this credit note. Changing it fails the plan, because this resource cannot be replaced. Removing it from the configuration leaves the current value. See [`refunds`](#refunds) below.
 * `shipping_cost` - (Optional) When shipping_cost contains the shipping_rate from the invoice, the shipping_cost is included in the credit note. One of `amount`, `lines`, or `shipping_cost` must be provided. Changing it fails the plan, because this resource cannot be replaced. See [`shipping_cost`](#shipping_cost) below.
-* `status` - (Optional) Status of this credit note, one of `issued` or `void`. Learn more about [voiding credit notes](https://docs.stripe.com/billing/invoices/credit-notes#voiding). Possible values: `void`. Removing it from the configuration leaves the current value.
+* `status` - (Optional) Status of this credit note, one of `issued` or `void`. Learn more about [voiding credit notes](https://docs.stripe.com/billing/invoices/credit-notes#voiding). Possible values: `void`. Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
 
 <a id="lines"></a>
 ### `lines`

@@ -42,7 +42,7 @@ The following arguments are optional:
 * `note` - (Optional) A note. Changing it replaces the resource. Default (Stripe): `draft`. Removing it from the configuration leaves the current value.
 * `parts` - (Optional) The parts of the gadget. See [`parts`](#parts) below.
 * `password` - (Optional, Write-Only) A password the provider never stores.
-* `reference` - (Optional) A reference only an update sets. Default: not sent.
+* `reference` - (Optional) A reference only an update sets. Default: not sent. Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
 * `tier` - (Optional) The pricing tier. Default (Stripe): the account's default tier (`basic` on a US account).
 * `token` - (Optional, Sensitive) A token that stays in state.
 
@@ -53,7 +53,7 @@ The `parts` attribute is a list. Each element supports:
 
 * `label` - (Required) Label of the part.
 * `options` - (Optional) Options of the part. See [`parts.options`](#parts.options) below.
-* `serial` - (Read-Only) Serial number, set by the API.
+* `serial` - (Optional) Serial number, set by the API. Default: none. Removing it from the configuration lets Stripe set it when the list is next sent.
 
 <a id="parts.options"></a>
 ### `parts.options`

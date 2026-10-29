@@ -293,3 +293,53 @@ func TestSuiteRunGivesTheRealTablesTheirDefaults(t *testing.T) {
 		}
 	}
 }
+
+// A rule default carries the index of its rule (the format's schema requires `rule_ref` with kind
+// `rule`), in the base create and in every variant: the reader refuses one without it, or with
+// an index past the rules, so the generator never compares or words a rule it does not have.
+func TestEvidenceReaderRefusesARuleDefaultWithoutItsRule(t *testing.T) {
+	raw, err := os.ReadFile(filepath.Join("testdata", "evidence", "run-40926522642.json"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	for name, set := range map[string]func(d map[string]any){
+		"base without rule_ref":    func(d map[string]any) { d["kind"] = "rule"; delete(d, "value") },
+		"variant without rule_ref": func(d map[string]any) { vd := variantDefault(d); vd["kind"] = "rule"; delete(vd, "value") },
+		"base and variant without": func(d map[string]any) {
+			d["kind"] = "rule"
+			delete(d, "value")
+			vd := variantDefault(d)
+			vd["kind"] = "rule"
+			delete(vd, "value")
+		},
+		"variant past the rules": func(d map[string]any) {
+			vd := variantDefault(d)
+			vd["kind"] = "rule"
+			delete(vd, "value")
+			vd["rule_ref"] = 0
+		},
+	} {
+		var record map[string]any
+		if err := json.Unmarshal(raw, &record); err != nil {
+			t.Fatal(err)
+		}
+		for _, l := range record["leaves"].([]any) {
+			leaf := l.(map[string]any)
+			if leaf["object"] == "coupon" && leaf["operation"] == "PostCoupons" && leaf["path"] == "duration" {
+				set(leaf["default"].(map[string]any))
+			}
+		}
+		changed, err := json.Marshal(record)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if _, err := decodeEvidence(changed); err == nil || !strings.Contains(err.Error(), "request/PostCoupons/duration has a rule default with no rule") {
+			t.Errorf("%s: err = %v", name, err)
+		}
+	}
+}
+
+// variantDefault is the default of a recorded default's first variant.
+func variantDefault(d map[string]any) map[string]any {
+	return d["variants"].([]any)[0].(map[string]any)["default"].(map[string]any)
+}

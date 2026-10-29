@@ -67,7 +67,7 @@ The following arguments are required:
 
 The following arguments are optional:
 
-* `cancellation_reason` - (Optional) Reason why the `status` of this card is `canceled`. Possible values: `lost`, `stolen`. Default: not sent. Removing it from the configuration leaves the current value.
+* `cancellation_reason` - (Optional) Reason why the `status` of this card is `canceled`. Possible values: `lost`, `stolen`. Default: not sent. Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
 * `exp_month` - (Optional) The desired expiration month (1-12) for this card if [specifying a custom expiration date](https://docs.stripe.com/issuing/cards/virtual/issue-cards?testing-method=with-code#exp-dates). Changing it replaces the resource. Removing it from the configuration leaves the current value.
 * `exp_year` - (Optional) The desired 4-digit expiration year for this card if [specifying a custom expiration date](https://docs.stripe.com/issuing/cards/virtual/issue-cards?testing-method=with-code#exp-dates). Changing it replaces the resource. Removing it from the configuration leaves the current value.
 * `financial_account` - (Optional) The new financial account ID the card will be associated with. This field allows a card to be reassigned to a different financial account. Changing it replaces the resource.
@@ -76,7 +76,7 @@ The following arguments are optional:
 * `replacement_for` - (Optional) The card this is meant to be a replacement for (if any). Changing it replaces the resource.
 * `replacement_reason` - (Optional) If `replacement_for` is specified, this should indicate why that card is being replaced. Possible values: `damaged`, `expired`, `lost`, `stolen`. Changing it replaces the resource.
 * `spending_controls` - (Optional) Rules that control spending for this card. Refer to our [documentation](https://docs.stripe.com/issuing/controls/spending-controls) for more details. Removing it from the configuration leaves the current value. See [`spending_controls`](#spending_controls) below.
-* `status` - (Optional) Whether authorizations can be approved on this card. May be blocked from activating cards depending on past-due Cardholder requirements. Defaults to `inactive`. Possible values: `active`, `inactive`, `canceled`. Removing it from the configuration leaves the current value.
+* `status` - (Optional) Whether authorizations can be approved on this card. May be blocked from activating cards depending on past-due Cardholder requirements. Defaults to `inactive`. Possible values: `active`, `inactive`, `canceled`. Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
 
 <a id="lifecycle_controls"></a>
 ### `lifecycle_controls`

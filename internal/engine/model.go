@@ -59,6 +59,9 @@ type node struct {
 	// parameter.
 	TokenForm, DataForm string
 	OneRequired         bool
+	// InList marks a field of a list element, whose prior value the plan cannot keep: after an
+	// insert or a reorder the state's element at the same index may be another.
+	InList bool
 	// Fixed is a field of an element of a FixedKeys list that Stripe cannot change in place.
 	// The plan check replaces the resource when it changes, element by element, so a
 	// reorder does not.
@@ -711,7 +714,7 @@ func (c *compiler) build(table []fields.Field, prefix string, top, parentOutput,
 			}
 			f.Shape = fields.ScalarSet
 		}
-		n := &node{Field: f, Path: path, IsHashForm: hashForm}
+		n := &node{Field: f, Path: path, IsHashForm: hashForm, InList: inList}
 		if rule, ok := c.decl.Defaults[path]; ok {
 			if f.Default == nil || f.Default.Kind != fields.DefaultRule && f.Default.Kind != fields.DefaultVaries {
 				return nil, fmt.Errorf("defaults entry `%s` words a rule the evidence does not record for the field", path)

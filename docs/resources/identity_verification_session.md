@@ -53,7 +53,7 @@ The following arguments are optional:
 * `related_customer` - (Optional) Customer ID Changing it fails the plan, because this resource cannot be replaced.
 * `related_customer_account` - (Optional) The ID of the Account representing a customer. Changing it fails the plan, because this resource cannot be replaced.
 * `return_url` - (Optional) The URL that the user will be redirected to upon completing the verification flow. Changing it fails the plan, because this resource cannot be replaced.
-* `status` - (Optional) Status of this VerificationSession. [Learn more about the lifecycle of sessions](https://docs.stripe.com/identity/how-sessions-work). Possible values: `canceled`. Removing it from the configuration leaves the current value.
+* `status` - (Optional) Status of this VerificationSession. [Learn more about the lifecycle of sessions](https://docs.stripe.com/identity/how-sessions-work). Possible values: `canceled`. Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
 
 <a id="options"></a>
 ### `options`

@@ -52,7 +52,7 @@ The following arguments are optional:
 * `on_behalf_of` - (Optional) The Stripe account ID created for this SetupIntent. Changing it fails the plan, because this resource cannot be replaced.
 * `payment_method` - (Optional) ID of the payment method (a PaymentMethod, Card, or saved Source object) to attach to this SetupIntent.
 * `payment_method_configuration` - (Optional) The ID of the [payment method configuration](https://docs.stripe.com/api/payment_method_configurations) to use with this SetupIntent. Changing it fails the plan, because this resource cannot be replaced.
-* `status` - (Optional) [Status](https://docs.stripe.com/payments/intents#intent-statuses) of this SetupIntent, one of `requires_payment_method`, `requires_confirmation`, `requires_action`, `processing`, `canceled`, or `succeeded`. Possible values: `canceled`. Removing it from the configuration leaves the current value.
+* `status` - (Optional) [Status](https://docs.stripe.com/payments/intents#intent-statuses) of this SetupIntent, one of `requires_payment_method`, `requires_confirmation`, `requires_action`, `processing`, `canceled`, or `succeeded`. Possible values: `canceled`. Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
 * `usage` - (Optional) Indicates how the payment method is intended to be used in the future. If not provided, this value defaults to `off_session`. Possible values: `off_session`, `on_session`. Changing it fails the plan, because this resource cannot be replaced. Removing it from the configuration leaves the current value.
 
 <a id="automatic_payment_methods"></a>

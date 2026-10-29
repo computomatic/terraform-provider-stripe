@@ -39,11 +39,11 @@ The following arguments are required:
 
 The following arguments are optional:
 
-* `active` - (Optional) Whether the shipping rate can be used for new purchases. Defaults to `true`. Default: not sent. Removing it from the configuration leaves the current value.
+* `active` - (Optional) Whether the shipping rate can be used for new purchases. Defaults to `true`. Default: not sent. Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
 * `delivery_estimate` - (Optional) The estimated range for how long shipping will take, meant to be displayable to the customer. This will appear on CheckoutSessions. Changing it replaces the resource. See [`delivery_estimate`](#delivery_estimate) below.
 * `fixed_amount` - (Optional) Describes a fixed amount to charge for shipping. Must be present if type is `fixed_amount`. See [`fixed_amount`](#fixed_amount) below.
 * `metadata` - (Optional) Set of [key-value pairs](https://docs.stripe.com/api/metadata) that you can attach to an object. This can be useful for storing additional information about the object in a structured format. Individual keys can be unset by posting an empty value to them. All keys can be unset by posting an empty value to `metadata`.
-* `tax_behavior` - (Optional) Specifies whether the rate is considered inclusive of taxes or exclusive of taxes. One of `inclusive`, `exclusive`, or `unspecified`. Possible values: `exclusive`, `inclusive`, `unspecified`. Stripe changes it only from `unspecified`, so changing it from any other value replaces the resource. Removing it from the configuration leaves the current value.
+* `tax_behavior` - (Optional) Specifies whether the rate is considered inclusive of taxes or exclusive of taxes. One of `inclusive`, `exclusive`, or `unspecified`. Possible values: `exclusive`, `inclusive`, `unspecified`. Stripe changes it only from `unspecified`, so changing it from any other value replaces the resource. Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
 * `tax_code` - (Optional) A [tax code](https://docs.stripe.com/tax/tax-categories) ID. The Shipping tax code is `txcd_92010001`. Changing it replaces the resource.
 
 <a id="delivery_estimate"></a>
@@ -85,7 +85,7 @@ The `fixed_amount` attribute supports:
 The `fixed_amount.currency_options` attribute is a map. Each value supports:
 
 * `amount` - (Required) A non-negative integer in cents representing how much to charge.
-* `tax_behavior` - (Optional) Specifies whether the rate is considered inclusive of taxes or exclusive of taxes. One of `inclusive`, `exclusive`, or `unspecified`. Possible values: `exclusive`, `inclusive`, `unspecified`. Removing it from the configuration leaves the current value.
+* `tax_behavior` - (Optional) Specifies whether the rate is considered inclusive of taxes or exclusive of taxes. One of `inclusive`, `exclusive`, or `unspecified`. Possible values: `exclusive`, `inclusive`, `unspecified`. Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
 
 ## Attribute Reference
 

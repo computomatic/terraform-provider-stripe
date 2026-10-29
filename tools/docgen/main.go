@@ -126,7 +126,7 @@ func attachDocs(s *schema, docs map[string]engine.AttributeDoc) error {
 		if a == nil {
 			return fmt.Errorf("%s: the engine documents %s, which the schema does not have", s.Type, path)
 		}
-		a.Default, a.NeedsDefault, a.Copy = d.Default, d.NeedsDefault, d.Copy
+		a.Default, a.NeedsDefault, a.Removal, a.Copy = d.Default, d.NeedsDefault, d.Removal, d.Copy
 	}
 	return nil
 }

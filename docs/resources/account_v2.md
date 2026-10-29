@@ -56,7 +56,7 @@ resource "stripe_account_v2" "seller" {
 
 The following arguments are optional:
 
-* `closed` - (Optional) Indicates whether the account has been closed. Possible values: `true`. Removing it from the configuration leaves the current value.
+* `closed` - (Optional) Indicates whether the account has been closed. Possible values: `true`. Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
 * `configuration` - (Optional) An Account Configuration which allows the Account to take on a key persona across Stripe products. See [`configuration`](#configuration) below.
 * `contact_email` - (Optional) The primary contact email address for the Account.
 * `dashboard` - (Optional) A value indicating the Stripe dashboard this Account has access to. This will depend on which configurations are enabled for this account. Possible values: `express`, `full`, `none`.
@@ -223,7 +223,7 @@ The `configuration.recipient.capabilities.stripe_balance.stripe_transfers.status
 
 The `defaults` attribute supports:
 
-* `currency` - (Optional) Three-letter [ISO currency code](https://www.iso.org/iso-4217-currency-codes.html), in lowercase. Must be a [supported currency](https://stripe.com/docs/currencies). Removing it from the configuration leaves the current value.
+* `currency` - (Optional) Three-letter [ISO currency code](https://www.iso.org/iso-4217-currency-codes.html), in lowercase. Must be a [supported currency](https://stripe.com/docs/currencies). Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
 * `responsibilities` - (Optional) Default responsibilities held by either Stripe or the platform. Removing it from the configuration leaves the current value. See [`defaults.responsibilities`](#defaults.responsibilities) below.
 
 <a id="defaults.responsibilities"></a>
@@ -249,7 +249,7 @@ The `identity` attribute supports:
 
 The `identity.business_details` attribute supports:
 
-* `registered_name` - (Optional) The business legal name. Removing it from the configuration leaves the current value.
+* `registered_name` - (Optional) The business legal name. Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
 
 ## Attribute Reference
 

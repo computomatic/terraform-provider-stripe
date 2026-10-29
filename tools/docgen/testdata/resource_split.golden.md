@@ -30,7 +30,7 @@ The following arguments are optional:
 * `note` - (Optional) A note. Changing it replaces the resource. Default (Stripe): `draft`. Removing it from the configuration leaves the current value.
 * `parts` - (Optional) The parts of the gadget. See [`parts`](../guides/widget_gadget-resource-parts) on its own page.
 * `password` - (Optional, Write-Only) A password the provider never stores.
-* `reference` - (Optional) A reference only an update sets. Default: not sent.
+* `reference` - (Optional) A reference only an update sets. Default: not sent. Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
 * `tier` - (Optional) The pricing tier. Default (Stripe): the account's default tier (`basic` on a US account).
 * `token` - (Optional, Sensitive) A token that stays in state.
 

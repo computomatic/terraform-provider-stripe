@@ -39,7 +39,7 @@ The following arguments are optional:
 * `payment_method` - (Optional) The ID of a PaymentMethod representing the payment method to be used for the top-up. A PaymentMethod of type `us_bank_account` can be used. Changing it fails the plan, because this resource cannot be replaced. Removing it from the configuration leaves the current value.
 * `payment_method_options` - (Optional) Payment method-specific configuration for this top-up. Changing it fails the plan, because this resource cannot be replaced. Removing it from the configuration leaves the current value. See [`payment_method_options`](#payment_method_options) below.
 * `statement_descriptor` - (Optional) Extra information about a top-up for the source's bank statement. Limited to 15 ASCII characters. Changing it fails the plan, because this resource cannot be replaced.
-* `status` - (Optional) The status of the top-up is either `canceled`, `failed`, `pending`, `reversed`, or `succeeded`. Possible values: `canceled`. Removing it from the configuration leaves the current value.
+* `status` - (Optional) The status of the top-up is either `canceled`, `failed`, `pending`, `reversed`, or `succeeded`. Possible values: `canceled`. Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
 * `transfer_group` - (Optional) A string that identifies this top-up as part of a group. Changing it fails the plan, because this resource cannot be replaced.
 
 <a id="payment_method_options"></a>

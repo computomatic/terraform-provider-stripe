@@ -35,7 +35,7 @@ The following arguments are required:
 
 The following arguments are optional:
 
-* `active` - (Optional) Whether the plan is currently available for new subscriptions. Defaults to `true`. Removing it from the configuration leaves the current value.
+* `active` - (Optional) Whether the plan is currently available for new subscriptions. Defaults to `true`. Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
 * `amount` - (Optional) A positive integer in cents (or local equivalent) (or 0 for a free plan) representing how much to charge on a recurring basis. Changing it replaces the resource. Removing it from the configuration leaves the current value.
 * `amount_decimal` - (Optional) Same as `amount`, but accepts a decimal value with at most 12 decimal places. Only one of `amount` and `amount_decimal` can be set. Changing it replaces the resource. Removing it from the configuration leaves the current value.
 * `billing_scheme` - (Optional) Describes how to compute the price per period. Either `per_unit` or `tiered`. `per_unit` indicates that the fixed amount (specified in `amount`) will be charged per unit in `quantity` (for plans with `usage_type=licensed`), or per unit of total usage (for plans with `usage_type=metered`). `tiered` indicates that the unit pricing will be computed using a tiering strategy as defined using the `tiers` and `tiers_mode` attributes. Possible values: `per_unit`, `tiered`. Changing it replaces the resource. Removing it from the configuration leaves the current value.

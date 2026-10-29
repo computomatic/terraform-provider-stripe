@@ -17,7 +17,7 @@ The `parts` attribute is a list. Each element supports:
 
 * `label` - (Required) Label of the part.
 * `options` - (Optional) Options of the part. See [`parts.options`](#parts.options) below.
-* `serial` - (Read-Only) Serial number, set by the API.
+* `serial` - (Optional) Serial number, set by the API. Default: none. Removing it from the configuration lets Stripe set it when the list is next sent.
 
 <a id="parts.options"></a>
 ### `parts.options`

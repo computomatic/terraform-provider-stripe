@@ -42,6 +42,9 @@ type attr struct {
 	// NeedsDefault says the argument must have a Default: the pinned evidence verifies it, or
 	// only an update takes it.
 	NeedsDefault bool
+	// Removal is, on a resource's Optional and Computed argument, the engine's sentence on what
+	// removing it from the configuration does.
+	Removal string
 	// Copy is, on an embedded copy of another Stripe object, the data source type that reads it.
 	Copy string
 }

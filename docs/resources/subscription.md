@@ -57,10 +57,10 @@ The following arguments are optional:
 * `billing_mode` - (Optional) Controls how prorations and invoices for subscriptions are calculated and orchestrated. Changing it replaces the resource. Removing it from the configuration leaves the current value. See [`billing_mode`](#billing_mode) below.
 * `billing_schedules` - (Optional) An array of billing schedules, which allow you to bill customers in advance for multiple service periods. Requires flexible billing mode and API version 2026-05-27.dahlia or later. Learn more about [prebilling](https://docs.stripe.com/billing/subscriptions/prebilling). Removing it from the configuration leaves the current value. See [`billing_schedules`](#billing_schedules) below.
 * `billing_thresholds` - (Optional) Define thresholds at which an invoice will be sent, and the subscription advanced to a new billing period. When updating, pass an empty string to remove previously-defined thresholds. See [`billing_thresholds`](#billing_thresholds) below.
-* `cancel_at` - (Optional) A timestamp at which the subscription should cancel. If set to a date before the current period ends, this will cause a proration if prorations have been enabled using `proration_behavior`. If set during a future period, this will always cause a proration for that period. Removing it from the configuration leaves the current value.
-* `cancel_at_period_end` - (Optional) Indicate whether this subscription should cancel at the end of the current period (`current_period_end`). Defaults to `false`. Removing it from the configuration leaves the current value.
+* `cancel_at` - (Optional) A timestamp at which the subscription should cancel. If set to a date before the current period ends, this will cause a proration if prorations have been enabled using `proration_behavior`. If set during a future period, this will always cause a proration for that period. Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
+* `cancel_at_period_end` - (Optional) Indicate whether this subscription should cancel at the end of the current period (`current_period_end`). Defaults to `false`. Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
 * `cancellation_details` - (Optional) Details about why this subscription was cancelled. Removing it from the configuration leaves the current value. See [`cancellation_details`](#cancellation_details) below.
-* `collection_method` - (Optional) Either `charge_automatically`, or `send_invoice`. When charging automatically, Stripe will attempt to pay this subscription at the end of the cycle using the default source attached to the customer. When sending an invoice, Stripe will email your customer an invoice with payment instructions and mark the subscription as `active`. Defaults to `charge_automatically`. Possible values: `charge_automatically`, `send_invoice`. Removing it from the configuration leaves the current value.
+* `collection_method` - (Optional) Either `charge_automatically`, or `send_invoice`. When charging automatically, Stripe will attempt to pay this subscription at the end of the cycle using the default source attached to the customer. When sending an invoice, Stripe will email your customer an invoice with payment instructions and mark the subscription as `active`. Defaults to `charge_automatically`. Possible values: `charge_automatically`, `send_invoice`. Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
 * `currency` - (Optional) Three-letter [ISO currency code](https://www.iso.org/iso-4217-currency-codes.html), in lowercase. Must be a [supported currency](https://stripe.com/docs/currencies). Changing it replaces the resource. Removing it from the configuration leaves the current value.
 * `customer` - (Optional) The identifier of the customer to subscribe. Changing it replaces the resource. Removing it from the configuration leaves the current value.
 * `customer_account` - (Optional) The identifier of the account representing the customer to subscribe. Changing it replaces the resource.
@@ -195,7 +195,7 @@ The `billing_schedules` attribute is a list. Each element supports:
 
 * `applies_to` - (Optional) Specifies which subscription items the billing schedule applies to. See [`billing_schedules.applies_to`](#billing_schedules.applies_to) below.
 * `bill_until` - (Required) Specifies the end of billing period. See [`billing_schedules.bill_until`](#billing_schedules.bill_until) below.
-* `key` - (Optional) Unique identifier for the billing schedule. Removing it from the configuration leaves the current value.
+* `key` - (Optional) Unique identifier for the billing schedule. Removing it from the configuration lets Stripe set it when the list is next sent.
 
 <a id="billing_schedules.applies_to"></a>
 ### `billing_schedules.applies_to`
@@ -236,9 +236,9 @@ The `billing_thresholds` attribute supports:
 
 The `cancellation_details` attribute supports:
 
-* `comment` - (Optional) Additional comments about why the user canceled the subscription, if the subscription was canceled explicitly by the user. Default: not sent. Removing it from the configuration leaves the current value.
-* `feedback` - (Optional) The customer submitted reason for why they canceled, if the subscription was canceled explicitly by the user. Possible values: `customer_service`, `low_quality`, `missing_features`, `other`, `switched_service`, `too_complex`, `too_expensive`, `unused`. Default: not sent. Removing it from the configuration leaves the current value.
-* `feedback_option` - (Optional) Customized feedback options that provide deeper insight into why the subscription was canceled, if the subscription was canceled explicitly by the user. Default: not sent. Removing it from the configuration leaves the current value.
+* `comment` - (Optional) Additional comments about why the user canceled the subscription, if the subscription was canceled explicitly by the user. Default: not sent. Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
+* `feedback` - (Optional) The customer submitted reason for why they canceled, if the subscription was canceled explicitly by the user. Possible values: `customer_service`, `low_quality`, `missing_features`, `other`, `switched_service`, `too_complex`, `too_expensive`, `unused`. Default: not sent. Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
+* `feedback_option` - (Optional) Customized feedback options that provide deeper insight into why the subscription was canceled, if the subscription was canceled explicitly by the user. Default: not sent. Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
 * `reason` - (Read-Only) Why this subscription was canceled. Possible values: `canceled_by_retention_policy`, `cancellation_requested`, `payment_disputed`, `payment_failed`.
 
 <a id="invoice_settings"></a>
@@ -281,12 +281,12 @@ The `items` attribute is a list. Each element supports:
 * `current_period_start` - (Read-Only) The start time of this subscription item's current billing period.
 * `current_trial` - (Optional) The current trial that is applied to this subscription item. See [`items.current_trial`](#items.current_trial) below.
 * `deleted` - (Optional) Default: not sent.
-* `id` - (Optional) Unique identifier for the object. Default: not sent. Removing it from the configuration leaves the current value.
-* `metadata` - (Optional) Set of [key-value pairs](https://docs.stripe.com/api/metadata) that you can attach to an object. This can be useful for storing additional information about the object in a structured format. Removing it from the configuration leaves the current value.
+* `id` - (Optional) Unique identifier for the object. Default: not sent. Removing it from the configuration lets Stripe set it when the list is next sent.
+* `metadata` - (Optional) Set of [key-value pairs](https://docs.stripe.com/api/metadata) that you can attach to an object. This can be useful for storing additional information about the object in a structured format. Removing it from the configuration lets Stripe set it when the list is next sent.
 * `object` - (Read-Only) String representing the object's type. Objects of the same type share the same value. Possible values: `subscription_item`.
-* `price` - (Optional) Prices define the unit cost, currency, and (optional) billing cycle for both recurring and one-time purchases of products. [Products](https://docs.stripe.com/api#products) help you track inventory or provisioning, and prices help you track payment terms. Different physical goods or levels of service should be represented by products, and pricing options should be represented by prices. This approach lets you change prices without having to change your provisioning scheme. For example, you might have a single "gold" product that has prices for $10/month, $100/year, and €9 once. Related guides: [Set up a subscription](https://docs.stripe.com/billing/subscriptions/set-up-subscription), [create an invoice](https://docs.stripe.com/billing/invoices/create), and more about [products and prices](https://docs.stripe.com/products-prices/overview). Removing it from the configuration leaves the current value.
+* `price` - (Optional) Prices define the unit cost, currency, and (optional) billing cycle for both recurring and one-time purchases of products. [Products](https://docs.stripe.com/api#products) help you track inventory or provisioning, and prices help you track payment terms. Different physical goods or levels of service should be represented by products, and pricing options should be represented by prices. This approach lets you change prices without having to change your provisioning scheme. For example, you might have a single "gold" product that has prices for $10/month, $100/year, and €9 once. Related guides: [Set up a subscription](https://docs.stripe.com/billing/subscriptions/set-up-subscription), [create an invoice](https://docs.stripe.com/billing/invoices/create), and more about [products and prices](https://docs.stripe.com/products-prices/overview). Removing it from the configuration lets Stripe set it when the list is next sent.
 * `price_data` - (Optional) See [`items.price_data`](#items.price_data) below.
-* `quantity` - (Optional) The [quantity](https://docs.stripe.com/subscriptions/quantities) of the plan to which the customer should be subscribed. Removing it from the configuration leaves the current value.
+* `quantity` - (Optional) The [quantity](https://docs.stripe.com/subscriptions/quantities) of the plan to which the customer should be subscribed. Removing it from the configuration lets Stripe set it when the list is next sent.
 * `subscription` - (Read-Only) The `subscription` this `subscription_item` belongs to.
 * `tax_rates` - (Optional) The tax rates which apply to this `subscription_item`. When set, the `default_tax_rates` on the subscription do not apply to this `subscription_item`.
 
@@ -331,8 +331,8 @@ The `items.price_data.recurring` attribute supports:
 
 The `pause_collection` attribute supports:
 
-* `behavior` - (Optional) The payment collection behavior for this subscription while paused. Possible values: `keep_as_draft`, `mark_uncollectible`, `void`. Default: not sent. Removing it from the configuration leaves the current value.
-* `resumes_at` - (Optional) The time after which the subscription will resume collecting payments. Default: not sent. Removing it from the configuration leaves the current value.
+* `behavior` - (Optional) The payment collection behavior for this subscription while paused. Possible values: `keep_as_draft`, `mark_uncollectible`, `void`. Default: not sent. Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
+* `resumes_at` - (Optional) The time after which the subscription will resume collecting payments. Default: not sent. Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
 
 <a id="payment_settings"></a>
 ### `payment_settings`
@@ -379,7 +379,7 @@ The `payment_settings.payment_method_options.acss_debit.mandate_options` attribu
 
 The `payment_settings.payment_method_options.bancontact` attribute supports:
 
-* `preferred_language` - (Optional) Preferred language of the Bancontact authorization page that the customer is redirected to. Possible values: `de`, `en`, `fr`, `nl`. Removing it from the configuration leaves the current value.
+* `preferred_language` - (Optional) Preferred language of the Bancontact authorization page that the customer is redirected to. Possible values: `de`, `en`, `fr`, `nl`. Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
 
 <a id="payment_settings.payment_method_options.billie"></a>
 ### `payment_settings.payment_method_options.billie`
@@ -547,7 +547,7 @@ The `payment_settings.payment_method_options.us_bank_account.financial_connectio
 The `pending_invoice_item_interval` attribute supports:
 
 * `interval` - (Required) Specifies invoicing frequency. Either `day`, `week`, `month` or `year`. Possible values: `day`, `month`, `week`, `year`.
-* `interval_count` - (Optional) The number of intervals between invoices. For example, `interval=month` and `interval_count=3` bills every 3 months. Maximum of one year interval allowed (1 year, 12 months, or 52 weeks). Removing it from the configuration leaves the current value.
+* `interval_count` - (Optional) The number of intervals between invoices. For example, `interval=month` and `interval_count=3` bills every 3 months. Maximum of one year interval allowed (1 year, 12 months, or 52 weeks). Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
 
 <a id="transfer_data"></a>
 ### `transfer_data`
@@ -570,7 +570,7 @@ The `trial_settings` attribute supports:
 The `trial_settings.end_behavior` attribute supports:
 
 * `billing_cycle_anchor` - (Optional) Indicates how the subscription's billing cycle anchor is reset when a trial ends. If not set, the default is `now`. Possible values: `now`, `unchanged`.
-* `missing_payment_method` - (Optional) Indicates how the subscription should change when the trial ends if the user did not provide a payment method. Possible values: `cancel`, `create_invoice`, `pause`. Removing it from the configuration leaves the current value.
+* `missing_payment_method` - (Optional) Indicates how the subscription should change when the trial ends if the user did not provide a payment method. Possible values: `cancel`, `create_invoice`, `pause`. Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
 
 ## Attribute Reference
 

@@ -645,7 +645,8 @@ func (p *Pinned) leafDefault(k Key) *fields.Default {
 	return nil
 }
 
-// same reports whether two defaults state the same thing: null and absent both state none.
+// same reports whether two defaults state the same thing: null and absent both state none. Two
+// rule defaults both carry a rule_ref, which Evidence.check requires of every rule default.
 func (d *EvidenceDefault) same(o *EvidenceDefault) bool {
 	none := func(k string) bool { return k == "null" || k == "absent" }
 	switch {
@@ -684,11 +685,7 @@ func (p *Pinned) observed(r EvidenceRule) string {
 	}
 	for _, o := range obs {
 		if len(o.Condition) == 0 {
-			v := literal(o.Value)
-			if v == "" {
-				v = `""`
-			}
-			s := "`" + v + "`"
+			s := fields.Code(literal(o.Value))
 			if c := p.Evidence.StripeRun.PlatformCountry; c != "" {
 				s += " on " + articleFor(c) + " " + c + " account"
 			}

@@ -26,7 +26,7 @@ The following arguments are required:
 
 The following arguments are optional:
 
-* `enabled` - (Optional) Whether this payment method domain is enabled. If the domain is not enabled, payment methods that require a payment method domain will not appear in Elements or Embedded Checkout. Removing it from the configuration leaves the current value.
+* `enabled` - (Optional) Whether this payment method domain is enabled. If the domain is not enabled, payment methods that require a payment method domain will not appear in Elements or Embedded Checkout. Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
 
 ## Attribute Reference
 

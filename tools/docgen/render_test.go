@@ -81,7 +81,7 @@ func fixture(t *testing.T) *schemas {
 				str("status", "The status of the gadget.", computed),
 				nested("parts", "The parts of the gadget.", tfprotov6.SchemaObjectNestingModeList, optional,
 					str("label", "Label of the part.", required),
-					str("serial", "Serial number, set by the API.", computed),
+					str("serial", "Serial number, set by the API.", optionalComputed),
 					nested("options", "Options of the part.", tfprotov6.SchemaObjectNestingModeMap, optional,
 						str("size", "Size of the option.", required),
 						nested("finish", "Finish of the option.", tfprotov6.SchemaObjectNestingModeSingle, optional,
@@ -91,7 +91,7 @@ func fixture(t *testing.T) *schemas {
 					str("label", "Label of the part.", computed),
 					str("object", "The name of the object's type.", computed)),
 				str("tier", "The pricing tier", optional),
-				str("reference", "A reference only an update sets.", optional),
+				str("reference", "A reference only an update sets.", optionalComputed),
 				nested("history", "What happened to the gadget.", tfprotov6.SchemaObjectNestingModeSet, computed,
 					str("at", "When it happened.", computed),
 					str("secret", "A secret detail.", func(a *tfprotov6.SchemaAttribute) { a.Computed, a.Sensitive = true, true })),
@@ -132,15 +132,17 @@ func fixture(t *testing.T) *schemas {
 // withDefaults puts on the fixture what the engine and the provider say about its attributes
 // (ADR 2026-10-29-full-attribute-coverage, D3 and D4): a value Stripe applies, a rule Stripe
 // applies with the value the suite observed, none, not sent, and the provider's own value and
-// rule; and an embedded copy of a gadget part.
+// rule; the three removal sentences, for an argument the plan keeps, one in a list element and
+// one the provider stops sending; and an embedded copy of a gadget part.
 func withDefaults(t *testing.T, s *schemas) *schemas {
 	t.Helper()
 	for typeName, docs := range map[string]map[string]engine.AttributeDoc{
 		"widget_gadget": {
-			"note":                        {Default: "Default (Stripe): `draft`.", NeedsDefault: true},
+			"note":                        {Default: "Default (Stripe): `draft`.", NeedsDefault: true, Removal: engine.RemovalKeeps},
 			"tier":                        {Default: "Default (Stripe): the account's default tier (`basic` on a US account).", NeedsDefault: true},
 			"legacy":                      {Default: "Default: none.", NeedsDefault: true},
-			"reference":                   {Default: "Default: not sent.", NeedsDefault: true},
+			"reference":                   {Default: "Default: not sent.", NeedsDefault: true, Removal: engine.RemovalNotSent},
+			"parts.serial":                {Default: "Default: none.", NeedsDefault: true, Removal: engine.RemovalInList},
 			"parts.options.finish.colour": {Default: "Default: none.", NeedsDefault: true},
 			"last_part":                   {Copy: "widget_gadget_part"},
 		},

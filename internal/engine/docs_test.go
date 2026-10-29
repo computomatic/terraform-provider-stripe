@@ -18,7 +18,9 @@ func docsTable() []fields.Field {
 		case "quantity":
 			table[i].Default, table[i].Verified = &fields.Default{Kind: fields.DefaultVaries}, true
 		case "ratio":
-			table[i].Verified = true
+			table[i].Verified, table[i].ServerDefaulted, table[i].Stable = true, true, true
+		case "items":
+			table[i].Fields[1].ServerDefaulted, table[i].Fields[1].Stable = true, true
 		case "address":
 			table[i].Fields[1].Default = &fields.Default{Kind: fields.DefaultRule, Rule: "the account's postal code", Observed: "`94103` on a US account"}
 		}
@@ -33,7 +35,10 @@ func docsTable() []fields.Field {
 }
 
 // The page of an optional argument states its default: the evidence's, or the declaration's
-// wording of a rule the evidence records. A verified argument, and one only the update takes, is
+// wording of a rule the evidence records. An Optional and Computed argument says what removing it
+// does, as the plan treats it: one the plan keeps (a stable one, E5) leaves the current value,
+// one in a list element, stable or not, Stripe sets when the list is sent again, and any other
+// the provider stops sending. A verified argument, and one only the update takes, is
 // marked so that docgen refuses it without a statement, and an embedded copy names the data
 // source of the copied object.
 func TestAttributeDocs(t *testing.T) {
@@ -48,13 +53,16 @@ func TestAttributeDocs(t *testing.T) {
 	for path, want := range map[string]AttributeDoc{
 		"kind":          {Default: "Default (Stripe): `a`.", NeedsDefault: true},
 		"quantity":      {Default: "Default (Stripe): one per line of the parent.", NeedsDefault: true},
-		"ratio":         {NeedsDefault: true},
+		"ratio":         {NeedsDefault: true, Removal: RemovalKeeps},
+		"id":            {Removal: RemovalKeeps},
+		"active":        {Removal: RemovalNotSent},
+		"items.qty":     {Removal: RemovalInList},
 		"address.zip":   {Default: "Default (Stripe): the account's postal code (`94103` on a US account)."},
 		"last_charge":   {Copy: "stripe_charge"},
 		"name":          {},
 		"lines":         {},
 		"address.line1": {},
-		"default_ref":   {NeedsDefault: true},
+		"default_ref":   {NeedsDefault: true, Removal: RemovalNotSent},
 	} {
 		if got[path] != want {
 			t.Errorf("%s: %+v, want %+v", path, got[path], want)

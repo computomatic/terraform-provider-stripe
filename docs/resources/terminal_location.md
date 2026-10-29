@@ -34,7 +34,7 @@ The following arguments are optional:
 * `address_kana` - (Optional) The Kana variation of the full address of the location (Japan only). See [`address_kana`](#address_kana) below.
 * `address_kanji` - (Optional) The Kanji variation of the full address of the location (Japan only). See [`address_kanji`](#address_kanji) below.
 * `configuration_overrides` - (Optional) The ID of a configuration that will be used to customize all readers in this location.
-* `display_name` - (Optional) A name for the location. Maximum length is 1000 characters. Removing it from the configuration leaves the current value.
+* `display_name` - (Optional) A name for the location. Maximum length is 1000 characters. Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
 * `display_name_kana` - (Optional) The Kana variation of the name for the location (Japan only). Maximum length is 1000 characters.
 * `display_name_kanji` - (Optional) The Kanji variation of the name for the location (Japan only). Maximum length is 1000 characters.
 * `metadata` - (Optional) Set of [key-value pairs](https://docs.stripe.com/api/metadata) that you can attach to an object. This can be useful for storing additional information about the object in a structured format. Individual keys can be unset by posting an empty value to them. All keys can be unset by posting an empty value to `metadata`.
@@ -48,7 +48,7 @@ The `address` attribute supports:
 * `city` - (Optional) City, district, suburb, town, or village.
 * `country` - (Required) Two-letter country code ([ISO 3166-1 alpha-2](https://en.wikipedia.org/wiki/ISO_3166-1_alpha-2)). Changing it replaces the resource.
 * `line1` - (Optional) Address line 1, such as the street, PO Box, or company name.
-* `line2` - (Optional) Address line 2, such as the apartment, suite, unit, or building. Removing it from the configuration leaves the current value.
+* `line2` - (Optional) Address line 2, such as the apartment, suite, unit, or building. Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
 * `postal_code` - (Optional) ZIP or postal code.
 * `state` - (Optional) State, county, province, or region ([ISO 3166-2](https://en.wikipedia.org/wiki/ISO_3166-2)).
 

@@ -46,7 +46,7 @@ The following arguments are optional:
 * `currency` - (Optional) Request currency for the order as a three-letter [ISO currency code](https://www.iso.org/iso-4217-currency-codes.html), in lowercase. Must be a supported [settlement currency for your account](https://stripe.com/docs/currencies). If omitted, the account's default currency will be used. Changing it fails the plan, because this resource cannot be replaced. Removing it from the configuration leaves the current value.
 * `metadata` - (Optional) Set of [key-value pairs](https://docs.stripe.com/api/metadata) that you can attach to an object. This can be useful for storing additional information about the object in a structured format. Individual keys can be unset by posting an empty value to them. All keys can be unset by posting an empty value to `metadata`.
 * `metric_tons` - (Optional) Requested number of tons for the order. Either this or `amount` must be specified. Changing it fails the plan, because this resource cannot be replaced. Removing it from the configuration leaves the current value.
-* `status` - (Optional) The current status of this order. Possible values: `canceled`. Removing it from the configuration leaves the current value.
+* `status` - (Optional) The current status of this order. Possible values: `canceled`. Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
 
 <a id="beneficiary"></a>
 ### `beneficiary`
