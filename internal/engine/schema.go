@@ -327,7 +327,7 @@ func (m *model) dataSourceSchema() dschema.Schema {
 			desc := strings.TrimSpace(describe(n) + m.lowerCaseNote(n))
 			if n.Name == "id" {
 				// The create-time description tells a resource user how to choose an ID.
-				desc = "The ID of the " + noun(m.decl.TypeName) + " to read."
+				desc = "The ID of the " + Noun(m.decl.TypeName) + " to read."
 			}
 			a = dschema.StringAttribute{Optional: true, Computed: true, MarkdownDescription: desc}
 		}
@@ -354,9 +354,15 @@ func (m *model) dataSourceSchema() dschema.Schema {
 	return dschema.Schema{MarkdownDescription: desc, Attributes: attrs}
 }
 
-// noun is a type name in words, such as `product feature` for `stripe_product_feature`.
-func noun(typeName string) string {
-	return strings.ReplaceAll(strings.TrimPrefix(typeName, "stripe_"), "_", " ")
+// Noun is a type name in words, such as `product feature` for `stripe_product_feature`. A
+// `/v2` type name ends in `_v2` (architecture ADR D7), which reads first in words:
+// `v2 account person` for `stripe_account_person_v2`. tools/docgen writes the pages with it.
+func Noun(typeName string) string {
+	name := strings.TrimPrefix(typeName, "stripe_")
+	if base, ok := strings.CutSuffix(name, "_v2"); ok {
+		name = "v2_" + base
+	}
+	return strings.ReplaceAll(name, "_", " ")
 }
 
 // WithArticle is a noun with `a` or `an` before it, by its first letter. tools/docgen writes

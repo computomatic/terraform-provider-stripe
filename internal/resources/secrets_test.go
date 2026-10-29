@@ -17,7 +17,7 @@ import (
 	"github.com/computomatic/terraform-provider-stripe/internal/engine"
 	"github.com/computomatic/terraform-provider-stripe/internal/resources/apps_secret"
 	"github.com/computomatic/terraform-provider-stripe/internal/resources/checkout_session"
-	"github.com/computomatic/terraform-provider-stripe/internal/resources/commerce_product_catalog_import"
+	"github.com/computomatic/terraform-provider-stripe/internal/resources/commerce_product_catalog_import_v2"
 	"github.com/computomatic/terraform-provider-stripe/internal/resources/identity_verification_report"
 	"github.com/computomatic/terraform-provider-stripe/internal/resources/identity_verification_session"
 	"github.com/computomatic/terraform-provider-stripe/internal/resources/invoice"
@@ -50,7 +50,7 @@ func TestClientSecretsAreSensitive(t *testing.T) {
 		"verified outputs": {identity_verification_session.NewDataSource, []string{"verified_outputs"}, clientSecrets + `,"verified_outputs":{"id_number":"` + secret + `"}`},
 		"app secret":       {apps_secret.NewDataSource, []string{"payload"}, `,"payload":"` + secret + `"`},
 		"report id number": {identity_verification_report.NewDataSource, []string{"id_number"}, `,"id_number":{"id_number":"` + secret + `"}`},
-		"import upload url": {commerce_product_catalog_import.NewDataSource, []string{"status_details", "awaiting_upload", "upload_url", "url"},
+		"import upload url": {commerce_product_catalog_import_v2.NewDataSource, []string{"status_details", "awaiting_upload", "upload_url", "url"},
 			`,"status_details":{"awaiting_upload":{"upload_url":{"url":"` + secret + `"}}}`},
 	} {
 		t.Run(name, func(t *testing.T) {

@@ -6,7 +6,7 @@ The accepted architecture (`adrs/1-pending/2026-10-17-provider-architecture/ADR.
 
 ## Status
 
-Status: Accepted, 2026-10-18, with the four open questions answered as recommended (see "Resolved questions"). The ADR stays in `adrs/1-pending/` until implemented.
+Status: Accepted, 2026-10-18, with the four open questions answered as recommended (see "Resolved questions"). Amended 2026-10-29 by provider issue #66 on type names (D1). The ADR stays in `adrs/1-pending/` until implemented.
 
 Evidence is current as of 2026-10-18: the behaviour of the Stripe API as observed by a black-box conformance suite, and the behaviour of the Stripe API fake the provider is tested against.
 
@@ -55,7 +55,7 @@ Evidence is current as of 2026-10-18: the behaviour of the Stripe API as observe
 - **Decoding and errors (D5).** Missing and `null` read the same. `invalid_fields` entries become attribute-level diagnostics; context fields are kept in the detail.
 - **Pagination (D6).** A `/v2` lookup reads one page of 20 and treats a non-null `next_page_url` as "more". No page is followed, because no consumer needs one.
 - **Client (D7).** JSON by path prefix, `Stripe-Version` as today, an idempotency key on `POST` only.
-- **Tests (D8).** The per-resource acceptance set for `stripe_core_event_destination` against the fake, plus unit tests for the codec, errors, generator and engine, and a list of behaviours the suite and fake must prove first.
+- **Tests (D8).** The per-resource acceptance set for `stripe_event_destination_v2` against the fake, plus unit tests for the codec, errors, generator and engine, and a list of behaviours the suite and fake must prove first.
 
 ## Approach Details
 
@@ -64,7 +64,7 @@ Evidence is current as of 2026-10-18: the behaviour of the Stripe API as observe
 - **Decision.** A declaration is `/v2` when its `Paths` start with `/v2/`. The engine and client derive everything else from that. `Declaration.V2` (`internal/engine/declaration.go:116`) and `stripeapi.Request.Encoding` with `FormEncoding`/`JSONEncoding` (`internal/stripeapi/client.go:30-44`) are deleted.
 - **Check.** `newModel` (`internal/engine/model.go`, beside the existing `Paths` checks at `:71-94`) fails when the non-empty paths of one declaration do not all start with `/v2/` or all with `/v1/`. An archive `Path` is held to the same rule.
 - **Why.** The fake decides the same way, by path prefix, so a flag can only disagree with the wire. A flag also leaves a trap: `tfacc.Post` (`internal/acctest/tfacc/tfacc.go:34`) builds a `stripeapi.Request` with the default form encoding, so any test that touches a `/v2` path out of band would send a form. Derived encoding makes that test helper correct without a change.
-- **Type name and import.** Unchanged from the architecture ADR (D7): `stripe_core_event_destination`, import ID the bare `ed_...` ID. `IDPrefix` is `ed_`; the suite sees `ed_test_...` and the import check is a prefix match that only warns (`internal/engine/resource.go:468`), so `ed_` holds.
+- **Type name and import.** As the architecture ADR (D7) names a `/v2` object: `stripe_event_destination_v2`, import ID the bare `ed_...` ID. `IDPrefix` is `ed_`; the suite sees `ed_test_...` and the import check is a prefix match that only warns (`internal/engine/resource.go:468`), so `ed_` holds. (Amended 2026-10-29 by provider issue #66: every `/v2` type name ends in `_v2`, drops the `core` namespace and keeps every other, so this resource, first named `stripe_core_event_destination`, is `stripe_event_destination_v2` and the `/v2` account is `stripe_account_v2`.)
 - **Parents.** A `/v2` child path uses its own placeholder (`/v2/core/accounts/{account_id}/persons/{id}`). `Declaration.Parent` already names the placeholder, so `Parent: "account_id"` works with no change; the parent attribute is then named `account_id`, which is Stripe's name and is kept verbatim (architecture ADR D7).
 
 ### D2. How the generator reads `/v2` operations
@@ -105,7 +105,7 @@ The engine builds one `wire.Object` tree for every namespace; the only differenc
 
 - **Decision.** `Declaration` gains `Include []string`: the values the engine sends as `include` on retrieve, list, create and update. For event destinations: `Include: []string{"webhook_endpoint.url"}`.
 - **Why always.** The architecture ADR makes `PreserveConfig` the answer to a redacted field (D2, Read and drift). With `include` the real value is read, so a URL changed out of band is drift. `Expand` already works this way for `/v1` (`Declaration.Expand`, `internal/engine/api.go:61`); `Include` is its `/v2` counterpart (Stripe: `expand` "isn't supported"; `include` is the substitute).
-- **Encoding.** On `POST` it is a body member `"include": ["webhook_endpoint.url"]`. On `GET` it is a query parameter in the indexed form `include[0]=webhook_endpoint.url`, which is what Stripe documents for direct API calls and what `wire.EncodeForm` already produces for arrays (`internal/wire/form.go`, `include%5B0%5D=...`). The suite proves the scalar form `include=webhook_endpoint.url` (`event_destination_test.go:339`), and the fake accepts a scalar for an array parameter (`wire/v2.go:64`); the indexed form is documented but unproven by the suite. The fake serves it: the `stripe_core_event_destination` acceptance tests read the URL back and assert the decoded `include` array in the request log. D8 keeps the suite proof on the list.
+- **Encoding.** On `POST` it is a body member `"include": ["webhook_endpoint.url"]`. On `GET` it is a query parameter in the indexed form `include[0]=webhook_endpoint.url`, which is what Stripe documents for direct API calls and what `wire.EncodeForm` already produces for arrays (`internal/wire/form.go`, `include%5B0%5D=...`). The suite proves the scalar form `include=webhook_endpoint.url` (`event_destination_test.go:339`), and the fake accepts a scalar for an array parameter (`wire/v2.go:64`); the indexed form is documented but unproven by the suite. The fake serves it: the `stripe_event_destination_v2` acceptance tests read the URL back and assert the decoded `include` array in the request log. D8 keeps the suite proof on the list.
 - **Update.** Each update request carries `include`, so the response has the URL. The create request carries `include` too, so state starts with the URL without a second read.
 - **Not a Terraform attribute.** `include` is never in the schema and never in state.
 - **Signing secret.** `webhook_endpoint.signing_secret` would be `OnceReturned` (Computed, Sensitive, carried forward) with `include=webhook_endpoint.signing_secret` on create only. It stays out of this ADR's implementation (resolved question 1).
@@ -144,7 +144,7 @@ A `/v2` request with no parameters (`DELETE`, or a `POST` to `/enable` or `/disa
 
 ### D8. Testing
 
-**Acceptance tests** (`internal/resources/core_event_destination/resource_test.go`, fake-backed, parallel, a fresh account each; the layout meta-test in `internal/resources/layout_test.go` requires the six by name):
+**Acceptance tests** (`internal/resources/event_destination_v2/resource_test.go`, fake-backed, parallel, a fresh account each; the layout meta-test in `internal/resources/layout_test.go` requires the six by name):
 
 | Test | `/v2` content |
 |-|-|
@@ -177,7 +177,7 @@ A `/v2` request with no parameters (`DELETE`, or a `POST` to `/enable` or `/disa
 
 Answered on 2026-10-18, each as recommended.
 
-1. **`webhook_endpoint.signing_secret`.** `stripe_core_event_destination` ships without it, and the generator omits it from the table because neither the suite nor the fake proves it yet. Proving it is a priority, since the secret is what makes a webhook destination usable; the field follows.
+1. **`webhook_endpoint.signing_secret`.** `stripe_event_destination_v2` ships without it, and the generator omits it from the table because neither the suite nor the fake proves it yet. Proving it is a priority, since the secret is what makes a webhook destination usable; the field follows.
 2. **Enable and disable.** `status` is read-only Computed. A writable `status` comes once the suite proves the action calls.
 3. **Clearing a `/v2` field.** The engine refuses to send `null` for anything but a `metadata` key unless the declaration lists the field in `ClearsWithNull`.
 4. **Suite work before wave 4.** The gaps in the D8 table go to the suite before `v2.core.account`.
@@ -198,7 +198,7 @@ Dependencies: (none)
 
 Remove `Declaration.V2`; add the namespace check to `newModel` (D1), `Include` and `ClearsWithNull` (D3, D4). Add the generator's media-type check and the `Omit` of `include` (D2). Add the event destination entry to `Resources`.
 
-Acceptance criteria: `go generate` produces `internal/generated/core_event_destination` twice with no diff; the generator fixture test covers a `/v2` operation and the form-body error; a declaration mixing `/v1/` and `/v2/` paths fails `newModel`.
+Acceptance criteria: `go generate` produces `internal/generated/event_destination_v2` twice with no diff; the generator fixture test covers a `/v2` operation and the form-body error; a declaration mixing `/v1/` and `/v2/` paths fails `newModel`.
 
 Status: DONE
 
@@ -214,7 +214,7 @@ Status: DONE
 
 Dependencies: Step 1, Step 2.
 
-### Step 4: `stripe_core_event_destination`
+### Step 4: `stripe_event_destination_v2`
 
 Declaration (`IDPrefix: "ed_"`, `Delete`, `Include`, no `Lookups`), docs example, the six acceptance tests and the data source test (D8), against a pinned fake release.
 

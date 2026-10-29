@@ -238,7 +238,7 @@ func (r *Resource) refuseChangingClosed(req resource.ModifyPlanRequest, resp *re
 	if !r.m.closed(req.State.Raw) || unchanged(resp.Plan.Raw, req.Config.Raw, req.State.Raw) {
 		return false
 	}
-	thing := noun(r.m.decl.TypeName)
+	thing := Noun(r.m.decl.TypeName)
 	resp.Diagnostics.AddError("Cannot change a closed "+r.m.decl.TypeName,
 		fmt.Sprintf("This %[1]s is closed, and Stripe refuses any change to a closed %[1]s; it cannot be reopened either. Revert the configuration to what the state holds, or add `lifecycle { ignore_changes = all }` to leave the %[1]s as it is.\n\n%[2]s",
 			thing, fmt.Sprintf(removeFromState, r.m.decl.TypeName)))
@@ -348,7 +348,7 @@ func (r *Resource) refuseLeavingFinal(req resource.ModifyPlanRequest, resp *reso
 			continue
 		}
 		resp.Diagnostics.AddAttributeError(path.Root(name), "Cannot change `"+name+"` from `"+prior+"`",
-			fmt.Sprintf("Stripe cannot move this %s out of `%s`. Remove `%s` from the configuration.", noun(r.m.decl.TypeName), prior, name))
+			fmt.Sprintf("Stripe cannot move this %s out of `%s`. Remove `%s` from the configuration.", Noun(r.m.decl.TypeName), prior, name))
 	}
 	return resp.Diagnostics.HasError()
 }
@@ -532,7 +532,7 @@ func (r *Resource) refuseDroppingMetadataKeys(ctx context.Context, req resource.
 	slices.Sort(dropped)
 	resp.Diagnostics.AddAttributeError(path.Root(name), "Cannot remove a metadata key",
 		fmt.Sprintf("Stripe keeps a key sent with an empty value in the metadata of %s, so it cannot remove %s. Set each key to \"\" to clear its value instead.",
-			WithArticle(noun(r.m.decl.TypeName)), strings.Join(dropped, ", ")))
+			WithArticle(Noun(r.m.decl.TypeName)), strings.Join(dropped, ", ")))
 	return true
 }
 
@@ -696,7 +696,7 @@ func (r *Resource) unreached(diags *diag.Diagnostics, body wire.Object, plan bas
 			continue
 		}
 		seen[name] = true
-		thing := noun(r.m.decl.TypeName)
+		thing := Noun(r.m.decl.TypeName)
 		detail := fmt.Sprintf("Setting `%s` to `%s` stopped at `%s`: no action moves %s from `%s` to `%s`.", name, want, got, WithArticle(thing), got, want)
 		if refusal := refusals[name]; refusal != nil {
 			detail = fmt.Sprintf("Setting `%s` to `%s` stopped at `%s`: Stripe moved the %s to `%s` by itself while the request was sent, and refused it: %s",
@@ -715,7 +715,7 @@ func (r *Resource) taintedAfterCreate(diags *diag.Diagnostics, id string) {
 	if r.m.decl.Delete != Refuse {
 		return
 	}
-	thing := noun(r.m.decl.TypeName)
+	thing := Noun(r.m.decl.TypeName)
 	diags.AddError("The "+thing+" exists and is tainted", fmt.Sprintf(
 		"The %s `%s` exists in Stripe and Terraform has marked it tainted. Because it cannot be destroyed, run `terraform untaint <address>` once the configuration is fixed, or remove it from the state.",
 		thing, id))

@@ -75,7 +75,7 @@ func (h hashSource) PlanModifyString(ctx context.Context, req planmodifier.Strin
 			resp.PlanValue = req.StateValue
 			resp.Diagnostics.AddAttributeWarning(path.Root(sourceAttr), "The file to upload was not found",
 				fmt.Sprintf("`%s` does not exist, so the plan kept the SHA-256 recorded when the %s was uploaded and did not compare the content. A changed file at that path is not noticed until the file is there to read.",
-					source.ValueString(), noun(h.m.decl.TypeName)))
+					source.ValueString(), Noun(h.m.decl.TypeName)))
 			return
 		}
 		resp.PlanValue = types.StringUnknown()
@@ -111,7 +111,7 @@ func (h hashSource) uploadedFrom(ctx context.Context, req planmodifier.StringReq
 
 // contentRefusal says why a resource that refuses destroy cannot upload a file's new content.
 func (m *model) contentRefusal(reason string) string {
-	thing := noun(m.decl.TypeName)
+	thing := Noun(m.decl.TypeName)
 	return fmt.Sprintf("The content of `%[1]s` has changed since the %[2]s was uploaded. Uploading it needs a new %[2]s, because Stripe cannot change the content of an existing one, and the existing %[2]s cannot be destroyed. %[3]s\n\n"+
 		"Restore the file's content, or remove the existing %[2]s from the state with a removed block or `terraform state rm` and apply again to upload a new one.",
 		sourceAttr, thing, reason)
@@ -162,7 +162,7 @@ func uploadSource(m *model, plan basetypes.ObjectValue, prior, refusal string, d
 		diags.AddAttributeError(path.Root(sourceAttr), "Cannot replace "+m.decl.TypeName, m.contentRefusal(refusal))
 		return nil, ""
 	default:
-		thing := noun(m.decl.TypeName)
+		thing := Noun(m.decl.TypeName)
 		diags.AddAttributeError(path.Root(sourceAttr), "The file to upload has new content",
 			fmt.Sprintf("The content of `%s` is not what the %s was uploaded with, and the plan could not read the file to tell. An update cannot upload new content. Plan and apply again: the plan then replaces the %s.", source, thing, thing))
 		return nil, ""

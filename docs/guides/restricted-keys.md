@@ -60,6 +60,8 @@ Where Stripe's reference does not list an endpoint a type calls, the row says Un
 | `stripe_account_capability` | `connected_account_read` (Direct) | No resource |  |
 | `stripe_account_external_account` | `connected_account_read` (Direct) | `connected_account_write` (Direct) |  |
 | `stripe_account_person` | `connected_account_read` (Direct) | `connected_account_write` (Direct) |  |
+| `stripe_account_person_v2` | `v2_account_read` | `v2_account_read`, `v2_account_storer_write` |  |
+| `stripe_account_v2` | `v2_account_read` | `v2_account_read`, `v2_account_storer_write` |  |
 | `stripe_apple_pay_domain` | Unverified | Unverified | Unverified: the reference does not list `POST /v1/apple_pay/domains`, `GET /v1/apple_pay/domains/{id}`, `DELETE /v1/apple_pay/domains/{id}` and `GET /v1/apple_pay/domains`. |
 | `stripe_application_fee` | `application_fee_read` (Direct) | No resource |  |
 | `stripe_application_fee_refund` | `application_fee_read` (Direct) | `application_fee_write` (Direct), `balance_read` | `balance_read` is for the live-mode check. |
@@ -81,11 +83,7 @@ Where Stripe's reference does not list an endpoint a type calls, the row says Un
 | `stripe_climate_order` | `climate_order_read` | `climate_order_write`, `balance_read` | `balance_read` is for the live-mode check. |
 | `stripe_climate_product` | `climate_order_read` | No resource |  |
 | `stripe_climate_supplier` | `climate_order_read` | No resource |  |
-| `stripe_commerce_product_catalog_import` | `product_catalog_import_read` | No resource |  |
-| `stripe_core_account` | `v2_account_read` | `v2_account_read`, `v2_account_storer_write` |  |
-| `stripe_core_account_person` | `v2_account_read` | `v2_account_read`, `v2_account_storer_write` |  |
-| `stripe_core_event` | `event_read` | No resource | Unverified: the reference does not list `GET /v2/core/events/{id}`. |
-| `stripe_core_event_destination` | `webhook_read` | `webhook_write` |  |
+| `stripe_commerce_product_catalog_import_v2` | `product_catalog_import_read` | No resource |  |
 | `stripe_country_spec` | Unverified | No resource | Unverified: the reference does not list `GET /v1/country_specs/{id}`. |
 | `stripe_coupon` | `coupon_read` | `coupon_write` |  |
 | `stripe_credit_note` | `credit_note_read` | `credit_note_write`, `balance_read` | `balance_read` is for the live-mode check. |
@@ -100,6 +98,8 @@ Where Stripe's reference does not list an endpoint a type calls, the row says Un
 | `stripe_entitlements_active_entitlement` | `entitlement_read` | No resource |  |
 | `stripe_entitlements_feature` | `feature_read` | `feature_write` |  |
 | `stripe_event` | `event_read` | No resource |  |
+| `stripe_event_destination_v2` | `webhook_read` | `webhook_write` |  |
+| `stripe_event_v2` | `event_read` | No resource | Unverified: the reference does not list `GET /v2/core/events/{id}`. |
 | `stripe_file` | `file_read` | `file_write` |  |
 | `stripe_file_link` | `file_read` | `file_write` |  |
 | `stripe_financial_connections_account` | `connections_api_accounts_list_read`, `connections_api_accounts_retrieve_read` | No resource |  |

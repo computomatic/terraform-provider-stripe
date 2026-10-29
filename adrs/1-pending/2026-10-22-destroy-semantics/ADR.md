@@ -8,7 +8,7 @@
 
 Status: Accepted (decided by the owner agent), 2026-10-22, with the eight open questions answered as recommended (see "Resolved questions"). The `create_before_destroy` risk under D2 is accepted as recorded. It is built (every step below is done) and stays in `adrs/1-pending/` with the repository's other accepted ADRs.
 
-It amends D2 ("Delete versus archive") of `adrs/1-pending/2026-10-17-provider-architecture/ADR.md` and the acceptance resolution "Archive and expire" recorded in that ADR's Status. It replaces the rule that keeps the account's default billing portal configuration on destroy. Nothing in the `/v2` ADR (`adrs/1-pending/2026-10-17-v2-support/ADR.md`) changes: its one resource, `stripe_core_event_destination`, deletes.
+It amends D2 ("Delete versus archive") of `adrs/1-pending/2026-10-17-provider-architecture/ADR.md` and the acceptance resolution "Archive and expire" recorded in that ADR's Status. It replaces the rule that keeps the account's default billing portal configuration on destroy. Nothing in the `/v2` ADR (`adrs/1-pending/2026-10-17-v2-support/ADR.md`) changes: its one resource, `stripe_event_destination_v2`, deletes.
 
 Evidence is current as of 2026-10-22: the repository at `6047d16`, the conformance suite (`stripe-api-conformance`) at `f2141be`, terraform-plugin-framework v1.19.0, Terraform 1.15.6 and OpenTofu 1.12.3 run locally (CI runs Terraform 1.16.6 and OpenTofu 1.12.3, `.github/workflows/ci.yml:75,79` at `6047d16`).
 

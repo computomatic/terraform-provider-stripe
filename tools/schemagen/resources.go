@@ -9,7 +9,7 @@ var Resources = []Resource{
 	{Package: "country_spec", ReadPath: "/v1/country_specs/{country}", Omit: []string{"supported_bank_account_currencies"}},
 	// The Omit entries: `include` is a request parameter, not an object field, and the signing
 	// secret waits for the conformance suite and the fake to prove it (ADR 2026-10-17-v2-support).
-	{Package: "core_event_destination", CreatePath: "/v2/core/event_destinations", UpdatePath: "/v2/core/event_destinations/{id}", Omit: []string{"include", "webhook_endpoint.signing_secret"}},
+	{Package: "event_destination_v2", CreatePath: "/v2/core/event_destinations", UpdatePath: "/v2/core/event_destinations/{id}", Omit: []string{"include", "webhook_endpoint.signing_secret"}},
 	{Package: "coupon", CreatePath: "/v1/coupons", UpdatePath: "/v1/coupons/{coupon}"},
 	{Package: "customer", CreatePath: "/v1/customers", UpdatePath: "/v1/customers/{customer}", Omit: []string{"sources", "subscriptions"}},
 	{Package: "entitlements_feature", CreatePath: "/v1/entitlements/features", UpdatePath: "/v1/entitlements/features/{id}"},
@@ -141,7 +141,7 @@ var Resources = []Resource{
 		Keep: []string{"address", "created", "dob", "email", "first_name", "future_requirements", "id", "id_number", "id_number_provided", "last_name", "metadata", "phone",
 			"relationship", "requirements", "ssn_last_4", "ssn_last_4_provided", "verification"},
 		ReadOnly: []string{"relationship.authorizer", "relationship.legal_guardian", "verification"}},
-	{Package: "core_account", CreatePath: "/v2/core/accounts", UpdatePath: "/v2/core/accounts/{id}",
+	{Package: "account_v2", CreatePath: "/v2/core/accounts", UpdatePath: "/v2/core/accounts/{id}",
 		Keep: []string{"applied_configurations", "closed",
 			"configuration.customer.applied", "configuration.customer.capabilities.automatic_indirect_tax",
 			"configuration.merchant.applied", "configuration.merchant.capabilities.card_payments", "configuration.merchant.capabilities.stripe_balance.payouts",
@@ -151,7 +151,7 @@ var Resources = []Resource{
 		ReadOnly: []string{"configuration.customer.applied", "configuration.merchant.applied", "configuration.recipient.applied",
 			"configuration.merchant.capabilities.stripe_balance", "configuration.recipient.capabilities.stripe_balance.payouts"},
 		CreateOnly: []string{"identity.country", "identity.entity_type"}},
-	{Package: "core_account_person", CreatePath: "/v2/core/accounts/{account_id}/persons", UpdatePath: "/v2/core/accounts/{account_id}/persons/{id}",
+	{Package: "account_person_v2", CreatePath: "/v2/core/accounts/{account_id}/persons", UpdatePath: "/v2/core/accounts/{account_id}/persons/{id}",
 		Keep: []string{"address.city", "address.country", "address.line1", "address.line2", "address.postal_code", "address.state", "created", "date_of_birth", "email",
 			"given_name", "id", "id_numbers", "livemode", "metadata", "phone", "relationship", "surname", "updated"},
 		ReadOnly: []string{"relationship.authorizer", "relationship.legal_guardian"}},
@@ -238,11 +238,11 @@ var Resources = []Resource{
 	{Package: "tax_transaction_line_item", ListPath: "/v1/tax/transactions/{transaction}/line_items"},
 	{Package: "tax_location", ReadPath: "/v1/tax/locations/{location}"},
 	{Package: "reporting_report_run", ReadPath: "/v1/reporting/report_runs/{report_run}"},
-	{Package: "core_event", ReadPath: "/v2/core/events/{id}"},
+	{Package: "event_v2", ReadPath: "/v2/core/events/{id}"},
 	{Package: "apps_secret", ReadPath: "/v1/apps/secrets/find"},
 	{Package: "identity_verification_report", ReadPath: "/v1/identity/verification_reports/{report}"},
 	{Package: "payment_record", ReadPath: "/v1/payment_records/{id}"},
-	{Package: "commerce_product_catalog_import", ReadPath: "/v2/commerce/product_catalog/imports/{id}"},
+	{Package: "commerce_product_catalog_import_v2", ReadPath: "/v2/commerce/product_catalog/imports/{id}"},
 	// Wave 8 batches d and k: Connect money movement and a customer's legacy cards and bank
 	// accounts. A reversal is addressed under its transfer, a fee refund under its fee and a
 	// card or bank account under its customer, so the engine adds each parent and the
