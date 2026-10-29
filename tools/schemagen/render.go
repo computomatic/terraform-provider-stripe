@@ -101,7 +101,6 @@ func writeLiteral(b *strings.Builder, f fields.Field) {
 		{"ServerDefaulted", f.ServerDefaulted},
 		{"Sensitive", f.Sensitive},
 		{"Stable", f.Stable},
-		{"Verified", f.Verified},
 	} {
 		if flag.on {
 			fmt.Fprintf(b, ", %s: true", flag.name)

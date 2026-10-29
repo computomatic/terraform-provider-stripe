@@ -85,9 +85,6 @@ type Field struct {
 	// or else what the pinned evidence records, or nil where it records none (ADR
 	// 2026-10-29-full-attribute-coverage, D4).
 	Default *Default
-	// Verified is true when the pinned fake release verifies a request leaf of the field, so
-	// that its page must state its default.
-	Verified bool
 	// Copy is, on an embedded copy of another Stripe object, the data source type that reads
 	// that object (D3).
 	Copy string

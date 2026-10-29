@@ -240,8 +240,8 @@ func fieldAt(table []fields.Field, path string) *fields.Field {
 }
 
 // annotate records on the table's fields the default of each optional argument an exposed
-// request leaf holds, and whether the leaf is verified, for its docs line (D4). The create's
-// default comes before an update's `not sent`.
+// request leaf holds, for its docs line (D4). The create's default comes before an update's
+// `not sent`.
 func annotate(table []fields.Field, leaves []Leaf, records []Record, create string, ev *Pinned) {
 	for i, l := range leaves {
 		r := records[i]
@@ -251,9 +251,6 @@ func annotate(table []fields.Field, leaves []Leaf, records []Record, create stri
 		f := fieldAt(table, l.At)
 		if f == nil || f.Required {
 			continue
-		}
-		if r.Class == ClassVerified {
-			f.Verified = true
 		}
 		if d := defaultOf(l, r, create, leaves, ev); d != nil && (f.Default == nil || l.Operation == create) {
 			f.Default = d
@@ -878,12 +875,24 @@ func RenderCoverageJSON(h coverageHeader, records []Record) ([]byte, error) {
 	return buf.Bytes(), nil
 }
 
-// defaultsNotRecorded counts, per table, the optional request paths exposed with no default
+// unrecordedDefaults is one table's optional arguments whose docs line has no default
+// statement yet: by path those the pinned evidence verifies, which records no default the docs
+// can state, and the count of the others, which it does not verify yet.
+type unrecordedDefaults struct {
+	Verified   []string
+	Unverified int
+}
+
+func (u unrecordedDefaults) total() int { return len(u.Verified) + u.Unverified }
+
+// defaultsNotRecorded finds, per table, the optional request paths exposed with no default
 // statement on any of their leaves. A path the create requires is no optional argument, though
-// its update leaf is optional.
-func defaultsNotRecorded(records []Record) map[string]int {
-	stated, required := map[string]bool{}, map[string]bool{}
-	optional := map[string]string{}
+// its update leaf is optional. A path is verified when any of its exposed request leaves is.
+func defaultsNotRecorded(records []Record) map[string]unrecordedDefaults {
+	stated, required, verified := map[string]bool{}, map[string]bool{}, map[string]bool{}
+	type arg struct{ table, path string }
+	var optional []arg
+	seen := map[string]bool{}
 	for _, r := range records {
 		if r.Side != SideRequest || r.State != StateExposed {
 			continue
@@ -893,16 +902,30 @@ func defaultsNotRecorded(records []Record) map[string]int {
 			required[k] = true
 			continue
 		}
-		optional[k] = r.Table
+		if !seen[k] {
+			seen[k] = true
+			optional = append(optional, arg{r.Table, r.Path})
+		}
+		if r.Class == ClassVerified {
+			verified[k] = true
+		}
 		if r.Default != nil && r.Default.Statement != "" {
 			stated[k] = true
 		}
 	}
-	out := map[string]int{}
-	for k, table := range optional {
-		if !stated[k] && !required[k] {
-			out[table]++
+	out := map[string]unrecordedDefaults{}
+	for _, a := range optional {
+		k := a.table + " " + a.path
+		if stated[k] || required[k] {
+			continue
 		}
+		u := out[a.table]
+		if verified[k] {
+			u.Verified = append(u.Verified, a.path)
+		} else {
+			u.Unverified++
+		}
+		out[a.table] = u
 	}
 	return out
 }
@@ -929,7 +952,7 @@ func RenderCoverageMarkdown(h coverageHeader, records []Record) []byte {
 	}
 
 	b.WriteString("\n## Per table\n\n")
-	b.WriteString("Defaults not yet recorded counts the optional arguments a table exposes whose docs line has no default statement yet, because the pinned evidence does not verify them (D4).\n\n")
+	b.WriteString("Defaults not yet recorded counts the optional arguments a table exposes whose docs line has no default statement yet (D4); \"Defaults not yet recorded\" below lists them.\n\n")
 	b.WriteString("|Table|Object|Request exposed|Request excluded|Request awaiting|Response exposed|Response excluded|Response awaiting|Defaults not yet recorded|\n|-|-|-|-|-|-|-|-|-|\n")
 	var tables []string
 	per := map[string]*sideCounts{}
@@ -945,7 +968,26 @@ func RenderCoverageMarkdown(h coverageHeader, records []Record) []byte {
 	unrecorded := defaultsNotRecorded(records)
 	for _, t := range tables {
 		c := per[t]
-		fmt.Fprintf(&b, "|`%s`|`%s`|%d|%d|%d|%d|%d|%d|%d|\n", t, object[t], c.Request.Exposed, c.Request.Excluded, c.Request.Awaiting, c.Response.Exposed, c.Response.Excluded, c.Response.Awaiting, unrecorded[t])
+		fmt.Fprintf(&b, "|`%s`|`%s`|%d|%d|%d|%d|%d|%d|%d|\n", t, object[t], c.Request.Exposed, c.Request.Excluded, c.Request.Awaiting, c.Response.Exposed, c.Response.Excluded, c.Response.Awaiting, unrecorded[t].total())
+	}
+
+	b.WriteString("\n## Defaults not yet recorded\n\nPer table, the optional arguments it exposes whose docs line has no default statement yet (D4). Verified, default not recorded: the pinned evidence verifies the argument but records no default the docs can state, such as one the minimal creates set; each is named. Unverified: the evidence does not verify the argument yet; they are counted. Until `v0.1.0` docgen requires a statement only of the provider's arguments and those only an update takes; its `everyArgumentHasADefault` then requires one of both kinds.\n\n")
+	b.WriteString("|Table|Verified, default not recorded|Unverified|\n|-|-|-|\n")
+	n := 0
+	for _, t := range tables {
+		u := unrecorded[t]
+		if u.total() == 0 {
+			continue
+		}
+		names := make([]string, len(u.Verified))
+		for i, p := range u.Verified {
+			names[i] = "`" + p + "`"
+		}
+		fmt.Fprintf(&b, "|`%s`|%s|%d|\n", t, strings.Join(names, ", "), u.Unverified)
+		n++
+	}
+	if n == 0 {
+		b.WriteString("\nNone.\n")
 	}
 
 	line := func(r Record) string {
@@ -961,7 +1003,7 @@ func RenderCoverageMarkdown(h coverageHeader, records []Record) []byte {
 	}
 
 	b.WriteString("\n## The spec's \"Defaults to\" against the evidence\n\nWhere a description's \"Defaults to\" names another value than the pinned evidence records, for the conformance suite to check. The spec's text is never a source of the docs' default statements (D4).\n\n")
-	n := 0
+	n = 0
 	for _, r := range records {
 		if r.SpecDefault != "" {
 			fmt.Fprintf(&b, "%s: the spec says `%s`; the evidence says %s\n", line(r), r.SpecDefault, r.Default.Statement)

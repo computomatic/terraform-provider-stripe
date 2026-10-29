@@ -138,12 +138,12 @@ func withDefaults(t *testing.T, s *schemas) *schemas {
 	t.Helper()
 	for typeName, docs := range map[string]map[string]engine.AttributeDoc{
 		"widget_gadget": {
-			"note":                        {Default: "Default (Stripe): `draft`.", NeedsDefault: true, Removal: engine.RemovalKeeps},
-			"tier":                        {Default: "Default (Stripe): the account's default tier (`basic` on a US account).", NeedsDefault: true},
-			"legacy":                      {Default: "Default: none.", NeedsDefault: true},
+			"note":                        {Default: "Default (Stripe): `draft`.", Removal: engine.RemovalKeeps},
+			"tier":                        {Default: "Default (Stripe): the account's default tier (`basic` on a US account)."},
+			"legacy":                      {Default: "Default: none."},
 			"reference":                   {Default: "Default: not sent.", NeedsDefault: true, Removal: engine.RemovalNotSent},
-			"parts.serial":                {Default: "Default: none.", NeedsDefault: true, Removal: engine.RemovalInList},
-			"parts.options.finish.colour": {Default: "Default: none.", NeedsDefault: true},
+			"parts.serial":                {Default: "Default: none.", Removal: engine.RemovalInList},
+			"parts.options.finish.colour": {Default: "Default: none."},
 			"last_part":                   {Copy: "widget_gadget_part"},
 		},
 	} {
@@ -484,21 +484,25 @@ func TestGuideSplit(t *testing.T) {
 	}
 }
 
-// An optional argument the evidence verifies, and every argument of the provider, must state a
-// default; in the total mode every optional argument must, but for a nested object with members.
+// An optional argument only the update takes, and every argument of the provider, must state a
+// default, but one whose default the evidence has not recorded need not, verified or not; in the
+// total mode every optional argument must, but for a nested object with members.
 func TestDefaultsAreChecked(t *testing.T) {
 	if err := checkDefaults(withDefaults(t, fixture(t)), false); err != nil {
 		t.Errorf("complete fixture: %v", err)
 	}
 	s := withDefaults(t, fixture(t))
 	at(byType(s.Resources, "widget_gadget").Attrs, "tier").Default = ""
+	at(byType(s.Resources, "widget_gadget").Attrs, "reference").Default = ""
 	at(s.Provider.Attrs, "base_url").Default = ""
 	err := checkDefaults(s, false)
-	if err == nil || !strings.Contains(err.Error(), "resources/widget_gadget.md: tier") || !strings.Contains(err.Error(), "index.md: base_url") {
-		t.Errorf("err = %v, want it to name both arguments", err)
+	want := "optional arguments without a default statement (ADR 2026-10-29-full-attribute-coverage, D4):\n" +
+		"  index.md: base_url\n  resources/widget_gadget.md: reference"
+	if err == nil || err.Error() != want {
+		t.Errorf("err = %v, want %q", err, want)
 	}
 	err = checkDefaults(withDefaults(t, fixture(t)), true)
-	want := "optional arguments without a default statement (ADR 2026-10-29-full-attribute-coverage, D4):\n" +
+	want = "optional arguments without a default statement (ADR 2026-10-29-full-attribute-coverage, D4):\n" +
 		"  resources/widget_gadget.md: password\n  resources/widget_gadget.md: token"
 	if err == nil || err.Error() != want {
 		t.Errorf("total: err = %v, want %q", err, want)
