@@ -121,37 +121,37 @@ The following arguments are required:
 
 The following arguments are optional:
 
-* `business_profile` - (Optional) Business information about the account. See [`business_profile`](#business_profile) below.
-* `business_type` - (Optional) The business type. Once you create an [Account Link](https://docs.stripe.com/api/account_links) or [Account Session](https://docs.stripe.com/api/account_sessions), this property can only be updated for accounts where [controller.requirement_collection](https://docs.stripe.com/api/accounts/object#account_object-controller-requirement_collection) is `application`, which includes Custom accounts. Possible values: `company`, `government_entity`, `individual`, `non_profit`.
+* `business_profile` - (Optional) Business information about the account. Removing it from the configuration leaves the current value. See [`business_profile`](#business_profile) below.
+* `business_type` - (Optional) The business type. Once you create an [Account Link](https://docs.stripe.com/api/account_links) or [Account Session](https://docs.stripe.com/api/account_sessions), this property can only be updated for accounts where [controller.requirement_collection](https://docs.stripe.com/api/accounts/object#account_object-controller-requirement_collection) is `application`, which includes Custom accounts. Possible values: `company`, `government_entity`, `individual`, `non_profit`. Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
 * `capabilities` - (Optional) Each key of the dictionary represents a capability, and each capability maps to its settings (for example, whether it has been requested or not). Each capability is inactive until you have provided its specific requirements and Stripe has verified them. An account might have some of its requested capabilities be active and some be inactive. Required when [account.controller.stripe_dashboard.type](https://docs.stripe.com/api/accounts/create#create_account-controller-dashboard-type) is `none`, which includes Custom accounts. See [`capabilities`](#capabilities) below.
 * `company` - (Optional) Information about the company or business. This field is available for any `business_type`. Once you create an [Account Link](https://docs.stripe.com/api/account_links) or [Account Session](https://docs.stripe.com/api/account_sessions), this property can only be updated for accounts where [controller.requirement_collection](https://docs.stripe.com/api/accounts/object#account_object-controller-requirement_collection) is `application`, which includes Custom accounts. See [`company`](#company) below.
-* `controller` - (Optional) A hash of configuration describing the account controller's attributes. Changing it replaces the resource. See [`controller`](#controller) below.
-* `email` - (Optional) The email address of the account holder. This is only to make the account easier to identify to you. If [controller.requirement_collection](https://docs.stripe.com/api/accounts/object#account_object-controller-requirement_collection) is `application`, which includes Custom accounts, Stripe doesn't email the account without your consent.
+* `controller` - (Optional) A hash of configuration describing the account controller's attributes. Changing it replaces the resource. Removing it from the configuration leaves the current value. See [`controller`](#controller) below.
+* `email` - (Optional) The email address of the account holder. This is only to make the account easier to identify to you. If [controller.requirement_collection](https://docs.stripe.com/api/accounts/object#account_object-controller-requirement_collection) is `application`, which includes Custom accounts, Stripe doesn't email the account without your consent. Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
 * `external_account` - (Optional) A card or bank account to attach to the account for receiving [payouts](https://docs.stripe.com/connect/bank-debit-card-payouts) (you won’t be able to use it for top-ups). You can provide either a token, like the ones returned by [Stripe.js](https://docs.stripe.com/js), or a dictionary, as documented in the `external_account` parameter for [bank account](https://docs.stripe.com/api#account_create_bank_account) creation. <br><br>By default, providing an external account sets it as the new default external account for its currency, and deletes the old default if one exists. To add additional external accounts without replacing the existing default for the currency, use the [bank account](https://docs.stripe.com/api#account_create_bank_account) or [card creation](https://docs.stripe.com/api#account_create_card) APIs. After you create an [Account Link](https://docs.stripe.com/api/account_links) or [Account Session](https://docs.stripe.com/api/account_sessions), this property can only be updated for accounts where [controller.requirement_collection](https://docs.stripe.com/api/accounts/object#account_object-controller-requirement_collection) is `application`, which includes Custom accounts.
 * `individual` - (Optional) Information about the person represented by the account. This field is null unless `business_type` is set to `individual`. Once you create an [Account Link](https://docs.stripe.com/api/account_links) or [Account Session](https://docs.stripe.com/api/account_sessions), this property can only be updated for accounts where [controller.requirement_collection](https://docs.stripe.com/api/accounts/object#account_object-controller-requirement_collection) is `application`, which includes Custom accounts. See [`individual`](#individual) below.
 * `metadata` - (Optional) Set of [key-value pairs](https://docs.stripe.com/api/metadata) that you can attach to an object. This can be useful for storing additional information about the object in a structured format. Individual keys can be unset by posting an empty value to them. All keys can be unset by posting an empty value to `metadata`.
-* `settings` - (Optional) Options for customizing how the account functions within Stripe. See [`settings`](#settings) below.
-* `tos_acceptance` - (Optional) Details on the account's acceptance of the [Stripe Services Agreement](https://docs.stripe.com/connect/updating-accounts#tos-acceptance). This property can only be updated for accounts where [controller.requirement_collection](https://docs.stripe.com/api/accounts/object#account_object-controller-requirement_collection) is `application`, which includes Custom accounts. This property defaults to a `full` service agreement when empty. See [`tos_acceptance`](#tos_acceptance) below.
-* `type` - (Optional) The `type` parameter is deprecated. Use [`controller`](https://docs.stripe.com/api/accounts/create#create_account-controller) instead to configure dashboard access, fee payer, loss liability, and requirement collection. Possible values: `custom`, `express`, `standard`. Changing it replaces the resource.
+* `settings` - (Optional) Options for customizing how the account functions within Stripe. Removing it from the configuration leaves the current value. See [`settings`](#settings) below.
+* `tos_acceptance` - (Optional) Details on the account's acceptance of the [Stripe Services Agreement](https://docs.stripe.com/connect/updating-accounts#tos-acceptance). This property can only be updated for accounts where [controller.requirement_collection](https://docs.stripe.com/api/accounts/object#account_object-controller-requirement_collection) is `application`, which includes Custom accounts. This property defaults to a `full` service agreement when empty. Removing it from the configuration leaves the current value. See [`tos_acceptance`](#tos_acceptance) below.
+* `type` - (Optional) The `type` parameter is deprecated. Use [`controller`](https://docs.stripe.com/api/accounts/create#create_account-controller) instead to configure dashboard access, fee payer, loss liability, and requirement collection. Possible values: `custom`, `express`, `standard`. Changing it replaces the resource. Removing it from the configuration leaves the current value.
 
 <a id="business_profile"></a>
 ### `business_profile`
 
 The `business_profile` attribute supports:
 
-* `annual_revenue` - (Optional) The applicant's gross annual revenue for its preceding fiscal year. See [`business_profile.annual_revenue`](#business_profile.annual_revenue) below.
-* `estimated_worker_count` - (Optional) An estimated upper bound of employees, contractors, vendors, etc. currently working for the business.
-* `mcc` - (Optional) [The merchant category code for the account](https://docs.stripe.com/connect/setting-mcc). MCCs are used to classify businesses based on the goods or services they provide.
+* `annual_revenue` - (Optional) The applicant's gross annual revenue for its preceding fiscal year. Removing it from the configuration leaves the current value. See [`business_profile.annual_revenue`](#business_profile.annual_revenue) below.
+* `estimated_worker_count` - (Optional) An estimated upper bound of employees, contractors, vendors, etc. currently working for the business. Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
+* `mcc` - (Optional) [The merchant category code for the account](https://docs.stripe.com/connect/setting-mcc). MCCs are used to classify businesses based on the goods or services they provide. Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
 * `minority_owned_business_designation` - (Read-Only) Whether the business is a minority-owned, women-owned, and/or LGBTQI+ -owned business.
 * `monthly_estimated_revenue` - (Read-Only) See [`business_profile.monthly_estimated_revenue`](#business_profile.monthly_estimated_revenue) below.
-* `name` - (Optional) The customer-facing business name.
-* `product_description` - (Optional) Internal-only description of the product sold or service provided by the business. It's used by Stripe for risk and underwriting purposes.
+* `name` - (Optional) The customer-facing business name. Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
+* `product_description` - (Optional) Internal-only description of the product sold or service provided by the business. It's used by Stripe for risk and underwriting purposes. Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
 * `specified_commercial_transactions_act_url` - (Read-Only) A link to the business's publicly available terms related to the Specified Commercial Transaction Act. Only used for accounts in Japan.
 * `support_address` - (Read-Only) A publicly available mailing address for sending support issues to. See [`business_profile.support_address`](#business_profile.support_address) below.
 * `support_email` - (Read-Only) A publicly available email address for sending support issues to.
 * `support_phone` - (Read-Only) A publicly available phone number to call with support issues.
 * `support_url` - (Read-Only) A publicly available website for handling support issues.
-* `url` - (Optional) The business's publicly available website.
+* `url` - (Optional) The business's publicly available website. Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
 
 <a id="business_profile.annual_revenue"></a>
 ### `business_profile.annual_revenue`
@@ -752,11 +752,11 @@ The `company` attribute supports:
 
 The `controller` attribute supports:
 
-* `fees` - (Optional) See [`controller.fees`](#controller.fees) below.
+* `fees` - (Optional) Removing it from the configuration leaves the current value. See [`controller.fees`](#controller.fees) below.
 * `is_controller` - (Read-Only) `true` if the Connect application retrieving the resource controls the account and can therefore exercise [platform controls](https://docs.stripe.com/connect/platform-controls-for-standard-accounts). Otherwise, this field is null.
-* `losses` - (Optional) See [`controller.losses`](#controller.losses) below.
-* `requirement_collection` - (Optional) A value indicating responsibility for collecting requirements on this account. Only returned when the Connect application retrieving the resource controls the account. Possible values: `application`, `stripe`.
-* `stripe_dashboard` - (Optional) See [`controller.stripe_dashboard`](#controller.stripe_dashboard) below.
+* `losses` - (Optional) Removing it from the configuration leaves the current value. See [`controller.losses`](#controller.losses) below.
+* `requirement_collection` - (Optional) A value indicating responsibility for collecting requirements on this account. Only returned when the Connect application retrieving the resource controls the account. Possible values: `application`, `stripe`. Removing it from the configuration leaves the current value.
+* `stripe_dashboard` - (Optional) Removing it from the configuration leaves the current value. See [`controller.stripe_dashboard`](#controller.stripe_dashboard) below.
 * `type` - (Read-Only) The controller type. Can be `application`, if a Connect application controls the account, or `account`, if the account controls itself. Possible values: `account`, `application`.
 
 <a id="controller.fees"></a>
@@ -764,21 +764,21 @@ The `controller` attribute supports:
 
 The `controller.fees` attribute supports:
 
-* `payer` - (Optional) A value indicating the responsible payer of a bundle of Stripe fees for pricing-control eligible products on this account. Learn more about [fee behavior on connected accounts](https://docs.stripe.com/connect/direct-charges-fee-payer-behavior). Possible values: `account`, `application`.
+* `payer` - (Optional) A value indicating the responsible payer of a bundle of Stripe fees for pricing-control eligible products on this account. Learn more about [fee behavior on connected accounts](https://docs.stripe.com/connect/direct-charges-fee-payer-behavior). Possible values: `account`, `application`. Removing it from the configuration leaves the current value.
 
 <a id="controller.losses"></a>
 ### `controller.losses`
 
 The `controller.losses` attribute supports:
 
-* `payments` - (Optional) A value indicating who is liable when this account can't pay back negative balances from payments. Possible values: `application`, `stripe`.
+* `payments` - (Optional) A value indicating who is liable when this account can't pay back negative balances from payments. Possible values: `application`, `stripe`. Removing it from the configuration leaves the current value.
 
 <a id="controller.stripe_dashboard"></a>
 ### `controller.stripe_dashboard`
 
 The `controller.stripe_dashboard` attribute supports:
 
-* `type` - (Optional) A value indicating the Stripe dashboard this account has access to independent of the Connect application. Possible values: `express`, `full`, `none`.
+* `type` - (Optional) A value indicating the Stripe dashboard this account has access to independent of the Connect application. Possible values: `express`, `full`, `none`. Removing it from the configuration leaves the current value.
 
 <a id="individual"></a>
 ### `individual`
@@ -835,7 +835,7 @@ The `settings` attribute supports:
 
 * `bacs_debit_payments` - (Read-Only) See [`settings.bacs_debit_payments`](#settings.bacs_debit_payments) below.
 * `branding` - (Read-Only) See [`settings.branding`](#settings.branding) below.
-* `card_issuing` - (Optional) See [`settings.card_issuing`](#settings.card_issuing) below.
+* `card_issuing` - (Optional) Removing it from the configuration leaves the current value. See [`settings.card_issuing`](#settings.card_issuing) below.
 * `card_payments` - (Read-Only) See [`settings.card_payments`](#settings.card_payments) below.
 * `dashboard` - (Read-Only) See [`settings.dashboard`](#settings.dashboard) below.
 * `invoices` - (Read-Only) See [`settings.invoices`](#settings.invoices) below.
@@ -843,7 +843,7 @@ The `settings` attribute supports:
 * `payouts` - (Read-Only) See [`settings.payouts`](#settings.payouts) below.
 * `paypay_payments` - (Read-Only) See [`settings.paypay_payments`](#settings.paypay_payments) below.
 * `sepa_debit_payments` - (Read-Only) See [`settings.sepa_debit_payments`](#settings.sepa_debit_payments) below.
-* `treasury` - (Optional) See [`settings.treasury`](#settings.treasury) below.
+* `treasury` - (Optional) Removing it from the configuration leaves the current value. See [`settings.treasury`](#settings.treasury) below.
 
 <a id="settings.bacs_debit_payments"></a>
 ### `settings.bacs_debit_payments`
@@ -868,15 +868,15 @@ The `settings.branding` attribute supports:
 
 The `settings.card_issuing` attribute supports:
 
-* `tos_acceptance` - (Optional) See [`settings.card_issuing.tos_acceptance`](#settings.card_issuing.tos_acceptance) below.
+* `tos_acceptance` - (Optional) Removing it from the configuration leaves the current value. See [`settings.card_issuing.tos_acceptance`](#settings.card_issuing.tos_acceptance) below.
 
 <a id="settings.card_issuing.tos_acceptance"></a>
 ### `settings.card_issuing.tos_acceptance`
 
 The `settings.card_issuing.tos_acceptance` attribute supports:
 
-* `date` - (Optional) The Unix timestamp marking when the account representative accepted the service agreement.
-* `ip` - (Optional) The IP address from which the account representative accepted the service agreement.
+* `date` - (Optional) The Unix timestamp marking when the account representative accepted the service agreement. Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
+* `ip` - (Optional) The IP address from which the account representative accepted the service agreement. Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
 * `user_agent` - (Read-Only) The user agent of the browser from which the account representative accepted the service agreement.
 
 <a id="settings.card_payments"></a>
@@ -988,15 +988,15 @@ The `settings.sepa_debit_payments` attribute supports:
 
 The `settings.treasury` attribute supports:
 
-* `tos_acceptance` - (Optional) See [`settings.treasury.tos_acceptance`](#settings.treasury.tos_acceptance) below.
+* `tos_acceptance` - (Optional) Removing it from the configuration leaves the current value. See [`settings.treasury.tos_acceptance`](#settings.treasury.tos_acceptance) below.
 
 <a id="settings.treasury.tos_acceptance"></a>
 ### `settings.treasury.tos_acceptance`
 
 The `settings.treasury.tos_acceptance` attribute supports:
 
-* `date` - (Optional) The Unix timestamp marking when the account representative accepted the service agreement.
-* `ip` - (Optional) The IP address from which the account representative accepted the service agreement.
+* `date` - (Optional) The Unix timestamp marking when the account representative accepted the service agreement. Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
+* `ip` - (Optional) The IP address from which the account representative accepted the service agreement. Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
 * `user_agent` - (Read-Only) The user agent of the browser from which the account representative accepted the service agreement.
 
 <a id="tos_acceptance"></a>
@@ -1004,8 +1004,8 @@ The `settings.treasury.tos_acceptance` attribute supports:
 
 The `tos_acceptance` attribute supports:
 
-* `date` - (Optional) The Unix timestamp marking when the account representative accepted their service agreement
-* `ip` - (Optional) The IP address from which the account representative accepted their service agreement
+* `date` - (Optional) The Unix timestamp marking when the account representative accepted their service agreement. Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
+* `ip` - (Optional) The IP address from which the account representative accepted their service agreement. Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
 
 ## Attribute Reference
 

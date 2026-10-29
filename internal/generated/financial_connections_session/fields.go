@@ -13,7 +13,7 @@ var Table = []fields.Field{
 		{Name: "customer_account", Shape: fields.String, Response: true},
 		{Name: "type", Shape: fields.String, Response: true, Enum: []string{"account", "customer"}, Description: "Type of account holder that this account belongs to."},
 	}},
-	{Name: "accounts", Shape: fields.Object, Response: true, Description: "The accounts that were collected as part of this Session.", Fields: []fields.Field{
+	{Name: "accounts", Shape: fields.Object, Response: true, Description: "The accounts that were collected as part of this Session.", PagedBy: "stripe_financial_connections_account", Fields: []fields.Field{
 		{Name: "data", Shape: fields.ObjectList, Response: true, Description: "Details about each object.", Fields: []fields.Field{
 			{Name: "account_holder", Shape: fields.Object, Response: true, Description: "The account holder that this account belongs to.", Fields: []fields.Field{
 				{Name: "account", Shape: fields.String, Response: true, Description: "The ID of the Stripe account that this account belongs to. Only available when `account_holder.type` is `account`."},

@@ -15,7 +15,7 @@ var Table = []fields.Field{
 			{Name: "value", Shape: fields.String, Response: true, Enum: []string{"off", "on"}, Description: "The effective display preference value."},
 		}},
 	}},
-	{Name: "active", Shape: fields.Bool, Update: true, Response: true, Description: "Whether the configuration can be used for new payments."},
+	{Name: "active", Shape: fields.Bool, Update: true, Response: true, Description: "Whether the configuration can be used for new payments.", Default: &fields.Default{Kind: fields.DefaultNotSent}},
 	{Name: "affirm", Shape: fields.Object, Create: true, Update: true, Response: true, Description: "[Affirm](https://www.affirm.com/) gives your customers a way to split purchases over a series of payments. Depending on the purchase, they can pay with four interest-free payments (Split Pay) or pay over a longer term (Installments), which might include interest. Check this [page](https://docs.stripe.com/payments/affirm) for more details like country availability.", Fields: []fields.Field{
 		{Name: "available", Shape: fields.Bool, Response: true, Description: "Whether this payment method may be offered at checkout. True if `display_preference` is `on` and the payment method's capability is active."},
 		{Name: "display_preference", Shape: fields.Object, Create: true, Update: true, Response: true, ServerDefaulted: true, Fields: []fields.Field{

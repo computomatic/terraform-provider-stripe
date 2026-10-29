@@ -51,22 +51,22 @@ The following arguments are optional:
 
 * `application_fee_amount` - (Optional) The amount of the application fee (if any) that will be requested to be applied to the payment and transferred to the application owner's Stripe account. There cannot be any line items with recurring prices when using this field.
 * `application_fee_percent` - (Optional) A non-negative decimal between 0 and 100, with at most two decimal places. This represents the percentage of the subscription invoice total that will be transferred to the application owner's Stripe account. There must be at least 1 line item with a recurring price to use this field.
-* `automatic_tax` - (Optional) Settings for automatic tax lookup for this quote and resulting invoices and subscriptions. See [`automatic_tax`](#automatic_tax) below.
-* `collection_method` - (Optional) Either `charge_automatically`, or `send_invoice`. When charging automatically, Stripe will attempt to pay invoices at the end of the subscription cycle or at invoice finalization using the default payment method attached to the subscription or customer. When sending an invoice, Stripe will email your customer an invoice with payment instructions and mark the subscription as `active`. Defaults to `charge_automatically`. Possible values: `charge_automatically`, `send_invoice`.
-* `customer` - (Optional) The customer for which this quote belongs to. A customer is required before finalizing the quote. Once specified, it cannot be changed.
+* `automatic_tax` - (Optional) Settings for automatic tax lookup for this quote and resulting invoices and subscriptions. Removing it from the configuration leaves the current value. See [`automatic_tax`](#automatic_tax) below.
+* `collection_method` - (Optional) Either `charge_automatically`, or `send_invoice`. When charging automatically, Stripe will attempt to pay invoices at the end of the subscription cycle or at invoice finalization using the default payment method attached to the subscription or customer. When sending an invoice, Stripe will email your customer an invoice with payment instructions and mark the subscription as `active`. Defaults to `charge_automatically`. Possible values: `charge_automatically`, `send_invoice`. Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
+* `customer` - (Optional) The customer for which this quote belongs to. A customer is required before finalizing the quote. Once specified, it cannot be changed. Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
 * `customer_account` - (Optional) The account for which this quote belongs to. A customer or account is required before finalizing the quote. Once specified, it cannot be changed.
 * `default_tax_rates` - (Optional) The tax rates that will apply to any line item that does not have `tax_rates` set.
 * `description` - (Optional) A description that will be displayed on the quote PDF. If no value is passed, the default description configured in your [quote template settings](https://dashboard.stripe.com/settings/billing/quote) will be used.
-* `expires_at` - (Optional) A future timestamp on which the quote will be canceled if in `open` or `draft` status. Measured in seconds since the Unix epoch. If no value is passed, the default expiration date configured in your [quote template settings](https://dashboard.stripe.com/settings/billing/quote) will be used.
+* `expires_at` - (Optional) A future timestamp on which the quote will be canceled if in `open` or `draft` status. Measured in seconds since the Unix epoch. If no value is passed, the default expiration date configured in your [quote template settings](https://dashboard.stripe.com/settings/billing/quote) will be used. Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
 * `footer` - (Optional) A footer that will be displayed on the quote PDF. If no value is passed, the default footer configured in your [quote template settings](https://dashboard.stripe.com/settings/billing/quote) will be used.
 * `from_quote` - (Optional) Clone an existing quote. The new quote will be created in `status=draft`. When using this parameter, you cannot specify any other parameters except for `expires_at`. Changing it fails the plan, because this resource cannot be replaced. See [`from_quote`](#from_quote) below.
 * `header` - (Optional) A header that will be displayed on the quote PDF. If no value is passed, the default header configured in your [quote template settings](https://dashboard.stripe.com/settings/billing/quote) will be used.
-* `invoice_settings` - (Optional) All invoices will be billed using the specified settings. See [`invoice_settings`](#invoice_settings) below.
+* `invoice_settings` - (Optional) All invoices will be billed using the specified settings. Removing it from the configuration leaves the current value. See [`invoice_settings`](#invoice_settings) below.
 * `line_items` - (Optional) A list of line items the customer is being quoted for. Each line item includes information about the product, the quantity, and the resulting cost. See [`line_items`](#line_items) below.
 * `metadata` - (Optional) Set of [key-value pairs](https://docs.stripe.com/api/metadata) that you can attach to an object. This can be useful for storing additional information about the object in a structured format. Individual keys can be unset by posting an empty value to them. All keys can be unset by posting an empty value to `metadata`.
 * `on_behalf_of` - (Optional) The account on behalf of which to charge.
-* `status` - (Optional) The status of the quote. Possible values: `canceled`.
-* `subscription_data` - (Optional) When creating a subscription or subscription schedule, the specified configuration data will be used. There must be at least one line item with a recurring price for a subscription or subscription schedule to be created. A subscription schedule is created if `subscription_data[effective_date]` is present and in the future, otherwise a subscription is created. See [`subscription_data`](#subscription_data) below.
+* `status` - (Optional) The status of the quote. Possible values: `canceled`. Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
+* `subscription_data` - (Optional) When creating a subscription or subscription schedule, the specified configuration data will be used. There must be at least one line item with a recurring price for a subscription or subscription schedule to be created. A subscription schedule is created if `subscription_data[effective_date]` is present and in the future, otherwise a subscription is created. Removing it from the configuration leaves the current value. See [`subscription_data`](#subscription_data) below.
 * `test_clock` - (Optional) ID of the test clock to attach to the quote. Changing it fails the plan, because this resource cannot be replaced.
 * `transfer_data` - (Optional) The data with which to automatically create a Transfer for each of the invoices. See [`transfer_data`](#transfer_data) below.
 
@@ -93,7 +93,7 @@ The `automatic_tax.liability` attribute supports:
 
 The `from_quote` attribute supports:
 
-* `is_revision` - (Optional) Whether this quote is a revision of a different quote.
+* `is_revision` - (Optional) Whether this quote is a revision of a different quote. Removing it from the configuration leaves the current value.
 * `quote` - (Required) The quote that was cloned.
 
 <a id="invoice_settings"></a>
@@ -105,7 +105,7 @@ The `invoice_settings` attribute supports:
 * `days_until_due` - (Optional) Number of days within which a customer must pay invoices generated by this quote. This value will be `null` for quotes where `collection_method=charge_automatically`.
 * `description` - (Optional) An arbitrary string attached to the object. Often useful for displaying to users.
 * `footer` - (Optional) Footer to be displayed on the invoice.
-* `issuer` - (Optional) See [`invoice_settings.issuer`](#invoice_settings.issuer) below.
+* `issuer` - (Optional) Removing it from the configuration leaves the current value. See [`invoice_settings.issuer`](#invoice_settings.issuer) below.
 
 <a id="invoice_settings.custom_fields"></a>
 ### `invoice_settings.custom_fields`
@@ -136,7 +136,7 @@ The `line_items` attribute is a list. Each element supports:
 * `currency` - (Read-Only) Three-letter [ISO currency code](https://www.iso.org/iso-4217-currency-codes.html), in lowercase. Must be a [supported currency](https://stripe.com/docs/currencies).
 * `description` - (Read-Only) An arbitrary string attached to the object. Often useful for displaying to users. Defaults to product name.
 * `discounts` - (Optional) The discounts applied to the line item. See [`line_items.discounts`](#line_items.discounts) below.
-* `id` - (Optional) Unique identifier for the object.
+* `id` - (Optional) Unique identifier for the object. Default: not sent. Removing it from the configuration lets Stripe set it when the list is next sent.
 * `metadata` - (Read-Only) Set of [key-value pairs](https://docs.stripe.com/api/metadata) that you can attach to an object. This can be useful for storing additional information about the object in a structured format.
 * `object` - (Read-Only) String representing the object's type. Objects of the same type share the same value. Possible values: `item`.
 * `price` - (Optional) The price used to generate the line item.
@@ -161,7 +161,7 @@ The `line_items.discounts` attribute is a list. Each element supports:
 
 * `amount` - (Read-Only) The amount discounted.
 * `coupon` - (Optional)
-* `discount` - (Optional) A discount represents the actual application of a [coupon](https://docs.stripe.com/api#coupons) or [promotion code](https://docs.stripe.com/api#promotion_codes). It contains information about when the discount began, when it will end, and what it is applied to. Related guide: [Applying discounts to subscriptions](https://docs.stripe.com/billing/subscriptions/discounts)
+* `discount` - (Optional) A discount represents the actual application of a [coupon](https://docs.stripe.com/api#coupons) or [promotion code](https://docs.stripe.com/api#promotion_codes). It contains information about when the discount began, when it will end, and what it is applied to. Related guide: [Applying discounts to subscriptions](https://docs.stripe.com/billing/subscriptions/discounts). Removing it from the configuration lets Stripe set it when the list is next sent.
 * `promotion_code` - (Optional)
 
 <a id="line_items.price_data"></a>
@@ -231,7 +231,7 @@ The `line_items.taxes.rate.flat_amount` attribute supports:
 
 The `subscription_data` attribute supports:
 
-* `billing_mode` - (Optional) The billing mode of the quote. Changing it fails the plan, because this resource cannot be replaced. See [`subscription_data.billing_mode`](#subscription_data.billing_mode) below.
+* `billing_mode` - (Optional) The billing mode of the quote. Changing it fails the plan, because this resource cannot be replaced. Removing it from the configuration leaves the current value. See [`subscription_data.billing_mode`](#subscription_data.billing_mode) below.
 * `description` - (Optional) The subscription's description, meant to be displayable to the customer. Use this field to optionally store an explanation of the subscription for rendering in Stripe surfaces and certain local payment methods UIs.
 * `effective_date` - (Optional) When creating a new subscription, the date of which the subscription schedule will start after the quote is accepted. This date is ignored if it is in the past when the quote is accepted. Measured in seconds since the Unix epoch.
 * `metadata` - (Optional) Set of [key-value pairs](https://docs.stripe.com/api/metadata) that will set metadata on the subscription or subscription schedule when the quote is accepted. If a recurring price is included in `line_items`, this field will be passed to the resulting subscription's `metadata` field. If `subscription_data.effective_date` is used, this field will be passed to the resulting subscription schedule's `phases.metadata` field. Unlike object-level metadata, this field is declarative. Updates will clear prior values.
@@ -365,34 +365,7 @@ The `computed.recurring.total_details.breakdown.taxes` attribute is a list. Each
 <a id="computed.recurring.total_details.breakdown.taxes.rate"></a>
 ### `computed.recurring.total_details.breakdown.taxes.rate`
 
-The `computed.recurring.total_details.breakdown.taxes.rate` attribute supports:
-
-* `active` - Defaults to `true`. When set to `false`, this tax rate cannot be used with new applications or Checkout Sessions, but will still work for subscriptions and invoices that already have it set.
-* `country` - Two-letter country code ([ISO 3166-1 alpha-2](https://en.wikipedia.org/wiki/ISO_3166-1_alpha-2)).
-* `created` - Time at which the object was created. Measured in seconds since the Unix epoch.
-* `description` - An arbitrary string attached to the tax rate for your internal use only. It will not be visible to your customers.
-* `display_name` - The display name of the tax rates as it will appear to your customer on their receipt email, PDF, and the hosted invoice page.
-* `effective_percentage` - Actual/effective tax rate percentage out of 100. For tax calculations with automatic_tax[enabled]=true, this percentage reflects the rate actually used to calculate tax based on the product's taxability and whether the user is registered to collect taxes in the corresponding jurisdiction.
-* `flat_amount` - The amount of the tax rate when the `rate_type` is `flat_amount`. Tax rates with `rate_type` `percentage` can vary based on the transaction, resulting in this field being `null`. This field exposes the amount and currency of the flat tax rate. See [`computed.recurring.total_details.breakdown.taxes.rate.flat_amount`](#computed.recurring.total_details.breakdown.taxes.rate.flat_amount) below.
-* `id` - Unique identifier for the object.
-* `inclusive` - This specifies if the tax rate is inclusive or exclusive.
-* `jurisdiction` - The jurisdiction for the tax rate. You can use this label field for tax reporting purposes. It also appears on your customer’s invoice.
-* `jurisdiction_level` - The level of the jurisdiction that imposes this tax rate. Will be `null` for manually defined tax rates. Possible values: `city`, `country`, `county`, `district`, `multiple`, `state`.
-* `livemode` - If the object exists in live mode, the value is `true`. If the object exists in test mode, the value is `false`.
-* `metadata` - Set of [key-value pairs](https://docs.stripe.com/api/metadata) that you can attach to an object. This can be useful for storing additional information about the object in a structured format.
-* `object` - String representing the object's type. Objects of the same type share the same value. Possible values: `tax_rate`.
-* `percentage` - Tax rate percentage out of 100. For tax calculations with automatic_tax[enabled]=true, this percentage includes the statutory tax rate of non-taxable jurisdictions.
-* `rate_type` - Indicates the type of tax rate applied to the taxable amount. This value can be `null` when no tax applies to the location. This field is only present for TaxRates created by Stripe Tax. Possible values: `flat_amount`, `percentage`.
-* `state` - [ISO 3166-2 subdivision code](https://en.wikipedia.org/wiki/ISO_3166-2), without country prefix. For example, "NY" for New York, United States.
-* `tax_type` - The high-level tax type, such as `vat` or `sales_tax`. Possible values: `amusement_tax`, `communications_tax`, `digital_excise_tax`, `gst`, `hst`, `igst`, `jct`, `lease_tax`, `mass_transit_parking_tax`, `parking_tax`, `pst`, `qst`, `retail_delivery_fee`, `rst`, `sales_tax`, `service_tax`, `utility_users_tax`, `vat`.
-
-<a id="computed.recurring.total_details.breakdown.taxes.rate.flat_amount"></a>
-### `computed.recurring.total_details.breakdown.taxes.rate.flat_amount`
-
-The `computed.recurring.total_details.breakdown.taxes.rate.flat_amount` attribute supports:
-
-* `amount` - Amount of the tax when the `rate_type` is `flat_amount`. This positive integer represents how much to charge in the smallest currency unit (e.g., 100 cents to charge $1.00 or 100 to charge ¥100, a zero-decimal currency). The amount value supports up to eight digits (e.g., a value of 99999999 for a USD charge of $999,999.99).
-* `currency` - Three-letter ISO currency code, in lowercase.
+The `computed.recurring.total_details.breakdown.taxes.rate` attribute holds a tax rate, with the attributes of the [`stripe_tax_rate`](../data-sources/tax_rate) data source and `object`, the name of its type.
 
 <a id="computed.upfront"></a>
 ### `computed.upfront`
@@ -682,34 +655,7 @@ The `computed.upfront.total_details.breakdown.taxes` attribute is a list. Each e
 <a id="computed.upfront.total_details.breakdown.taxes.rate"></a>
 ### `computed.upfront.total_details.breakdown.taxes.rate`
 
-The `computed.upfront.total_details.breakdown.taxes.rate` attribute supports:
-
-* `active` - Defaults to `true`. When set to `false`, this tax rate cannot be used with new applications or Checkout Sessions, but will still work for subscriptions and invoices that already have it set.
-* `country` - Two-letter country code ([ISO 3166-1 alpha-2](https://en.wikipedia.org/wiki/ISO_3166-1_alpha-2)).
-* `created` - Time at which the object was created. Measured in seconds since the Unix epoch.
-* `description` - An arbitrary string attached to the tax rate for your internal use only. It will not be visible to your customers.
-* `display_name` - The display name of the tax rates as it will appear to your customer on their receipt email, PDF, and the hosted invoice page.
-* `effective_percentage` - Actual/effective tax rate percentage out of 100. For tax calculations with automatic_tax[enabled]=true, this percentage reflects the rate actually used to calculate tax based on the product's taxability and whether the user is registered to collect taxes in the corresponding jurisdiction.
-* `flat_amount` - The amount of the tax rate when the `rate_type` is `flat_amount`. Tax rates with `rate_type` `percentage` can vary based on the transaction, resulting in this field being `null`. This field exposes the amount and currency of the flat tax rate. See [`computed.upfront.total_details.breakdown.taxes.rate.flat_amount`](#computed.upfront.total_details.breakdown.taxes.rate.flat_amount) below.
-* `id` - Unique identifier for the object.
-* `inclusive` - This specifies if the tax rate is inclusive or exclusive.
-* `jurisdiction` - The jurisdiction for the tax rate. You can use this label field for tax reporting purposes. It also appears on your customer’s invoice.
-* `jurisdiction_level` - The level of the jurisdiction that imposes this tax rate. Will be `null` for manually defined tax rates. Possible values: `city`, `country`, `county`, `district`, `multiple`, `state`.
-* `livemode` - If the object exists in live mode, the value is `true`. If the object exists in test mode, the value is `false`.
-* `metadata` - Set of [key-value pairs](https://docs.stripe.com/api/metadata) that you can attach to an object. This can be useful for storing additional information about the object in a structured format.
-* `object` - String representing the object's type. Objects of the same type share the same value. Possible values: `tax_rate`.
-* `percentage` - Tax rate percentage out of 100. For tax calculations with automatic_tax[enabled]=true, this percentage includes the statutory tax rate of non-taxable jurisdictions.
-* `rate_type` - Indicates the type of tax rate applied to the taxable amount. This value can be `null` when no tax applies to the location. This field is only present for TaxRates created by Stripe Tax. Possible values: `flat_amount`, `percentage`.
-* `state` - [ISO 3166-2 subdivision code](https://en.wikipedia.org/wiki/ISO_3166-2), without country prefix. For example, "NY" for New York, United States.
-* `tax_type` - The high-level tax type, such as `vat` or `sales_tax`. Possible values: `amusement_tax`, `communications_tax`, `digital_excise_tax`, `gst`, `hst`, `igst`, `jct`, `lease_tax`, `mass_transit_parking_tax`, `parking_tax`, `pst`, `qst`, `retail_delivery_fee`, `rst`, `sales_tax`, `service_tax`, `utility_users_tax`, `vat`.
-
-<a id="computed.upfront.total_details.breakdown.taxes.rate.flat_amount"></a>
-### `computed.upfront.total_details.breakdown.taxes.rate.flat_amount`
-
-The `computed.upfront.total_details.breakdown.taxes.rate.flat_amount` attribute supports:
-
-* `amount` - Amount of the tax when the `rate_type` is `flat_amount`. This positive integer represents how much to charge in the smallest currency unit (e.g., 100 cents to charge $1.00 or 100 to charge ¥100, a zero-decimal currency). The amount value supports up to eight digits (e.g., a value of 99999999 for a USD charge of $999,999.99).
-* `currency` - Three-letter ISO currency code, in lowercase.
+The `computed.upfront.total_details.breakdown.taxes.rate` attribute holds a tax rate, with the attributes of the [`stripe_tax_rate`](../data-sources/tax_rate) data source and `object`, the name of its type.
 
 <a id="status_transitions"></a>
 ### `status_transitions`
@@ -786,34 +732,7 @@ The `total_details.breakdown.taxes` attribute is a list. Each element supports:
 <a id="total_details.breakdown.taxes.rate"></a>
 ### `total_details.breakdown.taxes.rate`
 
-The `total_details.breakdown.taxes.rate` attribute supports:
-
-* `active` - Defaults to `true`. When set to `false`, this tax rate cannot be used with new applications or Checkout Sessions, but will still work for subscriptions and invoices that already have it set.
-* `country` - Two-letter country code ([ISO 3166-1 alpha-2](https://en.wikipedia.org/wiki/ISO_3166-1_alpha-2)).
-* `created` - Time at which the object was created. Measured in seconds since the Unix epoch.
-* `description` - An arbitrary string attached to the tax rate for your internal use only. It will not be visible to your customers.
-* `display_name` - The display name of the tax rates as it will appear to your customer on their receipt email, PDF, and the hosted invoice page.
-* `effective_percentage` - Actual/effective tax rate percentage out of 100. For tax calculations with automatic_tax[enabled]=true, this percentage reflects the rate actually used to calculate tax based on the product's taxability and whether the user is registered to collect taxes in the corresponding jurisdiction.
-* `flat_amount` - The amount of the tax rate when the `rate_type` is `flat_amount`. Tax rates with `rate_type` `percentage` can vary based on the transaction, resulting in this field being `null`. This field exposes the amount and currency of the flat tax rate. See [`total_details.breakdown.taxes.rate.flat_amount`](#total_details.breakdown.taxes.rate.flat_amount) below.
-* `id` - Unique identifier for the object.
-* `inclusive` - This specifies if the tax rate is inclusive or exclusive.
-* `jurisdiction` - The jurisdiction for the tax rate. You can use this label field for tax reporting purposes. It also appears on your customer’s invoice.
-* `jurisdiction_level` - The level of the jurisdiction that imposes this tax rate. Will be `null` for manually defined tax rates. Possible values: `city`, `country`, `county`, `district`, `multiple`, `state`.
-* `livemode` - If the object exists in live mode, the value is `true`. If the object exists in test mode, the value is `false`.
-* `metadata` - Set of [key-value pairs](https://docs.stripe.com/api/metadata) that you can attach to an object. This can be useful for storing additional information about the object in a structured format.
-* `object` - String representing the object's type. Objects of the same type share the same value. Possible values: `tax_rate`.
-* `percentage` - Tax rate percentage out of 100. For tax calculations with automatic_tax[enabled]=true, this percentage includes the statutory tax rate of non-taxable jurisdictions.
-* `rate_type` - Indicates the type of tax rate applied to the taxable amount. This value can be `null` when no tax applies to the location. This field is only present for TaxRates created by Stripe Tax. Possible values: `flat_amount`, `percentage`.
-* `state` - [ISO 3166-2 subdivision code](https://en.wikipedia.org/wiki/ISO_3166-2), without country prefix. For example, "NY" for New York, United States.
-* `tax_type` - The high-level tax type, such as `vat` or `sales_tax`. Possible values: `amusement_tax`, `communications_tax`, `digital_excise_tax`, `gst`, `hst`, `igst`, `jct`, `lease_tax`, `mass_transit_parking_tax`, `parking_tax`, `pst`, `qst`, `retail_delivery_fee`, `rst`, `sales_tax`, `service_tax`, `utility_users_tax`, `vat`.
-
-<a id="total_details.breakdown.taxes.rate.flat_amount"></a>
-### `total_details.breakdown.taxes.rate.flat_amount`
-
-The `total_details.breakdown.taxes.rate.flat_amount` attribute supports:
-
-* `amount` - Amount of the tax when the `rate_type` is `flat_amount`. This positive integer represents how much to charge in the smallest currency unit (e.g., 100 cents to charge $1.00 or 100 to charge ¥100, a zero-decimal currency). The amount value supports up to eight digits (e.g., a value of 99999999 for a USD charge of $999,999.99).
-* `currency` - Three-letter ISO currency code, in lowercase.
+The `total_details.breakdown.taxes.rate` attribute holds a tax rate, with the attributes of the [`stripe_tax_rate`](../data-sources/tax_rate) data source and `object`, the name of its type.
 
 ## Timeouts
 

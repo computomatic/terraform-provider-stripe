@@ -27,5 +27,5 @@ Manages widgets. Every request is sent with API version `v1`. Attributes mean wh
 
 This provider supports the following arguments:
 
-* `api_key` - (Optional, Sensitive) A secret key. Defaults to the `WIDGET_API_KEY` environment variable.
-* `base_url` - (Optional) Base URL of the API.
+* `api_key` - (Optional, Sensitive) A secret key. Defaults to the `WIDGET_API_KEY` environment variable. Default (provider): the `WIDGET_API_KEY` environment variable.
+* `base_url` - (Optional) Base URL of the API. Default (provider): `https://api.example.com`.

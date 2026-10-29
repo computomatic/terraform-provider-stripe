@@ -53,7 +53,7 @@ The following arguments are optional:
 * `features` - (Optional) Encodes whether a FinancialAccount has access to a particular feature. Stripe or the platform can control features via the requested field. See [`features`](#features) below.
 * `metadata` - (Optional) Set of [key-value pairs](https://docs.stripe.com/api/metadata) that you can attach to an object. This can be useful for storing additional information about the object in a structured format. Individual keys can be unset by posting an empty value to them. All keys can be unset by posting an empty value to `metadata`.
 * `nickname` - (Optional) The nickname for the FinancialAccount.
-* `platform_restrictions` - (Optional) The set of functionalities that the platform can restrict on the FinancialAccount. See [`platform_restrictions`](#platform_restrictions) below.
+* `platform_restrictions` - (Optional) The set of functionalities that the platform can restrict on the FinancialAccount. Removing it from the configuration leaves the current value. See [`platform_restrictions`](#platform_restrictions) below.
 
 <a id="features"></a>
 ### `features`

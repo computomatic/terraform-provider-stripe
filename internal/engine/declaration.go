@@ -329,6 +329,12 @@ type Declaration struct {
 	// unset, such as a transition's `status`, is no change while it is unknown in the plan. No
 	// path may cross a list.
 	FilledFrom map[string][]string
+	// Defaults words, by dotted path, the default of an optional argument whose value Stripe
+	// derives from the account or another argument, where the pinned evidence records that rule
+	// or gives the value differently in the variants of its minimal create. Its page then says
+	// `Default (Stripe): <text>.`, with the value the suite observed where the evidence has one
+	// (ADR 2026-10-29-full-attribute-coverage, D4). Each entry cites the suite test in a comment.
+	Defaults map[string]string
 	// NotServerDefaulted prunes fields the generator marked as server-defaulted.
 	NotServerDefaulted []string
 	// Sensitive marks attributes Sensitive and masks them in logs.

@@ -7,7 +7,7 @@ import "github.com/computomatic/terraform-provider-stripe/internal/fields"
 
 // Table lists every request and response field of the object.
 var Table = []fields.Field{
-	{Name: "active", Shape: fields.Bool, Update: true, Response: true, Description: "Whether the configuration is active and can be used to create portal sessions."},
+	{Name: "active", Shape: fields.Bool, Update: true, Response: true, Description: "Whether the configuration is active and can be used to create portal sessions.", Default: &fields.Default{Kind: fields.DefaultNotSent}},
 	{Name: "application", Shape: fields.String, Response: true, Description: "ID of the Connect Application that created the configuration."},
 	{Name: "business_profile", Shape: fields.Object, Create: true, Update: true, Response: true, ServerDefaulted: true, Description: "The business information shown to customers in the portal.", Fields: []fields.Field{
 		{Name: "headline", Shape: fields.String, Create: true, Update: true, Response: true, Description: "The messaging shown to customers in the portal."},

@@ -73,9 +73,9 @@ The following arguments are optional:
 * `metadata` - (Optional) Set of [key-value pairs](https://docs.stripe.com/api/metadata) that you can attach to an object. This can be useful for storing additional information about the object in a structured format. Individual keys can be unset by posting an empty value to them. All keys can be unset by posting an empty value to `metadata`.
 * `phone_number` - (Optional) The cardholder's phone number. This will be transformed to [E.164](https://en.wikipedia.org/wiki/E.164) if it is not provided in that format already. This is required for all cardholders who will be creating EU cards. See the [3D Secure documentation](https://docs.stripe.com/issuing/3d-secure#when-is-3d-secure-applied) for more details.
 * `preferred_locales` - (Optional) The cardholder’s preferred locales (languages), ordered by preference. Locales can be `de`, `en`, `es`, `fr`, or `it`. This changes the language of the [3D Secure flow](https://docs.stripe.com/issuing/3d-secure) and one-time password messages sent to the cardholder.
-* `spending_controls` - (Optional) Rules that control spending across this cardholder's cards. Refer to our [documentation](https://docs.stripe.com/issuing/controls/spending-controls) for more details. See [`spending_controls`](#spending_controls) below.
-* `status` - (Optional) Specifies whether to permit authorizations on this cardholder's cards. Defaults to `active`. Possible values: `active`, `inactive`.
-* `type` - (Optional) One of `individual` or `company`. See [Choose a cardholder type](https://docs.stripe.com/issuing/other/choose-cardholder) for more details. Possible values: `company`, `individual`. Changing it replaces the resource.
+* `spending_controls` - (Optional) Rules that control spending across this cardholder's cards. Refer to our [documentation](https://docs.stripe.com/issuing/controls/spending-controls) for more details. Removing it from the configuration leaves the current value. See [`spending_controls`](#spending_controls) below.
+* `status` - (Optional) Specifies whether to permit authorizations on this cardholder's cards. Defaults to `active`. Possible values: `active`, `inactive`. Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
+* `type` - (Optional) One of `individual` or `company`. See [Choose a cardholder type](https://docs.stripe.com/issuing/other/choose-cardholder) for more details. Possible values: `company`, `individual`. Changing it replaces the resource. Removing it from the configuration leaves the current value.
 
 <a id="billing"></a>
 ### `billing`
@@ -113,7 +113,7 @@ The `individual` attribute supports:
 * `dob` - (Optional) The date of birth of this cardholder. See [`individual.dob`](#individual.dob) below.
 * `first_name` - (Optional) The first name of this cardholder. Required before activating Cards. This field cannot contain any numbers, special characters (except periods, commas, hyphens, spaces and apostrophes) or non-latin letters.
 * `last_name` - (Optional) The last name of this cardholder. Required before activating Cards. This field cannot contain any numbers, special characters (except periods, commas, hyphens, spaces and apostrophes) or non-latin letters.
-* `verification` - (Optional) Government-issued ID document for this cardholder. See [`individual.verification`](#individual.verification) below.
+* `verification` - (Optional) Government-issued ID document for this cardholder. Removing it from the configuration leaves the current value. See [`individual.verification`](#individual.verification) below.
 
 <a id="individual.card_issuing"></a>
 ### `individual.card_issuing`
@@ -167,7 +167,7 @@ The `spending_controls` attribute supports:
 * `blocked_categories` - (Optional) Array of strings containing [categories](https://docs.stripe.com/api#issuing_authorization_object-merchant_data-category) of authorizations to decline. All other categories will be allowed. Cannot be set with `allowed_categories`.
 * `blocked_merchant_countries` - (Optional) Array of strings containing representing countries from which authorizations will be declined. Country codes should be ISO 3166 alpha-2 country codes (e.g. `US`). Cannot be set with `allowed_merchant_countries`. Provide an empty value to unset this control.
 * `spending_limits` - (Optional) Limit spending with amount-based rules that apply across this cardholder's cards. See [`spending_controls.spending_limits`](#spending_controls.spending_limits) below.
-* `spending_limits_currency` - (Optional) Currency of the amounts within `spending_limits`.
+* `spending_limits_currency` - (Optional) Currency of the amounts within `spending_limits`. Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
 
 <a id="spending_controls.spending_limits"></a>
 ### `spending_controls.spending_limits`

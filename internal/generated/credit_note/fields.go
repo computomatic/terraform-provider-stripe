@@ -24,7 +24,7 @@ var Table = []fields.Field{
 	{Name: "email_type", Shape: fields.String, Create: true, Enum: []string{"credit_note", "none"}, Description: "Type of email to send to the customer, one of `credit_note` or `none` and the default is `credit_note`."},
 	{Name: "id", Shape: fields.String, Response: true, Description: "Unique identifier for the object."},
 	{Name: "invoice", Shape: fields.String, Required: true, Create: true, Response: true, Description: "ID of the invoice."},
-	{Name: "lines", Shape: fields.ObjectList, Create: true, Response: true, ServerDefaulted: true, Description: "Line items that make up the credit note. One of `amount`, `lines`, or `shipping_cost` must be provided.", Fields: []fields.Field{
+	{Name: "lines", Shape: fields.ObjectList, Create: true, Response: true, ServerDefaulted: true, Description: "Line items that make up the credit note. One of `amount`, `lines`, or `shipping_cost` must be provided.", PagedBy: "stripe_credit_note_line", Fields: []fields.Field{
 		{Name: "amount", Shape: fields.Int, Create: true, Response: true, ServerDefaulted: true, Description: "The integer amount in cents (or local equivalent) representing the gross amount being credited for this line item, excluding (exclusive) tax and discounts."},
 		{Name: "description", Shape: fields.String, Create: true, Response: true, Description: "Description of the item being credited."},
 		{Name: "discount_amount", Shape: fields.Int, Response: true, Description: "The integer amount in cents (or local equivalent) representing the discount being credited for this line item."},
@@ -96,7 +96,7 @@ var Table = []fields.Field{
 		{Name: "shipping_rate", Shape: fields.String, Create: true, Response: true, Description: "The ID of the ShippingRate for this invoice."},
 		{Name: "taxes", Shape: fields.ObjectList, Response: true, Description: "The taxes applied to the shipping rate.", Fields: []fields.Field{
 			{Name: "amount", Shape: fields.Int, Response: true, Description: "Amount of tax applied for this rate."},
-			{Name: "rate", Shape: fields.Object, Response: true, Description: "Tax rates can be applied to [invoices](https://docs.stripe.com/invoicing/taxes/tax-rates), [subscriptions](https://docs.stripe.com/billing/taxes/tax-rates) and [Checkout Sessions](https://docs.stripe.com/payments/checkout/use-manual-tax-rates) to collect tax. Related guide: [Tax rates](https://docs.stripe.com/billing/taxes/tax-rates)", Fields: []fields.Field{
+			{Name: "rate", Shape: fields.Object, Response: true, Description: "Tax rates can be applied to [invoices](https://docs.stripe.com/invoicing/taxes/tax-rates), [subscriptions](https://docs.stripe.com/billing/taxes/tax-rates) and [Checkout Sessions](https://docs.stripe.com/payments/checkout/use-manual-tax-rates) to collect tax. Related guide: [Tax rates](https://docs.stripe.com/billing/taxes/tax-rates)", Copy: "stripe_tax_rate", Fields: []fields.Field{
 				{Name: "active", Shape: fields.Bool, Response: true, Description: "Defaults to `true`. When set to `false`, this tax rate cannot be used with new applications or Checkout Sessions, but will still work for subscriptions and invoices that already have it set."},
 				{Name: "country", Shape: fields.String, Response: true, Description: "Two-letter country code ([ISO 3166-1 alpha-2](https://en.wikipedia.org/wiki/ISO_3166-1_alpha-2))."},
 				{Name: "created", Shape: fields.Int, Response: true, Description: "Time at which the object was created. Measured in seconds since the Unix epoch."},

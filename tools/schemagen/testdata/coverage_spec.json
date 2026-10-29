@@ -10,7 +10,7 @@
           "required": ["name"],
           "properties": {
             "name": {"type": "string"},
-            "color": {"type": "string"},
+            "color": {"type": "string", "description": "Colour of the gadget. Defaults to `red`."},
             "confirm": {"type": "boolean"},
             "expand": {"type": "array", "items": {"type": "string"}},
             "owner": {"type": "object", "properties": {"email": {"type": "string"}, "phone": {"type": "string"}}},
@@ -20,7 +20,7 @@
               {"type": "object", "required": ["number"], "properties": {"number": {"type": "string"}, "cvc": {"type": "string"}}}
             ]},
             "settings": {"type": "object", "required": ["mode"], "properties": {"mode": {"type": "string"}, "limit": {"type": "integer"}}},
-            "tags": {"type": "array", "items": {"type": "string"}},
+            "tags": {"type": "array", "items": {"type": "string"}, "description": "Tags of the gadget. Defaults to `sale`."},
             "options": {"type": "object", "additionalProperties": {"type": "object", "properties": {"amount": {"type": "integer"}}}}
           }
         }}}},

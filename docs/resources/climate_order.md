@@ -42,11 +42,11 @@ The following arguments are required:
 The following arguments are optional:
 
 * `amount` - (Optional) Requested amount of carbon removal units. Either this or `metric_tons` must be specified. Changing it fails the plan, because this resource cannot be replaced.
-* `beneficiary` - (Optional) Publicly sharable reference for the end beneficiary of carbon removal. Assumed to be the Stripe account if not set. See [`beneficiary`](#beneficiary) below.
-* `currency` - (Optional) Request currency for the order as a three-letter [ISO currency code](https://www.iso.org/iso-4217-currency-codes.html), in lowercase. Must be a supported [settlement currency for your account](https://stripe.com/docs/currencies). If omitted, the account's default currency will be used. Changing it fails the plan, because this resource cannot be replaced.
+* `beneficiary` - (Optional) Publicly sharable reference for the end beneficiary of carbon removal. Assumed to be the Stripe account if not set. Removing it from the configuration leaves the current value. See [`beneficiary`](#beneficiary) below.
+* `currency` - (Optional) Request currency for the order as a three-letter [ISO currency code](https://www.iso.org/iso-4217-currency-codes.html), in lowercase. Must be a supported [settlement currency for your account](https://stripe.com/docs/currencies). If omitted, the account's default currency will be used. Changing it fails the plan, because this resource cannot be replaced. Removing it from the configuration leaves the current value.
 * `metadata` - (Optional) Set of [key-value pairs](https://docs.stripe.com/api/metadata) that you can attach to an object. This can be useful for storing additional information about the object in a structured format. Individual keys can be unset by posting an empty value to them. All keys can be unset by posting an empty value to `metadata`.
-* `metric_tons` - (Optional) Requested number of tons for the order. Either this or `amount` must be specified. Changing it fails the plan, because this resource cannot be replaced.
-* `status` - (Optional) The current status of this order. Possible values: `canceled`.
+* `metric_tons` - (Optional) Requested number of tons for the order. Either this or `amount` must be specified. Changing it fails the plan, because this resource cannot be replaced. Removing it from the configuration leaves the current value.
+* `status` - (Optional) The current status of this order. Possible values: `canceled`. Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
 
 <a id="beneficiary"></a>
 ### `beneficiary`
@@ -100,26 +100,7 @@ The `delivery_details.location` attribute supports:
 <a id="delivery_details.supplier"></a>
 ### `delivery_details.supplier`
 
-The `delivery_details.supplier` attribute supports:
-
-* `id` - Unique identifier for the object.
-* `info_url` - Link to a webpage to learn more about the supplier.
-* `livemode` - Has the value `true` if the object exists in live mode or the value `false` if the object exists in test mode.
-* `locations` - The locations in which this supplier operates. See [`delivery_details.supplier.locations`](#delivery_details.supplier.locations) below.
-* `name` - Name of this carbon removal supplier.
-* `object` - String representing the object’s type. Objects of the same type share the same value. Possible values: `climate.supplier`.
-* `removal_pathway` - The scientific pathway used for carbon removal. Possible values: `biomass_carbon_removal_and_storage`, `direct_air_capture`, `enhanced_weathering`, `marine_carbon_removal`.
-
-<a id="delivery_details.supplier.locations"></a>
-### `delivery_details.supplier.locations`
-
-The `delivery_details.supplier.locations` attribute is a list. Each element supports:
-
-* `city` - The city where the supplier is located.
-* `country` - Two-letter ISO code representing the country where the supplier is located.
-* `latitude` - The geographic latitude where the supplier is located.
-* `longitude` - The geographic longitude where the supplier is located.
-* `region` - The state/county/province/region where the supplier is located.
+The `delivery_details.supplier` attribute holds a climate supplier, with the attributes of the [`stripe_climate_supplier`](../data-sources/climate_supplier) data source and `object`, the name of its type.
 
 ## Timeouts
 

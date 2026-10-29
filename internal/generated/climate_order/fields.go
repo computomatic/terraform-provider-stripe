@@ -33,7 +33,7 @@ var Table = []fields.Field{
 		}},
 		{Name: "metric_tons", Shape: fields.String, Response: true, Description: "Quantity of carbon removal supplied by this delivery."},
 		{Name: "registry_url", Shape: fields.String, Response: true, Description: "Once retired, a URL to the registry entry for the tons from this delivery."},
-		{Name: "supplier", Shape: fields.Object, Response: true, Description: "A supplier of carbon removal.", Fields: []fields.Field{
+		{Name: "supplier", Shape: fields.Object, Response: true, Description: "A supplier of carbon removal.", Copy: "stripe_climate_supplier", Fields: []fields.Field{
 			{Name: "id", Shape: fields.String, Response: true, Description: "Unique identifier for the object."},
 			{Name: "info_url", Shape: fields.String, Response: true, Description: "Link to a webpage to learn more about the supplier."},
 			{Name: "livemode", Shape: fields.Bool, Response: true, Description: "Has the value `true` if the object exists in live mode or the value `false` if the object exists in test mode."},

@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"sort"
+	"strings"
 
 	"github.com/hashicorp/terraform-plugin-go/tfprotov6"
 	"github.com/hashicorp/terraform-plugin-go/tftypes"
@@ -35,6 +36,32 @@ type attr struct {
 	Nesting     nesting
 	// Children are the fields of a nested attribute, sorted by name.
 	Children []*attr
+	// Default is an optional argument's default statement, from the engine or the provider, or
+	// "" where none is recorded yet (ADR 2026-10-29-full-attribute-coverage, D4).
+	Default string
+	// NeedsDefault says the argument must have a Default: the pinned evidence verifies it, or
+	// only an update takes it.
+	NeedsDefault bool
+	// Removal is, on a resource's Optional and Computed argument, the engine's sentence on what
+	// removing it from the configuration does.
+	Removal string
+	// Copy is, on an embedded copy of another Stripe object, the data source type that reads it.
+	Copy string
+}
+
+// at returns the attribute at a dotted path below attrs, or nil.
+func at(attrs []*attr, path string) *attr {
+	name, rest, nested := strings.Cut(path, ".")
+	for _, a := range attrs {
+		if a.Name != name {
+			continue
+		}
+		if !nested {
+			return a
+		}
+		return at(a.Children, rest)
+	}
+	return nil
 }
 
 // argument reports whether the user sets the attribute.

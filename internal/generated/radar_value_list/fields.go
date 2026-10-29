@@ -12,7 +12,7 @@ var Table = []fields.Field{
 	{Name: "created_by", Shape: fields.String, Response: true, Description: "The name or email address of the user who created this value list."},
 	{Name: "id", Shape: fields.String, Response: true, Description: "Unique identifier for the object."},
 	{Name: "item_type", Shape: fields.String, Create: true, Response: true, ServerDefaulted: true, Enum: []string{"account", "card_bin", "card_fingerprint", "case_sensitive_string", "country", "crypto_fingerprint", "customer_id", "email", "ip_address", "sepa_debit_fingerprint", "string", "us_bank_account_fingerprint"}, Description: "Type of the items in the value list. One of `card_fingerprint`, `card_bin`, `crypto_fingerprint`, `email`, `ip_address`, `country`, `string`, `case_sensitive_string`, `customer_id`, `account`, `sepa_debit_fingerprint`, or `us_bank_account_fingerprint`. Use `string` if the item type is unknown or mixed."},
-	{Name: "list_items", Shape: fields.Object, Response: true, Description: "List of items contained within this value list.", Fields: []fields.Field{
+	{Name: "list_items", Shape: fields.Object, Response: true, Description: "List of items contained within this value list.", PagedBy: "stripe_radar_value_list_item", Fields: []fields.Field{
 		{Name: "data", Shape: fields.ObjectList, Response: true, Description: "Details about each object.", Fields: []fields.Field{
 			{Name: "created", Shape: fields.Int, Response: true, Description: "Time at which the object was created. Measured in seconds since the Unix epoch."},
 			{Name: "created_by", Shape: fields.String, Response: true, Description: "The name or email address of the user who added this item to the value list."},

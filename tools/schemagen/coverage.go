@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"regexp"
 	"slices"
 	"sort"
 	"strings"
@@ -61,12 +62,31 @@ type Record struct {
 	// Tests are the suite's leaf tests that prove it, from the pinned spec/evidence.json.
 	Tests   []string       `json:"tests,omitempty"`
 	Default *DefaultRecord `json:"default,omitempty"`
+	// SpecDefault is the value the spec's "Defaults to" sentence names where the evidence's
+	// default differs, for the suite to check; the spec's text is never a source (D4).
+	SpecDefault string `json:"spec_default,omitempty"`
 }
 
-// DefaultRecord is an optional argument's default statement (D4) and where it comes from.
+// DefaultRecord is an optional argument's default statement (D4) and where it comes from: the
+// evidence, or the provider for an argument only the update takes, which it never sends on
+// create. Varies marks a default the variants of the minimal create give differently, which
+// has no statement until the declaration words its rule (Declaration.Defaults).
 type DefaultRecord struct {
-	Statement string `json:"statement"`
+	Statement string `json:"statement,omitempty"`
 	Source    string `json:"source"`
+	Varies    bool   `json:"varies,omitempty"`
+}
+
+// defaultRecord is the report's record of a default.
+func defaultRecord(d *fields.Default) *DefaultRecord {
+	if d == nil {
+		return nil
+	}
+	source := "evidence"
+	if d.Kind == fields.DefaultNotSent {
+		source = "provider"
+	}
+	return &DefaultRecord{Statement: d.Statement(), Source: source, Varies: d.Kind == fields.DefaultVaries}
 }
 
 // tableCoverage is what one table contributes to the report.
@@ -75,6 +95,7 @@ type tableCoverage struct {
 	ops     []string
 	records []Record
 	table   []fields.Field
+	leaves  []Leaf
 }
 
 // coverTable walks one table, applies the rules and the register, builds the table through
@@ -84,7 +105,7 @@ func coverTable(spec *Spec, res Resource, ev *Pinned) (*tableCoverage, error) {
 	if err != nil {
 		return nil, err
 	}
-	tc := &tableCoverage{object: object}
+	tc := &tableCoverage{object: object, leaves: leaves}
 	var create, update string
 	for _, o := range []struct {
 		path string
@@ -188,15 +209,91 @@ func coverTable(spec *Spec, res Resource, ev *Pinned) (*tableCoverage, error) {
 		case ev == nil || r.Class != "":
 			r.State = StateAwaiting
 		}
-		if ev != nil && r.State != StateExcluded && !r.Required {
-			r.Default = ev.defaultStatement(l.Key, create, leaves)
+		if d := defaultOf(l, *r, create, leaves, ev); d != nil {
+			r.Default = defaultRecord(d)
+			if f := fieldAt(tc.table, l.At); f != nil {
+				r.SpecDefault = disagreement(f.Description, d)
+			}
 		}
 	}
+	annotate(tc.table, leaves, records, create, ev)
 	if err := newRequired(create, leaves, records, before); err != nil {
 		return nil, fmt.Errorf("%s: %w", res.Package, err)
 	}
 	tc.records = records
 	return tc, nil
+}
+
+// fieldAt returns the field of a table at a dotted path of attribute names, or nil.
+func fieldAt(table []fields.Field, path string) *fields.Field {
+	name, rest, nested := strings.Cut(path, ".")
+	for i := range table {
+		if table[i].AttrName() != name {
+			continue
+		}
+		if !nested {
+			return &table[i]
+		}
+		return fieldAt(table[i].Fields, rest)
+	}
+	return nil
+}
+
+// annotate records on the table's fields the default of each optional argument an exposed
+// request leaf holds, and whether the leaf is verified, for its docs line (D4). The create's
+// default comes before an update's `not sent`.
+func annotate(table []fields.Field, leaves []Leaf, records []Record, create string, ev *Pinned) {
+	for i, l := range leaves {
+		r := records[i]
+		if l.Side != SideRequest || r.State != StateExposed {
+			continue
+		}
+		f := fieldAt(table, l.At)
+		if f == nil || f.Required {
+			continue
+		}
+		if r.Class == ClassVerified {
+			f.Verified = true
+		}
+		if d := defaultOf(l, r, create, leaves, ev); d != nil && (f.Default == nil || l.Operation == create) {
+			f.Default = d
+		}
+	}
+}
+
+// defaultOf is the default of an exposed optional request leaf (D4): `not sent` for one only
+// the update takes, which needs no evidence, or else what the pinned evidence records for a
+// verified one. A leaf only the update takes is an optional argument even where its hash in the
+// update requires it, because the create never sends it.
+func defaultOf(l Leaf, r Record, create string, leaves []Leaf, ev *Pinned) *fields.Default {
+	if l.Side != SideRequest || r.State != StateExposed {
+		return nil
+	}
+	if l.Operation != create {
+		onCreate := slices.ContainsFunc(leaves, func(c Leaf) bool { return c.Operation == create && c.Path == l.Path })
+		if create == "" || !onCreate {
+			return &fields.Default{Kind: fields.DefaultNotSent}
+		}
+		return nil
+	}
+	if r.Required || r.Class != ClassVerified {
+		return nil
+	}
+	return ev.leafDefault(l.Key)
+}
+
+// annotateCopies records on each embedded copy the table holds in full the data source type
+// that reads the copied object: the one table whose object it is. A copy of an object no table,
+// or several, holds has none, and so has one the table holds as its ID.
+func annotateCopies(tc *tableCoverage, readers map[string][]string) {
+	for i, l := range tc.leaves {
+		if l.Kind != KindEmbedded || l.Side != SideResponse || tc.records[i].State != StateExposed || len(readers[l.Target]) != 1 {
+			continue
+		}
+		if f := fieldAt(tc.table, l.At); f != nil && (f.Shape == fields.Object || f.Shape == fields.ObjectList || f.Shape == fields.ObjectMap) {
+			f.Copy = readers[l.Target][0]
+		}
+	}
 }
 
 // rule returns the exclusion rule that leaves a leaf out, or "". The recursion cut leaves out
@@ -519,41 +616,127 @@ func (p *Pinned) facts(res Resource, object, create, update string, leaves []Lea
 	}
 }
 
-// defaultStatement is an optional request leaf's default statement from the evidence (D4):
-// what Stripe set on a minimal create, or `not sent` for an argument only the update takes.
-func (p *Pinned) defaultStatement(k Key, create string, leaves []Leaf) *DefaultRecord {
-	if k.Side != SideRequest {
-		return nil
-	}
+// leafDefault is an optional create leaf's default from the evidence (D4): what Stripe set on
+// a minimal create. A default the variants of the minimal create give differently is
+// DefaultVaries, which a declaration words.
+func (p *Pinned) leafDefault(k Key) *fields.Default {
 	e := p.leaf(k)
 	if e == nil || e.Status != "proven" {
 		return nil
-	}
-	if k.Operation != create {
-		onCreate := slices.ContainsFunc(leaves, func(l Leaf) bool { return l.Operation == create && l.Path == k.Path })
-		if create != "" && onCreate {
-			return nil
-		}
-		return &DefaultRecord{Statement: "Default: not sent.", Source: "provider"}
 	}
 	d := e.Default
 	if d == nil {
 		return nil
 	}
+	for _, v := range d.Variants {
+		if !d.same(&v.Default) {
+			return &fields.Default{Kind: fields.DefaultVaries}
+		}
+	}
 	switch d.Kind {
 	case "value":
-		var s string
-		v := string(d.Value)
-		if json.Unmarshal(d.Value, &s) == nil {
-			v = s
-		}
-		return &DefaultRecord{Statement: "Default (Stripe): `" + v + "`.", Source: "evidence"}
+		return &fields.Default{Kind: fields.DefaultValue, Value: literal(d.Value)}
 	case "null", "absent":
-		return &DefaultRecord{Statement: "Default: none.", Source: "evidence"}
+		return &fields.Default{Kind: fields.DefaultNone}
 	case "rule":
-		return &DefaultRecord{Statement: "Default (Stripe): " + strings.TrimSuffix(p.Evidence.Rules[*d.RuleRef].Rule, ".") + ".", Source: "evidence"}
+		r := p.Evidence.Rules[*d.RuleRef]
+		return &fields.Default{Kind: fields.DefaultRule, Rule: r.Rule, Observed: p.observed(r)}
 	}
 	return nil
+}
+
+// same reports whether two defaults state the same thing: null and absent both state none. Two
+// rule defaults both carry a rule_ref, which Evidence.check requires of every rule default.
+func (d *EvidenceDefault) same(o *EvidenceDefault) bool {
+	none := func(k string) bool { return k == "null" || k == "absent" }
+	switch {
+	case none(d.Kind) || none(o.Kind):
+		return none(d.Kind) && none(o.Kind)
+	case d.Kind != o.Kind:
+		return false
+	case d.Kind == "rule":
+		return *d.RuleRef == *o.RuleRef
+	}
+	return literal(d.Value) == literal(o.Value)
+}
+
+// literal is a recorded value as the docs show it: a string bare, anything else as compact JSON.
+func literal(v json.RawMessage) string {
+	var s string
+	if json.Unmarshal(v, &s) == nil {
+		return s
+	}
+	var b bytes.Buffer
+	if json.Compact(&b, v) != nil {
+		return string(v)
+	}
+	return b.String()
+}
+
+// observed is the value a rule gave on the suite's own account with nothing else set: the
+// observation whose condition is empty, such as "`usd` on a US account", or "".
+func (p *Pinned) observed(r EvidenceRule) string {
+	var obs []struct {
+		Condition map[string]json.RawMessage `json:"condition"`
+		Value     json.RawMessage            `json:"value"`
+	}
+	if json.Unmarshal(r.Observations, &obs) != nil {
+		return ""
+	}
+	for _, o := range obs {
+		if len(o.Condition) == 0 {
+			s := fields.Code(literal(o.Value))
+			if c := p.Evidence.StripeRun.PlatformCountry; c != "" {
+				s += " on " + articleFor(c) + " " + c + " account"
+			}
+			return s
+		}
+	}
+	return ""
+}
+
+// articleFor is the indefinite article before a country code read as letters: "an" before
+// one whose first letter's name starts with a vowel sound (`an FR account`, `a US account`).
+func articleFor(country string) string {
+	if country != "" && strings.ContainsRune("AEFHILMNORSX", rune(country[0])) {
+		return "an"
+	}
+	return "a"
+}
+
+// specDefault is the literal a description's "Defaults to" sentence names, such as `once` in
+// "Defaults to `once`.", or "" when it names none or a rule.
+func specDefault(desc string) string {
+	m := specDefaultText.FindStringSubmatch(desc)
+	if m == nil {
+		return ""
+	}
+	if m[1] != "" {
+		return m[1]
+	}
+	return m[2]
+}
+
+var specDefaultText = regexp.MustCompile("Defaults to (?:`([^`]+)`|(true|false|-?[0-9]+(?:\\.[0-9]+)?))(?:[ ,.]|$)")
+
+// disagreement is the spec's default for an optional argument where the evidence says
+// otherwise, or "". A rule, a default the variants give differently and an argument only the
+// update takes are not compared.
+func disagreement(desc string, d *fields.Default) string {
+	spec := specDefault(desc)
+	if spec == "" || d == nil {
+		return ""
+	}
+	switch d.Kind {
+	case fields.DefaultValue:
+		if d.Value == spec {
+			return ""
+		}
+	case fields.DefaultNone:
+	default:
+		return ""
+	}
+	return spec
 }
 
 // checkVerifiedKeys fails on a verified leaf of a table's object and operations that no
@@ -695,6 +878,35 @@ func RenderCoverageJSON(h coverageHeader, records []Record) ([]byte, error) {
 	return buf.Bytes(), nil
 }
 
+// defaultsNotRecorded counts, per table, the optional request paths exposed with no default
+// statement on any of their leaves. A path the create requires is no optional argument, though
+// its update leaf is optional.
+func defaultsNotRecorded(records []Record) map[string]int {
+	stated, required := map[string]bool{}, map[string]bool{}
+	optional := map[string]string{}
+	for _, r := range records {
+		if r.Side != SideRequest || r.State != StateExposed {
+			continue
+		}
+		k := r.Table + " " + r.Path
+		if r.Required {
+			required[k] = true
+			continue
+		}
+		optional[k] = r.Table
+		if r.Default != nil && r.Default.Statement != "" {
+			stated[k] = true
+		}
+	}
+	out := map[string]int{}
+	for k, table := range optional {
+		if !stated[k] && !required[k] {
+			out[table]++
+		}
+	}
+	return out
+}
+
 // RenderCoverageMarkdown writes coverage.md: the totals, the totals per table, then every
 // leaf exposed against a rule, excluded or awaiting proof.
 func RenderCoverageMarkdown(h coverageHeader, records []Record) []byte {
@@ -716,7 +928,9 @@ func RenderCoverageMarkdown(h coverageHeader, records []Record) []byte {
 		fmt.Fprintf(&b, "|%s|%d|%d|%d|%d|\n", s.name, s.c.Exposed, s.c.Excluded, s.c.Awaiting, s.c.total())
 	}
 
-	b.WriteString("\n## Per table\n\n|Table|Object|Request exposed|Request excluded|Request awaiting|Response exposed|Response excluded|Response awaiting|\n|-|-|-|-|-|-|-|-|\n")
+	b.WriteString("\n## Per table\n\n")
+	b.WriteString("Defaults not yet recorded counts the optional arguments a table exposes whose docs line has no default statement yet, because the pinned evidence does not verify them (D4).\n\n")
+	b.WriteString("|Table|Object|Request exposed|Request excluded|Request awaiting|Response exposed|Response excluded|Response awaiting|Defaults not yet recorded|\n|-|-|-|-|-|-|-|-|-|\n")
 	var tables []string
 	per := map[string]*sideCounts{}
 	object := map[string]string{}
@@ -728,9 +942,10 @@ func RenderCoverageMarkdown(h coverageHeader, records []Record) []byte {
 		}
 		per[r.Table].add(r)
 	}
+	unrecorded := defaultsNotRecorded(records)
 	for _, t := range tables {
 		c := per[t]
-		fmt.Fprintf(&b, "|`%s`|`%s`|%d|%d|%d|%d|%d|%d|\n", t, object[t], c.Request.Exposed, c.Request.Excluded, c.Request.Awaiting, c.Response.Exposed, c.Response.Excluded, c.Response.Awaiting)
+		fmt.Fprintf(&b, "|`%s`|`%s`|%d|%d|%d|%d|%d|%d|%d|\n", t, object[t], c.Request.Exposed, c.Request.Excluded, c.Request.Awaiting, c.Response.Exposed, c.Response.Excluded, c.Response.Awaiting, unrecorded[t])
 	}
 
 	line := func(r Record) string {
@@ -745,8 +960,20 @@ func RenderCoverageMarkdown(h coverageHeader, records []Record) []byte {
 		return fmt.Sprintf("- `%s` %s `%s` (%s)", r.Table, owner, p, r.Shape)
 	}
 
-	b.WriteString("\n## Exposed against a rule\n\nExposed today and excluded by a rule; removed before `v0.1.0` (D6, Step 6).\n\n")
+	b.WriteString("\n## The spec's \"Defaults to\" against the evidence\n\nWhere a description's \"Defaults to\" names another value than the pinned evidence records, for the conformance suite to check. The spec's text is never a source of the docs' default statements (D4).\n\n")
 	n := 0
+	for _, r := range records {
+		if r.SpecDefault != "" {
+			fmt.Fprintf(&b, "%s: the spec says `%s`; the evidence says %s\n", line(r), r.SpecDefault, r.Default.Statement)
+			n++
+		}
+	}
+	if n == 0 {
+		b.WriteString("None.\n")
+	}
+
+	b.WriteString("\n## Exposed against a rule\n\nExposed today and excluded by a rule; removed before `v0.1.0` (D6, Step 6).\n\n")
+	n = 0
 	for _, r := range records {
 		if r.State == StateExposed && r.Rule != "" {
 			fmt.Fprintf(&b, "%s: %s\n", line(r), r.Rule)

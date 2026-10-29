@@ -56,13 +56,13 @@ resource "stripe_account_v2" "seller" {
 
 The following arguments are optional:
 
-* `closed` - (Optional) Indicates whether the account has been closed. Possible values: `true`.
+* `closed` - (Optional) Indicates whether the account has been closed. Possible values: `true`. Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
 * `configuration` - (Optional) An Account Configuration which allows the Account to take on a key persona across Stripe products. See [`configuration`](#configuration) below.
 * `contact_email` - (Optional) The primary contact email address for the Account.
 * `dashboard` - (Optional) A value indicating the Stripe dashboard this Account has access to. This will depend on which configurations are enabled for this account. Possible values: `express`, `full`, `none`.
-* `defaults` - (Optional) Default values to be used on Account Configurations. See [`defaults`](#defaults) below.
+* `defaults` - (Optional) Default values to be used on Account Configurations. Removing it from the configuration leaves the current value. See [`defaults`](#defaults) below.
 * `display_name` - (Optional) A descriptive name for the Account. This name will be surfaced in the Stripe Dashboard and on any invoices sent to the Account.
-* `identity` - (Optional) Information about the company, individual, and business represented by the Account. See [`identity`](#identity) below.
+* `identity` - (Optional) Information about the company, individual, and business represented by the Account. Removing it from the configuration leaves the current value. See [`identity`](#identity) below.
 * `metadata` - (Optional) Set of key-value pairs that you can attach to an object. This can be useful for storing additional information about the object in a structured format.
 
 <a id="configuration"></a>
@@ -223,8 +223,8 @@ The `configuration.recipient.capabilities.stripe_balance.stripe_transfers.status
 
 The `defaults` attribute supports:
 
-* `currency` - (Optional) Three-letter [ISO currency code](https://www.iso.org/iso-4217-currency-codes.html), in lowercase. Must be a [supported currency](https://stripe.com/docs/currencies).
-* `responsibilities` - (Optional) Default responsibilities held by either Stripe or the platform. See [`defaults.responsibilities`](#defaults.responsibilities) below.
+* `currency` - (Optional) Three-letter [ISO currency code](https://www.iso.org/iso-4217-currency-codes.html), in lowercase. Must be a [supported currency](https://stripe.com/docs/currencies). Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
+* `responsibilities` - (Optional) Default responsibilities held by either Stripe or the platform. Removing it from the configuration leaves the current value. See [`defaults.responsibilities`](#defaults.responsibilities) below.
 
 <a id="defaults.responsibilities"></a>
 ### `defaults.responsibilities`
@@ -240,7 +240,7 @@ The `defaults.responsibilities` attribute supports:
 
 The `identity` attribute supports:
 
-* `business_details` - (Optional) Information about the company or business. See [`identity.business_details`](#identity.business_details) below.
+* `business_details` - (Optional) Information about the company or business. Removing it from the configuration leaves the current value. See [`identity.business_details`](#identity.business_details) below.
 * `country` - (Optional) The country in which the account holder resides, or in which the business is legally established. This should be an [ISO 3166-1 alpha-2](https://en.wikipedia.org/wiki/ISO_3166-1_alpha-2) country code. Changing it fails the plan, because this resource cannot be replaced.
 * `entity_type` - (Optional) The entity type represented by the Account. Ensure this field is accurate before adding configurations that rely on identity information, as it determines which identity fields apply and how the Account is validated. Possible values: `company`, `government_entity`, `individual`, `non_profit`. Changing it fails the plan, because this resource cannot be replaced.
 
@@ -249,7 +249,7 @@ The `identity` attribute supports:
 
 The `identity.business_details` attribute supports:
 
-* `registered_name` - (Optional) The business legal name.
+* `registered_name` - (Optional) The business legal name. Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
 
 ## Attribute Reference
 

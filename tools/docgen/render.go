@@ -41,6 +41,21 @@ type importExample struct {
 type pageInput struct {
 	Examples []example
 	Import   *importExample
+	// DataSources are every data source, by type, which an embedded copy's subsection links to
+	// when that data source holds every attribute of the copy.
+	DataSources map[string]*schema
+	// Guides maps a top-level nested attribute moved off the page, because the page would pass
+	// the budget, to the name of the guide page that holds its subsections (D3).
+	Guides map[string]string
+}
+
+// page writes the lines and subsections of one page.
+type page struct {
+	*markdown
+	in pageInput
+	// resource says the page is a resource's, whose Optional and Computed arguments keep their
+	// value when the configuration removes them.
+	resource bool
 }
 
 // markdown builds a page from blocks separated by one blank line.
@@ -110,64 +125,126 @@ func markers(a *attr, labelled bool) string {
 	return "(" + strings.Join(m, ", ") + ")"
 }
 
-// line is one bullet. Its link to a nested attribute's subsection uses the dotted path.
-func line(a *attr, path string, labelled bool) string {
+// line is one bullet. Its link to a nested attribute's subsection uses the dotted path. An
+// optional argument's line ends with its default statement and, on a resource page where it
+// is also Computed, the engine's sentence on removing it (D4).
+func (p *page) line(a *attr, path string, labelled bool) string {
 	parts := []string{"*", "`" + a.Name + "`", "-"}
 	if m := markers(a, labelled); m != "" {
 		parts = append(parts, m)
 	}
-	if d := oneLine(a.Description); d != "" {
+	d := oneLine(a.Description)
+	var after []string
+	if labelled && a.Optional && !a.Required {
+		if a.Default != "" {
+			after = append(after, a.Default)
+		}
+		if p.resource && a.Removal != "" {
+			after = append(after, a.Removal)
+		}
+	}
+	if len(after) > 0 && !endsSentence(d) {
+		d += "."
+	}
+	if d != "" {
 		parts = append(parts, d)
 	}
+	parts = append(parts, after...)
 	if a.Nesting != nestNone {
-		parts = append(parts, fmt.Sprintf("See [`%s`](#%s) below.", path, path))
+		if g, ok := p.in.Guides[path]; ok {
+			parts = append(parts, fmt.Sprintf("See [`%s`](../guides/%s) on its own page.", path, g))
+		} else {
+			parts = append(parts, fmt.Sprintf("See [`%s`](#%s) below.", path, path))
+		}
 	}
 	return strings.Join(parts, " ")
 }
 
-func lineList(attrs []*attr, labelled bool) string {
+// endsSentence reports whether a description ends a sentence, as a following sentence needs:
+// with a full stop, question or exclamation mark, also inside a closing bracket or quote
+// (`(the default.)`, `"done."`). An empty one needs no full stop.
+func endsSentence(d string) bool {
+	d = strings.TrimRight(d, `)]}"'’”`)
+	return d == "" || strings.ContainsAny(d[len(d)-1:], ".!?")
+}
+
+func (p *page) lineList(attrs []*attr, labelled bool) string {
 	l := make([]string, len(attrs))
 	for i, a := range attrs {
-		l[i] = line(a, a.Name, labelled)
+		l[i] = p.line(a, a.Name, labelled)
 	}
 	return strings.Join(l, "\n")
 }
 
 // subsections writes a `###` subsection for each nested attribute, each followed by those
-// of its own nested attributes. labelled says whether the attribute is set by the user.
-func subsections(m *markdown, attrs []*attr, prefix string, labelled bool) {
+// of its own nested attributes. labelled says whether the attribute is set by the user. An
+// attribute moved to a guide page has none here, and an embedded copy whose data source holds
+// every attribute it has is one line linking to that data source's page (D3).
+func (p *page) subsections(attrs []*attr, prefix string, labelled bool) {
 	for _, a := range attrs {
 		if a.Nesting == nestNone {
 			continue
 		}
 		path := prefix + a.Name
+		if _, moved := p.in.Guides[path]; moved {
+			continue
+		}
 		inner := labelled && a.argument()
-		m.add(fmt.Sprintf("<a id=%q></a>\n### `%s`", path, path))
-		var byline string
+		p.add(fmt.Sprintf("<a id=%q></a>\n### `%s`", path, path))
+		var byline, each string
 		switch a.Nesting {
 		case nestSingle:
 			byline = fmt.Sprintf("The `%s` attribute supports:", path)
+			each = fmt.Sprintf("The `%s` attribute holds", path)
 		case nestList:
 			byline = fmt.Sprintf("The `%s` attribute is a list. Each element supports:", path)
+			each = fmt.Sprintf("The `%s` attribute is a list. Each element holds", path)
 		case nestSet:
 			byline = fmt.Sprintf("The `%s` attribute is a set. Each element supports:", path)
+			each = fmt.Sprintf("The `%s` attribute is a set. Each element holds", path)
 		case nestMap:
 			byline = fmt.Sprintf("The `%s` attribute is a map. Each value supports:", path)
+			each = fmt.Sprintf("The `%s` attribute is a map. Each value holds", path)
 		}
-		m.add(byline)
+		if ds := p.in.DataSources[a.Copy]; ds != nil {
+			// A copy carries the copied object's `object`, its type's name, which a data source
+			// does not.
+			copied := filter(a.Children, func(c *attr) bool { return c.Name != "object" || at(ds.Attrs, "object") != nil })
+			if holds(ds.Attrs, copied) {
+				also := ""
+				if len(copied) < len(a.Children) {
+					also = " and `object`, the name of its type"
+				}
+				p.add(fmt.Sprintf("%s %s, with the attributes of the [`%s`](../data-sources/%s) data source%s.", each, engine.WithArticle(engine.Noun(a.Copy)), a.Copy, strings.TrimPrefix(a.Copy, "stripe_"), also))
+				continue
+			}
+		}
+		p.add(byline)
 		if len(a.Children) > 0 {
 			l := make([]string, len(a.Children))
 			for i, c := range a.Children {
-				l[i] = line(c, path+"."+c.Name, inner)
+				l[i] = p.line(c, path+"."+c.Name, inner)
 			}
-			m.add(strings.Join(l, "\n"))
+			p.add(strings.Join(l, "\n"))
 		}
-		subsections(m, a.Children, path+".", inner)
+		p.subsections(a.Children, path+".", inner)
 	}
 }
 
+// holds reports whether a data source's attributes include every attribute of a copy, at every
+// depth, so that its page documents the whole copy.
+func holds(ds, copied []*attr) bool {
+	for _, c := range copied {
+		d := at(ds, c.Name)
+		if d == nil || (c.Nesting == nestNone) != (d.Nesting == nestNone) || !holds(d.Children, c.Children) {
+			return false
+		}
+	}
+	return true
+}
+
 // exampleUsage writes the Example Usage section.
-func exampleUsage(m *markdown, examples []example) error {
+func exampleUsage(m *page, examples []example) error {
 	if len(examples) == 0 {
 		return fmt.Errorf("no example")
 	}
@@ -193,18 +270,18 @@ func filter(attrs []*attr, keep func(*attr) bool) []*attr {
 
 // argumentSections writes the Argument Reference of a resource or the provider, and the
 // subsections of its nested arguments.
-func argumentSections(m *markdown, args []*attr, byline string) {
+func argumentSections(m *page, args []*attr, byline string) {
 	if len(args) == 0 {
 		return
 	}
 	m.add("## Argument Reference")
 	m.add(byline)
-	m.add(lineList(args, true))
-	subsections(m, args, "", true)
+	m.add(m.lineList(args, true))
+	m.subsections(args, "", true)
 }
 
 // resourceArguments writes the required and optional arguments in two lists.
-func resourceArguments(m *markdown, s *schema) []*attr {
+func resourceArguments(m *page, s *schema) []*attr {
 	args := filter(s.Attrs, func(a *attr) bool { return a.argument() && a.Name != "timeouts" })
 	if len(args) == 0 {
 		return nil
@@ -214,19 +291,19 @@ func resourceArguments(m *markdown, s *schema) []*attr {
 	m.add("## Argument Reference")
 	if len(required) > 0 {
 		m.add("The following arguments are required:")
-		m.add(lineList(required, true))
+		m.add(m.lineList(required, true))
 	}
 	if len(optional) > 0 {
 		m.add("The following arguments are optional:")
-		m.add(lineList(optional, true))
+		m.add(m.lineList(optional, true))
 	}
-	subsections(m, args, "", true)
+	m.subsections(args, "", true)
 	return args
 }
 
 // attributeSections writes the Attribute Reference. The subsections of its nested
 // attributes follow the list.
-func attributeSections(m *markdown, kind string, exported []*attr, haveArguments bool) {
+func attributeSections(m *page, kind string, exported []*attr, haveArguments bool) {
 	m.add("## Attribute Reference")
 	if len(exported) == 0 {
 		m.add(fmt.Sprintf("This %s exports no additional attributes.", kind))
@@ -237,8 +314,8 @@ func attributeSections(m *markdown, kind string, exported []*attr, haveArguments
 	} else {
 		m.add(fmt.Sprintf("This %s exports the following attributes:", kind))
 	}
-	m.add(lineList(exported, false))
-	subsections(m, exported, "", false)
+	m.add(m.lineList(exported, false))
+	m.subsections(exported, "", false)
 }
 
 // idAttribute is the `id` line of the Attribute Reference. A resource that lets the user
@@ -254,7 +331,7 @@ func idAttribute(s *schema) *attr {
 	return id
 }
 
-func timeoutsSection(m *markdown, s *schema, defaultTimeout time.Duration) {
+func timeoutsSection(m *page, s *schema, defaultTimeout time.Duration) {
 	t := s.find("timeouts")
 	if t == nil {
 		return
@@ -273,7 +350,7 @@ func renderResource(s *schema, in pageInput, defaultTimeout time.Duration) (stri
 	if in.Import == nil {
 		return "", fmt.Errorf("no import example")
 	}
-	m := &markdown{}
+	m := &page{markdown: &markdown{}, in: in, resource: true}
 	m.add(frontMatter(s.Type+" Resource - Stripe", s.Description))
 	m.add("# Resource: " + s.Type)
 	m.add(strings.TrimSpace(s.Description))
@@ -306,7 +383,7 @@ func renderResource(s *schema, in pageInput, defaultTimeout time.Duration) (stri
 }
 
 func renderDataSource(s *schema, in pageInput) (string, error) {
-	m := &markdown{}
+	m := &page{markdown: &markdown{}, in: in}
 	m.add(frontMatter(s.Type+" Data Source - Stripe", s.Description))
 	m.add("# Data Source: " + s.Type)
 	m.add(strings.TrimSpace(s.Description))
@@ -333,8 +410,8 @@ func renderDataSource(s *schema, in pageInput) (string, error) {
 			}
 			optional = nil
 		}
-		m.add(lineList(append(append(required, optional...), listParams...), true))
-		subsections(m, args, "", true)
+		m.add(m.lineList(append(append(required, optional...), listParams...), true))
+		m.subsections(args, "", true)
 	}
 	exported := filter(s.Attrs, func(a *attr) bool { return !a.argument() })
 	attributeSections(m, "data source", exported, len(args) > 0)
@@ -353,7 +430,7 @@ type providerProse struct {
 }
 
 func renderProvider(s *schema, prose providerProse, examples []example) (string, error) {
-	m := &markdown{}
+	m := &page{markdown: &markdown{}}
 	m.add(prose.FrontMatter)
 	m.add(strings.TrimSpace(prose.Lead))
 	if err := exampleUsage(m, examples); err != nil {
@@ -366,7 +443,7 @@ func renderProvider(s *schema, prose providerProse, examples []example) (string,
 
 // removingSection shows how to stop managing an object whose destroy is refused: a `removed`
 // block, or `terraform state rm`. name is the resource name the Import section uses.
-func removingSection(m *markdown, s *schema, name string) {
+func removingSection(m *page, s *schema, name string) {
 	subject := engine.Noun(s.Type)
 	address := s.Type + "." + name
 	m.add("## Removing from State")
@@ -377,7 +454,7 @@ func removingSection(m *markdown, s *schema, name string) {
 	m.add(fmt.Sprintf("The %s stays in the Stripe account. Replacing one with `terraform apply -replace` or `terraform taint` fails in the same way, at apply.", subject))
 }
 
-func importSection(m *markdown, s *schema, imp importExample) error {
+func importSection(m *page, s *schema, imp importExample) error {
 	name := s.Type + "." + imp.Name
 	subject := engine.Noun(s.Type)
 	indefinite := engine.WithArticle(subject)
@@ -421,7 +498,7 @@ func indent(s, prefix string) string {
 	return prefix + strings.ReplaceAll(s, "\n", "\n"+prefix)
 }
 
-func identitySection(m *markdown, ids []*identityAttr, subject string) {
+func identitySection(m *page, ids []*identityAttr, subject string) {
 	describe := func(a *identityAttr) string {
 		switch {
 		case a.Description != "":

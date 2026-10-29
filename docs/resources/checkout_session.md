@@ -48,56 +48,56 @@ output "checkout_url" {
 
 The following arguments are optional:
 
-* `adaptive_pricing` - (Optional) Settings for price localization with [Adaptive Pricing](https://docs.stripe.com/payments/checkout/adaptive-pricing). Changing it fails the plan, because this resource cannot be replaced. See [`adaptive_pricing`](#adaptive_pricing) below.
+* `adaptive_pricing` - (Optional) Settings for price localization with [Adaptive Pricing](https://docs.stripe.com/payments/checkout/adaptive-pricing). Changing it fails the plan, because this resource cannot be replaced. Removing it from the configuration leaves the current value. See [`adaptive_pricing`](#adaptive_pricing) below.
 * `after_expiration` - (Optional) Configure actions after a Checkout Session has expired. You can't set this parameter if `ui_mode` is `elements`. Changing it fails the plan, because this resource cannot be replaced. See [`after_expiration`](#after_expiration) below.
 * `allow_promotion_codes` - (Optional) Enables user redeemable promotion codes. Changing it fails the plan, because this resource cannot be replaced.
 * `allowed_payment_method_types` - (Optional) A list of the types of payment methods (e.g., `card`) this Checkout Session can accept. Unlike `payment_method_types`, this acts as a filter on the dynamically computed set of eligible payment methods rather than an explicit static list. Only payment methods that are both dynamically eligible and present in this list will be offered to the customer. Changing it fails the plan, because this resource cannot be replaced.
-* `automatic_tax` - (Optional) Settings for automatic tax lookup for this session and resulting payments, invoices, and subscriptions. Changing it fails the plan, because this resource cannot be replaced. See [`automatic_tax`](#automatic_tax) below.
+* `automatic_tax` - (Optional) Settings for automatic tax lookup for this session and resulting payments, invoices, and subscriptions. Changing it fails the plan, because this resource cannot be replaced. Removing it from the configuration leaves the current value. See [`automatic_tax`](#automatic_tax) below.
 * `billing_address_collection` - (Optional) Specify whether Checkout should collect the customer's billing address. Defaults to `auto`. Possible values: `auto`, `required`. Changing it fails the plan, because this resource cannot be replaced.
-* `branding_settings` - (Optional) The branding settings for the Checkout Session. This parameter is not allowed if ui_mode is `elements`. Changing it fails the plan, because this resource cannot be replaced. See [`branding_settings`](#branding_settings) below.
+* `branding_settings` - (Optional) The branding settings for the Checkout Session. This parameter is not allowed if ui_mode is `elements`. Changing it fails the plan, because this resource cannot be replaced. Removing it from the configuration leaves the current value. See [`branding_settings`](#branding_settings) below.
 * `cancel_url` - (Optional) If set, Checkout displays a back button and customers will be directed to this URL if they decide to cancel payment and return to your website. This parameter is not allowed if ui_mode is `embedded_page` or `elements`. Changing it fails the plan, because this resource cannot be replaced.
 * `client_reference_id` - (Optional) A unique string to reference the Checkout Session. This can be a customer ID, a cart ID, or similar, and can be used to reconcile the session with your internal systems. Changing it fails the plan, because this resource cannot be replaced.
 * `consent_collection` - (Optional) Configure fields for the Checkout Session to gather active consent from customers. Changing it fails the plan, because this resource cannot be replaced. See [`consent_collection`](#consent_collection) below.
-* `currency` - (Optional) Three-letter [ISO currency code](https://www.iso.org/iso-4217-currency-codes.html), in lowercase. Must be a [supported currency](https://stripe.com/docs/currencies). Required in `setup` mode when `payment_method_types` is not set. Changing it fails the plan, because this resource cannot be replaced.
-* `custom_fields` - (Optional) Collect additional information from your customer using custom fields. Up to 3 fields are supported. You can't set this parameter if `ui_mode` is `elements`. Changing it fails the plan, because this resource cannot be replaced. See [`custom_fields`](#custom_fields) below.
-* `custom_text` - (Optional) Display additional text for your customers using custom text. You can't set this parameter if `ui_mode` is `elements`. Changing it fails the plan, because this resource cannot be replaced. See [`custom_text`](#custom_text) below.
+* `currency` - (Optional) Three-letter [ISO currency code](https://www.iso.org/iso-4217-currency-codes.html), in lowercase. Must be a [supported currency](https://stripe.com/docs/currencies). Required in `setup` mode when `payment_method_types` is not set. Changing it fails the plan, because this resource cannot be replaced. Removing it from the configuration leaves the current value.
+* `custom_fields` - (Optional) Collect additional information from your customer using custom fields. Up to 3 fields are supported. You can't set this parameter if `ui_mode` is `elements`. Changing it fails the plan, because this resource cannot be replaced. Removing it from the configuration leaves the current value. See [`custom_fields`](#custom_fields) below.
+* `custom_text` - (Optional) Display additional text for your customers using custom text. You can't set this parameter if `ui_mode` is `elements`. Changing it fails the plan, because this resource cannot be replaced. Removing it from the configuration leaves the current value. See [`custom_text`](#custom_text) below.
 * `customer` - (Optional) ID of an existing Customer, if one exists. In `payment` mode, the customer’s most recently saved card payment method will be used to prefill the email, name, card details, and billing address on the Checkout page. In `subscription` mode, the customer’s [default payment method](https://docs.stripe.com/api/customers/update#update_customer-invoice_settings-default_payment_method) will be used if it’s a card, otherwise the most recently saved card will be used. A valid billing address, billing name and billing email are required on the payment method for Checkout to prefill the customer's card details. If the Customer already has a valid [email](https://docs.stripe.com/api/customers/object#customer_object-email) set, the email will be prefilled and not editable in Checkout. If the Customer does not have a valid `email`, Checkout will set the email entered during the session on the Customer. If blank for Checkout Sessions in `subscription` mode or with `customer_creation` set as `always` in `payment` mode, Checkout will create a new Customer object based on information provided during the payment flow. You can set [`payment_intent_data.setup_future_usage`](https://docs.stripe.com/api/checkout/sessions/create#create_checkout_session-payment_intent_data-setup_future_usage) to have Checkout automatically attach the payment method to the Customer you pass in for future reuse. Changing it fails the plan, because this resource cannot be replaced.
 * `customer_account` - (Optional) ID of an existing Account, if one exists. Has the same behavior as `customer`. Changing it fails the plan, because this resource cannot be replaced.
-* `customer_creation` - (Optional) Configure whether a Checkout Session creates a [Customer](https://docs.stripe.com/api/customers) during Session confirmation. When a Customer is not created, you can still retrieve email, address, and other customer data entered in Checkout with [customer_details](https://docs.stripe.com/api/checkout/sessions/object#checkout_session_object-customer_details). Sessions that don't create Customers instead are grouped by [guest customers](https://docs.stripe.com/payments/checkout/guest-customers) in the Dashboard. Promotion codes limited to first time customers will return invalid for these Sessions. Can only be set in `payment` and `setup` mode. Possible values: `always`, `if_required`. Changing it fails the plan, because this resource cannot be replaced.
+* `customer_creation` - (Optional) Configure whether a Checkout Session creates a [Customer](https://docs.stripe.com/api/customers) during Session confirmation. When a Customer is not created, you can still retrieve email, address, and other customer data entered in Checkout with [customer_details](https://docs.stripe.com/api/checkout/sessions/object#checkout_session_object-customer_details). Sessions that don't create Customers instead are grouped by [guest customers](https://docs.stripe.com/payments/checkout/guest-customers) in the Dashboard. Promotion codes limited to first time customers will return invalid for these Sessions. Can only be set in `payment` and `setup` mode. Possible values: `always`, `if_required`. Changing it fails the plan, because this resource cannot be replaced. Removing it from the configuration leaves the current value.
 * `customer_email` - (Optional) If provided, this value will be used when the Customer object is created. If not provided, customers will be asked to enter their email address. Use this parameter to prefill customer data if you already have an email on file. To access information about the customer once a session is complete, use the `customer` field. Changing it fails the plan, because this resource cannot be replaced.
 * `customer_update` - (Optional) Controls what fields on Customer can be updated by the Checkout Session. Can only be provided when `customer` is provided. Changing it fails the plan, because this resource cannot be replaced. See [`customer_update`](#customer_update) below.
 * `discounts` - (Optional) The coupon or promotion code to apply to this Session. Currently, only up to one may be specified. Changing it fails the plan, because this resource cannot be replaced. See [`discounts`](#discounts) below.
 * `excluded_payment_method_types` - (Optional) A list of the types of payment methods (e.g., `card`) that should be excluded from this Checkout Session. This should only be used when payment methods for this Checkout Session are managed through the [Stripe Dashboard](https://dashboard.stripe.com/settings/payment_methods). Changing it fails the plan, because this resource cannot be replaced.
-* `expires_at` - (Optional) The Epoch time in seconds at which the Checkout Session will expire. It can be anywhere from 30 minutes to 24 hours after Checkout Session creation. By default, this value is 24 hours from creation. Changing it fails the plan, because this resource cannot be replaced.
+* `expires_at` - (Optional) The Epoch time in seconds at which the Checkout Session will expire. It can be anywhere from 30 minutes to 24 hours after Checkout Session creation. By default, this value is 24 hours from creation. Changing it fails the plan, because this resource cannot be replaced. Removing it from the configuration leaves the current value.
 * `integration_identifier` - (Optional) The integration identifier for this Checkout Session. Multiple Checkout Sessions can have the same integration identifier. Changing it fails the plan, because this resource cannot be replaced.
-* `invoice_creation` - (Optional) Generate a post-purchase Invoice for one-time payments. Changing it fails the plan, because this resource cannot be replaced. See [`invoice_creation`](#invoice_creation) below.
+* `invoice_creation` - (Optional) Generate a post-purchase Invoice for one-time payments. Changing it fails the plan, because this resource cannot be replaced. Removing it from the configuration leaves the current value. See [`invoice_creation`](#invoice_creation) below.
 * `line_items` - (Optional) A list of items the customer is purchasing. Use this parameter to pass one-time or recurring [Prices](https://docs.stripe.com/api/prices). The parameter is required for `payment` and `subscription` mode. For `payment` mode, there is a maximum of 100 line items, however it is recommended to consolidate line items if there are more than a few dozen. For `subscription` mode, there is a maximum of 20 line items with recurring Prices and 20 line items with one-time Prices. Line items with one-time Prices will be on the initial invoice only. Changing it fails the plan, because this resource cannot be replaced. See [`line_items`](#line_items) below.
 * `locale` - (Optional) The IETF language tag of the locale Checkout is displayed in. If blank or `auto`, the browser's locale is used. Possible values: `auto`, `bg`, `cs`, `da`, `de`, `el`, `en`, `en-GB`, `es`, `es-419`, `et`, `fi`, `fil`, `fr`, `fr-CA`, `hr`, `hu`, `id`, `it`, `ja`, `ko`, `lt`, `lv`, `ms`, `mt`, `nb`, `nl`, `pl`, `pt`, `pt-BR`, `ro`, `ru`, `sk`, `sl`, `sv`, `th`, `tr`, `vi`, `zh`, `zh-HK`, `zh-TW`. Changing it fails the plan, because this resource cannot be replaced.
-* `managed_payments` - (Optional) Settings for Managed Payments for this Checkout Session and resulting [PaymentIntents](https://docs.stripe.com/api/payment_intents/object), [Invoices](https://docs.stripe.com/api/invoices/object), and [Subscriptions](https://docs.stripe.com/api/subscriptions/object). Changing it fails the plan, because this resource cannot be replaced. See [`managed_payments`](#managed_payments) below.
+* `managed_payments` - (Optional) Settings for Managed Payments for this Checkout Session and resulting [PaymentIntents](https://docs.stripe.com/api/payment_intents/object), [Invoices](https://docs.stripe.com/api/invoices/object), and [Subscriptions](https://docs.stripe.com/api/subscriptions/object). Changing it fails the plan, because this resource cannot be replaced. Removing it from the configuration leaves the current value. See [`managed_payments`](#managed_payments) below.
 * `metadata` - (Optional) Set of [key-value pairs](https://docs.stripe.com/api/metadata) that you can attach to an object. This can be useful for storing additional information about the object in a structured format. Individual keys can be unset by posting an empty value to them. All keys can be unset by posting an empty value to `metadata`.
-* `mode` - (Optional) The mode of the Checkout Session. Pass `subscription` if the Checkout Session includes at least one recurring item. Possible values: `payment`, `setup`, `subscription`. Changing it fails the plan, because this resource cannot be replaced.
+* `mode` - (Optional) The mode of the Checkout Session. Pass `subscription` if the Checkout Session includes at least one recurring item. Possible values: `payment`, `setup`, `subscription`. Changing it fails the plan, because this resource cannot be replaced. Removing it from the configuration leaves the current value.
 * `name_collection` - (Optional) Controls name collection settings for the session. You can configure Checkout to collect your customers' business names, individual names, or both. Each name field can be either required or optional. If a [Customer](https://docs.stripe.com/api/customers) is created or provided, the names can be saved to the Customer object as well. Changing it fails the plan, because this resource cannot be replaced. See [`name_collection`](#name_collection) below.
 * `optional_items` - (Optional) A list of optional items the customer can add to their order at checkout. Use this parameter to pass one-time or recurring [Prices](https://docs.stripe.com/api/prices). There is a maximum of 10 optional items allowed on a Checkout Session, and the existing limits on the number of line items allowed on a Checkout Session apply to the combined number of line items and optional items. For `payment` mode, there is a maximum of 100 combined line items and optional items, however it is recommended to consolidate items if there are more than a few dozen. For `subscription` mode, there is a maximum of 20 line items and optional items with recurring Prices and 20 line items and optional items with one-time Prices. You can't set this parameter if `ui_mode` is `elements` or `form`. Changing it fails the plan, because this resource cannot be replaced. See [`optional_items`](#optional_items) below.
 * `origin_context` - (Optional) Where the user is coming from. This informs the optimizations that are applied to the session. You can't set this parameter if `ui_mode` is `elements`. Possible values: `mobile_app`, `web`. Changing it fails the plan, because this resource cannot be replaced.
 * `payment_intent_data` - (Optional) A subset of parameters to be passed to PaymentIntent creation for Checkout Sessions in `payment` mode. Changing it fails the plan, because this resource cannot be replaced. See [`payment_intent_data`](#payment_intent_data) below.
-* `payment_method_collection` - (Optional) Specify whether Checkout should collect a payment method. When set to `if_required`, Checkout will not collect a payment method when the total due for the session is 0. This may occur if the Checkout Session includes a free trial or a discount. Can only be set in `subscription` mode. Defaults to `always`. If you'd like information on how to collect a payment method outside of Checkout, read the guide on configuring [subscriptions with a free trial](https://docs.stripe.com/payments/checkout/free-trials). Possible values: `always`, `if_required`. Changing it fails the plan, because this resource cannot be replaced.
+* `payment_method_collection` - (Optional) Specify whether Checkout should collect a payment method. When set to `if_required`, Checkout will not collect a payment method when the total due for the session is 0. This may occur if the Checkout Session includes a free trial or a discount. Can only be set in `subscription` mode. Defaults to `always`. If you'd like information on how to collect a payment method outside of Checkout, read the guide on configuring [subscriptions with a free trial](https://docs.stripe.com/payments/checkout/free-trials). Possible values: `always`, `if_required`. Changing it fails the plan, because this resource cannot be replaced. Removing it from the configuration leaves the current value.
 * `payment_method_configuration` - (Optional) The ID of the payment method configuration to use with this Checkout session. Changing it fails the plan, because this resource cannot be replaced.
 * `payment_method_data` - (Optional) This parameter allows you to set some attributes on the payment method created during a Checkout session. Changing it fails the plan, because this resource cannot be replaced. See [`payment_method_data`](#payment_method_data) below.
-* `payment_method_options` - (Optional) Payment-method-specific configuration. Changing it fails the plan, because this resource cannot be replaced. See [`payment_method_options`](#payment_method_options) below.
+* `payment_method_options` - (Optional) Payment-method-specific configuration. Changing it fails the plan, because this resource cannot be replaced. Removing it from the configuration leaves the current value. See [`payment_method_options`](#payment_method_options) below.
 * `permissions` - (Optional) This property is used to set up permissions for various actions (for example, update) on the CheckoutSession object. Can only be set when creating `embedded_page` or `elements` sessions. For specific permissions, please refer to their dedicated subsections, such as `permissions.update_shipping_details`. Changing it fails the plan, because this resource cannot be replaced. See [`permissions`](#permissions) below.
-* `phone_number_collection` - (Optional) Controls phone number collection settings for the session. We recommend that you review your privacy policy and check with your legal contacts before using this feature. Learn more about [collecting phone numbers with Checkout](https://docs.stripe.com/payments/checkout/phone-numbers). Changing it fails the plan, because this resource cannot be replaced. See [`phone_number_collection`](#phone_number_collection) below.
-* `redirect_on_completion` - (Optional) This parameter applies to `ui_mode: embedded_page`. Learn more about the [redirect behavior](https://docs.stripe.com/payments/checkout/custom-success-page?payment-ui=embedded-form) of embedded sessions. Defaults to `always`. Possible values: `always`, `if_required`, `never`. Changing it fails the plan, because this resource cannot be replaced.
+* `phone_number_collection` - (Optional) Controls phone number collection settings for the session. We recommend that you review your privacy policy and check with your legal contacts before using this feature. Learn more about [collecting phone numbers with Checkout](https://docs.stripe.com/payments/checkout/phone-numbers). Changing it fails the plan, because this resource cannot be replaced. Removing it from the configuration leaves the current value. See [`phone_number_collection`](#phone_number_collection) below.
+* `redirect_on_completion` - (Optional) This parameter applies to `ui_mode: embedded_page`. Learn more about the [redirect behavior](https://docs.stripe.com/payments/checkout/custom-success-page?payment-ui=embedded-form) of embedded sessions. Defaults to `always`. Possible values: `always`, `if_required`, `never`. Changing it fails the plan, because this resource cannot be replaced. Removing it from the configuration leaves the current value.
 * `return_url` - (Optional) The URL to redirect your customer back to after they authenticate or cancel their payment on the payment method's app or site. This parameter is required if `ui_mode` is `embedded_page` or `elements` and redirect-based payment methods are enabled on the session. Changing it fails the plan, because this resource cannot be replaced.
 * `saved_payment_method_options` - (Optional) Controls saved payment method settings for the session. Only available in `payment` and `subscription` mode. Changing it fails the plan, because this resource cannot be replaced. See [`saved_payment_method_options`](#saved_payment_method_options) below.
 * `setup_intent_data` - (Optional) A subset of parameters to be passed to SetupIntent creation for Checkout Sessions in `setup` mode. Changing it fails the plan, because this resource cannot be replaced. See [`setup_intent_data`](#setup_intent_data) below.
 * `shipping_address_collection` - (Optional) When set, provides configuration for Checkout to collect a shipping address from a customer. Changing it fails the plan, because this resource cannot be replaced. See [`shipping_address_collection`](#shipping_address_collection) below.
-* `shipping_options` - (Optional) The shipping rate options to apply to this Session. Up to a maximum of 5. See [`shipping_options`](#shipping_options) below.
-* `status` - (Optional) The status of the Checkout Session, one of `open`, `complete`, or `expired`. Possible values: `expired`.
+* `shipping_options` - (Optional) The shipping rate options to apply to this Session. Up to a maximum of 5. Removing it from the configuration leaves the current value. See [`shipping_options`](#shipping_options) below.
+* `status` - (Optional) The status of the Checkout Session, one of `open`, `complete`, or `expired`. Possible values: `expired`. Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
 * `submit_type` - (Optional) Describes the type of transaction being performed by Checkout in order to customize relevant text on the page, such as the submit button. `submit_type` can only be specified on Checkout Sessions in `payment` or `subscription` mode. If blank or `auto`, `pay` is used. You can't set this parameter if `ui_mode` is `elements`. Possible values: `auto`, `book`, `donate`, `pay`, `subscribe`. Changing it fails the plan, because this resource cannot be replaced.
 * `subscription_data` - (Optional) A subset of parameters to be passed to subscription creation for Checkout Sessions in `subscription` mode. Changing it fails the plan, because this resource cannot be replaced. See [`subscription_data`](#subscription_data) below.
 * `success_url` - (Optional) The URL to which Stripe should send customers when payment or setup is complete. This parameter is not allowed if ui_mode is `embedded_page` or `elements`. If you'd like to use information from the successful Checkout Session on your page, read the guide on [customizing your success page](https://docs.stripe.com/payments/checkout/custom-success-page). Changing it fails the plan, because this resource cannot be replaced.
-* `tax_id_collection` - (Optional) Controls tax ID collection during checkout. Changing it fails the plan, because this resource cannot be replaced. See [`tax_id_collection`](#tax_id_collection) below.
-* `ui_mode` - (Optional) The UI mode of the Session. Defaults to `hosted_page`. Possible values: `elements`, `embedded_page`, `form`, `hosted_page`. Changing it fails the plan, because this resource cannot be replaced.
+* `tax_id_collection` - (Optional) Controls tax ID collection during checkout. Changing it fails the plan, because this resource cannot be replaced. Removing it from the configuration leaves the current value. See [`tax_id_collection`](#tax_id_collection) below.
+* `ui_mode` - (Optional) The UI mode of the Session. Defaults to `hosted_page`. Possible values: `elements`, `embedded_page`, `form`, `hosted_page`. Changing it fails the plan, because this resource cannot be replaced. Removing it from the configuration leaves the current value.
 * `wallet_options` - (Optional) Wallet-specific configuration. Changing it fails the plan, because this resource cannot be replaced. See [`wallet_options`](#wallet_options) below.
 
 <a id="adaptive_pricing"></a>
@@ -105,7 +105,7 @@ The following arguments are optional:
 
 The `adaptive_pricing` attribute supports:
 
-* `enabled` - (Optional) If enabled, Adaptive Pricing is available on [eligible sessions](https://docs.stripe.com/payments/currencies/localize-prices/adaptive-pricing?payment-ui=stripe-hosted#restrictions).
+* `enabled` - (Optional) If enabled, Adaptive Pricing is available on [eligible sessions](https://docs.stripe.com/payments/currencies/localize-prices/adaptive-pricing?payment-ui=stripe-hosted#restrictions). Removing it from the configuration leaves the current value.
 
 <a id="after_expiration"></a>
 ### `after_expiration`
@@ -119,7 +119,7 @@ The `after_expiration` attribute supports:
 
 The `after_expiration.recovery` attribute supports:
 
-* `allow_promotion_codes` - (Optional) Enables user redeemable promotion codes on the recovered Checkout Sessions. Defaults to `false`
+* `allow_promotion_codes` - (Optional) Enables user redeemable promotion codes on the recovered Checkout Sessions. Defaults to `false`. Removing it from the configuration leaves the current value.
 * `enabled` - (Required) If `true`, a recovery url will be generated to recover this Checkout Session if it expires before a transaction is completed. It will be attached to the Checkout Session object upon expiration.
 * `expires_at` - (Read-Only) The timestamp at which the recovery URL will expire.
 * `url` - (Read-Only) URL that creates a new Checkout Session when clicked that is a copy of this expired Checkout Session
@@ -147,11 +147,11 @@ The `automatic_tax.liability` attribute supports:
 
 The `branding_settings` attribute supports:
 
-* `background_color` - (Optional) A hex color value starting with `#` representing the background color for the Checkout Session.
-* `border_style` - (Optional) The border style for the Checkout Session. Must be one of `rounded`, `rectangular`, or `pill`. Possible values: `pill`, `rectangular`, `rounded`.
-* `button_color` - (Optional) A hex color value starting with `#` representing the button color for the Checkout Session.
-* `display_name` - (Optional) The display name shown on the Checkout Session.
-* `font_family` - (Optional) The font family for the Checkout Session. Must be one of the [supported font families](https://docs.stripe.com/payments/checkout/customization/appearance?payment-ui=stripe-hosted#font-compatibility). Possible values: `be_vietnam_pro`, `bitter`, `chakra_petch`, `default`, `hahmlet`, `inconsolata`, `inter`, `lato`, `lora`, `m_plus_1_code`, `montserrat`, `noto_sans`, `noto_sans_jp`, `noto_serif`, `nunito`, `open_sans`, `pridi`, `pt_sans`, `pt_serif`, `raleway`, `roboto`, `roboto_slab`, `source_sans_pro`, `titillium_web`, `ubuntu_mono`, `zen_maru_gothic`.
+* `background_color` - (Optional) A hex color value starting with `#` representing the background color for the Checkout Session. Removing it from the configuration leaves the current value.
+* `border_style` - (Optional) The border style for the Checkout Session. Must be one of `rounded`, `rectangular`, or `pill`. Possible values: `pill`, `rectangular`, `rounded`. Removing it from the configuration leaves the current value.
+* `button_color` - (Optional) A hex color value starting with `#` representing the button color for the Checkout Session. Removing it from the configuration leaves the current value.
+* `display_name` - (Optional) The display name shown on the Checkout Session. Removing it from the configuration leaves the current value.
+* `font_family` - (Optional) The font family for the Checkout Session. Must be one of the [supported font families](https://docs.stripe.com/payments/checkout/customization/appearance?payment-ui=stripe-hosted#font-compatibility). Possible values: `be_vietnam_pro`, `bitter`, `chakra_petch`, `default`, `hahmlet`, `inconsolata`, `inter`, `lato`, `lora`, `m_plus_1_code`, `montserrat`, `noto_sans`, `noto_sans_jp`, `noto_serif`, `nunito`, `open_sans`, `pridi`, `pt_sans`, `pt_serif`, `raleway`, `roboto`, `roboto_slab`, `source_sans_pro`, `titillium_web`, `ubuntu_mono`, `zen_maru_gothic`. Removing it from the configuration leaves the current value.
 * `icon` - (Optional) The icon for the Checkout Session. You cannot set both `logo` and `icon`. See [`branding_settings.icon`](#branding_settings.icon) below.
 * `logo` - (Optional) The logo for the Checkout Session. You cannot set both `logo` and `icon`. See [`branding_settings.logo`](#branding_settings.logo) below.
 
@@ -198,7 +198,7 @@ The `custom_fields` attribute is a list. Each element supports:
 * `key` - (Required) String of your choice that your integration can use to reconcile this field. Must be unique to this field, alphanumeric, and up to 200 characters.
 * `label` - (Required) See [`custom_fields.label`](#custom_fields.label) below.
 * `numeric` - (Optional) See [`custom_fields.numeric`](#custom_fields.numeric) below.
-* `optional` - (Optional) Whether the customer is required to complete the field before completing the Checkout Session. Defaults to `false`.
+* `optional` - (Optional) Whether the customer is required to complete the field before completing the Checkout Session. Defaults to `false`. Removing it from the configuration leaves the current value.
 * `text` - (Optional) See [`custom_fields.text`](#custom_fields.text) below.
 * `type` - (Required) The type of the field. Possible values: `dropdown`, `numeric`, `text`.
 
@@ -308,7 +308,7 @@ The `discounts` attribute is a list. Each element supports:
 The `invoice_creation` attribute supports:
 
 * `enabled` - (Required) Indicates whether invoice creation is enabled for the Checkout Session.
-* `invoice_data` - (Optional) See [`invoice_creation.invoice_data`](#invoice_creation.invoice_data) below.
+* `invoice_data` - (Optional) Removing it from the configuration leaves the current value. See [`invoice_creation.invoice_data`](#invoice_creation.invoice_data) below.
 
 <a id="invoice_creation.invoice_data"></a>
 ### `invoice_creation.invoice_data`
@@ -360,7 +360,7 @@ The `line_items` attribute is a list. Each element supports:
 * `currency` - (Read-Only) Three-letter [ISO currency code](https://www.iso.org/iso-4217-currency-codes.html), in lowercase. Must be a [supported currency](https://stripe.com/docs/currencies).
 * `description` - (Read-Only) An arbitrary string attached to the object. Often useful for displaying to users. Defaults to product name.
 * `discounts` - (Read-Only) The discounts applied to the line item. See [`line_items.discounts`](#line_items.discounts) below.
-* `id` - (Optional) Unique identifier for the object.
+* `id` - (Optional) Unique identifier for the object. Default: not sent. Removing it from the configuration leaves the current value.
 * `metadata` - (Optional) Set of [key-value pairs](https://docs.stripe.com/api/metadata) that you can attach to an object. This can be useful for storing additional information about the object in a structured format.
 * `object` - (Read-Only) String representing the object's type. Objects of the same type share the same value. Possible values: `item`.
 * `price` - (Optional) The price used to generate the line item.
@@ -502,7 +502,7 @@ The `line_items.taxes.rate.flat_amount` attribute supports:
 
 The `managed_payments` attribute supports:
 
-* `enabled` - (Optional) Set to `true` to enable [Managed Payments](https://docs.stripe.com/payments/managed-payments), Stripe's merchant of record solution, for this session.
+* `enabled` - (Optional) Set to `true` to enable [Managed Payments](https://docs.stripe.com/payments/managed-payments), Stripe's merchant of record solution, for this session. Removing it from the configuration leaves the current value.
 
 <a id="name_collection"></a>
 ### `name_collection`
@@ -518,7 +518,7 @@ The `name_collection` attribute supports:
 The `name_collection.business` attribute supports:
 
 * `enabled` - (Required) Indicates whether business name collection is enabled for the session
-* `optional` - (Optional) Whether the customer is required to complete the field before completing the Checkout Session. Defaults to `false`.
+* `optional` - (Optional) Whether the customer is required to complete the field before completing the Checkout Session. Defaults to `false`. Removing it from the configuration leaves the current value.
 
 <a id="name_collection.individual"></a>
 ### `name_collection.individual`
@@ -526,7 +526,7 @@ The `name_collection.business` attribute supports:
 The `name_collection.individual` attribute supports:
 
 * `enabled` - (Required) Indicates whether individual name collection is enabled for the session
-* `optional` - (Optional) Whether the customer is required to complete the field before completing the Checkout Session. Defaults to `false`.
+* `optional` - (Optional) Whether the customer is required to complete the field before completing the Checkout Session. Defaults to `false`. Removing it from the configuration leaves the current value.
 
 <a id="optional_items"></a>
 ### `optional_items`
@@ -776,7 +776,7 @@ The `payment_method_options.blik.mandate_options` attribute supports:
 
 The `payment_method_options.boleto` attribute supports:
 
-* `expires_after_days` - (Optional) The number of calendar days before a Boleto voucher expires. For example, if you create a Boleto voucher on Monday and you set expires_after_days to 2, the Boleto voucher will expire on Wednesday at 23:59 America/Sao_Paulo time.
+* `expires_after_days` - (Optional) The number of calendar days before a Boleto voucher expires. For example, if you create a Boleto voucher on Monday and you set expires_after_days to 2, the Boleto voucher will expire on Wednesday at 23:59 America/Sao_Paulo time. Removing it from the configuration leaves the current value.
 * `setup_future_usage` - (Optional) Indicates that you intend to make future payments with this PaymentIntent's payment method. If you provide a Customer with the PaymentIntent, you can use this parameter to [attach the payment method](https://docs.stripe.com/payments/save-during-payment) to the Customer after the PaymentIntent is confirmed and the customer completes any required actions. If you don't provide a Customer, you can still [attach](https://docs.stripe.com/api/payment_methods/attach) the payment method to a Customer after the transaction completes. If the payment method is `card_present` and isn't a digital wallet, Stripe creates and attaches a [generated_card](https://docs.stripe.com/api/charges/object#charge_object-payment_method_details-card_present-generated_card) payment method representing the card to the Customer instead. When processing card payments, Stripe uses `setup_future_usage` to help you comply with regional legislation and network rules, such as [SCA](https://docs.stripe.com/strong-customer-authentication). Possible values: `none`, `off_session`, `on_session`.
 
 <a id="payment_method_options.card"></a>
@@ -790,7 +790,7 @@ The `payment_method_options.card` attribute supports:
 * `request_incremental_authorization` - (Optional) Request ability to [increment the authorization](https://docs.stripe.com/payments/incremental-authorization) for this CheckoutSession. Possible values: `if_available`, `never`.
 * `request_multicapture` - (Optional) Request ability to make [multiple captures](https://docs.stripe.com/payments/multicapture) for this CheckoutSession. Possible values: `if_available`, `never`.
 * `request_overcapture` - (Optional) Request ability to [overcapture](https://docs.stripe.com/payments/overcapture) for this CheckoutSession. Possible values: `if_available`, `never`.
-* `request_three_d_secure` - (Optional) We strongly recommend that you rely on our SCA Engine to automatically prompt your customers for authentication based on risk level and [other requirements](https://docs.stripe.com/strong-customer-authentication). However, if you wish to request 3D Secure based on logic from your own fraud engine, provide this option. If not provided, this value defaults to `automatic`. Read our guide on [manually requesting 3D Secure](https://docs.stripe.com/payments/3d-secure/authentication-flow#manual-three-ds) for more information on how this configuration interacts with Radar and our SCA Engine. Possible values: `any`, `automatic`, `challenge`.
+* `request_three_d_secure` - (Optional) We strongly recommend that you rely on our SCA Engine to automatically prompt your customers for authentication based on risk level and [other requirements](https://docs.stripe.com/strong-customer-authentication). However, if you wish to request 3D Secure based on logic from your own fraud engine, provide this option. If not provided, this value defaults to `automatic`. Read our guide on [manually requesting 3D Secure](https://docs.stripe.com/payments/3d-secure/authentication-flow#manual-three-ds) for more information on how this configuration interacts with Radar and our SCA Engine. Possible values: `any`, `automatic`, `challenge`. Removing it from the configuration leaves the current value.
 * `restrictions` - (Optional) See [`payment_method_options.card.restrictions`](#payment_method_options.card.restrictions) below.
 * `setup_future_usage` - (Optional) Indicates that you intend to make future payments with this PaymentIntent's payment method. If you provide a Customer with the PaymentIntent, you can use this parameter to [attach the payment method](https://docs.stripe.com/payments/save-during-payment) to the Customer after the PaymentIntent is confirmed and the customer completes any required actions. If you don't provide a Customer, you can still [attach](https://docs.stripe.com/api/payment_methods/attach) the payment method to a Customer after the transaction completes. If the payment method is `card_present` and isn't a digital wallet, Stripe creates and attaches a [generated_card](https://docs.stripe.com/api/charges/object#charge_object-payment_method_details-card_present-generated_card) payment method representing the card to the Customer instead. When processing card payments, Stripe uses `setup_future_usage` to help you comply with regional legislation and network rules, such as [SCA](https://docs.stripe.com/strong-customer-authentication). Possible values: `off_session`, `on_session`.
 * `statement_descriptor_suffix_kana` - (Optional) Provides information about a card payment that customers see on their statements. Concatenated with the Kana prefix (shortened Kana descriptor) or Kana statement descriptor that’s set on the account to form the complete statement descriptor. Maximum 22 characters. On card statements, the *concatenation* of both prefix and suffix (including separators) will appear truncated to 22 characters.
@@ -981,7 +981,7 @@ The `payment_method_options.naver_pay` attribute supports:
 
 The `payment_method_options.oxxo` attribute supports:
 
-* `expires_after_days` - (Optional) The number of calendar days before an OXXO invoice expires. For example, if you create an OXXO invoice on Monday and you set expires_after_days to 2, the OXXO invoice will expire on Wednesday at 23:59 America/Mexico_City time.
+* `expires_after_days` - (Optional) The number of calendar days before an OXXO invoice expires. For example, if you create an OXXO invoice on Monday and you set expires_after_days to 2, the OXXO invoice will expire on Wednesday at 23:59 America/Mexico_City time. Removing it from the configuration leaves the current value.
 * `setup_future_usage` - (Optional) Indicates that you intend to make future payments with this PaymentIntent's payment method. If you provide a Customer with the PaymentIntent, you can use this parameter to [attach the payment method](https://docs.stripe.com/payments/save-during-payment) to the Customer after the PaymentIntent is confirmed and the customer completes any required actions. If you don't provide a Customer, you can still [attach](https://docs.stripe.com/api/payment_methods/attach) the payment method to a Customer after the transaction completes. If the payment method is `card_present` and isn't a digital wallet, Stripe creates and attaches a [generated_card](https://docs.stripe.com/api/charges/object#charge_object-payment_method_details-card_present-generated_card) payment method representing the card to the Customer instead. When processing card payments, Stripe uses `setup_future_usage` to help you comply with regional legislation and network rules, such as [SCA](https://docs.stripe.com/strong-customer-authentication). Possible values: `none`.
 
 <a id="payment_method_options.p24"></a>
@@ -1244,7 +1244,7 @@ The `shipping_address_collection` attribute supports:
 The `shipping_options` attribute is a list. Each element supports:
 
 * `shipping_amount` - (Read-Only) A non-negative integer in cents representing how much to charge.
-* `shipping_rate` - (Optional) The shipping rate.
+* `shipping_rate` - (Optional) The shipping rate. Removing it from the configuration lets Stripe set it when the list is next sent.
 * `shipping_rate_data` - (Optional) See [`shipping_options.shipping_rate_data`](#shipping_options.shipping_rate_data) below.
 
 <a id="shipping_options.shipping_rate_data"></a>
@@ -1399,7 +1399,7 @@ The `subscription_data.trial_settings.end_behavior` attribute supports:
 The `tax_id_collection` attribute supports:
 
 * `enabled` - (Required) Indicates whether tax ID collection is enabled for the session
-* `required` - (Optional) Indicates whether a tax ID is required on the payment page Possible values: `if_supported`, `never`.
+* `required` - (Optional) Indicates whether a tax ID is required on the payment page Possible values: `if_supported`, `never`. Removing it from the configuration leaves the current value.
 
 <a id="wallet_options"></a>
 ### `wallet_options`
@@ -1564,34 +1564,7 @@ The `shipping_cost.taxes` attribute is a list. Each element supports:
 <a id="shipping_cost.taxes.rate"></a>
 ### `shipping_cost.taxes.rate`
 
-The `shipping_cost.taxes.rate` attribute supports:
-
-* `active` - Defaults to `true`. When set to `false`, this tax rate cannot be used with new applications or Checkout Sessions, but will still work for subscriptions and invoices that already have it set.
-* `country` - Two-letter country code ([ISO 3166-1 alpha-2](https://en.wikipedia.org/wiki/ISO_3166-1_alpha-2)).
-* `created` - Time at which the object was created. Measured in seconds since the Unix epoch.
-* `description` - An arbitrary string attached to the tax rate for your internal use only. It will not be visible to your customers.
-* `display_name` - The display name of the tax rates as it will appear to your customer on their receipt email, PDF, and the hosted invoice page.
-* `effective_percentage` - Actual/effective tax rate percentage out of 100. For tax calculations with automatic_tax[enabled]=true, this percentage reflects the rate actually used to calculate tax based on the product's taxability and whether the user is registered to collect taxes in the corresponding jurisdiction.
-* `flat_amount` - The amount of the tax rate when the `rate_type` is `flat_amount`. Tax rates with `rate_type` `percentage` can vary based on the transaction, resulting in this field being `null`. This field exposes the amount and currency of the flat tax rate. See [`shipping_cost.taxes.rate.flat_amount`](#shipping_cost.taxes.rate.flat_amount) below.
-* `id` - Unique identifier for the object.
-* `inclusive` - This specifies if the tax rate is inclusive or exclusive.
-* `jurisdiction` - The jurisdiction for the tax rate. You can use this label field for tax reporting purposes. It also appears on your customer’s invoice.
-* `jurisdiction_level` - The level of the jurisdiction that imposes this tax rate. Will be `null` for manually defined tax rates. Possible values: `city`, `country`, `county`, `district`, `multiple`, `state`.
-* `livemode` - If the object exists in live mode, the value is `true`. If the object exists in test mode, the value is `false`.
-* `metadata` - Set of [key-value pairs](https://docs.stripe.com/api/metadata) that you can attach to an object. This can be useful for storing additional information about the object in a structured format.
-* `object` - String representing the object's type. Objects of the same type share the same value. Possible values: `tax_rate`.
-* `percentage` - Tax rate percentage out of 100. For tax calculations with automatic_tax[enabled]=true, this percentage includes the statutory tax rate of non-taxable jurisdictions.
-* `rate_type` - Indicates the type of tax rate applied to the taxable amount. This value can be `null` when no tax applies to the location. This field is only present for TaxRates created by Stripe Tax. Possible values: `flat_amount`, `percentage`.
-* `state` - [ISO 3166-2 subdivision code](https://en.wikipedia.org/wiki/ISO_3166-2), without country prefix. For example, "NY" for New York, United States.
-* `tax_type` - The high-level tax type, such as `vat` or `sales_tax`. Possible values: `amusement_tax`, `communications_tax`, `digital_excise_tax`, `gst`, `hst`, `igst`, `jct`, `lease_tax`, `mass_transit_parking_tax`, `parking_tax`, `pst`, `qst`, `retail_delivery_fee`, `rst`, `sales_tax`, `service_tax`, `utility_users_tax`, `vat`.
-
-<a id="shipping_cost.taxes.rate.flat_amount"></a>
-### `shipping_cost.taxes.rate.flat_amount`
-
-The `shipping_cost.taxes.rate.flat_amount` attribute supports:
-
-* `amount` - Amount of the tax when the `rate_type` is `flat_amount`. This positive integer represents how much to charge in the smallest currency unit (e.g., 100 cents to charge $1.00 or 100 to charge ¥100, a zero-decimal currency). The amount value supports up to eight digits (e.g., a value of 99999999 for a USD charge of $999,999.99).
-* `currency` - Three-letter ISO currency code, in lowercase.
+The `shipping_cost.taxes.rate` attribute holds a tax rate, with the attributes of the [`stripe_tax_rate`](../data-sources/tax_rate) data source and `object`, the name of its type.
 
 <a id="total_details"></a>
 ### `total_details`
@@ -1659,34 +1632,7 @@ The `total_details.breakdown.taxes` attribute is a list. Each element supports:
 <a id="total_details.breakdown.taxes.rate"></a>
 ### `total_details.breakdown.taxes.rate`
 
-The `total_details.breakdown.taxes.rate` attribute supports:
-
-* `active` - Defaults to `true`. When set to `false`, this tax rate cannot be used with new applications or Checkout Sessions, but will still work for subscriptions and invoices that already have it set.
-* `country` - Two-letter country code ([ISO 3166-1 alpha-2](https://en.wikipedia.org/wiki/ISO_3166-1_alpha-2)).
-* `created` - Time at which the object was created. Measured in seconds since the Unix epoch.
-* `description` - An arbitrary string attached to the tax rate for your internal use only. It will not be visible to your customers.
-* `display_name` - The display name of the tax rates as it will appear to your customer on their receipt email, PDF, and the hosted invoice page.
-* `effective_percentage` - Actual/effective tax rate percentage out of 100. For tax calculations with automatic_tax[enabled]=true, this percentage reflects the rate actually used to calculate tax based on the product's taxability and whether the user is registered to collect taxes in the corresponding jurisdiction.
-* `flat_amount` - The amount of the tax rate when the `rate_type` is `flat_amount`. Tax rates with `rate_type` `percentage` can vary based on the transaction, resulting in this field being `null`. This field exposes the amount and currency of the flat tax rate. See [`total_details.breakdown.taxes.rate.flat_amount`](#total_details.breakdown.taxes.rate.flat_amount) below.
-* `id` - Unique identifier for the object.
-* `inclusive` - This specifies if the tax rate is inclusive or exclusive.
-* `jurisdiction` - The jurisdiction for the tax rate. You can use this label field for tax reporting purposes. It also appears on your customer’s invoice.
-* `jurisdiction_level` - The level of the jurisdiction that imposes this tax rate. Will be `null` for manually defined tax rates. Possible values: `city`, `country`, `county`, `district`, `multiple`, `state`.
-* `livemode` - If the object exists in live mode, the value is `true`. If the object exists in test mode, the value is `false`.
-* `metadata` - Set of [key-value pairs](https://docs.stripe.com/api/metadata) that you can attach to an object. This can be useful for storing additional information about the object in a structured format.
-* `object` - String representing the object's type. Objects of the same type share the same value. Possible values: `tax_rate`.
-* `percentage` - Tax rate percentage out of 100. For tax calculations with automatic_tax[enabled]=true, this percentage includes the statutory tax rate of non-taxable jurisdictions.
-* `rate_type` - Indicates the type of tax rate applied to the taxable amount. This value can be `null` when no tax applies to the location. This field is only present for TaxRates created by Stripe Tax. Possible values: `flat_amount`, `percentage`.
-* `state` - [ISO 3166-2 subdivision code](https://en.wikipedia.org/wiki/ISO_3166-2), without country prefix. For example, "NY" for New York, United States.
-* `tax_type` - The high-level tax type, such as `vat` or `sales_tax`. Possible values: `amusement_tax`, `communications_tax`, `digital_excise_tax`, `gst`, `hst`, `igst`, `jct`, `lease_tax`, `mass_transit_parking_tax`, `parking_tax`, `pst`, `qst`, `retail_delivery_fee`, `rst`, `sales_tax`, `service_tax`, `utility_users_tax`, `vat`.
-
-<a id="total_details.breakdown.taxes.rate.flat_amount"></a>
-### `total_details.breakdown.taxes.rate.flat_amount`
-
-The `total_details.breakdown.taxes.rate.flat_amount` attribute supports:
-
-* `amount` - Amount of the tax when the `rate_type` is `flat_amount`. This positive integer represents how much to charge in the smallest currency unit (e.g., 100 cents to charge $1.00 or 100 to charge ¥100, a zero-decimal currency). The amount value supports up to eight digits (e.g., a value of 99999999 for a USD charge of $999,999.99).
-* `currency` - Three-letter ISO currency code, in lowercase.
+The `total_details.breakdown.taxes.rate` attribute holds a tax rate, with the attributes of the [`stripe_tax_rate`](../data-sources/tax_rate) data source and `object`, the name of its type.
 
 ## Timeouts
 

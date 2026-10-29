@@ -33,3 +33,7 @@ The resources that move money (`stripe_payment_intent`, `stripe_charge`, `stripe
 ## Stripe API version
 
 <!-- provider-description --> Attributes therefore mean what that version documents, and a change to your account's default API version does not change how the provider behaves. A later provider release may move to a newer API version and says so in its release notes.
+
+## Defaults
+
+An optional argument's line ends with its default once that default is verified against Stripe, and every provider argument's line, and every line of an argument only an update takes, ends with its own: `Default (Stripe):` is the value Stripe applies when the configuration leaves the argument out, or the rule by which Stripe picks one; `Default (provider):` is the value the provider applies; `Default: none.` means the argument stays unset; and `Default: not sent.` marks an argument only an update takes. An argument that Stripe fills in when the configuration leaves it out says what deleting it from the configuration does: it leaves the current value, it lets Stripe set the value when the list that holds it is next sent, or the provider stops sending it and records the value Stripe holds at the next apply. To change such a value, set the value you want instead.

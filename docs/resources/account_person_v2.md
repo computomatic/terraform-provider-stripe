@@ -62,7 +62,7 @@ The following arguments are optional:
 * `id_numbers` - (Optional) The identification numbers (e.g., SSN) associated with the person. See [`id_numbers`](#id_numbers) below.
 * `metadata` - (Optional) Set of key-value pairs that you can attach to an object. This can be useful for storing additional information about the object in a structured format.
 * `phone` - (Optional) The phone number for this person.
-* `relationship` - (Optional) The relationship that this person has with the Account's business or legal entity. See [`relationship`](#relationship) below.
+* `relationship` - (Optional) The relationship that this person has with the Account's business or legal entity. Removing it from the configuration leaves the current value. See [`relationship`](#relationship) below.
 * `surname` - (Optional) The person's last name.
 
 <a id="address"></a>
@@ -70,12 +70,12 @@ The following arguments are optional:
 
 The `address` attribute supports:
 
-* `city` - (Optional) City, district, suburb, town, or village.
+* `city` - (Optional) City, district, suburb, town, or village. Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
 * `country` - (Required) Two-letter country code ([ISO 3166-1 alpha-2](https://en.wikipedia.org/wiki/ISO_3166-1_alpha-2)).
-* `line1` - (Optional) Address line 1 (e.g., street, PO Box, or company name).
-* `line2` - (Optional) Address line 2 (e.g., apartment, suite, unit, or building).
-* `postal_code` - (Optional) ZIP or postal code.
-* `state` - (Optional) State, county, province, or region.
+* `line1` - (Optional) Address line 1 (e.g., street, PO Box, or company name). Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
+* `line2` - (Optional) Address line 2 (e.g., apartment, suite, unit, or building). Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
+* `postal_code` - (Optional) ZIP or postal code. Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
+* `state` - (Optional) State, county, province, or region. Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
 
 <a id="date_of_birth"></a>
 ### `date_of_birth`
@@ -100,13 +100,13 @@ The `id_numbers` attribute is a list. Each element supports:
 The `relationship` attribute supports:
 
 * `authorizer` - (Read-Only) Whether the individual is an authorizer of the Account's identity.
-* `director` - (Optional) Indicates whether the person is a director of the associated legal entity.
-* `executive` - (Optional) Indicates whether the person is an executive of the associated legal entity.
+* `director` - (Optional) Indicates whether the person is a director of the associated legal entity. Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
+* `executive` - (Optional) Indicates whether the person is an executive of the associated legal entity. Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
 * `legal_guardian` - (Read-Only) Whether the individual is the legal guardian of the Account's representative.
-* `owner` - (Optional) Indicates whether the person is an owner of the associated legal entity.
-* `percent_ownership` - (Optional) The percentage of ownership the person has in the associated legal entity.
-* `representative` - (Optional) Indicates whether the person is a representative of the associated legal entity.
-* `title` - (Optional) The title or position the person holds in the associated legal entity.
+* `owner` - (Optional) Indicates whether the person is an owner of the associated legal entity. Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
+* `percent_ownership` - (Optional) The percentage of ownership the person has in the associated legal entity. Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
+* `representative` - (Optional) Indicates whether the person is a representative of the associated legal entity. Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
+* `title` - (Optional) The title or position the person holds in the associated legal entity. Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
 
 ## Attribute Reference
 

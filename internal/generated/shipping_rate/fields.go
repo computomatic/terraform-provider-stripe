@@ -7,7 +7,7 @@ import "github.com/computomatic/terraform-provider-stripe/internal/fields"
 
 // Table lists every request and response field of the object.
 var Table = []fields.Field{
-	{Name: "active", Shape: fields.Bool, Update: true, Response: true, Description: "Whether the shipping rate can be used for new purchases. Defaults to `true`."},
+	{Name: "active", Shape: fields.Bool, Update: true, Response: true, Description: "Whether the shipping rate can be used for new purchases. Defaults to `true`.", Default: &fields.Default{Kind: fields.DefaultNotSent}},
 	{Name: "created", Shape: fields.Int, Response: true, Description: "Time at which the object was created. Measured in seconds since the Unix epoch."},
 	{Name: "delivery_estimate", Shape: fields.Object, Create: true, Response: true, Description: "The estimated range for how long shipping will take, meant to be displayable to the customer. This will appear on CheckoutSessions.", Fields: []fields.Field{
 		{Name: "maximum", Shape: fields.Object, Create: true, Response: true, Description: "The upper bound of the estimated range. If empty, represents no upper bound i.e., infinite.", Fields: []fields.Field{

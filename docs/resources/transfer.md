@@ -40,7 +40,7 @@ The following arguments are optional:
 * `description` - (Optional) An arbitrary string attached to the object. Often useful for displaying to users.
 * `metadata` - (Optional) Set of [key-value pairs](https://docs.stripe.com/api/metadata) that you can attach to an object. This can be useful for storing additional information about the object in a structured format. Individual keys can be unset by posting an empty value to them. All keys can be unset by posting an empty value to `metadata`.
 * `source_transaction` - (Optional) You can use this parameter to transfer funds from a charge before they are added to your available balance. A pending balance will transfer immediately but the funds will not become available until the original charge becomes available. [See the Connect documentation](https://docs.stripe.com/connect/separate-charges-and-transfers#transfer-availability) for details. Changing it fails the plan, because this resource cannot be replaced.
-* `source_type` - (Optional) The source balance to use for this transfer. One of `bank_account`, `card`, or `fpx`. For most users, this will default to `card`. Possible values: `bank_account`, `card`, `fpx`. Changing it fails the plan, because this resource cannot be replaced.
+* `source_type` - (Optional) The source balance to use for this transfer. One of `bank_account`, `card`, or `fpx`. For most users, this will default to `card`. Possible values: `bank_account`, `card`, `fpx`. Changing it fails the plan, because this resource cannot be replaced. Removing it from the configuration leaves the current value.
 * `transfer_group` - (Optional) A string that identifies this transaction as part of a group. See the [Connect documentation](https://docs.stripe.com/connect/separate-charges-and-transfers#transfer-options) for details. Changing it fails the plan, because this resource cannot be replaced.
 
 ## Attribute Reference
@@ -53,7 +53,7 @@ This resource exports the following attributes in addition to the arguments abov
 * `created` - Time that this record of the transfer was first created.
 * `destination_payment` - If the destination is a Stripe account, this will be the ID of the payment that the destination account received for the transfer.
 * `livemode` - If the object exists in live mode, the value is `true`. If the object exists in test mode, the value is `false`.
-* `reversals` - A list of reversals that have been applied to the transfer. See [`reversals`](#reversals) below.
+* `reversals` - A list of reversals that have been applied to the transfer. Holds the first page of the list Stripe returns with the object; `has_more` is true when there are more. Read every element with the `stripe_transfer_reversal` data source. See [`reversals`](#reversals) below.
 * `reversed` - Whether the transfer has been fully reversed. If the transfer is only partially reversed, this attribute will still be false.
 
 <a id="reversals"></a>

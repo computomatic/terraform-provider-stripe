@@ -22,7 +22,7 @@ var Table = []fields.Field{
 		{Name: "timezone", Shape: fields.String, Response: true, Description: "Defaults to `Etc/UTC`. The output timezone for all timestamps in the report. A list of possible time zone values is maintained at the [IANA Time Zone Database](http://www.iana.org/time-zones). Has no effect on `interval_start` or `interval_end`."},
 	}},
 	{Name: "report_type", Shape: fields.String, Response: true, Description: "The ID of the [report type](https://docs.stripe.com/reports/report-types) to run, such as `\"balance.summary.1\"`."},
-	{Name: "result", Shape: fields.Object, Response: true, Description: "The file object representing the result of the report run (populated when\n `status=succeeded`).", Fields: []fields.Field{
+	{Name: "result", Shape: fields.Object, Response: true, Description: "The file object representing the result of the report run (populated when\n `status=succeeded`).", Copy: "stripe_file", Fields: []fields.Field{
 		{Name: "created", Shape: fields.Int, Response: true, Description: "Time at which the object was created. Measured in seconds since the Unix epoch."},
 		{Name: "expires_at", Shape: fields.Int, Response: true, Description: "The file expires and isn't available at this time in epoch seconds."},
 		{Name: "filename", Shape: fields.String, Response: true, Description: "The suitable name for saving the file to a filesystem."},

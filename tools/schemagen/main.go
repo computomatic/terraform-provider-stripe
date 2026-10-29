@@ -88,17 +88,23 @@ func Generate(root string, resources []Resource) ([]File, error) {
 	files := []File{{Path: "internal/stripeapi/version.go", Content: version}}
 	var covered []*tableCoverage
 	var records []Record
+	readers := map[string][]string{}
 	for _, res := range resources {
 		tc, err := coverTable(spec, res, ev)
 		if err != nil {
 			return nil, err
 		}
+		covered = append(covered, tc)
+		readers[tc.object] = append(readers[tc.object], "stripe_"+res.Package)
+	}
+	for i, res := range resources {
+		tc := covered[i]
+		annotateCopies(tc, readers)
 		src, err := RenderTable(res.Package, tc.table)
 		if err != nil {
 			return nil, err
 		}
 		files = append(files, File{Path: filepath.Join("internal", "generated", res.Package, "fields.go"), Content: src})
-		covered = append(covered, tc)
 		records = append(records, tc.records...)
 	}
 	if err := checkPagedReaders(resources); err != nil {

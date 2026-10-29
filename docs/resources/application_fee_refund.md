@@ -34,7 +34,7 @@ The following arguments are required:
 
 The following arguments are optional:
 
-* `amount` - (Optional) A positive integer, in _cents (or local equivalent)_, representing how much of this fee to refund. Can refund only up to the remaining unrefunded amount of the fee. Changing it fails the plan, because this resource cannot be replaced.
+* `amount` - (Optional) A positive integer, in _cents (or local equivalent)_, representing how much of this fee to refund. Can refund only up to the remaining unrefunded amount of the fee. Changing it fails the plan, because this resource cannot be replaced. Removing it from the configuration leaves the current value.
 * `metadata` - (Optional) Set of [key-value pairs](https://docs.stripe.com/api/metadata) that you can attach to an object. This can be useful for storing additional information about the object in a structured format. Individual keys can be unset by posting an empty value to them. All keys can be unset by posting an empty value to `metadata`.
 
 ## Attribute Reference

@@ -61,26 +61,26 @@ The following arguments are required:
 
 The following arguments are optional:
 
-* `amount` - (Optional) The integer amount in cents (or local equivalent) representing the total amount of the credit note. One of `amount`, `lines`, or `shipping_cost` must be provided. Changing it fails the plan, because this resource cannot be replaced.
+* `amount` - (Optional) The integer amount in cents (or local equivalent) representing the total amount of the credit note. One of `amount`, `lines`, or `shipping_cost` must be provided. Changing it fails the plan, because this resource cannot be replaced. Removing it from the configuration leaves the current value.
 * `credit_amount` - (Optional) The integer amount in cents (or local equivalent) representing the amount to credit the customer's balance, which will be automatically applied to their next invoice. Changing it fails the plan, because this resource cannot be replaced.
-* `effective_at` - (Optional) The date when this credit note is in effect. Same as `created` unless overwritten. When defined, this value replaces the system-generated 'Date of issue' printed on the credit note PDF. Changing it fails the plan, because this resource cannot be replaced.
+* `effective_at` - (Optional) The date when this credit note is in effect. Same as `created` unless overwritten. When defined, this value replaces the system-generated 'Date of issue' printed on the credit note PDF. Changing it fails the plan, because this resource cannot be replaced. Removing it from the configuration leaves the current value.
 * `email_type` - (Optional) Type of email to send to the customer, one of `credit_note` or `none` and the default is `credit_note`. Possible values: `credit_note`, `none`. Changing it fails the plan, because this resource cannot be replaced.
-* `lines` - (Optional) Line items that make up the credit note. One of `amount`, `lines`, or `shipping_cost` must be provided. Changing it fails the plan, because this resource cannot be replaced. See [`lines`](#lines) below.
+* `lines` - (Optional) Line items that make up the credit note. One of `amount`, `lines`, or `shipping_cost` must be provided. Holds the first page of the list Stripe returns with the object; `has_more` is true when there are more. Read every element with the `stripe_credit_note_line` data source. Changing it fails the plan, because this resource cannot be replaced. Removing it from the configuration leaves the current value. See [`lines`](#lines) below.
 * `memo` - (Optional) The credit note's memo appears on the credit note PDF.
 * `metadata` - (Optional) Set of [key-value pairs](https://docs.stripe.com/api/metadata) that you can attach to an object. This can be useful for storing additional information about the object in a structured format. Individual keys can be unset by posting an empty value to them. All keys can be unset by posting an empty value to `metadata`.
 * `out_of_band_amount` - (Optional) The integer amount in cents (or local equivalent) representing the amount that is credited outside of Stripe. Changing it fails the plan, because this resource cannot be replaced.
 * `reason` - (Optional) Reason for issuing this credit note, one of `duplicate`, `fraudulent`, `order_change`, or `product_unsatisfactory` Possible values: `duplicate`, `fraudulent`, `order_change`, `product_unsatisfactory`. Changing it fails the plan, because this resource cannot be replaced.
 * `refund_amount` - (Optional) The integer amount in cents (or local equivalent) representing the amount to refund. If set, a refund will be created for the charge associated with the invoice. Changing it fails the plan, because this resource cannot be replaced.
-* `refunds` - (Optional) Refunds to link to this credit note. Changing it fails the plan, because this resource cannot be replaced. See [`refunds`](#refunds) below.
+* `refunds` - (Optional) Refunds to link to this credit note. Changing it fails the plan, because this resource cannot be replaced. Removing it from the configuration leaves the current value. See [`refunds`](#refunds) below.
 * `shipping_cost` - (Optional) When shipping_cost contains the shipping_rate from the invoice, the shipping_cost is included in the credit note. One of `amount`, `lines`, or `shipping_cost` must be provided. Changing it fails the plan, because this resource cannot be replaced. See [`shipping_cost`](#shipping_cost) below.
-* `status` - (Optional) Status of this credit note, one of `issued` or `void`. Learn more about [voiding credit notes](https://docs.stripe.com/billing/invoices/credit-notes#voiding). Possible values: `void`.
+* `status` - (Optional) Status of this credit note, one of `issued` or `void`. Learn more about [voiding credit notes](https://docs.stripe.com/billing/invoices/credit-notes#voiding). Possible values: `void`. Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
 
 <a id="lines"></a>
 ### `lines`
 
 The `lines` attribute is a list. Each element supports:
 
-* `amount` - (Optional) The integer amount in cents (or local equivalent) representing the gross amount being credited for this line item, excluding (exclusive) tax and discounts.
+* `amount` - (Optional) The integer amount in cents (or local equivalent) representing the gross amount being credited for this line item, excluding (exclusive) tax and discounts. Removing it from the configuration leaves the current value.
 * `description` - (Optional) Description of the item being credited.
 * `discount_amount` - (Read-Only) The integer amount in cents (or local equivalent) representing the discount being credited for this line item.
 * `discount_amounts` - (Read-Only) The amount of discount calculated per discount for this line item See [`lines.discount_amounts`](#lines.discount_amounts) below.
@@ -92,11 +92,11 @@ The `lines` attribute is a list. Each element supports:
 * `pretax_credit_amounts` - (Read-Only) The pretax credit amounts (ex: discount, credit grants, etc) for this line item. See [`lines.pretax_credit_amounts`](#lines.pretax_credit_amounts) below.
 * `quantity` - (Optional) The number of units of product being credited.
 * `tax_amounts` - (Optional) See [`lines.tax_amounts`](#lines.tax_amounts) below.
-* `tax_rates` - (Optional) The tax rates which apply to the line item.
+* `tax_rates` - (Optional) The tax rates which apply to the line item. Removing it from the configuration leaves the current value.
 * `taxes` - (Read-Only) The tax information of the line item. See [`lines.taxes`](#lines.taxes) below.
 * `type` - (Required) The type of the credit note line item, one of `invoice_line_item` or `custom_line_item`. When the type is `invoice_line_item` there is an additional `invoice_line_item` property on the resource the value of which is the id of the credited line item on the invoice. Possible values: `custom_line_item`, `invoice_line_item`.
 * `unit_amount` - (Optional) The cost of each unit of product being credited.
-* `unit_amount_decimal` - (Optional) Same as `unit_amount`, but contains a decimal value with at most 12 decimal places.
+* `unit_amount_decimal` - (Optional) Same as `unit_amount`, but contains a decimal value with at most 12 decimal places. Removing it from the configuration leaves the current value.
 
 <a id="lines.discount_amounts"></a>
 ### `lines.discount_amounts`
@@ -149,9 +149,9 @@ The `lines.taxes.tax_rate_details` attribute supports:
 
 The `refunds` attribute is a list. Each element supports:
 
-* `amount_refunded` - (Optional) Amount of the refund that applies to this credit note, in cents (or local equivalent).
+* `amount_refunded` - (Optional) Amount of the refund that applies to this credit note, in cents (or local equivalent). Removing it from the configuration leaves the current value.
 * `payment_record_refund` - (Optional) The PaymentRecord refund details associated with this credit note refund. See [`refunds.payment_record_refund`](#refunds.payment_record_refund) below.
-* `refund` - (Optional) ID of the refund.
+* `refund` - (Optional) ID of the refund. Removing it from the configuration leaves the current value.
 * `type` - (Optional) Type of the refund, one of `refund` or `payment_record_refund`. Possible values: `payment_record_refund`, `refund`.
 
 <a id="refunds.payment_record_refund"></a>
@@ -186,34 +186,7 @@ The `shipping_cost.taxes` attribute is a list. Each element supports:
 <a id="shipping_cost.taxes.rate"></a>
 ### `shipping_cost.taxes.rate`
 
-The `shipping_cost.taxes.rate` attribute supports:
-
-* `active` - Defaults to `true`. When set to `false`, this tax rate cannot be used with new applications or Checkout Sessions, but will still work for subscriptions and invoices that already have it set.
-* `country` - Two-letter country code ([ISO 3166-1 alpha-2](https://en.wikipedia.org/wiki/ISO_3166-1_alpha-2)).
-* `created` - Time at which the object was created. Measured in seconds since the Unix epoch.
-* `description` - An arbitrary string attached to the tax rate for your internal use only. It will not be visible to your customers.
-* `display_name` - The display name of the tax rates as it will appear to your customer on their receipt email, PDF, and the hosted invoice page.
-* `effective_percentage` - Actual/effective tax rate percentage out of 100. For tax calculations with automatic_tax[enabled]=true, this percentage reflects the rate actually used to calculate tax based on the product's taxability and whether the user is registered to collect taxes in the corresponding jurisdiction.
-* `flat_amount` - The amount of the tax rate when the `rate_type` is `flat_amount`. Tax rates with `rate_type` `percentage` can vary based on the transaction, resulting in this field being `null`. This field exposes the amount and currency of the flat tax rate. See [`shipping_cost.taxes.rate.flat_amount`](#shipping_cost.taxes.rate.flat_amount) below.
-* `id` - Unique identifier for the object.
-* `inclusive` - This specifies if the tax rate is inclusive or exclusive.
-* `jurisdiction` - The jurisdiction for the tax rate. You can use this label field for tax reporting purposes. It also appears on your customer’s invoice.
-* `jurisdiction_level` - The level of the jurisdiction that imposes this tax rate. Will be `null` for manually defined tax rates. Possible values: `city`, `country`, `county`, `district`, `multiple`, `state`.
-* `livemode` - If the object exists in live mode, the value is `true`. If the object exists in test mode, the value is `false`.
-* `metadata` - Set of [key-value pairs](https://docs.stripe.com/api/metadata) that you can attach to an object. This can be useful for storing additional information about the object in a structured format.
-* `object` - String representing the object's type. Objects of the same type share the same value. Possible values: `tax_rate`.
-* `percentage` - Tax rate percentage out of 100. For tax calculations with automatic_tax[enabled]=true, this percentage includes the statutory tax rate of non-taxable jurisdictions.
-* `rate_type` - Indicates the type of tax rate applied to the taxable amount. This value can be `null` when no tax applies to the location. This field is only present for TaxRates created by Stripe Tax. Possible values: `flat_amount`, `percentage`.
-* `state` - [ISO 3166-2 subdivision code](https://en.wikipedia.org/wiki/ISO_3166-2), without country prefix. For example, "NY" for New York, United States.
-* `tax_type` - The high-level tax type, such as `vat` or `sales_tax`. Possible values: `amusement_tax`, `communications_tax`, `digital_excise_tax`, `gst`, `hst`, `igst`, `jct`, `lease_tax`, `mass_transit_parking_tax`, `parking_tax`, `pst`, `qst`, `retail_delivery_fee`, `rst`, `sales_tax`, `service_tax`, `utility_users_tax`, `vat`.
-
-<a id="shipping_cost.taxes.rate.flat_amount"></a>
-### `shipping_cost.taxes.rate.flat_amount`
-
-The `shipping_cost.taxes.rate.flat_amount` attribute supports:
-
-* `amount` - Amount of the tax when the `rate_type` is `flat_amount`. This positive integer represents how much to charge in the smallest currency unit (e.g., 100 cents to charge $1.00 or 100 to charge ¥100, a zero-decimal currency). The amount value supports up to eight digits (e.g., a value of 99999999 for a USD charge of $999,999.99).
-* `currency` - Three-letter ISO currency code, in lowercase.
+The `shipping_cost.taxes.rate` attribute holds a tax rate, with the attributes of the [`stripe_tax_rate`](../data-sources/tax_rate) data source and `object`, the name of its type.
 
 ## Attribute Reference
 

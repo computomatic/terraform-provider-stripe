@@ -236,6 +236,13 @@ func buildGated(spec *Spec, res Resource, g *gate) ([]fields.Field, error) {
 			return nil, fmt.Errorf("%s: docs-from entry %q names no object", res.Package, p)
 		}
 	}
+	// The docs line of a list Stripe returns a page at a time names the type that reads every
+	// element (D3); coverTable checks the entries.
+	for p, reader := range res.PagedLists {
+		if f := fieldAt(table, p); f != nil {
+			f.PagedBy = reader
+		}
+	}
 	return table, nil
 }
 

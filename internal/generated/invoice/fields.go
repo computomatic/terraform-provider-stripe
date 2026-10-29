@@ -97,7 +97,7 @@ var Table = []fields.Field{
 		{Name: "type", Shape: fields.String, Required: true, Create: true, Update: true, Response: true, Enum: []string{"account", "self"}, Description: "Type of the account referenced."},
 	}},
 	{Name: "latest_revision", Shape: fields.String, Response: true, Description: "The ID of the most recent non-draft revision of this invoice"},
-	{Name: "lines", Shape: fields.Object, Response: true, Description: "The individual line items that make up the invoice. `lines` is sorted as follows: (1) pending invoice items (including prorations) in reverse chronological order, (2) subscription items in reverse chronological order, and (3) invoice items added after invoice creation in chronological order.", Fields: []fields.Field{
+	{Name: "lines", Shape: fields.Object, Response: true, Description: "The individual line items that make up the invoice. `lines` is sorted as follows: (1) pending invoice items (including prorations) in reverse chronological order, (2) subscription items in reverse chronological order, and (3) invoice items added after invoice creation in chronological order.", PagedBy: "stripe_invoice_line", Fields: []fields.Field{
 		{Name: "data", Shape: fields.ObjectList, Response: true, Description: "Details about each object.", Fields: []fields.Field{
 			{Name: "amount", Shape: fields.Int, Response: true, Description: "The amount, in cents (or local equivalent)."},
 			{Name: "currency", Shape: fields.String, Response: true, Description: "Three-letter [ISO currency code](https://www.iso.org/iso-4217-currency-codes.html), in lowercase. Must be a [supported currency](https://stripe.com/docs/currencies)."},
@@ -346,7 +346,7 @@ var Table = []fields.Field{
 		}},
 		{Name: "taxes", Shape: fields.ObjectList, Response: true, Description: "The taxes applied to the shipping rate.", Fields: []fields.Field{
 			{Name: "amount", Shape: fields.Int, Response: true, Description: "Amount of tax applied for this rate."},
-			{Name: "rate", Shape: fields.Object, Response: true, Description: "Tax rates can be applied to [invoices](https://docs.stripe.com/invoicing/taxes/tax-rates), [subscriptions](https://docs.stripe.com/billing/taxes/tax-rates) and [Checkout Sessions](https://docs.stripe.com/payments/checkout/use-manual-tax-rates) to collect tax. Related guide: [Tax rates](https://docs.stripe.com/billing/taxes/tax-rates)", Fields: []fields.Field{
+			{Name: "rate", Shape: fields.Object, Response: true, Description: "Tax rates can be applied to [invoices](https://docs.stripe.com/invoicing/taxes/tax-rates), [subscriptions](https://docs.stripe.com/billing/taxes/tax-rates) and [Checkout Sessions](https://docs.stripe.com/payments/checkout/use-manual-tax-rates) to collect tax. Related guide: [Tax rates](https://docs.stripe.com/billing/taxes/tax-rates)", Copy: "stripe_tax_rate", Fields: []fields.Field{
 				{Name: "active", Shape: fields.Bool, Response: true, Description: "Defaults to `true`. When set to `false`, this tax rate cannot be used with new applications or Checkout Sessions, but will still work for subscriptions and invoices that already have it set."},
 				{Name: "country", Shape: fields.String, Response: true, Description: "Two-letter country code ([ISO 3166-1 alpha-2](https://en.wikipedia.org/wiki/ISO_3166-1_alpha-2))."},
 				{Name: "created", Shape: fields.Int, Response: true, Description: "Time at which the object was created. Measured in seconds since the Unix epoch."},

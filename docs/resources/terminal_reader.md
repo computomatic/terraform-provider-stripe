@@ -46,7 +46,7 @@ The following arguments are required:
 
 The following arguments are optional:
 
-* `label` - (Optional) Custom label given to the reader for easier identification. If no label is specified, the registration code will be used.
+* `label` - (Optional) Custom label given to the reader for easier identification. If no label is specified, the registration code will be used. Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
 * `location` - (Optional) The location to assign the reader to. Changing it replaces the resource.
 * `metadata` - (Optional) Set of [key-value pairs](https://docs.stripe.com/api/metadata) that you can attach to an object. This can be useful for storing additional information about the object in a structured format. Individual keys can be unset by posting an empty value to them. All keys can be unset by posting an empty value to `metadata`.
 

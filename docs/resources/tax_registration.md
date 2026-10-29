@@ -159,7 +159,7 @@ The `country_options.ae` attribute supports:
 
 The `country_options.ae.standard` attribute supports:
 
-* `place_of_supply_scheme` - (Optional) Place of supply scheme used in an Default standard registration. Possible values: `inbound_goods`, `standard`.
+* `place_of_supply_scheme` - (Optional) Place of supply scheme used in an Default standard registration. Possible values: `inbound_goods`, `standard`. Removing it from the configuration leaves the current value.
 
 <a id="country_options.al"></a>
 ### `country_options.al`
@@ -226,7 +226,7 @@ The `country_options.au` attribute supports:
 
 The `country_options.au.standard` attribute supports:
 
-* `place_of_supply_scheme` - (Optional) Place of supply scheme used in an Default standard registration. Possible values: `inbound_goods`, `standard`.
+* `place_of_supply_scheme` - (Optional) Place of supply scheme used in an Default standard registration. Possible values: `inbound_goods`, `standard`. Removing it from the configuration leaves the current value.
 
 <a id="country_options.aw"></a>
 ### `country_options.aw`
@@ -427,7 +427,7 @@ The `country_options.ch` attribute supports:
 
 The `country_options.ch.standard` attribute supports:
 
-* `place_of_supply_scheme` - (Optional) Place of supply scheme used in an Default standard registration. Possible values: `inbound_goods`, `standard`.
+* `place_of_supply_scheme` - (Optional) Place of supply scheme used in an Default standard registration. Possible values: `inbound_goods`, `standard`. Removing it from the configuration leaves the current value.
 
 <a id="country_options.cl"></a>
 ### `country_options.cl`
@@ -626,7 +626,7 @@ The `country_options.gb` attribute supports:
 
 The `country_options.gb.standard` attribute supports:
 
-* `place_of_supply_scheme` - (Optional) Place of supply scheme used in an Default standard registration. Possible values: `inbound_goods`, `standard`.
+* `place_of_supply_scheme` - (Optional) Place of supply scheme used in an Default standard registration. Possible values: `inbound_goods`, `standard`. Removing it from the configuration leaves the current value.
 
 <a id="country_options.ge"></a>
 ### `country_options.ge`
@@ -767,7 +767,7 @@ The `country_options.jp` attribute supports:
 
 The `country_options.jp.standard` attribute supports:
 
-* `place_of_supply_scheme` - (Optional) Place of supply scheme used in an Default standard registration. Possible values: `inbound_goods`, `standard`.
+* `place_of_supply_scheme` - (Optional) Place of supply scheme used in an Default standard registration. Possible values: `inbound_goods`, `standard`. Removing it from the configuration leaves the current value.
 
 <a id="country_options.ke"></a>
 ### `country_options.ke`
@@ -986,7 +986,7 @@ The `country_options.no` attribute supports:
 
 The `country_options.no.standard` attribute supports:
 
-* `place_of_supply_scheme` - (Optional) Place of supply scheme used in an Default standard registration. Possible values: `inbound_goods`, `standard`.
+* `place_of_supply_scheme` - (Optional) Place of supply scheme used in an Default standard registration. Possible values: `inbound_goods`, `standard`. Removing it from the configuration leaves the current value.
 
 <a id="country_options.np"></a>
 ### `country_options.np`
@@ -1008,7 +1008,7 @@ The `country_options.nz` attribute supports:
 
 The `country_options.nz.standard` attribute supports:
 
-* `place_of_supply_scheme` - (Optional) Place of supply scheme used in an Default standard registration. Possible values: `inbound_goods`, `standard`.
+* `place_of_supply_scheme` - (Optional) Place of supply scheme used in an Default standard registration. Possible values: `inbound_goods`, `standard`. Removing it from the configuration leaves the current value.
 
 <a id="country_options.om"></a>
 ### `country_options.om`
@@ -1141,7 +1141,7 @@ The `country_options.sg` attribute supports:
 
 The `country_options.sg.standard` attribute supports:
 
-* `place_of_supply_scheme` - (Optional) Place of supply scheme used in an Default standard registration. Possible values: `inbound_goods`, `standard`.
+* `place_of_supply_scheme` - (Optional) Place of supply scheme used in an Default standard registration. Possible values: `inbound_goods`, `standard`. Removing it from the configuration leaves the current value.
 
 <a id="country_options.si"></a>
 ### `country_options.si`

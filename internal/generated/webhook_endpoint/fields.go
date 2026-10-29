@@ -12,7 +12,7 @@ var Table = []fields.Field{
 	{Name: "connect", Shape: fields.Bool, Create: true, Description: "Whether this endpoint should receive events from connected accounts (`true`), or from your account (`false`). Defaults to `false`."},
 	{Name: "created", Shape: fields.Int, Response: true, Description: "Time at which the object was created. Measured in seconds since the Unix epoch."},
 	{Name: "description", Shape: fields.String, Create: true, Update: true, Response: true, Description: "An optional description of what the webhook is used for."},
-	{Name: "disabled", Shape: fields.Bool, Update: true, Description: "Disable the webhook endpoint if set to true."},
+	{Name: "disabled", Shape: fields.Bool, Update: true, Description: "Disable the webhook endpoint if set to true.", Default: &fields.Default{Kind: fields.DefaultNotSent}},
 	{Name: "enabled_events", Shape: fields.ScalarList, Elem: fields.String, Required: true, Create: true, Update: true, Response: true, Description: "The list of events to enable for this endpoint. You may specify `['*']` to enable all events, except those that require explicit selection."},
 	{Name: "id", Shape: fields.String, Response: true, Description: "Unique identifier for the object."},
 	{Name: "livemode", Shape: fields.Bool, Response: true, Description: "If the object exists in live mode, the value is `true`. If the object exists in test mode, the value is `false`."},

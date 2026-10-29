@@ -29,7 +29,16 @@ import (
 
 // describe is the description of a data source attribute.
 func describe(n *node) string {
-	return describeValues(n.Description, n.Enum)
+	return strings.TrimSpace(describeValues(n.Description, n.Enum) + pagedNote(n))
+}
+
+// pagedNote is the sentence that says a list Stripe returns a page at a time holds only its
+// first page, and which type reads every element (ADR 2026-10-29-full-attribute-coverage, D3).
+func pagedNote(n *node) string {
+	if n.PagedBy == "" {
+		return ""
+	}
+	return " Holds the first page of the list Stripe returns with the object; `has_more` is true when there are more. Read every element with the `" + n.PagedBy + "` data source."
 }
 
 // describeValues is a description followed by the values the attribute can hold.
@@ -53,7 +62,7 @@ func (m *model) describeResource(n *node) string {
 	if set := m.transitionValues(n); len(set) > 0 {
 		desc, values = specValues.ReplaceAllString(desc, ""), set
 	}
-	d := describeValues(desc, values) + m.lowerCaseNote(n)
+	d := describeValues(desc, values) + pagedNote(n) + m.lowerCaseNote(n)
 	if n.Replace {
 		d += m.changingIt()
 	}

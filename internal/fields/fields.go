@@ -3,6 +3,8 @@
 // Stripe name, shape, and where Stripe accepts it.
 package fields
 
+import "strings"
+
 // Shape is how a Stripe value maps to a Terraform attribute (ADR D2, "Nested objects").
 type Shape int
 
@@ -79,6 +81,99 @@ type Field struct {
 	// Enum lists the values Stripe documents for a string field.
 	Enum        []string
 	Description string
+	// Default is the default of an optional argument: `not sent` for one only the update takes,
+	// or else what the pinned evidence records, or nil where it records none (ADR
+	// 2026-10-29-full-attribute-coverage, D4).
+	Default *Default
+	// Verified is true when the pinned fake release verifies a request leaf of the field, so
+	// that its page must state its default.
+	Verified bool
+	// Copy is, on an embedded copy of another Stripe object, the data source type that reads
+	// that object (D3).
+	Copy string
+	// PagedBy is, on a list Stripe returns a page at a time on every read, the type that reads
+	// every element (D3).
+	PagedBy string
+}
+
+// DefaultKind is where an optional argument's value comes from when the configuration leaves
+// it unset (D4).
+type DefaultKind int
+
+const (
+	// DefaultValue is a fixed value Stripe applies.
+	DefaultValue DefaultKind = iota + 1
+	// DefaultRule is a value Stripe derives from the account or another argument.
+	DefaultRule
+	// DefaultVaries is a value the variants of the suite's minimal create give differently,
+	// which a declaration words as a rule. Until it does, there is no statement.
+	DefaultVaries
+	// DefaultNone is an argument Stripe leaves unset.
+	DefaultNone
+	// DefaultNotSent is an argument only the update takes.
+	DefaultNotSent
+	// DefaultProvider is a value, or a rule, the provider applies.
+	DefaultProvider
+)
+
+// Default is an optional argument's default.
+type Default struct {
+	Kind DefaultKind
+	// Value is the literal of a DefaultValue or DefaultProvider, as a configuration writes it.
+	Value string
+	// Rule words a DefaultRule, or a DefaultProvider that is no literal.
+	Rule string
+	// Observed is, on a DefaultRule, the value the suite observed on its own account and where,
+	// such as "`usd` on a US account".
+	Observed string
+}
+
+// Statement is the sentence that ends the argument's line on its page, or "" where there is
+// none yet.
+func (d Default) Statement() string {
+	switch d.Kind {
+	case DefaultValue:
+		return "Default (Stripe): " + Code(d.Value) + "."
+	case DefaultRule:
+		s := "Default (Stripe): " + strings.TrimSuffix(d.Rule, ".")
+		if d.Observed != "" {
+			s += " (" + d.Observed + ")"
+		}
+		return s + "."
+	case DefaultNone:
+		return "Default: none."
+	case DefaultNotSent:
+		return "Default: not sent."
+	case DefaultProvider:
+		if d.Rule != "" {
+			return "Default (provider): " + strings.TrimSuffix(d.Rule, ".") + "."
+		}
+		return "Default (provider): " + Code(d.Value) + "."
+	}
+	return ""
+}
+
+// Code is a value as a Markdown code span. The empty string shows as `""`, and a value that
+// holds backticks takes a fence one longer than its longest run of them, with a space on each
+// side, which Markdown strips, so that a backtick at either end stays in the value.
+func Code(v string) string {
+	if v == "" {
+		v = `""`
+	}
+	longest, run := 0, 0
+	for _, r := range v {
+		if r != '`' {
+			run = 0
+			continue
+		}
+		run++
+		longest = max(longest, run)
+	}
+	fence := strings.Repeat("`", longest+1)
+	if longest > 0 {
+		return fence + " " + v + " " + fence
+	}
+	return fence + v + fence
 }
 
 // AttrName returns the Terraform attribute name.

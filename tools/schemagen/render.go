@@ -26,6 +26,15 @@ var shapeNames = map[fields.Shape]string{
 	fields.IntMap:     "IntMap",
 }
 
+var defaultKindNames = map[fields.DefaultKind]string{
+	fields.DefaultValue:    "DefaultValue",
+	fields.DefaultRule:     "DefaultRule",
+	fields.DefaultVaries:   "DefaultVaries",
+	fields.DefaultNone:     "DefaultNone",
+	fields.DefaultNotSent:  "DefaultNotSent",
+	fields.DefaultProvider: "DefaultProvider",
+}
+
 // RenderTable renders the Go source of a resource's field table.
 func RenderTable(pkg string, table []fields.Field) ([]byte, error) {
 	var b strings.Builder
@@ -92,6 +101,7 @@ func writeLiteral(b *strings.Builder, f fields.Field) {
 		{"ServerDefaulted", f.ServerDefaulted},
 		{"Sensitive", f.Sensitive},
 		{"Stable", f.Stable},
+		{"Verified", f.Verified},
 	} {
 		if flag.on {
 			fmt.Fprintf(b, ", %s: true", flag.name)
@@ -109,6 +119,21 @@ func writeLiteral(b *strings.Builder, f fields.Field) {
 	}
 	if f.Description != "" {
 		fmt.Fprintf(b, ", Description: %s", strconv.Quote(f.Description))
+	}
+	if d := f.Default; d != nil {
+		fmt.Fprintf(b, ", Default: &fields.Default{Kind: fields.%s", defaultKindNames[d.Kind])
+		for _, m := range []struct{ name, value string }{{"Value", d.Value}, {"Rule", d.Rule}, {"Observed", d.Observed}} {
+			if m.value != "" {
+				fmt.Fprintf(b, ", %s: %s", m.name, strconv.Quote(m.value))
+			}
+		}
+		b.WriteString("}")
+	}
+	if f.Copy != "" {
+		fmt.Fprintf(b, ", Copy: %s", strconv.Quote(f.Copy))
+	}
+	if f.PagedBy != "" {
+		fmt.Fprintf(b, ", PagedBy: %s", strconv.Quote(f.PagedBy))
 	}
 	if len(f.Fields) > 0 {
 		b.WriteString(", Fields: ")

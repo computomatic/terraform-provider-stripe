@@ -7,8 +7,8 @@ import "github.com/computomatic/terraform-provider-stripe/internal/fields"
 
 // Table lists every request and response field of the object.
 var Table = []fields.Field{
-	{Name: "account_holder_name", Shape: fields.String, Create: true, Update: true, Response: true, Description: "The name of the person or business that owns the bank account."},
-	{Name: "account_holder_type", Shape: fields.String, Create: true, Update: true, Response: true, Enum: []string{"company", "individual"}, Description: "The type of entity that holds the account. This can be either `individual` or `company`."},
+	{Name: "account_holder_name", Shape: fields.String, Create: true, Update: true, Response: true, Description: "The name of the person or business that owns the bank account.", Default: &fields.Default{Kind: fields.DefaultNotSent}},
+	{Name: "account_holder_type", Shape: fields.String, Create: true, Update: true, Response: true, Enum: []string{"company", "individual"}, Description: "The type of entity that holds the account. This can be either `individual` or `company`.", Default: &fields.Default{Kind: fields.DefaultNotSent}},
 	{Name: "account_number", Shape: fields.String, Required: true, Create: true},
 	{Name: "account_type", Shape: fields.String, Response: true, Description: "The bank account type. This can only be `checking` or `savings` in most countries. In Japan, this can only be `futsu` or `toza`."},
 	{Name: "available_payout_methods", Shape: fields.ScalarList, Elem: fields.String, Response: true, Description: "A set of available payout methods for this bank account. Only values from this set should be passed as the `method` when creating a payout."},

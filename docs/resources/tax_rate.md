@@ -33,7 +33,7 @@ The following arguments are required:
 
 The following arguments are optional:
 
-* `active` - (Optional) Flag determining whether the tax rate is active or inactive (archived). Inactive tax rates cannot be used with new applications or Checkout Sessions, but will still work for subscriptions and invoices that already have it set.
+* `active` - (Optional) Flag determining whether the tax rate is active or inactive (archived). Inactive tax rates cannot be used with new applications or Checkout Sessions, but will still work for subscriptions and invoices that already have it set. Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
 * `country` - (Optional) Two-letter country code ([ISO 3166-1 alpha-2](https://en.wikipedia.org/wiki/ISO_3166-1_alpha-2)).
 * `description` - (Optional) An arbitrary string attached to the tax rate for your internal use only. It will not be visible to your customers.
 * `jurisdiction` - (Optional) The jurisdiction for the tax rate. You can use this label field for tax reporting purposes. It also appears on your customer’s invoice.

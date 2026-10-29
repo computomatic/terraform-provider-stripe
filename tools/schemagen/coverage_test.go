@@ -16,6 +16,7 @@ import (
 	"testing"
 
 	"github.com/computomatic/terraform-provider-stripe/internal/engine"
+	"github.com/computomatic/terraform-provider-stripe/internal/fields"
 	"github.com/computomatic/terraform-provider-stripe/internal/resources/payment_intent"
 	"github.com/computomatic/terraform-provider-stripe/internal/resources/setup_intent"
 )
@@ -316,13 +317,21 @@ func TestRegisterEntriesAreChecked(t *testing.T) {
 	}
 }
 
-// The default statement comes from the evidence: a value, none, a rule, or `not sent` for an
-// argument only the update takes.
+// The default statement of a verified leaf comes from the evidence: a value, none, a rule with
+// the value observed on the suite's account, or `not sent` for an argument only the update
+// takes. Variants that disagree leave the declaration to word the rule. The table's fields
+// carry the statement, and the report lists where the spec's "Defaults to" text disagrees.
 func TestDefaultStatementsComeFromTheEvidence(t *testing.T) {
 	res := gadget()
-	ev := pinned(t, res, nil)
+	verified := map[string]string{}
+	for _, k := range []string{"request/PostGadgets/color", "request/PostGadgets/tags", "request/PostGadgets/price", "request/PostGadgets/owner.email", "request/PostGadgetsId/color"} {
+		verified[k] = ClassVerified
+	}
+	ev := pinned(t, res, verified)
 	rule := 0
-	ev.Evidence.Rules = []EvidenceRule{{Rule: "the customer's currency, else the account's default currency"}}
+	ev.Evidence.StripeRun.PlatformCountry = "US"
+	ev.Evidence.Rules = []EvidenceRule{{Rule: "the customer's currency, else the account's default currency",
+		Observations: json.RawMessage(`[{"condition":{"customer.currency":"eur"},"value":"eur"},{"condition":{},"value":"usd"}]`)}}
 	leaf := func(key string, d *EvidenceDefault) EvidenceLeaf {
 		for _, l := range ev.Attributes.Leaves {
 			if l.Key.String() == key {
@@ -333,19 +342,25 @@ func TestDefaultStatementsComeFromTheEvidence(t *testing.T) {
 		return EvidenceLeaf{}
 	}
 	ev.Evidence.Leaves = []EvidenceLeaf{
-		leaf("request/PostGadgets/color", &EvidenceDefault{Kind: "value", Value: json.RawMessage(`"blue"`)}),
+		leaf("request/PostGadgets/color", &EvidenceDefault{Kind: "value", Value: json.RawMessage(`"blue"`),
+			Variants: []DefaultVariant{{Variant: "with_price", Default: EvidenceDefault{Kind: "value", Value: json.RawMessage(`"blue"`)}}}}),
 		leaf("request/PostGadgets/tags", &EvidenceDefault{Kind: "null"}),
 		leaf("request/PostGadgets/price", &EvidenceDefault{Kind: "rule", RuleRef: &rule}),
+		leaf("request/PostGadgets/owner.email", &EvidenceDefault{Kind: "absent",
+			Variants: []DefaultVariant{{Variant: "with_owner", Default: EvidenceDefault{Kind: "value", Value: json.RawMessage(`"a@example.com"`)}}}}),
 		leaf("request/PostGadgetsId/color", nil),
+		leaf("request/PostGadgetsId/settings.limit", nil),
 	}
-	got := byKey(cover(t, res, ev))
-	for k, want := range map[string]string{
-		"request/PostGadgets/color": "Default (Stripe): `blue`.",
-		"request/PostGadgets/tags":  "Default: none.",
-		"request/PostGadgets/price": "Default (Stripe): the customer's currency, else the account's default currency.",
+	tc := cover(t, res, ev)
+	got := byKey(tc)
+	for k, want := range map[string]DefaultRecord{
+		"request/PostGadgets/color":       {Statement: "Default (Stripe): `blue`.", Source: "evidence"},
+		"request/PostGadgets/tags":        {Statement: "Default: none.", Source: "evidence"},
+		"request/PostGadgets/price":       {Statement: "Default (Stripe): the customer's currency, else the account's default currency (`usd` on a US account).", Source: "evidence"},
+		"request/PostGadgets/owner.email": {Source: "evidence", Varies: true},
 	} {
-		if d := got[k].Default; d == nil || d.Statement != want || d.Source != "evidence" {
-			t.Errorf("%s: %+v, want %q", k, d, want)
+		if d := got[k].Default; d == nil || *d != want {
+			t.Errorf("%s: %+v, want %+v", k, d, want)
 		}
 		if len(got[k].Tests) != 1 {
 			t.Errorf("%s: tests %v", k, got[k].Tests)
@@ -353,6 +368,72 @@ func TestDefaultStatementsComeFromTheEvidence(t *testing.T) {
 	}
 	if d := got["request/PostGadgetsId/color"].Default; d != nil {
 		t.Errorf("an update leaf the create also takes has the statement %+v", d)
+	}
+	if d := got["request/PostGadgets/name"].Default; d != nil {
+		t.Errorf("an unverified leaf has the statement %+v", d)
+	}
+	// The fixture's update takes nothing the create does not, so the update-only case reads the
+	// update's leaf without the create's. It needs no evidence: an unverified leaf, with nothing
+	// pinned, is `not sent` too, but one not exposed has no statement.
+	update := Leaf{Key: Key{Object: "gadget", Side: SideRequest, Operation: "PostGadgetsId", Path: "settings.limit"}}
+	for _, p := range []*Pinned{ev, nil} {
+		if d := defaultOf(update, Record{State: StateExposed}, "PostGadgets", nil, p); d == nil || d.Statement() != "Default: not sent." {
+			t.Errorf("an argument only the update takes: %+v", d)
+		}
+	}
+	if d := defaultOf(update, Record{State: StateAwaiting}, "PostGadgets", nil, nil); d != nil {
+		t.Errorf("an update-only leaf awaiting proof has the statement %+v", d)
+	}
+
+	// The spec's "Defaults to `red`" disagrees with the evidence's `blue`, and its "Defaults to
+	// `sale`" with none; neither is a source.
+	if s := got["request/PostGadgets/color"].SpecDefault; s != "red" {
+		t.Errorf("color: spec default %q, want red", s)
+	}
+	if s := got["request/PostGadgets/tags"].SpecDefault; s != "sale" {
+		t.Errorf("tags: spec default %q, want sale", s)
+	}
+
+	for path, want := range map[string]*fields.Default{
+		"color":       {Kind: fields.DefaultValue, Value: "blue"},
+		"tags":        {Kind: fields.DefaultNone},
+		"owner.email": {Kind: fields.DefaultVaries},
+		"name":        nil,
+	} {
+		f := fieldAt(tc.table, path)
+		if f == nil {
+			t.Fatalf("no field %s", path)
+		}
+		if !reflect.DeepEqual(f.Default, want) || f.Verified != (want != nil) {
+			t.Errorf("%s: default %+v, verified %v, want %+v", path, f.Default, f.Verified, want)
+		}
+	}
+	if f := fieldAt(tc.table, "parts"); f == nil || f.PagedBy != "stripe_gadget" {
+		t.Errorf("parts: %+v, want it read by stripe_gadget", f)
+	}
+}
+
+// The report counts, per table, the optional arguments exposed without a default statement, and
+// lists the spec's disagreements.
+func TestReportCountsDefaultsNotYetRecorded(t *testing.T) {
+	records := []Record{
+		{Table: "gadget", Key: Key{Object: "gadget", Side: SideRequest, Operation: "PostGadgets", Path: "color"}, State: StateExposed, Default: &DefaultRecord{Statement: "Default (Stripe): `blue`.", Source: "evidence"}, SpecDefault: "red"},
+		{Table: "gadget", Key: Key{Object: "gadget", Side: SideRequest, Operation: "PostGadgetsId", Path: "color"}, State: StateExposed},
+		{Table: "gadget", Key: Key{Object: "gadget", Side: SideRequest, Operation: "PostGadgets", Path: "tags"}, State: StateExposed},
+		{Table: "gadget", Key: Key{Object: "gadget", Side: SideRequest, Operation: "PostGadgetsId", Path: "tags"}, State: StateExposed},
+		{Table: "gadget", Key: Key{Object: "gadget", Side: SideRequest, Operation: "PostGadgets", Path: "name"}, State: StateExposed, Required: true},
+		{Table: "gadget", Key: Key{Object: "gadget", Side: SideRequest, Operation: "PostGadgetsId", Path: "name"}, State: StateExposed},
+		{Table: "gadget", Key: Key{Object: "gadget", Side: SideRequest, Operation: "PostGadgets", Path: "owner.email"}, State: StateExposed, Default: &DefaultRecord{Source: "evidence", Varies: true}},
+		{Table: "gadget", Key: Key{Object: "gadget", Side: SideResponse, Path: "status"}, State: StateExposed},
+	}
+	md := string(RenderCoverageMarkdown(coverageHeader{}, records))
+	for _, want := range []string{
+		"|`gadget`|`gadget`|7|0|0|1|0|0|2|",
+		"- `gadget` PostGadgets `color` (): the spec says `red`; the evidence says Default (Stripe): `blue`.",
+	} {
+		if !strings.Contains(md, want) {
+			t.Errorf("coverage.md lacks %q:\n%s", want, md)
+		}
 	}
 }
 

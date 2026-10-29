@@ -56,24 +56,24 @@ The following arguments are required:
 
 The following arguments are optional:
 
-* `amount` - (Optional) The dispute amount in the card's currency and in the [smallest currency unit](https://docs.stripe.com/currencies#zero-decimal). If not set, defaults to the full transaction amount.
+* `amount` - (Optional) The dispute amount in the card's currency and in the [smallest currency unit](https://docs.stripe.com/currencies#zero-decimal). If not set, defaults to the full transaction amount. Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
 * `metadata` - (Optional) Set of [key-value pairs](https://docs.stripe.com/api/metadata) that you can attach to an object. This can be useful for storing additional information about the object in a structured format. Individual keys can be unset by posting an empty value to them. All keys can be unset by posting an empty value to `metadata`.
-* `status` - (Optional) Current status of the dispute. Possible values: `submitted`.
+* `status` - (Optional) Current status of the dispute. Possible values: `submitted`. Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
 
 <a id="evidence"></a>
 ### `evidence`
 
 The `evidence` attribute supports:
 
-* `canceled` - (Optional) See [`evidence.canceled`](#evidence.canceled) below.
-* `duplicate` - (Optional) See [`evidence.duplicate`](#evidence.duplicate) below.
-* `fraudulent` - (Optional) See [`evidence.fraudulent`](#evidence.fraudulent) below.
-* `merchandise_not_as_described` - (Optional) See [`evidence.merchandise_not_as_described`](#evidence.merchandise_not_as_described) below.
-* `no_valid_authorization` - (Optional) See [`evidence.no_valid_authorization`](#evidence.no_valid_authorization) below.
-* `not_received` - (Optional) See [`evidence.not_received`](#evidence.not_received) below.
-* `other` - (Optional) See [`evidence.other`](#evidence.other) below.
+* `canceled` - (Optional) Removing it from the configuration leaves the current value. See [`evidence.canceled`](#evidence.canceled) below.
+* `duplicate` - (Optional) Removing it from the configuration leaves the current value. See [`evidence.duplicate`](#evidence.duplicate) below.
+* `fraudulent` - (Optional) Removing it from the configuration leaves the current value. See [`evidence.fraudulent`](#evidence.fraudulent) below.
+* `merchandise_not_as_described` - (Optional) Removing it from the configuration leaves the current value. See [`evidence.merchandise_not_as_described`](#evidence.merchandise_not_as_described) below.
+* `no_valid_authorization` - (Optional) Removing it from the configuration leaves the current value. See [`evidence.no_valid_authorization`](#evidence.no_valid_authorization) below.
+* `not_received` - (Optional) Removing it from the configuration leaves the current value. See [`evidence.not_received`](#evidence.not_received) below.
+* `other` - (Optional) Removing it from the configuration leaves the current value. See [`evidence.other`](#evidence.other) below.
 * `reason` - (Required) The reason for filing the dispute. Its value will match the field containing the evidence. Possible values: `canceled`, `duplicate`, `fraudulent`, `merchandise_not_as_described`, `no_valid_authorization`, `not_received`, `other`, `service_not_as_described`.
-* `service_not_as_described` - (Optional) See [`evidence.service_not_as_described`](#evidence.service_not_as_described) below.
+* `service_not_as_described` - (Optional) Removing it from the configuration leaves the current value. See [`evidence.service_not_as_described`](#evidence.service_not_as_described) below.
 
 <a id="evidence.canceled"></a>
 ### `evidence.canceled`
@@ -178,35 +178,7 @@ This resource exports the following attributes in addition to the arguments abov
 <a id="balance_transactions"></a>
 ### `balance_transactions`
 
-The `balance_transactions` attribute is a list. Each element supports:
-
-* `amount` - Gross amount of this transaction (in cents (or local equivalent)). A positive value represents funds charged to another party, and a negative value represents funds sent to another party.
-* `available_on` - The date that the transaction's net funds become available in the Stripe balance.
-* `balance_type` - The balance that this transaction impacts. Possible values: `issuing`, `payments`, `refund_and_dispute_prefunding`, `risk_reserved`.
-* `created` - Time at which the object was created. Measured in seconds since the Unix epoch.
-* `currency` - Three-letter [ISO currency code](https://www.iso.org/iso-4217-currency-codes.html), in lowercase. Must be a [supported currency](https://stripe.com/docs/currencies).
-* `description` - An arbitrary string attached to the object. Often useful for displaying to users.
-* `exchange_rate` - If applicable, this transaction uses an exchange rate. If money converts from currency A to currency B, then the `amount` in currency A, multiplied by the `exchange_rate`, equals the `amount` in currency B. For example, if you charge a customer 10.00 EUR, the PaymentIntent's `amount` is `1000` and `currency` is `eur`. If this converts to 12.34 USD in your Stripe account, the BalanceTransaction's `amount` is `1234`, its `currency` is `usd`, and the `exchange_rate` is `1.234`.
-* `fee` - Fees (in cents (or local equivalent)) paid for this transaction. Represented as a positive integer when assessed.
-* `fee_details` - Detailed breakdown of fees (in cents (or local equivalent)) paid for this transaction. See [`balance_transactions.fee_details`](#balance_transactions.fee_details) below.
-* `id` - Unique identifier for the object.
-* `net` - Net impact to a Stripe balance (in cents (or local equivalent)). A positive value represents incrementing a Stripe balance, and a negative value decrementing a Stripe balance. You can calculate the net impact of a transaction on a balance by `amount` - `fee`
-* `object` - String representing the object's type. Objects of the same type share the same value. Possible values: `balance_transaction`.
-* `reporting_category` - Learn more about how [reporting categories](https://stripe.com/docs/reports/reporting-categories) can help you understand balance transactions from an accounting perspective.
-* `source` - This transaction relates to the Stripe object.
-* `status` - The transaction's net funds status in the Stripe balance, which are either `available` or `pending`.
-* `type` - Transaction type: `tax_fund`, `adjustment`, `advance`, `advance_funding`, `anticipation_repayment`, `application_fee`, `application_fee_refund`, `charge`, `climate_order_purchase`, `climate_order_refund`, `connect_collection_transfer`, `contribution`, `inbound_transfer`, `inbound_transfer_reversal`, `issuing_authorization_hold`, `issuing_authorization_release`, `issuing_dispute`, `issuing_dispute_provisional_credit`, `issuing_dispute_provisional_credit_reversal`, `issuing_transaction`, `obligation_outbound`, `obligation_reversal_inbound`, `payment`, `payment_failure_refund`, `payment_network_reserve_hold`, `payment_network_reserve_release`, `payment_refund`, `payment_reversal`, `payment_unreconciled`, `payout`, `payout_cancel`, `payout_failure`, `payout_minimum_balance_hold`, `payout_minimum_balance_release`, `refund`, `refund_failure`, `reserve_transaction`, `reserved_funds`, `reserve_hold`, `reserve_release`, `stripe_fee`, `stripe_fx_fee`, `stripe_balance_payment_debit`, `stripe_balance_payment_debit_reversal`, `tax_fee`, `topup`, `topup_reversal`, `transfer`, `transfer_cancel`, `transfer_failure`, `transfer_refund`, or `fee_credit_funding`. Learn more about [balance transaction types and what they represent](https://stripe.com/docs/reports/balance-transaction-types). To classify transactions for accounting purposes, consider `reporting_category` instead. Possible values: `adjustment`, `advance`, `advance_funding`, `anticipation_repayment`, `application_fee`, `application_fee_refund`, `charge`, `climate_order_purchase`, `climate_order_refund`, `connect_collection_transfer`, `contribution`, `fee_credit_funding`, `inbound_transfer`, `inbound_transfer_reversal`, `issuing_authorization_hold`, `issuing_authorization_release`, `issuing_dispute`, `issuing_dispute_provisional_credit`, `issuing_dispute_provisional_credit_reversal`, `issuing_transaction`, `obligation_outbound`, `obligation_reversal_inbound`, `payment`, `payment_failure_refund`, `payment_network_reserve_hold`, `payment_network_reserve_release`, `payment_refund`, `payment_reversal`, `payment_unreconciled`, `payout`, `payout_cancel`, `payout_failure`, `payout_minimum_balance_hold`, `payout_minimum_balance_release`, `refund`, `refund_failure`, `reserve_hold`, `reserve_release`, `reserve_transaction`, `reserved_funds`, `stripe_balance_payment_debit`, `stripe_balance_payment_debit_reversal`, `stripe_fee`, `stripe_fx_fee`, `tax_fee`, `tax_fund`, `topup`, `topup_reversal`, `transfer`, `transfer_cancel`, `transfer_failure`, `transfer_refund`.
-
-<a id="balance_transactions.fee_details"></a>
-### `balance_transactions.fee_details`
-
-The `balance_transactions.fee_details` attribute is a list. Each element supports:
-
-* `amount` - Amount of the fee, in cents.
-* `application` - ID of the Connect application that earned the fee.
-* `currency` - Three-letter [ISO currency code](https://www.iso.org/iso-4217-currency-codes.html), in lowercase. Must be a [supported currency](https://stripe.com/docs/currencies).
-* `description` - An arbitrary string attached to the object. Often useful for displaying to users.
-* `type` - Type of the fee, one of: `application_fee`, `payment_method_passthrough_fee`, `stripe_fee`, `tax`, or `withheld_tax`.
+The `balance_transactions` attribute is a list. Each element holds a balance transaction, with the attributes of the [`stripe_balance_transaction`](../data-sources/balance_transaction) data source and `object`, the name of its type.
 
 <a id="treasury"></a>
 ### `treasury`

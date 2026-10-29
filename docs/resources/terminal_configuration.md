@@ -42,7 +42,7 @@ The following arguments are optional:
 * `bbpos_wisepad3` - (Optional) An object containing device type specific settings for BBPOS WisePad 3 readers. See [`bbpos_wisepad3`](#bbpos_wisepad3) below.
 * `bbpos_wisepos_e` - (Optional) An object containing device type specific settings for BBPOS WisePOS E readers. See [`bbpos_wisepos_e`](#bbpos_wisepos_e) below.
 * `cellular` - (Optional) Configuration for cellular connectivity. See [`cellular`](#cellular) below.
-* `name` - (Optional) Name of the configuration
+* `name` - (Optional) Name of the configuration. Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
 * `offline` - (Optional) Configurations for collecting transactions offline. See [`offline`](#offline) below.
 * `reboot_window` - (Optional) Reboot time settings for readers. that support customized reboot time configuration. See [`reboot_window`](#reboot_window) below.
 * `stripe_s700` - (Optional) An object containing device type specific settings for Stripe S700 readers. See [`stripe_s700`](#stripe_s700) below.

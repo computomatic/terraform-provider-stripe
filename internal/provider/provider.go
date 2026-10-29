@@ -17,6 +17,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
 
 	"github.com/computomatic/terraform-provider-stripe/internal/engine"
+	"github.com/computomatic/terraform-provider-stripe/internal/fields"
 	"github.com/computomatic/terraform-provider-stripe/internal/resources/account"
 	"github.com/computomatic/terraform-provider-stripe/internal/resources/account_capability"
 	"github.com/computomatic/terraform-provider-stripe/internal/resources/account_external_account"
@@ -215,6 +216,24 @@ func (p *stripeProvider) Schema(_ context.Context, _ provider.SchemaRequest, res
 				Description: "Allows the resources that move money, such as `stripe_payment_intent` and `stripe_transfer`, to create and change objects in a live-mode Stripe account. Defaults to false: they then work in sandboxes and test mode, and fail at plan time in live mode. The provider asks Stripe for the account's mode; it never infers it from the key.",
 			},
 		},
+	}
+}
+
+// ArgumentDefaults is, for each provider argument, the value the provider applies when the
+// configuration leaves it unset, which its docs line states (ADR
+// 2026-10-29-full-attribute-coverage, D4).
+func ArgumentDefaults() map[string]fields.Default {
+	env := func(name, then string) fields.Default {
+		return fields.Default{Kind: fields.DefaultProvider, Rule: "the `" + name + "` environment variable" + then}
+	}
+	return map[string]fields.Default{
+		"api_key":                   env("STRIPE_API_KEY", "; with neither, the provider fails to configure"),
+		"base_url":                  env("STRIPE_API_BASE", ", then `"+stripeapi.DefaultBaseURL+"`"),
+		"files_base_url":            env("STRIPE_FILES_BASE_URL", ", then `base_url` when that is set, then `"+stripeapi.DefaultFilesBaseURL+"`"),
+		"stripe_account":            env("STRIPE_ACCOUNT", "; with neither, no `Stripe-Account` header is sent"),
+		"stripe_context":            env("STRIPE_CONTEXT", "; with neither, no `Stripe-Context` header is sent"),
+		"max_retries":               {Kind: fields.DefaultProvider, Value: fmt.Sprint(stripeapi.DefaultMaxRetries)},
+		"allow_live_money_movement": {Kind: fields.DefaultProvider, Value: "false"},
 	}
 }
 
