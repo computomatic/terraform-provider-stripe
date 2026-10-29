@@ -20,6 +20,17 @@ go generate ./internal/generated
 
 `go test ./...` fails when a generated file is out of date. `tools/schemadiff old.json new.json` compares two `terraform providers schema -json` documents and marks breaking changes.
 
+The generator also writes the coverage report, `internal/generated/coverage.json` and `coverage.md` (`adrs/1-pending/2026-10-29-full-attribute-coverage/ADR.md`, D1). It walks every table's create and update request and its object into leaves, keyed as the conformance suite's evidence record and the fake's `attributes.json` key them: object, side, `operationId` (request leaves), a dotted path in which an array or map of hashes adds no segment, and the union branch. A nested API object is one leaf, unless the table's request writes it as a hash; a list envelope is one leaf. Each leaf is `exposed` (the table holds it), `excluded` by a rule (X1 `expand` and `include`, X2 type markers, X3 lists returned only when expanded, X4 recursion, X5 `confirm` where `status` confirms) or by the register, or `awaiting_proof`. `coverage.md` gives the totals per table, then the excluded and awaiting leaves; the count awaiting proof is the work left. Generation fails on a leaf with no state, on a table field the walk does not reach, and on a Required request leaf, not exposed today, inside an object exposed today, because exposing it would break configurations.
+
+The register is `Exclude` in a table's entry in `tools/schemagen/resources.go`: a dotted path, whose leaves on both sides and in every branch it leaves out, to a reason that names its evidence (a suite test, a Stripe doc URL or a framework limit). The product owner approves each new entry in review. An entry may not remove a leaf exposed today.
+
+The evidence gate exposes a leaf once the pinned fake release's `attributes.json` lists it as `verified`, in spite of the table's `Keep`, `Omit`, `ReadOnly` and `NoResponse`; any other class leaves it awaiting proof. The provider vendors two files with their pin, `spec/EVIDENCE_PIN.json` (the fake release, the suite's `suite_ref` and `run_id`, and the bytes and SHA-256 of each file):
+
+- `spec/attributes.json`: the release asset of the fake release in `.fake-version`.
+- `spec/evidence.json`: the suite's per-run evidence file `evidence/<suite_ref>/<run_id>.json` from its `results` branch, at the commit and run `attributes.json` names. The coverage report takes the proving tests and the default statements from it.
+
+Moving to a new fake release replaces both files and the pin in the same change as `.fake-version`. Generation refuses a file that differs from its pin, either file when its `api_version` or `spec_sha256` differs from `spec/PIN.json`, an evidence record whose commit or run differs from the one `attributes.json` names, a verified leaf the table cannot hold yet, and a verified leaf the walk does not have. Until a fake release attaches `attributes.json` there is no pin, and every leaf not exposed today awaits proof.
+
 ## Adding a resource
 
 A resource is a short declaration in `internal/resources/<name>` that the generic engine in `internal/engine` turns into a resource and a data source. Each resource directory needs:

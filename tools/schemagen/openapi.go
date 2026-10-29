@@ -56,6 +56,11 @@ type Schema struct {
 	OneOf                []*Schema          `json:"oneOf"`
 	AllOf                []*Schema          `json:"allOf"`
 	Enum                 []json.RawMessage  `json:"enum"`
+	// ResourceID names the API object a component schema is (`x-resourceId`).
+	ResourceID string `json:"x-resourceId"`
+	// ExpansionResources is present on a field Stripe expands on request
+	// (`x-expansionResources`); the leaf walk reads only whether it is there.
+	ExpansionResources json.RawMessage `json:"x-expansionResources"`
 }
 
 // Additional is `additionalProperties`, which is either a boolean or a schema.

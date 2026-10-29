@@ -72,6 +72,14 @@ type Resource struct {
 	// field below the path that the spec leaves undescribed here takes the description of the
 	// field at the same place there.
 	DocsFrom map[string]string
+	// Exclude is the exclusion register (ADR 2026-10-29-full-attribute-coverage, D1): a dotted
+	// path, whose leaves on either side and in any union branch are left out, to the reason,
+	// which names its evidence (a suite test, a Stripe doc URL or a framework limit). The
+	// product owner approves each new entry in review.
+	Exclude map[string]string
+	// StatusConfirms says that the declaration's `status` transition confirms the object, so
+	// the request's `confirm` is left out by rule X5.
+	StatusConfirms bool
 }
 
 // view is a schema classified into one of the engine's shapes.
@@ -92,9 +100,16 @@ func (v *view) scalar() bool {
 	return false
 }
 
-// Build derives the field table of one resource from the spec.
+// Build derives the field table of one resource from the spec, as the declaration trims it.
 func Build(spec *Spec, res Resource) ([]fields.Field, error) {
-	b := builder{spec: spec, omit: map[string]bool{}, keep: map[string]bool{}, createOnly: map[string]bool{}, readOnly: map[string]bool{}, require: map[string]bool{}, noResponse: map[string]bool{}}
+	return buildGated(spec, res, nil)
+}
+
+// buildGated derives the field table of one resource from the spec, holding every field the
+// gate names on its side in spite of Keep, Omit, ReadOnly and NoResponse (ADR
+// 2026-10-29-full-attribute-coverage, "The evidence gate").
+func buildGated(spec *Spec, res Resource, g *gate) ([]fields.Field, error) {
+	b := builder{spec: spec, gate: g, omit: map[string]bool{}, keep: map[string]bool{}, createOnly: map[string]bool{}, readOnly: map[string]bool{}, require: map[string]bool{}, noResponse: map[string]bool{}}
 	for _, p := range res.Keep {
 		b.keep[p] = false
 	}
@@ -213,6 +228,8 @@ func Build(spec *Spec, res Resource) ([]fields.Field, error) {
 
 type builder struct {
 	spec *Spec
+	// gate holds the fields the pinned evidence verifies, or nil.
+	gate *gate
 	// omit maps each omitted path to whether the build met it.
 	omit map[string]bool
 	// keep maps each path of Resource.Keep to whether the build met it.
@@ -228,6 +245,34 @@ type builder struct {
 	// docsFrom maps each path of Resource.DocsFrom to its request schema until the build
 	// meets it.
 	docsFrom map[string]*Schema
+}
+
+// gate is the table paths that the pinned evidence verifies, per side. A create-only hash
+// (Resource.CreateHash) is already spread into the top level of its paths.
+type gate struct {
+	create, update, response []string
+}
+
+// near reports whether a table path is on, above or below a path of one side of the gate: on
+// or above it, the field holds the verified leaf or a hash on its way; below it, the field is
+// inside a verified embedded copy or list.
+func near(paths []string, at string) bool {
+	for _, p := range paths {
+		if p == at || strings.HasPrefix(p, at+".") || strings.HasPrefix(at, p+".") {
+			return true
+		}
+	}
+	return false
+}
+
+// onOrUnder reports whether a table path is one of paths or below one.
+func onOrUnder(paths map[string]bool, at string) bool {
+	for p := at; p != ""; p = parentPath(p) {
+		if _, ok := paths[p]; ok {
+			return true
+		}
+	}
+	return false
 }
 
 // kept reports whether a field path is on, below or above a path of Resource.Keep, and marks
@@ -286,9 +331,14 @@ func (b *builder) object(create, update, resp *Schema, docs []*Schema, where str
 		at := where + name
 		if _, omitted := b.omit[at]; omitted {
 			b.omit[at] = true
-			continue
 		}
-		if !b.kept(at) {
+		// A trimmed field stays only on a side the gate verifies at, above or below it.
+		trimmed := onOrUnder(b.omit, at) || !b.kept(at)
+		var g gate
+		if b.gate != nil {
+			g = *b.gate
+		}
+		if trimmed && !near(g.create, at) && !near(g.update, at) && !near(g.response, at) {
 			continue
 		}
 		// A hash with no keys in the response only says its payment method type is in use,
@@ -311,7 +361,13 @@ func (b *builder) object(create, update, resp *Schema, docs []*Schema, where str
 		}
 		if _, only := b.readOnly[at]; only {
 			b.readOnly[at] = true
-			cv, uv = nil, nil
+		}
+		readOnly := trimmed || onOrUnder(b.readOnly, at)
+		if readOnly && !near(g.create, at) {
+			cv = nil
+		}
+		if readOnly && !near(g.update, at) {
+			uv = nil
 		}
 		rv, err := b.classify(prop(resp, name), at, depth)
 		if err != nil {
@@ -329,6 +385,11 @@ func (b *builder) object(create, update, resp *Schema, docs []*Schema, where str
 		}
 		if _, none := b.noResponse[at]; none {
 			b.noResponse[at] = true
+		}
+		if trimmed && !near(g.response, at) {
+			rv = nil
+		}
+		if onOrUnder(b.noResponse, at) && !near(g.response, at) {
 			if rv != nil {
 				dvs = append([]*view{rv}, dvs...)
 			}

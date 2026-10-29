@@ -30,7 +30,8 @@ var Resources = []Resource{
 	{Package: "balance_transaction", ReadPath: "/v1/balance_transactions/{id}"},
 	{Package: "billing_feedback_option", CreatePath: "/v1/billing/feedback_options", UpdatePath: "/v1/billing/feedback_options/{id}"},
 	{Package: "event", ReadPath: "/v1/events/{id}", Omit: []string{"data"}},
-	{Package: "file", CreatePath: "/v1/files", Omit: []string{"file", "file_link_data"}},
+	{Package: "file", CreatePath: "/v1/files", Omit: []string{"file", "file_link_data"},
+		Exclude: map[string]string{"file": "Sent by the declaration as the upload of the local file `source` names: Terraform cannot send file content from HCL (framework limit; internal/resources/file)."}},
 	{Package: "file_link", CreatePath: "/v1/file_links", UpdatePath: "/v1/file_links/{link}"},
 	{Package: "payment_method_configuration", CreatePath: "/v1/payment_method_configurations", UpdatePath: "/v1/payment_method_configurations/{configuration}"},
 	{Package: "payment_method_domain", CreatePath: "/v1/payment_method_domains", UpdatePath: "/v1/payment_method_domains/{payment_method_domain}"},
@@ -63,9 +64,9 @@ var Resources = []Resource{
 	{Package: "setup_intent", CreatePath: "/v1/setup_intents", UpdatePath: "/v1/setup_intents/{intent}", Omit: []string{"last_setup_error.payment_intent", "last_setup_error.setup_intent", "last_setup_error.source", "confirm", "mandate_data", "payment_method_data", "return_url", "use_stripe_sdk", "single_use", "payment_method_options", "confirmation_token"}},
 	{Package: "customer_payment_method", CreatePath: "/v1/payment_methods/{payment_method}/attach", UpdatePath: "/v1/payment_methods/{payment_method}", Omit: []string{"customer", "customer_account"}, ReadOnly: []string{"allow_redisplay", "card.exp_month", "card.networks", "us_bank_account"}},
 	// Confirming is the resource's `status`, so the confirm-time parameters are left out, as
-	// they are for setup intents. `hooks` is in the response, so it stays readable but is not
-	// an argument, which the suite has not proven.
-	{Package: "payment_intent", CreatePath: "/v1/payment_intents", UpdatePath: "/v1/payment_intents/{intent}", Omit: []string{
+	// they are for setup intents, and `confirm` is excluded by rule X5. `hooks` is in the
+	// response, so it stays readable but is not an argument, which the suite has not proven.
+	{Package: "payment_intent", StatusConfirms: true, CreatePath: "/v1/payment_intents", UpdatePath: "/v1/payment_intents/{intent}", Omit: []string{
 		"payment_method_options", "amount_details", "last_payment_error.payment_intent", "last_payment_error.setup_intent", "last_payment_error.source",
 		"confirm", "confirmation_token", "error_on_requires_action", "mandate", "mandate_data", "off_session", "payment_method_data", "return_url",
 		"use_stripe_sdk", "radar_options",
