@@ -8,7 +8,7 @@ The direction it serves (the owner, 2026-10-29):
 
 > I'd like the fake stripe API to be so complete and faithful that I could potentially license it to customers who need a fake API to test their own projects against.
 
-The provider exposes an attribute as soon as the suite proves it against Stripe and the fake serves it, leaf by leaf (the provider's ADR, `ADR.md` beside this file, D1 and D6). Its waves order the work; they are not release gates. The attributes it exposes today stay exposed while the suite audits them against this list; one the audit cannot prove yet is proven in its wave. How the suite proves and how the fake serves are for those repositories' own ADRs. This file says what, not how.
+The provider exposes an attribute as soon as the pinned fake release's `attributes.json` lists it as `verified` (proven against Stripe by an assertion that also ran on the fake, served, and passing the release's fidelity run), leaf by leaf (the provider's ADR, `ADR.md` beside this file, D1 and D6). Its waves order the work; they are not release gates. The attributes it exposes today stay exposed while the suite audits them against this list; one the audit cannot prove yet is proven in its wave. How the suite proves and how the fake serves are for those repositories' own ADRs. This file says what, not how.
 
 ## The files
 
@@ -86,11 +86,11 @@ For every leaf the suite proves:
 - **F-2.** The update semantics the suite proves (P4).
 - **F-3.** The same refusals, including by the account's country (P12).
 - **F-4.** A leaf the suite has not proven stays `fake_not_implemented`. The provider does not expose it, so it never sends it.
-- **F-5.** Each fake release says which suite commit it passes (today `conformance/SUITE_REF`), so the provider can pin evidence from that commit (next section).
+- **F-5.** Each fake release attaches `attributes.json`, naming the suite commit and evidence run it embedded and every leaf's state; the provider exposes only leaves it lists as `verified` (met by A7 of the fake's ADR, `fake-stripe-api`, `adrs/1-pending/2026-10-29-attribute-parity/ADR.md`, fake PR #65).
 
 ## The evidence record the provider consumes
 
-The provider generates its schema and docs from a machine-readable record, pinned like the spec: at a suite commit, per object and path, whether the suite proves it and by which test, the observed default (a value, null, or account- or argument-dependent with the rule), the normalised form, side effects, and refusals with the account country. The provider pins the record of the suite commit that its pinned fake release passes (F-5), so a leaf is exposed only when both hold. The format is the suite's choice; the provider adapts.
+The provider generates its schema and docs from a machine-readable record, pinned like the spec: at a suite commit, per object and path, whether the suite proves it and by which test, the observed default (a value, null, or account- or argument-dependent with the rule), the normalised form, side effects, and refusals with the account country. The provider vendors the immutable per-run file `evidence/<suite_ref>/<run_id>.json` from the suite's `results` branch, at the `suite_ref` and `run_id` its pinned fake release's `attributes.json` names, never the commit's current copy `evidence/<sha>.json`, which changes when the same commit passes again. Its defaults and other facts for the docs come from that file. The format is specified by the suite's ADR (`stripe-api-conformance`, `adrs/1-pending/2026-10-29-attribute-coverage/ADR.md`, suite PR #71).
 
 ## Hard cases
 
@@ -99,7 +99,7 @@ Flags in `hard_cases` are heuristics over paths and Stripe's descriptions, to be
 |Flag|Leaves|What makes it hard|Examples|
 |-|-|-|-|
 |`payment-method:<type>(<countries>)`|2,111|Options and details of payment methods a US account may not offer|`payment_method_options.konbini`, `payment_method_details.sepa_debit`|
-|`hosted-flow`|331|Filled only when a customer acts in a Stripe-hosted page or a redirect|`next_action`, `collected_information`, `customer_details`, `three_d_secure`|
+|`hosted-flow`|331|Filled only when a customer acts in a Stripe-hosted page or a redirect. Proven against Stripe only (`"targets": ["stripe"]`) until the fake serves hosted flows, and not exposed by the provider until a fake release verifies them|`next_action`, `collected_information`, `customer_details`, `three_d_secure`|
 |`country:<country>`|254|Accepted only for accounts in some countries, or only meaningful there|`company.address_kana` (Japan), `individual.registered_address`|
 |`onboarding`|244|Values that appear as verification and onboarding progress|`requirements`, `future_requirements`, `verification`, `tos_acceptance`, `*_declaration`|
 |`file`|229|Needs an uploaded file|`documents.*`, `verification.document.front`|

@@ -35,13 +35,15 @@ Decided by the product owner at acceptance, 2026-10-29, from the revised draft's
 13. Lists returned only when expanded are excluded from data sources too, because their own data sources read them (D1, D5).
 14. Lists Stripe returns a page at a time on every read (`lines`, `items`, `reversals`) are kept as today; the docs say the attribute holds the first page Stripe returns and where to read the rest (D3).
 15. Changes that break only behaviour (removing an argument no longer clears it; state read back from Stripe) count as breaking, so `v0.1.0` waits on the suite's minimal creates and unsetting proofs for the 57 objects of Step 6 (D6).
-16. A leaf is exposed as soon as the evidence record proves it and the pinned fake serves it. Waves order the work; they are not release gates (D6).
+16. A leaf is exposed as soon as the pinned fake release's `attributes.json` lists it as `verified` (amended: see below and D1). Waves order the work; they are not release gates (D6).
+
+Amended before merge, 2026-10-29, to match the suite's ADR (`stripe-api-conformance`, `adrs/1-pending/2026-10-29-attribute-coverage/ADR.md`, suite PR #71) and the fake's ADR (`fake-stripe-api`, `adrs/1-pending/2026-10-29-attribute-parity/ADR.md`, fake PR #65), both accepted by the product owner: the provider gates on the pinned fake release's `attributes.json` (D1, "The evidence gate"), vendors the suite's per-run evidence file that `attributes.json` names, and does not expose hosted-flow leaves the suite proves against Stripe only.
 
 Also accepted: the measuring and hand-off scripts and `handoff-leaves.tsv` stay beside this ADR until the Step 1 coverage report supersedes them.
 
 The decisions most worth scrutiny:
 
-1. **Every exposed attribute is proven (D1, D6).** The generator exposes a leaf only when the suite's evidence proves it and the pinned fake release serves it. Each leaf waits on the suite and the fake, however long that takes; waves only order the work.
+1. **Every exposed attribute is proven (D1, D6).** The generator exposes a leaf only when the pinned fake release's `attributes.json` lists it as `verified`: proven against Stripe by an assertion that also ran on the fake, served, and passing the release's fidelity run. Each leaf waits on the suite and the fake, however long that takes; waves only order the work.
 2. **Optional and Computed unless the suite shows otherwise (D2, E2).** An optional argument that Stripe returns keeps Stripe's value when removed from the configuration, unless the suite shows Stripe leaves it empty and proves how to unset it. 801 argument leaves exposed today are affected, so the suite's minimal creates for 57 objects come before `v0.1.0`.
 3. **Apply keeps the plan; refresh reads Stripe (D2, E4).** A defence for users when Stripe answers differently from what the suite recorded: a warning instead of "Provider produced inconsistent result after apply", and an error in the acceptance tests.
 4. **The hash form of a token-or-hash parameter is `<name>_data` (D3).** A named exception to the architecture ADR's rule of Stripe's names verbatim, chosen because it keeps every existing string attribute and follows Stripe's own `price` and `price_data` pattern.
@@ -102,7 +104,7 @@ One request can prove many fields: the suite's record of a payment link created 
 
 ## Approach Overview
 
-- **Every attribute (D1).** Every leaf of the create request, update request and response schemas is an attribute of the resource, and every response leaf one of the data source, except by five rules and a register whose entries carry a reason and the product owner's approval. A leaf is exposed once the suite's evidence proves it and the pinned fake release serves it. A generated coverage report shows every leaf's state, and CI fails on a leaf that is neither exposed, excluded nor awaiting proof.
+- **Every attribute (D1).** Every leaf of the create request, update request and response schemas is an attribute of the resource, and every response leaf one of the data source, except by five rules and a register whose entries carry a reason and the product owner's approval. A leaf is exposed once the pinned fake release's `attributes.json` lists it as `verified`. A generated coverage report shows every leaf's state, and CI fails on a leaf that is neither exposed, excluded nor awaiting proof.
 - **State (D2).** Six engine rules: sent as configured; Optional and Computed unless the suite shows Stripe leaves the argument empty; write-only values and instructions kept from configuration, Sensitive where Stripe reports `<name>_provided`; apply keeps the plan and warns where Stripe answers differently; unset settings keep their prior value where the suite shows Stripe does not change them; an unexpected shape warns on read.
 - **Shapes (D3).** Response unions become one object with every variant's members; a token-or-hash parameter keeps its string attribute and gains `<name>_data`; embedded copies are read in full; recursion stops at the repeat; `discounts` maps between its request and response shapes.
 - **Defaults (D4).** Every optional argument's line ends with one default statement: the value and whether Stripe or the provider sets it, or none. Stripe's defaults come from the suite's minimal creates.
@@ -131,7 +133,14 @@ The schema marks a list returned only when expanded by leaving it out of the obj
 
 **The register.** Any other exclusion is an entry in `Resource.Exclude`, a map from dotted path to reason, in `tools/schemagen/resources.go`. An entry names its evidence (a suite test, a Stripe doc URL, or a framework limit). The product owner approves each new entry in review; excluding a whole resource or data source goes to the owner. `Keep`, `Omit`, `ReadOnly` and `NoResponse` stop being ways to trim for lack of proof: the evidence gate below does that job. `CreateOnly`, `Require`, `Response`, `CreateHash` and `DocsFrom` stay, because they describe Stripe.
 
-**The evidence gate.** The provider vendors the suite's evidence record as `spec/evidence.json`, with the suite commit and API version beside it, as `spec/PIN.json` records the spec. It is the record of the suite commit that the pinned fake release passes (the fake's `conformance/SUITE_REF` at the tag in `.fake-version`), so a leaf the record proves is also one the fake serves. The generator exposes a leaf when the record proves it, and refuses a record whose API version differs from `spec/PIN.json`. What the record holds is listed in `handoff.md` ("The evidence record the provider consumes"); its format is the suite's choice.
+**The evidence gate.** The provider gates on the fake's own manifest, not on the suite's record alone. Each fake release attaches `attributes.json`, which names the release (`fake_version`), the suite commit it embedded (`suite_ref`), the evidence run (`run_id`), `api_version` and `spec_sha256`, and classes every leaf ("`attributes.json`", A7 of the fake's ADR (`fake-stripe-api`, `adrs/1-pending/2026-10-29-attribute-parity/ADR.md`, fake PR #65)). The generator exposes a leaf only when that file lists it as `verified`: its pinned record says `proven` with `targets` including `fake`, the release binary serves it, and every leaf test the record cites passed on the fake in the release's fidelity run (same section, "Classes"). Every other class (`served_failing`, `served_unverified`, `gap_proven_not_served`, `gap_stripe_only`, `gap_placeholder_null`, `unproven`) leaves it unexposed. A leaf the suite proves against Stripe only (`"targets": ["stripe"]`, the hosted-flow leaves, decision 6 of the fake's ADR and the suite's `targets`) is therefore not exposed until the fake serves it and a release verifies it.
+
+The provider vendors two files beside `spec/PIN.json`, with their own pin (`spec/EVIDENCE.json`: the fake release, `suite_ref`, `run_id`, and the size and SHA-256 of each file):
+
+- `spec/attributes.json`: the release asset of the fake release named in `.fake-version`.
+- `spec/evidence.json`: the suite's per-run file `evidence/<suite_ref>/<run_id>.json` from its `results` branch, at the `suite_ref` and `run_id` that `attributes.json` names. Not `evidence/<sha>.json`, which is a copy of the commit's current run and changes when the same commit passes again ("Where it lives and how it is pinned", the suite's ADR (`stripe-api-conformance`, `adrs/1-pending/2026-10-29-attribute-coverage/ADR.md`, suite PR #71)). The per-run file is immutable, and it is the bytes the fake embedded (F-5 of the fake's ADR).
+
+Defaults, normalised forms, side effects, unset results and refusals for the docs and the engine (D2, D4) come from `spec/evidence.json`. The generator refuses either file when its `api_version` or `spec_sha256` differs from `spec/PIN.json`, or when their `suite_ref` and `run_id` disagree. Moving to a new fake release re-pins both in the same change, as `.fake-version` moves today. What the record holds is listed in `handoff.md` ("The evidence record the provider consumes") and specified by the suite's ADR.
 
 Today's attributes were trimmed to what the suite proves, so they stay exposed while the suite audits them against `handoff.md`; one the audit cannot prove is proven in its resource's wave, never removed, because removing it would break users (per the product owner).
 
@@ -233,7 +242,7 @@ The evidence behind them: `stripe_coupon.duration` ("`POST /v1/coupons` with onl
 
 The spec's "Defaults to" text is not a source. The generator compares it with the evidence and lists disagreements in the coverage report for the suite to check.
 
-**Staying correct.** The generator recomputes every statement from the pinned evidence and spec on each run, so a new evidence record or a spec bump shows as a diff of the generated files and the docs. Evidence for another API version fails generation. `coverage.json` records each statement's source.
+**Staying correct.** The generator recomputes every statement from the pinned evidence (the per-run file of D1) and spec on each run, so a new fake release, with its evidence run, or a spec bump shows as a diff of the generated files and the docs. Evidence for another API version fails generation. `coverage.json` records each statement's source.
 
 **Completeness in CI.** A leaf is exposed only with evidence (D1), and the minimal creates are part of that evidence, so every exposed optional argument has a statement. `tools/docgen` fails on an optional argument without one, naming the page and the path.
 
@@ -264,7 +273,7 @@ No change of this ADR makes an existing attribute Sensitive (no exposed argument
 
 #### Waves
 
-A leaf is exposed as soon as the pinned evidence record proves it and the pinned fake release serves it, whatever its wave (per the product owner). Waves order the work for the suite, the fake and the provider; they are not release gates. A resource is done by the definition below. What each wave needs, in brief (the full lists are in `handoff.md`):
+A leaf is exposed as soon as the pinned fake release's `attributes.json` lists it as `verified`, whatever its wave (per the product owner; D1). Waves order the work for the suite, the fake and the provider; they are not release gates. A resource is done by the definition below. What each wave needs, in brief (the full lists are in `handoff.md`):
 
 |Wave|Objects|Hard cases the suite meets first|
 |-|-|-|
@@ -280,7 +289,7 @@ A leaf is exposed as soon as the pinned evidence record proves it and the pinned
 #### Definition of done per resource
 
 1. The coverage report shows every leaf of the table exposed or excluded by a rule or an approved register entry; none awaits proof.
-2. The evidence for the table is in the pinned `spec/evidence.json`, from the suite commit the pinned fake release passes.
+2. Every exposed leaf of the table is `verified` in the pinned `spec/attributes.json`, and its facts are in the pinned per-run `spec/evidence.json` that file names.
 3. The full-surface test passes against that fake under Terraform and OpenTofu in strict mode.
 4. Every optional argument has a default statement from the provider or the evidence.
 5. The six per-resource acceptance tests and the import block test pass; the docs are regenerated; every page is within the budget.
@@ -289,13 +298,13 @@ A leaf is exposed as soon as the pinned evidence record proves it and the pinned
 
 ### Step 1: Coverage report, register and evidence gate
 
-Add the leaf walk of `measurement.md` to `tools/schemagen`, the rules X1 to X5, `Resource.Exclude`, the reader of `spec/evidence.json` and its pin, the gate that exposes a proven leaf, the generated `internal/generated/coverage.json` and `coverage.md`, and the check that fails on a new Required leaf under an object exposed today unless the register approves it. Today's exposed leaves stay exposed while the suite audits them, and one the audit cannot prove yet is proven in its wave, never removed (per the product owner). Describe the report and the evidence pin in `CONTRIBUTING.md` ("Generated code").
+Add the leaf walk of `measurement.md` to `tools/schemagen`, the rules X1 to X5, `Resource.Exclude`, the readers of `spec/attributes.json` and `spec/evidence.json` and their pin `spec/EVIDENCE.json`, the gate that exposes a `verified` leaf, the generated `internal/generated/coverage.json` and `coverage.md`, and the check that fails on a new Required leaf under an object exposed today unless the register approves it. Today's exposed leaves stay exposed while the suite audits them, and one the audit cannot prove yet is proven in its wave, never removed (per the product owner). Describe the report and the evidence pin in `CONTRIBUTING.md` ("Generated code").
 
-Acceptance criteria: `go generate ./internal/generated` writes both files and changes no field table; a fixture leaf with no state fails the test; a fixture evidence record for another API version fails generation; a fixture record that proves a leaf exposes it.
+Acceptance criteria: `go generate ./internal/generated` writes both files and changes no field table; a fixture leaf with no state fails the test; a fixture evidence record for another API version fails generation, and so does one whose `run_id` differs from the fixture `attributes.json`; a leaf `verified` there is exposed, and one in any other class (including `gap_stripe_only`) is not.
 
 Status: PENDING
 
-Dependencies: none. Until the suite's record exists, a fixture stands in for it.
+Dependencies: none. Until a fake release attaches `attributes.json` and the suite publishes a passed run, fixtures stand in for both.
 
 ### Step 2: Generator shapes
 
@@ -325,13 +334,13 @@ Acceptance criteria: docgen golden tests cover every statement form and a guide-
 
 Status: PENDING
 
-Dependencies: Step 1. The evidence record's format, from the suite's ADR.
+Dependencies: Step 1. The evidence record's format, specified by the suite's ADR (format version 1).
 
 ### Step 5: Full-surface acceptance test
 
-A helper in `internal/acctest` that builds, from a table and the evidence's sample values, a configuration setting every argument the evidence proves on the fake's US account, applies it, checks an empty plan, updates every updatable argument, checks an empty plan and imports, in strict mode. `internal/resources/layout_test.go` requires `TestAcc<Name>_fullSurface` of every resource whose wave is done.
+A helper in `internal/acctest` that builds, from a table and the evidence's sample values, a configuration setting every argument the pinned `attributes.json` lists as `verified`, with values from the pinned evidence, applies it, checks an empty plan, updates every updatable argument, checks an empty plan and imports, in strict mode. `internal/resources/layout_test.go` requires `TestAcc<Name>_fullSurface` of every resource whose wave is done.
 
-Acceptance criteria: the test passes for `stripe_account` against a fake release that serves its proven leaves, on Terraform and OpenTofu; it fails when the engine drops a field.
+Acceptance criteria: the test passes for `stripe_account` against a fake release whose `attributes.json` verifies its leaves, on Terraform and OpenTofu; it fails when the engine drops a field.
 
 Status: PENDING
 
@@ -345,7 +354,7 @@ Acceptance criteria: `coverage.json` shows each of the 801 leaves Optional and C
 
 Status: PENDING
 
-Dependencies: Steps 1 to 3. The suite's minimal creates and unsetting samples for the 57 objects, and the 22 read-backs, in a pinned evidence record that the pinned fake release passes.
+Dependencies: Steps 1 to 3. The suite's minimal creates and unsetting samples for the 57 objects, and the 22 read-backs, `verified` in a pinned fake release's `attributes.json`, with the facts in the per-run evidence file it names.
 
 ### Step 7: Wave 1, `stripe_account`
 
@@ -359,7 +368,7 @@ Dependencies: Steps 1 to 5 for exposing its proven leaves, which can happen befo
 
 ### Step 8: Waves 2 to 6
 
-In wave order, each leaf exposed as soon as the suite proves it and the pinned fake serves it. When the last wave lands, `Keep`, `Omit`, `ReadOnly` and `NoResponse` are deleted, and the architecture ADR's D1 sentence points here.
+In wave order, each leaf exposed as soon as the pinned fake release verifies it. When the last wave lands, `Keep`, `Omit`, `ReadOnly` and `NoResponse` are deleted, and the architecture ADR's D1 sentence points here.
 
 Acceptance criteria: the definition of done for every resource; `coverage.md` shows no leaf awaiting proof.
 
