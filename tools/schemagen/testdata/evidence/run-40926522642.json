@@ -1,0 +1,4091 @@
+{
+  "api_version": "2026-09-30.endive",
+  "countries": [
+    {
+      "accepted": [
+        "request/PostTerminalLocations/address_kana.city",
+        "request/PostTerminalLocations/address_kana.country",
+        "request/PostTerminalLocations/address_kana.line1",
+        "request/PostTerminalLocations/address_kana.postal_code",
+        "request/PostTerminalLocations/address_kana.state",
+        "request/PostTerminalLocations/address_kana.town",
+        "request/PostTerminalLocations/address_kanji.city",
+        "request/PostTerminalLocations/address_kanji.country",
+        "request/PostTerminalLocations/address_kanji.line1",
+        "request/PostTerminalLocations/address_kanji.postal_code",
+        "request/PostTerminalLocations/address_kanji.state",
+        "request/PostTerminalLocations/address_kanji.town",
+        "request/PostTerminalLocations/display_name_kana",
+        "request/PostTerminalLocations/display_name_kanji",
+        "request/PostTerminalLocationsLocation/display_name_kana",
+        "request/PostTerminalLocationsLocation/display_name_kanji"
+      ],
+      "account_tag": "country_jp",
+      "country": "JP",
+      "tests": [
+        "TestTerminalLocationAttributes/leaves/request/PostTerminalLocations/address_kana.city",
+        "TestTerminalLocationAttributes/leaves/request/PostTerminalLocations/address_kana.country",
+        "TestTerminalLocationAttributes/leaves/request/PostTerminalLocations/address_kana.line1",
+        "TestTerminalLocationAttributes/leaves/request/PostTerminalLocations/address_kana.postal_code",
+        "TestTerminalLocationAttributes/leaves/request/PostTerminalLocations/address_kana.state",
+        "TestTerminalLocationAttributes/leaves/request/PostTerminalLocations/address_kana.town",
+        "TestTerminalLocationAttributes/leaves/request/PostTerminalLocations/address_kanji.city",
+        "TestTerminalLocationAttributes/leaves/request/PostTerminalLocations/address_kanji.country",
+        "TestTerminalLocationAttributes/leaves/request/PostTerminalLocations/address_kanji.line1",
+        "TestTerminalLocationAttributes/leaves/request/PostTerminalLocations/address_kanji.postal_code",
+        "TestTerminalLocationAttributes/leaves/request/PostTerminalLocations/address_kanji.state",
+        "TestTerminalLocationAttributes/leaves/request/PostTerminalLocations/address_kanji.town",
+        "TestTerminalLocationAttributes/leaves/request/PostTerminalLocations/display_name_kana",
+        "TestTerminalLocationAttributes/leaves/request/PostTerminalLocations/display_name_kanji",
+        "TestTerminalLocationAttributes/leaves/request/PostTerminalLocationsLocation/display_name_kana",
+        "TestTerminalLocationAttributes/leaves/request/PostTerminalLocationsLocation/display_name_kanji",
+        "TestTerminalLocationAttributes/leaves/response/terminal.location/display_name_kana",
+        "TestTerminalLocationAttributes/leaves/response/terminal.location/display_name_kanji"
+      ]
+    }
+  ],
+  "discounts": [],
+  "embedded_copies": [],
+  "families": [],
+  "filled_from": [],
+  "format_version": 1,
+  "leaves": [
+    {
+      "branch": "",
+      "nullable": {
+        "non_null_observed": true,
+        "null_observed": false
+      },
+      "object": "charge",
+      "operation": "",
+      "path": "payment_method_details.bancontact.bank_code",
+      "side": "response",
+      "status": "proven",
+      "targets": [
+        "stripe"
+      ],
+      "tests": [
+        "TestChargeAttributes/leaves/response/charge/payment_method_details.bancontact.bank_code"
+      ]
+    },
+    {
+      "branch": "",
+      "nullable": {
+        "non_null_observed": true,
+        "null_observed": false
+      },
+      "object": "charge",
+      "operation": "",
+      "path": "payment_method_details.bancontact.bank_name",
+      "side": "response",
+      "status": "proven",
+      "targets": [
+        "stripe"
+      ],
+      "tests": [
+        "TestChargeAttributes/leaves/response/charge/payment_method_details.bancontact.bank_name"
+      ]
+    },
+    {
+      "branch": "",
+      "nullable": {
+        "non_null_observed": true,
+        "null_observed": false
+      },
+      "object": "charge",
+      "operation": "",
+      "path": "payment_method_details.bancontact.bic",
+      "side": "response",
+      "status": "proven",
+      "targets": [
+        "stripe"
+      ],
+      "tests": [
+        "TestChargeAttributes/leaves/response/charge/payment_method_details.bancontact.bic"
+      ]
+    },
+    {
+      "branch": "",
+      "nullable": {
+        "non_null_observed": true,
+        "null_observed": false
+      },
+      "object": "charge",
+      "operation": "",
+      "path": "payment_method_details.bancontact.generated_sepa_debit",
+      "side": "response",
+      "status": "proven",
+      "targets": [
+        "stripe"
+      ],
+      "tests": [
+        "TestChargeAttributes/leaves/response/charge/payment_method_details.bancontact.generated_sepa_debit"
+      ]
+    },
+    {
+      "branch": "",
+      "nullable": {
+        "non_null_observed": true,
+        "null_observed": false
+      },
+      "object": "charge",
+      "operation": "",
+      "path": "payment_method_details.bancontact.generated_sepa_debit_mandate",
+      "side": "response",
+      "status": "proven",
+      "targets": [
+        "stripe"
+      ],
+      "tests": [
+        "TestChargeAttributes/leaves/response/charge/payment_method_details.bancontact.generated_sepa_debit_mandate"
+      ]
+    },
+    {
+      "branch": "",
+      "nullable": {
+        "non_null_observed": true,
+        "null_observed": false
+      },
+      "object": "charge",
+      "operation": "",
+      "path": "payment_method_details.bancontact.iban_last4",
+      "side": "response",
+      "status": "proven",
+      "targets": [
+        "stripe"
+      ],
+      "tests": [
+        "TestChargeAttributes/leaves/response/charge/payment_method_details.bancontact.iban_last4"
+      ]
+    },
+    {
+      "branch": "",
+      "nullable": {
+        "non_null_observed": true,
+        "null_observed": false
+      },
+      "object": "charge",
+      "operation": "",
+      "path": "payment_method_details.bancontact.preferred_language",
+      "side": "response",
+      "status": "proven",
+      "targets": [
+        "stripe"
+      ],
+      "tests": [
+        "TestChargeAttributes/leaves/response/charge/payment_method_details.bancontact.preferred_language"
+      ]
+    },
+    {
+      "branch": "",
+      "nullable": {
+        "non_null_observed": true,
+        "null_observed": false
+      },
+      "object": "charge",
+      "operation": "",
+      "path": "payment_method_details.bancontact.verified_name",
+      "side": "response",
+      "status": "proven",
+      "targets": [
+        "stripe"
+      ],
+      "tests": [
+        "TestChargeAttributes/leaves/response/charge/payment_method_details.bancontact.verified_name"
+      ]
+    },
+    {
+      "accepted_in": [
+        "US"
+      ],
+      "branch": "",
+      "default": {
+        "kind": "null"
+      },
+      "object": "coupon",
+      "on": [
+        "create"
+      ],
+      "operation": "PostCoupons",
+      "path": "amount_off",
+      "refusals": [],
+      "returned": {
+        "form": "as_sent",
+        "response_path": "amount_off"
+      },
+      "side": "request",
+      "status": "proven",
+      "targets": [
+        "fake",
+        "stripe"
+      ],
+      "tests": [
+        "TestCouponAttributes/leaves/request/PostCoupons/amount_off",
+        "TestCouponAttributes/leaves/response/coupon/amount_off"
+      ]
+    },
+    {
+      "accepted_in": [
+        "US"
+      ],
+      "branch": "",
+      "default": {
+        "kind": "absent",
+        "variants": [
+          {
+            "default": {
+              "kind": "absent"
+            },
+            "variant": "amount_off"
+          }
+        ]
+      },
+      "object": "coupon",
+      "on": [
+        "create"
+      ],
+      "operation": "PostCoupons",
+      "path": "applies_to.products",
+      "refusals": [],
+      "returned": {
+        "form": "as_sent",
+        "response_path": "applies_to.products"
+      },
+      "side": "request",
+      "status": "proven",
+      "targets": [
+        "fake",
+        "stripe"
+      ],
+      "tests": [
+        "TestCouponAttributes/leaves/request/PostCoupons/applies_to.products",
+        "TestCouponAttributes/leaves/response/coupon/applies_to.products"
+      ]
+    },
+    {
+      "accepted_in": [
+        "US"
+      ],
+      "branch": "",
+      "default": {
+        "kind": "null"
+      },
+      "object": "coupon",
+      "on": [
+        "create"
+      ],
+      "operation": "PostCoupons",
+      "path": "currency",
+      "refusals": [],
+      "returned": {
+        "form": "as_sent",
+        "response_path": "currency"
+      },
+      "side": "request",
+      "status": "proven",
+      "targets": [
+        "fake",
+        "stripe"
+      ],
+      "tests": [
+        "TestCouponAttributes/leaves/request/PostCoupons/currency",
+        "TestCouponAttributes/leaves/response/coupon/currency"
+      ]
+    },
+    {
+      "accepted_in": [
+        "US"
+      ],
+      "branch": "",
+      "default": {
+        "kind": "absent",
+        "variants": [
+          {
+            "default": {
+              "kind": "value",
+              "value": {
+                "usd": 500
+              }
+            },
+            "variant": "amount_off"
+          }
+        ]
+      },
+      "object": "coupon",
+      "on": [
+        "create"
+      ],
+      "operation": "PostCoupons",
+      "path": "currency_options.amount_off",
+      "refusals": [],
+      "returned": {
+        "form": "normalised",
+        "pairs": [
+          {
+            "returned": {
+              "eur": 7,
+              "usd": 500
+            },
+            "sent": {
+              "eur": 7
+            }
+          }
+        ],
+        "response_path": "currency_options.amount_off"
+      },
+      "side": "request",
+      "status": "proven",
+      "targets": [
+        "fake",
+        "stripe"
+      ],
+      "tests": [
+        "TestCouponAttributes/leaves/request/PostCoupons/currency_options.amount_off",
+        "TestCouponAttributes/leaves/response/coupon/currency_options.amount_off"
+      ]
+    },
+    {
+      "accepted_in": [
+        "US"
+      ],
+      "branch": "",
+      "default": {
+        "kind": "value",
+        "value": "once",
+        "variants": [
+          {
+            "default": {
+              "kind": "value",
+              "value": "once"
+            },
+            "variant": "amount_off"
+          }
+        ]
+      },
+      "enum_values": [
+        {
+          "accepted": true,
+          "value": "forever"
+        },
+        {
+          "accepted": true,
+          "value": "once"
+        },
+        {
+          "accepted": true,
+          "value": "repeating"
+        }
+      ],
+      "object": "coupon",
+      "on": [
+        "create"
+      ],
+      "operation": "PostCoupons",
+      "path": "duration",
+      "refusals": [],
+      "returned": {
+        "form": "as_sent",
+        "response_path": "duration"
+      },
+      "side": "request",
+      "status": "proven",
+      "targets": [
+        "fake",
+        "stripe"
+      ],
+      "tests": [
+        "TestCouponAttributes/leaves/request/PostCoupons/duration",
+        "TestCouponAttributes/leaves/response/coupon/duration"
+      ]
+    },
+    {
+      "accepted_in": [
+        "US"
+      ],
+      "branch": "",
+      "default": {
+        "kind": "null",
+        "variants": [
+          {
+            "default": {
+              "kind": "null"
+            },
+            "variant": "amount_off"
+          }
+        ]
+      },
+      "object": "coupon",
+      "on": [
+        "create"
+      ],
+      "operation": "PostCoupons",
+      "path": "duration_in_months",
+      "refusals": [],
+      "returned": {
+        "form": "as_sent",
+        "response_path": "duration_in_months"
+      },
+      "side": "request",
+      "status": "proven",
+      "targets": [
+        "fake",
+        "stripe"
+      ],
+      "tests": [
+        "TestCouponAttributes/leaves/request/PostCoupons/duration_in_months",
+        "TestCouponAttributes/leaves/response/coupon/duration_in_months"
+      ]
+    },
+    {
+      "accepted_in": [
+        "US"
+      ],
+      "branch": "",
+      "object": "coupon",
+      "on": [
+        "create"
+      ],
+      "operation": "PostCoupons",
+      "path": "id",
+      "refusals": [],
+      "returned": {
+        "form": "as_sent",
+        "response_path": "id"
+      },
+      "side": "request",
+      "status": "proven",
+      "targets": [
+        "fake",
+        "stripe"
+      ],
+      "tests": [
+        "TestCouponAttributes/leaves/request/PostCoupons/id"
+      ]
+    },
+    {
+      "accepted_in": [
+        "US"
+      ],
+      "branch": "",
+      "default": {
+        "kind": "null",
+        "variants": [
+          {
+            "default": {
+              "kind": "null"
+            },
+            "variant": "amount_off"
+          }
+        ]
+      },
+      "object": "coupon",
+      "on": [
+        "create"
+      ],
+      "operation": "PostCoupons",
+      "path": "max_redemptions",
+      "refusals": [],
+      "returned": {
+        "form": "as_sent",
+        "response_path": "max_redemptions"
+      },
+      "side": "request",
+      "status": "proven",
+      "targets": [
+        "fake",
+        "stripe"
+      ],
+      "tests": [
+        "TestCouponAttributes/leaves/request/PostCoupons/max_redemptions",
+        "TestCouponAttributes/leaves/response/coupon/max_redemptions"
+      ]
+    },
+    {
+      "accepted_in": [
+        "US"
+      ],
+      "branch": "",
+      "default": {
+        "kind": "value",
+        "value": {},
+        "variants": [
+          {
+            "default": {
+              "kind": "value",
+              "value": {}
+            },
+            "variant": "amount_off"
+          }
+        ]
+      },
+      "object": "coupon",
+      "on": [
+        "create"
+      ],
+      "operation": "PostCoupons",
+      "path": "metadata",
+      "refusals": [],
+      "returned": {
+        "form": "as_sent",
+        "response_path": "metadata"
+      },
+      "side": "request",
+      "status": "proven",
+      "targets": [
+        "fake",
+        "stripe"
+      ],
+      "tests": [
+        "TestCouponAttributes/leaves/request/PostCoupons/metadata",
+        "TestCouponAttributes/leaves/response/coupon/metadata"
+      ]
+    },
+    {
+      "accepted_in": [
+        "US"
+      ],
+      "branch": "",
+      "default": {
+        "kind": "null",
+        "variants": [
+          {
+            "default": {
+              "kind": "null"
+            },
+            "variant": "amount_off"
+          }
+        ]
+      },
+      "object": "coupon",
+      "on": [
+        "create"
+      ],
+      "operation": "PostCoupons",
+      "path": "name",
+      "refusals": [],
+      "returned": {
+        "form": "as_sent",
+        "response_path": "name"
+      },
+      "side": "request",
+      "status": "proven",
+      "targets": [
+        "fake",
+        "stripe"
+      ],
+      "tests": [
+        "TestCouponAttributes/leaves/request/PostCoupons/name",
+        "TestCouponAttributes/leaves/response/coupon/name"
+      ]
+    },
+    {
+      "accepted_in": [
+        "US"
+      ],
+      "branch": "",
+      "object": "coupon",
+      "on": [
+        "create"
+      ],
+      "operation": "PostCoupons",
+      "path": "percent_off",
+      "refusals": [],
+      "returned": {
+        "form": "as_sent",
+        "response_path": "percent_off"
+      },
+      "side": "request",
+      "status": "proven",
+      "targets": [
+        "fake",
+        "stripe"
+      ],
+      "tests": [
+        "TestCouponAttributes/leaves/request/PostCoupons/percent_off"
+      ]
+    },
+    {
+      "accepted_in": [
+        "US"
+      ],
+      "branch": "",
+      "default": {
+        "kind": "null",
+        "variants": [
+          {
+            "default": {
+              "kind": "null"
+            },
+            "variant": "amount_off"
+          }
+        ]
+      },
+      "object": "coupon",
+      "on": [
+        "create"
+      ],
+      "operation": "PostCoupons",
+      "path": "redeem_by",
+      "refusals": [],
+      "returned": {
+        "form": "as_sent",
+        "response_path": "redeem_by"
+      },
+      "side": "request",
+      "status": "proven",
+      "targets": [
+        "fake",
+        "stripe"
+      ],
+      "tests": [
+        "TestCouponAttributes/leaves/request/PostCoupons/redeem_by",
+        "TestCouponAttributes/leaves/response/coupon/redeem_by"
+      ]
+    },
+    {
+      "accepted_in": [
+        "US"
+      ],
+      "branch": "",
+      "object": "coupon",
+      "on": [
+        "update"
+      ],
+      "operation": "PostCouponsCoupon",
+      "path": "currency_options.amount_off",
+      "refusals": [],
+      "returned": {
+        "form": "normalised",
+        "pairs": [
+          {
+            "returned": {
+              "eur": 7,
+              "gbp": 8,
+              "usd": 500
+            },
+            "sent": {
+              "gbp": 8
+            }
+          }
+        ],
+        "response_path": "currency_options.amount_off"
+      },
+      "side": "request",
+      "status": "proven",
+      "targets": [
+        "fake",
+        "stripe"
+      ],
+      "tests": [
+        "TestCouponAttributes/leaves/request/PostCouponsCoupon/currency_options.amount_off"
+      ]
+    },
+    {
+      "accepted_in": [
+        "US"
+      ],
+      "branch": "",
+      "object": "coupon",
+      "on": [
+        "update"
+      ],
+      "operation": "PostCouponsCoupon",
+      "path": "metadata",
+      "refusals": [],
+      "returned": {
+        "form": "as_sent",
+        "response_path": "metadata"
+      },
+      "side": "request",
+      "status": "proven",
+      "targets": [
+        "fake",
+        "stripe"
+      ],
+      "tests": [
+        "TestCouponAttributes/leaves/request/PostCouponsCoupon/metadata"
+      ],
+      "unset": {
+        "by": "empty_string",
+        "matcher": {
+          "kind": "sent",
+          "path": "metadata"
+        },
+        "result": "as_sent"
+      }
+    },
+    {
+      "accepted_in": [
+        "US"
+      ],
+      "branch": "",
+      "object": "coupon",
+      "on": [
+        "update"
+      ],
+      "operation": "PostCouponsCoupon",
+      "path": "name",
+      "refusals": [],
+      "returned": {
+        "form": "as_sent",
+        "response_path": "name"
+      },
+      "side": "request",
+      "status": "proven",
+      "targets": [
+        "fake",
+        "stripe"
+      ],
+      "tests": [
+        "TestCouponAttributes/leaves/request/PostCouponsCoupon/name"
+      ],
+      "unset": {
+        "by": "empty_string",
+        "error": {
+          "code": "parameter_invalid_empty",
+          "message": "You passed an empty string for 'name'. We assume empty values are an attempt to unset a parameter; however 'name' cannot be unset. You should remove 'name' from your request or supply a non-empty value.",
+          "param": "name",
+          "status": 400,
+          "type": "invalid_request_error"
+        },
+        "result": "refused"
+      }
+    },
+    {
+      "branch": "",
+      "initial": [
+        {
+          "matcher": {
+            "kind": "null"
+          },
+          "variant": ""
+        },
+        {
+          "matcher": {
+            "kind": "sent",
+            "path": "amount_off"
+          },
+          "variant": "amount_off"
+        }
+      ],
+      "nullable": {
+        "non_null_observed": true,
+        "null_observed": true
+      },
+      "object": "coupon",
+      "operation": "",
+      "path": "amount_off",
+      "side": "response",
+      "status": "proven",
+      "targets": [
+        "fake",
+        "stripe"
+      ],
+      "tests": [
+        "TestCouponAttributes/leaves/response/coupon/amount_off"
+      ]
+    },
+    {
+      "branch": "",
+      "initial": [
+        {
+          "matcher": {
+            "kind": "absent"
+          },
+          "variant": ""
+        },
+        {
+          "matcher": {
+            "kind": "absent"
+          },
+          "variant": "amount_off"
+        }
+      ],
+      "nullable": {
+        "non_null_observed": true,
+        "null_observed": false
+      },
+      "object": "coupon",
+      "operation": "",
+      "path": "applies_to.products",
+      "side": "response",
+      "status": "proven",
+      "targets": [
+        "fake",
+        "stripe"
+      ],
+      "tests": [
+        "TestCouponAttributes/leaves/response/coupon/applies_to.products"
+      ]
+    },
+    {
+      "branch": "",
+      "initial": [
+        {
+          "matcher": {
+            "kind": "timestamp"
+          },
+          "variant": ""
+        },
+        {
+          "matcher": {
+            "kind": "timestamp"
+          },
+          "variant": "amount_off"
+        }
+      ],
+      "nullable": {
+        "non_null_observed": true,
+        "null_observed": false
+      },
+      "object": "coupon",
+      "operation": "",
+      "path": "created",
+      "side": "response",
+      "status": "proven",
+      "targets": [
+        "fake",
+        "stripe"
+      ],
+      "tests": [
+        "TestCouponAttributes/leaves/response/coupon/created"
+      ]
+    },
+    {
+      "branch": "",
+      "initial": [
+        {
+          "matcher": {
+            "kind": "null"
+          },
+          "variant": ""
+        },
+        {
+          "matcher": {
+            "kind": "sent",
+            "path": "currency"
+          },
+          "variant": "amount_off"
+        }
+      ],
+      "nullable": {
+        "non_null_observed": true,
+        "null_observed": true
+      },
+      "object": "coupon",
+      "operation": "",
+      "path": "currency",
+      "side": "response",
+      "status": "proven",
+      "targets": [
+        "fake",
+        "stripe"
+      ],
+      "tests": [
+        "TestCouponAttributes/leaves/response/coupon/currency"
+      ]
+    },
+    {
+      "branch": "",
+      "initial": [
+        {
+          "matcher": {
+            "kind": "absent"
+          },
+          "variant": ""
+        },
+        {
+          "matcher": {
+            "kind": "value",
+            "value": {
+              "usd": 500
+            }
+          },
+          "variant": "amount_off"
+        }
+      ],
+      "nullable": {
+        "non_null_observed": true,
+        "null_observed": false
+      },
+      "object": "coupon",
+      "operation": "",
+      "path": "currency_options.amount_off",
+      "side": "response",
+      "status": "proven",
+      "targets": [
+        "fake",
+        "stripe"
+      ],
+      "tests": [
+        "TestCouponAttributes/leaves/response/coupon/currency_options.amount_off"
+      ]
+    },
+    {
+      "branch": "",
+      "initial": [
+        {
+          "matcher": {
+            "kind": "value",
+            "value": "once"
+          },
+          "variant": ""
+        },
+        {
+          "matcher": {
+            "kind": "value",
+            "value": "once"
+          },
+          "variant": "amount_off"
+        }
+      ],
+      "nullable": {
+        "non_null_observed": true,
+        "null_observed": false
+      },
+      "object": "coupon",
+      "operation": "",
+      "path": "duration",
+      "side": "response",
+      "status": "proven",
+      "targets": [
+        "fake",
+        "stripe"
+      ],
+      "tests": [
+        "TestCouponAttributes/leaves/response/coupon/duration"
+      ]
+    },
+    {
+      "branch": "",
+      "initial": [
+        {
+          "matcher": {
+            "kind": "null"
+          },
+          "variant": ""
+        },
+        {
+          "matcher": {
+            "kind": "null"
+          },
+          "variant": "amount_off"
+        }
+      ],
+      "nullable": {
+        "non_null_observed": true,
+        "null_observed": true
+      },
+      "object": "coupon",
+      "operation": "",
+      "path": "duration_in_months",
+      "side": "response",
+      "status": "proven",
+      "targets": [
+        "fake",
+        "stripe"
+      ],
+      "tests": [
+        "TestCouponAttributes/leaves/response/coupon/duration_in_months"
+      ]
+    },
+    {
+      "branch": "",
+      "initial": [
+        {
+          "matcher": {
+            "kind": "created"
+          },
+          "variant": ""
+        },
+        {
+          "matcher": {
+            "kind": "created"
+          },
+          "variant": "amount_off"
+        }
+      ],
+      "nullable": {
+        "non_null_observed": true,
+        "null_observed": false
+      },
+      "object": "coupon",
+      "operation": "",
+      "path": "id",
+      "side": "response",
+      "status": "proven",
+      "targets": [
+        "fake",
+        "stripe"
+      ],
+      "tests": [
+        "TestCouponAttributes/leaves/response/coupon/id"
+      ]
+    },
+    {
+      "branch": "",
+      "initial": [
+        {
+          "matcher": {
+            "kind": "value",
+            "value": false
+          },
+          "variant": ""
+        },
+        {
+          "matcher": {
+            "kind": "value",
+            "value": false
+          },
+          "variant": "amount_off"
+        }
+      ],
+      "nullable": {
+        "non_null_observed": true,
+        "null_observed": false
+      },
+      "object": "coupon",
+      "operation": "",
+      "path": "livemode",
+      "side": "response",
+      "status": "proven",
+      "targets": [
+        "fake",
+        "stripe"
+      ],
+      "tests": [
+        "TestCouponAttributes/leaves/response/coupon/livemode"
+      ]
+    },
+    {
+      "branch": "",
+      "initial": [
+        {
+          "matcher": {
+            "kind": "null"
+          },
+          "variant": ""
+        },
+        {
+          "matcher": {
+            "kind": "null"
+          },
+          "variant": "amount_off"
+        }
+      ],
+      "nullable": {
+        "non_null_observed": true,
+        "null_observed": true
+      },
+      "object": "coupon",
+      "operation": "",
+      "path": "max_redemptions",
+      "side": "response",
+      "status": "proven",
+      "targets": [
+        "fake",
+        "stripe"
+      ],
+      "tests": [
+        "TestCouponAttributes/leaves/response/coupon/max_redemptions"
+      ]
+    },
+    {
+      "branch": "",
+      "initial": [
+        {
+          "matcher": {
+            "kind": "value",
+            "value": {}
+          },
+          "variant": ""
+        },
+        {
+          "matcher": {
+            "kind": "value",
+            "value": {}
+          },
+          "variant": "amount_off"
+        }
+      ],
+      "nullable": {
+        "non_null_observed": true,
+        "null_observed": false
+      },
+      "object": "coupon",
+      "operation": "",
+      "path": "metadata",
+      "side": "response",
+      "status": "proven",
+      "targets": [
+        "fake",
+        "stripe"
+      ],
+      "tests": [
+        "TestCouponAttributes/leaves/response/coupon/metadata"
+      ]
+    },
+    {
+      "branch": "",
+      "initial": [
+        {
+          "matcher": {
+            "kind": "null"
+          },
+          "variant": ""
+        },
+        {
+          "matcher": {
+            "kind": "null"
+          },
+          "variant": "amount_off"
+        }
+      ],
+      "nullable": {
+        "non_null_observed": true,
+        "null_observed": true
+      },
+      "object": "coupon",
+      "operation": "",
+      "path": "name",
+      "side": "response",
+      "status": "proven",
+      "targets": [
+        "fake",
+        "stripe"
+      ],
+      "tests": [
+        "TestCouponAttributes/leaves/response/coupon/name"
+      ]
+    },
+    {
+      "branch": "",
+      "initial": [
+        {
+          "matcher": {
+            "kind": "value",
+            "value": "coupon"
+          },
+          "variant": ""
+        },
+        {
+          "matcher": {
+            "kind": "value",
+            "value": "coupon"
+          },
+          "variant": "amount_off"
+        }
+      ],
+      "nullable": {
+        "non_null_observed": true,
+        "null_observed": false
+      },
+      "object": "coupon",
+      "operation": "",
+      "path": "object",
+      "side": "response",
+      "status": "proven",
+      "targets": [
+        "fake",
+        "stripe"
+      ],
+      "tests": [
+        "TestCouponAttributes/leaves/response/coupon/object"
+      ]
+    },
+    {
+      "branch": "",
+      "initial": [
+        {
+          "matcher": {
+            "kind": "sent",
+            "path": "percent_off"
+          },
+          "variant": ""
+        },
+        {
+          "matcher": {
+            "kind": "null"
+          },
+          "variant": "amount_off"
+        }
+      ],
+      "nullable": {
+        "non_null_observed": true,
+        "null_observed": true
+      },
+      "object": "coupon",
+      "operation": "",
+      "path": "percent_off",
+      "side": "response",
+      "status": "proven",
+      "targets": [
+        "fake",
+        "stripe"
+      ],
+      "tests": [
+        "TestCouponAttributes/leaves/response/coupon/percent_off"
+      ]
+    },
+    {
+      "branch": "",
+      "initial": [
+        {
+          "matcher": {
+            "kind": "null"
+          },
+          "variant": ""
+        },
+        {
+          "matcher": {
+            "kind": "null"
+          },
+          "variant": "amount_off"
+        }
+      ],
+      "nullable": {
+        "non_null_observed": true,
+        "null_observed": true
+      },
+      "object": "coupon",
+      "operation": "",
+      "path": "redeem_by",
+      "side": "response",
+      "status": "proven",
+      "targets": [
+        "fake",
+        "stripe"
+      ],
+      "tests": [
+        "TestCouponAttributes/leaves/response/coupon/redeem_by"
+      ]
+    },
+    {
+      "branch": "",
+      "initial": [
+        {
+          "matcher": {
+            "kind": "value",
+            "value": 0
+          },
+          "variant": ""
+        },
+        {
+          "matcher": {
+            "kind": "value",
+            "value": 0
+          },
+          "variant": "amount_off"
+        }
+      ],
+      "nullable": {
+        "non_null_observed": true,
+        "null_observed": false
+      },
+      "object": "coupon",
+      "operation": "",
+      "path": "times_redeemed",
+      "side": "response",
+      "status": "proven",
+      "targets": [
+        "fake",
+        "stripe"
+      ],
+      "tests": [
+        "TestCouponAttributes/leaves/response/coupon/times_redeemed"
+      ]
+    },
+    {
+      "branch": "",
+      "initial": [
+        {
+          "matcher": {
+            "kind": "value",
+            "value": true
+          },
+          "variant": ""
+        },
+        {
+          "matcher": {
+            "kind": "value",
+            "value": true
+          },
+          "variant": "amount_off"
+        }
+      ],
+      "nullable": {
+        "non_null_observed": true,
+        "null_observed": false
+      },
+      "object": "coupon",
+      "operation": "",
+      "path": "valid",
+      "side": "response",
+      "status": "proven",
+      "targets": [
+        "fake",
+        "stripe"
+      ],
+      "tests": [
+        "TestCouponAttributes/leaves/response/coupon/valid"
+      ]
+    },
+    {
+      "accepted_in": [
+        "JP"
+      ],
+      "branch": "",
+      "object": "terminal.location",
+      "on": [
+        "create"
+      ],
+      "operation": "PostTerminalLocations",
+      "path": "address_kana.city",
+      "refusals": [],
+      "returned": {
+        "form": "as_sent",
+        "response_path": "address_kana.city"
+      },
+      "side": "request",
+      "status": "proven",
+      "targets": [
+        "fake",
+        "stripe"
+      ],
+      "tests": [
+        "TestTerminalLocationAttributes/leaves/request/PostTerminalLocations/address_kana.city"
+      ]
+    },
+    {
+      "accepted_in": [
+        "JP"
+      ],
+      "branch": "",
+      "object": "terminal.location",
+      "on": [
+        "create"
+      ],
+      "operation": "PostTerminalLocations",
+      "path": "address_kana.country",
+      "refusals": [],
+      "returned": {
+        "form": "as_sent",
+        "response_path": "address_kana.country"
+      },
+      "side": "request",
+      "status": "proven",
+      "targets": [
+        "fake",
+        "stripe"
+      ],
+      "tests": [
+        "TestTerminalLocationAttributes/leaves/request/PostTerminalLocations/address_kana.country"
+      ]
+    },
+    {
+      "accepted_in": [
+        "JP"
+      ],
+      "branch": "",
+      "object": "terminal.location",
+      "on": [
+        "create"
+      ],
+      "operation": "PostTerminalLocations",
+      "path": "address_kana.line1",
+      "refusals": [],
+      "returned": {
+        "form": "as_sent",
+        "response_path": "address_kana.line1"
+      },
+      "side": "request",
+      "status": "proven",
+      "targets": [
+        "fake",
+        "stripe"
+      ],
+      "tests": [
+        "TestTerminalLocationAttributes/leaves/request/PostTerminalLocations/address_kana.line1"
+      ]
+    },
+    {
+      "accepted_in": [
+        "JP"
+      ],
+      "branch": "",
+      "object": "terminal.location",
+      "on": [
+        "create"
+      ],
+      "operation": "PostTerminalLocations",
+      "path": "address_kana.postal_code",
+      "refusals": [],
+      "returned": {
+        "form": "as_sent",
+        "response_path": "address_kana.postal_code"
+      },
+      "side": "request",
+      "status": "proven",
+      "targets": [
+        "fake",
+        "stripe"
+      ],
+      "tests": [
+        "TestTerminalLocationAttributes/leaves/request/PostTerminalLocations/address_kana.postal_code"
+      ]
+    },
+    {
+      "accepted_in": [
+        "JP"
+      ],
+      "branch": "",
+      "object": "terminal.location",
+      "on": [
+        "create"
+      ],
+      "operation": "PostTerminalLocations",
+      "path": "address_kana.state",
+      "refusals": [],
+      "returned": {
+        "form": "as_sent",
+        "response_path": "address_kana.state"
+      },
+      "side": "request",
+      "status": "proven",
+      "targets": [
+        "fake",
+        "stripe"
+      ],
+      "tests": [
+        "TestTerminalLocationAttributes/leaves/request/PostTerminalLocations/address_kana.state"
+      ]
+    },
+    {
+      "accepted_in": [
+        "JP"
+      ],
+      "branch": "",
+      "object": "terminal.location",
+      "on": [
+        "create"
+      ],
+      "operation": "PostTerminalLocations",
+      "path": "address_kana.town",
+      "refusals": [],
+      "returned": {
+        "form": "as_sent",
+        "response_path": "address_kana.town"
+      },
+      "side": "request",
+      "status": "proven",
+      "targets": [
+        "fake",
+        "stripe"
+      ],
+      "tests": [
+        "TestTerminalLocationAttributes/leaves/request/PostTerminalLocations/address_kana.town"
+      ]
+    },
+    {
+      "accepted_in": [
+        "JP"
+      ],
+      "branch": "",
+      "object": "terminal.location",
+      "on": [
+        "create"
+      ],
+      "operation": "PostTerminalLocations",
+      "path": "address_kanji.city",
+      "refusals": [],
+      "returned": {
+        "form": "as_sent",
+        "response_path": "address_kanji.city"
+      },
+      "side": "request",
+      "status": "proven",
+      "targets": [
+        "fake",
+        "stripe"
+      ],
+      "tests": [
+        "TestTerminalLocationAttributes/leaves/request/PostTerminalLocations/address_kanji.city"
+      ]
+    },
+    {
+      "accepted_in": [
+        "JP"
+      ],
+      "branch": "",
+      "object": "terminal.location",
+      "on": [
+        "create"
+      ],
+      "operation": "PostTerminalLocations",
+      "path": "address_kanji.country",
+      "refusals": [],
+      "returned": {
+        "form": "as_sent",
+        "response_path": "address_kanji.country"
+      },
+      "side": "request",
+      "status": "proven",
+      "targets": [
+        "fake",
+        "stripe"
+      ],
+      "tests": [
+        "TestTerminalLocationAttributes/leaves/request/PostTerminalLocations/address_kanji.country"
+      ]
+    },
+    {
+      "accepted_in": [
+        "JP"
+      ],
+      "branch": "",
+      "object": "terminal.location",
+      "on": [
+        "create"
+      ],
+      "operation": "PostTerminalLocations",
+      "path": "address_kanji.line1",
+      "refusals": [],
+      "returned": {
+        "form": "as_sent",
+        "response_path": "address_kanji.line1"
+      },
+      "side": "request",
+      "status": "proven",
+      "targets": [
+        "fake",
+        "stripe"
+      ],
+      "tests": [
+        "TestTerminalLocationAttributes/leaves/request/PostTerminalLocations/address_kanji.line1"
+      ]
+    },
+    {
+      "accepted_in": [
+        "JP"
+      ],
+      "branch": "",
+      "object": "terminal.location",
+      "on": [
+        "create"
+      ],
+      "operation": "PostTerminalLocations",
+      "path": "address_kanji.postal_code",
+      "refusals": [],
+      "returned": {
+        "form": "as_sent",
+        "response_path": "address_kanji.postal_code"
+      },
+      "side": "request",
+      "status": "proven",
+      "targets": [
+        "fake",
+        "stripe"
+      ],
+      "tests": [
+        "TestTerminalLocationAttributes/leaves/request/PostTerminalLocations/address_kanji.postal_code"
+      ]
+    },
+    {
+      "accepted_in": [
+        "JP"
+      ],
+      "branch": "",
+      "object": "terminal.location",
+      "on": [
+        "create"
+      ],
+      "operation": "PostTerminalLocations",
+      "path": "address_kanji.state",
+      "refusals": [],
+      "returned": {
+        "form": "as_sent",
+        "response_path": "address_kanji.state"
+      },
+      "side": "request",
+      "status": "proven",
+      "targets": [
+        "fake",
+        "stripe"
+      ],
+      "tests": [
+        "TestTerminalLocationAttributes/leaves/request/PostTerminalLocations/address_kanji.state"
+      ]
+    },
+    {
+      "accepted_in": [
+        "JP"
+      ],
+      "branch": "",
+      "object": "terminal.location",
+      "on": [
+        "create"
+      ],
+      "operation": "PostTerminalLocations",
+      "path": "address_kanji.town",
+      "refusals": [],
+      "returned": {
+        "form": "as_sent",
+        "response_path": "address_kanji.town"
+      },
+      "side": "request",
+      "status": "proven",
+      "targets": [
+        "fake",
+        "stripe"
+      ],
+      "tests": [
+        "TestTerminalLocationAttributes/leaves/request/PostTerminalLocations/address_kanji.town"
+      ]
+    },
+    {
+      "accepted_in": [
+        "JP"
+      ],
+      "branch": "",
+      "default": {
+        "kind": "absent"
+      },
+      "object": "terminal.location",
+      "on": [
+        "create"
+      ],
+      "operation": "PostTerminalLocations",
+      "path": "display_name_kana",
+      "refusals": [],
+      "returned": {
+        "form": "as_sent",
+        "response_path": "display_name_kana"
+      },
+      "side": "request",
+      "status": "proven",
+      "targets": [
+        "fake",
+        "stripe"
+      ],
+      "tests": [
+        "TestTerminalLocationAttributes/leaves/request/PostTerminalLocations/display_name_kana",
+        "TestTerminalLocationAttributes/leaves/response/terminal.location/display_name_kana"
+      ]
+    },
+    {
+      "accepted_in": [
+        "JP"
+      ],
+      "branch": "",
+      "default": {
+        "kind": "absent"
+      },
+      "object": "terminal.location",
+      "on": [
+        "create"
+      ],
+      "operation": "PostTerminalLocations",
+      "path": "display_name_kanji",
+      "refusals": [],
+      "returned": {
+        "form": "as_sent",
+        "response_path": "display_name_kanji"
+      },
+      "side": "request",
+      "status": "proven",
+      "targets": [
+        "fake",
+        "stripe"
+      ],
+      "tests": [
+        "TestTerminalLocationAttributes/leaves/request/PostTerminalLocations/display_name_kanji",
+        "TestTerminalLocationAttributes/leaves/response/terminal.location/display_name_kanji"
+      ]
+    },
+    {
+      "accepted_in": [
+        "JP"
+      ],
+      "branch": "",
+      "object": "terminal.location",
+      "on": [
+        "update"
+      ],
+      "operation": "PostTerminalLocationsLocation",
+      "path": "display_name_kana",
+      "refusals": [],
+      "returned": {
+        "form": "as_sent",
+        "response_path": "display_name_kana"
+      },
+      "side": "request",
+      "status": "proven",
+      "targets": [
+        "fake",
+        "stripe"
+      ],
+      "tests": [
+        "TestTerminalLocationAttributes/leaves/request/PostTerminalLocationsLocation/display_name_kana"
+      ],
+      "unset": {
+        "by": "empty_string",
+        "matcher": {
+          "kind": "absent"
+        },
+        "result": "absent"
+      }
+    },
+    {
+      "accepted_in": [
+        "JP"
+      ],
+      "branch": "",
+      "object": "terminal.location",
+      "on": [
+        "update"
+      ],
+      "operation": "PostTerminalLocationsLocation",
+      "path": "display_name_kanji",
+      "refusals": [],
+      "returned": {
+        "form": "as_sent",
+        "response_path": "display_name_kanji"
+      },
+      "side": "request",
+      "status": "proven",
+      "targets": [
+        "fake",
+        "stripe"
+      ],
+      "tests": [
+        "TestTerminalLocationAttributes/leaves/request/PostTerminalLocationsLocation/display_name_kanji"
+      ],
+      "unset": {
+        "by": "empty_string",
+        "matcher": {
+          "kind": "absent"
+        },
+        "result": "absent"
+      }
+    },
+    {
+      "branch": "",
+      "initial": [
+        {
+          "matcher": {
+            "kind": "sent",
+            "path": "address_kana.city"
+          },
+          "variant": ""
+        }
+      ],
+      "nullable": {
+        "non_null_observed": true,
+        "null_observed": false
+      },
+      "object": "terminal.location",
+      "operation": "",
+      "path": "address_kana.city",
+      "side": "response",
+      "status": "proven",
+      "targets": [
+        "fake",
+        "stripe"
+      ],
+      "tests": [
+        "TestTerminalLocationAttributes/leaves/response/terminal.location/address_kana.city"
+      ]
+    },
+    {
+      "branch": "",
+      "initial": [
+        {
+          "matcher": {
+            "kind": "sent",
+            "path": "address_kana.country"
+          },
+          "variant": ""
+        }
+      ],
+      "nullable": {
+        "non_null_observed": true,
+        "null_observed": false
+      },
+      "object": "terminal.location",
+      "operation": "",
+      "path": "address_kana.country",
+      "side": "response",
+      "status": "proven",
+      "targets": [
+        "fake",
+        "stripe"
+      ],
+      "tests": [
+        "TestTerminalLocationAttributes/leaves/response/terminal.location/address_kana.country"
+      ]
+    },
+    {
+      "branch": "",
+      "initial": [
+        {
+          "matcher": {
+            "kind": "sent",
+            "path": "address_kana.line1"
+          },
+          "variant": ""
+        }
+      ],
+      "nullable": {
+        "non_null_observed": true,
+        "null_observed": false
+      },
+      "object": "terminal.location",
+      "operation": "",
+      "path": "address_kana.line1",
+      "side": "response",
+      "status": "proven",
+      "targets": [
+        "fake",
+        "stripe"
+      ],
+      "tests": [
+        "TestTerminalLocationAttributes/leaves/response/terminal.location/address_kana.line1"
+      ]
+    },
+    {
+      "branch": "",
+      "initial": [
+        {
+          "matcher": {
+            "kind": "sent",
+            "path": "address_kana.postal_code"
+          },
+          "variant": ""
+        }
+      ],
+      "nullable": {
+        "non_null_observed": true,
+        "null_observed": false
+      },
+      "object": "terminal.location",
+      "operation": "",
+      "path": "address_kana.postal_code",
+      "side": "response",
+      "status": "proven",
+      "targets": [
+        "fake",
+        "stripe"
+      ],
+      "tests": [
+        "TestTerminalLocationAttributes/leaves/response/terminal.location/address_kana.postal_code"
+      ]
+    },
+    {
+      "branch": "",
+      "initial": [
+        {
+          "matcher": {
+            "kind": "sent",
+            "path": "address_kana.state"
+          },
+          "variant": ""
+        }
+      ],
+      "nullable": {
+        "non_null_observed": true,
+        "null_observed": false
+      },
+      "object": "terminal.location",
+      "operation": "",
+      "path": "address_kana.state",
+      "side": "response",
+      "status": "proven",
+      "targets": [
+        "fake",
+        "stripe"
+      ],
+      "tests": [
+        "TestTerminalLocationAttributes/leaves/response/terminal.location/address_kana.state"
+      ]
+    },
+    {
+      "branch": "",
+      "initial": [
+        {
+          "matcher": {
+            "kind": "sent",
+            "path": "address_kana.town"
+          },
+          "variant": ""
+        }
+      ],
+      "nullable": {
+        "non_null_observed": true,
+        "null_observed": false
+      },
+      "object": "terminal.location",
+      "operation": "",
+      "path": "address_kana.town",
+      "side": "response",
+      "status": "proven",
+      "targets": [
+        "fake",
+        "stripe"
+      ],
+      "tests": [
+        "TestTerminalLocationAttributes/leaves/response/terminal.location/address_kana.town"
+      ]
+    },
+    {
+      "branch": "",
+      "initial": [
+        {
+          "matcher": {
+            "kind": "sent",
+            "path": "address_kanji.city"
+          },
+          "variant": ""
+        }
+      ],
+      "nullable": {
+        "non_null_observed": true,
+        "null_observed": false
+      },
+      "object": "terminal.location",
+      "operation": "",
+      "path": "address_kanji.city",
+      "side": "response",
+      "status": "proven",
+      "targets": [
+        "fake",
+        "stripe"
+      ],
+      "tests": [
+        "TestTerminalLocationAttributes/leaves/response/terminal.location/address_kanji.city"
+      ]
+    },
+    {
+      "branch": "",
+      "initial": [
+        {
+          "matcher": {
+            "kind": "sent",
+            "path": "address_kanji.country"
+          },
+          "variant": ""
+        }
+      ],
+      "nullable": {
+        "non_null_observed": true,
+        "null_observed": false
+      },
+      "object": "terminal.location",
+      "operation": "",
+      "path": "address_kanji.country",
+      "side": "response",
+      "status": "proven",
+      "targets": [
+        "fake",
+        "stripe"
+      ],
+      "tests": [
+        "TestTerminalLocationAttributes/leaves/response/terminal.location/address_kanji.country"
+      ]
+    },
+    {
+      "branch": "",
+      "initial": [
+        {
+          "matcher": {
+            "kind": "sent",
+            "path": "address_kanji.line1"
+          },
+          "variant": ""
+        }
+      ],
+      "nullable": {
+        "non_null_observed": true,
+        "null_observed": false
+      },
+      "object": "terminal.location",
+      "operation": "",
+      "path": "address_kanji.line1",
+      "side": "response",
+      "status": "proven",
+      "targets": [
+        "fake",
+        "stripe"
+      ],
+      "tests": [
+        "TestTerminalLocationAttributes/leaves/response/terminal.location/address_kanji.line1"
+      ]
+    },
+    {
+      "branch": "",
+      "initial": [
+        {
+          "matcher": {
+            "kind": "sent",
+            "path": "address_kanji.postal_code"
+          },
+          "variant": ""
+        }
+      ],
+      "nullable": {
+        "non_null_observed": true,
+        "null_observed": false
+      },
+      "object": "terminal.location",
+      "operation": "",
+      "path": "address_kanji.postal_code",
+      "side": "response",
+      "status": "proven",
+      "targets": [
+        "fake",
+        "stripe"
+      ],
+      "tests": [
+        "TestTerminalLocationAttributes/leaves/response/terminal.location/address_kanji.postal_code"
+      ]
+    },
+    {
+      "branch": "",
+      "initial": [
+        {
+          "matcher": {
+            "kind": "sent",
+            "path": "address_kanji.state"
+          },
+          "variant": ""
+        }
+      ],
+      "nullable": {
+        "non_null_observed": true,
+        "null_observed": false
+      },
+      "object": "terminal.location",
+      "operation": "",
+      "path": "address_kanji.state",
+      "side": "response",
+      "status": "proven",
+      "targets": [
+        "fake",
+        "stripe"
+      ],
+      "tests": [
+        "TestTerminalLocationAttributes/leaves/response/terminal.location/address_kanji.state"
+      ]
+    },
+    {
+      "branch": "",
+      "initial": [
+        {
+          "matcher": {
+            "kind": "sent",
+            "path": "address_kanji.town"
+          },
+          "variant": ""
+        }
+      ],
+      "nullable": {
+        "non_null_observed": true,
+        "null_observed": false
+      },
+      "object": "terminal.location",
+      "operation": "",
+      "path": "address_kanji.town",
+      "side": "response",
+      "status": "proven",
+      "targets": [
+        "fake",
+        "stripe"
+      ],
+      "tests": [
+        "TestTerminalLocationAttributes/leaves/response/terminal.location/address_kanji.town"
+      ]
+    },
+    {
+      "branch": "",
+      "initial": [
+        {
+          "matcher": {
+            "kind": "absent"
+          },
+          "variant": ""
+        }
+      ],
+      "nullable": {
+        "non_null_observed": true,
+        "null_observed": false
+      },
+      "object": "terminal.location",
+      "operation": "",
+      "path": "display_name_kana",
+      "side": "response",
+      "status": "proven",
+      "targets": [
+        "fake",
+        "stripe"
+      ],
+      "tests": [
+        "TestTerminalLocationAttributes/leaves/response/terminal.location/display_name_kana"
+      ]
+    },
+    {
+      "branch": "",
+      "initial": [
+        {
+          "matcher": {
+            "kind": "absent"
+          },
+          "variant": ""
+        }
+      ],
+      "nullable": {
+        "non_null_observed": true,
+        "null_observed": false
+      },
+      "object": "terminal.location",
+      "operation": "",
+      "path": "display_name_kanji",
+      "side": "response",
+      "status": "proven",
+      "targets": [
+        "fake",
+        "stripe"
+      ],
+      "tests": [
+        "TestTerminalLocationAttributes/leaves/response/terminal.location/display_name_kanji"
+      ]
+    },
+    {
+      "accepted_in": [
+        "US"
+      ],
+      "branch": "",
+      "default": {
+        "kind": "absent"
+      },
+      "object": "v2.core.event_destination",
+      "on": [
+        "create"
+      ],
+      "operation": "PostV2CoreEventDestinations",
+      "path": "amazon_eventbridge.aws_account_id",
+      "refusals": [],
+      "returned": {
+        "form": "as_sent",
+        "response_path": "amazon_eventbridge.aws_account_id"
+      },
+      "side": "request",
+      "status": "proven",
+      "targets": [
+        "fake",
+        "stripe"
+      ],
+      "tests": [
+        "TestEventDestinationAttributes/leaves/request/PostV2CoreEventDestinations/amazon_eventbridge.aws_account_id",
+        "TestEventDestinationAttributes/leaves/response/v2.core.event_destination/amazon_eventbridge.aws_account_id"
+      ]
+    },
+    {
+      "accepted_in": [
+        "US"
+      ],
+      "branch": "",
+      "object": "v2.core.event_destination",
+      "on": [
+        "create"
+      ],
+      "operation": "PostV2CoreEventDestinations",
+      "path": "amazon_eventbridge.aws_region",
+      "refusals": [],
+      "returned": {
+        "form": "not_returned",
+        "response_path": ""
+      },
+      "side": "request",
+      "status": "proven",
+      "targets": [
+        "fake",
+        "stripe"
+      ],
+      "tests": [
+        "TestEventDestinationAttributes/leaves/request/PostV2CoreEventDestinations/amazon_eventbridge.aws_region"
+      ]
+    },
+    {
+      "accepted_in": [],
+      "branch": "",
+      "object": "v2.core.event_destination",
+      "on": [
+        "create"
+      ],
+      "operation": "PostV2CoreEventDestinations",
+      "path": "azure_event_grid.azure_region",
+      "refusals": [
+        {
+          "account_country": "US",
+          "code": "invalid_azure_partner_configuration",
+          "message": "The provided resource group 'conformance' or subscription ID '8f14e45f-ceea-467a-9c4b-7d1a2b3c4d5e' does not exist in Azure.",
+          "param": "",
+          "status": 400,
+          "tests": [
+            "TestEventDestinationAttributes/leaves/request/PostV2CoreEventDestinations/azure_event_grid.azure_region"
+          ],
+          "type": ""
+        }
+      ],
+      "side": "request",
+      "status": "proven",
+      "targets": [
+        "fake",
+        "stripe"
+      ],
+      "tests": [
+        "TestEventDestinationAttributes/leaves/request/PostV2CoreEventDestinations/azure_event_grid.azure_region"
+      ]
+    },
+    {
+      "accepted_in": [],
+      "branch": "",
+      "object": "v2.core.event_destination",
+      "on": [
+        "create"
+      ],
+      "operation": "PostV2CoreEventDestinations",
+      "path": "azure_event_grid.azure_resource_group_name",
+      "refusals": [
+        {
+          "account_country": "US",
+          "code": "invalid_azure_partner_configuration",
+          "message": "The provided resource group 'conformance' or subscription ID '8f14e45f-ceea-467a-9c4b-7d1a2b3c4d5e' does not exist in Azure.",
+          "param": "",
+          "status": 400,
+          "tests": [
+            "TestEventDestinationAttributes/leaves/request/PostV2CoreEventDestinations/azure_event_grid.azure_resource_group_name"
+          ],
+          "type": ""
+        }
+      ],
+      "side": "request",
+      "status": "proven",
+      "targets": [
+        "fake",
+        "stripe"
+      ],
+      "tests": [
+        "TestEventDestinationAttributes/leaves/request/PostV2CoreEventDestinations/azure_event_grid.azure_resource_group_name"
+      ]
+    },
+    {
+      "accepted_in": [],
+      "branch": "",
+      "object": "v2.core.event_destination",
+      "on": [
+        "create"
+      ],
+      "operation": "PostV2CoreEventDestinations",
+      "path": "azure_event_grid.azure_subscription_id",
+      "refusals": [
+        {
+          "account_country": "US",
+          "code": "invalid_azure_partner_configuration",
+          "message": "The provided resource group 'conformance' or subscription ID '8f14e45f-ceea-467a-9c4b-7d1a2b3c4d5e' does not exist in Azure.",
+          "param": "",
+          "status": 400,
+          "tests": [
+            "TestEventDestinationAttributes/leaves/request/PostV2CoreEventDestinations/azure_event_grid.azure_subscription_id"
+          ],
+          "type": ""
+        }
+      ],
+      "side": "request",
+      "status": "proven",
+      "targets": [
+        "fake",
+        "stripe"
+      ],
+      "tests": [
+        "TestEventDestinationAttributes/leaves/request/PostV2CoreEventDestinations/azure_event_grid.azure_subscription_id"
+      ]
+    },
+    {
+      "accepted_in": [
+        "US"
+      ],
+      "branch": "",
+      "default": {
+        "kind": "value",
+        "value": "",
+        "variants": [
+          {
+            "default": {
+              "kind": "value",
+              "value": ""
+            },
+            "variant": "amazon_eventbridge"
+          }
+        ]
+      },
+      "object": "v2.core.event_destination",
+      "on": [
+        "create"
+      ],
+      "operation": "PostV2CoreEventDestinations",
+      "path": "description",
+      "refusals": [],
+      "returned": {
+        "form": "as_sent",
+        "response_path": "description"
+      },
+      "side": "request",
+      "status": "proven",
+      "targets": [
+        "fake",
+        "stripe"
+      ],
+      "tests": [
+        "TestEventDestinationAttributes/leaves/request/PostV2CoreEventDestinations/description",
+        "TestEventDestinationAttributes/leaves/response/v2.core.event_destination/description"
+      ]
+    },
+    {
+      "accepted_in": [
+        "US"
+      ],
+      "branch": "",
+      "object": "v2.core.event_destination",
+      "on": [
+        "create"
+      ],
+      "operation": "PostV2CoreEventDestinations",
+      "path": "enabled_events",
+      "refusals": [
+        {
+          "account_country": "US",
+          "code": "invalid_azure_partner_configuration",
+          "message": "The provided resource group 'conformance' or subscription ID '8f14e45f-ceea-467a-9c4b-7d1a2b3c4d5e' does not exist in Azure.",
+          "param": "",
+          "status": 400,
+          "tests": [
+            "TestEventDestinationAttributes/leaves/request/PostV2CoreEventDestinations/enabled_events"
+          ],
+          "type": ""
+        }
+      ],
+      "returned": {
+        "form": "as_sent",
+        "response_path": "enabled_events"
+      },
+      "side": "request",
+      "status": "proven",
+      "targets": [
+        "fake",
+        "stripe"
+      ],
+      "tests": [
+        "TestEventDestinationAttributes/leaves/request/PostV2CoreEventDestinations/enabled_events"
+      ]
+    },
+    {
+      "accepted_in": [
+        "US"
+      ],
+      "branch": "",
+      "enum_values": [
+        {
+          "accepted": true,
+          "value": "snapshot"
+        },
+        {
+          "accepted": true,
+          "value": "thin"
+        }
+      ],
+      "object": "v2.core.event_destination",
+      "on": [
+        "create"
+      ],
+      "operation": "PostV2CoreEventDestinations",
+      "path": "event_payload",
+      "refusals": [
+        {
+          "account_country": "US",
+          "code": "invalid_azure_partner_configuration",
+          "message": "The provided resource group 'conformance' or subscription ID '8f14e45f-ceea-467a-9c4b-7d1a2b3c4d5e' does not exist in Azure.",
+          "param": "",
+          "status": 400,
+          "tests": [
+            "TestEventDestinationAttributes/leaves/request/PostV2CoreEventDestinations/event_payload"
+          ],
+          "type": ""
+        }
+      ],
+      "returned": {
+        "form": "as_sent",
+        "response_path": "event_payload"
+      },
+      "side": "request",
+      "status": "proven",
+      "targets": [
+        "fake",
+        "stripe"
+      ],
+      "tests": [
+        "TestEventDestinationAttributes/leaves/request/PostV2CoreEventDestinations/event_payload"
+      ]
+    },
+    {
+      "accepted_in": [
+        "US"
+      ],
+      "branch": "",
+      "default": {
+        "kind": "value",
+        "value": [
+          "@self"
+        ],
+        "variants": [
+          {
+            "default": {
+              "kind": "value",
+              "value": [
+                "@self"
+              ]
+            },
+            "variant": "amazon_eventbridge"
+          }
+        ]
+      },
+      "object": "v2.core.event_destination",
+      "on": [
+        "create"
+      ],
+      "operation": "PostV2CoreEventDestinations",
+      "path": "events_from",
+      "refusals": [],
+      "returned": {
+        "form": "as_sent",
+        "response_path": "events_from"
+      },
+      "side": "request",
+      "status": "proven",
+      "targets": [
+        "fake",
+        "stripe"
+      ],
+      "tests": [
+        "TestEventDestinationAttributes/leaves/request/PostV2CoreEventDestinations/events_from",
+        "TestEventDestinationAttributes/leaves/response/v2.core.event_destination/events_from"
+      ]
+    },
+    {
+      "accepted_in": [
+        "US"
+      ],
+      "branch": "",
+      "default": {
+        "kind": "value",
+        "value": {},
+        "variants": [
+          {
+            "default": {
+              "kind": "value",
+              "value": {}
+            },
+            "variant": "amazon_eventbridge"
+          }
+        ]
+      },
+      "object": "v2.core.event_destination",
+      "on": [
+        "create"
+      ],
+      "operation": "PostV2CoreEventDestinations",
+      "path": "metadata",
+      "refusals": [],
+      "returned": {
+        "form": "as_sent",
+        "response_path": "metadata"
+      },
+      "side": "request",
+      "status": "proven",
+      "targets": [
+        "fake",
+        "stripe"
+      ],
+      "tests": [
+        "TestEventDestinationAttributes/leaves/request/PostV2CoreEventDestinations/metadata",
+        "TestEventDestinationAttributes/leaves/response/v2.core.event_destination/metadata"
+      ]
+    },
+    {
+      "accepted_in": [
+        "US"
+      ],
+      "branch": "",
+      "object": "v2.core.event_destination",
+      "on": [
+        "create"
+      ],
+      "operation": "PostV2CoreEventDestinations",
+      "path": "name",
+      "refusals": [
+        {
+          "account_country": "US",
+          "code": "invalid_azure_partner_configuration",
+          "message": "The provided resource group 'conformance' or subscription ID '8f14e45f-ceea-467a-9c4b-7d1a2b3c4d5e' does not exist in Azure.",
+          "param": "",
+          "status": 400,
+          "tests": [
+            "TestEventDestinationAttributes/leaves/request/PostV2CoreEventDestinations/name"
+          ],
+          "type": ""
+        }
+      ],
+      "returned": {
+        "form": "as_sent",
+        "response_path": "name"
+      },
+      "side": "request",
+      "status": "proven",
+      "targets": [
+        "fake",
+        "stripe"
+      ],
+      "tests": [
+        "TestEventDestinationAttributes/leaves/request/PostV2CoreEventDestinations/name"
+      ]
+    },
+    {
+      "accepted_in": [
+        "US"
+      ],
+      "branch": "",
+      "default": {
+        "kind": "null",
+        "variants": [
+          {
+            "default": {
+              "kind": "null"
+            },
+            "variant": "amazon_eventbridge"
+          }
+        ]
+      },
+      "object": "v2.core.event_destination",
+      "on": [
+        "create"
+      ],
+      "operation": "PostV2CoreEventDestinations",
+      "path": "snapshot_api_version",
+      "refusals": [],
+      "returned": {
+        "form": "as_sent",
+        "response_path": "snapshot_api_version"
+      },
+      "side": "request",
+      "status": "proven",
+      "targets": [
+        "fake",
+        "stripe"
+      ],
+      "tests": [
+        "TestEventDestinationAttributes/leaves/request/PostV2CoreEventDestinations/snapshot_api_version",
+        "TestEventDestinationAttributes/leaves/response/v2.core.event_destination/snapshot_api_version"
+      ]
+    },
+    {
+      "accepted_in": [
+        "US"
+      ],
+      "branch": "",
+      "enum_values": [
+        {
+          "accepted": true,
+          "value": "amazon_eventbridge"
+        },
+        {
+          "accepted": false,
+          "value": "azure_event_grid"
+        },
+        {
+          "accepted": true,
+          "value": "webhook_endpoint"
+        }
+      ],
+      "object": "v2.core.event_destination",
+      "on": [
+        "create"
+      ],
+      "operation": "PostV2CoreEventDestinations",
+      "path": "type",
+      "refusals": [
+        {
+          "account_country": "US",
+          "code": "invalid_azure_partner_configuration",
+          "message": "The provided resource group 'conformance' or subscription ID '8f14e45f-ceea-467a-9c4b-7d1a2b3c4d5e' does not exist in Azure.",
+          "param": "",
+          "status": 400,
+          "tests": [
+            "TestEventDestinationAttributes/leaves/request/PostV2CoreEventDestinations/type"
+          ],
+          "type": ""
+        }
+      ],
+      "returned": {
+        "form": "as_sent",
+        "response_path": "type"
+      },
+      "side": "request",
+      "status": "proven",
+      "targets": [
+        "fake",
+        "stripe"
+      ],
+      "tests": [
+        "TestEventDestinationAttributes/leaves/request/PostV2CoreEventDestinations/type"
+      ]
+    },
+    {
+      "accepted_in": [
+        "US"
+      ],
+      "branch": "",
+      "object": "v2.core.event_destination",
+      "on": [
+        "create"
+      ],
+      "operation": "PostV2CoreEventDestinations",
+      "path": "webhook_endpoint.url",
+      "refusals": [],
+      "returned": {
+        "form": "as_sent",
+        "response_path": "webhook_endpoint.url"
+      },
+      "side": "request",
+      "status": "proven",
+      "targets": [
+        "fake",
+        "stripe"
+      ],
+      "tests": [
+        "TestEventDestinationAttributes/leaves/request/PostV2CoreEventDestinations/webhook_endpoint.url"
+      ]
+    },
+    {
+      "accepted_in": [
+        "US"
+      ],
+      "branch": "",
+      "object": "v2.core.event_destination",
+      "on": [
+        "update"
+      ],
+      "operation": "PostV2CoreEventDestinationsId",
+      "path": "description",
+      "refusals": [],
+      "returned": {
+        "form": "as_sent",
+        "response_path": "description"
+      },
+      "side": "request",
+      "status": "proven",
+      "targets": [
+        "fake",
+        "stripe"
+      ],
+      "tests": [
+        "TestEventDestinationAttributes/leaves/request/PostV2CoreEventDestinationsId/description"
+      ],
+      "unset": {
+        "by": "null",
+        "matcher": {
+          "kind": "unchanged",
+          "path": "description"
+        },
+        "result": "unchanged"
+      }
+    },
+    {
+      "accepted_in": [
+        "US"
+      ],
+      "branch": "",
+      "object": "v2.core.event_destination",
+      "on": [
+        "update"
+      ],
+      "operation": "PostV2CoreEventDestinationsId",
+      "path": "enabled_events",
+      "refusals": [],
+      "returned": {
+        "form": "as_sent",
+        "response_path": "enabled_events"
+      },
+      "side": "request",
+      "status": "proven",
+      "targets": [
+        "fake",
+        "stripe"
+      ],
+      "tests": [
+        "TestEventDestinationAttributes/leaves/request/PostV2CoreEventDestinationsId/enabled_events"
+      ],
+      "unset": {
+        "by": "shorter_array",
+        "matcher": {
+          "kind": "sent",
+          "path": "enabled_events"
+        },
+        "result": "as_sent"
+      }
+    },
+    {
+      "accepted_in": [
+        "US"
+      ],
+      "branch": "",
+      "object": "v2.core.event_destination",
+      "on": [
+        "update"
+      ],
+      "operation": "PostV2CoreEventDestinationsId",
+      "path": "metadata",
+      "refusals": [],
+      "returned": {
+        "form": "as_sent",
+        "response_path": "metadata"
+      },
+      "side": "request",
+      "status": "proven",
+      "targets": [
+        "fake",
+        "stripe"
+      ],
+      "tests": [
+        "TestEventDestinationAttributes/leaves/request/PostV2CoreEventDestinationsId/metadata"
+      ],
+      "unset": {
+        "by": "null",
+        "matcher": {
+          "kind": "sent",
+          "path": "metadata"
+        },
+        "result": "as_sent"
+      }
+    },
+    {
+      "accepted_in": [
+        "US"
+      ],
+      "branch": "",
+      "object": "v2.core.event_destination",
+      "on": [
+        "update"
+      ],
+      "operation": "PostV2CoreEventDestinationsId",
+      "path": "name",
+      "refusals": [],
+      "returned": {
+        "form": "as_sent",
+        "response_path": "name"
+      },
+      "side": "request",
+      "status": "proven",
+      "targets": [
+        "fake",
+        "stripe"
+      ],
+      "tests": [
+        "TestEventDestinationAttributes/leaves/request/PostV2CoreEventDestinationsId/name"
+      ],
+      "unset": {
+        "by": "null",
+        "matcher": {
+          "kind": "unchanged",
+          "path": "name"
+        },
+        "result": "unchanged"
+      }
+    },
+    {
+      "accepted_in": [
+        "US"
+      ],
+      "branch": "",
+      "object": "v2.core.event_destination",
+      "on": [
+        "update"
+      ],
+      "operation": "PostV2CoreEventDestinationsId",
+      "path": "webhook_endpoint.url",
+      "refusals": [],
+      "returned": {
+        "form": "as_sent",
+        "response_path": "webhook_endpoint.url"
+      },
+      "side": "request",
+      "status": "proven",
+      "targets": [
+        "fake",
+        "stripe"
+      ],
+      "tests": [
+        "TestEventDestinationAttributes/leaves/request/PostV2CoreEventDestinationsId/webhook_endpoint.url"
+      ]
+    },
+    {
+      "branch": "",
+      "initial": [
+        {
+          "matcher": {
+            "kind": "absent"
+          },
+          "variant": ""
+        },
+        {
+          "matcher": {
+            "kind": "sent",
+            "path": "amazon_eventbridge.aws_account_id"
+          },
+          "variant": "amazon_eventbridge"
+        }
+      ],
+      "nullable": {
+        "non_null_observed": true,
+        "null_observed": false
+      },
+      "object": "v2.core.event_destination",
+      "operation": "",
+      "path": "amazon_eventbridge.aws_account_id",
+      "side": "response",
+      "status": "proven",
+      "targets": [
+        "fake",
+        "stripe"
+      ],
+      "tests": [
+        "TestEventDestinationAttributes/leaves/response/v2.core.event_destination/amazon_eventbridge.aws_account_id"
+      ]
+    },
+    {
+      "branch": "",
+      "initial": [
+        {
+          "matcher": {
+            "kind": "absent"
+          },
+          "variant": ""
+        },
+        {
+          "matcher": {
+            "kind": "created",
+            "prefix": "arn:aws:events:us-east-1::event-source/aws.partner/stripe.com/"
+          },
+          "variant": "amazon_eventbridge"
+        }
+      ],
+      "nullable": {
+        "non_null_observed": true,
+        "null_observed": false
+      },
+      "object": "v2.core.event_destination",
+      "operation": "",
+      "path": "amazon_eventbridge.aws_event_source_arn",
+      "side": "response",
+      "status": "proven",
+      "targets": [
+        "fake",
+        "stripe"
+      ],
+      "tests": [
+        "TestEventDestinationAttributes/leaves/response/v2.core.event_destination/amazon_eventbridge.aws_event_source_arn"
+      ]
+    },
+    {
+      "branch": "",
+      "initial": [
+        {
+          "matcher": {
+            "kind": "absent"
+          },
+          "variant": ""
+        },
+        {
+          "matcher": {
+            "kind": "value",
+            "value": "pending"
+          },
+          "variant": "amazon_eventbridge"
+        }
+      ],
+      "nullable": {
+        "non_null_observed": true,
+        "null_observed": false
+      },
+      "object": "v2.core.event_destination",
+      "operation": "",
+      "path": "amazon_eventbridge.aws_event_source_status",
+      "side": "response",
+      "status": "proven",
+      "targets": [
+        "fake",
+        "stripe"
+      ],
+      "tests": [
+        "TestEventDestinationAttributes/leaves/response/v2.core.event_destination/amazon_eventbridge.aws_event_source_status"
+      ]
+    },
+    {
+      "branch": "",
+      "initial": [
+        {
+          "matcher": {
+            "kind": "timestamp"
+          },
+          "variant": ""
+        },
+        {
+          "matcher": {
+            "kind": "timestamp"
+          },
+          "variant": "amazon_eventbridge"
+        }
+      ],
+      "nullable": {
+        "non_null_observed": true,
+        "null_observed": false
+      },
+      "object": "v2.core.event_destination",
+      "operation": "",
+      "path": "created",
+      "side": "response",
+      "status": "proven",
+      "targets": [
+        "fake",
+        "stripe"
+      ],
+      "tests": [
+        "TestEventDestinationAttributes/leaves/response/v2.core.event_destination/created"
+      ]
+    },
+    {
+      "branch": "",
+      "initial": [
+        {
+          "matcher": {
+            "kind": "value",
+            "value": ""
+          },
+          "variant": ""
+        },
+        {
+          "matcher": {
+            "kind": "value",
+            "value": ""
+          },
+          "variant": "amazon_eventbridge"
+        }
+      ],
+      "nullable": {
+        "non_null_observed": true,
+        "null_observed": false
+      },
+      "object": "v2.core.event_destination",
+      "operation": "",
+      "path": "description",
+      "side": "response",
+      "status": "proven",
+      "targets": [
+        "fake",
+        "stripe"
+      ],
+      "tests": [
+        "TestEventDestinationAttributes/leaves/response/v2.core.event_destination/description"
+      ]
+    },
+    {
+      "branch": "",
+      "initial": [
+        {
+          "matcher": {
+            "kind": "sent",
+            "path": "enabled_events"
+          },
+          "variant": ""
+        },
+        {
+          "matcher": {
+            "kind": "sent",
+            "path": "enabled_events"
+          },
+          "variant": "amazon_eventbridge"
+        }
+      ],
+      "nullable": {
+        "non_null_observed": true,
+        "null_observed": false
+      },
+      "object": "v2.core.event_destination",
+      "operation": "",
+      "path": "enabled_events",
+      "side": "response",
+      "status": "proven",
+      "targets": [
+        "fake",
+        "stripe"
+      ],
+      "tests": [
+        "TestEventDestinationAttributes/leaves/response/v2.core.event_destination/enabled_events"
+      ]
+    },
+    {
+      "branch": "",
+      "initial": [
+        {
+          "matcher": {
+            "kind": "sent",
+            "path": "event_payload"
+          },
+          "variant": ""
+        },
+        {
+          "matcher": {
+            "kind": "sent",
+            "path": "event_payload"
+          },
+          "variant": "amazon_eventbridge"
+        }
+      ],
+      "nullable": {
+        "non_null_observed": true,
+        "null_observed": false
+      },
+      "object": "v2.core.event_destination",
+      "operation": "",
+      "path": "event_payload",
+      "side": "response",
+      "status": "proven",
+      "targets": [
+        "fake",
+        "stripe"
+      ],
+      "tests": [
+        "TestEventDestinationAttributes/leaves/response/v2.core.event_destination/event_payload"
+      ]
+    },
+    {
+      "branch": "",
+      "initial": [
+        {
+          "matcher": {
+            "kind": "value",
+            "value": [
+              "@self"
+            ]
+          },
+          "variant": ""
+        },
+        {
+          "matcher": {
+            "kind": "value",
+            "value": [
+              "@self"
+            ]
+          },
+          "variant": "amazon_eventbridge"
+        }
+      ],
+      "nullable": {
+        "non_null_observed": true,
+        "null_observed": false
+      },
+      "object": "v2.core.event_destination",
+      "operation": "",
+      "path": "events_from",
+      "side": "response",
+      "status": "proven",
+      "targets": [
+        "fake",
+        "stripe"
+      ],
+      "tests": [
+        "TestEventDestinationAttributes/leaves/response/v2.core.event_destination/events_from"
+      ]
+    },
+    {
+      "branch": "",
+      "initial": [
+        {
+          "matcher": {
+            "kind": "created"
+          },
+          "variant": ""
+        },
+        {
+          "matcher": {
+            "kind": "created"
+          },
+          "variant": "amazon_eventbridge"
+        }
+      ],
+      "nullable": {
+        "non_null_observed": true,
+        "null_observed": false
+      },
+      "object": "v2.core.event_destination",
+      "operation": "",
+      "path": "id",
+      "side": "response",
+      "status": "proven",
+      "targets": [
+        "fake",
+        "stripe"
+      ],
+      "tests": [
+        "TestEventDestinationAttributes/leaves/response/v2.core.event_destination/id"
+      ]
+    },
+    {
+      "branch": "",
+      "initial": [
+        {
+          "matcher": {
+            "kind": "value",
+            "value": false
+          },
+          "variant": ""
+        },
+        {
+          "matcher": {
+            "kind": "value",
+            "value": false
+          },
+          "variant": "amazon_eventbridge"
+        }
+      ],
+      "nullable": {
+        "non_null_observed": true,
+        "null_observed": false
+      },
+      "object": "v2.core.event_destination",
+      "operation": "",
+      "path": "livemode",
+      "side": "response",
+      "status": "proven",
+      "targets": [
+        "fake",
+        "stripe"
+      ],
+      "tests": [
+        "TestEventDestinationAttributes/leaves/response/v2.core.event_destination/livemode"
+      ]
+    },
+    {
+      "branch": "",
+      "initial": [
+        {
+          "matcher": {
+            "kind": "value",
+            "value": {}
+          },
+          "variant": ""
+        },
+        {
+          "matcher": {
+            "kind": "value",
+            "value": {}
+          },
+          "variant": "amazon_eventbridge"
+        }
+      ],
+      "nullable": {
+        "non_null_observed": true,
+        "null_observed": false
+      },
+      "object": "v2.core.event_destination",
+      "operation": "",
+      "path": "metadata",
+      "side": "response",
+      "status": "proven",
+      "targets": [
+        "fake",
+        "stripe"
+      ],
+      "tests": [
+        "TestEventDestinationAttributes/leaves/response/v2.core.event_destination/metadata"
+      ]
+    },
+    {
+      "branch": "",
+      "initial": [
+        {
+          "matcher": {
+            "kind": "sent",
+            "path": "name"
+          },
+          "variant": ""
+        },
+        {
+          "matcher": {
+            "kind": "sent",
+            "path": "name"
+          },
+          "variant": "amazon_eventbridge"
+        }
+      ],
+      "nullable": {
+        "non_null_observed": true,
+        "null_observed": false
+      },
+      "object": "v2.core.event_destination",
+      "operation": "",
+      "path": "name",
+      "side": "response",
+      "status": "proven",
+      "targets": [
+        "fake",
+        "stripe"
+      ],
+      "tests": [
+        "TestEventDestinationAttributes/leaves/response/v2.core.event_destination/name"
+      ]
+    },
+    {
+      "branch": "",
+      "initial": [
+        {
+          "matcher": {
+            "kind": "value",
+            "value": "v2.core.event_destination"
+          },
+          "variant": ""
+        },
+        {
+          "matcher": {
+            "kind": "value",
+            "value": "v2.core.event_destination"
+          },
+          "variant": "amazon_eventbridge"
+        }
+      ],
+      "nullable": {
+        "non_null_observed": true,
+        "null_observed": false
+      },
+      "object": "v2.core.event_destination",
+      "operation": "",
+      "path": "object",
+      "side": "response",
+      "status": "proven",
+      "targets": [
+        "fake",
+        "stripe"
+      ],
+      "tests": [
+        "TestEventDestinationAttributes/leaves/response/v2.core.event_destination/object"
+      ]
+    },
+    {
+      "branch": "",
+      "initial": [
+        {
+          "matcher": {
+            "kind": "null"
+          },
+          "variant": ""
+        },
+        {
+          "matcher": {
+            "kind": "null"
+          },
+          "variant": "amazon_eventbridge"
+        }
+      ],
+      "nullable": {
+        "non_null_observed": true,
+        "null_observed": true
+      },
+      "object": "v2.core.event_destination",
+      "operation": "",
+      "path": "snapshot_api_version",
+      "side": "response",
+      "status": "proven",
+      "targets": [
+        "fake",
+        "stripe"
+      ],
+      "tests": [
+        "TestEventDestinationAttributes/leaves/response/v2.core.event_destination/snapshot_api_version"
+      ]
+    },
+    {
+      "branch": "",
+      "initial": [
+        {
+          "matcher": {
+            "kind": "value",
+            "value": "enabled"
+          },
+          "variant": ""
+        },
+        {
+          "matcher": {
+            "kind": "value",
+            "value": "enabled"
+          },
+          "variant": "amazon_eventbridge"
+        }
+      ],
+      "nullable": {
+        "non_null_observed": true,
+        "null_observed": false
+      },
+      "object": "v2.core.event_destination",
+      "operation": "",
+      "path": "status",
+      "side": "response",
+      "status": "proven",
+      "targets": [
+        "fake",
+        "stripe"
+      ],
+      "tests": [
+        "TestEventDestinationAttributes/leaves/response/v2.core.event_destination/status"
+      ]
+    },
+    {
+      "branch": "",
+      "initial": [
+        {
+          "matcher": {
+            "kind": "absent"
+          },
+          "variant": ""
+        },
+        {
+          "matcher": {
+            "kind": "absent"
+          },
+          "variant": "amazon_eventbridge"
+        }
+      ],
+      "nullable": {
+        "non_null_observed": false,
+        "null_observed": false
+      },
+      "object": "v2.core.event_destination",
+      "operation": "",
+      "path": "status_details.disabled.reason",
+      "side": "response",
+      "status": "proven",
+      "targets": [
+        "fake",
+        "stripe"
+      ],
+      "tests": [
+        "TestEventDestination/disable_records_the_reason/leaves/response/v2.core.event_destination/status_details.disabled.reason"
+      ]
+    },
+    {
+      "branch": "",
+      "initial": [
+        {
+          "matcher": {
+            "kind": "sent",
+            "path": "type"
+          },
+          "variant": ""
+        },
+        {
+          "matcher": {
+            "kind": "sent",
+            "path": "type"
+          },
+          "variant": "amazon_eventbridge"
+        }
+      ],
+      "nullable": {
+        "non_null_observed": true,
+        "null_observed": false
+      },
+      "object": "v2.core.event_destination",
+      "operation": "",
+      "path": "type",
+      "side": "response",
+      "status": "proven",
+      "targets": [
+        "fake",
+        "stripe"
+      ],
+      "tests": [
+        "TestEventDestinationAttributes/leaves/response/v2.core.event_destination/type"
+      ]
+    },
+    {
+      "branch": "",
+      "initial": [
+        {
+          "matcher": {
+            "kind": "timestamp"
+          },
+          "variant": ""
+        },
+        {
+          "matcher": {
+            "kind": "timestamp"
+          },
+          "variant": "amazon_eventbridge"
+        }
+      ],
+      "nullable": {
+        "non_null_observed": true,
+        "null_observed": false
+      },
+      "object": "v2.core.event_destination",
+      "operation": "",
+      "path": "updated",
+      "side": "response",
+      "status": "proven",
+      "targets": [
+        "fake",
+        "stripe"
+      ],
+      "tests": [
+        "TestEventDestinationAttributes/leaves/response/v2.core.event_destination/updated"
+      ]
+    },
+    {
+      "branch": "",
+      "initial": [
+        {
+          "matcher": {
+            "kind": "secret",
+            "prefix": "whsec_"
+          },
+          "variant": ""
+        },
+        {
+          "matcher": {
+            "kind": "absent"
+          },
+          "variant": "amazon_eventbridge"
+        }
+      ],
+      "nullable": {
+        "non_null_observed": true,
+        "null_observed": true
+      },
+      "object": "v2.core.event_destination",
+      "operation": "",
+      "path": "webhook_endpoint.signing_secret",
+      "side": "response",
+      "status": "proven",
+      "targets": [
+        "fake",
+        "stripe"
+      ],
+      "tests": [
+        "TestEventDestinationAttributes/leaves/response/v2.core.event_destination/webhook_endpoint.signing_secret"
+      ]
+    },
+    {
+      "branch": "",
+      "initial": [
+        {
+          "matcher": {
+            "kind": "sent",
+            "path": "webhook_endpoint.url"
+          },
+          "variant": ""
+        },
+        {
+          "matcher": {
+            "kind": "absent"
+          },
+          "variant": "amazon_eventbridge"
+        }
+      ],
+      "nullable": {
+        "non_null_observed": true,
+        "null_observed": false
+      },
+      "object": "v2.core.event_destination",
+      "operation": "",
+      "path": "webhook_endpoint.url",
+      "side": "response",
+      "status": "proven",
+      "targets": [
+        "fake",
+        "stripe"
+      ],
+      "tests": [
+        "TestEventDestinationAttributes/leaves/response/v2.core.event_destination/webhook_endpoint.url"
+      ]
+    }
+  ],
+  "minimal_creates": [
+    {
+      "account_country": "US",
+      "object": "coupon",
+      "operation": "PostCoupons",
+      "params": {
+        "percent_off": 10
+      },
+      "response": {
+        "amount_off": {
+          "kind": "null"
+        },
+        "applies_to.products": {
+          "kind": "absent"
+        },
+        "created": {
+          "kind": "timestamp"
+        },
+        "currency": {
+          "kind": "null"
+        },
+        "currency_options.amount_off": {
+          "kind": "absent"
+        },
+        "duration": {
+          "kind": "value",
+          "value": "once"
+        },
+        "duration_in_months": {
+          "kind": "null"
+        },
+        "id": {
+          "kind": "created"
+        },
+        "livemode": {
+          "kind": "value",
+          "value": false
+        },
+        "max_redemptions": {
+          "kind": "null"
+        },
+        "metadata": {
+          "kind": "value",
+          "value": {}
+        },
+        "name": {
+          "kind": "null"
+        },
+        "object": {
+          "kind": "value",
+          "value": "coupon"
+        },
+        "percent_off": {
+          "kind": "sent",
+          "path": "percent_off"
+        },
+        "redeem_by": {
+          "kind": "null"
+        },
+        "times_redeemed": {
+          "kind": "value",
+          "value": 0
+        },
+        "valid": {
+          "kind": "value",
+          "value": true
+        }
+      },
+      "selected_by": {},
+      "status": 200,
+      "tests": [
+        "TestCouponAttributes/leaves/response/coupon/amount_off",
+        "TestCouponAttributes/leaves/response/coupon/applies_to.products",
+        "TestCouponAttributes/leaves/response/coupon/created",
+        "TestCouponAttributes/leaves/response/coupon/currency",
+        "TestCouponAttributes/leaves/response/coupon/currency_options.amount_off",
+        "TestCouponAttributes/leaves/response/coupon/duration",
+        "TestCouponAttributes/leaves/response/coupon/duration_in_months",
+        "TestCouponAttributes/leaves/response/coupon/id",
+        "TestCouponAttributes/leaves/response/coupon/livemode",
+        "TestCouponAttributes/leaves/response/coupon/max_redemptions",
+        "TestCouponAttributes/leaves/response/coupon/metadata",
+        "TestCouponAttributes/leaves/response/coupon/name",
+        "TestCouponAttributes/leaves/response/coupon/object",
+        "TestCouponAttributes/leaves/response/coupon/percent_off",
+        "TestCouponAttributes/leaves/response/coupon/redeem_by",
+        "TestCouponAttributes/leaves/response/coupon/times_redeemed",
+        "TestCouponAttributes/leaves/response/coupon/valid"
+      ],
+      "variant": ""
+    },
+    {
+      "account_country": "US",
+      "object": "coupon",
+      "operation": "PostCoupons",
+      "params": {
+        "amount_off": 500,
+        "currency": {
+          "$gen": "account_currency"
+        }
+      },
+      "response": {
+        "amount_off": {
+          "kind": "sent",
+          "path": "amount_off"
+        },
+        "applies_to.products": {
+          "kind": "absent"
+        },
+        "created": {
+          "kind": "timestamp"
+        },
+        "currency": {
+          "kind": "sent",
+          "path": "currency"
+        },
+        "currency_options.amount_off": {
+          "kind": "value",
+          "value": {
+            "usd": 500
+          }
+        },
+        "duration": {
+          "kind": "value",
+          "value": "once"
+        },
+        "duration_in_months": {
+          "kind": "null"
+        },
+        "id": {
+          "kind": "created"
+        },
+        "livemode": {
+          "kind": "value",
+          "value": false
+        },
+        "max_redemptions": {
+          "kind": "null"
+        },
+        "metadata": {
+          "kind": "value",
+          "value": {}
+        },
+        "name": {
+          "kind": "null"
+        },
+        "object": {
+          "kind": "value",
+          "value": "coupon"
+        },
+        "percent_off": {
+          "kind": "null"
+        },
+        "redeem_by": {
+          "kind": "null"
+        },
+        "times_redeemed": {
+          "kind": "value",
+          "value": 0
+        },
+        "valid": {
+          "kind": "value",
+          "value": true
+        }
+      },
+      "selected_by": {
+        "amount_off": 500,
+        "currency": {
+          "$gen": "account_currency"
+        }
+      },
+      "status": 200,
+      "tests": [
+        "TestCouponAttributes/leaves/response/coupon/amount_off",
+        "TestCouponAttributes/leaves/response/coupon/applies_to.products",
+        "TestCouponAttributes/leaves/response/coupon/created",
+        "TestCouponAttributes/leaves/response/coupon/currency",
+        "TestCouponAttributes/leaves/response/coupon/currency_options.amount_off",
+        "TestCouponAttributes/leaves/response/coupon/duration",
+        "TestCouponAttributes/leaves/response/coupon/duration_in_months",
+        "TestCouponAttributes/leaves/response/coupon/id",
+        "TestCouponAttributes/leaves/response/coupon/livemode",
+        "TestCouponAttributes/leaves/response/coupon/max_redemptions",
+        "TestCouponAttributes/leaves/response/coupon/metadata",
+        "TestCouponAttributes/leaves/response/coupon/name",
+        "TestCouponAttributes/leaves/response/coupon/object",
+        "TestCouponAttributes/leaves/response/coupon/percent_off",
+        "TestCouponAttributes/leaves/response/coupon/redeem_by",
+        "TestCouponAttributes/leaves/response/coupon/times_redeemed",
+        "TestCouponAttributes/leaves/response/coupon/valid"
+      ],
+      "variant": "amount_off"
+    },
+    {
+      "account_country": "JP",
+      "object": "terminal.location",
+      "operation": "PostTerminalLocations",
+      "params": {
+        "address_kana": {
+          "city": "ｼﾌﾞﾔ",
+          "country": "JP",
+          "line1": "27-15",
+          "postal_code": "1500001",
+          "state": "ﾄｳｷﾖｳﾄ",
+          "town": "ｼﾞﾝｸﾞｳﾏｴ 3-"
+        },
+        "address_kanji": {
+          "city": "渋谷区",
+          "country": "JP",
+          "line1": "２７－１５",
+          "postal_code": "１５００００１",
+          "state": "東京都",
+          "town": "神宮前　３丁目"
+        },
+        "display_name": {
+          "$gen": "unique",
+          "arg": "100"
+        }
+      },
+      "response": {
+        "address_kana.city": {
+          "kind": "sent",
+          "path": "address_kana.city"
+        },
+        "address_kana.country": {
+          "kind": "sent",
+          "path": "address_kana.country"
+        },
+        "address_kana.line1": {
+          "kind": "sent",
+          "path": "address_kana.line1"
+        },
+        "address_kana.postal_code": {
+          "kind": "sent",
+          "path": "address_kana.postal_code"
+        },
+        "address_kana.state": {
+          "kind": "sent",
+          "path": "address_kana.state"
+        },
+        "address_kana.town": {
+          "kind": "sent",
+          "path": "address_kana.town"
+        },
+        "address_kanji.city": {
+          "kind": "sent",
+          "path": "address_kanji.city"
+        },
+        "address_kanji.country": {
+          "kind": "sent",
+          "path": "address_kanji.country"
+        },
+        "address_kanji.line1": {
+          "kind": "sent",
+          "path": "address_kanji.line1"
+        },
+        "address_kanji.postal_code": {
+          "kind": "sent",
+          "path": "address_kanji.postal_code"
+        },
+        "address_kanji.state": {
+          "kind": "sent",
+          "path": "address_kanji.state"
+        },
+        "address_kanji.town": {
+          "kind": "sent",
+          "path": "address_kanji.town"
+        },
+        "display_name_kana": {
+          "kind": "absent"
+        },
+        "display_name_kanji": {
+          "kind": "absent"
+        }
+      },
+      "selected_by": {},
+      "status": 200,
+      "tests": [
+        "TestTerminalLocationAttributes/leaves/response/terminal.location/address_kana.city",
+        "TestTerminalLocationAttributes/leaves/response/terminal.location/address_kana.country",
+        "TestTerminalLocationAttributes/leaves/response/terminal.location/address_kana.line1",
+        "TestTerminalLocationAttributes/leaves/response/terminal.location/address_kana.postal_code",
+        "TestTerminalLocationAttributes/leaves/response/terminal.location/address_kana.state",
+        "TestTerminalLocationAttributes/leaves/response/terminal.location/address_kana.town",
+        "TestTerminalLocationAttributes/leaves/response/terminal.location/address_kanji.city",
+        "TestTerminalLocationAttributes/leaves/response/terminal.location/address_kanji.country",
+        "TestTerminalLocationAttributes/leaves/response/terminal.location/address_kanji.line1",
+        "TestTerminalLocationAttributes/leaves/response/terminal.location/address_kanji.postal_code",
+        "TestTerminalLocationAttributes/leaves/response/terminal.location/address_kanji.state",
+        "TestTerminalLocationAttributes/leaves/response/terminal.location/address_kanji.town",
+        "TestTerminalLocationAttributes/leaves/response/terminal.location/display_name_kana",
+        "TestTerminalLocationAttributes/leaves/response/terminal.location/display_name_kanji"
+      ],
+      "variant": ""
+    },
+    {
+      "account_country": "US",
+      "object": "v2.core.event_destination",
+      "operation": "PostV2CoreEventDestinations",
+      "params": {
+        "enabled_events": [
+          "v1.billing.meter.error_report_triggered"
+        ],
+        "event_payload": "thin",
+        "name": {
+          "$gen": "unique"
+        },
+        "type": "webhook_endpoint",
+        "webhook_endpoint": {
+          "url": {
+            "$gen": "url"
+          }
+        }
+      },
+      "response": {
+        "amazon_eventbridge.aws_account_id": {
+          "kind": "absent"
+        },
+        "amazon_eventbridge.aws_event_source_arn": {
+          "kind": "absent"
+        },
+        "amazon_eventbridge.aws_event_source_status": {
+          "kind": "absent"
+        },
+        "created": {
+          "kind": "timestamp"
+        },
+        "description": {
+          "kind": "value",
+          "value": ""
+        },
+        "enabled_events": {
+          "kind": "sent",
+          "path": "enabled_events"
+        },
+        "event_payload": {
+          "kind": "sent",
+          "path": "event_payload"
+        },
+        "events_from": {
+          "kind": "value",
+          "value": [
+            "@self"
+          ]
+        },
+        "id": {
+          "kind": "created"
+        },
+        "livemode": {
+          "kind": "value",
+          "value": false
+        },
+        "metadata": {
+          "kind": "value",
+          "value": {}
+        },
+        "name": {
+          "kind": "sent",
+          "path": "name"
+        },
+        "object": {
+          "kind": "value",
+          "value": "v2.core.event_destination"
+        },
+        "snapshot_api_version": {
+          "kind": "null"
+        },
+        "status": {
+          "kind": "value",
+          "value": "enabled"
+        },
+        "status_details.disabled.reason": {
+          "kind": "absent"
+        },
+        "type": {
+          "kind": "sent",
+          "path": "type"
+        },
+        "updated": {
+          "kind": "timestamp"
+        },
+        "webhook_endpoint.signing_secret": {
+          "kind": "secret",
+          "prefix": "whsec_"
+        },
+        "webhook_endpoint.url": {
+          "kind": "sent",
+          "path": "webhook_endpoint.url"
+        }
+      },
+      "selected_by": {},
+      "status": 200,
+      "tests": [
+        "TestEventDestination/disable_records_the_reason/leaves/response/v2.core.event_destination/status_details.disabled.reason",
+        "TestEventDestinationAttributes/leaves/response/v2.core.event_destination/amazon_eventbridge.aws_account_id",
+        "TestEventDestinationAttributes/leaves/response/v2.core.event_destination/amazon_eventbridge.aws_event_source_arn",
+        "TestEventDestinationAttributes/leaves/response/v2.core.event_destination/amazon_eventbridge.aws_event_source_status",
+        "TestEventDestinationAttributes/leaves/response/v2.core.event_destination/created",
+        "TestEventDestinationAttributes/leaves/response/v2.core.event_destination/description",
+        "TestEventDestinationAttributes/leaves/response/v2.core.event_destination/enabled_events",
+        "TestEventDestinationAttributes/leaves/response/v2.core.event_destination/event_payload",
+        "TestEventDestinationAttributes/leaves/response/v2.core.event_destination/events_from",
+        "TestEventDestinationAttributes/leaves/response/v2.core.event_destination/id",
+        "TestEventDestinationAttributes/leaves/response/v2.core.event_destination/livemode",
+        "TestEventDestinationAttributes/leaves/response/v2.core.event_destination/metadata",
+        "TestEventDestinationAttributes/leaves/response/v2.core.event_destination/name",
+        "TestEventDestinationAttributes/leaves/response/v2.core.event_destination/object",
+        "TestEventDestinationAttributes/leaves/response/v2.core.event_destination/snapshot_api_version",
+        "TestEventDestinationAttributes/leaves/response/v2.core.event_destination/status",
+        "TestEventDestinationAttributes/leaves/response/v2.core.event_destination/type",
+        "TestEventDestinationAttributes/leaves/response/v2.core.event_destination/updated",
+        "TestEventDestinationAttributes/leaves/response/v2.core.event_destination/webhook_endpoint.signing_secret",
+        "TestEventDestinationAttributes/leaves/response/v2.core.event_destination/webhook_endpoint.url"
+      ],
+      "variant": ""
+    },
+    {
+      "account_country": "US",
+      "object": "v2.core.event_destination",
+      "operation": "PostV2CoreEventDestinations",
+      "params": {
+        "amazon_eventbridge": {
+          "aws_account_id": "123456789012",
+          "aws_region": "us-east-1"
+        },
+        "enabled_events": [
+          "v1.billing.meter.error_report_triggered"
+        ],
+        "event_payload": "thin",
+        "name": {
+          "$gen": "unique"
+        },
+        "type": "amazon_eventbridge"
+      },
+      "response": {
+        "amazon_eventbridge.aws_account_id": {
+          "kind": "sent",
+          "path": "amazon_eventbridge.aws_account_id"
+        },
+        "amazon_eventbridge.aws_event_source_arn": {
+          "kind": "created",
+          "prefix": "arn:aws:events:us-east-1::event-source/aws.partner/stripe.com/"
+        },
+        "amazon_eventbridge.aws_event_source_status": {
+          "kind": "value",
+          "value": "pending"
+        },
+        "created": {
+          "kind": "timestamp"
+        },
+        "description": {
+          "kind": "value",
+          "value": ""
+        },
+        "enabled_events": {
+          "kind": "sent",
+          "path": "enabled_events"
+        },
+        "event_payload": {
+          "kind": "sent",
+          "path": "event_payload"
+        },
+        "events_from": {
+          "kind": "value",
+          "value": [
+            "@self"
+          ]
+        },
+        "id": {
+          "kind": "created"
+        },
+        "livemode": {
+          "kind": "value",
+          "value": false
+        },
+        "metadata": {
+          "kind": "value",
+          "value": {}
+        },
+        "name": {
+          "kind": "sent",
+          "path": "name"
+        },
+        "object": {
+          "kind": "value",
+          "value": "v2.core.event_destination"
+        },
+        "snapshot_api_version": {
+          "kind": "null"
+        },
+        "status": {
+          "kind": "value",
+          "value": "enabled"
+        },
+        "status_details.disabled.reason": {
+          "kind": "absent"
+        },
+        "type": {
+          "kind": "sent",
+          "path": "type"
+        },
+        "updated": {
+          "kind": "timestamp"
+        },
+        "webhook_endpoint.signing_secret": {
+          "kind": "absent"
+        },
+        "webhook_endpoint.url": {
+          "kind": "absent"
+        }
+      },
+      "selected_by": {
+        "amazon_eventbridge": {
+          "aws_account_id": "123456789012",
+          "aws_region": "us-east-1"
+        },
+        "type": "amazon_eventbridge"
+      },
+      "status": 200,
+      "tests": [
+        "TestEventDestination/disable_records_the_reason/leaves/response/v2.core.event_destination/status_details.disabled.reason",
+        "TestEventDestinationAttributes/leaves/response/v2.core.event_destination/amazon_eventbridge.aws_account_id",
+        "TestEventDestinationAttributes/leaves/response/v2.core.event_destination/amazon_eventbridge.aws_event_source_arn",
+        "TestEventDestinationAttributes/leaves/response/v2.core.event_destination/amazon_eventbridge.aws_event_source_status",
+        "TestEventDestinationAttributes/leaves/response/v2.core.event_destination/created",
+        "TestEventDestinationAttributes/leaves/response/v2.core.event_destination/description",
+        "TestEventDestinationAttributes/leaves/response/v2.core.event_destination/enabled_events",
+        "TestEventDestinationAttributes/leaves/response/v2.core.event_destination/event_payload",
+        "TestEventDestinationAttributes/leaves/response/v2.core.event_destination/events_from",
+        "TestEventDestinationAttributes/leaves/response/v2.core.event_destination/id",
+        "TestEventDestinationAttributes/leaves/response/v2.core.event_destination/livemode",
+        "TestEventDestinationAttributes/leaves/response/v2.core.event_destination/metadata",
+        "TestEventDestinationAttributes/leaves/response/v2.core.event_destination/name",
+        "TestEventDestinationAttributes/leaves/response/v2.core.event_destination/object",
+        "TestEventDestinationAttributes/leaves/response/v2.core.event_destination/snapshot_api_version",
+        "TestEventDestinationAttributes/leaves/response/v2.core.event_destination/status",
+        "TestEventDestinationAttributes/leaves/response/v2.core.event_destination/type",
+        "TestEventDestinationAttributes/leaves/response/v2.core.event_destination/updated",
+        "TestEventDestinationAttributes/leaves/response/v2.core.event_destination/webhook_endpoint.signing_secret",
+        "TestEventDestinationAttributes/leaves/response/v2.core.event_destination/webhook_endpoint.url"
+      ],
+      "variant": "amazon_eventbridge"
+    }
+  ],
+  "paged_lists": [],
+  "rules": [],
+  "scope": {
+    "file": "handoff-leaves.tsv",
+    "provider_commit": "4b16f5e0fca94111c4c2f84a496f02bfb1f2551a",
+    "sha256": "c1246f55c4f2131cc741c11804877e1ac69cec1b80f8bb0f4051896c443c26b8"
+  },
+  "side_effects": [],
+  "spec_sha256": "9119e72c7ff8ad142e94f7efa9cf49d8e6eec69df3592e17e8fba15099726ed7",
+  "stripe_run": {
+    "event": "push",
+    "id": 40926522642,
+    "passed": false,
+    "platform_country": "US",
+    "sandbox": "ci",
+    "time": "2026-10-29T19:02:11Z"
+  },
+  "suite_commit": "761e47215607cbfaa1cf34ce674c364aae2b1e35"
+}

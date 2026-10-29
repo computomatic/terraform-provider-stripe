@@ -43,14 +43,14 @@ The following arguments are required:
 
 The following arguments are optional:
 
-* `active` - (Optional) Whether the promotion code is currently active.
-* `code` - (Optional) The customer-facing code. Regardless of case, this code must be unique across all active promotion codes for a specific customer. Valid characters are lower case letters (a-z), upper case letters (A-Z), digits (0-9), and dashes (-). If left blank, we will generate one automatically. Changing it replaces the resource.
+* `active` - (Optional) Whether the promotion code is currently active. Removing it from the configuration leaves the current value.
+* `code` - (Optional) The customer-facing code. Regardless of case, this code must be unique across all active promotion codes for a specific customer. Valid characters are lower case letters (a-z), upper case letters (A-Z), digits (0-9), and dashes (-). If left blank, we will generate one automatically. Changing it replaces the resource. Removing it from the configuration leaves the current value.
 * `customer` - (Optional) The customer who can use this promotion code. If not set, all customers can use the promotion code. Changing it replaces the resource.
 * `customer_account` - (Optional) The account representing the customer who can use this promotion code. If not set, all customers can use the promotion code. Changing it replaces the resource.
 * `expires_at` - (Optional) The timestamp at which this promotion code will expire. If the coupon has specified a `redeems_by`, then this value cannot be after the coupon's `redeems_by`. Changing it replaces the resource.
 * `max_redemptions` - (Optional) A positive integer specifying the number of times the promotion code can be redeemed. If the coupon has specified a `max_redemptions`, then this value cannot be greater than the coupon's `max_redemptions`. Changing it replaces the resource.
 * `metadata` - (Optional) Set of [key-value pairs](https://docs.stripe.com/api/metadata) that you can attach to an object. This can be useful for storing additional information about the object in a structured format. Individual keys can be unset by posting an empty value to them. All keys can be unset by posting an empty value to `metadata`.
-* `restrictions` - (Optional) Settings that restrict the redemption of the promotion code. See [`restrictions`](#restrictions) below.
+* `restrictions` - (Optional) Settings that restrict the redemption of the promotion code. Removing it from the configuration leaves the current value. See [`restrictions`](#restrictions) below.
 
 <a id="promotion"></a>
 ### `promotion`
@@ -66,7 +66,7 @@ The `promotion` attribute supports:
 The `restrictions` attribute supports:
 
 * `currency_options` - (Optional) Promotion code restrictions defined in each available currency option. Each key must be a three-letter [ISO currency code](https://www.iso.org/iso-4217-currency-codes.html) and a [supported currency](https://stripe.com/docs/currencies). See [`restrictions.currency_options`](#restrictions.currency_options) below.
-* `first_time_transaction` - (Optional) A Boolean indicating if the Promotion Code should only be redeemed for Customers without any successful payments or invoices Changing it replaces the resource.
+* `first_time_transaction` - (Optional) A Boolean indicating if the Promotion Code should only be redeemed for Customers without any successful payments or invoices Changing it replaces the resource. Removing it from the configuration leaves the current value.
 * `minimum_amount` - (Optional) Minimum amount required to redeem this Promotion Code into a Coupon (e.g., a purchase must be $100 or more to work). Changing it replaces the resource.
 * `minimum_amount_currency` - (Optional) Three-letter [ISO code](https://stripe.com/docs/currencies) for minimum_amount Changing it replaces the resource.
 
@@ -75,7 +75,7 @@ The `restrictions` attribute supports:
 
 The `restrictions.currency_options` attribute is a map. Each value supports:
 
-* `minimum_amount` - (Optional) Minimum amount required to redeem this Promotion Code into a Coupon (e.g., a purchase must be $100 or more to work).
+* `minimum_amount` - (Optional) Minimum amount required to redeem this Promotion Code into a Coupon (e.g., a purchase must be $100 or more to work). Removing it from the configuration leaves the current value.
 
 ## Attribute Reference
 

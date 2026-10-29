@@ -7,7 +7,7 @@ import "github.com/computomatic/terraform-provider-stripe/internal/fields"
 
 // Table lists every request and response field of the object.
 var Table = []fields.Field{
-	{Name: "active", Shape: fields.Bool, Update: true, Response: true, Description: "Whether the payment link's `url` is active. If `false`, customers visiting the URL will be shown a page saying that the link has been deactivated."},
+	{Name: "active", Shape: fields.Bool, Update: true, Response: true, Description: "Whether the payment link's `url` is active. If `false`, customers visiting the URL will be shown a page saying that the link has been deactivated.", Default: &fields.Default{Kind: fields.DefaultNotSent}},
 	{Name: "after_completion", Shape: fields.Object, Create: true, Update: true, Response: true, ServerDefaulted: true, Description: "Behavior after the purchase is complete.", Fields: []fields.Field{
 		{Name: "hosted_confirmation", Shape: fields.Object, Create: true, Update: true, Response: true, Fields: []fields.Field{
 			{Name: "custom_message", Shape: fields.String, Create: true, Update: true, Response: true, Description: "The custom message that is displayed to the customer after the purchase is complete."},
@@ -134,7 +134,7 @@ var Table = []fields.Field{
 				{Name: "subscription_item", Shape: fields.String, Response: true, Description: "The subscription item that this coupon is applied to, if it is applied to a particular subscription item."},
 			}},
 		}},
-		{Name: "id", Shape: fields.String, Update: true, Response: true, Description: "Unique identifier for the object."},
+		{Name: "id", Shape: fields.String, Update: true, Response: true, Description: "Unique identifier for the object.", Default: &fields.Default{Kind: fields.DefaultNotSent}},
 		{Name: "metadata", Shape: fields.StringMap, Response: true, Description: "Set of [key-value pairs](https://docs.stripe.com/api/metadata) that you can attach to an object. This can be useful for storing additional information about the object in a structured format."},
 		{Name: "object", Shape: fields.String, Response: true, Enum: []string{"item"}, Description: "String representing the object's type. Objects of the same type share the same value."},
 		{Name: "price", Shape: fields.String, Required: true, Create: true, Response: true, Description: "The price used to generate the line item."},

@@ -64,15 +64,15 @@ The following arguments are required:
 
 The following arguments are optional:
 
-* `address` - (Optional) The person's address. See [`address`](#address) below.
-* `dob` - (Optional) The person's date of birth. See [`dob`](#dob) below.
-* `email` - (Optional) The person's email address.
-* `first_name` - (Optional) The person's first name.
+* `address` - (Optional) The person's address. Removing it from the configuration leaves the current value. See [`address`](#address) below.
+* `dob` - (Optional) The person's date of birth. Removing it from the configuration leaves the current value. See [`dob`](#dob) below.
+* `email` - (Optional) The person's email address. Removing it from the configuration leaves the current value.
+* `first_name` - (Optional) The person's first name. Removing it from the configuration leaves the current value.
 * `id_number` - (Optional, Sensitive) The person's ID number, as appropriate for their country. For example, a social security number in the U.S., social insurance number in Canada, etc. Instead of the number itself, you can also provide a [PII token provided by Stripe.js](https://docs.stripe.com/js/tokens/create_token?type=pii). Changing this value for the account's representative requires that the account re-accept the [terms of service](https://docs.stripe.com/api/accounts/object#account_object-tos_acceptance).
-* `last_name` - (Optional) The person's last name.
+* `last_name` - (Optional) The person's last name. Removing it from the configuration leaves the current value.
 * `metadata` - (Optional) Set of [key-value pairs](https://docs.stripe.com/api/metadata) that you can attach to an object. This can be useful for storing additional information about the object in a structured format. Individual keys can be unset by posting an empty value to them. All keys can be unset by posting an empty value to `metadata`.
-* `phone` - (Optional) The person's phone number.
-* `relationship` - (Optional) The relationship that this person has with the account's legal entity. See [`relationship`](#relationship) below.
+* `phone` - (Optional) The person's phone number. Removing it from the configuration leaves the current value.
+* `relationship` - (Optional) The relationship that this person has with the account's legal entity. Removing it from the configuration leaves the current value. See [`relationship`](#relationship) below.
 * `ssn_last_4` - (Optional, Sensitive) The last four digits of the person's Social Security number (U.S. only). Changing this value for the account's representative requires that the account re-accept the [terms of service](https://docs.stripe.com/api/accounts/object#account_object-tos_acceptance).
 
 <a id="address"></a>
@@ -80,12 +80,12 @@ The following arguments are optional:
 
 The `address` attribute supports:
 
-* `city` - (Optional) City, district, suburb, town, or village.
-* `country` - (Optional) Two-letter country code ([ISO 3166-1 alpha-2](https://en.wikipedia.org/wiki/ISO_3166-1_alpha-2)).
-* `line1` - (Optional) Address line 1, such as the street, PO Box, or company name.
-* `line2` - (Optional) Address line 2, such as the apartment, suite, unit, or building.
-* `postal_code` - (Optional) ZIP or postal code.
-* `state` - (Optional) State, county, province, or region ([ISO 3166-2](https://en.wikipedia.org/wiki/ISO_3166-2)).
+* `city` - (Optional) City, district, suburb, town, or village. Removing it from the configuration leaves the current value.
+* `country` - (Optional) Two-letter country code ([ISO 3166-1 alpha-2](https://en.wikipedia.org/wiki/ISO_3166-1_alpha-2)). Removing it from the configuration leaves the current value.
+* `line1` - (Optional) Address line 1, such as the street, PO Box, or company name. Removing it from the configuration leaves the current value.
+* `line2` - (Optional) Address line 2, such as the apartment, suite, unit, or building. Removing it from the configuration leaves the current value.
+* `postal_code` - (Optional) ZIP or postal code. Removing it from the configuration leaves the current value.
+* `state` - (Optional) State, county, province, or region ([ISO 3166-2](https://en.wikipedia.org/wiki/ISO_3166-2)). Removing it from the configuration leaves the current value.
 
 <a id="dob"></a>
 ### `dob`
@@ -102,13 +102,13 @@ The `dob` attribute supports:
 The `relationship` attribute supports:
 
 * `authorizer` - (Read-Only) Whether the person is the authorizer of the account's representative.
-* `director` - (Optional) Whether the person is a director of the account's legal entity. Directors are typically members of the governing board of the company, or responsible for ensuring the company meets its regulatory obligations.
-* `executive` - (Optional) Whether the person has significant responsibility to control, manage, or direct the organization.
+* `director` - (Optional) Whether the person is a director of the account's legal entity. Directors are typically members of the governing board of the company, or responsible for ensuring the company meets its regulatory obligations. Removing it from the configuration leaves the current value.
+* `executive` - (Optional) Whether the person has significant responsibility to control, manage, or direct the organization. Removing it from the configuration leaves the current value.
 * `legal_guardian` - (Read-Only) Whether the person is the legal guardian of the account's representative.
-* `owner` - (Optional) Whether the person is an owner of the account’s legal entity.
-* `percent_ownership` - (Optional) The percent owned by the person of the account's legal entity.
-* `representative` - (Optional) Whether the person is authorized as the primary representative of the account. This is the person nominated by the business to provide information about themselves, and general information about the account. There can only be one representative at any given time. At the time the account is created, this person should be set to the person responsible for opening the account.
-* `title` - (Optional) The person's title (e.g., CEO, Support Engineer).
+* `owner` - (Optional) Whether the person is an owner of the account’s legal entity. Removing it from the configuration leaves the current value.
+* `percent_ownership` - (Optional) The percent owned by the person of the account's legal entity. Removing it from the configuration leaves the current value.
+* `representative` - (Optional) Whether the person is authorized as the primary representative of the account. This is the person nominated by the business to provide information about themselves, and general information about the account. There can only be one representative at any given time. At the time the account is created, this person should be set to the person responsible for opening the account. Removing it from the configuration leaves the current value.
+* `title` - (Optional) The person's title (e.g., CEO, Support Engineer). Removing it from the configuration leaves the current value.
 
 ## Attribute Reference
 

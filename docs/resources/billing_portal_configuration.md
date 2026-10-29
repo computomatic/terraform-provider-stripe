@@ -47,10 +47,10 @@ The following arguments are required:
 
 The following arguments are optional:
 
-* `active` - (Optional) Whether the configuration is active and can be used to create portal sessions.
-* `business_profile` - (Optional) The business information shown to customers in the portal. See [`business_profile`](#business_profile) below.
+* `active` - (Optional) Whether the configuration is active and can be used to create portal sessions. Default: not sent. Removing it from the configuration leaves the current value.
+* `business_profile` - (Optional) The business information shown to customers in the portal. Removing it from the configuration leaves the current value. See [`business_profile`](#business_profile) below.
 * `default_return_url` - (Optional) The default URL to redirect customers to when they click on the portal's link to return to your website. This can be [overridden](https://docs.stripe.com/api/customer_portal/sessions/create#create_portal_session-return_url) when creating the session.
-* `login_page` - (Optional) The hosted login page for this configuration. Learn more about the portal login page in our [integration docs](https://stripe.com/docs/billing/subscriptions/integrating-customer-portal#share). See [`login_page`](#login_page) below.
+* `login_page` - (Optional) The hosted login page for this configuration. Learn more about the portal login page in our [integration docs](https://stripe.com/docs/billing/subscriptions/integrating-customer-portal#share). Removing it from the configuration leaves the current value. See [`login_page`](#login_page) below.
 * `metadata` - (Optional) Set of [key-value pairs](https://docs.stripe.com/api/metadata) that you can attach to an object. This can be useful for storing additional information about the object in a structured format. Individual keys can be unset by posting an empty value to them. All keys can be unset by posting an empty value to `metadata`.
 * `name` - (Optional) The name of the configuration.
 
@@ -68,18 +68,18 @@ The `business_profile` attribute supports:
 
 The `features` attribute supports:
 
-* `customer_update` - (Optional) See [`features.customer_update`](#features.customer_update) below.
-* `invoice_history` - (Optional) See [`features.invoice_history`](#features.invoice_history) below.
-* `payment_method_update` - (Optional) See [`features.payment_method_update`](#features.payment_method_update) below.
-* `subscription_cancel` - (Optional) See [`features.subscription_cancel`](#features.subscription_cancel) below.
-* `subscription_update` - (Optional) See [`features.subscription_update`](#features.subscription_update) below.
+* `customer_update` - (Optional) Removing it from the configuration leaves the current value. See [`features.customer_update`](#features.customer_update) below.
+* `invoice_history` - (Optional) Removing it from the configuration leaves the current value. See [`features.invoice_history`](#features.invoice_history) below.
+* `payment_method_update` - (Optional) Removing it from the configuration leaves the current value. See [`features.payment_method_update`](#features.payment_method_update) below.
+* `subscription_cancel` - (Optional) Removing it from the configuration leaves the current value. See [`features.subscription_cancel`](#features.subscription_cancel) below.
+* `subscription_update` - (Optional) Removing it from the configuration leaves the current value. See [`features.subscription_update`](#features.subscription_update) below.
 
 <a id="features.customer_update"></a>
 ### `features.customer_update`
 
 The `features.customer_update` attribute supports:
 
-* `allowed_updates` - (Optional) The types of customer updates that are supported. When empty, customers are not updateable.
+* `allowed_updates` - (Optional) The types of customer updates that are supported. When empty, customers are not updateable. Removing it from the configuration leaves the current value.
 * `enabled` - (Required) Whether the feature is enabled.
 
 <a id="features.invoice_history"></a>
@@ -102,10 +102,10 @@ The `features.payment_method_update` attribute supports:
 
 The `features.subscription_cancel` attribute supports:
 
-* `cancellation_reason` - (Optional) See [`features.subscription_cancel.cancellation_reason`](#features.subscription_cancel.cancellation_reason) below.
+* `cancellation_reason` - (Optional) Removing it from the configuration leaves the current value. See [`features.subscription_cancel.cancellation_reason`](#features.subscription_cancel.cancellation_reason) below.
 * `enabled` - (Required) Whether the feature is enabled.
-* `mode` - (Optional) Whether to cancel subscriptions immediately or at the end of the billing period. Possible values: `at_period_end`, `immediately`.
-* `proration_behavior` - (Optional) Whether to create prorations when canceling subscriptions. Possible values are `none` and `create_prorations`. Possible values: `always_invoice`, `create_prorations`, `none`.
+* `mode` - (Optional) Whether to cancel subscriptions immediately or at the end of the billing period. Possible values: `at_period_end`, `immediately`. Removing it from the configuration leaves the current value.
+* `proration_behavior` - (Optional) Whether to create prorations when canceling subscriptions. Possible values are `none` and `create_prorations`. Possible values: `always_invoice`, `create_prorations`, `none`. Removing it from the configuration leaves the current value.
 
 <a id="features.subscription_cancel.cancellation_reason"></a>
 ### `features.subscription_cancel.cancellation_reason`
@@ -122,19 +122,19 @@ The `features.subscription_cancel.cancellation_reason` attribute supports:
 The `features.subscription_update` attribute supports:
 
 * `billing_cycle_anchor` - (Optional) Determines the value to use for the billing cycle anchor on subscription updates. Valid values are `now` or `unchanged`, and the default value is `unchanged`. Setting the value to `now` resets the subscription's billing cycle anchor to the current time (in UTC). For more information, see the billing cycle [documentation](https://docs.stripe.com/billing/subscriptions/billing-cycle). Possible values: `now`, `unchanged`.
-* `default_allowed_updates` - (Optional) The types of subscription updates that are supported for items listed in the `products` attribute. When empty, subscriptions are not updateable.
+* `default_allowed_updates` - (Optional) The types of subscription updates that are supported for items listed in the `products` attribute. When empty, subscriptions are not updateable. Removing it from the configuration leaves the current value.
 * `enabled` - (Required) Whether the feature is enabled.
 * `products` - (Optional) The list of up to 10 products that support subscription updates. See [`features.subscription_update.products`](#features.subscription_update.products) below.
-* `proration_behavior` - (Optional) Determines how to handle prorations resulting from subscription updates. Valid values are `none`, `create_prorations`, and `always_invoice`. Defaults to a value of `none` if you don't set it during creation. Possible values: `always_invoice`, `create_prorations`, `none`.
-* `schedule_at_period_end` - (Optional) See [`features.subscription_update.schedule_at_period_end`](#features.subscription_update.schedule_at_period_end) below.
-* `trial_update_behavior` - (Optional) Determines how handle updates to trialing subscriptions. Valid values are `end_trial` and `continue_trial`. Defaults to a value of `end_trial` if you don't set it during creation. Possible values: `continue_trial`, `end_trial`.
+* `proration_behavior` - (Optional) Determines how to handle prorations resulting from subscription updates. Valid values are `none`, `create_prorations`, and `always_invoice`. Defaults to a value of `none` if you don't set it during creation. Possible values: `always_invoice`, `create_prorations`, `none`. Removing it from the configuration leaves the current value.
+* `schedule_at_period_end` - (Optional) Removing it from the configuration leaves the current value. See [`features.subscription_update.schedule_at_period_end`](#features.subscription_update.schedule_at_period_end) below.
+* `trial_update_behavior` - (Optional) Determines how handle updates to trialing subscriptions. Valid values are `end_trial` and `continue_trial`. Defaults to a value of `end_trial` if you don't set it during creation. Possible values: `continue_trial`, `end_trial`. Removing it from the configuration leaves the current value.
 
 <a id="features.subscription_update.products"></a>
 ### `features.subscription_update.products`
 
 The `features.subscription_update.products` attribute is a list. Each element supports:
 
-* `adjustable_quantity` - (Optional) See [`features.subscription_update.products.adjustable_quantity`](#features.subscription_update.products.adjustable_quantity) below.
+* `adjustable_quantity` - (Optional) Removing it from the configuration leaves the current value. See [`features.subscription_update.products.adjustable_quantity`](#features.subscription_update.products.adjustable_quantity) below.
 * `prices` - (Required) The list of price IDs which, when subscribed to, a subscription can be updated.
 * `product` - (Required) The product ID.
 
@@ -145,14 +145,14 @@ The `features.subscription_update.products.adjustable_quantity` attribute suppor
 
 * `enabled` - (Required) If true, the quantity can be adjusted to any non-negative integer.
 * `maximum` - (Optional) The maximum quantity that can be set for the product.
-* `minimum` - (Optional) The minimum quantity that can be set for the product.
+* `minimum` - (Optional) The minimum quantity that can be set for the product. Removing it from the configuration leaves the current value.
 
 <a id="features.subscription_update.schedule_at_period_end"></a>
 ### `features.subscription_update.schedule_at_period_end`
 
 The `features.subscription_update.schedule_at_period_end` attribute supports:
 
-* `conditions` - (Optional) List of conditions. When any condition is true, an update will be scheduled at the end of the current period. See [`features.subscription_update.schedule_at_period_end.conditions`](#features.subscription_update.schedule_at_period_end.conditions) below.
+* `conditions` - (Optional) List of conditions. When any condition is true, an update will be scheduled at the end of the current period. Removing it from the configuration leaves the current value. See [`features.subscription_update.schedule_at_period_end.conditions`](#features.subscription_update.schedule_at_period_end.conditions) below.
 
 <a id="features.subscription_update.schedule_at_period_end.conditions"></a>
 ### `features.subscription_update.schedule_at_period_end.conditions`

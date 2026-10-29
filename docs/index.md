@@ -50,14 +50,18 @@ The resources that move money (`stripe_payment_intent`, `stripe_charge`, `stripe
 
 Every request is sent with Stripe API version `2026-09-30.endive`. Attributes therefore mean what that version documents, and a change to your account's default API version does not change how the provider behaves. A later provider release may move to a newer API version and says so in its release notes.
 
+## Defaults
+
+An optional argument's line ends with its default once that default is verified against Stripe, and every provider argument's line, and every line of an argument only an update takes, ends with its own: `Default (Stripe):` is the value Stripe applies when the configuration leaves the argument out, or the rule by which Stripe picks one; `Default (provider):` is the value the provider applies; `Default: none.` means the argument stays unset; and `Default: not sent.` marks an argument only an update takes. An argument whose line also says `Removing it from the configuration leaves the current value.` keeps the value Stripe holds when you delete it from the configuration; set the value you want instead.
+
 ## Argument Reference
 
 This provider supports the following arguments:
 
-* `allow_live_money_movement` - (Optional) Allows the resources that move money, such as `stripe_payment_intent` and `stripe_transfer`, to create and change objects in a live-mode Stripe account. Defaults to false: they then work in sandboxes and test mode, and fail at plan time in live mode. The provider asks Stripe for the account's mode; it never infers it from the key.
-* `api_key` - (Optional, Sensitive) A Stripe restricted key (`rk_`), or a secret key (`sk_`), which Stripe advises against for new uses. Defaults to the `STRIPE_API_KEY` environment variable.
-* `base_url` - (Optional) Base URL of the Stripe API, without a path. Defaults to the `STRIPE_API_BASE` environment variable, then `https://api.stripe.com`.
-* `files_base_url` - (Optional) Base URL of the Stripe Files API, without a path, to which `stripe_file` uploads files. Defaults to the `STRIPE_FILES_BASE_URL` environment variable, then `base_url` when that is set, then `https://files.stripe.com`.
-* `max_retries` - (Optional) Retries per request on transport errors, 429 and 5xx responses. Defaults to 3.
-* `stripe_account` - (Optional) A connected account ID, sent as the `Stripe-Account` header. Defaults to the `STRIPE_ACCOUNT` environment variable. Conflicts with `stripe_context`.
-* `stripe_context` - (Optional) The account the requests act on, sent unchanged as the `Stripe-Context` header of every request. An organization key (`sk_org_`) needs it. Defaults to the `STRIPE_CONTEXT` environment variable. Conflicts with `stripe_account`.
+* `allow_live_money_movement` - (Optional) Allows the resources that move money, such as `stripe_payment_intent` and `stripe_transfer`, to create and change objects in a live-mode Stripe account. Defaults to false: they then work in sandboxes and test mode, and fail at plan time in live mode. The provider asks Stripe for the account's mode; it never infers it from the key. Default (provider): `false`.
+* `api_key` - (Optional, Sensitive) A Stripe restricted key (`rk_`), or a secret key (`sk_`), which Stripe advises against for new uses. Defaults to the `STRIPE_API_KEY` environment variable. Default (provider): the `STRIPE_API_KEY` environment variable; with neither, the provider fails to configure.
+* `base_url` - (Optional) Base URL of the Stripe API, without a path. Defaults to the `STRIPE_API_BASE` environment variable, then `https://api.stripe.com`. Default (provider): the `STRIPE_API_BASE` environment variable, then `https://api.stripe.com`.
+* `files_base_url` - (Optional) Base URL of the Stripe Files API, without a path, to which `stripe_file` uploads files. Defaults to the `STRIPE_FILES_BASE_URL` environment variable, then `base_url` when that is set, then `https://files.stripe.com`. Default (provider): the `STRIPE_FILES_BASE_URL` environment variable, then `base_url` when that is set, then `https://files.stripe.com`.
+* `max_retries` - (Optional) Retries per request on transport errors, 429 and 5xx responses. Defaults to 3. Default (provider): `3`.
+* `stripe_account` - (Optional) A connected account ID, sent as the `Stripe-Account` header. Defaults to the `STRIPE_ACCOUNT` environment variable. Conflicts with `stripe_context`. Default (provider): the `STRIPE_ACCOUNT` environment variable; with neither, no `Stripe-Account` header is sent.
+* `stripe_context` - (Optional) The account the requests act on, sent unchanged as the `Stripe-Context` header of every request. An organization key (`sk_org_`) needs it. Defaults to the `STRIPE_CONTEXT` environment variable. Conflicts with `stripe_account`. Default (provider): the `STRIPE_CONTEXT` environment variable; with neither, no `Stripe-Context` header is sent.

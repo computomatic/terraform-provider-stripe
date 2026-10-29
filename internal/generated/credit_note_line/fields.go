@@ -25,7 +25,7 @@ var Table = []fields.Field{
 		{Name: "type", Shape: fields.String, Response: true, Enum: []string{"credit_balance_transaction", "discount"}, Description: "Type of the pretax credit amount referenced."},
 	}},
 	{Name: "quantity", Shape: fields.Int, Response: true, Description: "The number of units of product being credited."},
-	{Name: "tax_rates", Shape: fields.ObjectList, Response: true, Description: "The tax rates which apply to the line item.", Fields: []fields.Field{
+	{Name: "tax_rates", Shape: fields.ObjectList, Response: true, Description: "The tax rates which apply to the line item.", Copy: "stripe_tax_rate", Fields: []fields.Field{
 		{Name: "active", Shape: fields.Bool, Response: true, Description: "Defaults to `true`. When set to `false`, this tax rate cannot be used with new applications or Checkout Sessions, but will still work for subscriptions and invoices that already have it set."},
 		{Name: "country", Shape: fields.String, Response: true, Description: "Two-letter country code ([ISO 3166-1 alpha-2](https://en.wikipedia.org/wiki/ISO_3166-1_alpha-2))."},
 		{Name: "created", Shape: fields.Int, Response: true, Description: "Time at which the object was created. Measured in seconds since the Unix epoch."},

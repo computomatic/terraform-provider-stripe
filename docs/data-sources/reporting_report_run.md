@@ -58,41 +58,4 @@ The `parameters` attribute supports:
 <a id="result"></a>
 ### `result`
 
-The `result` attribute supports:
-
-* `created` - Time at which the object was created. Measured in seconds since the Unix epoch.
-* `expires_at` - The file expires and isn't available at this time in epoch seconds.
-* `filename` - The suitable name for saving the file to a filesystem.
-* `id` - Unique identifier for the object.
-* `links` - A list of [file links](https://docs.stripe.com/api#file_links) that point at this file. See [`result.links`](#result.links) below.
-* `object` - String representing the object's type. Objects of the same type share the same value. Possible values: `file`.
-* `purpose` - The [purpose](https://docs.stripe.com/file-upload#uploading-a-file) of the uploaded file. Possible values: `account_requirement`, `additional_verification`, `business_icon`, `business_logo`, `customer_signature`, `dispute_evidence`, `document_provider_identity_document`, `finance_report_run`, `financial_account_statement`, `identity_document`, `identity_document_downloadable`, `issuing_regulatory_reporting`, `pci_document`, `platform_terms_of_service`, `selfie`, `sigma_scheduled_query`, `tax_document_user_upload`, `terminal_android_apk`, `terminal_reader_splashscreen`, `terminal_wifi_certificate`, `terminal_wifi_private_key`.
-* `size` - The size of the file object in bytes.
-* `title` - A suitable title for the document.
-* `type` - The returned file type (for example, `csv`, `pdf`, `jpg`, or `png`).
-* `url` - Use your live secret API key to download the file from this URL.
-
-<a id="result.links"></a>
-### `result.links`
-
-The `result.links` attribute supports:
-
-* `data` - Details about each object. See [`result.links.data`](#result.links.data) below.
-* `has_more` - True if this list has another page of items after this one that can be fetched.
-* `object` - String representing the object's type. Objects of the same type share the same value. Always has the value `list`. Possible values: `list`.
-* `url` - The URL where this list can be accessed.
-
-<a id="result.links.data"></a>
-### `result.links.data`
-
-The `result.links.data` attribute is a list. Each element supports:
-
-* `created` - Time at which the object was created. Measured in seconds since the Unix epoch.
-* `expired` - Returns if the link is already expired.
-* `expires_at` - Time that the link expires.
-* `file` - The file object this link points to.
-* `id` - Unique identifier for the object.
-* `livemode` - If the object exists in live mode, the value is `true`. If the object exists in test mode, the value is `false`.
-* `metadata` - Set of [key-value pairs](https://docs.stripe.com/api/metadata) that you can attach to an object. This can be useful for storing additional information about the object in a structured format.
-* `object` - String representing the object's type. Objects of the same type share the same value. Possible values: `file_link`.
-* `url` - The publicly accessible URL to download the file.
+The `result` attribute holds a file, with the attributes of the [`stripe_file`](../data-sources/file) data source and `object`, the name of its type.

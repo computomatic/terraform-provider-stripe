@@ -50,41 +50,41 @@ The following arguments are optional:
 
 * `add_invoice_items` - (Optional) A list of prices and quantities that will generate invoice items appended to the next invoice for this subscription. You may pass up to 20 items. See [`add_invoice_items`](#add_invoice_items) below.
 * `application_fee_percent` - (Optional) A non-negative decimal between 0 and 100, with at most two decimal places. This represents the percentage of the subscription invoice total that will be transferred to the application owner's Stripe account. The request must be made by a platform account on a connected account in order to set an application fee percentage. For more information, see the application fees [documentation](https://stripe.com/docs/connect/subscriptions#collecting-fees-on-subscriptions).
-* `automatic_tax` - (Optional) Automatic tax settings for this subscription. See [`automatic_tax`](#automatic_tax) below.
+* `automatic_tax` - (Optional) Automatic tax settings for this subscription. Removing it from the configuration leaves the current value. See [`automatic_tax`](#automatic_tax) below.
 * `backdate_start_date` - (Optional) A past timestamp to backdate the subscription's start date to. If set, the first invoice will contain line items for the timespan between the start date and the current time. Can be combined with trials and the billing cycle anchor. Changing it replaces the resource.
-* `billing_cycle_anchor` - (Optional) A future timestamp in UTC format to anchor the subscription's [billing cycle](https://docs.stripe.com/subscriptions/billing-cycle). The anchor is the reference point that aligns future billing cycle dates. It sets the day of week for `week` intervals, the day of month for `month` and `year` intervals, and the month of year for `year` intervals. Changing it replaces the resource.
+* `billing_cycle_anchor` - (Optional) A future timestamp in UTC format to anchor the subscription's [billing cycle](https://docs.stripe.com/subscriptions/billing-cycle). The anchor is the reference point that aligns future billing cycle dates. It sets the day of week for `week` intervals, the day of month for `month` and `year` intervals, and the month of year for `year` intervals. Changing it replaces the resource. Removing it from the configuration leaves the current value.
 * `billing_cycle_anchor_config` - (Optional) Mutually exclusive with billing_cycle_anchor and only valid with monthly and yearly price intervals. When provided, the billing_cycle_anchor is set to the next occurrence of the day_of_month at the hour, minute, and second UTC. Changing it replaces the resource. See [`billing_cycle_anchor_config`](#billing_cycle_anchor_config) below.
-* `billing_mode` - (Optional) Controls how prorations and invoices for subscriptions are calculated and orchestrated. Changing it replaces the resource. See [`billing_mode`](#billing_mode) below.
-* `billing_schedules` - (Optional) An array of billing schedules, which allow you to bill customers in advance for multiple service periods. Requires flexible billing mode and API version 2026-05-27.dahlia or later. Learn more about [prebilling](https://docs.stripe.com/billing/subscriptions/prebilling). See [`billing_schedules`](#billing_schedules) below.
+* `billing_mode` - (Optional) Controls how prorations and invoices for subscriptions are calculated and orchestrated. Changing it replaces the resource. Removing it from the configuration leaves the current value. See [`billing_mode`](#billing_mode) below.
+* `billing_schedules` - (Optional) An array of billing schedules, which allow you to bill customers in advance for multiple service periods. Requires flexible billing mode and API version 2026-05-27.dahlia or later. Learn more about [prebilling](https://docs.stripe.com/billing/subscriptions/prebilling). Removing it from the configuration leaves the current value. See [`billing_schedules`](#billing_schedules) below.
 * `billing_thresholds` - (Optional) Define thresholds at which an invoice will be sent, and the subscription advanced to a new billing period. When updating, pass an empty string to remove previously-defined thresholds. See [`billing_thresholds`](#billing_thresholds) below.
-* `cancel_at` - (Optional) A timestamp at which the subscription should cancel. If set to a date before the current period ends, this will cause a proration if prorations have been enabled using `proration_behavior`. If set during a future period, this will always cause a proration for that period.
-* `cancel_at_period_end` - (Optional) Indicate whether this subscription should cancel at the end of the current period (`current_period_end`). Defaults to `false`.
-* `cancellation_details` - (Optional) Details about why this subscription was cancelled See [`cancellation_details`](#cancellation_details) below.
-* `collection_method` - (Optional) Either `charge_automatically`, or `send_invoice`. When charging automatically, Stripe will attempt to pay this subscription at the end of the cycle using the default source attached to the customer. When sending an invoice, Stripe will email your customer an invoice with payment instructions and mark the subscription as `active`. Defaults to `charge_automatically`. Possible values: `charge_automatically`, `send_invoice`.
-* `currency` - (Optional) Three-letter [ISO currency code](https://www.iso.org/iso-4217-currency-codes.html), in lowercase. Must be a [supported currency](https://stripe.com/docs/currencies). Changing it replaces the resource.
-* `customer` - (Optional) The identifier of the customer to subscribe. Changing it replaces the resource.
+* `cancel_at` - (Optional) A timestamp at which the subscription should cancel. If set to a date before the current period ends, this will cause a proration if prorations have been enabled using `proration_behavior`. If set during a future period, this will always cause a proration for that period. Removing it from the configuration leaves the current value.
+* `cancel_at_period_end` - (Optional) Indicate whether this subscription should cancel at the end of the current period (`current_period_end`). Defaults to `false`. Removing it from the configuration leaves the current value.
+* `cancellation_details` - (Optional) Details about why this subscription was cancelled. Removing it from the configuration leaves the current value. See [`cancellation_details`](#cancellation_details) below.
+* `collection_method` - (Optional) Either `charge_automatically`, or `send_invoice`. When charging automatically, Stripe will attempt to pay this subscription at the end of the cycle using the default source attached to the customer. When sending an invoice, Stripe will email your customer an invoice with payment instructions and mark the subscription as `active`. Defaults to `charge_automatically`. Possible values: `charge_automatically`, `send_invoice`. Removing it from the configuration leaves the current value.
+* `currency` - (Optional) Three-letter [ISO currency code](https://www.iso.org/iso-4217-currency-codes.html), in lowercase. Must be a [supported currency](https://stripe.com/docs/currencies). Changing it replaces the resource. Removing it from the configuration leaves the current value.
+* `customer` - (Optional) The identifier of the customer to subscribe. Changing it replaces the resource. Removing it from the configuration leaves the current value.
 * `customer_account` - (Optional) The identifier of the account representing the customer to subscribe. Changing it replaces the resource.
 * `days_until_due` - (Optional) Number of days a customer has to pay invoices generated by this subscription. Valid only for subscriptions where `collection_method` is set to `send_invoice`.
 * `default_payment_method` - (Optional) ID of the default payment method for the subscription. It must belong to the customer associated with the subscription. This takes precedence over `default_source`. If neither are set, invoices will use the customer's [invoice_settings.default_payment_method](https://docs.stripe.com/api/customers/object#customer_object-invoice_settings-default_payment_method) or [default_source](https://docs.stripe.com/api/customers/object#customer_object-default_source).
 * `default_source` - (Optional) ID of the default payment source for the subscription. It must belong to the customer associated with the subscription and be in a chargeable state. If `default_payment_method` is also set, `default_payment_method` will take precedence. If neither are set, invoices will use the customer's [invoice_settings.default_payment_method](https://docs.stripe.com/api/customers/object#customer_object-invoice_settings-default_payment_method) or [default_source](https://docs.stripe.com/api/customers/object#customer_object-default_source).
 * `default_tax_rates` - (Optional) The tax rates that will apply to any subscription item that does not have `tax_rates` set. Invoices created will have their `default_tax_rates` populated from the subscription.
 * `description` - (Optional) The subscription's description, meant to be displayable to the customer. Use this field to optionally store an explanation of the subscription for rendering in Stripe surfaces and certain local payment methods UIs.
-* `invoice_settings` - (Optional) All invoices will be billed using the specified settings. See [`invoice_settings`](#invoice_settings) below.
-* `items` - (Optional) A list of up to 20 subscription items, each with an attached price. See [`items`](#items) below.
+* `invoice_settings` - (Optional) All invoices will be billed using the specified settings. Removing it from the configuration leaves the current value. See [`invoice_settings`](#invoice_settings) below.
+* `items` - (Optional) A list of up to 20 subscription items, each with an attached price. Holds the first page of the list Stripe returns with the object; `has_more` is true when there are more. Read every element with the `stripe_subscription_item` data source. Removing it from the configuration leaves the current value. See [`items`](#items) below.
 * `metadata` - (Optional) Set of [key-value pairs](https://docs.stripe.com/api/metadata) that you can attach to an object. This can be useful for storing additional information about the object in a structured format. Individual keys can be unset by posting an empty value to them. All keys can be unset by posting an empty value to `metadata`.
 * `off_session` - (Optional) Indicates if a customer is on or off-session while an invoice payment is attempted. Defaults to `false` (on-session).
 * `on_behalf_of` - (Optional) The account on behalf of which to charge, for each of the subscription's invoices.
-* `pause_collection` - (Optional) If specified, payment collection for this subscription will be paused. Note that the subscription status will be unchanged and will not be updated to `paused`. Learn more about [pausing collection](https://docs.stripe.com/billing/subscriptions/pause-payment). See [`pause_collection`](#pause_collection) below.
+* `pause_collection` - (Optional) If specified, payment collection for this subscription will be paused. Note that the subscription status will be unchanged and will not be updated to `paused`. Learn more about [pausing collection](https://docs.stripe.com/billing/subscriptions/pause-payment). Removing it from the configuration leaves the current value. See [`pause_collection`](#pause_collection) below.
 * `payment_behavior` - (Optional) Controls how Stripe handles the first invoice when payment is required and `collection_method=charge_automatically`. Subscriptions with `collection_method=send_invoice` are automatically activated regardless of the first Invoice status. Possible values: `allow_incomplete`, `default_incomplete`, `error_if_incomplete`, `pending_if_incomplete`.
-* `payment_settings` - (Optional) Payment settings to pass to invoices created by the subscription. See [`payment_settings`](#payment_settings) below.
+* `payment_settings` - (Optional) Payment settings to pass to invoices created by the subscription. Removing it from the configuration leaves the current value. See [`payment_settings`](#payment_settings) below.
 * `pending_invoice_item_interval` - (Optional) Specifies an interval for how often to bill for any pending invoice items. It is analogous to calling [Create an invoice](https://docs.stripe.com/api/invoices/create) for the given subscription at the specified interval. See [`pending_invoice_item_interval`](#pending_invoice_item_interval) below.
 * `proration_behavior` - (Optional) Determines how to handle [prorations](https://docs.stripe.com/billing/subscriptions/prorations) resulting from the `billing_cycle_anchor`. If no value is passed, the default is `create_prorations`. Possible values: `always_invoice`, `create_prorations`, `none`.
-* `proration_date` - (Optional) If set, prorations will be calculated as though the subscription was updated at the given time. This can be used to apply exactly the same prorations that were previewed with the [create preview](https://stripe.com/docs/api/invoices/create_preview) endpoint. `proration_date` can also be used to implement custom proration logic, such as prorating by day instead of by second, by providing the time that you wish to use for proration calculations.
+* `proration_date` - (Optional) If set, prorations will be calculated as though the subscription was updated at the given time. This can be used to apply exactly the same prorations that were previewed with the [create preview](https://stripe.com/docs/api/invoices/create_preview) endpoint. `proration_date` can also be used to implement custom proration logic, such as prorating by day instead of by second, by providing the time that you wish to use for proration calculations. Default: not sent.
 * `transfer_data` - (Optional) If specified, the funds from the subscription's invoices will be transferred to the destination and the ID of the resulting transfers will be found on the resulting charges. See [`transfer_data`](#transfer_data) below.
 * `trial_end` - (Optional) Unix timestamp representing the end of the trial period the customer will get before being charged for the first time. If set, trial_end will override the default trial period of the plan the customer is being subscribed to. The special value `now` can be provided to end the customer's trial immediately. Can be at most two years from `billing_cycle_anchor`. See [Using trial periods on subscriptions](https://docs.stripe.com/billing/subscriptions/trials/free-trials) to learn more.
 * `trial_from_plan` - (Optional) Indicates if a plan's `trial_period_days` should be applied to the subscription. Setting `trial_end` per subscription is preferred, and this defaults to `false`. Setting this flag to `true` together with `trial_end` is not allowed. See [Using trial periods on subscriptions](https://docs.stripe.com/billing/subscriptions/trials/free-trials) to learn more.
 * `trial_period_days` - (Optional) Integer representing the number of trial period days before the customer is charged for the first time. This will always overwrite any trials that might apply via a subscribed plan. See [Using trial periods on subscriptions](https://docs.stripe.com/billing/subscriptions/trials/free-trials) to learn more. Changing it replaces the resource.
-* `trial_settings` - (Optional) Settings related to subscription trials. See [`trial_settings`](#trial_settings) below.
+* `trial_settings` - (Optional) Settings related to subscription trials. Removing it from the configuration leaves the current value. See [`trial_settings`](#trial_settings) below.
 
 <a id="add_invoice_items"></a>
 ### `add_invoice_items`
@@ -195,7 +195,7 @@ The `billing_schedules` attribute is a list. Each element supports:
 
 * `applies_to` - (Optional) Specifies which subscription items the billing schedule applies to. See [`billing_schedules.applies_to`](#billing_schedules.applies_to) below.
 * `bill_until` - (Required) Specifies the end of billing period. See [`billing_schedules.bill_until`](#billing_schedules.bill_until) below.
-* `key` - (Optional) Unique identifier for the billing schedule.
+* `key` - (Optional) Unique identifier for the billing schedule. Removing it from the configuration leaves the current value.
 
 <a id="billing_schedules.applies_to"></a>
 ### `billing_schedules.applies_to`
@@ -236,9 +236,9 @@ The `billing_thresholds` attribute supports:
 
 The `cancellation_details` attribute supports:
 
-* `comment` - (Optional) Additional comments about why the user canceled the subscription, if the subscription was canceled explicitly by the user.
-* `feedback` - (Optional) The customer submitted reason for why they canceled, if the subscription was canceled explicitly by the user. Possible values: `customer_service`, `low_quality`, `missing_features`, `other`, `switched_service`, `too_complex`, `too_expensive`, `unused`.
-* `feedback_option` - (Optional) Customized feedback options that provide deeper insight into why the subscription was canceled, if the subscription was canceled explicitly by the user.
+* `comment` - (Optional) Additional comments about why the user canceled the subscription, if the subscription was canceled explicitly by the user. Default: not sent. Removing it from the configuration leaves the current value.
+* `feedback` - (Optional) The customer submitted reason for why they canceled, if the subscription was canceled explicitly by the user. Possible values: `customer_service`, `low_quality`, `missing_features`, `other`, `switched_service`, `too_complex`, `too_expensive`, `unused`. Default: not sent. Removing it from the configuration leaves the current value.
+* `feedback_option` - (Optional) Customized feedback options that provide deeper insight into why the subscription was canceled, if the subscription was canceled explicitly by the user. Default: not sent. Removing it from the configuration leaves the current value.
 * `reason` - (Read-Only) Why this subscription was canceled. Possible values: `canceled_by_retention_policy`, `cancellation_requested`, `payment_disputed`, `payment_failed`.
 
 <a id="invoice_settings"></a>
@@ -250,7 +250,7 @@ The `invoice_settings` attribute supports:
 * `custom_fields` - (Optional) A list of up to 4 custom fields to be displayed on the invoice. See [`invoice_settings.custom_fields`](#invoice_settings.custom_fields) below.
 * `description` - (Optional) An arbitrary string attached to the object. Often useful for displaying to users.
 * `footer` - (Optional) Footer to be displayed on the invoice.
-* `issuer` - (Optional) See [`invoice_settings.issuer`](#invoice_settings.issuer) below.
+* `issuer` - (Optional) Removing it from the configuration leaves the current value. See [`invoice_settings.issuer`](#invoice_settings.issuer) below.
 
 <a id="invoice_settings.custom_fields"></a>
 ### `invoice_settings.custom_fields`
@@ -275,18 +275,18 @@ The `items` attribute is a list. Each element supports:
 
 * `billed_until` - (Read-Only) The time period the subscription item has been billed for.
 * `billing_thresholds` - (Optional) Define thresholds at which an invoice will be sent, and the related subscription advanced to a new billing period See [`items.billing_thresholds`](#items.billing_thresholds) below.
-* `clear_usage` - (Optional)
+* `clear_usage` - (Optional) Default: not sent.
 * `created` - (Read-Only) Time at which the object was created. Measured in seconds since the Unix epoch.
 * `current_period_end` - (Read-Only) The end time of this subscription item's current billing period.
 * `current_period_start` - (Read-Only) The start time of this subscription item's current billing period.
 * `current_trial` - (Optional) The current trial that is applied to this subscription item. See [`items.current_trial`](#items.current_trial) below.
-* `deleted` - (Optional)
-* `id` - (Optional) Unique identifier for the object.
-* `metadata` - (Optional) Set of [key-value pairs](https://docs.stripe.com/api/metadata) that you can attach to an object. This can be useful for storing additional information about the object in a structured format.
+* `deleted` - (Optional) Default: not sent.
+* `id` - (Optional) Unique identifier for the object. Default: not sent. Removing it from the configuration leaves the current value.
+* `metadata` - (Optional) Set of [key-value pairs](https://docs.stripe.com/api/metadata) that you can attach to an object. This can be useful for storing additional information about the object in a structured format. Removing it from the configuration leaves the current value.
 * `object` - (Read-Only) String representing the object's type. Objects of the same type share the same value. Possible values: `subscription_item`.
-* `price` - (Optional) Prices define the unit cost, currency, and (optional) billing cycle for both recurring and one-time purchases of products. [Products](https://docs.stripe.com/api#products) help you track inventory or provisioning, and prices help you track payment terms. Different physical goods or levels of service should be represented by products, and pricing options should be represented by prices. This approach lets you change prices without having to change your provisioning scheme. For example, you might have a single "gold" product that has prices for $10/month, $100/year, and €9 once. Related guides: [Set up a subscription](https://docs.stripe.com/billing/subscriptions/set-up-subscription), [create an invoice](https://docs.stripe.com/billing/invoices/create), and more about [products and prices](https://docs.stripe.com/products-prices/overview).
+* `price` - (Optional) Prices define the unit cost, currency, and (optional) billing cycle for both recurring and one-time purchases of products. [Products](https://docs.stripe.com/api#products) help you track inventory or provisioning, and prices help you track payment terms. Different physical goods or levels of service should be represented by products, and pricing options should be represented by prices. This approach lets you change prices without having to change your provisioning scheme. For example, you might have a single "gold" product that has prices for $10/month, $100/year, and €9 once. Related guides: [Set up a subscription](https://docs.stripe.com/billing/subscriptions/set-up-subscription), [create an invoice](https://docs.stripe.com/billing/invoices/create), and more about [products and prices](https://docs.stripe.com/products-prices/overview). Removing it from the configuration leaves the current value.
 * `price_data` - (Optional) See [`items.price_data`](#items.price_data) below.
-* `quantity` - (Optional) The [quantity](https://docs.stripe.com/subscriptions/quantities) of the plan to which the customer should be subscribed.
+* `quantity` - (Optional) The [quantity](https://docs.stripe.com/subscriptions/quantities) of the plan to which the customer should be subscribed. Removing it from the configuration leaves the current value.
 * `subscription` - (Read-Only) The `subscription` this `subscription_item` belongs to.
 * `tax_rates` - (Optional) The tax rates which apply to this `subscription_item`. When set, the `default_tax_rates` on the subscription do not apply to this `subscription_item`.
 
@@ -331,8 +331,8 @@ The `items.price_data.recurring` attribute supports:
 
 The `pause_collection` attribute supports:
 
-* `behavior` - (Optional) The payment collection behavior for this subscription while paused. Possible values: `keep_as_draft`, `mark_uncollectible`, `void`.
-* `resumes_at` - (Optional) The time after which the subscription will resume collecting payments.
+* `behavior` - (Optional) The payment collection behavior for this subscription while paused. Possible values: `keep_as_draft`, `mark_uncollectible`, `void`. Default: not sent. Removing it from the configuration leaves the current value.
+* `resumes_at` - (Optional) The time after which the subscription will resume collecting payments. Default: not sent. Removing it from the configuration leaves the current value.
 
 <a id="payment_settings"></a>
 ### `payment_settings`
@@ -379,7 +379,7 @@ The `payment_settings.payment_method_options.acss_debit.mandate_options` attribu
 
 The `payment_settings.payment_method_options.bancontact` attribute supports:
 
-* `preferred_language` - (Optional) Preferred language of the Bancontact authorization page that the customer is redirected to. Possible values: `de`, `en`, `fr`, `nl`.
+* `preferred_language` - (Optional) Preferred language of the Bancontact authorization page that the customer is redirected to. Possible values: `de`, `en`, `fr`, `nl`. Removing it from the configuration leaves the current value.
 
 <a id="payment_settings.payment_method_options.billie"></a>
 ### `payment_settings.payment_method_options.billie`
@@ -547,7 +547,7 @@ The `payment_settings.payment_method_options.us_bank_account.financial_connectio
 The `pending_invoice_item_interval` attribute supports:
 
 * `interval` - (Required) Specifies invoicing frequency. Either `day`, `week`, `month` or `year`. Possible values: `day`, `month`, `week`, `year`.
-* `interval_count` - (Optional) The number of intervals between invoices. For example, `interval=month` and `interval_count=3` bills every 3 months. Maximum of one year interval allowed (1 year, 12 months, or 52 weeks).
+* `interval_count` - (Optional) The number of intervals between invoices. For example, `interval=month` and `interval_count=3` bills every 3 months. Maximum of one year interval allowed (1 year, 12 months, or 52 weeks). Removing it from the configuration leaves the current value.
 
 <a id="transfer_data"></a>
 ### `transfer_data`
@@ -570,7 +570,7 @@ The `trial_settings` attribute supports:
 The `trial_settings.end_behavior` attribute supports:
 
 * `billing_cycle_anchor` - (Optional) Indicates how the subscription's billing cycle anchor is reset when a trial ends. If not set, the default is `now`. Possible values: `now`, `unchanged`.
-* `missing_payment_method` - (Optional) Indicates how the subscription should change when the trial ends if the user did not provide a payment method. Possible values: `cancel`, `create_invoice`, `pause`.
+* `missing_payment_method` - (Optional) Indicates how the subscription should change when the trial ends if the user did not provide a payment method. Possible values: `cancel`, `create_invoice`, `pause`. Removing it from the configuration leaves the current value.
 
 ## Attribute Reference
 

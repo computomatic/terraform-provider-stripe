@@ -44,7 +44,7 @@ This data source exports the following attributes in addition to the arguments a
 * `livemode` - If the object exists in live mode, the value is `true`. If the object exists in test mode, the value is `false`.
 * `originating_transaction` - ID of the corresponding charge on the platform account, if this fee was the result of a charge using the `destination` parameter.
 * `refunded` - Whether the fee has been fully refunded. If the fee is only partially refunded, this attribute will still be false.
-* `refunds` - A list of refunds that have been applied to the fee. See [`refunds`](#refunds) below.
+* `refunds` - A list of refunds that have been applied to the fee. Holds the first page of the list Stripe returns with the object; `has_more` is true when there are more. Read every element with the `stripe_application_fee_refund` data source. See [`refunds`](#refunds) below.
 
 <a id="fee_source"></a>
 ### `fee_source`

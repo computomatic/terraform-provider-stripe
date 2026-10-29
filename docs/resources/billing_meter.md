@@ -42,9 +42,9 @@ The following arguments are required:
 
 The following arguments are optional:
 
-* `customer_mapping` - (Optional) Fields that specify how to map a meter event to a customer. Changing it replaces the resource. See [`customer_mapping`](#customer_mapping) below.
+* `customer_mapping` - (Optional) Fields that specify how to map a meter event to a customer. Changing it replaces the resource. Removing it from the configuration leaves the current value. See [`customer_mapping`](#customer_mapping) below.
 * `event_time_window` - (Optional) The time window which meter events have been pre-aggregated for, if any. Possible values: `day`, `hour`. Changing it replaces the resource.
-* `value_settings` - (Optional) Fields that specify how to calculate a meter event's value. Changing it replaces the resource. See [`value_settings`](#value_settings) below.
+* `value_settings` - (Optional) Fields that specify how to calculate a meter event's value. Changing it replaces the resource. Removing it from the configuration leaves the current value. See [`value_settings`](#value_settings) below.
 
 <a id="customer_mapping"></a>
 ### `customer_mapping`

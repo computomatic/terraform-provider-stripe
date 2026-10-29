@@ -45,32 +45,32 @@ The following arguments are required:
 
 The following arguments are optional:
 
-* `billing_details` - (Optional) Billing information associated with the PaymentMethod that may be used or required by particular types of payment methods. See [`billing_details`](#billing_details) below.
-* `card` - (Optional) If this is a `card` PaymentMethod, this hash contains the user's card details. See [`card`](#card) below.
-* `metadata` - (Optional) Set of [key-value pairs](https://docs.stripe.com/api/metadata) that you can attach to an object. This can be useful for storing additional information about the object in a structured format. Individual keys can be unset by posting an empty value to them. All keys can be unset by posting an empty value to `metadata`.
+* `billing_details` - (Optional) Billing information associated with the PaymentMethod that may be used or required by particular types of payment methods. Removing it from the configuration leaves the current value. See [`billing_details`](#billing_details) below.
+* `card` - (Optional) If this is a `card` PaymentMethod, this hash contains the user's card details. Removing it from the configuration leaves the current value. See [`card`](#card) below.
+* `metadata` - (Optional) Set of [key-value pairs](https://docs.stripe.com/api/metadata) that you can attach to an object. This can be useful for storing additional information about the object in a structured format. Individual keys can be unset by posting an empty value to them. All keys can be unset by posting an empty value to `metadata`. Default: not sent.
 
 <a id="billing_details"></a>
 ### `billing_details`
 
 The `billing_details` attribute supports:
 
-* `address` - (Optional) Billing address. See [`billing_details.address`](#billing_details.address) below.
-* `email` - (Optional) Email address.
-* `name` - (Optional) Full name.
-* `phone` - (Optional) Billing phone number (including extension).
-* `tax_id` - (Optional) Taxpayer identification number. Used only for transactions between LATAM buyers and non-LATAM sellers.
+* `address` - (Optional) Billing address. Removing it from the configuration leaves the current value. See [`billing_details.address`](#billing_details.address) below.
+* `email` - (Optional) Email address. Default: not sent. Removing it from the configuration leaves the current value.
+* `name` - (Optional) Full name. Default: not sent. Removing it from the configuration leaves the current value.
+* `phone` - (Optional) Billing phone number (including extension). Default: not sent. Removing it from the configuration leaves the current value.
+* `tax_id` - (Optional) Taxpayer identification number. Used only for transactions between LATAM buyers and non-LATAM sellers. Default: not sent. Removing it from the configuration leaves the current value.
 
 <a id="billing_details.address"></a>
 ### `billing_details.address`
 
 The `billing_details.address` attribute supports:
 
-* `city` - (Optional) City, district, suburb, town, or village.
-* `country` - (Optional) Two-letter country code ([ISO 3166-1 alpha-2](https://en.wikipedia.org/wiki/ISO_3166-1_alpha-2)).
-* `line1` - (Optional) Address line 1, such as the street, PO Box, or company name.
-* `line2` - (Optional) Address line 2, such as the apartment, suite, unit, or building.
-* `postal_code` - (Optional) ZIP or postal code.
-* `state` - (Optional) State, county, province, or region ([ISO 3166-2](https://en.wikipedia.org/wiki/ISO_3166-2)).
+* `city` - (Optional) City, district, suburb, town, or village. Default: not sent. Removing it from the configuration leaves the current value.
+* `country` - (Optional) Two-letter country code ([ISO 3166-1 alpha-2](https://en.wikipedia.org/wiki/ISO_3166-1_alpha-2)). Default: not sent. Removing it from the configuration leaves the current value.
+* `line1` - (Optional) Address line 1, such as the street, PO Box, or company name. Default: not sent. Removing it from the configuration leaves the current value.
+* `line2` - (Optional) Address line 2, such as the apartment, suite, unit, or building. Default: not sent. Removing it from the configuration leaves the current value.
+* `postal_code` - (Optional) ZIP or postal code. Default: not sent. Removing it from the configuration leaves the current value.
+* `state` - (Optional) State, county, province, or region ([ISO 3166-2](https://en.wikipedia.org/wiki/ISO_3166-2)). Default: not sent. Removing it from the configuration leaves the current value.
 
 <a id="card"></a>
 ### `card`
@@ -82,7 +82,7 @@ The `card` attribute supports:
 * `country` - (Read-Only) Two-letter ISO code representing the country of the card. You could use this attribute to get a sense of the international breakdown of cards you've collected.
 * `display_brand` - (Read-Only) The brand to use when displaying the card, this accounts for customer's brand choice on dual-branded cards. Can be `american_express`, `cartes_bancaires`, `diners_club`, `discover`, `eftpos_australia`, `interac`, `jcb`, `mastercard`, `union_pay`, `visa`, or `other` and may contain more values in the future.
 * `exp_month` - (Read-Only) Two-digit number representing the card's expiration month.
-* `exp_year` - (Optional) Four-digit number representing the card's expiration year.
+* `exp_year` - (Optional) Four-digit number representing the card's expiration year. Default: not sent. Removing it from the configuration leaves the current value.
 * `fingerprint` - (Read-Only) Uniquely identifies this particular card number. You can use this attribute to check whether two customers who’ve signed up with you are using the same card number, for example. For payment methods that tokenize card information (Apple Pay, Google Pay), the tokenized number might be provided instead of the underlying card number. *As of May 1, 2021, card fingerprint in India for Connect changed to allow two fingerprints for the same card---one for India and one for the rest of the world.*
 * `funding` - (Read-Only) Card funding type. Can be `credit`, `debit`, `prepaid`, or `unknown`.
 * `generated_from` - (Read-Only) Details of the original PaymentMethod that created this object. See [`card.generated_from`](#card.generated_from) below.

@@ -73,6 +73,7 @@ func loadSchemas(ctx context.Context) (*schemas, error) {
 			ImportNote() (string, engine.NoteLevel)
 			DestroyNote() string
 			MoneyNote() string
+			AttributeDocs() map[string]engine.AttributeDoc
 		})
 		if !ok {
 			continue
@@ -82,6 +83,9 @@ func loadSchemas(ctx context.Context) (*schemas, error) {
 				rs.ImportNote, rs.ImportNoteLevel = noted.ImportNote()
 				rs.DestroyNote = noted.DestroyNote()
 				rs.MoneyNote = noted.MoneyNote()
+				if err := attachDocs(rs, noted.AttributeDocs()); err != nil {
+					return nil, err
+				}
 			}
 		}
 	}
@@ -89,22 +93,64 @@ func loadSchemas(ctx context.Context) (*schemas, error) {
 		d := newDataSource()
 		var meta datasource.MetadataResponse
 		d.Metadata(ctx, datasource.MetadataRequest{ProviderTypeName: "stripe"}, &meta)
-		listed, ok := d.(interface{ ListParamNames() []string })
+		listed, ok := d.(interface {
+			ListParamNames() []string
+			AttributeDocs() map[string]engine.AttributeDoc
+		})
 		if !ok {
 			continue
 		}
 		for _, ds := range s.DataSources {
 			if ds.Type == meta.TypeName {
 				ds.ListParams = listed.ListParamNames()
+				if err := attachDocs(ds, listed.AttributeDocs()); err != nil {
+					return nil, err
+				}
 			}
 		}
+	}
+	for name, d := range provider.ArgumentDefaults() {
+		a := at(s.Provider.Attrs, name)
+		if a == nil {
+			return nil, fmt.Errorf("provider: a default for %s, which is no argument", name)
+		}
+		a.Default = d.Statement()
 	}
 	return s, nil
 }
 
-// renderAll renders every page, keyed by its path relative to the output directory.
+// attachDocs puts what the engine says about each attribute on the page model.
+func attachDocs(s *schema, docs map[string]engine.AttributeDoc) error {
+	for path, d := range docs {
+		a := at(s.Attrs, path)
+		if a == nil {
+			return fmt.Errorf("%s: the engine documents %s, which the schema does not have", s.Type, path)
+		}
+		a.Default, a.NeedsDefault, a.Copy = d.Default, d.NeedsDefault, d.Copy
+	}
+	return nil
+}
+
+// renderAll renders every page, keyed by its path relative to the output directory. It fails on
+// an optional argument without the default statement it must have.
 func renderAll(s *schemas, root string) (map[string]string, error) {
+	if err := checkDefaults(s, everyArgumentHasADefault); err != nil {
+		return nil, err
+	}
+	dataSources := map[string]*schema{}
+	for _, d := range s.DataSources {
+		dataSources[d.Type] = d
+	}
 	pages := map[string]string{}
+	add := func(fitted map[string]string) error {
+		for path, page := range fitted {
+			if _, dup := pages[path]; dup {
+				return fmt.Errorf("two pages at %s", path)
+			}
+			pages[path] = page
+		}
+		return nil
+	}
 	for _, r := range s.Resources {
 		ex, err := readExamples(filepath.Join(root, "examples", "resources", r.Type), "resource")
 		if err != nil {
@@ -114,22 +160,28 @@ func renderAll(s *schemas, root string) (map[string]string, error) {
 		if err != nil {
 			return nil, fmt.Errorf("%s: %w", r.Type, err)
 		}
-		page, err := renderResource(r, pageInput{Examples: ex, Import: imp}, engine.DefaultOperationTimeout)
+		fitted, err := fit(r, "resources", pageInput{Examples: ex, Import: imp, DataSources: dataSources}, func(s *schema, in pageInput) (string, error) {
+			return renderResource(s, in, engine.DefaultOperationTimeout)
+		}, pageBudget)
 		if err != nil {
 			return nil, fmt.Errorf("%s: %w", r.Type, err)
 		}
-		pages[pagePath("resources", r.Type)] = page
+		if err := add(fitted); err != nil {
+			return nil, err
+		}
 	}
 	for _, d := range s.DataSources {
 		ex, err := readExamples(filepath.Join(root, "examples", "data-sources", d.Type), "data-source")
 		if err != nil {
 			return nil, fmt.Errorf("%s: %w", d.Type, err)
 		}
-		page, err := renderDataSource(d, pageInput{Examples: ex})
+		fitted, err := fit(d, "data-sources", pageInput{Examples: ex, DataSources: dataSources}, renderDataSource, pageBudget)
 		if err != nil {
 			return nil, fmt.Errorf("%s data source: %w", d.Type, err)
 		}
-		pages[pagePath("data-sources", d.Type)] = page
+		if err := add(fitted); err != nil {
+			return nil, err
+		}
 	}
 	prose, err := readProviderProse(filepath.Join(root, "docs-src", "provider.md"))
 	if err != nil {
@@ -155,6 +207,9 @@ func renderAll(s *schemas, root string) (map[string]string, error) {
 		if strings.Contains(page, permissionsMarker) {
 			page = strings.ReplaceAll(page, permissionsMarker, table)
 			placed = true
+		}
+		if _, dup := pages[path]; dup {
+			return nil, fmt.Errorf("the guide %s has the name of a generated guide", path)
 		}
 		pages[path] = page
 	}

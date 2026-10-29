@@ -38,10 +38,12 @@ The following arguments are required:
 
 The following arguments are optional:
 
-* `legacy` - (Optional, Deprecated) An old field.
-* `note` - (Optional) A note. Changing it replaces the resource.
+* `legacy` - (Optional, Deprecated) An old field. Default: none.
+* `note` - (Optional) A note. Changing it replaces the resource. Default (Stripe): `draft`. Removing it from the configuration leaves the current value.
 * `parts` - (Optional) The parts of the gadget. See [`parts`](#parts) below.
 * `password` - (Optional, Write-Only) A password the provider never stores.
+* `reference` - (Optional) A reference only an update sets. Default: not sent.
+* `tier` - (Optional) The pricing tier. Default (Stripe): the account's default tier (`basic` on a US account).
 * `token` - (Optional, Sensitive) A token that stays in state.
 
 <a id="parts"></a>
@@ -66,7 +68,7 @@ The `parts.options` attribute is a map. Each value supports:
 
 The `parts.options.finish` attribute supports:
 
-* `colour` - (Optional) Colour of the finish.
+* `colour` - (Optional) Colour of the finish. Default: none.
 
 ## Attribute Reference
 
@@ -74,6 +76,7 @@ This resource exports the following attributes in addition to the arguments abov
 
 * `id` - Unique identifier for the object.
 * `history` - What happened to the gadget. See [`history`](#history) below.
+* `last_part` - The part attached last. See [`last_part`](#last_part) below.
 * `status` - The status of the gadget.
 
 <a id="history"></a>
@@ -83,6 +86,11 @@ The `history` attribute is a set. Each element supports:
 
 * `at` - When it happened.
 * `secret` - (Sensitive) A secret detail.
+
+<a id="last_part"></a>
+### `last_part`
+
+The `last_part` attribute holds a widget gadget part, with the attributes of the [`widget_gadget_part`](../data-sources/widget_gadget_part) data source and `object`, the name of its type.
 
 ## Timeouts
 

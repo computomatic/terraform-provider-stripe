@@ -18,7 +18,7 @@ var Table = []fields.Field{
 	{Name: "id", Shape: fields.String, Response: true, Description: "Unique identifier for the object."},
 	{Name: "livemode", Shape: fields.Bool, Response: true, Description: "If the object exists in live mode, the value is `true`. If the object exists in test mode, the value is `false`."},
 	{Name: "metadata", Shape: fields.StringMap, Create: true, Update: true, Response: true, ServerDefaulted: true, Description: "Set of [key-value pairs](https://docs.stripe.com/api/metadata) that you can attach to an object. This can be useful for storing additional information about the object in a structured format. Individual keys can be unset by posting an empty value to them. All keys can be unset by posting an empty value to `metadata`."},
-	{Name: "reversals", Shape: fields.Object, Response: true, Description: "A list of reversals that have been applied to the transfer.", Fields: []fields.Field{
+	{Name: "reversals", Shape: fields.Object, Response: true, Description: "A list of reversals that have been applied to the transfer.", PagedBy: "stripe_transfer_reversal", Fields: []fields.Field{
 		{Name: "data", Shape: fields.ObjectList, Response: true, Description: "Details about each object.", Fields: []fields.Field{
 			{Name: "amount", Shape: fields.Int, Response: true, Description: "Amount, in cents (or local equivalent)."},
 			{Name: "balance_transaction", Shape: fields.String, Response: true, Description: "Balance transaction that describes the impact on your account balance."},

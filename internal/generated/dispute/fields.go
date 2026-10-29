@@ -8,7 +8,7 @@ import "github.com/computomatic/terraform-provider-stripe/internal/fields"
 // Table lists every request and response field of the object.
 var Table = []fields.Field{
 	{Name: "amount", Shape: fields.Int, Response: true, Description: "Disputed amount. Usually the amount of the charge, but it can differ (usually because of currency fluctuation or because only part of the order is disputed)."},
-	{Name: "balance_transactions", Shape: fields.ObjectList, Response: true, Description: "List of zero, one, or two balance transactions that show funds withdrawn and reinstated to your Stripe account as a result of this dispute.", Fields: []fields.Field{
+	{Name: "balance_transactions", Shape: fields.ObjectList, Response: true, Description: "List of zero, one, or two balance transactions that show funds withdrawn and reinstated to your Stripe account as a result of this dispute.", Copy: "stripe_balance_transaction", Fields: []fields.Field{
 		{Name: "amount", Shape: fields.Int, Response: true, Description: "Gross amount of this transaction (in cents (or local equivalent)). A positive value represents funds charged to another party, and a negative value represents funds sent to another party."},
 		{Name: "available_on", Shape: fields.Int, Response: true, Description: "The date that the transaction's net funds become available in the Stripe balance."},
 		{Name: "balance_type", Shape: fields.String, Response: true, Enum: []string{"issuing", "payments", "refund_and_dispute_prefunding", "risk_reserved"}, Description: "The balance that this transaction impacts."},

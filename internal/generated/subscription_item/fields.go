@@ -21,7 +21,7 @@ var Table = []fields.Field{
 	}},
 	{Name: "id", Shape: fields.String, Response: true, Description: "Unique identifier for the object."},
 	{Name: "metadata", Shape: fields.StringMap, Create: true, Update: true, Response: true, ServerDefaulted: true, Description: "Set of [key-value pairs](https://docs.stripe.com/api/metadata) that you can attach to an object. This can be useful for storing additional information about the object in a structured format. Individual keys can be unset by posting an empty value to them. All keys can be unset by posting an empty value to `metadata`."},
-	{Name: "off_session", Shape: fields.Bool, Update: true, Description: "Indicates if a customer is on or off-session while an invoice payment is attempted. Defaults to `false` (on-session)."},
+	{Name: "off_session", Shape: fields.Bool, Update: true, Description: "Indicates if a customer is on or off-session while an invoice payment is attempted. Defaults to `false` (on-session).", Default: &fields.Default{Kind: fields.DefaultNotSent}},
 	{Name: "payment_behavior", Shape: fields.String, Create: true, Update: true, Enum: []string{"allow_incomplete", "default_incomplete", "error_if_incomplete", "pending_if_incomplete"}, Description: "Controls how Stripe handles payment when a subscription update requires payment and `collection_method=charge_automatically`."},
 	{Name: "price", Shape: fields.String, Create: true, Update: true, Response: true, ServerDefaulted: true, Description: "The ID of the price object."},
 	{Name: "price_data", Shape: fields.Object, Create: true, Update: true, Description: "Data used to generate a new [Price](https://docs.stripe.com/api/prices) object inline.", Fields: []fields.Field{

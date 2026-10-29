@@ -62,7 +62,7 @@ The following arguments are required:
 
 The following arguments are optional:
 
-* `active` - (Optional) Whether the trial offer can be used for new subscriptions. Defaults to true.
+* `active` - (Optional) Whether the trial offer can be used for new subscriptions. Defaults to true. Removing it from the configuration leaves the current value.
 * `nickname` - (Optional) A brief description of the trial offer, hidden from customers. Changing it replaces the resource.
 
 <a id="duration"></a>

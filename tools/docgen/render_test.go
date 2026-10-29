@@ -3,9 +3,11 @@ package main
 import (
 	"context"
 	"flag"
+	"maps"
 	"os"
 	"path/filepath"
 	"regexp"
+	"slices"
 	"strings"
 	"testing"
 	"time"
@@ -60,7 +62,8 @@ func idAttr(name string) *tfprotov6.ResourceIdentitySchemaAttribute {
 
 // fixture covers every shape of D1 to D4: required and optional arguments, a sensitive and a
 // write-only one, nesting at three depths, a read-only nested attribute, a child resource, a
-// singleton and a data source with lookup keys.
+// singleton and a data source with lookup keys. withDefaults gives it the default statements of
+// the full-attribute-coverage ADR's D4, one of each form, and an embedded copy.
 func fixture(t *testing.T) *schemas {
 	t.Helper()
 	resp := &tfprotov6.GetProviderSchemaResponse{
@@ -84,6 +87,11 @@ func fixture(t *testing.T) *schemas {
 						nested("finish", "Finish of the option.", tfprotov6.SchemaObjectNestingModeSingle, optional,
 							str("colour", "Colour of the finish.", optional))),
 				),
+				nested("last_part", "The part attached last.", tfprotov6.SchemaObjectNestingModeSingle, computed,
+					str("label", "Label of the part.", computed),
+					str("object", "The name of the object's type.", computed)),
+				str("tier", "The pricing tier", optional),
+				str("reference", "A reference only an update sets.", optional),
 				nested("history", "What happened to the gadget.", tfprotov6.SchemaObjectNestingModeSet, computed,
 					str("at", "When it happened.", computed),
 					str("secret", "A secret detail.", func(a *tfprotov6.SchemaAttribute) { a.Computed, a.Sensitive = true, true })),
@@ -121,6 +129,40 @@ func fixture(t *testing.T) *schemas {
 	return s
 }
 
+// withDefaults puts on the fixture what the engine and the provider say about its attributes
+// (ADR 2026-10-29-full-attribute-coverage, D3 and D4): a value Stripe applies, a rule Stripe
+// applies with the value the suite observed, none, not sent, and the provider's own value and
+// rule; and an embedded copy of a gadget part.
+func withDefaults(t *testing.T, s *schemas) *schemas {
+	t.Helper()
+	for typeName, docs := range map[string]map[string]engine.AttributeDoc{
+		"widget_gadget": {
+			"note":                        {Default: "Default (Stripe): `draft`.", NeedsDefault: true},
+			"tier":                        {Default: "Default (Stripe): the account's default tier (`basic` on a US account).", NeedsDefault: true},
+			"legacy":                      {Default: "Default: none.", NeedsDefault: true},
+			"reference":                   {Default: "Default: not sent.", NeedsDefault: true},
+			"parts.options.finish.colour": {Default: "Default: none.", NeedsDefault: true},
+			"last_part":                   {Copy: "widget_gadget_part"},
+		},
+	} {
+		if err := attachDocs(byType(s.Resources, typeName), docs); err != nil {
+			t.Fatal(err)
+		}
+	}
+	at(s.Provider.Attrs, "api_key").Default = "Default (provider): the `WIDGET_API_KEY` environment variable."
+	at(s.Provider.Attrs, "base_url").Default = "Default (provider): `https://api.example.com`."
+	return s
+}
+
+// dataSources indexes the fixture's data sources, which an embedded copy links to.
+func dataSources(s *schemas) map[string]*schema {
+	out := map[string]*schema{}
+	for _, d := range s.DataSources {
+		out[d.Type] = d
+	}
+	return out
+}
+
 func byType(list []*schema, typeName string) *schema {
 	for _, s := range list {
 		if s.Type == typeName {
@@ -149,7 +191,7 @@ func golden(t *testing.T, name, got string) {
 }
 
 func TestGoldenPages(t *testing.T) {
-	s := fixture(t)
+	s := withDefaults(t, fixture(t))
 	timeout := 20 * time.Minute
 	ex := []example{
 		{Code: "resource \"widget_gadget\" \"main\" {\n  name = \"Main\"\n}\n"},
@@ -161,8 +203,9 @@ func TestGoldenPages(t *testing.T) {
 	byType(s.Resources, "widget_gadget").DestroyNote = "Gadgets cannot be deleted. `terraform destroy`, and a change that would replace the gadget, fail at plan time. To stop managing a gadget, remove it from the state as [Removing from State](#removing-from-state) shows; it stays in the account."
 	byType(s.Resources, "widget_gadget_part").ImportNote = "Parts are matched by serial."
 	gadget, err := renderResource(byType(s.Resources, "widget_gadget"), pageInput{
-		Examples: ex,
-		Import:   &importExample{Name: "main", ID: "gad_123"},
+		Examples:    ex,
+		Import:      &importExample{Name: "main", ID: "gad_123"},
+		DataSources: dataSources(s),
 	}, timeout)
 	if err != nil {
 		t.Fatal(err)
@@ -275,9 +318,6 @@ func TestStalePagesAreDeleted(t *testing.T) {
 	}
 }
 
-// Half the Registry's limit, so that growth is caught long before it truncates a page.
-const pageBudget = 250_000
-
 func TestPagesStayUnderBudget(t *testing.T) {
 	check := func(name string, pages map[string]string) {
 		for path, page := range pages {
@@ -310,8 +350,14 @@ func TestPagesStayUnderBudget(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(all) != len(real.Resources)+len(real.DataSources)+len(guides)+1 {
-		t.Errorf("got %d pages for %d resources, %d data sources, %d guides and the index", len(all), len(real.Resources), len(real.DataSources), len(guides))
+	split := 0
+	for path := range all {
+		if _, written := guides[path]; strings.HasPrefix(path, "guides/") && !written {
+			split++
+		}
+	}
+	if len(all) != len(real.Resources)+len(real.DataSources)+len(guides)+split+1 {
+		t.Errorf("got %d pages for %d resources, %d data sources, %d guides, %d split guides and the index", len(all), len(real.Resources), len(real.DataSources), len(guides), split)
 	}
 	check("provider", all)
 }
@@ -402,6 +448,77 @@ func TestPermissionTable(t *testing.T) {
 	} {
 		if _, err := permissionTable(s, bad); err == nil {
 			t.Errorf("%s: want an error", name)
+		}
+	}
+}
+
+// A page over the budget moves its largest top-level nested block to a guide page of its own,
+// which keeps each argument's default statement and is linked from the block's line.
+func TestGuideSplit(t *testing.T) {
+	s := withDefaults(t, fixture(t))
+	gadget := byType(s.Resources, "widget_gadget")
+	in := pageInput{
+		Examples:    []example{{Code: "resource \"widget_gadget\" \"main\" {\n  name = \"Main\"\n}\n"}},
+		Import:      &importExample{Name: "main", ID: "gad_123"},
+		DataSources: dataSources(s),
+	}
+	render := func(s *schema, in pageInput) (string, error) { return renderResource(s, in, 20*time.Minute) }
+	whole, err := render(gadget, in)
+	if err != nil {
+		t.Fatal(err)
+	}
+	pages, err := fit(gadget, "resources", in, render, len(whole)-1)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(pages) != 2 {
+		t.Fatalf("got pages %v, want the page and one guide", slices.Collect(maps.Keys(pages)))
+	}
+	golden(t, "resource_split", pages[filepath.Join("resources", "widget_gadget.md")])
+	golden(t, "guide_split", pages[filepath.Join("guides", "widget_gadget-resource-parts.md")])
+
+	if _, err := fit(gadget, "resources", in, render, 100); err == nil {
+		t.Error("a page over the budget with every block moved must fail")
+	}
+}
+
+// An optional argument the evidence verifies, and every argument of the provider, must state a
+// default; in the total mode every optional argument must, but for a nested object with members.
+func TestDefaultsAreChecked(t *testing.T) {
+	if err := checkDefaults(withDefaults(t, fixture(t)), false); err != nil {
+		t.Errorf("complete fixture: %v", err)
+	}
+	s := withDefaults(t, fixture(t))
+	at(byType(s.Resources, "widget_gadget").Attrs, "tier").Default = ""
+	at(s.Provider.Attrs, "base_url").Default = ""
+	err := checkDefaults(s, false)
+	if err == nil || !strings.Contains(err.Error(), "resources/widget_gadget.md: tier") || !strings.Contains(err.Error(), "index.md: base_url") {
+		t.Errorf("err = %v, want it to name both arguments", err)
+	}
+	err = checkDefaults(withDefaults(t, fixture(t)), true)
+	want := "optional arguments without a default statement (ADR 2026-10-29-full-attribute-coverage, D4):\n" +
+		"  resources/widget_gadget.md: password\n  resources/widget_gadget.md: token"
+	if err == nil || err.Error() != want {
+		t.Errorf("total: err = %v, want %q", err, want)
+	}
+}
+
+// An embedded copy links to the data source of the copied object only where that data source
+// has every attribute the copy has.
+func TestCopiesLinkOnlyToADataSourceThatHoldsThem(t *testing.T) {
+	ds := []*attr{{Name: "label"}, {Name: "size", Nesting: nestSingle, Children: []*attr{{Name: "width"}}}}
+	for name, copied := range map[string]struct {
+		attrs []*attr
+		want  bool
+	}{
+		"subset":       {[]*attr{{Name: "label"}}, true},
+		"nested":       {[]*attr{{Name: "size", Nesting: nestSingle, Children: []*attr{{Name: "width"}}}}, true},
+		"missing":      {[]*attr{{Name: "colour"}}, false},
+		"nested extra": {[]*attr{{Name: "size", Nesting: nestSingle, Children: []*attr{{Name: "depth"}}}}, false},
+		"shape":        {[]*attr{{Name: "label", Nesting: nestSingle}}, false},
+	} {
+		if got := holds(ds, copied.attrs); got != copied.want {
+			t.Errorf("%s: holds %v, want %v", name, got, copied.want)
 		}
 	}
 }

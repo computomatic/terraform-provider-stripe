@@ -28,7 +28,7 @@ The following arguments are required:
 
 The following arguments are optional:
 
-* `status` - (Optional) The feedback option's status. Possible values: `inactive`.
+* `status` - (Optional) The feedback option's status. Possible values: `inactive`. Removing it from the configuration leaves the current value.
 
 ## Attribute Reference
 

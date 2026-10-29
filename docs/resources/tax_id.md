@@ -37,7 +37,7 @@ The following arguments are required:
 
 The following arguments are optional:
 
-* `owner` - (Optional) The account or customer the tax ID belongs to. Defaults to `owner[type]=self`. Changing it replaces the resource. See [`owner`](#owner) below.
+* `owner` - (Optional) The account or customer the tax ID belongs to. Defaults to `owner[type]=self`. Changing it replaces the resource. Removing it from the configuration leaves the current value. See [`owner`](#owner) below.
 
 <a id="owner"></a>
 ### `owner`

@@ -86,23 +86,4 @@ The `delivery_details.location` attribute supports:
 <a id="delivery_details.supplier"></a>
 ### `delivery_details.supplier`
 
-The `delivery_details.supplier` attribute supports:
-
-* `id` - Unique identifier for the object.
-* `info_url` - Link to a webpage to learn more about the supplier.
-* `livemode` - Has the value `true` if the object exists in live mode or the value `false` if the object exists in test mode.
-* `locations` - The locations in which this supplier operates. See [`delivery_details.supplier.locations`](#delivery_details.supplier.locations) below.
-* `name` - Name of this carbon removal supplier.
-* `object` - String representing the object’s type. Objects of the same type share the same value. Possible values: `climate.supplier`.
-* `removal_pathway` - The scientific pathway used for carbon removal. Possible values: `biomass_carbon_removal_and_storage`, `direct_air_capture`, `enhanced_weathering`, `marine_carbon_removal`.
-
-<a id="delivery_details.supplier.locations"></a>
-### `delivery_details.supplier.locations`
-
-The `delivery_details.supplier.locations` attribute is a list. Each element supports:
-
-* `city` - The city where the supplier is located.
-* `country` - Two-letter ISO code representing the country where the supplier is located.
-* `latitude` - The geographic latitude where the supplier is located.
-* `longitude` - The geographic longitude where the supplier is located.
-* `region` - The state/county/province/region where the supplier is located.
+The `delivery_details.supplier` attribute holds a climate supplier, with the attributes of the [`stripe_climate_supplier`](../data-sources/climate_supplier) data source and `object`, the name of its type.

@@ -34,7 +34,7 @@ This data source exports the following attributes in addition to the arguments a
 * `created` - Time at which the object was created. Measured in seconds since the Unix epoch.
 * `created_by` - The name or email address of the user who created this value list.
 * `item_type` - Type of the items in the value list. One of `card_fingerprint`, `card_bin`, `crypto_fingerprint`, `email`, `ip_address`, `country`, `string`, `case_sensitive_string`, `customer_id`, `account`, `sepa_debit_fingerprint`, or `us_bank_account_fingerprint`. Use `string` if the item type is unknown or mixed. Possible values: `account`, `card_bin`, `card_fingerprint`, `case_sensitive_string`, `country`, `crypto_fingerprint`, `customer_id`, `email`, `ip_address`, `sepa_debit_fingerprint`, `string`, `us_bank_account_fingerprint`.
-* `list_items` - List of items contained within this value list. See [`list_items`](#list_items) below.
+* `list_items` - List of items contained within this value list. Holds the first page of the list Stripe returns with the object; `has_more` is true when there are more. Read every element with the `stripe_radar_value_list_item` data source. See [`list_items`](#list_items) below.
 * `livemode` - If the object exists in live mode, the value is `true`. If the object exists in test mode, the value is `false`.
 * `metadata` - Set of [key-value pairs](https://docs.stripe.com/api/metadata) that you can attach to an object. This can be useful for storing additional information about the object in a structured format. Individual keys can be unset by posting an empty value to them. All keys can be unset by posting an empty value to `metadata`.
 * `name` - The human-readable name of the value list.

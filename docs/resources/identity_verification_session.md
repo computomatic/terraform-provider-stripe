@@ -48,12 +48,12 @@ The following arguments are optional:
 
 * `client_reference_id` - (Optional) A string to reference this user. This can be a customer ID, a session ID, or similar, and can be used to reconcile this verification with your internal systems. Changing it fails the plan, because this resource cannot be replaced.
 * `metadata` - (Optional) Set of [key-value pairs](https://docs.stripe.com/api/metadata) that you can attach to an object. This can be useful for storing additional information about the object in a structured format. Individual keys can be unset by posting an empty value to them. All keys can be unset by posting an empty value to `metadata`.
-* `options` - (Optional) A set of options for the session’s verification checks. Changing it fails the plan, because this resource cannot be replaced. See [`options`](#options) below.
+* `options` - (Optional) A set of options for the session’s verification checks. Changing it fails the plan, because this resource cannot be replaced. Removing it from the configuration leaves the current value. See [`options`](#options) below.
 * `provided_details` - (Optional) Details provided about the user being verified. These details might be shown to the user. Changing it fails the plan, because this resource cannot be replaced. See [`provided_details`](#provided_details) below.
 * `related_customer` - (Optional) Customer ID Changing it fails the plan, because this resource cannot be replaced.
 * `related_customer_account` - (Optional) The ID of the Account representing a customer. Changing it fails the plan, because this resource cannot be replaced.
 * `return_url` - (Optional) The URL that the user will be redirected to upon completing the verification flow. Changing it fails the plan, because this resource cannot be replaced.
-* `status` - (Optional) Status of this VerificationSession. [Learn more about the lifecycle of sessions](https://docs.stripe.com/identity/how-sessions-work). Possible values: `canceled`.
+* `status` - (Optional) Status of this VerificationSession. [Learn more about the lifecycle of sessions](https://docs.stripe.com/identity/how-sessions-work). Possible values: `canceled`. Removing it from the configuration leaves the current value.
 
 <a id="options"></a>
 ### `options`
@@ -70,10 +70,10 @@ The `options` attribute supports:
 
 The `options.document` attribute supports:
 
-* `allowed_types` - (Optional) Array of strings of allowed identity document types. If the provided identity document isn’t one of the allowed types, the verification check will fail with a document_type_not_allowed error code.
-* `require_id_number` - (Optional) Collect an ID number and perform an [ID number check](https://docs.stripe.com/identity/verification-checks?type=id-number) with the document’s extracted name and date of birth.
-* `require_live_capture` - (Optional) Disable image uploads, identity document images have to be captured using the device’s camera.
-* `require_matching_selfie` - (Optional) Capture a face image and perform a [selfie check](https://docs.stripe.com/identity/verification-checks?type=selfie) comparing a photo ID and a picture of your user’s face. [Learn more](https://docs.stripe.com/identity/selfie).
+* `allowed_types` - (Optional) Array of strings of allowed identity document types. If the provided identity document isn’t one of the allowed types, the verification check will fail with a document_type_not_allowed error code. Removing it from the configuration leaves the current value.
+* `require_id_number` - (Optional) Collect an ID number and perform an [ID number check](https://docs.stripe.com/identity/verification-checks?type=id-number) with the document’s extracted name and date of birth. Removing it from the configuration leaves the current value.
+* `require_live_capture` - (Optional) Disable image uploads, identity document images have to be captured using the device’s camera. Removing it from the configuration leaves the current value.
+* `require_matching_selfie` - (Optional) Capture a face image and perform a [selfie check](https://docs.stripe.com/identity/verification-checks?type=selfie) comparing a photo ID and a picture of your user’s face. [Learn more](https://docs.stripe.com/identity/selfie). Removing it from the configuration leaves the current value.
 
 <a id="options.email"></a>
 ### `options.email`

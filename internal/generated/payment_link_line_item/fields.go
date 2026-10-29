@@ -41,7 +41,7 @@ var Table = []fields.Field{
 	}},
 	{Name: "id", Shape: fields.String, Response: true, Description: "Unique identifier for the object."},
 	{Name: "metadata", Shape: fields.StringMap, Response: true, Description: "Set of [key-value pairs](https://docs.stripe.com/api/metadata) that you can attach to an object. This can be useful for storing additional information about the object in a structured format."},
-	{Name: "price", Shape: fields.Object, Response: true, Description: "The price used to generate the line item.", Fields: []fields.Field{
+	{Name: "price", Shape: fields.Object, Response: true, Description: "The price used to generate the line item.", Copy: "stripe_price", Fields: []fields.Field{
 		{Name: "active", Shape: fields.Bool, Response: true, Description: "Whether the price can be used for new purchases."},
 		{Name: "billing_scheme", Shape: fields.String, Response: true, Enum: []string{"per_unit", "tiered"}, Description: "Describes how to compute the price per period. Either `per_unit` or `tiered`. `per_unit` indicates that the fixed amount (specified in `unit_amount` or `unit_amount_decimal`) will be charged per unit in `quantity` (for prices with `usage_type=licensed`), or per unit of total usage (for prices with `usage_type=metered`). `tiered` indicates that the unit pricing will be computed using a tiering strategy as defined using the `tiers` and `tiers_mode` attributes."},
 		{Name: "created", Shape: fields.Int, Response: true, Description: "Time at which the object was created. Measured in seconds since the Unix epoch."},
@@ -101,7 +101,7 @@ var Table = []fields.Field{
 	{Name: "quantity", Shape: fields.Int, Response: true, Description: "The quantity of products being purchased."},
 	{Name: "taxes", Shape: fields.ObjectList, Response: true, Description: "The taxes applied to the line item.", Fields: []fields.Field{
 		{Name: "amount", Shape: fields.Int, Response: true, Description: "Amount of tax applied for this rate."},
-		{Name: "rate", Shape: fields.Object, Response: true, Description: "Tax rates can be applied to [invoices](https://docs.stripe.com/invoicing/taxes/tax-rates), [subscriptions](https://docs.stripe.com/billing/taxes/tax-rates) and [Checkout Sessions](https://docs.stripe.com/payments/checkout/use-manual-tax-rates) to collect tax. Related guide: [Tax rates](https://docs.stripe.com/billing/taxes/tax-rates)", Fields: []fields.Field{
+		{Name: "rate", Shape: fields.Object, Response: true, Description: "Tax rates can be applied to [invoices](https://docs.stripe.com/invoicing/taxes/tax-rates), [subscriptions](https://docs.stripe.com/billing/taxes/tax-rates) and [Checkout Sessions](https://docs.stripe.com/payments/checkout/use-manual-tax-rates) to collect tax. Related guide: [Tax rates](https://docs.stripe.com/billing/taxes/tax-rates)", Copy: "stripe_tax_rate", Fields: []fields.Field{
 			{Name: "active", Shape: fields.Bool, Response: true, Description: "Defaults to `true`. When set to `false`, this tax rate cannot be used with new applications or Checkout Sessions, but will still work for subscriptions and invoices that already have it set."},
 			{Name: "country", Shape: fields.String, Response: true, Description: "Two-letter country code ([ISO 3166-1 alpha-2](https://en.wikipedia.org/wiki/ISO_3166-1_alpha-2))."},
 			{Name: "created", Shape: fields.Int, Response: true, Description: "Time at which the object was created. Measured in seconds since the Unix epoch."},

@@ -54,7 +54,7 @@ The following arguments are required:
 
 The following arguments are optional:
 
-* `status` - (Optional) Status of the alert. This can be active, inactive or archived. Possible values: `active`, `inactive`, `archived`.
+* `status` - (Optional) Status of the alert. This can be active, inactive or archived. Possible values: `active`, `inactive`, `archived`. Removing it from the configuration leaves the current value.
 * `usage_threshold` - (Optional) The configuration of the usage threshold. Changing it replaces the resource. See [`usage_threshold`](#usage_threshold) below.
 
 <a id="usage_threshold"></a>

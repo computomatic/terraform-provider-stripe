@@ -24,7 +24,7 @@ var Table = []fields.Field{
 	{Name: "livemode", Shape: fields.Bool, Response: true, Description: "If the object exists in live mode, the value is `true`. If the object exists in test mode, the value is `false`."},
 	{Name: "originating_transaction", Shape: fields.String, Response: true, Description: "ID of the corresponding charge on the platform account, if this fee was the result of a charge using the `destination` parameter."},
 	{Name: "refunded", Shape: fields.Bool, Response: true, Description: "Whether the fee has been fully refunded. If the fee is only partially refunded, this attribute will still be false."},
-	{Name: "refunds", Shape: fields.Object, Response: true, Description: "A list of refunds that have been applied to the fee.", Fields: []fields.Field{
+	{Name: "refunds", Shape: fields.Object, Response: true, Description: "A list of refunds that have been applied to the fee.", PagedBy: "stripe_application_fee_refund", Fields: []fields.Field{
 		{Name: "data", Shape: fields.ObjectList, Response: true, Description: "Details about each object.", Fields: []fields.Field{
 			{Name: "amount", Shape: fields.Int, Response: true, Description: "Amount, in cents (or local equivalent)."},
 			{Name: "balance_transaction", Shape: fields.String, Response: true, Description: "Balance transaction that describes the impact on your account balance."},

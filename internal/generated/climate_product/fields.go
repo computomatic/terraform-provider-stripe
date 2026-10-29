@@ -18,7 +18,7 @@ var Table = []fields.Field{
 	{Name: "livemode", Shape: fields.Bool, Response: true, Description: "Has the value `true` if the object exists in live mode or the value `false` if the object exists in test mode."},
 	{Name: "metric_tons_available", Shape: fields.String, Response: true, Description: "The quantity of metric tons available for reservation."},
 	{Name: "name", Shape: fields.String, Response: true, Description: "The Climate product's name."},
-	{Name: "suppliers", Shape: fields.ObjectList, Response: true, Description: "The carbon removal suppliers that fulfill orders for this Climate product.", Fields: []fields.Field{
+	{Name: "suppliers", Shape: fields.ObjectList, Response: true, Description: "The carbon removal suppliers that fulfill orders for this Climate product.", Copy: "stripe_climate_supplier", Fields: []fields.Field{
 		{Name: "id", Shape: fields.String, Response: true, Description: "Unique identifier for the object."},
 		{Name: "info_url", Shape: fields.String, Response: true, Description: "Link to a webpage to learn more about the supplier."},
 		{Name: "livemode", Shape: fields.Bool, Response: true, Description: "Has the value `true` if the object exists in live mode or the value `false` if the object exists in test mode."},

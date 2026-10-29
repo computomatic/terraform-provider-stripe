@@ -51,9 +51,9 @@ The following arguments are required:
 
 The following arguments are optional:
 
-* `account_holder_name` - (Optional) The name of the person or business that owns the bank account.
-* `account_holder_type` - (Optional) The type of entity that holds the account. This can be either `individual` or `company`. Possible values: `company`, `individual`.
-* `default_for_currency` - (Optional) When set to true, or if this is the first external account added in this currency, this account becomes the default external account for its currency.
+* `account_holder_name` - (Optional) The name of the person or business that owns the bank account. Default: not sent.
+* `account_holder_type` - (Optional) The type of entity that holds the account. This can be either `individual` or `company`. Possible values: `company`, `individual`. Default: not sent.
+* `default_for_currency` - (Optional) When set to true, or if this is the first external account added in this currency, this account becomes the default external account for its currency. Removing it from the configuration leaves the current value.
 * `metadata` - (Optional) Set of [key-value pairs](https://docs.stripe.com/api/metadata) that you can attach to an object. This can be useful for storing additional information about the object in a structured format. Individual keys can be unset by posting an empty value to them. All keys can be unset by posting an empty value to `metadata`.
 
 ## Attribute Reference

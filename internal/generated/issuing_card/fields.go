@@ -8,7 +8,7 @@ import "github.com/computomatic/terraform-provider-stripe/internal/fields"
 // Table lists every request and response field of the object.
 var Table = []fields.Field{
 	{Name: "brand", Shape: fields.String, Response: true, Description: "The brand of the card."},
-	{Name: "cancellation_reason", Shape: fields.String, Update: true, Response: true, Enum: []string{"lost", "stolen"}, Description: "Reason why the `status` of this card is `canceled`."},
+	{Name: "cancellation_reason", Shape: fields.String, Update: true, Response: true, Enum: []string{"lost", "stolen"}, Description: "Reason why the `status` of this card is `canceled`.", Default: &fields.Default{Kind: fields.DefaultNotSent}},
 	{Name: "cardholder", Shape: fields.String, Required: true, Create: true, Response: true, Description: "The [Cardholder](https://docs.stripe.com/api#issuing_cardholder_object) object with which the card will be associated."},
 	{Name: "created", Shape: fields.Int, Response: true, Description: "Time at which the object was created. Measured in seconds since the Unix epoch."},
 	{Name: "currency", Shape: fields.String, Required: true, Create: true, Response: true, Description: "The currency for the card."},

@@ -54,7 +54,7 @@ This data source exports the following attributes in addition to the arguments a
 * `description` - The subscription's description, meant to be displayable to the customer. Use this field to optionally store an explanation of the subscription for rendering in Stripe surfaces and certain local payment methods UIs.
 * `ended_at` - If the subscription has ended, the date the subscription ended.
 * `invoice_settings` - All invoices will be billed using the specified settings. See [`invoice_settings`](#invoice_settings) below.
-* `items` - A list of up to 20 subscription items, each with an attached price. See [`items`](#items) below.
+* `items` - A list of up to 20 subscription items, each with an attached price. Holds the first page of the list Stripe returns with the object; `has_more` is true when there are more. Read every element with the `stripe_subscription_item` data source. See [`items`](#items) below.
 * `latest_invoice` - The most recent invoice this subscription has generated over its lifecycle (for example, when it cycles or is updated).
 * `livemode` - If the object exists in live mode, the value is `true`. If the object exists in test mode, the value is `false`.
 * `managed_payments` - Settings for Managed Payments for this Subscription and resulting [Invoices](https://docs.stripe.com/api/invoices/object) and [PaymentIntents](https://docs.stripe.com/api/payment_intents/object). See [`managed_payments`](#managed_payments) below.

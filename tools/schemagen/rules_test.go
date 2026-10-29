@@ -196,11 +196,14 @@ func TestSuiteFixtureBuildsTheRealTables(t *testing.T) {
 	}
 }
 
-// tableDiff lists the fields b adds to a, and those whose only difference is Stable.
+// tableDiff lists the fields b adds to a, and those whose only difference is Stable. What the
+// docs line says (Default, Verified, Copy, PagedBy) is not compared.
 func tableDiff(a, b []fields.Field, prefix string) []string {
 	var out []string
 	for _, f := range b {
+		f.Default, f.Verified, f.Copy, f.PagedBy = nil, false, "", ""
 		g, ok := fields.Find(a, f.Name)
+		g.Default, g.Verified, g.Copy, g.PagedBy = nil, false, "", ""
 		switch {
 		case !ok:
 			out = append(out, "+ "+prefix+f.AttrName())
@@ -217,4 +220,76 @@ func tableDiff(a, b []fields.Field, prefix string) []string {
 		out = append(out, tableDiff(todayKids, kids, prefix+f.Name+".")...)
 	}
 	return out
+}
+
+// The suite's first real run (testdata/evidence/run-40926522642.json), with every leaf it proves
+// on both targets verified, gives the real tables their default statements: a string, an empty
+// string, a list and a map Stripe sets, and none. A verified optional argument the minimal
+// creates set, or whose hash they leave out, has no statement, which docgen then refuses.
+func TestSuiteRunGivesTheRealTablesTheirDefaults(t *testing.T) {
+	data, err := os.ReadFile(filepath.Join("..", "..", "spec", "openapi.json"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	spec, err := ParseSpec(data)
+	if err != nil {
+		t.Fatal(err)
+	}
+	raw, err := os.ReadFile(filepath.Join("testdata", "evidence", "run-40926522642.json"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	e, err := decodeEvidence(raw)
+	if err != nil {
+		t.Fatal(err)
+	}
+	p := &Pinned{Attributes: &Attributes{}, Evidence: e}
+	for _, l := range e.Leaves {
+		if l.Status == "proven" && slices.Contains(l.Targets, "fake") {
+			p.Attributes.Leaves = append(p.Attributes.Leaves, AttributeLeaf{Key: l.Key, Class: ClassVerified})
+		}
+	}
+	for pkg, want := range map[string]map[string]string{
+		"coupon": {
+			"duration":    "Default (Stripe): `once`.",
+			"metadata":    "Default (Stripe): `{}`.",
+			"redeem_by":   "Default: none.",
+			"percent_off": "",
+			"id":          "",
+		},
+		"event_destination_v2": {
+			"description":          "Default (Stripe): `\"\"`.",
+			"events_from":          "Default (Stripe): `[\"@self\"]`.",
+			"snapshot_api_version": "Default: none.",
+		},
+		"terminal_location": {
+			"display_name_kana": "Default: none.",
+			"address_kana.city": "",
+		},
+	} {
+		i := slices.IndexFunc(Resources, func(r Resource) bool { return r.Package == pkg })
+		tc, err := coverTable(spec, Resources[i], p)
+		if err != nil {
+			t.Fatalf("%s: %v", pkg, err)
+		}
+		for path, statement := range want {
+			f := fieldAt(tc.table, path)
+			if f == nil || !f.Verified {
+				t.Errorf("%s %s: %+v, want a verified field", pkg, path, f)
+				continue
+			}
+			got := ""
+			if f.Default != nil {
+				got = f.Default.Statement()
+			}
+			if got != statement {
+				t.Errorf("%s %s: %q, want %q", pkg, path, got, statement)
+			}
+		}
+		for _, r := range tc.records {
+			if r.SpecDefault != "" {
+				t.Errorf("%s %s: the spec's default %q disagrees with the run", pkg, r.Key, r.SpecDefault)
+			}
+		}
+	}
 }

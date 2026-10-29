@@ -7,7 +7,7 @@ import "github.com/computomatic/terraform-provider-stripe/internal/fields"
 
 // Table lists every request and response field of the object.
 var Table = []fields.Field{
-	{Name: "active", Shape: fields.Bool, Update: true, Response: true, Description: "Inactive features cannot be attached to new products and will not be returned from the features list endpoint."},
+	{Name: "active", Shape: fields.Bool, Update: true, Response: true, Description: "Inactive features cannot be attached to new products and will not be returned from the features list endpoint.", Default: &fields.Default{Kind: fields.DefaultNotSent}},
 	{Name: "id", Shape: fields.String, Response: true, Description: "Unique identifier for the object."},
 	{Name: "livemode", Shape: fields.Bool, Response: true, Description: "If the object exists in live mode, the value is `true`. If the object exists in test mode, the value is `false`."},
 	{Name: "lookup_key", Shape: fields.String, Required: true, Create: true, Response: true, Description: "A unique key you provide as your own system identifier. This may be up to 80 characters."},

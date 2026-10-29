@@ -9,7 +9,7 @@ import "github.com/computomatic/terraform-provider-stripe/internal/fields"
 var Table = []fields.Field{
 	{Name: "active", Shape: fields.Bool, Create: true, Update: true, Response: true, ServerDefaulted: true, Description: "Whether the product is currently available for purchase. Defaults to `true`."},
 	{Name: "created", Shape: fields.Int, Response: true, Description: "Time at which the object was created. Measured in seconds since the Unix epoch."},
-	{Name: "default_price", Shape: fields.String, Update: true, Response: true, Description: "The ID of the [Price](https://docs.stripe.com/api/prices) object that is the default price for this product."},
+	{Name: "default_price", Shape: fields.String, Update: true, Response: true, Description: "The ID of the [Price](https://docs.stripe.com/api/prices) object that is the default price for this product.", Default: &fields.Default{Kind: fields.DefaultNotSent}},
 	{Name: "default_price_data", Shape: fields.Object, Create: true, Description: "Data used to generate a new [Price](https://docs.stripe.com/api/prices) object. This Price will be set as the default price for this product.", Fields: []fields.Field{
 		{Name: "currency", Shape: fields.String, Required: true, Create: true},
 		{Name: "currency_options", Shape: fields.ObjectMap, Create: true, Fields: []fields.Field{

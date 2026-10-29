@@ -678,6 +678,11 @@ func (c *compiler) unused() error {
 			return fmt.Errorf("null_as entry `%s` names no field", p)
 		}
 	}
+	for p := range c.decl.Defaults {
+		if !c.used["defaults/"+p] {
+			return fmt.Errorf("defaults entry `%s` names no field", p)
+		}
+	}
 	for p := range c.decl.Rename {
 		if !c.used["rename/"+p] {
 			return fmt.Errorf("rename entry `%s` names no field", p)
@@ -707,6 +712,13 @@ func (c *compiler) build(table []fields.Field, prefix string, top, parentOutput,
 			f.Shape = fields.ScalarSet
 		}
 		n := &node{Field: f, Path: path, IsHashForm: hashForm}
+		if rule, ok := c.decl.Defaults[path]; ok {
+			if f.Default == nil || f.Default.Kind != fields.DefaultRule && f.Default.Kind != fields.DefaultVaries {
+				return nil, fmt.Errorf("defaults entry `%s` words a rule the evidence does not record for the field", path)
+			}
+			n.Default = &fields.Default{Kind: fields.DefaultRule, Rule: rule, Observed: f.Default.Observed}
+			c.used["defaults/"+path] = true
+		}
 		if v, ok := c.decl.NullAs[path]; ok {
 			if f.Shape != fields.String {
 				return nil, fmt.Errorf("null_as entry `%s` is not a string field", path)

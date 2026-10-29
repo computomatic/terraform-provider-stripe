@@ -221,7 +221,7 @@ var Table = []fields.Field{
 				{Name: "subscription_item", Shape: fields.String, Response: true, Description: "The subscription item that this coupon is applied to, if it is applied to a particular subscription item."},
 			}},
 		}},
-		{Name: "id", Shape: fields.String, Update: true, Response: true, Description: "Unique identifier for the object."},
+		{Name: "id", Shape: fields.String, Update: true, Response: true, Description: "Unique identifier for the object.", Default: &fields.Default{Kind: fields.DefaultNotSent}},
 		{Name: "metadata", Shape: fields.StringMap, Create: true, Update: true, Response: true, Description: "Set of [key-value pairs](https://docs.stripe.com/api/metadata) that you can attach to an object. This can be useful for storing additional information about the object in a structured format."},
 		{Name: "object", Shape: fields.String, Response: true, Enum: []string{"item"}, Description: "String representing the object's type. Objects of the same type share the same value."},
 		{Name: "price", Shape: fields.String, Create: true, Update: true, Response: true, Description: "The price used to generate the line item."},
@@ -651,7 +651,7 @@ var Table = []fields.Field{
 		{Name: "shipping_rate", Shape: fields.String, Response: true, Description: "The ID of the ShippingRate for this order."},
 		{Name: "taxes", Shape: fields.ObjectList, Response: true, Description: "The taxes applied to the shipping rate.", Fields: []fields.Field{
 			{Name: "amount", Shape: fields.Int, Response: true, Description: "Amount of tax applied for this rate."},
-			{Name: "rate", Shape: fields.Object, Response: true, Description: "Tax rates can be applied to [invoices](https://docs.stripe.com/invoicing/taxes/tax-rates), [subscriptions](https://docs.stripe.com/billing/taxes/tax-rates) and [Checkout Sessions](https://docs.stripe.com/payments/checkout/use-manual-tax-rates) to collect tax. Related guide: [Tax rates](https://docs.stripe.com/billing/taxes/tax-rates)", Fields: []fields.Field{
+			{Name: "rate", Shape: fields.Object, Response: true, Description: "Tax rates can be applied to [invoices](https://docs.stripe.com/invoicing/taxes/tax-rates), [subscriptions](https://docs.stripe.com/billing/taxes/tax-rates) and [Checkout Sessions](https://docs.stripe.com/payments/checkout/use-manual-tax-rates) to collect tax. Related guide: [Tax rates](https://docs.stripe.com/billing/taxes/tax-rates)", Copy: "stripe_tax_rate", Fields: []fields.Field{
 				{Name: "active", Shape: fields.Bool, Response: true, Description: "Defaults to `true`. When set to `false`, this tax rate cannot be used with new applications or Checkout Sessions, but will still work for subscriptions and invoices that already have it set."},
 				{Name: "country", Shape: fields.String, Response: true, Description: "Two-letter country code ([ISO 3166-1 alpha-2](https://en.wikipedia.org/wiki/ISO_3166-1_alpha-2))."},
 				{Name: "created", Shape: fields.Int, Response: true, Description: "Time at which the object was created. Measured in seconds since the Unix epoch."},
@@ -786,7 +786,7 @@ var Table = []fields.Field{
 			}},
 			{Name: "taxes", Shape: fields.ObjectList, Response: true, Description: "The aggregated tax amounts by rate.", Fields: []fields.Field{
 				{Name: "amount", Shape: fields.Int, Response: true, Description: "Amount of tax applied for this rate."},
-				{Name: "rate", Shape: fields.Object, Response: true, Description: "Tax rates can be applied to [invoices](https://docs.stripe.com/invoicing/taxes/tax-rates), [subscriptions](https://docs.stripe.com/billing/taxes/tax-rates) and [Checkout Sessions](https://docs.stripe.com/payments/checkout/use-manual-tax-rates) to collect tax. Related guide: [Tax rates](https://docs.stripe.com/billing/taxes/tax-rates)", Fields: []fields.Field{
+				{Name: "rate", Shape: fields.Object, Response: true, Description: "Tax rates can be applied to [invoices](https://docs.stripe.com/invoicing/taxes/tax-rates), [subscriptions](https://docs.stripe.com/billing/taxes/tax-rates) and [Checkout Sessions](https://docs.stripe.com/payments/checkout/use-manual-tax-rates) to collect tax. Related guide: [Tax rates](https://docs.stripe.com/billing/taxes/tax-rates)", Copy: "stripe_tax_rate", Fields: []fields.Field{
 					{Name: "active", Shape: fields.Bool, Response: true, Description: "Defaults to `true`. When set to `false`, this tax rate cannot be used with new applications or Checkout Sessions, but will still work for subscriptions and invoices that already have it set."},
 					{Name: "country", Shape: fields.String, Response: true, Description: "Two-letter country code ([ISO 3166-1 alpha-2](https://en.wikipedia.org/wiki/ISO_3166-1_alpha-2))."},
 					{Name: "created", Shape: fields.Int, Response: true, Description: "Time at which the object was created. Measured in seconds since the Unix epoch."},

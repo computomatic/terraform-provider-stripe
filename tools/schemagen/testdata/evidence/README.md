@@ -7,3 +7,9 @@ jq '.leaves |= map(select(.object=="coupon" or .object=="v2.core.event_destinati
 ```
 
 Its `suite_commit` and run are the suite fixture's placeholders. Replace it from the same file when the suite changes the format.
+
+`run-40926522642.json` is the suite's first evidence record from a run against Stripe, cut to the 109 leaves it proves. Source: `stripe-api-conformance` branch `results`, `evidence/761e47215607cbfaa1cf34ce674c364aae2b1e35.json` (suite run 40926522642, `passed: false` because three hand-written tests failed, so it cannot be pinned), filtered with:
+
+```sh
+jq '.leaves |= map(select(.status=="proven"))' 761e47215607cbfaa1cf34ce674c364aae2b1e35.json
+```

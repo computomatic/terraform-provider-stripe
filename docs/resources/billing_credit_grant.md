@@ -49,14 +49,14 @@ The following arguments are required:
 
 The following arguments are optional:
 
-* `category` - (Optional) The category of this credit grant. It defaults to `paid` if not specified. Possible values: `paid`, `promotional`. Changing it fails the plan, because this resource cannot be replaced.
-* `customer` - (Optional) ID of the customer receiving the billing credits. Changing it fails the plan, because this resource cannot be replaced.
+* `category` - (Optional) The category of this credit grant. It defaults to `paid` if not specified. Possible values: `paid`, `promotional`. Changing it fails the plan, because this resource cannot be replaced. Removing it from the configuration leaves the current value.
+* `customer` - (Optional) ID of the customer receiving the billing credits. Changing it fails the plan, because this resource cannot be replaced. Removing it from the configuration leaves the current value.
 * `customer_account` - (Optional) ID of the account representing the customer receiving the billing credits. Changing it fails the plan, because this resource cannot be replaced.
-* `effective_at` - (Optional) The time when the billing credits become effective-when they're eligible for use. It defaults to the current timestamp if not specified. Changing it fails the plan, because this resource cannot be replaced.
+* `effective_at` - (Optional) The time when the billing credits become effective-when they're eligible for use. It defaults to the current timestamp if not specified. Changing it fails the plan, because this resource cannot be replaced. Removing it from the configuration leaves the current value.
 * `expires_at` - (Optional) The time when the billing credits expire. If not specified, the billing credits don't expire.
 * `metadata` - (Optional) Set of key-value pairs that you can attach to an object. You can use this to store additional information about the object (for example, cost basis) in a structured format.
 * `name` - (Optional) A descriptive name shown in the Dashboard. Changing it fails the plan, because this resource cannot be replaced.
-* `priority` - (Optional) The desired priority for applying this credit grant. If not specified, it will be set to the default value of 50. The highest priority is 0 and the lowest is 100. Changing it fails the plan, because this resource cannot be replaced.
+* `priority` - (Optional) The desired priority for applying this credit grant. If not specified, it will be set to the default value of 50. The highest priority is 0 and the lowest is 100. Changing it fails the plan, because this resource cannot be replaced. Removing it from the configuration leaves the current value.
 
 <a id="amount"></a>
 ### `amount`
