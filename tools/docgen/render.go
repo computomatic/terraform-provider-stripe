@@ -82,11 +82,6 @@ func frontMatter(title, description string) string {
 	)
 }
 
-// noun is the resource's name in words, such as `product feature`.
-func noun(typeName string) string {
-	return strings.ReplaceAll(strings.TrimPrefix(typeName, "stripe_"), "_", " ")
-}
-
 // markers is the parenthesised prefix of a line: the kind (when labelled) and the flags.
 func markers(a *attr, labelled bool) string {
 	var m []string
@@ -372,7 +367,7 @@ func renderProvider(s *schema, prose providerProse, examples []example) (string,
 // removingSection shows how to stop managing an object whose destroy is refused: a `removed`
 // block, or `terraform state rm`. name is the resource name the Import section uses.
 func removingSection(m *markdown, s *schema, name string) {
-	subject := noun(s.Type)
+	subject := engine.Noun(s.Type)
 	address := s.Type + "." + name
 	m.add("## Removing from State")
 	m.add(fmt.Sprintf("To stop managing %s whose destroy is refused, remove it from the state without destroying it. In Terraform 1.7 and later, and OpenTofu 1.10 and later, replace the `resource` block with a [`removed` block](%s) and apply:", engine.WithArticle(subject), removedBlockURL))
@@ -384,7 +379,7 @@ func removingSection(m *markdown, s *schema, name string) {
 
 func importSection(m *markdown, s *schema, imp importExample) error {
 	name := s.Type + "." + imp.Name
-	subject := noun(s.Type)
+	subject := engine.Noun(s.Type)
 	indefinite := engine.WithArticle(subject)
 	id := imp.ID
 	m.add("## Import")

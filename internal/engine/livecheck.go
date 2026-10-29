@@ -57,7 +57,7 @@ func (c *LiveCheck) refusal(ctx context.Context, typeName string) diag.Diagnosti
 		return nil
 	}
 	live, err := c.mode(ctx)
-	thing := WithArticle(noun(typeName))
+	thing := WithArticle(Noun(typeName))
 	if err != nil {
 		return diag.NewErrorDiagnostic(cannotTellSummary, fmt.Sprintf(
 			"The provider creates or changes %s only once Stripe has confirmed the account's mode, because it can move real money. Reading GET /v1/balance failed:\n\n%s\n\nA restricted key needs the Balance read permission for this check.",
@@ -143,7 +143,7 @@ func (m *model) moneyNote() string {
 	if !m.decl.MovesMoney {
 		return ""
 	}
-	thing := noun(m.decl.TypeName)
+	thing := Noun(m.decl.TypeName)
 	lead := WithArticle(thing)
 	status := ""
 	if len(m.decl.Transitions) > 0 {

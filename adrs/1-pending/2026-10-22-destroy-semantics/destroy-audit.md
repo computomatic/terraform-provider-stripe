@@ -23,7 +23,7 @@ Rows marked **(Q*n*)** follow the numbered question in the ADR's "Resolved quest
 
 | New destroy | Count | Resources |
 |-|-|-|
-| Delete | 18 | account, apple_pay_domain, core_event_destination, coupon, customer, invoiceitem, plan, product_feature, radar_value_list, radar_value_list_item, subscription, subscription_item, tax_id, terminal_configuration, terminal_location, terminal_reader, test_helpers_test_clock, webhook_endpoint |
+| Delete | 18 | account, apple_pay_domain, coupon, customer, event_destination_v2, invoiceitem, plan, product_feature, radar_value_list, radar_value_list_item, subscription, subscription_item, tax_id, terminal_configuration, terminal_location, terminal_reader, test_helpers_test_clock, webhook_endpoint |
 | Delete, refuse when default | 1 | account_external_account (Q5) |
 | Delete or archive | 1 | product |
 | Archive | 10 | billing_meter, issuing_cardholder, payment_link, payment_method_configuration, payment_method_domain, price, product_catalog_trial_offer, promotion_code, shipping_rate, tax_rate |
@@ -63,9 +63,9 @@ Destroy changes for 19 resources: the 15 that now refuse (among them every resou
 | account | Delete | `DELETE`; `reject`, `unreject` | Not applicable |
 | apple_pay_domain | Delete | `DELETE` | Not applicable |
 | billing_meter | Archive: `POST /deactivate` | `deactivate`, `reactivate` | `billing_meter_test.go`: "deactivate and reactivate" |
-| core_event_destination | Delete | `DELETE`; `enable`, `disable`, `ping` | Not applicable |
 | coupon | Delete | `DELETE` | Not applicable |
 | customer | Delete | `DELETE` | Not applicable |
+| event_destination_v2 | Delete | `DELETE`; `enable`, `disable`, `ping` | Not applicable |
 | invoiceitem | Delete (a refused delete of an item on a finalized invoice is Stripe's error, shown as it is) | `DELETE` | Not applicable |
 | issuing_cardholder | Archive: `status = inactive` | `status` on update | `issuing_cardholder_test.go`: "update status" (inactive, then active) |
 | payment_link | Archive: `active = false` | `active` on update | `payment_link_test.go`: "deactivate and reactivate" |

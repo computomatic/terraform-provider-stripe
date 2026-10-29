@@ -68,11 +68,11 @@ const removeFromState = "To stop managing it, replace its resource block with a 
 
 func (m *model) destroyRefusal(reason string) string {
 	return fmt.Sprintf("%s The provider does not destroy what Stripe cannot delete or archive, so the %s is still in the Stripe account and in the state.\n\n%s",
-		reason, noun(m.decl.TypeName), fmt.Sprintf(removeFromState, m.decl.TypeName))
+		reason, Noun(m.decl.TypeName), fmt.Sprintf(removeFromState, m.decl.TypeName))
 }
 
 func (m *model) replaceRefusal(p path.Path, reason string) string {
-	thing := noun(m.decl.TypeName)
+	thing := Noun(m.decl.TypeName)
 	return fmt.Sprintf("Changing `%[1]s` needs a new %[2]s, because Stripe cannot change it on an existing one, and the existing %[2]s cannot be destroyed. %[3]s\n\n"+
 		"Revert the change, add `lifecycle { ignore_changes = [%[1]s] }` to leave it as it is, or remove the existing %[2]s from the state with a removed block or `terraform state rm` and apply again to create a new one.",
 		p.String(), thing, reason)
@@ -81,7 +81,7 @@ func (m *model) replaceRefusal(p path.Path, reason string) string {
 // destroyNote is the page's callout for a resource that refuses destroy, without its sigil,
 // or "" for one that never does.
 func (m *model) destroyNote() string {
-	thing := noun(m.decl.TypeName)
+	thing := Noun(m.decl.TypeName)
 	const remove = " remove it from the state as [Removing from State](#removing-from-state) shows; it stays in the Stripe account."
 	switch {
 	case m.decl.Delete == Refuse:

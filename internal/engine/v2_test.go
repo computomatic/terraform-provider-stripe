@@ -30,6 +30,19 @@ func v2Declaration() Declaration {
 	return decl
 }
 
+// A /v2 type name ends in `_v2`, which messages and docs put first (architecture ADR D7).
+func TestV2NounPutsTheVersionFirst(t *testing.T) {
+	for typeName, want := range map[string]string{
+		"stripe_product_feature":   "product feature",
+		"stripe_account_v2":        "v2 account",
+		"stripe_account_person_v2": "v2 account person",
+	} {
+		if got := Noun(typeName); got != want {
+			t.Errorf("Noun(%q) = %q, want %q", typeName, got, want)
+		}
+	}
+}
+
 func TestV2DeclarationRules(t *testing.T) {
 	cases := map[string]func(*Declaration){
 		"mixed namespaces":      func(d *Declaration) { d.Paths.List = "/v1/widgets" },

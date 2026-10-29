@@ -21,6 +21,8 @@ import (
 	"github.com/computomatic/terraform-provider-stripe/internal/resources/account_capability"
 	"github.com/computomatic/terraform-provider-stripe/internal/resources/account_external_account"
 	"github.com/computomatic/terraform-provider-stripe/internal/resources/account_person"
+	"github.com/computomatic/terraform-provider-stripe/internal/resources/account_person_v2"
+	"github.com/computomatic/terraform-provider-stripe/internal/resources/account_v2"
 	"github.com/computomatic/terraform-provider-stripe/internal/resources/apple_pay_domain"
 	"github.com/computomatic/terraform-provider-stripe/internal/resources/application_fee"
 	"github.com/computomatic/terraform-provider-stripe/internal/resources/application_fee_refund"
@@ -42,11 +44,7 @@ import (
 	"github.com/computomatic/terraform-provider-stripe/internal/resources/climate_order"
 	"github.com/computomatic/terraform-provider-stripe/internal/resources/climate_product"
 	"github.com/computomatic/terraform-provider-stripe/internal/resources/climate_supplier"
-	"github.com/computomatic/terraform-provider-stripe/internal/resources/commerce_product_catalog_import"
-	"github.com/computomatic/terraform-provider-stripe/internal/resources/core_account"
-	"github.com/computomatic/terraform-provider-stripe/internal/resources/core_account_person"
-	"github.com/computomatic/terraform-provider-stripe/internal/resources/core_event"
-	"github.com/computomatic/terraform-provider-stripe/internal/resources/core_event_destination"
+	"github.com/computomatic/terraform-provider-stripe/internal/resources/commerce_product_catalog_import_v2"
 	"github.com/computomatic/terraform-provider-stripe/internal/resources/country_spec"
 	"github.com/computomatic/terraform-provider-stripe/internal/resources/coupon"
 	"github.com/computomatic/terraform-provider-stripe/internal/resources/credit_note"
@@ -61,6 +59,8 @@ import (
 	"github.com/computomatic/terraform-provider-stripe/internal/resources/entitlements_active_entitlement"
 	"github.com/computomatic/terraform-provider-stripe/internal/resources/entitlements_feature"
 	"github.com/computomatic/terraform-provider-stripe/internal/resources/event"
+	"github.com/computomatic/terraform-provider-stripe/internal/resources/event_destination_v2"
+	"github.com/computomatic/terraform-provider-stripe/internal/resources/event_v2"
 	"github.com/computomatic/terraform-provider-stripe/internal/resources/file"
 	"github.com/computomatic/terraform-provider-stripe/internal/resources/file_link"
 	"github.com/computomatic/terraform-provider-stripe/internal/resources/financial_connections_account"
@@ -264,7 +264,7 @@ func (p *stripeProvider) Resources(_ context.Context) []func() resource.Resource
 		must(billing_feedback_option.NewResource()),
 		must(billing_meter.NewResource()),
 		must(billing_portal_configuration.NewResource()),
-		must(core_event_destination.NewResource()),
+		must(event_destination_v2.NewResource()),
 		must(coupon.NewResource()),
 		must(customer.NewResource()),
 		must(customer_balance_transaction.NewResource()),
@@ -306,8 +306,8 @@ func (p *stripeProvider) Resources(_ context.Context) []func() resource.Resource
 		must(issuing_dispute.NewResource()),
 		must(treasury_financial_account.NewResource()),
 		must(account_person.NewResource()),
-		must(core_account.NewResource()),
-		must(core_account_person.NewResource()),
+		must(account_v2.NewResource()),
+		must(account_person_v2.NewResource()),
 		// The resources that move money (adrs/1-pending/2026-10-22-money-moving-resources).
 		must(payment_intent.NewResource()),
 		must(refund.NewResource()),
@@ -342,7 +342,7 @@ func (p *stripeProvider) DataSources(_ context.Context) []func() datasource.Data
 		must(billing_feedback_option.NewDataSource()),
 		must(billing_meter.NewDataSource()),
 		must(billing_portal_configuration.NewDataSource()),
-		must(core_event_destination.NewDataSource()),
+		must(event_destination_v2.NewDataSource()),
 		must(country_spec.NewDataSource()),
 		must(coupon.NewDataSource()),
 		must(credit_note.NewDataSource()),
@@ -434,14 +434,14 @@ func (p *stripeProvider) DataSources(_ context.Context) []func() datasource.Data
 		must(tax_transaction_line_item.NewDataSource()),
 		must(tax_location.NewDataSource()),
 		must(reporting_report_run.NewDataSource()),
-		must(core_event.NewDataSource()),
+		must(event_v2.NewDataSource()),
 		must(apps_secret.NewDataSource()),
 		must(identity_verification_report.NewDataSource()),
 		must(payment_record.NewDataSource()),
-		must(commerce_product_catalog_import.NewDataSource()),
+		must(commerce_product_catalog_import_v2.NewDataSource()),
 		must(account_person.NewDataSource()),
-		must(core_account.NewDataSource()),
-		must(core_account_person.NewDataSource()),
+		must(account_v2.NewDataSource()),
+		must(account_person_v2.NewDataSource()),
 		must(apps_install.NewDataSource()),
 		must(transfer.NewDataSource()),
 		must(transfer_reversal.NewDataSource()),
