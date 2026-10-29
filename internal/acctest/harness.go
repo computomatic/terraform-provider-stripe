@@ -22,6 +22,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/computomatic/terraform-provider-stripe/internal/stripeapi"
 	"github.com/computomatic/terraform-provider-stripe/internal/wire"
 )
 
@@ -185,12 +186,31 @@ type Config struct {
 }
 
 // ProviderBlock renders the provider block for a test's configuration. Without a key it
-// leaves out api_key, so the provider reads it from the environment.
+// leaves out api_key, so the provider reads it from the environment. In smoke mode it names
+// Stripe's Files API host, which the provider would otherwise take from `base_url`.
 func (c Config) ProviderBlock() string {
 	if c.Key == "" {
-		return fmt.Sprintf("provider \"stripe\" {\n  base_url = %q\n}\n", c.BaseURL)
+		return fmt.Sprintf("provider \"stripe\" {\n  base_url = %q\n%s}\n", c.BaseURL, c.filesBaseURLLine("  files_base_url = "))
 	}
-	return fmt.Sprintf("provider \"stripe\" {\n  api_key  = %q\n  base_url = %q\n}\n", c.Key, c.BaseURL)
+	return fmt.Sprintf("provider \"stripe\" {\n  api_key  = %q\n  base_url = %q\n%s}\n", c.Key, c.BaseURL, c.filesBaseURLLine("  files_base_url = "))
+}
+
+// FilesBaseURL is the Files API host that uploads go to: Stripe's in smoke mode, the fake's
+// own port otherwise.
+func (c Config) FilesBaseURL() string {
+	if c.Smoke {
+		return stripeapi.DefaultFilesBaseURL
+	}
+	return c.BaseURL
+}
+
+// filesBaseURLLine is the `files_base_url` argument of a provider block, after the prefix that
+// aligns it, in smoke mode, and "" against the fake, whose `base_url` serves files too.
+func (c Config) filesBaseURLLine(prefix string) string {
+	if !c.Smoke {
+		return ""
+	}
+	return fmt.Sprintf("%s%q\n", prefix, c.FilesBaseURL())
 }
 
 // ProviderBlockWith renders ProviderBlock with more arguments, each one line such as
@@ -216,7 +236,7 @@ func (c Config) ConnectedProviderBlock() string {
 	if c.Key != "" {
 		key = fmt.Sprintf("  api_key        = %q\n", c.Key)
 	}
-	return fmt.Sprintf("provider \"stripe\" {\n  alias          = \"connected\"\n%s  base_url       = %q\n  stripe_account = %q\n}\n", key, c.BaseURL, c.StripeAccount)
+	return fmt.Sprintf("provider \"stripe\" {\n  alias          = \"connected\"\n%s  base_url       = %q\n%s  stripe_account = %q\n}\n", key, c.BaseURL, c.filesBaseURLLine("  files_base_url = "), c.StripeAccount)
 }
 
 // APIKey is the key for the harness's own calls: the account's key against the fake, the

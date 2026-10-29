@@ -2,13 +2,9 @@ package tfacc
 
 import (
 	"bytes"
-	"encoding/json"
 	"image"
 	"image/color"
 	"image/png"
-	"io"
-	"mime/multipart"
-	"net/http"
 	"testing"
 
 	"github.com/computomatic/terraform-provider-stripe/internal/acctest"
@@ -72,56 +68,20 @@ func cardLogoPNG(t *testing.T) []byte {
 	return buf.Bytes()
 }
 
-// upload sends a multipart `POST /v1/files`, which the Stripe client does not encode, to the
-// Files API host: Stripe's in smoke mode, the fake's own port otherwise. It returns the file's
-// ID.
+// upload sends `POST /v1/files` to the Files API host: Stripe's in smoke mode, the fake's own
+// port otherwise. It returns the file's ID.
 func upload(t *testing.T, c acctest.Config, purpose, filename string, content []byte) string {
 	t.Helper()
-	var body bytes.Buffer
-	form := multipart.NewWriter(&body)
-	if err := form.WriteField("purpose", purpose); err != nil {
-		t.Fatal(err)
-	}
-	part, err := form.CreateFormFile("file", filename)
-	if err != nil {
-		t.Fatal(err)
-	}
-	if _, err := part.Write(content); err != nil {
-		t.Fatal(err)
-	}
-	if err := form.Close(); err != nil {
-		t.Fatal(err)
-	}
-	base := c.BaseURL
-	if c.Smoke {
-		base = stripeapi.DefaultFilesBaseURL
-	}
-	req, err := http.NewRequestWithContext(t.Context(), http.MethodPost, base+"/v1/files", &body)
-	if err != nil {
-		t.Fatal(err)
-	}
-	req.Header.Set("Authorization", "Bearer "+c.APIKey())
-	req.Header.Set("Stripe-Version", stripeapi.Version)
-	req.Header.Set("Content-Type", form.FormDataContentType())
-	if c.StripeAccount != "" {
-		req.Header.Set("Stripe-Account", c.StripeAccount)
-	}
-	resp, err := http.DefaultClient.Do(req)
+	resp, err := Client(c).Do(t.Context(), stripeapi.Request{
+		Method: "POST", Path: "/v1/files", Host: stripeapi.FilesHost,
+		Params: wire.Object{{Name: "purpose", Value: wire.String(purpose)}},
+		File:   &stripeapi.File{Part: "file", Name: filename, Content: content},
+	})
 	if err != nil {
 		t.Fatalf("POST /v1/files: %v", err)
 	}
-	defer resp.Body.Close()
-	raw, err := io.ReadAll(resp.Body)
-	if err != nil {
-		t.Fatalf("POST /v1/files: %v", err)
-	}
-	var file struct {
-		ID string `json:"id"`
-	}
-	if resp.StatusCode != http.StatusOK || json.Unmarshal(raw, &file) != nil || file.ID == "" {
-		t.Fatalf("POST /v1/files: %d %s", resp.StatusCode, raw)
-	}
-	return file.ID
+	id, _ := resp.Body.(wire.Object).GetString("id")
+	return id
 }
 
 // PhysicalBundle returns the ID of an active physical bundle of the connected account conn

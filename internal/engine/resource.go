@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"net/http"
 	"net/url"
 	"slices"
 	"strconv"
@@ -187,6 +188,10 @@ func (r *Resource) planChange(ctx context.Context, req resource.ModifyPlanReques
 		return
 	}
 	if r.forgetFilled(req, resp) {
+		return
+	}
+	// A file to upload that the plan could not read is for the apply to hash and check.
+	if r.m.hashUnknown(resp.Plan.Raw) {
 		return
 	}
 	if unchanged(resp.Plan.Raw, req.Config.Raw, req.State.Raw) {
@@ -585,6 +590,13 @@ func (r *Resource) Create(ctx context.Context, req resource.CreateRequest, resp 
 		return
 	}
 
+	var content []byte
+	var sum string
+	if r.m.decl.Upload != nil {
+		if content, sum = uploadSource(r.m, plan, "", "", &resp.Diagnostics); resp.Diagnostics.HasError() {
+			return
+		}
+	}
 	params, err := r.m.encodeCreate(plan)
 	if err != nil {
 		resp.Diagnostics.AddError("Cannot build the create request", err.Error())
@@ -596,7 +608,12 @@ func (r *Resource) Create(ctx context.Context, req resource.CreateRequest, resp 
 		createPath = strings.ReplaceAll(createPath, "{"+attach+"}", url.PathEscape(stringAttr(plan, attach)))
 		params = append(params, wire.Field{Name: r.m.decl.Parent, Value: wire.String(parent)})
 	}
-	body, err := r.api.call(ctx, "POST", createPath, r.api.expanded(params, ""))
+	var body wire.Object
+	if r.m.decl.Upload != nil {
+		body, err = r.api.upload(ctx, createPath, r.api.expanded(params, ""), stringAttr(plan, sourceAttr), content)
+	} else {
+		body, err = r.api.call(ctx, "POST", createPath, r.api.expanded(params, ""))
+	}
 	if err != nil {
 		r.api.fail(&resp.Diagnostics, err)
 		return
@@ -634,7 +651,7 @@ func (r *Resource) Create(ctx context.Context, req resource.CreateRequest, resp 
 			body = mergeBodies(body, updated)
 		}
 	}
-	body, err = r.applyTransitions(ctx, body, plan, id, parent)
+	body, refusals, err := r.applyTransitions(ctx, body, plan, id, parent)
 	if err == nil {
 		body, err = r.retrieveExpandOnRetrieve(ctx, body, id, parent)
 	}
@@ -653,17 +670,21 @@ func (r *Resource) Create(ctx context.Context, req resource.CreateRequest, resp 
 		return
 	}
 	resp.Diagnostics.Append(resp.State.Set(ctx, state)...)
+	if r.m.decl.Upload != nil {
+		resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root(sourceHashAttr), sum)...)
+	}
 	resp.Diagnostics.Append(r.keepPlannedOverReached(ctx, &resp.State, body, plan)...)
 	resp.Diagnostics.Append(r.m.setIdentity(ctx, resp.Identity, id, parent)...)
-	if r.unreached(&resp.Diagnostics, body, plan) {
+	if r.unreached(&resp.Diagnostics, body, plan, refusals) {
 		r.taintedAfterCreate(&resp.Diagnostics, id)
 	}
 }
 
 // unreached fails the apply when a transition field the plan sets is not at the planned value,
 // or at a value that satisfies it, once the actions have run, and reports whether it did. The
-// state keeps what Stripe left.
-func (r *Resource) unreached(diags *diag.Diagnostics, body wire.Object, plan basetypes.ObjectValue) bool {
+// state keeps what Stripe left. refusals holds, by attribute name, the refusal of an action
+// that Stripe answered after it had moved the object on by itself.
+func (r *Resource) unreached(diags *diag.Diagnostics, body wire.Object, plan basetypes.ObjectValue, refusals map[string]*stripeapi.APIError) bool {
 	failed := false
 	seen := map[string]bool{}
 	for _, t := range r.m.decl.Transitions {
@@ -676,8 +697,12 @@ func (r *Resource) unreached(diags *diag.Diagnostics, body wire.Object, plan bas
 		}
 		seen[name] = true
 		thing := noun(r.m.decl.TypeName)
-		diags.AddAttributeError(path.Root(name), fmt.Sprintf("Stripe left the %s at `%s`", thing, got),
-			fmt.Sprintf("Setting `%s` to `%s` stopped at `%s`: no action moves %s from `%s` to `%s`.", name, want, got, WithArticle(thing), got, want))
+		detail := fmt.Sprintf("Setting `%s` to `%s` stopped at `%s`: no action moves %s from `%s` to `%s`.", name, want, got, WithArticle(thing), got, want)
+		if refusal := refusals[name]; refusal != nil {
+			detail = fmt.Sprintf("Setting `%s` to `%s` stopped at `%s`: Stripe moved the %s to `%s` by itself while the request was sent, and refused it: %s",
+				name, want, got, thing, got, refusal.Message)
+		}
+		diags.AddAttributeError(path.Root(name), fmt.Sprintf("Stripe left the %s at `%s`", thing, got), detail)
 		failed = true
 	}
 	return failed
@@ -756,6 +781,14 @@ func (r *Resource) Update(ctx context.Context, req resource.UpdateRequest, resp 
 		return
 	}
 
+	// A new `source` with the content already uploaded, or the first apply after an import,
+	// records the file's hash and sends nothing.
+	var sum string
+	if r.m.decl.Upload != nil {
+		if _, sum = uploadSource(r.m, plan, stringAttr(state, sourceHashAttr), r.m.refusal(req.State.Raw), &resp.Diagnostics); resp.Diagnostics.HasError() {
+			return
+		}
+	}
 	params, err := r.m.encodeUpdate(plan, state, req.Config.Raw)
 	if err != nil {
 		resp.Diagnostics.AddError("Cannot build the update request", err.Error())
@@ -794,7 +827,7 @@ func (r *Resource) Update(ctx context.Context, req resource.UpdateRequest, resp 
 		r.api.fail(&resp.Diagnostics, err)
 		return
 	}
-	body, err = r.applyTransitions(ctx, body, plan, id, parent)
+	body, refusals, err := r.applyTransitions(ctx, body, plan, id, parent)
 	if err == nil {
 		body, err = r.retrieveExpandOnRetrieve(ctx, body, id, parent)
 	}
@@ -815,9 +848,12 @@ func (r *Resource) Update(ctx context.Context, req resource.UpdateRequest, resp 
 		return
 	}
 	resp.Diagnostics.Append(resp.State.Set(ctx, next)...)
+	if r.m.decl.Upload != nil {
+		resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root(sourceHashAttr), sum)...)
+	}
 	resp.Diagnostics.Append(r.keepPlannedOverReached(ctx, &resp.State, body, plan)...)
 	resp.Diagnostics.Append(r.m.setIdentity(ctx, resp.Identity, id, parent)...)
-	r.unreached(&resp.Diagnostics, body, plan)
+	r.unreached(&resp.Diagnostics, body, plan, refusals)
 }
 
 func (r *Resource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
@@ -883,7 +919,15 @@ func (r *Resource) Delete(ctx context.Context, req resource.DeleteRequest, resp 
 // applyTransitions calls the action endpoint of each transition whose planned value is known
 // and differs from the object's, and returns the body with each action's response laid over it. A value the object already
 // holds, or one that satisfies it, sends nothing.
-func (r *Resource) applyTransitions(ctx context.Context, body wire.Object, plan basetypes.ObjectValue, id, parent string) (wire.Object, error) {
+//
+// Stripe moves some objects on by itself, such as an outbound payment that posts within a
+// second of its creation, and then refuses an action it would have taken a moment before. When
+// Stripe refuses an action with a 400 and a retrieve shows the field moved on from the value the
+// action was sent from, the retrieve is the body and the refusal is returned by attribute name,
+// for unreached to explain, in place of the error: the state then holds where Stripe left the
+// object, so the next plan sees it.
+func (r *Resource) applyTransitions(ctx context.Context, body wire.Object, plan basetypes.ObjectValue, id, parent string) (wire.Object, map[string]*stripeapi.APIError, error) {
+	var refusals map[string]*stripeapi.APIError
 	for _, t := range r.m.decl.Transitions {
 		n, _ := r.m.top(t.Field)
 		current := wireScalar(body, t.Field)
@@ -903,14 +947,27 @@ func (r *Resource) applyTransitions(ctx context.Context, body wire.Object, plan 
 			params = r.api.expanded(params, "")
 		}
 		next, err := r.api.call(ctx, "POST", r.m.expand(t.Path, id, parent), params)
+		var apiErr *stripeapi.APIError
+		if errors.As(err, &apiErr) && apiErr.Status == http.StatusBadRequest {
+			moved, getErr := r.api.call(ctx, "GET", r.m.expand(r.m.decl.Paths.Retrieve, id, parent), r.api.retrieved(nil))
+			if getErr != nil || wireScalar(moved, t.Field) == current {
+				return nil, nil, err
+			}
+			if refusals == nil {
+				refusals = map[string]*stripeapi.APIError{}
+			}
+			refusals[n.AttrName()] = apiErr
+			body = mergeBodies(body, moved)
+			continue
+		}
 		if err != nil {
-			return nil, err
+			return nil, nil, err
 		}
 		next = withoutIncluded(next, r.m.decl.Include)
 		// A once-returned field is in the create response only, so the action's does not replace it.
 		body = mergeBodies(body, next)
 	}
-	return body, nil
+	return body, refusals, nil
 }
 
 // retrieveExpandOnRetrieve lays a retrieve's answer over body, for a declaration with fields

@@ -43,21 +43,21 @@ This data source supports the following arguments:
 
 This data source exports the following attributes in addition to the arguments above:
 
-* `amount` - Amount (in cents) transferred.
+* `amount` - Amount (in cents) to be transferred.
 * `cancelable` - Returns `true` if the InboundTransfer is able to be canceled.
 * `created` - Time at which the object was created. Measured in seconds since the Unix epoch.
 * `currency` - Three-letter [ISO currency code](https://www.iso.org/iso-4217-currency-codes.html), in lowercase. Must be a [supported currency](https://stripe.com/docs/currencies).
 * `description` - An arbitrary string attached to the object. Often useful for displaying to users.
 * `failure_details` - Details about this InboundTransfer's failure. Will be set when `status=failed` or `returned=true`. See [`failure_details`](#failure_details) below.
-* `financial_account` - The FinancialAccount that received the funds.
+* `financial_account` - The FinancialAccount to send funds to.
 * `hosted_regulatory_receipt_url` - A [hosted transaction receipt](https://docs.stripe.com/treasury/moving-money/regulatory-receipts) URL that is provided when money movement is considered regulated under Stripe's money transmission licenses.
 * `linked_flows` - See [`linked_flows`](#linked_flows) below.
 * `livemode` - If the object exists in live mode, the value is `true`. If the object exists in test mode, the value is `false`.
-* `metadata` - Set of [key-value pairs](https://docs.stripe.com/api/metadata) that you can attach to an object. This can be useful for storing additional information about the object in a structured format.
-* `origin_payment_method` - The origin payment method to be debited for an InboundTransfer.
+* `metadata` - Set of [key-value pairs](https://docs.stripe.com/api/metadata) that you can attach to an object. This can be useful for storing additional information about the object in a structured format. Individual keys can be unset by posting an empty value to them. All keys can be unset by posting an empty value to `metadata`.
+* `origin_payment_method` - The origin payment method to be debited for the InboundTransfer.
 * `origin_payment_method_details` - Details about the PaymentMethod for an InboundTransfer. See [`origin_payment_method_details`](#origin_payment_method_details) below.
 * `returned` - Returns `true` if the funds for an InboundTransfer were returned after the InboundTransfer went to the `succeeded` state.
-* `statement_descriptor` - Statement descriptor shown when funds are debited from the source. Not all payment networks support `statement_descriptor`.
+* `statement_descriptor` - The complete description that appears on your customers' statements. Maximum 10 characters. Can only include -#.$&*, spaces, and alphanumeric characters.
 * `status` - Status of the InboundTransfer: `processing`, `succeeded`, `failed`, and `canceled`. An InboundTransfer is `processing` if it is created and pending. The status changes to `succeeded` once the funds have been "confirmed" and a `transaction` is created and posted. The status changes to `failed` if the transfer fails. Possible values: `canceled`, `failed`, `processing`, `succeeded`.
 * `status_transitions` - See [`status_transitions`](#status_transitions) below.
 * `transaction` - The Transaction associated with this object.

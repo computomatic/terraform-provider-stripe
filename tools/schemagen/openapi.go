@@ -124,12 +124,16 @@ func (s *Spec) operation(method, path string) (*Operation, error) {
 
 // requestSchema returns the resolved request schema of the operation at path. A `/v2`
 // operation must take JSON only and any other must take a form, so a spec release that
-// changes a namespace's encoding fails generation instead of producing a wrong table.
+// changes a namespace's encoding fails generation instead of producing a wrong table. A
+// multipart form, which the Files API's upload takes, is a form.
 func (s *Spec) requestSchema(op *Operation, path string) (*Schema, error) {
 	if op.RequestBody == nil {
 		return nil, nil
 	}
 	form := op.RequestBody.Content["application/x-www-form-urlencoded"]
+	if form == nil {
+		form = op.RequestBody.Content["multipart/form-data"]
+	}
 	js := op.RequestBody.Content["application/json"]
 	switch {
 	case strings.HasPrefix(path, "/v2/") && (js == nil || form != nil):

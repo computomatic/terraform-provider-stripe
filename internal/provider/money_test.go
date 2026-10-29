@@ -20,7 +20,8 @@ import (
 func TestMoneyMovingResources(t *testing.T) {
 	want := []string{
 		"stripe_application_fee_refund", "stripe_charge", "stripe_checkout_session", "stripe_climate_order", "stripe_credit_note", "stripe_invoice", "stripe_payment_intent", "stripe_payout", "stripe_refund",
-		"stripe_topup", "stripe_transfer", "stripe_transfer_reversal",
+		"stripe_topup", "stripe_transfer", "stripe_transfer_reversal", "stripe_treasury_credit_reversal", "stripe_treasury_debit_reversal",
+		"stripe_treasury_inbound_transfer", "stripe_treasury_outbound_payment", "stripe_treasury_outbound_transfer",
 	}
 	ctx := context.Background()
 	var got []string

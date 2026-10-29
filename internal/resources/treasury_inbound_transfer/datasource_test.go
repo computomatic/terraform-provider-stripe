@@ -9,7 +9,6 @@ import (
 
 	"github.com/computomatic/terraform-provider-stripe/internal/acctest"
 	"github.com/computomatic/terraform-provider-stripe/internal/acctest/tfacc"
-	"github.com/computomatic/terraform-provider-stripe/internal/stripeapi"
 	"github.com/computomatic/terraform-provider-stripe/internal/wire"
 )
 
@@ -28,22 +27,17 @@ data "stripe_treasury_inbound_transfer" "test" {
 `
 }
 
-// Nothing in the API makes an inbound transfer: making one needs a verified US bank account payment method on the connected account, which no test helper creates (suite: "inbound transfers"). The test reads the first one
-// the financial account lists and skips when there is none, as on a new account.
+// The test pulls a transfer from the bank account attached to the connected account through the
+// API and reads it back.
 func TestAccTreasuryInboundTransfer_read(t *testing.T) {
-	acct := acctest.NewAccount(t)
-	conn := tfacc.IssuingAccount(t, acct)
-	fa := tfacc.IssuingFinancialAccount(t, conn)
-	resp, err := tfacc.Client(conn).Do(t.Context(), stripeapi.Request{Method: "GET", Path: "/v1/treasury/inbound_transfers", Params: wire.Object{{Name: "financial_account", Value: wire.String(fa)}}})
-	if err != nil {
-		t.Fatalf("listing inbound transfers: %v", err)
-	}
-	data, _ := resp.Body.(wire.Object).Get("data")
-	items, _ := data.(wire.Array)
-	if len(items) == 0 {
-		t.Skip("the financial account has no inbound transfers, and making one needs a verified US bank account payment method on the connected account, which no test helper creates")
-	}
-	id, _ := items[0].(wire.Object).GetString("id")
+	s := newScope(t)
+	acct, conn, fa := s.acct, s.conn, s.fa
+	id := tfacc.Create(t, conn, "/v1/treasury/inbound_transfers", wire.Object{
+		{Name: "financial_account", Value: wire.String(fa)},
+		{Name: "amount", Value: wire.Int(amount)},
+		{Name: "currency", Value: wire.String("usd")},
+		{Name: "origin_payment_method", Value: wire.String(s.bank)},
+	})
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: tfacc.ProviderFactories,
 		Steps: []resource.TestStep{{

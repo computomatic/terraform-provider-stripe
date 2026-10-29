@@ -9,7 +9,6 @@ import (
 
 	"github.com/computomatic/terraform-provider-stripe/internal/acctest"
 	"github.com/computomatic/terraform-provider-stripe/internal/acctest/tfacc"
-	"github.com/computomatic/terraform-provider-stripe/internal/stripeapi"
 	"github.com/computomatic/terraform-provider-stripe/internal/wire"
 )
 
@@ -28,29 +27,30 @@ data "stripe_treasury_outbound_payment" "test" {
 `
 }
 
-// Nothing in the API makes an outbound payment: making one needs a customer with a US bank account payment method on the connected account, which no test helper creates (suite: "outbound payments"). The test reads the first one
-// the financial account lists and skips when there is none, as on a new account.
+// The test pays Stripe's test bank account through the API and reads the payment back.
 func TestAccTreasuryOutboundPayment_read(t *testing.T) {
-	acct := acctest.NewAccount(t)
-	conn := tfacc.IssuingAccount(t, acct)
-	fa := tfacc.IssuingFinancialAccount(t, conn)
-	resp, err := tfacc.Client(conn).Do(t.Context(), stripeapi.Request{Method: "GET", Path: "/v1/treasury/outbound_payments", Params: wire.Object{{Name: "financial_account", Value: wire.String(fa)}}})
-	if err != nil {
-		t.Fatalf("listing outbound payments: %v", err)
-	}
-	data, _ := resp.Body.(wire.Object).Get("data")
-	items, _ := data.(wire.Array)
-	if len(items) == 0 {
-		t.Skip("the financial account has no outbound payments, and making one needs a customer with a US bank account payment method on the connected account, which no test helper creates")
-	}
-	id, _ := items[0].(wire.Object).GetString("id")
+	s := newScope(t)
+	id := tfacc.Create(t, s.conn, "/v1/treasury/outbound_payments", wire.Object{
+		{Name: "financial_account", Value: wire.String(s.fa)},
+		{Name: "amount", Value: wire.Int(amount)},
+		{Name: "currency", Value: wire.String("usd")},
+		{Name: "destination_payment_method_data", Value: wire.Object{
+			{Name: "type", Value: wire.String("us_bank_account")},
+			{Name: "us_bank_account", Value: wire.Object{
+				{Name: "routing_number", Value: wire.String("110000000")},
+				{Name: "account_number", Value: wire.String("000123456789")},
+				{Name: "account_holder_type", Value: wire.String("individual")},
+			}},
+			{Name: "billing_details", Value: wire.Object{{Name: "name", Value: wire.String("Jenny Rosen")}}},
+		}},
+	})
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: tfacc.ProviderFactories,
 		Steps: []resource.TestStep{{
-			Config: config(acct, conn, id),
+			Config: config(s.acct, s.conn, id),
 			Check: resource.ComposeAggregateTestCheckFunc(
 				resource.TestCheckResourceAttr(address, "id", id),
-				resource.TestCheckResourceAttr(address, "financial_account", fa),
+				resource.TestCheckResourceAttr(address, "financial_account", s.fa),
 				resource.TestCheckResourceAttrSet(address, "status"),
 			),
 		}},

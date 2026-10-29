@@ -3,12 +3,12 @@
 page_title: "stripe_treasury_outbound_transfer Data Source - Stripe"
 subcategory: ""
 description: |-
-  A transfer of money out of a Treasury financial account to a bank account the connected account owns. It lives on a connected account, so read it through a provider configuration whose stripe_account is that account. Look one up by its id.
+  A transfer of money out of a Treasury financial account to another financial account or a bank account the connected account owns. It lives on a connected account, so read it through a provider configuration whose stripe_account is that account. Look one up by its id.
 ---
 
 # Data Source: stripe_treasury_outbound_transfer
 
-A transfer of money out of a Treasury financial account to a bank account the connected account owns. It lives on a connected account, so read it through a provider configuration whose `stripe_account` is that account. Look one up by its `id`.
+A transfer of money out of a Treasury financial account to another financial account or a bank account the connected account owns. It lives on a connected account, so read it through a provider configuration whose `stripe_account` is that account. Look one up by its `id`.
 
 ## Example Usage
 
@@ -43,24 +43,34 @@ This data source supports the following arguments:
 
 This data source exports the following attributes in addition to the arguments above:
 
-* `amount` - Amount (in cents) transferred.
+* `amount` - Amount (in cents) to be transferred.
 * `cancelable` - Returns `true` if the object can be canceled, and `false` otherwise.
 * `created` - Time at which the object was created. Measured in seconds since the Unix epoch.
 * `currency` - Three-letter [ISO currency code](https://www.iso.org/iso-4217-currency-codes.html), in lowercase. Must be a [supported currency](https://stripe.com/docs/currencies).
 * `description` - An arbitrary string attached to the object. Often useful for displaying to users.
-* `destination_payment_method` - The PaymentMethod used as the payment instrument for an OutboundTransfer.
+* `destination_payment_method` - The PaymentMethod to use as the payment instrument for the OutboundTransfer.
+* `destination_payment_method_data` - Hash used to generate the PaymentMethod to be used for this OutboundTransfer. Exclusive with `destination_payment_method`. See [`destination_payment_method_data`](#destination_payment_method_data) below.
 * `destination_payment_method_details` - See [`destination_payment_method_details`](#destination_payment_method_details) below.
+* `destination_payment_method_options` - Hash describing payment method configuration details. See [`destination_payment_method_options`](#destination_payment_method_options) below.
 * `expected_arrival_date` - The date when funds are expected to arrive in the destination account.
-* `financial_account` - The FinancialAccount that funds were pulled from.
+* `financial_account` - The FinancialAccount to pull funds from.
 * `hosted_regulatory_receipt_url` - A [hosted transaction receipt](https://docs.stripe.com/treasury/moving-money/regulatory-receipts) URL that is provided when money movement is considered regulated under Stripe's money transmission licenses.
 * `livemode` - If the object exists in live mode, the value is `true`. If the object exists in test mode, the value is `false`.
-* `metadata` - Set of [key-value pairs](https://docs.stripe.com/api/metadata) that you can attach to an object. This can be useful for storing additional information about the object in a structured format.
+* `metadata` - Set of [key-value pairs](https://docs.stripe.com/api/metadata) that you can attach to an object. This can be useful for storing additional information about the object in a structured format. Individual keys can be unset by posting an empty value to them. All keys can be unset by posting an empty value to `metadata`.
 * `returned_details` - Details about a returned OutboundTransfer. Only set when the status is `returned`. See [`returned_details`](#returned_details) below.
-* `statement_descriptor` - Information about the OutboundTransfer to be sent to the recipient account.
+* `statement_descriptor` - Statement descriptor to be shown on the receiving end of an OutboundTransfer. Maximum 10 characters for `ach` transfers or 140 characters for `us_domestic_wire` transfers. The default value is "transfer". Can only include -#.$&*, spaces, and alphanumeric characters.
 * `status` - Current status of the OutboundTransfer: `processing`, `failed`, `canceled`, `posted`, `returned`. An OutboundTransfer is `processing` if it has been created and is pending. The status changes to `posted` once the OutboundTransfer has been "confirmed" and funds have left the account, or to `failed` or `canceled`. If an OutboundTransfer fails to arrive at its destination, its status will change to `returned`. Possible values: `canceled`, `failed`, `posted`, `processing`, `returned`.
 * `status_transitions` - See [`status_transitions`](#status_transitions) below.
 * `tracking_details` - Details about network-specific tracking information if available. See [`tracking_details`](#tracking_details) below.
 * `transaction` - The Transaction associated with this object.
+
+<a id="destination_payment_method_data"></a>
+### `destination_payment_method_data`
+
+The `destination_payment_method_data` attribute supports:
+
+* `financial_account` -
+* `type` - Possible values: `financial_account`.
 
 <a id="destination_payment_method_details"></a>
 ### `destination_payment_method_details`
@@ -114,6 +124,20 @@ The `destination_payment_method_details.us_bank_account` attribute supports:
 * `mandate` - ID of the mandate used to make this payment.
 * `network` - The network rails used. See the [docs](https://docs.stripe.com/treasury/money-movement/timelines) to learn more about money movement timelines for each network type. Possible values: `ach`, `us_domestic_wire`.
 * `routing_number` - Routing number of the bank account.
+
+<a id="destination_payment_method_options"></a>
+### `destination_payment_method_options`
+
+The `destination_payment_method_options` attribute supports:
+
+* `us_bank_account` - See [`destination_payment_method_options.us_bank_account`](#destination_payment_method_options.us_bank_account) below.
+
+<a id="destination_payment_method_options.us_bank_account"></a>
+### `destination_payment_method_options.us_bank_account`
+
+The `destination_payment_method_options.us_bank_account` attribute supports:
+
+* `network` - Possible values: `ach`, `us_domestic_wire`.
 
 <a id="returned_details"></a>
 ### `returned_details`

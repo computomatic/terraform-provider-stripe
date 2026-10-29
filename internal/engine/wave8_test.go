@@ -130,7 +130,10 @@ type actionStub struct {
 	stub *stubStripe
 	// failStop makes the stop action fail.
 	failStop bool
-	log      []stripeapi.Request
+	// movesOn, with failStop, is the phase Stripe moves the widget to by itself just before it
+	// refuses the stop.
+	movesOn string
+	log     []stripeapi.Request
 }
 
 func (a *actionStub) Do(ctx context.Context, req stripeapi.Request) (*stripeapi.Response, error) {
@@ -142,6 +145,9 @@ func (a *actionStub) Do(ctx context.Context, req stripeapi.Request) (*stripeapi.
 		}
 	}
 	if action == "stop" && a.failStop {
+		if a.movesOn != "" {
+			a.stub.objects[id] = put(a.stub.objects[id], "phase", wire.String(a.movesOn))
+		}
 		return nil, &stripeapi.APIError{Status: 400, Message: "cannot stop"}
 	}
 	var body wire.Object
@@ -245,8 +251,46 @@ func TestTransitionFailureAfterTheUpdateFailsTheUpdate(t *testing.T) {
 	if !resp.Diagnostics.HasError() {
 		t.Fatalf("the failed action must fail the update; requests: %s", a.paths())
 	}
-	if got := a.paths(); got != "POST /v1/widgets/wid_1;POST /v1/widgets/wid_1/stop" {
+	// The retrieve after the refusal finds the widget where it was, so the refusal stands.
+	if got := a.paths(); got != "POST /v1/widgets/wid_1;POST /v1/widgets/wid_1/stop;GET /v1/widgets/wid_1" {
 		t.Errorf("requests: %s", got)
+	}
+	if detail := resp.Diagnostics.Errors()[0].Detail(); !strings.Contains(detail, "cannot stop") {
+		t.Errorf("the refusal must be Stripe's: %s", detail)
+	}
+}
+
+// Stripe moved the widget on by itself, as it posts an outbound payment, and then refused the
+// stop: the apply fails with Stripe's refusal and where Stripe left the widget, and the state
+// holds that phase, so the next plan sees it.
+func TestTransitionRefusedAfterStripeMovedOnKeepsWhereStripeLeftIt(t *testing.T) {
+	r, a := actionResource(t, transitionDeclaration())
+	state, _ := r.create(t, startedPlan(r, nil).(basetypes.ObjectValue))
+	a.failStop, a.movesOn = true, "posted"
+	a.log = nil
+	plan := r.fill(map[string]attr.Value{"id": state.Attributes()["id"], "name": types.StringValue("w"), "phase": types.StringValue("off")})
+	resp := resource.UpdateResponse{State: tfsdk.State{Schema: r.schema, Raw: raw(t, state)}}
+	r.Update(context.Background(), resource.UpdateRequest{
+		Plan:  tfsdk.Plan{Schema: r.schema, Raw: raw(t, plan)},
+		State: tfsdk.State{Schema: r.schema, Raw: raw(t, state)},
+	}, &resp)
+	if got := a.paths(); got != "GET /v1/widgets/wid_1;POST /v1/widgets/wid_1/stop;GET /v1/widgets/wid_1" {
+		t.Errorf("requests: %s", got)
+	}
+	errs := resp.Diagnostics.Errors()
+	if len(errs) != 1 {
+		t.Fatalf("diagnostics: %v", resp.Diagnostics)
+	}
+	if summary, detail := errs[0].Summary(), errs[0].Detail(); summary != "Stripe left the widget at `posted`" ||
+		!strings.Contains(detail, "moved the widget to `posted` by itself") || !strings.HasSuffix(detail, "refused it: cannot stop") {
+		t.Errorf("summary %q, detail %q", summary, detail)
+	}
+	var next basetypes.ObjectValue
+	if diags := resp.State.Get(context.Background(), &next); diags.HasError() {
+		t.Fatal(diags)
+	}
+	if got := str(t, next, "phase"); got != "posted" {
+		t.Errorf("the state must hold where Stripe left the widget, got %q", got)
 	}
 }
 

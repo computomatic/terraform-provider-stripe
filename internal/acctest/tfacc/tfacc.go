@@ -29,7 +29,7 @@ var ProviderFactories = map[string]func() (tfprotov6.ProviderServer, error){
 // names one. Tests use it to change an object out of band (drift) and to check what is left
 // after destroy.
 func Client(c acctest.Config) *stripeapi.Client {
-	return stripeapi.New(stripeapi.Config{APIKey: c.APIKey(), BaseURL: c.BaseURL, StripeAccount: c.StripeAccount, MaxRetries: 3}, stripeapi.Options{Version: "test"})
+	return stripeapi.New(stripeapi.Config{APIKey: c.APIKey(), BaseURL: c.BaseURL, FilesBaseURL: c.FilesBaseURL(), StripeAccount: c.StripeAccount, MaxRetries: 3}, stripeapi.Options{Version: "test"})
 }
 
 // Post sends an update to an object behind the provider's back.

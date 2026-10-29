@@ -7,23 +7,23 @@ import "github.com/computomatic/terraform-provider-stripe/internal/fields"
 
 // Table lists every request and response field of the object.
 var Table = []fields.Field{
-	{Name: "amount", Shape: fields.Int, Response: true, Description: "Amount (in cents) transferred."},
+	{Name: "amount", Shape: fields.Int, Required: true, Create: true, Response: true, Description: "Amount (in cents) to be transferred."},
 	{Name: "cancelable", Shape: fields.Bool, Response: true, Description: "Returns `true` if the InboundTransfer is able to be canceled."},
 	{Name: "created", Shape: fields.Int, Response: true, Description: "Time at which the object was created. Measured in seconds since the Unix epoch."},
-	{Name: "currency", Shape: fields.String, Response: true, Description: "Three-letter [ISO currency code](https://www.iso.org/iso-4217-currency-codes.html), in lowercase. Must be a [supported currency](https://stripe.com/docs/currencies)."},
-	{Name: "description", Shape: fields.String, Response: true, Description: "An arbitrary string attached to the object. Often useful for displaying to users."},
+	{Name: "currency", Shape: fields.String, Required: true, Create: true, Response: true, Description: "Three-letter [ISO currency code](https://www.iso.org/iso-4217-currency-codes.html), in lowercase. Must be a [supported currency](https://stripe.com/docs/currencies)."},
+	{Name: "description", Shape: fields.String, Create: true, Response: true, Description: "An arbitrary string attached to the object. Often useful for displaying to users."},
 	{Name: "failure_details", Shape: fields.Object, Response: true, Description: "Details about this InboundTransfer's failure. Will be set when `status=failed` or `returned=true`.", Fields: []fields.Field{
 		{Name: "code", Shape: fields.String, Response: true, Enum: []string{"account_closed", "account_frozen", "bank_account_restricted", "bank_ownership_changed", "debit_not_authorized", "incorrect_account_holder_address", "incorrect_account_holder_name", "incorrect_account_holder_tax_id", "insufficient_funds", "invalid_account_number", "invalid_currency", "no_account", "other"}, Description: "Reason for the failure."},
 	}},
-	{Name: "financial_account", Shape: fields.String, Response: true, Description: "The FinancialAccount that received the funds."},
+	{Name: "financial_account", Shape: fields.String, Required: true, Create: true, Response: true, Description: "The FinancialAccount to send funds to."},
 	{Name: "hosted_regulatory_receipt_url", Shape: fields.String, Response: true, Description: "A [hosted transaction receipt](https://docs.stripe.com/treasury/moving-money/regulatory-receipts) URL that is provided when money movement is considered regulated under Stripe's money transmission licenses."},
 	{Name: "id", Shape: fields.String, Response: true, Description: "Unique identifier for the object."},
 	{Name: "linked_flows", Shape: fields.Object, Response: true, Fields: []fields.Field{
 		{Name: "received_debit", Shape: fields.String, Response: true, Description: "If funds for this flow were returned after the flow went to the `succeeded` state, this field contains a reference to the ReceivedDebit return."},
 	}},
 	{Name: "livemode", Shape: fields.Bool, Response: true, Description: "If the object exists in live mode, the value is `true`. If the object exists in test mode, the value is `false`."},
-	{Name: "metadata", Shape: fields.StringMap, Response: true, Description: "Set of [key-value pairs](https://docs.stripe.com/api/metadata) that you can attach to an object. This can be useful for storing additional information about the object in a structured format."},
-	{Name: "origin_payment_method", Shape: fields.String, Response: true, Description: "The origin payment method to be debited for an InboundTransfer."},
+	{Name: "metadata", Shape: fields.StringMap, Create: true, Response: true, ServerDefaulted: true, Description: "Set of [key-value pairs](https://docs.stripe.com/api/metadata) that you can attach to an object. This can be useful for storing additional information about the object in a structured format. Individual keys can be unset by posting an empty value to them. All keys can be unset by posting an empty value to `metadata`."},
+	{Name: "origin_payment_method", Shape: fields.String, Required: true, Create: true, Response: true, Description: "The origin payment method to be debited for the InboundTransfer."},
 	{Name: "origin_payment_method_details", Shape: fields.Object, Response: true, Description: "Details about the PaymentMethod for an InboundTransfer.", Fields: []fields.Field{
 		{Name: "billing_details", Shape: fields.Object, Response: true, Fields: []fields.Field{
 			{Name: "address", Shape: fields.Object, Response: true, Fields: []fields.Field{
@@ -50,7 +50,7 @@ var Table = []fields.Field{
 		}},
 	}},
 	{Name: "returned", Shape: fields.Bool, Response: true, Description: "Returns `true` if the funds for an InboundTransfer were returned after the InboundTransfer went to the `succeeded` state."},
-	{Name: "statement_descriptor", Shape: fields.String, Response: true, Description: "Statement descriptor shown when funds are debited from the source. Not all payment networks support `statement_descriptor`."},
+	{Name: "statement_descriptor", Shape: fields.String, Create: true, Response: true, ServerDefaulted: true, Description: "The complete description that appears on your customers' statements. Maximum 10 characters. Can only include -#.$&*, spaces, and alphanumeric characters."},
 	{Name: "status", Shape: fields.String, Response: true, Enum: []string{"canceled", "failed", "processing", "succeeded"}, Description: "Status of the InboundTransfer: `processing`, `succeeded`, `failed`, and `canceled`. An InboundTransfer is `processing` if it is created and pending. The status changes to `succeeded` once the funds have been \"confirmed\" and a `transaction` is created and posted. The status changes to `failed` if the transfer fails."},
 	{Name: "status_transitions", Shape: fields.Object, Response: true, Fields: []fields.Field{
 		{Name: "canceled_at", Shape: fields.Int, Response: true, Description: "Timestamp describing when an InboundTransfer changed status to `canceled`."},

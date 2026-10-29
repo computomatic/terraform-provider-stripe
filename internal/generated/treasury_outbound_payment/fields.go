@@ -7,13 +7,38 @@ import "github.com/computomatic/terraform-provider-stripe/internal/fields"
 
 // Table lists every request and response field of the object.
 var Table = []fields.Field{
-	{Name: "amount", Shape: fields.Int, Response: true, Description: "Amount (in cents) transferred."},
+	{Name: "amount", Shape: fields.Int, Required: true, Create: true, Response: true, Description: "Amount (in cents) to be transferred."},
 	{Name: "cancelable", Shape: fields.Bool, Response: true, Description: "Returns `true` if the object can be canceled, and `false` otherwise."},
 	{Name: "created", Shape: fields.Int, Response: true, Description: "Time at which the object was created. Measured in seconds since the Unix epoch."},
-	{Name: "currency", Shape: fields.String, Response: true, Description: "Three-letter [ISO currency code](https://www.iso.org/iso-4217-currency-codes.html), in lowercase. Must be a [supported currency](https://stripe.com/docs/currencies)."},
-	{Name: "customer", Shape: fields.String, Response: true, Description: "ID of the [customer](https://docs.stripe.com/api/customers) to whom an OutboundPayment is sent."},
-	{Name: "description", Shape: fields.String, Response: true, Description: "An arbitrary string attached to the object. Often useful for displaying to users."},
-	{Name: "destination_payment_method", Shape: fields.String, Response: true, Description: "The PaymentMethod via which an OutboundPayment is sent. This field can be empty if the OutboundPayment was created using `destination_payment_method_data`."},
+	{Name: "currency", Shape: fields.String, Required: true, Create: true, Response: true, Description: "Three-letter [ISO currency code](https://www.iso.org/iso-4217-currency-codes.html), in lowercase. Must be a [supported currency](https://stripe.com/docs/currencies)."},
+	{Name: "customer", Shape: fields.String, Create: true, Response: true, Description: "ID of the customer to whom the OutboundPayment is sent. Must match the Customer attached to the `destination_payment_method` passed in."},
+	{Name: "description", Shape: fields.String, Create: true, Response: true, Description: "An arbitrary string attached to the object. Often useful for displaying to users."},
+	{Name: "destination_payment_method", Shape: fields.String, Create: true, Response: true, Description: "The PaymentMethod to use as the payment instrument for the OutboundPayment. Exclusive with `destination_payment_method_data`."},
+	{Name: "destination_payment_method_data", Shape: fields.Object, Create: true, Description: "Hash used to generate the PaymentMethod to be used for this OutboundPayment. Exclusive with `destination_payment_method`.", Fields: []fields.Field{
+		{Name: "billing_details", Shape: fields.Object, Create: true, Fields: []fields.Field{
+			{Name: "address", Shape: fields.Object, Create: true, Fields: []fields.Field{
+				{Name: "city", Shape: fields.String, Create: true},
+				{Name: "country", Shape: fields.String, Create: true},
+				{Name: "line1", Shape: fields.String, Create: true},
+				{Name: "line2", Shape: fields.String, Create: true},
+				{Name: "postal_code", Shape: fields.String, Create: true},
+				{Name: "state", Shape: fields.String, Create: true},
+			}},
+			{Name: "email", Shape: fields.String, Create: true},
+			{Name: "name", Shape: fields.String, Create: true},
+			{Name: "phone", Shape: fields.String, Create: true},
+		}},
+		{Name: "financial_account", Shape: fields.String, Create: true},
+		{Name: "metadata", Shape: fields.StringMap, Create: true},
+		{Name: "type", Shape: fields.String, Required: true, Create: true, Enum: []string{"financial_account", "us_bank_account"}},
+		{Name: "us_bank_account", Shape: fields.Object, Create: true, Fields: []fields.Field{
+			{Name: "account_holder_type", Shape: fields.String, Create: true, Enum: []string{"company", "individual"}},
+			{Name: "account_number", Shape: fields.String, Create: true},
+			{Name: "account_type", Shape: fields.String, Create: true, Enum: []string{"checking", "savings"}},
+			{Name: "financial_connections_account", Shape: fields.String, Create: true},
+			{Name: "routing_number", Shape: fields.String, Create: true},
+		}},
+	}},
 	{Name: "destination_payment_method_details", Shape: fields.Object, Response: true, Description: "Details about the PaymentMethod for an OutboundPayment.", Fields: []fields.Field{
 		{Name: "billing_details", Shape: fields.Object, Response: true, Fields: []fields.Field{
 			{Name: "address", Shape: fields.Object, Response: true, Fields: []fields.Field{
@@ -43,21 +68,26 @@ var Table = []fields.Field{
 			{Name: "routing_number", Shape: fields.String, Response: true, Description: "Routing number of the bank account."},
 		}},
 	}},
-	{Name: "end_user_details", Shape: fields.Object, Response: true, Description: "Details about the end user.", Fields: []fields.Field{
-		{Name: "ip_address", Shape: fields.String, Response: true, Description: "IP address of the user initiating the OutboundPayment. Set if `present` is set to `true`. IP address collection is required for risk and compliance reasons. This will be used to help determine if the OutboundPayment is authorized or should be blocked."},
-		{Name: "present", Shape: fields.Bool, Response: true, Description: "`true` if the OutboundPayment creation request is being made on behalf of an end user by a platform. Otherwise, `false`."},
+	{Name: "destination_payment_method_options", Shape: fields.Object, Create: true, Description: "Payment method-specific configuration for this OutboundPayment.", Fields: []fields.Field{
+		{Name: "us_bank_account", Shape: fields.Object, Create: true, Fields: []fields.Field{
+			{Name: "network", Shape: fields.String, Create: true, Enum: []string{"ach", "us_domestic_wire"}},
+		}},
+	}},
+	{Name: "end_user_details", Shape: fields.Object, Create: true, Response: true, Description: "End user details.", Fields: []fields.Field{
+		{Name: "ip_address", Shape: fields.String, Create: true, Response: true, Description: "IP address of the user initiating the OutboundPayment. Set if `present` is set to `true`. IP address collection is required for risk and compliance reasons. This will be used to help determine if the OutboundPayment is authorized or should be blocked."},
+		{Name: "present", Shape: fields.Bool, Required: true, Create: true, Response: true, Description: "`true` if the OutboundPayment creation request is being made on behalf of an end user by a platform. Otherwise, `false`."},
 	}},
 	{Name: "expected_arrival_date", Shape: fields.Int, Response: true, Description: "The date when funds are expected to arrive in the destination account."},
-	{Name: "financial_account", Shape: fields.String, Response: true, Description: "The FinancialAccount that funds were pulled from."},
+	{Name: "financial_account", Shape: fields.String, Required: true, Create: true, Response: true, Description: "The FinancialAccount to pull funds from."},
 	{Name: "hosted_regulatory_receipt_url", Shape: fields.String, Response: true, Description: "A [hosted transaction receipt](https://docs.stripe.com/treasury/moving-money/regulatory-receipts) URL that is provided when money movement is considered regulated under Stripe's money transmission licenses."},
 	{Name: "id", Shape: fields.String, Response: true, Description: "Unique identifier for the object."},
 	{Name: "livemode", Shape: fields.Bool, Response: true, Description: "If the object exists in live mode, the value is `true`. If the object exists in test mode, the value is `false`."},
-	{Name: "metadata", Shape: fields.StringMap, Response: true, Description: "Set of [key-value pairs](https://docs.stripe.com/api/metadata) that you can attach to an object. This can be useful for storing additional information about the object in a structured format."},
+	{Name: "metadata", Shape: fields.StringMap, Create: true, Response: true, ServerDefaulted: true, Description: "Set of [key-value pairs](https://docs.stripe.com/api/metadata) that you can attach to an object. This can be useful for storing additional information about the object in a structured format. Individual keys can be unset by posting an empty value to them. All keys can be unset by posting an empty value to `metadata`."},
 	{Name: "returned_details", Shape: fields.Object, Response: true, Description: "Details about a returned OutboundPayment. Only set when the status is `returned`.", Fields: []fields.Field{
 		{Name: "code", Shape: fields.String, Response: true, Enum: []string{"account_closed", "account_frozen", "bank_account_restricted", "bank_ownership_changed", "declined", "incorrect_account_holder_name", "invalid_account_number", "invalid_currency", "no_account", "other"}, Description: "Reason for the return."},
 		{Name: "transaction", Shape: fields.String, Response: true, Description: "The Transaction associated with this object."},
 	}},
-	{Name: "statement_descriptor", Shape: fields.String, Response: true, Description: "The description that appears on the receiving end for an OutboundPayment (for example, bank statement for external bank transfer)."},
+	{Name: "statement_descriptor", Shape: fields.String, Create: true, Response: true, ServerDefaulted: true, Description: "The description that appears on the receiving end for this OutboundPayment (for example, bank statement for external bank transfer). Maximum 10 characters for `ach` payments, 140 characters for `us_domestic_wire` payments, or 500 characters for `stripe` network transfers. Can only include -#.$&*, spaces, and alphanumeric characters. The default value is \"payment\"."},
 	{Name: "status", Shape: fields.String, Response: true, Enum: []string{"canceled", "failed", "posted", "processing", "returned"}, Description: "Current status of the OutboundPayment: `processing`, `failed`, `posted`, `returned`, `canceled`. An OutboundPayment is `processing` if it has been created and is pending. The status changes to `posted` once the OutboundPayment has been \"confirmed\" and funds have left the account, or to `failed` or `canceled`. If an OutboundPayment fails to arrive at its destination, its status will change to `returned`."},
 	{Name: "status_transitions", Shape: fields.Object, Response: true, Fields: []fields.Field{
 		{Name: "canceled_at", Shape: fields.Int, Response: true, Description: "Timestamp describing when an OutboundPayment changed status to `canceled`."},

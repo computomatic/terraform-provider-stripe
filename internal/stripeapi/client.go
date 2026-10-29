@@ -7,7 +7,9 @@ import (
 	"fmt"
 	"io"
 	"math/rand/v2"
+	"mime/multipart"
 	"net/http"
+	"net/url"
 	"slices"
 	"strconv"
 	"strings"
@@ -47,8 +49,20 @@ type Request struct {
 	// Params go in the query string for GET and in the body for every other method.
 	Params wire.Object
 	Host   Host
+	// File, when set, makes a POST a multipart form upload, as the Files API takes one: Params
+	// are its text parts and File its file part.
+	File *File
 	// Sensitive lists field names, at any depth, whose values are masked in trace logs.
 	Sensitive []string
+}
+
+// File is the file part of a multipart upload.
+type File struct {
+	// Part is the form field that carries the file, such as `file`.
+	Part string
+	// Name is the file name sent with the part.
+	Name    string
+	Content []byte
 }
 
 // Response is a successful (2xx) Stripe response.
@@ -187,6 +201,13 @@ func (c *Client) build(req Request) (target string, body []byte, contentType str
 		return target, nil, "", nil
 	}
 
+	if req.File != nil {
+		body, contentType, err := encodeMultipart(req.Params, req.File)
+		if err != nil {
+			return "", nil, "", err
+		}
+		return target, body, contentType, nil
+	}
 	if IsV2Path(req.Path) {
 		// The conformance suite sends no body and no content type when there is nothing to
 		// send, and the fake refuses a body on a DELETE.
@@ -204,6 +225,43 @@ func (c *Client) build(req Request) (target string, body []byte, contentType str
 		return "", nil, "", err
 	}
 	return target, []byte(encoded), "application/x-www-form-urlencoded", nil
+}
+
+// encodeMultipart renders params as the text parts of a multipart form, named in the form
+// body's bracket notation, followed by the file part. Every attempt resends the same bytes, so a
+// retry repeats the upload exactly.
+func encodeMultipart(params wire.Object, file *File) (body []byte, contentType string, err error) {
+	encoded, err := wire.EncodeForm(params)
+	if err != nil {
+		return nil, "", err
+	}
+	var buf bytes.Buffer
+	w := multipart.NewWriter(&buf)
+	for pair := range strings.SplitSeq(encoded, "&") {
+		if pair == "" {
+			continue
+		}
+		rawKey, rawValue, _ := strings.Cut(pair, "=")
+		key, errKey := url.QueryUnescape(rawKey)
+		value, errValue := url.QueryUnescape(rawValue)
+		if err := errors.Join(errKey, errValue); err != nil {
+			return nil, "", err
+		}
+		if err := w.WriteField(key, value); err != nil {
+			return nil, "", err
+		}
+	}
+	part, err := w.CreateFormFile(file.Part, file.Name)
+	if err != nil {
+		return nil, "", err
+	}
+	if _, err := part.Write(file.Content); err != nil {
+		return nil, "", err
+	}
+	if err := w.Close(); err != nil {
+		return nil, "", err
+	}
+	return buf.Bytes(), w.FormDataContentType(), nil
 }
 
 // attempt performs one HTTP exchange. On a received response it returns the decoded body

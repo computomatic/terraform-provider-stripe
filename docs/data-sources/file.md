@@ -3,12 +3,12 @@
 page_title: "stripe_file Data Source - Stripe"
 subcategory: ""
 description: |-
-  A file uploaded to Stripe. Look one up by its id. Files cannot be created or deleted through Terraform.
+  A file uploaded to Stripe. Look one up by its id.
 ---
 
 # Data Source: stripe_file
 
-A file uploaded to Stripe. Look one up by its `id`. Files cannot be created or deleted through Terraform.
+A file uploaded to Stripe. Look one up by its `id`.
 
 ## Example Usage
 
@@ -32,7 +32,7 @@ This data source exports the following attributes in addition to the arguments a
 * `expires_at` - The file expires and isn't available at this time in epoch seconds.
 * `filename` - The suitable name for saving the file to a filesystem.
 * `links` - A list of [file links](https://docs.stripe.com/api#file_links) that point at this file. See [`links`](#links) below.
-* `purpose` - The [purpose](https://docs.stripe.com/file-upload#uploading-a-file) of the uploaded file. Possible values: `account_requirement`, `additional_verification`, `business_icon`, `business_logo`, `customer_signature`, `dispute_evidence`, `document_provider_identity_document`, `finance_report_run`, `financial_account_statement`, `identity_document`, `identity_document_downloadable`, `issuing_regulatory_reporting`, `pci_document`, `platform_terms_of_service`, `selfie`, `sigma_scheduled_query`, `tax_document_user_upload`, `terminal_android_apk`, `terminal_reader_splashscreen`, `terminal_wifi_certificate`, `terminal_wifi_private_key`.
+* `purpose` - The [purpose](https://docs.stripe.com/file-upload#uploading-a-file) of the uploaded file. Possible values: `account_requirement`, `additional_verification`, `business_icon`, `business_logo`, `customer_signature`, `dispute_evidence`, `identity_document`, `issuing_regulatory_reporting`, `pci_document`, `platform_terms_of_service`, `tax_document_user_upload`, `terminal_android_apk`, `terminal_reader_splashscreen`, `terminal_wifi_certificate`, `terminal_wifi_private_key`.
 * `size` - The size of the file object in bytes.
 * `title` - A suitable title for the document.
 * `type` - The returned file type (for example, `csv`, `pdf`, `jpg`, or `png`).
