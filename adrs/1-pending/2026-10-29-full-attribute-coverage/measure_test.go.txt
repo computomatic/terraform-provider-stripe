@@ -1,0 +1,658 @@
+package main
+
+// Throwaway measurement for adrs/1-pending/2026-10-29-full-attribute-coverage. Run with
+// MEASURE_OUT=<file> go test ./tools/schemagen -run TestMeasure.
+
+import (
+	"encoding/json"
+	"fmt"
+	"os"
+	"path/filepath"
+	"regexp"
+	"slices"
+	"sort"
+	"strings"
+	"testing"
+
+	"github.com/computomatic/terraform-provider-stripe/internal/fields"
+)
+
+type mSchema struct {
+	Ref                  string              `json:"$ref"`
+	Type                 string              `json:"type"`
+	Description          string              `json:"description"`
+	Deprecated           bool                `json:"deprecated"`
+	Properties           map[string]*mSchema `json:"properties"`
+	AdditionalProperties json.RawMessage     `json:"additionalProperties"`
+	Items                *mSchema            `json:"items"`
+	AnyOf                []*mSchema          `json:"anyOf"`
+	OneOf                []*mSchema          `json:"oneOf"`
+	AllOf                []*mSchema          `json:"allOf"`
+	Enum                 []json.RawMessage   `json:"enum"`
+	Expansion            json.RawMessage     `json:"x-expansionResources"`
+	ResourceID           string              `json:"x-resourceId"`
+	Required             []string            `json:"required"`
+	Title                string              `json:"title"`
+}
+
+func (s *mSchema) addl() *mSchema {
+	if len(s.AdditionalProperties) == 0 || s.AdditionalProperties[0] != '{' {
+		return nil
+	}
+	var a mSchema
+	if json.Unmarshal(s.AdditionalProperties, &a) != nil {
+		return nil
+	}
+	return &a
+}
+
+type mMedia struct {
+	Schema *mSchema `json:"schema"`
+}
+
+type mOp struct {
+	RequestBody *struct {
+		Content map[string]*mMedia `json:"content"`
+	} `json:"requestBody"`
+	Responses map[string]*struct {
+		Content map[string]*mMedia `json:"content"`
+	} `json:"responses"`
+}
+
+type mSpec struct {
+	Paths      map[string]map[string]*mOp `json:"paths"`
+	Components struct {
+		Schemas map[string]*mSchema `json:"schemas"`
+	} `json:"components"`
+}
+
+type tag uint
+
+const (
+	tUnion tag = 1 << iota
+	tRecursion
+	tExpandable
+	tDeprecated
+	tControl
+	tEmpty
+	tMap
+	tEmbedded
+	tDefault
+)
+
+type walker struct {
+	spec  *mSpec
+	out   map[string]tag
+	stack []string
+}
+
+func (w *walker) leaf(path string, t tag) { w.out[path] |= t }
+
+var deprecatedText = regexp.MustCompile(`(?i)(^|\W)deprecated`)
+
+func onlyEmptyEnum(s *mSchema) bool {
+	if s.Type != "string" || len(s.Enum) == 0 {
+		return false
+	}
+	for _, e := range s.Enum {
+		var v string
+		if json.Unmarshal(e, &v) == nil && v != "" {
+			return false
+		}
+	}
+	return true
+}
+
+func (w *walker) walk(sc *mSchema, path string, t tag, depth int) {
+	if sc == nil {
+		return
+	}
+	if sc.Deprecated || deprecatedText.MatchString(sc.Description) {
+		t |= tDeprecated
+	}
+	if defaultWord.MatchString(sc.Description) {
+		t |= tDefault
+	}
+	expandable := len(sc.Expansion) > 0
+	for sc.Ref != "" {
+		name := strings.TrimPrefix(sc.Ref, "#/components/schemas/")
+		if slices.Contains(w.stack, name) || depth > maxDepth {
+			w.leaf(path, t|tRecursion)
+			return
+		}
+		w.stack = append(w.stack, name)
+		defer func() { w.stack = w.stack[:len(w.stack)-1] }()
+		sc = w.spec.Components.Schemas[name]
+		if sc.ResourceID != "" && len(w.stack) > 1 {
+			t |= tEmbedded
+		}
+		if sc.Deprecated {
+			t |= tDeprecated
+		}
+		if len(sc.Expansion) > 0 {
+			expandable = true
+		}
+	}
+	var variants []*mSchema
+	for _, v := range slices.Concat(sc.AnyOf, sc.OneOf, sc.AllOf) {
+		r := v
+		for r.Ref != "" {
+			r = w.spec.Components.Schemas[strings.TrimPrefix(r.Ref, "#/components/schemas/")]
+		}
+		if onlyEmptyEnum(r) {
+			continue
+		}
+		if len(v.Expansion) > 0 {
+			expandable = true
+		}
+		variants = append(variants, v)
+	}
+	if expandable && len(variants) > 1 {
+		w.leaf(path, t|tExpandable)
+		return
+	}
+	switch {
+	case len(variants) == 1:
+		w.walk(variants[0], path, t, depth)
+		return
+	case len(variants) > 1:
+		for _, v := range variants {
+			w.walk(v, path, t|tUnion, depth)
+		}
+		return
+	}
+	if depth > maxDepth {
+		w.leaf(path, t|tRecursion)
+		return
+	}
+	switch sc.Type {
+	case "array":
+		w.walk(sc.Items, path, t&^tDefault, depth+1)
+	case "object", "":
+		switch {
+		case len(sc.Properties) > 0:
+			for name, p := range sc.Properties {
+				if path == "" && name == "object" {
+					continue
+				}
+				pt := t
+				if path == "" && (name == "expand" || name == "include") {
+					pt |= tControl
+				}
+				w.walk(p, join(path, name), pt&^tDefault, depth+1)
+			}
+		case sc.addl() != nil:
+			v := sc.addl()
+			r := v
+			for r.Ref != "" {
+				r = w.spec.Components.Schemas[strings.TrimPrefix(r.Ref, "#/components/schemas/")]
+			}
+			if r.Type == "object" || len(r.Properties) > 0 || len(r.AnyOf)+len(r.OneOf) > 0 {
+				w.walk(v, path, t|tMap, depth+1)
+			} else {
+				w.leaf(path, t|tMap)
+			}
+		default:
+			w.leaf(path, t|tEmpty)
+		}
+	default:
+		w.leaf(path, t)
+	}
+}
+
+func join(a, b string) string {
+	if a == "" {
+		return b
+	}
+	return a + "." + b
+}
+
+func (s *mSpec) resolve(sc *mSchema) *mSchema {
+	for sc != nil && sc.Ref != "" {
+		sc = s.Components.Schemas[strings.TrimPrefix(sc.Ref, "#/components/schemas/")]
+	}
+	return sc
+}
+
+func (s *mSpec) request(method, path string) *mSchema {
+	op := s.Paths[path][strings.ToLower(method)]
+	if op == nil || op.RequestBody == nil {
+		return nil
+	}
+	for _, ct := range []string{"application/x-www-form-urlencoded", "application/json"} {
+		if m := op.RequestBody.Content[ct]; m != nil {
+			return s.resolve(m.Schema)
+		}
+	}
+	return nil
+}
+
+// response returns the 200 schema unresolved, so the walker sees the object's own name and
+// counts a nested copy of it as recursion.
+func (s *mSpec) response(method, path string) *mSchema {
+	op := s.Paths[path][strings.ToLower(method)]
+	return op.Responses["200"].Content["application/json"].Schema
+}
+
+type tleaf struct{ create, update, resp, required, serverDefaulted, defaultText bool }
+
+var defaultWord = regexp.MustCompile(`(?i)\bdefault`)
+
+func tableLeaves(fs []fields.Field, prefix string, out map[string]tleaf) {
+	for _, f := range fs {
+		p := join(prefix, f.Name)
+		if len(f.Fields) > 0 {
+			tableLeaves(f.Fields, p, out)
+			continue
+		}
+		out[p] = tleaf{f.Create, f.Update, f.Response, f.Required, f.ServerDefaulted, defaultWord.MatchString(f.Description)}
+	}
+}
+
+// within reports whether p is on or below one of paths.
+func within(p string, paths []string) bool {
+	for _, x := range paths {
+		if p == x || strings.HasPrefix(p, x+".") {
+			return true
+		}
+	}
+	return false
+}
+
+func kept(p string, keep []string) bool {
+	if len(keep) == 0 {
+		return true
+	}
+	for _, k := range keep {
+		if p == k || strings.HasPrefix(p, k+".") || strings.HasPrefix(k, p+".") {
+			return true
+		}
+	}
+	return false
+}
+
+func underSeg(p, seg string) bool {
+	for _, s := range strings.Split(p, ".") {
+		if s == seg {
+			return true
+		}
+	}
+	return false
+}
+
+// present reports whether p, or an ancestor of p, is a leaf in set (an ancestor leaf is an ID
+// or a value that stands for the subtree).
+func presentIn(p string, set map[string]tag) bool {
+	if _, ok := set[p]; ok {
+		return true
+	}
+	for i := len(p) - 1; i > 0; i-- {
+		if p[i] == '.' {
+			if _, ok := set[p[:i]]; ok {
+				return true
+			}
+		}
+	}
+	for k := range set {
+		if strings.HasPrefix(k, p+".") {
+			return true
+		}
+	}
+	return false
+}
+
+func reason(res Resource, p string, t tag, side string, reqSpec, respSpec map[string]tag) string {
+	switch {
+	case t&tControl != 0:
+		return "request control"
+	case t&tDeprecated != 0:
+		return "deprecated"
+	case t&tEmbedded != 0 && side == "resp" && ancestorIn(p, reqSpec):
+		return "ID in, object out"
+	case t&tEmbedded != 0 && side == "resp" && !presentIn(p, reqSpec):
+		return "embedded copy of another object"
+	case underSeg(p, "discounts"):
+		return "objects in, IDs out"
+	case t&tRecursion != 0:
+		return "recursion"
+	case t&tUnion != 0:
+		return "union"
+	case t&tEmpty != 0:
+		return "empty object"
+	case side == "req" && !presentIn(p, respSpec) && dataSeg(p):
+		return "inline data for another object"
+	case side == "req" && !presentIn(p, respSpec):
+		if !strings.Contains(p, ".") {
+			return "request-only instruction"
+		}
+		return "write-only value"
+	}
+	return "trimmed for lack of proof"
+}
+
+func ancestorIn(p string, set map[string]tag) bool {
+	for i := len(p) - 1; i > 0; i-- {
+		if p[i] == '.' {
+			if _, ok := set[p[:i]]; ok {
+				return true
+			}
+		}
+	}
+	return false
+}
+
+func dataSeg(p string) bool {
+	for _, s := range strings.Split(p, ".") {
+		if strings.HasSuffix(s, "_data") {
+			return true
+		}
+	}
+	return false
+}
+
+func mechanism(res Resource, p, side string) string {
+	switch {
+	case within(p, res.Omit):
+		return "Omit"
+	case !kept(p, res.Keep):
+		return "Keep"
+	case side == "req" && within(p, res.ReadOnly):
+		return "ReadOnly"
+	case side == "resp" && within(p, res.NoResponse):
+		return "NoResponse"
+	}
+	return "generator"
+}
+
+type row struct {
+	pkg, kind                                   string
+	specReq, specResp, expReq, expResp          int
+	optArgs, optDefaultText, optServerDefaulted int
+	specOpt, specDef                            int
+	exposedEmbedded                             int
+	embeddedRoots                               []string
+	missReq, missResp                           map[string]int
+	missing                                     []missing
+}
+
+type missing struct{ path, side, reason, mech string }
+
+func TestMeasure(t *testing.T) {
+	outPath := os.Getenv("MEASURE_OUT")
+	if outPath == "" {
+		t.Skip("MEASURE_OUT not set")
+	}
+	data, err := os.ReadFile(filepath.Join("..", "..", "spec", "openapi.json"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	var ms mSpec
+	if err := json.Unmarshal(data, &ms); err != nil {
+		t.Fatal(err)
+	}
+	spec, err := ParseSpec(data)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var rows []row
+	for _, res := range Resources {
+		table, err := Build(spec, res)
+		if err != nil {
+			t.Fatal(err)
+		}
+		r := row{pkg: res.Package, kind: "data source only", missReq: map[string]int{}, missResp: map[string]int{}}
+		reqSpec := map[string]tag{}
+		respSpec := map[string]tag{}
+		method, path := "POST", res.CreatePath
+		switch {
+		case res.CreatePath != "":
+			r.kind = "resource"
+		case res.ReadPath != "":
+			method, path = "GET", res.ReadPath
+		default:
+			method, path = "GET", res.ListPath
+		}
+		if method == "POST" {
+			cw := &walker{spec: &ms, out: reqSpec}
+			create := ms.request("POST", res.CreatePath)
+			if res.CreateHash != "" {
+				// The create takes the object as a hash under one key; count the hash's fields
+				// at the top level, as the table does.
+				flat := &mSchema{Type: "object", Properties: map[string]*mSchema{}}
+				for k, v := range create.Properties {
+					if k != res.CreateHash {
+						flat.Properties[k] = v
+					}
+				}
+				for _, v := range slices.Concat(create.Properties[res.CreateHash].AnyOf) {
+					if rv := ms.resolve(v); len(rv.Properties) > 0 {
+						for k, p := range rv.Properties {
+							flat.Properties[k] = p
+						}
+					}
+				}
+				create = flat
+			}
+			cw.walk(create, "", 0, 0)
+			if res.UpdatePath != "" {
+				uw := &walker{spec: &ms, out: reqSpec}
+				uw.walk(ms.request("POST", res.UpdatePath), "", 0, 0)
+			}
+		}
+		resp := ms.response(method, path)
+		if res.ListPath != "" && res.CreatePath == "" && res.ReadPath == "" {
+			resp = ms.resolve(resp).Properties["data"].Items
+		}
+		if res.Response != "" {
+			resp = &mSchema{Ref: "#/components/schemas/" + res.Response}
+		}
+		rw := &walker{spec: &ms, out: respSpec}
+		rw.walk(resp, "", 0, 0)
+
+		tl := map[string]tleaf{}
+		tableLeaves(table, "", tl)
+		for p, l := range tl {
+			if l.create || l.update {
+				r.expReq++
+				if !l.required {
+					r.optArgs++
+					if l.defaultText {
+						r.optDefaultText++
+					}
+					if l.serverDefaulted {
+						r.optServerDefaulted++
+					}
+				}
+			}
+			if l.resp {
+				r.expResp++
+			}
+			_ = p
+		}
+		r.specReq, r.specResp = len(reqSpec), len(respSpec)
+		for _, tg := range reqSpec {
+			if tg&tControl == 0 {
+				r.specOpt++
+				if tg&tDefault != 0 {
+					r.specDef++
+				}
+			}
+		}
+		for p, tg := range reqSpec {
+			if l, ok := tl[p]; ok && (l.create || l.update) {
+				continue
+			}
+			if tg&tExpandable != 0 {
+				// An expandable request parameter is an ID; the table may hold it as a leaf.
+				if l, ok := tl[p]; ok && (l.create || l.update) {
+					continue
+				}
+			}
+			why := reason(res, p, tg, "req", reqSpec, respSpec)
+			r.missReq[why]++
+			r.missing = append(r.missing, missing{p, "req", why, mechanism(res, p, "req")})
+		}
+		for p, tg := range respSpec {
+			if l, ok := tl[p]; ok && l.resp {
+				if tg&tEmbedded != 0 && !presentIn(p, reqSpec) {
+					r.exposedEmbedded++
+					top, _, _ := strings.Cut(p, ".")
+					r.embeddedRoots = appendUnique(r.embeddedRoots, top)
+				}
+				continue
+			}
+			why := reason(res, p, tg, "resp", reqSpec, respSpec)
+			r.missResp[why]++
+			r.missing = append(r.missing, missing{p, "resp", why, mechanism(res, p, "resp")})
+		}
+		sort.Slice(r.missing, func(i, j int) bool { return r.missing[i].path < r.missing[j].path })
+		rows = append(rows, r)
+	}
+	if err := os.WriteFile(outPath, []byte(render(rows)), 0o644); err != nil {
+		t.Fatal(err)
+	}
+}
+
+var reasons = []string{"trimmed for lack of proof", "embedded copy of another object", "union", "recursion", "ID in, object out", "objects in, IDs out", "inline data for another object", "write-only value", "request-only instruction", "request control", "deprecated", "empty object"}
+
+func render(rows []row) string {
+	var b strings.Builder
+	var tot row
+	tot.missReq, tot.missResp = map[string]int{}, map[string]int{}
+	res, ds := 0, 0
+	for _, r := range rows {
+		if r.kind == "resource" {
+			res++
+		}
+		ds++
+		tot.specReq += r.specReq
+		tot.specResp += r.specResp
+		tot.expReq += r.expReq
+		tot.expResp += r.expResp
+		tot.optArgs += r.optArgs
+		tot.optDefaultText += r.optDefaultText
+		tot.optServerDefaulted += r.optServerDefaulted
+		for k, v := range r.missReq {
+			tot.missReq[k] += v
+		}
+		for k, v := range r.missResp {
+			tot.missResp[k] += v
+		}
+	}
+	fmt.Fprintf(&b, "Tables: %d (%d with a resource, %d with a data source)\n\n", len(rows), res, ds)
+	fmt.Fprintf(&b, "|Side|Spec leaves|Exposed|Missing|\n|-|-|-|-|\n")
+	fmt.Fprintf(&b, "|Request parameters|%d|%d|%d|\n", tot.specReq, tot.expReq, sum(tot.missReq))
+	fmt.Fprintf(&b, "|Response fields|%d|%d|%d|\n\n", tot.specResp, tot.expResp, sum(tot.missResp))
+	specOpt, specDef := 0, 0
+	for _, r := range rows {
+		specOpt += r.specOpt
+		specDef += r.specDef
+	}
+	fmt.Fprintf(&b, "Request leaves in the spec: %d; with \"default\" in their own description: %d\n\n", specOpt, specDef)
+	fmt.Fprintf(&b, "Optional argument leaves exposed: %d; with \"default\" in the spec text: %d; marked server-defaulted by the generator: %d\n\n", tot.optArgs, tot.optDefaultText, tot.optServerDefaulted)
+	b.WriteString("|Reason|Request leaves|Response leaves|\n|-|-|-|\n")
+	for _, k := range reasons {
+		fmt.Fprintf(&b, "|%s|%d|%d|\n", k, tot.missReq[k], tot.missResp[k])
+	}
+	b.WriteString("\n## Exposed today inside embedded copies of other objects\n\n")
+	for _, r := range rows {
+		if r.exposedEmbedded > 0 {
+			fmt.Fprintf(&b, "- %s: %d leaves under %s\n", r.pkg, r.exposedEmbedded, strings.Join(r.embeddedRoots, ", "))
+		}
+	}
+	b.WriteString("\n## Per table\n\n|Table|Kind|Req spec|Req exposed|Req missing|Resp spec|Resp exposed|Resp missing|Optional args|Default in text|\n|-|-|-|-|-|-|-|-|-|-|\n")
+	sorted := slices.Clone(rows)
+	sort.Slice(sorted, func(i, j int) bool {
+		gi := sum(sorted[i].missReq) + sum(sorted[i].missResp)
+		gj := sum(sorted[j].missReq) + sum(sorted[j].missResp)
+		if gi != gj {
+			return gi > gj
+		}
+		return sorted[i].pkg < sorted[j].pkg
+	})
+	for _, r := range sorted {
+		fmt.Fprintf(&b, "|%s|%s|%d|%d|%d|%d|%d|%d|%d|%d|\n", r.pkg, r.kind, r.specReq, r.expReq, sum(r.missReq), r.specResp, r.expResp, sum(r.missResp), r.optArgs, r.optDefaultText)
+	}
+	b.WriteString("\n## Per table, missing by reason (request / response)\n\n|Table|" + strings.Join(reasons, "|") + "|\n|-" + strings.Repeat("|-", len(reasons)) + "|\n")
+	for _, r := range sorted {
+		if sum(r.missReq)+sum(r.missResp) == 0 {
+			continue
+		}
+		cells := make([]string, len(reasons))
+		for i, k := range reasons {
+			cells[i] = fmt.Sprintf("%d / %d", r.missReq[k], r.missResp[k])
+		}
+		fmt.Fprintf(&b, "|%s|%s|\n", r.pkg, strings.Join(cells, "|"))
+	}
+	if pkg := os.Getenv("MEASURE_DUMP"); pkg != "" {
+		for _, r := range rows {
+			if r.pkg != pkg {
+				continue
+			}
+			b.WriteString("\n## dump " + pkg + "\n\n")
+			count := map[string]int{}
+			for _, m := range r.missing {
+				parts := strings.SplitN(m.path, ".", 4)
+				if len(parts) > 3 {
+					parts = parts[:3]
+				}
+				count[m.side+" "+strings.Join(parts, ".")+" "+m.reason+" "+m.mech]++
+			}
+			keys := make([]string, 0, len(count))
+			for k := range count {
+				keys = append(keys, k)
+			}
+			sort.Strings(keys)
+			for _, k := range keys {
+				fmt.Fprintf(&b, "%5d %s\n", count[k], k)
+			}
+		}
+	}
+	for _, r := range rows {
+		if r.pkg != "account" {
+			continue
+		}
+		b.WriteString("\n## account: missing leaves by top-level field\n\n|Field|Side|Leaves|Reason|Mechanism|\n|-|-|-|-|-|\n")
+		type key struct{ top, side, why, mech string }
+		count := map[key]int{}
+		for _, m := range r.missing {
+			top, _, _ := strings.Cut(m.path, ".")
+			if strings.HasPrefix(m.path, "settings.") || strings.HasPrefix(m.path, "business_profile.") || strings.HasPrefix(m.path, "individual.") || strings.HasPrefix(m.path, "company.") {
+				parts := strings.SplitN(m.path, ".", 3)
+				top = parts[0] + "." + parts[1]
+			}
+			count[key{top, m.side, m.why(), m.mech}]++
+		}
+		keys := make([]key, 0, len(count))
+		for k := range count {
+			keys = append(keys, k)
+		}
+		sort.Slice(keys, func(i, j int) bool {
+			if keys[i].top != keys[j].top {
+				return keys[i].top < keys[j].top
+			}
+			return keys[i].side < keys[j].side
+		})
+		for _, k := range keys {
+			fmt.Fprintf(&b, "|`%s`|%s|%d|%s|%s|\n", k.top, k.side, count[k], k.why, k.mech)
+		}
+	}
+	return b.String()
+}
+
+func (m missing) why() string { return m.reason }
+
+func appendUnique(l []string, s string) []string {
+	if slices.Contains(l, s) {
+		return l
+	}
+	return append(l, s)
+}
+
+func sum(m map[string]int) int {
+	n := 0
+	for _, v := range m {
+		n += v
+	}
+	return n
+}

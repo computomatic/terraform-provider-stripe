@@ -1,0 +1,733 @@
+package main
+
+// Throwaway hand-off generator for adrs/1-pending/2026-10-29-full-attribute-coverage. Run with
+// HANDOFF_DIR=<dir> go test ./tools/schemagen -run TestHandoff. It needs measure_test.go.
+
+import (
+	"context"
+	"encoding/json"
+	"fmt"
+	"os"
+	"path/filepath"
+	"regexp"
+	"slices"
+	"sort"
+	"strings"
+	"testing"
+
+	"github.com/hashicorp/terraform-plugin-framework/providerserver"
+	"github.com/hashicorp/terraform-plugin-go/tfprotov6"
+
+	"github.com/computomatic/terraform-provider-stripe/internal/provider"
+)
+
+type hctx struct {
+	t                         tag
+	embedAt, embedObj, listAt string
+	desc                      string
+	inArray                   bool
+}
+
+type hleaf struct {
+	side, path, shape string
+	t                 tag
+	embedAt, embedObj string
+	listAt            string
+	desc              string
+}
+
+type hwalker struct {
+	spec    *mSpec
+	side    string
+	out     map[string]*hleaf
+	stack   []string
+	embeds  map[string]string
+	xlists  map[string]bool
+	unions  map[string]string
+	writers map[string]tag
+}
+
+func (w *hwalker) leaf(path, shape string, c hctx) {
+	l := w.out[path]
+	if l == nil {
+		l = &hleaf{side: w.side, path: path, shape: shape, embedAt: c.embedAt, embedObj: c.embedObj, listAt: c.listAt, desc: c.desc}
+		w.out[path] = l
+	} else if l.shape != shape && !strings.Contains(l.shape, shape) {
+		l.shape += " | " + shape
+	}
+	l.t |= c.t
+}
+
+func (w *hwalker) deref(sc *mSchema) *mSchema {
+	for sc != nil && sc.Ref != "" {
+		sc = w.spec.Components.Schemas[strings.TrimPrefix(sc.Ref, "#/components/schemas/")]
+	}
+	return sc
+}
+
+// isList reports a list envelope: an object whose `object` is the enum `list`.
+func (w *hwalker) isList(sc *mSchema) bool {
+	sc = w.deref(sc)
+	if sc == nil {
+		return false
+	}
+	if len(sc.Properties) == 0 {
+		var objs []*mSchema
+		for _, v := range slices.Concat(sc.AnyOf, sc.OneOf) {
+			if r := w.deref(v); r != nil && len(r.Properties) > 0 {
+				objs = append(objs, r)
+			}
+		}
+		if len(objs) != 1 {
+			return false
+		}
+		sc = objs[0]
+	}
+	o := sc.Properties["object"]
+	if o == nil {
+		return false
+	}
+	o = w.deref(o)
+	return len(o.Enum) == 1 && string(o.Enum[0]) == `"list"`
+}
+
+func (w *hwalker) walk(sc *mSchema, path string, c hctx, depth int) {
+	if sc == nil {
+		return
+	}
+	if sc.Deprecated || deprecatedText.MatchString(sc.Description) {
+		c.t |= tDeprecated
+	}
+	if sc.Description != "" {
+		c.desc = sc.Description
+	}
+	expandable := len(sc.Expansion) > 0
+	for sc.Ref != "" {
+		name := strings.TrimPrefix(sc.Ref, "#/components/schemas/")
+		if slices.Contains(w.stack, name) || depth > maxDepth {
+			w.leaf(path, "recursion: "+name, hctx{t: c.t | tRecursion, embedAt: c.embedAt, embedObj: c.embedObj, listAt: c.listAt, desc: c.desc})
+			return
+		}
+		w.stack = append(w.stack, name)
+		defer func() { w.stack = w.stack[:len(w.stack)-1] }()
+		sc = w.spec.Components.Schemas[name]
+		if sc.ResourceID != "" && len(w.stack) > 1 && c.embedAt == "" && w.side == "response" {
+			c.embedAt, c.embedObj = path, sc.ResourceID
+			c.t |= tEmbedded
+			w.embeds[path] = sc.ResourceID
+		}
+		if sc.Deprecated {
+			c.t |= tDeprecated
+		}
+		if len(sc.Expansion) > 0 {
+			expandable = true
+		}
+		if c.desc == "" {
+			c.desc = sc.Description
+		}
+	}
+	var variants []*mSchema
+	for _, v := range slices.Concat(sc.AnyOf, sc.OneOf, sc.AllOf) {
+		r := w.deref(v)
+		if onlyEmptyEnum(r) {
+			continue
+		}
+		if len(v.Expansion) > 0 {
+			expandable = true
+		}
+		variants = append(variants, v)
+	}
+	if expandable && len(variants) > 1 {
+		w.leaf(path, "expandable reference (ID)", c)
+		return
+	}
+	switch {
+	case len(variants) == 1:
+		w.walk(variants[0], path, c, depth)
+		return
+	case len(variants) > 1:
+		var kinds []string
+		for _, v := range variants {
+			r := w.deref(v)
+			k := r.Type
+			if k == "" || k == "object" {
+				k = "object"
+				if r.ResourceID != "" {
+					k = r.ResourceID
+				} else if v.Ref != "" {
+					k = strings.TrimPrefix(v.Ref, "#/components/schemas/")
+				}
+			}
+			kinds = append(kinds, k)
+		}
+		w.unions[path] = strings.Join(kinds, " | ")
+		for _, v := range variants {
+			w.walk(v, path, hctx{t: c.t | tUnion, embedAt: c.embedAt, embedObj: c.embedObj, listAt: c.listAt, desc: c.desc, inArray: c.inArray}, depth)
+		}
+		return
+	}
+	if depth > maxDepth {
+		w.leaf(path, "too deep", hctx{t: c.t | tRecursion, embedAt: c.embedAt, embedObj: c.embedObj, listAt: c.listAt, desc: c.desc})
+		return
+	}
+	prefix := ""
+	if c.inArray {
+		prefix = "list of "
+	}
+	switch sc.Type {
+	case "array":
+		w.walk(sc.Items, path, hctx{t: c.t, embedAt: c.embedAt, embedObj: c.embedObj, listAt: c.listAt, desc: c.desc, inArray: true}, depth+1)
+	case "object", "":
+		switch {
+		case len(sc.Properties) > 0:
+			for name, p := range sc.Properties {
+				if path == "" && name == "object" {
+					continue
+				}
+				kc := hctx{t: c.t &^ (tDefault | tReqd), embedAt: c.embedAt, embedObj: c.embedObj, listAt: c.listAt}
+				if w.side == "request" && slices.Contains(sc.Required, name) {
+					kc.t |= tReqd
+				}
+				if path == "" && (name == "expand" || name == "include") {
+					kc.t |= tControl
+				}
+				at := join(path, name)
+				if w.side == "response" && kc.listAt == "" && w.isList(p) && !slices.Contains(sc.Required, name) {
+					if _, written := w.writers[at]; !written && !presentIn(at, w.writers) {
+						kc.listAt = at
+						w.xlists[at] = true
+					}
+				}
+				w.walk(p, at, kc, depth+1)
+			}
+		case sc.addl() != nil:
+			v := sc.addl()
+			r := w.deref(v)
+			if r.Type == "object" || len(r.Properties) > 0 || len(r.AnyOf)+len(r.OneOf) > 0 {
+				w.walk(v, path, hctx{t: c.t | tMap, embedAt: c.embedAt, embedObj: c.embedObj, listAt: c.listAt, desc: c.desc}, depth+1)
+			} else {
+				w.leaf(path, "map of "+r.Type, hctx{t: c.t | tMap, embedAt: c.embedAt, embedObj: c.embedObj, listAt: c.listAt, desc: c.desc})
+			}
+		default:
+			w.leaf(path, prefix+"empty hash", hctx{t: c.t | tEmpty, embedAt: c.embedAt, embedObj: c.embedObj, listAt: c.listAt, desc: c.desc})
+		}
+	default:
+		k := sc.Type
+		if len(sc.Enum) > 0 && k == "string" {
+			k = "enum"
+		}
+		w.leaf(path, prefix+k, c)
+	}
+}
+
+// Hard-case heuristics. They flag a leaf for the suite's own ADR to confirm, nothing more.
+
+var countryWord = regexp.MustCompile(`\b(Japan|Japanese|Australia|Australian|Canada|Canadian|India|Indian|Mexico|Mexican|Brazil|Brazilian|Malaysia|Malaysian|Singapore|Thailand|Thai|United Kingdom|UK|Europe|European|EU|EEA|Germany|German|France|French|Hong Kong|Switzerland|Swiss|Poland|Polish|Netherlands|Dutch|Belgium|Austria|Italy|Italian|Spain|Spanish|Sweden|Swedish|Denmark|Danish|Norway|Finland|Portugal|Ireland|Korea|Korean|China|Chinese|New Zealand|Philippines|Indonesia|Vietnam|UAE|Israel|Turkey|Nigeria|Kenya|South Africa|Argentina|Chile|Colombia|Peru|Gibraltar|Liechtenstein)\b`)
+
+var paymentMethodCountry = map[string]string{
+	"acss_debit": "CA", "au_becs_debit": "AU", "bacs_debit": "GB", "sepa_debit": "EU", "boleto": "BR", "konbini": "JP",
+	"paynow": "SG", "promptpay": "TH", "blik": "PL", "ideal": "NL", "bancontact": "BE", "eps": "AT", "p24": "PL", "fpx": "MY",
+	"grabpay": "SG/MY", "oxxo": "MX", "pix": "BR", "upi": "IN", "kakao_pay": "KR", "kr_card": "KR", "naver_pay": "KR",
+	"payco": "KR", "samsung_pay": "KR", "twint": "CH", "swish": "SE", "mb_way": "PT", "multibanco": "PT", "mobilepay": "DK/FI",
+	"satispay": "IT", "paypay": "JP", "pay_by_bank": "GB", "alipay": "CN", "wechat_pay": "CN", "zip": "AU", "alma": "FR",
+	"billie": "DE", "bizum": "ES", "sofort": "DE", "giropay": "DE", "nz_bank_account": "NZ", "interac_present": "CA",
+	"payto": "AU", "sepa_credit_transfer": "EU", "klarna": "EU/US", "afterpay_clearpay": "AU/GB/US", "revolut_pay": "GB/EU",
+	"eu_bank_transfer": "EU", "gb_bank_transfer": "GB", "jp_bank_transfer": "JP", "mx_bank_transfer": "MX",
+	"id_bank_transfer": "ID", "sunbit": "US", "crypto": "US", "affirm": "US/CA", "cashapp": "US", "us_bank_account": "US",
+}
+
+var fileSegs = map[string]bool{"documents": true, "document": true, "front": true, "back": true, "file": true, "files": true, "icon": true, "logo": true, "card_logo": true, "carrier_text": false}
+var fileText = regexp.MustCompile(`(?i)file upload|/api/files|file_upload|\bfile\b with a `)
+var onboardSegs = []string{"verification", "requirements", "future_requirements", "tos_acceptance", "additional_tos_acceptances", "ownership_declaration", "directorship_declaration", "representative_declaration"}
+var hostedSegs = []string{"next_action", "collected_information", "customer_details", "three_d_secure", "redirect", "customer_acceptance", "verified_outputs", "presentment_details"}
+var failureSegs = []string{"last_payment_error", "last_setup_error", "last_finalization_error", "api_error", "failure_code", "failure_message", "failure_reason", "failure_details", "last_error"}
+
+// tReqd marks a request leaf its parent object requires.
+const tReqd = tDefault << 1
+
+func hardCases(path, desc string) []string {
+	segs := strings.Split(path, ".")
+	var out []string
+	add := func(s string) {
+		if !slices.Contains(out, s) {
+			out = append(out, s)
+		}
+	}
+	for _, s := range segs {
+		if strings.HasSuffix(s, "_kana") || strings.HasSuffix(s, "_kanji") {
+			add("country:JP")
+		}
+		if c, ok := paymentMethodCountry[s]; ok && c != "US" && c != "US/CA" {
+			add("payment-method:" + s + "(" + c + ")")
+		}
+		if fileSegs[s] {
+			add("file")
+		}
+		if slices.Contains(onboardSegs, s) {
+			add("onboarding")
+		}
+		if slices.Contains(hostedSegs, s) {
+			add("hosted-flow")
+		}
+		if slices.Contains(failureSegs, s) {
+			add("failure-state")
+		}
+	}
+	if m := countryWord.FindString(desc); m != "" && !slices.ContainsFunc(out, func(s string) bool {
+		return strings.HasPrefix(s, "country:") || strings.HasPrefix(s, "payment-method:")
+	}) {
+		add("country:" + m)
+	}
+	if fileText.MatchString(desc) {
+		add("file")
+	}
+	return out
+}
+
+func typeName(pkg string) string {
+	switch pkg {
+	case "core_account":
+		return "stripe_account_v2"
+	case "core_account_person":
+		return "stripe_account_person_v2"
+	case "core_event_destination":
+		return "stripe_event_destination_v2"
+	case "core_event":
+		return "stripe_event_v2"
+	}
+	return "stripe_" + pkg
+}
+
+var waves = map[string][]string{
+	"1": {"account"},
+	"2": {"account_person", "account_external_account", "account_capability", "core_account", "core_account_person", "core_event_destination", "core_event", "application_fee", "application_fee_refund", "transfer", "transfer_reversal", "apps_install", "apps_secret", "country_spec"},
+	"3": {"payment_intent", "setup_intent", "customer_payment_method", "charge", "refund", "checkout_session", "checkout_session_line_item", "payment_link", "payment_link_line_item", "mandate", "dispute", "payment_intent_amount_details_line_item", "payment_method_configuration", "payment_method_domain", "apple_pay_domain", "payment_record", "radar_early_fraud_warning", "review", "radar_value_list", "radar_value_list_item", "payout", "topup", "balance", "balance_settings", "balance_transaction"},
+	"4": {"customer", "invoice", "invoiceitem", "invoice_line", "invoice_payment", "invoice_rendering_template", "subscription", "subscription_item", "subscription_schedule", "quote", "quote_line_item", "quote_computed_upfront_line_item", "credit_note", "credit_note_line", "coupon", "price", "product", "plan", "promotion_code", "shipping_rate", "tax_rate", "product_feature", "product_catalog_trial_offer", "billing_alert", "billing_credit_balance_transaction", "billing_credit_grant", "billing_feedback_option", "billing_meter", "billing_meter_event_summary", "billing_portal_configuration", "customer_balance_transaction", "customer_cash_balance_transaction", "customer_card", "customer_bank_account", "test_helpers_test_clock", "tax_id", "entitlements_feature", "entitlements_active_entitlement"},
+	"5": {"issuing_authorization", "issuing_card", "issuing_cardholder", "issuing_dispute", "issuing_personalization_design", "issuing_physical_bundle", "issuing_token", "issuing_transaction", "treasury_credit_reversal", "treasury_debit_reversal", "treasury_financial_account", "treasury_inbound_transfer", "treasury_outbound_payment", "treasury_outbound_transfer", "treasury_received_credit", "treasury_received_debit", "treasury_transaction", "treasury_transaction_entry", "terminal_configuration", "terminal_location", "terminal_reader"},
+}
+
+func waveOf(pkg string) string {
+	for w, l := range waves {
+		if slices.Contains(l, pkg) {
+			return w
+		}
+	}
+	return "6"
+}
+
+type sattr struct{ optional, computed, required, sensitive bool }
+
+func schemaAttrs(attrs []*tfprotov6.SchemaAttribute, prefix string, out map[string]sattr) {
+	for _, a := range attrs {
+		p := join(prefix, a.Name)
+		out[p] = sattr{a.Optional, a.Computed, a.Required, a.Sensitive}
+		if a.NestedType != nil {
+			schemaAttrs(a.NestedType.Attributes, p, out)
+		}
+	}
+}
+
+type hsum struct {
+	pkg, kind, wave, ops, object                              string
+	req, reqExposed, resp, respExposed, embedPts, embedLeaves int
+	xlists, unionPts                                          int
+	hard                                                      map[string]int
+	breaking                                                  map[string]int
+	countries                                                 []string
+}
+
+func TestHandoff(t *testing.T) {
+	dir := os.Getenv("HANDOFF_DIR")
+	if dir == "" {
+		t.Skip("HANDOFF_DIR not set")
+	}
+	data, err := os.ReadFile(filepath.Join("..", "..", "spec", "openapi.json"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	var ms mSpec
+	if err := json.Unmarshal(data, &ms); err != nil {
+		t.Fatal(err)
+	}
+	spec, err := ParseSpec(data)
+	if err != nil {
+		t.Fatal(err)
+	}
+	server, err := providerserver.NewProtocol6WithError(provider.New("dev")())()
+	if err != nil {
+		t.Fatal(err)
+	}
+	ps, err := server.GetProviderSchema(context.Background(), &tfprotov6.GetProviderSchemaRequest{})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	var tsv strings.Builder
+	tsv.WriteString("wave\ttable\tterraform_type\tside\tpath\tshape\tcreate\tupdate\texposed_today\trule\tembedded_object\thard_cases\tbreaking_today\n")
+	var sums []hsum
+	countryRows := map[string][]string{}
+	for _, res := range Resources {
+		table, err := Build(spec, res)
+		if err != nil {
+			t.Fatal(err)
+		}
+		tl := map[string]tleaf{}
+		tableLeaves(table, "", tl)
+		tn := typeName(res.Package)
+		cur := map[string]sattr{}
+		if s := ps.ResourceSchemas[tn]; s != nil {
+			schemaAttrs(s.Block.Attributes, "", cur)
+		} else if s := ps.ResourceSchemas["stripe_"+res.Package]; s != nil {
+			schemaAttrs(s.Block.Attributes, "", cur)
+		}
+		sum := hsum{pkg: res.Package, kind: "data source", wave: waveOf(res.Package), hard: map[string]int{}, breaking: map[string]int{}}
+		create := map[string]*hleaf{}
+		update := map[string]*hleaf{}
+		method, path := "POST", res.CreatePath
+		switch {
+		case res.CreatePath != "":
+			sum.kind = "resource and data source"
+			sum.ops = "POST " + res.CreatePath
+			if res.UpdatePath != "" {
+				sum.ops += "; POST " + res.UpdatePath
+			}
+		case res.ReadPath != "":
+			method, path = "GET", res.ReadPath
+			sum.ops = "GET " + res.ReadPath
+		default:
+			method, path = "GET", res.ListPath
+			sum.ops = "GET " + res.ListPath + " (element)"
+		}
+		reqTags := map[string]tag{}
+		reqUnions := map[string]string{}
+		if method == "POST" {
+			body := ms.request("POST", res.CreatePath)
+			if res.CreateHash != "" {
+				flat := &mSchema{Type: "object", Properties: map[string]*mSchema{}}
+				for k, v := range body.Properties {
+					if k != res.CreateHash {
+						flat.Properties[k] = v
+					}
+				}
+				for _, v := range body.Properties[res.CreateHash].AnyOf {
+					if rv := ms.resolve(v); len(rv.Properties) > 0 {
+						for k, p := range rv.Properties {
+							flat.Properties[k] = p
+						}
+					}
+				}
+				body = flat
+			}
+			cw := &hwalker{spec: &ms, side: "request", out: create, embeds: map[string]string{}, xlists: map[string]bool{}, unions: map[string]string{}}
+			cw.walk(body, "", hctx{}, 0)
+			for p, l := range create {
+				reqTags[p] |= l.t
+			}
+			if res.UpdatePath != "" {
+				uw := &hwalker{spec: &ms, side: "request", out: update, embeds: map[string]string{}, xlists: map[string]bool{}, unions: cw.unions}
+				uw.walk(ms.request("POST", res.UpdatePath), "", hctx{}, 0)
+				for p, l := range update {
+					reqTags[p] |= l.t
+				}
+			}
+			for p, k := range cw.unions {
+				reqUnions[p] = k
+				if _, ok := reqTags[p]; ok || presentIn(p, reqTags) {
+					sum.unionPts++
+				}
+			}
+		}
+		resp := ms.response(method, path)
+		if res.ListPath != "" && res.CreatePath == "" && res.ReadPath == "" {
+			resp = ms.resolve(resp).Properties["data"].Items
+		}
+		if res.Response != "" {
+			resp = &mSchema{Ref: "#/components/schemas/" + res.Response}
+		}
+		if r := ms.resolve(resp); r != nil {
+			sum.object = r.ResourceID
+		}
+		respLeaves := map[string]*hleaf{}
+		rw := &hwalker{spec: &ms, side: "response", out: respLeaves, embeds: map[string]string{}, xlists: map[string]bool{}, unions: map[string]string{}, writers: reqTags}
+		rw.walk(resp, "", hctx{}, 0)
+		respTags := map[string]tag{}
+		for p, l := range respLeaves {
+			respTags[p] = l.t
+		}
+		sum.unionPts += len(rw.unions)
+
+		row := func(side, p, shape string, cr, up bool, exposed bool, rule, embObj string, hard []string, breaking []string) {
+			b := func(v bool) string {
+				if v {
+					return "yes"
+				}
+				return ""
+			}
+			fmt.Fprintf(&tsv, "%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n", sum.wave, res.Package, tn, side, p, shape, b(cr), b(up), b(exposed), rule, embObj, strings.Join(hard, ","), strings.Join(breaking, ","))
+		}
+		countHard := func(hard []string, p string) {
+			for _, h := range hard {
+				cat, _, _ := strings.Cut(h, ":")
+				sum.hard[cat]++
+				if cat == "country" || cat == "payment-method" {
+					sum.countries = appendUnique(sum.countries, h)
+					countryRows[res.Package] = append(countryRows[res.Package], p)
+				}
+			}
+		}
+
+		// Request rows.
+		reqPaths := map[string]bool{}
+		for p := range create {
+			reqPaths[p] = true
+		}
+		for p := range update {
+			reqPaths[p] = true
+		}
+		for _, p := range sortedKeys(reqPaths) {
+			l := create[p]
+			if l == nil {
+				l = update[p]
+			}
+			_, cr := create[p]
+			_, up := update[p]
+			rule := ""
+			switch {
+			case l.t&tControl != 0:
+				rule = "X1 request control"
+			case p == "confirm":
+				rule = "excluded: `status` models confirming (owner)"
+			}
+			if l.t&tUnion != 0 && rule == "" {
+				rule = "union member"
+			}
+			if !presentIn(p, respTags) && rule == "" {
+				switch {
+				case dataSeg(p):
+					rule = "inline data for another object"
+				case !strings.Contains(p, "."):
+					rule = "request-only instruction"
+				default:
+					rule = "write-only value"
+				}
+			}
+			if underSeg(p, "discounts") && rule == "" {
+				rule = "objects in, IDs out"
+			}
+			exp := false
+			if x, ok := tl[p]; ok && (x.create || x.update) {
+				exp = true
+			}
+			var breaking []string
+			if a, ok := cur[p]; ok && exp {
+				if _, inResp := respTags[p]; a.optional && !a.computed && inResp {
+					breaking = append(breaking, "may-become-computed")
+				}
+				parent, name := "", p
+				if i := strings.LastIndex(p, "."); i >= 0 {
+					parent, name = p[:i], p[i+1:]
+				}
+				if _, ok := respTags[join(parent, name+"_provided")]; ok && !a.sensitive {
+					breaking = append(breaking, "becomes-sensitive")
+				}
+				_ = reqUnions
+			}
+			if !exp && l.t&tReqd != 0 && cr && rule == "" {
+				parent, _, _ := strings.Cut(p, ".")
+				if i := strings.LastIndex(p, "."); i >= 0 {
+					parent = p[:i]
+				} else {
+					parent = ""
+				}
+				if parent == "" || anyRequestExposedUnder(parent, tl) {
+					breaking = append(breaking, "new-required")
+				}
+			}
+			if x, ok := tl[p]; ok && exp && !x.resp && presentIn(p, respTags) && rule == "" {
+				if _, there := respTags[p]; there {
+					breaking = append(breaking, "read-back")
+				}
+			}
+			if l.t&tDeprecated != 0 {
+				rule = strings.TrimPrefix(rule+"; deprecated", "; ")
+			}
+			hard := hardCases(p, l.desc)
+			if rule != "X1 request control" {
+				sum.req++
+				if exp {
+					sum.reqExposed++
+				}
+				countHard(hard, p)
+			}
+			for _, b := range breaking {
+				sum.breaking[b]++
+			}
+			row("request", p, l.shape, cr, up, exp, rule, "", hard, breaking)
+		}
+
+		// Response rows: embedded copies and expand-only lists collapse to one row each.
+		points := map[string]bool{}
+		for _, p := range sortedKeys2(respLeaves) {
+			l := respLeaves[p]
+			exposedLeaf := false
+			if x, ok := tl[p]; ok && x.resp {
+				exposedLeaf = true
+			}
+			if l.listAt != "" {
+				if !points[l.listAt] {
+					points[l.listAt] = true
+					sum.xlists++
+					var breaking []string
+					if anyExposedUnder(l.listAt, tl) {
+						breaking = []string{"removed-by-X3"}
+						sum.breaking["removed-by-X3"]++
+					}
+					row("response", l.listAt, "paged list, returned only when expanded", false, false, anyExposedUnder(l.listAt, tl), "X3 excluded: managed by its own resource or data source", "", nil, breaking)
+				}
+				continue
+			}
+			if l.embedAt != "" && !presentIn(l.embedAt, reqTags) {
+				sum.embedLeaves++
+				if !points[l.embedAt] {
+					points[l.embedAt] = true
+					sum.embedPts++
+					row("response", l.embedAt, "embedded copy", false, false, anyExposedUnder(l.embedAt, tl), "embedded copy: prove where and when it appears", l.embedObj, hardCases(l.embedAt, ""), nil)
+				}
+				continue
+			}
+			rule := ""
+			switch {
+			case l.t&tEmpty != 0:
+				rule = "X2 type marker"
+			case l.t&tRecursion != 0:
+				rule = "X4 recursion cut"
+			case l.t&tUnion != 0:
+				rule = "union member"
+			case l.t&tEmbedded != 0 && ancestorIn(p, reqTags):
+				rule = "ID in, object out: held as the ID"
+			}
+			if underSeg(p, "discounts") {
+				rule = "objects in, IDs out"
+			}
+			if l.t&tDeprecated != 0 {
+				rule = strings.TrimPrefix(rule+"; deprecated", "; ")
+			}
+			hard := hardCases(p, l.desc)
+			if !strings.HasPrefix(rule, "X") && !strings.HasPrefix(rule, "ID in") {
+				sum.resp++
+				if exposedLeaf {
+					sum.respExposed++
+				}
+				countHard(hard, p)
+			}
+			row("response", p, l.shape, false, false, exposedLeaf, rule, "", hard, nil)
+		}
+		sums = append(sums, sum)
+	}
+	if err := os.WriteFile(filepath.Join(dir, "handoff-leaves.tsv"), []byte(tsv.String()), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(dir, "handoff-summary.tmp"), []byte(renderHandoff(sums, countryRows)), 0o644); err != nil {
+		t.Fatal(err)
+	}
+}
+
+func anyRequestExposedUnder(p string, tl map[string]tleaf) bool {
+	for k, l := range tl {
+		if (l.create || l.update) && strings.HasPrefix(k, p+".") {
+			return true
+		}
+	}
+	return false
+}
+
+func anyExposedUnder(p string, tl map[string]tleaf) bool {
+	for k, l := range tl {
+		if l.resp && (k == p || strings.HasPrefix(k, p+".")) {
+			return true
+		}
+	}
+	return false
+}
+
+func sortedKeys(m map[string]bool) []string {
+	out := make([]string, 0, len(m))
+	for k := range m {
+		out = append(out, k)
+	}
+	sort.Strings(out)
+	return out
+}
+
+func sortedKeys2(m map[string]*hleaf) []string {
+	out := make([]string, 0, len(m))
+	for k := range m {
+		out = append(out, k)
+	}
+	sort.Strings(out)
+	return out
+}
+
+var hardCats = []string{"country", "payment-method", "file", "onboarding", "hosted-flow", "failure-state"}
+var breakCats = []string{"may-become-computed", "becomes-sensitive", "read-back", "removed-by-X3", "new-required"}
+
+func renderHandoff(sums []hsum, countryRows map[string][]string) string {
+	var b strings.Builder
+	sort.Slice(sums, func(i, j int) bool {
+		if sums[i].wave != sums[j].wave {
+			return sums[i].wave < sums[j].wave
+		}
+		return sums[i].pkg < sums[j].pkg
+	})
+	var tot hsum
+	tot.hard, tot.breaking = map[string]int{}, map[string]int{}
+	for _, s := range sums {
+		tot.req += s.req
+		tot.reqExposed += s.reqExposed
+		tot.resp += s.resp
+		tot.respExposed += s.respExposed
+		tot.embedPts += s.embedPts
+		tot.embedLeaves += s.embedLeaves
+		tot.xlists += s.xlists
+		tot.unionPts += s.unionPts
+		for k, v := range s.hard {
+			tot.hard[k] += v
+		}
+		for k, v := range s.breaking {
+			tot.breaking[k] += v
+		}
+	}
+	fmt.Fprintf(&b, "TOTALS req=%d reqExposed=%d resp=%d respExposed=%d embedPts=%d embedLeaves=%d xlists=%d unionPts=%d hard=%v breaking=%v\n\n", tot.req, tot.reqExposed, tot.resp, tot.respExposed, tot.embedPts, tot.embedLeaves, tot.xlists, tot.unionPts, tot.hard, tot.breaking)
+	b.WriteString("|Wave|Terraform type|Stripe object|Operations|Request leaves (new)|Response leaves (new)|Embedded copies|Expand-only lists|Unions|" + strings.Join(hardCats, "|") + "|\n|-|-|-|-|-|-|-|-|-" + strings.Repeat("|-", len(hardCats)) + "|\n")
+	for _, s := range sums {
+		cells := make([]string, len(hardCats))
+		for i, k := range hardCats {
+			cells[i] = fmt.Sprint(s.hard[k])
+		}
+		fmt.Fprintf(&b, "|%s|`%s`|`%s`|%s|%d (%d)|%d (%d)|%d|%d|%d|%s|\n", s.wave, typeName(s.pkg), s.object, s.ops, s.req, s.req-s.reqExposed, s.resp, s.resp-s.respExposed, s.embedPts, s.xlists, s.unionPts, strings.Join(cells, "|"))
+	}
+	b.WriteString("\nBREAKING\n\n|Wave|Terraform type|" + strings.Join(breakCats, "|") + "|\n|-|-" + strings.Repeat("|-", len(breakCats)) + "|\n")
+	for _, s := range sums {
+		n := 0
+		for _, v := range s.breaking {
+			n += v
+		}
+		if n == 0 {
+			continue
+		}
+		cells := make([]string, len(breakCats))
+		for i, k := range breakCats {
+			cells[i] = fmt.Sprint(s.breaking[k])
+		}
+		fmt.Fprintf(&b, "|%s|`%s`|%s|\n", s.wave, typeName(s.pkg), strings.Join(cells, "|"))
+	}
+	b.WriteString("\nCOUNTRIES\n\n")
+	for _, s := range sums {
+		if len(s.countries) == 0 {
+			continue
+		}
+		sort.Strings(s.countries)
+		fmt.Fprintf(&b, "- `%s` (%d leaves): %s\n", typeName(s.pkg), len(countryRows[s.pkg]), strings.Join(s.countries, ", "))
+	}
+	return b.String()
+}
