@@ -26,7 +26,7 @@ func suiteFixture(t *testing.T) []byte {
 }
 
 // The reader takes the suite's own fixture record whole, and refuses a member the format does
-// not define and a value outside a closed set it reads.
+// not define, naming where in the record it is, and a value outside a closed set it reads.
 func TestEvidenceReaderTakesTheSuiteFixtureAndRefusesTheUnknown(t *testing.T) {
 	data := suiteFixture(t)
 	e, err := decodeEvidence(data)
@@ -45,8 +45,9 @@ func TestEvidenceReaderTakesTheSuiteFixtureAndRefusesTheUnknown(t *testing.T) {
 	for _, tc := range []struct {
 		name, old, new, want string
 	}{
-		{"an unknown top-level member", `"format_version": 1,`, `"format_version": 1, "verdicts": [],`, `unknown field "verdicts"`},
-		{"an unknown leaf member", `"status": "proven",`, `"status": "proven", "since": "2026-10-01",`, `unknown field "since"`},
+		{"an unknown top-level member", `"format_version": 1,`, `"format_version": 1, "verdicts": [],`, `decode: verdicts is a member the format does not define`},
+		{"an unknown leaf member", `"status": "proven",`, `"status": "proven", "since": "2026-10-01",`, `decode: leaves[0] (request/PostCoupons/amount_off).since is a member the format does not define`},
+		{"an unknown member of a leaf's fact", `"result": "refused"`, `"result": "refused", "retried": true`, `decode: leaves[14] (request/PostCouponsCoupon/name).unset.retried is a member the format does not define`},
 		{"an unknown unset result", `"result": "refused"`, `"result": "cleared"`, `unset result "cleared"`},
 		{"an unknown default kind", `"kind": "null"`, `"kind": "empty"`, `default kind "empty"`},
 		{"an unknown status", `"status": "unreachable"`, `"status": "skipped"`, `status "skipped"`},

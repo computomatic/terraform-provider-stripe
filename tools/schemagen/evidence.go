@@ -8,8 +8,10 @@ import (
 	"errors"
 	"fmt"
 	"io/fs"
+	"maps"
 	"os"
 	"path/filepath"
+	"reflect"
 	"slices"
 	"strings"
 )
@@ -342,12 +344,85 @@ func decodeEvidence(data []byte) (*Evidence, error) {
 	d := json.NewDecoder(bytes.NewReader(data))
 	d.DisallowUnknownFields()
 	if err := d.Decode(e); err != nil {
+		if where := unknownMember(data, reflect.TypeFor[Evidence](), ""); where != "" {
+			return nil, fmt.Errorf("decode: %s is a member the format does not define: %w", where, err)
+		}
 		return nil, fmt.Errorf("decode: %w", err)
 	}
 	if err := e.check(); err != nil {
 		return nil, err
 	}
 	return e, nil
+}
+
+// unknownMember returns where in data the first member that t does not declare is, as a path
+// from the record's root such as `leaves[12] (request/PostCoupons/name).unset.since`, naming the
+// leaf an element of a list is, or "" when t declares every member.
+func unknownMember(data json.RawMessage, t reflect.Type, at string) string {
+	for t.Kind() == reflect.Pointer {
+		t = t.Elem()
+	}
+	switch t.Kind() {
+	case reflect.Struct:
+		var members map[string]json.RawMessage
+		if json.Unmarshal(data, &members) != nil {
+			return ""
+		}
+		declared := jsonMembers(t)
+		names := make([]string, 0, len(members))
+		for name := range members {
+			names = append(names, name)
+		}
+		slices.Sort(names)
+		for _, name := range names {
+			inner := name
+			if at != "" {
+				inner = at + "." + name
+			}
+			ft, ok := declared[name]
+			if !ok {
+				return inner
+			}
+			if where := unknownMember(members[name], ft, inner); where != "" {
+				return where
+			}
+		}
+	case reflect.Slice:
+		var elems []json.RawMessage
+		if t.Elem() == reflect.TypeFor[byte]() || json.Unmarshal(data, &elems) != nil {
+			return ""
+		}
+		for i, elem := range elems {
+			inner := fmt.Sprintf("%s[%d]", at, i)
+			var k Key
+			if json.Unmarshal(elem, &k) == nil && k.Side != "" {
+				inner += " (" + k.String() + ")"
+			}
+			if where := unknownMember(elem, t.Elem(), inner); where != "" {
+				return where
+			}
+		}
+	}
+	return ""
+}
+
+// jsonMembers maps the JSON member names a struct declares, those of embedded structs
+// included, to their types.
+func jsonMembers(t reflect.Type) map[string]reflect.Type {
+	out := map[string]reflect.Type{}
+	for f := range t.Fields() {
+		name, _, _ := strings.Cut(f.Tag.Get("json"), ",")
+		switch {
+		case name == "-":
+		case f.Anonymous && name == "":
+			maps.Copy(out, jsonMembers(f.Type))
+		case name == "":
+			out[f.Name] = f.Type
+		default:
+			out[name] = f.Type
+		}
+	}
+	return out
 }
 
 // check refuses a value outside a closed set the generator reads, and a rule default with no

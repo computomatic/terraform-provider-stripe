@@ -36,7 +36,7 @@ func (r *Resource) keepPlan(ctx context.Context, state *tfsdk.State, plan, confi
 	for _, d := range diffs {
 		name := d.at.String()
 		planned, given := display(d.planned), display(d.given)
-		if r.m.sensitiveAt(d.at) {
+		if r.m.holdsSensitive(d.at) {
 			planned, given = "(sensitive value)", "(sensitive value)"
 		}
 		configured := !valueAt(config, d.tfAt).IsNull()
@@ -69,7 +69,7 @@ func keepPlanned(planned, given tftypes.Value, at path.Path, tfAt *tftypes.Attri
 		return given
 	}
 	fully := planned.IsFullyKnown()
-	if fully && planned.Equal(given) {
+	if fully && sameValue(planned, given) {
 		return given
 	}
 	keep := func() tftypes.Value {
@@ -121,6 +121,72 @@ func keepPlanned(planned, given tftypes.Value, at path.Path, tfAt *tftypes.Attri
 		return keep()
 	}
 	return given
+}
+
+// sameValue reports whether two values are equal, comparing a fractional number at the float64
+// precision the decoder reads Stripe's numbers with: Terraform sends `33.3` parsed at 512 bits,
+// which as a big number differs from the float64 nearest to it. An integer is compared exactly.
+func sameValue(a, b tftypes.Value) bool {
+	typ := a.Type()
+	if !typ.Equal(b.Type()) || a.IsKnown() != b.IsKnown() || a.IsNull() != b.IsNull() {
+		return false
+	}
+	if !a.IsKnown() || a.IsNull() {
+		return true
+	}
+	switch {
+	case typ.Is(tftypes.Number):
+		x, y := new(big.Float), new(big.Float)
+		if a.As(&x) != nil || b.As(&y) != nil {
+			return a.Equal(b)
+		}
+		if x.IsInt() && y.IsInt() {
+			return x.Cmp(y) == 0
+		}
+		fx, _ := x.Float64()
+		fy, _ := y.Float64()
+		return fx == fy
+	case typ.Is(tftypes.List{}), typ.Is(tftypes.Tuple{}):
+		var p, g []tftypes.Value
+		if a.As(&p) != nil || b.As(&g) != nil || len(p) != len(g) {
+			return false
+		}
+		for i := range p {
+			if !sameValue(p[i], g[i]) {
+				return false
+			}
+		}
+		return true
+	case typ.Is(tftypes.Set{}):
+		var p, g []tftypes.Value
+		if a.As(&p) != nil || b.As(&g) != nil || len(p) != len(g) {
+			return false
+		}
+		matched := make([]bool, len(g))
+	next:
+		for _, pv := range p {
+			for i, gv := range g {
+				if !matched[i] && sameValue(pv, gv) {
+					matched[i] = true
+					continue next
+				}
+			}
+			return false
+		}
+		return true
+	case typ.Is(tftypes.Map{}), typ.Is(tftypes.Object{}):
+		var p, g map[string]tftypes.Value
+		if a.As(&p) != nil || b.As(&g) != nil || !sameKeys(p, g) {
+			return false
+		}
+		for k := range p {
+			if !sameValue(p[k], g[k]) {
+				return false
+			}
+		}
+		return true
+	}
+	return a.Equal(b)
 }
 
 func sameKeys(a, b map[string]tftypes.Value) bool {
@@ -200,8 +266,10 @@ func displayHCL(v tftypes.Value) string {
 	return v.String()
 }
 
-// sensitiveAt reports whether the attribute at p, or one it is inside, is Sensitive.
-func (m *model) sensitiveAt(p path.Path) bool {
+// holdsSensitive reports whether the value at p would show a Sensitive attribute: the
+// attribute at p, one it is inside, or one anywhere inside it. A difference at a list, an
+// object or a map shows its children.
+func (m *model) holdsSensitive(p path.Path) bool {
 	nodes := m.nodes
 	for _, step := range p.Steps() {
 		name, ok := step.(path.PathStepAttributeName)
@@ -222,6 +290,15 @@ func (m *model) sensitiveAt(p path.Path) bool {
 			return true
 		}
 		nodes = found.Kids
+	}
+	return anySensitive(nodes)
+}
+
+func anySensitive(nodes []*node) bool {
+	for _, n := range nodes {
+		if n.Sensitive || anySensitive(n.Kids) {
+			return true
+		}
 	}
 	return false
 }

@@ -101,7 +101,9 @@ func TestAccCoupon_update(t *testing.T) {
 	})
 }
 
-// percent_off cannot be changed on a coupon, so changing it replaces the coupon.
+// percent_off cannot be changed on a coupon, so changing it replaces the coupon. A fractional
+// percentage applies without a difference from the plan, which Terraform parses at a higher
+// precision than Stripe's answer is read at.
 func TestAccCoupon_replace(t *testing.T) {
 	acct := acctest.NewAccount(t)
 	resource.ParallelTest(t, resource.TestCase{
@@ -116,21 +118,27 @@ func TestAccCoupon_replace(t *testing.T) {
 				}},
 				Check: resource.TestCheckResourceAttr(address, "id", acct.ID("", "second")),
 			},
-			{
-				Config: acct.ProviderBlock() + fmt.Sprintf(`
-resource "stripe_coupon" "test" {
-  id          = %q
-  percent_off = 50
-  duration    = "once"
-}
-`, acct.ID("", "second")),
-				ConfigPlanChecks: resource.ConfigPlanChecks{PreApply: []plancheck.PlanCheck{
-					plancheck.ExpectResourceAction(address, plancheck.ResourceActionReplace),
-				}},
-				Check: resource.TestCheckResourceAttr(address, "percent_off", "50"),
-			},
+			fractionalCoupon(acct, "33.3"),
+			fractionalCoupon(acct, "0.1"),
 		},
 	})
+}
+
+// fractionalCoupon replaces the coupon with one at a fractional percent_off.
+func fractionalCoupon(acct acctest.Config, percent string) resource.TestStep {
+	return resource.TestStep{
+		Config: acct.ProviderBlock() + fmt.Sprintf(`
+resource "stripe_coupon" "test" {
+  id          = %q
+  percent_off = %s
+  duration    = "once"
+}
+`, acct.ID("", "second"), percent),
+		ConfigPlanChecks: resource.ConfigPlanChecks{PreApply: []plancheck.PlanCheck{
+			plancheck.ExpectResourceAction(address, plancheck.ResourceActionReplace),
+		}},
+		Check: resource.TestCheckResourceAttr(address, "percent_off", percent),
+	}
 }
 
 func TestAccCoupon_import(t *testing.T) {
