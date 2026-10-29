@@ -24,6 +24,9 @@ import (
 // field: JSON has no unset marker the conformance suite has proven, and an Optional
 // collection configured empty means the same as one left out.
 func (m *model) encodeCreate(plan basetypes.ObjectValue) (wire.Object, error) {
+	if err := m.checkForms(m.nodes, plan.Attributes(), ""); err != nil {
+		return nil, err
+	}
 	body, err := encodeObject(m.nodes, plan.Attributes(), func(n *node) bool { return n.Create })
 	if err != nil {
 		return nil, err
@@ -57,7 +60,7 @@ func (m *model) wrapCreate(body wire.Object) wire.Object {
 func pruneEmpty(kids []*node, obj wire.Object) wire.Object {
 	var out wire.Object
 	for _, f := range obj {
-		k := findNode(kids, f.Name)
+		k := findNodeFor(kids, f)
 		if k == nil {
 			out = append(out, f)
 			continue
@@ -85,12 +88,108 @@ func pruneEmpty(kids []*node, obj wire.Object) wire.Object {
 				v = pruned
 			}
 		}
-		if emptyWire(v) && !k.Required {
+		// A hash with no members is sent only as configured, `{}`, which selects its option.
+		if emptyWire(v) && !k.Required && !(k.Shape == fields.Object && len(k.Kids) == 0) {
 			continue
 		}
 		out = append(out, wire.Field{Name: f.Name, Value: v})
 	}
 	return out
+}
+
+// findNodeFor returns the node a wire field was encoded from: by name, and for the two forms
+// of a token-or-hash parameter, which share it, by whether the value is a hash.
+func findNodeFor(kids []*node, f wire.Field) *node {
+	_, hash := f.Value.(wire.Object)
+	var found *node
+	for _, k := range kids {
+		if k.Name == f.Name {
+			if found == nil || hash == (k.Shape == fields.Object) {
+				found = k
+			}
+		}
+	}
+	return found
+}
+
+// checkForms refuses, at any depth of a plan, what Stripe must not be sent: both forms of a
+// token-or-hash parameter, which plan-time validation cannot catch while the token is unknown;
+// neither form of one the create requires; and, on /v1, a hash with no members, whose empty
+// value would unset it.
+func (m *model) checkForms(kids []*node, attrs map[string]attr.Value, prefix string) error {
+	set := func(v attr.Value) bool { return v != nil && !v.IsNull() && !v.IsUnknown() }
+	null := func(v attr.Value) bool { return v == nil || v.IsNull() }
+	for _, n := range kids {
+		v := attrs[n.AttrName()]
+		at := prefix + n.AttrName()
+		if n.IsHashForm && n.TokenForm != "" {
+			token := attrs[n.TokenForm]
+			switch {
+			case set(v) && set(token):
+				return fmt.Errorf("both `%s%s` and `%s` are set: Stripe takes the token or the hash under one name, `%s`", prefix, n.TokenForm, at, n.Name)
+			case n.OneRequired && null(v) && null(token):
+				return fmt.Errorf("neither `%s%s` nor `%s` is set: Stripe requires one", prefix, n.TokenForm, at)
+			}
+		}
+		if !m.v2 && n.noMembers() && set(v) {
+			return fmt.Errorf("`%s`: %s", at, noEmptyHashDetail)
+		}
+		if !set(v) || len(n.Kids) == 0 {
+			continue
+		}
+		var err error
+		switch c := v.(type) {
+		case basetypes.ObjectValue:
+			err = m.checkForms(n.Kids, c.Attributes(), at+".")
+		case basetypes.ListValue:
+			for i, e := range c.Elements() {
+				if o, ok := e.(basetypes.ObjectValue); ok && err == nil {
+					err = m.checkForms(n.Kids, o.Attributes(), fmt.Sprintf("%s[%d].", at, i))
+				}
+			}
+		case basetypes.MapValue:
+			for _, k := range sortedKeys(c.Elements()) {
+				if o, ok := c.Elements()[k].(basetypes.ObjectValue); ok && err == nil {
+					err = m.checkForms(n.Kids, o.Attributes(), fmt.Sprintf("%s[%q].", at, k))
+				}
+			}
+		}
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+// checkUpdateForms runs checkForms on an update's configuration, which alone says which form of
+// a token-or-hash parameter is set: the plan carries the token Stripe returned for a hash. An
+// update with no configuration, which only the engine's own follow-ups build, is checked on
+// its plan.
+func (m *model) checkUpdateForms(plan basetypes.ObjectValue, config tftypes.Value) error {
+	if config.Type() == nil {
+		return m.checkForms(m.nodes, plan.Attributes(), "")
+	}
+	v, err := plan.Type(context.Background()).ValueFromTerraform(context.Background(), config)
+	if err != nil {
+		return err
+	}
+	o, ok := v.(basetypes.ObjectValue)
+	if !ok {
+		return fmt.Errorf("the configuration is %T, not an object", v)
+	}
+	return m.checkForms(m.nodes, o.Attributes(), "")
+}
+
+// otherFormSet reports whether the plan sets the other form of a token-or-hash parameter.
+func (m *model) otherFormSet(n *node, plan map[string]attr.Value) bool {
+	for _, other := range m.nodes {
+		if other != n && other.Name == n.Name {
+			if v := plan[other.AttrName()]; v != nil && !v.IsNull() {
+				return true
+			}
+		}
+	}
+	return false
 }
 
 func findNode(kids []*node, name string) *node {
@@ -131,6 +230,9 @@ func (m *model) encodeFollowUp(plan basetypes.ObjectValue) (wire.Object, error) 
 func (m *model) encodeUpdate(plan, state basetypes.ObjectValue, config tftypes.Value) (wire.Object, error) {
 	var out wire.Object
 	planAttrs, stateAttrs := plan.Attributes(), state.Attributes()
+	if err := m.checkUpdateForms(plan, config); err != nil {
+		return nil, err
+	}
 	updatable := func(k *node) bool { return k.Update && !slices.Contains(m.decl.RefuseChange, k.Path) }
 	for _, n := range m.nodes {
 		if !updatable(n) || slices.Contains(m.decl.SendWithUpdate, n.Name) {
@@ -173,6 +275,8 @@ func (m *model) encodeUpdate(plan, state basetypes.ObjectValue, config tftypes.V
 			}
 		case pv.IsNull() && m.v2 && !slices.Contains(m.decl.ClearsWithNull, n.Name):
 			return nil, fmt.Errorf("clearing `%s` is not supported on this resource: Stripe's /v2 behaviour for null is not yet verified for it", n.Path)
+		case pv.IsNull() && m.otherFormSet(n, planAttrs):
+			// The other form of a token-or-hash parameter takes its place under the same name.
 		case pv.IsNull():
 			out = append(out, wire.Field{Name: n.Name, Value: wire.Null{}})
 		case n.Name == m.decl.CurrencyOptions:

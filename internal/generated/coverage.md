@@ -6,22 +6,22 @@ Every leaf of each table's create and update requests and of its object is expos
 
 |Side|Exposed|Excluded|Awaiting proof|Total|
 |-|-|-|-|-|
-|Request|3197|124|2262|5583|
-|Response|5272|121|2101|7494|
+|Request|3197|125|2261|5583|
+|Response|5272|118|2104|7494|
 
 ## Per table
 
 |Table|Object|Request exposed|Request excluded|Request awaiting|Response exposed|Response excluded|Response awaiting|
 |-|-|-|-|-|-|-|-|
-|`account`|`account`|210|2|333|101|2|229|
-|`account_capability`|`capability`|0|0|0|26|0|1|
-|`account_external_account`|`bank_account`|12|2|16|27|0|1|
-|`account_person`|`person`|44|2|96|55|0|39|
-|`account_person_v2`|`v2.core.account_person`|44|0|104|27|0|50|
+|`account`|`account`|210|2|333|101|1|230|
+|`account_capability`|`capability`|0|0|0|26|1|0|
+|`account_external_account`|`bank_account`|12|2|16|27|1|0|
+|`account_person`|`person`|44|2|96|55|1|38|
+|`account_person_v2`|`v2.core.account_person`|44|0|104|27|1|49|
 |`account_v2`|`v2.core.account`|24|2|515|63|0|358|
 |`apple_pay_domain`|`apple_pay_domain`|1|1|0|4|0|0|
 |`application_fee`|`application_fee`|0|0|0|16|0|0|
-|`application_fee_refund`|`fee_refund`|3|2|0|6|0|1|
+|`application_fee_refund`|`fee_refund`|3|2|0|6|1|0|
 |`apps_install`|`apps.install`|0|0|0|18|0|0|
 |`apps_secret`|`apps.secret`|0|0|0|9|0|0|
 |`balance`|`balance`|0|0|0|41|0|0|
@@ -32,7 +32,7 @@ Every leaf of each table's create and update requests and of its object is expos
 |`billing_credit_grant`|`billing.credit_grant`|15|2|0|19|0|0|
 |`billing_feedback_option`|`billing.feedback_option`|2|2|0|5|0|0|
 |`billing_meter`|`billing.meter`|8|2|0|13|0|0|
-|`billing_meter_event_summary`|`billing.meter_event_summary`|0|0|0|5|0|1|
+|`billing_meter_event_summary`|`billing.meter_event_summary`|0|0|0|5|1|0|
 |`billing_portal_configuration`|`billing_portal.configuration`|59|2|0|37|0|0|
 |`charge`|`charge`|41|2|23|386|11|0|
 |`checkout_session`|`checkout.session`|354|2|8|293|0|0|
@@ -46,11 +46,11 @@ Every leaf of each table's create and update requests and of its object is expos
 |`credit_note`|`credit_note`|30|2|0|53|0|0|
 |`credit_note_line`|`credit_note_line_item`|0|0|0|24|0|0|
 |`customer`|`customer`|82|2|23|58|2|0|
-|`customer_balance_transaction`|`customer_balance_transaction`|6|2|0|13|0|1|
-|`customer_bank_account`|`bank_account`|0|0|0|27|0|1|
-|`customer_card`|`card`|0|0|0|29|0|1|
-|`customer_cash_balance_transaction`|`customer_cash_balance_transaction`|0|0|0|27|0|1|
-|`customer_payment_method`|`payment_method`|12|2|7|198|37|2|
+|`customer_balance_transaction`|`customer_balance_transaction`|6|2|0|13|1|0|
+|`customer_bank_account`|`bank_account`|0|0|0|27|1|0|
+|`customer_card`|`card`|0|0|0|29|1|0|
+|`customer_cash_balance_transaction`|`customer_cash_balance_transaction`|0|0|0|27|1|0|
+|`customer_payment_method`|`payment_method`|12|3|6|198|38|1|
 |`dispute`|`dispute`|0|0|0|86|0|0|
 |`entitlements_active_entitlement`|`entitlements.active_entitlement`|0|0|0|4|0|0|
 |`entitlements_feature`|`entitlements.feature`|6|2|0|6|0|0|
@@ -65,8 +65,8 @@ Every leaf of each table's create and update requests and of its object is expos
 |`financial_connections_transaction`|`financial_connections.transaction`|0|0|0|12|0|0|
 |`identity_verification_report`|`identity.verification_report`|0|0|0|61|1|0|
 |`identity_verification_session`|`identity.verification_session`|20|2|3|43|1|3|
-|`invoice`|`invoice`|183|2|12|170|3|19|
-|`invoice_line`|`line_item`|0|0|0|42|0|1|
+|`invoice`|`invoice`|183|2|12|170|0|22|
+|`invoice_line`|`line_item`|0|0|0|42|1|0|
 |`invoice_payment`|`invoice_payment`|0|0|0|15|0|0|
 |`invoice_rendering_template`|`invoice_rendering_template`|0|0|0|7|0|0|
 |`invoiceitem`|`invoiceitem`|41|2|7|34|0|1|
@@ -79,7 +79,7 @@ Every leaf of each table's create and update requests and of its object is expos
 |`issuing_token`|`issuing.token`|0|0|0|36|0|0|
 |`issuing_transaction`|`issuing.transaction`|0|0|0|67|0|0|
 |`mandate`|`mandate`|0|0|0|51|11|0|
-|`payment_intent`|`payment_intent`|73|3|640|258|7|1112|
+|`payment_intent`|`payment_intent`|73|3|640|258|2|1117|
 |`payment_intent_amount_details_line_item`|`payment_intent_amount_details_line_item`|0|0|0|17|0|0|
 |`payment_link`|`payment_link`|171|2|15|90|0|0|
 |`payment_link_line_item`|`item`|0|0|0|19|0|0|
@@ -103,9 +103,9 @@ Every leaf of each table's create and update requests and of its object is expos
 |`reporting_report_run`|`reporting.report_run`|0|0|0|16|0|0|
 |`reporting_report_type`|`reporting.report_type`|0|0|0|8|0|0|
 |`review`|`review`|0|0|0|20|0|0|
-|`setup_intent`|`setup_intent`|24|2|345|60|7|175|
+|`setup_intent`|`setup_intent`|24|2|345|60|2|180|
 |`shipping_rate`|`shipping_rate`|18|2|0|17|0|0|
-|`subscription`|`subscription`|246|2|17|126|2|1|
+|`subscription`|`subscription`|246|2|17|126|0|3|
 |`subscription_item`|`subscription_item`|34|2|6|14|0|1|
 |`subscription_schedule`|`subscription_schedule`|186|2|29|95|0|16|
 |`tax_code`|`tax_code`|0|0|0|4|0|0|
@@ -122,7 +122,7 @@ Every leaf of each table's create and update requests and of its object is expos
 |`test_helpers_test_clock`|`test_helpers.test_clock`|2|1|1|8|0|0|
 |`topup`|`topup`|10|2|1|18|0|0|
 |`transfer`|`transfer`|10|2|0|16|0|0|
-|`transfer_reversal`|`transfer_reversal`|5|2|0|8|0|1|
+|`transfer_reversal`|`transfer_reversal`|5|2|0|8|1|0|
 |`treasury_credit_reversal`|`treasury.credit_reversal`|2|1|0|13|0|0|
 |`treasury_debit_reversal`|`treasury.debit_reversal`|2|1|0|14|0|0|
 |`treasury_financial_account`|`treasury.financial_account`|27|2|3|25|0|46|
@@ -272,9 +272,8 @@ Exposed today and excluded by a rule; removed before `v0.1.0` (D6, Step 6).
 - `webhook_endpoint` PostWebhookEndpoints `expand` (list of string)
 - `webhook_endpoint` PostWebhookEndpointsWebhookEndpoint `expand` (list of string)
 
-### X2, type markers: a response hash with no keys
+### X2, type markers: a response hash with no keys that no request writes
 
-- `account` response `settings.paypay_payments.site.accessible` (empty_hash)
 - `charge` response `payment_method_details.card.wallet.amex_express_checkout` (empty_hash)
 - `charge` response `payment_method_details.card.wallet.apple_pay` (empty_hash)
 - `charge` response `payment_method_details.card.wallet.google_pay` (empty_hash)
@@ -329,9 +328,6 @@ Exposed today and excluded by a rule; removed before `v0.1.0` (D6, Step 6).
 - `event_v2` response `data` (empty_hash)
 - `identity_verification_report` response `options.id_number` (empty_hash)
 - `identity_verification_session` response `options.id_number` (empty_hash)
-- `invoice` response `payment_settings.payment_method_options.blik` (empty_hash)
-- `invoice` response `payment_settings.payment_method_options.konbini` (empty_hash)
-- `invoice` response `payment_settings.payment_method_options.sepa_debit` (empty_hash)
 - `mandate` response `customer_acceptance.offline` (empty_hash)
 - `mandate` response `payment_method_details.amazon_pay` (empty_hash)
 - `mandate` response `payment_method_details.cashapp` (empty_hash)
@@ -345,10 +341,6 @@ Exposed today and excluded by a rule; removed before `v0.1.0` (D6, Step 6).
 - `mandate` response `payment_method_details.twint` (empty_hash)
 - `payment_intent` response `next_action.blik_authorize` (empty_hash)
 - `payment_intent` response `next_action.use_stripe_sdk` (empty_hash)
-- `payment_intent` response `payment_method_options.bizum@payment_method_options_bizum` (empty_hash)
-- `payment_intent` response `payment_method_options.interac_present@payment_method_options_interac_present` (empty_hash)
-- `payment_intent` response `payment_method_options.pay_by_bank@payment_method_options_pay_by_bank` (empty_hash)
-- `payment_intent` response `payment_method_options.paypay@payment_method_options_paypay` (empty_hash)
 - `payment_record` response `payment_method_details.card.wallet.google_pay` (empty_hash)
 - `payment_record` response `payment_method_details.card.wallet.link` (empty_hash)
 - `payment_record` response `payment_method_details.customer_balance` (empty_hash)
@@ -381,12 +373,6 @@ Exposed today and excluded by a rule; removed before `v0.1.0` (D6, Step 6).
 - `refund` response `destination_details.zip` (empty_hash)
 - `setup_intent` response `next_action.blik_authorize` (empty_hash)
 - `setup_intent` response `next_action.use_stripe_sdk` (empty_hash)
-- `setup_intent` response `payment_method_options.amazon_pay@setup_intent_payment_method_options_amazon_pay` (empty_hash)
-- `setup_intent` response `payment_method_options.bizum@setup_intent_payment_method_options_bizum` (empty_hash)
-- `setup_intent` response `payment_method_options.card_present@setup_intent_payment_method_options_card_present` (empty_hash)
-- `setup_intent` response `payment_method_options.link@setup_intent_payment_method_options_link` (empty_hash)
-- `subscription` response `payment_settings.payment_method_options.konbini` (empty_hash)
-- `subscription` response `payment_settings.payment_method_options.sepa_debit` (empty_hash)
 - `tax_settings` response `status_details.active` (empty_hash)
 
 ### X3, paged lists returned only when expanded: a list envelope the object does not require and no request writes
@@ -397,10 +383,9 @@ Exposed today and excluded by a rule; removed before `v0.1.0` (D6, Step 6).
 - `tax_transaction` response `line_items` (paged_list)
 - `treasury_transaction` response `entries` (paged_list)
 
-### X4, the recursion cut: a schema met again on its own path
+### X4, the recursion cut: a schema met again on its own path, where it has no `id` to hold
 
-- `payment_intent` response `last_payment_error.payment_intent` (recursion)
-- `setup_intent` response `last_setup_error.setup_intent` (recursion)
+None.
 
 ### X5, `confirm` where the declaration's `status` transition confirms
 
@@ -408,7 +393,21 @@ Exposed today and excluded by a rule; removed before `v0.1.0` (D6, Step 6).
 
 ### The register (`Resource.Exclude`)
 
+- `account_capability` response `account` (reference): the parent attribute holds it
+- `account_external_account` response `account` (reference): the parent attribute holds it
+- `account_person` response `account` (string): the parent attribute holds it
+- `account_person_v2` response `account` (string): the parent attribute holds it
+- `application_fee_refund` response `fee` (reference): the parent attribute holds it
+- `billing_meter_event_summary` response `meter` (string): the parent attribute holds it
+- `customer_balance_transaction` response `customer` (reference): the parent attribute holds it
+- `customer_bank_account` response `customer` (reference): the parent attribute holds it
+- `customer_card` response `customer` (reference): the parent attribute holds it
+- `customer_cash_balance_transaction` response `customer` (reference): the parent attribute holds it
+- `customer_payment_method` PostPaymentMethodsPaymentMethodAttach `customer` (string): the parent attribute holds it
+- `customer_payment_method` response `customer` (reference): the parent attribute holds it
 - `file` PostFiles `file` (string): Sent by the declaration as the upload of the local file `source` names: Terraform cannot send file content from HCL (framework limit; internal/resources/file).
+- `invoice_line` response `invoice` (string): the parent attribute holds it
+- `transfer_reversal` response `transfer` (reference): the parent attribute holds it
 
 ## Awaiting proof
 
@@ -974,12 +973,9 @@ Exposed today and excluded by a rule; removed before `v0.1.0` (D6, Step 6).
 - `account` response `individual.verification.document.details_code` (string)
 - `account` response `individual.verification.document.front` (reference)
 - `account` response `individual.verification.status` (string)
+- `account` response `settings.paypay_payments.site.accessible` (empty_hash)
 - `account` response `tos_acceptance.service_agreement` (string)
 - `account` response `tos_acceptance.user_agent` (string)
-
-### `account_capability`
-
-- `account_capability` response `account` (reference)
 
 ### `account_external_account`
 
@@ -999,7 +995,6 @@ Exposed today and excluded by a rule; removed before `v0.1.0` (D6, Step 6).
 - `account_external_account` PostAccountsAccountExternalAccountsId `exp_month` (string)
 - `account_external_account` PostAccountsAccountExternalAccountsId `exp_year` (string)
 - `account_external_account` PostAccountsAccountExternalAccountsId `name` (string)
-- `account_external_account` response `account` (reference)
 
 ### `account_person`
 
@@ -1099,7 +1094,6 @@ Exposed today and excluded by a rule; removed before `v0.1.0` (D6, Step 6).
 - `account_person` PostAccountsAccountPersonsPerson `verification.additional_document.front` (string)
 - `account_person` PostAccountsAccountPersonsPerson `verification.document.back` (string)
 - `account_person` PostAccountsAccountPersonsPerson `verification.document.front` (string)
-- `account_person` response `account` (string)
 - `account_person` response `additional_tos_acceptances.account.date` (integer)
 - `account_person` response `additional_tos_acceptances.account.ip` (string)
 - `account_person` response `additional_tos_acceptances.account.user_agent` (string)
@@ -1245,7 +1239,6 @@ Exposed today and excluded by a rule; removed before `v0.1.0` (D6, Step 6).
 - `account_person_v2` PostV2CoreAccountsAccountIdPersonsId `script_names.kana.surname` (string)
 - `account_person_v2` PostV2CoreAccountsAccountIdPersonsId `script_names.kanji.given_name` (string)
 - `account_person_v2` PostV2CoreAccountsAccountIdPersonsId `script_names.kanji.surname` (string)
-- `account_person_v2` response `account` (string)
 - `account_person_v2` response `additional_addresses.city` (string)
 - `account_person_v2` response `additional_addresses.country` (string)
 - `account_person_v2` response `additional_addresses.line1` (string)
@@ -2172,19 +2165,11 @@ Exposed today and excluded by a rule; removed before `v0.1.0` (D6, Step 6).
 - `account_v2` response `identity.individual.surname` (string)
 - `account_v2` response `identity.individual.updated` (string)
 
-### `application_fee_refund`
-
-- `application_fee_refund` response `fee` (reference)
-
 ### `balance_settings`
 
 - `balance_settings` response `payments.payouts.automatic_transfer_rules_by_currency.payout_method` (string)
 - `balance_settings` response `payments.payouts.automatic_transfer_rules_by_currency.transfer_up_to_amount` (integer)
 - `balance_settings` response `payments.payouts.automatic_transfer_rules_by_currency.type` (string)
-
-### `billing_meter_event_summary`
-
-- `billing_meter_event_summary` response `meter` (string)
 
 ### `charge`
 
@@ -2253,22 +2238,6 @@ Exposed today and excluded by a rule; removed before `v0.1.0` (D6, Step 6).
 - `customer` PostCustomersCustomer `card.object@object` (string)
 - `customer` PostCustomersCustomer `card.swipe_data@object` (string)
 
-### `customer_balance_transaction`
-
-- `customer_balance_transaction` response `customer` (reference)
-
-### `customer_bank_account`
-
-- `customer_bank_account` response `customer` (reference)
-
-### `customer_card`
-
-- `customer_card` response `customer` (reference)
-
-### `customer_cash_balance_transaction`
-
-- `customer_cash_balance_transaction` response `customer` (reference)
-
 ### `customer_payment_method`
 
 - `customer_payment_method` PostPaymentMethodsPaymentMethod `allow_redisplay` (string)
@@ -2276,9 +2245,7 @@ Exposed today and excluded by a rule; removed before `v0.1.0` (D6, Step 6).
 - `customer_payment_method` PostPaymentMethodsPaymentMethod `card.networks.preferred` (string)
 - `customer_payment_method` PostPaymentMethodsPaymentMethod `us_bank_account.account_holder_type` (string)
 - `customer_payment_method` PostPaymentMethodsPaymentMethod `us_bank_account.account_type` (string)
-- `customer_payment_method` PostPaymentMethodsPaymentMethodAttach `customer` (string)
 - `customer_payment_method` PostPaymentMethodsPaymentMethodAttach `customer_account` (string)
-- `customer_payment_method` response `customer` (reference)
 - `customer_payment_method` response `customer_account` (string)
 
 ### `event_destination_v2`
@@ -2333,10 +2300,9 @@ Exposed today and excluded by a rule; removed before `v0.1.0` (D6, Step 6).
 - `invoice` response `last_finalization_error.source@card` (embedded)
 - `invoice` response `last_finalization_error.source@source` (embedded)
 - `invoice` response `last_finalization_error.type` (string)
-
-### `invoice_line`
-
-- `invoice_line` response `invoice` (string)
+- `invoice` response `payment_settings.payment_method_options.blik` (empty_hash)
+- `invoice` response `payment_settings.payment_method_options.konbini` (empty_hash)
+- `invoice` response `payment_settings.payment_method_options.sepa_debit` (empty_hash)
 
 ### `invoiceitem`
 
@@ -3076,6 +3042,7 @@ Exposed today and excluded by a rule; removed before `v0.1.0` (D6, Step 6).
 - `payment_intent` response `amount_details.tax.total_tax_amount@payment_flows_amount_details` (integer)
 - `payment_intent` response `amount_details.tip.amount@payment_flows_amount_details` (integer)
 - `payment_intent` response `amount_details.tip.amount@payment_flows_amount_details_client` (integer)
+- `payment_intent` response `last_payment_error.payment_intent` (recursion)
 - `payment_intent` response `last_payment_error.setup_intent` (embedded)
 - `payment_intent` response `last_payment_error.source@bank_account` (embedded)
 - `payment_intent` response `last_payment_error.source@card` (embedded)
@@ -3276,6 +3243,7 @@ Exposed today and excluded by a rule; removed before `v0.1.0` (D6, Step 6).
 - `payment_intent` response `payment_method_options.billie.routing.requested_priority@payment_intent_type_specific_payment_method_options_client` (string)
 - `payment_intent` response `payment_method_options.billie.setup_future_usage@payment_intent_type_specific_payment_method_options_client` (string)
 - `payment_intent` response `payment_method_options.billie.verification_method@payment_intent_type_specific_payment_method_options_client` (string)
+- `payment_intent` response `payment_method_options.bizum@payment_method_options_bizum` (empty_hash)
 - `payment_intent` response `payment_method_options.bizum.capture_method@payment_intent_type_specific_payment_method_options_client` (string)
 - `payment_intent` response `payment_method_options.bizum.installments.enabled@payment_intent_type_specific_payment_method_options_client` (boolean)
 - `payment_intent` response `payment_method_options.bizum.installments.plan.count@payment_intent_type_specific_payment_method_options_client` (integer)
@@ -3533,6 +3501,7 @@ Exposed today and excluded by a rule; removed before `v0.1.0` (D6, Step 6).
 - `payment_intent` response `payment_method_options.ideal.setup_future_usage@payment_intent_type_specific_payment_method_options_client` (string)
 - `payment_intent` response `payment_method_options.ideal.setup_future_usage@payment_method_options_ideal` (string)
 - `payment_intent` response `payment_method_options.ideal.verification_method@payment_intent_type_specific_payment_method_options_client` (string)
+- `payment_intent` response `payment_method_options.interac_present@payment_method_options_interac_present` (empty_hash)
 - `payment_intent` response `payment_method_options.interac_present.capture_method@payment_intent_type_specific_payment_method_options_client` (string)
 - `payment_intent` response `payment_method_options.interac_present.installments.enabled@payment_intent_type_specific_payment_method_options_client` (boolean)
 - `payment_intent` response `payment_method_options.interac_present.installments.plan.count@payment_intent_type_specific_payment_method_options_client` (integer)
@@ -3766,6 +3735,7 @@ Exposed today and excluded by a rule; removed before `v0.1.0` (D6, Step 6).
 - `payment_intent` response `payment_method_options.p24.setup_future_usage@payment_intent_type_specific_payment_method_options_client` (string)
 - `payment_intent` response `payment_method_options.p24.setup_future_usage@payment_method_options_p24` (string)
 - `payment_intent` response `payment_method_options.p24.verification_method@payment_intent_type_specific_payment_method_options_client` (string)
+- `payment_intent` response `payment_method_options.pay_by_bank@payment_method_options_pay_by_bank` (empty_hash)
 - `payment_intent` response `payment_method_options.pay_by_bank.capture_method@payment_intent_type_specific_payment_method_options_client` (string)
 - `payment_intent` response `payment_method_options.pay_by_bank.installments.enabled@payment_intent_type_specific_payment_method_options_client` (boolean)
 - `payment_intent` response `payment_method_options.pay_by_bank.installments.plan.count@payment_intent_type_specific_payment_method_options_client` (integer)
@@ -3837,6 +3807,7 @@ Exposed today and excluded by a rule; removed before `v0.1.0` (D6, Step 6).
 - `payment_intent` response `payment_method_options.paypal.setup_future_usage@payment_intent_type_specific_payment_method_options_client` (string)
 - `payment_intent` response `payment_method_options.paypal.setup_future_usage@payment_method_options_paypal` (string)
 - `payment_intent` response `payment_method_options.paypal.verification_method@payment_intent_type_specific_payment_method_options_client` (string)
+- `payment_intent` response `payment_method_options.paypay@payment_method_options_paypay` (empty_hash)
 - `payment_intent` response `payment_method_options.paypay.capture_method@payment_intent_type_specific_payment_method_options_client` (string)
 - `payment_intent` response `payment_method_options.paypay.installments.enabled@payment_intent_type_specific_payment_method_options_client` (boolean)
 - `payment_intent` response `payment_method_options.paypay.installments.plan.count@payment_intent_type_specific_payment_method_options_client` (integer)
@@ -4567,6 +4538,7 @@ Exposed today and excluded by a rule; removed before `v0.1.0` (D6, Step 6).
 - `setup_intent` PostSetupIntentsIntent `payment_method_options.us_bank_account.networks.requested` (list of string)
 - `setup_intent` PostSetupIntentsIntent `payment_method_options.us_bank_account.verification_method` (string)
 - `setup_intent` response `last_setup_error.payment_intent` (embedded)
+- `setup_intent` response `last_setup_error.setup_intent` (recursion)
 - `setup_intent` response `last_setup_error.source@bank_account` (embedded)
 - `setup_intent` response `last_setup_error.source@card` (embedded)
 - `setup_intent` response `last_setup_error.source@source` (embedded)
@@ -4585,6 +4557,7 @@ Exposed today and excluded by a rule; removed before `v0.1.0` (D6, Step 6).
 - `setup_intent` response `payment_method_options.acss_debit.mandate_options.transaction_type@setup_intent_payment_method_options_acss_debit` (string)
 - `setup_intent` response `payment_method_options.acss_debit.verification_method@setup_intent_payment_method_options_acss_debit` (string)
 - `setup_intent` response `payment_method_options.acss_debit.verification_method@setup_intent_type_specific_payment_method_options_client` (string)
+- `setup_intent` response `payment_method_options.amazon_pay@setup_intent_payment_method_options_amazon_pay` (empty_hash)
 - `setup_intent` response `payment_method_options.amazon_pay.mandate_options.amount@setup_intent_type_specific_payment_method_options_client` (integer)
 - `setup_intent` response `payment_method_options.amazon_pay.mandate_options.amount_type@setup_intent_type_specific_payment_method_options_client` (string)
 - `setup_intent` response `payment_method_options.amazon_pay.mandate_options.end_date@setup_intent_type_specific_payment_method_options_client` (string)
@@ -4602,6 +4575,7 @@ Exposed today and excluded by a rule; removed before `v0.1.0` (D6, Step 6).
 - `setup_intent` response `payment_method_options.bacs_debit.mandate_options.reference_prefix@setup_intent_payment_method_options_bacs_debit` (string)
 - `setup_intent` response `payment_method_options.bacs_debit.mandate_options.start_date@setup_intent_type_specific_payment_method_options_client` (string)
 - `setup_intent` response `payment_method_options.bacs_debit.verification_method@setup_intent_type_specific_payment_method_options_client` (string)
+- `setup_intent` response `payment_method_options.bizum@setup_intent_payment_method_options_bizum` (empty_hash)
 - `setup_intent` response `payment_method_options.bizum.mandate_options.amount@setup_intent_type_specific_payment_method_options_client` (integer)
 - `setup_intent` response `payment_method_options.bizum.mandate_options.amount_type@setup_intent_type_specific_payment_method_options_client` (string)
 - `setup_intent` response `payment_method_options.bizum.mandate_options.end_date@setup_intent_type_specific_payment_method_options_client` (string)
@@ -4640,6 +4614,7 @@ Exposed today and excluded by a rule; removed before `v0.1.0` (D6, Step 6).
 - `setup_intent` response `payment_method_options.card.network@setup_intent_payment_method_options_card` (string)
 - `setup_intent` response `payment_method_options.card.request_three_d_secure@setup_intent_payment_method_options_card` (string)
 - `setup_intent` response `payment_method_options.card.verification_method@setup_intent_type_specific_payment_method_options_client` (string)
+- `setup_intent` response `payment_method_options.card_present@setup_intent_payment_method_options_card_present` (empty_hash)
 - `setup_intent` response `payment_method_options.card_present.mandate_options.amount@setup_intent_type_specific_payment_method_options_client` (integer)
 - `setup_intent` response `payment_method_options.card_present.mandate_options.amount_type@setup_intent_type_specific_payment_method_options_client` (string)
 - `setup_intent` response `payment_method_options.card_present.mandate_options.end_date@setup_intent_type_specific_payment_method_options_client` (string)
@@ -4658,6 +4633,7 @@ Exposed today and excluded by a rule; removed before `v0.1.0` (D6, Step 6).
 - `setup_intent` response `payment_method_options.klarna.mandate_options.start_date@setup_intent_type_specific_payment_method_options_client` (string)
 - `setup_intent` response `payment_method_options.klarna.preferred_locale@setup_intent_payment_method_options_klarna` (string)
 - `setup_intent` response `payment_method_options.klarna.verification_method@setup_intent_type_specific_payment_method_options_client` (string)
+- `setup_intent` response `payment_method_options.link@setup_intent_payment_method_options_link` (empty_hash)
 - `setup_intent` response `payment_method_options.link.mandate_options.amount@setup_intent_type_specific_payment_method_options_client` (integer)
 - `setup_intent` response `payment_method_options.link.mandate_options.amount_type@setup_intent_type_specific_payment_method_options_client` (string)
 - `setup_intent` response `payment_method_options.link.mandate_options.end_date@setup_intent_type_specific_payment_method_options_client` (string)
@@ -4762,6 +4738,8 @@ Exposed today and excluded by a rule; removed before `v0.1.0` (D6, Step 6).
 - `subscription` PostSubscriptionsSubscriptionExposedId `payment_settings.payment_method_options.konbini` (empty_hash)
 - `subscription` PostSubscriptionsSubscriptionExposedId `payment_settings.payment_method_options.sepa_debit` (empty_hash)
 - `subscription` response `discounts` (list of reference)
+- `subscription` response `payment_settings.payment_method_options.konbini` (empty_hash)
+- `subscription` response `payment_settings.payment_method_options.sepa_debit` (empty_hash)
 
 ### `subscription_item`
 
@@ -4841,10 +4819,6 @@ Exposed today and excluded by a rule; removed before `v0.1.0` (D6, Step 6).
 ### `topup`
 
 - `topup` PostTopups `source` (string)
-
-### `transfer_reversal`
-
-- `transfer_reversal` response `transfer` (reference)
 
 ### `treasury_financial_account`
 

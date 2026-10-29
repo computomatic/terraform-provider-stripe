@@ -252,8 +252,13 @@ func TestReadPathIntMapUnionAndOmit(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if _, err := Build(spec, Resource{Package: "gauge", ReadPath: "/v1/gauge"}); err == nil {
-		t.Fatal("an array of alternative objects is not modelled and must fail unless omitted")
+	// An array of alternative objects is one list of objects with every variant's members.
+	merged, err := Build(spec, Resource{Package: "gauge", ReadPath: "/v1/gauge"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if f := lookup(t, merged, "sources"); f.Shape != fields.ObjectList || len(f.Fields) != 2 || f.Fields[0].Name != "a" || f.Fields[1].Name != "b" {
+		t.Errorf("sources: %+v", f)
 	}
 	table, err := Build(spec, Resource{Package: "gauge", ReadPath: "/v1/gauge", Omit: []string{"sources"}})
 	if err != nil {
@@ -445,9 +450,15 @@ func TestListShapes(t *testing.T) {
 		t.Errorf("anchor: %+v", f)
 	}
 
-	// Objects sent and IDs returned have no one shape, so the field must be omitted.
-	if _, err := Build(spec, Resource{Package: "order", CreatePath: "/v1/orders", CreateOnly: []string{"anchor"}}); err == nil {
-		t.Error("a list of objects against a list of IDs must fail unless omitted")
+	// Objects sent and IDs returned: the resource takes the request's shape and keeps the
+	// configured value, and the data source reads the IDs.
+	split, err := Build(spec, Resource{Package: "order", CreatePath: "/v1/orders", CreateOnly: []string{"anchor"}})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if f := lookup(t, split, "discounts"); f.Shape != fields.ObjectList || !f.Create || f.Response || f.DataSource == nil ||
+		f.DataSource.Shape != fields.ScalarList || f.DataSource.Elem != fields.String || !f.DataSource.Response || f.DataSource.Create {
+		t.Errorf("discounts: %+v", f)
 	}
 	if _, err := Build(spec, Resource{Package: "order", CreatePath: "/v1/orders", Omit: []string{"discounts"}, CreateOnly: []string{"nothing"}}); err == nil {
 		t.Error("a create-only entry that names no field must fail")
@@ -462,8 +473,12 @@ func TestListEnvelopeNeedsTheListObject(t *testing.T) {
 		t.Fatal(err)
 	}
 	res := Resource{Package: "order", CreatePath: "/v1/orders", UpdatePath: "/v1/orders/{id}", Omit: []string{"discounts"}, CreateOnly: []string{"anchor"}}
-	if _, err := Build(spec, res); err == nil {
-		t.Error("an object with a `data` array that is not a list must not stand for the request's list of objects")
+	table, err := Build(spec, res)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if f := lookup(t, table, "items"); f.Shape != fields.ObjectList || f.Response || f.DataSource == nil || f.DataSource.Shape != fields.Object {
+		t.Errorf("an object with a `data` array that is not a list must not stand for the request's list of objects: %+v", f)
 	}
 }
 

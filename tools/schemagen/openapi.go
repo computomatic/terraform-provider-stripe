@@ -61,6 +61,9 @@ type Schema struct {
 	// ExpansionResources is present on a field Stripe expands on request
 	// (`x-expansionResources`); the leaf walk reads only whether it is there.
 	ExpansionResources json.RawMessage `json:"x-expansionResources"`
+	// mergeOf holds the schemas a union's variants give one member, which the generator
+	// classifies as one (D3). The spec never sets it.
+	mergeOf []*Schema
 }
 
 // Additional is `additionalProperties`, which is either a boolean or a schema.

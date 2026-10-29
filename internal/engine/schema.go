@@ -21,6 +21,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/setplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 
 	"github.com/computomatic/terraform-provider-stripe/internal/fields"
@@ -247,9 +248,16 @@ func (m *model) resourceAttribute(n *node) rschema.Attribute {
 				}, replaceIfSetDescription, replaceIfSetDescription)
 			})}
 	case fields.Object:
-		return rschema.SingleNestedAttribute{Required: n.Required, Optional: n.Optional, Computed: n.Computed, Sensitive: n.Sensitive, MarkdownDescription: desc,
+		a := rschema.SingleNestedAttribute{Required: n.Required, Optional: n.Optional, Computed: n.Computed, Sensitive: n.Sensitive, MarkdownDescription: desc,
 			Attributes:    m.resourceAttributes(n.Kids),
 			PlanModifiers: planMods(n, m.refuseObject, objectplanmodifier.UseStateForUnknown, objectplanmodifier.RequiresReplace)}
+		if n.TokenForm != "" {
+			a.Validators = append(a.Validators, oneForm{token: n.TokenForm, hash: n.AttrName()})
+		}
+		if !m.v2 && n.noMembers() {
+			a.Validators = append(a.Validators, noEmptyHashOnV1{})
+		}
+		return a
 	case fields.ObjectList:
 		return rschema.ListNestedAttribute{Required: n.Required, Optional: n.Optional, Computed: n.Computed, Sensitive: n.Sensitive, MarkdownDescription: desc,
 			NestedObject:  rschema.NestedAttributeObject{Attributes: m.resourceAttributes(n.Kids)},
@@ -271,7 +279,11 @@ func (m *model) resourceAttribute(n *node) rschema.Attribute {
 		return rschema.SetAttribute{ElementType: scalarType(n.Elem), Required: n.Required, Optional: n.Optional, Computed: n.Computed, Sensitive: n.Sensitive, MarkdownDescription: desc,
 			PlanModifiers: planMods(n, m.refuseSet, setplanmodifier.UseStateForUnknown, setplanmodifier.RequiresReplace)}
 	default:
-		mods := planMods(n, m.refuseString, stringplanmodifier.UseStateForUnknown, stringplanmodifier.RequiresReplace, func() planmodifier.String {
+		useState := stringplanmodifier.UseStateForUnknown
+		if n.DataForm != "" {
+			useState = func() planmodifier.String { return keepToken{hash: n.DataForm} }
+		}
+		mods := planMods(n, m.refuseString, useState, stringplanmodifier.RequiresReplace, func() planmodifier.String {
 			return stringplanmodifier.RequiresReplaceIf(func(_ context.Context, req planmodifier.StringRequest, resp *stringplanmodifier.RequiresReplaceIfFuncResponse) {
 				resp.RequiresReplace = changedByConfig(req.ConfigValue, req.StateValue)
 			}, replaceIfSetDescription, replaceIfSetDescription)
@@ -281,8 +293,12 @@ func (m *model) resourceAttribute(n *node) rschema.Attribute {
 				resp.RequiresReplace = changedFromFixed(req.ConfigValue, req.StateValue, from)
 			}, replaceFixedDescription, replaceFixedDescription)))
 		}
-		return rschema.StringAttribute{Required: n.Required, Optional: n.Optional, Computed: n.Computed, Sensitive: n.Sensitive, MarkdownDescription: desc,
+		a := rschema.StringAttribute{Required: n.Required, Optional: n.Optional, Computed: n.Computed, Sensitive: n.Sensitive, MarkdownDescription: desc,
 			PlanModifiers: mods}
+		if n.OneRequired {
+			a.Validators = []validator.String{requireOneForm{token: n.AttrName(), hash: n.DataForm}}
+		}
+		return a
 	}
 }
 

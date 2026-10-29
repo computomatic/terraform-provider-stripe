@@ -1,5 +1,9 @@
 package main
 
+// parentHolds is the register's reason for a table's own copy of the parent ID that the
+// engine adds as the declaration's Parent attribute.
+const parentHolds = "the parent attribute holds it"
+
 // Resources lists the objects the generator writes tables for. A resource joins the list
 // when its declaration is written.
 var Resources = []Resource{
@@ -35,7 +39,7 @@ var Resources = []Resource{
 	{Package: "file_link", CreatePath: "/v1/file_links", UpdatePath: "/v1/file_links/{link}"},
 	{Package: "payment_method_configuration", CreatePath: "/v1/payment_method_configurations", UpdatePath: "/v1/payment_method_configurations/{configuration}"},
 	{Package: "payment_method_domain", CreatePath: "/v1/payment_method_domains", UpdatePath: "/v1/payment_method_domains/{payment_method_domain}"},
-	{Package: "radar_value_list", CreatePath: "/v1/radar/value_lists", UpdatePath: "/v1/radar/value_lists/{value_list}"},
+	{Package: "radar_value_list", CreatePath: "/v1/radar/value_lists", UpdatePath: "/v1/radar/value_lists/{value_list}", PagedLists: map[string]string{"list_items": "stripe_radar_value_list_item"}},
 	{Package: "radar_value_list_item", CreatePath: "/v1/radar/value_list_items"},
 	{Package: "reporting_report_type", ReadPath: "/v1/reporting/report_types/{report_type}"},
 	{Package: "tax_registration", CreatePath: "/v1/tax/registrations", UpdatePath: "/v1/tax/registrations/{id}"},
@@ -45,13 +49,13 @@ var Resources = []Resource{
 	// The Omit entries of the billing objects: `discounts` is sent as objects and returned as
 	// IDs, which no attribute holds both ways, so discounts wait for a decision on them.
 	{Package: "billing_credit_grant", CreatePath: "/v1/billing/credit_grants", UpdatePath: "/v1/billing/credit_grants/{id}"},
-	{Package: "credit_note", CreatePath: "/v1/credit_notes", UpdatePath: "/v1/credit_notes/{id}"},
+	{Package: "credit_note", CreatePath: "/v1/credit_notes", UpdatePath: "/v1/credit_notes/{id}", PagedLists: map[string]string{"lines": "stripe_credit_note_line"}},
 	// An invoice's payment error is a nested payment intent that repeats without end, and
 	// three payment method options are empty objects in the response.
-	{Package: "invoice", CreatePath: "/v1/invoices", UpdatePath: "/v1/invoices/{invoice}", Omit: []string{"discounts", "last_finalization_error", "payment_settings.payment_method_options.blik", "payment_settings.payment_method_options.konbini", "payment_settings.payment_method_options.sepa_debit"}},
+	{Package: "invoice", CreatePath: "/v1/invoices", UpdatePath: "/v1/invoices/{invoice}", PagedLists: map[string]string{"lines": "stripe_invoice_line"}, Omit: []string{"discounts", "last_finalization_error", "payment_settings.payment_method_options.blik", "payment_settings.payment_method_options.konbini", "payment_settings.payment_method_options.sepa_debit"}},
 	{Package: "invoiceitem", CreatePath: "/v1/invoiceitems", UpdatePath: "/v1/invoiceitems/{invoiceitem}", Omit: []string{"discounts"}},
 	{Package: "quote", CreatePath: "/v1/quotes", UpdatePath: "/v1/quotes/{quote}", Omit: []string{"discounts"}},
-	{Package: "subscription", CreatePath: "/v1/subscriptions", UpdatePath: "/v1/subscriptions/{subscription_exposed_id}", Omit: []string{"discounts", "payment_settings.payment_method_options.konbini", "payment_settings.payment_method_options.sepa_debit", "items.discounts"}, CreateOnly: []string{"billing_cycle_anchor"}},
+	{Package: "subscription", CreatePath: "/v1/subscriptions", UpdatePath: "/v1/subscriptions/{subscription_exposed_id}", PagedLists: map[string]string{"items": "stripe_subscription_item"}, Omit: []string{"discounts", "payment_settings.payment_method_options.konbini", "payment_settings.payment_method_options.sepa_debit", "items.discounts"}, CreateOnly: []string{"billing_cycle_anchor"}},
 	{Package: "subscription_item", CreatePath: "/v1/subscription_items", UpdatePath: "/v1/subscription_items/{item}", Omit: []string{"discounts"}},
 	{Package: "subscription_schedule", CreatePath: "/v1/subscription_schedules", UpdatePath: "/v1/subscription_schedules/{schedule}", Omit: []string{"from_subscription", "pause_schedules"}},
 	// Wave 6. The setup intent leaves out what only confirming it uses, and its payment
@@ -62,7 +66,7 @@ var Resources = []Resource{
 	// not prove, on an object that cannot be replaced.
 	{Package: "payment_link", CreatePath: "/v1/payment_links", UpdatePath: "/v1/payment_links/{payment_link}", Omit: []string{"line_items.price_data"}, Require: []string{"line_items.price"}},
 	{Package: "setup_intent", CreatePath: "/v1/setup_intents", UpdatePath: "/v1/setup_intents/{intent}", Omit: []string{"last_setup_error.payment_intent", "last_setup_error.setup_intent", "last_setup_error.source", "confirm", "mandate_data", "payment_method_data", "return_url", "use_stripe_sdk", "single_use", "payment_method_options", "confirmation_token"}},
-	{Package: "customer_payment_method", CreatePath: "/v1/payment_methods/{payment_method}/attach", UpdatePath: "/v1/payment_methods/{payment_method}", Omit: []string{"customer", "customer_account"}, ReadOnly: []string{"allow_redisplay", "card.exp_month", "card.networks", "us_bank_account"}},
+	{Package: "customer_payment_method", Exclude: map[string]string{"customer": parentHolds}, CreatePath: "/v1/payment_methods/{payment_method}/attach", UpdatePath: "/v1/payment_methods/{payment_method}", Omit: []string{"customer", "customer_account"}, ReadOnly: []string{"allow_redisplay", "card.exp_month", "card.networks", "us_bank_account"}},
 	// Confirming is the resource's `status`, so the confirm-time parameters are left out, as
 	// they are for setup intents, and `confirm` is excluded by rule X5. `hooks` is in the
 	// response, so it stays readable but is not an argument, which the suite has not proven.
@@ -124,11 +128,11 @@ var Resources = []Resource{
 	// the hash the spec documents under `bank_account`. Its `account` is the parent ID. The
 	// Omit entries are the card's update parameters and the documents, which need a file. The
 	// account type is refused on a US account.
-	{Package: "account_external_account", CreatePath: "/v1/accounts/{account}/external_accounts", UpdatePath: "/v1/accounts/{account}/external_accounts/{id}",
+	{Package: "account_external_account", Exclude: map[string]string{"account": parentHolds}, CreatePath: "/v1/accounts/{account}/external_accounts", UpdatePath: "/v1/accounts/{account}/external_accounts/{id}",
 		Response: "bank_account", CreateHash: "bank_account",
 		Omit:     []string{"external_account", "account", "documents", "address_city", "address_country", "address_line1", "address_line2", "address_state", "address_zip", "exp_month", "exp_year", "name"},
 		ReadOnly: []string{"account_type"}, Require: []string{"currency", "routing_number"}},
-	{Package: "account_capability", ReadPath: "/v1/accounts/{account}/capabilities/{capability}", Omit: []string{"account"}},
+	{Package: "account_capability", Exclude: map[string]string{"account": parentHolds}, ReadPath: "/v1/accounts/{account}/capabilities/{capability}", Omit: []string{"account"}},
 	// Wave 4 batch b Connect. Each table keeps what the conformance suite and the fake prove,
 	// among many fields that need files, other countries or onboarding flows. A v1 person's
 	// `account` and a v2 person's `account` are the parent the engine adds. The `authorizer`
@@ -138,7 +142,7 @@ var Resources = []Resource{
 	// configuration is applied, are read-only. Its country and entity type are create-only,
 	// because the suite updates only the registered name of an identity. App installs are
 	// read-only: no suite test can install an app.
-	{Package: "account_person", CreatePath: "/v1/accounts/{account}/persons", UpdatePath: "/v1/accounts/{account}/persons/{person}",
+	{Package: "account_person", Exclude: map[string]string{"account": parentHolds}, CreatePath: "/v1/accounts/{account}/persons", UpdatePath: "/v1/accounts/{account}/persons/{person}",
 		Keep: []string{"address", "created", "dob", "email", "first_name", "future_requirements", "id", "id_number", "id_number_provided", "last_name", "metadata", "phone",
 			"relationship", "requirements", "ssn_last_4", "ssn_last_4_provided", "verification"},
 		ReadOnly: []string{"relationship.authorizer", "relationship.legal_guardian", "verification"}},
@@ -152,7 +156,7 @@ var Resources = []Resource{
 		ReadOnly: []string{"configuration.customer.applied", "configuration.merchant.applied", "configuration.recipient.applied",
 			"configuration.merchant.capabilities.stripe_balance", "configuration.recipient.capabilities.stripe_balance.payouts"},
 		CreateOnly: []string{"identity.country", "identity.entity_type"}},
-	{Package: "account_person_v2", CreatePath: "/v2/core/accounts/{account_id}/persons", UpdatePath: "/v2/core/accounts/{account_id}/persons/{id}",
+	{Package: "account_person_v2", Exclude: map[string]string{"account": parentHolds}, CreatePath: "/v2/core/accounts/{account_id}/persons", UpdatePath: "/v2/core/accounts/{account_id}/persons/{id}",
 		Keep: []string{"address.city", "address.country", "address.line1", "address.line2", "address.postal_code", "address.state", "created", "date_of_birth", "email",
 			"given_name", "id", "id_numbers", "livemode", "metadata", "phone", "relationship", "surname", "updated"},
 		ReadOnly: []string{"relationship.authorizer", "relationship.legal_guardian"}},
@@ -164,8 +168,8 @@ var Resources = []Resource{
 	// parent and the response's copy is left out. Cash balance transactions are read-only.
 	{Package: "billing_alert", CreatePath: "/v1/billing/alerts"},
 	{Package: "tax_id", CreatePath: "/v1/tax_ids", ReadOnly: []string{"owner.account", "owner.customer_account"}},
-	{Package: "customer_balance_transaction", CreatePath: "/v1/customers/{customer}/balance_transactions", UpdatePath: "/v1/customers/{customer}/balance_transactions/{transaction}", Omit: []string{"customer"}},
-	{Package: "customer_cash_balance_transaction", ReadPath: "/v1/customers/{customer}/cash_balance_transactions/{transaction}", Omit: []string{"customer"}},
+	{Package: "customer_balance_transaction", Exclude: map[string]string{"customer": parentHolds}, CreatePath: "/v1/customers/{customer}/balance_transactions", UpdatePath: "/v1/customers/{customer}/balance_transactions/{transaction}", Omit: []string{"customer"}},
+	{Package: "customer_cash_balance_transaction", Exclude: map[string]string{"customer": parentHolds}, ReadPath: "/v1/customers/{customer}/cash_balance_transactions/{transaction}", Omit: []string{"customer"}},
 	// Wave 8 batch b. Test clocks advance by an action endpoint, so the table sees `frozen_time`
 	// as create-only and the declaration moves it. Early fraud warnings and reviews are
 	// read-only: the suite cannot create them on its account. An invoice payment is retrieved by
@@ -181,7 +185,7 @@ var Resources = []Resource{
 	// Wave 8 batch c. Stripe has no retrieve for a line, only the list under its invoice,
 	// credit note or quote, so the table is the list element's. The invoice line's `invoice` is
 	// the parent the engine adds.
-	{Package: "invoice_line", ListPath: "/v1/invoices/{invoice}/lines", Omit: []string{"invoice"}},
+	{Package: "invoice_line", Exclude: map[string]string{"invoice": parentHolds}, ListPath: "/v1/invoices/{invoice}/lines", Omit: []string{"invoice"}},
 	{Package: "credit_note_line", ListPath: "/v1/credit_notes/{credit_note}/lines"},
 	{Package: "quote_line_item", ListPath: "/v1/quotes/{quote}/line_items"},
 	{Package: "quote_computed_upfront_line_item", ListPath: "/v1/quotes/{quote}/computed_upfront_line_items"},
@@ -224,14 +228,14 @@ var Resources = []Resource{
 	{Package: "issuing_transaction", ReadPath: "/v1/issuing/transactions/{transaction}"},
 	{Package: "issuing_token", ReadPath: "/v1/issuing/tokens/{token}"},
 	{Package: "financial_connections_account", ReadPath: "/v1/financial_connections/accounts/{account}"},
-	{Package: "financial_connections_session", ReadPath: "/v1/financial_connections/sessions/{session}"},
+	{Package: "financial_connections_session", ReadPath: "/v1/financial_connections/sessions/{session}", PagedLists: map[string]string{"accounts": "stripe_financial_connections_account"}},
 	// Wave 8 batches e, f, h and i: read-only objects. A meter event summary, a payment intent's
 	// line item and a tax transaction's line item have no retrieve, only a list under their
 	// parent; the summary's `meter` is the parent the engine adds. A secret is read through
 	// `find`. A tax transaction's `line_items` is returned only when expanded, which the fake
 	// does not serve; the line item data source reads them.
 	{Package: "billing_credit_balance_transaction", ReadPath: "/v1/billing/credit_balance_transactions/{id}"},
-	{Package: "billing_meter_event_summary", ListPath: "/v1/billing/meters/{id}/event_summaries", Omit: []string{"meter"}},
+	{Package: "billing_meter_event_summary", Exclude: map[string]string{"meter": parentHolds}, ListPath: "/v1/billing/meters/{id}/event_summaries", Omit: []string{"meter"}},
 	{Package: "entitlements_active_entitlement", ReadPath: "/v1/entitlements/active_entitlements/{id}"},
 	{Package: "invoice_rendering_template", ReadPath: "/v1/invoice_rendering_templates/{template}"},
 	{Package: "payment_intent_amount_details_line_item", ListPath: "/v1/payment_intents/{intent}/amount_details_line_items"},
@@ -249,12 +253,12 @@ var Resources = []Resource{
 	// card or bank account under its customer, so the engine adds each parent and the
 	// response's copy is left out.
 	// Stripe requires a transfer's `amount`, which the spec leaves optional (suite: "missing amount").
-	{Package: "transfer", CreatePath: "/v1/transfers", UpdatePath: "/v1/transfers/{transfer}", Require: []string{"amount"}},
-	{Package: "transfer_reversal", CreatePath: "/v1/transfers/{id}/reversals", UpdatePath: "/v1/transfers/{transfer}/reversals/{id}", Omit: []string{"transfer"}},
-	{Package: "application_fee", ReadPath: "/v1/application_fees/{id}"},
-	{Package: "application_fee_refund", CreatePath: "/v1/application_fees/{id}/refunds", UpdatePath: "/v1/application_fees/{fee}/refunds/{id}", Omit: []string{"fee"}},
-	{Package: "customer_card", ReadPath: "/v1/customers/{customer}/cards/{id}", Omit: []string{"customer"}},
-	{Package: "customer_bank_account", ReadPath: "/v1/customers/{customer}/bank_accounts/{id}", Omit: []string{"customer"}},
+	{Package: "transfer", CreatePath: "/v1/transfers", UpdatePath: "/v1/transfers/{transfer}", PagedLists: map[string]string{"reversals": "stripe_transfer_reversal"}, Require: []string{"amount"}},
+	{Package: "transfer_reversal", Exclude: map[string]string{"transfer": parentHolds}, CreatePath: "/v1/transfers/{id}/reversals", UpdatePath: "/v1/transfers/{transfer}/reversals/{id}", Omit: []string{"transfer"}},
+	{Package: "application_fee", ReadPath: "/v1/application_fees/{id}", PagedLists: map[string]string{"refunds": "stripe_application_fee_refund"}},
+	{Package: "application_fee_refund", Exclude: map[string]string{"fee": parentHolds}, CreatePath: "/v1/application_fees/{id}/refunds", UpdatePath: "/v1/application_fees/{fee}/refunds/{id}", Omit: []string{"fee"}},
+	{Package: "customer_card", Exclude: map[string]string{"customer": parentHolds}, ReadPath: "/v1/customers/{customer}/cards/{id}", Omit: []string{"customer"}},
+	{Package: "customer_bank_account", Exclude: map[string]string{"customer": parentHolds}, ReadPath: "/v1/customers/{customer}/bank_accounts/{id}", Omit: []string{"customer"}},
 	// The line items of a checkout session and of a payment link have no retrieve, only the
 	// list under their parent, so the table is the list element's.
 	{Package: "checkout_session_line_item", ListPath: "/v1/checkout/sessions/{session}/line_items"},

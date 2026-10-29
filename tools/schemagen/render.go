@@ -65,8 +65,19 @@ func writeFields(b *strings.Builder, table []fields.Field) {
 }
 
 func writeField(b *strings.Builder, f fields.Field) {
+	writeLiteral(b, f)
+	b.WriteString(",\n")
+}
+
+// writeLiteral writes one field's composite literal, without a type for an element of a
+// table.
+func writeLiteral(b *strings.Builder, f fields.Field) {
 	b.WriteString("{")
-	fmt.Fprintf(b, "Name: %s, Shape: fields.%s", strconv.Quote(f.Name), shapeNames[f.Shape])
+	fmt.Fprintf(b, "Name: %s", strconv.Quote(f.Name))
+	if f.Attr != "" {
+		fmt.Fprintf(b, ", Attr: %s", strconv.Quote(f.Attr))
+	}
+	fmt.Fprintf(b, ", Shape: fields.%s", shapeNames[f.Shape])
 	if f.Shape == fields.ScalarList || f.Shape == fields.ScalarSet {
 		fmt.Fprintf(b, ", Elem: fields.%s", shapeNames[f.Elem])
 	}
@@ -79,6 +90,7 @@ func writeField(b *strings.Builder, f fields.Field) {
 		{"Update", f.Update},
 		{"Response", f.Response},
 		{"ServerDefaulted", f.ServerDefaulted},
+		{"Sensitive", f.Sensitive},
 	} {
 		if flag.on {
 			fmt.Fprintf(b, ", %s: true", flag.name)
@@ -101,5 +113,9 @@ func writeField(b *strings.Builder, f fields.Field) {
 		b.WriteString(", Fields: ")
 		writeFields(b, f.Fields)
 	}
-	b.WriteString("},\n")
+	if f.DataSource != nil {
+		b.WriteString(", DataSource: &fields.Field")
+		writeLiteral(b, *f.DataSource)
+	}
+	b.WriteString("}")
 }

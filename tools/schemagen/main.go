@@ -101,6 +101,9 @@ func Generate(root string, resources []Resource) ([]File, error) {
 		covered = append(covered, tc)
 		records = append(records, tc.records...)
 	}
+	if err := checkPagedReaders(resources); err != nil {
+		return nil, err
+	}
 	if ev != nil {
 		if err := checkVerifiedKeys(ev, covered); err != nil {
 			return nil, err

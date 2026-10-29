@@ -34,9 +34,9 @@ const (
 
 var ruleText = map[string]string{
 	RuleControl:    "request controls: top-level `expand` and `include`",
-	RuleTypeMarker: "type markers: a response hash with no keys",
+	RuleTypeMarker: "type markers: a response hash with no keys that no request writes",
 	RulePagedList:  "paged lists returned only when expanded: a list envelope the object does not require and no request writes",
-	RuleRecursion:  "the recursion cut: a schema met again on its own path",
+	RuleRecursion:  "the recursion cut: a schema met again on its own path, where it has no `id` to hold",
 	RuleConfirm:    "`confirm` where the declaration's `status` transition confirms",
 }
 
@@ -55,6 +55,9 @@ type Record struct {
 	Reason string `json:"reason,omitempty"`
 	// Class is the leaf's class in the pinned spec/attributes.json.
 	Class string `json:"class,omitempty"`
+	// PagedBy is the type that reads every element of a list Stripe returns a page at a time
+	// (Resource.PagedLists).
+	PagedBy string `json:"paged_by,omitempty"`
 	// Tests are the suite's leaf tests that prove it, from the pinned spec/evidence.json.
 	Tests   []string       `json:"tests,omitempty"`
 	Default *DefaultRecord `json:"default,omitempty"`
@@ -118,7 +121,7 @@ func coverTable(spec *Spec, res Resource, ev *Pinned) (*tableCoverage, error) {
 	g := &gate{}
 	for i, l := range leaves {
 		r := Record{Table: res.Package, Key: l.Key, Shape: l.Shape(), Target: l.Target, Required: l.Required && l.Side == SideRequest}
-		r.Rule = rule(res, l, written)
+		r.Rule = rule(spec, res, l, written)
 		for p := l.Path; p != "" && r.Rule == ""; p = parentPath(p) {
 			if _, ok := register[p]; ok {
 				register[p] = true
@@ -132,14 +135,13 @@ func coverTable(spec *Spec, res Resource, ev *Pinned) (*tableCoverage, error) {
 			}
 		}
 		if r.Class == ClassVerified && r.Rule == "" {
-			at := tablePath(res, create, l.Key)
 			switch l.Operation {
 			case "":
-				g.response = append(g.response, at)
+				g.response = append(g.response, l.At)
 			case create:
-				g.create = append(g.create, at)
+				g.create = append(g.create, l.At)
 			default:
-				g.update = append(g.update, at)
+				g.update = append(g.update, l.At)
 			}
 		}
 		records[i] = r
@@ -164,11 +166,14 @@ func coverTable(spec *Spec, res Resource, ev *Pinned) (*tableCoverage, error) {
 	if err := coversTable(res, create, update, leaves, after); err != nil {
 		return nil, err
 	}
+	if err := pagedLists(res, leaves, records); err != nil {
+		return nil, err
+	}
 
 	for i, l := range leaves {
 		r := &records[i]
 		switch {
-		case exposed(res, create, l, after):
+		case exposed(create, l, after):
 			r.State = StateExposed
 			if r.Rule == RuleRegister {
 				return nil, fmt.Errorf("%s: register entry for %s removes a leaf exposed today", res.Package, l.Key)
@@ -184,23 +189,24 @@ func coverTable(spec *Spec, res Resource, ev *Pinned) (*tableCoverage, error) {
 			r.Default = ev.defaultStatement(l.Key, create, leaves)
 		}
 	}
-	if err := newRequired(res, create, leaves, records, before); err != nil {
-		return nil, err
+	if err := newRequired(create, leaves, records, before); err != nil {
+		return nil, fmt.Errorf("%s: %w", res.Package, err)
 	}
 	tc.records = records
 	return tc, nil
 }
 
-// rule returns the exclusion rule that leaves a leaf out, or "".
-func rule(res Resource, l Leaf, written map[string]bool) string {
+// rule returns the exclusion rule that leaves a leaf out, or "". The recursion cut leaves out
+// only a repeat with no `id`: one with an ID is held as it (D3).
+func rule(spec *Spec, res Resource, l Leaf, written map[string]bool) string {
 	switch {
 	case l.Side == SideRequest && (l.Path == "expand" || l.Path == "include"):
 		return RuleControl
-	case l.Side == SideResponse && l.Kind == KindEmptyHash:
+	case l.Side == SideResponse && l.Kind == KindEmptyHash && !written[l.Path]:
 		return RuleTypeMarker
 	case l.Side == SideResponse && l.Kind == KindPagedList && !l.Required && !written[l.Path]:
 		return RulePagedList
-	case l.Kind == KindRecursion:
+	case l.Kind == KindRecursion && prop(spec.Components.Schemas[l.Target], "id") == nil:
 		return RuleRecursion
 	case l.Side == SideRequest && res.StatusConfirms && l.Path == "confirm":
 		return RuleConfirm
@@ -208,35 +214,34 @@ func rule(res Resource, l Leaf, written map[string]bool) string {
 	return ""
 }
 
-// tablePath is where the table holds a leaf: its path, with a create-only hash
-// (Resource.CreateHash) spread into the top level.
-func tablePath(res Resource, create string, k Key) string {
-	if res.CreateHash != "" && k.Operation == create {
-		if rest, ok := strings.CutPrefix(k.Path, res.CreateHash+"."); ok {
-			return rest
-		}
-	}
-	return k.Path
+// tableIndex is a table's fields by dotted attribute path: as the resource holds them, and as
+// the data source reads them, which takes the response's shape where it differs (D3).
+type tableIndex struct {
+	request, response map[string]held
 }
 
-// held is one field of a table, by dotted path.
+// held is one field of a table.
 type held struct {
 	create, update, response bool
+	shape                    fields.Shape
 	nested                   bool
 }
 
-func index(table []fields.Field) map[string]held {
-	out := map[string]held{}
-	var walk func([]fields.Field, string)
-	walk = func(fs []fields.Field, prefix string) {
-		for _, f := range fs {
-			p := join(prefix, f.Name)
-			out[p] = held{create: f.Create, update: f.Update, response: f.Response, nested: len(f.Fields) > 0}
-			walk(f.Fields, p)
+func index(table []fields.Field) tableIndex {
+	flat := func(table []fields.Field) map[string]held {
+		out := map[string]held{}
+		var walk func([]fields.Field, string)
+		walk = func(fs []fields.Field, prefix string) {
+			for _, f := range fs {
+				p := join(prefix, f.AttrName())
+				out[p] = held{create: f.Create, update: f.Update, response: f.Response, shape: f.Shape, nested: len(f.Fields) > 0}
+				walk(f.Fields, p)
+			}
 		}
+		walk(table, "")
+		return out
 	}
-	walk(table, "")
-	return out
+	return tableIndex{request: flat(table), response: flat(fields.ForDataSource(table))}
 }
 
 // whole reports a leaf that stands for everything below it: a copy, a list, a recursion or
@@ -245,27 +250,64 @@ func whole(k Kind) bool {
 	return k == KindEmbedded || k == KindPagedList || k == KindRecursion || k == KindReference
 }
 
-// exposed reports whether the table holds a leaf on its side.
-func exposed(res Resource, create string, l Leaf, table map[string]held) bool {
-	h, ok := table[tablePath(res, create, l.Key)]
-	if !ok || h.nested && !whole(l.Kind) {
+// exposed reports whether the table holds a leaf on its side and in its union branch.
+func exposed(create string, l Leaf, idx tableIndex) bool {
+	table := idx.request
+	if l.Side == SideResponse {
+		table = idx.response
+	}
+	h, ok := table[l.At]
+	// A request hash with no members is held by an object, whose members, if any, are the
+	// response's.
+	if !ok || h.nested && !whole(l.Kind) && l.Kind != KindEmptyHash {
 		return false
 	}
-	switch l.Operation {
-	case "":
-		return h.response
-	case create:
-		return h.create
+	switch {
+	case l.Operation == "" && !h.response, l.Operation != "" && l.Operation == create && !h.create, l.Operation != "" && l.Operation != create && !h.update:
+		return false
 	}
-	return h.update
+	return holdsBranch(l, table)
+}
+
+// holdsBranch reports whether the field at a leaf's union holds the leaf's branch: a string,
+// number or boolean field the scalar branches it can carry, an object the hash branch or a
+// response's merged variants, and `<name>_data` the hash form of a token-or-hash parameter.
+func holdsBranch(l Leaf, table map[string]held) bool {
+	switch {
+	case l.Branch == "":
+		return true
+	case l.PointAt == "":
+		// The hash of Resource.CreateHash, spread into the top level.
+		return l.Branch == "object"
+	case strings.HasPrefix(l.At, l.PointAt+"_data."):
+		return true
+	}
+	p, ok := table[l.PointAt]
+	if !ok {
+		return false
+	}
+	switch l.Branch {
+	case "string":
+		return p.shape == fields.String
+	case "integer":
+		return p.shape == fields.Int || p.shape == fields.String
+	case "number":
+		return p.shape == fields.Float || p.shape == fields.String
+	case "boolean":
+		return p.shape == fields.Bool || p.shape == fields.String
+	case "array":
+		return p.shape == fields.ObjectList || p.shape == fields.ScalarList || p.shape == fields.ScalarSet
+	}
+	// The hash branch of a request, or a response variant named by its `object` or schema.
+	return p.shape == fields.Object
 }
 
 // coversTable checks that every field the table holds is a leaf of the walk, or below a leaf
 // that stands for its whole subtree, so that the report cannot miss an attribute.
-func coversTable(res Resource, create, update string, leaves []Leaf, table map[string]held) error {
+func coversTable(res Resource, create, update string, leaves []Leaf, idx tableIndex) error {
 	at := map[string]Kind{}
 	for _, l := range leaves {
-		at[string(l.Side)+" "+l.Operation+" "+tablePath(res, create, l.Key)] = l.Kind
+		at[string(l.Side)+" "+l.Operation+" "+l.At] = l.Kind
 	}
 	found := func(op, p string) bool {
 		side := SideRequest
@@ -282,35 +324,99 @@ func coversTable(res Resource, create, update string, leaves []Leaf, table map[s
 		}
 		return false
 	}
-	paths := make([]string, 0, len(table))
-	for p := range table {
-		paths = append(paths, p)
+	check := func(table map[string]held, sides func(held) []struct {
+		on bool
+		op string
+	}) error {
+		paths := make([]string, 0, len(table))
+		for p := range table {
+			paths = append(paths, p)
+		}
+		sort.Strings(paths)
+		for _, p := range paths {
+			h := table[p]
+			if h.nested {
+				continue
+			}
+			for _, side := range sides(h) {
+				if side.on && !found(side.op, p) {
+					return fmt.Errorf("%s: the table holds %s (operation %q), which the leaf walk does not reach", res.Package, p, side.op)
+				}
+			}
+		}
+		return nil
 	}
-	sort.Strings(paths)
-	for _, p := range paths {
-		h := table[p]
-		if h.nested {
+	type side = struct {
+		on bool
+		op string
+	}
+	if err := check(idx.request, func(h held) []side { return []side{{h.create, create}, {h.update, update}} }); err != nil {
+		return err
+	}
+	return check(idx.response, func(h held) []side { return []side{{h.response, ""}} })
+}
+
+// pagedLists checks Resource.PagedLists (D3): every list envelope the object requires, which
+// Stripe returns a page at a time on every read, names the type that reads every element, and
+// every entry names such a list. The report records the type.
+func pagedLists(res Resource, leaves []Leaf, records []Record) error {
+	met := map[string]bool{}
+	var missing []string
+	for i, l := range leaves {
+		if l.Side != SideResponse || l.Kind != KindPagedList || !l.Required {
 			continue
 		}
-		for _, side := range []struct {
-			on bool
-			op string
-		}{{h.create, create}, {h.update, update}, {h.response, ""}} {
-			if side.on && !found(side.op, p) {
-				return fmt.Errorf("%s: the table holds %s (operation %q), which the leaf walk does not reach", res.Package, p, side.op)
+		reader, ok := res.PagedLists[l.Path]
+		if !ok {
+			missing = append(missing, l.Path)
+			continue
+		}
+		met[l.Path] = true
+		records[i].PagedBy = reader
+	}
+	if len(missing) > 0 {
+		return fmt.Errorf("%s: name in PagedLists the type that reads every element of each list Stripe returns a page at a time: %s", res.Package, strings.Join(missing, ", "))
+	}
+	for p := range res.PagedLists {
+		if !met[p] {
+			return fmt.Errorf("%s: paged-lists entry %q names no list the object requires", res.Package, p)
+		}
+	}
+	return nil
+}
+
+// checkPagedReaders fails on a PagedLists entry that names no table's type.
+func checkPagedReaders(resources []Resource) error {
+	types := map[string]bool{}
+	for _, res := range resources {
+		types["stripe_"+res.Package] = true
+	}
+	for _, res := range resources {
+		for _, p := range sortedKeys(res.PagedLists) {
+			if !types[res.PagedLists[p]] {
+				return fmt.Errorf("%s: paged-lists entry %q names %s, which is no table's type", res.Package, p, res.PagedLists[p])
 			}
 		}
 	}
 	return nil
 }
 
+func sortedKeys(m map[string]string) []string {
+	keys := make([]string, 0, len(m))
+	for k := range m {
+		keys = append(keys, k)
+	}
+	sort.Strings(keys)
+	return keys
+}
+
 // newRequired fails on a Required request leaf, not exposed today, inside a hash that is
 // exposed today (or at the top level of a request whose resource exists): exposing it would
 // break the configurations that set the hash (D6). The register approves one by excluding it.
-func newRequired(res Resource, create string, leaves []Leaf, records []Record, today map[string]held) error {
+func newRequired(create string, leaves []Leaf, records []Record, today tableIndex) error {
 	exposedToday := map[string]bool{}
 	for _, l := range leaves {
-		if l.Side == SideRequest && exposed(res, create, l, today) {
+		if l.Side == SideRequest && exposed(create, l, today) {
 			exposedToday[l.Operation+" "+l.Branch+" "+l.Path] = true
 			for p := parentPath(l.Path); ; p = parentPath(p) {
 				exposedToday[l.Operation+" "+l.Branch+" "+p+"."] = true
@@ -331,7 +437,7 @@ func newRequired(res Resource, create string, leaves []Leaf, records []Record, t
 		}
 	}
 	if len(found) > 0 {
-		return fmt.Errorf("%s: new Required leaves inside an object exposed today, which would break configurations unless the register approves them: %s", res.Package, strings.Join(found, ", "))
+		return fmt.Errorf("new Required leaves inside an object exposed today, which would break configurations unless the register approves them: %s", strings.Join(found, ", "))
 	}
 	return nil
 }

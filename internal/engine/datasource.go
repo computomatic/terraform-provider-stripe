@@ -19,7 +19,7 @@ import (
 // NewDataSource compiles the declaration against its table and returns the data source
 // constructor the provider registers.
 func NewDataSource(decl Declaration, table []fields.Field) (func() datasource.DataSource, error) {
-	m, err := compile(decl, table)
+	m, err := compile(decl, fields.ForDataSource(table))
 	if err != nil {
 		return nil, err
 	}

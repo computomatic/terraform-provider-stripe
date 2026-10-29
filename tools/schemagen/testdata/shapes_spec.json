@@ -1,0 +1,88 @@
+{
+  "openapi": "3.0.0",
+  "info": {"version": "2000-01-01.fixture"},
+  "paths": {
+    "/v1/shapes": {
+      "post": {
+        "operationId": "PostShapes",
+        "requestBody": {"content": {"application/x-www-form-urlencoded": {"schema": {
+          "type": "object",
+          "properties": {
+            "name": {"type": "string"},
+            "tax_id": {"type": "string"},
+            "source": {"anyOf": [
+              {"type": "string"},
+              {"type": "object", "required": ["number"], "properties": {"number": {"type": "string"}, "cvc": {"type": "string"}}}
+            ]},
+            "options": {"type": "object", "properties": {
+              "affirm": {"type": "object", "properties": {}},
+              "klarna": {"type": "object", "properties": {}},
+              "zip": {"type": "object", "properties": {}},
+              "card": {"type": "object", "properties": {"request_three_d_secure": {"type": "string"}}}
+            }},
+            "caps": {"type": "object", "properties": {"a": {"type": "object", "properties": {"requested": {"type": "boolean"}}}}},
+            "method": {"anyOf": [
+              {"type": "object", "required": ["type"], "properties": {"type": {"type": "string", "enum": ["card"]}, "card": {"type": "object", "properties": {"number": {"type": "string"}}}}},
+              {"type": "object", "required": ["type"], "properties": {"type": {"type": "string", "enum": ["bank"]}, "bank": {"type": "object", "properties": {"routing": {"type": "string"}}}}}
+            ]}
+          }
+        }}}},
+        "responses": {"200": {"content": {"application/json": {"schema": {"$ref": "#/components/schemas/shape"}}}}}
+      }
+    },
+    "/v1/shapes/{id}": {
+      "post": {
+        "operationId": "PostShapesId",
+        "requestBody": {"content": {"application/x-www-form-urlencoded": {"schema": {
+          "type": "object",
+          "properties": {
+            "name": {"type": "string"},
+            "caps": {"type": "object", "properties": {"a": {"type": "object", "properties": {"requested": {"type": "boolean"}}}}}
+          }
+        }}}},
+        "responses": {"200": {"content": {"application/json": {"schema": {"$ref": "#/components/schemas/shape"}}}}}
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "shape": {
+        "type": "object",
+        "x-resourceId": "shape",
+        "required": ["id", "lines"],
+        "properties": {
+          "id": {"type": "string"},
+          "object": {"type": "string", "enum": ["shape"]},
+          "name": {"type": "string"},
+          "tax_id_provided": {"type": "boolean"},
+          "source": {"type": "string", "nullable": true},
+          "caps": {"type": "object", "properties": {"a": {"type": "string", "enum": ["active", "inactive"]}}},
+          "options": {"type": "object", "properties": {
+            "card": {"type": "object", "properties": {"request_three_d_secure": {"type": "string"}}},
+            "klarna": {"type": "object", "properties": {}},
+            "zip": {"type": "object", "properties": {"status": {"type": "string"}}}
+          }},
+          "payment": {"oneOf": [{"$ref": "#/components/schemas/shape_card"}, {"$ref": "#/components/schemas/shape_bank"}]},
+          "clash": {"oneOf": [{"$ref": "#/components/schemas/clash_a"}, {"$ref": "#/components/schemas/clash_b"}]},
+          "parent": {"$ref": "#/components/schemas/shape"},
+          "loop": {"$ref": "#/components/schemas/shape_loop"},
+          "last_error": {"$ref": "#/components/schemas/shape_error"},
+          "lines": {"type": "object", "properties": {
+            "object": {"type": "string", "enum": ["list"]},
+            "data": {"type": "array", "items": {"$ref": "#/components/schemas/shape_line"}},
+            "has_more": {"type": "boolean"},
+            "url": {"type": "string"}
+          }}
+        }
+      },
+      "shape_card": {"type": "object", "properties": {"object": {"type": "string", "enum": ["card"]}, "brand": {"type": "string"}, "last4": {"type": "string"}, "expires": {"type": "integer"}}},
+      "shape_bank": {"type": "object", "properties": {"object": {"type": "string", "enum": ["bank_account"]}, "bank_name": {"type": "string"}, "last4": {"type": "string"}, "expires": {"type": "string"}}},
+      "clash_a": {"type": "object", "properties": {"object": {"type": "string", "enum": ["a"]}, "value": {"type": "string"}}},
+      "clash_b": {"type": "object", "properties": {"object": {"type": "string", "enum": ["b"]}, "value": {"type": "boolean"}}},
+      "shape_loop": {"type": "object", "properties": {"name": {"type": "string"}, "loop": {"$ref": "#/components/schemas/shape_loop"}}},
+      "shape_error": {"type": "object", "properties": {"message": {"type": "string"}, "charge": {"$ref": "#/components/schemas/shape_charge"}}},
+      "shape_charge": {"type": "object", "x-resourceId": "charge", "properties": {"id": {"type": "string"}, "amount": {"type": "integer"}, "outcome": {"type": "object", "properties": {"risk_level": {"type": "string"}}}}},
+      "shape_line": {"type": "object", "x-resourceId": "shape_line", "properties": {"id": {"type": "string"}, "amount": {"type": "integer"}}}
+    }
+  }
+}
