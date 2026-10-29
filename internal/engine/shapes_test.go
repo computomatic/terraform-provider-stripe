@@ -7,6 +7,7 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/path"
+	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
@@ -60,6 +61,10 @@ func shapesTable() []fields.Field {
 				{Name: "unit_amount", Shape: fields.Int, Create: true, Update: true},
 			}},
 			{Name: "note", Shape: fields.String, Create: true, Update: true, Response: true},
+		}},
+		{Name: "terms", Shape: fields.Object, Create: true, Update: true, Fields: []fields.Field{
+			{Name: "early", Shape: fields.String, Create: true},
+			{Name: "late", Shape: fields.String, Update: true},
 		}},
 		{Name: "settings", Shape: fields.Object, Create: true, Update: true, Response: true, Fields: []fields.Field{
 			{Name: "mode", Shape: fields.String, Create: true, Update: true, Response: true},
@@ -364,8 +369,16 @@ func TestShapesARequiredParameterTakesEitherForm(t *testing.T) {
 	if !resp.Diagnostics.HasError() || !strings.Contains(resp.Diagnostics.Errors()[0].Detail(), "Set `source` or `source_data`") {
 		t.Errorf("neither form: %v", resp.Diagnostics)
 	}
-	if _, err := r.m.encodeCreate(config); err == nil || !strings.Contains(err.Error(), "neither `source` nor `source_data`") {
-		t.Errorf("create with neither: err = %v", err)
+	// A token configured unknown at plan, which the validator lets through, can be null at
+	// apply: the configuration of the update then sets neither form. On create an unset token
+	// is unknown in the plan, never null, so only the configuration can tell.
+	state := r.fill(map[string]attr.Value{"id": types.StringValue("shp_1"), "source": types.StringValue("ba_1"), "source_data": types.ObjectNull(dataType.AttrTypes), "tax_id": types.StringValue("1")})
+	plan := r.fill(map[string]attr.Value{"id": types.StringValue("shp_1"), "source": types.StringValue("ba_1"), "source_data": types.ObjectNull(dataType.AttrTypes), "tax_id": types.StringValue("2")})
+	if _, err := r.m.encodeUpdate(plan, state, raw); err == nil || !strings.Contains(err.Error(), "neither `source` nor `source_data`") {
+		t.Errorf("update with neither configured: err = %v", err)
+	}
+	if _, err := r.m.encodeCreate(r.fill(map[string]attr.Value{"source_data": types.ObjectNull(dataType.AttrTypes)})); err != nil {
+		t.Errorf("a create whose token is unknown in the plan: %v", err)
 	}
 }
 
@@ -555,6 +568,59 @@ func TestShapesRefuseAnObjectThatEncodesToNothingOnV1(t *testing.T) {
 	}
 	if !dresp.Diagnostics.HasError() || !strings.Contains(dresp.Diagnostics.Errors()[0].Detail(), "`scope`") {
 		t.Errorf("a data source's scope = {}: %v", dresp.Diagnostics)
+	}
+}
+
+// Under a field that forces replacement, such as a create-only list, a token keeps its state
+// value: a change of the hash form changes the list, which replaces the resource anyway.
+func TestShapesTokenUnderAReplacingListKeepsItsStateValue(t *testing.T) {
+	table := shapesTable()
+	for i := range table {
+		if table[i].Name == "items" {
+			table[i].Update = false
+		}
+	}
+	r := configured(t, shapesDeclaration(), table, newStub())
+	price := r.schema.Attributes["items"].(schema.ListNestedAttribute).NestedObject.Attributes["price"].(schema.StringAttribute)
+	if len(price.PlanModifiers) != 1 {
+		t.Fatalf("items.price has %d plan modifiers, want the one that keeps its state value", len(price.PlanModifiers))
+	}
+	if _, keeps := price.PlanModifiers[0].(keepToken); !keeps {
+		t.Errorf("items.price: %T", price.PlanModifiers[0])
+	}
+}
+
+// The /v1 refusal of an object sent empty judges a create by what a create sends: an object
+// whose only configured argument the create does not take is refused at plan. An update,
+// whose body the plan cannot tell, is refused at apply, saying what the update sends.
+func TestShapesEmptyObjectJudgedByTheOperation(t *testing.T) {
+	r := shapesResource(t)
+	termsType := r.objType.AttrTypes["terms"]
+	plan := r.fill(map[string]attr.Value{"terms": objectOf(termsType, map[string]attr.Value{"late": types.StringValue("x")})})
+	null := tftypes.NewValue(r.objType.TerraformType(context.Background()), nil)
+	resp := resource.ModifyPlanResponse{Plan: tfsdk.Plan{Schema: r.schema, Raw: raw(t, plan)}}
+	r.ModifyPlan(context.Background(), resource.ModifyPlanRequest{
+		Config: tfsdk.Config{Schema: r.schema, Raw: raw(t, plan)}, Plan: tfsdk.Plan{Schema: r.schema, Raw: raw(t, plan)},
+		State: tfsdk.State{Schema: r.schema, Raw: null},
+	}, &resp)
+	if !resp.Diagnostics.HasError() || !strings.Contains(resp.Diagnostics.Errors()[0].Detail(), "`terms`: a create sends only `early` of it, which is not set; `late` is sent only on an update") {
+		t.Errorf("a create with only an update-only argument: %v", resp.Diagnostics)
+	}
+	ok := r.fill(map[string]attr.Value{"terms": objectOf(termsType, map[string]attr.Value{"early": types.StringValue("x")})})
+	resp = resource.ModifyPlanResponse{Plan: tfsdk.Plan{Schema: r.schema, Raw: raw(t, ok)}}
+	r.ModifyPlan(context.Background(), resource.ModifyPlanRequest{
+		Config: tfsdk.Config{Schema: r.schema, Raw: raw(t, ok)}, Plan: tfsdk.Plan{Schema: r.schema, Raw: raw(t, ok)},
+		State: tfsdk.State{Schema: r.schema, Raw: null},
+	}, &resp)
+	if resp.Diagnostics.HasError() {
+		t.Errorf("a create with a create argument: %v", resp.Diagnostics)
+	}
+
+	state := r.fill(map[string]attr.Value{"id": types.StringValue("shp_1"), "terms": objectOf(termsType, map[string]attr.Value{"early": types.StringValue("a"), "late": types.StringValue("b")})})
+	changed := r.fill(map[string]attr.Value{"id": types.StringValue("shp_1"), "terms": objectOf(termsType, map[string]attr.Value{"early": types.StringValue("a")})})
+	_, err := r.m.encodeUpdate(changed, state, raw(t, changed))
+	if err == nil || !strings.Contains(err.Error(), "`terms`: an update sends only `late` of it, which is not set; `early` is sent only on a create") {
+		t.Errorf("an update that leaves only a create-only argument: err = %v", err)
 	}
 }
 

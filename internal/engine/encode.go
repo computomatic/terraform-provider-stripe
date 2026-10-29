@@ -24,14 +24,14 @@ import (
 // field: JSON has no unset marker the conformance suite has proven, and an Optional
 // collection configured empty means the same as one left out.
 func (m *model) encodeCreate(plan basetypes.ObjectValue) (wire.Object, error) {
-	if err := m.checkForms(m.nodes, plan.Attributes(), ""); err != nil {
+	if err := m.checkForms(m.nodes, plan.Attributes(), "", false); err != nil {
 		return nil, err
 	}
 	body, err := encodeObject(m.nodes, plan.Attributes(), func(n *node) bool { return n.Create })
 	if err != nil {
 		return nil, err
 	}
-	if err := m.refuseEmptyObjects(m.nodes, body); err != nil {
+	if err := m.refuseEmptyObjects(m.nodes, body, opCreate); err != nil {
 		return nil, err
 	}
 	if m.v2 {
@@ -115,10 +115,12 @@ func findNodeFor(kids []*node, f wire.Field) *node {
 	return found
 }
 
-// checkForms refuses, at any depth of a plan, both forms of a token-or-hash parameter set,
-// which plan-time validation cannot catch while the token is unknown, and neither form of one
-// the create requires.
-func (m *model) checkForms(kids []*node, attrs map[string]attr.Value, prefix string) error {
+// checkForms refuses, at any depth, both forms of a token-or-hash parameter set, which
+// plan-time validation cannot catch while the token is unknown. Read from a configuration
+// (configured), it also refuses neither form of one the create requires, set: a token
+// configured unknown at plan can be null at apply. A plan cannot show that, because an unset
+// token, which is Computed, is unknown in it, never null.
+func (m *model) checkForms(kids []*node, attrs map[string]attr.Value, prefix string, configured bool) error {
 	set := func(v attr.Value) bool { return v != nil && !v.IsNull() && !v.IsUnknown() }
 	null := func(v attr.Value) bool { return v == nil || v.IsNull() }
 	for _, n := range kids {
@@ -129,7 +131,7 @@ func (m *model) checkForms(kids []*node, attrs map[string]attr.Value, prefix str
 			switch {
 			case set(v) && set(token):
 				return fmt.Errorf("both `%s%s` and `%s` are set: Stripe takes the token or the hash under one name, `%s`", prefix, n.TokenForm, at, n.Name)
-			case n.OneRequired && null(v) && null(token):
+			case configured && n.OneRequired && null(v) && null(token):
 				return fmt.Errorf("neither `%s%s` nor `%s` is set: Stripe requires one", prefix, n.TokenForm, at)
 			}
 		}
@@ -139,17 +141,17 @@ func (m *model) checkForms(kids []*node, attrs map[string]attr.Value, prefix str
 		var err error
 		switch c := v.(type) {
 		case basetypes.ObjectValue:
-			err = m.checkForms(n.Kids, c.Attributes(), at+".")
+			err = m.checkForms(n.Kids, c.Attributes(), at+".", configured)
 		case basetypes.ListValue:
 			for i, e := range c.Elements() {
 				if o, ok := e.(basetypes.ObjectValue); ok && err == nil {
-					err = m.checkForms(n.Kids, o.Attributes(), fmt.Sprintf("%s[%d].", at, i))
+					err = m.checkForms(n.Kids, o.Attributes(), fmt.Sprintf("%s[%d].", at, i), configured)
 				}
 			}
 		case basetypes.MapValue:
 			for _, k := range sortedKeys(c.Elements()) {
 				if o, ok := c.Elements()[k].(basetypes.ObjectValue); ok && err == nil {
-					err = m.checkForms(n.Kids, o.Attributes(), fmt.Sprintf("%s[%q].", at, k))
+					err = m.checkForms(n.Kids, o.Attributes(), fmt.Sprintf("%s[%q].", at, k), configured)
 				}
 			}
 		}
@@ -166,7 +168,7 @@ func (m *model) checkForms(kids []*node, attrs map[string]attr.Value, prefix str
 // its plan.
 func (m *model) checkUpdateForms(plan basetypes.ObjectValue, config tftypes.Value) error {
 	if config.Type() == nil {
-		return m.checkForms(m.nodes, plan.Attributes(), "")
+		return m.checkForms(m.nodes, plan.Attributes(), "", false)
 	}
 	v, err := plan.Type(context.Background()).ValueFromTerraform(context.Background(), config)
 	if err != nil {
@@ -176,7 +178,7 @@ func (m *model) checkUpdateForms(plan basetypes.ObjectValue, config tftypes.Valu
 	if !ok {
 		return fmt.Errorf("the configuration is %T, not an object", v)
 	}
-	return m.checkForms(m.nodes, o.Attributes(), "")
+	return m.checkForms(m.nodes, o.Attributes(), "", true)
 }
 
 // hashSent reports whether the hash form named data, among kids, is set and sent.
@@ -242,7 +244,7 @@ func (m *model) encodeUpdate(plan, state basetypes.ObjectValue, config tftypes.V
 	if err != nil {
 		return nil, err
 	}
-	if err := m.refuseEmptyObjects(m.nodes, out); err != nil {
+	if err := m.refuseEmptyObjects(m.nodes, out, opUpdate); err != nil {
 		return nil, err
 	}
 	return out, nil

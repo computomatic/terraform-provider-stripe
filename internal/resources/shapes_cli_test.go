@@ -16,6 +16,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-go/tfprotov6"
 	tfresource "github.com/hashicorp/terraform-plugin-testing/helper/resource"
+	"github.com/hashicorp/terraform-plugin-testing/plancheck"
 	"github.com/hashicorp/terraform-plugin-testing/terraform"
 
 	"github.com/computomatic/terraform-provider-stripe/internal/engine"
@@ -57,6 +58,14 @@ func listTable() []fields.Field {
 			{Name: "quantity", Shape: fields.Int, Create: true, Update: true, Response: true},
 		}},
 	}
+}
+
+// fixedListTable is listTable with the list create-only, which forces replacement, and
+// metadata, which changes in place.
+func fixedListTable() []fields.Field {
+	table := listTable()
+	table[1].Update = false
+	return append(table, fields.Field{Name: "metadata", Shape: fields.StringMap, Create: true, Update: true, Response: true})
 }
 
 func shapeFactories(store *shapeStore) map[string]func() (tfprotov6.ProviderServer, error) {
@@ -184,6 +193,30 @@ func TestAccHashFormInAListKeepsEachElementsToken(t *testing.T) {
 	})
 }
 
+// Under a create-only list, a token made through the hash form keeps its state value, so a
+// change elsewhere updates the object in place instead of replacing it.
+func TestAccHashFormUnderACreateOnlyListUpdatesInPlace(t *testing.T) {
+	config := func(note string) string {
+		return `resource "stripe_shape_fixed_list" "s" {
+  items    = [{ price_data = { unit_amount = 100 }, quantity = 1 }]
+  metadata = { note = "` + note + `" }
+}`
+	}
+	tfresource.Test(t, tfresource.TestCase{
+		ProtoV6ProviderFactories: shapeFactories(newShapeStore("/v1/shape_fixed_lists")),
+		Steps: []tfresource.TestStep{
+			{Config: config("one"), Check: tfresource.TestCheckResourceAttrSet("stripe_shape_fixed_list.s", "items.0.price")},
+			{
+				Config: config("two"),
+				ConfigPlanChecks: tfresource.ConfigPlanChecks{PreApply: []plancheck.PlanCheck{
+					plancheck.ExpectResourceAction("stripe_shape_fixed_list.s", plancheck.ResourceActionUpdate),
+				}},
+				Check: tfresource.TestCheckResourceAttr("stripe_shape_fixed_list.s", "metadata.note", "two"),
+			},
+		},
+	})
+}
+
 type shapeProvider struct{ store *shapeStore }
 
 func (p *shapeProvider) Metadata(_ context.Context, _ provider.MetadataRequest, resp *provider.MetadataResponse) {
@@ -201,7 +234,7 @@ func (p *shapeProvider) Resources(context.Context) []func() resource.Resource {
 	for _, r := range []struct {
 		typeName, base string
 		table          []fields.Field
-	}{{"stripe_shape", "/v1/shapes", shapeTable()}, {"stripe_shape_v2", "/v2/core/shapes", shapeTable()}, {"stripe_shape_list", "/v1/shape_lists", listTable()}} {
+	}{{"stripe_shape", "/v1/shapes", shapeTable()}, {"stripe_shape_v2", "/v2/core/shapes", shapeTable()}, {"stripe_shape_list", "/v1/shape_lists", listTable()}, {"stripe_shape_fixed_list", "/v1/shape_fixed_lists", fixedListTable()}} {
 		ctor, err := engine.NewResource(engine.Declaration{
 			TypeName:    r.typeName,
 			IDPrefix:    "shp_",
@@ -259,7 +292,7 @@ func (s *shapeStore) Do(_ context.Context, req stripeapi.Request) (*stripeapi.Re
 		if err != nil {
 			return nil, err
 		}
-		s.objects[id] = obj
+		s.objects[id] = withMetadata(obj, req.Params)
 	case s.objects[id] == nil:
 		return nil, &stripeapi.APIError{Status: http.StatusNotFound, Code: "resource_missing", Message: "No such shape: " + id}
 	case req.Method == "POST":
@@ -267,7 +300,7 @@ func (s *shapeStore) Do(_ context.Context, req stripeapi.Request) (*stripeapi.Re
 		if err != nil {
 			return nil, err
 		}
-		s.objects[id] = obj
+		s.objects[id] = withMetadata(obj, req.Params)
 		if name, ok := req.Params.GetString("name"); ok {
 			obj := wire.Object{}
 			for _, f := range s.objects[id] {
@@ -323,4 +356,35 @@ func (s *shapeStore) withItems(obj wire.Object, params wire.Object) (wire.Object
 		}
 	}
 	return append(out, wire.Field{Name: "items", Value: items}), nil
+}
+
+// withMetadata sets the object's `metadata` from the request's keys, if it sends any; an empty
+// value removes a key.
+func withMetadata(obj wire.Object, params wire.Object) wire.Object {
+	sent, ok := params.GetObject("metadata")
+	if !ok {
+		return obj
+	}
+	meta := wire.Object{}
+	var out wire.Object
+	for _, f := range obj {
+		if f.Name == "metadata" {
+			meta, _ = f.Value.(wire.Object)
+			continue
+		}
+		out = append(out, f)
+	}
+	for _, kv := range sent {
+		var kept wire.Object
+		for _, f := range meta {
+			if f.Name != kv.Name {
+				kept = append(kept, f)
+			}
+		}
+		if v, isStr := kv.Value.(wire.String); isStr && v != "" {
+			kept = append(kept, kv)
+		}
+		meta = kept
+	}
+	return append(out, wire.Field{Name: "metadata", Value: meta})
 }

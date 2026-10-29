@@ -801,9 +801,12 @@ func (c *compiler) build(table []fields.Field, prefix string, top, parentOutput,
 			// state's element at the same index may be another object after an insert or a
 			// reorder, so the token is unknown on a change, as any value Stripe fills in for a list
 			// element is, and a create-only one replaces only when the configuration sets another
-			// value, so an unknown token never plans a replacement.
+			// value, so an unknown token never plans a replacement. Under a field that forces
+			// replacement it keeps its state value too: there nothing changes in place, so a
+			// change of the hash form changes that field and replaces the resource, and the
+			// replacement plans the token afresh with no state.
 			if token.Response && !token.computedOnly() {
-				token.Computed, token.UseState = true, !inList
+				token.Computed, token.UseState = true, !inList || parentReplace
 				if inList && token.Replace {
 					token.Replace, token.ReplaceIfSet = false, true
 				}
