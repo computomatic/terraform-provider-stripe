@@ -38,8 +38,9 @@ type Field struct {
 	// Name is the Stripe field name, used on the wire and, unless Attr is set, as the
 	// attribute name.
 	Name string
-	// Attr overrides the attribute name. The generator never sets it; the engine applies
-	// declaration renames to it.
+	// Attr overrides the attribute name. The generator sets it to `<name>_data` on the hash
+	// form of a parameter that takes a token or a hash, which is sent under Name; the engine
+	// applies declaration renames to it.
 	Attr  string
 	Shape Shape
 	// Elem is the element shape of a ScalarList or ScalarSet.
@@ -47,7 +48,8 @@ type Field struct {
 	// Fields are the members of an Object, or of the elements of an ObjectList or
 	// ObjectMap.
 	Fields []Field
-	// Required is true when Stripe requires the field on create.
+	// Required is true when Stripe requires the field on create. On both forms of a
+	// token-or-hash parameter it means that Stripe requires one of the two.
 	Required bool
 	// Create is true when the field is in the create request schema.
 	Create bool
@@ -60,6 +62,13 @@ type Field struct {
 	// ServerDefaulted is true for an Optional request field the response always carries
 	// (the response schema marks it required and not nullable): Stripe may fill it in.
 	ServerDefaulted bool
+	// Sensitive is true for a value Stripe never returns and reports only as set, through a
+	// `<name>_provided` flag beside it in the response.
+	Sensitive bool
+	// DataSource is the field as the data source reads it, where the response gives it another
+	// shape than the request does (an account's `capabilities`: `requested` flags in,
+	// statuses out). The resource keeps the request's shape and the configured value.
+	DataSource *Field
 	// Enum lists the values Stripe documents for a string field.
 	Enum        []string
 	Description string
@@ -78,6 +87,27 @@ func (f Field) CreateOnly() bool { return f.Create && !f.Update }
 
 // Writable reports whether the field is in any request schema.
 func (f Field) Writable() bool { return f.Create || f.Update }
+
+// HashForm reports the hash form of a token-or-hash parameter, `<name>_data`.
+func (f Field) HashForm() bool { return f.Attr != "" && f.Attr == f.Name+"_data" }
+
+// ForDataSource returns the table as the data source reads it: each field with a DataSource
+// form replaced by it, and without the hash forms of token-or-hash parameters, which only a
+// request takes.
+func ForDataSource(table []Field) []Field {
+	out := make([]Field, 0, len(table))
+	for _, f := range table {
+		if f.HashForm() {
+			continue
+		}
+		if f.DataSource != nil {
+			f = *f.DataSource
+		}
+		f.Fields = ForDataSource(f.Fields)
+		out = append(out, f)
+	}
+	return out
+}
 
 // Find returns the top-level field with the given Stripe name.
 func Find(table []Field, name string) (Field, bool) {

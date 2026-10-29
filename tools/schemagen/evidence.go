@@ -132,6 +132,9 @@ func LoadEvidence(root string, spec Pin) (*Pinned, error) {
 	if err := d.Decode(&p.Pin); err != nil {
 		return nil, fmt.Errorf("decode spec/EVIDENCE_PIN.json: %w", err)
 	}
+	if err := namesRun("spec/EVIDENCE_PIN.json", p.Pin.SuiteRef, p.Pin.RunID); err != nil {
+		return nil, err
+	}
 	fake, err := os.ReadFile(filepath.Join(root, ".fake-version"))
 	if err != nil {
 		return nil, err
@@ -149,6 +152,9 @@ func LoadEvidence(root string, spec Pin) (*Pinned, error) {
 		return nil, fmt.Errorf("decode spec/attributes.json: %w", err)
 	}
 	a := p.Attributes
+	if err := namesRun("spec/attributes.json", a.SuiteRef, a.RunID); err != nil {
+		return nil, err
+	}
 	switch {
 	case a.FakeVersion != p.Pin.FakeVersion:
 		return nil, fmt.Errorf("spec/attributes.json is from fake %s, spec/EVIDENCE_PIN.json pins %s", a.FakeVersion, p.Pin.FakeVersion)
@@ -158,10 +164,15 @@ func LoadEvidence(root string, spec Pin) (*Pinned, error) {
 	if err := sameSpec("spec/attributes.json", a.APIVersion, a.SpecSHA256, spec); err != nil {
 		return nil, err
 	}
+	seen := map[Key]bool{}
 	for _, l := range a.Leaves {
 		if !slices.Contains(classes, l.Class) {
 			return nil, fmt.Errorf("spec/attributes.json: %s has the unknown class %q", l.Key, l.Class)
 		}
+		if seen[l.Key] {
+			return nil, fmt.Errorf("spec/attributes.json lists %s twice", l.Key)
+		}
+		seen[l.Key] = true
 	}
 
 	evData, err := readPinned(root, "evidence.json", p.Pin.Evidence)
@@ -173,6 +184,9 @@ func LoadEvidence(root string, spec Pin) (*Pinned, error) {
 		return nil, fmt.Errorf("decode spec/evidence.json: %w", err)
 	}
 	e := p.Evidence
+	if err := namesRun("spec/evidence.json", e.SuiteCommit, e.StripeRun.ID); err != nil {
+		return nil, err
+	}
 	switch {
 	case e.FormatVersion != evidenceFormat:
 		return nil, fmt.Errorf("spec/evidence.json has format version %d; the generator reads %d", e.FormatVersion, evidenceFormat)
@@ -182,12 +196,36 @@ func LoadEvidence(root string, spec Pin) (*Pinned, error) {
 	if err := sameSpec("spec/evidence.json", e.APIVersion, e.SpecSHA256, spec); err != nil {
 		return nil, err
 	}
+	proven := map[Key]bool{}
 	for _, l := range e.Leaves {
 		if d := l.Default; d != nil && d.Kind == "rule" && (d.RuleRef == nil || *d.RuleRef < 0 || *d.RuleRef >= len(e.Rules)) {
 			return nil, fmt.Errorf("spec/evidence.json: %s has a rule default with no rule", l.Key)
 		}
+		if _, dup := proven[l.Key]; dup {
+			return nil, fmt.Errorf("spec/evidence.json lists %s twice", l.Key)
+		}
+		proven[l.Key] = l.Status == "proven"
+	}
+	// The fake verifies only what the record proves; a verified leaf the pinned record does
+	// not prove means the two files do not belong together.
+	var unproven []string
+	for _, l := range a.Leaves {
+		if l.Class == ClassVerified && !proven[l.Key] {
+			unproven = append(unproven, l.Key.String())
+		}
+	}
+	if len(unproven) > 0 {
+		return nil, fmt.Errorf("spec/attributes.json verifies leaves that spec/evidence.json does not prove: %s", strings.Join(unproven, ", "))
 	}
 	return &p, nil
+}
+
+// namesRun refuses a file that names no suite commit or run.
+func namesRun(file, suiteRef string, runID int64) error {
+	if strings.TrimSpace(suiteRef) == "" || runID == 0 {
+		return fmt.Errorf("%s names no suite run (suite commit %q, run %d)", file, suiteRef, runID)
+	}
+	return nil
 }
 
 func readPinned(root, name string, want PinnedFile) ([]byte, error) {

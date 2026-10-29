@@ -80,6 +80,10 @@ type Resource struct {
 	// StatusConfirms says that the declaration's `status` transition confirms the object, so
 	// the request's `confirm` is left out by rule X5.
 	StatusConfirms bool
+	// PagedLists maps the dotted path of each list envelope the object requires, which Stripe
+	// returns a page at a time on every read (an invoice's `lines`), to the resource or data
+	// source type that reads every element (`stripe_invoice_line`) (D3).
+	PagedLists map[string]string
 }
 
 // view is a schema classified into one of the engine's shapes.
@@ -90,6 +94,11 @@ type view struct {
 	nullable bool
 	enum     []string
 	desc     string
+	// refs are the component schemas followed to reach the view, which the walk below it
+	// carries on its stack.
+	refs []string
+	// empty marks a hash with no members.
+	empty bool
 }
 
 func (v *view) scalar() bool {
@@ -184,7 +193,11 @@ func buildGated(spec *Spec, res Resource, g *gate) ([]fields.Field, error) {
 			return nil, err
 		}
 	}
-	table, err := b.object(create, update, resp, nil, "", 0)
+	var root []string
+	if r, err := responseRoot(spec, createOp, res); err == nil {
+		root = []string{strings.TrimPrefix(r.Ref, refPrefix)}
+	}
+	table, err := b.object(level{create: create, update: update, resp: resp, raw: resp, stacks: stacks{resp: root}}, "", 0)
 	if err != nil {
 		return nil, fmt.Errorf("%s: %w", res.Package, err)
 	}
@@ -300,17 +313,41 @@ func prop(s *Schema, name string) *Schema {
 	return s.Properties[name]
 }
 
+// level is one object level of the table: the create, update and response schemas as the
+// trims leave them, the response's schema whatever the trims (which says whether Stripe
+// reports a value only through a `<name>_provided` flag), the docs schemas, and per side the
+// component schemas on the path, at which recursion stops.
+type level struct {
+	create, update, resp, raw *Schema
+	// docs are other schemas of the same object level, in order: the response of a
+	// NoResponse object, and the request of a DocsFrom operation.
+	docs   []*Schema
+	stacks stacks
+	// restricted holds only the fields the gate verifies, as a trimmed subtree does: the
+	// hash form of a token-or-hash parameter, which no table held before the gate.
+	restricted bool
+}
+
+// stacks holds, per side, the component schemas on the path from the root.
+type stacks struct{ create, update, resp []string }
+
+// push returns the stack with the component schemas a view was reached through.
+func push(stack []string, v *view) []string {
+	if v == nil || len(v.refs) == 0 {
+		return stack
+	}
+	return append(slices.Clone(stack), v.refs...)
+}
+
 // object merges the create, update and response schemas of one object level into fields.
-// Any of the three may be nil. docs are other schemas of the same object level, in order: the
-// response of a NoResponse object, and the request of a DocsFrom operation. A field without a
-// description of its own takes the first description of a field at the same place in them
-// that has the same shape.
-func (b *builder) object(create, update, resp *Schema, docs []*Schema, where string, depth int) ([]fields.Field, error) {
+// Any of the three may be nil. A field without a description of its own takes the first
+// description of a field at the same place in the docs schemas that has the same shape.
+func (b *builder) object(l level, where string, depth int) ([]fields.Field, error) {
 	if depth > maxDepth {
 		return nil, fmt.Errorf("%s: nesting deeper than %d levels", where, maxDepth)
 	}
 	names := map[string]bool{}
-	for _, s := range []*Schema{create, update, resp} {
+	for _, s := range []*Schema{l.create, l.update, l.resp} {
 		if s != nil {
 			for name := range s.Properties {
 				names[name] = true
@@ -323,6 +360,10 @@ func (b *builder) object(create, update, resp *Schema, docs []*Schema, where str
 	}
 	sort.Strings(sorted)
 
+	var g gate
+	if b.gate != nil {
+		g = *b.gate
+	}
 	var out []fields.Field
 	for _, name := range sorted {
 		if where == "" && (name == "expand" || name == "object") {
@@ -333,29 +374,27 @@ func (b *builder) object(create, update, resp *Schema, docs []*Schema, where str
 			b.omit[at] = true
 		}
 		// A trimmed field stays only on a side the gate verifies at, above or below it.
-		trimmed := onOrUnder(b.omit, at) || !b.kept(at)
-		var g gate
-		if b.gate != nil {
-			g = *b.gate
-		}
-		if trimmed && !near(g.create, at) && !near(g.update, at) && !near(g.response, at) {
+		trimmed := l.restricted || onOrUnder(b.omit, at) || !b.kept(at)
+		// The hash form of a token-or-hash parameter, `<name>_data`, keeps the field when the
+		// gate verifies a leaf of it, even where the token is trimmed.
+		if trimmed && !near(g.create, at) && !near(g.update, at) && !near(g.response, at) && !near(g.create, at+"_data") && !near(g.update, at+"_data") {
 			continue
 		}
 		// A hash with no keys in the response only says its payment method type is in use,
-		// which `type` already does. A request hash with none is still an error: it might
-		// be a field the provider needs to send.
-		if prop(create, name) == nil && prop(update, name) == nil && b.emptyObject(prop(resp, name)) {
+		// which `type` already does (rule X2). A request hash with none selects an option.
+		if prop(l.create, name) == nil && prop(l.update, name) == nil && b.emptyObject(prop(l.resp, name)) {
 			continue
 		}
-		cv, err := b.classify(prop(create, name), at, depth)
+		cv, err := b.classify(prop(l.create, name), at, depth, l.stacks.create)
 		if err != nil {
 			return nil, err
 		}
-		uv, err := b.classify(prop(update, name), at, depth)
+		uv, err := b.classify(prop(l.update, name), at, depth, l.stacks.update)
 		if err != nil {
 			return nil, err
 		}
-		if _, only := b.createOnly[at]; only {
+		_, createOnly := b.createOnly[at]
+		if createOnly {
 			b.createOnly[at] = true
 			uv = nil
 		}
@@ -369,13 +408,13 @@ func (b *builder) object(create, update, resp *Schema, docs []*Schema, where str
 		if readOnly && !near(g.update, at) {
 			uv = nil
 		}
-		rv, err := b.classify(prop(resp, name), at, depth)
+		rv, err := b.classify(prop(l.resp, name), at, depth, l.stacks.resp)
 		if err != nil {
 			return nil, err
 		}
 		var dvs []*view
-		for _, d := range docs {
-			dv, err := b.classify(prop(d, name), at, depth)
+		for _, d := range l.docs {
+			dv, err := b.classify(prop(d, name), at, depth, nil)
 			if err != nil {
 				return nil, err
 			}
@@ -399,43 +438,47 @@ func (b *builder) object(create, update, resp *Schema, docs []*Schema, where str
 			delete(b.docsFrom, at)
 			dvs = append(dvs, &view{shape: fields.Object, obj: other})
 		}
-		if rv, err = b.unwrapList(rv, cv, uv, at, depth); err != nil {
+		if rv, err = b.unwrapList(rv, cv, uv, at, depth, l.stacks.resp); err != nil {
 			return nil, err
 		}
-		views := []*view{cv, uv, rv}
 		var base *view
-		for _, v := range views {
+		for _, v := range []*view{cv, uv} {
 			if v == nil {
 				continue
 			}
 			if base == nil {
 				base = v
-			} else if v.shape != base.shape || v.elem != base.elem {
-				// A union of an integer and a string (`up_to` is an integer or `inf`)
-				// is a string: the response's integer decodes into one.
-				if isIntOrString(base, v) {
-					base.shape = fields.String
-					continue
-				}
-				// A reference is sent as an ID and returned as the whole object (a product
-				// feature's `entitlement_feature`): the ID is the value, and the decoder
-				// takes it from the object.
-				if isStringOrObject(base, v) {
-					base.shape, base.obj = fields.String, nil
-					continue
-				}
-				// The same for a list: IDs are sent and the objects returned, as for a
-				// subscription's `tax_rates`. The decoder takes each element's `id`.
-				if isIDListOrObjects(base, v) {
-					continue
-				}
-				return nil, fmt.Errorf("%s: request and response disagree on the shape (%d/%d against %d/%d)", at, base.shape, base.elem, v.shape, v.elem)
+			} else if !reconcile(base, v) {
+				return nil, fmt.Errorf("%s: the create and update requests disagree on the shape (%d/%d against %d/%d)", at, base.shape, base.elem, v.shape, v.elem)
 			}
 		}
+		// A field the response gives another shape than the request (D3, "Same name,
+		// different shape") takes the request's in the resource, which keeps the configured
+		// value, and the response's in the data source.
+		var split *view
+		switch {
+		case rv == nil:
+		case base == nil:
+			base = rv
+		case !reconcile(base, rv):
+			split, rv = rv, nil
+		}
+		required := l.create != nil && slices.Contains(l.create.Required, name)
+		if _, req := b.require[at]; req {
+			required = true
+		}
+		data, err := b.hashForm(l, name, at, createOnly, required, depth)
+		if err != nil {
+			return nil, err
+		}
 		if base == nil {
+			if data != nil {
+				out = append(out, *data)
+			}
 			continue
 		}
 
+		views := []*view{cv, uv, rv}
 		f := fields.Field{
 			Name:     name,
 			Shape:    base.shape,
@@ -474,29 +517,225 @@ func (b *builder) object(create, update, resp *Schema, docs []*Schema, where str
 				kidDocs = append(kidDocs, dv.obj)
 			}
 		}
-		if cv != nil && create != nil {
-			f.Required = slices.Contains(create.Required, name)
+		if cv != nil && l.create != nil {
+			f.Required = slices.Contains(l.create.Required, name)
 		}
 		if _, req := b.require[at]; req && cv != nil {
 			b.require[at] = true
 			f.Required = true
 		}
-		if cv != nil && !f.Required && rv != nil && !rv.nullable && resp != nil && slices.Contains(resp.Required, name) {
+		if cv != nil && !f.Required && rv != nil && !rv.nullable && l.resp != nil && slices.Contains(l.resp.Required, name) {
 			f.ServerDefaulted = true
 		}
-		switch base.shape {
-		case fields.Object, fields.ObjectList, fields.ObjectMap:
-			f.Fields, err = b.object(objOf(cv), objOf(uv), objOf(rv), kidDocs, at+".", depth+1)
-			if err != nil {
+		// A value Stripe never returns and reports only through a `<name>_provided` flag is
+		// Sensitive (E3). Today's such arguments are Sensitive by their declarations, so the
+		// table marks only those the gate exposes.
+		f.Sensitive = (cv != nil || uv != nil) && prop(l.raw, name) == nil && b.providedFlag(l.raw, name) &&
+			(near(g.create, at) || near(g.update, at))
+		if nestedShape(base.shape) {
+			kid := level{create: objOf(cv), update: objOf(uv), resp: objOf(rv), raw: b.objectSchema(prop(l.raw, name)), docs: kidDocs,
+				stacks: stacks{push(l.stacks.create, cv), push(l.stacks.update, uv), push(l.stacks.resp, rv)}, restricted: l.restricted}
+			if f.Fields, err = b.object(kid, at+".", depth+1); err != nil {
 				return nil, err
 			}
-			if len(f.Fields) == 0 {
+			if len(f.Fields) == 0 && !(cv != nil && cv.empty || uv != nil && uv.empty) {
 				return nil, fmt.Errorf("%s: object has no fields", at)
 			}
 		}
+		if split != nil {
+			ds, err := b.dataSourceField(name, split, l, at, depth)
+			if err != nil {
+				return nil, err
+			}
+			f.DataSource = &ds
+		}
 		out = append(out, f)
+		if data != nil {
+			out = append(out, *data)
+		}
 	}
 	return out, nil
+}
+
+// reconcile merges a view of another side into base, by the rules that let one attribute hold
+// both, and reports false when none applies.
+func reconcile(base, v *view) bool {
+	switch {
+	case v.shape == base.shape && v.elem == base.elem:
+	// A union of an integer and a string (`up_to` is an integer or `inf`) is a string: the
+	// response's integer decodes into one.
+	case isIntOrString(base, v):
+		base.shape = fields.String
+	// A reference is sent as an ID and returned as the whole object (a product feature's
+	// `entitlement_feature`): the ID is the value, and the decoder takes it from the object.
+	case isStringOrObject(base, v):
+		base.shape, base.obj = fields.String, nil
+	// The same for a list: IDs are sent and the objects returned, as for a subscription's
+	// `tax_rates`. The decoder takes each element's `id`.
+	case isIDListOrObjects(base, v):
+	default:
+		return false
+	}
+	return true
+}
+
+func nestedShape(s fields.Shape) bool {
+	return s == fields.Object || s == fields.ObjectList || s == fields.ObjectMap
+}
+
+// dataSourceField builds the response's form of a field whose request takes another shape.
+func (b *builder) dataSourceField(name string, rv *view, l level, at string, depth int) (fields.Field, error) {
+	f := fields.Field{Name: name, Shape: rv.shape, Elem: rv.elem, Response: true, Description: cleanDescription(rv.desc), Enum: slices.Clone(rv.enum)}
+	if nestedShape(rv.shape) {
+		kid := level{resp: rv.obj, raw: rv.obj, stacks: stacks{resp: push(l.stacks.resp, rv)}, restricted: l.restricted}
+		var err error
+		if f.Fields, err = b.object(kid, at+".", depth+1); err != nil {
+			return f, err
+		}
+		if len(f.Fields) == 0 {
+			return f, fmt.Errorf("%s: object has no fields", at)
+		}
+	}
+	return f, nil
+}
+
+// hashForm builds `<name>_data`, the hash form of a parameter that takes a token or a hash
+// (D3), sent on the wire under `<name>`, Required where the create request requires the
+// parameter. The response's value at `<name>` is read into
+// `<name>` only, so the hash form keeps the configured value. It is built only where the gate
+// verifies a leaf of it, and it fails when `<name>_data` is already a field at that level.
+func (b *builder) hashForm(l level, name, at string, createOnly, required bool, depth int) (*fields.Field, error) {
+	var g gate
+	if b.gate != nil {
+		g = *b.gate
+	}
+	dataAt := at + "_data"
+	ch, uh := tokenHash(b.spec, prop(l.create, name)), tokenHash(b.spec, prop(l.update, name))
+	if !near(g.create, dataAt) {
+		ch = nil
+	}
+	if createOnly || !near(g.update, dataAt) {
+		uh = nil
+	}
+	if ch == nil && uh == nil {
+		return nil, nil
+	}
+	for _, s := range []*Schema{l.create, l.update, l.resp} {
+		if prop(s, name+"_data") != nil {
+			return nil, fmt.Errorf("%s: `%s_data`, the hash form of `%s`, is already a field", dataAt, name, name)
+		}
+	}
+	cv, err := b.classify(ch, dataAt, depth, l.stacks.create)
+	if err != nil {
+		return nil, err
+	}
+	uv, err := b.classify(uh, dataAt, depth, l.stacks.update)
+	if err != nil {
+		return nil, err
+	}
+	// Where the create request requires the parameter, the hash form is marked Required as
+	// the token is; the engine reads the pair as one of the two required.
+	f := fields.Field{Name: name, Attr: name + "_data", Shape: fields.Object, Required: required && cv != nil, Create: cv != nil, Update: uv != nil}
+	for _, v := range []*view{cv, uv} {
+		if v != nil && f.Description == "" {
+			f.Description = cleanDescription(v.desc)
+		}
+	}
+	kid := level{create: objOf(cv), update: objOf(uv), stacks: stacks{create: push(l.stacks.create, cv), update: push(l.stacks.update, uv)}, restricted: true}
+	if f.Fields, err = b.object(kid, dataAt+".", depth+1); err != nil {
+		return nil, err
+	}
+	if len(f.Fields) == 0 {
+		return nil, fmt.Errorf("%s: object has no fields", dataAt)
+	}
+	return &f, nil
+}
+
+// tokenHash returns the hash variant of a request parameter that takes a token (or ID) or a
+// hash, such as an account's `bank_account`, or nil for any other schema. The leaf walk names
+// the same parameters.
+func tokenHash(spec *Spec, sc *Schema) *Schema {
+	sc, err := spec.resolve(sc)
+	if err != nil || sc == nil || len(sc.ExpansionResources) > 0 {
+		return nil
+	}
+	var str, hash int
+	var out *Schema
+	for _, v := range slices.Concat(sc.AnyOf, sc.OneOf) {
+		r, err := spec.resolve(v)
+		if err != nil {
+			return nil
+		}
+		switch {
+		case r.Type == "string" && onlyEmpty(r):
+		case len(v.ExpansionResources) > 0:
+			return nil
+		case r.Type == "string":
+			str++
+		case len(r.Properties) > 0 && len(r.AnyOf)+len(r.OneOf) == 0:
+			hash++
+			out = v
+		default:
+			return nil
+		}
+	}
+	if str == 1 && hash == 1 {
+		return out
+	}
+	return nil
+}
+
+// providedFlag reports whether a response level has `<name>_provided`, a boolean.
+func (b *builder) providedFlag(resp *Schema, name string) bool {
+	sc, err := b.spec.resolve(prop(resp, name+"_provided"))
+	return err == nil && sc != nil && sc.Type == "boolean"
+}
+
+// objectSchema returns the hash a schema holds, through references, a union with one hash,
+// an array, a map or a list envelope, or nil. It reads the response's schema where the trims
+// leave nothing to classify.
+func (b *builder) objectSchema(sc *Schema) *Schema {
+	for hops := 0; sc != nil && hops < 16; hops++ {
+		r, err := b.spec.resolve(sc)
+		if err != nil || r == nil {
+			return nil
+		}
+		switch {
+		case len(r.AnyOf)+len(r.OneOf) > 0:
+			var hashes []*Schema
+			for _, v := range slices.Concat(r.AnyOf, r.OneOf) {
+				if h, err := b.spec.resolve(v); err == nil && h != nil && h.Type != "string" {
+					hashes = append(hashes, v)
+				}
+			}
+			if len(hashes) != 1 {
+				return nil
+			}
+			sc = hashes[0]
+		case r.Type == "array":
+			sc = r.Items
+		case len(r.Properties) > 0:
+			if data := prop(r, "data"); data != nil && slices.Contains(enumStrings(b.deref(prop(r, "object"))), "list") {
+				sc = data
+				continue
+			}
+			return r
+		case r.AdditionalProperties != nil && r.AdditionalProperties.Schema != nil:
+			sc = r.AdditionalProperties.Schema
+		default:
+			return nil
+		}
+	}
+	return nil
+}
+
+// deref resolves a schema, or returns an empty one.
+func (b *builder) deref(sc *Schema) *Schema {
+	r, err := b.spec.resolve(sc)
+	if err != nil || r == nil {
+		return &Schema{}
+	}
+	return r
 }
 
 // emptyObject reports a schema of an object that names no keys and no value schema.
@@ -505,7 +744,7 @@ func (b *builder) emptyObject(sc *Schema) bool {
 		return false
 	}
 	sc, err := b.spec.resolve(sc)
-	if err != nil || len(sc.AnyOf)+len(sc.OneOf)+len(sc.AllOf) > 0 {
+	if err != nil || len(sc.AnyOf)+len(sc.OneOf)+len(sc.AllOf)+len(sc.mergeOf) > 0 {
 		return false
 	}
 	return (sc.Type == "object" || sc.Type == "") && len(sc.Properties) == 0 && (sc.AdditionalProperties == nil || sc.AdditionalProperties.Schema == nil)
@@ -520,33 +759,52 @@ func objOf(v *view) *Schema {
 
 // classify maps a schema to a shape. It returns nil for a nil schema and for a schema that
 // only admits the empty string (Stripe's way of unsetting a field), which is not a field
-// value.
-func (b *builder) classify(sc *Schema, where string, depth int) (*view, error) {
+// value. stack holds the component schemas on the path: a schema met again on it is the
+// recursion cut (D3), held as the repeat's `id` where it has one and left out otherwise.
+func (b *builder) classify(sc *Schema, where string, depth int, stack []string) (*view, error) {
 	if sc == nil {
 		return nil, nil
 	}
 	if depth > maxDepth {
 		return nil, fmt.Errorf("%s: nesting deeper than %d levels", where, maxDepth)
 	}
-	sc, err := b.spec.resolve(sc)
-	if err != nil {
-		return nil, fmt.Errorf("%s: %w", where, err)
+	if len(sc.mergeOf) > 0 {
+		return b.classifyMerged(sc, where, depth, stack)
 	}
+	var refs []string
+	desc := sc.Description
+	for sc.Ref != "" {
+		name, ok := strings.CutPrefix(sc.Ref, refPrefix)
+		target := b.spec.Components.Schemas[name]
+		if !ok || target == nil || len(refs) > 16 {
+			return nil, fmt.Errorf("%s: unsupported reference %q", where, sc.Ref)
+		}
+		if slices.Contains(stack, name) || slices.Contains(refs, name) {
+			return recursionCut(target, desc), nil
+		}
+		refs = append(refs, name)
+		sc = target
+		if desc == "" {
+			desc = sc.Description
+		}
+	}
+	stack = append(slices.Clone(stack), refs...)
 
 	variants := slices.Concat(sc.AnyOf, sc.OneOf, sc.AllOf)
 	if len(variants) > 0 {
-		v, err := b.classifyVariants(variants, where, depth)
+		v, err := b.classifyVariants(variants, where, depth, stack)
 		if err != nil || v == nil {
 			return nil, err
 		}
 		v.nullable = v.nullable || sc.Nullable
-		if sc.Description != "" {
-			v.desc = sc.Description
+		if desc != "" {
+			v.desc = desc
 		}
+		v.refs = append(refs, v.refs...)
 		return v, nil
 	}
 
-	v := &view{nullable: sc.Nullable, desc: sc.Description}
+	v := &view{nullable: sc.Nullable, desc: desc, refs: refs}
 	switch sc.Type {
 	case "string":
 		v.shape = fields.String
@@ -561,7 +819,7 @@ func (b *builder) classify(sc *Schema, where string, depth int) (*view, error) {
 	case "boolean":
 		v.shape = fields.Bool
 	case "array":
-		item, err := b.classify(sc.Items, where+"[]", depth)
+		item, err := b.classify(sc.Items, where+"[]", depth, stack)
 		if err != nil {
 			return nil, err
 		}
@@ -571,7 +829,8 @@ func (b *builder) classify(sc *Schema, where string, depth int) (*view, error) {
 		case item.scalar():
 			v.shape, v.elem = fields.ScalarList, item.shape
 		case item.shape == fields.Object:
-			v.shape, v.obj = fields.ObjectList, item.obj
+			v.shape, v.obj, v.empty = fields.ObjectList, item.obj, item.empty
+			v.refs = append(v.refs, item.refs...)
 		default:
 			return nil, fmt.Errorf("%s: arrays of this item shape are not supported", where)
 		}
@@ -580,7 +839,7 @@ func (b *builder) classify(sc *Schema, where string, depth int) (*view, error) {
 		case len(sc.Properties) > 0:
 			v.shape, v.obj = fields.Object, sc
 		case sc.AdditionalProperties != nil && sc.AdditionalProperties.Schema != nil:
-			value, err := b.classify(sc.AdditionalProperties.Schema, where+"{}", depth)
+			value, err := b.classify(sc.AdditionalProperties.Schema, where+"{}", depth, stack)
 			if err != nil {
 				return nil, err
 			}
@@ -593,11 +852,13 @@ func (b *builder) classify(sc *Schema, where string, depth int) (*view, error) {
 				v.shape = fields.IntMap
 			case value.shape == fields.Object:
 				v.shape, v.obj = fields.ObjectMap, value.obj
+				v.refs = append(v.refs, value.refs...)
 			default:
 				return nil, fmt.Errorf("%s: maps of this value shape are not supported", where)
 			}
 		default:
-			return nil, fmt.Errorf("%s: object with neither properties nor a value schema", where)
+			// A hash with no members selects an option with Stripe's defaults (D3).
+			v.shape, v.obj, v.empty = fields.Object, sc, true
 		}
 	default:
 		return nil, fmt.Errorf("%s: unsupported schema type %q", where, sc.Type)
@@ -605,10 +866,23 @@ func (b *builder) classify(sc *Schema, where string, depth int) (*view, error) {
 	return v, nil
 }
 
+// recursionCut is the view of a schema met again on its own path: the repeat's ID, or nothing
+// where the schema has no `id`.
+func recursionCut(target *Schema, desc string) *view {
+	if prop(target, "id") == nil {
+		return nil
+	}
+	if desc == "" {
+		desc = target.Description
+	}
+	return &view{shape: fields.String, desc: desc}
+}
+
 // classifyVariants picks the representation of an anyOf or oneOf. A real string variant
 // wins, which covers expandable references (the ID is the value, ADR D2) and fields that
-// take either a number or a word. Otherwise the single remaining variant is used.
-func (b *builder) classifyVariants(variants []*Schema, where string, depth int) (*view, error) {
+// take either a number or a word. A single remaining variant is used as it is, and several
+// become one object holding every variant's members, merged by name (D3).
+func (b *builder) classifyVariants(variants []*Schema, where string, depth int, stack []string) (*view, error) {
 	var rest []*Schema
 	var str *Schema
 	strings := 0
@@ -629,15 +903,87 @@ func (b *builder) classifyVariants(variants []*Schema, where string, depth int) 
 	}
 	switch {
 	case str != nil && len(rest) == 0 && strings == 1:
-		return b.classify(str, where, depth)
+		return b.classify(str, where, depth, stack)
 	case str != nil:
 		return &view{shape: fields.String, nullable: str.Nullable, desc: str.Description}, nil
 	case len(rest) == 0:
 		return nil, nil
 	case len(rest) == 1:
-		return b.classify(rest[0], where, depth)
+		return b.classify(rest[0], where, depth, stack)
 	}
-	return nil, fmt.Errorf("%s: %d alternative schemas without a string form are not supported", where, len(rest))
+	return b.classify(&Schema{mergeOf: rest}, where, depth, stack)
+}
+
+// classifyMerged classifies a union of several schemas as one: each must have the same shape,
+// and the members of hashes are merged by name, so that a name two variants give different
+// shapes fails, naming it. A hash with no members adds nothing; the merged hash requires a
+// member only where every variant does, and a merged string takes every variant's values.
+func (b *builder) classifyMerged(sc *Schema, where string, depth int, stack []string) (*view, error) {
+	var views []*view
+	for _, m := range sc.mergeOf {
+		v, err := b.classify(m, where, depth, stack)
+		if err != nil {
+			return nil, err
+		}
+		if v != nil && !(v.empty && v.shape == fields.Object && len(sc.mergeOf) > 1) {
+			views = append(views, v)
+		}
+	}
+	if len(views) == 0 {
+		return nil, nil
+	}
+	out := *views[0]
+	out.enum = slices.Clone(out.enum)
+	for _, v := range views[1:] {
+		switch {
+		case v.shape == out.shape && v.elem == out.elem:
+		// The integer-or-string rule stays: a member one variant gives as an integer and
+		// another as a word is a string.
+		case isIntOrString(&out, v):
+			out.shape = fields.String
+		default:
+			return nil, fmt.Errorf("%s: the variants of a union give it different shapes (%d/%d against %d/%d); add a declaration override or a register entry", where, out.shape, out.elem, v.shape, v.elem)
+		}
+		out.nullable = out.nullable || v.nullable
+		out.refs = append(out.refs, v.refs...)
+		if out.desc == "" {
+			out.desc = v.desc
+		}
+		for _, e := range v.enum {
+			if !slices.Contains(out.enum, e) {
+				out.enum = append(out.enum, e)
+			}
+		}
+	}
+	if !nestedShape(out.shape) {
+		return &out, nil
+	}
+	merged := &Schema{Type: "object", Properties: map[string]*Schema{}}
+	required := map[string]int{}
+	for _, v := range views {
+		for _, r := range v.obj.Required {
+			required[r]++
+		}
+		for name, p := range v.obj.Properties {
+			switch prev := merged.Properties[name]; {
+			case prev == nil:
+				merged.Properties[name] = p
+			case prev == p:
+			case len(prev.mergeOf) > 0:
+				prev.mergeOf = append(prev.mergeOf, p)
+			default:
+				merged.Properties[name] = &Schema{mergeOf: []*Schema{prev, p}}
+			}
+		}
+	}
+	for _, name := range sortedNames(merged.Properties) {
+		if required[name] == len(views) {
+			merged.Required = append(merged.Required, name)
+		}
+	}
+	out.obj = merged
+	out.empty = len(merged.Properties) == 0
+	return &out, nil
 }
 
 func enumStrings(sc *Schema) []string {
@@ -663,7 +1009,7 @@ func onlyEmpty(sc *Schema) bool {
 // `data` is an array, into the
 // list inside it when the request sends a list of objects, as a subscription does for its
 // `items`. The fields of an element are then merged with the request's.
-func (b *builder) unwrapList(rv, cv, uv *view, where string, depth int) (*view, error) {
+func (b *builder) unwrapList(rv, cv, uv *view, where string, depth int, stack []string) (*view, error) {
 	isList := func(v *view) bool { return v != nil && v.shape == fields.ObjectList }
 	if rv == nil || rv.shape != fields.Object || rv.obj == nil || !(isList(cv) || isList(uv)) {
 		return rv, nil
@@ -673,7 +1019,7 @@ func (b *builder) unwrapList(rv, cv, uv *view, where string, depth int) (*view, 
 	if data == nil || kind == nil || !slices.Contains(enumStrings(kind), "list") {
 		return rv, nil
 	}
-	inner, err := b.classify(data, where+".data", depth+1)
+	inner, err := b.classify(data, where+".data", depth+1, push(stack, rv))
 	if err != nil {
 		return nil, err
 	}
@@ -695,11 +1041,11 @@ func isIntOrString(a, b *view) bool {
 	return plain(a, fields.Int) && plain(b, fields.String) || plain(a, fields.String) && plain(b, fields.Int)
 }
 
-// isStringOrObject reports whether one view is a plain string and the other an object.
-func isStringOrObject(a, b *view) bool {
-	str := func(v *view) bool { return v.shape == fields.String && v.elem == 0 }
-	obj := func(v *view) bool { return v.shape == fields.Object }
-	return str(a) && obj(b) || obj(a) && str(b)
+// isStringOrObject reports whether the request's view is a plain string and the response's an
+// object: an ID sent and the object returned. A hash sent and a string returned is no such
+// reference; it splits between the resource and the data source.
+func isStringOrObject(request, response *view) bool {
+	return request.shape == fields.String && request.elem == 0 && response.shape == fields.Object
 }
 
 var (

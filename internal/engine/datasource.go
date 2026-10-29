@@ -19,7 +19,7 @@ import (
 // NewDataSource compiles the declaration against its table and returns the data source
 // constructor the provider registers.
 func NewDataSource(decl Declaration, table []fields.Field) (func() datasource.DataSource, error) {
-	m, err := compile(decl, table)
+	m, err := compile(decl, fields.ForDataSource(table))
 	if err != nil {
 		return nil, err
 	}
@@ -359,6 +359,9 @@ func (d *DataSource) findBy(ctx context.Context, config basetypes.ObjectValue, p
 			continue
 		}
 		params = append(params, wire.Field{Name: p.Name, Value: value})
+		if err := d.m.refuseEmptyObjects([]*node{n}, params[len(params)-1:], opLookup); err != nil {
+			return nil, err
+		}
 		labels = appendLabels(labels, p.Name, value)
 	}
 	label := strings.Join(labels, ", ")

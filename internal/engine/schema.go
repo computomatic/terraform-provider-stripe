@@ -21,6 +21,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/setplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 
 	"github.com/computomatic/terraform-provider-stripe/internal/fields"
@@ -247,12 +248,19 @@ func (m *model) resourceAttribute(n *node) rschema.Attribute {
 				}, replaceIfSetDescription, replaceIfSetDescription)
 			})}
 	case fields.Object:
-		return rschema.SingleNestedAttribute{Required: n.Required, Optional: n.Optional, Computed: n.Computed, Sensitive: n.Sensitive, MarkdownDescription: desc,
+		a := rschema.SingleNestedAttribute{Required: n.Required, Optional: n.Optional, Computed: n.Computed, Sensitive: n.Sensitive, MarkdownDescription: desc,
 			Attributes:    m.resourceAttributes(n.Kids),
 			PlanModifiers: planMods(n, m.refuseObject, objectplanmodifier.UseStateForUnknown, objectplanmodifier.RequiresReplace)}
+		if n.TokenForm != "" {
+			a.Validators = append(a.Validators, oneForm{token: n.TokenForm, hash: n.AttrName()})
+		}
+		if !m.v2 && n.Writable() && !n.computedOnly() {
+			a.Validators = append(a.Validators, emptyObjectValidator(n.Kids, false))
+		}
+		return a
 	case fields.ObjectList:
 		return rschema.ListNestedAttribute{Required: n.Required, Optional: n.Optional, Computed: n.Computed, Sensitive: n.Sensitive, MarkdownDescription: desc,
-			NestedObject:  rschema.NestedAttributeObject{Attributes: m.resourceAttributes(n.Kids)},
+			NestedObject:  rschema.NestedAttributeObject{Attributes: m.resourceAttributes(n.Kids), Validators: m.elementValidators(n)},
 			PlanModifiers: planMods(n, m.refuseList, listplanmodifier.UseStateForUnknown, listplanmodifier.RequiresReplace)}
 	case fields.ObjectMap:
 		return rschema.MapNestedAttribute{Required: n.Required, Optional: n.Optional, Computed: n.Computed, Sensitive: n.Sensitive, MarkdownDescription: desc,
@@ -271,7 +279,11 @@ func (m *model) resourceAttribute(n *node) rschema.Attribute {
 		return rschema.SetAttribute{ElementType: scalarType(n.Elem), Required: n.Required, Optional: n.Optional, Computed: n.Computed, Sensitive: n.Sensitive, MarkdownDescription: desc,
 			PlanModifiers: planMods(n, m.refuseSet, setplanmodifier.UseStateForUnknown, setplanmodifier.RequiresReplace)}
 	default:
-		mods := planMods(n, m.refuseString, stringplanmodifier.UseStateForUnknown, stringplanmodifier.RequiresReplace, func() planmodifier.String {
+		useState := stringplanmodifier.UseStateForUnknown
+		if n.DataForm != "" {
+			useState = func() planmodifier.String { return keepToken{hash: n.DataForm} }
+		}
+		mods := planMods(n, m.refuseString, useState, stringplanmodifier.RequiresReplace, func() planmodifier.String {
 			return stringplanmodifier.RequiresReplaceIf(func(_ context.Context, req planmodifier.StringRequest, resp *stringplanmodifier.RequiresReplaceIfFuncResponse) {
 				resp.RequiresReplace = changedByConfig(req.ConfigValue, req.StateValue)
 			}, replaceIfSetDescription, replaceIfSetDescription)
@@ -281,8 +293,12 @@ func (m *model) resourceAttribute(n *node) rschema.Attribute {
 				resp.RequiresReplace = changedFromFixed(req.ConfigValue, req.StateValue, from)
 			}, replaceFixedDescription, replaceFixedDescription)))
 		}
-		return rschema.StringAttribute{Required: n.Required, Optional: n.Optional, Computed: n.Computed, Sensitive: n.Sensitive, MarkdownDescription: desc,
+		a := rschema.StringAttribute{Required: n.Required, Optional: n.Optional, Computed: n.Computed, Sensitive: n.Sensitive, MarkdownDescription: desc,
 			PlanModifiers: mods}
+		if n.OneRequired {
+			a.Validators = []validator.String{requireOneForm{token: n.AttrName(), hash: n.DataForm}}
+		}
+		return a
 	}
 }
 
@@ -293,6 +309,15 @@ func changedFromFixed(config, state basetypes.StringValue, from string) bool {
 }
 
 const replaceFixedDescription = "Changing a value Stripe has fixed replaces the resource."
+
+// elementValidators refuses, on /v1, a list element whose configuration would encode to
+// nothing.
+func (m *model) elementValidators(n *node) []validator.Object {
+	if m.v2 || !n.Writable() || n.computedOnly() {
+		return nil
+	}
+	return []validator.Object{emptyObjectValidator(n.Kids, false)}
+}
 
 func (m *model) resourceAttributes(kids []*node) map[string]rschema.Attribute {
 	attrs := make(map[string]rschema.Attribute, len(kids))
@@ -332,7 +357,7 @@ func (m *model) dataSourceSchema() dschema.Schema {
 			a = dschema.StringAttribute{Optional: true, Computed: true, MarkdownDescription: desc}
 		}
 		if m.findParam(n.Name) {
-			a = findAttribute(n)
+			a = findAttribute(n, !m.v2)
 		}
 		if p, ok := m.listParam(n.Name); ok {
 			a = dschema.StringAttribute{Optional: true, Computed: true, MarkdownDescription: p.Description}
@@ -403,8 +428,9 @@ func dataSourceAttribute(n *node) dschema.Attribute {
 }
 
 // findAttribute is the Required attribute of a find parameter that names a field. The fields
-// of an object are Optional, because Stripe, not the schema, says which it needs.
-func findAttribute(n *node) dschema.Attribute {
+// of an object are Optional, because Stripe, not the schema, says which it needs; on /v1 an
+// object with none set is refused, as it would be sent empty.
+func findAttribute(n *node, v1 bool) dschema.Attribute {
 	desc := describe(n)
 	switch n.Shape {
 	case fields.Int:
@@ -418,7 +444,11 @@ func findAttribute(n *node) dschema.Attribute {
 				kids[k.AttrName()] = dschema.StringAttribute{Optional: true, MarkdownDescription: describe(k)}
 			}
 		}
-		return dschema.SingleNestedAttribute{Required: true, MarkdownDescription: desc, Attributes: kids}
+		a := dschema.SingleNestedAttribute{Required: true, MarkdownDescription: desc, Attributes: kids}
+		if v1 {
+			a.Validators = []validator.Object{emptyObjectValidator(n.Kids, true)}
+		}
+		return a
 	default:
 		return dschema.StringAttribute{Required: true, MarkdownDescription: desc}
 	}

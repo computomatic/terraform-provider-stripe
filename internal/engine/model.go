@@ -21,7 +21,9 @@ import (
 // node is a table field with every decision of the D2 rules resolved.
 type node struct {
 	fields.Field
-	// Path is the dotted Stripe field path.
+	// Path is the dotted Stripe field path, which declaration entries name. The hash form of a
+	// token-or-hash parameter, which shares the token's Stripe name, is named by its attribute
+	// name, `<name>_data`, and so is everything below it, so that an entry names one form.
 	Path string
 	Kids []*node
 
@@ -49,6 +51,14 @@ type node struct {
 	// from the state's, and never for an unknown one: a create-only value Stripe fills in for
 	// a list element.
 	ReplaceIfSet bool
+	// IsHashForm marks the hash form of a token-or-hash parameter (`<name>_data`).
+	IsHashForm bool
+	// TokenForm is, on the hash form, the attribute name of its token form, and DataForm, on the
+	// token form, the attribute name of its hash form: a configuration sets at most one of the
+	// two, and exactly one where OneRequired is set, because the create request requires the
+	// parameter.
+	TokenForm, DataForm string
+	OneRequired         bool
 	// Fixed is a field of an element of a FixedKeys list that Stripe cannot change in place.
 	// The plan check replaces the resource when it changes, element by element, so a
 	// reorder does not.
@@ -678,7 +688,11 @@ func (c *compiler) unused() error {
 func (c *compiler) build(table []fields.Field, prefix string, top, parentOutput, parentReplace, inList, inFixed bool) ([]*node, error) {
 	var out []*node
 	for _, f := range table {
+		hashForm := f.HashForm()
 		path := prefix + f.Name
+		if hashForm {
+			path = prefix + f.AttrName()
+		}
 		if attrName, ok := c.decl.Rename[path]; ok {
 			f.Attr = attrName
 			c.used["rename/"+path] = true
@@ -689,7 +703,7 @@ func (c *compiler) build(table []fields.Field, prefix string, top, parentOutput,
 			}
 			f.Shape = fields.ScalarSet
 		}
-		n := &node{Field: f, Path: path}
+		n := &node{Field: f, Path: path, IsHashForm: hashForm}
 		if v, ok := c.decl.NullAs[path]; ok {
 			if f.Shape != fields.String {
 				return nil, fmt.Errorf("null_as entry `%s` is not a string field", path)
@@ -699,7 +713,7 @@ func (c *compiler) build(table []fields.Field, prefix string, top, parentOutput,
 		}
 
 		once := c.mark("once_returned", c.once, path)
-		n.Sensitive = c.mark("sensitive", c.sensitive, path) || once
+		n.Sensitive = c.mark("sensitive", c.sensitive, path) || once || f.Sensitive
 		n.Preserve = c.mark("preserve_config", c.preserve, path)
 		n.KeepOmitted = c.mark("keep_omitted", c.keepOmitted, path)
 		notDefaulted := c.mark("not_server_defaulted", c.unDefaulted, path)
@@ -766,6 +780,38 @@ func (c *compiler) build(table []fields.Field, prefix string, top, parentOutput,
 			n.Kids = kids
 		}
 		out = append(out, n)
+	}
+	for _, hash := range out {
+		if !hash.IsHashForm {
+			continue
+		}
+		for _, token := range out {
+			if token.IsHashForm || token.Name != hash.Name {
+				continue
+			}
+			hash.TokenForm, token.DataForm = token.AttrName(), hash.AttrName()
+			// A required parameter takes either form, so neither attribute is Required.
+			if token.Required || hash.Required {
+				token.Required, hash.Required = false, false
+				token.Optional, hash.Optional = true, true
+				token.OneRequired, hash.OneRequired = true, true
+			}
+			// A token the response returns is filled in when the hash form creates it. Outside a
+			// list it keeps its state value while neither form changes. Inside a list element the
+			// state's element at the same index may be another object after an insert or a
+			// reorder, so the token is unknown on a change, as any value Stripe fills in for a list
+			// element is, and a create-only one replaces only when the configuration sets another
+			// value, so an unknown token never plans a replacement. Under a field that forces
+			// replacement it keeps its state value too: there nothing changes in place, so a
+			// change of the hash form changes that field and replaces the resource, and the
+			// replacement plans the token afresh with no state.
+			if token.Response && !token.computedOnly() {
+				token.Computed, token.UseState = true, !inList || parentReplace
+				if inList && token.Replace {
+					token.Replace, token.ReplaceIfSet = false, true
+				}
+			}
+		}
 	}
 	return out, nil
 }

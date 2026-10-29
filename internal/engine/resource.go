@@ -131,6 +131,16 @@ func (r *Resource) ModifyPlan(ctx context.Context, req resource.ModifyPlanReques
 	if resp.Diagnostics.HasError() || req.Plan.Raw.IsNull() {
 		return
 	}
+	if req.State.Raw.IsNull() && !r.m.v2 {
+		var plan basetypes.ObjectValue
+		if diags := resp.Plan.Get(ctx, &plan); diags.HasError() {
+			resp.Diagnostics.Append(diags...)
+			return
+		}
+		if r.m.emptyOnCreate(r.m.nodes, plan.Attributes(), path.Empty(), true, &resp.Diagnostics); resp.Diagnostics.HasError() {
+			return
+		}
+	}
 	if req.State.Raw.IsNull() || !resp.Plan.Raw.Equal(req.State.Raw) {
 		r.refuseLiveMoney(ctx, &resp.Diagnostics)
 	}

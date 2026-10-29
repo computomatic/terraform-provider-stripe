@@ -4,9 +4,14 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
+	"go/ast"
+	"go/parser"
+	"go/token"
 	"os"
 	"path/filepath"
 	"reflect"
+	"slices"
+	"strconv"
 	"strings"
 	"testing"
 
@@ -33,7 +38,8 @@ func coverageSpec(t *testing.T) *Spec {
 // gadget is the fixture table: `confirm`, which `status` does, and a `payment` union and a
 // `parent` recursion, which the generator cannot hold yet, are omitted.
 func gadget() Resource {
-	return Resource{Package: "gadget", CreatePath: "/v1/gadgets", UpdatePath: "/v1/gadgets/{id}", StatusConfirms: true, Omit: []string{"confirm", "payment", "parent"}}
+	return Resource{Package: "gadget", CreatePath: "/v1/gadgets", UpdatePath: "/v1/gadgets/{id}", StatusConfirms: true, Omit: []string{"confirm", "payment", "parent"},
+		PagedLists: map[string]string{"parts": "stripe_gadget"}}
 }
 
 func cover(t *testing.T, res Resource, ev *Pinned) *tableCoverage {
@@ -87,7 +93,7 @@ func TestCoverageWalkKeysRulesAndStates(t *testing.T) {
 		"response/gadget/parts":                          {StateExposed, "", "paged_list", false},
 		"response/gadget/extras":                         {StateExposed, RulePagedList, "paged_list", false},
 		"response/gadget/marker":                         {StateExcluded, RuleTypeMarker, "empty_hash", false},
-		"response/gadget/parent":                         {StateExcluded, RuleRecursion, "recursion", false},
+		"response/gadget/parent":                         {StateAwaiting, "", "recursion", false},
 		"response/gadget/payment.brand@card":             {StateAwaiting, "", "string", false},
 		"response/gadget/payment.bank_name@bank_account": {StateAwaiting, "", "string", false},
 		"response/gadget/options.amount":                 {StateExposed, "", "integer", false},
@@ -116,7 +122,13 @@ func TestCoverageWalkKeysRulesAndStates(t *testing.T) {
 // classes given.
 func pinned(t *testing.T, res Resource, set map[string]string) *Pinned {
 	t.Helper()
-	_, leaves, err := walkTable(coverageSpec(t), res)
+	return pinnedIn(t, coverageSpec(t), res, set)
+}
+
+// pinnedIn is pinned for a table of another fixture spec.
+func pinnedIn(t *testing.T, spec *Spec, res Resource, set map[string]string) *Pinned {
+	t.Helper()
+	_, leaves, err := walkTable(spec, res)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -169,11 +181,11 @@ func TestGateExposesAVerifiedLeaf(t *testing.T) {
 		"request/PostGadgetsId/settings.limit": ClassVerified,
 		"response/gadget/owner.verified":       ClassVerified,
 	}))
-	h := index(tc.table)
+	h := index(tc.table).request
 	check := func(path string, want held) {
 		t.Helper()
 		got := h[path]
-		got.nested = false
+		got.nested, got.shape = false, 0
 		if got != want {
 			t.Errorf("%s: %+v, want %+v", path, got, want)
 		}
@@ -207,7 +219,7 @@ func TestGateExposesNoOtherClass(t *testing.T) {
 			continue
 		}
 		tc := cover(t, res, pinned(t, res, map[string]string{"request/PostGadgets/color": class}))
-		if _, ok := index(tc.table)["color"]; ok {
+		if _, ok := index(tc.table).request["color"]; ok {
 			t.Errorf("%s: color is in the table", class)
 		}
 		if r := byKey(tc)["request/PostGadgets/color"]; r.State != StateAwaiting || r.Class != class {
@@ -226,12 +238,13 @@ func TestGateLeavesAnExcludedLeafOut(t *testing.T) {
 	}
 }
 
-// A verified leaf that the table cannot hold, such as the hash form of a string-or-hash
-// parameter before Step 2, fails generation, naming it.
+// A verified leaf that the table cannot hold, such as the token form of a hash the table
+// spreads into its top level, fails generation, naming it.
 func TestGateFailsOnAVerifiedLeafTheTableCannotHold(t *testing.T) {
 	res := gadget()
-	_, err := coverTable(coverageSpec(t), res, pinned(t, res, map[string]string{"request/PostGadgets/source.cvc@object": ClassVerified}))
-	if err == nil || !strings.Contains(err.Error(), "source.cvc@object") {
+	res.CreateHash = "source"
+	_, err := coverTable(coverageSpec(t), res, pinned(t, res, map[string]string{"request/PostGadgets/source@string": ClassVerified}))
+	if err == nil || !strings.Contains(err.Error(), "request/PostGadgets/source@string is verified, but the generator cannot hold it") {
 		t.Errorf("err = %v, want it to name the leaf", err)
 	}
 }
@@ -384,7 +397,9 @@ func fixtureEvidence(t *testing.T) (*Attributes, *Evidence) {
 	sum := sha256.Sum256(must(os.ReadFile(filepath.Join("testdata", coverageSpecFile))))
 	a := pinned(t, trimmed(), map[string]string{"request/PostGadgets/color": ClassVerified}).Attributes
 	a.FakeVersion, a.SuiteRef, a.RunID, a.APIVersion, a.SpecSHA256 = "v9.9.9", "abc123", 42, "2000-01-01.fixture", hex.EncodeToString(sum[:])
-	e := &Evidence{FormatVersion: 1, SuiteCommit: "abc123", APIVersion: a.APIVersion, SpecSHA256: a.SpecSHA256}
+	e := &Evidence{FormatVersion: 1, SuiteCommit: "abc123", APIVersion: a.APIVersion, SpecSHA256: a.SpecSHA256,
+		Leaves: []EvidenceLeaf{{Key: Key{Object: "gadget", Side: SideRequest, Operation: "PostGadgets", Path: "color"}, Status: "proven", Targets: []string{"fake", "stripe"},
+			Tests: []string{"TestGadgetAttributes/leaves/request/PostGadgets/color"}}}}
 	e.StripeRun.ID = 42
 	return a, e
 }
@@ -455,6 +470,16 @@ func TestGenerateRefusesMismatchedEvidence(t *testing.T) {
 		{"attributes of another fake", func(a *Attributes, _ *Evidence) { a.FakeVersion = "v9.9.8" }, "spec/attributes.json is from fake v9.9.8"},
 		{"another evidence format", func(_ *Attributes, e *Evidence) { e.FormatVersion = 2 }, "format version 2"},
 		{"an unknown class", func(a *Attributes, _ *Evidence) { a.Leaves[0].Class = "proven" }, `unknown class "proven"`},
+		{"a duplicate key in attributes.json", func(a *Attributes, _ *Evidence) {
+			a.Leaves = append(a.Leaves, AttributeLeaf{Key: Key{Object: "gadget", Side: SideRequest, Operation: "PostGadgets", Path: "color"}, Class: ClassUnproven})
+		}, "spec/attributes.json lists request/PostGadgets/color twice"},
+		{"a duplicate key in the evidence", func(_ *Attributes, e *Evidence) { e.Leaves = append(e.Leaves, e.Leaves[0]) }, "spec/evidence.json lists request/PostGadgets/color twice"},
+		{"a verified leaf the evidence does not prove", func(_ *Attributes, e *Evidence) { e.Leaves[0].Status = "failed" }, "spec/attributes.json verifies leaves that spec/evidence.json does not prove: request/PostGadgets/color"},
+		{"a verified leaf the evidence lacks", func(_ *Attributes, e *Evidence) { e.Leaves = nil }, "does not prove: request/PostGadgets/color"},
+		{"attributes with no suite commit", func(a *Attributes, _ *Evidence) { a.SuiteRef = "" }, `spec/attributes.json names no suite run (suite commit "", run 42)`},
+		{"attributes with no run", func(a *Attributes, _ *Evidence) { a.RunID = 0 }, `spec/attributes.json names no suite run (suite commit "abc123", run 0)`},
+		{"evidence with no suite commit", func(_ *Attributes, e *Evidence) { e.SuiteCommit = " " }, `spec/evidence.json names no suite run`},
+		{"evidence with no run", func(_ *Attributes, e *Evidence) { e.StripeRun.ID = 0 }, `spec/evidence.json names no suite run (suite commit "abc123", run 0)`},
 	} {
 		a, e := fixtureEvidence(t)
 		tc.edit(a, e)
@@ -477,6 +502,25 @@ func TestGenerateRefusesMismatchedEvidence(t *testing.T) {
 	}
 	if _, err := Generate(root, []Resource{trimmed()}); err == nil || !strings.Contains(err.Error(), ".fake-version is v9.9.10") {
 		t.Errorf("a pin for another fake release: err = %v", err)
+	}
+
+	for name, edit := range map[string]func(*EvidencePin){
+		`spec/EVIDENCE_PIN.json names no suite run (suite commit "", run 42)`:      func(p *EvidencePin) { p.SuiteRef = "" },
+		`spec/EVIDENCE_PIN.json names no suite run (suite commit "abc123", run 0)`: func(p *EvidencePin) { p.RunID = 0 },
+	} {
+		root := fixtureRoot(t, a, e)
+		path := filepath.Join(root, "spec", "EVIDENCE_PIN.json")
+		var pin EvidencePin
+		if err := json.Unmarshal(must(os.ReadFile(path)), &pin); err != nil {
+			t.Fatal(err)
+		}
+		edit(&pin)
+		if err := os.WriteFile(path, must(json.Marshal(pin)), 0o644); err != nil {
+			t.Fatal(err)
+		}
+		if _, err := Generate(root, []Resource{trimmed()}); err == nil || !strings.Contains(err.Error(), name) {
+			t.Errorf("err = %v, want %q", err, name)
+		}
 	}
 }
 
@@ -520,4 +564,79 @@ func TestStatusConfirmsFollowsTheDeclarations(t *testing.T) {
 			t.Errorf("%s: StatusConfirms is %v, but its declaration's status transition confirms: %v", res.Package, res.StatusConfirms, confirms)
 		}
 	}
+}
+
+// Every table whose own response repeats the parent ID that the engine adds as the
+// declaration's Parent attribute excludes that copy in the register: by the parent's name, or
+// for a parent `<name>_id`, by `<name>`.
+func TestEveryParentCopyHasItsRegisterEntry(t *testing.T) {
+	data, err := os.ReadFile(filepath.Join(repoRoot, "spec", "openapi.json"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	spec, err := ParseSpec(data)
+	if err != nil {
+		t.Fatal(err)
+	}
+	parents := declaredParents(t)
+	if len(parents) == 0 {
+		t.Fatal("no declaration has a parent: the source scan is broken")
+	}
+	for _, res := range Resources {
+		parent, ok := parents[res.Package]
+		if !ok {
+			continue
+		}
+		delete(parents, res.Package)
+		_, leaves, err := walkTable(spec, res)
+		if err != nil {
+			t.Fatal(err)
+		}
+		for _, name := range []string{parent, strings.TrimSuffix(parent, "_id")} {
+			copied := slices.ContainsFunc(leaves, func(l Leaf) bool { return l.Side == SideResponse && l.Path == name })
+			if copied && res.Exclude[name] != parentHolds {
+				t.Errorf("%s: its response's `%s` is the parent `%s`; add the register entry %q", res.Package, name, parent, parentHolds)
+			}
+		}
+	}
+	for pkg := range parents {
+		t.Errorf("internal/resources/%s declares a parent but has no table", pkg)
+	}
+}
+
+// declaredParents reads the Parent of every declaration under internal/resources, by package.
+func declaredParents(t *testing.T) map[string]string {
+	t.Helper()
+	files, err := filepath.Glob(filepath.Join(repoRoot, "internal", "resources", "*", "*.go"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	out := map[string]string{}
+	fset := token.NewFileSet()
+	for _, path := range files {
+		if strings.HasSuffix(path, "_test.go") {
+			continue
+		}
+		f, err := parser.ParseFile(fset, path, nil, 0)
+		if err != nil {
+			t.Fatal(err)
+		}
+		ast.Inspect(f, func(n ast.Node) bool {
+			kv, ok := n.(*ast.KeyValueExpr)
+			if !ok {
+				return true
+			}
+			key, isIdent := kv.Key.(*ast.Ident)
+			value, isLit := kv.Value.(*ast.BasicLit)
+			if isIdent && isLit && key.Name == "Parent" && value.Kind == token.STRING {
+				parent, err := strconv.Unquote(value.Value)
+				if err != nil {
+					t.Fatal(err)
+				}
+				out[filepath.Base(filepath.Dir(path))] = parent
+			}
+			return true
+		})
+	}
+	return out
 }

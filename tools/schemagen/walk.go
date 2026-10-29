@@ -76,6 +76,12 @@ type Leaf struct {
 	// Target names the copied object of an embedded copy, the element object of a paged
 	// list, or the schema a recursion meets.
 	Target string
+	// BranchAt is the path of the union that names Branch.
+	BranchAt string
+	// At is where the table holds the leaf, and PointAt where it holds the union at
+	// BranchAt: the path, with a create-only hash (Resource.CreateHash) spread into the top
+	// level and the hash form of a token-or-hash parameter under `<name>_data` (D3).
+	At, PointAt string
 }
 
 // Shape describes the leaf for the coverage report: its kind or JSON type, with `list of`
@@ -140,11 +146,16 @@ func walkTable(spec *Spec, res Resource) (object string, leaves []Leaf, err erro
 		if body == nil {
 			continue
 		}
-		w := &walker{spec: spec, key: Key{Object: object, Side: SideRequest, Operation: op.OperationID}, out: map[Key]*Leaf{}}
-		if err := w.walk(body, "", "", carried{}); err != nil {
+		w := &walker{spec: spec, key: Key{Object: object, Side: SideRequest, Operation: op.OperationID}, out: map[Key]*Leaf{}, tokens: map[string]bool{}}
+		if err := w.walk(body, "", union{}, carried{}); err != nil {
 			return "", nil, fmt.Errorf("%s: %w", res.Package, err)
 		}
+		flatten := ""
+		if at == res.CreatePath {
+			flatten = res.CreateHash
+		}
 		for _, l := range w.leaves() {
+			l.At, l.PointAt = tableAt(l.Path, w.tokens, flatten), tableAt(l.BranchAt, w.tokens, flatten)
 			request = append(request, l)
 			for p := parentPath(l.Path); p != ""; p = parentPath(p) {
 				hashes[p] = true
@@ -153,10 +164,37 @@ func walkTable(spec *Spec, res Resource) (object string, leaves []Leaf, err erro
 	}
 
 	w := &walker{spec: spec, key: Key{Object: object, Side: SideResponse}, out: map[Key]*Leaf{}, hashes: hashes}
-	if err := w.walk(root, "", "", carried{}); err != nil {
+	if err := w.walk(root, "", union{}, carried{}); err != nil {
 		return "", nil, fmt.Errorf("%s: %w", res.Package, err)
 	}
-	return object, append(request, w.leaves()...), nil
+	for _, l := range w.leaves() {
+		l.At, l.PointAt = l.Path, l.BranchAt
+		request = append(request, l)
+	}
+	return object, request, nil
+}
+
+// tableAt is where the table holds a request path: with the create-only hash flatten spread
+// into the top level, and each token-or-hash parameter above the path's last segment as its
+// hash form, `<name>_data`. The hash flatten itself has no place in the table, "".
+func tableAt(path string, tokens map[string]bool, flatten string) string {
+	if path == "" || path == flatten {
+		return ""
+	}
+	segs := strings.Split(path, ".")
+	var out []string
+	for i, seg := range segs {
+		orig := strings.Join(segs[:i+1], ".")
+		switch {
+		case orig == flatten:
+			out = nil
+			continue
+		case tokens[orig] && i < len(segs)-1:
+			seg += "_data"
+		}
+		out = append(out, seg)
+	}
+	return strings.Join(out, ".")
 }
 
 // responseRoot returns the object schema of a table as a `$ref`, so that the walk knows its
@@ -220,11 +258,16 @@ type walker struct {
 	out   map[Key]*Leaf
 	// hashes holds every path the table's request writes as a hash, on a response walk.
 	hashes map[string]bool
+	// tokens holds every request parameter that takes a token or a hash.
+	tokens map[string]bool
 }
 
-func (w *walker) leaf(l Leaf, path, branch string, c carried) error {
+// union is the branch a leaf is in, and the path of the union that names it.
+type union struct{ name, at string }
+
+func (w *walker) leaf(l Leaf, path string, br union, c carried) error {
 	l.Key = w.key
-	l.Path, l.Branch = path, branch
+	l.Path, l.Branch, l.BranchAt = path, br.name, br.at
 	l.Array, l.Map, l.Required = c.array, c.mapped, c.required
 	if prev, ok := w.out[l.Key]; ok {
 		if prev.Kind != l.Kind || prev.Type != l.Type || prev.Target != l.Target || prev.Array != l.Array || prev.Map != l.Map {
@@ -246,7 +289,7 @@ func (w *walker) leaves() []Leaf {
 	return out
 }
 
-func (w *walker) walk(sc *Schema, path, branch string, c carried) error {
+func (w *walker) walk(sc *Schema, path string, br union, c carried) error {
 	if sc == nil {
 		return fmt.Errorf("%s: no schema", path)
 	}
@@ -258,14 +301,14 @@ func (w *walker) walk(sc *Schema, path, branch string, c carried) error {
 			return fmt.Errorf("%s: unresolved %s", path, sc.Ref)
 		}
 		if slices.Contains(w.stack, name) {
-			return w.leaf(Leaf{Kind: KindRecursion, Target: name}, path, branch, c)
+			return w.leaf(Leaf{Kind: KindRecursion, Target: name}, path, br, c)
 		}
 		if object := objectName(name, target); object != "" && len(w.stack) > 0 && !w.hashes[path] {
-			return w.leaf(Leaf{Kind: KindEmbedded, Target: object}, path, branch, c)
+			return w.leaf(Leaf{Kind: KindEmbedded, Target: object}, path, br, c)
 		}
 		w.stack = append(w.stack, name)
 		defer func() { w.stack = w.stack[:len(w.stack)-1] }()
-		return w.walk(target, path, branch, c)
+		return w.walk(target, path, br, c)
 	}
 
 	var variants []*Schema
@@ -277,18 +320,21 @@ func (w *walker) walk(sc *Schema, path, branch string, c carried) error {
 		variants = append(variants, v)
 	}
 	if expandable && len(variants) > 1 {
-		return w.leaf(Leaf{Kind: KindReference}, path, branch, c)
+		return w.leaf(Leaf{Kind: KindReference}, path, br, c)
 	}
 	switch {
 	case len(variants) == 1:
-		return w.walk(variants[0], path, branch, c)
+		return w.walk(variants[0], path, br, c)
 	case len(variants) > 1:
 		names, err := w.branches(variants)
 		if err != nil {
 			return fmt.Errorf("%s: %w", path, err)
 		}
+		if w.key.Side == SideRequest && tokenHash(w.spec, sc) != nil {
+			w.tokens[path] = true
+		}
 		for i, v := range variants {
-			if err := w.walk(v, path, names[i], c); err != nil {
+			if err := w.walk(v, path, union{names[i], path}, c); err != nil {
 				return err
 			}
 		}
@@ -301,10 +347,10 @@ func (w *walker) walk(sc *Schema, path, branch string, c carried) error {
 	switch sc.Type {
 	case "array":
 		c.array = true
-		return w.walk(sc.Items, path, branch, c)
+		return w.walk(sc.Items, path, br, c)
 	case "object", "":
 		if path != "" && w.key.Side == SideResponse && w.isListEnvelope(sc) {
-			return w.leaf(Leaf{Kind: KindPagedList, Target: w.elementObject(sc)}, path, branch, c)
+			return w.leaf(Leaf{Kind: KindPagedList, Target: w.elementObject(sc)}, path, br, c)
 		}
 		if len(sc.Properties) > 0 {
 			for _, name := range sortedNames(sc.Properties) {
@@ -312,7 +358,7 @@ func (w *walker) walk(sc *Schema, path, branch string, c carried) error {
 					continue
 				}
 				pc := carried{required: slices.Contains(sc.Required, name)}
-				if err := w.walk(sc.Properties[name], join(path, name), branch, pc); err != nil {
+				if err := w.walk(sc.Properties[name], join(path, name), br, pc); err != nil {
 					return err
 				}
 			}
@@ -320,11 +366,11 @@ func (w *walker) walk(sc *Schema, path, branch string, c carried) error {
 		}
 		if sc.AdditionalProperties != nil && sc.AdditionalProperties.Schema != nil {
 			c.mapped = true
-			return w.walk(sc.AdditionalProperties.Schema, path, branch, c)
+			return w.walk(sc.AdditionalProperties.Schema, path, br, c)
 		}
-		return w.leaf(Leaf{Kind: KindEmptyHash}, path, branch, c)
+		return w.leaf(Leaf{Kind: KindEmptyHash}, path, br, c)
 	default:
-		return w.leaf(Leaf{Kind: KindScalar, Type: sc.Type}, path, branch, c)
+		return w.leaf(Leaf{Kind: KindScalar, Type: sc.Type}, path, br, c)
 	}
 }
 
