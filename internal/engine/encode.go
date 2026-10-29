@@ -31,6 +31,9 @@ func (m *model) encodeCreate(plan basetypes.ObjectValue) (wire.Object, error) {
 	if err != nil {
 		return nil, err
 	}
+	if err := m.refuseEmptyObjects(m.nodes, body); err != nil {
+		return nil, err
+	}
 	if m.v2 {
 		body = pruneEmpty(m.nodes, body)
 	}
@@ -112,10 +115,9 @@ func findNodeFor(kids []*node, f wire.Field) *node {
 	return found
 }
 
-// checkForms refuses, at any depth of a plan, what Stripe must not be sent: both forms of a
-// token-or-hash parameter, which plan-time validation cannot catch while the token is unknown;
-// neither form of one the create requires; and, on /v1, a hash with no members, whose empty
-// value would unset it.
+// checkForms refuses, at any depth of a plan, both forms of a token-or-hash parameter set,
+// which plan-time validation cannot catch while the token is unknown, and neither form of one
+// the create requires.
 func (m *model) checkForms(kids []*node, attrs map[string]attr.Value, prefix string) error {
 	set := func(v attr.Value) bool { return v != nil && !v.IsNull() && !v.IsUnknown() }
 	null := func(v attr.Value) bool { return v == nil || v.IsNull() }
@@ -130,9 +132,6 @@ func (m *model) checkForms(kids []*node, attrs map[string]attr.Value, prefix str
 			case n.OneRequired && null(v) && null(token):
 				return fmt.Errorf("neither `%s%s` nor `%s` is set: Stripe requires one", prefix, n.TokenForm, at)
 			}
-		}
-		if !m.v2 && n.noMembers() && set(v) {
-			return fmt.Errorf("`%s`: %s", at, noEmptyHashDetail)
 		}
 		if !set(v) || len(n.Kids) == 0 {
 			continue
@@ -178,6 +177,17 @@ func (m *model) checkUpdateForms(plan basetypes.ObjectValue, config tftypes.Valu
 		return fmt.Errorf("the configuration is %T, not an object", v)
 	}
 	return m.checkForms(m.nodes, o.Attributes(), "")
+}
+
+// hashSent reports whether the hash form named data, among kids, is set and sent.
+func hashSent(kids []*node, data string, attrs map[string]attr.Value, allow func(*node) bool) bool {
+	for _, k := range kids {
+		if k.IsHashForm && k.AttrName() == data {
+			v := attrs[data]
+			return allow(k) && v != nil && !v.IsNull() && !v.IsUnknown()
+		}
+	}
+	return false
 }
 
 // otherFormSet reports whether the plan sets the other form of a token-or-hash parameter.
@@ -228,6 +238,18 @@ func (m *model) encodeFollowUp(plan basetypes.ObjectValue) (wire.Object, error) 
 // subscription items, ask Stripe to change them. config is the configuration; the zero
 // value turns that check off.
 func (m *model) encodeUpdate(plan, state basetypes.ObjectValue, config tftypes.Value) (wire.Object, error) {
+	out, err := m.encodeChanges(plan, state, config)
+	if err != nil {
+		return nil, err
+	}
+	if err := m.refuseEmptyObjects(m.nodes, out); err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+// encodeChanges builds encodeUpdate's body.
+func (m *model) encodeChanges(plan, state basetypes.ObjectValue, config tftypes.Value) (wire.Object, error) {
 	var out wire.Object
 	planAttrs, stateAttrs := plan.Attributes(), state.Attributes()
 	if err := m.checkUpdateForms(plan, config); err != nil {
@@ -641,6 +663,12 @@ func encodeObject(kids []*node, attrs map[string]attr.Value, allow func(*node) b
 	var out wire.Object
 	for _, k := range kids {
 		if !allow(k) {
+			continue
+		}
+		// A token is known beside its set hash form only because the plan kept it from the
+		// state (checkForms refuses a configuration that sets both), so only the hash, which the
+		// configuration sets, is sent.
+		if k.DataForm != "" && hashSent(kids, k.DataForm, attrs, allow) {
 			continue
 		}
 		v, ok, err := encodeValue(k, attrs[k.AttrName()], allow)

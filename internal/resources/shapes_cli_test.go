@@ -44,6 +44,21 @@ func shapeTable() []fields.Field {
 	}
 }
 
+// listTable has a list whose elements take a price as a token or as a hash; the response
+// returns each element's token.
+func listTable() []fields.Field {
+	return []fields.Field{
+		{Name: "id", Shape: fields.String, Response: true},
+		{Name: "items", Shape: fields.ObjectList, Required: true, Create: true, Update: true, Response: true, Fields: []fields.Field{
+			{Name: "price", Shape: fields.String, Create: true, Update: true, Response: true},
+			{Name: "price", Attr: "price_data", Shape: fields.Object, Create: true, Update: true, Fields: []fields.Field{
+				{Name: "unit_amount", Shape: fields.Int, Create: true, Update: true},
+			}},
+			{Name: "quantity", Shape: fields.Int, Create: true, Update: true, Response: true},
+		}},
+	}
+}
+
 func shapeFactories(store *shapeStore) map[string]func() (tfprotov6.ProviderServer, error) {
 	return map[string]func() (tfprotov6.ProviderServer, error){"stripe": providerserver.NewProtocol6WithError(&shapeProvider{store: store})}
 }
@@ -131,6 +146,44 @@ func TestAccHashFormCreatesAndPlansClean(t *testing.T) {
 	})
 }
 
+// An insert at the front of a list and a reorder, whose elements make equal prices through the
+// hash form, take each element's token from Stripe, never from another element in the state.
+func TestAccHashFormInAListKeepsEachElementsToken(t *testing.T) {
+	store := newShapeStore("/v1/shape_lists")
+	items := func(quantities ...int) string {
+		var b strings.Builder
+		b.WriteString(`resource "stripe_shape_list" "s" {
+  items = [`)
+		for _, q := range quantities {
+			fmt.Fprintf(&b, "\n    { price_data = { unit_amount = 100 }, quantity = %d },", q)
+		}
+		b.WriteString("\n  ]\n}\n")
+		return b.String()
+	}
+	tokens := func(want int) tfresource.TestCheckFunc {
+		return func(s *terraform.State) error {
+			attrs := s.RootModule().Resources["stripe_shape_list.s"].Primary.Attributes
+			seen := map[string]bool{}
+			for i := 0; i < want; i++ {
+				token := attrs[fmt.Sprintf("items.%d.price", i)]
+				if !strings.HasPrefix(token, "pr_") || seen[token] {
+					return fmt.Errorf("items.%d.price = %q: %v", i, token, attrs)
+				}
+				seen[token] = true
+			}
+			return nil
+		}
+	}
+	tfresource.Test(t, tfresource.TestCase{
+		ProtoV6ProviderFactories: shapeFactories(store),
+		Steps: []tfresource.TestStep{
+			{Config: items(1), Check: tokens(1)},
+			{Config: items(2, 1), Check: tokens(2)},
+			{Config: items(1, 2), Check: tokens(2)},
+		},
+	})
+}
+
 type shapeProvider struct{ store *shapeStore }
 
 func (p *shapeProvider) Metadata(_ context.Context, _ provider.MetadataRequest, resp *provider.MetadataResponse) {
@@ -145,14 +198,17 @@ func (p *shapeProvider) Configure(_ context.Context, _ provider.ConfigureRequest
 
 func (p *shapeProvider) Resources(context.Context) []func() resource.Resource {
 	var out []func() resource.Resource
-	for typeName, base := range map[string]string{"stripe_shape": "/v1/shapes", "stripe_shape_v2": "/v2/core/shapes"} {
+	for _, r := range []struct {
+		typeName, base string
+		table          []fields.Field
+	}{{"stripe_shape", "/v1/shapes", shapeTable()}, {"stripe_shape_v2", "/v2/core/shapes", shapeTable()}, {"stripe_shape_list", "/v1/shape_lists", listTable()}} {
 		ctor, err := engine.NewResource(engine.Declaration{
-			TypeName:    typeName,
+			TypeName:    r.typeName,
 			IDPrefix:    "shp_",
 			Description: "A fixture object with the shapes of D3.",
-			Paths:       engine.Paths{Create: base, Retrieve: base + "/{id}", Update: base + "/{id}", Delete: base + "/{id}"},
+			Paths:       engine.Paths{Create: r.base, Retrieve: r.base + "/{id}", Update: r.base + "/{id}", Delete: r.base + "/{id}"},
 			Delete:      engine.Delete,
-		}, shapeTable())
+		}, r.table)
 		if err != nil {
 			panic(err)
 		}
@@ -164,13 +220,14 @@ func (p *shapeProvider) Resources(context.Context) []func() resource.Resource {
 func (p *shapeProvider) DataSources(context.Context) []func() datasource.DataSource { return nil }
 
 // shapeStore answers the fixture's create, retrieve, update and delete under one base path,
-// returns a bank account ID for a `source` sent as a hash, and records the last create's
-// parameters.
+// returns a bank account ID for a `source` sent as a hash and a new price ID for each element of
+// `items` whose `price` is a hash, and records the last create's parameters.
 type shapeStore struct {
 	base    string
 	mu      sync.Mutex
 	objects map[string]wire.Object
 	next    int
+	prices  int
 	created wire.Object
 }
 
@@ -198,10 +255,19 @@ func (s *shapeStore) Do(_ context.Context, req stripeapi.Request) (*stripeapi.Re
 		} else if token, has := req.Params.GetString("source"); has {
 			obj = append(obj, wire.Field{Name: "source", Value: wire.String(token)})
 		}
+		obj, err := s.withItems(obj, req.Params)
+		if err != nil {
+			return nil, err
+		}
 		s.objects[id] = obj
 	case s.objects[id] == nil:
 		return nil, &stripeapi.APIError{Status: http.StatusNotFound, Code: "resource_missing", Message: "No such shape: " + id}
 	case req.Method == "POST":
+		obj, err := s.withItems(s.objects[id], req.Params)
+		if err != nil {
+			return nil, err
+		}
+		s.objects[id] = obj
 		if name, ok := req.Params.GetString("name"); ok {
 			obj := wire.Object{}
 			for _, f := range s.objects[id] {
@@ -217,4 +283,44 @@ func (s *shapeStore) Do(_ context.Context, req stripeapi.Request) (*stripeapi.Re
 		return &stripeapi.Response{Status: 200, Body: wire.Object{{Name: "id", Value: wire.String(id)}, {Name: "deleted", Value: wire.Bool(true)}}}, nil
 	}
 	return &stripeapi.Response{Status: 200, Body: s.objects[id]}, nil
+}
+
+// withItems sets the object's `items` from the request's, if it sends them: a price sent as a
+// hash becomes a new price ID, one sent as an ID stays, and an element that sends a parameter
+// twice is refused, as Stripe refuses one.
+func (s *shapeStore) withItems(obj wire.Object, params wire.Object) (wire.Object, error) {
+	sent, ok := params.Get("items")
+	arr, isArr := sent.(wire.Array)
+	if !ok || !isArr {
+		return obj, nil
+	}
+	items := wire.Array{}
+	for i, e := range arr {
+		in, _ := e.(wire.Object)
+		seen := map[string]bool{}
+		for _, f := range in {
+			if seen[f.Name] {
+				return nil, &stripeapi.APIError{Status: http.StatusBadRequest, Type: "invalid_request_error", Param: fmt.Sprintf("items[%d][%s]", i, f.Name), Message: "Received both a string and a hash for " + f.Name}
+			}
+			seen[f.Name] = true
+		}
+		item := wire.Object{}
+		if _, hash := in.GetObject("price"); hash {
+			s.prices++
+			item = append(item, wire.Field{Name: "price", Value: wire.String("pr_" + strconv.Itoa(s.prices))})
+		} else if token, has := in.GetString("price"); has {
+			item = append(item, wire.Field{Name: "price", Value: wire.String(token)})
+		}
+		if q, has := in.Get("quantity"); has {
+			item = append(item, wire.Field{Name: "quantity", Value: q})
+		}
+		items = append(items, item)
+	}
+	out := wire.Object{}
+	for _, f := range obj {
+		if f.Name != "items" {
+			out = append(out, f)
+		}
+	}
+	return append(out, wire.Field{Name: "items", Value: items}), nil
 }

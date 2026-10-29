@@ -796,10 +796,17 @@ func (c *compiler) build(table []fields.Field, prefix string, top, parentOutput,
 				token.Optional, hash.Optional = true, true
 				token.OneRequired, hash.OneRequired = true, true
 			}
-			// A token the response returns is filled in when the hash form creates it, and
-			// keeps its state value while neither form changes.
+			// A token the response returns is filled in when the hash form creates it. Outside a
+			// list it keeps its state value while neither form changes. Inside a list element the
+			// state's element at the same index may be another object after an insert or a
+			// reorder, so the token is unknown on a change, as any value Stripe fills in for a list
+			// element is, and a create-only one replaces only when the configuration sets another
+			// value, so an unknown token never plans a replacement.
 			if token.Response && !token.computedOnly() {
-				token.Computed, token.UseState = true, true
+				token.Computed, token.UseState = true, !inList
+				if inList && token.Replace {
+					token.Replace, token.ReplaceIfSet = false, true
+				}
 			}
 		}
 	}

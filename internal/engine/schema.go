@@ -254,13 +254,13 @@ func (m *model) resourceAttribute(n *node) rschema.Attribute {
 		if n.TokenForm != "" {
 			a.Validators = append(a.Validators, oneForm{token: n.TokenForm, hash: n.AttrName()})
 		}
-		if !m.v2 && n.noMembers() {
-			a.Validators = append(a.Validators, noEmptyHashOnV1{})
+		if !m.v2 && n.Writable() && !n.computedOnly() {
+			a.Validators = append(a.Validators, emptyObjectValidator(n.Kids, false))
 		}
 		return a
 	case fields.ObjectList:
 		return rschema.ListNestedAttribute{Required: n.Required, Optional: n.Optional, Computed: n.Computed, Sensitive: n.Sensitive, MarkdownDescription: desc,
-			NestedObject:  rschema.NestedAttributeObject{Attributes: m.resourceAttributes(n.Kids)},
+			NestedObject:  rschema.NestedAttributeObject{Attributes: m.resourceAttributes(n.Kids), Validators: m.elementValidators(n)},
 			PlanModifiers: planMods(n, m.refuseList, listplanmodifier.UseStateForUnknown, listplanmodifier.RequiresReplace)}
 	case fields.ObjectMap:
 		return rschema.MapNestedAttribute{Required: n.Required, Optional: n.Optional, Computed: n.Computed, Sensitive: n.Sensitive, MarkdownDescription: desc,
@@ -310,6 +310,15 @@ func changedFromFixed(config, state basetypes.StringValue, from string) bool {
 
 const replaceFixedDescription = "Changing a value Stripe has fixed replaces the resource."
 
+// elementValidators refuses, on /v1, a list element whose configuration would encode to
+// nothing.
+func (m *model) elementValidators(n *node) []validator.Object {
+	if m.v2 || !n.Writable() || n.computedOnly() {
+		return nil
+	}
+	return []validator.Object{emptyObjectValidator(n.Kids, false)}
+}
+
 func (m *model) resourceAttributes(kids []*node) map[string]rschema.Attribute {
 	attrs := make(map[string]rschema.Attribute, len(kids))
 	for _, k := range kids {
@@ -348,7 +357,7 @@ func (m *model) dataSourceSchema() dschema.Schema {
 			a = dschema.StringAttribute{Optional: true, Computed: true, MarkdownDescription: desc}
 		}
 		if m.findParam(n.Name) {
-			a = findAttribute(n)
+			a = findAttribute(n, !m.v2)
 		}
 		if p, ok := m.listParam(n.Name); ok {
 			a = dschema.StringAttribute{Optional: true, Computed: true, MarkdownDescription: p.Description}
@@ -419,8 +428,9 @@ func dataSourceAttribute(n *node) dschema.Attribute {
 }
 
 // findAttribute is the Required attribute of a find parameter that names a field. The fields
-// of an object are Optional, because Stripe, not the schema, says which it needs.
-func findAttribute(n *node) dschema.Attribute {
+// of an object are Optional, because Stripe, not the schema, says which it needs; on /v1 an
+// object with none set is refused, as it would be sent empty.
+func findAttribute(n *node, v1 bool) dschema.Attribute {
 	desc := describe(n)
 	switch n.Shape {
 	case fields.Int:
@@ -434,7 +444,11 @@ func findAttribute(n *node) dschema.Attribute {
 				kids[k.AttrName()] = dschema.StringAttribute{Optional: true, MarkdownDescription: describe(k)}
 			}
 		}
-		return dschema.SingleNestedAttribute{Required: true, MarkdownDescription: desc, Attributes: kids}
+		a := dschema.SingleNestedAttribute{Required: true, MarkdownDescription: desc, Attributes: kids}
+		if v1 {
+			a.Validators = []validator.Object{emptyObjectValidator(n.Kids, true)}
+		}
+		return a
 	default:
 		return dschema.StringAttribute{Required: true, MarkdownDescription: desc}
 	}
