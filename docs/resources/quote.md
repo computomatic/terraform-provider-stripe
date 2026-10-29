@@ -878,3 +878,5 @@ Using `terraform import`, import a quote using its ID. For example:
 ```console
 % terraform import stripe_quote.onboarding qt_123
 ```
+
+-> Stripe does not return `line_items.discounts.coupon`, `line_items.discounts.promotion_code`, `line_items.price_data` or `line_items.tax_rates`, so an imported quote has them null: a configuration that sets one plans an update after the import.

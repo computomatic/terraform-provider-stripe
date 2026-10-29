@@ -186,3 +186,5 @@ Using `terraform import`, import a product using its ID. For example:
 ```console
 % terraform import stripe_product.gold prod_123
 ```
+
+~> Stripe does not return `default_price_data`, so an imported product has it null: a configuration that sets it plans a replacement after the import.

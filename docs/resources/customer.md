@@ -293,3 +293,5 @@ Using `terraform import`, import a customer using its ID. For example:
 ```console
 % terraform import stripe_customer.acme cus_123
 ```
+
+~> Stripe does not return `bank_account`, `card`, `default_alipay_account`, `default_bank_account`, `default_card`, `source`, `tax.validate_location`, `payment_method` or `tax_id_data`, so an imported customer has them null: a configuration that sets `bank_account`, `card`, `default_alipay_account`, `default_bank_account`, `default_card`, `source` or `tax.validate_location` plans an update after the import, and one that sets `payment_method` or `tax_id_data` plans a replacement.

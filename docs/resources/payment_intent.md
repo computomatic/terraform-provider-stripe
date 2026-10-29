@@ -1411,3 +1411,5 @@ Using `terraform import`, import a payment intent using its ID. For example:
 ```console
 % terraform import stripe_payment_intent.order pi_123
 ```
+
+~> Stripe does not return `payment_method_configuration`, so an imported payment intent has it null: a configuration that sets it plans a replacement after the import.

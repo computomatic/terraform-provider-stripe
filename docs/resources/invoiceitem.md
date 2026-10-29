@@ -198,3 +198,5 @@ Using `terraform import`, import an invoiceitem using its ID. For example:
 ```console
 % terraform import stripe_invoiceitem.setup_fee ii_123
 ```
+
+~> Stripe does not return `price_data`, `pricing.price`, `tax_behavior`, `tax_code`, `unit_amount_decimal` or `subscription`, so an imported invoiceitem has them null: a configuration that sets `price_data`, `pricing.price`, `tax_behavior`, `tax_code` or `unit_amount_decimal` plans an update after the import, and one that sets `subscription` plans a replacement.

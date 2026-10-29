@@ -152,6 +152,9 @@ func coverTable(spec *Spec, res Resource, ev *Pinned) (*tableCoverage, error) {
 		}
 	}
 
+	if ev != nil {
+		ev.facts(res, object, create, update, leaves, g)
+	}
 	baseline, err := Build(spec, res)
 	if err != nil {
 		return nil, err
@@ -460,6 +463,60 @@ func (p *Pinned) leaf(k Key) *EvidenceLeaf {
 		}
 	}
 	return p.leaves[k]
+}
+
+// facts records on the gate what the evidence shows about the table's verified fields: the
+// request fields Stripe leaves null on a minimal create and unsets as the engine sends the
+// unset, `""` on `/v1` and null on `/v2` (E2), and the response fields that no update of the
+// object changed as a side effect and that Stripe does not fill from another field (E5). An
+// update shows nothing unless the suite proved a leaf of the table's update, whose probes
+// record the side effects. A field holding several leaves needs each of them to show it.
+func (p *Pinned) facts(res Resource, object, create, update string, leaves []Leaf, g *gate) {
+	unsetBy := "empty_string"
+	if strings.HasPrefix(res.CreatePath, "/v2/") || strings.HasPrefix(res.ReadPath, "/v2/") {
+		unsetBy = "null"
+	}
+	updated := false
+	var changed []string
+	filled := map[string]bool{}
+	for _, e := range p.Evidence.Leaves {
+		if e.Object == object && e.Side == SideRequest && update != "" && e.Operation == update && e.Status == "proven" {
+			updated = true
+		}
+	}
+	for _, se := range p.Evidence.SideEffects {
+		if se.Object == object {
+			for _, c := range se.Changed {
+				changed = append(changed, c.Path)
+			}
+		}
+	}
+	for _, f := range p.Evidence.FilledFrom {
+		if f.Object == object {
+			filled[f.Path] = true
+		}
+	}
+	g.clears, g.stable = map[string]bool{}, map[string]bool{}
+	all := func(m map[string]bool, at string, ok bool) {
+		if prev, seen := m[at]; seen {
+			ok = ok && prev
+		}
+		m[at] = ok
+	}
+	for _, l := range leaves {
+		e := p.leaf(l.Key)
+		if p.class(l.Key) != ClassVerified || e == nil {
+			continue
+		}
+		switch {
+		case l.Side == SideResponse:
+			all(g.stable, l.At, updated && !filled[l.Path] && !near(changed, l.Path))
+		case l.Operation == create:
+			all(g.clears, l.At, e.Default.none())
+		default:
+			all(g.clears, l.At, e.Unset != nil && e.Unset.By == unsetBy && (e.Unset.Result == "null" || e.Unset.Result == "absent"))
+		}
+	}
 }
 
 // defaultStatement is an optional request leaf's default statement from the evidence (D4):

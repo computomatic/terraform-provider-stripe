@@ -18,6 +18,11 @@ type ProviderData struct {
 	Client Client
 	// Live decides whether a resource that moves money may change an object.
 	Live *LiveCheck
+	// Strict turns the warnings of an apply that Stripe answered otherwise than planned (E4)
+	// and of a field in an unexpected shape (E6) into errors. The acceptance harness sets it,
+	// so that a test fails where Stripe or the fake answers otherwise than the conformance
+	// suite recorded.
+	Strict bool
 }
 
 // LiveCheck answers, once per provider configuration, whether money may move: always when the

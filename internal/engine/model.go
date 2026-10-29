@@ -77,6 +77,9 @@ type model struct {
 	v2 bool
 	// sensitiveNames are the field names masked in request logs.
 	sensitiveNames []string
+	// discounts is the resource's top-level `discounts`, which it maps by key (discounts.go),
+	// or nil.
+	discounts *node
 }
 
 // reservedNames are the root attribute names Terraform does not allow.
@@ -171,7 +174,7 @@ func compile(decl Declaration, table []fields.Field) (*model, error) {
 		return nil, fmt.Errorf("%s: %w", decl.TypeName, err)
 	}
 
-	m := &model{decl: decl, nodes: nodes, v2: v2}
+	m := &model{decl: decl, nodes: nodes, v2: v2, discounts: discountsNode(nodes)}
 	if decl.Attach != "" && (decl.Parent == "" || !strings.Contains(decl.Paths.Create, "{"+decl.Attach+"}")) {
 		return nil, fmt.Errorf("%s: an attachment needs a parent and a create path that names `{%s}`", decl.TypeName, decl.Attach)
 	}
@@ -767,9 +770,12 @@ func (c *compiler) build(table []fields.Field, prefix string, top, parentOutput,
 			n.Fixed = (f.CreateOnly() || replaceOn) && !n.computedOnly()
 			n.Replace, n.ReplaceIfSet = false, false
 		}
+		// An argument the evidence shows no update changes unless it names it keeps its value
+		// when the configuration leaves it unset (E5), outside a list element, where the
+		// state's element at the same index may be another after an insert or a reorder.
 		n.UseState = n.Computed && !n.Required && !serverFilledInList &&
 			((top && (f.Name == "id" || f.Name == "created" || f.Name == "livemode")) || f.CreateOnly() || replaceOn || n.Once || parentReplace ||
-				n.Optional && !inList && nestedShape(f.Shape))
+				n.Optional && !inList && (nestedShape(f.Shape) || f.Stable))
 
 		switch f.Shape {
 		case fields.Object, fields.ObjectList, fields.ObjectMap:

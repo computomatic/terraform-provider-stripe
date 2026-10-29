@@ -152,3 +152,5 @@ Using `terraform import`, import a subscription item using its ID. For example:
 ```console
 % terraform import stripe_subscription_item.addon si_123
 ```
+
+-> Stripe does not return `off_session`, `payment_behavior`, `price_data`, `proration_behavior` or `proration_date`, so an imported subscription item has them null: a configuration that sets one plans an update after the import.

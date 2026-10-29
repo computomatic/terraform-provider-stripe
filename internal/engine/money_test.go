@@ -434,8 +434,8 @@ func TestApplyFailsWhenTheTransitionDoesNotArrive(t *testing.T) {
 	}
 }
 
-// A create whose response cannot be read leaves the object in Stripe, tainted: on a resource
-// whose destroy is refused the error says how to clear the taint.
+// A create whose response cannot be read in strict mode leaves the object in Stripe, tainted:
+// on a resource whose destroy is refused the error says how to clear the taint.
 func TestCreateWithAnUnreadableResponseSaysToUntaint(t *testing.T) {
 	decl := fixtureDeclaration()
 	decl.Delete, decl.Paths.Delete, decl.RefuseReason = Refuse, "", "Stripe cannot delete a widget."
@@ -447,6 +447,7 @@ func TestCreateWithAnUnreadableResponseSaysToUntaint(t *testing.T) {
 		}}, nil
 	})
 	r := configured(t, decl, fixtureTable(), client)
+	r.api.strict = true
 	resp := r.tryCreate(t, r.fill(map[string]attr.Value{"name": types.StringValue("w")}))
 	if !hasSummary(resp.Diagnostics, "Unexpected Stripe response") || !hasSummary(resp.Diagnostics, "The widget exists and is tainted") {
 		t.Errorf("want the decode error and the taint guidance: %v", resp.Diagnostics)

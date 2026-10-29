@@ -18,10 +18,12 @@ import (
 	"github.com/computomatic/terraform-provider-stripe/internal/wire"
 )
 
-// ProviderFactories serves the provider over protocol 6, as the release binary does.
+// ProviderFactories serves the provider over protocol 6, as the release binary does, in strict
+// mode, so that a test fails where Stripe or the fake answers otherwise than planned or than the
+// conformance suite recorded.
 var ProviderFactories = map[string]func() (tfprotov6.ProviderServer, error){
 	"stripe": func() (tfprotov6.ProviderServer, error) {
-		return providerserver.NewProtocol6WithError(provider.New("test")())()
+		return providerserver.NewProtocol6WithError(provider.NewStrict("test")())()
 	},
 }
 

@@ -93,4 +93,4 @@ Using `terraform import`, import a webhook endpoint using its ID. For example:
 % terraform import stripe_webhook_endpoint.events we_123
 ```
 
--> An imported endpoint has no `secret`, because Stripe returns it only at creation.
+~> An imported endpoint has no `secret`, because Stripe returns it only at creation. Stripe does not return `disabled` or `connect`, so an imported webhook endpoint has them null: a configuration that sets `disabled` plans an update after the import, and one that sets `connect` plans a replacement.

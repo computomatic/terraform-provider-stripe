@@ -440,8 +440,9 @@ func TestEmbeddedListWithMoreElementsIsAnError(t *testing.T) {
 	if err := decode(envelope(wire.Field{Name: "object", Value: wire.String("list")}, wire.Field{Name: "has_more", Value: wire.Bool(false)})); err != nil {
 		t.Errorf("a complete list decodes: %v", err)
 	}
-	if err := decode(envelope()); err == nil {
-		t.Error("an object that is not a list is not unwrapped")
+	body := wire.Object{{Name: "id", Value: wire.String("lst_1")}, {Name: "name", Value: wire.String("n")}, {Name: "items", Value: envelope()}}
+	if _, diags := r.m.decodeState(body, r.fill(nil), r.objType, false, nil); len(diags.Warnings()) == 0 {
+		t.Error("an object that is not a list is not unwrapped: it is a field in an unexpected shape")
 	}
 }
 

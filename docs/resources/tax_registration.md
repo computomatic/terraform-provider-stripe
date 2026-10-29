@@ -1502,3 +1502,5 @@ Using `terraform import`, import a tax registration using its ID. For example:
 ```console
 % terraform import stripe_tax_registration.gb taxreg_123
 ```
+
+~> Stripe does not return `country_options.al.standard`, `country_options.ao.standard`, `country_options.aw.standard`, `country_options.ba.standard`, `country_options.bb.standard`, `country_options.bd.standard`, `country_options.bf.standard`, `country_options.bh.standard`, `country_options.bs.standard`, `country_options.cd.standard`, `country_options.et.standard`, `country_options.gn.standard`, `country_options.is.standard`, `country_options.me.standard`, `country_options.mk.standard`, `country_options.mr.standard`, `country_options.om.standard`, `country_options.rs.standard`, `country_options.sr.standard`, `country_options.uy.standard`, `country_options.za.standard` or `country_options.zw.standard`, so an imported tax registration has them null: a configuration that sets one plans a replacement after the import.

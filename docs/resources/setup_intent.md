@@ -853,3 +853,5 @@ Using `terraform import`, import a setup intent using its ID. For example:
 ```console
 % terraform import stripe_setup_intent.card seti_123
 ```
+
+~> Stripe does not return `payment_method_configuration`, so an imported setup intent has it null: a configuration that sets it plans a replacement after the import.
