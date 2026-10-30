@@ -268,7 +268,7 @@ func defaultOf(l Leaf, r Record, create string, leaves []Leaf, ev *Pinned) *fiel
 		return nil
 	}
 	if l.Operation != create {
-		onCreate := slices.ContainsFunc(leaves, func(c Leaf) bool { return c.Operation == create && c.Path == l.Path })
+		onCreate := slices.ContainsFunc(leaves, func(c Leaf) bool { return c.Operation == create && c.At == l.At })
 		if create == "" || !onCreate {
 			return &fields.Default{Kind: fields.DefaultNotSent}
 		}
@@ -591,6 +591,14 @@ func (p *Pinned) facts(res Resource, object, create, update string, leaves []Lea
 			filled[f.Path] = true
 		}
 	}
+	if p.parentDefaults == nil {
+		p.parentDefaults = map[Key]bool{}
+	}
+	for _, l := range leaves {
+		if l.Operation == create && slices.Contains(res.ParentDefaults, l.At) {
+			p.parentDefaults[l.Key] = true
+		}
+	}
 	g.clears, g.stable = map[string]bool{}, map[string]bool{}
 	all := func(m map[string]bool, at string, ok bool) {
 		if prev, seen := m[at]; seen {
@@ -615,8 +623,8 @@ func (p *Pinned) facts(res Resource, object, create, update string, leaves []Lea
 }
 
 // leafDefault is an optional create leaf's default from the evidence (D4): what Stripe set on
-// a minimal create. A default the variants of the minimal create give differently is
-// DefaultVaries, which a declaration words.
+// a minimal create. A default the variants of the minimal create give differently, or that the
+// table's ParentDefaults names, is DefaultVaries, which a declaration words.
 func (p *Pinned) leafDefault(k Key) *fields.Default {
 	e := p.leaf(k)
 	if e == nil || e.Status != "proven" {
@@ -625,6 +633,9 @@ func (p *Pinned) leafDefault(k Key) *fields.Default {
 	d := e.Default
 	if d == nil {
 		return nil
+	}
+	if p.parentDefaults[k] {
+		return &fields.Default{Kind: fields.DefaultVaries}
 	}
 	for _, v := range d.Variants {
 		if !d.same(&v.Default) {
@@ -671,24 +682,19 @@ func literal(v json.RawMessage) string {
 	return b.String()
 }
 
-// observed is the value a rule gave on the suite's own account with nothing else set: the
-// observation whose condition is empty, such as "`usd` on a US account", or "".
+// observed is the literal a rule gave on the suite's own account with nothing else set: the
+// observation of the plain create, such as "`usd` on a US account", or "" where that create
+// holds no literal, as one that sends the value or that Stripe generates it for does not.
 func (p *Pinned) observed(r EvidenceRule) string {
-	var obs []struct {
-		Condition map[string]json.RawMessage `json:"condition"`
-		Value     json.RawMessage            `json:"value"`
-	}
-	if json.Unmarshal(r.Observations, &obs) != nil {
-		return ""
-	}
-	for _, o := range obs {
-		if len(o.Condition) == 0 {
-			s := fields.Code(literal(o.Value))
-			if c := p.Evidence.StripeRun.PlatformCountry; c != "" {
-				s += " on " + articleFor(c) + " " + c + " account"
-			}
-			return s
+	for _, o := range r.Observations {
+		if o.Condition.Variant != "" || o.Value.Kind != "value" {
+			continue
 		}
+		s := fields.Code(literal(o.Value.Value))
+		if c := o.Condition.AccountCountry; c != "" {
+			s += " on " + articleFor(c) + " " + c + " account"
+		}
+		return s
 	}
 	return ""
 }

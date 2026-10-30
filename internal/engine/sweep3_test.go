@@ -179,6 +179,34 @@ func TestKeepOmittedKeepsOnlyAFullyKnownValue(t *testing.T) {
 	}
 }
 
+// A preserved field outlives a response that leaves its object out, such as a v2 recipient's
+// `requested` flag once Stripe drops the capability it belongs to, and the rest of the object
+// reads as Stripe left it. An object with no such value reads as null.
+func TestPreserveConfigOutlivesAnObjectTheResponseLeavesOut(t *testing.T) {
+	decl := fixtureDeclaration()
+	decl.PreserveConfig = []string{"address.line1"}
+	r := configured(t, decl, fixtureTable(), newStub())
+	addressType := r.objType.AttrTypes["address"]
+	plan := r.fill(map[string]attr.Value{
+		"id": types.StringValue("wid_1"), "name": types.StringValue("n"),
+		"address": object(addressType, map[string]attr.Value{"line1": types.StringValue("1 Main"), "zip": types.StringUnknown()}),
+	})
+	body := wire.Object{{Name: "id", Value: wire.String("wid_1")}, {Name: "name", Value: wire.String("n")}}
+	got, diags := r.m.decodeState(body, plan, r.objType, false, nil)
+	noErrors(t, diags)
+	want := object(addressType, map[string]attr.Value{"line1": types.StringValue("1 Main"), "zip": types.StringNull()})
+	if !got.Attributes()["address"].Equal(want) {
+		t.Errorf("address = %v, want the preserved line and nothing else", got.Attributes()["address"])
+	}
+
+	empty := r.fill(with(plan, map[string]attr.Value{"address": types.ObjectNull(addressType.(types.ObjectType).AttrTypes)}))
+	got, diags = r.m.decodeState(body, empty, r.objType, false, nil)
+	noErrors(t, diags)
+	if !got.Attributes()["address"].IsNull() {
+		t.Errorf("no preserved value, so the address is null: %v", got.Attributes()["address"])
+	}
+}
+
 func TestKeepOmittedMustNameAResponseFieldOutsideAList(t *testing.T) {
 	for _, name := range []string{"nothing", "passcode", "address.nothing", "items.qty"} {
 		decl := fixtureDeclaration()

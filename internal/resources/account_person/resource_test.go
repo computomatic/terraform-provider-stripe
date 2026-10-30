@@ -265,6 +265,189 @@ func TestAccAccountPerson_update(t *testing.T) {
 
 // A change to the identity number is refused at plan time, because the suite sets it on create
 // only.
+// ordinary is a person with the suite's ordinary values, none of Stripe's Connect test values,
+// which verify a person soon after the create and then refuse changes. extra lands inside it.
+func ordinary(extra string) string {
+	return fmt.Sprintf(`
+resource "stripe_account_person" "test" {
+  account    = stripe_account.test.id
+  first_name = "Jenny"
+  last_name  = "Rosen"
+
+  dob = {
+    day   = 4
+    month = 3
+    year  = 1980
+  }
+
+  address = {
+    line1       = "354 Oyster Point Blvd"
+    city        = "South San Francisco"
+    state       = "CA"
+    postal_code = "94080"
+    country     = "US"
+  }
+%s}
+`, extra)
+}
+
+// The arguments the record proves (suite: TestAccountPersonAttributes): they are read back and
+// change in place. An update sends only the members of `registered_address` that changed, and
+// removing an argument the record shows an empty string unsets clears it, where one it does not
+// keeps its value.
+func TestAccAccountPerson_verifiedArguments(t *testing.T) {
+	acct := acctest.NewAccount(t)
+	var account, id string
+	base := acct.ProviderBlock() + accountBlock(acct, "test", "persons")
+	created := `
+  gender             = "female"
+  maiden_name        = "Smith"
+  political_exposure = "none"
+  full_name_aliases  = ["Jen Rosen", "J Rosen"]
+  registered_address = {
+    line1       = "500 Grand Ave"
+    city        = "Oakland"
+    state       = "CA"
+    postal_code = "94610"
+    country     = "US"
+  }
+`
+	changed := `
+  gender             = "male"
+  maiden_name        = "Jones"
+  political_exposure = "existing"
+  full_name_aliases  = ["Jen Rosen"]
+  registered_address = {
+    line1       = "200 SW Market St"
+    city        = "Portland"
+    state       = "OR"
+    postal_code = "97201"
+    country     = "US"
+  }
+`
+	removed := `
+  political_exposure = "existing"
+  registered_address = {
+    line1       = "200 SW Market St"
+    state       = "OR"
+    postal_code = "97201"
+    country     = "US"
+  }
+`
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: tfacc.ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: base + ordinary(created),
+				ConfigPlanChecks: resource.ConfigPlanChecks{PostApplyPostRefresh: []plancheck.PlanCheck{
+					plancheck.ExpectEmptyPlan(),
+				}},
+				Check: resource.ComposeAggregateTestCheckFunc(
+					ids(address, &account, &id),
+					resource.TestCheckResourceAttr(address, "gender", "female"),
+					resource.TestCheckResourceAttr(address, "maiden_name", "Smith"),
+					resource.TestCheckResourceAttr(address, "political_exposure", "none"),
+					resource.TestCheckResourceAttr(address, "full_name_aliases.#", "2"),
+					resource.TestCheckResourceAttr(address, "registered_address.city", "Oakland"),
+				),
+			},
+			{
+				Config: base + ordinary(changed),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply:             []plancheck.PlanCheck{plancheck.ExpectResourceAction(address, plancheck.ResourceActionUpdate)},
+					PostApplyPostRefresh: []plancheck.PlanCheck{plancheck.ExpectEmptyPlan()},
+				},
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr(address, "gender", "male"),
+					resource.TestCheckResourceAttr(address, "maiden_name", "Jones"),
+					resource.TestCheckResourceAttr(address, "political_exposure", "existing"),
+					resource.TestCheckResourceAttr(address, "full_name_aliases.#", "1"),
+					resource.TestCheckResourceAttr(address, "registered_address.city", "Portland"),
+				),
+			},
+			{
+				Config: base + ordinary(removed),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PostApplyPostRefresh: []plancheck.PlanCheck{plancheck.ExpectEmptyPlan()},
+				},
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckNoResourceAttr(address, "gender"),
+					resource.TestCheckNoResourceAttr(address, "maiden_name"),
+					resource.TestCheckNoResourceAttr(address, "registered_address.city"),
+					resource.TestCheckResourceAttr(address, "registered_address.line1", "200 SW Market St"),
+					resource.TestCheckResourceAttr(address, "political_exposure", "existing"),
+					resource.TestCheckResourceAttr(address, "full_name_aliases.#", "1"),
+				),
+			},
+		},
+	})
+}
+
+// A verification document keeps what the configuration says, as `stripe_account`'s individual's
+// does, because the dev sandbox replaced a test token there with a file of its own. A change
+// made outside Terraform is therefore not seen.
+func TestAccAccountPerson_documentKeepsConfiguredValue(t *testing.T) {
+	acct := acctest.NewAccount(t)
+	var account, id string
+	cfg := acct.ProviderBlock() + accountBlock(acct, "test", "persons") + ordinary(`
+  verification = { document = { front = "file_identity_document_success" } }
+`)
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: tfacc.ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: cfg,
+				ConfigPlanChecks: resource.ConfigPlanChecks{PostApplyPostRefresh: []plancheck.PlanCheck{
+					plancheck.ExpectEmptyPlan(),
+				}},
+				Check: resource.ComposeAggregateTestCheckFunc(
+					ids(address, &account, &id),
+					resource.TestCheckResourceAttr(address, "verification.document.front", "file_identity_document_success"),
+				),
+			},
+			{
+				PreConfig: func() {
+					if acct.Smoke {
+						return
+					}
+					tfacc.Post(t, acct, personPath(account, id), wire.Object{{Name: "verification", Value: wire.Object{
+						{Name: "document", Value: wire.Object{{Name: "front", Value: wire.String("file_stored_by_stripe")}}},
+					}}})
+				},
+				Config: cfg,
+				ConfigPlanChecks: resource.ConfigPlanChecks{PreApply: []plancheck.PlanCheck{
+					plancheck.ExpectEmptyPlan(),
+				}},
+				Check: resource.TestCheckResourceAttr(address, "verification.document.front", "file_identity_document_success"),
+			},
+		},
+	})
+}
+
+// An argument the record shows Stripe leaves empty and unsets is Optional alone, so a value
+// Stripe holds that the configuration leaves out plans an update that clears it.
+func TestAccAccountPerson_clearsWhatTheConfigurationLeavesOut(t *testing.T) {
+	acct := acctest.NewAccount(t)
+	var account, id string
+	cfg := acct.ProviderBlock() + accountBlock(acct, "test", "persons") + ordinary("")
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: tfacc.ProviderFactories,
+		Steps: []resource.TestStep{
+			{Config: cfg, Check: ids(address, &account, &id)},
+			{
+				PreConfig: func() {
+					tfacc.Post(t, acct, personPath(account, id), wire.Object{{Name: "gender", Value: wire.String("male")}})
+				},
+				Config: cfg,
+				ConfigPlanChecks: resource.ConfigPlanChecks{PreApply: []plancheck.PlanCheck{
+					plancheck.ExpectResourceAction(address, plancheck.ResourceActionUpdate),
+				}},
+				Check: resource.TestCheckNoResourceAttr(address, "gender"),
+			},
+		},
+	})
+}
+
 func TestAccAccountPerson_refuseIDNumber(t *testing.T) {
 	acct := acctest.NewAccount(t)
 	resource.ParallelTest(t, resource.TestCase{

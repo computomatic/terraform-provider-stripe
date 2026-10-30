@@ -60,8 +60,17 @@ type Resource struct {
 	// `bank_account`. The table takes the hash's fields as create fields in place of the
 	// property, and the engine's CreateWrap sends them back under it. The request's other
 	// properties stay top-level fields. An `external_account` string beside it is an
-	// alternative form of the same property, so list it in Omit.
+	// alternative form of the same property, so list it in Omit until the gate exposes it.
 	CreateHash string
+	// TokenForm names the create property that takes a token in place of the hash of
+	// CreateHash. No member of the hash is then required, because a create sends one form or
+	// the other: the engine's CreateWrap checks them at plan.
+	TokenForm string
+	// ParentDefaults lists request fields whose recorded default is what the suite's parent
+	// object happened to hold, such as a refund's amount, which is what remains of the fee,
+	// rather than a value Stripe applies. They have no statement until the declaration words
+	// the rule in Defaults, as a default the variants give differently has none.
+	ParentDefaults []string
 	// NoResponse lists dotted field paths whose response has another shape than the request's,
 	// such as an account's `capabilities` (a hash of `requested` flags on the way in, of status
 	// strings on the way out). The table counts them as request-only: the state keeps what the
@@ -155,6 +164,9 @@ func buildGated(spec *Spec, res Resource, g *gate) ([]fields.Field, error) {
 	if res.CreateHash != "" {
 		if create, err = spec.flattenHash(create, res.CreateHash); err != nil {
 			return nil, fmt.Errorf("%s: %w", res.Package, err)
+		}
+		if res.TokenForm != "" {
+			create.Required = nil
 		}
 	}
 	resp, err := spec.responseSchema(createOp)

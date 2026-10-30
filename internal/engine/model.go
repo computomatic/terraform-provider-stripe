@@ -283,6 +283,13 @@ func compile(decl Declaration, table []fields.Field) (*model, error) {
 				return nil, fmt.Errorf("%s: create wrap outside entry `%s` is not a top-level create field", decl.TypeName, name)
 			}
 		}
+		if w.Token != "" {
+			for _, name := range append([]string{w.Token}, w.Requires...) {
+				if n, ok := m.top(name); !ok || !n.Create || n.Required {
+					return nil, fmt.Errorf("%s: create wrap token entry `%s` is not an optional top-level create field", decl.TypeName, name)
+				}
+			}
+		}
 	}
 	for source, filled := range decl.FilledFrom {
 		if n, _, ok := m.at(source); !ok || !n.Optional && !n.Required {

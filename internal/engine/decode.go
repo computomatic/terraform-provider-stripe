@@ -89,6 +89,19 @@ func nullOf(t attr.Type) attr.Value {
 
 func known(v attr.Value) bool { return v != nil && !v.IsNull() && !v.IsUnknown() }
 
+// holdsPreserved reports whether an object holds, at any depth, a preserved field with a known
+// prior value, which outlives a response that leaves the object out, as a recipient's
+// `stripe_transfers` once it is no longer requested.
+func holdsPreserved(n *node, prior attr.Value) bool {
+	if n.Shape != fields.Object {
+		return false
+	}
+	held := objectAttrs(prior)
+	return slices.ContainsFunc(n.Kids, func(k *node) bool {
+		return k.Preserve && known(held[k.AttrName()]) || holdsPreserved(k, held[k.AttrName()])
+	})
+}
+
 // node decodes one field, applying the carry-forward rules of ADR D2: a field the response
 // never carries, a once-returned field the response omits, a kept field, or any field of a
 // closed object, that the response omits or returns null and a preserved field all keep the
@@ -184,6 +197,9 @@ func (d *decoder) wrongShape(n *node, problem string, prior attr.Value) attr.Val
 
 func (d *decoder) value(n *node, w wire.Value, prior attr.Value) attr.Value {
 	if isAbsent(w) {
+		if !d.dataSource && holdsPreserved(n, prior) {
+			return d.object(n.Kids, nil, objectAttrs(prior))
+		}
 		return nullOf(attrType(n))
 	}
 	switch n.Shape {

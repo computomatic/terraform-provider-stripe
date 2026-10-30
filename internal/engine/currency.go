@@ -141,6 +141,7 @@ var currencyCode = regexp.MustCompile(`^[a-z]{3}$`)
 // for the object's own currency, which Stripe adds by itself and refuses to be given.
 func (r *Resource) ValidateConfig(ctx context.Context, req resource.ValidateConfigRequest, resp *resource.ValidateConfigResponse) {
 	r.validateExactlyOneOf(ctx, req, resp)
+	r.validateCreateWrap(ctx, req, resp)
 	r.validateTransitions(ctx, req, resp)
 	r.m.validateLowerCase(ctx, req.Config, &resp.Diagnostics)
 	name := r.m.currencyOptionsAttr()
@@ -207,6 +208,65 @@ func (r *Resource) validateExactlyOneOf(ctx context.Context, req resource.Valida
 		}
 		if set > 1 || set == 0 && unknown == 0 {
 			resp.Diagnostics.AddError("Invalid configuration", fmt.Sprintf("exactly one of %s must be set, got %d", strings.Join(names, ", "), set))
+		}
+	}
+}
+
+// validateCreateWrap refuses a create-only field set beside a CreateWrap's token, which no plan
+// could ever send. A field an update takes may stand beside the token once the object exists,
+// which only a plan can tell (planCreateWrap).
+func (r *Resource) validateCreateWrap(ctx context.Context, req resource.ValidateConfigRequest, resp *resource.ValidateConfigResponse) {
+	r.checkCreateWrap(ctx, req.Config, false, &resp.Diagnostics)
+}
+
+// planCreateWrap refuses a create that sets a CreateWrap's token beside any field of the hash,
+// or that sets neither the token nor every field the hash needs.
+func (r *Resource) planCreateWrap(ctx context.Context, config tfsdk.Config, diags *diag.Diagnostics) {
+	r.checkCreateWrap(ctx, config, true, diags)
+}
+
+// checkCreateWrap is the check of a CreateWrap's token against the configuration, for a create
+// or, with no state to tell, for any plan. A value unknown here is left for encodeCreate, which
+// checks what the apply resolved (checkTokenForm).
+func (r *Resource) checkCreateWrap(ctx context.Context, config tfsdk.Config, creating bool, diags *diag.Diagnostics) {
+	w := r.m.decl.CreateWrap
+	if w == nil || w.Token == "" {
+		return
+	}
+	value := func(name string) attr.Value {
+		n, _ := r.m.top(name)
+		var v attr.Value
+		diags.Append(config.GetAttribute(ctx, path.Root(n.AttrName()), &v)...)
+		return v
+	}
+	token := value(w.Token)
+	if diags.HasError() || token.IsUnknown() {
+		return
+	}
+	if !token.IsNull() {
+		for _, n := range r.m.nodes {
+			if !n.Create || n.Name == w.Token || slices.Contains(w.Outside, n.Name) || !creating && !n.CreateOnly() {
+				continue
+			}
+			v := value(n.Name)
+			switch {
+			case diags.HasError() || v.IsNull() || v.IsUnknown():
+			case n.CreateOnly():
+				diags.AddAttributeError(path.Root(n.AttrName()), "Invalid configuration",
+					fmt.Sprintf("`%s` cannot be set beside `%s`: Stripe takes it from the token.", n.AttrName(), w.Token))
+			default:
+				diags.AddAttributeError(path.Root(n.AttrName()), "Invalid configuration",
+					fmt.Sprintf("`%s` cannot be set beside `%s` on a create: Stripe takes it from the token. Set it once the object exists, and it changes in place.", n.AttrName(), w.Token))
+			}
+		}
+		return
+	}
+	if !creating {
+		return
+	}
+	for _, name := range w.Requires {
+		if v := value(name); !diags.HasError() && v.IsNull() {
+			diags.AddError("Invalid configuration", fmt.Sprintf("`%s` is required unless `%s` is set.", name, w.Token))
 		}
 	}
 }

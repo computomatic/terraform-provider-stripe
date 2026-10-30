@@ -40,9 +40,12 @@ This data source exports the following attributes in addition to the arguments a
 * `email` - Email.
 * `given_name` - The person's first name.
 * `id_numbers` - The identification numbers (e.g., SSN) associated with the person. See [`id_numbers`](#id_numbers) below.
+* `legal_gender` - The person's gender (International regulations require either "male" or "female"). Possible values: `female`, `male`.
 * `livemode` - Has the value `true` if the object exists in live mode or the value `false` if the object exists in test mode.
 * `metadata` - Set of key-value pairs that you can attach to an object. This can be useful for storing additional information about the object in a structured format.
+* `nationalities` - The nationalities (countries) this person is associated with.
 * `phone` - The phone number for this person.
+* `political_exposure` - The person's political exposure. Possible values: `existing`, `none`.
 * `relationship` - The relationship that this person has with the Account's business or legal entity. See [`relationship`](#relationship) below.
 * `surname` - The person's last name.
 * `updated` - Time at which the object was last updated. Represented as a RFC 3339 date & time UTC value in millisecond precision, for example: 2022-09-18T13:22:18.123Z.
@@ -58,6 +61,7 @@ The `address` attribute supports:
 * `line2` - Address line 2 (e.g., apartment, suite, unit, or building).
 * `postal_code` - ZIP or postal code.
 * `state` - State, county, province, or region.
+* `town` - Town or district.
 
 <a id="date_of_birth"></a>
 ### `date_of_birth`
@@ -84,7 +88,7 @@ The `relationship` attribute supports:
 * `authorizer` - Whether the individual is an authorizer of the Account's identity.
 * `director` - Indicates whether the person is a director of the associated legal entity.
 * `executive` - Indicates whether the person is an executive of the associated legal entity.
-* `legal_guardian` - Whether the individual is the legal guardian of the Account's representative.
+* `legal_guardian` - Indicates whether the person is a legal guardian of the associated legal entity.
 * `owner` - Indicates whether the person is an owner of the associated legal entity.
 * `percent_ownership` - The percentage of ownership the person has in the associated legal entity.
 * `representative` - Indicates whether the person is a representative of the associated legal entity.

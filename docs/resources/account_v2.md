@@ -3,12 +3,12 @@
 page_title: "stripe_account_v2 Resource - Stripe"
 subcategory: ""
 description: |-
-  A connected account created through Stripe's /v2 Accounts API, whose configurations say how the platform uses it: as a customer, a merchant or a recipient. Each configuration requests one capability: automatic_indirect_tax for a customer, card_payments for a merchant and stripe_balance.stripe_transfers for a recipient; state holds every configuration the account has applied, with the status of each capability. Stripe refuses dashboard on an account that is only a customer. The account is also a v1 connected account with the same ID, which the stripe_account data source reads. Set closed to true to close the account, which cannot be undone; Stripe returns most fields of a closed account as null, so state keeps the values they had before the close. Stripe refuses any change to a closed account, so once it is closed a plan that changes it fails. Changing identity.country or identity.entity_type needs a new account. A plan that changes configuration, dashboard or defaults on an existing account fails, because changing them is not supported yet: revert the configuration, ignore the change, or remove the account from the state and apply again to create a new one. Stripe returns identity.country in upper case, so state keeps the country as you configured it. Stripe has no proven way to clear display_name or contact_email, so an apply that removes one from the configuration fails; removing the registered name leaves it on the account.
+  A connected account created through Stripe's /v2 Accounts API, whose configurations say how the platform uses it: as a customer, a merchant or a recipient. Each configuration requests one capability: automatic_indirect_tax for a customer, card_payments for a merchant and stripe_balance.stripe_transfers for a recipient; state holds every configuration the account has applied, with the status of each capability. Stripe refuses dashboard on an account that is only a customer. The account is also a v1 connected account with the same ID, which the stripe_account data source reads. Set closed to true to close the account, which cannot be undone; Stripe returns most fields of a closed account as null, so state keeps the values they had before the close. Stripe refuses any change to a closed account, so once it is closed a plan that changes it fails. identity.entity_type, identity.business_details.registered_name, defaults.locales, defaults.profile and the recipient configuration's capabilities.stripe_balance.stripe_transfers.requested change in place; changing that requested flag can move the status of the recipient's capabilities. Stripe refuses a change of dashboard or of the collectors in defaults.responsibilities once they are set, so a plan that changes one on an existing account fails, as does one that changes identity.country, defaults.currency, configuration.customer, configuration.merchant or the recipient configuration's applied, because changing them is not supported yet: revert the configuration, ignore the change, or remove the account from the state and apply again to create a new one. Stripe returns identity.country in upper case, so state keeps the country as you configured it. Stripe has no proven way to clear display_name or contact_email, so an apply that removes one from the configuration fails; removing dashboard, identity.country or the registered name leaves it on the account, and removing contact_phone, identity.entity_type or a member of defaults.profile clears it.
 ---
 
 # Resource: stripe_account_v2
 
-A connected account created through Stripe's `/v2` Accounts API, whose configurations say how the platform uses it: as a customer, a merchant or a recipient. Each configuration requests one capability: `automatic_indirect_tax` for a customer, `card_payments` for a merchant and `stripe_balance.stripe_transfers` for a recipient; state holds every configuration the account has applied, with the status of each capability. Stripe refuses `dashboard` on an account that is only a customer. The account is also a v1 connected account with the same ID, which the `stripe_account` data source reads. Set `closed` to `true` to close the account, which cannot be undone; Stripe returns most fields of a closed account as null, so state keeps the values they had before the close. Stripe refuses any change to a closed account, so once it is closed a plan that changes it fails. Changing `identity.country` or `identity.entity_type` needs a new account. A plan that changes `configuration`, `dashboard` or `defaults` on an existing account fails, because changing them is not supported yet: revert the configuration, ignore the change, or remove the account from the state and apply again to create a new one. Stripe returns `identity.country` in upper case, so state keeps the country as you configured it. Stripe has no proven way to clear `display_name` or `contact_email`, so an apply that removes one from the configuration fails; removing the registered name leaves it on the account.
+A connected account created through Stripe's `/v2` Accounts API, whose configurations say how the platform uses it: as a customer, a merchant or a recipient. Each configuration requests one capability: `automatic_indirect_tax` for a customer, `card_payments` for a merchant and `stripe_balance.stripe_transfers` for a recipient; state holds every configuration the account has applied, with the status of each capability. Stripe refuses `dashboard` on an account that is only a customer. The account is also a v1 connected account with the same ID, which the `stripe_account` data source reads. Set `closed` to `true` to close the account, which cannot be undone; Stripe returns most fields of a closed account as null, so state keeps the values they had before the close. Stripe refuses any change to a closed account, so once it is closed a plan that changes it fails. `identity.entity_type`, `identity.business_details.registered_name`, `defaults.locales`, `defaults.profile` and the recipient configuration's `capabilities.stripe_balance.stripe_transfers.requested` change in place; changing that `requested` flag can move the status of the recipient's capabilities. Stripe refuses a change of `dashboard` or of the collectors in `defaults.responsibilities` once they are set, so a plan that changes one on an existing account fails, as does one that changes `identity.country`, `defaults.currency`, `configuration.customer`, `configuration.merchant` or the recipient configuration's `applied`, because changing them is not supported yet: revert the configuration, ignore the change, or remove the account from the state and apply again to create a new one. Stripe returns `identity.country` in upper case, so state keeps the country as you configured it. Stripe has no proven way to clear `display_name` or `contact_email`, so an apply that removes one from the configuration fails; removing `dashboard`, `identity.country` or the registered name leaves it on the account, and removing `contact_phone`, `identity.entity_type` or a member of `defaults.profile` clears it.
 
 ~> Stripe cannot delete an account created through `/v2`; set `closed` to `true` to close it. `terraform destroy`, and a change that would replace the v2 account, fail at plan time. To stop managing a v2 account, remove it from the state as [Removing from State](#removing-from-state) shows; it stays in the Stripe account.
 
@@ -57,13 +57,14 @@ resource "stripe_account_v2" "seller" {
 The following arguments are optional:
 
 * `closed` - (Optional) Indicates whether the account has been closed. Possible values: `true`. Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
-* `configuration` - (Optional) An Account Configuration which allows the Account to take on a key persona across Stripe products. See [`configuration`](#configuration) below.
-* `contact_email` - (Optional) The primary contact email address for the Account.
-* `dashboard` - (Optional) A value indicating the Stripe dashboard this Account has access to. This will depend on which configurations are enabled for this account. Possible values: `express`, `full`, `none`.
+* `configuration` - (Optional) An Account Configuration which allows the Account to take on a key persona across Stripe products. Removing it from the configuration leaves the current value. See [`configuration`](#configuration) below.
+* `contact_email` - (Optional) The primary contact email address for the Account. Default: none.
+* `contact_phone` - (Optional) The default contact phone for the Account. Default: none.
+* `dashboard` - (Optional) A value indicating the Stripe dashboard this Account has access to. This will depend on which configurations are enabled for this account. Possible values: `express`, `full`, `none`. Default: none. Removing it from the configuration leaves the current value.
 * `defaults` - (Optional) Default values to be used on Account Configurations. Removing it from the configuration leaves the current value. See [`defaults`](#defaults) below.
-* `display_name` - (Optional) A descriptive name for the Account. This name will be surfaced in the Stripe Dashboard and on any invoices sent to the Account.
+* `display_name` - (Optional) A descriptive name for the Account. This name will be surfaced in the Stripe Dashboard and on any invoices sent to the Account. Default: none.
 * `identity` - (Optional) Information about the company, individual, and business represented by the Account. Removing it from the configuration leaves the current value. See [`identity`](#identity) below.
-* `metadata` - (Optional) Set of key-value pairs that you can attach to an object. This can be useful for storing additional information about the object in a structured format.
+* `metadata` - (Optional) Set of key-value pairs that you can attach to an object. This can be useful for storing additional information about the object in a structured format. Default (Stripe): `{}`.
 
 <a id="configuration"></a>
 ### `configuration`
@@ -167,7 +168,7 @@ The `configuration.merchant.capabilities.stripe_balance.payouts.status_details` 
 
 The `configuration.recipient` attribute supports:
 
-* `applied` - (Read-Only) Indicates whether the recipient configuration is active. You can deactivate or reactivate the recipient configuration by updating this property. Deactivating the configuration by setting this value to false  unrequest all capabilities within the configuration. It will not delete any of the configuration's other properties.
+* `applied` - (Optional) Represents the state of the configuration, and can be updated to deactivate or re-apply a configuration. Default: not sent. Removing it from the configuration leaves the current value.
 * `capabilities` - (Optional) Capabilities to be requested on the Recipient Configuration. See [`configuration.recipient.capabilities`](#configuration.recipient.capabilities) below.
 
 <a id="configuration.recipient.capabilities"></a>
@@ -223,8 +224,19 @@ The `configuration.recipient.capabilities.stripe_balance.stripe_transfers.status
 
 The `defaults` attribute supports:
 
-* `currency` - (Optional) Three-letter [ISO currency code](https://www.iso.org/iso-4217-currency-codes.html), in lowercase. Must be a [supported currency](https://stripe.com/docs/currencies). Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
+* `currency` - (Optional) Three-letter [ISO currency code](https://www.iso.org/iso-4217-currency-codes.html), in lowercase. Must be a [supported currency](https://stripe.com/docs/currencies). Removing it from the configuration leaves the current value.
+* `locales` - (Optional) The Account's preferred locales (languages), ordered by preference. Default (Stripe): `[]`. Removing it from the configuration leaves the current value.
+* `profile` - (Optional) Account profile information. Removing it from the configuration leaves the current value. See [`defaults.profile`](#defaults.profile) below.
 * `responsibilities` - (Optional) Default responsibilities held by either Stripe or the platform. Removing it from the configuration leaves the current value. See [`defaults.responsibilities`](#defaults.responsibilities) below.
+
+<a id="defaults.profile"></a>
+### `defaults.profile`
+
+The `defaults.profile` attribute supports:
+
+* `business_url` - (Optional) The business's publicly-available website. Default: none.
+* `doing_business_as` - (Optional) The name which is used by the business. Default: none.
+* `product_description` - (Optional) Internal-only description of the product sold or service provided by the business. It's used by Stripe for risk and underwriting purposes. Default: none.
 
 <a id="defaults.responsibilities"></a>
 ### `defaults.responsibilities`
@@ -241,8 +253,8 @@ The `defaults.responsibilities` attribute supports:
 The `identity` attribute supports:
 
 * `business_details` - (Optional) Information about the company or business. Removing it from the configuration leaves the current value. See [`identity.business_details`](#identity.business_details) below.
-* `country` - (Optional) The country in which the account holder resides, or in which the business is legally established. This should be an [ISO 3166-1 alpha-2](https://en.wikipedia.org/wiki/ISO_3166-1_alpha-2) country code. Changing it fails the plan, because this resource cannot be replaced.
-* `entity_type` - (Optional) The entity type represented by the Account. Ensure this field is accurate before adding configurations that rely on identity information, as it determines which identity fields apply and how the Account is validated. Possible values: `company`, `government_entity`, `individual`, `non_profit`. Changing it fails the plan, because this resource cannot be replaced.
+* `country` - (Optional) The country in which the account holder resides, or in which the business is legally established. This should be an [ISO 3166-1 alpha-2](https://en.wikipedia.org/wiki/ISO_3166-1_alpha-2) country code. Default: none. Removing it from the configuration leaves the current value.
+* `entity_type` - (Optional) The entity type represented by the Account. Ensure this field is accurate before adding configurations that rely on identity information, as it determines which identity fields apply and how the Account is validated. Possible values: `company`, `government_entity`, `individual`, `non_profit`. Default: none.
 
 <a id="identity.business_details"></a>
 ### `identity.business_details`
@@ -507,4 +519,4 @@ Using `terraform import`, import a v2 account using its ID. For example:
 % terraform import stripe_account_v2.seller acct_1Nv0FGQ9RKHgCVdK
 ```
 
-~> Stripe does not return the capabilities a configuration requested, so an imported account has no `requested` flags in `configuration`, and its `identity.country` is in upper case. Add `lifecycle { ignore_changes = [configuration] }` to a configuration that sets it, because a plan that changes `configuration` fails, and add `identity.country` to the list if the configuration writes the country in lower case, because a plan that changes it fails too. An imported closed account has no values for the fields Stripe returns as null, and a plan that changes a closed account fails, so its configuration needs `lifecycle { ignore_changes = all }`.
+~> Stripe does not return the capabilities a configuration requested, so an imported account has no `requested` flags in `configuration`, and its `identity.country` is in upper case. Add `lifecycle { ignore_changes = [configuration] }` to a configuration that sets it, because a plan that changes `configuration.customer` or `configuration.merchant` fails, and add `identity.country` to the list if the configuration writes the country in lower case, because a plan that changes it fails too. An imported closed account has no values for the fields Stripe returns as null, and a plan that changes a closed account fails, so its configuration needs `lifecycle { ignore_changes = all }`.

@@ -63,6 +63,37 @@ func TestEvidenceReaderTakesTheSuiteFixtureAndRefusesTheUnknown(t *testing.T) {
 	}
 }
 
+// A rule's observation is the one matcher the generator reads, so the reader refuses a kind the
+// format does not define and a condition it cannot weigh, and reads every kind the record holds.
+func TestEvidenceReaderReadsRuleObservationsStrictly(t *testing.T) {
+	data, err := os.ReadFile(filepath.Join("testdata", "evidence", "run-40926522642.json"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	withObservation := func(observation string) []byte {
+		rule := `"rules": [{"object": "coupon", "operation": "PostCoupons", "path": "name", "rule": "a rule", "observations": [` + observation + `], "tests": ["a"]}],`
+		return bytes.Replace(data, []byte(`"rules": [],`), []byte(rule), 1)
+	}
+	for _, m := range []string{
+		`{"kind": "value", "value": false}`, `{"kind": "absent"}`, `{"kind": "null"}`, `{"kind": "sent", "path": "name"}`,
+		`{"kind": "created", "prefix": "arn:"}`, `{"kind": "fingerprint", "path": "account_number"}`,
+		`{"kind": "from", "path": "currency", "ref": "application_fee"}`, `{"kind": "normalised", "path": "amount_off", "returned": {"usd": 500}}`,
+	} {
+		if _, err := decodeEvidence(withObservation(`{"condition": {"account_country": "US", "variant": ""}, "value": ` + m + `}`)); err != nil {
+			t.Errorf("%s: %v", m, err)
+		}
+	}
+	for _, tc := range []struct{ name, observation, want string }{
+		{"an unknown matcher kind", `{"condition": {"variant": ""}, "value": {"kind": "derived"}}`, `observation "derived"`},
+		{"an unknown matcher member", `{"condition": {"variant": ""}, "value": {"kind": "value", "value": 1, "unit": "cents"}}`, `rules[0].observations[0].value.unit is a member the format does not define`},
+		{"an unknown condition", `{"condition": {"variant": "", "customer.currency": "eur"}, "value": {"kind": "absent"}}`, `rules[0].observations[0].condition.customer.currency is a member the format does not define`},
+	} {
+		if _, err := decodeEvidence(withObservation(tc.observation)); err == nil || !strings.Contains(err.Error(), tc.want) {
+			t.Errorf("%s: %v, want %q", tc.name, err, tc.want)
+		}
+	}
+}
+
 // proven adds a proven evidence leaf for the key, with its facts.
 func proven(p *Pinned, key string, l EvidenceLeaf) {
 	side, rest, _ := strings.Cut(key, "/")

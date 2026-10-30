@@ -1,13 +1,13 @@
 {
-  "fake_version": "v0.27.0",
-  "suite_ref": "3b86d258fd95ad91de056adde268ff5ca1740155",
-  "run_id": 40980203177,
+  "fake_version": "v0.28.0",
+  "suite_ref": "8c084533c563276f4653ad9d6df5e2189fbdbb0b",
+  "run_id": 41001758035,
   "attributes": {
-    "bytes": 5776743,
-    "sha256": "9337ef646d859329222899c0197b805c4bf93d315a201f7b266ae71f8d9606cf"
+    "bytes": 5833816,
+    "sha256": "bf6120fa40da23125c1618d90014e13718e5313b339a2795ffe410841aae94f3"
   },
   "evidence": {
-    "bytes": 3374451,
-    "sha256": "031a2308eac889398b32f597bf9f1004a1397d35cd28ab7e14c5163924cba611"
+    "bytes": 3633121,
+    "sha256": "c46e5053132075a9eb6d0fb08b82e20e8d7b65a478eba597f447f97c903e7526"
   }
 }
