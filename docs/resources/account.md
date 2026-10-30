@@ -3,12 +3,12 @@
 page_title: "stripe_account Resource - Stripe"
 subcategory: ""
 description: |-
-  A connected account of the platform. terraform destroy deletes the account and, with it, its bank accounts. Set exactly one of type (a custom account) or controller (an account whose controller properties you choose), together with country. type, controller and country cannot change on an existing account, so changing one replaces it. Stripe refuses a custom account that requests no capability: one in the US must request at least transfers. The resource requests the capabilities it lists on creation only: a plan that changes capabilities on an existing account fails, because changing requested capabilities is not supported yet: revert the configuration, ignore the change, or recreate the account deliberately with terraform taint (tofu taint in OpenTofu). Read their status with the stripe_account_capability data source. The onboarding arguments (business_type, individual, company, external_account, tos_acceptance, settings.card_issuing.tos_acceptance, settings.treasury.tos_acceptance and the business profile's mcc, url, product_description, annual_revenue and estimated_worker_count) are sent on creation only, and a plan that changes one on an existing account fails in the same way. Stripe never returns individual.id_number or individual.ssn_last_4, and the provider does not read individual, company or external_account back, so state keeps the values you configured, and the two identity numbers are sensitive. Removing email, business_type, tos_acceptance or a business_profile or settings argument from the configuration leaves the value on the account. A refresh that finds the account gone (Stripe answers 403 account_invalid) removes it from state.
+  A connected account of the platform. terraform destroy deletes the account and, with it, its bank accounts. Set exactly one of type (a custom account) or controller (an account whose controller properties you choose), together with country. type, controller and country cannot change on an existing account, so changing one replaces it. Stripe refuses a custom account that requests no capability: one in the US must request at least transfers. The resource requests the capabilities it lists on creation only: a plan that changes capabilities on an existing account fails, because changing requested capabilities is not supported yet: revert the configuration, ignore the change, or recreate the account deliberately with terraform taint (tofu taint in OpenTofu). Read their status with the stripe_account_capability data source. The onboarding arguments (business_type, individual.id_number, individual.ssn_last_4, external_account, tos_acceptance, settings.card_issuing.tos_acceptance, settings.treasury.tos_acceptance and the business profile's mcc, url, product_description, annual_revenue and estimated_worker_count) are sent on creation only, and a plan that changes one on an existing account fails in the same way. Stripe never returns individual.id_number, individual.ssn_last_4 or external_account, so state keeps the values you configured, and the two identity numbers are sensitive. The rest of individual and company is read back from Stripe and changes in place, so a value changed outside Terraform plans an update back to the configuration, and a member the configuration leaves out but that Stripe holds plans an update that clears it, where Stripe can clear it. Stripe refuses some changes itself, such as of a verified individual, and its refusal fails the apply. individual.phone keeps the form you configured, because Stripe stores a phone number in its own form, such as +10000000000 for 0000000000, and a verification document's front and back keep what you configured, because Stripe replaces a test token such as file_identity_document_success with a file of its own. Removing email, business_type, tos_acceptance, individual, company, individual.phone or a business_profile or settings argument from the configuration leaves the value on the account. A refresh that finds the account gone (Stripe answers 403 account_invalid) removes it from state.
 ---
 
 # Resource: stripe_account
 
-A connected account of the platform. `terraform destroy` deletes the account and, with it, its bank accounts. Set exactly one of `type` (a custom account) or `controller` (an account whose controller properties you choose), together with `country`. `type`, `controller` and `country` cannot change on an existing account, so changing one replaces it. Stripe refuses a custom account that requests no capability: one in the US must request at least `transfers`. The resource requests the capabilities it lists on creation only: a plan that changes `capabilities` on an existing account fails, because changing requested capabilities is not supported yet: revert the configuration, ignore the change, or recreate the account deliberately with `terraform taint` (`tofu taint` in OpenTofu). Read their status with the `stripe_account_capability` data source. The onboarding arguments (`business_type`, `individual`, `company`, `external_account`, `tos_acceptance`, `settings.card_issuing.tos_acceptance`, `settings.treasury.tos_acceptance` and the business profile's `mcc`, `url`, `product_description`, `annual_revenue` and `estimated_worker_count`) are sent on creation only, and a plan that changes one on an existing account fails in the same way. Stripe never returns `individual.id_number` or `individual.ssn_last_4`, and the provider does not read `individual`, `company` or `external_account` back, so state keeps the values you configured, and the two identity numbers are sensitive. Removing `email`, `business_type`, `tos_acceptance` or a `business_profile` or `settings` argument from the configuration leaves the value on the account. A refresh that finds the account gone (Stripe answers 403 `account_invalid`) removes it from state.
+A connected account of the platform. `terraform destroy` deletes the account and, with it, its bank accounts. Set exactly one of `type` (a custom account) or `controller` (an account whose controller properties you choose), together with `country`. `type`, `controller` and `country` cannot change on an existing account, so changing one replaces it. Stripe refuses a custom account that requests no capability: one in the US must request at least `transfers`. The resource requests the capabilities it lists on creation only: a plan that changes `capabilities` on an existing account fails, because changing requested capabilities is not supported yet: revert the configuration, ignore the change, or recreate the account deliberately with `terraform taint` (`tofu taint` in OpenTofu). Read their status with the `stripe_account_capability` data source. The onboarding arguments (`business_type`, `individual.id_number`, `individual.ssn_last_4`, `external_account`, `tos_acceptance`, `settings.card_issuing.tos_acceptance`, `settings.treasury.tos_acceptance` and the business profile's `mcc`, `url`, `product_description`, `annual_revenue` and `estimated_worker_count`) are sent on creation only, and a plan that changes one on an existing account fails in the same way. Stripe never returns `individual.id_number`, `individual.ssn_last_4` or `external_account`, so state keeps the values you configured, and the two identity numbers are sensitive. The rest of `individual` and `company` is read back from Stripe and changes in place, so a value changed outside Terraform plans an update back to the configuration, and a member the configuration leaves out but that Stripe holds plans an update that clears it, where Stripe can clear it. Stripe refuses some changes itself, such as of a verified individual, and its refusal fails the apply. `individual.phone` keeps the form you configured, because Stripe stores a phone number in its own form, such as `+10000000000` for `0000000000`, and a verification document's `front` and `back` keep what you configured, because Stripe replaces a test token such as `file_identity_document_success` with a file of its own. Removing `email`, `business_type`, `tos_acceptance`, `individual`, `company`, `individual.phone` or a `business_profile` or `settings` argument from the configuration leaves the value on the account. A refresh that finds the account gone (Stripe answers 403 `account_invalid`) removes it from state.
 
 ## Example Usage
 
@@ -124,12 +124,12 @@ The following arguments are optional:
 * `business_profile` - (Optional) Business information about the account. Removing it from the configuration leaves the current value. See [`business_profile`](#business_profile) below.
 * `business_type` - (Optional) The business type. Once you create an [Account Link](https://docs.stripe.com/api/account_links) or [Account Session](https://docs.stripe.com/api/account_sessions), this property can only be updated for accounts where [controller.requirement_collection](https://docs.stripe.com/api/accounts/object#account_object-controller-requirement_collection) is `application`, which includes Custom accounts. Possible values: `company`, `government_entity`, `individual`, `non_profit`. Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
 * `capabilities` - (Optional) Each key of the dictionary represents a capability, and each capability maps to its settings (for example, whether it has been requested or not). Each capability is inactive until you have provided its specific requirements and Stripe has verified them. An account might have some of its requested capabilities be active and some be inactive. Required when [account.controller.stripe_dashboard.type](https://docs.stripe.com/api/accounts/create#create_account-controller-dashboard-type) is `none`, which includes Custom accounts. See [`capabilities`](#capabilities) below.
-* `company` - (Optional) Information about the company or business. This field is available for any `business_type`. Once you create an [Account Link](https://docs.stripe.com/api/account_links) or [Account Session](https://docs.stripe.com/api/account_sessions), this property can only be updated for accounts where [controller.requirement_collection](https://docs.stripe.com/api/accounts/object#account_object-controller-requirement_collection) is `application`, which includes Custom accounts. See [`company`](#company) below.
+* `company` - (Optional) Information about the company or business. This field is available for any `business_type`. Once you create an [Account Link](https://docs.stripe.com/api/account_links) or [Account Session](https://docs.stripe.com/api/account_sessions), this property can only be updated for accounts where [controller.requirement_collection](https://docs.stripe.com/api/accounts/object#account_object-controller-requirement_collection) is `application`, which includes Custom accounts. Removing it from the configuration leaves the current value. See [`company`](#company) below.
 * `controller` - (Optional) A hash of configuration describing the account controller's attributes. Changing it replaces the resource. Removing it from the configuration leaves the current value. See [`controller`](#controller) below.
 * `email` - (Optional) The email address of the account holder. This is only to make the account easier to identify to you. If [controller.requirement_collection](https://docs.stripe.com/api/accounts/object#account_object-controller-requirement_collection) is `application`, which includes Custom accounts, Stripe doesn't email the account without your consent. Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
 * `external_account` - (Optional) A card or bank account to attach to the account for receiving [payouts](https://docs.stripe.com/connect/bank-debit-card-payouts) (you won’t be able to use it for top-ups). You can provide either a token, like the ones returned by [Stripe.js](https://docs.stripe.com/js), or a dictionary, as documented in the `external_account` parameter for [bank account](https://docs.stripe.com/api#account_create_bank_account) creation. <br><br>By default, providing an external account sets it as the new default external account for its currency, and deletes the old default if one exists. To add additional external accounts without replacing the existing default for the currency, use the [bank account](https://docs.stripe.com/api#account_create_bank_account) or [card creation](https://docs.stripe.com/api#account_create_card) APIs. After you create an [Account Link](https://docs.stripe.com/api/account_links) or [Account Session](https://docs.stripe.com/api/account_sessions), this property can only be updated for accounts where [controller.requirement_collection](https://docs.stripe.com/api/accounts/object#account_object-controller-requirement_collection) is `application`, which includes Custom accounts.
-* `individual` - (Optional) Information about the person represented by the account. This field is null unless `business_type` is set to `individual`. Once you create an [Account Link](https://docs.stripe.com/api/account_links) or [Account Session](https://docs.stripe.com/api/account_sessions), this property can only be updated for accounts where [controller.requirement_collection](https://docs.stripe.com/api/accounts/object#account_object-controller-requirement_collection) is `application`, which includes Custom accounts. See [`individual`](#individual) below.
-* `metadata` - (Optional) Set of [key-value pairs](https://docs.stripe.com/api/metadata) that you can attach to an object. This can be useful for storing additional information about the object in a structured format. Individual keys can be unset by posting an empty value to them. All keys can be unset by posting an empty value to `metadata`.
+* `individual` - (Optional) Information about the person represented by the account. This field is null unless `business_type` is set to `individual`. Once you create an [Account Link](https://docs.stripe.com/api/account_links) or [Account Session](https://docs.stripe.com/api/account_sessions), this property can only be updated for accounts where [controller.requirement_collection](https://docs.stripe.com/api/accounts/object#account_object-controller-requirement_collection) is `application`, which includes Custom accounts. Removing it from the configuration leaves the current value. See [`individual`](#individual) below.
+* `metadata` - (Optional) Set of [key-value pairs](https://docs.stripe.com/api/metadata) that you can attach to an object. This can be useful for storing additional information about the object in a structured format. Individual keys can be unset by posting an empty value to them. All keys can be unset by posting an empty value to `metadata`. Default (Stripe): `{}`.
 * `settings` - (Optional) Options for customizing how the account functions within Stripe. Removing it from the configuration leaves the current value. See [`settings`](#settings) below.
 * `tos_acceptance` - (Optional) Details on the account's acceptance of the [Stripe Services Agreement](https://docs.stripe.com/connect/updating-accounts#tos-acceptance). This property can only be updated for accounts where [controller.requirement_collection](https://docs.stripe.com/api/accounts/object#account_object-controller-requirement_collection) is `application`, which includes Custom accounts. This property defaults to a `full` service agreement when empty. Removing it from the configuration leaves the current value. See [`tos_acceptance`](#tos_acceptance) below.
 * `type` - (Optional) The `type` parameter is deprecated. Use [`controller`](https://docs.stripe.com/api/accounts/create#create_account-controller) instead to configure dashboard access, fee payer, loss liability, and requirement collection. Possible values: `custom`, `express`, `standard`. Changing it replaces the resource. Removing it from the configuration leaves the current value.
@@ -745,7 +745,81 @@ The `capabilities.zip_payments` attribute supports:
 
 The `company` attribute supports:
 
-* `name` - (Optional) The company's legal name. Also available for accounts where [controller.requirement_collection](https://docs.stripe.com/api/accounts/object#account_object-controller-requirement_collection) is `stripe`.
+* `address` - (Optional) Removing it from the configuration leaves the current value. See [`company.address`](#company.address) below.
+* `administrative_address` - (Optional) Removing it from the configuration leaves the current value. See [`company.administrative_address`](#company.administrative_address) below.
+* `directors_provided` - (Optional) Whether the company's directors have been provided. This Boolean will be `true` if you've manually indicated that all directors are provided via [the `directors_provided` parameter](https://docs.stripe.com/api/accounts/update#update_account-company-directors_provided). Default (Stripe): `false` on a company account, `true` on an individual one. Removing it from the configuration leaves the current value.
+* `directorship_declaration` - (Optional) This hash is used to attest that the director information provided to Stripe is both current and correct. Removing it from the configuration leaves the current value. See [`company.directorship_declaration`](#company.directorship_declaration) below.
+* `executives_provided` - (Optional) Whether the company's executives have been provided. This Boolean will be `true` if you've manually indicated that all executives are provided via [the `executives_provided` parameter](https://docs.stripe.com/api/accounts/update#update_account-company-executives_provided), or if Stripe determined that sufficient executives were provided. Default (Stripe): `false` on a company account, `true` on an individual one. Removing it from the configuration leaves the current value.
+* `name` - (Optional) The company's legal name. Also available for accounts where [controller.requirement_collection](https://docs.stripe.com/api/accounts/object#account_object-controller-requirement_collection) is `stripe`. Default: none.
+* `owners_provided` - (Optional) Whether the company's owners have been provided. This Boolean will be `true` if you've manually indicated that all owners are provided via [the `owners_provided` parameter](https://docs.stripe.com/api/accounts/update#update_account-company-owners_provided), or if Stripe determined that sufficient owners were provided. Stripe determines ownership requirements using both the number of owners provided and their total percent ownership (calculated by adding the `percent_ownership` of each owner together). Default (Stripe): `false` on a company account, `true` on an individual one. Removing it from the configuration leaves the current value.
+* `ownership_declaration` - (Optional) This hash is used to attest that the beneficial owner information provided to Stripe is both current and correct. Removing it from the configuration leaves the current value. See [`company.ownership_declaration`](#company.ownership_declaration) below.
+* `phone` - (Optional) The company's phone number (used for verification). Default: none. Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
+* `principal_place_of_business` - (Optional) Removing it from the configuration leaves the current value. See [`company.principal_place_of_business`](#company.principal_place_of_business) below.
+* `registration_date` - (Optional) Removing it from the configuration leaves the current value. See [`company.registration_date`](#company.registration_date) below.
+* `structure` - (Optional) The category identifying the legal structure of the company or legal entity. Also available for accounts where [controller.requirement_collection](https://docs.stripe.com/api/accounts/object#account_object-controller-requirement_collection) is `stripe`. See [Business structure](https://docs.stripe.com/connect/identity-verification#business-structure) for more details. Possible values: `free_zone_establishment`, `free_zone_llc`, `government_instrumentality`, `governmental_unit`, `incorporated_non_profit`, `incorporated_partnership`, `limited_liability_partnership`, `llc`, `multi_member_llc`, `private_company`, `private_corporation`, `private_partnership`, `public_company`, `public_corporation`, `public_partnership`, `registered_charity`, `single_member_llc`, `sole_establishment`, `sole_proprietorship`, `tax_exempt_government_instrumentality`, `unincorporated_association`, `unincorporated_non_profit`, `unincorporated_partnership`. Default: none.
+
+<a id="company.address"></a>
+### `company.address`
+
+The `company.address` attribute supports:
+
+* `city` - (Optional) City, district, suburb, town, or village. Default: none. Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
+* `country` - (Optional) Two-letter country code ([ISO 3166-1 alpha-2](https://en.wikipedia.org/wiki/ISO_3166-1_alpha-2)). Default: none. Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
+* `line1` - (Optional) Address line 1, such as the street, PO Box, or company name. Default: none. Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
+* `line2` - (Optional) Address line 2, such as the apartment, suite, unit, or building. Default: none. Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
+* `postal_code` - (Optional) ZIP or postal code. Default: none. Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
+* `state` - (Optional) State, county, province, or region ([ISO 3166-2](https://en.wikipedia.org/wiki/ISO_3166-2)). Default: none. Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
+
+<a id="company.administrative_address"></a>
+### `company.administrative_address`
+
+The `company.administrative_address` attribute supports:
+
+* `city` - (Optional) City, district, suburb, town, or village. Default: none.
+* `country` - (Optional) Two-letter country code ([ISO 3166-1 alpha-2](https://en.wikipedia.org/wiki/ISO_3166-1_alpha-2)). Default: none. Removing it from the configuration leaves the current value.
+* `line1` - (Optional) Address line 1, such as the street, PO Box, or company name. Default: none.
+* `line2` - (Optional) Address line 2, such as the apartment, suite, unit, or building. Default: none.
+* `postal_code` - (Optional) ZIP or postal code. Default: none.
+* `state` - (Optional) State, county, province, or region ([ISO 3166-2](https://en.wikipedia.org/wiki/ISO_3166-2)). Default: none.
+
+<a id="company.directorship_declaration"></a>
+### `company.directorship_declaration`
+
+The `company.directorship_declaration` attribute supports:
+
+* `date` - (Optional) The Unix timestamp marking when the directorship declaration attestation was made. Default: none. Removing it from the configuration leaves the current value.
+* `ip` - (Optional) The IP address from which the directorship declaration attestation was made. Default: none. Removing it from the configuration leaves the current value.
+* `user_agent` - (Optional) The user-agent string from the browser where the directorship declaration attestation was made. Default: none. Removing it from the configuration leaves the current value.
+
+<a id="company.ownership_declaration"></a>
+### `company.ownership_declaration`
+
+The `company.ownership_declaration` attribute supports:
+
+* `date` - (Optional) The Unix timestamp marking when the beneficial owner attestation was made. Default: none. Removing it from the configuration leaves the current value.
+* `ip` - (Optional) The IP address from which the beneficial owner attestation was made. Default: none. Removing it from the configuration leaves the current value.
+* `user_agent` - (Optional) The user-agent string from the browser where the beneficial owner attestation was made. Default: none. Removing it from the configuration leaves the current value.
+
+<a id="company.principal_place_of_business"></a>
+### `company.principal_place_of_business`
+
+The `company.principal_place_of_business` attribute supports:
+
+* `city` - (Optional) City, district, suburb, town, or village. Default: none.
+* `country` - (Optional) Two-letter country code ([ISO 3166-1 alpha-2](https://en.wikipedia.org/wiki/ISO_3166-1_alpha-2)). Default: none. Removing it from the configuration leaves the current value.
+* `line1` - (Optional) Address line 1, such as the street, PO Box, or company name. Default: none.
+* `line2` - (Optional) Address line 2, such as the apartment, suite, unit, or building. Default: none.
+* `postal_code` - (Optional) ZIP or postal code. Default: none.
+* `state` - (Optional) State, county, province, or region ([ISO 3166-2](https://en.wikipedia.org/wiki/ISO_3166-2)). Default: none.
+
+<a id="company.registration_date"></a>
+### `company.registration_date`
+
+The `company.registration_date` attribute supports:
+
+* `day` - (Required) The day of registration, between 1 and 31.
+* `month` - (Required) The month of registration, between 1 and 12.
+* `year` - (Required) The four-digit year of registration.
 
 <a id="controller"></a>
 ### `controller`
@@ -785,25 +859,34 @@ The `controller.stripe_dashboard` attribute supports:
 
 The `individual` attribute supports:
 
-* `address` - (Optional) The person's address. See [`individual.address`](#individual.address) below.
-* `dob` - (Optional) The person's date of birth. See [`individual.dob`](#individual.dob) below.
-* `email` - (Optional) The person's email address. Also available for accounts where [controller.requirement_collection](https://docs.stripe.com/api/accounts/object#account_object-controller-requirement_collection) is `stripe`.
-* `first_name` - (Optional) The person's first name. Also available for accounts where [controller.requirement_collection](https://docs.stripe.com/api/accounts/object#account_object-controller-requirement_collection) is `stripe`.
+* `address` - (Optional) The person's address. Removing it from the configuration leaves the current value. See [`individual.address`](#individual.address) below.
+* `dob` - (Optional) The person's date of birth. Removing it from the configuration leaves the current value. See [`individual.dob`](#individual.dob) below.
+* `email` - (Optional) The person's email address. Also available for accounts where [controller.requirement_collection](https://docs.stripe.com/api/accounts/object#account_object-controller-requirement_collection) is `stripe`. Default: none.
+* `first_name` - (Optional) The person's first name. Also available for accounts where [controller.requirement_collection](https://docs.stripe.com/api/accounts/object#account_object-controller-requirement_collection) is `stripe`. Default: none.
+* `full_name_aliases` - (Optional) A list of alternate names or aliases that the person is known by. Also available for accounts where [controller.requirement_collection](https://docs.stripe.com/api/accounts/object#account_object-controller-requirement_collection) is `stripe`. Default: none. Removing it from the configuration leaves the current value.
+* `gender` - (Optional) The person's gender. Default: none.
 * `id_number` - (Optional, Sensitive) The person's ID number, as appropriate for their country. For example, a social security number in the U.S., social insurance number in Canada, etc. Instead of the number itself, you can also provide a [PII token provided by Stripe.js](https://docs.stripe.com/js/tokens/create_token?type=pii). Changing this value for the account's representative requires that the account re-accept the [terms of service](https://docs.stripe.com/api/accounts/object#account_object-tos_acceptance).
-* `last_name` - (Optional) The person's last name. Also available for accounts where [controller.requirement_collection](https://docs.stripe.com/api/accounts/object#account_object-controller-requirement_collection) is `stripe`.
-* `phone` - (Optional) The person's phone number.
+* `last_name` - (Optional) The person's last name. Also available for accounts where [controller.requirement_collection](https://docs.stripe.com/api/accounts/object#account_object-controller-requirement_collection) is `stripe`. Default: none.
+* `maiden_name` - (Optional) The person's maiden name. Default: none.
+* `metadata` - (Optional) Set of [key-value pairs](https://docs.stripe.com/api/metadata) that you can attach to an object. This can be useful for storing additional information about the object in a structured format. Default: none. Removing it from the configuration leaves the current value.
+* `phone` - (Optional) The person's phone number. Default: none. Removing it from the configuration leaves the current value.
+* `political_exposure` - (Optional) Indicates if the person or any of their representatives, family members, or other closely related persons, declares that they hold or have held an important public job or function, in any jurisdiction. Possible values: `existing`, `none`. Default: none. Removing it from the configuration leaves the current value.
+* `registered_address` - (Optional) The person's registered address. Removing it from the configuration leaves the current value. See [`individual.registered_address`](#individual.registered_address) below.
+* `relationship` - (Optional) The relationship that this person has with the account's legal entity. Removing it from the configuration leaves the current value. See [`individual.relationship`](#individual.relationship) below.
 * `ssn_last_4` - (Optional, Sensitive) The last four digits of the person's Social Security number (U.S. only). Changing this value for the account's representative requires that the account re-accept the [terms of service](https://docs.stripe.com/api/accounts/object#account_object-tos_acceptance).
-* `verification` - (Optional) The person's verification status. See [`individual.verification`](#individual.verification) below.
+* `verification` - (Optional) The person's verification status. Removing it from the configuration leaves the current value. See [`individual.verification`](#individual.verification) below.
 
 <a id="individual.address"></a>
 ### `individual.address`
 
 The `individual.address` attribute supports:
 
-* `city` - (Optional) City, district, suburb, town, or village.
-* `line1` - (Optional) Address line 1, such as the street, PO Box, or company name.
-* `postal_code` - (Optional) ZIP or postal code.
-* `state` - (Optional) State, county, province, or region ([ISO 3166-2](https://en.wikipedia.org/wiki/ISO_3166-2)).
+* `city` - (Optional) City, district, suburb, town, or village. Default: none.
+* `country` - (Optional) Two-letter country code ([ISO 3166-1 alpha-2](https://en.wikipedia.org/wiki/ISO_3166-1_alpha-2)). Default: none. Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
+* `line1` - (Optional) Address line 1, such as the street, PO Box, or company name. Default: none.
+* `line2` - (Optional) Address line 2, such as the apartment, suite, unit, or building. Default: none.
+* `postal_code` - (Optional) ZIP or postal code. Default: none.
+* `state` - (Optional) State, county, province, or region ([ISO 3166-2](https://en.wikipedia.org/wiki/ISO_3166-2)). Default: none.
 
 <a id="individual.dob"></a>
 ### `individual.dob`
@@ -814,19 +897,52 @@ The `individual.dob` attribute supports:
 * `month` - (Required) The month of birth, between 1 and 12.
 * `year` - (Required) The four-digit year of birth.
 
+<a id="individual.registered_address"></a>
+### `individual.registered_address`
+
+The `individual.registered_address` attribute supports:
+
+* `city` - (Optional) City, district, suburb, town, or village. Default: none.
+* `country` - (Optional) Two-letter country code ([ISO 3166-1 alpha-2](https://en.wikipedia.org/wiki/ISO_3166-1_alpha-2)). Default: none.
+* `line1` - (Optional) Address line 1, such as the street, PO Box, or company name. Default: none.
+* `line2` - (Optional) Address line 2, such as the apartment, suite, unit, or building. Default: none.
+* `postal_code` - (Optional) ZIP or postal code. Default: none.
+* `state` - (Optional) State, county, province, or region ([ISO 3166-2](https://en.wikipedia.org/wiki/ISO_3166-2)). Default: none.
+
+<a id="individual.relationship"></a>
+### `individual.relationship`
+
+The `individual.relationship` attribute supports:
+
+* `director` - (Optional) Whether the person is a director of the account's legal entity. Directors are typically members of the governing board of the company, or responsible for ensuring the company meets its regulatory obligations. Default: none. Removing it from the configuration leaves the current value.
+* `executive` - (Optional) Whether the person has significant responsibility to control, manage, or direct the organization. Default: none. Removing it from the configuration leaves the current value.
+* `owner` - (Optional) Whether the person is an owner of the account’s legal entity. Default: none. Removing it from the configuration leaves the current value.
+* `percent_ownership` - (Optional) The percent owned by the person of the account's legal entity. Default: none. Removing it from the configuration leaves the current value.
+* `title` - (Optional) The person's title (e.g., CEO, Support Engineer). Default: none.
+
 <a id="individual.verification"></a>
 ### `individual.verification`
 
 The `individual.verification` attribute supports:
 
-* `document` - (Optional) See [`individual.verification.document`](#individual.verification.document) below.
+* `additional_document` - (Optional) A document showing address, either a passport, local ID card, or utility bill from a well-known utility company. Removing it from the configuration leaves the current value. See [`individual.verification.additional_document`](#individual.verification.additional_document) below.
+* `document` - (Optional) Removing it from the configuration leaves the current value. See [`individual.verification.document`](#individual.verification.document) below.
+
+<a id="individual.verification.additional_document"></a>
+### `individual.verification.additional_document`
+
+The `individual.verification.additional_document` attribute supports:
+
+* `back` - (Optional) The back of an ID returned by a [file upload](https://docs.stripe.com/api#create_file) with a `purpose` value of `identity_document`. Default: none.
+* `front` - (Optional) The front of an ID returned by a [file upload](https://docs.stripe.com/api#create_file) with a `purpose` value of `identity_document`. Default: none.
 
 <a id="individual.verification.document"></a>
 ### `individual.verification.document`
 
 The `individual.verification.document` attribute supports:
 
-* `front` - (Optional) The front of an ID returned by a [file upload](https://docs.stripe.com/api#create_file) with a `purpose` value of `identity_document`.
+* `back` - (Optional) The back of an ID returned by a [file upload](https://docs.stripe.com/api#create_file) with a `purpose` value of `identity_document`. Default: none.
+* `front` - (Optional) The front of an ID returned by a [file upload](https://docs.stripe.com/api#create_file) with a `purpose` value of `identity_document`. Default: none.
 
 <a id="settings"></a>
 ### `settings`
@@ -1124,4 +1240,4 @@ Using `terraform import`, import an account using its ID. For example:
 % terraform import stripe_account.seller acct_1Nv0FGQ9RKHgCVdK
 ```
 
-~> Stripe does not return which `capabilities` were requested, and the provider does not read back `individual`, `company` or `external_account`, so an imported account has none of them in state. Add `lifecycle { ignore_changes = [capabilities, individual, company, external_account] }`, listing those the configuration sets, because a plan that changes one of them fails.
+~> Stripe does not return which `capabilities` were requested, `external_account`, `individual.id_number` or `individual.ssn_last_4`, so an imported account has none of them in state. Add `lifecycle { ignore_changes = [capabilities, external_account, individual.id_number, individual.ssn_last_4] }`, listing those the configuration sets, because a plan that changes one of them fails. An import reads `individual.phone` and the verification documents in Stripe's form, such as `+10000000000` for `0000000000` and a `file_...` ID for a test token, so the first plan updates one configured in another form unless `ignore_changes` lists it too, and Stripe refuses a new document once it has verified the individual.

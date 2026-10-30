@@ -14,8 +14,8 @@ import (
 // `webhook_endpoint.url` unless a request includes it, so the engine includes it on every
 // request and the URL is read back like any other field. `status` is read-only: enabling
 // and disabling are separate action endpoints that the provider does not call yet. The
-// signing secret is left out of the table until the conformance suite and the fake prove
-// it (ADR adrs/1-pending/2026-10-17-v2-support).
+// signing secret is in the exclusion register until the engine can send `include` on create
+// alone to read it once (ADR adrs/1-pending/2026-10-17-v2-support).
 var Declaration = engine.Declaration{
 	TypeName:              "stripe_event_destination_v2",
 	IDPrefix:              "ed_",

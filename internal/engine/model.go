@@ -294,6 +294,11 @@ func compile(decl Declaration, table []fields.Field) (*model, error) {
 			}
 		}
 	}
+	for _, name := range decl.SendChangedMembers {
+		if n, ok := m.top(name); !ok || n.Shape != fields.Object || !n.Update {
+			return nil, fmt.Errorf("%s: send-changed-members entry `%s` is not a top-level object an update takes", decl.TypeName, name)
+		}
+	}
 	for _, name := range decl.RefuseChange {
 		if n, _, ok := m.at(name); !ok || !n.Optional && !n.Required {
 			return nil, fmt.Errorf("%s: refuse-change entry `%s` is not a configurable field outside a list", decl.TypeName, name)

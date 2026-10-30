@@ -177,7 +177,7 @@ A `/v2` request with no parameters (`DELETE`, or a `POST` to `/enable` or `/disa
 
 Answered on 2026-10-18, each as recommended.
 
-1. **`webhook_endpoint.signing_secret`.** `stripe_event_destination_v2` ships without it, and the generator omits it from the table because neither the suite nor the fake proves it yet. Proving it is a priority, since the secret is what makes a webhook destination usable; the field follows.
+1. **`webhook_endpoint.signing_secret`.** `stripe_event_destination_v2` ships without it, and the generator omits it from the table because neither the suite nor the fake proves it yet. Proving it is a priority, since the secret is what makes a webhook destination usable; the field follows. Fake `v0.27.0` proves it, and it stays out of the table through the exclusion register until the engine can send `include` on create alone to read it once. That fetch is queued as provider work: the attribute then lands as `OnceReturned`, Computed and Sensitive, and state holds it, per the owner's decision of 2026-10-29.
 2. **Enable and disable.** `status` is read-only Computed. A writable `status` comes once the suite proves the action calls.
 3. **Clearing a `/v2` field.** The engine refuses to send `null` for anything but a `metadata` key unless the declaration lists the field in `ClearsWithNull`.
 4. **Suite work before wave 4.** The gaps in the D8 table go to the suite before `v2.core.account`.

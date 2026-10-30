@@ -1,23 +1,25 @@
 {
-  "fake_version": "v0.26.0",
-  "suite_ref": "2d60360145abd09ea0fd95a0899ab325a8898ac4",
-  "run_id": 40940184416,
+  "fake_version": "v0.27.0",
+  "suite_ref": "3b86d258fd95ad91de056adde268ff5ca1740155",
+  "run_id": 40980203177,
   "api_version": "2026-09-30.endive",
   "spec_sha256": "9119e72c7ff8ad142e94f7efa9cf49d8e6eec69df3592e17e8fba15099726ed7",
   "counts": {
-    "gap_proven_not_served": 38,
+    "gap_placeholder_null": 2,
+    "gap_proven_not_served": 30,
     "gap_stripe_only": 8,
-    "proven_by_test": 11752,
-    "served_unverified": 24,
-    "unproven": 6958,
-    "verified": 39
+    "proven_by_test": 11449,
+    "unproven": 7058,
+    "verified": 272
   },
   "objects": [
     {
       "object": "account",
       "counts": {
-        "proven_by_test": 712,
-        "unproven": 250
+        "gap_placeholder_null": 2,
+        "proven_by_test": 439,
+        "unproven": 320,
+        "verified": 201
       }
     },
     {
@@ -714,8 +716,8 @@
     {
       "object": "quote",
       "counts": {
-        "proven_by_test": 145,
-        "unproven": 42
+        "proven_by_test": 139,
+        "unproven": 48
       }
     },
     {
@@ -821,8 +823,8 @@
     {
       "object": "subscription",
       "counts": {
-        "proven_by_test": 200,
-        "unproven": 457
+        "proven_by_test": 194,
+        "unproven": 463
       }
     },
     {
@@ -835,8 +837,8 @@
     {
       "object": "subscription_schedule",
       "counts": {
-        "proven_by_test": 351,
-        "unproven": 33
+        "proven_by_test": 333,
+        "unproven": 51
       }
     },
     {
@@ -1119,10 +1121,8 @@
     {
       "object": "v2.core.event_destination",
       "counts": {
-        "gap_proven_not_served": 8,
-        "served_unverified": 24,
         "unproven": 5,
-        "verified": 7
+        "verified": 39
       }
     },
     {
@@ -1328,9 +1328,10 @@
       "path": "business_profile.minority_owned_business_designation",
       "branch": "",
       "shape": "list",
-      "state": "proven_by_test",
+      "state": "unserved",
+      "reason": "not_proven",
       "status": "unproven",
-      "class": "proven_by_test"
+      "class": "unproven"
     },
     {
       "object": "account",
@@ -1339,9 +1340,10 @@
       "path": "business_profile.monthly_estimated_revenue.amount",
       "branch": "",
       "shape": "integer",
-      "state": "proven_by_test",
+      "state": "unserved",
+      "reason": "not_proven",
       "status": "unproven",
-      "class": "proven_by_test"
+      "class": "unproven"
     },
     {
       "object": "account",
@@ -1350,9 +1352,10 @@
       "path": "business_profile.monthly_estimated_revenue.currency",
       "branch": "",
       "shape": "string",
-      "state": "proven_by_test",
+      "state": "unserved",
+      "reason": "not_proven",
       "status": "unproven",
-      "class": "proven_by_test"
+      "class": "unproven"
     },
     {
       "object": "account",
@@ -1383,9 +1386,10 @@
       "path": "business_profile.specified_commercial_transactions_act_url",
       "branch": "",
       "shape": "string",
-      "state": "proven_by_test",
+      "state": "unserved",
+      "reason": "not_proven",
       "status": "unproven",
-      "class": "proven_by_test"
+      "class": "unproven"
     },
     {
       "object": "account",
@@ -1394,9 +1398,10 @@
       "path": "business_profile.support_address.city",
       "branch": "",
       "shape": "string",
-      "state": "proven_by_test",
+      "state": "unserved",
+      "reason": "not_proven",
       "status": "unproven",
-      "class": "proven_by_test"
+      "class": "unproven"
     },
     {
       "object": "account",
@@ -1405,9 +1410,10 @@
       "path": "business_profile.support_address.country",
       "branch": "",
       "shape": "string",
-      "state": "proven_by_test",
+      "state": "unserved",
+      "reason": "not_proven",
       "status": "unproven",
-      "class": "proven_by_test"
+      "class": "unproven"
     },
     {
       "object": "account",
@@ -1416,9 +1422,10 @@
       "path": "business_profile.support_address.line1",
       "branch": "",
       "shape": "string",
-      "state": "proven_by_test",
+      "state": "unserved",
+      "reason": "not_proven",
       "status": "unproven",
-      "class": "proven_by_test"
+      "class": "unproven"
     },
     {
       "object": "account",
@@ -1427,9 +1434,10 @@
       "path": "business_profile.support_address.line2",
       "branch": "",
       "shape": "string",
-      "state": "proven_by_test",
+      "state": "unserved",
+      "reason": "not_proven",
       "status": "unproven",
-      "class": "proven_by_test"
+      "class": "unproven"
     },
     {
       "object": "account",
@@ -1438,9 +1446,10 @@
       "path": "business_profile.support_address.postal_code",
       "branch": "",
       "shape": "string",
-      "state": "proven_by_test",
+      "state": "unserved",
+      "reason": "not_proven",
       "status": "unproven",
-      "class": "proven_by_test"
+      "class": "unproven"
     },
     {
       "object": "account",
@@ -1449,9 +1458,10 @@
       "path": "business_profile.support_address.state",
       "branch": "",
       "shape": "string",
-      "state": "proven_by_test",
+      "state": "unserved",
+      "reason": "not_proven",
       "status": "unproven",
-      "class": "proven_by_test"
+      "class": "unproven"
     },
     {
       "object": "account",
@@ -1460,9 +1470,10 @@
       "path": "business_profile.support_email",
       "branch": "",
       "shape": "string",
-      "state": "proven_by_test",
+      "state": "unserved",
+      "reason": "not_proven",
       "status": "unproven",
-      "class": "proven_by_test"
+      "class": "unproven"
     },
     {
       "object": "account",
@@ -1471,9 +1482,10 @@
       "path": "business_profile.support_phone",
       "branch": "",
       "shape": "string",
-      "state": "proven_by_test",
+      "state": "unserved",
+      "reason": "not_proven",
       "status": "unproven",
-      "class": "proven_by_test"
+      "class": "unproven"
     },
     {
       "object": "account",
@@ -1482,9 +1494,10 @@
       "path": "business_profile.support_url",
       "branch": "",
       "shape": "string",
-      "state": "proven_by_test",
+      "state": "unserved",
+      "reason": "not_proven",
       "status": "unproven",
-      "class": "proven_by_test"
+      "class": "unproven"
     },
     {
       "object": "account",
@@ -2274,9 +2287,13 @@
       "path": "company.address.city",
       "branch": "",
       "shape": "string",
-      "state": "proven_by_test",
-      "status": "unproven",
-      "class": "proven_by_test"
+      "state": "served",
+      "status": "proven",
+      "tests": [
+        "TestAccountAttributes/leaves/request/PostAccounts/company.address.city",
+        "TestAccountAttributes/leaves/response/account/company.address.city"
+      ],
+      "class": "verified"
     },
     {
       "object": "account",
@@ -2285,9 +2302,13 @@
       "path": "company.address.country",
       "branch": "",
       "shape": "string",
-      "state": "proven_by_test",
-      "status": "unproven",
-      "class": "proven_by_test"
+      "state": "served",
+      "status": "proven",
+      "tests": [
+        "TestAccountAttributes/leaves/request/PostAccounts/company.address.country",
+        "TestAccountAttributes/leaves/response/account/company.address.country"
+      ],
+      "class": "verified"
     },
     {
       "object": "account",
@@ -2296,9 +2317,13 @@
       "path": "company.address.line1",
       "branch": "",
       "shape": "string",
-      "state": "proven_by_test",
-      "status": "unproven",
-      "class": "proven_by_test"
+      "state": "served",
+      "status": "proven",
+      "tests": [
+        "TestAccountAttributes/leaves/request/PostAccounts/company.address.line1",
+        "TestAccountAttributes/leaves/response/account/company.address.line1"
+      ],
+      "class": "verified"
     },
     {
       "object": "account",
@@ -2307,9 +2332,13 @@
       "path": "company.address.line2",
       "branch": "",
       "shape": "string",
-      "state": "proven_by_test",
-      "status": "unproven",
-      "class": "proven_by_test"
+      "state": "served",
+      "status": "proven",
+      "tests": [
+        "TestAccountAttributes/leaves/request/PostAccounts/company.address.line2",
+        "TestAccountAttributes/leaves/response/account/company.address.line2"
+      ],
+      "class": "verified"
     },
     {
       "object": "account",
@@ -2318,9 +2347,13 @@
       "path": "company.address.postal_code",
       "branch": "",
       "shape": "string",
-      "state": "proven_by_test",
-      "status": "unproven",
-      "class": "proven_by_test"
+      "state": "served",
+      "status": "proven",
+      "tests": [
+        "TestAccountAttributes/leaves/request/PostAccounts/company.address.postal_code",
+        "TestAccountAttributes/leaves/response/account/company.address.postal_code"
+      ],
+      "class": "verified"
     },
     {
       "object": "account",
@@ -2329,9 +2362,13 @@
       "path": "company.address.state",
       "branch": "",
       "shape": "string",
-      "state": "proven_by_test",
-      "status": "unproven",
-      "class": "proven_by_test"
+      "state": "served",
+      "status": "proven",
+      "tests": [
+        "TestAccountAttributes/leaves/request/PostAccounts/company.address.state",
+        "TestAccountAttributes/leaves/response/account/company.address.state"
+      ],
+      "class": "verified"
     },
     {
       "object": "account",
@@ -2340,9 +2377,10 @@
       "path": "company.address_kana.city",
       "branch": "",
       "shape": "string",
-      "state": "proven_by_test",
+      "state": "unserved",
+      "reason": "not_proven",
       "status": "unproven",
-      "class": "proven_by_test"
+      "class": "unproven"
     },
     {
       "object": "account",
@@ -2351,9 +2389,10 @@
       "path": "company.address_kana.country",
       "branch": "",
       "shape": "string",
-      "state": "proven_by_test",
+      "state": "unserved",
+      "reason": "not_proven",
       "status": "unproven",
-      "class": "proven_by_test"
+      "class": "unproven"
     },
     {
       "object": "account",
@@ -2362,9 +2401,10 @@
       "path": "company.address_kana.line1",
       "branch": "",
       "shape": "string",
-      "state": "proven_by_test",
+      "state": "unserved",
+      "reason": "not_proven",
       "status": "unproven",
-      "class": "proven_by_test"
+      "class": "unproven"
     },
     {
       "object": "account",
@@ -2373,9 +2413,10 @@
       "path": "company.address_kana.line2",
       "branch": "",
       "shape": "string",
-      "state": "proven_by_test",
+      "state": "unserved",
+      "reason": "not_proven",
       "status": "unproven",
-      "class": "proven_by_test"
+      "class": "unproven"
     },
     {
       "object": "account",
@@ -2384,9 +2425,10 @@
       "path": "company.address_kana.postal_code",
       "branch": "",
       "shape": "string",
-      "state": "proven_by_test",
+      "state": "unserved",
+      "reason": "not_proven",
       "status": "unproven",
-      "class": "proven_by_test"
+      "class": "unproven"
     },
     {
       "object": "account",
@@ -2395,9 +2437,10 @@
       "path": "company.address_kana.state",
       "branch": "",
       "shape": "string",
-      "state": "proven_by_test",
+      "state": "unserved",
+      "reason": "not_proven",
       "status": "unproven",
-      "class": "proven_by_test"
+      "class": "unproven"
     },
     {
       "object": "account",
@@ -2406,9 +2449,10 @@
       "path": "company.address_kana.town",
       "branch": "",
       "shape": "string",
-      "state": "proven_by_test",
+      "state": "unserved",
+      "reason": "not_proven",
       "status": "unproven",
-      "class": "proven_by_test"
+      "class": "unproven"
     },
     {
       "object": "account",
@@ -2417,9 +2461,10 @@
       "path": "company.address_kanji.city",
       "branch": "",
       "shape": "string",
-      "state": "proven_by_test",
+      "state": "unserved",
+      "reason": "not_proven",
       "status": "unproven",
-      "class": "proven_by_test"
+      "class": "unproven"
     },
     {
       "object": "account",
@@ -2428,9 +2473,10 @@
       "path": "company.address_kanji.country",
       "branch": "",
       "shape": "string",
-      "state": "proven_by_test",
+      "state": "unserved",
+      "reason": "not_proven",
       "status": "unproven",
-      "class": "proven_by_test"
+      "class": "unproven"
     },
     {
       "object": "account",
@@ -2439,9 +2485,10 @@
       "path": "company.address_kanji.line1",
       "branch": "",
       "shape": "string",
-      "state": "proven_by_test",
+      "state": "unserved",
+      "reason": "not_proven",
       "status": "unproven",
-      "class": "proven_by_test"
+      "class": "unproven"
     },
     {
       "object": "account",
@@ -2450,9 +2497,10 @@
       "path": "company.address_kanji.line2",
       "branch": "",
       "shape": "string",
-      "state": "proven_by_test",
+      "state": "unserved",
+      "reason": "not_proven",
       "status": "unproven",
-      "class": "proven_by_test"
+      "class": "unproven"
     },
     {
       "object": "account",
@@ -2461,9 +2509,10 @@
       "path": "company.address_kanji.postal_code",
       "branch": "",
       "shape": "string",
-      "state": "proven_by_test",
+      "state": "unserved",
+      "reason": "not_proven",
       "status": "unproven",
-      "class": "proven_by_test"
+      "class": "unproven"
     },
     {
       "object": "account",
@@ -2472,9 +2521,10 @@
       "path": "company.address_kanji.state",
       "branch": "",
       "shape": "string",
-      "state": "proven_by_test",
+      "state": "unserved",
+      "reason": "not_proven",
       "status": "unproven",
-      "class": "proven_by_test"
+      "class": "unproven"
     },
     {
       "object": "account",
@@ -2483,9 +2533,10 @@
       "path": "company.address_kanji.town",
       "branch": "",
       "shape": "string",
-      "state": "proven_by_test",
+      "state": "unserved",
+      "reason": "not_proven",
       "status": "unproven",
-      "class": "proven_by_test"
+      "class": "unproven"
     },
     {
       "object": "account",
@@ -2494,9 +2545,13 @@
       "path": "company.administrative_address.city",
       "branch": "",
       "shape": "string",
-      "state": "proven_by_test",
-      "status": "unproven",
-      "class": "proven_by_test"
+      "state": "served",
+      "status": "proven",
+      "tests": [
+        "TestAccountAttributes/leaves/request/PostAccounts/company.administrative_address.city",
+        "TestAccountAttributes/leaves/response/account/company.administrative_address.city"
+      ],
+      "class": "verified"
     },
     {
       "object": "account",
@@ -2505,9 +2560,13 @@
       "path": "company.administrative_address.country",
       "branch": "",
       "shape": "string",
-      "state": "proven_by_test",
-      "status": "unproven",
-      "class": "proven_by_test"
+      "state": "served",
+      "status": "proven",
+      "tests": [
+        "TestAccountAttributes/leaves/request/PostAccounts/company.administrative_address.country",
+        "TestAccountAttributes/leaves/response/account/company.administrative_address.country"
+      ],
+      "class": "verified"
     },
     {
       "object": "account",
@@ -2516,9 +2575,13 @@
       "path": "company.administrative_address.line1",
       "branch": "",
       "shape": "string",
-      "state": "proven_by_test",
-      "status": "unproven",
-      "class": "proven_by_test"
+      "state": "served",
+      "status": "proven",
+      "tests": [
+        "TestAccountAttributes/leaves/request/PostAccounts/company.administrative_address.line1",
+        "TestAccountAttributes/leaves/response/account/company.administrative_address.line1"
+      ],
+      "class": "verified"
     },
     {
       "object": "account",
@@ -2527,9 +2590,13 @@
       "path": "company.administrative_address.line2",
       "branch": "",
       "shape": "string",
-      "state": "proven_by_test",
-      "status": "unproven",
-      "class": "proven_by_test"
+      "state": "served",
+      "status": "proven",
+      "tests": [
+        "TestAccountAttributes/leaves/request/PostAccounts/company.administrative_address.line2",
+        "TestAccountAttributes/leaves/response/account/company.administrative_address.line2"
+      ],
+      "class": "verified"
     },
     {
       "object": "account",
@@ -2538,9 +2605,13 @@
       "path": "company.administrative_address.postal_code",
       "branch": "",
       "shape": "string",
-      "state": "proven_by_test",
-      "status": "unproven",
-      "class": "proven_by_test"
+      "state": "served",
+      "status": "proven",
+      "tests": [
+        "TestAccountAttributes/leaves/request/PostAccounts/company.administrative_address.postal_code",
+        "TestAccountAttributes/leaves/response/account/company.administrative_address.postal_code"
+      ],
+      "class": "verified"
     },
     {
       "object": "account",
@@ -2549,9 +2620,13 @@
       "path": "company.administrative_address.state",
       "branch": "",
       "shape": "string",
-      "state": "proven_by_test",
-      "status": "unproven",
-      "class": "proven_by_test"
+      "state": "served",
+      "status": "proven",
+      "tests": [
+        "TestAccountAttributes/leaves/request/PostAccounts/company.administrative_address.state",
+        "TestAccountAttributes/leaves/response/account/company.administrative_address.state"
+      ],
+      "class": "verified"
     },
     {
       "object": "account",
@@ -2560,9 +2635,13 @@
       "path": "company.directors_provided",
       "branch": "",
       "shape": "boolean",
-      "state": "proven_by_test",
-      "status": "unproven",
-      "class": "proven_by_test"
+      "state": "served",
+      "status": "proven",
+      "tests": [
+        "TestAccountAttributes/leaves/request/PostAccounts/company.directors_provided",
+        "TestAccountAttributes/leaves/response/account/company.directors_provided"
+      ],
+      "class": "verified"
     },
     {
       "object": "account",
@@ -2571,9 +2650,13 @@
       "path": "company.directorship_declaration.date",
       "branch": "",
       "shape": "integer",
-      "state": "proven_by_test",
-      "status": "unproven",
-      "class": "proven_by_test"
+      "state": "served",
+      "status": "proven",
+      "tests": [
+        "TestAccountAttributes/leaves/request/PostAccounts/company.directorship_declaration.date",
+        "TestAccountAttributes/leaves/response/account/company.directorship_declaration.date"
+      ],
+      "class": "verified"
     },
     {
       "object": "account",
@@ -2582,9 +2665,13 @@
       "path": "company.directorship_declaration.ip",
       "branch": "",
       "shape": "string",
-      "state": "proven_by_test",
-      "status": "unproven",
-      "class": "proven_by_test"
+      "state": "served",
+      "status": "proven",
+      "tests": [
+        "TestAccountAttributes/leaves/request/PostAccounts/company.directorship_declaration.ip",
+        "TestAccountAttributes/leaves/response/account/company.directorship_declaration.ip"
+      ],
+      "class": "verified"
     },
     {
       "object": "account",
@@ -2593,9 +2680,13 @@
       "path": "company.directorship_declaration.user_agent",
       "branch": "",
       "shape": "string",
-      "state": "proven_by_test",
-      "status": "unproven",
-      "class": "proven_by_test"
+      "state": "served",
+      "status": "proven",
+      "tests": [
+        "TestAccountAttributes/leaves/request/PostAccounts/company.directorship_declaration.user_agent",
+        "TestAccountAttributes/leaves/response/account/company.directorship_declaration.user_agent"
+      ],
+      "class": "verified"
     },
     {
       "object": "account",
@@ -2604,9 +2695,13 @@
       "path": "company.executives_provided",
       "branch": "",
       "shape": "boolean",
-      "state": "proven_by_test",
-      "status": "unproven",
-      "class": "proven_by_test"
+      "state": "served",
+      "status": "proven",
+      "tests": [
+        "TestAccountAttributes/leaves/request/PostAccounts/company.executives_provided",
+        "TestAccountAttributes/leaves/response/account/company.executives_provided"
+      ],
+      "class": "verified"
     },
     {
       "object": "account",
@@ -2615,9 +2710,10 @@
       "path": "company.export_license_id",
       "branch": "",
       "shape": "string",
-      "state": "proven_by_test",
+      "state": "unserved",
+      "reason": "not_proven",
       "status": "unproven",
-      "class": "proven_by_test"
+      "class": "unproven"
     },
     {
       "object": "account",
@@ -2626,9 +2722,10 @@
       "path": "company.export_purpose_code",
       "branch": "",
       "shape": "string",
-      "state": "proven_by_test",
+      "state": "unserved",
+      "reason": "not_proven",
       "status": "unproven",
-      "class": "proven_by_test"
+      "class": "unproven"
     },
     {
       "object": "account",
@@ -2637,9 +2734,13 @@
       "path": "company.name",
       "branch": "",
       "shape": "string",
-      "state": "proven_by_test",
-      "status": "unproven",
-      "class": "proven_by_test"
+      "state": "served",
+      "status": "proven",
+      "tests": [
+        "TestAccountAttributes/leaves/request/PostAccounts/company.name",
+        "TestAccountAttributes/leaves/response/account/company.name"
+      ],
+      "class": "verified"
     },
     {
       "object": "account",
@@ -2648,9 +2749,10 @@
       "path": "company.name_kana",
       "branch": "",
       "shape": "string",
-      "state": "proven_by_test",
+      "state": "unserved",
+      "reason": "not_proven",
       "status": "unproven",
-      "class": "proven_by_test"
+      "class": "unproven"
     },
     {
       "object": "account",
@@ -2659,9 +2761,10 @@
       "path": "company.name_kanji",
       "branch": "",
       "shape": "string",
-      "state": "proven_by_test",
+      "state": "unserved",
+      "reason": "not_proven",
       "status": "unproven",
-      "class": "proven_by_test"
+      "class": "unproven"
     },
     {
       "object": "account",
@@ -2670,9 +2773,13 @@
       "path": "company.owners_provided",
       "branch": "",
       "shape": "boolean",
-      "state": "proven_by_test",
-      "status": "unproven",
-      "class": "proven_by_test"
+      "state": "served",
+      "status": "proven",
+      "tests": [
+        "TestAccountAttributes/leaves/request/PostAccounts/company.owners_provided",
+        "TestAccountAttributes/leaves/response/account/company.owners_provided"
+      ],
+      "class": "verified"
     },
     {
       "object": "account",
@@ -2681,9 +2788,13 @@
       "path": "company.ownership_declaration.date",
       "branch": "",
       "shape": "integer",
-      "state": "proven_by_test",
-      "status": "unproven",
-      "class": "proven_by_test"
+      "state": "served",
+      "status": "proven",
+      "tests": [
+        "TestAccountAttributes/leaves/request/PostAccounts/company.ownership_declaration.date",
+        "TestAccountAttributes/leaves/response/account/company.ownership_declaration.date"
+      ],
+      "class": "verified"
     },
     {
       "object": "account",
@@ -2692,9 +2803,13 @@
       "path": "company.ownership_declaration.ip",
       "branch": "",
       "shape": "string",
-      "state": "proven_by_test",
-      "status": "unproven",
-      "class": "proven_by_test"
+      "state": "served",
+      "status": "proven",
+      "tests": [
+        "TestAccountAttributes/leaves/request/PostAccounts/company.ownership_declaration.ip",
+        "TestAccountAttributes/leaves/response/account/company.ownership_declaration.ip"
+      ],
+      "class": "verified"
     },
     {
       "object": "account",
@@ -2703,9 +2818,13 @@
       "path": "company.ownership_declaration.user_agent",
       "branch": "",
       "shape": "string",
-      "state": "proven_by_test",
-      "status": "unproven",
-      "class": "proven_by_test"
+      "state": "served",
+      "status": "proven",
+      "tests": [
+        "TestAccountAttributes/leaves/request/PostAccounts/company.ownership_declaration.user_agent",
+        "TestAccountAttributes/leaves/response/account/company.ownership_declaration.user_agent"
+      ],
+      "class": "verified"
     },
     {
       "object": "account",
@@ -2714,9 +2833,10 @@
       "path": "company.ownership_exemption_reason",
       "branch": "",
       "shape": "enum",
-      "state": "proven_by_test",
+      "state": "unserved",
+      "reason": "not_proven",
       "status": "unproven",
-      "class": "proven_by_test"
+      "class": "unproven"
     },
     {
       "object": "account",
@@ -2725,9 +2845,13 @@
       "path": "company.phone",
       "branch": "",
       "shape": "string",
-      "state": "proven_by_test",
-      "status": "unproven",
-      "class": "proven_by_test"
+      "state": "served",
+      "status": "proven",
+      "tests": [
+        "TestAccountAttributes/leaves/request/PostAccounts/company.phone",
+        "TestAccountAttributes/leaves/response/account/company.phone"
+      ],
+      "class": "verified"
     },
     {
       "object": "account",
@@ -2736,9 +2860,13 @@
       "path": "company.principal_place_of_business.city",
       "branch": "",
       "shape": "string",
-      "state": "proven_by_test",
-      "status": "unproven",
-      "class": "proven_by_test"
+      "state": "served",
+      "status": "proven",
+      "tests": [
+        "TestAccountAttributes/leaves/request/PostAccounts/company.principal_place_of_business.city",
+        "TestAccountAttributes/leaves/response/account/company.principal_place_of_business.city"
+      ],
+      "class": "verified"
     },
     {
       "object": "account",
@@ -2747,9 +2875,13 @@
       "path": "company.principal_place_of_business.country",
       "branch": "",
       "shape": "string",
-      "state": "proven_by_test",
-      "status": "unproven",
-      "class": "proven_by_test"
+      "state": "served",
+      "status": "proven",
+      "tests": [
+        "TestAccountAttributes/leaves/request/PostAccounts/company.principal_place_of_business.country",
+        "TestAccountAttributes/leaves/response/account/company.principal_place_of_business.country"
+      ],
+      "class": "verified"
     },
     {
       "object": "account",
@@ -2758,9 +2890,13 @@
       "path": "company.principal_place_of_business.line1",
       "branch": "",
       "shape": "string",
-      "state": "proven_by_test",
-      "status": "unproven",
-      "class": "proven_by_test"
+      "state": "served",
+      "status": "proven",
+      "tests": [
+        "TestAccountAttributes/leaves/request/PostAccounts/company.principal_place_of_business.line1",
+        "TestAccountAttributes/leaves/response/account/company.principal_place_of_business.line1"
+      ],
+      "class": "verified"
     },
     {
       "object": "account",
@@ -2769,9 +2905,13 @@
       "path": "company.principal_place_of_business.line2",
       "branch": "",
       "shape": "string",
-      "state": "proven_by_test",
-      "status": "unproven",
-      "class": "proven_by_test"
+      "state": "served",
+      "status": "proven",
+      "tests": [
+        "TestAccountAttributes/leaves/request/PostAccounts/company.principal_place_of_business.line2",
+        "TestAccountAttributes/leaves/response/account/company.principal_place_of_business.line2"
+      ],
+      "class": "verified"
     },
     {
       "object": "account",
@@ -2780,9 +2920,13 @@
       "path": "company.principal_place_of_business.postal_code",
       "branch": "",
       "shape": "string",
-      "state": "proven_by_test",
-      "status": "unproven",
-      "class": "proven_by_test"
+      "state": "served",
+      "status": "proven",
+      "tests": [
+        "TestAccountAttributes/leaves/request/PostAccounts/company.principal_place_of_business.postal_code",
+        "TestAccountAttributes/leaves/response/account/company.principal_place_of_business.postal_code"
+      ],
+      "class": "verified"
     },
     {
       "object": "account",
@@ -2791,9 +2935,13 @@
       "path": "company.principal_place_of_business.state",
       "branch": "",
       "shape": "string",
-      "state": "proven_by_test",
-      "status": "unproven",
-      "class": "proven_by_test"
+      "state": "served",
+      "status": "proven",
+      "tests": [
+        "TestAccountAttributes/leaves/request/PostAccounts/company.principal_place_of_business.state",
+        "TestAccountAttributes/leaves/response/account/company.principal_place_of_business.state"
+      ],
+      "class": "verified"
     },
     {
       "object": "account",
@@ -2802,9 +2950,13 @@
       "path": "company.registration_date.day",
       "branch": "",
       "shape": "integer",
-      "state": "proven_by_test",
-      "status": "unproven",
-      "class": "proven_by_test"
+      "state": "served",
+      "status": "proven",
+      "tests": [
+        "TestAccountAttributes/leaves/request/PostAccounts/company.registration_date.day",
+        "TestAccountAttributes/leaves/response/account/company.registration_date.day"
+      ],
+      "class": "verified"
     },
     {
       "object": "account",
@@ -2813,9 +2965,13 @@
       "path": "company.registration_date.month",
       "branch": "",
       "shape": "integer",
-      "state": "proven_by_test",
-      "status": "unproven",
-      "class": "proven_by_test"
+      "state": "served",
+      "status": "proven",
+      "tests": [
+        "TestAccountAttributes/leaves/request/PostAccounts/company.registration_date.month",
+        "TestAccountAttributes/leaves/response/account/company.registration_date.month"
+      ],
+      "class": "verified"
     },
     {
       "object": "account",
@@ -2824,9 +2980,13 @@
       "path": "company.registration_date.year",
       "branch": "",
       "shape": "integer",
-      "state": "proven_by_test",
-      "status": "unproven",
-      "class": "proven_by_test"
+      "state": "served",
+      "status": "proven",
+      "tests": [
+        "TestAccountAttributes/leaves/request/PostAccounts/company.registration_date.year",
+        "TestAccountAttributes/leaves/response/account/company.registration_date.year"
+      ],
+      "class": "verified"
     },
     {
       "object": "account",
@@ -2835,9 +2995,10 @@
       "path": "company.registration_number",
       "branch": "",
       "shape": "string",
-      "state": "proven_by_test",
+      "state": "unserved",
+      "reason": "not_proven",
       "status": "unproven",
-      "class": "proven_by_test"
+      "class": "unproven"
     },
     {
       "object": "account",
@@ -2846,9 +3007,10 @@
       "path": "company.representative_declaration.date",
       "branch": "",
       "shape": "integer",
-      "state": "proven_by_test",
+      "state": "unserved",
+      "reason": "not_proven",
       "status": "unproven",
-      "class": "proven_by_test"
+      "class": "unproven"
     },
     {
       "object": "account",
@@ -2857,9 +3019,10 @@
       "path": "company.representative_declaration.ip",
       "branch": "",
       "shape": "string",
-      "state": "proven_by_test",
+      "state": "unserved",
+      "reason": "not_proven",
       "status": "unproven",
-      "class": "proven_by_test"
+      "class": "unproven"
     },
     {
       "object": "account",
@@ -2868,9 +3031,10 @@
       "path": "company.representative_declaration.user_agent",
       "branch": "",
       "shape": "string",
-      "state": "proven_by_test",
+      "state": "unserved",
+      "reason": "not_proven",
       "status": "unproven",
-      "class": "proven_by_test"
+      "class": "unproven"
     },
     {
       "object": "account",
@@ -2879,9 +3043,13 @@
       "path": "company.structure",
       "branch": "",
       "shape": "enum",
-      "state": "proven_by_test",
-      "status": "unproven",
-      "class": "proven_by_test"
+      "state": "served",
+      "status": "proven",
+      "tests": [
+        "TestAccountAttributes/leaves/request/PostAccounts/company.structure",
+        "TestAccountAttributes/leaves/response/account/company.structure"
+      ],
+      "class": "verified"
     },
     {
       "object": "account",
@@ -2890,9 +3058,10 @@
       "path": "company.tax_id",
       "branch": "",
       "shape": "string",
-      "state": "proven_by_test",
+      "state": "unserved",
+      "reason": "not_proven",
       "status": "unproven",
-      "class": "proven_by_test"
+      "class": "unproven"
     },
     {
       "object": "account",
@@ -2901,9 +3070,10 @@
       "path": "company.tax_id_registrar",
       "branch": "",
       "shape": "string",
-      "state": "proven_by_test",
+      "state": "unserved",
+      "reason": "not_proven",
       "status": "unproven",
-      "class": "proven_by_test"
+      "class": "unproven"
     },
     {
       "object": "account",
@@ -2912,9 +3082,10 @@
       "path": "company.vat_id",
       "branch": "",
       "shape": "string",
-      "state": "proven_by_test",
+      "state": "unserved",
+      "reason": "not_proven",
       "status": "unproven",
-      "class": "proven_by_test"
+      "class": "unproven"
     },
     {
       "object": "account",
@@ -2923,9 +3094,10 @@
       "path": "company.verification.document.back",
       "branch": "",
       "shape": "string",
-      "state": "proven_by_test",
+      "state": "unserved",
+      "reason": "not_proven",
       "status": "unproven",
-      "class": "proven_by_test"
+      "class": "unproven"
     },
     {
       "object": "account",
@@ -2934,9 +3106,10 @@
       "path": "company.verification.document.front",
       "branch": "",
       "shape": "string",
-      "state": "proven_by_test",
+      "state": "unserved",
+      "reason": "not_proven",
       "status": "unproven",
-      "class": "proven_by_test"
+      "class": "unproven"
     },
     {
       "object": "account",
@@ -3154,9 +3327,13 @@
       "path": "individual.address.city",
       "branch": "",
       "shape": "string",
-      "state": "proven_by_test",
-      "status": "unproven",
-      "class": "proven_by_test"
+      "state": "served",
+      "status": "proven",
+      "tests": [
+        "TestAccountAttributes/leaves/request/PostAccounts/individual.address.city",
+        "TestAccountAttributes/leaves/response/account/individual.address.city"
+      ],
+      "class": "verified"
     },
     {
       "object": "account",
@@ -3165,9 +3342,13 @@
       "path": "individual.address.country",
       "branch": "",
       "shape": "string",
-      "state": "proven_by_test",
-      "status": "unproven",
-      "class": "proven_by_test"
+      "state": "served",
+      "status": "proven",
+      "tests": [
+        "TestAccountAttributes/leaves/request/PostAccounts/individual.address.country",
+        "TestAccountAttributes/leaves/response/account/individual.address.country"
+      ],
+      "class": "verified"
     },
     {
       "object": "account",
@@ -3176,9 +3357,13 @@
       "path": "individual.address.line1",
       "branch": "",
       "shape": "string",
-      "state": "proven_by_test",
-      "status": "unproven",
-      "class": "proven_by_test"
+      "state": "served",
+      "status": "proven",
+      "tests": [
+        "TestAccountAttributes/leaves/request/PostAccounts/individual.address.line1",
+        "TestAccountAttributes/leaves/response/account/individual.address.line1"
+      ],
+      "class": "verified"
     },
     {
       "object": "account",
@@ -3187,9 +3372,13 @@
       "path": "individual.address.line2",
       "branch": "",
       "shape": "string",
-      "state": "proven_by_test",
-      "status": "unproven",
-      "class": "proven_by_test"
+      "state": "served",
+      "status": "proven",
+      "tests": [
+        "TestAccountAttributes/leaves/request/PostAccounts/individual.address.line2",
+        "TestAccountAttributes/leaves/response/account/individual.address.line2"
+      ],
+      "class": "verified"
     },
     {
       "object": "account",
@@ -3198,9 +3387,13 @@
       "path": "individual.address.postal_code",
       "branch": "",
       "shape": "string",
-      "state": "proven_by_test",
-      "status": "unproven",
-      "class": "proven_by_test"
+      "state": "served",
+      "status": "proven",
+      "tests": [
+        "TestAccountAttributes/leaves/request/PostAccounts/individual.address.postal_code",
+        "TestAccountAttributes/leaves/response/account/individual.address.postal_code"
+      ],
+      "class": "verified"
     },
     {
       "object": "account",
@@ -3209,9 +3402,13 @@
       "path": "individual.address.state",
       "branch": "",
       "shape": "string",
-      "state": "proven_by_test",
-      "status": "unproven",
-      "class": "proven_by_test"
+      "state": "served",
+      "status": "proven",
+      "tests": [
+        "TestAccountAttributes/leaves/request/PostAccounts/individual.address.state",
+        "TestAccountAttributes/leaves/response/account/individual.address.state"
+      ],
+      "class": "verified"
     },
     {
       "object": "account",
@@ -3220,9 +3417,10 @@
       "path": "individual.address_kana.city",
       "branch": "",
       "shape": "string",
-      "state": "proven_by_test",
+      "state": "unserved",
+      "reason": "not_proven",
       "status": "unproven",
-      "class": "proven_by_test"
+      "class": "unproven"
     },
     {
       "object": "account",
@@ -3231,9 +3429,10 @@
       "path": "individual.address_kana.country",
       "branch": "",
       "shape": "string",
-      "state": "proven_by_test",
+      "state": "unserved",
+      "reason": "not_proven",
       "status": "unproven",
-      "class": "proven_by_test"
+      "class": "unproven"
     },
     {
       "object": "account",
@@ -3242,9 +3441,10 @@
       "path": "individual.address_kana.line1",
       "branch": "",
       "shape": "string",
-      "state": "proven_by_test",
+      "state": "unserved",
+      "reason": "not_proven",
       "status": "unproven",
-      "class": "proven_by_test"
+      "class": "unproven"
     },
     {
       "object": "account",
@@ -3253,9 +3453,10 @@
       "path": "individual.address_kana.line2",
       "branch": "",
       "shape": "string",
-      "state": "proven_by_test",
+      "state": "unserved",
+      "reason": "not_proven",
       "status": "unproven",
-      "class": "proven_by_test"
+      "class": "unproven"
     },
     {
       "object": "account",
@@ -3264,9 +3465,10 @@
       "path": "individual.address_kana.postal_code",
       "branch": "",
       "shape": "string",
-      "state": "proven_by_test",
+      "state": "unserved",
+      "reason": "not_proven",
       "status": "unproven",
-      "class": "proven_by_test"
+      "class": "unproven"
     },
     {
       "object": "account",
@@ -3275,9 +3477,10 @@
       "path": "individual.address_kana.state",
       "branch": "",
       "shape": "string",
-      "state": "proven_by_test",
+      "state": "unserved",
+      "reason": "not_proven",
       "status": "unproven",
-      "class": "proven_by_test"
+      "class": "unproven"
     },
     {
       "object": "account",
@@ -3286,9 +3489,10 @@
       "path": "individual.address_kana.town",
       "branch": "",
       "shape": "string",
-      "state": "proven_by_test",
+      "state": "unserved",
+      "reason": "not_proven",
       "status": "unproven",
-      "class": "proven_by_test"
+      "class": "unproven"
     },
     {
       "object": "account",
@@ -3297,9 +3501,10 @@
       "path": "individual.address_kanji.city",
       "branch": "",
       "shape": "string",
-      "state": "proven_by_test",
+      "state": "unserved",
+      "reason": "not_proven",
       "status": "unproven",
-      "class": "proven_by_test"
+      "class": "unproven"
     },
     {
       "object": "account",
@@ -3308,9 +3513,10 @@
       "path": "individual.address_kanji.country",
       "branch": "",
       "shape": "string",
-      "state": "proven_by_test",
+      "state": "unserved",
+      "reason": "not_proven",
       "status": "unproven",
-      "class": "proven_by_test"
+      "class": "unproven"
     },
     {
       "object": "account",
@@ -3319,9 +3525,10 @@
       "path": "individual.address_kanji.line1",
       "branch": "",
       "shape": "string",
-      "state": "proven_by_test",
+      "state": "unserved",
+      "reason": "not_proven",
       "status": "unproven",
-      "class": "proven_by_test"
+      "class": "unproven"
     },
     {
       "object": "account",
@@ -3330,9 +3537,10 @@
       "path": "individual.address_kanji.line2",
       "branch": "",
       "shape": "string",
-      "state": "proven_by_test",
+      "state": "unserved",
+      "reason": "not_proven",
       "status": "unproven",
-      "class": "proven_by_test"
+      "class": "unproven"
     },
     {
       "object": "account",
@@ -3341,9 +3549,10 @@
       "path": "individual.address_kanji.postal_code",
       "branch": "",
       "shape": "string",
-      "state": "proven_by_test",
+      "state": "unserved",
+      "reason": "not_proven",
       "status": "unproven",
-      "class": "proven_by_test"
+      "class": "unproven"
     },
     {
       "object": "account",
@@ -3352,9 +3561,10 @@
       "path": "individual.address_kanji.state",
       "branch": "",
       "shape": "string",
-      "state": "proven_by_test",
+      "state": "unserved",
+      "reason": "not_proven",
       "status": "unproven",
-      "class": "proven_by_test"
+      "class": "unproven"
     },
     {
       "object": "account",
@@ -3363,9 +3573,10 @@
       "path": "individual.address_kanji.town",
       "branch": "",
       "shape": "string",
-      "state": "proven_by_test",
+      "state": "unserved",
+      "reason": "not_proven",
       "status": "unproven",
-      "class": "proven_by_test"
+      "class": "unproven"
     },
     {
       "object": "account",
@@ -3374,9 +3585,13 @@
       "path": "individual.dob.day",
       "branch": "",
       "shape": "integer",
-      "state": "proven_by_test",
-      "status": "unproven",
-      "class": "proven_by_test"
+      "state": "served",
+      "status": "proven",
+      "tests": [
+        "TestAccountAttributes/leaves/request/PostAccounts/individual.dob.day",
+        "TestAccountAttributes/leaves/response/account/individual.dob.day"
+      ],
+      "class": "verified"
     },
     {
       "object": "account",
@@ -3385,9 +3600,13 @@
       "path": "individual.dob.month",
       "branch": "",
       "shape": "integer",
-      "state": "proven_by_test",
-      "status": "unproven",
-      "class": "proven_by_test"
+      "state": "served",
+      "status": "proven",
+      "tests": [
+        "TestAccountAttributes/leaves/request/PostAccounts/individual.dob.month",
+        "TestAccountAttributes/leaves/response/account/individual.dob.month"
+      ],
+      "class": "verified"
     },
     {
       "object": "account",
@@ -3396,9 +3615,13 @@
       "path": "individual.dob.year",
       "branch": "",
       "shape": "integer",
-      "state": "proven_by_test",
-      "status": "unproven",
-      "class": "proven_by_test"
+      "state": "served",
+      "status": "proven",
+      "tests": [
+        "TestAccountAttributes/leaves/request/PostAccounts/individual.dob.year",
+        "TestAccountAttributes/leaves/response/account/individual.dob.year"
+      ],
+      "class": "verified"
     },
     {
       "object": "account",
@@ -3407,9 +3630,13 @@
       "path": "individual.email",
       "branch": "",
       "shape": "string",
-      "state": "proven_by_test",
-      "status": "unproven",
-      "class": "proven_by_test"
+      "state": "served",
+      "status": "proven",
+      "tests": [
+        "TestAccountAttributes/leaves/request/PostAccounts/individual.email",
+        "TestAccountAttributes/leaves/response/account/individual.email"
+      ],
+      "class": "verified"
     },
     {
       "object": "account",
@@ -3418,9 +3645,13 @@
       "path": "individual.first_name",
       "branch": "",
       "shape": "string",
-      "state": "proven_by_test",
-      "status": "unproven",
-      "class": "proven_by_test"
+      "state": "served",
+      "status": "proven",
+      "tests": [
+        "TestAccountAttributes/leaves/request/PostAccounts/individual.first_name",
+        "TestAccountAttributes/leaves/response/account/individual.first_name"
+      ],
+      "class": "verified"
     },
     {
       "object": "account",
@@ -3429,9 +3660,10 @@
       "path": "individual.first_name_kana",
       "branch": "",
       "shape": "string",
-      "state": "proven_by_test",
+      "state": "unserved",
+      "reason": "not_proven",
       "status": "unproven",
-      "class": "proven_by_test"
+      "class": "unproven"
     },
     {
       "object": "account",
@@ -3440,9 +3672,10 @@
       "path": "individual.first_name_kanji",
       "branch": "",
       "shape": "string",
-      "state": "proven_by_test",
+      "state": "unserved",
+      "reason": "not_proven",
       "status": "unproven",
-      "class": "proven_by_test"
+      "class": "unproven"
     },
     {
       "object": "account",
@@ -3451,9 +3684,13 @@
       "path": "individual.full_name_aliases",
       "branch": "",
       "shape": "list",
-      "state": "proven_by_test",
-      "status": "unproven",
-      "class": "proven_by_test"
+      "state": "served",
+      "status": "proven",
+      "tests": [
+        "TestAccountAttributes/leaves/request/PostAccounts/individual.full_name_aliases",
+        "TestAccountAttributes/leaves/response/account/individual.full_name_aliases"
+      ],
+      "class": "verified"
     },
     {
       "object": "account",
@@ -3462,9 +3699,13 @@
       "path": "individual.gender",
       "branch": "",
       "shape": "string",
-      "state": "proven_by_test",
-      "status": "unproven",
-      "class": "proven_by_test"
+      "state": "served",
+      "status": "proven",
+      "tests": [
+        "TestAccountAttributes/leaves/request/PostAccounts/individual.gender",
+        "TestAccountAttributes/leaves/response/account/individual.gender"
+      ],
+      "class": "verified"
     },
     {
       "object": "account",
@@ -3484,9 +3725,10 @@
       "path": "individual.id_number_secondary",
       "branch": "",
       "shape": "string",
-      "state": "proven_by_test",
+      "state": "unserved",
+      "reason": "not_proven",
       "status": "unproven",
-      "class": "proven_by_test"
+      "class": "unproven"
     },
     {
       "object": "account",
@@ -3495,9 +3737,13 @@
       "path": "individual.last_name",
       "branch": "",
       "shape": "string",
-      "state": "proven_by_test",
-      "status": "unproven",
-      "class": "proven_by_test"
+      "state": "served",
+      "status": "proven",
+      "tests": [
+        "TestAccountAttributes/leaves/request/PostAccounts/individual.last_name",
+        "TestAccountAttributes/leaves/response/account/individual.last_name"
+      ],
+      "class": "verified"
     },
     {
       "object": "account",
@@ -3506,9 +3752,10 @@
       "path": "individual.last_name_kana",
       "branch": "",
       "shape": "string",
-      "state": "proven_by_test",
+      "state": "unserved",
+      "reason": "not_proven",
       "status": "unproven",
-      "class": "proven_by_test"
+      "class": "unproven"
     },
     {
       "object": "account",
@@ -3517,9 +3764,10 @@
       "path": "individual.last_name_kanji",
       "branch": "",
       "shape": "string",
-      "state": "proven_by_test",
+      "state": "unserved",
+      "reason": "not_proven",
       "status": "unproven",
-      "class": "proven_by_test"
+      "class": "unproven"
     },
     {
       "object": "account",
@@ -3528,9 +3776,13 @@
       "path": "individual.maiden_name",
       "branch": "",
       "shape": "string",
-      "state": "proven_by_test",
-      "status": "unproven",
-      "class": "proven_by_test"
+      "state": "served",
+      "status": "proven",
+      "tests": [
+        "TestAccountAttributes/leaves/request/PostAccounts/individual.maiden_name",
+        "TestAccountAttributes/leaves/response/account/individual.maiden_name"
+      ],
+      "class": "verified"
     },
     {
       "object": "account",
@@ -3539,9 +3791,13 @@
       "path": "individual.metadata",
       "branch": "",
       "shape": "map",
-      "state": "proven_by_test",
-      "status": "unproven",
-      "class": "proven_by_test"
+      "state": "served",
+      "status": "proven",
+      "tests": [
+        "TestAccountAttributes/leaves/request/PostAccounts/individual.metadata",
+        "TestAccountAttributes/leaves/response/account/individual.metadata"
+      ],
+      "class": "verified"
     },
     {
       "object": "account",
@@ -3550,9 +3806,13 @@
       "path": "individual.phone",
       "branch": "",
       "shape": "string",
-      "state": "proven_by_test",
-      "status": "unproven",
-      "class": "proven_by_test"
+      "state": "served",
+      "status": "proven",
+      "tests": [
+        "TestAccountAttributes/leaves/request/PostAccounts/individual.phone",
+        "TestAccountAttributes/leaves/response/account/individual.phone"
+      ],
+      "class": "verified"
     },
     {
       "object": "account",
@@ -3561,9 +3821,13 @@
       "path": "individual.political_exposure",
       "branch": "",
       "shape": "enum",
-      "state": "proven_by_test",
-      "status": "unproven",
-      "class": "proven_by_test"
+      "state": "served",
+      "status": "proven",
+      "tests": [
+        "TestAccountAttributes/leaves/request/PostAccounts/individual.political_exposure",
+        "TestAccountAttributes/leaves/response/account/individual.political_exposure"
+      ],
+      "class": "verified"
     },
     {
       "object": "account",
@@ -3572,9 +3836,13 @@
       "path": "individual.registered_address.city",
       "branch": "",
       "shape": "string",
-      "state": "proven_by_test",
-      "status": "unproven",
-      "class": "proven_by_test"
+      "state": "served",
+      "status": "proven",
+      "tests": [
+        "TestAccountAttributes/leaves/request/PostAccounts/individual.registered_address.city",
+        "TestAccountAttributes/leaves/response/account/individual.registered_address.city"
+      ],
+      "class": "verified"
     },
     {
       "object": "account",
@@ -3583,9 +3851,13 @@
       "path": "individual.registered_address.country",
       "branch": "",
       "shape": "string",
-      "state": "proven_by_test",
-      "status": "unproven",
-      "class": "proven_by_test"
+      "state": "served",
+      "status": "proven",
+      "tests": [
+        "TestAccountAttributes/leaves/request/PostAccounts/individual.registered_address.country",
+        "TestAccountAttributes/leaves/response/account/individual.registered_address.country"
+      ],
+      "class": "verified"
     },
     {
       "object": "account",
@@ -3594,9 +3866,13 @@
       "path": "individual.registered_address.line1",
       "branch": "",
       "shape": "string",
-      "state": "proven_by_test",
-      "status": "unproven",
-      "class": "proven_by_test"
+      "state": "served",
+      "status": "proven",
+      "tests": [
+        "TestAccountAttributes/leaves/request/PostAccounts/individual.registered_address.line1",
+        "TestAccountAttributes/leaves/response/account/individual.registered_address.line1"
+      ],
+      "class": "verified"
     },
     {
       "object": "account",
@@ -3605,9 +3881,13 @@
       "path": "individual.registered_address.line2",
       "branch": "",
       "shape": "string",
-      "state": "proven_by_test",
-      "status": "unproven",
-      "class": "proven_by_test"
+      "state": "served",
+      "status": "proven",
+      "tests": [
+        "TestAccountAttributes/leaves/request/PostAccounts/individual.registered_address.line2",
+        "TestAccountAttributes/leaves/response/account/individual.registered_address.line2"
+      ],
+      "class": "verified"
     },
     {
       "object": "account",
@@ -3616,9 +3896,13 @@
       "path": "individual.registered_address.postal_code",
       "branch": "",
       "shape": "string",
-      "state": "proven_by_test",
-      "status": "unproven",
-      "class": "proven_by_test"
+      "state": "served",
+      "status": "proven",
+      "tests": [
+        "TestAccountAttributes/leaves/request/PostAccounts/individual.registered_address.postal_code",
+        "TestAccountAttributes/leaves/response/account/individual.registered_address.postal_code"
+      ],
+      "class": "verified"
     },
     {
       "object": "account",
@@ -3627,9 +3911,13 @@
       "path": "individual.registered_address.state",
       "branch": "",
       "shape": "string",
-      "state": "proven_by_test",
-      "status": "unproven",
-      "class": "proven_by_test"
+      "state": "served",
+      "status": "proven",
+      "tests": [
+        "TestAccountAttributes/leaves/request/PostAccounts/individual.registered_address.state",
+        "TestAccountAttributes/leaves/response/account/individual.registered_address.state"
+      ],
+      "class": "verified"
     },
     {
       "object": "account",
@@ -3638,9 +3926,13 @@
       "path": "individual.relationship.director",
       "branch": "",
       "shape": "boolean",
-      "state": "proven_by_test",
-      "status": "unproven",
-      "class": "proven_by_test"
+      "state": "served",
+      "status": "proven",
+      "tests": [
+        "TestAccountAttributes/leaves/request/PostAccounts/individual.relationship.director",
+        "TestAccountAttributes/leaves/response/account/individual.relationship.director"
+      ],
+      "class": "verified"
     },
     {
       "object": "account",
@@ -3649,9 +3941,13 @@
       "path": "individual.relationship.executive",
       "branch": "",
       "shape": "boolean",
-      "state": "proven_by_test",
-      "status": "unproven",
-      "class": "proven_by_test"
+      "state": "served",
+      "status": "proven",
+      "tests": [
+        "TestAccountAttributes/leaves/request/PostAccounts/individual.relationship.executive",
+        "TestAccountAttributes/leaves/response/account/individual.relationship.executive"
+      ],
+      "class": "verified"
     },
     {
       "object": "account",
@@ -3660,9 +3956,13 @@
       "path": "individual.relationship.owner",
       "branch": "",
       "shape": "boolean",
-      "state": "proven_by_test",
-      "status": "unproven",
-      "class": "proven_by_test"
+      "state": "served",
+      "status": "proven",
+      "tests": [
+        "TestAccountAttributes/leaves/request/PostAccounts/individual.relationship.owner",
+        "TestAccountAttributes/leaves/response/account/individual.relationship.owner"
+      ],
+      "class": "verified"
     },
     {
       "object": "account",
@@ -3671,9 +3971,13 @@
       "path": "individual.relationship.percent_ownership",
       "branch": "",
       "shape": "number",
-      "state": "proven_by_test",
-      "status": "unproven",
-      "class": "proven_by_test"
+      "state": "served",
+      "status": "proven",
+      "tests": [
+        "TestAccountAttributes/leaves/request/PostAccounts/individual.relationship.percent_ownership",
+        "TestAccountAttributes/leaves/response/account/individual.relationship.percent_ownership"
+      ],
+      "class": "verified"
     },
     {
       "object": "account",
@@ -3682,9 +3986,13 @@
       "path": "individual.relationship.title",
       "branch": "",
       "shape": "string",
-      "state": "proven_by_test",
-      "status": "unproven",
-      "class": "proven_by_test"
+      "state": "served",
+      "status": "proven",
+      "tests": [
+        "TestAccountAttributes/leaves/request/PostAccounts/individual.relationship.title",
+        "TestAccountAttributes/leaves/response/account/individual.relationship.title"
+      ],
+      "class": "verified"
     },
     {
       "object": "account",
@@ -3704,9 +4012,13 @@
       "path": "individual.verification.additional_document.back",
       "branch": "",
       "shape": "string",
-      "state": "proven_by_test",
-      "status": "unproven",
-      "class": "proven_by_test"
+      "state": "served",
+      "status": "proven",
+      "tests": [
+        "TestAccountAttributes/leaves/request/PostAccounts/individual.verification.additional_document.back",
+        "TestAccountAttributes/leaves/response/account/individual.verification.additional_document.back"
+      ],
+      "class": "verified"
     },
     {
       "object": "account",
@@ -3715,9 +4027,13 @@
       "path": "individual.verification.additional_document.front",
       "branch": "",
       "shape": "string",
-      "state": "proven_by_test",
-      "status": "unproven",
-      "class": "proven_by_test"
+      "state": "served",
+      "status": "proven",
+      "tests": [
+        "TestAccountAttributes/leaves/request/PostAccounts/individual.verification.additional_document.front",
+        "TestAccountAttributes/leaves/response/account/individual.verification.additional_document.front"
+      ],
+      "class": "verified"
     },
     {
       "object": "account",
@@ -3726,9 +4042,13 @@
       "path": "individual.verification.document.back",
       "branch": "",
       "shape": "string",
-      "state": "proven_by_test",
-      "status": "unproven",
-      "class": "proven_by_test"
+      "state": "served",
+      "status": "proven",
+      "tests": [
+        "TestAccountAttributes/leaves/request/PostAccounts/individual.verification.document.back",
+        "TestAccountAttributes/leaves/response/account/individual.verification.document.back"
+      ],
+      "class": "verified"
     },
     {
       "object": "account",
@@ -3737,9 +4057,13 @@
       "path": "individual.verification.document.front",
       "branch": "",
       "shape": "string",
-      "state": "proven_by_test",
-      "status": "unproven",
-      "class": "proven_by_test"
+      "state": "served",
+      "status": "proven",
+      "tests": [
+        "TestAccountAttributes/leaves/request/PostAccounts/individual.verification.document.front",
+        "TestAccountAttributes/leaves/response/account/individual.verification.document.front"
+      ],
+      "class": "verified"
     },
     {
       "object": "account",
@@ -3748,9 +4072,13 @@
       "path": "metadata",
       "branch": "",
       "shape": "map",
-      "state": "proven_by_test",
-      "status": "unproven",
-      "class": "proven_by_test"
+      "state": "served",
+      "status": "proven",
+      "tests": [
+        "TestAccountAttributes/leaves/request/PostAccounts/metadata",
+        "TestAccountAttributes/leaves/response/account/metadata"
+      ],
+      "class": "verified"
     },
     {
       "object": "account",
@@ -3759,9 +4087,10 @@
       "path": "settings.bacs_debit_payments.display_name",
       "branch": "",
       "shape": "string",
-      "state": "proven_by_test",
+      "state": "unserved",
+      "reason": "not_proven",
       "status": "unproven",
-      "class": "proven_by_test"
+      "class": "unproven"
     },
     {
       "object": "account",
@@ -3770,9 +4099,10 @@
       "path": "settings.branding.icon",
       "branch": "",
       "shape": "string",
-      "state": "proven_by_test",
+      "state": "unserved",
+      "reason": "not_proven",
       "status": "unproven",
-      "class": "proven_by_test"
+      "class": "unproven"
     },
     {
       "object": "account",
@@ -3781,9 +4111,10 @@
       "path": "settings.branding.logo",
       "branch": "",
       "shape": "string",
-      "state": "proven_by_test",
+      "state": "unserved",
+      "reason": "not_proven",
       "status": "unproven",
-      "class": "proven_by_test"
+      "class": "unproven"
     },
     {
       "object": "account",
@@ -3792,9 +4123,10 @@
       "path": "settings.branding.primary_color",
       "branch": "",
       "shape": "string",
-      "state": "proven_by_test",
+      "state": "unserved",
+      "reason": "not_proven",
       "status": "unproven",
-      "class": "proven_by_test"
+      "class": "unproven"
     },
     {
       "object": "account",
@@ -3803,9 +4135,10 @@
       "path": "settings.branding.secondary_color",
       "branch": "",
       "shape": "string",
-      "state": "proven_by_test",
+      "state": "unserved",
+      "reason": "not_proven",
       "status": "unproven",
-      "class": "proven_by_test"
+      "class": "unproven"
     },
     {
       "object": "account",
@@ -3836,9 +4169,10 @@
       "path": "settings.card_issuing.tos_acceptance.user_agent",
       "branch": "",
       "shape": "string",
-      "state": "proven_by_test",
+      "state": "unserved",
+      "reason": "not_proven",
       "status": "unproven",
-      "class": "proven_by_test"
+      "class": "unproven"
     },
     {
       "object": "account",
@@ -3847,9 +4181,10 @@
       "path": "settings.card_payments.decline_on.avs_failure",
       "branch": "",
       "shape": "boolean",
-      "state": "proven_by_test",
+      "state": "unserved",
+      "reason": "not_proven",
       "status": "unproven",
-      "class": "proven_by_test"
+      "class": "unproven"
     },
     {
       "object": "account",
@@ -3858,9 +4193,10 @@
       "path": "settings.card_payments.decline_on.cvc_failure",
       "branch": "",
       "shape": "boolean",
-      "state": "proven_by_test",
+      "state": "unserved",
+      "reason": "not_proven",
       "status": "unproven",
-      "class": "proven_by_test"
+      "class": "unproven"
     },
     {
       "object": "account",
@@ -3869,9 +4205,10 @@
       "path": "settings.card_payments.statement_descriptor_prefix",
       "branch": "",
       "shape": "string",
-      "state": "proven_by_test",
+      "state": "unserved",
+      "reason": "not_proven",
       "status": "unproven",
-      "class": "proven_by_test"
+      "class": "unproven"
     },
     {
       "object": "account",
@@ -3880,9 +4217,10 @@
       "path": "settings.card_payments.statement_descriptor_prefix_kana",
       "branch": "",
       "shape": "string",
-      "state": "proven_by_test",
+      "state": "unserved",
+      "reason": "not_proven",
       "status": "unproven",
-      "class": "proven_by_test"
+      "class": "unproven"
     },
     {
       "object": "account",
@@ -3891,9 +4229,10 @@
       "path": "settings.card_payments.statement_descriptor_prefix_kanji",
       "branch": "",
       "shape": "string",
-      "state": "proven_by_test",
+      "state": "unserved",
+      "reason": "not_proven",
       "status": "unproven",
-      "class": "proven_by_test"
+      "class": "unproven"
     },
     {
       "object": "account",
@@ -3902,9 +4241,10 @@
       "path": "settings.invoices.hosted_payment_method_save",
       "branch": "",
       "shape": "enum",
-      "state": "proven_by_test",
+      "state": "unserved",
+      "reason": "not_proven",
       "status": "unproven",
-      "class": "proven_by_test"
+      "class": "unproven"
     },
     {
       "object": "account",
@@ -3913,9 +4253,10 @@
       "path": "settings.payments.statement_descriptor",
       "branch": "",
       "shape": "string",
-      "state": "proven_by_test",
+      "state": "unserved",
+      "reason": "not_proven",
       "status": "unproven",
-      "class": "proven_by_test"
+      "class": "unproven"
     },
     {
       "object": "account",
@@ -3924,9 +4265,10 @@
       "path": "settings.payments.statement_descriptor_kana",
       "branch": "",
       "shape": "string",
-      "state": "proven_by_test",
+      "state": "unserved",
+      "reason": "not_proven",
       "status": "unproven",
-      "class": "proven_by_test"
+      "class": "unproven"
     },
     {
       "object": "account",
@@ -3935,9 +4277,10 @@
       "path": "settings.payments.statement_descriptor_kanji",
       "branch": "",
       "shape": "string",
-      "state": "proven_by_test",
+      "state": "unserved",
+      "reason": "not_proven",
       "status": "unproven",
-      "class": "proven_by_test"
+      "class": "unproven"
     },
     {
       "object": "account",
@@ -3946,9 +4289,10 @@
       "path": "settings.payouts.debit_negative_balances",
       "branch": "",
       "shape": "boolean",
-      "state": "proven_by_test",
+      "state": "unserved",
+      "reason": "not_proven",
       "status": "unproven",
-      "class": "proven_by_test"
+      "class": "unproven"
     },
     {
       "object": "account",
@@ -3957,9 +4301,10 @@
       "path": "settings.payouts.schedule.delay_days",
       "branch": "integer",
       "shape": "integer",
-      "state": "proven_by_test",
+      "state": "unserved",
+      "reason": "not_proven",
       "status": "unproven",
-      "class": "proven_by_test"
+      "class": "unproven"
     },
     {
       "object": "account",
@@ -3968,9 +4313,10 @@
       "path": "settings.payouts.schedule.delay_days",
       "branch": "string",
       "shape": "enum",
-      "state": "proven_by_test",
+      "state": "unserved",
+      "reason": "not_proven",
       "status": "unproven",
-      "class": "proven_by_test"
+      "class": "unproven"
     },
     {
       "object": "account",
@@ -3979,9 +4325,10 @@
       "path": "settings.payouts.schedule.interval",
       "branch": "",
       "shape": "enum",
-      "state": "proven_by_test",
+      "state": "unserved",
+      "reason": "not_proven",
       "status": "unproven",
-      "class": "proven_by_test"
+      "class": "unproven"
     },
     {
       "object": "account",
@@ -3990,9 +4337,10 @@
       "path": "settings.payouts.schedule.monthly_anchor",
       "branch": "",
       "shape": "integer",
-      "state": "proven_by_test",
+      "state": "unserved",
+      "reason": "not_proven",
       "status": "unproven",
-      "class": "proven_by_test"
+      "class": "unproven"
     },
     {
       "object": "account",
@@ -4001,9 +4349,10 @@
       "path": "settings.payouts.schedule.monthly_payout_days",
       "branch": "",
       "shape": "list",
-      "state": "proven_by_test",
+      "state": "unserved",
+      "reason": "not_proven",
       "status": "unproven",
-      "class": "proven_by_test"
+      "class": "unproven"
     },
     {
       "object": "account",
@@ -4012,9 +4361,10 @@
       "path": "settings.payouts.schedule.weekly_anchor",
       "branch": "",
       "shape": "enum",
-      "state": "proven_by_test",
+      "state": "unserved",
+      "reason": "not_proven",
       "status": "unproven",
-      "class": "proven_by_test"
+      "class": "unproven"
     },
     {
       "object": "account",
@@ -4023,9 +4373,10 @@
       "path": "settings.payouts.schedule.weekly_payout_days",
       "branch": "",
       "shape": "list",
-      "state": "proven_by_test",
+      "state": "unserved",
+      "reason": "not_proven",
       "status": "unproven",
-      "class": "proven_by_test"
+      "class": "unproven"
     },
     {
       "object": "account",
@@ -4034,9 +4385,10 @@
       "path": "settings.payouts.statement_descriptor",
       "branch": "",
       "shape": "string",
-      "state": "proven_by_test",
+      "state": "unserved",
+      "reason": "not_proven",
       "status": "unproven",
-      "class": "proven_by_test"
+      "class": "unproven"
     },
     {
       "object": "account",
@@ -4045,9 +4397,10 @@
       "path": "settings.paypay_payments.additional_files",
       "branch": "",
       "shape": "list",
-      "state": "proven_by_test",
+      "state": "unserved",
+      "reason": "not_proven",
       "status": "unproven",
-      "class": "proven_by_test"
+      "class": "unproven"
     },
     {
       "object": "account",
@@ -4056,9 +4409,10 @@
       "path": "settings.paypay_payments.goods_type",
       "branch": "",
       "shape": "enum",
-      "state": "proven_by_test",
+      "state": "unserved",
+      "reason": "not_proven",
       "status": "unproven",
-      "class": "proven_by_test"
+      "class": "unproven"
     },
     {
       "object": "account",
@@ -4067,9 +4421,10 @@
       "path": "settings.paypay_payments.site.accessible",
       "branch": "",
       "shape": "empty_hash",
-      "state": "proven_by_test",
+      "state": "unserved",
+      "reason": "not_proven",
       "status": "unproven",
-      "class": "proven_by_test"
+      "class": "unproven"
     },
     {
       "object": "account",
@@ -4078,9 +4433,10 @@
       "path": "settings.paypay_payments.site.in_development.password",
       "branch": "",
       "shape": "string",
-      "state": "proven_by_test",
+      "state": "unserved",
+      "reason": "not_proven",
       "status": "unproven",
-      "class": "proven_by_test"
+      "class": "unproven"
     },
     {
       "object": "account",
@@ -4089,9 +4445,10 @@
       "path": "settings.paypay_payments.site.in_development.username",
       "branch": "",
       "shape": "string",
-      "state": "proven_by_test",
+      "state": "unserved",
+      "reason": "not_proven",
       "status": "unproven",
-      "class": "proven_by_test"
+      "class": "unproven"
     },
     {
       "object": "account",
@@ -4100,9 +4457,10 @@
       "path": "settings.paypay_payments.site.restricted.payment_flow_file",
       "branch": "",
       "shape": "string",
-      "state": "proven_by_test",
+      "state": "unserved",
+      "reason": "not_proven",
       "status": "unproven",
-      "class": "proven_by_test"
+      "class": "unproven"
     },
     {
       "object": "account",
@@ -4111,9 +4469,10 @@
       "path": "settings.paypay_payments.site.type",
       "branch": "",
       "shape": "enum",
-      "state": "proven_by_test",
+      "state": "unserved",
+      "reason": "not_proven",
       "status": "unproven",
-      "class": "proven_by_test"
+      "class": "unproven"
     },
     {
       "object": "account",
@@ -4122,9 +4481,10 @@
       "path": "settings.sepa_debit_payments.creditor_id",
       "branch": "",
       "shape": "string",
-      "state": "proven_by_test",
+      "state": "unserved",
+      "reason": "not_proven",
       "status": "unproven",
-      "class": "proven_by_test"
+      "class": "unproven"
     },
     {
       "object": "account",
@@ -4155,9 +4515,10 @@
       "path": "settings.treasury.tos_acceptance.user_agent",
       "branch": "",
       "shape": "string",
-      "state": "proven_by_test",
+      "state": "unserved",
+      "reason": "not_proven",
       "status": "unproven",
-      "class": "proven_by_test"
+      "class": "unproven"
     },
     {
       "object": "account",
@@ -4188,9 +4549,10 @@
       "path": "tos_acceptance.service_agreement",
       "branch": "",
       "shape": "string",
-      "state": "proven_by_test",
+      "state": "unserved",
+      "reason": "not_proven",
       "status": "unproven",
-      "class": "proven_by_test"
+      "class": "unproven"
     },
     {
       "object": "account",
@@ -4199,9 +4561,10 @@
       "path": "tos_acceptance.user_agent",
       "branch": "",
       "shape": "string",
-      "state": "proven_by_test",
+      "state": "unserved",
+      "reason": "not_proven",
       "status": "unproven",
-      "class": "proven_by_test"
+      "class": "unproven"
     },
     {
       "object": "account",
@@ -4288,9 +4651,10 @@
       "path": "business_profile.minority_owned_business_designation",
       "branch": "",
       "shape": "list",
-      "state": "proven_by_test",
+      "state": "unserved",
+      "reason": "not_proven",
       "status": "unproven",
-      "class": "proven_by_test"
+      "class": "unproven"
     },
     {
       "object": "account",
@@ -4299,9 +4663,10 @@
       "path": "business_profile.monthly_estimated_revenue.amount",
       "branch": "",
       "shape": "integer",
-      "state": "proven_by_test",
+      "state": "unserved",
+      "reason": "not_proven",
       "status": "unproven",
-      "class": "proven_by_test"
+      "class": "unproven"
     },
     {
       "object": "account",
@@ -4310,9 +4675,10 @@
       "path": "business_profile.monthly_estimated_revenue.currency",
       "branch": "",
       "shape": "string",
-      "state": "proven_by_test",
+      "state": "unserved",
+      "reason": "not_proven",
       "status": "unproven",
-      "class": "proven_by_test"
+      "class": "unproven"
     },
     {
       "object": "account",
@@ -4343,9 +4709,10 @@
       "path": "business_profile.specified_commercial_transactions_act_url",
       "branch": "",
       "shape": "string",
-      "state": "proven_by_test",
+      "state": "unserved",
+      "reason": "not_proven",
       "status": "unproven",
-      "class": "proven_by_test"
+      "class": "unproven"
     },
     {
       "object": "account",
@@ -4354,9 +4721,10 @@
       "path": "business_profile.support_address.city",
       "branch": "",
       "shape": "string",
-      "state": "proven_by_test",
+      "state": "unserved",
+      "reason": "not_proven",
       "status": "unproven",
-      "class": "proven_by_test"
+      "class": "unproven"
     },
     {
       "object": "account",
@@ -4365,9 +4733,10 @@
       "path": "business_profile.support_address.country",
       "branch": "",
       "shape": "string",
-      "state": "proven_by_test",
+      "state": "unserved",
+      "reason": "not_proven",
       "status": "unproven",
-      "class": "proven_by_test"
+      "class": "unproven"
     },
     {
       "object": "account",
@@ -4376,9 +4745,10 @@
       "path": "business_profile.support_address.line1",
       "branch": "",
       "shape": "string",
-      "state": "proven_by_test",
+      "state": "unserved",
+      "reason": "not_proven",
       "status": "unproven",
-      "class": "proven_by_test"
+      "class": "unproven"
     },
     {
       "object": "account",
@@ -4387,9 +4757,10 @@
       "path": "business_profile.support_address.line2",
       "branch": "",
       "shape": "string",
-      "state": "proven_by_test",
+      "state": "unserved",
+      "reason": "not_proven",
       "status": "unproven",
-      "class": "proven_by_test"
+      "class": "unproven"
     },
     {
       "object": "account",
@@ -4398,9 +4769,10 @@
       "path": "business_profile.support_address.postal_code",
       "branch": "",
       "shape": "string",
-      "state": "proven_by_test",
+      "state": "unserved",
+      "reason": "not_proven",
       "status": "unproven",
-      "class": "proven_by_test"
+      "class": "unproven"
     },
     {
       "object": "account",
@@ -4409,9 +4781,10 @@
       "path": "business_profile.support_address.state",
       "branch": "",
       "shape": "string",
-      "state": "proven_by_test",
+      "state": "unserved",
+      "reason": "not_proven",
       "status": "unproven",
-      "class": "proven_by_test"
+      "class": "unproven"
     },
     {
       "object": "account",
@@ -4420,9 +4793,10 @@
       "path": "business_profile.support_email",
       "branch": "",
       "shape": "string",
-      "state": "proven_by_test",
+      "state": "unserved",
+      "reason": "not_proven",
       "status": "unproven",
-      "class": "proven_by_test"
+      "class": "unproven"
     },
     {
       "object": "account",
@@ -4431,9 +4805,10 @@
       "path": "business_profile.support_phone",
       "branch": "",
       "shape": "string",
-      "state": "proven_by_test",
+      "state": "unserved",
+      "reason": "not_proven",
       "status": "unproven",
-      "class": "proven_by_test"
+      "class": "unproven"
     },
     {
       "object": "account",
@@ -4442,9 +4817,10 @@
       "path": "business_profile.support_url",
       "branch": "",
       "shape": "string",
-      "state": "proven_by_test",
+      "state": "unserved",
+      "reason": "not_proven",
       "status": "unproven",
-      "class": "proven_by_test"
+      "class": "unproven"
     },
     {
       "object": "account",
@@ -5235,10 +5611,12 @@
       "path": "company.address.city",
       "branch": "",
       "shape": "string",
-      "state": "unserved",
-      "reason": "not_proven",
-      "status": "unproven",
-      "class": "unproven"
+      "state": "served",
+      "status": "proven",
+      "tests": [
+        "TestAccountAttributes/leaves/request/PostAccountsAccount/company.address.city"
+      ],
+      "class": "verified"
     },
     {
       "object": "account",
@@ -5247,10 +5625,12 @@
       "path": "company.address.country",
       "branch": "",
       "shape": "string",
-      "state": "unserved",
-      "reason": "not_proven",
-      "status": "unproven",
-      "class": "unproven"
+      "state": "served",
+      "status": "proven",
+      "tests": [
+        "TestAccountAttributes/leaves/request/PostAccountsAccount/company.address.country"
+      ],
+      "class": "verified"
     },
     {
       "object": "account",
@@ -5259,10 +5639,12 @@
       "path": "company.address.line1",
       "branch": "",
       "shape": "string",
-      "state": "unserved",
-      "reason": "not_proven",
-      "status": "unproven",
-      "class": "unproven"
+      "state": "served",
+      "status": "proven",
+      "tests": [
+        "TestAccountAttributes/leaves/request/PostAccountsAccount/company.address.line1"
+      ],
+      "class": "verified"
     },
     {
       "object": "account",
@@ -5271,10 +5653,12 @@
       "path": "company.address.line2",
       "branch": "",
       "shape": "string",
-      "state": "unserved",
-      "reason": "not_proven",
-      "status": "unproven",
-      "class": "unproven"
+      "state": "served",
+      "status": "proven",
+      "tests": [
+        "TestAccountAttributes/leaves/request/PostAccountsAccount/company.address.line2"
+      ],
+      "class": "verified"
     },
     {
       "object": "account",
@@ -5283,10 +5667,12 @@
       "path": "company.address.postal_code",
       "branch": "",
       "shape": "string",
-      "state": "unserved",
-      "reason": "not_proven",
-      "status": "unproven",
-      "class": "unproven"
+      "state": "served",
+      "status": "proven",
+      "tests": [
+        "TestAccountAttributes/leaves/request/PostAccountsAccount/company.address.postal_code"
+      ],
+      "class": "verified"
     },
     {
       "object": "account",
@@ -5295,10 +5681,12 @@
       "path": "company.address.state",
       "branch": "",
       "shape": "string",
-      "state": "unserved",
-      "reason": "not_proven",
-      "status": "unproven",
-      "class": "unproven"
+      "state": "served",
+      "status": "proven",
+      "tests": [
+        "TestAccountAttributes/leaves/request/PostAccountsAccount/company.address.state"
+      ],
+      "class": "verified"
     },
     {
       "object": "account",
@@ -5475,10 +5863,12 @@
       "path": "company.administrative_address.city",
       "branch": "",
       "shape": "string",
-      "state": "unserved",
-      "reason": "not_proven",
-      "status": "unproven",
-      "class": "unproven"
+      "state": "served",
+      "status": "proven",
+      "tests": [
+        "TestAccountAttributes/leaves/request/PostAccountsAccount/company.administrative_address.city"
+      ],
+      "class": "verified"
     },
     {
       "object": "account",
@@ -5487,10 +5877,12 @@
       "path": "company.administrative_address.country",
       "branch": "",
       "shape": "string",
-      "state": "unserved",
-      "reason": "not_proven",
-      "status": "unproven",
-      "class": "unproven"
+      "state": "served",
+      "status": "proven",
+      "tests": [
+        "TestAccountAttributes/leaves/request/PostAccountsAccount/company.administrative_address.country"
+      ],
+      "class": "verified"
     },
     {
       "object": "account",
@@ -5499,10 +5891,12 @@
       "path": "company.administrative_address.line1",
       "branch": "",
       "shape": "string",
-      "state": "unserved",
-      "reason": "not_proven",
-      "status": "unproven",
-      "class": "unproven"
+      "state": "served",
+      "status": "proven",
+      "tests": [
+        "TestAccountAttributes/leaves/request/PostAccountsAccount/company.administrative_address.line1"
+      ],
+      "class": "verified"
     },
     {
       "object": "account",
@@ -5511,10 +5905,12 @@
       "path": "company.administrative_address.line2",
       "branch": "",
       "shape": "string",
-      "state": "unserved",
-      "reason": "not_proven",
-      "status": "unproven",
-      "class": "unproven"
+      "state": "served",
+      "status": "proven",
+      "tests": [
+        "TestAccountAttributes/leaves/request/PostAccountsAccount/company.administrative_address.line2"
+      ],
+      "class": "verified"
     },
     {
       "object": "account",
@@ -5523,10 +5919,12 @@
       "path": "company.administrative_address.postal_code",
       "branch": "",
       "shape": "string",
-      "state": "unserved",
-      "reason": "not_proven",
-      "status": "unproven",
-      "class": "unproven"
+      "state": "served",
+      "status": "proven",
+      "tests": [
+        "TestAccountAttributes/leaves/request/PostAccountsAccount/company.administrative_address.postal_code"
+      ],
+      "class": "verified"
     },
     {
       "object": "account",
@@ -5535,10 +5933,12 @@
       "path": "company.administrative_address.state",
       "branch": "",
       "shape": "string",
-      "state": "unserved",
-      "reason": "not_proven",
-      "status": "unproven",
-      "class": "unproven"
+      "state": "served",
+      "status": "proven",
+      "tests": [
+        "TestAccountAttributes/leaves/request/PostAccountsAccount/company.administrative_address.state"
+      ],
+      "class": "verified"
     },
     {
       "object": "account",
@@ -5547,10 +5947,12 @@
       "path": "company.directors_provided",
       "branch": "",
       "shape": "boolean",
-      "state": "unserved",
-      "reason": "not_proven",
-      "status": "unproven",
-      "class": "unproven"
+      "state": "served",
+      "status": "proven",
+      "tests": [
+        "TestAccountAttributes/leaves/request/PostAccountsAccount/company.directors_provided"
+      ],
+      "class": "verified"
     },
     {
       "object": "account",
@@ -5559,10 +5961,12 @@
       "path": "company.directorship_declaration.date",
       "branch": "",
       "shape": "integer",
-      "state": "unserved",
-      "reason": "not_proven",
-      "status": "unproven",
-      "class": "unproven"
+      "state": "served",
+      "status": "proven",
+      "tests": [
+        "TestAccountAttributes/leaves/request/PostAccountsAccount/company.directorship_declaration.date"
+      ],
+      "class": "verified"
     },
     {
       "object": "account",
@@ -5571,10 +5975,12 @@
       "path": "company.directorship_declaration.ip",
       "branch": "",
       "shape": "string",
-      "state": "unserved",
-      "reason": "not_proven",
-      "status": "unproven",
-      "class": "unproven"
+      "state": "served",
+      "status": "proven",
+      "tests": [
+        "TestAccountAttributes/leaves/request/PostAccountsAccount/company.directorship_declaration.ip"
+      ],
+      "class": "verified"
     },
     {
       "object": "account",
@@ -5583,10 +5989,12 @@
       "path": "company.directorship_declaration.user_agent",
       "branch": "",
       "shape": "string",
-      "state": "unserved",
-      "reason": "not_proven",
-      "status": "unproven",
-      "class": "unproven"
+      "state": "served",
+      "status": "proven",
+      "tests": [
+        "TestAccountAttributes/leaves/request/PostAccountsAccount/company.directorship_declaration.user_agent"
+      ],
+      "class": "verified"
     },
     {
       "object": "account",
@@ -5595,10 +6003,12 @@
       "path": "company.executives_provided",
       "branch": "",
       "shape": "boolean",
-      "state": "unserved",
-      "reason": "not_proven",
-      "status": "unproven",
-      "class": "unproven"
+      "state": "served",
+      "status": "proven",
+      "tests": [
+        "TestAccountAttributes/leaves/request/PostAccountsAccount/company.executives_provided"
+      ],
+      "class": "verified"
     },
     {
       "object": "account",
@@ -5631,10 +6041,12 @@
       "path": "company.name",
       "branch": "",
       "shape": "string",
-      "state": "unserved",
-      "reason": "not_proven",
-      "status": "unproven",
-      "class": "unproven"
+      "state": "served",
+      "status": "proven",
+      "tests": [
+        "TestAccountAttributes/leaves/request/PostAccountsAccount/company.name"
+      ],
+      "class": "verified"
     },
     {
       "object": "account",
@@ -5667,10 +6079,12 @@
       "path": "company.owners_provided",
       "branch": "",
       "shape": "boolean",
-      "state": "unserved",
-      "reason": "not_proven",
-      "status": "unproven",
-      "class": "unproven"
+      "state": "served",
+      "status": "proven",
+      "tests": [
+        "TestAccountAttributes/leaves/request/PostAccountsAccount/company.owners_provided"
+      ],
+      "class": "verified"
     },
     {
       "object": "account",
@@ -5679,10 +6093,12 @@
       "path": "company.ownership_declaration.date",
       "branch": "",
       "shape": "integer",
-      "state": "unserved",
-      "reason": "not_proven",
-      "status": "unproven",
-      "class": "unproven"
+      "state": "served",
+      "status": "proven",
+      "tests": [
+        "TestAccountAttributes/leaves/request/PostAccountsAccount/company.ownership_declaration.date"
+      ],
+      "class": "verified"
     },
     {
       "object": "account",
@@ -5691,10 +6107,12 @@
       "path": "company.ownership_declaration.ip",
       "branch": "",
       "shape": "string",
-      "state": "unserved",
-      "reason": "not_proven",
-      "status": "unproven",
-      "class": "unproven"
+      "state": "served",
+      "status": "proven",
+      "tests": [
+        "TestAccountAttributes/leaves/request/PostAccountsAccount/company.ownership_declaration.ip"
+      ],
+      "class": "verified"
     },
     {
       "object": "account",
@@ -5703,10 +6121,12 @@
       "path": "company.ownership_declaration.user_agent",
       "branch": "",
       "shape": "string",
-      "state": "unserved",
-      "reason": "not_proven",
-      "status": "unproven",
-      "class": "unproven"
+      "state": "served",
+      "status": "proven",
+      "tests": [
+        "TestAccountAttributes/leaves/request/PostAccountsAccount/company.ownership_declaration.user_agent"
+      ],
+      "class": "verified"
     },
     {
       "object": "account",
@@ -5727,10 +6147,12 @@
       "path": "company.phone",
       "branch": "",
       "shape": "string",
-      "state": "unserved",
-      "reason": "not_proven",
-      "status": "unproven",
-      "class": "unproven"
+      "state": "served",
+      "status": "proven",
+      "tests": [
+        "TestAccountAttributes/leaves/request/PostAccountsAccount/company.phone"
+      ],
+      "class": "verified"
     },
     {
       "object": "account",
@@ -5739,10 +6161,12 @@
       "path": "company.principal_place_of_business.city",
       "branch": "",
       "shape": "string",
-      "state": "unserved",
-      "reason": "not_proven",
-      "status": "unproven",
-      "class": "unproven"
+      "state": "served",
+      "status": "proven",
+      "tests": [
+        "TestAccountAttributes/leaves/request/PostAccountsAccount/company.principal_place_of_business.city"
+      ],
+      "class": "verified"
     },
     {
       "object": "account",
@@ -5751,10 +6175,12 @@
       "path": "company.principal_place_of_business.country",
       "branch": "",
       "shape": "string",
-      "state": "unserved",
-      "reason": "not_proven",
-      "status": "unproven",
-      "class": "unproven"
+      "state": "served",
+      "status": "proven",
+      "tests": [
+        "TestAccountAttributes/leaves/request/PostAccountsAccount/company.principal_place_of_business.country"
+      ],
+      "class": "verified"
     },
     {
       "object": "account",
@@ -5763,10 +6189,12 @@
       "path": "company.principal_place_of_business.line1",
       "branch": "",
       "shape": "string",
-      "state": "unserved",
-      "reason": "not_proven",
-      "status": "unproven",
-      "class": "unproven"
+      "state": "served",
+      "status": "proven",
+      "tests": [
+        "TestAccountAttributes/leaves/request/PostAccountsAccount/company.principal_place_of_business.line1"
+      ],
+      "class": "verified"
     },
     {
       "object": "account",
@@ -5775,10 +6203,12 @@
       "path": "company.principal_place_of_business.line2",
       "branch": "",
       "shape": "string",
-      "state": "unserved",
-      "reason": "not_proven",
-      "status": "unproven",
-      "class": "unproven"
+      "state": "served",
+      "status": "proven",
+      "tests": [
+        "TestAccountAttributes/leaves/request/PostAccountsAccount/company.principal_place_of_business.line2"
+      ],
+      "class": "verified"
     },
     {
       "object": "account",
@@ -5787,10 +6217,12 @@
       "path": "company.principal_place_of_business.postal_code",
       "branch": "",
       "shape": "string",
-      "state": "unserved",
-      "reason": "not_proven",
-      "status": "unproven",
-      "class": "unproven"
+      "state": "served",
+      "status": "proven",
+      "tests": [
+        "TestAccountAttributes/leaves/request/PostAccountsAccount/company.principal_place_of_business.postal_code"
+      ],
+      "class": "verified"
     },
     {
       "object": "account",
@@ -5799,10 +6231,12 @@
       "path": "company.principal_place_of_business.state",
       "branch": "",
       "shape": "string",
-      "state": "unserved",
-      "reason": "not_proven",
-      "status": "unproven",
-      "class": "unproven"
+      "state": "served",
+      "status": "proven",
+      "tests": [
+        "TestAccountAttributes/leaves/request/PostAccountsAccount/company.principal_place_of_business.state"
+      ],
+      "class": "verified"
     },
     {
       "object": "account",
@@ -5811,10 +6245,12 @@
       "path": "company.registration_date.day",
       "branch": "",
       "shape": "integer",
-      "state": "unserved",
-      "reason": "not_proven",
-      "status": "unproven",
-      "class": "unproven"
+      "state": "served",
+      "status": "proven",
+      "tests": [
+        "TestAccountAttributes/leaves/request/PostAccountsAccount/company.registration_date.day"
+      ],
+      "class": "verified"
     },
     {
       "object": "account",
@@ -5823,10 +6259,12 @@
       "path": "company.registration_date.month",
       "branch": "",
       "shape": "integer",
-      "state": "unserved",
-      "reason": "not_proven",
-      "status": "unproven",
-      "class": "unproven"
+      "state": "served",
+      "status": "proven",
+      "tests": [
+        "TestAccountAttributes/leaves/request/PostAccountsAccount/company.registration_date.month"
+      ],
+      "class": "verified"
     },
     {
       "object": "account",
@@ -5835,10 +6273,12 @@
       "path": "company.registration_date.year",
       "branch": "",
       "shape": "integer",
-      "state": "unserved",
-      "reason": "not_proven",
-      "status": "unproven",
-      "class": "unproven"
+      "state": "served",
+      "status": "proven",
+      "tests": [
+        "TestAccountAttributes/leaves/request/PostAccountsAccount/company.registration_date.year"
+      ],
+      "class": "verified"
     },
     {
       "object": "account",
@@ -5895,10 +6335,12 @@
       "path": "company.structure",
       "branch": "",
       "shape": "enum",
-      "state": "unserved",
-      "reason": "not_proven",
-      "status": "unproven",
-      "class": "unproven"
+      "state": "served",
+      "status": "proven",
+      "tests": [
+        "TestAccountAttributes/leaves/request/PostAccountsAccount/company.structure"
+      ],
+      "class": "verified"
     },
     {
       "object": "account",
@@ -6146,10 +6588,12 @@
       "path": "individual.address.city",
       "branch": "",
       "shape": "string",
-      "state": "unserved",
-      "reason": "not_proven",
-      "status": "unproven",
-      "class": "unproven"
+      "state": "served",
+      "status": "proven",
+      "tests": [
+        "TestAccountAttributes/leaves/request/PostAccountsAccount/individual.address.city"
+      ],
+      "class": "verified"
     },
     {
       "object": "account",
@@ -6158,10 +6602,12 @@
       "path": "individual.address.country",
       "branch": "",
       "shape": "string",
-      "state": "unserved",
-      "reason": "not_proven",
-      "status": "unproven",
-      "class": "unproven"
+      "state": "served",
+      "status": "proven",
+      "tests": [
+        "TestAccountAttributes/leaves/request/PostAccountsAccount/individual.address.country"
+      ],
+      "class": "verified"
     },
     {
       "object": "account",
@@ -6170,10 +6616,12 @@
       "path": "individual.address.line1",
       "branch": "",
       "shape": "string",
-      "state": "unserved",
-      "reason": "not_proven",
-      "status": "unproven",
-      "class": "unproven"
+      "state": "served",
+      "status": "proven",
+      "tests": [
+        "TestAccountAttributes/leaves/request/PostAccountsAccount/individual.address.line1"
+      ],
+      "class": "verified"
     },
     {
       "object": "account",
@@ -6182,10 +6630,12 @@
       "path": "individual.address.line2",
       "branch": "",
       "shape": "string",
-      "state": "unserved",
-      "reason": "not_proven",
-      "status": "unproven",
-      "class": "unproven"
+      "state": "served",
+      "status": "proven",
+      "tests": [
+        "TestAccountAttributes/leaves/request/PostAccountsAccount/individual.address.line2"
+      ],
+      "class": "verified"
     },
     {
       "object": "account",
@@ -6194,10 +6644,12 @@
       "path": "individual.address.postal_code",
       "branch": "",
       "shape": "string",
-      "state": "unserved",
-      "reason": "not_proven",
-      "status": "unproven",
-      "class": "unproven"
+      "state": "served",
+      "status": "proven",
+      "tests": [
+        "TestAccountAttributes/leaves/request/PostAccountsAccount/individual.address.postal_code"
+      ],
+      "class": "verified"
     },
     {
       "object": "account",
@@ -6206,10 +6658,12 @@
       "path": "individual.address.state",
       "branch": "",
       "shape": "string",
-      "state": "unserved",
-      "reason": "not_proven",
-      "status": "unproven",
-      "class": "unproven"
+      "state": "served",
+      "status": "proven",
+      "tests": [
+        "TestAccountAttributes/leaves/request/PostAccountsAccount/individual.address.state"
+      ],
+      "class": "verified"
     },
     {
       "object": "account",
@@ -6386,10 +6840,12 @@
       "path": "individual.dob.day",
       "branch": "",
       "shape": "integer",
-      "state": "unserved",
-      "reason": "not_proven",
-      "status": "unproven",
-      "class": "unproven"
+      "state": "served",
+      "status": "proven",
+      "tests": [
+        "TestAccountAttributes/leaves/request/PostAccountsAccount/individual.dob.day"
+      ],
+      "class": "verified"
     },
     {
       "object": "account",
@@ -6398,10 +6854,12 @@
       "path": "individual.dob.month",
       "branch": "",
       "shape": "integer",
-      "state": "unserved",
-      "reason": "not_proven",
-      "status": "unproven",
-      "class": "unproven"
+      "state": "served",
+      "status": "proven",
+      "tests": [
+        "TestAccountAttributes/leaves/request/PostAccountsAccount/individual.dob.month"
+      ],
+      "class": "verified"
     },
     {
       "object": "account",
@@ -6410,10 +6868,12 @@
       "path": "individual.dob.year",
       "branch": "",
       "shape": "integer",
-      "state": "unserved",
-      "reason": "not_proven",
-      "status": "unproven",
-      "class": "unproven"
+      "state": "served",
+      "status": "proven",
+      "tests": [
+        "TestAccountAttributes/leaves/request/PostAccountsAccount/individual.dob.year"
+      ],
+      "class": "verified"
     },
     {
       "object": "account",
@@ -6422,10 +6882,12 @@
       "path": "individual.email",
       "branch": "",
       "shape": "string",
-      "state": "unserved",
-      "reason": "not_proven",
-      "status": "unproven",
-      "class": "unproven"
+      "state": "served",
+      "status": "proven",
+      "tests": [
+        "TestAccountAttributes/leaves/request/PostAccountsAccount/individual.email"
+      ],
+      "class": "verified"
     },
     {
       "object": "account",
@@ -6434,10 +6896,12 @@
       "path": "individual.first_name",
       "branch": "",
       "shape": "string",
-      "state": "unserved",
-      "reason": "not_proven",
-      "status": "unproven",
-      "class": "unproven"
+      "state": "served",
+      "status": "proven",
+      "tests": [
+        "TestAccountAttributes/leaves/request/PostAccountsAccount/individual.first_name"
+      ],
+      "class": "verified"
     },
     {
       "object": "account",
@@ -6470,10 +6934,12 @@
       "path": "individual.full_name_aliases",
       "branch": "",
       "shape": "list",
-      "state": "unserved",
-      "reason": "not_proven",
-      "status": "unproven",
-      "class": "unproven"
+      "state": "served",
+      "status": "proven",
+      "tests": [
+        "TestAccountAttributes/leaves/request/PostAccountsAccount/individual.full_name_aliases"
+      ],
+      "class": "verified"
     },
     {
       "object": "account",
@@ -6482,10 +6948,12 @@
       "path": "individual.gender",
       "branch": "",
       "shape": "string",
-      "state": "unserved",
-      "reason": "not_proven",
-      "status": "unproven",
-      "class": "unproven"
+      "state": "served",
+      "status": "proven",
+      "tests": [
+        "TestAccountAttributes/leaves/request/PostAccountsAccount/individual.gender"
+      ],
+      "class": "verified"
     },
     {
       "object": "account",
@@ -6518,10 +6986,12 @@
       "path": "individual.last_name",
       "branch": "",
       "shape": "string",
-      "state": "unserved",
-      "reason": "not_proven",
-      "status": "unproven",
-      "class": "unproven"
+      "state": "served",
+      "status": "proven",
+      "tests": [
+        "TestAccountAttributes/leaves/request/PostAccountsAccount/individual.last_name"
+      ],
+      "class": "verified"
     },
     {
       "object": "account",
@@ -6554,10 +7024,12 @@
       "path": "individual.maiden_name",
       "branch": "",
       "shape": "string",
-      "state": "unserved",
-      "reason": "not_proven",
-      "status": "unproven",
-      "class": "unproven"
+      "state": "served",
+      "status": "proven",
+      "tests": [
+        "TestAccountAttributes/leaves/request/PostAccountsAccount/individual.maiden_name"
+      ],
+      "class": "verified"
     },
     {
       "object": "account",
@@ -6566,10 +7038,12 @@
       "path": "individual.metadata",
       "branch": "",
       "shape": "map",
-      "state": "unserved",
-      "reason": "not_proven",
-      "status": "unproven",
-      "class": "unproven"
+      "state": "served",
+      "status": "proven",
+      "tests": [
+        "TestAccountAttributes/leaves/request/PostAccountsAccount/individual.metadata"
+      ],
+      "class": "verified"
     },
     {
       "object": "account",
@@ -6578,10 +7052,12 @@
       "path": "individual.phone",
       "branch": "",
       "shape": "string",
-      "state": "unserved",
-      "reason": "not_proven",
-      "status": "unproven",
-      "class": "unproven"
+      "state": "served",
+      "status": "proven",
+      "tests": [
+        "TestAccountAttributes/leaves/request/PostAccountsAccount/individual.phone"
+      ],
+      "class": "verified"
     },
     {
       "object": "account",
@@ -6590,10 +7066,12 @@
       "path": "individual.political_exposure",
       "branch": "",
       "shape": "enum",
-      "state": "unserved",
-      "reason": "not_proven",
-      "status": "unproven",
-      "class": "unproven"
+      "state": "served",
+      "status": "proven",
+      "tests": [
+        "TestAccountAttributes/leaves/request/PostAccountsAccount/individual.political_exposure"
+      ],
+      "class": "verified"
     },
     {
       "object": "account",
@@ -6602,10 +7080,12 @@
       "path": "individual.registered_address.city",
       "branch": "",
       "shape": "string",
-      "state": "unserved",
-      "reason": "not_proven",
-      "status": "unproven",
-      "class": "unproven"
+      "state": "served",
+      "status": "proven",
+      "tests": [
+        "TestAccountAttributes/leaves/request/PostAccountsAccount/individual.registered_address.city"
+      ],
+      "class": "verified"
     },
     {
       "object": "account",
@@ -6614,10 +7094,12 @@
       "path": "individual.registered_address.country",
       "branch": "",
       "shape": "string",
-      "state": "unserved",
-      "reason": "not_proven",
-      "status": "unproven",
-      "class": "unproven"
+      "state": "served",
+      "status": "proven",
+      "tests": [
+        "TestAccountAttributes/leaves/request/PostAccountsAccount/individual.registered_address.country"
+      ],
+      "class": "verified"
     },
     {
       "object": "account",
@@ -6626,10 +7108,12 @@
       "path": "individual.registered_address.line1",
       "branch": "",
       "shape": "string",
-      "state": "unserved",
-      "reason": "not_proven",
-      "status": "unproven",
-      "class": "unproven"
+      "state": "served",
+      "status": "proven",
+      "tests": [
+        "TestAccountAttributes/leaves/request/PostAccountsAccount/individual.registered_address.line1"
+      ],
+      "class": "verified"
     },
     {
       "object": "account",
@@ -6638,10 +7122,12 @@
       "path": "individual.registered_address.line2",
       "branch": "",
       "shape": "string",
-      "state": "unserved",
-      "reason": "not_proven",
-      "status": "unproven",
-      "class": "unproven"
+      "state": "served",
+      "status": "proven",
+      "tests": [
+        "TestAccountAttributes/leaves/request/PostAccountsAccount/individual.registered_address.line2"
+      ],
+      "class": "verified"
     },
     {
       "object": "account",
@@ -6650,10 +7136,12 @@
       "path": "individual.registered_address.postal_code",
       "branch": "",
       "shape": "string",
-      "state": "unserved",
-      "reason": "not_proven",
-      "status": "unproven",
-      "class": "unproven"
+      "state": "served",
+      "status": "proven",
+      "tests": [
+        "TestAccountAttributes/leaves/request/PostAccountsAccount/individual.registered_address.postal_code"
+      ],
+      "class": "verified"
     },
     {
       "object": "account",
@@ -6662,10 +7150,12 @@
       "path": "individual.registered_address.state",
       "branch": "",
       "shape": "string",
-      "state": "unserved",
-      "reason": "not_proven",
-      "status": "unproven",
-      "class": "unproven"
+      "state": "served",
+      "status": "proven",
+      "tests": [
+        "TestAccountAttributes/leaves/request/PostAccountsAccount/individual.registered_address.state"
+      ],
+      "class": "verified"
     },
     {
       "object": "account",
@@ -6674,10 +7164,12 @@
       "path": "individual.relationship.director",
       "branch": "",
       "shape": "boolean",
-      "state": "unserved",
-      "reason": "not_proven",
-      "status": "unproven",
-      "class": "unproven"
+      "state": "served",
+      "status": "proven",
+      "tests": [
+        "TestAccountAttributes/leaves/request/PostAccountsAccount/individual.relationship.director"
+      ],
+      "class": "verified"
     },
     {
       "object": "account",
@@ -6686,10 +7178,12 @@
       "path": "individual.relationship.executive",
       "branch": "",
       "shape": "boolean",
-      "state": "unserved",
-      "reason": "not_proven",
-      "status": "unproven",
-      "class": "unproven"
+      "state": "served",
+      "status": "proven",
+      "tests": [
+        "TestAccountAttributes/leaves/request/PostAccountsAccount/individual.relationship.executive"
+      ],
+      "class": "verified"
     },
     {
       "object": "account",
@@ -6698,10 +7192,12 @@
       "path": "individual.relationship.owner",
       "branch": "",
       "shape": "boolean",
-      "state": "unserved",
-      "reason": "not_proven",
-      "status": "unproven",
-      "class": "unproven"
+      "state": "served",
+      "status": "proven",
+      "tests": [
+        "TestAccountAttributes/leaves/request/PostAccountsAccount/individual.relationship.owner"
+      ],
+      "class": "verified"
     },
     {
       "object": "account",
@@ -6710,10 +7206,12 @@
       "path": "individual.relationship.percent_ownership",
       "branch": "",
       "shape": "number",
-      "state": "unserved",
-      "reason": "not_proven",
-      "status": "unproven",
-      "class": "unproven"
+      "state": "served",
+      "status": "proven",
+      "tests": [
+        "TestAccountAttributes/leaves/request/PostAccountsAccount/individual.relationship.percent_ownership"
+      ],
+      "class": "verified"
     },
     {
       "object": "account",
@@ -6722,10 +7220,12 @@
       "path": "individual.relationship.title",
       "branch": "",
       "shape": "string",
-      "state": "unserved",
-      "reason": "not_proven",
-      "status": "unproven",
-      "class": "unproven"
+      "state": "served",
+      "status": "proven",
+      "tests": [
+        "TestAccountAttributes/leaves/request/PostAccountsAccount/individual.relationship.title"
+      ],
+      "class": "verified"
     },
     {
       "object": "account",
@@ -6746,10 +7246,12 @@
       "path": "individual.verification.additional_document.back",
       "branch": "",
       "shape": "string",
-      "state": "unserved",
-      "reason": "not_proven",
-      "status": "unproven",
-      "class": "unproven"
+      "state": "served",
+      "status": "proven",
+      "tests": [
+        "TestAccountAttributes/leaves/request/PostAccountsAccount/individual.verification.additional_document.back"
+      ],
+      "class": "verified"
     },
     {
       "object": "account",
@@ -6758,10 +7260,12 @@
       "path": "individual.verification.additional_document.front",
       "branch": "",
       "shape": "string",
-      "state": "unserved",
-      "reason": "not_proven",
-      "status": "unproven",
-      "class": "unproven"
+      "state": "served",
+      "status": "proven",
+      "tests": [
+        "TestAccountAttributes/leaves/request/PostAccountsAccount/individual.verification.additional_document.front"
+      ],
+      "class": "verified"
     },
     {
       "object": "account",
@@ -6770,10 +7274,12 @@
       "path": "individual.verification.document.back",
       "branch": "",
       "shape": "string",
-      "state": "unserved",
-      "reason": "not_proven",
-      "status": "unproven",
-      "class": "unproven"
+      "state": "served",
+      "status": "proven",
+      "tests": [
+        "TestAccountAttributes/leaves/request/PostAccountsAccount/individual.verification.document.back"
+      ],
+      "class": "verified"
     },
     {
       "object": "account",
@@ -6782,10 +7288,12 @@
       "path": "individual.verification.document.front",
       "branch": "",
       "shape": "string",
-      "state": "unserved",
-      "reason": "not_proven",
-      "status": "unproven",
-      "class": "unproven"
+      "state": "served",
+      "status": "proven",
+      "tests": [
+        "TestAccountAttributes/leaves/request/PostAccountsAccount/individual.verification.document.front"
+      ],
+      "class": "verified"
     },
     {
       "object": "account",
@@ -6794,9 +7302,12 @@
       "path": "metadata",
       "branch": "",
       "shape": "map",
-      "state": "proven_by_test",
-      "status": "unproven",
-      "class": "proven_by_test"
+      "state": "served",
+      "status": "proven",
+      "tests": [
+        "TestAccountAttributes/leaves/request/PostAccountsAccount/metadata"
+      ],
+      "class": "verified"
     },
     {
       "object": "account",
@@ -9236,9 +9747,12 @@
       "path": "company.address.city",
       "branch": "",
       "shape": "string",
-      "state": "proven_by_test",
-      "status": "unproven",
-      "class": "proven_by_test"
+      "state": "served",
+      "status": "proven",
+      "tests": [
+        "TestAccountAttributes/leaves/response/account/company.address.city"
+      ],
+      "class": "verified"
     },
     {
       "object": "account",
@@ -9247,9 +9761,12 @@
       "path": "company.address.country",
       "branch": "",
       "shape": "string",
-      "state": "proven_by_test",
-      "status": "unproven",
-      "class": "proven_by_test"
+      "state": "served",
+      "status": "proven",
+      "tests": [
+        "TestAccountAttributes/leaves/response/account/company.address.country"
+      ],
+      "class": "verified"
     },
     {
       "object": "account",
@@ -9258,9 +9775,12 @@
       "path": "company.address.line1",
       "branch": "",
       "shape": "string",
-      "state": "proven_by_test",
-      "status": "unproven",
-      "class": "proven_by_test"
+      "state": "served",
+      "status": "proven",
+      "tests": [
+        "TestAccountAttributes/leaves/response/account/company.address.line1"
+      ],
+      "class": "verified"
     },
     {
       "object": "account",
@@ -9269,9 +9789,12 @@
       "path": "company.address.line2",
       "branch": "",
       "shape": "string",
-      "state": "proven_by_test",
-      "status": "unproven",
-      "class": "proven_by_test"
+      "state": "served",
+      "status": "proven",
+      "tests": [
+        "TestAccountAttributes/leaves/response/account/company.address.line2"
+      ],
+      "class": "verified"
     },
     {
       "object": "account",
@@ -9280,9 +9803,12 @@
       "path": "company.address.postal_code",
       "branch": "",
       "shape": "string",
-      "state": "proven_by_test",
-      "status": "unproven",
-      "class": "proven_by_test"
+      "state": "served",
+      "status": "proven",
+      "tests": [
+        "TestAccountAttributes/leaves/response/account/company.address.postal_code"
+      ],
+      "class": "verified"
     },
     {
       "object": "account",
@@ -9291,9 +9817,12 @@
       "path": "company.address.state",
       "branch": "",
       "shape": "string",
-      "state": "proven_by_test",
-      "status": "unproven",
-      "class": "proven_by_test"
+      "state": "served",
+      "status": "proven",
+      "tests": [
+        "TestAccountAttributes/leaves/response/account/company.address.state"
+      ],
+      "class": "verified"
     },
     {
       "object": "account",
@@ -9302,9 +9831,10 @@
       "path": "company.address_kana.city",
       "branch": "",
       "shape": "string",
-      "state": "proven_by_test",
+      "state": "unserved",
+      "reason": "not_proven",
       "status": "unproven",
-      "class": "proven_by_test"
+      "class": "unproven"
     },
     {
       "object": "account",
@@ -9313,9 +9843,10 @@
       "path": "company.address_kana.country",
       "branch": "",
       "shape": "string",
-      "state": "proven_by_test",
+      "state": "unserved",
+      "reason": "not_proven",
       "status": "unproven",
-      "class": "proven_by_test"
+      "class": "unproven"
     },
     {
       "object": "account",
@@ -9324,9 +9855,10 @@
       "path": "company.address_kana.line1",
       "branch": "",
       "shape": "string",
-      "state": "proven_by_test",
+      "state": "unserved",
+      "reason": "not_proven",
       "status": "unproven",
-      "class": "proven_by_test"
+      "class": "unproven"
     },
     {
       "object": "account",
@@ -9335,9 +9867,10 @@
       "path": "company.address_kana.line2",
       "branch": "",
       "shape": "string",
-      "state": "proven_by_test",
+      "state": "unserved",
+      "reason": "not_proven",
       "status": "unproven",
-      "class": "proven_by_test"
+      "class": "unproven"
     },
     {
       "object": "account",
@@ -9346,9 +9879,10 @@
       "path": "company.address_kana.postal_code",
       "branch": "",
       "shape": "string",
-      "state": "proven_by_test",
+      "state": "unserved",
+      "reason": "not_proven",
       "status": "unproven",
-      "class": "proven_by_test"
+      "class": "unproven"
     },
     {
       "object": "account",
@@ -9357,9 +9891,10 @@
       "path": "company.address_kana.state",
       "branch": "",
       "shape": "string",
-      "state": "proven_by_test",
+      "state": "unserved",
+      "reason": "not_proven",
       "status": "unproven",
-      "class": "proven_by_test"
+      "class": "unproven"
     },
     {
       "object": "account",
@@ -9368,9 +9903,10 @@
       "path": "company.address_kana.town",
       "branch": "",
       "shape": "string",
-      "state": "proven_by_test",
+      "state": "unserved",
+      "reason": "not_proven",
       "status": "unproven",
-      "class": "proven_by_test"
+      "class": "unproven"
     },
     {
       "object": "account",
@@ -9379,9 +9915,10 @@
       "path": "company.address_kanji.city",
       "branch": "",
       "shape": "string",
-      "state": "proven_by_test",
+      "state": "unserved",
+      "reason": "not_proven",
       "status": "unproven",
-      "class": "proven_by_test"
+      "class": "unproven"
     },
     {
       "object": "account",
@@ -9390,9 +9927,10 @@
       "path": "company.address_kanji.country",
       "branch": "",
       "shape": "string",
-      "state": "proven_by_test",
+      "state": "unserved",
+      "reason": "not_proven",
       "status": "unproven",
-      "class": "proven_by_test"
+      "class": "unproven"
     },
     {
       "object": "account",
@@ -9401,9 +9939,10 @@
       "path": "company.address_kanji.line1",
       "branch": "",
       "shape": "string",
-      "state": "proven_by_test",
+      "state": "unserved",
+      "reason": "not_proven",
       "status": "unproven",
-      "class": "proven_by_test"
+      "class": "unproven"
     },
     {
       "object": "account",
@@ -9412,9 +9951,10 @@
       "path": "company.address_kanji.line2",
       "branch": "",
       "shape": "string",
-      "state": "proven_by_test",
+      "state": "unserved",
+      "reason": "not_proven",
       "status": "unproven",
-      "class": "proven_by_test"
+      "class": "unproven"
     },
     {
       "object": "account",
@@ -9423,9 +9963,10 @@
       "path": "company.address_kanji.postal_code",
       "branch": "",
       "shape": "string",
-      "state": "proven_by_test",
+      "state": "unserved",
+      "reason": "not_proven",
       "status": "unproven",
-      "class": "proven_by_test"
+      "class": "unproven"
     },
     {
       "object": "account",
@@ -9434,9 +9975,10 @@
       "path": "company.address_kanji.state",
       "branch": "",
       "shape": "string",
-      "state": "proven_by_test",
+      "state": "unserved",
+      "reason": "not_proven",
       "status": "unproven",
-      "class": "proven_by_test"
+      "class": "unproven"
     },
     {
       "object": "account",
@@ -9445,9 +9987,10 @@
       "path": "company.address_kanji.town",
       "branch": "",
       "shape": "string",
-      "state": "proven_by_test",
+      "state": "unserved",
+      "reason": "not_proven",
       "status": "unproven",
-      "class": "proven_by_test"
+      "class": "unproven"
     },
     {
       "object": "account",
@@ -9456,9 +9999,12 @@
       "path": "company.administrative_address.city",
       "branch": "",
       "shape": "string",
-      "state": "proven_by_test",
-      "status": "unproven",
-      "class": "proven_by_test"
+      "state": "served",
+      "status": "proven",
+      "tests": [
+        "TestAccountAttributes/leaves/response/account/company.administrative_address.city"
+      ],
+      "class": "verified"
     },
     {
       "object": "account",
@@ -9467,9 +10013,12 @@
       "path": "company.administrative_address.country",
       "branch": "",
       "shape": "string",
-      "state": "proven_by_test",
-      "status": "unproven",
-      "class": "proven_by_test"
+      "state": "served",
+      "status": "proven",
+      "tests": [
+        "TestAccountAttributes/leaves/response/account/company.administrative_address.country"
+      ],
+      "class": "verified"
     },
     {
       "object": "account",
@@ -9478,9 +10027,12 @@
       "path": "company.administrative_address.line1",
       "branch": "",
       "shape": "string",
-      "state": "proven_by_test",
-      "status": "unproven",
-      "class": "proven_by_test"
+      "state": "served",
+      "status": "proven",
+      "tests": [
+        "TestAccountAttributes/leaves/response/account/company.administrative_address.line1"
+      ],
+      "class": "verified"
     },
     {
       "object": "account",
@@ -9489,9 +10041,12 @@
       "path": "company.administrative_address.line2",
       "branch": "",
       "shape": "string",
-      "state": "proven_by_test",
-      "status": "unproven",
-      "class": "proven_by_test"
+      "state": "served",
+      "status": "proven",
+      "tests": [
+        "TestAccountAttributes/leaves/response/account/company.administrative_address.line2"
+      ],
+      "class": "verified"
     },
     {
       "object": "account",
@@ -9500,9 +10055,12 @@
       "path": "company.administrative_address.postal_code",
       "branch": "",
       "shape": "string",
-      "state": "proven_by_test",
-      "status": "unproven",
-      "class": "proven_by_test"
+      "state": "served",
+      "status": "proven",
+      "tests": [
+        "TestAccountAttributes/leaves/response/account/company.administrative_address.postal_code"
+      ],
+      "class": "verified"
     },
     {
       "object": "account",
@@ -9511,9 +10069,12 @@
       "path": "company.administrative_address.state",
       "branch": "",
       "shape": "string",
-      "state": "proven_by_test",
-      "status": "unproven",
-      "class": "proven_by_test"
+      "state": "served",
+      "status": "proven",
+      "tests": [
+        "TestAccountAttributes/leaves/response/account/company.administrative_address.state"
+      ],
+      "class": "verified"
     },
     {
       "object": "account",
@@ -9522,9 +10083,12 @@
       "path": "company.directors_provided",
       "branch": "",
       "shape": "boolean",
-      "state": "proven_by_test",
-      "status": "unproven",
-      "class": "proven_by_test"
+      "state": "served",
+      "status": "proven",
+      "tests": [
+        "TestAccountAttributes/leaves/response/account/company.directors_provided"
+      ],
+      "class": "verified"
     },
     {
       "object": "account",
@@ -9533,9 +10097,12 @@
       "path": "company.directorship_declaration.date",
       "branch": "",
       "shape": "integer",
-      "state": "proven_by_test",
-      "status": "unproven",
-      "class": "proven_by_test"
+      "state": "served",
+      "status": "proven",
+      "tests": [
+        "TestAccountAttributes/leaves/response/account/company.directorship_declaration.date"
+      ],
+      "class": "verified"
     },
     {
       "object": "account",
@@ -9544,9 +10111,12 @@
       "path": "company.directorship_declaration.ip",
       "branch": "",
       "shape": "string",
-      "state": "proven_by_test",
-      "status": "unproven",
-      "class": "proven_by_test"
+      "state": "served",
+      "status": "proven",
+      "tests": [
+        "TestAccountAttributes/leaves/response/account/company.directorship_declaration.ip"
+      ],
+      "class": "verified"
     },
     {
       "object": "account",
@@ -9555,9 +10125,12 @@
       "path": "company.directorship_declaration.user_agent",
       "branch": "",
       "shape": "string",
-      "state": "proven_by_test",
-      "status": "unproven",
-      "class": "proven_by_test"
+      "state": "served",
+      "status": "proven",
+      "tests": [
+        "TestAccountAttributes/leaves/response/account/company.directorship_declaration.user_agent"
+      ],
+      "class": "verified"
     },
     {
       "object": "account",
@@ -9566,9 +10139,12 @@
       "path": "company.executives_provided",
       "branch": "",
       "shape": "boolean",
-      "state": "proven_by_test",
-      "status": "unproven",
-      "class": "proven_by_test"
+      "state": "served",
+      "status": "proven",
+      "tests": [
+        "TestAccountAttributes/leaves/response/account/company.executives_provided"
+      ],
+      "class": "verified"
     },
     {
       "object": "account",
@@ -9577,9 +10153,10 @@
       "path": "company.export_license_id",
       "branch": "",
       "shape": "string",
-      "state": "proven_by_test",
+      "state": "unserved",
+      "reason": "not_proven",
       "status": "unproven",
-      "class": "proven_by_test"
+      "class": "unproven"
     },
     {
       "object": "account",
@@ -9588,9 +10165,10 @@
       "path": "company.export_purpose_code",
       "branch": "",
       "shape": "string",
-      "state": "proven_by_test",
+      "state": "unserved",
+      "reason": "not_proven",
       "status": "unproven",
-      "class": "proven_by_test"
+      "class": "unproven"
     },
     {
       "object": "account",
@@ -9599,9 +10177,12 @@
       "path": "company.name",
       "branch": "",
       "shape": "string",
-      "state": "proven_by_test",
-      "status": "unproven",
-      "class": "proven_by_test"
+      "state": "served",
+      "status": "proven",
+      "tests": [
+        "TestAccountAttributes/leaves/response/account/company.name"
+      ],
+      "class": "verified"
     },
     {
       "object": "account",
@@ -9610,9 +10191,9 @@
       "path": "company.name_kana",
       "branch": "",
       "shape": "string",
-      "state": "proven_by_test",
+      "state": "placeholder_null",
       "status": "unproven",
-      "class": "proven_by_test"
+      "class": "gap_placeholder_null"
     },
     {
       "object": "account",
@@ -9621,9 +10202,9 @@
       "path": "company.name_kanji",
       "branch": "",
       "shape": "string",
-      "state": "proven_by_test",
+      "state": "placeholder_null",
       "status": "unproven",
-      "class": "proven_by_test"
+      "class": "gap_placeholder_null"
     },
     {
       "object": "account",
@@ -9632,9 +10213,12 @@
       "path": "company.owners_provided",
       "branch": "",
       "shape": "boolean",
-      "state": "proven_by_test",
-      "status": "unproven",
-      "class": "proven_by_test"
+      "state": "served",
+      "status": "proven",
+      "tests": [
+        "TestAccountAttributes/leaves/response/account/company.owners_provided"
+      ],
+      "class": "verified"
     },
     {
       "object": "account",
@@ -9643,9 +10227,12 @@
       "path": "company.ownership_declaration.date",
       "branch": "",
       "shape": "integer",
-      "state": "proven_by_test",
-      "status": "unproven",
-      "class": "proven_by_test"
+      "state": "served",
+      "status": "proven",
+      "tests": [
+        "TestAccountAttributes/leaves/response/account/company.ownership_declaration.date"
+      ],
+      "class": "verified"
     },
     {
       "object": "account",
@@ -9654,9 +10241,12 @@
       "path": "company.ownership_declaration.ip",
       "branch": "",
       "shape": "string",
-      "state": "proven_by_test",
-      "status": "unproven",
-      "class": "proven_by_test"
+      "state": "served",
+      "status": "proven",
+      "tests": [
+        "TestAccountAttributes/leaves/response/account/company.ownership_declaration.ip"
+      ],
+      "class": "verified"
     },
     {
       "object": "account",
@@ -9665,9 +10255,12 @@
       "path": "company.ownership_declaration.user_agent",
       "branch": "",
       "shape": "string",
-      "state": "proven_by_test",
-      "status": "unproven",
-      "class": "proven_by_test"
+      "state": "served",
+      "status": "proven",
+      "tests": [
+        "TestAccountAttributes/leaves/response/account/company.ownership_declaration.user_agent"
+      ],
+      "class": "verified"
     },
     {
       "object": "account",
@@ -9676,9 +10269,10 @@
       "path": "company.ownership_exemption_reason",
       "branch": "",
       "shape": "enum",
-      "state": "proven_by_test",
+      "state": "unserved",
+      "reason": "not_proven",
       "status": "unproven",
-      "class": "proven_by_test"
+      "class": "unproven"
     },
     {
       "object": "account",
@@ -9687,9 +10281,12 @@
       "path": "company.phone",
       "branch": "",
       "shape": "string",
-      "state": "proven_by_test",
-      "status": "unproven",
-      "class": "proven_by_test"
+      "state": "served",
+      "status": "proven",
+      "tests": [
+        "TestAccountAttributes/leaves/response/account/company.phone"
+      ],
+      "class": "verified"
     },
     {
       "object": "account",
@@ -9698,9 +10295,12 @@
       "path": "company.principal_place_of_business.city",
       "branch": "",
       "shape": "string",
-      "state": "proven_by_test",
-      "status": "unproven",
-      "class": "proven_by_test"
+      "state": "served",
+      "status": "proven",
+      "tests": [
+        "TestAccountAttributes/leaves/response/account/company.principal_place_of_business.city"
+      ],
+      "class": "verified"
     },
     {
       "object": "account",
@@ -9709,9 +10309,12 @@
       "path": "company.principal_place_of_business.country",
       "branch": "",
       "shape": "string",
-      "state": "proven_by_test",
-      "status": "unproven",
-      "class": "proven_by_test"
+      "state": "served",
+      "status": "proven",
+      "tests": [
+        "TestAccountAttributes/leaves/response/account/company.principal_place_of_business.country"
+      ],
+      "class": "verified"
     },
     {
       "object": "account",
@@ -9720,9 +10323,12 @@
       "path": "company.principal_place_of_business.line1",
       "branch": "",
       "shape": "string",
-      "state": "proven_by_test",
-      "status": "unproven",
-      "class": "proven_by_test"
+      "state": "served",
+      "status": "proven",
+      "tests": [
+        "TestAccountAttributes/leaves/response/account/company.principal_place_of_business.line1"
+      ],
+      "class": "verified"
     },
     {
       "object": "account",
@@ -9731,9 +10337,12 @@
       "path": "company.principal_place_of_business.line2",
       "branch": "",
       "shape": "string",
-      "state": "proven_by_test",
-      "status": "unproven",
-      "class": "proven_by_test"
+      "state": "served",
+      "status": "proven",
+      "tests": [
+        "TestAccountAttributes/leaves/response/account/company.principal_place_of_business.line2"
+      ],
+      "class": "verified"
     },
     {
       "object": "account",
@@ -9742,9 +10351,12 @@
       "path": "company.principal_place_of_business.postal_code",
       "branch": "",
       "shape": "string",
-      "state": "proven_by_test",
-      "status": "unproven",
-      "class": "proven_by_test"
+      "state": "served",
+      "status": "proven",
+      "tests": [
+        "TestAccountAttributes/leaves/response/account/company.principal_place_of_business.postal_code"
+      ],
+      "class": "verified"
     },
     {
       "object": "account",
@@ -9753,9 +10365,12 @@
       "path": "company.principal_place_of_business.state",
       "branch": "",
       "shape": "string",
-      "state": "proven_by_test",
-      "status": "unproven",
-      "class": "proven_by_test"
+      "state": "served",
+      "status": "proven",
+      "tests": [
+        "TestAccountAttributes/leaves/response/account/company.principal_place_of_business.state"
+      ],
+      "class": "verified"
     },
     {
       "object": "account",
@@ -9764,9 +10379,12 @@
       "path": "company.registration_date.day",
       "branch": "",
       "shape": "integer",
-      "state": "proven_by_test",
-      "status": "unproven",
-      "class": "proven_by_test"
+      "state": "served",
+      "status": "proven",
+      "tests": [
+        "TestAccountAttributes/leaves/response/account/company.registration_date.day"
+      ],
+      "class": "verified"
     },
     {
       "object": "account",
@@ -9775,9 +10393,12 @@
       "path": "company.registration_date.month",
       "branch": "",
       "shape": "integer",
-      "state": "proven_by_test",
-      "status": "unproven",
-      "class": "proven_by_test"
+      "state": "served",
+      "status": "proven",
+      "tests": [
+        "TestAccountAttributes/leaves/response/account/company.registration_date.month"
+      ],
+      "class": "verified"
     },
     {
       "object": "account",
@@ -9786,9 +10407,12 @@
       "path": "company.registration_date.year",
       "branch": "",
       "shape": "integer",
-      "state": "proven_by_test",
-      "status": "unproven",
-      "class": "proven_by_test"
+      "state": "served",
+      "status": "proven",
+      "tests": [
+        "TestAccountAttributes/leaves/response/account/company.registration_date.year"
+      ],
+      "class": "verified"
     },
     {
       "object": "account",
@@ -9797,9 +10421,10 @@
       "path": "company.representative_declaration.date",
       "branch": "",
       "shape": "integer",
-      "state": "proven_by_test",
+      "state": "unserved",
+      "reason": "not_proven",
       "status": "unproven",
-      "class": "proven_by_test"
+      "class": "unproven"
     },
     {
       "object": "account",
@@ -9808,9 +10433,10 @@
       "path": "company.representative_declaration.ip",
       "branch": "",
       "shape": "string",
-      "state": "proven_by_test",
+      "state": "unserved",
+      "reason": "not_proven",
       "status": "unproven",
-      "class": "proven_by_test"
+      "class": "unproven"
     },
     {
       "object": "account",
@@ -9819,9 +10445,10 @@
       "path": "company.representative_declaration.user_agent",
       "branch": "",
       "shape": "string",
-      "state": "proven_by_test",
+      "state": "unserved",
+      "reason": "not_proven",
       "status": "unproven",
-      "class": "proven_by_test"
+      "class": "unproven"
     },
     {
       "object": "account",
@@ -9830,9 +10457,12 @@
       "path": "company.structure",
       "branch": "",
       "shape": "enum",
-      "state": "proven_by_test",
-      "status": "unproven",
-      "class": "proven_by_test"
+      "state": "served",
+      "status": "proven",
+      "tests": [
+        "TestAccountAttributes/leaves/response/account/company.structure"
+      ],
+      "class": "verified"
     },
     {
       "object": "account",
@@ -9841,9 +10471,10 @@
       "path": "company.tax_id_provided",
       "branch": "",
       "shape": "boolean",
-      "state": "proven_by_test",
+      "state": "unserved",
+      "reason": "not_proven",
       "status": "unproven",
-      "class": "proven_by_test"
+      "class": "unproven"
     },
     {
       "object": "account",
@@ -9852,9 +10483,10 @@
       "path": "company.tax_id_registrar",
       "branch": "",
       "shape": "string",
-      "state": "proven_by_test",
+      "state": "unserved",
+      "reason": "not_proven",
       "status": "unproven",
-      "class": "proven_by_test"
+      "class": "unproven"
     },
     {
       "object": "account",
@@ -9863,9 +10495,10 @@
       "path": "company.vat_id_provided",
       "branch": "",
       "shape": "boolean",
-      "state": "proven_by_test",
+      "state": "unserved",
+      "reason": "not_proven",
       "status": "unproven",
-      "class": "proven_by_test"
+      "class": "unproven"
     },
     {
       "object": "account",
@@ -9874,9 +10507,10 @@
       "path": "company.verification.document.back",
       "branch": "",
       "shape": "reference",
-      "state": "proven_by_test",
+      "state": "unserved",
+      "reason": "not_proven",
       "status": "unproven",
-      "class": "proven_by_test"
+      "class": "unproven"
     },
     {
       "object": "account",
@@ -9885,9 +10519,10 @@
       "path": "company.verification.document.details",
       "branch": "",
       "shape": "string",
-      "state": "proven_by_test",
+      "state": "unserved",
+      "reason": "not_proven",
       "status": "unproven",
-      "class": "proven_by_test"
+      "class": "unproven"
     },
     {
       "object": "account",
@@ -9896,9 +10531,10 @@
       "path": "company.verification.document.details_code",
       "branch": "",
       "shape": "string",
-      "state": "proven_by_test",
+      "state": "unserved",
+      "reason": "not_proven",
       "status": "unproven",
-      "class": "proven_by_test"
+      "class": "unproven"
     },
     {
       "object": "account",
@@ -9907,9 +10543,10 @@
       "path": "company.verification.document.front",
       "branch": "",
       "shape": "reference",
-      "state": "proven_by_test",
+      "state": "unserved",
+      "reason": "not_proven",
       "status": "unproven",
-      "class": "proven_by_test"
+      "class": "unproven"
     },
     {
       "object": "account",
@@ -10171,9 +10808,10 @@
       "path": "groups.payments_pricing",
       "branch": "",
       "shape": "string",
-      "state": "proven_by_test",
+      "state": "unserved",
+      "reason": "not_proven",
       "status": "unproven",
-      "class": "proven_by_test"
+      "class": "unproven"
     },
     {
       "object": "account",
@@ -10237,9 +10875,12 @@
       "path": "individual.address.city",
       "branch": "",
       "shape": "string",
-      "state": "proven_by_test",
-      "status": "unproven",
-      "class": "proven_by_test"
+      "state": "served",
+      "status": "proven",
+      "tests": [
+        "TestAccountAttributes/leaves/response/account/individual.address.city"
+      ],
+      "class": "verified"
     },
     {
       "object": "account",
@@ -10248,9 +10889,12 @@
       "path": "individual.address.country",
       "branch": "",
       "shape": "string",
-      "state": "proven_by_test",
-      "status": "unproven",
-      "class": "proven_by_test"
+      "state": "served",
+      "status": "proven",
+      "tests": [
+        "TestAccountAttributes/leaves/response/account/individual.address.country"
+      ],
+      "class": "verified"
     },
     {
       "object": "account",
@@ -10259,9 +10903,12 @@
       "path": "individual.address.line1",
       "branch": "",
       "shape": "string",
-      "state": "proven_by_test",
-      "status": "unproven",
-      "class": "proven_by_test"
+      "state": "served",
+      "status": "proven",
+      "tests": [
+        "TestAccountAttributes/leaves/response/account/individual.address.line1"
+      ],
+      "class": "verified"
     },
     {
       "object": "account",
@@ -10270,9 +10917,12 @@
       "path": "individual.address.line2",
       "branch": "",
       "shape": "string",
-      "state": "proven_by_test",
-      "status": "unproven",
-      "class": "proven_by_test"
+      "state": "served",
+      "status": "proven",
+      "tests": [
+        "TestAccountAttributes/leaves/response/account/individual.address.line2"
+      ],
+      "class": "verified"
     },
     {
       "object": "account",
@@ -10281,9 +10931,12 @@
       "path": "individual.address.postal_code",
       "branch": "",
       "shape": "string",
-      "state": "proven_by_test",
-      "status": "unproven",
-      "class": "proven_by_test"
+      "state": "served",
+      "status": "proven",
+      "tests": [
+        "TestAccountAttributes/leaves/response/account/individual.address.postal_code"
+      ],
+      "class": "verified"
     },
     {
       "object": "account",
@@ -10292,9 +10945,12 @@
       "path": "individual.address.state",
       "branch": "",
       "shape": "string",
-      "state": "proven_by_test",
-      "status": "unproven",
-      "class": "proven_by_test"
+      "state": "served",
+      "status": "proven",
+      "tests": [
+        "TestAccountAttributes/leaves/response/account/individual.address.state"
+      ],
+      "class": "verified"
     },
     {
       "object": "account",
@@ -10468,9 +11124,12 @@
       "path": "individual.dob.day",
       "branch": "",
       "shape": "integer",
-      "state": "proven_by_test",
-      "status": "unproven",
-      "class": "proven_by_test"
+      "state": "served",
+      "status": "proven",
+      "tests": [
+        "TestAccountAttributes/leaves/response/account/individual.dob.day"
+      ],
+      "class": "verified"
     },
     {
       "object": "account",
@@ -10479,9 +11138,12 @@
       "path": "individual.dob.month",
       "branch": "",
       "shape": "integer",
-      "state": "proven_by_test",
-      "status": "unproven",
-      "class": "proven_by_test"
+      "state": "served",
+      "status": "proven",
+      "tests": [
+        "TestAccountAttributes/leaves/response/account/individual.dob.month"
+      ],
+      "class": "verified"
     },
     {
       "object": "account",
@@ -10490,9 +11152,12 @@
       "path": "individual.dob.year",
       "branch": "",
       "shape": "integer",
-      "state": "proven_by_test",
-      "status": "unproven",
-      "class": "proven_by_test"
+      "state": "served",
+      "status": "proven",
+      "tests": [
+        "TestAccountAttributes/leaves/response/account/individual.dob.year"
+      ],
+      "class": "verified"
     },
     {
       "object": "account",
@@ -10501,9 +11166,12 @@
       "path": "individual.email",
       "branch": "",
       "shape": "string",
-      "state": "proven_by_test",
-      "status": "unproven",
-      "class": "proven_by_test"
+      "state": "served",
+      "status": "proven",
+      "tests": [
+        "TestAccountAttributes/leaves/response/account/individual.email"
+      ],
+      "class": "verified"
     },
     {
       "object": "account",
@@ -10512,9 +11180,12 @@
       "path": "individual.first_name",
       "branch": "",
       "shape": "string",
-      "state": "proven_by_test",
-      "status": "unproven",
-      "class": "proven_by_test"
+      "state": "served",
+      "status": "proven",
+      "tests": [
+        "TestAccountAttributes/leaves/response/account/individual.first_name"
+      ],
+      "class": "verified"
     },
     {
       "object": "account",
@@ -10545,9 +11216,12 @@
       "path": "individual.full_name_aliases",
       "branch": "",
       "shape": "list",
-      "state": "proven_by_test",
-      "status": "unproven",
-      "class": "proven_by_test"
+      "state": "served",
+      "status": "proven",
+      "tests": [
+        "TestAccountAttributes/leaves/response/account/individual.full_name_aliases"
+      ],
+      "class": "verified"
     },
     {
       "object": "account",
@@ -10655,9 +11329,12 @@
       "path": "individual.gender",
       "branch": "",
       "shape": "string",
-      "state": "proven_by_test",
-      "status": "unproven",
-      "class": "proven_by_test"
+      "state": "served",
+      "status": "proven",
+      "tests": [
+        "TestAccountAttributes/leaves/response/account/individual.gender"
+      ],
+      "class": "verified"
     },
     {
       "object": "account",
@@ -10699,9 +11376,12 @@
       "path": "individual.last_name",
       "branch": "",
       "shape": "string",
-      "state": "proven_by_test",
-      "status": "unproven",
-      "class": "proven_by_test"
+      "state": "served",
+      "status": "proven",
+      "tests": [
+        "TestAccountAttributes/leaves/response/account/individual.last_name"
+      ],
+      "class": "verified"
     },
     {
       "object": "account",
@@ -10732,9 +11412,12 @@
       "path": "individual.maiden_name",
       "branch": "",
       "shape": "string",
-      "state": "proven_by_test",
-      "status": "unproven",
-      "class": "proven_by_test"
+      "state": "served",
+      "status": "proven",
+      "tests": [
+        "TestAccountAttributes/leaves/response/account/individual.maiden_name"
+      ],
+      "class": "verified"
     },
     {
       "object": "account",
@@ -10743,9 +11426,12 @@
       "path": "individual.metadata",
       "branch": "",
       "shape": "map",
-      "state": "proven_by_test",
-      "status": "unproven",
-      "class": "proven_by_test"
+      "state": "served",
+      "status": "proven",
+      "tests": [
+        "TestAccountAttributes/leaves/response/account/individual.metadata"
+      ],
+      "class": "verified"
     },
     {
       "object": "account",
@@ -10776,9 +11462,12 @@
       "path": "individual.phone",
       "branch": "",
       "shape": "string",
-      "state": "proven_by_test",
-      "status": "unproven",
-      "class": "proven_by_test"
+      "state": "served",
+      "status": "proven",
+      "tests": [
+        "TestAccountAttributes/leaves/response/account/individual.phone"
+      ],
+      "class": "verified"
     },
     {
       "object": "account",
@@ -10787,9 +11476,12 @@
       "path": "individual.political_exposure",
       "branch": "",
       "shape": "enum",
-      "state": "proven_by_test",
-      "status": "unproven",
-      "class": "proven_by_test"
+      "state": "served",
+      "status": "proven",
+      "tests": [
+        "TestAccountAttributes/leaves/response/account/individual.political_exposure"
+      ],
+      "class": "verified"
     },
     {
       "object": "account",
@@ -10798,9 +11490,12 @@
       "path": "individual.registered_address.city",
       "branch": "",
       "shape": "string",
-      "state": "proven_by_test",
-      "status": "unproven",
-      "class": "proven_by_test"
+      "state": "served",
+      "status": "proven",
+      "tests": [
+        "TestAccountAttributes/leaves/response/account/individual.registered_address.city"
+      ],
+      "class": "verified"
     },
     {
       "object": "account",
@@ -10809,9 +11504,12 @@
       "path": "individual.registered_address.country",
       "branch": "",
       "shape": "string",
-      "state": "proven_by_test",
-      "status": "unproven",
-      "class": "proven_by_test"
+      "state": "served",
+      "status": "proven",
+      "tests": [
+        "TestAccountAttributes/leaves/response/account/individual.registered_address.country"
+      ],
+      "class": "verified"
     },
     {
       "object": "account",
@@ -10820,9 +11518,12 @@
       "path": "individual.registered_address.line1",
       "branch": "",
       "shape": "string",
-      "state": "proven_by_test",
-      "status": "unproven",
-      "class": "proven_by_test"
+      "state": "served",
+      "status": "proven",
+      "tests": [
+        "TestAccountAttributes/leaves/response/account/individual.registered_address.line1"
+      ],
+      "class": "verified"
     },
     {
       "object": "account",
@@ -10831,9 +11532,12 @@
       "path": "individual.registered_address.line2",
       "branch": "",
       "shape": "string",
-      "state": "proven_by_test",
-      "status": "unproven",
-      "class": "proven_by_test"
+      "state": "served",
+      "status": "proven",
+      "tests": [
+        "TestAccountAttributes/leaves/response/account/individual.registered_address.line2"
+      ],
+      "class": "verified"
     },
     {
       "object": "account",
@@ -10842,9 +11546,12 @@
       "path": "individual.registered_address.postal_code",
       "branch": "",
       "shape": "string",
-      "state": "proven_by_test",
-      "status": "unproven",
-      "class": "proven_by_test"
+      "state": "served",
+      "status": "proven",
+      "tests": [
+        "TestAccountAttributes/leaves/response/account/individual.registered_address.postal_code"
+      ],
+      "class": "verified"
     },
     {
       "object": "account",
@@ -10853,9 +11560,12 @@
       "path": "individual.registered_address.state",
       "branch": "",
       "shape": "string",
-      "state": "proven_by_test",
-      "status": "unproven",
-      "class": "proven_by_test"
+      "state": "served",
+      "status": "proven",
+      "tests": [
+        "TestAccountAttributes/leaves/response/account/individual.registered_address.state"
+      ],
+      "class": "verified"
     },
     {
       "object": "account",
@@ -10875,9 +11585,12 @@
       "path": "individual.relationship.director",
       "branch": "",
       "shape": "boolean",
-      "state": "proven_by_test",
-      "status": "unproven",
-      "class": "proven_by_test"
+      "state": "served",
+      "status": "proven",
+      "tests": [
+        "TestAccountAttributes/leaves/response/account/individual.relationship.director"
+      ],
+      "class": "verified"
     },
     {
       "object": "account",
@@ -10886,9 +11599,12 @@
       "path": "individual.relationship.executive",
       "branch": "",
       "shape": "boolean",
-      "state": "proven_by_test",
-      "status": "unproven",
-      "class": "proven_by_test"
+      "state": "served",
+      "status": "proven",
+      "tests": [
+        "TestAccountAttributes/leaves/response/account/individual.relationship.executive"
+      ],
+      "class": "verified"
     },
     {
       "object": "account",
@@ -10908,9 +11624,12 @@
       "path": "individual.relationship.owner",
       "branch": "",
       "shape": "boolean",
-      "state": "proven_by_test",
-      "status": "unproven",
-      "class": "proven_by_test"
+      "state": "served",
+      "status": "proven",
+      "tests": [
+        "TestAccountAttributes/leaves/response/account/individual.relationship.owner"
+      ],
+      "class": "verified"
     },
     {
       "object": "account",
@@ -10919,9 +11638,12 @@
       "path": "individual.relationship.percent_ownership",
       "branch": "",
       "shape": "number",
-      "state": "proven_by_test",
-      "status": "unproven",
-      "class": "proven_by_test"
+      "state": "served",
+      "status": "proven",
+      "tests": [
+        "TestAccountAttributes/leaves/response/account/individual.relationship.percent_ownership"
+      ],
+      "class": "verified"
     },
     {
       "object": "account",
@@ -10941,9 +11663,12 @@
       "path": "individual.relationship.title",
       "branch": "",
       "shape": "string",
-      "state": "proven_by_test",
-      "status": "unproven",
-      "class": "proven_by_test"
+      "state": "served",
+      "status": "proven",
+      "tests": [
+        "TestAccountAttributes/leaves/response/account/individual.relationship.title"
+      ],
+      "class": "verified"
     },
     {
       "object": "account",
@@ -11117,9 +11842,12 @@
       "path": "individual.verification.additional_document.back",
       "branch": "",
       "shape": "reference",
-      "state": "proven_by_test",
-      "status": "unproven",
-      "class": "proven_by_test"
+      "state": "served",
+      "status": "proven",
+      "tests": [
+        "TestAccountAttributes/leaves/response/account/individual.verification.additional_document.back"
+      ],
+      "class": "verified"
     },
     {
       "object": "account",
@@ -11150,9 +11878,12 @@
       "path": "individual.verification.additional_document.front",
       "branch": "",
       "shape": "reference",
-      "state": "proven_by_test",
-      "status": "unproven",
-      "class": "proven_by_test"
+      "state": "served",
+      "status": "proven",
+      "tests": [
+        "TestAccountAttributes/leaves/response/account/individual.verification.additional_document.front"
+      ],
+      "class": "verified"
     },
     {
       "object": "account",
@@ -11183,9 +11914,12 @@
       "path": "individual.verification.document.back",
       "branch": "",
       "shape": "reference",
-      "state": "proven_by_test",
-      "status": "unproven",
-      "class": "proven_by_test"
+      "state": "served",
+      "status": "proven",
+      "tests": [
+        "TestAccountAttributes/leaves/response/account/individual.verification.document.back"
+      ],
+      "class": "verified"
     },
     {
       "object": "account",
@@ -11216,9 +11950,12 @@
       "path": "individual.verification.document.front",
       "branch": "",
       "shape": "reference",
-      "state": "proven_by_test",
-      "status": "unproven",
-      "class": "proven_by_test"
+      "state": "served",
+      "status": "proven",
+      "tests": [
+        "TestAccountAttributes/leaves/response/account/individual.verification.document.front"
+      ],
+      "class": "verified"
     },
     {
       "object": "account",
@@ -11238,9 +11975,12 @@
       "path": "metadata",
       "branch": "",
       "shape": "map",
-      "state": "proven_by_test",
-      "status": "unproven",
-      "class": "proven_by_test"
+      "state": "served",
+      "status": "proven",
+      "tests": [
+        "TestAccountAttributes/leaves/response/account/metadata"
+      ],
+      "class": "verified"
     },
     {
       "object": "account",
@@ -42054,7 +42794,8 @@
       "state": "served",
       "status": "proven",
       "tests": [
-        "TestCouponAttributes/leaves/request/PostCoupons/id"
+        "TestCouponAttributes/leaves/request/PostCoupons/id",
+        "TestCouponAttributes/leaves/response/coupon/id"
       ],
       "class": "verified"
     },
@@ -42113,7 +42854,8 @@
       "state": "served",
       "status": "proven",
       "tests": [
-        "TestCouponAttributes/leaves/request/PostCoupons/percent_off"
+        "TestCouponAttributes/leaves/request/PostCoupons/percent_off",
+        "TestCouponAttributes/leaves/response/coupon/percent_off"
       ],
       "class": "verified"
     },
@@ -132131,9 +132873,10 @@
       "path": "line_items.discounts.coupon",
       "branch": "",
       "shape": "string",
-      "state": "proven_by_test",
+      "state": "unserved",
+      "reason": "not_proven",
       "status": "unproven",
-      "class": "proven_by_test"
+      "class": "unproven"
     },
     {
       "object": "quote",
@@ -132142,9 +132885,10 @@
       "path": "line_items.discounts.discount",
       "branch": "",
       "shape": "string",
-      "state": "proven_by_test",
+      "state": "unserved",
+      "reason": "not_proven",
       "status": "unproven",
-      "class": "proven_by_test"
+      "class": "unproven"
     },
     {
       "object": "quote",
@@ -132153,9 +132897,10 @@
       "path": "line_items.discounts.promotion_code",
       "branch": "",
       "shape": "string",
-      "state": "proven_by_test",
+      "state": "unserved",
+      "reason": "not_proven",
       "status": "unproven",
-      "class": "proven_by_test"
+      "class": "unproven"
     },
     {
       "object": "quote",
@@ -132693,9 +133438,10 @@
       "path": "line_items.discounts.coupon",
       "branch": "",
       "shape": "string",
-      "state": "proven_by_test",
+      "state": "unserved",
+      "reason": "not_proven",
       "status": "unproven",
-      "class": "proven_by_test"
+      "class": "unproven"
     },
     {
       "object": "quote",
@@ -132704,9 +133450,10 @@
       "path": "line_items.discounts.discount",
       "branch": "",
       "shape": "string",
-      "state": "proven_by_test",
+      "state": "unserved",
+      "reason": "not_proven",
       "status": "unproven",
-      "class": "proven_by_test"
+      "class": "unproven"
     },
     {
       "object": "quote",
@@ -132715,9 +133462,10 @@
       "path": "line_items.discounts.promotion_code",
       "branch": "",
       "shape": "string",
-      "state": "proven_by_test",
+      "state": "unserved",
+      "reason": "not_proven",
       "status": "unproven",
-      "class": "proven_by_test"
+      "class": "unproven"
     },
     {
       "object": "quote",
@@ -156302,9 +157050,10 @@
       "path": "items.discounts.coupon",
       "branch": "",
       "shape": "string",
-      "state": "proven_by_test",
+      "state": "unserved",
+      "reason": "not_proven",
       "status": "unproven",
-      "class": "proven_by_test"
+      "class": "unproven"
     },
     {
       "object": "subscription",
@@ -156313,9 +157062,10 @@
       "path": "items.discounts.discount",
       "branch": "",
       "shape": "string",
-      "state": "proven_by_test",
+      "state": "unserved",
+      "reason": "not_proven",
       "status": "unproven",
-      "class": "proven_by_test"
+      "class": "unproven"
     },
     {
       "object": "subscription",
@@ -156324,9 +157074,10 @@
       "path": "items.discounts.promotion_code",
       "branch": "",
       "shape": "string",
-      "state": "proven_by_test",
+      "state": "unserved",
+      "reason": "not_proven",
       "status": "unproven",
-      "class": "proven_by_test"
+      "class": "unproven"
     },
     {
       "object": "subscription",
@@ -157798,9 +158549,10 @@
       "path": "items.discounts.coupon",
       "branch": "",
       "shape": "string",
-      "state": "proven_by_test",
+      "state": "unserved",
+      "reason": "not_proven",
       "status": "unproven",
-      "class": "proven_by_test"
+      "class": "unproven"
     },
     {
       "object": "subscription",
@@ -157809,9 +158561,10 @@
       "path": "items.discounts.discount",
       "branch": "",
       "shape": "string",
-      "state": "proven_by_test",
+      "state": "unserved",
+      "reason": "not_proven",
       "status": "unproven",
-      "class": "proven_by_test"
+      "class": "unproven"
     },
     {
       "object": "subscription",
@@ -157820,9 +158573,10 @@
       "path": "items.discounts.promotion_code",
       "branch": "",
       "shape": "string",
-      "state": "proven_by_test",
+      "state": "unserved",
+      "reason": "not_proven",
       "status": "unproven",
-      "class": "proven_by_test"
+      "class": "unproven"
     },
     {
       "object": "subscription",
@@ -162164,9 +162918,10 @@
       "path": "phases.add_invoice_items.discounts.coupon",
       "branch": "",
       "shape": "string",
-      "state": "proven_by_test",
+      "state": "unserved",
+      "reason": "not_proven",
       "status": "unproven",
-      "class": "proven_by_test"
+      "class": "unproven"
     },
     {
       "object": "subscription_schedule",
@@ -162175,9 +162930,10 @@
       "path": "phases.add_invoice_items.discounts.discount",
       "branch": "",
       "shape": "string",
-      "state": "proven_by_test",
+      "state": "unserved",
+      "reason": "not_proven",
       "status": "unproven",
-      "class": "proven_by_test"
+      "class": "unproven"
     },
     {
       "object": "subscription_schedule",
@@ -162186,9 +162942,10 @@
       "path": "phases.add_invoice_items.discounts.promotion_code",
       "branch": "",
       "shape": "string",
-      "state": "proven_by_test",
+      "state": "unserved",
+      "reason": "not_proven",
       "status": "unproven",
-      "class": "proven_by_test"
+      "class": "unproven"
     },
     {
       "object": "subscription_schedule",
@@ -162472,9 +163229,10 @@
       "path": "phases.discounts.coupon",
       "branch": "",
       "shape": "string",
-      "state": "proven_by_test",
+      "state": "unserved",
+      "reason": "not_proven",
       "status": "unproven",
-      "class": "proven_by_test"
+      "class": "unproven"
     },
     {
       "object": "subscription_schedule",
@@ -162483,9 +163241,10 @@
       "path": "phases.discounts.discount",
       "branch": "",
       "shape": "string",
-      "state": "proven_by_test",
+      "state": "unserved",
+      "reason": "not_proven",
       "status": "unproven",
-      "class": "proven_by_test"
+      "class": "unproven"
     },
     {
       "object": "subscription_schedule",
@@ -162494,9 +163253,10 @@
       "path": "phases.discounts.promotion_code",
       "branch": "",
       "shape": "string",
-      "state": "proven_by_test",
+      "state": "unserved",
+      "reason": "not_proven",
       "status": "unproven",
-      "class": "proven_by_test"
+      "class": "unproven"
     },
     {
       "object": "subscription_schedule",
@@ -162637,9 +163397,10 @@
       "path": "phases.items.discounts.coupon",
       "branch": "",
       "shape": "string",
-      "state": "proven_by_test",
+      "state": "unserved",
+      "reason": "not_proven",
       "status": "unproven",
-      "class": "proven_by_test"
+      "class": "unproven"
     },
     {
       "object": "subscription_schedule",
@@ -162648,9 +163409,10 @@
       "path": "phases.items.discounts.discount",
       "branch": "",
       "shape": "string",
-      "state": "proven_by_test",
+      "state": "unserved",
+      "reason": "not_proven",
       "status": "unproven",
-      "class": "proven_by_test"
+      "class": "unproven"
     },
     {
       "object": "subscription_schedule",
@@ -162659,9 +163421,10 @@
       "path": "phases.items.discounts.promotion_code",
       "branch": "",
       "shape": "string",
-      "state": "proven_by_test",
+      "state": "unserved",
+      "reason": "not_proven",
       "status": "unproven",
-      "class": "proven_by_test"
+      "class": "unproven"
     },
     {
       "object": "subscription_schedule",
@@ -163322,9 +164085,10 @@
       "path": "phases.add_invoice_items.discounts.coupon",
       "branch": "",
       "shape": "string",
-      "state": "proven_by_test",
+      "state": "unserved",
+      "reason": "not_proven",
       "status": "unproven",
-      "class": "proven_by_test"
+      "class": "unproven"
     },
     {
       "object": "subscription_schedule",
@@ -163333,9 +164097,10 @@
       "path": "phases.add_invoice_items.discounts.discount",
       "branch": "",
       "shape": "string",
-      "state": "proven_by_test",
+      "state": "unserved",
+      "reason": "not_proven",
       "status": "unproven",
-      "class": "proven_by_test"
+      "class": "unproven"
     },
     {
       "object": "subscription_schedule",
@@ -163344,9 +164109,10 @@
       "path": "phases.add_invoice_items.discounts.promotion_code",
       "branch": "",
       "shape": "string",
-      "state": "proven_by_test",
+      "state": "unserved",
+      "reason": "not_proven",
       "status": "unproven",
-      "class": "proven_by_test"
+      "class": "unproven"
     },
     {
       "object": "subscription_schedule",
@@ -163619,9 +164385,10 @@
       "path": "phases.discounts.coupon",
       "branch": "",
       "shape": "string",
-      "state": "proven_by_test",
+      "state": "unserved",
+      "reason": "not_proven",
       "status": "unproven",
-      "class": "proven_by_test"
+      "class": "unproven"
     },
     {
       "object": "subscription_schedule",
@@ -163630,9 +164397,10 @@
       "path": "phases.discounts.discount",
       "branch": "",
       "shape": "string",
-      "state": "proven_by_test",
+      "state": "unserved",
+      "reason": "not_proven",
       "status": "unproven",
-      "class": "proven_by_test"
+      "class": "unproven"
     },
     {
       "object": "subscription_schedule",
@@ -163641,9 +164409,10 @@
       "path": "phases.discounts.promotion_code",
       "branch": "",
       "shape": "string",
-      "state": "proven_by_test",
+      "state": "unserved",
+      "reason": "not_proven",
       "status": "unproven",
-      "class": "proven_by_test"
+      "class": "unproven"
     },
     {
       "object": "subscription_schedule",
@@ -163795,9 +164564,10 @@
       "path": "phases.items.discounts.coupon",
       "branch": "",
       "shape": "string",
-      "state": "proven_by_test",
+      "state": "unserved",
+      "reason": "not_proven",
       "status": "unproven",
-      "class": "proven_by_test"
+      "class": "unproven"
     },
     {
       "object": "subscription_schedule",
@@ -163806,9 +164576,10 @@
       "path": "phases.items.discounts.discount",
       "branch": "",
       "shape": "string",
-      "state": "proven_by_test",
+      "state": "unserved",
+      "reason": "not_proven",
       "status": "unproven",
-      "class": "proven_by_test"
+      "class": "unproven"
     },
     {
       "object": "subscription_schedule",
@@ -163817,9 +164588,10 @@
       "path": "phases.items.discounts.promotion_code",
       "branch": "",
       "shape": "string",
-      "state": "proven_by_test",
+      "state": "unserved",
+      "reason": "not_proven",
       "status": "unproven",
-      "class": "proven_by_test"
+      "class": "unproven"
     },
     {
       "object": "subscription_schedule",
@@ -209167,14 +209939,13 @@
       "path": "amazon_eventbridge.aws_account_id",
       "branch": "",
       "shape": "string",
-      "state": "unserved",
-      "reason": "needs_declaration",
+      "state": "served",
       "status": "proven",
       "tests": [
         "TestEventDestinationAttributes/leaves/request/PostV2CoreEventDestinations/amazon_eventbridge.aws_account_id",
         "TestEventDestinationAttributes/leaves/response/v2.core.event_destination/amazon_eventbridge.aws_account_id"
       ],
-      "class": "gap_proven_not_served"
+      "class": "verified"
     },
     {
       "object": "v2.core.event_destination",
@@ -209183,13 +209954,12 @@
       "path": "amazon_eventbridge.aws_region",
       "branch": "",
       "shape": "string",
-      "state": "unserved",
-      "reason": "needs_declaration",
+      "state": "served",
       "status": "proven",
       "tests": [
         "TestEventDestinationAttributes/leaves/request/PostV2CoreEventDestinations/amazon_eventbridge.aws_region"
       ],
-      "class": "gap_proven_not_served"
+      "class": "verified"
     },
     {
       "object": "v2.core.event_destination",
@@ -209198,13 +209968,12 @@
       "path": "azure_event_grid.azure_region",
       "branch": "",
       "shape": "string",
-      "state": "unserved",
-      "reason": "needs_declaration",
+      "state": "served",
       "status": "proven",
       "tests": [
         "TestEventDestinationAttributes/leaves/request/PostV2CoreEventDestinations/azure_event_grid.azure_region"
       ],
-      "class": "gap_proven_not_served"
+      "class": "verified"
     },
     {
       "object": "v2.core.event_destination",
@@ -209213,13 +209982,12 @@
       "path": "azure_event_grid.azure_resource_group_name",
       "branch": "",
       "shape": "string",
-      "state": "unserved",
-      "reason": "needs_declaration",
+      "state": "served",
       "status": "proven",
       "tests": [
         "TestEventDestinationAttributes/leaves/request/PostV2CoreEventDestinations/azure_event_grid.azure_resource_group_name"
       ],
-      "class": "gap_proven_not_served"
+      "class": "verified"
     },
     {
       "object": "v2.core.event_destination",
@@ -209228,13 +209996,12 @@
       "path": "azure_event_grid.azure_subscription_id",
       "branch": "",
       "shape": "string",
-      "state": "unserved",
-      "reason": "needs_declaration",
+      "state": "served",
       "status": "proven",
       "tests": [
         "TestEventDestinationAttributes/leaves/request/PostV2CoreEventDestinations/azure_event_grid.azure_subscription_id"
       ],
-      "class": "gap_proven_not_served"
+      "class": "verified"
     },
     {
       "object": "v2.core.event_destination",
@@ -209249,30 +210016,7 @@
         "TestEventDestinationAttributes/leaves/request/PostV2CoreEventDestinations/description",
         "TestEventDestinationAttributes/leaves/response/v2.core.event_destination/description"
       ],
-      "class": "served_unverified",
-      "detail": {
-        "test": "TestEventDestinationAttributes/leaves/response/v2.core.event_destination/description",
-        "base_url": "http://127.0.0.1:18111",
-        "object": "v2.core.event_destination",
-        "side": "response",
-        "operation": "",
-        "path": "description",
-        "branch": "",
-        "probe": "minimal/amazon_eventbridge",
-        "verdict": "mismatch",
-        "expected": {
-          "kind": "value",
-          "value": ""
-        },
-        "observed": null,
-        "error": {
-          "status": 501,
-          "type": "",
-          "code": "fake_not_implemented",
-          "param": "",
-          "message": "fake-stripe-api: parameter amazon_eventbridge[aws_account_id] of operation PostV2CoreEventDestinations is not implemented"
-        }
-      }
+      "class": "verified"
     },
     {
       "object": "v2.core.event_destination",
@@ -209286,27 +210030,7 @@
       "tests": [
         "TestEventDestinationAttributes/leaves/request/PostV2CoreEventDestinations/enabled_events"
       ],
-      "class": "served_unverified",
-      "detail": {
-        "test": "TestEventDestinationAttributes/leaves/request/PostV2CoreEventDestinations/enabled_events",
-        "base_url": "http://127.0.0.1:18111",
-        "object": "v2.core.event_destination",
-        "side": "request",
-        "operation": "PostV2CoreEventDestinations",
-        "path": "enabled_events",
-        "branch": "",
-        "probe": "minimal/amazon_eventbridge",
-        "verdict": "mismatch",
-        "expected": null,
-        "observed": null,
-        "error": {
-          "status": 501,
-          "type": "",
-          "code": "fake_not_implemented",
-          "param": "",
-          "message": "fake-stripe-api: parameter amazon_eventbridge[aws_account_id] of operation PostV2CoreEventDestinations is not implemented"
-        }
-      }
+      "class": "verified"
     },
     {
       "object": "v2.core.event_destination",
@@ -209320,27 +210044,7 @@
       "tests": [
         "TestEventDestinationAttributes/leaves/request/PostV2CoreEventDestinations/event_payload"
       ],
-      "class": "served_unverified",
-      "detail": {
-        "test": "TestEventDestinationAttributes/leaves/request/PostV2CoreEventDestinations/event_payload",
-        "base_url": "http://127.0.0.1:18111",
-        "object": "v2.core.event_destination",
-        "side": "request",
-        "operation": "PostV2CoreEventDestinations",
-        "path": "event_payload",
-        "branch": "",
-        "probe": "minimal/amazon_eventbridge",
-        "verdict": "mismatch",
-        "expected": null,
-        "observed": null,
-        "error": {
-          "status": 501,
-          "type": "",
-          "code": "fake_not_implemented",
-          "param": "",
-          "message": "fake-stripe-api: parameter amazon_eventbridge[aws_account_id] of operation PostV2CoreEventDestinations is not implemented"
-        }
-      }
+      "class": "verified"
     },
     {
       "object": "v2.core.event_destination",
@@ -209355,32 +210059,7 @@
         "TestEventDestinationAttributes/leaves/request/PostV2CoreEventDestinations/events_from",
         "TestEventDestinationAttributes/leaves/response/v2.core.event_destination/events_from"
       ],
-      "class": "served_unverified",
-      "detail": {
-        "test": "TestEventDestinationAttributes/leaves/response/v2.core.event_destination/events_from",
-        "base_url": "http://127.0.0.1:18111",
-        "object": "v2.core.event_destination",
-        "side": "response",
-        "operation": "",
-        "path": "events_from",
-        "branch": "",
-        "probe": "minimal/amazon_eventbridge",
-        "verdict": "mismatch",
-        "expected": {
-          "kind": "value",
-          "value": [
-            "@self"
-          ]
-        },
-        "observed": null,
-        "error": {
-          "status": 501,
-          "type": "",
-          "code": "fake_not_implemented",
-          "param": "",
-          "message": "fake-stripe-api: parameter amazon_eventbridge[aws_account_id] of operation PostV2CoreEventDestinations is not implemented"
-        }
-      }
+      "class": "verified"
     },
     {
       "object": "v2.core.event_destination",
@@ -209395,30 +210074,7 @@
         "TestEventDestinationAttributes/leaves/request/PostV2CoreEventDestinations/metadata",
         "TestEventDestinationAttributes/leaves/response/v2.core.event_destination/metadata"
       ],
-      "class": "served_unverified",
-      "detail": {
-        "test": "TestEventDestinationAttributes/leaves/response/v2.core.event_destination/metadata",
-        "base_url": "http://127.0.0.1:18111",
-        "object": "v2.core.event_destination",
-        "side": "response",
-        "operation": "",
-        "path": "metadata",
-        "branch": "",
-        "probe": "minimal/amazon_eventbridge",
-        "verdict": "mismatch",
-        "expected": {
-          "kind": "value",
-          "value": {}
-        },
-        "observed": null,
-        "error": {
-          "status": 501,
-          "type": "",
-          "code": "fake_not_implemented",
-          "param": "",
-          "message": "fake-stripe-api: parameter amazon_eventbridge[aws_account_id] of operation PostV2CoreEventDestinations is not implemented"
-        }
-      }
+      "class": "verified"
     },
     {
       "object": "v2.core.event_destination",
@@ -209432,27 +210088,7 @@
       "tests": [
         "TestEventDestinationAttributes/leaves/request/PostV2CoreEventDestinations/name"
       ],
-      "class": "served_unverified",
-      "detail": {
-        "test": "TestEventDestinationAttributes/leaves/request/PostV2CoreEventDestinations/name",
-        "base_url": "http://127.0.0.1:18111",
-        "object": "v2.core.event_destination",
-        "side": "request",
-        "operation": "PostV2CoreEventDestinations",
-        "path": "name",
-        "branch": "",
-        "probe": "minimal/amazon_eventbridge",
-        "verdict": "mismatch",
-        "expected": null,
-        "observed": null,
-        "error": {
-          "status": 501,
-          "type": "",
-          "code": "fake_not_implemented",
-          "param": "",
-          "message": "fake-stripe-api: parameter amazon_eventbridge[aws_account_id] of operation PostV2CoreEventDestinations is not implemented"
-        }
-      }
+      "class": "verified"
     },
     {
       "object": "v2.core.event_destination",
@@ -209467,29 +210103,7 @@
         "TestEventDestinationAttributes/leaves/request/PostV2CoreEventDestinations/snapshot_api_version",
         "TestEventDestinationAttributes/leaves/response/v2.core.event_destination/snapshot_api_version"
       ],
-      "class": "served_unverified",
-      "detail": {
-        "test": "TestEventDestinationAttributes/leaves/response/v2.core.event_destination/snapshot_api_version",
-        "base_url": "http://127.0.0.1:18111",
-        "object": "v2.core.event_destination",
-        "side": "response",
-        "operation": "",
-        "path": "snapshot_api_version",
-        "branch": "",
-        "probe": "minimal/amazon_eventbridge",
-        "verdict": "mismatch",
-        "expected": {
-          "kind": "null"
-        },
-        "observed": null,
-        "error": {
-          "status": 501,
-          "type": "",
-          "code": "fake_not_implemented",
-          "param": "",
-          "message": "fake-stripe-api: parameter amazon_eventbridge[aws_account_id] of operation PostV2CoreEventDestinations is not implemented"
-        }
-      }
+      "class": "verified"
     },
     {
       "object": "v2.core.event_destination",
@@ -209503,27 +210117,7 @@
       "tests": [
         "TestEventDestinationAttributes/leaves/request/PostV2CoreEventDestinations/type"
       ],
-      "class": "served_unverified",
-      "detail": {
-        "test": "TestEventDestinationAttributes/leaves/request/PostV2CoreEventDestinations/type",
-        "base_url": "http://127.0.0.1:18111",
-        "object": "v2.core.event_destination",
-        "side": "request",
-        "operation": "PostV2CoreEventDestinations",
-        "path": "type",
-        "branch": "",
-        "probe": "minimal/amazon_eventbridge",
-        "verdict": "mismatch",
-        "expected": null,
-        "observed": null,
-        "error": {
-          "status": 501,
-          "type": "",
-          "code": "fake_not_implemented",
-          "param": "",
-          "message": "fake-stripe-api: parameter amazon_eventbridge[aws_account_id] of operation PostV2CoreEventDestinations is not implemented"
-        }
-      }
+      "class": "verified"
     },
     {
       "object": "v2.core.event_destination",
@@ -209535,7 +210129,8 @@
       "state": "served",
       "status": "proven",
       "tests": [
-        "TestEventDestinationAttributes/leaves/request/PostV2CoreEventDestinations/webhook_endpoint.url"
+        "TestEventDestinationAttributes/leaves/request/PostV2CoreEventDestinations/webhook_endpoint.url",
+        "TestEventDestinationAttributes/leaves/response/v2.core.event_destination/webhook_endpoint.url"
       ],
       "class": "verified"
     },
@@ -209616,13 +210211,12 @@
       "path": "amazon_eventbridge.aws_account_id",
       "branch": "",
       "shape": "string",
-      "state": "unserved",
-      "reason": "needs_declaration",
+      "state": "served",
       "status": "proven",
       "tests": [
         "TestEventDestinationAttributes/leaves/response/v2.core.event_destination/amazon_eventbridge.aws_account_id"
       ],
-      "class": "gap_proven_not_served"
+      "class": "verified"
     },
     {
       "object": "v2.core.event_destination",
@@ -209631,13 +210225,12 @@
       "path": "amazon_eventbridge.aws_event_source_arn",
       "branch": "",
       "shape": "string",
-      "state": "unserved",
-      "reason": "needs_declaration",
+      "state": "served",
       "status": "proven",
       "tests": [
         "TestEventDestinationAttributes/leaves/response/v2.core.event_destination/amazon_eventbridge.aws_event_source_arn"
       ],
-      "class": "gap_proven_not_served"
+      "class": "verified"
     },
     {
       "object": "v2.core.event_destination",
@@ -209646,13 +210239,12 @@
       "path": "amazon_eventbridge.aws_event_source_status",
       "branch": "",
       "shape": "enum",
-      "state": "unserved",
-      "reason": "needs_declaration",
+      "state": "served",
       "status": "proven",
       "tests": [
         "TestEventDestinationAttributes/leaves/response/v2.core.event_destination/amazon_eventbridge.aws_event_source_status"
       ],
-      "class": "gap_proven_not_served"
+      "class": "verified"
     },
     {
       "object": "v2.core.event_destination",
@@ -209741,29 +210333,7 @@
       "tests": [
         "TestEventDestinationAttributes/leaves/response/v2.core.event_destination/created"
       ],
-      "class": "served_unverified",
-      "detail": {
-        "test": "TestEventDestinationAttributes/leaves/response/v2.core.event_destination/created",
-        "base_url": "http://127.0.0.1:18111",
-        "object": "v2.core.event_destination",
-        "side": "response",
-        "operation": "",
-        "path": "created",
-        "branch": "",
-        "probe": "minimal/amazon_eventbridge",
-        "verdict": "mismatch",
-        "expected": {
-          "kind": "timestamp"
-        },
-        "observed": null,
-        "error": {
-          "status": 501,
-          "type": "",
-          "code": "fake_not_implemented",
-          "param": "",
-          "message": "fake-stripe-api: parameter amazon_eventbridge[aws_account_id] of operation PostV2CoreEventDestinations is not implemented"
-        }
-      }
+      "class": "verified"
     },
     {
       "object": "v2.core.event_destination",
@@ -209777,30 +210347,7 @@
       "tests": [
         "TestEventDestinationAttributes/leaves/response/v2.core.event_destination/description"
       ],
-      "class": "served_unverified",
-      "detail": {
-        "test": "TestEventDestinationAttributes/leaves/response/v2.core.event_destination/description",
-        "base_url": "http://127.0.0.1:18111",
-        "object": "v2.core.event_destination",
-        "side": "response",
-        "operation": "",
-        "path": "description",
-        "branch": "",
-        "probe": "minimal/amazon_eventbridge",
-        "verdict": "mismatch",
-        "expected": {
-          "kind": "value",
-          "value": ""
-        },
-        "observed": null,
-        "error": {
-          "status": 501,
-          "type": "",
-          "code": "fake_not_implemented",
-          "param": "",
-          "message": "fake-stripe-api: parameter amazon_eventbridge[aws_account_id] of operation PostV2CoreEventDestinations is not implemented"
-        }
-      }
+      "class": "verified"
     },
     {
       "object": "v2.core.event_destination",
@@ -209814,30 +210361,7 @@
       "tests": [
         "TestEventDestinationAttributes/leaves/response/v2.core.event_destination/enabled_events"
       ],
-      "class": "served_unverified",
-      "detail": {
-        "test": "TestEventDestinationAttributes/leaves/response/v2.core.event_destination/enabled_events",
-        "base_url": "http://127.0.0.1:18111",
-        "object": "v2.core.event_destination",
-        "side": "response",
-        "operation": "",
-        "path": "enabled_events",
-        "branch": "",
-        "probe": "minimal/amazon_eventbridge",
-        "verdict": "mismatch",
-        "expected": {
-          "kind": "sent",
-          "path": "enabled_events"
-        },
-        "observed": null,
-        "error": {
-          "status": 501,
-          "type": "",
-          "code": "fake_not_implemented",
-          "param": "",
-          "message": "fake-stripe-api: parameter amazon_eventbridge[aws_account_id] of operation PostV2CoreEventDestinations is not implemented"
-        }
-      }
+      "class": "verified"
     },
     {
       "object": "v2.core.event_destination",
@@ -209851,30 +210375,7 @@
       "tests": [
         "TestEventDestinationAttributes/leaves/response/v2.core.event_destination/event_payload"
       ],
-      "class": "served_unverified",
-      "detail": {
-        "test": "TestEventDestinationAttributes/leaves/response/v2.core.event_destination/event_payload",
-        "base_url": "http://127.0.0.1:18111",
-        "object": "v2.core.event_destination",
-        "side": "response",
-        "operation": "",
-        "path": "event_payload",
-        "branch": "",
-        "probe": "minimal/amazon_eventbridge",
-        "verdict": "mismatch",
-        "expected": {
-          "kind": "sent",
-          "path": "event_payload"
-        },
-        "observed": null,
-        "error": {
-          "status": 501,
-          "type": "",
-          "code": "fake_not_implemented",
-          "param": "",
-          "message": "fake-stripe-api: parameter amazon_eventbridge[aws_account_id] of operation PostV2CoreEventDestinations is not implemented"
-        }
-      }
+      "class": "verified"
     },
     {
       "object": "v2.core.event_destination",
@@ -209888,32 +210389,7 @@
       "tests": [
         "TestEventDestinationAttributes/leaves/response/v2.core.event_destination/events_from"
       ],
-      "class": "served_unverified",
-      "detail": {
-        "test": "TestEventDestinationAttributes/leaves/response/v2.core.event_destination/events_from",
-        "base_url": "http://127.0.0.1:18111",
-        "object": "v2.core.event_destination",
-        "side": "response",
-        "operation": "",
-        "path": "events_from",
-        "branch": "",
-        "probe": "minimal/amazon_eventbridge",
-        "verdict": "mismatch",
-        "expected": {
-          "kind": "value",
-          "value": [
-            "@self"
-          ]
-        },
-        "observed": null,
-        "error": {
-          "status": 501,
-          "type": "",
-          "code": "fake_not_implemented",
-          "param": "",
-          "message": "fake-stripe-api: parameter amazon_eventbridge[aws_account_id] of operation PostV2CoreEventDestinations is not implemented"
-        }
-      }
+      "class": "verified"
     },
     {
       "object": "v2.core.event_destination",
@@ -209927,29 +210403,7 @@
       "tests": [
         "TestEventDestinationAttributes/leaves/response/v2.core.event_destination/id"
       ],
-      "class": "served_unverified",
-      "detail": {
-        "test": "TestEventDestinationAttributes/leaves/response/v2.core.event_destination/id",
-        "base_url": "http://127.0.0.1:18111",
-        "object": "v2.core.event_destination",
-        "side": "response",
-        "operation": "",
-        "path": "id",
-        "branch": "",
-        "probe": "minimal/amazon_eventbridge",
-        "verdict": "mismatch",
-        "expected": {
-          "kind": "created"
-        },
-        "observed": null,
-        "error": {
-          "status": 501,
-          "type": "",
-          "code": "fake_not_implemented",
-          "param": "",
-          "message": "fake-stripe-api: parameter amazon_eventbridge[aws_account_id] of operation PostV2CoreEventDestinations is not implemented"
-        }
-      }
+      "class": "verified"
     },
     {
       "object": "v2.core.event_destination",
@@ -209963,30 +210417,7 @@
       "tests": [
         "TestEventDestinationAttributes/leaves/response/v2.core.event_destination/livemode"
       ],
-      "class": "served_unverified",
-      "detail": {
-        "test": "TestEventDestinationAttributes/leaves/response/v2.core.event_destination/livemode",
-        "base_url": "http://127.0.0.1:18111",
-        "object": "v2.core.event_destination",
-        "side": "response",
-        "operation": "",
-        "path": "livemode",
-        "branch": "",
-        "probe": "minimal/amazon_eventbridge",
-        "verdict": "mismatch",
-        "expected": {
-          "kind": "value",
-          "value": false
-        },
-        "observed": null,
-        "error": {
-          "status": 501,
-          "type": "",
-          "code": "fake_not_implemented",
-          "param": "",
-          "message": "fake-stripe-api: parameter amazon_eventbridge[aws_account_id] of operation PostV2CoreEventDestinations is not implemented"
-        }
-      }
+      "class": "verified"
     },
     {
       "object": "v2.core.event_destination",
@@ -210000,30 +210431,7 @@
       "tests": [
         "TestEventDestinationAttributes/leaves/response/v2.core.event_destination/metadata"
       ],
-      "class": "served_unverified",
-      "detail": {
-        "test": "TestEventDestinationAttributes/leaves/response/v2.core.event_destination/metadata",
-        "base_url": "http://127.0.0.1:18111",
-        "object": "v2.core.event_destination",
-        "side": "response",
-        "operation": "",
-        "path": "metadata",
-        "branch": "",
-        "probe": "minimal/amazon_eventbridge",
-        "verdict": "mismatch",
-        "expected": {
-          "kind": "value",
-          "value": {}
-        },
-        "observed": null,
-        "error": {
-          "status": 501,
-          "type": "",
-          "code": "fake_not_implemented",
-          "param": "",
-          "message": "fake-stripe-api: parameter amazon_eventbridge[aws_account_id] of operation PostV2CoreEventDestinations is not implemented"
-        }
-      }
+      "class": "verified"
     },
     {
       "object": "v2.core.event_destination",
@@ -210037,30 +210445,7 @@
       "tests": [
         "TestEventDestinationAttributes/leaves/response/v2.core.event_destination/name"
       ],
-      "class": "served_unverified",
-      "detail": {
-        "test": "TestEventDestinationAttributes/leaves/response/v2.core.event_destination/name",
-        "base_url": "http://127.0.0.1:18111",
-        "object": "v2.core.event_destination",
-        "side": "response",
-        "operation": "",
-        "path": "name",
-        "branch": "",
-        "probe": "minimal/amazon_eventbridge",
-        "verdict": "mismatch",
-        "expected": {
-          "kind": "sent",
-          "path": "name"
-        },
-        "observed": null,
-        "error": {
-          "status": 501,
-          "type": "",
-          "code": "fake_not_implemented",
-          "param": "",
-          "message": "fake-stripe-api: parameter amazon_eventbridge[aws_account_id] of operation PostV2CoreEventDestinations is not implemented"
-        }
-      }
+      "class": "verified"
     },
     {
       "object": "v2.core.event_destination",
@@ -210074,30 +210459,7 @@
       "tests": [
         "TestEventDestinationAttributes/leaves/response/v2.core.event_destination/object"
       ],
-      "class": "served_unverified",
-      "detail": {
-        "test": "TestEventDestinationAttributes/leaves/response/v2.core.event_destination/object",
-        "base_url": "http://127.0.0.1:18111",
-        "object": "v2.core.event_destination",
-        "side": "response",
-        "operation": "",
-        "path": "object",
-        "branch": "",
-        "probe": "minimal/amazon_eventbridge",
-        "verdict": "mismatch",
-        "expected": {
-          "kind": "value",
-          "value": "v2.core.event_destination"
-        },
-        "observed": null,
-        "error": {
-          "status": 501,
-          "type": "",
-          "code": "fake_not_implemented",
-          "param": "",
-          "message": "fake-stripe-api: parameter amazon_eventbridge[aws_account_id] of operation PostV2CoreEventDestinations is not implemented"
-        }
-      }
+      "class": "verified"
     },
     {
       "object": "v2.core.event_destination",
@@ -210111,29 +210473,7 @@
       "tests": [
         "TestEventDestinationAttributes/leaves/response/v2.core.event_destination/snapshot_api_version"
       ],
-      "class": "served_unverified",
-      "detail": {
-        "test": "TestEventDestinationAttributes/leaves/response/v2.core.event_destination/snapshot_api_version",
-        "base_url": "http://127.0.0.1:18111",
-        "object": "v2.core.event_destination",
-        "side": "response",
-        "operation": "",
-        "path": "snapshot_api_version",
-        "branch": "",
-        "probe": "minimal/amazon_eventbridge",
-        "verdict": "mismatch",
-        "expected": {
-          "kind": "null"
-        },
-        "observed": null,
-        "error": {
-          "status": 501,
-          "type": "",
-          "code": "fake_not_implemented",
-          "param": "",
-          "message": "fake-stripe-api: parameter amazon_eventbridge[aws_account_id] of operation PostV2CoreEventDestinations is not implemented"
-        }
-      }
+      "class": "verified"
     },
     {
       "object": "v2.core.event_destination",
@@ -210147,30 +210487,7 @@
       "tests": [
         "TestEventDestinationAttributes/leaves/response/v2.core.event_destination/status"
       ],
-      "class": "served_unverified",
-      "detail": {
-        "test": "TestEventDestinationAttributes/leaves/response/v2.core.event_destination/status",
-        "base_url": "http://127.0.0.1:18111",
-        "object": "v2.core.event_destination",
-        "side": "response",
-        "operation": "",
-        "path": "status",
-        "branch": "",
-        "probe": "minimal/amazon_eventbridge",
-        "verdict": "mismatch",
-        "expected": {
-          "kind": "value",
-          "value": "enabled"
-        },
-        "observed": null,
-        "error": {
-          "status": 501,
-          "type": "",
-          "code": "fake_not_implemented",
-          "param": "",
-          "message": "fake-stripe-api: parameter amazon_eventbridge[aws_account_id] of operation PostV2CoreEventDestinations is not implemented"
-        }
-      }
+      "class": "verified"
     },
     {
       "object": "v2.core.event_destination",
@@ -210198,30 +210515,7 @@
       "tests": [
         "TestEventDestinationAttributes/leaves/response/v2.core.event_destination/type"
       ],
-      "class": "served_unverified",
-      "detail": {
-        "test": "TestEventDestinationAttributes/leaves/response/v2.core.event_destination/type",
-        "base_url": "http://127.0.0.1:18111",
-        "object": "v2.core.event_destination",
-        "side": "response",
-        "operation": "",
-        "path": "type",
-        "branch": "",
-        "probe": "minimal/amazon_eventbridge",
-        "verdict": "mismatch",
-        "expected": {
-          "kind": "sent",
-          "path": "type"
-        },
-        "observed": null,
-        "error": {
-          "status": 501,
-          "type": "",
-          "code": "fake_not_implemented",
-          "param": "",
-          "message": "fake-stripe-api: parameter amazon_eventbridge[aws_account_id] of operation PostV2CoreEventDestinations is not implemented"
-        }
-      }
+      "class": "verified"
     },
     {
       "object": "v2.core.event_destination",
@@ -210235,29 +210529,7 @@
       "tests": [
         "TestEventDestinationAttributes/leaves/response/v2.core.event_destination/updated"
       ],
-      "class": "served_unverified",
-      "detail": {
-        "test": "TestEventDestinationAttributes/leaves/response/v2.core.event_destination/updated",
-        "base_url": "http://127.0.0.1:18111",
-        "object": "v2.core.event_destination",
-        "side": "response",
-        "operation": "",
-        "path": "updated",
-        "branch": "",
-        "probe": "minimal/amazon_eventbridge",
-        "verdict": "mismatch",
-        "expected": {
-          "kind": "timestamp"
-        },
-        "observed": null,
-        "error": {
-          "status": 501,
-          "type": "",
-          "code": "fake_not_implemented",
-          "param": "",
-          "message": "fake-stripe-api: parameter amazon_eventbridge[aws_account_id] of operation PostV2CoreEventDestinations is not implemented"
-        }
-      }
+      "class": "verified"
     },
     {
       "object": "v2.core.event_destination",
@@ -210271,29 +210543,7 @@
       "tests": [
         "TestEventDestinationAttributes/leaves/response/v2.core.event_destination/webhook_endpoint.signing_secret"
       ],
-      "class": "served_unverified",
-      "detail": {
-        "test": "TestEventDestinationAttributes/leaves/response/v2.core.event_destination/webhook_endpoint.signing_secret",
-        "base_url": "http://127.0.0.1:18111",
-        "object": "v2.core.event_destination",
-        "side": "response",
-        "operation": "",
-        "path": "webhook_endpoint.signing_secret",
-        "branch": "",
-        "probe": "minimal/amazon_eventbridge",
-        "verdict": "mismatch",
-        "expected": {
-          "kind": "absent"
-        },
-        "observed": null,
-        "error": {
-          "status": 501,
-          "type": "",
-          "code": "fake_not_implemented",
-          "param": "",
-          "message": "fake-stripe-api: parameter amazon_eventbridge[aws_account_id] of operation PostV2CoreEventDestinations is not implemented"
-        }
-      }
+      "class": "verified"
     },
     {
       "object": "v2.core.event_destination",
@@ -210307,29 +210557,7 @@
       "tests": [
         "TestEventDestinationAttributes/leaves/response/v2.core.event_destination/webhook_endpoint.url"
       ],
-      "class": "served_unverified",
-      "detail": {
-        "test": "TestEventDestinationAttributes/leaves/response/v2.core.event_destination/webhook_endpoint.url",
-        "base_url": "http://127.0.0.1:18111",
-        "object": "v2.core.event_destination",
-        "side": "response",
-        "operation": "",
-        "path": "webhook_endpoint.url",
-        "branch": "",
-        "probe": "minimal/amazon_eventbridge",
-        "verdict": "mismatch",
-        "expected": {
-          "kind": "absent"
-        },
-        "observed": null,
-        "error": {
-          "status": 501,
-          "type": "",
-          "code": "fake_not_implemented",
-          "param": "",
-          "message": "fake-stripe-api: parameter amazon_eventbridge[aws_account_id] of operation PostV2CoreEventDestinations is not implemented"
-        }
-      }
+      "class": "verified"
     },
     {
       "object": "webhook_endpoint",

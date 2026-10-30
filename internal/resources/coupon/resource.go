@@ -27,6 +27,10 @@ var Declaration = engine.Declaration{
 	// Stripe returns the coupon's own currency among the options and refuses it as one.
 	CurrencyOptions: "currency_options",
 	Delete:          engine.Delete,
+	Defaults: map[string]string{
+		// suite: "TestCouponAttributes/leaves/response/coupon/percent_off"
+		"percent_off": "none, on a coupon created with `amount_off` and `currency`",
+	},
 }
 
 // NewResource returns the resource constructor the provider registers.

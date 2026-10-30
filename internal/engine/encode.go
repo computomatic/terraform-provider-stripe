@@ -303,6 +303,14 @@ func (m *model) encodeChanges(plan, state basetypes.ObjectValue, config tftypes.
 			// The other form of a token-or-hash parameter takes its place under the same name.
 		case pv.IsNull():
 			out = append(out, wire.Field{Name: n.Name, Value: wire.Null{}})
+		case slices.Contains(m.decl.SendChangedMembers, n.Name):
+			v, err := changedMembers(n, pv, sv, updatable)
+			if err != nil {
+				return nil, err
+			}
+			if len(v) > 0 {
+				out = append(out, wire.Field{Name: n.Name, Value: v})
+			}
 		case n.Name == m.decl.CurrencyOptions:
 			v, ok, err := encodeValue(n, addedKeys(pv, sv), updatable)
 			if err != nil {
@@ -579,6 +587,60 @@ func (m *model) carryOnUpdate(n *node, state attr.Value, v wire.Value) wire.Valu
 		out[i] = obj
 	}
 	return out
+}
+
+// changedMembers is what an update sends of an object in SendChangedMembers: the members
+// whose planned value differs from the state's. A member the plan leaves unknown is Stripe's
+// to fill in, so it is not sent.
+func changedMembers(n *node, plan, state attr.Value, allow func(*node) bool) (wire.Object, error) {
+	planned, held := objectAttrs(plan), objectAttrs(state)
+	var out wire.Object
+	for _, k := range n.Kids {
+		pv, sv := planned[k.AttrName()], held[k.AttrName()]
+		if !allow(k) || pv == nil || pv.IsUnknown() || pv.Equal(sv) {
+			continue
+		}
+		var v wire.Value
+		switch {
+		case pv.IsNull():
+			if sv == nil || emptyCollection(sv) {
+				continue
+			}
+			v = wire.Null{}
+		case k.Shape == fields.Object && !hasRequiredMember(k):
+			members, err := changedMembers(k, pv, sv, allow)
+			if err != nil {
+				return nil, err
+			}
+			if len(members) == 0 {
+				continue
+			}
+			v = members
+		case k.Shape == fields.StringMap:
+			diff, err := metadataDiff(pv, sv)
+			if err != nil {
+				return nil, err
+			}
+			if len(diff) == 0 {
+				continue
+			}
+			v = diff
+		default:
+			var ok bool
+			var err error
+			if v, ok, err = encodeValue(k, pv, allow); err != nil {
+				return nil, err
+			} else if !ok {
+				continue
+			}
+		}
+		out = append(out, wire.Field{Name: k.Name, Value: v})
+	}
+	return out, nil
+}
+
+func hasRequiredMember(n *node) bool {
+	return slices.ContainsFunc(n.Kids, func(k *node) bool { return k.Required })
 }
 
 // withoutUnchangedDefaults drops, from an object that changed, the nested objects Stripe

@@ -68,9 +68,10 @@ type Record struct {
 }
 
 // DefaultRecord is an optional argument's default statement (D4) and where it comes from: the
-// evidence, or the provider for an argument only the update takes, which it never sends on
-// create. Varies marks a default the variants of the minimal create give differently, which
-// has no statement until the declaration words its rule (Declaration.Defaults).
+// evidence, the provider for an argument only the update takes, which it never sends on
+// create, or the declaration that words its rule (Declaration.Defaults). Varies marks a default
+// the variants of the minimal create give differently, which has no statement until the
+// declaration words it.
 type DefaultRecord struct {
 	Statement string `json:"statement,omitempty"`
 	Source    string `json:"source"`

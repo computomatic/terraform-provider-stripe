@@ -2,6 +2,7 @@ package engine
 
 import (
 	"context"
+	"maps"
 	"net/http"
 	"strings"
 	"testing"
@@ -418,6 +419,71 @@ func TestRefuseChangeKeepsRefusedFieldsOutOfTheUpdate(t *testing.T) {
 		if got, want := wireOf(t, params), `{"address":{"line1":"2 Main St"}}`; got != want {
 			t.Errorf("%s refused fields: update body %s, want %s", name, got, want)
 		}
+	}
+}
+
+// An object in SendChangedMembers sends only what changed: a removed member as null, a nested
+// object's changed members, one with a Required member whole, a removed map key as null,
+// never a member the plan leaves unknown or one that is refused, and nothing when only those
+// differ.
+func TestSendChangedMembers(t *testing.T) {
+	member := func(name string, shape fields.Shape) fields.Field {
+		return fields.Field{Name: name, Shape: shape, Create: true, Update: true, Response: true}
+	}
+	dob := member("dob", fields.Object)
+	day, month := member("day", fields.Int), member("month", fields.Int)
+	day.Required, month.Required = true, true
+	dob.Fields = []fields.Field{day, month}
+	home := member("home", fields.Object)
+	home.Fields = []fields.Field{member("city", fields.String), member("line1", fields.String)}
+	tags := member("tags", fields.StringMap)
+	person := member("person", fields.Object)
+	person.Fields = []fields.Field{member("first", fields.String), member("last", fields.String), member("secret", fields.String), member("filled", fields.Bool), dob, home, tags}
+	decl := fixtureDeclaration()
+	decl.RefuseChange = []string{"person.secret"}
+	decl.SendChangedMembers = []string{"person"}
+	r := configured(t, decl, append(refuseTable(), person), noCalls(t))
+	personType := r.objType.AttrTypes["person"].(basetypes.ObjectType)
+	dobType := personType.AttrTypes["dob"].(basetypes.ObjectType).AttrTypes
+	homeType := personType.AttrTypes["home"].(basetypes.ObjectType).AttrTypes
+	build := func(over map[string]attr.Value) attr.Value {
+		attrs := map[string]attr.Value{
+			"first":  types.StringValue("Jenny"),
+			"last":   types.StringValue("Rosen"),
+			"secret": types.StringValue("s3"),
+			"filled": types.BoolValue(true),
+			"dob":    types.ObjectValueMust(dobType, map[string]attr.Value{"day": types.Int64Value(1), "month": types.Int64Value(2)}),
+			"home":   types.ObjectValueMust(homeType, map[string]attr.Value{"city": types.StringValue("A"), "line1": types.StringValue("1 Main")}),
+			"tags":   types.MapValueMust(types.StringType, map[string]attr.Value{"a": types.StringValue("1"), "b": types.StringValue("2")}),
+		}
+		maps.Copy(attrs, over)
+		return types.ObjectValueMust(personType.AttrTypes, attrs)
+	}
+	state := r.fill(map[string]attr.Value{"id": types.StringValue("wid_1"), "name": types.StringValue("w"), "person": build(nil)})
+	for name, tc := range map[string]struct {
+		change map[string]attr.Value
+		want   string
+	}{
+		"a scalar":          {map[string]attr.Value{"first": types.StringValue("Jane")}, `{"person":{"first":"Jane"}}`},
+		"a removed member":  {map[string]attr.Value{"last": types.StringNull()}, `{"person":{"last":null}}`},
+		"a nested member":   {map[string]attr.Value{"home": types.ObjectValueMust(homeType, map[string]attr.Value{"city": types.StringValue("B"), "line1": types.StringValue("1 Main")})}, `{"person":{"home":{"city":"B"}}}`},
+		"a required member": {map[string]attr.Value{"dob": types.ObjectValueMust(dobType, map[string]attr.Value{"day": types.Int64Value(3), "month": types.Int64Value(2)})}, `{"person":{"dob":{"day":3,"month":2}}}`},
+		"a map key":         {map[string]attr.Value{"tags": types.MapValueMust(types.StringType, map[string]attr.Value{"a": types.StringValue("1")})}, `{"person":{"tags":{"b":null}}}`},
+		"a refused member":  {map[string]attr.Value{"secret": types.StringValue("other")}, `{}`},
+		"an unknown member": {map[string]attr.Value{"filled": types.BoolUnknown()}, `{}`},
+	} {
+		plan := r.fill(with(state, map[string]attr.Value{"person": build(tc.change)}))
+		params, err := r.m.encodeUpdate(plan, state, tftypes.Value{})
+		if err != nil {
+			t.Fatal(err)
+		}
+		if got := wireOf(t, params); got != tc.want {
+			t.Errorf("%s: update body %s, want %s", name, got, tc.want)
+		}
+	}
+	decl.SendChangedMembers = []string{"name"}
+	if _, err := compile(decl, append(refuseTable(), person)); err == nil {
+		t.Error("an entry that is no object must be refused")
 	}
 }
 
