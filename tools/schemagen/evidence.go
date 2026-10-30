@@ -14,6 +14,8 @@ import (
 	"reflect"
 	"slices"
 	"strings"
+
+	"github.com/computomatic/terraform-provider-stripe/tools/internal/evidencecheck"
 )
 
 // EvidencePin is spec/EVIDENCE_PIN.json (the ADR's `spec/EVIDENCE.json`, renamed because it
@@ -36,18 +38,21 @@ type PinnedFile struct {
 }
 
 // Classes of a leaf in a fake release's `attributes.json` (fake ADR
-// 2026-10-29-attribute-parity, A7). Only ClassVerified exposes a leaf.
+// 2026-10-29-attribute-parity, A7, and the fake's `architecture/ci.md`, "Attribute fidelity",
+// which adds `served_broken` and `proven_by_test`). Only ClassVerified exposes a leaf.
 const (
 	ClassVerified           = "verified"
 	ClassServedFailing      = "served_failing"
+	ClassServedBroken       = "served_broken"
 	ClassServedUnverified   = "served_unverified"
 	ClassGapProvenNotServed = "gap_proven_not_served"
 	ClassGapStripeOnly      = "gap_stripe_only"
 	ClassGapPlaceholderNull = "gap_placeholder_null"
+	ClassProvenByTest       = "proven_by_test"
 	ClassUnproven           = "unproven"
 )
 
-var classes = []string{ClassVerified, ClassServedFailing, ClassServedUnverified, ClassGapProvenNotServed, ClassGapStripeOnly, ClassGapPlaceholderNull, ClassUnproven}
+var classes = []string{ClassVerified, ClassServedFailing, ClassServedBroken, ClassServedUnverified, ClassGapProvenNotServed, ClassGapStripeOnly, ClassGapPlaceholderNull, ClassProvenByTest, ClassUnproven}
 
 // Attributes is the part of a fake release's `attributes.json` the generator reads: the
 // header that ties it to a suite run and the spec, and each leaf's key and class. Other
@@ -229,10 +234,11 @@ type Pinned struct {
 const evidenceFormat = 1
 
 // LoadEvidence reads spec/EVIDENCE_PIN.json, spec/attributes.json and spec/evidence.json under
-// root. It returns nil when there is no pin: until a fake release attaches `attributes.json`,
-// nothing is verified and every leaf not exposed today awaits proof. Either file is refused
-// when it differs from the pin, when its API version or spec hash differs from spec/PIN.json,
-// or when the two disagree on the suite commit and run.
+// root. It returns nil when there is no pin: nothing is then verified, and every leaf not
+// exposed today awaits proof. Either file is refused when it differs from the pin, when its API
+// version or spec hash differs from spec/PIN.json, or when the two disagree on the suite commit
+// and run, and the record is refused when its Stripe run did not pass (evidencecheck, which
+// tools/evidencepin applies too).
 func LoadEvidence(root string, spec Pin) (*Pinned, error) {
 	pinData, err := os.ReadFile(filepath.Join(root, "spec", "EVIDENCE_PIN.json"))
 	if errors.Is(err, fs.ErrNotExist) {
@@ -247,7 +253,7 @@ func LoadEvidence(root string, spec Pin) (*Pinned, error) {
 	if err := d.Decode(&p.Pin); err != nil {
 		return nil, fmt.Errorf("decode spec/EVIDENCE_PIN.json: %w", err)
 	}
-	if err := namesRun("spec/EVIDENCE_PIN.json", p.Pin.SuiteRef, p.Pin.RunID); err != nil {
+	if err := evidencecheck.NamesRun("spec/EVIDENCE_PIN.json", p.Pin.SuiteRef, p.Pin.RunID); err != nil {
 		return nil, err
 	}
 	fake, err := os.ReadFile(filepath.Join(root, ".fake-version"))
@@ -267,7 +273,8 @@ func LoadEvidence(root string, spec Pin) (*Pinned, error) {
 		return nil, fmt.Errorf("decode spec/attributes.json: %w", err)
 	}
 	a := p.Attributes
-	if err := namesRun("spec/attributes.json", a.SuiteRef, a.RunID); err != nil {
+	pinnedSpec := evidencecheck.Spec{APIVersion: spec.APIVersion, SHA256: spec.SHA256}
+	if err := evidencecheck.CheckAttributes(a.header(), pinnedSpec); err != nil {
 		return nil, err
 	}
 	switch {
@@ -275,9 +282,6 @@ func LoadEvidence(root string, spec Pin) (*Pinned, error) {
 		return nil, fmt.Errorf("spec/attributes.json is from fake %s, spec/EVIDENCE_PIN.json pins %s", a.FakeVersion, p.Pin.FakeVersion)
 	case a.SuiteRef != p.Pin.SuiteRef || a.RunID != p.Pin.RunID:
 		return nil, fmt.Errorf("spec/attributes.json names suite run %s/%d, spec/EVIDENCE_PIN.json pins %s/%d", a.SuiteRef, a.RunID, p.Pin.SuiteRef, p.Pin.RunID)
-	}
-	if err := sameSpec("spec/attributes.json", a.APIVersion, a.SpecSHA256, spec); err != nil {
-		return nil, err
 	}
 	seen := map[Key]bool{}
 	for _, l := range a.Leaves {
@@ -298,13 +302,7 @@ func LoadEvidence(root string, spec Pin) (*Pinned, error) {
 		return nil, fmt.Errorf("spec/evidence.json: %w", err)
 	}
 	e := p.Evidence
-	if err := namesRun("spec/evidence.json", e.SuiteCommit, e.StripeRun.ID); err != nil {
-		return nil, err
-	}
-	if e.SuiteCommit != a.SuiteRef || e.StripeRun.ID != a.RunID {
-		return nil, fmt.Errorf("spec/evidence.json is suite run %s/%d, spec/attributes.json names %s/%d", e.SuiteCommit, e.StripeRun.ID, a.SuiteRef, a.RunID)
-	}
-	if err := sameSpec("spec/evidence.json", e.APIVersion, e.SpecSHA256, spec); err != nil {
+	if err := evidencecheck.CheckEvidence(e.header(), a.header(), pinnedSpec); err != nil {
 		return nil, err
 	}
 	proven := map[Key]bool{}
@@ -478,12 +476,16 @@ func (e *Evidence) check() error {
 	return nil
 }
 
-// namesRun refuses a file that names no suite commit or run.
-func namesRun(file, suiteRef string, runID int64) error {
-	if strings.TrimSpace(suiteRef) == "" || runID == 0 {
-		return fmt.Errorf("%s names no suite run (suite commit %q, run %d)", file, suiteRef, runID)
-	}
-	return nil
+// header is the part of the file evidencecheck reads.
+func (a *Attributes) header() evidencecheck.Attributes {
+	return evidencecheck.Attributes{FakeVersion: a.FakeVersion, SuiteRef: a.SuiteRef, RunID: a.RunID, APIVersion: a.APIVersion, SpecSHA256: a.SpecSHA256}
+}
+
+// header is the part of the record evidencecheck reads.
+func (e *Evidence) header() evidencecheck.Evidence {
+	h := evidencecheck.Evidence{SuiteCommit: e.SuiteCommit, APIVersion: e.APIVersion, SpecSHA256: e.SpecSHA256}
+	h.StripeRun.ID, h.StripeRun.Passed = e.StripeRun.ID, e.StripeRun.Passed
+	return h
 }
 
 func readPinned(root, name string, want PinnedFile) ([]byte, error) {
@@ -496,14 +498,4 @@ func readPinned(root, name string, want PinnedFile) ([]byte, error) {
 		return nil, fmt.Errorf("spec/%s is %d bytes with sha256 %s, spec/EVIDENCE_PIN.json pins %d bytes with %s", name, len(data), got, want.Bytes, want.SHA256)
 	}
 	return data, nil
-}
-
-func sameSpec(file, apiVersion, specSHA string, spec Pin) error {
-	if apiVersion != spec.APIVersion {
-		return fmt.Errorf("%s is for API version %s, spec/PIN.json pins %s", file, apiVersion, spec.APIVersion)
-	}
-	if specSHA != spec.SHA256 {
-		return fmt.Errorf("%s is for the spec with sha256 %s, spec/PIN.json pins %s", file, specSHA, spec.SHA256)
-	}
-	return nil
 }

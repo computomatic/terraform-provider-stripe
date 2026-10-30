@@ -5,8 +5,8 @@ package engine
 type AttributeDoc struct {
 	// Default is an optional argument's default statement, or "" where none is recorded yet.
 	Default string
-	// NeedsDefault says the page must state a default: the pinned evidence verifies the
-	// argument, or only an update takes it, which the provider never sends on create.
+	// NeedsDefault says the page must state a default: only an update takes the argument, which
+	// the provider never sends on create.
 	NeedsDefault bool
 	// Removal is, on an Optional and Computed argument, the sentence that says what removing it
 	// from the configuration does, which follows the default statement.
@@ -58,7 +58,7 @@ func (m *model) attributeDocs(arguments bool) map[string]AttributeDoc {
 				if n.Default != nil {
 					doc.Default = n.Default.Statement()
 				}
-				doc.NeedsDefault = n.Verified || n.Update && !n.Create
+				doc.NeedsDefault = n.Update && !n.Create
 				doc.Removal = removal(n)
 			}
 			doc.Copy = n.Copy

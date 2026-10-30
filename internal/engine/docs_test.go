@@ -14,11 +14,11 @@ func docsTable() []fields.Field {
 	for i := range table {
 		switch table[i].Name {
 		case "kind":
-			table[i].Default, table[i].Verified = &fields.Default{Kind: fields.DefaultValue, Value: "a"}, true
+			table[i].Default = &fields.Default{Kind: fields.DefaultValue, Value: "a"}
 		case "quantity":
-			table[i].Default, table[i].Verified = &fields.Default{Kind: fields.DefaultVaries}, true
+			table[i].Default = &fields.Default{Kind: fields.DefaultVaries}
 		case "ratio":
-			table[i].Verified, table[i].ServerDefaulted, table[i].Stable = true, true, true
+			table[i].ServerDefaulted, table[i].Stable = true, true
 		case "items":
 			table[i].Fields[1].ServerDefaulted, table[i].Fields[1].Stable = true, true
 		case "address":
@@ -38,9 +38,9 @@ func docsTable() []fields.Field {
 // wording of a rule the evidence records. An Optional and Computed argument says what removing it
 // does, as the plan treats it: one the plan keeps (a stable one, E5) leaves the current value,
 // one in a list element, stable or not, Stripe sets when the list is sent again, and any other
-// the provider stops sending. A verified argument, and one only the update takes, is
-// marked so that docgen refuses it without a statement, and an embedded copy names the data
-// source of the copied object.
+// the provider stops sending. An argument only the update takes is marked so that docgen
+// refuses it without a statement, and an embedded copy names the data source of the copied
+// object.
 func TestAttributeDocs(t *testing.T) {
 	decl := fixtureDeclaration()
 	decl.Defaults = map[string]string{"quantity": "one per line of the parent"}
@@ -51,9 +51,9 @@ func TestAttributeDocs(t *testing.T) {
 	r := ctor().(*Resource)
 	got := r.AttributeDocs()
 	for path, want := range map[string]AttributeDoc{
-		"kind":          {Default: "Default (Stripe): `a`.", NeedsDefault: true},
-		"quantity":      {Default: "Default (Stripe): one per line of the parent.", NeedsDefault: true},
-		"ratio":         {NeedsDefault: true, Removal: RemovalKeeps},
+		"kind":          {Default: "Default (Stripe): `a`."},
+		"quantity":      {Default: "Default (Stripe): one per line of the parent."},
+		"ratio":         {Removal: RemovalKeeps},
 		"id":            {Removal: RemovalKeeps},
 		"active":        {Removal: RemovalNotSent},
 		"items.qty":     {Removal: RemovalInList},

@@ -404,8 +404,8 @@ func TestDefaultStatementsComeFromTheEvidence(t *testing.T) {
 		if f == nil {
 			t.Fatalf("no field %s", path)
 		}
-		if !reflect.DeepEqual(f.Default, want) || f.Verified != (want != nil) {
-			t.Errorf("%s: default %+v, verified %v, want %+v", path, f.Default, f.Verified, want)
+		if !reflect.DeepEqual(f.Default, want) {
+			t.Errorf("%s: default %+v, want %+v", path, f.Default, want)
 		}
 	}
 	if f := fieldAt(tc.table, "parts"); f == nil || f.PagedBy != "stripe_gadget" {
@@ -413,8 +413,8 @@ func TestDefaultStatementsComeFromTheEvidence(t *testing.T) {
 	}
 }
 
-// The report counts, per table, the optional arguments exposed without a default statement, and
-// lists the spec's disagreements.
+// The report counts, per table, the optional arguments exposed without a default statement,
+// names the verified ones and counts the others, and lists the spec's disagreements.
 func TestReportCountsDefaultsNotYetRecorded(t *testing.T) {
 	records := []Record{
 		{Table: "gadget", Key: Key{Object: "gadget", Side: SideRequest, Operation: "PostGadgets", Path: "color"}, State: StateExposed, Default: &DefaultRecord{Statement: "Default (Stripe): `blue`.", Source: "evidence"}, SpecDefault: "red"},
@@ -423,12 +423,13 @@ func TestReportCountsDefaultsNotYetRecorded(t *testing.T) {
 		{Table: "gadget", Key: Key{Object: "gadget", Side: SideRequest, Operation: "PostGadgetsId", Path: "tags"}, State: StateExposed},
 		{Table: "gadget", Key: Key{Object: "gadget", Side: SideRequest, Operation: "PostGadgets", Path: "name"}, State: StateExposed, Required: true},
 		{Table: "gadget", Key: Key{Object: "gadget", Side: SideRequest, Operation: "PostGadgetsId", Path: "name"}, State: StateExposed},
-		{Table: "gadget", Key: Key{Object: "gadget", Side: SideRequest, Operation: "PostGadgets", Path: "owner.email"}, State: StateExposed, Default: &DefaultRecord{Source: "evidence", Varies: true}},
+		{Table: "gadget", Key: Key{Object: "gadget", Side: SideRequest, Operation: "PostGadgets", Path: "owner.email"}, State: StateExposed, Class: ClassVerified, Default: &DefaultRecord{Source: "evidence", Varies: true}},
 		{Table: "gadget", Key: Key{Object: "gadget", Side: SideResponse, Path: "status"}, State: StateExposed},
 	}
 	md := string(RenderCoverageMarkdown(coverageHeader{}, records))
 	for _, want := range []string{
 		"|`gadget`|`gadget`|7|0|0|1|0|0|2|",
+		"|`gadget`|`owner.email`|1|",
 		"- `gadget` PostGadgets `color` (): the spec says `red`; the evidence says Default (Stripe): `blue`.",
 	} {
 		if !strings.Contains(md, want) {
@@ -481,7 +482,7 @@ func fixtureEvidence(t *testing.T) (*Attributes, *Evidence) {
 	e := &Evidence{FormatVersion: 1, SuiteCommit: "abc123", APIVersion: a.APIVersion, SpecSHA256: a.SpecSHA256,
 		Leaves: []EvidenceLeaf{{Key: Key{Object: "gadget", Side: SideRequest, Operation: "PostGadgets", Path: "color"}, Status: "proven", Targets: []string{"fake", "stripe"},
 			Tests: []string{"TestGadgetAttributes/leaves/request/PostGadgets/color"}}}}
-	e.StripeRun.ID = 42
+	e.StripeRun.ID, e.StripeRun.Passed = 42, true
 	return a, e
 }
 
@@ -535,8 +536,8 @@ func TestGenerateWritesTheCoverageReport(t *testing.T) {
 	}
 }
 
-// The generator refuses evidence for another API version or spec, and evidence whose run
-// differs from the one attributes.json names, or that differs from its pin.
+// The generator refuses evidence for another API version or spec, evidence whose run differs
+// from the one attributes.json names or did not pass, and evidence that differs from its pin.
 func TestGenerateRefusesMismatchedEvidence(t *testing.T) {
 	for _, tc := range []struct {
 		name  string
@@ -561,6 +562,7 @@ func TestGenerateRefusesMismatchedEvidence(t *testing.T) {
 		{"attributes with no run", func(a *Attributes, _ *Evidence) { a.RunID = 0 }, `spec/attributes.json names no suite run (suite commit "abc123", run 0)`},
 		{"evidence with no suite commit", func(_ *Attributes, e *Evidence) { e.SuiteCommit = " " }, `spec/evidence.json names no suite run`},
 		{"evidence with no run", func(_ *Attributes, e *Evidence) { e.StripeRun.ID = 0 }, `spec/evidence.json names no suite run (suite commit "abc123", run 0)`},
+		{"evidence of a run that did not pass", func(_ *Attributes, e *Evidence) { e.StripeRun.Passed = false }, "spec/evidence.json is the record of suite run abc123/42, which did not pass"},
 	} {
 		a, e := fixtureEvidence(t)
 		tc.edit(a, e)

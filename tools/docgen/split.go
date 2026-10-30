@@ -82,9 +82,10 @@ func renderGuide(s *schema, dir string, a *attr, in pageInput) string {
 
 // everyArgumentHasADefault makes the default check total: every optional argument of a
 // resource, at any depth, states its default. Until the evidence of v0.1.0 is pinned (ADR
-// 2026-10-29-full-attribute-coverage, Step 6), only the provider's own arguments and those the
-// pinned evidence verifies, and those only an update takes, must; the coverage report counts
-// the rest per table.
+// 2026-10-29-full-attribute-coverage, Step 6), only the provider's own arguments and those only
+// an update takes must: evidence arrives object by object, so a verified argument whose default
+// is not recorded yet does not fail the docs. The coverage report names those per table and
+// counts the unverified rest.
 const everyArgumentHasADefault = false
 
 // checkDefaults fails on an optional argument without a default statement where one must exist,

@@ -197,13 +197,13 @@ func TestSuiteFixtureBuildsTheRealTables(t *testing.T) {
 }
 
 // tableDiff lists the fields b adds to a, and those whose only difference is Stable. What the
-// docs line says (Default, Verified, Copy, PagedBy) is not compared.
+// docs line says (Default, Copy, PagedBy) is not compared.
 func tableDiff(a, b []fields.Field, prefix string) []string {
 	var out []string
 	for _, f := range b {
-		f.Default, f.Verified, f.Copy, f.PagedBy = nil, false, "", ""
+		f.Default, f.Copy, f.PagedBy = nil, "", ""
 		g, ok := fields.Find(a, f.Name)
-		g.Default, g.Verified, g.Copy, g.PagedBy = nil, false, "", ""
+		g.Default, g.Copy, g.PagedBy = nil, "", ""
 		switch {
 		case !ok:
 			out = append(out, "+ "+prefix+f.AttrName())
@@ -225,7 +225,7 @@ func tableDiff(a, b []fields.Field, prefix string) []string {
 // The suite's first real run (testdata/evidence/run-40926522642.json), with every leaf it proves
 // on both targets verified, gives the real tables their default statements: a string, an empty
 // string, a list and a map Stripe sets, and none. A verified optional argument the minimal
-// creates set, or whose hash they leave out, has no statement, which docgen then refuses.
+// creates set, or whose hash they leave out, has no statement, and the coverage report names it.
 func TestSuiteRunGivesTheRealTablesTheirDefaults(t *testing.T) {
 	data, err := os.ReadFile(filepath.Join("..", "..", "spec", "openapi.json"))
 	if err != nil {
@@ -274,7 +274,10 @@ func TestSuiteRunGivesTheRealTablesTheirDefaults(t *testing.T) {
 		}
 		for path, statement := range want {
 			f := fieldAt(tc.table, path)
-			if f == nil || !f.Verified {
+			verified := slices.ContainsFunc(tc.records, func(r Record) bool {
+				return r.Side == SideRequest && r.Path == path && r.State == StateExposed && r.Class == ClassVerified
+			})
+			if f == nil || !verified {
 				t.Errorf("%s %s: %+v, want a verified field", pkg, path, f)
 				continue
 			}

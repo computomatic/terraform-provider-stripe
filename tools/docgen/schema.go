@@ -39,8 +39,7 @@ type attr struct {
 	// Default is an optional argument's default statement, from the engine or the provider, or
 	// "" where none is recorded yet (ADR 2026-10-29-full-attribute-coverage, D4).
 	Default string
-	// NeedsDefault says the argument must have a Default: the pinned evidence verifies it, or
-	// only an update takes it.
+	// NeedsDefault says the argument must have a Default: only an update takes it.
 	NeedsDefault bool
 	// Removal is, on a resource's Optional and Computed argument, the engine's sentence on what
 	// removing it from the configuration does.
