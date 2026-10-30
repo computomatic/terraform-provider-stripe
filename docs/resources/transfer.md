@@ -37,11 +37,11 @@ The following arguments are required:
 
 The following arguments are optional:
 
-* `description` - (Optional) An arbitrary string attached to the object. Often useful for displaying to users.
-* `metadata` - (Optional) Set of [key-value pairs](https://docs.stripe.com/api/metadata) that you can attach to an object. This can be useful for storing additional information about the object in a structured format. Individual keys can be unset by posting an empty value to them. All keys can be unset by posting an empty value to `metadata`.
-* `source_transaction` - (Optional) You can use this parameter to transfer funds from a charge before they are added to your available balance. A pending balance will transfer immediately but the funds will not become available until the original charge becomes available. [See the Connect documentation](https://docs.stripe.com/connect/separate-charges-and-transfers#transfer-availability) for details. Changing it fails the plan, because this resource cannot be replaced.
-* `source_type` - (Optional) The source balance to use for this transfer. One of `bank_account`, `card`, or `fpx`. For most users, this will default to `card`. Possible values: `bank_account`, `card`, `fpx`. Changing it fails the plan, because this resource cannot be replaced. Removing it from the configuration leaves the current value.
-* `transfer_group` - (Optional) A string that identifies this transaction as part of a group. See the [Connect documentation](https://docs.stripe.com/connect/separate-charges-and-transfers#transfer-options) for details. Changing it fails the plan, because this resource cannot be replaced.
+* `description` - (Optional) An arbitrary string attached to the object. Often useful for displaying to users. Default: none.
+* `metadata` - (Optional) Set of [key-value pairs](https://docs.stripe.com/api/metadata) that you can attach to an object. This can be useful for storing additional information about the object in a structured format. Individual keys can be unset by posting an empty value to them. All keys can be unset by posting an empty value to `metadata`. Default (Stripe): `{}`.
+* `source_transaction` - (Optional) You can use this parameter to transfer funds from a charge before they are added to your available balance. A pending balance will transfer immediately but the funds will not become available until the original charge becomes available. [See the Connect documentation](https://docs.stripe.com/connect/separate-charges-and-transfers#transfer-availability) for details. Changing it fails the plan, because this resource cannot be replaced. Default: none.
+* `source_type` - (Optional) The source balance to use for this transfer. One of `bank_account`, `card`, or `fpx`. For most users, this will default to `card`. Possible values: `bank_account`, `card`, `fpx`. Changing it fails the plan, because this resource cannot be replaced. Default (Stripe): `card`. Removing it from the configuration leaves the current value.
+* `transfer_group` - (Optional) A string that identifies this transaction as part of a group. See the [Connect documentation](https://docs.stripe.com/connect/separate-charges-and-transfers#transfer-options) for details. Changing it fails the plan, because this resource cannot be replaced. Default: none.
 
 ## Attribute Reference
 

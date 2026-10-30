@@ -329,9 +329,13 @@ func TestDefaultStatementsComeFromTheEvidence(t *testing.T) {
 	}
 	ev := pinned(t, res, verified)
 	rule := 0
-	ev.Evidence.StripeRun.PlatformCountry = "US"
+	observation := func(variant, value string) (o RuleObservation) {
+		o.Condition.AccountCountry, o.Condition.Variant = "US", variant
+		o.Value = Matcher{Kind: "value", Value: json.RawMessage(value)}
+		return o
+	}
 	ev.Evidence.Rules = []EvidenceRule{{Rule: "the customer's currency, else the account's default currency",
-		Observations: json.RawMessage(`[{"condition":{"customer.currency":"eur"},"value":"eur"},{"condition":{},"value":"usd"}]`)}}
+		Observations: []RuleObservation{observation("customer_eur", `"eur"`), observation("", `"usd"`)}}}
 	leaf := func(key string, d *EvidenceDefault) EvidenceLeaf {
 		for _, l := range ev.Attributes.Leaves {
 			if l.Key.String() == key {
@@ -722,4 +726,51 @@ func declaredParents(t *testing.T) map[string]string {
 		})
 	}
 	return out
+}
+
+// A default the suite read from its parent object, which the record gives as a literal, has no
+// statement until the declaration words the rule, as a default the variants give differently.
+func TestParentDefaultHasNoStatementUntilWorded(t *testing.T) {
+	res := gadget()
+	res.ParentDefaults = []string{"color"}
+	ev := pinned(t, res, map[string]string{"request/PostGadgets/color": ClassVerified})
+	for _, l := range ev.Attributes.Leaves {
+		if l.Key.String() == "request/PostGadgets/color" {
+			ev.Evidence.Leaves = []EvidenceLeaf{{Key: l.Key, Status: "proven", Default: &EvidenceDefault{Kind: "value", Value: json.RawMessage(`100`)}}}
+		}
+	}
+	tc := cover(t, res, ev)
+	f := fieldAt(tc.table, "color")
+	if f == nil || f.Default == nil || f.Default.Kind != fields.DefaultVaries {
+		t.Fatalf("color's default: %+v", f)
+	}
+}
+
+// A token form leaves no member of the spread hash required, because a create sends one form or
+// the other, and the table holds the token beside them once the gate verifies it.
+func TestTokenFormLeavesTheHashOptional(t *testing.T) {
+	spec := &Spec{}
+	raw := `{"paths": {"/v1/things": {"post": {"operationId": "PostThings", "requestBody": {"content": {"application/x-www-form-urlencoded": {"schema": {"type": "object", "properties": {
+		"bank": {"anyOf": [{"type": "object", "required": ["number"], "properties": {"number": {"type": "string"}}}, {"type": "string"}]},
+		"token": {"type": "string"}}}}}},
+		"responses": {"200": {"content": {"application/json": {"schema": {"$ref": "#/components/schemas/thing"}}}}}}}},
+		"components": {"schemas": {"thing": {"type": "object", "x-resourceId": "thing", "required": ["id"], "properties": {"id": {"type": "string"}, "number": {"type": "string"}}}}}}`
+	if err := json.Unmarshal([]byte(raw), spec); err != nil {
+		t.Fatal(err)
+	}
+	res := Resource{Package: "thing", CreatePath: "/v1/things", CreateHash: "bank", Omit: []string{"token"}}
+	table, err := Build(spec, res)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if f := fieldAt(table, "number"); f == nil || !f.Required {
+		t.Fatalf("without a token form the hash's own requirement stands: %+v", f)
+	}
+	res.TokenForm = "token"
+	if table, err = Build(spec, res); err != nil {
+		t.Fatal(err)
+	}
+	if f := fieldAt(table, "number"); f == nil || f.Required {
+		t.Errorf("a token form leaves number optional: %+v", f)
+	}
 }

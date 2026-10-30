@@ -290,26 +290,279 @@ func TestAccAccountV2_update(t *testing.T) {
 	})
 }
 
-// A change to the configurations, the dashboard or the defaults is refused at plan time,
-// because nothing proves Stripe applies one on update. The error says to remove the account
-// from the state, because its destroy is refused too.
+// A change the record does not prove is refused at plan time, whether Stripe refuses it (the
+// dashboard and the collectors, once set) or the suite only re-sent the value (the country, the
+// default currency, the recipient's `applied`), or nothing proves it (the customer and merchant
+// configurations). The error says to remove the account from the state, because its destroy is
+// refused too.
 func TestAccAccountV2_refuseChange(t *testing.T) {
 	acct := acctest.NewAccount(t)
+	withoutTax := "    customer  = { capabilities = { automatic_indirect_tax = { requested = false } } }\n"
+	cfg := merchantConfig(acct, "")
+	refused := func(config, field string) resource.TestStep {
+		return resource.TestStep{
+			Config:      config,
+			PlanOnly:    true,
+			ExpectError: regexp.MustCompile("(?s)Changing `" + field + "` is not supported yet.*removed block"),
+		}
+	}
+	unapplied := "    recipient = {\n      applied      = false\n      capabilities = { stripe_balance = { stripe_transfers = { requested = true } } }\n    }\n"
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: tfacc.ProviderFactories,
 		Steps: acctest.Forget(t, []resource.TestStep{
-			{Config: merchantConfig(acct, "")},
+			{Config: cfg},
+			refused(accountConfig(acct, created(acct), withoutTax+merchant, managed), "configuration.customer"),
+			refused(strings.ReplaceAll(cfg, `dashboard = "none"`, `dashboard = "express"`), "dashboard"),
+			refused(strings.ReplaceAll(cfg, `currency         = "usd"`, `currency         = "gbp"`), "defaults.currency"),
+			refused(strings.ReplaceAll(cfg, `fees_collector = "application"`, `fees_collector = "stripe"`), "defaults.responsibilities"),
+			refused(strings.ReplaceAll(cfg, `country          = "us"`, `country          = "GB"`), "identity.country"),
+			refused(accountConfig(acct, created(acct), customer+merchant+unapplied, managed), "configuration.recipient.applied"),
+		}, nil, "stripe_account_v2"),
+	})
+}
+
+// recipientConfig is the suite's recipient account: a US identity, a contact email and a
+// recipient configuration. body holds what the test changes, and the identity goes in full, so
+// that the test can change one member of it. Where the record generates a value, as it does the
+// name and the email (`$gen`), so does the test.
+func recipientConfig(c acctest.Config, identity, requested, body string) string {
+	return c.ProviderBlock() + fmt.Sprintf(`
+resource "stripe_account_v2" "test" {
+  display_name  = %q
+  contact_email = "e2e+%s@example.com"
+  identity = {
+%s  }
+  configuration = {
+    recipient = {
+%s
+    }
+  }
+%s}
+`, c.Name("Recipient"), c.Name("recipient"), identity, requested, body)
+}
+
+// profileConfig is the account of the record's probe `update/1`: no configuration and no
+// identity, on which the suite proves the contact phone and the defaults' locales and profile.
+func profileConfig(c acctest.Config, body string) string {
+	return c.ProviderBlock() + fmt.Sprintf(`
+resource "stripe_account_v2" "test" {
+  display_name = %q
+%s}
+`, c.Name("Profile"), body)
+}
+
+const (
+	usCompany = "    country     = \"US\"\n    entity_type = \"company\"\n"
+	requested = "      capabilities = { stripe_balance = { stripe_transfers = { requested = true } } }"
+)
+
+// The record's probes `update/1` and `unset/1`, on the same account and with the same values: the
+// contact phone, the locales reordered then shortened, and the profile. An update sends only what
+// changed. Removing a member the record shows null unsets clears it. The one business URL the
+// record holds is `https://accessible.stripe.com`, and Stripe refuses others the fake takes, so it
+// stays in every step and the update changes the locales and the name instead.
+func TestAccAccountV2_updateDefaults(t *testing.T) {
+	acct := acctest.NewAccount(t)
+	var path string
+	body := func(phone, locales, profile string) string {
+		return phone + `  defaults = {
+    locales = ` + locales + `
+    profile = {
+      business_url = "https://accessible.stripe.com"
+` + profile + `    }
+  }
+`
+	}
+	doing, renamed, product := acct.Name("Acme"), acct.Name("Acme Trading"), acct.Name("Hardware")
+	first := body("  contact_phone = \"+18008675309\"\n", `["ar-SA", "bg"]`, fmt.Sprintf(`      doing_business_as   = %q
+      product_description = %q
+`, doing, product))
+	second := body("  contact_phone = \"+18008675310\"\n", `["bg", "ar-SA"]`, fmt.Sprintf(`      doing_business_as   = %q
+      product_description = %q
+`, renamed, product))
+	removed := body("", `["ar-SA"]`, fmt.Sprintf(`      doing_business_as = %q
+`, renamed))
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: tfacc.ProviderFactories,
+		Steps: acctest.Forget(t, []resource.TestStep{
 			{
-				Config:      accountConfig(acct, created(acct), customer+merchant+recipient, managed),
-				PlanOnly:    true,
-				ExpectError: regexp.MustCompile("(?s)Changing `configuration` is not supported yet.*removed block"),
+				Config: profileConfig(acct, first),
+				ConfigPlanChecks: resource.ConfigPlanChecks{PostApplyPostRefresh: []plancheck.PlanCheck{
+					plancheck.ExpectEmptyPlan(),
+				}},
+				Check: resource.ComposeAggregateTestCheckFunc(
+					pathOf(&path),
+					resource.TestCheckResourceAttr(address, "contact_phone", "+18008675309"),
+					resource.TestCheckResourceAttr(address, "defaults.locales.0", "ar-SA"),
+					resource.TestCheckResourceAttr(address, "defaults.profile.business_url", "https://accessible.stripe.com"),
+					resource.TestCheckResourceAttr(address, "defaults.profile.doing_business_as", doing),
+				),
+			},
+			{
+				Config: profileConfig(acct, second),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply:             []plancheck.PlanCheck{plancheck.ExpectResourceAction(address, plancheck.ResourceActionUpdate)},
+					PostApplyPostRefresh: []plancheck.PlanCheck{plancheck.ExpectEmptyPlan()},
+				},
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr(address, "contact_phone", "+18008675310"),
+					resource.TestCheckResourceAttr(address, "defaults.locales.0", "bg"),
+					resource.TestCheckResourceAttr(address, "defaults.profile.doing_business_as", renamed),
+					func(*terraform.State) error {
+						if acct.Smoke {
+							return nil
+						}
+						u := lastUpdate(t, acct, path)
+						if defaults, _ := u.Get("defaults"); !jsonIs(defaults, `{"locales":["bg","ar-SA"],"profile":{"doing_business_as":"`+renamed+`"}}`) {
+							return fmt.Errorf("the update must send only the defaults that changed: %+v", defaults)
+						}
+						for _, never := range []string{"configuration", "identity"} {
+							if _, sent := u.Get(never); sent {
+								return fmt.Errorf("the update sent %s: %+v", never, u)
+							}
+						}
+						return nil
+					},
+				),
+			},
+			{
+				Config: profileConfig(acct, removed),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PostApplyPostRefresh: []plancheck.PlanCheck{plancheck.ExpectEmptyPlan()},
+				},
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckNoResourceAttr(address, "contact_phone"),
+					resource.TestCheckResourceAttr(address, "defaults.locales.#", "1"),
+					resource.TestCheckNoResourceAttr(address, "defaults.profile.product_description"),
+					resource.TestCheckResourceAttr(address, "defaults.profile.business_url", "https://accessible.stripe.com"),
+					resource.TestCheckResourceAttr(address, "defaults.profile.doing_business_as", renamed),
+				),
 			},
 		}, nil, "stripe_account_v2"),
 	})
 }
 
-// The identity's country and entity type are create-only, and Stripe cannot delete the
-// account, so a change to one fails the plan, and a taint fails at apply.
+// A contact phone Stripe holds that the configuration leaves out plans an update that clears it,
+// because the record shows null unsets it.
+func TestAccAccountV2_clearsWhatTheConfigurationLeavesOut(t *testing.T) {
+	acct := acctest.NewAccount(t)
+	var path string
+	cfg := profileConfig(acct, "")
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: tfacc.ProviderFactories,
+		Steps: acctest.Forget(t, []resource.TestStep{
+			{Config: cfg, Check: pathOf(&path)},
+			{
+				PreConfig: func() {
+					tfacc.Post(t, acct, path, wire.Object{{Name: "contact_phone", Value: wire.String("+18008675310")}})
+				},
+				Config: cfg,
+				ConfigPlanChecks: resource.ConfigPlanChecks{PreApply: []plancheck.PlanCheck{
+					plancheck.ExpectResourceAction(address, plancheck.ResourceActionUpdate),
+				}},
+				Check: resource.TestCheckNoResourceAttr(address, "contact_phone"),
+			},
+		}, nil, "stripe_account_v2"),
+	})
+}
+
+// lastUpdate is the parameters of the last POST to path. There is no log in smoke mode.
+func lastUpdate(t *testing.T, c acctest.Config, path string) wire.Object {
+	if c.Smoke {
+		return nil
+	}
+	for _, entry := range acctest.RequestLog(t, c) {
+		if params, ok := entry.Params.(wire.Object); ok && entry.Method == "POST" && entry.Path == path {
+			return params
+		}
+	}
+	return nil
+}
+
+// The record proves a change of the entity type, which goes alone: the country, which a change
+// of could not be sent, stays out of the request, and removing the country keeps its value,
+// because Stripe refuses a null.
+func TestAccAccountV2_updateIdentity(t *testing.T) {
+	acct := acctest.NewAccount(t)
+	var path string
+	managedRecipient := "  dashboard = \"none\"\n  defaults = {\n    responsibilities = { fees_collector = \"application\", losses_collector = \"application\" }\n  }\n"
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: tfacc.ProviderFactories,
+		Steps: acctest.Forget(t, []resource.TestStep{
+			{
+				Config: recipientConfig(acct, usCompany, requested, managedRecipient),
+				Check:  pathOf(&path),
+			},
+			{
+				Config: recipientConfig(acct, "    country     = \"US\"\n    entity_type = \"non_profit\"\n", requested, managedRecipient),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply:             []plancheck.PlanCheck{plancheck.ExpectResourceAction(address, plancheck.ResourceActionUpdate)},
+					PostApplyPostRefresh: []plancheck.PlanCheck{plancheck.ExpectEmptyPlan()},
+				},
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr(address, "identity.entity_type", "non_profit"),
+					func(*terraform.State) error {
+						if acct.Smoke {
+							return nil
+						}
+						if identity, _ := lastUpdate(t, acct, path).Get("identity"); !jsonIs(identity, `{"entity_type":"non_profit"}`) {
+							return fmt.Errorf("the update must send only what changed of the identity: %+v", identity)
+						}
+						return nil
+					},
+				),
+			},
+			{
+				Config: recipientConfig(acct, "    entity_type = \"non_profit\"\n", requested, managedRecipient),
+				ConfigPlanChecks: resource.ConfigPlanChecks{PreApply: []plancheck.PlanCheck{
+					plancheck.ExpectEmptyPlan(),
+				}},
+				Check: resource.TestCheckResourceAttr(address, "identity.country", "US"),
+			},
+		}, nil, "stripe_account_v2"),
+	})
+}
+
+// The record proves a change of a recipient's `stripe_transfers` request, whose capability
+// Stripe then drops from its answer (probe `update/2`). Stripe never returns `requested`, so
+// state keeps the configured value.
+func TestAccAccountV2_updateRecipient(t *testing.T) {
+	acct := acctest.NewAccount(t)
+	var path string
+	managedRecipient := "  dashboard = \"none\"\n  defaults = {\n    responsibilities = { fees_collector = \"application\", losses_collector = \"application\" }\n  }\n"
+	withdrawn := "      capabilities = { stripe_balance = { stripe_transfers = { requested = false } } }"
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: tfacc.ProviderFactories,
+		Steps: acctest.Forget(t, []resource.TestStep{
+			{
+				Config: recipientConfig(acct, usCompany, requested, managedRecipient),
+				Check:  pathOf(&path),
+			},
+			{
+				Config: recipientConfig(acct, usCompany, withdrawn, managedRecipient),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply:             []plancheck.PlanCheck{plancheck.ExpectResourceAction(address, plancheck.ResourceActionUpdate)},
+					PostApplyPostRefresh: []plancheck.PlanCheck{plancheck.ExpectEmptyPlan()},
+				},
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr(address, "configuration.recipient.capabilities.stripe_balance.stripe_transfers.requested", "false"),
+					func(*terraform.State) error {
+						if acct.Smoke {
+							return nil
+						}
+						if configuration, _ := lastUpdate(t, acct, path).Get("configuration"); !jsonIs(configuration, `{"recipient":{"capabilities":{"stripe_balance":{"stripe_transfers":{"requested":false}}}}}`) {
+							return fmt.Errorf("the update must send only the request: %+v", configuration)
+						}
+						return nil
+					},
+				),
+			},
+		}, nil, "stripe_account_v2"),
+	})
+}
+
+// Nothing of the account is create-only now, so no change of an argument replaces it. Stripe
+// cannot delete the account, so a taint fails at apply.
 func TestAccAccountV2_replace(t *testing.T) {
 	acct := acctest.NewAccount(t)
 	cfg := merchantConfig(acct, "")
@@ -317,7 +570,6 @@ func TestAccAccountV2_replace(t *testing.T) {
 		ProtoV6ProviderFactories: tfacc.ProviderFactories,
 		Steps: acctest.Forget(t, []resource.TestStep{
 			{Config: cfg},
-			{Config: regexp.MustCompile(`"company"`).ReplaceAllString(cfg, `"non_profit"`), PlanOnly: true, ExpectError: tfacc.RefusedReplace},
 			{Config: cfg, Taint: []string{address}, ExpectError: tfacc.RefusedDestroy},
 		}, nil, "stripe_account_v2"),
 	})

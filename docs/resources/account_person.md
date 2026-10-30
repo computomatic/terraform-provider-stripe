@@ -3,12 +3,12 @@
 page_title: "stripe_account_person Resource - Stripe"
 subcategory: ""
 description: |-
-  A person of a connected account's business, such as its representative, an executive, an owner or a director. terraform destroy deletes the person, and changing account creates a new one. Stripe never returns id_number or ssn_last_4, so state keeps the values you configured and treats them as sensitive; id_number_provided and ssn_last_4_provided say whether Stripe has them. A plan that changes either on an existing person fails, because changing them is not supported yet: revert the configuration, ignore the change, or recreate the person deliberately with terraform taint (tofu taint in OpenTofu). Stripe returns a ten digit phone with +1 in front, so state keeps the phone number as you configured it. Removing an argument other than metadata from the configuration leaves its value on the person. A refresh that finds the account gone (Stripe answers 403 account_invalid) removes the person from state.
+  A person of a connected account's business, such as its representative, an executive, an owner or a director. terraform destroy deletes the person, and changing account creates a new one. Stripe never returns id_number or ssn_last_4, so state keeps the values you configured and treats them as sensitive; id_number_provided and ssn_last_4_provided say whether Stripe has them. A plan that changes either on an existing person fails, because changing them is not supported yet: revert the configuration, ignore the change, or recreate the person deliberately with terraform taint (tofu taint in OpenTofu). Stripe returns a ten digit phone with +1 in front, so state keeps the phone number as you configured it, and a verification document's front and back keep what you configured, because Stripe replaces a test token such as file_identity_document_success with a file of its own, so a change of these made outside Terraform is not seen. Stripe refuses a new document once it has verified the person, and its refusal fails the apply. Removing gender, maiden_name, a member of registered_address or a verification document from the configuration clears it, removing a metadata key removes that key, and removing any other argument leaves its value on the person. A refresh that finds the account gone (Stripe answers 403 account_invalid) removes the person from state.
 ---
 
 # Resource: stripe_account_person
 
-A person of a connected account's business, such as its representative, an executive, an owner or a director. `terraform destroy` deletes the person, and changing `account` creates a new one. Stripe never returns `id_number` or `ssn_last_4`, so state keeps the values you configured and treats them as sensitive; `id_number_provided` and `ssn_last_4_provided` say whether Stripe has them. A plan that changes either on an existing person fails, because changing them is not supported yet: revert the configuration, ignore the change, or recreate the person deliberately with `terraform taint` (`tofu taint` in OpenTofu). Stripe returns a ten digit `phone` with `+1` in front, so state keeps the phone number as you configured it. Removing an argument other than `metadata` from the configuration leaves its value on the person. A refresh that finds the account gone (Stripe answers 403 `account_invalid`) removes the person from state.
+A person of a connected account's business, such as its representative, an executive, an owner or a director. `terraform destroy` deletes the person, and changing `account` creates a new one. Stripe never returns `id_number` or `ssn_last_4`, so state keeps the values you configured and treats them as sensitive; `id_number_provided` and `ssn_last_4_provided` say whether Stripe has them. A plan that changes either on an existing person fails, because changing them is not supported yet: revert the configuration, ignore the change, or recreate the person deliberately with `terraform taint` (`tofu taint` in OpenTofu). Stripe returns a ten digit `phone` with `+1` in front, so state keeps the phone number as you configured it, and a verification document's `front` and `back` keep what you configured, because Stripe replaces a test token such as `file_identity_document_success` with a file of its own, so a change of these made outside Terraform is not seen. Stripe refuses a new document once it has verified the person, and its refusal fails the apply. Removing `gender`, `maiden_name`, a member of `registered_address` or a verification document from the configuration clears it, removing a `metadata` key removes that key, and removing any other argument leaves its value on the person. A refresh that finds the account gone (Stripe answers 403 `account_invalid`) removes the person from state.
 
 ## Example Usage
 
@@ -66,26 +66,32 @@ The following arguments are optional:
 
 * `address` - (Optional) The person's address. Removing it from the configuration leaves the current value. See [`address`](#address) below.
 * `dob` - (Optional) The person's date of birth. Removing it from the configuration leaves the current value. See [`dob`](#dob) below.
-* `email` - (Optional) The person's email address. Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
-* `first_name` - (Optional) The person's first name. Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
+* `email` - (Optional) The person's email address. Default: none. Removing it from the configuration leaves the current value.
+* `first_name` - (Optional) The person's first name. Default: none. Removing it from the configuration leaves the current value.
+* `full_name_aliases` - (Optional) A list of alternate names or aliases that the person is known by. Default: none. Removing it from the configuration leaves the current value.
+* `gender` - (Optional) The person's gender (International regulations require either "male" or "female"). Default: none.
 * `id_number` - (Optional, Sensitive) The person's ID number, as appropriate for their country. For example, a social security number in the U.S., social insurance number in Canada, etc. Instead of the number itself, you can also provide a [PII token provided by Stripe.js](https://docs.stripe.com/js/tokens/create_token?type=pii). Changing this value for the account's representative requires that the account re-accept the [terms of service](https://docs.stripe.com/api/accounts/object#account_object-tos_acceptance).
-* `last_name` - (Optional) The person's last name. Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
-* `metadata` - (Optional) Set of [key-value pairs](https://docs.stripe.com/api/metadata) that you can attach to an object. This can be useful for storing additional information about the object in a structured format. Individual keys can be unset by posting an empty value to them. All keys can be unset by posting an empty value to `metadata`.
-* `phone` - (Optional) The person's phone number. Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
+* `last_name` - (Optional) The person's last name. Default: none. Removing it from the configuration leaves the current value.
+* `maiden_name` - (Optional) The person's maiden name. Default: none.
+* `metadata` - (Optional) Set of [key-value pairs](https://docs.stripe.com/api/metadata) that you can attach to an object. This can be useful for storing additional information about the object in a structured format. Individual keys can be unset by posting an empty value to them. All keys can be unset by posting an empty value to `metadata`. Default (Stripe): `{}`.
+* `phone` - (Optional) The person's phone number. Default: none. Removing it from the configuration leaves the current value.
+* `political_exposure` - (Optional) Indicates if the person or any of their representatives, family members, or other closely related persons, declares that they hold or have held an important public job or function, in any jurisdiction. Possible values: `existing`, `none`. Default: none. Removing it from the configuration leaves the current value.
+* `registered_address` - (Optional) The person's registered address. Removing it from the configuration leaves the current value. See [`registered_address`](#registered_address) below.
 * `relationship` - (Optional) The relationship that this person has with the account's legal entity. Removing it from the configuration leaves the current value. See [`relationship`](#relationship) below.
 * `ssn_last_4` - (Optional, Sensitive) The last four digits of the person's Social Security number (U.S. only). Changing this value for the account's representative requires that the account re-accept the [terms of service](https://docs.stripe.com/api/accounts/object#account_object-tos_acceptance).
+* `verification` - (Optional) The person's verification status. Removing it from the configuration leaves the current value. See [`verification`](#verification) below.
 
 <a id="address"></a>
 ### `address`
 
 The `address` attribute supports:
 
-* `city` - (Optional) City, district, suburb, town, or village. Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
-* `country` - (Optional) Two-letter country code ([ISO 3166-1 alpha-2](https://en.wikipedia.org/wiki/ISO_3166-1_alpha-2)). Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
-* `line1` - (Optional) Address line 1, such as the street, PO Box, or company name. Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
-* `line2` - (Optional) Address line 2, such as the apartment, suite, unit, or building. Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
-* `postal_code` - (Optional) ZIP or postal code. Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
-* `state` - (Optional) State, county, province, or region ([ISO 3166-2](https://en.wikipedia.org/wiki/ISO_3166-2)). Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
+* `city` - (Optional) City, district, suburb, town, or village. Default: none. Removing it from the configuration leaves the current value.
+* `country` - (Optional) Two-letter country code ([ISO 3166-1 alpha-2](https://en.wikipedia.org/wiki/ISO_3166-1_alpha-2)). Removing it from the configuration leaves the current value.
+* `line1` - (Optional) Address line 1, such as the street, PO Box, or company name. Default: none. Removing it from the configuration leaves the current value.
+* `line2` - (Optional) Address line 2, such as the apartment, suite, unit, or building. Default: none. Removing it from the configuration leaves the current value.
+* `postal_code` - (Optional) ZIP or postal code. Default: none. Removing it from the configuration leaves the current value.
+* `state` - (Optional) State, county, province, or region ([ISO 3166-2](https://en.wikipedia.org/wiki/ISO_3166-2)). Default: none. Removing it from the configuration leaves the current value.
 
 <a id="dob"></a>
 ### `dob`
@@ -96,19 +102,62 @@ The `dob` attribute supports:
 * `month` - (Required) The month of birth, between 1 and 12.
 * `year` - (Required) The four-digit year of birth.
 
+<a id="registered_address"></a>
+### `registered_address`
+
+The `registered_address` attribute supports:
+
+* `city` - (Optional) City, district, suburb, town, or village. Default: none.
+* `country` - (Optional) Two-letter country code ([ISO 3166-1 alpha-2](https://en.wikipedia.org/wiki/ISO_3166-1_alpha-2)). Default: none.
+* `line1` - (Optional) Address line 1, such as the street, PO Box, or company name. Default: none.
+* `line2` - (Optional) Address line 2, such as the apartment, suite, unit, or building. Default: none.
+* `postal_code` - (Optional) ZIP or postal code. Default: none.
+* `state` - (Optional) State, county, province, or region ([ISO 3166-2](https://en.wikipedia.org/wiki/ISO_3166-2)). Default: none.
+
 <a id="relationship"></a>
 ### `relationship`
 
 The `relationship` attribute supports:
 
 * `authorizer` - (Read-Only) Whether the person is the authorizer of the account's representative.
-* `director` - (Optional) Whether the person is a director of the account's legal entity. Directors are typically members of the governing board of the company, or responsible for ensuring the company meets its regulatory obligations. Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
-* `executive` - (Optional) Whether the person has significant responsibility to control, manage, or direct the organization. Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
+* `director` - (Optional) Whether the person is a director of the account's legal entity. Directors are typically members of the governing board of the company, or responsible for ensuring the company meets its regulatory obligations. Default (Stripe): `false`. Removing it from the configuration leaves the current value.
+* `executive` - (Optional) Whether the person has significant responsibility to control, manage, or direct the organization. Default (Stripe): `false`. Removing it from the configuration leaves the current value.
 * `legal_guardian` - (Read-Only) Whether the person is the legal guardian of the account's representative.
-* `owner` - (Optional) Whether the person is an owner of the account’s legal entity. Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
-* `percent_ownership` - (Optional) The percent owned by the person of the account's legal entity. Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
-* `representative` - (Optional) Whether the person is authorized as the primary representative of the account. This is the person nominated by the business to provide information about themselves, and general information about the account. There can only be one representative at any given time. At the time the account is created, this person should be set to the person responsible for opening the account. Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
-* `title` - (Optional) The person's title (e.g., CEO, Support Engineer). Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
+* `owner` - (Optional) Whether the person is an owner of the account’s legal entity. Default (Stripe): `false`. Removing it from the configuration leaves the current value.
+* `percent_ownership` - (Optional) The percent owned by the person of the account's legal entity. Default: none. Removing it from the configuration leaves the current value.
+* `representative` - (Optional) Whether the person is authorized as the primary representative of the account. This is the person nominated by the business to provide information about themselves, and general information about the account. There can only be one representative at any given time. At the time the account is created, this person should be set to the person responsible for opening the account. Default (Stripe): `false`. Removing it from the configuration leaves the current value.
+* `title` - (Optional) The person's title (e.g., CEO, Support Engineer). Default: none. Removing it from the configuration leaves the current value.
+
+<a id="verification"></a>
+### `verification`
+
+The `verification` attribute supports:
+
+* `additional_document` - (Optional) A document showing address, either a passport, local ID card, or utility bill from a well-known utility company. Removing it from the configuration leaves the current value. See [`verification.additional_document`](#verification.additional_document) below.
+* `details` - (Read-Only) A user-displayable string describing the verification state for the person. For example, this may say "Provided identity information could not be verified".
+* `details_code` - (Read-Only) One of `document_address_mismatch`, `document_dob_mismatch`, `document_duplicate_type`, `document_id_number_mismatch`, `document_name_mismatch`, `document_nationality_mismatch`, `failed_keyed_identity`, or `failed_other`. A machine-readable code specifying the verification state for the person.
+* `document` - (Optional) Removing it from the configuration leaves the current value. See [`verification.document`](#verification.document) below.
+* `status` - (Read-Only) The state of verification for the person. Possible values are `unverified`, `pending`, or `verified`. Please refer [guide](https://docs.stripe.com/connect/handling-api-verification) to handle verification updates.
+
+<a id="verification.additional_document"></a>
+### `verification.additional_document`
+
+The `verification.additional_document` attribute supports:
+
+* `back` - (Optional) The back of an ID returned by a [file upload](https://docs.stripe.com/api#create_file) with a `purpose` value of `identity_document`. Default: none.
+* `details` - (Read-Only) A user-displayable string describing the verification state of this document. For example, if a document is uploaded and the picture is too fuzzy, this may say "Identity document is too unclear to read".
+* `details_code` - (Read-Only) One of `document_corrupt`, `document_country_not_supported`, `document_expired`, `document_failed_copy`, `document_failed_other`, `document_failed_test_mode`, `document_fraudulent`, `document_failed_greyscale`, `document_incomplete`, `document_invalid`, `document_manipulated`, `document_missing_back`, `document_missing_front`, `document_not_readable`, `document_not_uploaded`, `document_photo_mismatch`, `document_too_large`, or `document_type_not_supported`. A machine-readable code specifying the verification state for this document.
+* `front` - (Optional) The front of an ID returned by a [file upload](https://docs.stripe.com/api#create_file) with a `purpose` value of `identity_document`. Default: none.
+
+<a id="verification.document"></a>
+### `verification.document`
+
+The `verification.document` attribute supports:
+
+* `back` - (Optional) The back of an ID returned by a [file upload](https://docs.stripe.com/api#create_file) with a `purpose` value of `identity_document`. Default: none.
+* `details` - (Read-Only) A user-displayable string describing the verification state of this document. For example, if a document is uploaded and the picture is too fuzzy, this may say "Identity document is too unclear to read".
+* `details_code` - (Read-Only) One of `document_corrupt`, `document_country_not_supported`, `document_expired`, `document_failed_copy`, `document_failed_other`, `document_failed_test_mode`, `document_fraudulent`, `document_failed_greyscale`, `document_incomplete`, `document_invalid`, `document_manipulated`, `document_missing_back`, `document_missing_front`, `document_not_readable`, `document_not_uploaded`, `document_photo_mismatch`, `document_too_large`, or `document_type_not_supported`. A machine-readable code specifying the verification state for this document.
+* `front` - (Optional) The front of an ID returned by a [file upload](https://docs.stripe.com/api#create_file) with a `purpose` value of `identity_document`. Default: none.
 
 ## Attribute Reference
 
@@ -120,7 +169,6 @@ This resource exports the following attributes in addition to the arguments abov
 * `id_number_provided` - Whether the person's `id_number` was provided. True if either the full ID number was provided or if only the required part of the ID number was provided (ex. last four of an individual's SSN for the US indicated by `ssn_last_4_provided`).
 * `requirements` - See [`requirements`](#requirements) below.
 * `ssn_last_4_provided` - Whether the last four digits of the person's Social Security number have been provided (U.S. only).
-* `verification` - See [`verification`](#verification) below.
 
 <a id="future_requirements"></a>
 ### `future_requirements`
@@ -180,37 +228,6 @@ The `requirements.errors` attribute is a list. Each element supports:
 * `reason` - An informative message that indicates the error type and provides additional details about the error.
 * `requirement` - The specific user onboarding requirement field (in the requirements hash) that needs to be resolved.
 
-<a id="verification"></a>
-### `verification`
-
-The `verification` attribute supports:
-
-* `additional_document` - A document showing address, either a passport, local ID card, or utility bill from a well-known utility company. See [`verification.additional_document`](#verification.additional_document) below.
-* `details` - A user-displayable string describing the verification state for the person. For example, this may say "Provided identity information could not be verified".
-* `details_code` - One of `document_address_mismatch`, `document_dob_mismatch`, `document_duplicate_type`, `document_id_number_mismatch`, `document_name_mismatch`, `document_nationality_mismatch`, `failed_keyed_identity`, or `failed_other`. A machine-readable code specifying the verification state for the person.
-* `document` - See [`verification.document`](#verification.document) below.
-* `status` - The state of verification for the person. Possible values are `unverified`, `pending`, or `verified`. Please refer [guide](https://docs.stripe.com/connect/handling-api-verification) to handle verification updates.
-
-<a id="verification.additional_document"></a>
-### `verification.additional_document`
-
-The `verification.additional_document` attribute supports:
-
-* `back` - The back of an ID returned by a [file upload](https://docs.stripe.com/api#create_file) with a `purpose` value of `identity_document`.
-* `details` - A user-displayable string describing the verification state of this document. For example, if a document is uploaded and the picture is too fuzzy, this may say "Identity document is too unclear to read".
-* `details_code` - One of `document_corrupt`, `document_country_not_supported`, `document_expired`, `document_failed_copy`, `document_failed_other`, `document_failed_test_mode`, `document_fraudulent`, `document_failed_greyscale`, `document_incomplete`, `document_invalid`, `document_manipulated`, `document_missing_back`, `document_missing_front`, `document_not_readable`, `document_not_uploaded`, `document_photo_mismatch`, `document_too_large`, or `document_type_not_supported`. A machine-readable code specifying the verification state for this document.
-* `front` - The front of an ID returned by a [file upload](https://docs.stripe.com/api#create_file) with a `purpose` value of `identity_document`.
-
-<a id="verification.document"></a>
-### `verification.document`
-
-The `verification.document` attribute supports:
-
-* `back` - The back of an ID returned by a [file upload](https://docs.stripe.com/api#create_file) with a `purpose` value of `identity_document`.
-* `details` - A user-displayable string describing the verification state of this document. For example, if a document is uploaded and the picture is too fuzzy, this may say "Identity document is too unclear to read".
-* `details_code` - One of `document_corrupt`, `document_country_not_supported`, `document_expired`, `document_failed_copy`, `document_failed_other`, `document_failed_test_mode`, `document_fraudulent`, `document_failed_greyscale`, `document_incomplete`, `document_invalid`, `document_manipulated`, `document_missing_back`, `document_missing_front`, `document_not_readable`, `document_not_uploaded`, `document_photo_mismatch`, `document_too_large`, or `document_type_not_supported`. A machine-readable code specifying the verification state for this document.
-* `front` - The front of an ID returned by a [file upload](https://docs.stripe.com/api#create_file) with a `purpose` value of `identity_document`.
-
 ## Timeouts
 
 [Configuration options](https://developer.hashicorp.com/terraform/language/resources/syntax#operation-timeouts) are set with the `timeouts` attribute, for example `timeouts = { create = "5m" }`:
@@ -257,4 +274,4 @@ Using `terraform import`, import an account person using its ID. For example:
 % terraform import stripe_account_person.representative acct_1Nv0FGQ9RKHgCVdK/person_1Nv0FGQ9RKHgCVdKmZb5XqT2
 ```
 
-~> Stripe never returns `id_number` or `ssn_last_4`, so an imported person has neither in state, and its `phone` is as Stripe formats it. Add `lifecycle { ignore_changes = [id_number, ssn_last_4] }` to a configuration that sets them, because a plan that changes them fails, and add `phone` to the list if the configuration writes it without the `+1`.
+~> Stripe never returns `id_number` or `ssn_last_4`, so an imported person has neither in state, and its `phone` and verification documents are in Stripe's form. Add `lifecycle { ignore_changes = [id_number, ssn_last_4] }` to a configuration that sets them, because a plan that changes them fails, and add `phone` to the list if the configuration writes it without the `+1`, and the verification documents if it names a test token.

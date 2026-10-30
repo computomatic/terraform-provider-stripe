@@ -6,6 +6,7 @@ import (
 	"slices"
 	"sort"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/hashicorp/terraform-plugin-framework/attr"
@@ -31,6 +32,9 @@ func (m *model) encodeCreate(plan basetypes.ObjectValue) (wire.Object, error) {
 	if err != nil {
 		return nil, err
 	}
+	if err := m.checkTokenForm(body); err != nil {
+		return nil, err
+	}
 	if err := m.refuseEmptyObjects(m.nodes, body, opCreate); err != nil {
 		return nil, err
 	}
@@ -40,10 +44,51 @@ func (m *model) encodeCreate(plan basetypes.ObjectValue) (wire.Object, error) {
 	return m.wrapCreate(body), nil
 }
 
+// checkTokenForm refuses a create body that holds a CreateWrap's token beside a field of the
+// hash, or neither the token nor every field the hash needs, as the plan does for what it knows
+// (planCreateWrap): a token configured from another resource is unknown there. It names
+// attributes and never their values, which include the sensitive account number.
+func (m *model) checkTokenForm(body wire.Object) error {
+	w := m.decl.CreateWrap
+	if w == nil || w.Token == "" {
+		return nil
+	}
+	attrName := func(name string) string {
+		if n, ok := m.top(name); ok {
+			return n.AttrName()
+		}
+		return name
+	}
+	var names []string
+	if _, token := body.Get(w.Token); token {
+		for _, f := range body {
+			if f.Name != w.Token && !slices.Contains(w.Outside, f.Name) {
+				names = append(names, "`"+attrName(f.Name)+"`")
+			}
+		}
+		if len(names) > 0 {
+			return fmt.Errorf("%s cannot be sent beside `%s` on a create: Stripe takes the token or the hash, not both", strings.Join(names, ", "), attrName(w.Token))
+		}
+		return nil
+	}
+	for _, name := range w.Requires {
+		if _, set := body.Get(name); !set {
+			names = append(names, "`"+attrName(name)+"`")
+		}
+	}
+	if len(names) > 0 {
+		return fmt.Errorf("%s required unless `%s` is set", strings.Join(names, ", "), attrName(w.Token))
+	}
+	return nil
+}
+
 // wrapCreate moves the create fields that belong in the declaration's hash under its key.
 func (m *model) wrapCreate(body wire.Object) wire.Object {
 	wrap := m.decl.CreateWrap
 	if wrap == nil {
+		return body
+	}
+	if _, token := body.Get(wrap.Token); token {
 		return body
 	}
 	var outer wire.Object

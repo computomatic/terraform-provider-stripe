@@ -36,6 +36,7 @@ This data source exports the following attributes in addition to the arguments a
 * `closed` - Indicates whether the account has been closed.
 * `configuration` - An Account Configuration which allows the Account to take on a key persona across Stripe products. See [`configuration`](#configuration) below.
 * `contact_email` - The primary contact email address for the Account.
+* `contact_phone` - The default contact phone for the Account.
 * `created` - Time at which the object was created. Represented as a RFC 3339 date & time UTC value in millisecond precision, for example: 2022-09-18T13:22:18.123Z.
 * `dashboard` - A value indicating the Stripe dashboard this Account has access to. This will depend on which configurations are enabled for this account. Possible values: `express`, `full`, `none`.
 * `defaults` - Default values to be used on Account Configurations. See [`defaults`](#defaults) below.
@@ -148,7 +149,7 @@ The `configuration.merchant.capabilities.stripe_balance.payouts.status_details` 
 
 The `configuration.recipient` attribute supports:
 
-* `applied` - Indicates whether the recipient configuration is active. You can deactivate or reactivate the recipient configuration by updating this property. Deactivating the configuration by setting this value to false  unrequest all capabilities within the configuration. It will not delete any of the configuration's other properties.
+* `applied` - Represents the state of the configuration, and can be updated to deactivate or re-apply a configuration.
 * `capabilities` - Capabilities to be requested on the Recipient Configuration. See [`configuration.recipient.capabilities`](#configuration.recipient.capabilities) below.
 
 <a id="configuration.recipient.capabilities"></a>
@@ -205,7 +206,18 @@ The `configuration.recipient.capabilities.stripe_balance.stripe_transfers.status
 The `defaults` attribute supports:
 
 * `currency` - Three-letter [ISO currency code](https://www.iso.org/iso-4217-currency-codes.html), in lowercase. Must be a [supported currency](https://stripe.com/docs/currencies).
+* `locales` - The Account's preferred locales (languages), ordered by preference.
+* `profile` - Account profile information. See [`defaults.profile`](#defaults.profile) below.
 * `responsibilities` - Default responsibilities held by either Stripe or the platform. See [`defaults.responsibilities`](#defaults.responsibilities) below.
+
+<a id="defaults.profile"></a>
+### `defaults.profile`
+
+The `defaults.profile` attribute supports:
+
+* `business_url` - The business's publicly-available website.
+* `doing_business_as` - The name which is used by the business.
+* `product_description` - Internal-only description of the product sold or service provided by the business. It's used by Stripe for risk and underwriting purposes.
 
 <a id="defaults.responsibilities"></a>
 ### `defaults.responsibilities`

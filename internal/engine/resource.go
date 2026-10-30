@@ -130,6 +130,11 @@ func (r *Resource) ModifyPlan(ctx context.Context, req resource.ModifyPlanReques
 	if resp.Diagnostics.HasError() || req.Plan.Raw.IsNull() {
 		return
 	}
+	if req.State.Raw.IsNull() {
+		if r.planCreateWrap(ctx, req.Config, &resp.Diagnostics); resp.Diagnostics.HasError() {
+			return
+		}
+	}
 	if req.State.Raw.IsNull() && !r.m.v2 {
 		var plan basetypes.ObjectValue
 		if diags := resp.Plan.Get(ctx, &plan); diags.HasError() {

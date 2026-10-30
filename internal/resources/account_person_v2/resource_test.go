@@ -259,6 +259,142 @@ func TestAccAccountPersonV2_update(t *testing.T) {
 
 // A change to the ID numbers is refused at plan time, because the suite sets them on create
 // only.
+// ordinary is a person with the suite's ordinary values, none of Stripe's Connect test values.
+// names and extra land inside it, and town in its address.
+func ordinary(names, town, extra string) string {
+	return fmt.Sprintf(`
+resource "stripe_account_person_v2" "test" {
+  account_id = stripe_account_v2.test.id
+  phone      = "+18008675309"
+%s
+  address = {
+    line1       = "354 Oyster Point Blvd"
+    city        = "South San Francisco"
+    state       = "CA"
+    postal_code = "94080"
+    country     = "US"
+%s  }
+%s}
+`, names, town, extra)
+}
+
+// The arguments the record proves (suite: TestV2CoreAccountPersonAttributes), read back and
+// changed in place. Removing a name or the legal gender clears it, because the record shows
+// null unsets it, and removing a political exposure, which Stripe refuses to unset, or the town,
+// a member of an address the engine sends whole, keeps it.
+func TestAccAccountPersonV2_verifiedArguments(t *testing.T) {
+	acct := acctest.NewAccount(t)
+	base := acct.ProviderBlock() + accountBlock(acct, "test")
+	names := fmt.Sprintf("  given_name = \"Jenny\"\n  surname    = \"Rosen\"\n  email      = \"e2e+%s@example.com\"\n", acct.Name("jenny"))
+	town := fmt.Sprintf("    town        = %q\n", acct.Name("Town"))
+	created := `
+  legal_gender       = "female"
+  political_exposure = "none"
+  nationalities      = ["US"]
+`
+	changed := `
+  legal_gender       = "male"
+  political_exposure = "existing"
+  nationalities      = ["CA"]
+`
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: tfacc.ProviderFactories,
+		Steps: acctest.Forget(t, []resource.TestStep{
+			{
+				Config: base + ordinary(names, town, created),
+				ConfigPlanChecks: resource.ConfigPlanChecks{PostApplyPostRefresh: []plancheck.PlanCheck{
+					plancheck.ExpectEmptyPlan(),
+				}},
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr(address, "legal_gender", "female"),
+					resource.TestCheckResourceAttr(address, "political_exposure", "none"),
+					resource.TestCheckResourceAttr(address, "nationalities.0", "US"),
+					resource.TestCheckResourceAttr(address, "address.town", acct.Name("Town")),
+				),
+			},
+			{
+				Config: base + ordinary(names, town, changed),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply:             []plancheck.PlanCheck{plancheck.ExpectResourceAction(address, plancheck.ResourceActionUpdate)},
+					PostApplyPostRefresh: []plancheck.PlanCheck{plancheck.ExpectEmptyPlan()},
+				},
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr(address, "legal_gender", "male"),
+					resource.TestCheckResourceAttr(address, "political_exposure", "existing"),
+					resource.TestCheckResourceAttr(address, "nationalities.0", "CA"),
+				),
+			},
+			{
+				Config: base + ordinary("", "", ""),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PostApplyPostRefresh: []plancheck.PlanCheck{plancheck.ExpectEmptyPlan()},
+				},
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckNoResourceAttr(address, "given_name"),
+					resource.TestCheckNoResourceAttr(address, "surname"),
+					resource.TestCheckNoResourceAttr(address, "email"),
+					resource.TestCheckNoResourceAttr(address, "legal_gender"),
+					resource.TestCheckResourceAttr(address, "political_exposure", "existing"),
+					resource.TestCheckResourceAttr(address, "address.town", acct.Name("Town")),
+				),
+			},
+		}, nil, "stripe_account_v2"),
+	})
+}
+
+// A legal guardian needs an existing representative on the account, and a person cannot be both
+// (suite: "relationship.legal_guardian").
+func TestAccAccountPersonV2_legalGuardian(t *testing.T) {
+	acct := acctest.NewAccount(t)
+	representativeBlock := personBlock(acct, "second", "test", "Rep", "", representative)
+	guardian := func(extra string) string {
+		return acct.ProviderBlock() + accountBlock(acct, "test") + representativeBlock + ordinary("", "", extra+"  depends_on = [stripe_account_person_v2.second]\n")
+	}
+	flag := "  relationship = { legal_guardian = true }\n"
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: tfacc.ProviderFactories,
+		Steps: acctest.Forget(t, []resource.TestStep{
+			{
+				Config: guardian(flag),
+				ConfigPlanChecks: resource.ConfigPlanChecks{PostApplyPostRefresh: []plancheck.PlanCheck{
+					plancheck.ExpectEmptyPlan(),
+				}},
+				Check: resource.TestCheckResourceAttr(address, "relationship.legal_guardian", "true"),
+			},
+		}, nil, "stripe_account_v2"),
+	})
+}
+
+// A value Stripe holds that the configuration leaves out plans an update that clears it, for the
+// arguments the record shows null unsets.
+func TestAccAccountPersonV2_clearsWhatTheConfigurationLeavesOut(t *testing.T) {
+	acct := acctest.NewAccount(t)
+	var account, id string
+	cfg := acct.ProviderBlock() + accountBlock(acct, "test") + ordinary("", "", "")
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: tfacc.ProviderFactories,
+		Steps: acctest.Forget(t, []resource.TestStep{
+			{Config: cfg, Check: ids(address, &account, &id)},
+			{
+				PreConfig: func() {
+					tfacc.Post(t, acct, personPath(account, id), wire.Object{
+						{Name: "given_name", Value: wire.String("Jane")},
+						{Name: "legal_gender", Value: wire.String("male")},
+					})
+				},
+				Config: cfg,
+				ConfigPlanChecks: resource.ConfigPlanChecks{PreApply: []plancheck.PlanCheck{
+					plancheck.ExpectResourceAction(address, plancheck.ResourceActionUpdate),
+				}},
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckNoResourceAttr(address, "given_name"),
+					resource.TestCheckNoResourceAttr(address, "legal_gender"),
+				),
+			},
+		}, nil, "stripe_account_v2"),
+	})
+}
+
 func TestAccAccountPersonV2_refuseIDNumbers(t *testing.T) {
 	acct := acctest.NewAccount(t)
 	resource.ParallelTest(t, resource.TestCase{

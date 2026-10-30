@@ -28,7 +28,10 @@ var Declaration = engine.Declaration{
 		Update:   "/v1/transfers/{transfer}/reversals/{id}",
 		List:     "/v1/transfers/{transfer}/reversals",
 	},
-	MovesMoney:   true,
+	MovesMoney: true,
+	// suite: "create the rest". The record's literal for "TestTransferReversalAttributes/leaves/
+	// request/PostTransfersIdReversals/amount" is what its transfer held.
+	Defaults:     map[string]string{"amount": "what remains of the transfer"},
 	Delete:       engine.Refuse,
 	RefuseReason: "Stripe cannot delete or undo a transfer reversal.",
 }

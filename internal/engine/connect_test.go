@@ -4,6 +4,7 @@ import (
 	"context"
 	"maps"
 	"net/http"
+	"slices"
 	"strings"
 	"testing"
 
@@ -161,11 +162,123 @@ func TestCreateWrapNestsTheCreateFields(t *testing.T) {
 	}
 }
 
+// A token takes the hash's place: the create sends it beside the outside fields, with no hash.
+func TestCreateWrapSendsATokenInPlaceOfTheHash(t *testing.T) {
+	decl := wrapDeclaration()
+	decl.CreateWrap.Token, decl.CreateWrap.Requires = "passcode", []string{"kind"}
+	m, err := compile(decl, fixtureTable())
+	if err != nil {
+		t.Fatal(err)
+	}
+	body := wire.Object{{Name: "passcode", Value: wire.String("tok_1")}, {Name: "metadata", Value: wire.Object{}}}
+	if got := m.wrapCreate(body); !slices.EqualFunc(got, body, func(a, b wire.Field) bool { return a.Name == b.Name }) {
+		t.Errorf("a create from a token must be sent as it is: %s", wireOf(t, got))
+	}
+	hash := m.wrapCreate(wire.Object{{Name: "name", Value: wire.String("n")}})
+	if _, wrapped := hash.Get("bank"); !wrapped {
+		t.Errorf("a create without the token still sends the hash: %s", wireOf(t, hash))
+	}
+}
+
+// tokenResource is a wrapped resource whose token is `passcode`, with `quantity` the field the
+// hash needs and `kind`, which no update takes, beside `name`, which one does.
+func tokenResource(t *testing.T, stub *stubStripe) *Resource {
+	t.Helper()
+	decl := wrapDeclaration()
+	decl.CreateWrap.Outside = []string{"metadata", "name"}
+	decl.CreateWrap.Token, decl.CreateWrap.Requires = "passcode", []string{"quantity"}
+	return configured(t, decl, fixtureTable(), stub)
+}
+
+func validated(t *testing.T, r *Resource, config basetypes.ObjectValue) diag.Diagnostics {
+	t.Helper()
+	var resp resource.ValidateConfigResponse
+	r.ValidateConfig(context.Background(), resource.ValidateConfigRequest{Config: tfsdk.Config{Schema: r.schema, Raw: raw(t, config)}}, &resp)
+	return resp.Diagnostics
+}
+
+// A token from another resource is unknown at validation and at plan, so nothing there can judge
+// it. Whatever it resolves to, the create refuses the two forms together, and neither, before
+// any request and without a value in the error.
+func TestCreateWrapChecksATokenUnknownAtPlanWhenItResolves(t *testing.T) {
+	stub := newStub()
+	r := tokenResource(t, stub)
+	config := r.fill(map[string]attr.Value{"name": types.StringValue("w"), "passcode": types.StringUnknown(), "kind": types.StringValue("a"), "quantity": types.Int64Value(7)})
+	if d := validated(t, r, config); d.HasError() {
+		t.Fatalf("an unknown token is left for apply: %v", d)
+	}
+	var plan resource.ModifyPlanResponse
+	r.planCreateWrap(context.Background(), tfsdk.Config{Schema: r.schema, Raw: raw(t, config)}, &plan.Diagnostics)
+	if plan.Diagnostics.HasError() {
+		t.Fatalf("an unknown token is left for apply: %v", plan.Diagnostics)
+	}
+
+	_, err := r.m.encodeCreate(r.fill(with(config, map[string]attr.Value{"passcode": types.StringValue("tok_secret_1")})))
+	if err == nil || !strings.Contains(err.Error(), "`kind`, `quantity` cannot be sent beside `passcode`") {
+		t.Fatalf("both forms at apply: %v", err)
+	}
+	if strings.Contains(err.Error(), "tok_secret_1") || strings.Contains(err.Error(), `"a"`) {
+		t.Errorf("the error must name attributes, never values: %v", err)
+	}
+
+	_, err = r.m.encodeCreate(r.fill(with(config, map[string]attr.Value{"passcode": types.StringNull(), "quantity": types.Int64Null()})))
+	if err == nil || !strings.Contains(err.Error(), "`quantity` required unless `passcode` is set") {
+		t.Fatalf("a token resolved to null needs the hash: %v", err)
+	}
+
+	if _, err = r.m.encodeCreate(r.fill(with(config, map[string]attr.Value{"passcode": types.StringValue("tok_1"), "kind": types.StringNull(), "quantity": types.Int64Null()}))); err != nil {
+		t.Errorf("the token alone, beside the outside fields: %v", err)
+	}
+	if _, err = r.m.encodeCreate(r.fill(with(config, map[string]attr.Value{"passcode": types.StringNull()}))); err != nil {
+		t.Errorf("the hash alone: %v", err)
+	}
+	if got := stub.requests(); len(got) != 0 {
+		t.Errorf("encoding sends nothing: %d requests", len(got))
+	}
+}
+
+// Validation sees no state, so beside a token it refuses only what could never be sent: a
+// create-only field. A create refuses every field of the hash and needs the hash without a
+// token; an object that exists takes an updatable field beside its token.
+func TestCreateWrapJudgesFieldsBesideATokenByWhatTheyCanDo(t *testing.T) {
+	r := tokenResource(t, newStub())
+	token := map[string]attr.Value{"name": types.StringValue("w"), "passcode": types.StringValue("tok_1")}
+	beside := func(field string, v attr.Value) basetypes.ObjectValue {
+		config := map[string]attr.Value{field: v}
+		maps.Copy(config, token)
+		return r.fill(config)
+	}
+	onCreate := func(config basetypes.ObjectValue) diag.Diagnostics {
+		var d diag.Diagnostics
+		r.planCreateWrap(context.Background(), tfsdk.Config{Schema: r.schema, Raw: raw(t, config)}, &d)
+		return d
+	}
+	createOnly, updatable := beside("kind", types.StringValue("a")), beside("quantity", types.Int64Value(7))
+	if d := validated(t, r, createOnly); !d.HasError() || !strings.Contains(d[0].Detail(), "`kind` cannot be set beside `passcode`") {
+		t.Errorf("a create-only field beside the token: %v", d)
+	}
+	if d := validated(t, r, updatable); d.HasError() {
+		t.Errorf("an updatable field beside the token passes validation: %v", d)
+	}
+	if d := onCreate(updatable); !d.HasError() || !strings.Contains(d[0].Detail(), "`quantity` cannot be set beside `passcode` on a create") {
+		t.Errorf("an updatable field beside the token on a create: %v", d)
+	}
+	if d := onCreate(r.fill(map[string]attr.Value{"name": types.StringValue("w")})); !d.HasError() || !strings.Contains(d[0].Detail(), "`quantity` is required unless `passcode` is set") {
+		t.Errorf("neither form on a create: %v", d)
+	}
+	if d := validated(t, r, r.fill(map[string]attr.Value{"name": types.StringValue("w")})); d.HasError() {
+		t.Errorf("an object that exists needs neither form: %v", d)
+	}
+}
+
 func TestCreateWrapMustNameCreateFields(t *testing.T) {
 	for name, wrap := range map[string]*CreateWrap{
 		"no key":          {Outside: []string{"metadata"}},
 		"unknown outside": {Key: "bank", Outside: []string{"nothing"}},
 		"not a create":    {Key: "bank", Outside: []string{"created"}},
+		"unknown token":   {Key: "bank", Token: "nothing"},
+		"required token":  {Key: "bank", Token: "name"},
+		"unknown needed":  {Key: "bank", Token: "passcode", Requires: []string{"nothing"}},
 	} {
 		decl := fixtureDeclaration()
 		decl.CreateWrap = wrap

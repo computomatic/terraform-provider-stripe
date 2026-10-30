@@ -165,12 +165,42 @@ type EvidenceUnset struct {
 
 // EvidenceRule is a default that depends on the account or another argument.
 type EvidenceRule struct {
-	Object       string          `json:"object"`
-	Operation    string          `json:"operation"`
-	Path         string          `json:"path"`
-	Rule         string          `json:"rule"`
-	Observations json.RawMessage `json:"observations,omitempty"`
-	Tests        []string        `json:"tests"`
+	Object       string            `json:"object"`
+	Operation    string            `json:"operation"`
+	Path         string            `json:"path"`
+	Rule         string            `json:"rule"`
+	Observations []RuleObservation `json:"observations,omitempty"`
+	Tests        []string          `json:"tests"`
+}
+
+// RuleObservation is what one probe of a rule held. The record's schema leaves the condition
+// open, so a member other than these fails the decode, rather than a condition the generator
+// cannot weigh passing for the plain create.
+type RuleObservation struct {
+	Condition struct {
+		AccountCountry string `json:"account_country"`
+		// Variant is the minimal create's variant, "" for the create with nothing else set.
+		Variant string `json:"variant"`
+	} `json:"condition"`
+	Value Matcher `json:"value"`
+}
+
+// Matcher is what a response path held, in every form the format defines. Each kind carries the
+// members it needs: `value` a literal, `sent` and `fingerprint` the request path, `from` the
+// path, under `ref` where a probe's parent holds it, and `id`, `created` and `secret` a prefix.
+type Matcher struct {
+	Kind     string          `json:"kind"`
+	Value    json.RawMessage `json:"value,omitempty"`
+	Path     string          `json:"path,omitempty"`
+	Prefix   *string         `json:"prefix,omitempty"`
+	Pattern  string          `json:"pattern,omitempty"`
+	Field    string          `json:"field,omitempty"`
+	Ref      string          `json:"ref,omitempty"`
+	Name     string          `json:"name,omitempty"`
+	Returned json.RawMessage `json:"returned,omitempty"`
+	Element  *Matcher        `json:"element,omitempty"`
+	Count    *int            `json:"count,omitempty"`
+	HasMore  *bool           `json:"has_more,omitempty"`
 }
 
 // SideEffect is one update of an update probe and the paths it did not name whose literal
@@ -219,6 +249,7 @@ var (
 	unsetBy       = []string{"empty_string", "null", "shorter_array"}
 	unsetResults  = []string{"null", "absent", "as_sent", "unchanged", "value", "refused"}
 	discountForms = []string{"coupon", "discount", "promotion_code"}
+	matcherKinds  = []string{"sent", "normalised", "value", "null", "absent", "id", "created", "ref", "account_id", "account", "from", "timestamp", "url", "secret", "list", "unchanged", "fingerprint"}
 )
 
 // Pinned is the vendored evidence, read and checked against its pin and the spec's.
@@ -229,6 +260,8 @@ type Pinned struct {
 	// classes and leaves index the two files by key, built on first use.
 	classes map[Key]string
 	leaves  map[Key]*EvidenceLeaf
+	// parentDefaults holds the leaves of the tables' ParentDefaults, gathered by facts.
+	parentDefaults map[Key]bool
 }
 
 const evidenceFormat = 1
@@ -466,6 +499,13 @@ func (e *Evidence) check() error {
 		}
 		if err := errors.Join(errs...); err != nil {
 			return err
+		}
+	}
+	for _, r := range e.Rules {
+		for _, o := range r.Observations {
+			if err := unknown(r.Object+" "+r.Path+": observation", o.Value.Kind, matcherKinds); err != nil {
+				return err
+			}
 		}
 	}
 	for _, d := range e.Discounts {

@@ -185,7 +185,7 @@ type Carry struct {
 }
 
 // CreateWrap says Stripe's create takes the object's fields as a hash under one key, such as
-// `external_account[routing_number]`, while the object's own fields are flat.
+// `bank_account[routing_number]`, while the object's own fields are flat.
 type CreateWrap struct {
 	// Key is the request parameter that holds the hash.
 	Key string
@@ -194,6 +194,16 @@ type CreateWrap struct {
 	// Outside lists the create fields that stay beside the hash, such as `metadata`. Every
 	// other create field goes into it.
 	Outside []string
+	// Token names a create field that takes a token in place of the hash, such as
+	// `external_account`. A create sets the token or the hash's fields, and a create from a
+	// token sends it beside the Outside fields, with no hash. Validation refuses a create-only
+	// field beside the token, the plan of a create any field of the hash, and the encoder both
+	// again, for a token unknown at plan. A field an update takes may stand beside the token
+	// once the object exists, and changes in place.
+	Token string
+	// Requires lists the fields a create from the hash needs, which a create from Token leaves
+	// to the token. The plan of a create and the encoder check them.
+	Requires []string
 }
 
 // Declaration is what the spec cannot say about a resource. It holds no CRUD logic.

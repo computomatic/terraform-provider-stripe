@@ -1,8 +1,14 @@
 package main
 
+import "fmt"
+
 // parentHolds is the register's reason for a table's own copy of the parent ID that the
 // engine adds as the declaration's Parent attribute.
 const parentHolds = "the parent attribute holds it"
+
+// cardOnly is the register's reason for the update parameters of a card, which the spec lists for
+// every external account, on a table that is only ever a bank account.
+const cardOnly = "A card's update parameter: Stripe refuses it on a bank account with `parameter_unknown` in every country (suite: TestAccountExternalAccountAttributes/leaves/request/PostAccountsAccountExternalAccountsId/%s), so as an argument of this table it could only ever fail the apply."
 
 // Resources lists the objects the generator writes tables for. A resource joins the list
 // when its declaration is written.
@@ -126,13 +132,25 @@ var Resources = []Resource{
 		DocsFrom:   map[string]string{"individual": "/v1/accounts/{account}/persons"},
 		Require:    []string{"country"}},
 	// The external account is a bank account here (a card is a different object), created from
-	// the hash the spec documents under `bank_account`. Its `account` is the parent ID. The
-	// Omit entries are the card's update parameters and the documents, which need a file. The
-	// account type is refused on a US account.
-	{Package: "account_external_account", Exclude: map[string]string{"account": parentHolds}, CreatePath: "/v1/accounts/{account}/external_accounts", UpdatePath: "/v1/accounts/{account}/external_accounts/{id}",
-		Response: "bank_account", CreateHash: "bank_account",
+	// the hash the spec documents under `bank_account`, or from a token in `external_account`.
+	// Its `account` is the parent ID. The Omit entries are the card's update parameters, which
+	// the register keeps out, and the documents, which need a file. The account type is refused
+	// on a US account; the suite leaves the countries that take one for later.
+	{Package: "account_external_account", Exclude: map[string]string{
+		"account":         parentHolds,
+		"address_city":    fmt.Sprintf(cardOnly, "address_city"),
+		"address_country": fmt.Sprintf(cardOnly, "address_country"),
+		"address_line1":   fmt.Sprintf(cardOnly, "address_line1"),
+		"address_line2":   fmt.Sprintf(cardOnly, "address_line2"),
+		"address_state":   fmt.Sprintf(cardOnly, "address_state"),
+		"address_zip":     fmt.Sprintf(cardOnly, "address_zip"),
+		"exp_month":       fmt.Sprintf(cardOnly, "exp_month"),
+		"exp_year":        fmt.Sprintf(cardOnly, "exp_year"),
+		"name":            fmt.Sprintf(cardOnly, "name"),
+	}, CreatePath: "/v1/accounts/{account}/external_accounts", UpdatePath: "/v1/accounts/{account}/external_accounts/{id}",
+		Response: "bank_account", CreateHash: "bank_account", TokenForm: "external_account",
 		Omit:     []string{"external_account", "account", "documents", "address_city", "address_country", "address_line1", "address_line2", "address_state", "address_zip", "exp_month", "exp_year", "name"},
-		ReadOnly: []string{"account_type"}, Require: []string{"currency", "routing_number"}},
+		ReadOnly: []string{"account_type"}},
 	{Package: "account_capability", Exclude: map[string]string{"account": parentHolds}, ReadPath: "/v1/accounts/{account}/capabilities/{capability}", Omit: []string{"account"}},
 	// Wave 4 batch b Connect. Each table keeps what the conformance suite and the fake prove,
 	// among many fields that need files, other countries or onboarding flows. A v1 person's
@@ -140,8 +158,7 @@ var Resources = []Resource{
 	// and `legal_guardian` roles and a v1 person's verification documents are read-only: no
 	// suite test sets them. A v2 account requests the one capability of each configuration
 	// the suite requests; the balance capabilities Stripe adds to it, and whether a
-	// configuration is applied, are read-only. Its country and entity type are create-only,
-	// because the suite updates only the registered name of an identity. App installs are
+	// configuration is applied, are read-only until the record verifies them. App installs are
 	// read-only: no suite test can install an app.
 	{Package: "account_person", Exclude: map[string]string{"account": parentHolds}, CreatePath: "/v1/accounts/{account}/persons", UpdatePath: "/v1/accounts/{account}/persons/{person}",
 		Keep: []string{"address", "created", "dob", "email", "first_name", "future_requirements", "id", "id_number", "id_number_provided", "last_name", "metadata", "phone",
@@ -155,8 +172,7 @@ var Resources = []Resource{
 			"contact_email", "created", "dashboard", "defaults.currency", "defaults.responsibilities", "display_name", "future_requirements", "id",
 			"identity.business_details.registered_name", "identity.country", "identity.entity_type", "livemode", "metadata", "requirements"},
 		ReadOnly: []string{"configuration.customer.applied", "configuration.merchant.applied", "configuration.recipient.applied",
-			"configuration.merchant.capabilities.stripe_balance", "configuration.recipient.capabilities.stripe_balance.payouts"},
-		CreateOnly: []string{"identity.country", "identity.entity_type"}},
+			"configuration.merchant.capabilities.stripe_balance", "configuration.recipient.capabilities.stripe_balance.payouts"}},
 	{Package: "account_person_v2", Exclude: map[string]string{"account": parentHolds}, CreatePath: "/v2/core/accounts/{account_id}/persons", UpdatePath: "/v2/core/accounts/{account_id}/persons/{id}",
 		Keep: []string{"address.city", "address.country", "address.line1", "address.line2", "address.postal_code", "address.state", "created", "date_of_birth", "email",
 			"given_name", "id", "id_numbers", "livemode", "metadata", "phone", "relationship", "surname", "updated"},
@@ -255,9 +271,9 @@ var Resources = []Resource{
 	// response's copy is left out.
 	// Stripe requires a transfer's `amount`, which the spec leaves optional (suite: "missing amount").
 	{Package: "transfer", CreatePath: "/v1/transfers", UpdatePath: "/v1/transfers/{transfer}", PagedLists: map[string]string{"reversals": "stripe_transfer_reversal"}, Require: []string{"amount"}},
-	{Package: "transfer_reversal", Exclude: map[string]string{"transfer": parentHolds}, CreatePath: "/v1/transfers/{id}/reversals", UpdatePath: "/v1/transfers/{transfer}/reversals/{id}", Omit: []string{"transfer"}},
+	{Package: "transfer_reversal", Exclude: map[string]string{"transfer": parentHolds}, CreatePath: "/v1/transfers/{id}/reversals", UpdatePath: "/v1/transfers/{transfer}/reversals/{id}", Omit: []string{"transfer"}, ParentDefaults: []string{"amount"}},
 	{Package: "application_fee", ReadPath: "/v1/application_fees/{id}", PagedLists: map[string]string{"refunds": "stripe_application_fee_refund"}},
-	{Package: "application_fee_refund", Exclude: map[string]string{"fee": parentHolds}, CreatePath: "/v1/application_fees/{id}/refunds", UpdatePath: "/v1/application_fees/{fee}/refunds/{id}", Omit: []string{"fee"}},
+	{Package: "application_fee_refund", Exclude: map[string]string{"fee": parentHolds}, CreatePath: "/v1/application_fees/{id}/refunds", UpdatePath: "/v1/application_fees/{fee}/refunds/{id}", Omit: []string{"fee"}, ParentDefaults: []string{"amount"}},
 	{Package: "customer_card", Exclude: map[string]string{"customer": parentHolds}, ReadPath: "/v1/customers/{customer}/cards/{id}", Omit: []string{"customer"}},
 	{Package: "customer_bank_account", Exclude: map[string]string{"customer": parentHolds}, ReadPath: "/v1/customers/{customer}/bank_accounts/{id}", Omit: []string{"customer"}},
 	// The line items of a checkout session and of a payment link have no retrieve, only the

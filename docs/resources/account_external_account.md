@@ -3,12 +3,12 @@
 page_title: "stripe_account_external_account Resource - Stripe"
 subcategory: ""
 description: |-
-  A bank account that a connected account is paid out to. terraform destroy deletes it. The first bank account added in a currency is its default: bank accounts created in one apply are added in no fixed order, so order them with depends_on or set default_for_currency. Stripe refuses default_for_currency = false on an account's first bank account in a currency. The bank account is also served as bank_accounts in Stripe's API: it is the same object. Stripe never returns the account_number, so state keeps the value you configured and treats it as sensitive. Only account_holder_name, account_holder_type, default_for_currency and metadata change in place; changing anything else creates a new bank account.
+  A bank account that a connected account is paid out to. Set external_account to a token such as btok_us_verified, or set account_number, country, currency and routing_number, with account_holder_name and account_holder_type if you want them. A bank account from a token takes those from the token, so set none of them beside it when you create it: the bank details never, and account_holder_name or account_holder_type only once the bank account exists, when they change in place. terraform destroy deletes it. The first bank account added in a currency is its default: bank accounts created in one apply are added in no fixed order, so order them with depends_on or set default_for_currency. Stripe refuses default_for_currency = false on an account's first bank account in a currency. The bank account is also served as bank_accounts in Stripe's API: it is the same object. Stripe never returns the account_number, so state keeps the value you configured and treats it as sensitive. Stripe takes account_type only in some countries, and refuses it on a US account. Only account_holder_name, account_holder_type, account_type, default_for_currency and metadata change in place; changing anything else creates a new bank account. Removing account_holder_name or account_holder_type from the configuration leaves the value on the bank account.
 ---
 
 # Resource: stripe_account_external_account
 
-A bank account that a connected account is paid out to. `terraform destroy` deletes it. The first bank account added in a currency is its default: bank accounts created in one apply are added in no fixed order, so order them with `depends_on` or set `default_for_currency`. Stripe refuses `default_for_currency = false` on an account's first bank account in a currency. The bank account is also served as `bank_accounts` in Stripe's API: it is the same object. Stripe never returns the `account_number`, so state keeps the value you configured and treats it as sensitive. Only `account_holder_name`, `account_holder_type`, `default_for_currency` and `metadata` change in place; changing anything else creates a new bank account.
+A bank account that a connected account is paid out to. Set `external_account` to a token such as `btok_us_verified`, or set `account_number`, `country`, `currency` and `routing_number`, with `account_holder_name` and `account_holder_type` if you want them. A bank account from a token takes those from the token, so set none of them beside it when you create it: the bank details never, and `account_holder_name` or `account_holder_type` only once the bank account exists, when they change in place. `terraform destroy` deletes it. The first bank account added in a currency is its default: bank accounts created in one apply are added in no fixed order, so order them with `depends_on` or set `default_for_currency`. Stripe refuses `default_for_currency = false` on an account's first bank account in a currency. The bank account is also served as `bank_accounts` in Stripe's API: it is the same object. Stripe never returns the `account_number`, so state keeps the value you configured and treats it as sensitive. Stripe takes `account_type` only in some countries, and refuses it on a US account. Only `account_holder_name`, `account_holder_type`, `account_type`, `default_for_currency` and `metadata` change in place; changing anything else creates a new bank account. Removing `account_holder_name` or `account_holder_type` from the configuration leaves the value on the bank account.
 
 ~> Stripe refuses to delete the default bank account of a currency; make another bank account the default first, or remove this one from the state before destroying the account, which deletes its bank accounts. `terraform destroy`, and a change that would replace it, fail at plan time for such an account external account. To stop managing one, remove it from the state as [Removing from State](#removing-from-state) shows; it stays in the Stripe account.
 
@@ -44,24 +44,25 @@ resource "stripe_account_external_account" "payouts" {
 The following arguments are required:
 
 * `account` - (Required) The ID of the parent object. Changing it replaces the resource.
-* `account_number` - (Required, Sensitive) Changing it replaces the resource.
-* `country` - (Required) Two-letter ISO code representing the country the bank account is located in. Changing it replaces the resource.
-* `currency` - (Required) Three-letter [ISO code for the currency](https://stripe.com/docs/payouts) paid out to the bank account. Changing it replaces the resource.
-* `routing_number` - (Required) The routing transit number for the bank account. Changing it replaces the resource.
 
 The following arguments are optional:
 
-* `account_holder_name` - (Optional) The name of the person or business that owns the bank account. Default: not sent.
-* `account_holder_type` - (Optional) The type of entity that holds the account. This can be either `individual` or `company`. Possible values: `company`, `individual`. Default: not sent.
-* `default_for_currency` - (Optional) When set to true, or if this is the first external account added in this currency, this account becomes the default external account for its currency. Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
-* `metadata` - (Optional) Set of [key-value pairs](https://docs.stripe.com/api/metadata) that you can attach to an object. This can be useful for storing additional information about the object in a structured format. Individual keys can be unset by posting an empty value to them. All keys can be unset by posting an empty value to `metadata`.
+* `account_holder_name` - (Optional) The name of the person or business that owns the bank account. Default: none. Removing it from the configuration leaves the current value.
+* `account_holder_type` - (Optional) The type of entity that holds the account. This can be either `individual` or `company`. Possible values: `company`, `individual`. Default: none. Removing it from the configuration leaves the current value.
+* `account_number` - (Optional, Sensitive) Changing it replaces the resource.
+* `account_type` - (Optional) The bank account type. This can only be `checking` or `savings` in most countries. In Japan, this can only be `futsu` or `toza`. Possible values: `checking`, `futsu`, `savings`, `toza`. Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
+* `country` - (Optional) Two-letter ISO code representing the country the bank account is located in. Changing it replaces the resource. Removing it from the configuration leaves the current value.
+* `currency` - (Optional) Three-letter [ISO code for the currency](https://stripe.com/docs/payouts) paid out to the bank account. Changing it replaces the resource. Removing it from the configuration leaves the current value.
+* `default_for_currency` - (Optional) When set to true, or if this is the first external account added in this currency, this account becomes the default external account for its currency. Default (Stripe): true for the first bank account in its currency on its account, false beside one (`false` on a US account). Removing it from the configuration leaves the current value.
+* `external_account` - (Optional) A token, like the ones returned by [Stripe.js](https://docs.stripe.com/js) or a dictionary containing a user's external account details (with the options shown below). Please refer to full [documentation](https://stripe.com/docs/api/external_accounts) instead. Changing it replaces the resource.
+* `metadata` - (Optional) Set of [key-value pairs](https://docs.stripe.com/api/metadata) that you can attach to an object. This can be useful for storing additional information about the object in a structured format. Individual keys can be unset by posting an empty value to them. All keys can be unset by posting an empty value to `metadata`. Default (Stripe): `{}`.
+* `routing_number` - (Optional) The routing transit number for the bank account. Changing it replaces the resource. Removing it from the configuration leaves the current value.
 
 ## Attribute Reference
 
 This resource exports the following attributes in addition to the arguments above:
 
 * `id` - Unique identifier for the object.
-* `account_type` - The bank account type. This can only be `checking` or `savings` in most countries. In Japan, this can only be `futsu` or `toza`.
 * `available_payout_methods` - A set of available payout methods for this bank account. Only values from this set should be passed as the `method` when creating a payout.
 * `bank_name` - Name of the bank associated with the routing number (e.g., `WELLS FARGO`).
 * `customer` - The ID of the customer that the bank account is associated with.
@@ -177,4 +178,4 @@ Using `terraform import`, import an account external account using its ID. For e
 % terraform import stripe_account_external_account.payouts acct_1Nv0FGQ9RKHgCVdK/ba_1Nv0FGQ9RKHgCVdK
 ```
 
-~> Stripe never returns the account number, so an imported bank account has none in state: a configuration that sets `account_number` plans a replacement unless it ignores changes to it with `lifecycle { ignore_changes = [account_number] }`.
+~> Stripe never returns the account number, so an imported bank account has none in state: a configuration that sets `account_number` plans a replacement unless it ignores changes to it with `lifecycle { ignore_changes = [account_number] }`. Stripe does not return `external_account`, so an imported account external account has it null: a configuration that sets it plans a replacement after the import.

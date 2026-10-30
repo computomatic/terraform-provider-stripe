@@ -27,7 +27,10 @@ var Declaration = engine.Declaration{
 		Update:   "/v1/application_fees/{fee}/refunds/{id}",
 		List:     "/v1/application_fees/{fee}/refunds",
 	},
-	MovesMoney:   true,
+	MovesMoney: true,
+	// suite: "create the rest". The record's literal for "TestApplicationFeeRefundAttributes/leaves/
+	// request/PostApplicationFeesIdRefunds/amount" is what its fee held.
+	Defaults:     map[string]string{"amount": "what remains of the fee"},
 	Delete:       engine.Refuse,
 	RefuseReason: "Stripe cannot delete or undo an application fee refund.",
 }

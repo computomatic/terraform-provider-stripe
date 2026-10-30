@@ -134,14 +134,14 @@ data "stripe_account_external_account" "test" {
 							continue
 						}
 						params, _ := entry.Params.(wire.Object)
-						hash, ok := params.Get("external_account")
+						hash, ok := params.Get("bank_account")
 						if !ok {
-							return fmt.Errorf("create did not send external_account: %s", entry.Path)
+							return fmt.Errorf("create did not send bank_account: %s", entry.Path)
 						}
 						inner, _ := hash.(wire.Object)
 						for name, want := range map[string]string{"object": "bank_account", "country": "US", "currency": "usd", "routing_number": routingNumber, "account_number": number} {
 							if got, _ := inner.GetString(name); got != want {
-								return fmt.Errorf("external_account[%s] = %q, want %q", name, got, want)
+								return fmt.Errorf("bank_account[%s] = %q, want %q", name, got, want)
 							}
 						}
 						if _, top := params.Get("routing_number"); top {
@@ -423,6 +423,182 @@ func TestAccAccountExternalAccount_driftAccountDeleted(t *testing.T) {
 
 // Stripe refuses a routing number that fails its check and an account number that is not a
 // test number in test mode (suite: "create errors"); the error reaches the user unchanged.
+// A token takes the place of the hash, and Stripe fills in what the hash would have said: the
+// bank details, and the holder of the token's bank account (suite: "external_account").
+func TestAccAccountExternalAccount_token(t *testing.T) {
+	acct := acctest.NewAccount(t)
+	cfg := accountBlock(acct) + `
+resource "stripe_account_external_account" "test" {
+  account          = stripe_account.test.id
+  external_account = "btok_us_verified"
+}
+`
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: tfacc.ProviderFactories,
+		Steps: acctest.Forget(t, []resource.TestStep{
+			{
+				Config: cfg,
+				ConfigPlanChecks: resource.ConfigPlanChecks{PostApplyPostRefresh: []plancheck.PlanCheck{
+					plancheck.ExpectEmptyPlan(),
+				}},
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr(address, "external_account", "btok_us_verified"),
+					resource.TestCheckResourceAttr(address, "country", "US"),
+					resource.TestCheckResourceAttr(address, "currency", "usd"),
+					resource.TestCheckResourceAttrSet(address, "routing_number"),
+					resource.TestCheckResourceAttr(address, "account_holder_name", "Jenny Rosen"),
+					resource.TestCheckNoResourceAttr(address, "account_number"),
+					func(*terraform.State) error {
+						if acct.Smoke {
+							return nil
+						}
+						for _, entry := range acctest.RequestLog(t, acct) {
+							if entry.Method != "POST" || !regexp.MustCompile(`/external_accounts$`).MatchString(entry.Path) {
+								continue
+							}
+							params, _ := entry.Params.(wire.Object)
+							if got, _ := params.GetString("external_account"); got != "btok_us_verified" {
+								return fmt.Errorf("external_account = %q, want the token", got)
+							}
+							if _, hash := params.Get("bank_account"); hash {
+								return fmt.Errorf("a create from a token sent the hash too: %+v", params)
+							}
+						}
+						return nil
+					},
+				),
+			},
+			{
+				Config: cfg + "\n",
+				ConfigPlanChecks: resource.ConfigPlanChecks{PreApply: []plancheck.PlanCheck{
+					plancheck.ExpectEmptyPlan(),
+				}},
+			},
+		}, nil, "stripe_account_external_account.test"),
+	})
+}
+
+// A create takes the token or the hash's fields: Stripe refuses any of them beside a token, and
+// the hash needs all of its own. Validation refuses the bank details, which could never be sent,
+// and the plan of a create the holder, which an update takes once the bank account exists.
+func TestAccAccountExternalAccount_tokenOrHash(t *testing.T) {
+	acct := acctest.NewAccount(t)
+	base := accountBlock(acct)
+	block := func(body string) string {
+		return base + "\nresource \"stripe_account_external_account\" \"test\" {\n  account = stripe_account.test.id\n" + body + "}\n"
+	}
+	token := "  external_account = \"btok_us_verified\"\n"
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: tfacc.ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config:      block(token + "  routing_number = \"110000000\"\n"),
+				PlanOnly:    true,
+				ExpectError: regexp.MustCompile("`routing_number` cannot be set beside `external_account`:\\s+Stripe takes it\\s+from the token"),
+			},
+			{
+				Config:      block(token + fmt.Sprintf("  account_holder_name = %q\n", acct.Name("Holder"))),
+				PlanOnly:    true,
+				ExpectError: regexp.MustCompile("`account_holder_name` cannot be set beside `external_account`\\s+on a\\s+create"),
+			},
+			{
+				Config:      block("  country = \"US\"\n"),
+				PlanOnly:    true,
+				ExpectError: regexp.MustCompile("`account_number` is required unless `external_account` is\\s+set"),
+			},
+		},
+	})
+}
+
+// A token from another resource is unknown at plan, so nothing refuses it beside the hash until
+// the apply knows it, and then before the account number is sent. The CLI validates again at that
+// point, or plans again, whichever field it is, so the refusal may come from either, and the
+// encoder's own check is proven by the engine (TestCreateWrapChecksATokenUnknownAtPlanWhenItResolves).
+// The account ID stands in for such a token: it is known only once the apply has made the account.
+func TestAccAccountExternalAccount_tokenUnknownAtPlan(t *testing.T) {
+	acct := acctest.NewAccount(t)
+	refused := regexp.MustCompile("cannot\\s+be\\s+(set|sent)\\s+beside\\s+`external_account`")
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: tfacc.ProviderFactories,
+		Steps: []resource.TestStep{{
+			Config:      accountBlock(acct) + bankBlock("test", "000111111116", "  external_account = stripe_account.test.id\n"),
+			ExpectError: refused,
+		}},
+	})
+}
+
+// The same, for a field an update takes, which validation leaves alone because the object may
+// exist: this one does not yet.
+func TestAccAccountExternalAccount_holderBesideTokenUnknownAtPlan(t *testing.T) {
+	acct := acctest.NewAccount(t)
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: tfacc.ProviderFactories,
+		Steps: []resource.TestStep{{
+			Config: accountBlock(acct) + fmt.Sprintf(`
+resource "stripe_account_external_account" "test" {
+  account             = stripe_account.test.id
+  external_account    = stripe_account.test.id
+  account_holder_name = %q
+}
+`, acct.Name("Holder")),
+			ExpectError: regexp.MustCompile("cannot\\s+be\\s+(set|sent)\\s+beside\\s+`external_account`"),
+		}},
+	})
+}
+
+// A bank account from a token changes its holder in place, as any other does. The record proves
+// that update only on a bank account from the hash: its update probes run on the hash's create.
+func TestAccAccountExternalAccount_tokenThenHolder(t *testing.T) {
+	acct := acctest.NewAccount(t)
+	var id string
+	block := func(extra string) string {
+		return accountBlock(acct) + "\nresource \"stripe_account_external_account\" \"test\" {\n  account          = stripe_account.test.id\n  external_account = \"btok_us_verified\"\n" + extra + "}\n"
+	}
+	holder := acct.Name("Holder")
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: tfacc.ProviderFactories,
+		Steps: acctest.Forget(t, []resource.TestStep{
+			{
+				Config: block(""),
+				Check: resource.TestCheckResourceAttrWith(address, "id", func(v string) error {
+					id = v
+					return nil
+				}),
+			},
+			{
+				Config: block(fmt.Sprintf("  account_holder_name = %q\n", holder)),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply:             []plancheck.PlanCheck{plancheck.ExpectResourceAction(address, plancheck.ResourceActionUpdate)},
+					PostApplyPostRefresh: []plancheck.PlanCheck{plancheck.ExpectEmptyPlan()},
+				},
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr(address, "account_holder_name", holder),
+					resource.TestCheckResourceAttr(address, "external_account", "btok_us_verified"),
+					resource.TestCheckResourceAttrWith(address, "id", func(v string) error {
+						if v != id {
+							return fmt.Errorf("the holder must change in place: %s became %s", id, v)
+						}
+						return nil
+					}),
+				),
+			},
+		}, nil, "stripe_account_external_account.test"),
+	})
+}
+
+// Stripe refuses `account_type` on a US account, on create and on update, with its own message
+// (suite: "bank_account.account_type"), which the provider passes on.
+func TestAccAccountExternalAccount_accountTypeRefused(t *testing.T) {
+	acct := acctest.NewAccount(t)
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: tfacc.ProviderFactories,
+		Steps: []resource.TestStep{{
+			Config:      accountBlock(acct) + bankBlock("test", "000111111116", "  account_type = \"checking\"\n"),
+			ExpectError: regexp.MustCompile("account types are not allowed"),
+		}},
+	})
+}
+
 func TestAccAccountExternalAccount_createError(t *testing.T) {
 	acct := acctest.NewAccount(t)
 	resource.ParallelTest(t, resource.TestCase{
