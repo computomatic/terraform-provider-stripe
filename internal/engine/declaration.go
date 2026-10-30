@@ -440,6 +440,12 @@ type Declaration struct {
 	// with a replace source below the top level, which is not checked, unless it refuses
 	// destroy, which fails every replacement first. Nor is a value not fully known at plan time. `-replace` cannot be told from an update at plan time.
 	RefuseChange []string
+	// SendChangedMembers lists top-level objects whose update sends only the members that
+	// changed, where the evidence shows Stripe keeps the members a request leaves out
+	// (`nested_hash_update: siblings_kept`), so the request never sends Stripe's own values back.
+	// A member removed from the configuration is sent as null, a map member's removed key
+	// likewise, and an object with Required members is sent whole, as Stripe takes it.
+	SendChangedMembers []string
 	// Sets lists scalar arrays that are sets of values.
 	Sets []string
 	// Rename maps a Stripe field path to the attribute name used instead, for names

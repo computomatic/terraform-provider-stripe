@@ -1,10 +1,13 @@
 package account_test
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"os"
+	"path/filepath"
 	"regexp"
+	"slices"
 	"strings"
 	"testing"
 
@@ -17,6 +20,7 @@ import (
 
 	"github.com/computomatic/terraform-provider-stripe/internal/acctest"
 	"github.com/computomatic/terraform-provider-stripe/internal/acctest/tfacc"
+	"github.com/computomatic/terraform-provider-stripe/internal/resources/account"
 	"github.com/computomatic/terraform-provider-stripe/internal/stripeapi"
 	"github.com/computomatic/terraform-provider-stripe/internal/wire"
 )
@@ -525,8 +529,10 @@ data "stripe_account_capability" "treasury" {
 // transfers and treasury active (suite: "Treasury reads on a US connected account (first
 // run)", "A transfers-only connected account activates at once"); the fake activates them in
 // the create. Stripe verifies card_issuing for minutes, so a smoke run checks the request
-// only. The plan after apply is empty. An import reads the business type, the profile and the
-// acceptances back, and leaves out what Stripe does not return.
+// only. The plan after apply is empty. The individual is read back, with what Stripe adds to
+// it and to `company`, but for the ID number and SSN, which Stripe never returns, and the
+// phone and the document, which state keeps as configured while a data source shows Stripe's
+// form. An import reads everything back that Stripe returns.
 func TestAccAccount_onboard(t *testing.T) {
 	acct := acctest.NewAccount(t)
 	cfg := onboardedConfig(acct, verified, "")
@@ -542,7 +548,11 @@ func TestAccAccount_onboard(t *testing.T) {
 		ProtoV6ProviderFactories: tfacc.ProviderFactories,
 		Steps: []resource.TestStep{
 			{
-				Config: cfg + capabilityData,
+				Config: cfg + capabilityData + `
+data "stripe_account" "read" {
+  id = stripe_account.test.id
+}
+`,
 				ConfigPlanChecks: resource.ConfigPlanChecks{PostApplyPostRefresh: []plancheck.PlanCheck{
 					plancheck.ExpectEmptyPlan(),
 				}},
@@ -563,27 +573,355 @@ func TestAccAccount_onboard(t *testing.T) {
 					resource.TestCheckResourceAttr(address, "settings.payments.statement_descriptor", descriptor(acct.Name(verified.name))),
 					resource.TestCheckResourceAttr(address, "individual.first_name", "Jenny"),
 					resource.TestCheckResourceAttr(address, "individual.id_number", "000000000"),
+					resource.TestCheckResourceAttr(address, "individual.phone", "0000000000"),
+					resource.TestCheckResourceAttr(address, "individual.address.country", "US"),
+					resource.TestCheckResourceAttr(address, "company.address.country", "US"),
+					resource.TestCheckResourceAttr(address, "company.phone", "+10000000000"),
 					resource.TestCheckResourceAttr(address, "external_account", "btok_us_verified"),
+					resource.TestCheckResourceAttr("data.stripe_account.read", "individual.first_name", "Jenny"),
+					resource.TestCheckResourceAttr("data.stripe_account.read", "individual.phone", "+10000000000"),
+					resource.TestCheckNoResourceAttr("data.stripe_account.read", "individual.id_number"),
 				),
 			},
 			{
 				ResourceName:            address,
 				ImportState:             true,
 				ImportStateVerify:       true,
-				ImportStateVerifyIgnore: []string{"capabilities", "individual", "external_account"},
+				ImportStateVerifyIgnore: []string{"capabilities", "external_account", "individual.id_number", "individual.ssn_last_4", "individual.phone", "individual.verification.document.front"},
+			},
+			// The `ignore_changes` of the import note leaves no difference to plan.
+			{
+				ResourceName:    address,
+				ImportState:     true,
+				ImportStateKind: resource.ImportBlockWithID,
+				Config:          onboardedConfig(acct, verified, "  lifecycle {\n    ignore_changes = [capabilities, external_account, individual.id_number, individual.ssn_last_4, individual.phone, individual.verification.document.front]\n  }\n"),
 			},
 		},
 	})
 }
 
+// A company's name is read back, with what Stripe adds to `company`, an import recovers it,
+// and a name changed outside Terraform plans an update back to the configuration.
+func TestAccAccount_companyReadBack(t *testing.T) {
+	acct := acctest.NewAccount(t)
+	var id string
+	cfg := customConfig(acct, capabilities+fmt.Sprintf("  business_type = \"company\"\n  company = {\n    name = %q\n  }\n", acct.Name("Read Back Inc")))
+	// Stripe moves these with the name, which the fake does not show. The fake also holds no
+	// business profile to leave the name unknown in.
+	renamed := []plancheck.PlanCheck{
+		plancheck.ExpectResourceAction(address, plancheck.ResourceActionUpdate),
+		plancheck.ExpectUnknownValue(address, tfjsonpath.New("settings")),
+	}
+	if acct.Smoke {
+		renamed = append(renamed, plancheck.ExpectUnknownValue(address, tfjsonpath.New("business_profile").AtMapKey("name")))
+	}
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: tfacc.ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: cfg,
+				ConfigPlanChecks: resource.ConfigPlanChecks{PostApplyPostRefresh: []plancheck.PlanCheck{
+					plancheck.ExpectEmptyPlan(),
+				}},
+				Check: resource.ComposeAggregateTestCheckFunc(
+					idOf(&id),
+					resource.TestCheckResourceAttr(address, "company.name", acct.Name("Read Back Inc")),
+					resource.TestCheckResourceAttr(address, "company.address.country", "US"),
+					resource.TestCheckResourceAttr(address, "company.owners_provided", "false"),
+				),
+			},
+			{
+				ResourceName:            address,
+				ImportState:             true,
+				ImportStateVerify:       true,
+				ImportStateVerifyIgnore: []string{"capabilities"},
+			},
+			{
+				PreConfig: func() {
+					tfacc.Post(t, acct, "/v1/accounts/"+id, wire.Object{{Name: "company", Value: wire.Object{{Name: "name", Value: wire.String(acct.Name("Renamed Inc"))}}}})
+				},
+				Config:           cfg,
+				ConfigPlanChecks: resource.ConfigPlanChecks{PreApply: renamed},
+				Check:            resource.TestCheckResourceAttr(address, "company.name", acct.Name("Read Back Inc")),
+			},
+		},
+	})
+}
+
+// Stripe replaces a test token with a `file_...` ID of its own, and the record's uploaded files
+// return as sent, so state keeps the configured value of a document reference: another value
+// from Stripe plans nothing. The fake stores a token as sent, so it gets the other value from a
+// request, which the dev sandbox needs no help for.
+func TestAccAccount_documentKeepsConfiguredValue(t *testing.T) {
+	acct := acctest.NewAccount(t)
+	var id string
+	cfg := customConfig(acct, capabilities+`  business_type = "individual"
+  individual = {
+    first_name   = "Jenny"
+    verification = { document = { front = "file_identity_document_success" } }
+  }
+`)
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: tfacc.ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: cfg,
+				ConfigPlanChecks: resource.ConfigPlanChecks{PostApplyPostRefresh: []plancheck.PlanCheck{
+					plancheck.ExpectEmptyPlan(),
+				}},
+				Check: resource.ComposeAggregateTestCheckFunc(
+					idOf(&id),
+					resource.TestCheckResourceAttr(address, "individual.verification.document.front", "file_identity_document_success"),
+				),
+			},
+			{
+				PreConfig: func() {
+					if acct.Smoke {
+						return
+					}
+					tfacc.Post(t, acct, "/v1/accounts/"+id, wire.Object{{Name: "individual", Value: wire.Object{{Name: "verification", Value: wire.Object{
+						{Name: "document", Value: wire.Object{{Name: "front", Value: wire.String("file_stored_by_stripe")}}},
+					}}}}})
+				},
+				Config: cfg,
+				ConfigPlanChecks: resource.ConfigPlanChecks{PreApply: []plancheck.PlanCheck{
+					plancheck.ExpectEmptyPlan(),
+				}},
+				Check: resource.TestCheckResourceAttr(address, "individual.verification.document.front", "file_identity_document_success"),
+			},
+		},
+	})
+}
+
+// An individual changed outside Terraform plans an update back to the configuration. A phone
+// number, which state keeps as configured, does not.
+func TestAccAccount_individualDrift(t *testing.T) {
+	acct := acctest.NewAccount(t)
+	var id string
+	cfg := customConfig(acct, capabilities+`  business_type = "individual"
+  individual = {
+    first_name = "Jenny"
+    last_name  = "Rosen"
+    phone      = "0000000000"
+  }
+`)
+	individual := func(name, value string) wire.Object {
+		return wire.Object{{Name: "individual", Value: wire.Object{{Name: name, Value: wire.String(value)}}}}
+	}
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: tfacc.ProviderFactories,
+		Steps: []resource.TestStep{
+			{Config: cfg, Check: idOf(&id)},
+			{
+				PreConfig: func() { tfacc.Post(t, acct, "/v1/accounts/"+id, individual("phone", "+15555550100")) },
+				Config:    cfg,
+				ConfigPlanChecks: resource.ConfigPlanChecks{PreApply: []plancheck.PlanCheck{
+					plancheck.ExpectEmptyPlan(),
+				}},
+			},
+			{
+				PreConfig: func() { tfacc.Post(t, acct, "/v1/accounts/"+id, individual("last_name", "Changed")) },
+				Config:    cfg,
+				ConfigPlanChecks: resource.ConfigPlanChecks{PreApply: []plancheck.PlanCheck{
+					plancheck.ExpectResourceAction(address, plancheck.ResourceActionUpdate),
+				}},
+				Check: resource.TestCheckResourceAttr(address, "individual.last_name", "Rosen"),
+			},
+		},
+	})
+}
+
+// The members of `individual` change in place, and the update sends only what changed: a date
+// of birth whole, as Stripe takes it, never the values Stripe filled in, and a member removed
+// from the configuration as an empty value, which clears it.
+func TestAccAccount_individualUpdate(t *testing.T) {
+	acct := acctest.NewAccount(t)
+	var id string
+	cfg := func(members string) string {
+		return customConfig(acct, capabilities+"  business_type = \"individual\"\n  individual = {\n"+members+"  }\n")
+	}
+	// sent checks what the newest update sent of `individual`.
+	sent := func(members wire.Object) resource.TestCheckFunc {
+		return func(*terraform.State) error {
+			if acct.Smoke {
+				return nil
+			}
+			for _, entry := range acctest.RequestLog(t, acct) {
+				if entry.Method == "POST" && entry.Path == "/v1/accounts/"+id {
+					if got, want := fmt.Sprint(entry.Params), fmt.Sprint(wire.Object{{Name: "individual", Value: members}}); got != want {
+						return fmt.Errorf("the update sent %s, want %s", got, want)
+					}
+					return nil
+				}
+			}
+			return fmt.Errorf("no update of %s", id)
+		}
+	}
+	empty := resource.ConfigPlanChecks{PostApplyPostRefresh: []plancheck.PlanCheck{plancheck.ExpectEmptyPlan()}}
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: tfacc.ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: cfg("    first_name = \"Jenny\"\n    last_name = \"Rosen\"\n    dob = { day = 1, month = 1, year = 1901 }\n"),
+				Check:  idOf(&id),
+			},
+			{
+				Config: cfg("    first_name = \"Jane\"\n    last_name = \"Rosen\"\n    dob = { day = 2, month = 1, year = 1901 }\n"),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					// Stripe moves its descriptors with the name, which the fake does not show.
+					PreApply:             []plancheck.PlanCheck{plancheck.ExpectUnknownValue(address, tfjsonpath.New("settings"))},
+					PostApplyPostRefresh: []plancheck.PlanCheck{plancheck.ExpectEmptyPlan()},
+				},
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttrPtr(address, "id", &id),
+					resource.TestCheckResourceAttr(address, "individual.first_name", "Jane"),
+					resource.TestCheckResourceAttr(address, "individual.dob.day", "2"),
+					resource.TestCheckResourceAttr(address, "individual.last_name", "Rosen"),
+					sent(wire.Object{
+						{Name: "dob", Value: wire.Object{{Name: "day", Value: wire.String("2")}, {Name: "month", Value: wire.String("1")}, {Name: "year", Value: wire.String("1901")}}},
+						{Name: "first_name", Value: wire.String("Jane")},
+					}),
+				),
+			},
+			{
+				Config:           cfg("    first_name = \"Jane\"\n    dob = { day = 2, month = 1, year = 1901 }\n"),
+				ConfigPlanChecks: empty,
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckNoResourceAttr(address, "individual.last_name"),
+					sent(wire.Object{{Name: "last_name", Value: wire.String("")}}),
+				),
+			},
+		},
+	})
+}
+
+// On an individual account with no `company` in the configuration, Stripe copies the individual's
+// address and phone into `company`, and the copy follows the individual's (the record's
+// `filled_from`).
+func TestAccAccount_companyCopiesIndividual(t *testing.T) {
+	acct := acctest.NewAccount(t)
+	cfg := func(city string) string {
+		return customConfig(acct, capabilities+fmt.Sprintf(`  business_type = "individual"
+  individual = {
+    first_name = "Jenny"
+    phone      = "0000000000"
+    address    = { line1 = "1 Home St", city = %q, state = "CA", postal_code = "94080" }
+  }
+`, city))
+	}
+	empty := resource.ConfigPlanChecks{PostApplyPostRefresh: []plancheck.PlanCheck{plancheck.ExpectEmptyPlan()}}
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: tfacc.ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config:           cfg("South San Francisco"),
+				ConfigPlanChecks: empty,
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr(address, "company.address.line1", "1 Home St"),
+					resource.TestCheckResourceAttr(address, "company.address.city", "South San Francisco"),
+					resource.TestCheckResourceAttr(address, "company.phone", "+10000000000"),
+				),
+			},
+			{
+				Config:           cfg("Daly City"),
+				ConfigPlanChecks: empty,
+				Check:            resource.TestCheckResourceAttr(address, "company.address.city", "Daly City"),
+			},
+		},
+	})
+}
+
+// The suite never sends `company` beside `individual`, so nothing records what Stripe does with
+// the rest of an address a request sends in part: the dev sandbox leaves it null and the fake
+// copies the individual's. Either way the configured part stays, an unchanged configuration
+// plans nothing, and a change of the individual is one update that leaves nothing to plan.
+func TestAccAccount_companyAddressBesideIndividual(t *testing.T) {
+	acct := acctest.NewAccount(t)
+	var id string
+	cfg := func(city string) string {
+		return customConfig(acct, capabilities+fmt.Sprintf(`  business_type = "individual"
+  individual = {
+    first_name = "Jenny"
+    address    = { line1 = "1 Home St", city = %q, state = "CA", postal_code = "94080" }
+  }
+  company = {
+    address = { line1 = "2 Office St" }
+  }
+`, city))
+	}
+	empty := resource.ConfigPlanChecks{PostApplyPostRefresh: []plancheck.PlanCheck{plancheck.ExpectEmptyPlan()}}
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: tfacc.ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config:           cfg("South San Francisco"),
+				ConfigPlanChecks: empty,
+				Check: resource.ComposeAggregateTestCheckFunc(
+					idOf(&id),
+					resource.TestCheckResourceAttr(address, "company.address.line1", "2 Office St"),
+				),
+			},
+			{
+				Config: cfg("Daly City"),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectResourceAction(address, plancheck.ResourceActionUpdate),
+						plancheck.ExpectUnknownValue(address, tfjsonpath.New("company").AtMapKey("address").AtMapKey("city")),
+					},
+					PostApplyPostRefresh: []plancheck.PlanCheck{plancheck.ExpectEmptyPlan()},
+				},
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttrPtr(address, "id", &id),
+					resource.TestCheckResourceAttr(address, "company.address.line1", "2 Office St"),
+				),
+			},
+		},
+	})
+}
+
+// Every member of `individual` and `company` changes in place where the pinned evidence verifies
+// its update, and is refused where it does not.
+func TestRefusedMembersAreThoseWithNoVerifiedUpdate(t *testing.T) {
+	raw, err := os.ReadFile(filepath.Join("..", "..", "generated", "coverage.json"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	var coverage struct {
+		Leaves []struct {
+			Table, Side, Operation, Path, State, Class string
+		} `json:"leaves"`
+	}
+	if err := json.Unmarshal(raw, &coverage); err != nil {
+		t.Fatal(err)
+	}
+	var unverified []string
+	for _, l := range coverage.Leaves {
+		if l.Table == "account" && l.Operation == "PostAccountsAccount" && l.State == "exposed" && l.Class != "verified" &&
+			(strings.HasPrefix(l.Path, "individual.") || strings.HasPrefix(l.Path, "company.")) {
+			unverified = append(unverified, l.Path)
+		}
+	}
+	slices.Sort(unverified)
+	var refused []string
+	for _, name := range account.Declaration.RefuseChange {
+		if strings.HasPrefix(name, "individual") || strings.HasPrefix(name, "company") {
+			refused = append(refused, name)
+		}
+	}
+	slices.Sort(refused)
+	if !slices.Equal(refused, unverified) {
+		t.Errorf("RefuseChange holds %v of `individual` and `company`, want the members whose update is not verified: %v", refused, unverified)
+	}
+}
+
 // The onboarding values are proven on create only, and replacing an account deletes it, so a
-// plan that changes one fails, field by field: the profile's MCC beside its updatable name,
-// the individual, and the Issuing terms. A change to the name alone is an update.
+// plan that changes one fails, field by field: the profile's MCC beside its updatable name and
+// the Issuing terms. A change to the name alone is an update.
 func TestAccAccount_refuseOnboardingChange(t *testing.T) {
 	acct := acctest.NewAccount(t)
 	var first string
-	otherMCC, otherName, otherIP, renamed := verified, verified, verified, verified
-	otherMCC.mcc, otherName.firstName, otherIP.issuingIP, renamed.name = "5045", "Jane", "8.8.4.4", "Renamed"
+	otherMCC, otherIP, renamed := verified, verified, verified
+	otherMCC.mcc, otherIP.issuingIP, renamed.name = "5045", "8.8.4.4", "Renamed"
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: tfacc.ProviderFactories,
 		Steps: []resource.TestStep{
@@ -593,14 +931,11 @@ func TestAccAccount_refuseOnboardingChange(t *testing.T) {
 				ExpectError: regexp.MustCompile(refused("business_profile.mcc") + `(?s).*ignore_changes`),
 			},
 			{
-				Config:      onboardedConfig(acct, otherName, ""),
-				ExpectError: regexp.MustCompile(refused("individual")),
-			},
-			{
 				Config:      onboardedConfig(acct, otherIP, ""),
 				ExpectError: regexp.MustCompile(refused("settings.card_issuing.tos_acceptance")),
 			},
 			// Removing the onboarding arguments is a change of those Stripe does not return.
+			// Stripe holds the rest, such as `individual`, so removing them changes nothing.
 			{
 				Config:      customConfig(acct, "  lifecycle {\n    ignore_changes = [capabilities]\n  }\n"),
 				ExpectError: regexp.MustCompile(refused("external_account")),
@@ -615,6 +950,8 @@ func TestAccAccount_refuseOnboardingChange(t *testing.T) {
 				Config: onboardedConfig(acct, renamed, ""),
 				ConfigPlanChecks: resource.ConfigPlanChecks{PreApply: []plancheck.PlanCheck{
 					plancheck.ExpectResourceAction(address, plancheck.ResourceActionUpdate),
+					// The configuration sets other `settings`, so only what it leaves unset is Stripe's.
+					plancheck.ExpectUnknownValue(address, tfjsonpath.New("settings").AtMapKey("payments")),
 				}},
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr(address, "business_profile.name", acct.Name(renamed.name)),
@@ -672,7 +1009,7 @@ func TestAccAccount_onboardingSensitive(t *testing.T) {
 			},
 			{
 				Config:      onboardedConfig(acct, otherID, ""),
-				ExpectError: regexp.MustCompile(refused("individual")),
+				ExpectError: regexp.MustCompile(refused("individual.id_number")),
 			},
 		},
 	})

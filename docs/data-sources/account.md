@@ -660,7 +660,81 @@ The `capabilities.zip_payments` attribute supports:
 
 The `company` attribute supports:
 
+* `address` - See [`company.address`](#company.address) below.
+* `administrative_address` - See [`company.administrative_address`](#company.administrative_address) below.
+* `directors_provided` - Whether the company's directors have been provided. This Boolean will be `true` if you've manually indicated that all directors are provided via [the `directors_provided` parameter](https://docs.stripe.com/api/accounts/update#update_account-company-directors_provided).
+* `directorship_declaration` - This hash is used to attest that the director information provided to Stripe is both current and correct. See [`company.directorship_declaration`](#company.directorship_declaration) below.
+* `executives_provided` - Whether the company's executives have been provided. This Boolean will be `true` if you've manually indicated that all executives are provided via [the `executives_provided` parameter](https://docs.stripe.com/api/accounts/update#update_account-company-executives_provided), or if Stripe determined that sufficient executives were provided.
 * `name` - The company's legal name. Also available for accounts where [controller.requirement_collection](https://docs.stripe.com/api/accounts/object#account_object-controller-requirement_collection) is `stripe`.
+* `owners_provided` - Whether the company's owners have been provided. This Boolean will be `true` if you've manually indicated that all owners are provided via [the `owners_provided` parameter](https://docs.stripe.com/api/accounts/update#update_account-company-owners_provided), or if Stripe determined that sufficient owners were provided. Stripe determines ownership requirements using both the number of owners provided and their total percent ownership (calculated by adding the `percent_ownership` of each owner together).
+* `ownership_declaration` - This hash is used to attest that the beneficial owner information provided to Stripe is both current and correct. See [`company.ownership_declaration`](#company.ownership_declaration) below.
+* `phone` - The company's phone number (used for verification).
+* `principal_place_of_business` - See [`company.principal_place_of_business`](#company.principal_place_of_business) below.
+* `registration_date` - See [`company.registration_date`](#company.registration_date) below.
+* `structure` - The category identifying the legal structure of the company or legal entity. Also available for accounts where [controller.requirement_collection](https://docs.stripe.com/api/accounts/object#account_object-controller-requirement_collection) is `stripe`. See [Business structure](https://docs.stripe.com/connect/identity-verification#business-structure) for more details. Possible values: `free_zone_establishment`, `free_zone_llc`, `government_instrumentality`, `governmental_unit`, `incorporated_non_profit`, `incorporated_partnership`, `limited_liability_partnership`, `llc`, `multi_member_llc`, `private_company`, `private_corporation`, `private_partnership`, `public_company`, `public_corporation`, `public_partnership`, `registered_charity`, `single_member_llc`, `sole_establishment`, `sole_proprietorship`, `tax_exempt_government_instrumentality`, `unincorporated_association`, `unincorporated_non_profit`, `unincorporated_partnership`.
+
+<a id="company.address"></a>
+### `company.address`
+
+The `company.address` attribute supports:
+
+* `city` - City, district, suburb, town, or village.
+* `country` - Two-letter country code ([ISO 3166-1 alpha-2](https://en.wikipedia.org/wiki/ISO_3166-1_alpha-2)).
+* `line1` - Address line 1, such as the street, PO Box, or company name.
+* `line2` - Address line 2, such as the apartment, suite, unit, or building.
+* `postal_code` - ZIP or postal code.
+* `state` - State, county, province, or region ([ISO 3166-2](https://en.wikipedia.org/wiki/ISO_3166-2)).
+
+<a id="company.administrative_address"></a>
+### `company.administrative_address`
+
+The `company.administrative_address` attribute supports:
+
+* `city` - City, district, suburb, town, or village.
+* `country` - Two-letter country code ([ISO 3166-1 alpha-2](https://en.wikipedia.org/wiki/ISO_3166-1_alpha-2)).
+* `line1` - Address line 1, such as the street, PO Box, or company name.
+* `line2` - Address line 2, such as the apartment, suite, unit, or building.
+* `postal_code` - ZIP or postal code.
+* `state` - State, county, province, or region ([ISO 3166-2](https://en.wikipedia.org/wiki/ISO_3166-2)).
+
+<a id="company.directorship_declaration"></a>
+### `company.directorship_declaration`
+
+The `company.directorship_declaration` attribute supports:
+
+* `date` - The Unix timestamp marking when the directorship declaration attestation was made.
+* `ip` - The IP address from which the directorship declaration attestation was made.
+* `user_agent` - The user-agent string from the browser where the directorship declaration attestation was made.
+
+<a id="company.ownership_declaration"></a>
+### `company.ownership_declaration`
+
+The `company.ownership_declaration` attribute supports:
+
+* `date` - The Unix timestamp marking when the beneficial owner attestation was made.
+* `ip` - The IP address from which the beneficial owner attestation was made.
+* `user_agent` - The user-agent string from the browser where the beneficial owner attestation was made.
+
+<a id="company.principal_place_of_business"></a>
+### `company.principal_place_of_business`
+
+The `company.principal_place_of_business` attribute supports:
+
+* `city` - City, district, suburb, town, or village.
+* `country` - Two-letter country code ([ISO 3166-1 alpha-2](https://en.wikipedia.org/wiki/ISO_3166-1_alpha-2)).
+* `line1` - Address line 1, such as the street, PO Box, or company name.
+* `line2` - Address line 2, such as the apartment, suite, unit, or building.
+* `postal_code` - ZIP or postal code.
+* `state` - State, county, province, or region ([ISO 3166-2](https://en.wikipedia.org/wiki/ISO_3166-2)).
+
+<a id="company.registration_date"></a>
+### `company.registration_date`
+
+The `company.registration_date` attribute supports:
+
+* `day` - The day of registration, between 1 and 31.
+* `month` - The month of registration, between 1 and 12.
+* `year` - The four-digit year of registration.
 
 <a id="controller"></a>
 ### `controller`
@@ -735,9 +809,16 @@ The `individual` attribute supports:
 * `dob` - The person's date of birth. See [`individual.dob`](#individual.dob) below.
 * `email` - The person's email address. Also available for accounts where [controller.requirement_collection](https://docs.stripe.com/api/accounts/object#account_object-controller-requirement_collection) is `stripe`.
 * `first_name` - The person's first name. Also available for accounts where [controller.requirement_collection](https://docs.stripe.com/api/accounts/object#account_object-controller-requirement_collection) is `stripe`.
+* `full_name_aliases` - A list of alternate names or aliases that the person is known by. Also available for accounts where [controller.requirement_collection](https://docs.stripe.com/api/accounts/object#account_object-controller-requirement_collection) is `stripe`.
+* `gender` - The person's gender.
 * `id_number` - (Sensitive) The person's ID number, as appropriate for their country. For example, a social security number in the U.S., social insurance number in Canada, etc. Instead of the number itself, you can also provide a [PII token provided by Stripe.js](https://docs.stripe.com/js/tokens/create_token?type=pii). Changing this value for the account's representative requires that the account re-accept the [terms of service](https://docs.stripe.com/api/accounts/object#account_object-tos_acceptance).
 * `last_name` - The person's last name. Also available for accounts where [controller.requirement_collection](https://docs.stripe.com/api/accounts/object#account_object-controller-requirement_collection) is `stripe`.
+* `maiden_name` - The person's maiden name.
+* `metadata` - Set of [key-value pairs](https://docs.stripe.com/api/metadata) that you can attach to an object. This can be useful for storing additional information about the object in a structured format.
 * `phone` - The person's phone number.
+* `political_exposure` - Indicates if the person or any of their representatives, family members, or other closely related persons, declares that they hold or have held an important public job or function, in any jurisdiction. Possible values: `existing`, `none`.
+* `registered_address` - The person's registered address. See [`individual.registered_address`](#individual.registered_address) below.
+* `relationship` - The relationship that this person has with the account's legal entity. See [`individual.relationship`](#individual.relationship) below.
 * `ssn_last_4` - (Sensitive) The last four digits of the person's Social Security number (U.S. only). Changing this value for the account's representative requires that the account re-accept the [terms of service](https://docs.stripe.com/api/accounts/object#account_object-tos_acceptance).
 * `verification` - The person's verification status. See [`individual.verification`](#individual.verification) below.
 
@@ -747,7 +828,9 @@ The `individual` attribute supports:
 The `individual.address` attribute supports:
 
 * `city` - City, district, suburb, town, or village.
+* `country` - Two-letter country code ([ISO 3166-1 alpha-2](https://en.wikipedia.org/wiki/ISO_3166-1_alpha-2)).
 * `line1` - Address line 1, such as the street, PO Box, or company name.
+* `line2` - Address line 2, such as the apartment, suite, unit, or building.
 * `postal_code` - ZIP or postal code.
 * `state` - State, county, province, or region ([ISO 3166-2](https://en.wikipedia.org/wiki/ISO_3166-2)).
 
@@ -760,18 +843,51 @@ The `individual.dob` attribute supports:
 * `month` - The month of birth, between 1 and 12.
 * `year` - The four-digit year of birth.
 
+<a id="individual.registered_address"></a>
+### `individual.registered_address`
+
+The `individual.registered_address` attribute supports:
+
+* `city` - City, district, suburb, town, or village.
+* `country` - Two-letter country code ([ISO 3166-1 alpha-2](https://en.wikipedia.org/wiki/ISO_3166-1_alpha-2)).
+* `line1` - Address line 1, such as the street, PO Box, or company name.
+* `line2` - Address line 2, such as the apartment, suite, unit, or building.
+* `postal_code` - ZIP or postal code.
+* `state` - State, county, province, or region ([ISO 3166-2](https://en.wikipedia.org/wiki/ISO_3166-2)).
+
+<a id="individual.relationship"></a>
+### `individual.relationship`
+
+The `individual.relationship` attribute supports:
+
+* `director` - Whether the person is a director of the account's legal entity. Directors are typically members of the governing board of the company, or responsible for ensuring the company meets its regulatory obligations.
+* `executive` - Whether the person has significant responsibility to control, manage, or direct the organization.
+* `owner` - Whether the person is an owner of the account’s legal entity.
+* `percent_ownership` - The percent owned by the person of the account's legal entity.
+* `title` - The person's title (e.g., CEO, Support Engineer).
+
 <a id="individual.verification"></a>
 ### `individual.verification`
 
 The `individual.verification` attribute supports:
 
+* `additional_document` - A document showing address, either a passport, local ID card, or utility bill from a well-known utility company. See [`individual.verification.additional_document`](#individual.verification.additional_document) below.
 * `document` - See [`individual.verification.document`](#individual.verification.document) below.
+
+<a id="individual.verification.additional_document"></a>
+### `individual.verification.additional_document`
+
+The `individual.verification.additional_document` attribute supports:
+
+* `back` - The back of an ID returned by a [file upload](https://docs.stripe.com/api#create_file) with a `purpose` value of `identity_document`.
+* `front` - The front of an ID returned by a [file upload](https://docs.stripe.com/api#create_file) with a `purpose` value of `identity_document`.
 
 <a id="individual.verification.document"></a>
 ### `individual.verification.document`
 
 The `individual.verification.document` attribute supports:
 
+* `back` - The back of an ID returned by a [file upload](https://docs.stripe.com/api#create_file) with a `purpose` value of `identity_document`.
 * `front` - The front of an ID returned by a [file upload](https://docs.stripe.com/api#create_file) with a `purpose` value of `identity_document`.
 
 <a id="requirements"></a>

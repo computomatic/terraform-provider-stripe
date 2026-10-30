@@ -179,7 +179,7 @@ func TestSuiteFixtureBuildsTheRealTables(t *testing.T) {
 	}
 	for pkg, want := range map[string][]string{
 		"coupon":               {"~ metadata stable", "~ name stable"},
-		"event_destination_v2": {"~ description stable", "~ metadata stable", "+ webhook_endpoint.signing_secret"},
+		"event_destination_v2": {"~ description stable", "~ metadata stable"},
 	} {
 		i := slices.IndexFunc(Resources, func(r Resource) bool { return r.Package == pkg })
 		tc, err := coverTable(spec, Resources[i], p)

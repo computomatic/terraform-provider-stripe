@@ -86,6 +86,10 @@ func Generate(root string, resources []Resource) ([]File, error) {
 		return nil, err
 	}
 	files := []File{{Path: "internal/stripeapi/version.go", Content: version}}
+	worded, err := declaredDefaults(root)
+	if err != nil {
+		return nil, err
+	}
 	var covered []*tableCoverage
 	var records []Record
 	readers := map[string][]string{}
@@ -94,6 +98,7 @@ func Generate(root string, resources []Resource) ([]File, error) {
 		if err != nil {
 			return nil, err
 		}
+		tc.applyDeclaredDefaults(worded[res.Package])
 		covered = append(covered, tc)
 		readers[tc.object] = append(readers[tc.object], "stripe_"+res.Package)
 	}
