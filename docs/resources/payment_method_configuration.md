@@ -34,139 +34,30 @@ resource "stripe_payment_method_configuration" "checkout" {
 
 The following arguments are optional:
 
-* `acss_debit` - (Optional) Canadian pre-authorized debit payments, check this [page](https://docs.stripe.com/payments/acss-debit) for more details like country availability. Removing it from the configuration leaves the current value. See [`acss_debit`](#acss_debit) below.
-* `active` - (Optional) Whether the configuration can be used for new payments. Default: not sent. Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
-* `affirm` - (Optional) [Affirm](https://www.affirm.com/) gives your customers a way to split purchases over a series of payments. Depending on the purchase, they can pay with four interest-free payments (Split Pay) or pay over a longer term (Installments), which might include interest. Check this [page](https://docs.stripe.com/payments/affirm) for more details like country availability. Removing it from the configuration leaves the current value. See [`affirm`](#affirm) below.
-* `afterpay_clearpay` - (Optional) Afterpay gives your customers a way to pay for purchases in installments, check this [page](https://docs.stripe.com/payments/afterpay-clearpay) for more details like country availability. Afterpay is particularly popular among businesses selling fashion, beauty, and sports products. Removing it from the configuration leaves the current value. See [`afterpay_clearpay`](#afterpay_clearpay) below.
-* `alipay` - (Optional) Alipay is a digital wallet in China that has more than a billion active users worldwide. Alipay users can pay on the web or on a mobile device using login credentials or their Alipay app. Alipay has a low dispute rate and reduces fraud by authenticating payments using the customer's login credentials. Check this [page](https://docs.stripe.com/payments/alipay) for more details. Removing it from the configuration leaves the current value. See [`alipay`](#alipay) below.
+* `active` - (Optional) Whether the configuration can be used for new payments. Default: not sent. Removing it from the configuration leaves the current value.
 * `alma` - (Optional) Alma is a Buy Now, Pay Later payment method that offers customers the ability to pay in 2, 3, or 4 installments. Removing it from the configuration leaves the current value. See [`alma`](#alma) below.
-* `amazon_pay` - (Optional) Amazon Pay is a wallet payment method that lets your customers check out the same way as on Amazon. Removing it from the configuration leaves the current value. See [`amazon_pay`](#amazon_pay) below.
-* `apple_pay` - (Optional) Stripe users can accept [Apple Pay](https://stripe.com/payments/apple-pay) in iOS applications in iOS 9 and later, and on the web in Safari starting with iOS 10 or macOS Sierra. There are no additional fees to process Apple Pay payments, and the [pricing](https://stripe.com/pricing) is the same as other card transactions. Check this [page](https://docs.stripe.com/apple-pay) for more details. Removing it from the configuration leaves the current value. See [`apple_pay`](#apple_pay) below.
-* `apple_pay_later` - (Optional) Apple Pay Later, a payment method for customers to buy now and pay later, gives your customers a way to split purchases into four installments across six weeks. Removing it from the configuration leaves the current value. See [`apple_pay_later`](#apple_pay_later) below.
 * `au_becs_debit` - (Optional) Stripe users in Australia can accept Bulk Electronic Clearing System (BECS) direct debit payments from customers with an Australian bank account. Check this [page](https://docs.stripe.com/payments/au-becs-debit) for more details. Removing it from the configuration leaves the current value. See [`au_becs_debit`](#au_becs_debit) below.
-* `bacs_debit` - (Optional) Stripe users in the UK can accept Bacs Direct Debit payments from customers with a UK bank account, check this [page](https://docs.stripe.com/payments/payment-methods/bacs-debit) for more details. Removing it from the configuration leaves the current value. See [`bacs_debit`](#bacs_debit) below.
 * `bancontact` - (Optional) Bancontact is the most popular online payment method in Belgium, with over 15 million cards in circulation. [Customers](https://docs.stripe.com/api/customers) use a Bancontact card or mobile app linked to a Belgian bank account to make online payments that are secure, guaranteed, and confirmed immediately. Check this [page](https://docs.stripe.com/payments/bancontact) for more details. Removing it from the configuration leaves the current value. See [`bancontact`](#bancontact) below.
 * `billie` - (Optional) Billie is a [single-use](https://docs.stripe.com/payments/payment-methods#usage) payment method that offers businesses Pay by Invoice where they offer payment terms ranging from 7-120 days. Customers are redirected from your website or app, authorize the payment with Billie, then return to your website or app. You get [immediate notification](https://docs.stripe.com/payments/payment-methods#payment-notification) of whether the payment succeeded or failed. Removing it from the configuration leaves the current value. See [`billie`](#billie) below.
-* `bizum` - (Optional) To enable Bizum, buyers need a Spanish IBAN from a bank connected to Bizum. Within their banking app, they can enable Bizum and link their mobile number to their IBAN. Removing it from the configuration leaves the current value. See [`bizum`](#bizum) below.
-* `blik` - (Optional) BLIK is a [single use](https://docs.stripe.com/payments/payment-methods#usage) payment method that requires customers to authenticate their payments. When customers want to pay online using BLIK, they request a six-digit code from their banking application and enter it into the payment collection form. Check this [page](https://docs.stripe.com/payments/blik) for more details. Removing it from the configuration leaves the current value. See [`blik`](#blik) below.
 * `boleto` - (Optional) Boleto is an official (regulated by the Central Bank of Brazil) payment method in Brazil. Check this [page](https://docs.stripe.com/payments/boleto) for more details. Removing it from the configuration leaves the current value. See [`boleto`](#boleto) below.
 * `card` - (Optional) Cards are a popular way for consumers and businesses to pay online or in person. Stripe supports global and local card networks. Removing it from the configuration leaves the current value. See [`card`](#card) below.
-* `cartes_bancaires` - (Optional) Cartes Bancaires is France's local card network. More than 95% of these cards are co-branded with either Visa or Mastercard, meaning you can process these cards over either Cartes Bancaires or the Visa or Mastercard networks. Check this [page](https://docs.stripe.com/payments/cartes-bancaires) for more details. Removing it from the configuration leaves the current value. See [`cartes_bancaires`](#cartes_bancaires) below.
-* `cashapp` - (Optional) Cash App is a popular consumer app in the US that allows customers to bank, invest, send, and receive money using their digital wallet. Check this [page](https://docs.stripe.com/payments/cash-app-pay) for more details. Removing it from the configuration leaves the current value. See [`cashapp`](#cashapp) below.
-* `crypto` - (Optional) [Stablecoin payments](https://docs.stripe.com/payments/stablecoin-payments) enable customers to pay in stablecoins like USDC from 100s of wallets including Phantom and Metamask. Removing it from the configuration leaves the current value. See [`crypto`](#crypto) below.
-* `customer_balance` - (Optional) Uses a customer’s [cash balance](https://docs.stripe.com/payments/customer-balance) for the payment. The cash balance can be funded via a bank transfer. Check this [page](https://docs.stripe.com/payments/bank-transfers) for more details. Removing it from the configuration leaves the current value. See [`customer_balance`](#customer_balance) below.
-* `eps` - (Optional) EPS is an Austria-based payment method that allows customers to complete transactions online using their bank credentials. EPS is supported by all Austrian banks and is accepted by over 80% of Austrian online retailers. Check this [page](https://docs.stripe.com/payments/eps) for more details. Removing it from the configuration leaves the current value. See [`eps`](#eps) below.
 * `fpx` - (Optional) Financial Process Exchange (FPX) is a Malaysia-based payment method that allows customers to complete transactions online using their bank credentials. Bank Negara Malaysia (BNM), the Central Bank of Malaysia, and eleven other major Malaysian financial institutions are members of the PayNet Group, which owns and operates FPX. It is one of the most popular online payment methods in Malaysia, with nearly 90 million transactions in 2018 according to BNM. Check this [page](https://docs.stripe.com/payments/fpx) for more details. Removing it from the configuration leaves the current value. See [`fpx`](#fpx) below.
 * `fr_meal_voucher_conecs` - (Optional) Meal vouchers in France, or “titres-restaurant”, is a local benefits program commonly offered by employers for their employees to purchase prepared food and beverages on working days. Check this [page](https://docs.stripe.com/payments/meal-vouchers/fr-meal-vouchers) for more details. Removing it from the configuration leaves the current value. See [`fr_meal_voucher_conecs`](#fr_meal_voucher_conecs) below.
-* `giropay` - (Optional) giropay is a German payment method based on online banking, introduced in 2006. It allows customers to complete transactions online using their online banking environment, with funds debited from their bank account. Depending on their bank, customers confirm payments on giropay using a second factor of authentication or a PIN. giropay accounts for 10% of online checkouts in Germany. Check this [page](https://docs.stripe.com/payments/giropay) for more details. Removing it from the configuration leaves the current value. See [`giropay`](#giropay) below.
-* `google_pay` - (Optional) Google Pay allows customers to make payments in your app or website using any credit or debit card saved to their Google Account, including those from Google Play, YouTube, Chrome, or an Android device. Use the Google Pay API to request any credit or debit card stored in your customer's Google account. Check this [page](https://docs.stripe.com/google-pay) for more details. Removing it from the configuration leaves the current value. See [`google_pay`](#google_pay) below.
 * `grabpay` - (Optional) GrabPay is a payment method developed by [Grab](https://www.grab.com/sg/consumer/finance/pay/). GrabPay is a digital wallet - customers maintain a balance in their wallets that they pay out with. Check this [page](https://docs.stripe.com/payments/grabpay) for more details. Removing it from the configuration leaves the current value. See [`grabpay`](#grabpay) below.
-* `ideal` - (Optional) iDEAL is a Netherlands-based payment method that allows customers to complete transactions online using their bank credentials. All major Dutch banks are members of Currence, the scheme that operates iDEAL, making it the most popular online payment method in the Netherlands with a share of online transactions close to 55%. Check this [page](https://docs.stripe.com/payments/ideal) for more details. Removing it from the configuration leaves the current value. See [`ideal`](#ideal) below.
 * `jcb` - (Optional) JCB is a credit card company based in Japan. JCB is currently available in Japan to businesses approved by JCB, and available to all businesses in Australia, Canada, Hong Kong, Japan, New Zealand, Singapore, Switzerland, United Kingdom, United States, and all countries in the European Economic Area except Iceland. Check this [page](https://support.stripe.com/questions/accepting-japan-credit-bureau-%28jcb%29-payments) for more details. Removing it from the configuration leaves the current value. See [`jcb`](#jcb) below.
-* `kakao_pay` - (Optional) Kakao Pay is a popular local wallet available in South Korea. Removing it from the configuration leaves the current value. See [`kakao_pay`](#kakao_pay) below.
-* `klarna` - (Optional) Klarna gives customers a range of [payment options](https://docs.stripe.com/payments/klarna#payment-options) during checkout. Available payment options vary depending on the customer's billing address and the transaction amount. These payment options make it convenient for customers to purchase items in all price ranges. Check this [page](https://docs.stripe.com/payments/klarna) for more details. Removing it from the configuration leaves the current value. See [`klarna`](#klarna) below.
 * `konbini` - (Optional) Konbini allows customers in Japan to pay for bills and online purchases at convenience stores with cash. Check this [page](https://docs.stripe.com/payments/konbini) for more details. Removing it from the configuration leaves the current value. See [`konbini`](#konbini) below.
-* `kr_card` - (Optional) Korean cards let users pay using locally issued cards from South Korea. Removing it from the configuration leaves the current value. See [`kr_card`](#kr_card) below.
 * `link` - (Optional) [Link](https://docs.stripe.com/payments/link) is a payment method network. With Link, users save their payment details once, then reuse that information to pay with one click for any business on the network. Removing it from the configuration leaves the current value. See [`link`](#link) below.
-* `mb_way` - (Optional) MB WAY is the most popular wallet in Portugal. After entering their phone number in your checkout, customers approve the payment directly in their MB WAY app. Check this [page](https://docs.stripe.com/payments/mb-way) for more details. Removing it from the configuration leaves the current value. See [`mb_way`](#mb_way) below.
 * `mobilepay` - (Optional) MobilePay is a [single-use](https://docs.stripe.com/payments/payment-methods#usage) card wallet payment method used in Denmark and Finland. It allows customers to [authenticate and approve](https://docs.stripe.com/payments/payment-methods#customer-actions) payments using the MobilePay app. Check this [page](https://docs.stripe.com/payments/mobilepay) for more details. Removing it from the configuration leaves the current value. See [`mobilepay`](#mobilepay) below.
-* `multibanco` - (Optional) Stripe users in Europe and the United States can accept Multibanco payments from customers in Portugal using [Sources](https://stripe.com/docs/sources)—a single integration path for creating payments using any supported method. Removing it from the configuration leaves the current value. See [`multibanco`](#multibanco) below.
-* `name` - (Optional) Configuration name. Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
-* `naver_pay` - (Optional) Naver Pay is a popular local wallet available in South Korea. Removing it from the configuration leaves the current value. See [`naver_pay`](#naver_pay) below.
+* `name` - (Optional) Configuration name. Removing it from the configuration leaves the current value.
 * `nz_bank_account` - (Optional) Stripe users in New Zealand can accept Bulk Electronic Clearing System (BECS) direct debit payments from customers with a New Zeland bank account. Check this [page](https://docs.stripe.com/payments/nz-bank-account) for more details. Removing it from the configuration leaves the current value. See [`nz_bank_account`](#nz_bank_account) below.
-* `oxxo` - (Optional) OXXO is a Mexican chain of convenience stores with thousands of locations across Latin America and represents nearly 20% of online transactions in Mexico. OXXO allows customers to pay bills and online purchases in-store with cash. Check this [page](https://docs.stripe.com/payments/oxxo) for more details. Removing it from the configuration leaves the current value. See [`oxxo`](#oxxo) below.
-* `p24` - (Optional) Przelewy24 is a Poland-based payment method aggregator that allows customers to complete transactions online using bank transfers and other methods. Bank transfers account for 30% of online payments in Poland and Przelewy24 provides a way for customers to pay with over 165 banks. Check this [page](https://docs.stripe.com/payments/p24) for more details. Removing it from the configuration leaves the current value. See [`p24`](#p24) below.
-* `parent` - (Optional) Configuration's parent configuration. Specify to create a child configuration. Changing it replaces the resource.
-* `pay_by_bank` - (Optional) Pay by bank is a redirect payment method backed by bank transfers. A customer is redirected to their bank to authorize a bank transfer for a given amount. This removes a lot of the error risks inherent in waiting for the customer to initiate a transfer themselves, and is less expensive than card payments. Removing it from the configuration leaves the current value. See [`pay_by_bank`](#pay_by_bank) below.
-* `payco` - (Optional) PAYCO is a [single-use](https://docs.stripe.com/payments/payment-methods#usage local wallet available in South Korea. Removing it from the configuration leaves the current value. See [`payco`](#payco) below.
+* `parent` - (Optional) Configuration's parent configuration. Specify to create a child configuration. Changing it replaces the resource. Stripe refused it on a US account on create: "Child configurations can only be created by the parent configuration's owner.". Default: none.
 * `paynow` - (Optional) PayNow is a Singapore-based payment method that allows customers to make a payment using their preferred app from participating banks and participating non-bank financial institutions. Check this [page](https://docs.stripe.com/payments/paynow) for more details. Removing it from the configuration leaves the current value. See [`paynow`](#paynow) below.
 * `paypal` - (Optional) PayPal, a digital wallet popular with customers in Europe, allows your customers worldwide to pay using their PayPal account. Check this [page](https://docs.stripe.com/payments/paypal) for more details. Removing it from the configuration leaves the current value. See [`paypal`](#paypal) below.
-* `paypay` - (Optional) Customers can pay with PayPay online or using the PayPay app. Removing it from the configuration leaves the current value. See [`paypay`](#paypay) below.
 * `payto` - (Optional) PayTo is a [real-time](https://docs.stripe.com/payments/real-time) payment method that enables customers in Australia to pay by providing their bank account details. Customers must accept a mandate authorizing you to debit their account. Check this [page](https://docs.stripe.com/payments/payto) for more details. Removing it from the configuration leaves the current value. See [`payto`](#payto) below.
-* `pix` - (Optional) Pix is a payment method popular in Brazil. When paying with Pix, customers authenticate and approve payments by scanning a QR code in their preferred banking app. Check this [page](https://docs.stripe.com/payments/pix) for more details. Removing it from the configuration leaves the current value. See [`pix`](#pix) below.
-* `promptpay` - (Optional) PromptPay is a Thailand-based payment method that allows customers to make a payment using their preferred app from participating banks. Check this [page](https://docs.stripe.com/payments/promptpay) for more details. Removing it from the configuration leaves the current value. See [`promptpay`](#promptpay) below.
 * `revolut_pay` - (Optional) Revolut Pay, developed by Revolut, a global finance app, is a digital wallet payment method. Revolut Pay uses the customer’s stored balance or cards to fund the payment, and offers the option for non-Revolut customers to save their details after their first purchase. Removing it from the configuration leaves the current value. See [`revolut_pay`](#revolut_pay) below.
-* `samsung_pay` - (Optional) Samsung Pay is a [single-use](https://docs.stripe.com/payments/payment-methods#usage local wallet available in South Korea. Removing it from the configuration leaves the current value. See [`samsung_pay`](#samsung_pay) below.
-* `satispay` - (Optional) Satispay is a [single-use](https://docs.stripe.com/payments/payment-methods#usage) payment method where customers are required to [authenticate](https://docs.stripe.com/payments/payment-methods#customer-actions) their payment. Customers pay by being redirected from your website or app, authorizing the payment with Satispay, then returning to your website or app. You get [immediate notification](https://docs.stripe.com/payments/payment-methods#payment-notification) of whether the payment succeeded or failed. Removing it from the configuration leaves the current value. See [`satispay`](#satispay) below.
-* `scalapay` - (Optional) Scalapay is a [single-use](https://docs.stripe.com/payments/payment-methods#usage) payment method that lets customers pay in 3 or 4 installments. Customers are redirected from your website or app, authorize the payment with Scalapay, then return to your website or app. You get [immediate notification](https://docs.stripe.com/payments/payment-methods#payment-notification) of whether the payment succeeded or failed. Removing it from the configuration leaves the current value. See [`scalapay`](#scalapay) below.
-* `sepa_debit` - (Optional) The [Single Euro Payments Area (SEPA)](https://en.wikipedia.org/wiki/Single_Euro_Payments_Area) is an initiative of the European Union to simplify payments within and across member countries. SEPA established and enforced banking standards to allow for the direct debiting of every EUR-denominated bank account within the SEPA region, check this [page](https://docs.stripe.com/payments/sepa-debit) for more details. Removing it from the configuration leaves the current value. See [`sepa_debit`](#sepa_debit) below.
 * `sequra` - (Optional) SeQura is a [single-use](https://docs.stripe.com/payments/payment-methods#usage) payment method that offers customers payment terms ranging from 7-120 days. Customers are redirected from your website or app, authorize the payment with SeQura, then return to your website or app. You get [immediate notification](https://docs.stripe.com/payments/payment-methods#payment-notification) of whether the payment succeeded or failed. Removing it from the configuration leaves the current value. See [`sequra`](#sequra) below.
-* `sofort` - (Optional) Stripe users in Europe and the United States can use the [Payment Intents API](https://stripe.com/docs/payments/payment-intents)—a single integration path for creating payments using any supported method—to accept [Sofort](https://www.sofort.com/) payments from customers. Check this [page](https://docs.stripe.com/payments/sofort) for more details. Removing it from the configuration leaves the current value. See [`sofort`](#sofort) below.
-* `sunbit` - (Optional) Sunbit is a [single-use](https://docs.stripe.com/payments/payment-methods#usage) payment method where customers choose to pay in 3, 6, or 12 installments. Customers are redirected from your website or app, authorize the payment with Sunbit, then return to your website or app. You get [immediate notification](https://docs.stripe.com/payments/payment-methods#payment-notification) of whether the payment succeeded or failed. Removing it from the configuration leaves the current value. See [`sunbit`](#sunbit) below.
 * `swish` - (Optional) Swish is a [real-time](https://docs.stripe.com/payments/real-time) payment method popular in Sweden. It allows customers to [authenticate and approve](https://docs.stripe.com/payments/payment-methods#customer-actions) payments using the Swish mobile app and the Swedish BankID mobile app. Check this [page](https://docs.stripe.com/payments/swish) for more details. Removing it from the configuration leaves the current value. See [`swish`](#swish) below.
 * `twint` - (Optional) Twint is a payment method popular in Switzerland. It allows customers to pay using their mobile phone. Check this [page](https://docs.stripe.com/payments/twint) for more details. Removing it from the configuration leaves the current value. See [`twint`](#twint) below.
-* `upi` - (Optional) Unified Payment Interface (UPI) is India's leading payment method with exponential growth since it launched in 2016. Removing it from the configuration leaves the current value. See [`upi`](#upi) below.
-* `us_bank_account` - (Optional) Stripe users in the United States can accept ACH direct debit payments from customers with a US bank account using the Automated Clearing House (ACH) payments system operated by Nacha. Check this [page](https://docs.stripe.com/payments/ach-direct-debit) for more details. Removing it from the configuration leaves the current value. See [`us_bank_account`](#us_bank_account) below.
-* `wechat_pay` - (Optional) WeChat, owned by Tencent, is China's leading mobile app with over 1 billion monthly active users. Chinese consumers can use WeChat Pay to pay for goods and services inside of businesses' apps and websites. WeChat Pay users buy most frequently in gaming, e-commerce, travel, online education, and food/nutrition. Check this [page](https://docs.stripe.com/payments/wechat-pay) for more details. Removing it from the configuration leaves the current value. See [`wechat_pay`](#wechat_pay) below.
-* `zip` - (Optional) Zip gives your customers a way to split purchases over a series of payments. Check this [page](https://docs.stripe.com/payments/zip) for more details like country availability. Removing it from the configuration leaves the current value. See [`zip`](#zip) below.
-
-<a id="acss_debit"></a>
-### `acss_debit`
-
-The `acss_debit` attribute supports:
-
-* `available` - (Read-Only) Whether this payment method may be offered at checkout. True if `display_preference` is `on` and the payment method's capability is active.
-* `display_preference` - (Optional) Removing it from the configuration leaves the current value. See [`acss_debit.display_preference`](#acss_debit.display_preference) below.
-
-<a id="acss_debit.display_preference"></a>
-### `acss_debit.display_preference`
-
-The `acss_debit.display_preference` attribute supports:
-
-* `overridable` - (Read-Only) For child configs, whether or not the account's preference will be observed. If `false`, the parent configuration's default is used.
-* `preference` - (Optional) The account's display preference. Possible values: `none`, `off`, `on`. Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
-* `value` - (Read-Only) The effective display preference value. Possible values: `off`, `on`.
-
-<a id="affirm"></a>
-### `affirm`
-
-The `affirm` attribute supports:
-
-* `available` - (Read-Only) Whether this payment method may be offered at checkout. True if `display_preference` is `on` and the payment method's capability is active.
-* `display_preference` - (Optional) Removing it from the configuration leaves the current value. See [`affirm.display_preference`](#affirm.display_preference) below.
-
-<a id="affirm.display_preference"></a>
-### `affirm.display_preference`
-
-The `affirm.display_preference` attribute supports:
-
-* `overridable` - (Read-Only) For child configs, whether or not the account's preference will be observed. If `false`, the parent configuration's default is used.
-* `preference` - (Optional) The account's display preference. Possible values: `none`, `off`, `on`. Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
-* `value` - (Read-Only) The effective display preference value. Possible values: `off`, `on`.
-
-<a id="afterpay_clearpay"></a>
-### `afterpay_clearpay`
-
-The `afterpay_clearpay` attribute supports:
-
-* `available` - (Read-Only) Whether this payment method may be offered at checkout. True if `display_preference` is `on` and the payment method's capability is active.
-* `display_preference` - (Optional) Removing it from the configuration leaves the current value. See [`afterpay_clearpay.display_preference`](#afterpay_clearpay.display_preference) below.
-
-<a id="afterpay_clearpay.display_preference"></a>
-### `afterpay_clearpay.display_preference`
-
-The `afterpay_clearpay.display_preference` attribute supports:
-
-* `overridable` - (Read-Only) For child configs, whether or not the account's preference will be observed. If `false`, the parent configuration's default is used.
-* `preference` - (Optional) The account's display preference. Possible values: `none`, `off`, `on`. Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
-* `value` - (Read-Only) The effective display preference value. Possible values: `off`, `on`.
-
-<a id="alipay"></a>
-### `alipay`
-
-The `alipay` attribute supports:
-
-* `available` - (Read-Only) Whether this payment method may be offered at checkout. True if `display_preference` is `on` and the payment method's capability is active.
-* `display_preference` - (Optional) Removing it from the configuration leaves the current value. See [`alipay.display_preference`](#alipay.display_preference) below.
-
-<a id="alipay.display_preference"></a>
-### `alipay.display_preference`
-
-The `alipay.display_preference` attribute supports:
-
-* `overridable` - (Read-Only) For child configs, whether or not the account's preference will be observed. If `false`, the parent configuration's default is used.
-* `preference` - (Optional) The account's display preference. Possible values: `none`, `off`, `on`. Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
-* `value` - (Read-Only) The effective display preference value. Possible values: `off`, `on`.
 
 <a id="alma"></a>
 ### `alma`
@@ -182,56 +73,8 @@ The `alma` attribute supports:
 The `alma.display_preference` attribute supports:
 
 * `overridable` - (Read-Only) For child configs, whether or not the account's preference will be observed. If `false`, the parent configuration's default is used.
-* `preference` - (Optional) The account's display preference. Possible values: `none`, `off`, `on`. Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
+* `preference` - (Optional) The account's display preference. Possible values: `none`, `off`, `on`. Stripe refused it on a US account on update: "`alma` is not available to this merchant". Default: not sent. Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
 * `value` - (Read-Only) The effective display preference value. Possible values: `off`, `on`.
-
-<a id="amazon_pay"></a>
-### `amazon_pay`
-
-The `amazon_pay` attribute supports:
-
-* `available` - (Read-Only) Whether this payment method may be offered at checkout. True if `display_preference` is `on` and the payment method's capability is active.
-* `display_preference` - (Optional) Removing it from the configuration leaves the current value. See [`amazon_pay.display_preference`](#amazon_pay.display_preference) below.
-
-<a id="amazon_pay.display_preference"></a>
-### `amazon_pay.display_preference`
-
-The `amazon_pay.display_preference` attribute supports:
-
-* `overridable` - (Read-Only) For child configs, whether or not the account's preference will be observed. If `false`, the parent configuration's default is used.
-* `preference` - (Optional) The account's display preference. Possible values: `none`, `off`, `on`. Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
-* `value` - (Read-Only) The effective display preference value. Possible values: `off`, `on`.
-
-<a id="apple_pay"></a>
-### `apple_pay`
-
-The `apple_pay` attribute supports:
-
-* `available` - (Read-Only) Whether this payment method may be offered at checkout. True if `display_preference` is `on` and the payment method's capability is active.
-* `display_preference` - (Optional) Removing it from the configuration leaves the current value. See [`apple_pay.display_preference`](#apple_pay.display_preference) below.
-
-<a id="apple_pay.display_preference"></a>
-### `apple_pay.display_preference`
-
-The `apple_pay.display_preference` attribute supports:
-
-* `overridable` - (Read-Only) For child configs, whether or not the account's preference will be observed. If `false`, the parent configuration's default is used.
-* `preference` - (Optional) The account's display preference. Possible values: `none`, `off`, `on`. Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
-* `value` - (Read-Only) The effective display preference value. Possible values: `off`, `on`.
-
-<a id="apple_pay_later"></a>
-### `apple_pay_later`
-
-The `apple_pay_later` attribute supports:
-
-* `display_preference` - (Optional) See [`apple_pay_later.display_preference`](#apple_pay_later.display_preference) below.
-
-<a id="apple_pay_later.display_preference"></a>
-### `apple_pay_later.display_preference`
-
-The `apple_pay_later.display_preference` attribute supports:
-
-* `preference` - (Optional) Possible values: `none`, `off`, `on`.
 
 <a id="au_becs_debit"></a>
 ### `au_becs_debit`
@@ -247,24 +90,7 @@ The `au_becs_debit` attribute supports:
 The `au_becs_debit.display_preference` attribute supports:
 
 * `overridable` - (Read-Only) For child configs, whether or not the account's preference will be observed. If `false`, the parent configuration's default is used.
-* `preference` - (Optional) The account's display preference. Possible values: `none`, `off`, `on`. Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
-* `value` - (Read-Only) The effective display preference value. Possible values: `off`, `on`.
-
-<a id="bacs_debit"></a>
-### `bacs_debit`
-
-The `bacs_debit` attribute supports:
-
-* `available` - (Read-Only) Whether this payment method may be offered at checkout. True if `display_preference` is `on` and the payment method's capability is active.
-* `display_preference` - (Optional) Removing it from the configuration leaves the current value. See [`bacs_debit.display_preference`](#bacs_debit.display_preference) below.
-
-<a id="bacs_debit.display_preference"></a>
-### `bacs_debit.display_preference`
-
-The `bacs_debit.display_preference` attribute supports:
-
-* `overridable` - (Read-Only) For child configs, whether or not the account's preference will be observed. If `false`, the parent configuration's default is used.
-* `preference` - (Optional) The account's display preference. Possible values: `none`, `off`, `on`. Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
+* `preference` - (Optional) The account's display preference. Possible values: `none`, `off`, `on`. Stripe refused it on a US account on update: "`au_becs_debit` is not available to this merchant". Default: not sent. Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
 * `value` - (Read-Only) The effective display preference value. Possible values: `off`, `on`.
 
 <a id="bancontact"></a>
@@ -281,7 +107,7 @@ The `bancontact` attribute supports:
 The `bancontact.display_preference` attribute supports:
 
 * `overridable` - (Read-Only) For child configs, whether or not the account's preference will be observed. If `false`, the parent configuration's default is used.
-* `preference` - (Optional) The account's display preference. Possible values: `none`, `off`, `on`. Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
+* `preference` - (Optional) The account's display preference. Possible values: `none`, `off`, `on`. Default (Stripe): `off`. Removing it from the configuration leaves the current value.
 * `value` - (Read-Only) The effective display preference value. Possible values: `off`, `on`.
 
 <a id="billie"></a>
@@ -298,41 +124,7 @@ The `billie` attribute supports:
 The `billie.display_preference` attribute supports:
 
 * `overridable` - (Read-Only) For child configs, whether or not the account's preference will be observed. If `false`, the parent configuration's default is used.
-* `preference` - (Optional) The account's display preference. Possible values: `none`, `off`, `on`. Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
-* `value` - (Read-Only) The effective display preference value. Possible values: `off`, `on`.
-
-<a id="bizum"></a>
-### `bizum`
-
-The `bizum` attribute supports:
-
-* `available` - (Read-Only) Whether this payment method may be offered at checkout. True if `display_preference` is `on` and the payment method's capability is active.
-* `display_preference` - (Optional) Removing it from the configuration leaves the current value. See [`bizum.display_preference`](#bizum.display_preference) below.
-
-<a id="bizum.display_preference"></a>
-### `bizum.display_preference`
-
-The `bizum.display_preference` attribute supports:
-
-* `overridable` - (Read-Only) For child configs, whether or not the account's preference will be observed. If `false`, the parent configuration's default is used.
-* `preference` - (Optional) The account's display preference. Possible values: `none`, `off`, `on`. Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
-* `value` - (Read-Only) The effective display preference value. Possible values: `off`, `on`.
-
-<a id="blik"></a>
-### `blik`
-
-The `blik` attribute supports:
-
-* `available` - (Read-Only) Whether this payment method may be offered at checkout. True if `display_preference` is `on` and the payment method's capability is active.
-* `display_preference` - (Optional) Removing it from the configuration leaves the current value. See [`blik.display_preference`](#blik.display_preference) below.
-
-<a id="blik.display_preference"></a>
-### `blik.display_preference`
-
-The `blik.display_preference` attribute supports:
-
-* `overridable` - (Read-Only) For child configs, whether or not the account's preference will be observed. If `false`, the parent configuration's default is used.
-* `preference` - (Optional) The account's display preference. Possible values: `none`, `off`, `on`. Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
+* `preference` - (Optional) The account's display preference. Possible values: `none`, `off`, `on`. Stripe refused it on a US account on update: "`billie` is not available to this merchant". Default: not sent. Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
 * `value` - (Read-Only) The effective display preference value. Possible values: `off`, `on`.
 
 <a id="boleto"></a>
@@ -349,7 +141,7 @@ The `boleto` attribute supports:
 The `boleto.display_preference` attribute supports:
 
 * `overridable` - (Read-Only) For child configs, whether or not the account's preference will be observed. If `false`, the parent configuration's default is used.
-* `preference` - (Optional) The account's display preference. Possible values: `none`, `off`, `on`. Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
+* `preference` - (Optional) The account's display preference. Possible values: `none`, `off`, `on`. Stripe refused it on a US account on update: "`boleto` is not available to this merchant". Default: not sent. Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
 * `value` - (Read-Only) The effective display preference value. Possible values: `off`, `on`.
 
 <a id="card"></a>
@@ -366,92 +158,7 @@ The `card` attribute supports:
 The `card.display_preference` attribute supports:
 
 * `overridable` - (Read-Only) For child configs, whether or not the account's preference will be observed. If `false`, the parent configuration's default is used.
-* `preference` - (Optional) The account's display preference. Possible values: `none`, `off`, `on`. Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
-* `value` - (Read-Only) The effective display preference value. Possible values: `off`, `on`.
-
-<a id="cartes_bancaires"></a>
-### `cartes_bancaires`
-
-The `cartes_bancaires` attribute supports:
-
-* `available` - (Read-Only) Whether this payment method may be offered at checkout. True if `display_preference` is `on` and the payment method's capability is active.
-* `display_preference` - (Optional) Removing it from the configuration leaves the current value. See [`cartes_bancaires.display_preference`](#cartes_bancaires.display_preference) below.
-
-<a id="cartes_bancaires.display_preference"></a>
-### `cartes_bancaires.display_preference`
-
-The `cartes_bancaires.display_preference` attribute supports:
-
-* `overridable` - (Read-Only) For child configs, whether or not the account's preference will be observed. If `false`, the parent configuration's default is used.
-* `preference` - (Optional) The account's display preference. Possible values: `none`, `off`, `on`. Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
-* `value` - (Read-Only) The effective display preference value. Possible values: `off`, `on`.
-
-<a id="cashapp"></a>
-### `cashapp`
-
-The `cashapp` attribute supports:
-
-* `available` - (Read-Only) Whether this payment method may be offered at checkout. True if `display_preference` is `on` and the payment method's capability is active.
-* `display_preference` - (Optional) Removing it from the configuration leaves the current value. See [`cashapp.display_preference`](#cashapp.display_preference) below.
-
-<a id="cashapp.display_preference"></a>
-### `cashapp.display_preference`
-
-The `cashapp.display_preference` attribute supports:
-
-* `overridable` - (Read-Only) For child configs, whether or not the account's preference will be observed. If `false`, the parent configuration's default is used.
-* `preference` - (Optional) The account's display preference. Possible values: `none`, `off`, `on`. Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
-* `value` - (Read-Only) The effective display preference value. Possible values: `off`, `on`.
-
-<a id="crypto"></a>
-### `crypto`
-
-The `crypto` attribute supports:
-
-* `available` - (Read-Only) Whether this payment method may be offered at checkout. True if `display_preference` is `on` and the payment method's capability is active.
-* `display_preference` - (Optional) Removing it from the configuration leaves the current value. See [`crypto.display_preference`](#crypto.display_preference) below.
-
-<a id="crypto.display_preference"></a>
-### `crypto.display_preference`
-
-The `crypto.display_preference` attribute supports:
-
-* `overridable` - (Read-Only) For child configs, whether or not the account's preference will be observed. If `false`, the parent configuration's default is used.
-* `preference` - (Optional) The account's display preference. Possible values: `none`, `off`, `on`. Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
-* `value` - (Read-Only) The effective display preference value. Possible values: `off`, `on`.
-
-<a id="customer_balance"></a>
-### `customer_balance`
-
-The `customer_balance` attribute supports:
-
-* `available` - (Read-Only) Whether this payment method may be offered at checkout. True if `display_preference` is `on` and the payment method's capability is active.
-* `display_preference` - (Optional) Removing it from the configuration leaves the current value. See [`customer_balance.display_preference`](#customer_balance.display_preference) below.
-
-<a id="customer_balance.display_preference"></a>
-### `customer_balance.display_preference`
-
-The `customer_balance.display_preference` attribute supports:
-
-* `overridable` - (Read-Only) For child configs, whether or not the account's preference will be observed. If `false`, the parent configuration's default is used.
-* `preference` - (Optional) The account's display preference. Possible values: `none`, `off`, `on`. Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
-* `value` - (Read-Only) The effective display preference value. Possible values: `off`, `on`.
-
-<a id="eps"></a>
-### `eps`
-
-The `eps` attribute supports:
-
-* `available` - (Read-Only) Whether this payment method may be offered at checkout. True if `display_preference` is `on` and the payment method's capability is active.
-* `display_preference` - (Optional) Removing it from the configuration leaves the current value. See [`eps.display_preference`](#eps.display_preference) below.
-
-<a id="eps.display_preference"></a>
-### `eps.display_preference`
-
-The `eps.display_preference` attribute supports:
-
-* `overridable` - (Read-Only) For child configs, whether or not the account's preference will be observed. If `false`, the parent configuration's default is used.
-* `preference` - (Optional) The account's display preference. Possible values: `none`, `off`, `on`. Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
+* `preference` - (Optional) The account's display preference. Possible values: `none`, `off`, `on`. Default (Stripe): `off`. Removing it from the configuration leaves the current value.
 * `value` - (Read-Only) The effective display preference value. Possible values: `off`, `on`.
 
 <a id="fpx"></a>
@@ -468,7 +175,7 @@ The `fpx` attribute supports:
 The `fpx.display_preference` attribute supports:
 
 * `overridable` - (Read-Only) For child configs, whether or not the account's preference will be observed. If `false`, the parent configuration's default is used.
-* `preference` - (Optional) The account's display preference. Possible values: `none`, `off`, `on`. Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
+* `preference` - (Optional) The account's display preference. Possible values: `none`, `off`, `on`. Stripe refused it on a US account on update: "`fpx` is not available to this merchant". Default: not sent. Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
 * `value` - (Read-Only) The effective display preference value. Possible values: `off`, `on`.
 
 <a id="fr_meal_voucher_conecs"></a>
@@ -483,41 +190,7 @@ The `fr_meal_voucher_conecs` attribute supports:
 
 The `fr_meal_voucher_conecs.display_preference` attribute supports:
 
-* `preference` - (Optional) Possible values: `none`, `off`, `on`.
-
-<a id="giropay"></a>
-### `giropay`
-
-The `giropay` attribute supports:
-
-* `available` - (Read-Only) Whether this payment method may be offered at checkout. True if `display_preference` is `on` and the payment method's capability is active.
-* `display_preference` - (Optional) Removing it from the configuration leaves the current value. See [`giropay.display_preference`](#giropay.display_preference) below.
-
-<a id="giropay.display_preference"></a>
-### `giropay.display_preference`
-
-The `giropay.display_preference` attribute supports:
-
-* `overridable` - (Read-Only) For child configs, whether or not the account's preference will be observed. If `false`, the parent configuration's default is used.
-* `preference` - (Optional) The account's display preference. Possible values: `none`, `off`, `on`. Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
-* `value` - (Read-Only) The effective display preference value. Possible values: `off`, `on`.
-
-<a id="google_pay"></a>
-### `google_pay`
-
-The `google_pay` attribute supports:
-
-* `available` - (Read-Only) Whether this payment method may be offered at checkout. True if `display_preference` is `on` and the payment method's capability is active.
-* `display_preference` - (Optional) Removing it from the configuration leaves the current value. See [`google_pay.display_preference`](#google_pay.display_preference) below.
-
-<a id="google_pay.display_preference"></a>
-### `google_pay.display_preference`
-
-The `google_pay.display_preference` attribute supports:
-
-* `overridable` - (Read-Only) For child configs, whether or not the account's preference will be observed. If `false`, the parent configuration's default is used.
-* `preference` - (Optional) The account's display preference. Possible values: `none`, `off`, `on`. Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
-* `value` - (Read-Only) The effective display preference value. Possible values: `off`, `on`.
+* `preference` - (Optional) Possible values: `none`, `off`, `on`. Stripe refused it on a US account on update: "`fr_meal_voucher_conecs` is not available to this merchant". Default: not sent.
 
 <a id="grabpay"></a>
 ### `grabpay`
@@ -533,24 +206,7 @@ The `grabpay` attribute supports:
 The `grabpay.display_preference` attribute supports:
 
 * `overridable` - (Read-Only) For child configs, whether or not the account's preference will be observed. If `false`, the parent configuration's default is used.
-* `preference` - (Optional) The account's display preference. Possible values: `none`, `off`, `on`. Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
-* `value` - (Read-Only) The effective display preference value. Possible values: `off`, `on`.
-
-<a id="ideal"></a>
-### `ideal`
-
-The `ideal` attribute supports:
-
-* `available` - (Read-Only) Whether this payment method may be offered at checkout. True if `display_preference` is `on` and the payment method's capability is active.
-* `display_preference` - (Optional) Removing it from the configuration leaves the current value. See [`ideal.display_preference`](#ideal.display_preference) below.
-
-<a id="ideal.display_preference"></a>
-### `ideal.display_preference`
-
-The `ideal.display_preference` attribute supports:
-
-* `overridable` - (Read-Only) For child configs, whether or not the account's preference will be observed. If `false`, the parent configuration's default is used.
-* `preference` - (Optional) The account's display preference. Possible values: `none`, `off`, `on`. Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
+* `preference` - (Optional) The account's display preference. Possible values: `none`, `off`, `on`. Stripe refused it on a US account on update: "`grabpay` is not available to this merchant". Default: not sent. Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
 * `value` - (Read-Only) The effective display preference value. Possible values: `off`, `on`.
 
 <a id="jcb"></a>
@@ -567,41 +223,7 @@ The `jcb` attribute supports:
 The `jcb.display_preference` attribute supports:
 
 * `overridable` - (Read-Only) For child configs, whether or not the account's preference will be observed. If `false`, the parent configuration's default is used.
-* `preference` - (Optional) The account's display preference. Possible values: `none`, `off`, `on`. Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
-* `value` - (Read-Only) The effective display preference value. Possible values: `off`, `on`.
-
-<a id="kakao_pay"></a>
-### `kakao_pay`
-
-The `kakao_pay` attribute supports:
-
-* `available` - (Read-Only) Whether this payment method may be offered at checkout. True if `display_preference` is `on` and the payment method's capability is active.
-* `display_preference` - (Optional) Removing it from the configuration leaves the current value. See [`kakao_pay.display_preference`](#kakao_pay.display_preference) below.
-
-<a id="kakao_pay.display_preference"></a>
-### `kakao_pay.display_preference`
-
-The `kakao_pay.display_preference` attribute supports:
-
-* `overridable` - (Read-Only) For child configs, whether or not the account's preference will be observed. If `false`, the parent configuration's default is used.
-* `preference` - (Optional) The account's display preference. Possible values: `none`, `off`, `on`. Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
-* `value` - (Read-Only) The effective display preference value. Possible values: `off`, `on`.
-
-<a id="klarna"></a>
-### `klarna`
-
-The `klarna` attribute supports:
-
-* `available` - (Read-Only) Whether this payment method may be offered at checkout. True if `display_preference` is `on` and the payment method's capability is active.
-* `display_preference` - (Optional) Removing it from the configuration leaves the current value. See [`klarna.display_preference`](#klarna.display_preference) below.
-
-<a id="klarna.display_preference"></a>
-### `klarna.display_preference`
-
-The `klarna.display_preference` attribute supports:
-
-* `overridable` - (Read-Only) For child configs, whether or not the account's preference will be observed. If `false`, the parent configuration's default is used.
-* `preference` - (Optional) The account's display preference. Possible values: `none`, `off`, `on`. Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
+* `preference` - (Optional) The account's display preference. Possible values: `none`, `off`, `on`. Stripe refused it on a US account on update: "`jcb` is not available to this merchant". Default: not sent. Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
 * `value` - (Read-Only) The effective display preference value. Possible values: `off`, `on`.
 
 <a id="konbini"></a>
@@ -618,24 +240,7 @@ The `konbini` attribute supports:
 The `konbini.display_preference` attribute supports:
 
 * `overridable` - (Read-Only) For child configs, whether or not the account's preference will be observed. If `false`, the parent configuration's default is used.
-* `preference` - (Optional) The account's display preference. Possible values: `none`, `off`, `on`. Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
-* `value` - (Read-Only) The effective display preference value. Possible values: `off`, `on`.
-
-<a id="kr_card"></a>
-### `kr_card`
-
-The `kr_card` attribute supports:
-
-* `available` - (Read-Only) Whether this payment method may be offered at checkout. True if `display_preference` is `on` and the payment method's capability is active.
-* `display_preference` - (Optional) Removing it from the configuration leaves the current value. See [`kr_card.display_preference`](#kr_card.display_preference) below.
-
-<a id="kr_card.display_preference"></a>
-### `kr_card.display_preference`
-
-The `kr_card.display_preference` attribute supports:
-
-* `overridable` - (Read-Only) For child configs, whether or not the account's preference will be observed. If `false`, the parent configuration's default is used.
-* `preference` - (Optional) The account's display preference. Possible values: `none`, `off`, `on`. Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
+* `preference` - (Optional) The account's display preference. Possible values: `none`, `off`, `on`. Stripe refused it on a US account on update: "`konbini` is not available to this merchant". Default: not sent. Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
 * `value` - (Read-Only) The effective display preference value. Possible values: `off`, `on`.
 
 <a id="link"></a>
@@ -652,24 +257,7 @@ The `link` attribute supports:
 The `link.display_preference` attribute supports:
 
 * `overridable` - (Read-Only) For child configs, whether or not the account's preference will be observed. If `false`, the parent configuration's default is used.
-* `preference` - (Optional) The account's display preference. Possible values: `none`, `off`, `on`. Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
-* `value` - (Read-Only) The effective display preference value. Possible values: `off`, `on`.
-
-<a id="mb_way"></a>
-### `mb_way`
-
-The `mb_way` attribute supports:
-
-* `available` - (Read-Only) Whether this payment method may be offered at checkout. True if `display_preference` is `on` and the payment method's capability is active.
-* `display_preference` - (Optional) Removing it from the configuration leaves the current value. See [`mb_way.display_preference`](#mb_way.display_preference) below.
-
-<a id="mb_way.display_preference"></a>
-### `mb_way.display_preference`
-
-The `mb_way.display_preference` attribute supports:
-
-* `overridable` - (Read-Only) For child configs, whether or not the account's preference will be observed. If `false`, the parent configuration's default is used.
-* `preference` - (Optional) The account's display preference. Possible values: `none`, `off`, `on`. Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
+* `preference` - (Optional) The account's display preference. Possible values: `none`, `off`, `on`. Default (Stripe): `off`. Removing it from the configuration leaves the current value.
 * `value` - (Read-Only) The effective display preference value. Possible values: `off`, `on`.
 
 <a id="mobilepay"></a>
@@ -686,41 +274,7 @@ The `mobilepay` attribute supports:
 The `mobilepay.display_preference` attribute supports:
 
 * `overridable` - (Read-Only) For child configs, whether or not the account's preference will be observed. If `false`, the parent configuration's default is used.
-* `preference` - (Optional) The account's display preference. Possible values: `none`, `off`, `on`. Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
-* `value` - (Read-Only) The effective display preference value. Possible values: `off`, `on`.
-
-<a id="multibanco"></a>
-### `multibanco`
-
-The `multibanco` attribute supports:
-
-* `available` - (Read-Only) Whether this payment method may be offered at checkout. True if `display_preference` is `on` and the payment method's capability is active.
-* `display_preference` - (Optional) Removing it from the configuration leaves the current value. See [`multibanco.display_preference`](#multibanco.display_preference) below.
-
-<a id="multibanco.display_preference"></a>
-### `multibanco.display_preference`
-
-The `multibanco.display_preference` attribute supports:
-
-* `overridable` - (Read-Only) For child configs, whether or not the account's preference will be observed. If `false`, the parent configuration's default is used.
-* `preference` - (Optional) The account's display preference. Possible values: `none`, `off`, `on`. Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
-* `value` - (Read-Only) The effective display preference value. Possible values: `off`, `on`.
-
-<a id="naver_pay"></a>
-### `naver_pay`
-
-The `naver_pay` attribute supports:
-
-* `available` - (Read-Only) Whether this payment method may be offered at checkout. True if `display_preference` is `on` and the payment method's capability is active.
-* `display_preference` - (Optional) Removing it from the configuration leaves the current value. See [`naver_pay.display_preference`](#naver_pay.display_preference) below.
-
-<a id="naver_pay.display_preference"></a>
-### `naver_pay.display_preference`
-
-The `naver_pay.display_preference` attribute supports:
-
-* `overridable` - (Read-Only) For child configs, whether or not the account's preference will be observed. If `false`, the parent configuration's default is used.
-* `preference` - (Optional) The account's display preference. Possible values: `none`, `off`, `on`. Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
+* `preference` - (Optional) The account's display preference. Possible values: `none`, `off`, `on`. Stripe refused it on a US account on update: "`mobilepay` is not available to this merchant". Default: not sent. Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
 * `value` - (Read-Only) The effective display preference value. Possible values: `off`, `on`.
 
 <a id="nz_bank_account"></a>
@@ -737,75 +291,7 @@ The `nz_bank_account` attribute supports:
 The `nz_bank_account.display_preference` attribute supports:
 
 * `overridable` - (Read-Only) For child configs, whether or not the account's preference will be observed. If `false`, the parent configuration's default is used.
-* `preference` - (Optional) The account's display preference. Possible values: `none`, `off`, `on`. Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
-* `value` - (Read-Only) The effective display preference value. Possible values: `off`, `on`.
-
-<a id="oxxo"></a>
-### `oxxo`
-
-The `oxxo` attribute supports:
-
-* `available` - (Read-Only) Whether this payment method may be offered at checkout. True if `display_preference` is `on` and the payment method's capability is active.
-* `display_preference` - (Optional) Removing it from the configuration leaves the current value. See [`oxxo.display_preference`](#oxxo.display_preference) below.
-
-<a id="oxxo.display_preference"></a>
-### `oxxo.display_preference`
-
-The `oxxo.display_preference` attribute supports:
-
-* `overridable` - (Read-Only) For child configs, whether or not the account's preference will be observed. If `false`, the parent configuration's default is used.
-* `preference` - (Optional) The account's display preference. Possible values: `none`, `off`, `on`. Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
-* `value` - (Read-Only) The effective display preference value. Possible values: `off`, `on`.
-
-<a id="p24"></a>
-### `p24`
-
-The `p24` attribute supports:
-
-* `available` - (Read-Only) Whether this payment method may be offered at checkout. True if `display_preference` is `on` and the payment method's capability is active.
-* `display_preference` - (Optional) Removing it from the configuration leaves the current value. See [`p24.display_preference`](#p24.display_preference) below.
-
-<a id="p24.display_preference"></a>
-### `p24.display_preference`
-
-The `p24.display_preference` attribute supports:
-
-* `overridable` - (Read-Only) For child configs, whether or not the account's preference will be observed. If `false`, the parent configuration's default is used.
-* `preference` - (Optional) The account's display preference. Possible values: `none`, `off`, `on`. Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
-* `value` - (Read-Only) The effective display preference value. Possible values: `off`, `on`.
-
-<a id="pay_by_bank"></a>
-### `pay_by_bank`
-
-The `pay_by_bank` attribute supports:
-
-* `available` - (Read-Only) Whether this payment method may be offered at checkout. True if `display_preference` is `on` and the payment method's capability is active.
-* `display_preference` - (Optional) Removing it from the configuration leaves the current value. See [`pay_by_bank.display_preference`](#pay_by_bank.display_preference) below.
-
-<a id="pay_by_bank.display_preference"></a>
-### `pay_by_bank.display_preference`
-
-The `pay_by_bank.display_preference` attribute supports:
-
-* `overridable` - (Read-Only) For child configs, whether or not the account's preference will be observed. If `false`, the parent configuration's default is used.
-* `preference` - (Optional) The account's display preference. Possible values: `none`, `off`, `on`. Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
-* `value` - (Read-Only) The effective display preference value. Possible values: `off`, `on`.
-
-<a id="payco"></a>
-### `payco`
-
-The `payco` attribute supports:
-
-* `available` - (Read-Only) Whether this payment method may be offered at checkout. True if `display_preference` is `on` and the payment method's capability is active.
-* `display_preference` - (Optional) Removing it from the configuration leaves the current value. See [`payco.display_preference`](#payco.display_preference) below.
-
-<a id="payco.display_preference"></a>
-### `payco.display_preference`
-
-The `payco.display_preference` attribute supports:
-
-* `overridable` - (Read-Only) For child configs, whether or not the account's preference will be observed. If `false`, the parent configuration's default is used.
-* `preference` - (Optional) The account's display preference. Possible values: `none`, `off`, `on`. Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
+* `preference` - (Optional) The account's display preference. Possible values: `none`, `off`, `on`. Stripe refused it on a US account on update: "`nz_bank_account` is not available to this merchant". Default: not sent. Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
 * `value` - (Read-Only) The effective display preference value. Possible values: `off`, `on`.
 
 <a id="paynow"></a>
@@ -822,7 +308,7 @@ The `paynow` attribute supports:
 The `paynow.display_preference` attribute supports:
 
 * `overridable` - (Read-Only) For child configs, whether or not the account's preference will be observed. If `false`, the parent configuration's default is used.
-* `preference` - (Optional) The account's display preference. Possible values: `none`, `off`, `on`. Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
+* `preference` - (Optional) The account's display preference. Possible values: `none`, `off`, `on`. Stripe refused it on a US account on update: "`paynow` is not available to this merchant". Default: not sent. Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
 * `value` - (Read-Only) The effective display preference value. Possible values: `off`, `on`.
 
 <a id="paypal"></a>
@@ -839,24 +325,7 @@ The `paypal` attribute supports:
 The `paypal.display_preference` attribute supports:
 
 * `overridable` - (Read-Only) For child configs, whether or not the account's preference will be observed. If `false`, the parent configuration's default is used.
-* `preference` - (Optional) The account's display preference. Possible values: `none`, `off`, `on`. Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
-* `value` - (Read-Only) The effective display preference value. Possible values: `off`, `on`.
-
-<a id="paypay"></a>
-### `paypay`
-
-The `paypay` attribute supports:
-
-* `available` - (Read-Only) Whether this payment method may be offered at checkout. True if `display_preference` is `on` and the payment method's capability is active.
-* `display_preference` - (Optional) Removing it from the configuration leaves the current value. See [`paypay.display_preference`](#paypay.display_preference) below.
-
-<a id="paypay.display_preference"></a>
-### `paypay.display_preference`
-
-The `paypay.display_preference` attribute supports:
-
-* `overridable` - (Read-Only) For child configs, whether or not the account's preference will be observed. If `false`, the parent configuration's default is used.
-* `preference` - (Optional) The account's display preference. Possible values: `none`, `off`, `on`. Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
+* `preference` - (Optional) The account's display preference. Possible values: `none`, `off`, `on`. Stripe refused it on a US account on update: "`paypal` is not available to this merchant". Default: not sent. Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
 * `value` - (Read-Only) The effective display preference value. Possible values: `off`, `on`.
 
 <a id="payto"></a>
@@ -873,41 +342,7 @@ The `payto` attribute supports:
 The `payto.display_preference` attribute supports:
 
 * `overridable` - (Read-Only) For child configs, whether or not the account's preference will be observed. If `false`, the parent configuration's default is used.
-* `preference` - (Optional) The account's display preference. Possible values: `none`, `off`, `on`. Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
-* `value` - (Read-Only) The effective display preference value. Possible values: `off`, `on`.
-
-<a id="pix"></a>
-### `pix`
-
-The `pix` attribute supports:
-
-* `available` - (Read-Only) Whether this payment method may be offered at checkout. True if `display_preference` is `on` and the payment method's capability is active.
-* `display_preference` - (Optional) Removing it from the configuration leaves the current value. See [`pix.display_preference`](#pix.display_preference) below.
-
-<a id="pix.display_preference"></a>
-### `pix.display_preference`
-
-The `pix.display_preference` attribute supports:
-
-* `overridable` - (Read-Only) For child configs, whether or not the account's preference will be observed. If `false`, the parent configuration's default is used.
-* `preference` - (Optional) The account's display preference. Possible values: `none`, `off`, `on`. Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
-* `value` - (Read-Only) The effective display preference value. Possible values: `off`, `on`.
-
-<a id="promptpay"></a>
-### `promptpay`
-
-The `promptpay` attribute supports:
-
-* `available` - (Read-Only) Whether this payment method may be offered at checkout. True if `display_preference` is `on` and the payment method's capability is active.
-* `display_preference` - (Optional) Removing it from the configuration leaves the current value. See [`promptpay.display_preference`](#promptpay.display_preference) below.
-
-<a id="promptpay.display_preference"></a>
-### `promptpay.display_preference`
-
-The `promptpay.display_preference` attribute supports:
-
-* `overridable` - (Read-Only) For child configs, whether or not the account's preference will be observed. If `false`, the parent configuration's default is used.
-* `preference` - (Optional) The account's display preference. Possible values: `none`, `off`, `on`. Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
+* `preference` - (Optional) The account's display preference. Possible values: `none`, `off`, `on`. Stripe refused it on a US account on update: "`payto` is not available to this merchant". Default: not sent. Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
 * `value` - (Read-Only) The effective display preference value. Possible values: `off`, `on`.
 
 <a id="revolut_pay"></a>
@@ -924,75 +359,7 @@ The `revolut_pay` attribute supports:
 The `revolut_pay.display_preference` attribute supports:
 
 * `overridable` - (Read-Only) For child configs, whether or not the account's preference will be observed. If `false`, the parent configuration's default is used.
-* `preference` - (Optional) The account's display preference. Possible values: `none`, `off`, `on`. Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
-* `value` - (Read-Only) The effective display preference value. Possible values: `off`, `on`.
-
-<a id="samsung_pay"></a>
-### `samsung_pay`
-
-The `samsung_pay` attribute supports:
-
-* `available` - (Read-Only) Whether this payment method may be offered at checkout. True if `display_preference` is `on` and the payment method's capability is active.
-* `display_preference` - (Optional) Removing it from the configuration leaves the current value. See [`samsung_pay.display_preference`](#samsung_pay.display_preference) below.
-
-<a id="samsung_pay.display_preference"></a>
-### `samsung_pay.display_preference`
-
-The `samsung_pay.display_preference` attribute supports:
-
-* `overridable` - (Read-Only) For child configs, whether or not the account's preference will be observed. If `false`, the parent configuration's default is used.
-* `preference` - (Optional) The account's display preference. Possible values: `none`, `off`, `on`. Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
-* `value` - (Read-Only) The effective display preference value. Possible values: `off`, `on`.
-
-<a id="satispay"></a>
-### `satispay`
-
-The `satispay` attribute supports:
-
-* `available` - (Read-Only) Whether this payment method may be offered at checkout. True if `display_preference` is `on` and the payment method's capability is active.
-* `display_preference` - (Optional) Removing it from the configuration leaves the current value. See [`satispay.display_preference`](#satispay.display_preference) below.
-
-<a id="satispay.display_preference"></a>
-### `satispay.display_preference`
-
-The `satispay.display_preference` attribute supports:
-
-* `overridable` - (Read-Only) For child configs, whether or not the account's preference will be observed. If `false`, the parent configuration's default is used.
-* `preference` - (Optional) The account's display preference. Possible values: `none`, `off`, `on`. Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
-* `value` - (Read-Only) The effective display preference value. Possible values: `off`, `on`.
-
-<a id="scalapay"></a>
-### `scalapay`
-
-The `scalapay` attribute supports:
-
-* `available` - (Read-Only) Whether this payment method may be offered at checkout. True if `display_preference` is `on` and the payment method's capability is active.
-* `display_preference` - (Optional) Removing it from the configuration leaves the current value. See [`scalapay.display_preference`](#scalapay.display_preference) below.
-
-<a id="scalapay.display_preference"></a>
-### `scalapay.display_preference`
-
-The `scalapay.display_preference` attribute supports:
-
-* `overridable` - (Read-Only) For child configs, whether or not the account's preference will be observed. If `false`, the parent configuration's default is used.
-* `preference` - (Optional) The account's display preference. Possible values: `none`, `off`, `on`. Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
-* `value` - (Read-Only) The effective display preference value. Possible values: `off`, `on`.
-
-<a id="sepa_debit"></a>
-### `sepa_debit`
-
-The `sepa_debit` attribute supports:
-
-* `available` - (Read-Only) Whether this payment method may be offered at checkout. True if `display_preference` is `on` and the payment method's capability is active.
-* `display_preference` - (Optional) Removing it from the configuration leaves the current value. See [`sepa_debit.display_preference`](#sepa_debit.display_preference) below.
-
-<a id="sepa_debit.display_preference"></a>
-### `sepa_debit.display_preference`
-
-The `sepa_debit.display_preference` attribute supports:
-
-* `overridable` - (Read-Only) For child configs, whether or not the account's preference will be observed. If `false`, the parent configuration's default is used.
-* `preference` - (Optional) The account's display preference. Possible values: `none`, `off`, `on`. Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
+* `preference` - (Optional) The account's display preference. Possible values: `none`, `off`, `on`. Stripe refused it on a US account on update: "`revolut_pay` is not available to this merchant". Default: not sent. Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
 * `value` - (Read-Only) The effective display preference value. Possible values: `off`, `on`.
 
 <a id="sequra"></a>
@@ -1009,41 +376,7 @@ The `sequra` attribute supports:
 The `sequra.display_preference` attribute supports:
 
 * `overridable` - (Read-Only) For child configs, whether or not the account's preference will be observed. If `false`, the parent configuration's default is used.
-* `preference` - (Optional) The account's display preference. Possible values: `none`, `off`, `on`. Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
-* `value` - (Read-Only) The effective display preference value. Possible values: `off`, `on`.
-
-<a id="sofort"></a>
-### `sofort`
-
-The `sofort` attribute supports:
-
-* `available` - (Read-Only) Whether this payment method may be offered at checkout. True if `display_preference` is `on` and the payment method's capability is active.
-* `display_preference` - (Optional) Removing it from the configuration leaves the current value. See [`sofort.display_preference`](#sofort.display_preference) below.
-
-<a id="sofort.display_preference"></a>
-### `sofort.display_preference`
-
-The `sofort.display_preference` attribute supports:
-
-* `overridable` - (Read-Only) For child configs, whether or not the account's preference will be observed. If `false`, the parent configuration's default is used.
-* `preference` - (Optional) The account's display preference. Possible values: `none`, `off`, `on`. Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
-* `value` - (Read-Only) The effective display preference value. Possible values: `off`, `on`.
-
-<a id="sunbit"></a>
-### `sunbit`
-
-The `sunbit` attribute supports:
-
-* `available` - (Read-Only) Whether this payment method may be offered at checkout. True if `display_preference` is `on` and the payment method's capability is active.
-* `display_preference` - (Optional) Removing it from the configuration leaves the current value. See [`sunbit.display_preference`](#sunbit.display_preference) below.
-
-<a id="sunbit.display_preference"></a>
-### `sunbit.display_preference`
-
-The `sunbit.display_preference` attribute supports:
-
-* `overridable` - (Read-Only) For child configs, whether or not the account's preference will be observed. If `false`, the parent configuration's default is used.
-* `preference` - (Optional) The account's display preference. Possible values: `none`, `off`, `on`. Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
+* `preference` - (Optional) The account's display preference. Possible values: `none`, `off`, `on`. Stripe refused it on a US account on update: "`sequra` is not available to this merchant". Default: not sent. Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
 * `value` - (Read-Only) The effective display preference value. Possible values: `off`, `on`.
 
 <a id="swish"></a>
@@ -1060,7 +393,7 @@ The `swish` attribute supports:
 The `swish.display_preference` attribute supports:
 
 * `overridable` - (Read-Only) For child configs, whether or not the account's preference will be observed. If `false`, the parent configuration's default is used.
-* `preference` - (Optional) The account's display preference. Possible values: `none`, `off`, `on`. Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
+* `preference` - (Optional) The account's display preference. Possible values: `none`, `off`, `on`. Stripe refused it on a US account on update: "`swish` is not available to this merchant". Default: not sent. Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
 * `value` - (Read-Only) The effective display preference value. Possible values: `off`, `on`.
 
 <a id="twint"></a>
@@ -1077,75 +410,7 @@ The `twint` attribute supports:
 The `twint.display_preference` attribute supports:
 
 * `overridable` - (Read-Only) For child configs, whether or not the account's preference will be observed. If `false`, the parent configuration's default is used.
-* `preference` - (Optional) The account's display preference. Possible values: `none`, `off`, `on`. Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
-* `value` - (Read-Only) The effective display preference value. Possible values: `off`, `on`.
-
-<a id="upi"></a>
-### `upi`
-
-The `upi` attribute supports:
-
-* `available` - (Read-Only) Whether this payment method may be offered at checkout. True if `display_preference` is `on` and the payment method's capability is active.
-* `display_preference` - (Optional) Removing it from the configuration leaves the current value. See [`upi.display_preference`](#upi.display_preference) below.
-
-<a id="upi.display_preference"></a>
-### `upi.display_preference`
-
-The `upi.display_preference` attribute supports:
-
-* `overridable` - (Read-Only) For child configs, whether or not the account's preference will be observed. If `false`, the parent configuration's default is used.
-* `preference` - (Optional) The account's display preference. Possible values: `none`, `off`, `on`. Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
-* `value` - (Read-Only) The effective display preference value. Possible values: `off`, `on`.
-
-<a id="us_bank_account"></a>
-### `us_bank_account`
-
-The `us_bank_account` attribute supports:
-
-* `available` - (Read-Only) Whether this payment method may be offered at checkout. True if `display_preference` is `on` and the payment method's capability is active.
-* `display_preference` - (Optional) Removing it from the configuration leaves the current value. See [`us_bank_account.display_preference`](#us_bank_account.display_preference) below.
-
-<a id="us_bank_account.display_preference"></a>
-### `us_bank_account.display_preference`
-
-The `us_bank_account.display_preference` attribute supports:
-
-* `overridable` - (Read-Only) For child configs, whether or not the account's preference will be observed. If `false`, the parent configuration's default is used.
-* `preference` - (Optional) The account's display preference. Possible values: `none`, `off`, `on`. Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
-* `value` - (Read-Only) The effective display preference value. Possible values: `off`, `on`.
-
-<a id="wechat_pay"></a>
-### `wechat_pay`
-
-The `wechat_pay` attribute supports:
-
-* `available` - (Read-Only) Whether this payment method may be offered at checkout. True if `display_preference` is `on` and the payment method's capability is active.
-* `display_preference` - (Optional) Removing it from the configuration leaves the current value. See [`wechat_pay.display_preference`](#wechat_pay.display_preference) below.
-
-<a id="wechat_pay.display_preference"></a>
-### `wechat_pay.display_preference`
-
-The `wechat_pay.display_preference` attribute supports:
-
-* `overridable` - (Read-Only) For child configs, whether or not the account's preference will be observed. If `false`, the parent configuration's default is used.
-* `preference` - (Optional) The account's display preference. Possible values: `none`, `off`, `on`. Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
-* `value` - (Read-Only) The effective display preference value. Possible values: `off`, `on`.
-
-<a id="zip"></a>
-### `zip`
-
-The `zip` attribute supports:
-
-* `available` - (Read-Only) Whether this payment method may be offered at checkout. True if `display_preference` is `on` and the payment method's capability is active.
-* `display_preference` - (Optional) Removing it from the configuration leaves the current value. See [`zip.display_preference`](#zip.display_preference) below.
-
-<a id="zip.display_preference"></a>
-### `zip.display_preference`
-
-The `zip.display_preference` attribute supports:
-
-* `overridable` - (Read-Only) For child configs, whether or not the account's preference will be observed. If `false`, the parent configuration's default is used.
-* `preference` - (Optional) The account's display preference. Possible values: `none`, `off`, `on`. Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
+* `preference` - (Optional) The account's display preference. Possible values: `none`, `off`, `on`. Stripe refused it on a US account on update: "`twint` is not available to this merchant". Default: not sent. Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
 * `value` - (Read-Only) The effective display preference value. Possible values: `off`, `on`.
 
 ## Attribute Reference
@@ -1153,9 +418,729 @@ The `zip.display_preference` attribute supports:
 This resource exports the following attributes in addition to the arguments above:
 
 * `id` - Unique identifier for the object.
+* `acss_debit` - See [`acss_debit`](#acss_debit) below.
+* `affirm` - See [`affirm`](#affirm) below.
+* `afterpay_clearpay` - See [`afterpay_clearpay`](#afterpay_clearpay) below.
+* `alipay` - See [`alipay`](#alipay) below.
+* `amazon_pay` - See [`amazon_pay`](#amazon_pay) below.
+* `apple_pay` - See [`apple_pay`](#apple_pay) below.
 * `application` - For child configs, the Connect application associated with the configuration.
+* `bacs_debit` - See [`bacs_debit`](#bacs_debit) below.
+* `bizum` - See [`bizum`](#bizum) below.
+* `blik` - See [`blik`](#blik) below.
+* `cartes_bancaires` - See [`cartes_bancaires`](#cartes_bancaires) below.
+* `cashapp` - See [`cashapp`](#cashapp) below.
+* `crypto` - See [`crypto`](#crypto) below.
+* `customer_balance` - See [`customer_balance`](#customer_balance) below.
+* `eps` - See [`eps`](#eps) below.
+* `giropay` - See [`giropay`](#giropay) below.
+* `google_pay` - See [`google_pay`](#google_pay) below.
+* `ideal` - See [`ideal`](#ideal) below.
 * `is_default` - The default configuration is used whenever a payment method configuration is not specified.
+* `kakao_pay` - See [`kakao_pay`](#kakao_pay) below.
+* `klarna` - See [`klarna`](#klarna) below.
+* `kr_card` - See [`kr_card`](#kr_card) below.
 * `livemode` - If the object exists in live mode, the value is `true`. If the object exists in test mode, the value is `false`.
+* `mb_way` - See [`mb_way`](#mb_way) below.
+* `multibanco` - See [`multibanco`](#multibanco) below.
+* `naver_pay` - See [`naver_pay`](#naver_pay) below.
+* `oxxo` - See [`oxxo`](#oxxo) below.
+* `p24` - See [`p24`](#p24) below.
+* `pay_by_bank` - See [`pay_by_bank`](#pay_by_bank) below.
+* `payco` - See [`payco`](#payco) below.
+* `paypay` - See [`paypay`](#paypay) below.
+* `pix` - See [`pix`](#pix) below.
+* `promptpay` - See [`promptpay`](#promptpay) below.
+* `samsung_pay` - See [`samsung_pay`](#samsung_pay) below.
+* `satispay` - See [`satispay`](#satispay) below.
+* `scalapay` - See [`scalapay`](#scalapay) below.
+* `sepa_debit` - See [`sepa_debit`](#sepa_debit) below.
+* `sofort` - See [`sofort`](#sofort) below.
+* `sunbit` - See [`sunbit`](#sunbit) below.
+* `upi` - See [`upi`](#upi) below.
+* `us_bank_account` - See [`us_bank_account`](#us_bank_account) below.
+* `wechat_pay` - See [`wechat_pay`](#wechat_pay) below.
+* `zip` - See [`zip`](#zip) below.
+
+<a id="acss_debit"></a>
+### `acss_debit`
+
+The `acss_debit` attribute supports:
+
+* `available` - Whether this payment method may be offered at checkout. True if `display_preference` is `on` and the payment method's capability is active.
+* `display_preference` - See [`acss_debit.display_preference`](#acss_debit.display_preference) below.
+
+<a id="acss_debit.display_preference"></a>
+### `acss_debit.display_preference`
+
+The `acss_debit.display_preference` attribute supports:
+
+* `overridable` - For child configs, whether or not the account's preference will be observed. If `false`, the parent configuration's default is used.
+* `preference` - The account's display preference. Possible values: `none`, `off`, `on`.
+* `value` - The effective display preference value. Possible values: `off`, `on`.
+
+<a id="affirm"></a>
+### `affirm`
+
+The `affirm` attribute supports:
+
+* `available` - Whether this payment method may be offered at checkout. True if `display_preference` is `on` and the payment method's capability is active.
+* `display_preference` - See [`affirm.display_preference`](#affirm.display_preference) below.
+
+<a id="affirm.display_preference"></a>
+### `affirm.display_preference`
+
+The `affirm.display_preference` attribute supports:
+
+* `overridable` - For child configs, whether or not the account's preference will be observed. If `false`, the parent configuration's default is used.
+* `preference` - The account's display preference. Possible values: `none`, `off`, `on`.
+* `value` - The effective display preference value. Possible values: `off`, `on`.
+
+<a id="afterpay_clearpay"></a>
+### `afterpay_clearpay`
+
+The `afterpay_clearpay` attribute supports:
+
+* `available` - Whether this payment method may be offered at checkout. True if `display_preference` is `on` and the payment method's capability is active.
+* `display_preference` - See [`afterpay_clearpay.display_preference`](#afterpay_clearpay.display_preference) below.
+
+<a id="afterpay_clearpay.display_preference"></a>
+### `afterpay_clearpay.display_preference`
+
+The `afterpay_clearpay.display_preference` attribute supports:
+
+* `overridable` - For child configs, whether or not the account's preference will be observed. If `false`, the parent configuration's default is used.
+* `preference` - The account's display preference. Possible values: `none`, `off`, `on`.
+* `value` - The effective display preference value. Possible values: `off`, `on`.
+
+<a id="alipay"></a>
+### `alipay`
+
+The `alipay` attribute supports:
+
+* `available` - Whether this payment method may be offered at checkout. True if `display_preference` is `on` and the payment method's capability is active.
+* `display_preference` - See [`alipay.display_preference`](#alipay.display_preference) below.
+
+<a id="alipay.display_preference"></a>
+### `alipay.display_preference`
+
+The `alipay.display_preference` attribute supports:
+
+* `overridable` - For child configs, whether or not the account's preference will be observed. If `false`, the parent configuration's default is used.
+* `preference` - The account's display preference. Possible values: `none`, `off`, `on`.
+* `value` - The effective display preference value. Possible values: `off`, `on`.
+
+<a id="amazon_pay"></a>
+### `amazon_pay`
+
+The `amazon_pay` attribute supports:
+
+* `available` - Whether this payment method may be offered at checkout. True if `display_preference` is `on` and the payment method's capability is active.
+* `display_preference` - See [`amazon_pay.display_preference`](#amazon_pay.display_preference) below.
+
+<a id="amazon_pay.display_preference"></a>
+### `amazon_pay.display_preference`
+
+The `amazon_pay.display_preference` attribute supports:
+
+* `overridable` - For child configs, whether or not the account's preference will be observed. If `false`, the parent configuration's default is used.
+* `preference` - The account's display preference. Possible values: `none`, `off`, `on`.
+* `value` - The effective display preference value. Possible values: `off`, `on`.
+
+<a id="apple_pay"></a>
+### `apple_pay`
+
+The `apple_pay` attribute supports:
+
+* `available` - Whether this payment method may be offered at checkout. True if `display_preference` is `on` and the payment method's capability is active.
+* `display_preference` - See [`apple_pay.display_preference`](#apple_pay.display_preference) below.
+
+<a id="apple_pay.display_preference"></a>
+### `apple_pay.display_preference`
+
+The `apple_pay.display_preference` attribute supports:
+
+* `overridable` - For child configs, whether or not the account's preference will be observed. If `false`, the parent configuration's default is used.
+* `preference` - The account's display preference. Possible values: `none`, `off`, `on`.
+* `value` - The effective display preference value. Possible values: `off`, `on`.
+
+<a id="bacs_debit"></a>
+### `bacs_debit`
+
+The `bacs_debit` attribute supports:
+
+* `available` - Whether this payment method may be offered at checkout. True if `display_preference` is `on` and the payment method's capability is active.
+* `display_preference` - See [`bacs_debit.display_preference`](#bacs_debit.display_preference) below.
+
+<a id="bacs_debit.display_preference"></a>
+### `bacs_debit.display_preference`
+
+The `bacs_debit.display_preference` attribute supports:
+
+* `overridable` - For child configs, whether or not the account's preference will be observed. If `false`, the parent configuration's default is used.
+* `preference` - The account's display preference. Possible values: `none`, `off`, `on`.
+* `value` - The effective display preference value. Possible values: `off`, `on`.
+
+<a id="bizum"></a>
+### `bizum`
+
+The `bizum` attribute supports:
+
+* `available` - Whether this payment method may be offered at checkout. True if `display_preference` is `on` and the payment method's capability is active.
+* `display_preference` - See [`bizum.display_preference`](#bizum.display_preference) below.
+
+<a id="bizum.display_preference"></a>
+### `bizum.display_preference`
+
+The `bizum.display_preference` attribute supports:
+
+* `overridable` - For child configs, whether or not the account's preference will be observed. If `false`, the parent configuration's default is used.
+* `preference` - The account's display preference. Possible values: `none`, `off`, `on`.
+* `value` - The effective display preference value. Possible values: `off`, `on`.
+
+<a id="blik"></a>
+### `blik`
+
+The `blik` attribute supports:
+
+* `available` - Whether this payment method may be offered at checkout. True if `display_preference` is `on` and the payment method's capability is active.
+* `display_preference` - See [`blik.display_preference`](#blik.display_preference) below.
+
+<a id="blik.display_preference"></a>
+### `blik.display_preference`
+
+The `blik.display_preference` attribute supports:
+
+* `overridable` - For child configs, whether or not the account's preference will be observed. If `false`, the parent configuration's default is used.
+* `preference` - The account's display preference. Possible values: `none`, `off`, `on`.
+* `value` - The effective display preference value. Possible values: `off`, `on`.
+
+<a id="cartes_bancaires"></a>
+### `cartes_bancaires`
+
+The `cartes_bancaires` attribute supports:
+
+* `available` - Whether this payment method may be offered at checkout. True if `display_preference` is `on` and the payment method's capability is active.
+* `display_preference` - See [`cartes_bancaires.display_preference`](#cartes_bancaires.display_preference) below.
+
+<a id="cartes_bancaires.display_preference"></a>
+### `cartes_bancaires.display_preference`
+
+The `cartes_bancaires.display_preference` attribute supports:
+
+* `overridable` - For child configs, whether or not the account's preference will be observed. If `false`, the parent configuration's default is used.
+* `preference` - The account's display preference. Possible values: `none`, `off`, `on`.
+* `value` - The effective display preference value. Possible values: `off`, `on`.
+
+<a id="cashapp"></a>
+### `cashapp`
+
+The `cashapp` attribute supports:
+
+* `available` - Whether this payment method may be offered at checkout. True if `display_preference` is `on` and the payment method's capability is active.
+* `display_preference` - See [`cashapp.display_preference`](#cashapp.display_preference) below.
+
+<a id="cashapp.display_preference"></a>
+### `cashapp.display_preference`
+
+The `cashapp.display_preference` attribute supports:
+
+* `overridable` - For child configs, whether or not the account's preference will be observed. If `false`, the parent configuration's default is used.
+* `preference` - The account's display preference. Possible values: `none`, `off`, `on`.
+* `value` - The effective display preference value. Possible values: `off`, `on`.
+
+<a id="crypto"></a>
+### `crypto`
+
+The `crypto` attribute supports:
+
+* `available` - Whether this payment method may be offered at checkout. True if `display_preference` is `on` and the payment method's capability is active.
+* `display_preference` - See [`crypto.display_preference`](#crypto.display_preference) below.
+
+<a id="crypto.display_preference"></a>
+### `crypto.display_preference`
+
+The `crypto.display_preference` attribute supports:
+
+* `overridable` - For child configs, whether or not the account's preference will be observed. If `false`, the parent configuration's default is used.
+* `preference` - The account's display preference. Possible values: `none`, `off`, `on`.
+* `value` - The effective display preference value. Possible values: `off`, `on`.
+
+<a id="customer_balance"></a>
+### `customer_balance`
+
+The `customer_balance` attribute supports:
+
+* `available` - Whether this payment method may be offered at checkout. True if `display_preference` is `on` and the payment method's capability is active.
+* `display_preference` - See [`customer_balance.display_preference`](#customer_balance.display_preference) below.
+
+<a id="customer_balance.display_preference"></a>
+### `customer_balance.display_preference`
+
+The `customer_balance.display_preference` attribute supports:
+
+* `overridable` - For child configs, whether or not the account's preference will be observed. If `false`, the parent configuration's default is used.
+* `preference` - The account's display preference. Possible values: `none`, `off`, `on`.
+* `value` - The effective display preference value. Possible values: `off`, `on`.
+
+<a id="eps"></a>
+### `eps`
+
+The `eps` attribute supports:
+
+* `available` - Whether this payment method may be offered at checkout. True if `display_preference` is `on` and the payment method's capability is active.
+* `display_preference` - See [`eps.display_preference`](#eps.display_preference) below.
+
+<a id="eps.display_preference"></a>
+### `eps.display_preference`
+
+The `eps.display_preference` attribute supports:
+
+* `overridable` - For child configs, whether or not the account's preference will be observed. If `false`, the parent configuration's default is used.
+* `preference` - The account's display preference. Possible values: `none`, `off`, `on`.
+* `value` - The effective display preference value. Possible values: `off`, `on`.
+
+<a id="giropay"></a>
+### `giropay`
+
+The `giropay` attribute supports:
+
+* `available` - Whether this payment method may be offered at checkout. True if `display_preference` is `on` and the payment method's capability is active.
+* `display_preference` - See [`giropay.display_preference`](#giropay.display_preference) below.
+
+<a id="giropay.display_preference"></a>
+### `giropay.display_preference`
+
+The `giropay.display_preference` attribute supports:
+
+* `overridable` - For child configs, whether or not the account's preference will be observed. If `false`, the parent configuration's default is used.
+* `preference` - The account's display preference. Possible values: `none`, `off`, `on`.
+* `value` - The effective display preference value. Possible values: `off`, `on`.
+
+<a id="google_pay"></a>
+### `google_pay`
+
+The `google_pay` attribute supports:
+
+* `available` - Whether this payment method may be offered at checkout. True if `display_preference` is `on` and the payment method's capability is active.
+* `display_preference` - See [`google_pay.display_preference`](#google_pay.display_preference) below.
+
+<a id="google_pay.display_preference"></a>
+### `google_pay.display_preference`
+
+The `google_pay.display_preference` attribute supports:
+
+* `overridable` - For child configs, whether or not the account's preference will be observed. If `false`, the parent configuration's default is used.
+* `preference` - The account's display preference. Possible values: `none`, `off`, `on`.
+* `value` - The effective display preference value. Possible values: `off`, `on`.
+
+<a id="ideal"></a>
+### `ideal`
+
+The `ideal` attribute supports:
+
+* `available` - Whether this payment method may be offered at checkout. True if `display_preference` is `on` and the payment method's capability is active.
+* `display_preference` - See [`ideal.display_preference`](#ideal.display_preference) below.
+
+<a id="ideal.display_preference"></a>
+### `ideal.display_preference`
+
+The `ideal.display_preference` attribute supports:
+
+* `overridable` - For child configs, whether or not the account's preference will be observed. If `false`, the parent configuration's default is used.
+* `preference` - The account's display preference. Possible values: `none`, `off`, `on`.
+* `value` - The effective display preference value. Possible values: `off`, `on`.
+
+<a id="kakao_pay"></a>
+### `kakao_pay`
+
+The `kakao_pay` attribute supports:
+
+* `available` - Whether this payment method may be offered at checkout. True if `display_preference` is `on` and the payment method's capability is active.
+* `display_preference` - See [`kakao_pay.display_preference`](#kakao_pay.display_preference) below.
+
+<a id="kakao_pay.display_preference"></a>
+### `kakao_pay.display_preference`
+
+The `kakao_pay.display_preference` attribute supports:
+
+* `overridable` - For child configs, whether or not the account's preference will be observed. If `false`, the parent configuration's default is used.
+* `preference` - The account's display preference. Possible values: `none`, `off`, `on`.
+* `value` - The effective display preference value. Possible values: `off`, `on`.
+
+<a id="klarna"></a>
+### `klarna`
+
+The `klarna` attribute supports:
+
+* `available` - Whether this payment method may be offered at checkout. True if `display_preference` is `on` and the payment method's capability is active.
+* `display_preference` - See [`klarna.display_preference`](#klarna.display_preference) below.
+
+<a id="klarna.display_preference"></a>
+### `klarna.display_preference`
+
+The `klarna.display_preference` attribute supports:
+
+* `overridable` - For child configs, whether or not the account's preference will be observed. If `false`, the parent configuration's default is used.
+* `preference` - The account's display preference. Possible values: `none`, `off`, `on`.
+* `value` - The effective display preference value. Possible values: `off`, `on`.
+
+<a id="kr_card"></a>
+### `kr_card`
+
+The `kr_card` attribute supports:
+
+* `available` - Whether this payment method may be offered at checkout. True if `display_preference` is `on` and the payment method's capability is active.
+* `display_preference` - See [`kr_card.display_preference`](#kr_card.display_preference) below.
+
+<a id="kr_card.display_preference"></a>
+### `kr_card.display_preference`
+
+The `kr_card.display_preference` attribute supports:
+
+* `overridable` - For child configs, whether or not the account's preference will be observed. If `false`, the parent configuration's default is used.
+* `preference` - The account's display preference. Possible values: `none`, `off`, `on`.
+* `value` - The effective display preference value. Possible values: `off`, `on`.
+
+<a id="mb_way"></a>
+### `mb_way`
+
+The `mb_way` attribute supports:
+
+* `available` - Whether this payment method may be offered at checkout. True if `display_preference` is `on` and the payment method's capability is active.
+* `display_preference` - See [`mb_way.display_preference`](#mb_way.display_preference) below.
+
+<a id="mb_way.display_preference"></a>
+### `mb_way.display_preference`
+
+The `mb_way.display_preference` attribute supports:
+
+* `overridable` - For child configs, whether or not the account's preference will be observed. If `false`, the parent configuration's default is used.
+* `preference` - The account's display preference. Possible values: `none`, `off`, `on`.
+* `value` - The effective display preference value. Possible values: `off`, `on`.
+
+<a id="multibanco"></a>
+### `multibanco`
+
+The `multibanco` attribute supports:
+
+* `available` - Whether this payment method may be offered at checkout. True if `display_preference` is `on` and the payment method's capability is active.
+* `display_preference` - See [`multibanco.display_preference`](#multibanco.display_preference) below.
+
+<a id="multibanco.display_preference"></a>
+### `multibanco.display_preference`
+
+The `multibanco.display_preference` attribute supports:
+
+* `overridable` - For child configs, whether or not the account's preference will be observed. If `false`, the parent configuration's default is used.
+* `preference` - The account's display preference. Possible values: `none`, `off`, `on`.
+* `value` - The effective display preference value. Possible values: `off`, `on`.
+
+<a id="naver_pay"></a>
+### `naver_pay`
+
+The `naver_pay` attribute supports:
+
+* `available` - Whether this payment method may be offered at checkout. True if `display_preference` is `on` and the payment method's capability is active.
+* `display_preference` - See [`naver_pay.display_preference`](#naver_pay.display_preference) below.
+
+<a id="naver_pay.display_preference"></a>
+### `naver_pay.display_preference`
+
+The `naver_pay.display_preference` attribute supports:
+
+* `overridable` - For child configs, whether or not the account's preference will be observed. If `false`, the parent configuration's default is used.
+* `preference` - The account's display preference. Possible values: `none`, `off`, `on`.
+* `value` - The effective display preference value. Possible values: `off`, `on`.
+
+<a id="oxxo"></a>
+### `oxxo`
+
+The `oxxo` attribute supports:
+
+* `available` - Whether this payment method may be offered at checkout. True if `display_preference` is `on` and the payment method's capability is active.
+* `display_preference` - See [`oxxo.display_preference`](#oxxo.display_preference) below.
+
+<a id="oxxo.display_preference"></a>
+### `oxxo.display_preference`
+
+The `oxxo.display_preference` attribute supports:
+
+* `overridable` - For child configs, whether or not the account's preference will be observed. If `false`, the parent configuration's default is used.
+* `preference` - The account's display preference. Possible values: `none`, `off`, `on`.
+* `value` - The effective display preference value. Possible values: `off`, `on`.
+
+<a id="p24"></a>
+### `p24`
+
+The `p24` attribute supports:
+
+* `available` - Whether this payment method may be offered at checkout. True if `display_preference` is `on` and the payment method's capability is active.
+* `display_preference` - See [`p24.display_preference`](#p24.display_preference) below.
+
+<a id="p24.display_preference"></a>
+### `p24.display_preference`
+
+The `p24.display_preference` attribute supports:
+
+* `overridable` - For child configs, whether or not the account's preference will be observed. If `false`, the parent configuration's default is used.
+* `preference` - The account's display preference. Possible values: `none`, `off`, `on`.
+* `value` - The effective display preference value. Possible values: `off`, `on`.
+
+<a id="pay_by_bank"></a>
+### `pay_by_bank`
+
+The `pay_by_bank` attribute supports:
+
+* `available` - Whether this payment method may be offered at checkout. True if `display_preference` is `on` and the payment method's capability is active.
+* `display_preference` - See [`pay_by_bank.display_preference`](#pay_by_bank.display_preference) below.
+
+<a id="pay_by_bank.display_preference"></a>
+### `pay_by_bank.display_preference`
+
+The `pay_by_bank.display_preference` attribute supports:
+
+* `overridable` - For child configs, whether or not the account's preference will be observed. If `false`, the parent configuration's default is used.
+* `preference` - The account's display preference. Possible values: `none`, `off`, `on`.
+* `value` - The effective display preference value. Possible values: `off`, `on`.
+
+<a id="payco"></a>
+### `payco`
+
+The `payco` attribute supports:
+
+* `available` - Whether this payment method may be offered at checkout. True if `display_preference` is `on` and the payment method's capability is active.
+* `display_preference` - See [`payco.display_preference`](#payco.display_preference) below.
+
+<a id="payco.display_preference"></a>
+### `payco.display_preference`
+
+The `payco.display_preference` attribute supports:
+
+* `overridable` - For child configs, whether or not the account's preference will be observed. If `false`, the parent configuration's default is used.
+* `preference` - The account's display preference. Possible values: `none`, `off`, `on`.
+* `value` - The effective display preference value. Possible values: `off`, `on`.
+
+<a id="paypay"></a>
+### `paypay`
+
+The `paypay` attribute supports:
+
+* `available` - Whether this payment method may be offered at checkout. True if `display_preference` is `on` and the payment method's capability is active.
+* `display_preference` - See [`paypay.display_preference`](#paypay.display_preference) below.
+
+<a id="paypay.display_preference"></a>
+### `paypay.display_preference`
+
+The `paypay.display_preference` attribute supports:
+
+* `overridable` - For child configs, whether or not the account's preference will be observed. If `false`, the parent configuration's default is used.
+* `preference` - The account's display preference. Possible values: `none`, `off`, `on`.
+* `value` - The effective display preference value. Possible values: `off`, `on`.
+
+<a id="pix"></a>
+### `pix`
+
+The `pix` attribute supports:
+
+* `available` - Whether this payment method may be offered at checkout. True if `display_preference` is `on` and the payment method's capability is active.
+* `display_preference` - See [`pix.display_preference`](#pix.display_preference) below.
+
+<a id="pix.display_preference"></a>
+### `pix.display_preference`
+
+The `pix.display_preference` attribute supports:
+
+* `overridable` - For child configs, whether or not the account's preference will be observed. If `false`, the parent configuration's default is used.
+* `preference` - The account's display preference. Possible values: `none`, `off`, `on`.
+* `value` - The effective display preference value. Possible values: `off`, `on`.
+
+<a id="promptpay"></a>
+### `promptpay`
+
+The `promptpay` attribute supports:
+
+* `available` - Whether this payment method may be offered at checkout. True if `display_preference` is `on` and the payment method's capability is active.
+* `display_preference` - See [`promptpay.display_preference`](#promptpay.display_preference) below.
+
+<a id="promptpay.display_preference"></a>
+### `promptpay.display_preference`
+
+The `promptpay.display_preference` attribute supports:
+
+* `overridable` - For child configs, whether or not the account's preference will be observed. If `false`, the parent configuration's default is used.
+* `preference` - The account's display preference. Possible values: `none`, `off`, `on`.
+* `value` - The effective display preference value. Possible values: `off`, `on`.
+
+<a id="samsung_pay"></a>
+### `samsung_pay`
+
+The `samsung_pay` attribute supports:
+
+* `available` - Whether this payment method may be offered at checkout. True if `display_preference` is `on` and the payment method's capability is active.
+* `display_preference` - See [`samsung_pay.display_preference`](#samsung_pay.display_preference) below.
+
+<a id="samsung_pay.display_preference"></a>
+### `samsung_pay.display_preference`
+
+The `samsung_pay.display_preference` attribute supports:
+
+* `overridable` - For child configs, whether or not the account's preference will be observed. If `false`, the parent configuration's default is used.
+* `preference` - The account's display preference. Possible values: `none`, `off`, `on`.
+* `value` - The effective display preference value. Possible values: `off`, `on`.
+
+<a id="satispay"></a>
+### `satispay`
+
+The `satispay` attribute supports:
+
+* `available` - Whether this payment method may be offered at checkout. True if `display_preference` is `on` and the payment method's capability is active.
+* `display_preference` - See [`satispay.display_preference`](#satispay.display_preference) below.
+
+<a id="satispay.display_preference"></a>
+### `satispay.display_preference`
+
+The `satispay.display_preference` attribute supports:
+
+* `overridable` - For child configs, whether or not the account's preference will be observed. If `false`, the parent configuration's default is used.
+* `preference` - The account's display preference. Possible values: `none`, `off`, `on`.
+* `value` - The effective display preference value. Possible values: `off`, `on`.
+
+<a id="scalapay"></a>
+### `scalapay`
+
+The `scalapay` attribute supports:
+
+* `available` - Whether this payment method may be offered at checkout. True if `display_preference` is `on` and the payment method's capability is active.
+* `display_preference` - See [`scalapay.display_preference`](#scalapay.display_preference) below.
+
+<a id="scalapay.display_preference"></a>
+### `scalapay.display_preference`
+
+The `scalapay.display_preference` attribute supports:
+
+* `overridable` - For child configs, whether or not the account's preference will be observed. If `false`, the parent configuration's default is used.
+* `preference` - The account's display preference. Possible values: `none`, `off`, `on`.
+* `value` - The effective display preference value. Possible values: `off`, `on`.
+
+<a id="sepa_debit"></a>
+### `sepa_debit`
+
+The `sepa_debit` attribute supports:
+
+* `available` - Whether this payment method may be offered at checkout. True if `display_preference` is `on` and the payment method's capability is active.
+* `display_preference` - See [`sepa_debit.display_preference`](#sepa_debit.display_preference) below.
+
+<a id="sepa_debit.display_preference"></a>
+### `sepa_debit.display_preference`
+
+The `sepa_debit.display_preference` attribute supports:
+
+* `overridable` - For child configs, whether or not the account's preference will be observed. If `false`, the parent configuration's default is used.
+* `preference` - The account's display preference. Possible values: `none`, `off`, `on`.
+* `value` - The effective display preference value. Possible values: `off`, `on`.
+
+<a id="sofort"></a>
+### `sofort`
+
+The `sofort` attribute supports:
+
+* `available` - Whether this payment method may be offered at checkout. True if `display_preference` is `on` and the payment method's capability is active.
+* `display_preference` - See [`sofort.display_preference`](#sofort.display_preference) below.
+
+<a id="sofort.display_preference"></a>
+### `sofort.display_preference`
+
+The `sofort.display_preference` attribute supports:
+
+* `overridable` - For child configs, whether or not the account's preference will be observed. If `false`, the parent configuration's default is used.
+* `preference` - The account's display preference. Possible values: `none`, `off`, `on`.
+* `value` - The effective display preference value. Possible values: `off`, `on`.
+
+<a id="sunbit"></a>
+### `sunbit`
+
+The `sunbit` attribute supports:
+
+* `available` - Whether this payment method may be offered at checkout. True if `display_preference` is `on` and the payment method's capability is active.
+* `display_preference` - See [`sunbit.display_preference`](#sunbit.display_preference) below.
+
+<a id="sunbit.display_preference"></a>
+### `sunbit.display_preference`
+
+The `sunbit.display_preference` attribute supports:
+
+* `overridable` - For child configs, whether or not the account's preference will be observed. If `false`, the parent configuration's default is used.
+* `preference` - The account's display preference. Possible values: `none`, `off`, `on`.
+* `value` - The effective display preference value. Possible values: `off`, `on`.
+
+<a id="upi"></a>
+### `upi`
+
+The `upi` attribute supports:
+
+* `available` - Whether this payment method may be offered at checkout. True if `display_preference` is `on` and the payment method's capability is active.
+* `display_preference` - See [`upi.display_preference`](#upi.display_preference) below.
+
+<a id="upi.display_preference"></a>
+### `upi.display_preference`
+
+The `upi.display_preference` attribute supports:
+
+* `overridable` - For child configs, whether or not the account's preference will be observed. If `false`, the parent configuration's default is used.
+* `preference` - The account's display preference. Possible values: `none`, `off`, `on`.
+* `value` - The effective display preference value. Possible values: `off`, `on`.
+
+<a id="us_bank_account"></a>
+### `us_bank_account`
+
+The `us_bank_account` attribute supports:
+
+* `available` - Whether this payment method may be offered at checkout. True if `display_preference` is `on` and the payment method's capability is active.
+* `display_preference` - See [`us_bank_account.display_preference`](#us_bank_account.display_preference) below.
+
+<a id="us_bank_account.display_preference"></a>
+### `us_bank_account.display_preference`
+
+The `us_bank_account.display_preference` attribute supports:
+
+* `overridable` - For child configs, whether or not the account's preference will be observed. If `false`, the parent configuration's default is used.
+* `preference` - The account's display preference. Possible values: `none`, `off`, `on`.
+* `value` - The effective display preference value. Possible values: `off`, `on`.
+
+<a id="wechat_pay"></a>
+### `wechat_pay`
+
+The `wechat_pay` attribute supports:
+
+* `available` - Whether this payment method may be offered at checkout. True if `display_preference` is `on` and the payment method's capability is active.
+* `display_preference` - See [`wechat_pay.display_preference`](#wechat_pay.display_preference) below.
+
+<a id="wechat_pay.display_preference"></a>
+### `wechat_pay.display_preference`
+
+The `wechat_pay.display_preference` attribute supports:
+
+* `overridable` - For child configs, whether or not the account's preference will be observed. If `false`, the parent configuration's default is used.
+* `preference` - The account's display preference. Possible values: `none`, `off`, `on`.
+* `value` - The effective display preference value. Possible values: `off`, `on`.
+
+<a id="zip"></a>
+### `zip`
+
+The `zip` attribute supports:
+
+* `available` - Whether this payment method may be offered at checkout. True if `display_preference` is `on` and the payment method's capability is active.
+* `display_preference` - See [`zip.display_preference`](#zip.display_preference) below.
+
+<a id="zip.display_preference"></a>
+### `zip.display_preference`
+
+The `zip.display_preference` attribute supports:
+
+* `overridable` - For child configs, whether or not the account's preference will be observed. If `false`, the parent configuration's default is used.
+* `preference` - The account's display preference. Possible values: `none`, `off`, `on`.
+* `value` - The effective display preference value. Possible values: `off`, `on`.
 
 ## Timeouts
 
@@ -1199,4 +1184,4 @@ Using `terraform import`, import a payment method configuration using its ID. Fo
 % terraform import stripe_payment_method_configuration.checkout pmc_123
 ```
 
--> Stripe does not return `apple_pay_later` or `fr_meal_voucher_conecs`, so an imported payment method configuration has them null: a configuration that sets one plans an update after the import.
+-> Stripe does not return `fr_meal_voucher_conecs`, so an imported payment method configuration has it null: a configuration that sets it plans an update after the import.

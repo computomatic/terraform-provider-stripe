@@ -41,7 +41,10 @@ type PinnedFile struct {
 // 2026-10-29-attribute-parity, A7, and the fake's `architecture/ci.md`, "Attribute fidelity",
 // which adds `served_broken` and `proven_by_test`). Only ClassVerified exposes a leaf.
 const (
-	ClassVerified           = "verified"
+	ClassVerified = "verified"
+	// ClassAcceptedOnly is a leaf Stripe takes and never returns, so that a user could neither
+	// read it back nor see drift: rule X6 leaves it out unless Resource.AcceptedOnly allows it.
+	ClassAcceptedOnly       = "verified_accepted_only"
 	ClassServedFailing      = "served_failing"
 	ClassServedBroken       = "served_broken"
 	ClassServedUnverified   = "served_unverified"
@@ -52,7 +55,7 @@ const (
 	ClassUnproven           = "unproven"
 )
 
-var classes = []string{ClassVerified, ClassServedFailing, ClassServedBroken, ClassServedUnverified, ClassGapProvenNotServed, ClassGapStripeOnly, ClassGapPlaceholderNull, ClassProvenByTest, ClassUnproven}
+var classes = []string{ClassVerified, ClassAcceptedOnly, ClassServedFailing, ClassServedBroken, ClassServedUnverified, ClassGapProvenNotServed, ClassGapStripeOnly, ClassGapPlaceholderNull, ClassProvenByTest, ClassUnproven}
 
 // Attributes is the part of a fake release's `attributes.json` the generator reads: the
 // header that ties it to a suite run and the spec, and each leaf's key and class. Other
@@ -70,7 +73,18 @@ type Attributes struct {
 type AttributeLeaf struct {
 	Key
 	Class string `json:"class"`
+	// Reason qualifies the class: ReasonRefusedOnly on a verified leaf says Stripe refused every
+	// request that sent it, so that only its refusal is proven.
+	Reason string `json:"reason,omitempty"`
 }
+
+// ReasonRefusedOnly is the reason of a leaf Stripe has only ever refused.
+const ReasonRefusedOnly = "refused_only"
+
+// attributeReasons is the closed set of reasons `attributes.json` gives. A reason outside it can
+// change what a class means, so a later fake's new one fails generation until the generator reads
+// it.
+var attributeReasons = []string{ReasonRefusedOnly, "accepted_only", "country_profile_missing", "needs_declaration", "not_proven", "operation_not_registered", "stripe_only"}
 
 // Evidence is the suite's evidence record, format version 1 (suite ADR
 // 2026-10-29-attribute-coverage, A7; its JSON Schema is `internal/evidence/schema/v1.json` in
@@ -88,7 +102,7 @@ type Evidence struct {
 	Rules          []EvidenceRule  `json:"rules"`
 	SideEffects    []SideEffect    `json:"side_effects"`
 	FilledFrom     []FilledFrom    `json:"filled_from"`
-	Families       json.RawMessage `json:"families,omitempty"`
+	Families       []Family        `json:"families,omitempty"`
 	EmbeddedCopies json.RawMessage `json:"embedded_copies,omitempty"`
 	PagedLists     json.RawMessage `json:"paged_lists,omitempty"`
 	Discounts      []Discount      `json:"discounts"`
@@ -120,10 +134,22 @@ type EvidenceLeaf struct {
 	EnumValues json.RawMessage `json:"enum_values,omitempty"`
 	WriteOnly  json.RawMessage `json:"write_only,omitempty"`
 	AcceptedIn json.RawMessage `json:"accepted_in,omitempty"`
-	Refusals   json.RawMessage `json:"refusals,omitempty"`
+	Refusals   []Refusal       `json:"refusals,omitempty"`
 	Initial    json.RawMessage `json:"initial,omitempty"`
 	Nullable   json.RawMessage `json:"nullable,omitempty"`
 	Failure    json.RawMessage `json:"failure,omitempty"`
+}
+
+// Refusal is one refusal of a request that sent the leaf, on an account of a country. The message
+// holds IDs and times as the placeholders `<id:prefix>` and `<time>`.
+type Refusal struct {
+	AccountCountry string   `json:"account_country"`
+	Status         int      `json:"status"`
+	Type           string   `json:"type"`
+	Code           string   `json:"code"`
+	Param          string   `json:"param"`
+	Message        string   `json:"message"`
+	Tests          []string `json:"tests"`
 }
 
 // EvidenceDefault is what Stripe set on a minimal create that left the leaf out: a value,
@@ -201,16 +227,20 @@ type Matcher struct {
 	Element  *Matcher        `json:"element,omitempty"`
 	Count    *int            `json:"count,omitempty"`
 	HasMore  *bool           `json:"has_more,omitempty"`
+	// Days is how many days after the response's created a `day_within` or `time_within` lies.
+	Days *int `json:"days,omitempty"`
 }
 
 // SideEffect is one update of an update probe and the paths it did not name whose literal
 // value changed (P5).
 type SideEffect struct {
-	Object    string        `json:"object"`
-	Operation string        `json:"operation"`
-	Probe     string        `json:"probe"`
-	Changed   []ChangedPath `json:"changed"`
-	Tests     []string      `json:"tests"`
+	Object    string `json:"object"`
+	Operation string `json:"operation"`
+	Probe     string `json:"probe"`
+	// Triggers are the request leaves the update sent, which the effect is known to follow.
+	Triggers []string      `json:"triggers"`
+	Changed  []ChangedPath `json:"changed"`
+	Tests    []string      `json:"tests"`
 }
 
 // ChangedPath is one path a side effect changed, with matchers of the values before and after.
@@ -227,6 +257,32 @@ type FilledFrom struct {
 	From   string   `json:"from"`
 	Tests  []string `json:"tests"`
 }
+
+// Family is what a partial update of the family's objects does (P4). Hashes, where given, says
+// per hash whether it keeps the siblings a partial update leaves out; a hash it does not list is
+// unknown, whatever NestedHashUpdate says of the family.
+type Family struct {
+	Family           string       `json:"family"`
+	Objects          []string     `json:"objects"`
+	NestedHashUpdate string       `json:"nested_hash_update"`
+	Hashes           []HashUpdate `json:"hashes,omitempty"`
+	ArrayUpdate      string       `json:"array_update"`
+	MapKeyRemoval    string       `json:"map_key_removal"`
+	ScalarUnset      string       `json:"scalar_unset"`
+	Tests            []string     `json:"tests"`
+}
+
+// HashUpdate is what a partial update of one hash did to the members it left out.
+type HashUpdate struct {
+	Hash   string `json:"hash"`
+	Update string `json:"update"`
+}
+
+// The values of HashUpdate.Update.
+const (
+	HashSiblingsKept    = "siblings_kept"
+	HashSiblingsCleared = "siblings_cleared"
+)
 
 // Discount is what one form of a `discounts` element sent to one operation returned (P11).
 type Discount struct {
@@ -249,7 +305,8 @@ var (
 	unsetBy       = []string{"empty_string", "null", "shorter_array"}
 	unsetResults  = []string{"null", "absent", "as_sent", "unchanged", "value", "refused"}
 	discountForms = []string{"coupon", "discount", "promotion_code"}
-	matcherKinds  = []string{"sent", "normalised", "value", "null", "absent", "id", "created", "ref", "account_id", "account", "from", "timestamp", "url", "secret", "list", "unchanged", "fingerprint"}
+	matcherKinds  = []string{"sent", "normalised", "value", "null", "absent", "id", "created", "ref", "account_id", "account", "from", "timestamp", "url", "secret", "list", "unchanged", "fingerprint", "day_within", "time_within"}
+	hashUpdates   = []string{HashSiblingsKept, HashSiblingsCleared}
 )
 
 // Pinned is the vendored evidence, read and checked against its pin and the spec's.
@@ -257,8 +314,9 @@ type Pinned struct {
 	Pin        EvidencePin
 	Attributes *Attributes
 	Evidence   *Evidence
-	// classes and leaves index the two files by key, built on first use.
+	// classes, refused and leaves index the two files by key, built on first use.
 	classes map[Key]string
+	refused map[Key]bool
 	leaves  map[Key]*EvidenceLeaf
 	// parentDefaults holds the leaves of the tables' ParentDefaults, gathered by facts.
 	parentDefaults map[Key]bool
@@ -316,15 +374,8 @@ func LoadEvidence(root string, spec Pin) (*Pinned, error) {
 	case a.SuiteRef != p.Pin.SuiteRef || a.RunID != p.Pin.RunID:
 		return nil, fmt.Errorf("spec/attributes.json names suite run %s/%d, spec/EVIDENCE_PIN.json pins %s/%d", a.SuiteRef, a.RunID, p.Pin.SuiteRef, p.Pin.RunID)
 	}
-	seen := map[Key]bool{}
-	for _, l := range a.Leaves {
-		if !slices.Contains(classes, l.Class) {
-			return nil, fmt.Errorf("spec/attributes.json: %s has the unknown class %q", l.Key, l.Class)
-		}
-		if seen[l.Key] {
-			return nil, fmt.Errorf("spec/attributes.json lists %s twice", l.Key)
-		}
-		seen[l.Key] = true
+	if err := a.check(); err != nil {
+		return nil, err
 	}
 
 	evData, err := readPinned(root, "evidence.json", p.Pin.Evidence)
@@ -357,6 +408,24 @@ func LoadEvidence(root string, spec Pin) (*Pinned, error) {
 		return nil, fmt.Errorf("spec/attributes.json verifies leaves that spec/evidence.json does not prove: %s", strings.Join(unproven, ", "))
 	}
 	return &p, nil
+}
+
+// check refuses a class or a reason outside its closed set, and a key listed twice.
+func (a *Attributes) check() error {
+	seen := map[Key]bool{}
+	for _, l := range a.Leaves {
+		if !slices.Contains(classes, l.Class) {
+			return fmt.Errorf("spec/attributes.json: %s has the unknown class %q", l.Key, l.Class)
+		}
+		if l.Reason != "" && !slices.Contains(attributeReasons, l.Reason) {
+			return fmt.Errorf("spec/attributes.json: %s has the unknown reason %q", l.Key, l.Reason)
+		}
+		if seen[l.Key] {
+			return fmt.Errorf("spec/attributes.json lists %s twice", l.Key)
+		}
+		seen[l.Key] = true
+	}
+	return nil
 }
 
 // decodeEvidence decodes an evidence record, refusing a member the format does not define and a
@@ -504,6 +573,13 @@ func (e *Evidence) check() error {
 	for _, r := range e.Rules {
 		for _, o := range r.Observations {
 			if err := unknown(r.Object+" "+r.Path+": observation", o.Value.Kind, matcherKinds); err != nil {
+				return err
+			}
+		}
+	}
+	for _, f := range e.Families {
+		for _, h := range f.Hashes {
+			if err := unknown(f.Family+" "+h.Hash+": hash update", h.Update, hashUpdates); err != nil {
 				return err
 			}
 		}

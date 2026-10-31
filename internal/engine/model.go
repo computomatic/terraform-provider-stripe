@@ -42,6 +42,8 @@ type node struct {
 	NullAs string
 	// Preserve keeps the configured value when the response redacts or reformats it.
 	Preserve bool
+	// MadeBy names the top-level argument that makes this one's value (Declaration.MadeBy).
+	MadeBy string
 	// KeepOmitted keeps the prior value when the response leaves the field out or null.
 	KeepOmitted bool
 	// FixedOnceSet is the one value Stripe lets the field change from. A configured change
@@ -296,14 +298,20 @@ func compile(decl Declaration, table []fields.Field) (*model, error) {
 			return nil, fmt.Errorf("%s: filled-from source `%s` is not a configurable field outside a list", decl.TypeName, source)
 		}
 		for _, f := range filled {
-			if n, _, ok := m.at(f); !ok || !n.Optional || !n.Computed {
-				return nil, fmt.Errorf("%s: filled-from entry `%s` is not a server-defaulted field outside a list", decl.TypeName, f)
+			if n, _, ok := m.at(f); !ok || !n.Computed {
+				return nil, fmt.Errorf("%s: filled-from entry `%s` is not a computed field outside a list", decl.TypeName, f)
 			}
 		}
 	}
-	for _, name := range decl.SendChangedMembers {
-		if n, ok := m.top(name); !ok || n.Shape != fields.Object || !n.Update {
-			return nil, fmt.Errorf("%s: send-changed-members entry `%s` is not a top-level object an update takes", decl.TypeName, name)
+	if err := m.checkSentMembers(); err != nil {
+		return nil, err
+	}
+	for name, by := range decl.MadeBy {
+		if n, ok := m.top(name); !ok || !n.Writable() {
+			return nil, fmt.Errorf("%s: made_by entry `%s` names no argument", decl.TypeName, name)
+		}
+		if n, ok := m.top(by); !ok || !n.Writable() {
+			return nil, fmt.Errorf("%s: made_by entry `%s` is made by `%s`, which names no argument", decl.TypeName, name, by)
 		}
 	}
 	for _, name := range decl.RefuseChange {
@@ -745,6 +753,9 @@ func (c *compiler) build(table []fields.Field, prefix string, top, parentOutput,
 		once := c.mark("once_returned", c.once, path)
 		n.Sensitive = c.mark("sensitive", c.sensitive, path) || once || f.Sensitive
 		n.Preserve = c.mark("preserve_config", c.preserve, path)
+		if top {
+			n.MadeBy = c.decl.MadeBy[path]
+		}
 		n.KeepOmitted = c.mark("keep_omitted", c.keepOmitted, path)
 		notDefaulted := c.mark("not_server_defaulted", c.unDefaulted, path)
 		if c.mark("server_defaulted", c.defaulted, path) {
@@ -847,6 +858,61 @@ func (c *compiler) build(table []fields.Field, prefix string, top, parentOutput,
 		}
 	}
 	return out, nil
+}
+
+// checkSentMembers refuses a declaration that leaves open how an update sends a hash. Each entry of
+// SendChangedMembers and SendWholeMembers is a hash an update takes, a nested one inside an object
+// that sends changed members, and every hash below such an object is named in one or the other,
+// so that a hash the gate newly exposes is never sent in part by default. A hash with a Required
+// member, sent whole as Stripe takes it, and one refused in RefuseChange, never sent, need no entry.
+func (m *model) checkSentMembers() error {
+	decl := m.decl
+	changed, whole := decl.SendChangedMembers, decl.SendWholeMembers
+	inside := func(name string) bool {
+		i := strings.LastIndex(name, ".")
+		return i > 0 && slices.Contains(changed, name[:i])
+	}
+	hash := func(name string) (*node, bool) {
+		n, _, ok := m.at(name)
+		if !ok || n.Shape != fields.Object || !n.Update {
+			return nil, false
+		}
+		return n, true
+	}
+	for _, name := range changed {
+		n, ok := hash(name)
+		if !ok || strings.Contains(name, ".") && !inside(name) || hasRequiredMember(n) {
+			return fmt.Errorf("%s: send-changed-members entry `%s` is not a hash an update takes in part, top-level or inside another entry", decl.TypeName, name)
+		}
+	}
+	for _, name := range whole {
+		if _, ok := hash(name); !ok || !inside(name) || slices.Contains(changed, name) {
+			return fmt.Errorf("%s: send-whole-members entry `%s` is not a hash inside a send-changed-members object and in that list alone", decl.TypeName, name)
+		}
+	}
+	var walk func(n *node) error
+	walk = func(n *node) error {
+		for _, k := range n.Kids {
+			switch {
+			case k.Shape != fields.Object || !k.Update || hasRequiredMember(k) || slices.Contains(decl.RefuseChange, k.Path) || slices.Contains(whole, k.Path):
+			case slices.Contains(changed, k.Path):
+				if err := walk(k); err != nil {
+					return err
+				}
+			default:
+				return fmt.Errorf("%s: the hash `%s` is inside a send-changed-members object: name it in SendChangedMembers or SendWholeMembers", decl.TypeName, k.Path)
+			}
+		}
+		return nil
+	}
+	for _, name := range changed {
+		if n, ok := m.top(name); ok {
+			if err := walk(n); err != nil {
+				return err
+			}
+		}
+	}
+	return nil
 }
 
 // nestedShape reports a shape that becomes a nested attribute.

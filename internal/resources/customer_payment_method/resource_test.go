@@ -7,8 +7,10 @@ import (
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
+	"github.com/hashicorp/terraform-plugin-testing/knownvalue"
 	"github.com/hashicorp/terraform-plugin-testing/plancheck"
 	"github.com/hashicorp/terraform-plugin-testing/terraform"
+	"github.com/hashicorp/terraform-plugin-testing/tfjsonpath"
 
 	"github.com/computomatic/terraform-provider-stripe/internal/acctest"
 	"github.com/computomatic/terraform-provider-stripe/internal/acctest/tfacc"
@@ -108,6 +110,11 @@ func TestAccCustomerPaymentMethod_testPaymentMethod(t *testing.T) {
 	})
 }
 
+// addressCheck is the path of one of a card's checks.
+func addressCheck(name string) tfjsonpath.Path {
+	return tfjsonpath.New("card").AtMapKey("checks").AtMapKey(name)
+}
+
 func TestAccCustomerPaymentMethod_update(t *testing.T) {
 	acct := acctest.NewAccount(t)
 	pm := paymentMethod(t, acct)
@@ -115,6 +122,14 @@ func TestAccCustomerPaymentMethod_update(t *testing.T) {
 		ProtoV6ProviderFactories: tfacc.ProviderFactories,
 		Steps: acctest.Forget(t, []resource.TestStep{
 			{Config: attachmentConfig(acct, pm, "  metadata = { keep = \"me\", drop = \"me\" }\n")},
+			{
+				// Only a change of the billing address moves the address checks.
+				Config: attachmentConfig(acct, pm, "  metadata = { keep = \"me\", drop = \"too\" }\n"),
+				ConfigPlanChecks: resource.ConfigPlanChecks{PreApply: []plancheck.PlanCheck{
+					plancheck.ExpectKnownValue(address, addressCheck("address_line1_check"), knownvalue.Null()),
+					plancheck.ExpectKnownValue(address, addressCheck("address_postal_code_check"), knownvalue.Null()),
+				}},
+			},
 			{
 				Config: attachmentConfig(acct, pm, `  metadata = { keep = "me", new = "v" }
   billing_details = {
@@ -127,19 +142,17 @@ func TestAccCustomerPaymentMethod_update(t *testing.T) {
       postal_code = "12345"
     }
   }
-  card = {
-    exp_year = 2039
-  }
 `),
 				ConfigPlanChecks: resource.ConfigPlanChecks{PreApply: []plancheck.PlanCheck{
 					plancheck.ExpectResourceAction(address, plancheck.ResourceActionUpdate),
+					plancheck.ExpectUnknownValue(address, addressCheck("address_line1_check")),
+					plancheck.ExpectUnknownValue(address, addressCheck("address_postal_code_check")),
 				}},
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr(address, "id", pm),
 					resource.TestCheckResourceAttr(address, "billing_details.name", "Ada Lovelace"),
 					resource.TestCheckResourceAttr(address, "billing_details.email", "ada@example.com"),
 					resource.TestCheckResourceAttr(address, "billing_details.address.city", "Springfield"),
-					resource.TestCheckResourceAttr(address, "card.exp_year", "2039"),
 					resource.TestCheckResourceAttr(address, "card.last4", "4242"),
 					resource.TestCheckResourceAttr(address, "metadata.%", "2"),
 					resource.TestCheckResourceAttr(address, "metadata.new", "v"),
@@ -151,6 +164,45 @@ func TestAccCustomerPaymentMethod_update(t *testing.T) {
 
 // Changing the attached payment method would replace the attachment, which Stripe can only
 // detach, for good: the plan fails, and so does a taint, at apply.
+// `allow_redisplay` and the preferred network change in place, with the record's enum values. The
+// configured network stays in state, because Stripe stores one the card does not have as
+// `invalid_preference` (suite: TestPaymentMethodAttributes, the `returned` of
+// `card.networks.preferred`).
+func TestAccCustomerPaymentMethod_verifiedUpdates(t *testing.T) {
+	acct := acctest.NewAccount(t)
+	pm := paymentMethod(t, acct)
+	cfg := func(redisplay, network string) string {
+		return attachmentConfig(acct, pm, fmt.Sprintf("  allow_redisplay = %q\n  card = {\n    networks = { preferred = %q }\n  }\n", redisplay, network))
+	}
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: tfacc.ProviderFactories,
+		Steps: acctest.Forget(t, []resource.TestStep{
+			{
+				Config: attachmentConfig(acct, pm, ""),
+				Check:  resource.TestCheckResourceAttr(address, "allow_redisplay", "unspecified"),
+			},
+			{
+				Config: cfg("always", "mastercard"),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply:             []plancheck.PlanCheck{plancheck.ExpectResourceAction(address, plancheck.ResourceActionUpdate)},
+					PostApplyPostRefresh: []plancheck.PlanCheck{plancheck.ExpectEmptyPlan()},
+				},
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr(address, "allow_redisplay", "always"),
+					resource.TestCheckResourceAttr(address, "card.networks.preferred", "mastercard"),
+				),
+			},
+			{
+				Config: cfg("limited", "cartes_bancaires"),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PostApplyPostRefresh: []plancheck.PlanCheck{plancheck.ExpectEmptyPlan()},
+				},
+				Check: resource.TestCheckResourceAttr(address, "allow_redisplay", "limited"),
+			},
+		}, nil, "stripe_customer_payment_method"),
+	})
+}
+
 func TestAccCustomerPaymentMethod_replace(t *testing.T) {
 	acct := acctest.NewAccount(t)
 	first, second := paymentMethod(t, acct), paymentMethod(t, acct)

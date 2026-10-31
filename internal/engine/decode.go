@@ -62,6 +62,10 @@ func (m *model) decodeState(body wire.Object, prior basetypes.ObjectValue, objTy
 			if n.Name == m.decl.CurrencyOptions {
 				w = withoutOwnCurrency(w, body)
 			}
+			if !dataSource && n.MadeBy != "" && known(priorAttrs[n.MadeBy]) && !known(priorAttrs[name]) {
+				attrs[name] = nullOf(t)
+				continue
+			}
 			attrs[name] = d.node(n, w, priorAttrs[name])
 			continue
 		}

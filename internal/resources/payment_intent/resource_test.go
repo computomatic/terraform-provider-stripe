@@ -11,6 +11,7 @@ import (
 
 	"github.com/computomatic/terraform-provider-stripe/internal/acctest"
 	"github.com/computomatic/terraform-provider-stripe/internal/acctest/tfacc"
+	"github.com/computomatic/terraform-provider-stripe/internal/stripeapi"
 	"github.com/computomatic/terraform-provider-stripe/internal/wire"
 )
 
@@ -130,8 +131,244 @@ func TestAccPaymentIntent_replace(t *testing.T) {
 		ProtoV6ProviderFactories: tfacc.ProviderFactories,
 		Steps: acctest.Forget(t, []resource.TestStep{
 			{Config: cfg},
-			{Config: intentConfig(acct, "  statement_descriptor = \"ORDER\"\n"), PlanOnly: true, ExpectError: tfacc.RefusedReplace},
+			{Config: intentConfig(acct, "  confirmation_method = \"manual\"\n"), PlanOnly: true, ExpectError: tfacc.RefusedReplace},
 			{Config: cfg, Taint: []string{address}, ExpectError: tfacc.RefusedDestroy},
+		}, nil, "stripe_payment_intent"),
+	})
+}
+
+// bareIntent is a payment intent with what the record's minimal create sends, which leaves
+// Stripe to choose the payment methods. extra lands inside it.
+func bareIntent(c acctest.Config, extra string) string {
+	return c.ProviderBlock() + fmt.Sprintf(`
+resource "stripe_payment_intent" "test" {
+  amount   = 500
+  currency = "usd"
+%s}
+`, extra)
+}
+
+// inPlace applies created, then changed, which must update the same intent in place, and shows an
+// empty plan after each.
+func inPlace(t *testing.T, acct acctest.Config, created, changed string, atFirst, atLast resource.TestCheckFunc) {
+	t.Helper()
+	inPlaceBeside(t, acct, "", created, changed, atFirst, atLast)
+}
+
+// inPlaceBeside is inPlace with the blocks of beside in the configuration too.
+func inPlaceBeside(t *testing.T, acct acctest.Config, beside, created, changed string, atFirst, atLast resource.TestCheckFunc) {
+	t.Helper()
+	var first string
+	empty := []plancheck.PlanCheck{plancheck.ExpectEmptyPlan()}
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: tfacc.ProviderFactories,
+		Steps: acctest.Forget(t, []resource.TestStep{
+			{
+				Config:           beside + bareIntent(acct, created),
+				ConfigPlanChecks: resource.ConfigPlanChecks{PostApplyPostRefresh: empty},
+				Check:            resource.ComposeAggregateTestCheckFunc(idOf(&first), atFirst),
+			},
+			{
+				Config: beside + bareIntent(acct, changed),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply:             []plancheck.PlanCheck{plancheck.ExpectResourceAction(address, plancheck.ResourceActionUpdate)},
+					PostApplyPostRefresh: empty,
+				},
+				Check: resource.ComposeAggregateTestCheckFunc(sameIntent(&first), atLast),
+			},
+		}, nil, "stripe_payment_intent"),
+	})
+}
+
+// freshCard makes an unattached card payment method from a test token, as the suite's recipe does
+// for each `payment_method` it sends: Stripe takes an unattached one once.
+func freshCard(t *testing.T, acct acctest.Config) string {
+	t.Helper()
+	resp, err := tfacc.Client(acct).Do(t.Context(), stripeapi.Request{Method: "POST", Path: "/v1/payment_methods", Params: wire.Object{
+		{Name: "type", Value: wire.String("card")},
+		{Name: "card", Value: wire.Object{{Name: "token", Value: wire.String("tok_visa")}}},
+	}})
+	if err != nil {
+		t.Fatalf("creating a payment method: %v", err)
+	}
+	id, _ := resp.Body.(wire.Object).GetString("id")
+	return id
+}
+
+// Stripe refuses `statement_descriptor` on a card payment it picks the methods for ("not supported
+// for the payment_method_type `card`", on the dev sandbox, and the suite's "create with
+// statement_descriptor is refused for card"), though the fake takes that create. The only requests
+// the record shows accepted are those of its `every_field/1` and `update/1` probes
+// (observations/payment_intent.json, suite 127d409): a manually confirmed intent with a customer
+// and a fresh card payment method, which this test sends, with their values. The record's four
+// creates are one body, so it does not say which of these lets the descriptor through.
+func TestAccPaymentIntent_descriptorChangesInPlace(t *testing.T) {
+	acct := acctest.NewAccount(t)
+	beside := "\nresource \"stripe_customer\" \"test\" {}\n"
+	cfg := func(pm, capture, future, descriptor, suffix, excluded string) string {
+		return fmt.Sprintf(`
+  customer                      = stripe_customer.test.id
+  confirmation_method           = "manual"
+  payment_method                = %q
+  capture_method                = %q
+  setup_future_usage            = %q
+  statement_descriptor          = %q
+  statement_descriptor_suffix   = %q
+  excluded_payment_method_types = [%s]
+`, pm, capture, future, descriptor, suffix, excluded)
+	}
+	created := cfg(freshCard(t, acct), "automatic", "off_session", "ATTRS PROBE", "ATTRS", `"affirm", "cashapp"`)
+	changed := cfg(freshCard(t, acct), "automatic_async", "on_session", "ATTRS UPDATED", "ATTRS TWO", `"cashapp", "affirm"`)
+	inPlaceBeside(t, acct, beside, created, changed,
+		resource.TestCheckResourceAttr(address, "statement_descriptor", "ATTRS PROBE"),
+		resource.ComposeAggregateTestCheckFunc(
+			resource.TestCheckResourceAttr(address, "statement_descriptor", "ATTRS UPDATED"),
+			resource.TestCheckResourceAttr(address, "statement_descriptor_suffix", "ATTRS TWO"),
+			resource.TestCheckResourceAttr(address, "excluded_payment_method_types.0", "cashapp"),
+		))
+}
+
+// The types a payment intent allows take the place of automatic payment methods and change in
+// place, with the record's enum values.
+func TestAccPaymentIntent_allowedTypesChangeInPlace(t *testing.T) {
+	acct := acctest.NewAccount(t)
+	cfg := func(types string) string { return fmt.Sprintf("  allowed_payment_method_types = [%s]\n", types) }
+	inPlace(t, acct, cfg(`"card"`), cfg(`"card", "link"`),
+		resource.TestCheckResourceAttr(address, "allowed_payment_method_types.#", "1"),
+		resource.TestCheckResourceAttr(address, "allowed_payment_method_types.1", "link"))
+}
+
+// The payment details change in place. The suite generates these strings.
+func TestAccPaymentIntent_paymentDetailsChangeInPlace(t *testing.T) {
+	acct := acctest.NewAccount(t)
+	one, two := acct.Name("order"), acct.Name("order-2")
+	cfg := func(order string) string {
+		return fmt.Sprintf("  payment_details = {\n    customer_reference = %q\n    order_reference = %q\n  }\n", order, order)
+	}
+	inPlace(t, acct, cfg(one), cfg(two),
+		resource.TestCheckResourceAttr(address, "payment_details.order_reference", one),
+		resource.TestCheckResourceAttr(address, "payment_details.customer_reference", two))
+}
+
+// The amount details change in place (suite: the postal codes of TestPaymentIntentAttributes'
+// recipe, and its generated integers, 7 and 8).
+func TestAccPaymentIntent_amountDetailsChangeInPlace(t *testing.T) {
+	acct := acctest.NewAccount(t)
+	cfg := func(n int) string {
+		return fmt.Sprintf(`
+  amount_details = {
+    discount_amount = %d
+    shipping = {
+      amount           = %d
+      from_postal_code = "94080"
+      to_postal_code   = "94610"
+    }
+    tax = { total_tax_amount = %d }
+  }
+`, n, n, n)
+	}
+	inPlace(t, acct, cfg(7), cfg(8),
+		resource.ComposeAggregateTestCheckFunc(
+			resource.TestCheckResourceAttr(address, "amount_details.shipping.to_postal_code", "94610"),
+			resource.TestCheckResourceAttr(address, "amount_details.tax.total_tax_amount", "7"),
+		),
+		resource.TestCheckResourceAttr(address, "amount_details.discount_amount", "8"))
+}
+
+// The card's options change in place, with the record's enum values, and the update sends the
+// whole hash, because the record's family clears the members an update leaves out.
+func TestAccPaymentIntent_cardOptionsChangeInPlace(t *testing.T) {
+	acct := acctest.NewAccount(t)
+	cfg := func(secure, future string) string {
+		return fmt.Sprintf(`
+  payment_method_options = {
+    card = {
+      capture_method           = "manual"
+      request_three_d_secure   = %q
+      require_cvc_recollection = true
+      setup_future_usage       = %q
+    }
+  }
+`, secure, future)
+	}
+	inPlace(t, acct, cfg("any", "off_session"), cfg("challenge", "on_session"),
+		resource.TestCheckResourceAttr(address, "payment_method_options.card.request_three_d_secure", "any"),
+		resource.ComposeAggregateTestCheckFunc(
+			resource.TestCheckResourceAttr(address, "payment_method_options.card.request_three_d_secure", "challenge"),
+			resource.TestCheckResourceAttr(address, "payment_method_options.card.setup_future_usage", "on_session"),
+			resource.TestCheckResourceAttr(address, "payment_method_options.card.capture_method", "manual"),
+		))
+}
+
+// The fee and the transfer's description and metadata change in place on a destination payment.
+// The fee is the record's 100, of its `destination` variant, and the suite's generated 8.
+func TestAccPaymentIntent_transferDataChangesInPlace(t *testing.T) {
+	acct := acctest.NewAccount(t)
+	destination := tfacc.TransfersAccount(t, acct)
+	one, two := acct.Name("first transfer"), acct.Name("second transfer")
+	cfg := func(fee int, description string) string {
+		return fmt.Sprintf(`
+  application_fee_amount = %d
+  transfer_data = {
+    destination = %q
+    description = %q
+    metadata    = { attrs_a = %q }
+  }
+`, fee, destination, description, description)
+	}
+	inPlace(t, acct, cfg(100, one), cfg(8, two),
+		resource.TestCheckResourceAttr(address, "transfer_data.description", one),
+		resource.ComposeAggregateTestCheckFunc(
+			resource.TestCheckResourceAttr(address, "application_fee_amount", "8"),
+			resource.TestCheckResourceAttr(address, "transfer_data.metadata.attrs_a", two),
+		))
+}
+
+// The transfer's amount changes in place on its own, as Stripe refuses a fee beside it (suite:
+// the record's `transfer_amount` variant, 100, and the suite's generated 8).
+func TestAccPaymentIntent_transferAmountChangesInPlace(t *testing.T) {
+	acct := acctest.NewAccount(t)
+	destination := tfacc.TransfersAccount(t, acct)
+	cfg := func(amount int) string {
+		return fmt.Sprintf("  transfer_data = {\n    destination = %q\n    amount = %d\n  }\n", destination, amount)
+	}
+	inPlace(t, acct, cfg(100), cfg(8),
+		resource.TestCheckResourceAttr(address, "transfer_data.amount", "100"),
+		resource.TestCheckResourceAttr(address, "transfer_data.amount", "8"))
+}
+
+// The record's `bancontact` variant: a payment method made inline, kept from the configuration,
+// and a payment method configuration Stripe never returns (suite: minimal create `bancontact`).
+func TestAccPaymentIntent_paymentMethodData(t *testing.T) {
+	acct := acctest.NewAccount(t)
+	cfg := func(name string) string {
+		return acct.ProviderBlock() + fmt.Sprintf(`
+resource "stripe_payment_method_configuration" "test" {
+  name = %q
+  bancontact = {
+    display_preference = { preference = "on" }
+  }
+}
+
+resource "stripe_payment_intent" "test" {
+  amount                       = 500
+  currency                     = "eur"
+  payment_method_configuration = stripe_payment_method_configuration.test.id
+  payment_method_data = {
+    type            = "bancontact"
+    billing_details = { name = %q }
+  }
+}
+`, acct.Name("Bancontact"), name)
+	}
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: tfacc.ProviderFactories,
+		Steps: acctest.Forget(t, []resource.TestStep{
+			{
+				Config:           cfg("Jenny Rosen"),
+				ConfigPlanChecks: resource.ConfigPlanChecks{PostApplyPostRefresh: []plancheck.PlanCheck{plancheck.ExpectEmptyPlan()}},
+				Check:            resource.TestCheckResourceAttr(address, "payment_method_data.billing_details.name", "Jenny Rosen"),
+			},
 		}, nil, "stripe_payment_intent"),
 	})
 }

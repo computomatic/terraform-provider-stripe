@@ -787,18 +787,18 @@ The `company.administrative_address` attribute supports:
 
 The `company.directorship_declaration` attribute supports:
 
-* `date` - (Optional) The Unix timestamp marking when the directorship declaration attestation was made. Default: none. Removing it from the configuration leaves the current value.
-* `ip` - (Optional) The IP address from which the directorship declaration attestation was made. Default: none. Removing it from the configuration leaves the current value.
-* `user_agent` - (Optional) The user-agent string from the browser where the directorship declaration attestation was made. Default: none. Removing it from the configuration leaves the current value.
+* `date` - (Optional) The Unix timestamp marking when the directorship declaration attestation was made. Stripe refused it on a US account on create: "company[directorship_declaration] is only allowed during account updates and accounts created via account tokens.". Default: none. Removing it from the configuration leaves the current value.
+* `ip` - (Optional) The IP address from which the directorship declaration attestation was made. Stripe refused it on a US account on create: "company[directorship_declaration] is only allowed during account updates and accounts created via account tokens.". Default: none. Removing it from the configuration leaves the current value.
+* `user_agent` - (Optional) The user-agent string from the browser where the directorship declaration attestation was made. Stripe refused it on a US account on create: "company[directorship_declaration] is only allowed during account updates and accounts created via account tokens.". Default: none. Removing it from the configuration leaves the current value.
 
 <a id="company.ownership_declaration"></a>
 ### `company.ownership_declaration`
 
 The `company.ownership_declaration` attribute supports:
 
-* `date` - (Optional) The Unix timestamp marking when the beneficial owner attestation was made. Default: none. Removing it from the configuration leaves the current value.
-* `ip` - (Optional) The IP address from which the beneficial owner attestation was made. Default: none. Removing it from the configuration leaves the current value.
-* `user_agent` - (Optional) The user-agent string from the browser where the beneficial owner attestation was made. Default: none. Removing it from the configuration leaves the current value.
+* `date` - (Optional) The Unix timestamp marking when the beneficial owner attestation was made. Stripe refused it on a US account on create: "legal_entity[ownership_declaration] is only allowed during account updates and accounts created via account tokens.". Default: none. Removing it from the configuration leaves the current value.
+* `ip` - (Optional) The IP address from which the beneficial owner attestation was made. Stripe refused it on a US account on create: "legal_entity[ownership_declaration] is only allowed during account updates and accounts created via account tokens.". Default: none. Removing it from the configuration leaves the current value.
+* `user_agent` - (Optional) The user-agent string from the browser where the beneficial owner attestation was made. Stripe refused it on a US account on create: "legal_entity[ownership_declaration] is only allowed during account updates and accounts created via account tokens.". Default: none. Removing it from the configuration leaves the current value.
 
 <a id="company.principal_place_of_business"></a>
 ### `company.principal_place_of_business`

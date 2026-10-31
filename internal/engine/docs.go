@@ -11,6 +11,9 @@ type AttributeDoc struct {
 	// Removal is, on an Optional and Computed argument, the sentence that says what removing it
 	// from the configuration does, which follows the default statement.
 	Removal string
+	// Refused is, on an argument Stripe has only ever refused, the sentence with its recorded
+	// refusal, which precedes the default statement.
+	Refused string
 	// Copy is, on an embedded copy of another Stripe object, the data source type that reads it.
 	Copy string
 }
@@ -60,6 +63,9 @@ func (m *model) attributeDocs(arguments bool) map[string]AttributeDoc {
 				}
 				doc.NeedsDefault = n.Update && !n.Create
 				doc.Removal = removal(n)
+			}
+			if arguments {
+				doc.Refused = n.Refused
 			}
 			doc.Copy = n.Copy
 			if doc != (AttributeDoc{}) {

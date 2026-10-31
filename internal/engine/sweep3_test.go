@@ -152,6 +152,47 @@ func TestKeepOmittedKeepsAFieldTheResponseLeavesOut(t *testing.T) {
 	}
 }
 
+// While the state holds the argument that makes a field's value and not the field, the field stays
+// null whatever Stripe returns; it reads as usual once the configuration sets it, or nothing makes
+// it.
+func TestMadeByKeepsTheFieldNull(t *testing.T) {
+	decl := fixtureDeclaration()
+	decl.MadeBy = map[string]string{"kind": "name"}
+	client := clientFunc(func(context.Context, stripeapi.Request) (*stripeapi.Response, error) {
+		return &stripeapi.Response{Body: wire.Object{{Name: "id", Value: wire.String("wid_1")}, {Name: "name", Value: wire.String("n")}, {Name: "kind", Value: wire.String("made")}}}, nil
+	})
+	r := configured(t, decl, fixtureTable(), client)
+	read := func(attrs map[string]attr.Value) basetypes.ObjectValue {
+		attrs["id"] = types.StringValue("wid_1")
+		got, _ := r.read(t, r.fill(attrs))
+		return got
+	}
+	if got := read(map[string]attr.Value{"name": types.StringValue("n")}); !got.Attributes()["kind"].IsNull() {
+		t.Errorf("the field must stay null: %v", got.Attributes()["kind"])
+	}
+	if got := read(map[string]attr.Value{"name": types.StringValue("n"), "kind": types.StringValue("set")}); str(t, got, "kind") != "made" {
+		t.Errorf("a set field must read Stripe's value: %v", got.Attributes()["kind"])
+	}
+	if got := read(map[string]attr.Value{}); str(t, got, "kind") != "made" {
+		t.Errorf("with nothing to make it, the field must read Stripe's value: %v", got.Attributes()["kind"])
+	}
+}
+
+// A made-by entry names two arguments, as the other declaration maps name fields.
+func TestMadeByNamesArguments(t *testing.T) {
+	for name, madeBy := range map[string]map[string]string{
+		"no such field":    {"gone": "name"},
+		"no such argument": {"kind": "gone"},
+		"response only":    {"created": "name"},
+	} {
+		decl := fixtureDeclaration()
+		decl.MadeBy = madeBy
+		if _, err := compile(decl, fixtureTable()); err == nil || !strings.Contains(err.Error(), "names no argument") {
+			t.Errorf("%s: %v", name, err)
+		}
+	}
+}
+
 // An apply whose plan holds a kept object with a member not known yet, such as an update that
 // closes an account and edits its identity together, keeps nothing from the plan when the
 // response returns the object null: the state never holds an unknown value.

@@ -101,7 +101,19 @@ func TestFilledFromForgetsTheStateOnAChange(t *testing.T) {
 	}
 }
 
-func TestFilledFromMustNameServerDefaultedFields(t *testing.T) {
+// A read-only member, which an object the plan keeps would otherwise hold at the state's value,
+// can be filled in too.
+func TestFilledFromTakesAReadOnlyMember(t *testing.T) {
+	table := caseTable()
+	table[1].Fields = append(table[1].Fields, fields.Field{Name: "score", Shape: fields.String, Response: true})
+	decl := caseDeclaration()
+	decl.FilledFrom = map[string][]string{"evidence.reason": {"evidence.score"}}
+	if _, err := NewResource(decl, table); err != nil {
+		t.Error(err)
+	}
+}
+
+func TestFilledFromMustNameComputedFields(t *testing.T) {
 	for name, filled := range map[string]map[string][]string{
 		"unknown source":         {"evidence.motive": {"evidence.other"}},
 		"output-only source":     {"id": {"evidence.other"}},

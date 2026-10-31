@@ -111,6 +111,54 @@ func TestAccCharge_replace(t *testing.T) {
 	})
 }
 
+// `receipt_email` and `shipping` change in place, and `fraud_details` reports a charge, with the
+// record's `safe` (suite: TestChargeAttributes). The update sends `shipping` whole, because the
+// record's family clears the members of `shipping.address` it leaves out. The strings, which the
+// suite generates, are unique per run.
+func TestAccCharge_verifiedUpdates(t *testing.T) {
+	acct := acctest.NewAccount(t)
+	var first string
+	email := func(name string) string { return fmt.Sprintf("e2e+%s@example.com", acct.Name(name)) }
+	shipping := func(receipt, name, carrier string) string {
+		return fmt.Sprintf(`
+  receipt_email = %q
+  shipping = {
+    name    = %q
+    carrier = %q
+    address = {
+      line1       = "354 Oyster Point Blvd"
+      city        = "South San Francisco"
+      state       = "CA"
+      postal_code = "94080"
+      country     = "US"
+    }
+  }
+`, receipt, name, carrier)
+	}
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: tfacc.ProviderFactories,
+		Steps: acctest.Forget(t, []resource.TestStep{
+			{
+				Config: chargeConfig(acct, 1000, shipping(email("first"), "Jenny Rosen", acct.Name("carrier"))),
+				Check:  chargePath(&first),
+			},
+			{
+				Config: chargeConfig(acct, 1000, shipping(email("second"), "Jenny Rosen", acct.Name("other carrier"))+"  fraud_details = { user_report = \"safe\" }\n"),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply:             []plancheck.PlanCheck{plancheck.ExpectResourceAction(resAddress, plancheck.ResourceActionUpdate)},
+					PostApplyPostRefresh: []plancheck.PlanCheck{plancheck.ExpectEmptyPlan()},
+				},
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr(resAddress, "receipt_email", email("second")),
+					resource.TestCheckResourceAttr(resAddress, "shipping.carrier", acct.Name("other carrier")),
+					resource.TestCheckResourceAttr(resAddress, "shipping.address.city", "South San Francisco"),
+					resource.TestCheckResourceAttr(resAddress, "fraud_details.user_report", "safe"),
+				),
+			},
+		}, nil, "stripe_charge"),
+	})
+}
+
 func TestAccCharge_import(t *testing.T) {
 	acct := acctest.NewAccount(t)
 	cfg := chargeConfig(acct, 1000, "  description = \"Direct charge\"\n  metadata = { team = \"a\" }\n")

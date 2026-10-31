@@ -1,6 +1,7 @@
 package resources
 
 import (
+	"encoding/json"
 	"fmt"
 	"go/ast"
 	"go/parser"
@@ -8,6 +9,7 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
+	"slices"
 	"strings"
 	"testing"
 )
@@ -15,6 +17,124 @@ import (
 // requiredTests are the acceptance tests of the P2 per-resource standard (ADR D6), as the
 // suffixes of `TestAcc<Resource>_<suffix>`.
 var requiredTests = []string{"create", "update", "replace", "import", "delete", "drift"}
+
+// acceptedDepartures are the hashes that send changed members though the record's
+// `families[].hashes` does not list them, which the product owner accepted on 2026-10-31 until the
+// suite proves them: each table's own entries, and below them the hashes the fake's declarations
+// (`ProvenByTest.Hashes`, fake v0.29.0) state as kept from suite tests. `individual` and
+// `configuration` are the owner's own entries, which the fake's declarations do not state.
+var acceptedDepartures = map[string][]string{
+	"account": {
+		"individual", "individual.registered_address", "individual.relationship", "individual.verification",
+		"individual.verification.document", "individual.verification.additional_document",
+		"company", "company.address", "company.administrative_address", "company.principal_place_of_business",
+	},
+	"account_person": {"registered_address", "verification", "verification.document", "verification.additional_document"},
+	"account_v2":     {"configuration", "defaults", "identity"},
+}
+
+// A hash sends only its changed members where `families[].hashes` lists it as `siblings_kept`, or
+// it is an accepted departure; a departure the record has since listed must go, and the
+// summary `nested_hash_update` proves nothing of a hash. SendWholeMembers holds no hash the record
+// lists as kept, which would send Stripe's own values back for nothing. The engine's
+// checkSentMembers makes each entry a hash and every hash below these objects an entry.
+func TestSendChangedMembersFollowTheEvidence(t *testing.T) {
+	type family struct {
+		Objects []string `json:"objects"`
+		Hashes  []struct {
+			Hash   string `json:"hash"`
+			Update string `json:"update"`
+		} `json:"hashes"`
+	}
+	var evidence struct {
+		Families []family `json:"families"`
+	}
+	raw, err := os.ReadFile(filepath.Join("..", "..", "spec", "evidence.json"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := json.Unmarshal(raw, &evidence); err != nil {
+		t.Fatal(err)
+	}
+	var coverage struct {
+		Leaves []struct{ Table, Object string } `json:"leaves"`
+	}
+	if raw, err = os.ReadFile(filepath.Join("..", "generated", "coverage.json")); err != nil {
+		t.Fatal(err)
+	}
+	if err := json.Unmarshal(raw, &coverage); err != nil {
+		t.Fatal(err)
+	}
+	objects := map[string]string{}
+	for _, l := range coverage.Leaves {
+		objects[l.Table] = l.Object
+	}
+	list := func(field string) *regexp.Regexp {
+		return regexp.MustCompile(field + `:\s*\[\]string\{([^}]*)\}`)
+	}
+	changed, whole, name := list("SendChangedMembers"), list("SendWholeMembers"), regexp.MustCompile(`"([^"]+)"`)
+	entries := func(re *regexp.Regexp, src []byte) []string {
+		var out []string
+		if m := re.FindSubmatch(src); m != nil {
+			for _, e := range name.FindAllSubmatch(m[1], -1) {
+				out = append(out, string(e[1]))
+			}
+		}
+		return out
+	}
+	declarations, err := filepath.Glob(filepath.Join("*", "resource.go"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	seen := map[string]bool{}
+	for _, file := range declarations {
+		src, err := os.ReadFile(file)
+		if err != nil {
+			t.Fatal(err)
+		}
+		sent, kept := entries(changed, src), entries(whole, src)
+		if len(sent)+len(kept) == 0 {
+			continue
+		}
+		table := filepath.Dir(file)
+		i := slices.IndexFunc(evidence.Families, func(f family) bool { return slices.Contains(f.Objects, objects[table]) })
+		if i < 0 {
+			t.Errorf("%s: no family holds its object %q", table, objects[table])
+			continue
+		}
+		record := map[string]string{}
+		for _, h := range evidence.Families[i].Hashes {
+			record[h.Hash] = h.Update
+		}
+		for _, hash := range sent {
+			seen[table+" "+hash] = true
+			accepted := slices.Contains(acceptedDepartures[table], hash)
+			switch update, listed := record[hash]; {
+			case listed && update != "siblings_kept":
+				t.Errorf("%s sends only the changed members of %s, which the record gives as %s", table, hash, update)
+			case listed && accepted:
+				t.Errorf("%s: the record now lists %s; take it out of acceptedDepartures", table, hash)
+			case !listed && !accepted:
+				t.Errorf("%s sends only the changed members of %s, which the record does not list and no departure accepts", table, hash)
+			}
+		}
+		for _, hash := range kept {
+			if record[hash] == "siblings_kept" {
+				t.Errorf("%s sends %s whole, which the record lists as keeping its siblings: send its changed members", table, hash)
+			}
+		}
+	}
+	if len(seen) == 0 {
+		t.Error("no declaration sends only changed members; the pattern no longer matches")
+	}
+	for table, hashes := range acceptedDepartures {
+		for _, hash := range hashes {
+			if !seen[table+" "+hash] {
+				t.Errorf("acceptedDepartures names %s %s, which no declaration sends in part", table, hash)
+			}
+		}
+	}
+}
 
 // A resource directory without a declaration, its docs examples or the six acceptance tests
 // fails the build (ADR D1, drift control). The pages under docs/ are generated from the

@@ -31,7 +31,7 @@ This data source supports the following arguments:
 This data source exports the following attributes in addition to the arguments above:
 
 * `acss_debit` - See [`acss_debit`](#acss_debit) below.
-* `allow_redisplay` - This field indicates whether this payment method can be shown again to its customer in a checkout flow. Stripe products such as Checkout and Elements use this field to determine whether a payment method can be shown as a saved payment method in a checkout flow. The field defaults to “unspecified”. Possible values: `always`, `limited`, `unspecified`.
+* `allow_redisplay` - This field indicates whether this payment method can be shown again to its customer in a checkout flow. Stripe products such as Checkout and Elements use this field to determine whether a payment method can be shown as a saved payment method in a checkout flow. The field defaults to `unspecified`. Possible values: `always`, `limited`, `unspecified`.
 * `au_becs_debit` - See [`au_becs_debit`](#au_becs_debit) below.
 * `bacs_debit` - See [`bacs_debit`](#bacs_debit) below.
 * `billing_details` - Billing information associated with the PaymentMethod that may be used or required by particular types of payment methods. See [`billing_details`](#billing_details) below.
@@ -43,6 +43,7 @@ This data source exports the following attributes in addition to the arguments a
 * `cashapp` - See [`cashapp`](#cashapp) below.
 * `created` - Time at which the object was created. Measured in seconds since the Unix epoch.
 * `custom` - See [`custom`](#custom) below.
+* `customer_account` - The ID of the Account representing the customer to which to attach the PaymentMethod.
 * `eps` - See [`eps`](#eps) below.
 * `fpx` - See [`fpx`](#fpx) below.
 * `ideal` - See [`ideal`](#ideal) below.
@@ -252,7 +253,7 @@ The `card.generated_from.payment_method_details.card_present.wallet` attribute s
 The `card.networks` attribute supports:
 
 * `available` - All networks available for selection via [payment_method_options.card.network](https://docs.stripe.com/api/payment_intents/confirm#confirm_payment_intent-payment_method_options-card-network).
-* `preferred` - The preferred network for co-branded cards. Can be `cartes_bancaires`, `mastercard`, `visa` or `invalid_preference` if requested network is not valid for the card.
+* `preferred` - The preferred network for co-branded cards. Can be `cartes_bancaires`, `mastercard`, `visa` or `invalid_preference` if requested network is not valid for the card. Possible values: `cartes_bancaires`, `mastercard`, `visa`.
 
 <a id="card.three_d_secure_usage"></a>
 ### `card.three_d_secure_usage`

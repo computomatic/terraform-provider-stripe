@@ -331,9 +331,10 @@ type Declaration struct {
 	// response schema is nullable, such as `unit_amount_decimal` from `unit_amount`. They are
 	// Optional and Computed.
 	ServerDefaulted []string
-	// FilledFrom maps a field, by dotted path, to the server-defaulted fields Stripe fills in
-	// according to its value, such as a dispute's `evidence.reason` to the evidence hash of each
-	// reason. When the planned value differs from the state's, each of those fields that the
+	// FilledFrom maps a field, by dotted path, to the computed fields Stripe fills in according
+	// to its value, such as a dispute's `evidence.reason` to the evidence hash of each reason, or
+	// a read-only member of an object the plan keeps, such as a card's `checks` from the billing
+	// address. When the planned value differs from the state's, each of those fields that the
 	// configuration leaves unset is unknown in the plan instead of kept from the state, because
 	// Stripe answers with the fields of the new value. A computed field the configuration leaves
 	// unset, such as a transition's `status`, is no change while it is unknown in the plan. No
@@ -352,6 +353,12 @@ type Declaration struct {
 	// PreserveConfig lists attributes whose response is a redacted or reformatted value.
 	// The configured value stays in state.
 	PreserveConfig []string
+	// MadeBy maps a top-level argument to the top-level argument that makes its value, such as a
+	// payment intent's `payment_method` to `payment_method_data`, from which Stripe makes a
+	// payment method. While the state or the plan holds the second and not the first, the first
+	// stays null whatever Stripe returns, so that it can stay Optional alone: Computed would stop
+	// its removal from the configuration from clearing it.
+	MadeBy map[string]string
 	// KeepOmitted lists fields, by dotted path outside any list, that a response can leave out
 	// or return null although the object still has them, such as the identity of a closed
 	// `/v2` account. A response that omits one or returns it null keeps the prior value when that is fully
@@ -450,12 +457,20 @@ type Declaration struct {
 	// with a replace source below the top level, which is not checked, unless it refuses
 	// destroy, which fails every replacement first. Nor is a value not fully known at plan time. `-replace` cannot be told from an update at plan time.
 	RefuseChange []string
-	// SendChangedMembers lists top-level objects whose update sends only the members that
-	// changed, where the evidence shows Stripe keeps the members a request leaves out
-	// (`nested_hash_update: siblings_kept`), so the request never sends Stripe's own values back.
-	// A member removed from the configuration is sent as null, a map member's removed key
-	// likewise, and an object with Required members is sent whole, as Stripe takes it.
+	// SendChangedMembers lists objects, by dotted path, whose update sends only the members that
+	// changed, where the evidence shows Stripe keeps the members a request leaves out: the
+	// record's `families[].hashes` lists the hash as `siblings_kept`, or it is a departure the
+	// product owner accepted, which `TestSendChangedMembersFollowTheEvidence` names. A nested
+	// entry sits inside another, so the request never sends Stripe's own values back. A member
+	// removed from the configuration is sent as null, a map member's removed key likewise, and an
+	// object with Required members is sent whole, as Stripe takes it, and needs no entry.
 	SendChangedMembers []string
+	// SendWholeMembers lists the hashes, by dotted path, inside a SendChangedMembers object that
+	// an update sends whole once a member changes, because nothing proves Stripe keeps the members
+	// a request leaves out: every hash there is in one list or the other (checkSentMembers). Every
+	// member an update takes is sent, one removed from the configuration as null, and one the plan
+	// leaves unknown with the state's value.
+	SendWholeMembers []string
 	// Sets lists scalar arrays that are sets of values.
 	Sets []string
 	// Rename maps a Stripe field path to the attribute name used instead, for names

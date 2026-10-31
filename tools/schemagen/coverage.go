@@ -30,15 +30,18 @@ const (
 	RulePagedList  = "X3"
 	RuleRecursion  = "X4"
 	RuleConfirm    = "X5"
-	RuleRegister   = "register"
+	// RuleAcceptedOnly leaves out a leaf Stripe accepts and never returns.
+	RuleAcceptedOnly = "X6"
+	RuleRegister     = "register"
 )
 
 var ruleText = map[string]string{
-	RuleControl:    "request controls: top-level `expand` and `include`",
-	RuleTypeMarker: "type markers: a response hash with no keys that no request writes",
-	RulePagedList:  "paged lists returned only when expanded: a list envelope the object does not require and no request writes",
-	RuleRecursion:  "the recursion cut: a schema met again on its own path, where it has no `id` to hold",
-	RuleConfirm:    "`confirm` where the declaration's `status` transition confirms",
+	RuleControl:      "request controls: top-level `expand` and `include`",
+	RuleTypeMarker:   "type markers: a response hash with no keys that no request writes",
+	RulePagedList:    "paged lists returned only when expanded: a list envelope the object does not require and no request writes",
+	RuleRecursion:    "the recursion cut: a schema met again on its own path, where it has no `id` to hold",
+	RuleConfirm:      "`confirm` where the declaration's `status` transition confirms",
+	RuleAcceptedOnly: "accepted only: Stripe takes it and never returns it, so a user could neither read it back nor see drift",
 }
 
 // Record is one spec leaf of one table in internal/generated/coverage.json.
@@ -52,13 +55,17 @@ type Record struct {
 	// Rule is the exclusion rule or `register`. An exposed leaf with a rule is one exposed
 	// today that the rule removes before v0.1.0 (D6, Step 6).
 	Rule string `json:"rule,omitempty"`
-	// Reason is the register entry's reason.
+	// Reason is the register entry's reason, or the AcceptedOnly entry's that keeps a leaf X6
+	// would leave out.
 	Reason string `json:"reason,omitempty"`
 	// Class is the leaf's class in the pinned spec/attributes.json.
 	Class string `json:"class,omitempty"`
 	// PagedBy is the type that reads every element of a list Stripe returns a page at a time
 	// (Resource.PagedLists).
 	PagedBy string `json:"paged_by,omitempty"`
+	// Refused says that Stripe refused every request that sent the leaf, whose refusal the
+	// field's docs line states.
+	Refused bool `json:"refused,omitempty"`
 	// Tests are the suite's leaf tests that prove it, from the pinned spec/evidence.json.
 	Tests   []string       `json:"tests,omitempty"`
 	Default *DefaultRecord `json:"default,omitempty"`
@@ -138,6 +145,11 @@ func coverTable(spec *Spec, res Resource, ev *Pinned) (*tableCoverage, error) {
 		}
 		register[p] = false
 	}
+	for p, reason := range res.AcceptedOnly {
+		if strings.TrimSpace(reason) == "" {
+			return nil, fmt.Errorf("%s: accepted-only entry %q has no reason", res.Package, p)
+		}
+	}
 
 	records := make([]Record, len(leaves))
 	g := &gate{}
@@ -155,8 +167,16 @@ func coverTable(spec *Spec, res Resource, ev *Pinned) (*tableCoverage, error) {
 			if e := ev.leaf(l.Key); e != nil && e.Status == "proven" {
 				r.Tests = e.Tests
 			}
+			r.Refused = ev.refusedOnly(l.Key)
 		}
-		if r.Class == ClassVerified && r.Rule == "" {
+		if r.Class == ClassAcceptedOnly && r.Rule == "" {
+			if reason, ok := res.AcceptedOnly[l.Path]; ok {
+				r.Reason = reason
+			} else {
+				r.Rule = RuleAcceptedOnly
+			}
+		}
+		if exposable(r.Class) && r.Rule == "" {
 			switch l.Operation {
 			case "":
 				g.response = append(g.response, l.At)
@@ -177,12 +197,13 @@ func coverTable(spec *Spec, res Resource, ev *Pinned) (*tableCoverage, error) {
 	if ev != nil {
 		ev.facts(res, object, create, update, leaves, g)
 	}
+	g.dropCreate, g.dropUpdate = dropped(leaves, records, create), dropped(leaves, records, update)
 	baseline, err := Build(spec, res)
 	if err != nil {
 		return nil, err
 	}
 	tc.table = baseline
-	if len(g.create)+len(g.update)+len(g.response) > 0 {
+	if len(g.create)+len(g.update)+len(g.response)+len(g.dropCreate)+len(g.dropUpdate) > 0 {
 		if tc.table, err = buildGated(spec, res, g); err != nil {
 			return nil, err
 		}
@@ -205,19 +226,21 @@ func coverTable(spec *Spec, res Resource, ev *Pinned) (*tableCoverage, error) {
 			}
 		case r.Rule != "":
 			r.State = StateExcluded
-		case r.Class == ClassVerified:
+		case exposable(r.Class):
 			return nil, fmt.Errorf("%s: %s is verified, but the generator cannot hold it in the table yet", res.Package, l.Key)
 		case ev == nil || r.Class != "":
 			r.State = StateAwaiting
 		}
-		if d := defaultOf(l, *r, create, leaves, ev); d != nil {
+		if d := defaultOf(l, *r, create, leaves, records, ev); d != nil {
 			r.Default = defaultRecord(d)
 			if f := fieldAt(tc.table, l.At); f != nil {
 				r.SpecDefault = disagreement(f.Description, d)
 			}
 		}
 	}
-	annotate(tc.table, leaves, records, create, ev)
+	if err := annotate(tc.table, leaves, records, create, ev); err != nil {
+		return nil, fmt.Errorf("%s: %w", res.Package, err)
+	}
 	if err := newRequired(create, leaves, records, before); err != nil {
 		return nil, fmt.Errorf("%s: %w", res.Package, err)
 	}
@@ -240,41 +263,160 @@ func fieldAt(table []fields.Field, path string) *fields.Field {
 	return nil
 }
 
+// exposable reports a class the gate lets through: verified, or accepted only where the rule that
+// leaves those out has not, because Resource.AcceptedOnly allows the leaf.
+func exposable(class string) bool {
+	return class == ClassVerified || class == ClassAcceptedOnly
+}
+
+// dropped is the table paths that rule X6 takes out of the request of one operation: those with
+// a leaf the rule leaves out and no other on or below them.
+func dropped(leaves []Leaf, records []Record, operation string) map[string]bool {
+	out, stays := map[string]bool{}, map[string]bool{}
+	for i, l := range leaves {
+		if l.Side != SideRequest || l.Operation != operation {
+			continue
+		}
+		into := stays
+		if records[i].Rule == RuleAcceptedOnly {
+			into = out
+		}
+		for p := l.At; p != ""; p = parentPath(p) {
+			into[p] = true
+		}
+	}
+	for p := range stays {
+		delete(out, p)
+	}
+	return out
+}
+
 // annotate records on the table's fields the default of each optional argument an exposed
-// request leaf holds, for its docs line (D4). The create's default comes before an update's
-// `not sent`.
-func annotate(table []fields.Field, leaves []Leaf, records []Record, create string, ev *Pinned) {
+// request leaf holds, for its docs line (D4), and Stripe's refusal of each argument it has only
+// ever refused, which it fails on where the record holds none. The create's default comes before
+// an update's `not sent`.
+func annotate(table []fields.Field, leaves []Leaf, records []Record, create string, ev *Pinned) error {
+	refused := map[string][]refusedOn{}
+	var paths []string
 	for i, l := range leaves {
 		r := records[i]
 		if l.Side != SideRequest || r.State != StateExposed {
 			continue
 		}
 		f := fieldAt(table, l.At)
-		if f == nil || f.Required {
+		if f == nil {
 			continue
 		}
-		if d := defaultOf(l, r, create, leaves, ev); d != nil && (f.Default == nil || l.Operation == create) {
+		if r.Refused {
+			on := "update"
+			if l.Operation == create {
+				on = "create"
+			}
+			e := ev.leaf(l.Key)
+			if len(e.Refusals) == 0 {
+				return fmt.Errorf("%s has the reason %s, but the record holds no refusal of it", l.Key, ReasonRefusedOnly)
+			}
+			if _, seen := refused[l.At]; !seen {
+				paths = append(paths, l.At)
+			}
+			for _, x := range e.Refusals {
+				refused[l.At] = append(refused[l.At], refusedOn{on: on, country: x.AccountCountry, message: x.Message})
+			}
+		}
+		if f.Required {
+			continue
+		}
+		if d := defaultOf(l, r, create, leaves, records, ev); d != nil && (f.Default == nil || l.Operation == create) {
 			f.Default = d
 		}
 	}
+	for _, at := range paths {
+		s, err := refusedSentence(refused[at])
+		if err != nil {
+			return fmt.Errorf("%s: %w", at, err)
+		}
+		fieldAt(table, at).Refused = s
+	}
+	return nil
 }
+
+// refusedOn is one recorded refusal of an argument: on which request, on an account of which
+// country, and Stripe's message.
+type refusedOn struct{ on, country, message string }
+
+// refusedSentence words an argument's recorded refusals for its docs line, one sentence per
+// message, in the order the record gives them.
+func refusedSentence(all []refusedOn) (string, error) {
+	type condition struct{ on, countries []string }
+	conditions := map[string]*condition{}
+	var messages []string
+	for _, r := range all {
+		m, err := refusalMessage(r.message)
+		if err != nil {
+			return "", err
+		}
+		c := conditions[m]
+		if c == nil {
+			c = &condition{}
+			conditions[m] = c
+			messages = append(messages, m)
+		}
+		if !slices.Contains(c.on, r.on) {
+			c.on = append(c.on, r.on)
+		}
+		if !slices.Contains(c.countries, r.country) {
+			c.countries = append(c.countries, r.country)
+		}
+	}
+	sentences := make([]string, len(messages))
+	for i, m := range messages {
+		c := conditions[m]
+		accounts := make([]string, len(c.countries))
+		for j, country := range c.countries {
+			accounts[j] = articleFor(country) + " " + country
+		}
+		sentences[i] = fmt.Sprintf("Stripe refused it on %s account on %s: %q.", strings.Join(accounts, " and "), strings.Join(c.on, " and "), m)
+	}
+	return strings.Join(sentences, " "), nil
+}
+
+// refusalMessage is a recorded message as the docs quote it, with its placeholders in words. A
+// placeholder the record's format does not define fails, so that the docs never show one.
+func refusalMessage(m string) (string, error) {
+	m = strings.ReplaceAll(idPlaceholder.ReplaceAllString(m, "$1..."), "<time>", "a time")
+	if p := anyPlaceholder.FindString(m); p != "" {
+		return "", fmt.Errorf("the refusal %q holds the placeholder %s, which the generator cannot word", m, p)
+	}
+	return m, nil
+}
+
+var (
+	idPlaceholder  = regexp.MustCompile(`<id:([a-zA-Z0-9_]+)>`)
+	anyPlaceholder = regexp.MustCompile(`<[^ >]+>`)
+)
 
 // defaultOf is the default of an exposed optional request leaf (D4): `not sent` for one only
 // the update takes, which needs no evidence, or else what the pinned evidence records for a
 // verified one. A leaf only the update takes is an optional argument even where its hash in the
-// update requires it, because the create never sends it.
-func defaultOf(l Leaf, r Record, create string, leaves []Leaf, ev *Pinned) *fields.Default {
+// update requires it, because the create never sends it, and so is one whose create leaf rule X6
+// leaves out.
+func defaultOf(l Leaf, r Record, create string, leaves []Leaf, records []Record, ev *Pinned) *fields.Default {
 	if l.Side != SideRequest || r.State != StateExposed {
 		return nil
 	}
 	if l.Operation != create {
-		onCreate := slices.ContainsFunc(leaves, func(c Leaf) bool { return c.Operation == create && c.At == l.At })
+		onCreate := false
+		for i, c := range leaves {
+			if c.Operation == create && c.At == l.At && records[i].Rule != RuleAcceptedOnly {
+				onCreate = true
+			}
+		}
 		if create == "" || !onCreate {
 			return &fields.Default{Kind: fields.DefaultNotSent}
 		}
 		return nil
 	}
-	if r.Required || r.Class != ClassVerified {
+	if r.Required || !exposable(r.Class) {
 		return nil
 	}
 	return ev.leafDefault(l.Key)
@@ -550,6 +692,19 @@ func (p *Pinned) class(k Key) string {
 	return p.classes[k]
 }
 
+// refusedOnly reports a leaf `attributes.json` marks as one Stripe has only ever refused.
+func (p *Pinned) refusedOnly(k Key) bool {
+	if p.refused == nil {
+		p.refused = map[Key]bool{}
+		for _, l := range p.Attributes.Leaves {
+			if l.Reason == ReasonRefusedOnly {
+				p.refused[l.Key] = true
+			}
+		}
+	}
+	return p.refused[k]
+}
+
 func (p *Pinned) leaf(k Key) *EvidenceLeaf {
 	if p.leaves == nil {
 		p.leaves = map[Key]*EvidenceLeaf{}
@@ -774,6 +929,53 @@ func checkVerifiedKeys(ev *Pinned, covered []*tableCoverage) error {
 	return nil
 }
 
+// checkAcceptedOnly fails on a Resource.AcceptedOnly entry that keeps no leaf: one that names no
+// leaf of the class in the pinned spec/attributes.json, or whose leaves another rule or the
+// register leaves out anyway, so that an entry goes when it stops mattering.
+func checkAcceptedOnly(resources []Resource, records []Record) error {
+	met := map[string]bool{}
+	for _, r := range records {
+		if r.Class == ClassAcceptedOnly && r.Rule == "" {
+			met[r.Table+" "+r.Path] = true
+		}
+	}
+	for _, res := range resources {
+		for _, p := range sortedKeys(res.AcceptedOnly) {
+			if !met[res.Package+" "+p] {
+				return fmt.Errorf("%s: accepted-only entry %q keeps no %s leaf: none is listed, or another rule leaves it out", res.Package, p, ClassAcceptedOnly)
+			}
+		}
+	}
+	return nil
+}
+
+// checkRequiredMembers fails on a hash a table exposes without a member its request requires, in
+// the same union branch: no configuration could send the hash. The register leaves such a hash
+// out.
+func checkRequiredMembers(records []Record) error {
+	hash := func(r Record, p string) string {
+		return r.Table + " " + r.Operation + " " + r.Branch + " " + p
+	}
+	exposedHash := map[string]bool{}
+	for _, r := range records {
+		if r.Side == SideRequest && r.State == StateExposed {
+			for p := parentPath(r.Path); p != ""; p = parentPath(p) {
+				exposedHash[hash(r, p)] = true
+			}
+		}
+	}
+	var found []string
+	for _, r := range records {
+		if r.Side == SideRequest && r.Required && r.State != StateExposed && r.Rule != RuleRegister && exposedHash[hash(r, parentPath(r.Path))] {
+			found = append(found, r.Table+" "+r.Key.String())
+		}
+	}
+	if len(found) > 0 {
+		return fmt.Errorf("a table exposes a hash without a member its request requires, which no configuration could send; expose the member or put the hash in the register: %s", strings.Join(found, ", "))
+	}
+	return nil
+}
+
 // checkStates fails on a leaf that is neither exposed, excluded nor awaiting proof: with a
 // pinned spec/attributes.json, a leaf it does not list.
 func checkStates(records []Record) error {
@@ -913,7 +1115,7 @@ func defaultsNotRecorded(records []Record) map[string]unrecordedDefaults {
 			seen[k] = true
 			optional = append(optional, arg{r.Table, r.Path})
 		}
-		if r.Class == ClassVerified {
+		if exposable(r.Class) {
 			verified[k] = true
 		}
 		if r.Default != nil && r.Default.Statement != "" {
@@ -1033,8 +1235,20 @@ func RenderCoverageMarkdown(h coverageHeader, records []Record) []byte {
 		b.WriteString("None.\n")
 	}
 
+	b.WriteString("\n## Accepted only and kept\n\nStripe takes these leaves and never returns them; `Resource.AcceptedOnly` keeps each in spite of rule X6, for the reason given.\n\n")
+	n = 0
+	for _, r := range records {
+		if r.State == StateExposed && r.Class == ClassAcceptedOnly {
+			fmt.Fprintf(&b, "%s: %s\n", line(r), r.Reason)
+			n++
+		}
+	}
+	if n == 0 {
+		b.WriteString("None.\n")
+	}
+
 	b.WriteString("\n## Excluded\n")
-	for _, rl := range []string{RuleControl, RuleTypeMarker, RulePagedList, RuleRecursion, RuleConfirm, RuleRegister} {
+	for _, rl := range []string{RuleControl, RuleTypeMarker, RulePagedList, RuleRecursion, RuleConfirm, RuleAcceptedOnly, RuleRegister} {
 		var lines []string
 		for _, r := range records {
 			if r.State == StateExcluded && r.Rule == rl {

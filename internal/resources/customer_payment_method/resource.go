@@ -24,7 +24,7 @@ import (
 var Declaration = engine.Declaration{
 	TypeName:              "stripe_customer_payment_method",
 	IDPrefix:              "pm_",
-	Description:           "A payment method attached to a customer. The resource is the attachment. The payment method itself is not created here, because creating one takes raw card data: create it with Stripe.js or a SetupIntent, or use a Stripe test payment method such as `pm_card_visa`, and give its ID as `payment_method`. Attaching a test payment method returns a new payment method, so the `id` can differ from `payment_method`. Only `billing_details`, `metadata` and `card.exp_year` change in place; Stripe's other updatable payment method fields are read-only here.",
+	Description:           "A payment method attached to a customer. The resource is the attachment. The payment method itself is not created here, because creating one takes raw card data: create it with Stripe.js or a SetupIntent, or use a Stripe test payment method such as `pm_card_visa`, and give its ID as `payment_method`. Attaching a test payment method returns a new payment method, so the `id` can differ from `payment_method`. Only `allow_redisplay`, `billing_details`, `card.networks.preferred` and `metadata` change in place; Stripe's other updatable payment method fields are read-only here.",
 	DataSourceDescription: "A payment method attached to a customer.",
 	Parent:                "customer",
 	Attach:                "payment_method",
@@ -34,8 +34,18 @@ var Declaration = engine.Declaration{
 		Update:   "/v1/payment_methods/{id}",
 		List:     "/v1/customers/{customer}/payment_methods",
 	},
-	Delete:       engine.Refuse,
-	RefuseReason: "Stripe has no delete for the attachment of a payment method to a customer, only a detach, which is final: a detached payment method cannot be attached again.",
+	// Stripe reruns the card's address checks when the billing address changes: the dev sandbox
+	// answered an update of `billing_details.address` with `pass` for both (smoke run of
+	// 2026-10-31, `TestAccCustomerPaymentMethod_update`). The record never observes
+	// `card.checks`, and its updates of the address send only `city`.
+	FilledFrom: map[string][]string{
+		"billing_details.address": {"card.checks.address_line1_check", "card.checks.address_postal_code_check"},
+	},
+	// Stripe stores a preferred network the card does not have as `invalid_preference` (the
+	// record's `returned`), so the configured value stays in state.
+	PreserveConfig: []string{"card.networks.preferred"},
+	Delete:         engine.Refuse,
+	RefuseReason:   "Stripe has no delete for the attachment of a payment method to a customer, only a detach, which is final: a detached payment method cannot be attached again.",
 }
 
 // NewResource returns the resource constructor the provider registers.

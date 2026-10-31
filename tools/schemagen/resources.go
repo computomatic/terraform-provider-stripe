@@ -10,6 +10,14 @@ const parentHolds = "the parent attribute holds it"
 // every external account, on a table that is only ever a bank account.
 const cardOnly = "A card's update parameter: Stripe refuses it on a bank account with `parameter_unknown` in every country (suite: TestAccountExternalAccountAttributes/leaves/request/PostAccountsAccountExternalAccountsId/%s), so as an argument of this table it could only ever fail the apply."
 
+// mandateData is the register's reason for a confirm-time hash whose `type`, which Stripe requires,
+// rule X6 leaves out, so that no configuration could send it.
+const mandateData = "`customer_acceptance.type`, which the hash requires, is accepted only, so that no configuration could send it (suite: TestSetupIntentAttributes/leaves/request/PostSetupIntents/mandate_data.customer_acceptance.type)."
+
+// acceptedKept is the Resource.AcceptedOnly reason of an argument whose only record is what the
+// configuration says (the product owner's decision of 2026-10-31).
+const acceptedKept = "Stripe never returns it, and the provider keeps it from configuration (PreserveConfig)."
+
 // Resources lists the objects the generator writes tables for. A resource joins the list
 // when its declaration is written.
 var Resources = []Resource{
@@ -20,7 +28,8 @@ var Resources = []Resource{
 	// The Omit entries: `include` is a request parameter, not an object field, and the signing
 	// secret waits for the conformance suite and the fake to prove it (ADR 2026-10-17-v2-support).
 	{Package: "event_destination_v2", CreatePath: "/v2/core/event_destinations", UpdatePath: "/v2/core/event_destinations/{id}", Omit: []string{"include", "webhook_endpoint.signing_secret"},
-		Exclude: map[string]string{"webhook_endpoint.signing_secret": "Stripe returns it only to a create that sends `include` with it (suite: TestEventDestinationAttributes/leaves/response/v2.core.event_destination/webhook_endpoint.signing_secret), and the engine cannot yet send `include` on create alone to read it once, as `OnceReturned` (adrs/1-pending/2026-10-17-v2-support)."}},
+		AcceptedOnly: map[string]string{"amazon_eventbridge.aws_region": "Its effect shows in `amazon_eventbridge.aws_event_source_arn`, which names the region."},
+		Exclude:      map[string]string{"webhook_endpoint.signing_secret": "Stripe returns it only to a create that sends `include` with it (suite: TestEventDestinationAttributes/leaves/response/v2.core.event_destination/webhook_endpoint.signing_secret), and the engine cannot yet send `include` on create alone to read it once, as `OnceReturned` (adrs/1-pending/2026-10-17-v2-support)."}},
 	{Package: "coupon", CreatePath: "/v1/coupons", UpdatePath: "/v1/coupons/{coupon}"},
 	{Package: "customer", CreatePath: "/v1/customers", UpdatePath: "/v1/customers/{customer}", Omit: []string{"sources", "subscriptions"}},
 	{Package: "entitlements_feature", CreatePath: "/v1/entitlements/features", UpdatePath: "/v1/entitlements/features/{id}"},
@@ -66,22 +75,26 @@ var Resources = []Resource{
 	{Package: "subscription_item", CreatePath: "/v1/subscription_items", UpdatePath: "/v1/subscription_items/{item}", Omit: []string{"discounts"}},
 	{Package: "subscription_schedule", CreatePath: "/v1/subscription_schedules", UpdatePath: "/v1/subscription_schedules/{schedule}", Omit: []string{"from_subscription", "pause_schedules"}},
 	// Wave 6. The setup intent leaves out what only confirming it uses, and its payment
-	// method options, which the suite does not prove. The customer payment method is an
+	// method options, until the gate exposes them. The customer payment method is an
 	// attachment, so the engine adds its `customer` as the parent and `customer_account` is
-	// not offered. The Omit entries of the read-only objects are unions and recursions the
-	// tables cannot hold. The ReadOnly entries are the payment method updates the suite does
-	// not prove, on an object that cannot be replaced.
+	// offered only as the gate exposes it. The Omit entries of the read-only objects are unions
+	// and recursions the tables cannot hold. The ReadOnly entries are the payment method updates
+	// the suite does not prove, on an object that cannot be replaced.
 	{Package: "payment_link", CreatePath: "/v1/payment_links", UpdatePath: "/v1/payment_links/{payment_link}", Omit: []string{"line_items.price_data"}, Require: []string{"line_items.price"}},
-	{Package: "setup_intent", CreatePath: "/v1/setup_intents", UpdatePath: "/v1/setup_intents/{intent}", Omit: []string{"last_setup_error.payment_intent", "last_setup_error.setup_intent", "last_setup_error.source", "confirm", "mandate_data", "payment_method_data", "return_url", "use_stripe_sdk", "single_use", "payment_method_options", "confirmation_token"}},
+	{Package: "setup_intent", AcceptedOnly: map[string]string{"payment_method_configuration": acceptedKept},
+		Exclude: map[string]string{"mandate_data": mandateData}, CreatePath: "/v1/setup_intents", UpdatePath: "/v1/setup_intents/{intent}", Omit: []string{"last_setup_error.payment_intent", "last_setup_error.setup_intent", "last_setup_error.source", "confirm", "mandate_data", "payment_method_data", "return_url", "use_stripe_sdk", "single_use", "payment_method_options", "confirmation_token"}},
 	{Package: "customer_payment_method", Exclude: map[string]string{"customer": parentHolds}, CreatePath: "/v1/payment_methods/{payment_method}/attach", UpdatePath: "/v1/payment_methods/{payment_method}", Omit: []string{"customer", "customer_account"}, ReadOnly: []string{"allow_redisplay", "card.exp_month", "card.networks", "us_bank_account"}},
-	// Confirming is the resource's `status`, so the confirm-time parameters are left out, as
-	// they are for setup intents, and `confirm` is excluded by rule X5. `hooks` is in the
-	// response, so it stays readable but is not an argument, which the suite has not proven.
-	{Package: "payment_intent", StatusConfirms: true, CreatePath: "/v1/payment_intents", UpdatePath: "/v1/payment_intents/{intent}", Omit: []string{
-		"payment_method_options", "amount_details", "last_payment_error.payment_intent", "last_payment_error.setup_intent", "last_payment_error.source",
-		"confirm", "confirmation_token", "error_on_requires_action", "mandate", "mandate_data", "off_session", "payment_method_data", "return_url",
-		"use_stripe_sdk", "radar_options",
-	}, ReadOnly: []string{"hooks"}},
+	// Confirming is the resource's `status`, so `confirm` is excluded by rule X5, and the Omit
+	// entries leave out the confirm-time parameters until the gate exposes them.
+	{Package: "payment_intent", StatusConfirms: true, AcceptedOnly: map[string]string{"payment_method_configuration": acceptedKept},
+		Exclude: map[string]string{
+			"mandate_data": mandateData,
+			"payment_method_options.card.installments.plan": "`type`, which a plan requires, is not verified, so that no configuration could send the plan (suite: TestPaymentIntentAttributes/leaves/request/PostPaymentIntents/payment_method_options.card.installments.plan.count, refused without `fixed_count`).",
+		}, CreatePath: "/v1/payment_intents", UpdatePath: "/v1/payment_intents/{intent}", Omit: []string{
+			"payment_method_options", "amount_details", "last_payment_error.payment_intent", "last_payment_error.setup_intent", "last_payment_error.source",
+			"confirm", "confirmation_token", "error_on_requires_action", "mandate", "mandate_data", "off_session", "payment_method_data", "return_url",
+			"use_stripe_sdk", "radar_options",
+		}, ReadOnly: []string{"hooks"}},
 	// A direct charge (ADR 2026-10-22-money-moving-resources, D6.2). The spec deprecates the
 	// create in favour of payment intents, but Stripe serves it. Its deprecated `card` and
 	// `destination` are left out; `application_fee` is also the response's fee ID, and
@@ -89,7 +102,7 @@ var Resources = []Resource{
 	// does `fraud_details`, which only the update takes and the suite has not proven. Stripe
 	// requires `amount` and `currency`, which the spec leaves optional (suite: "missing amount",
 	// "missing currency").
-	{Package: "charge", CreatePath: "/v1/charges", UpdatePath: "/v1/charges/{charge}", Omit: []string{"card", "destination"}, ReadOnly: []string{"application_fee", "fraud_details", "radar_options"}, Require: []string{"amount", "currency"}},
+	{Package: "charge", AcceptedOnly: map[string]string{"capture": "Its effect shows in `captured`."}, CreatePath: "/v1/charges", UpdatePath: "/v1/charges/{charge}", Omit: []string{"card", "destination"}, ReadOnly: []string{"application_fee", "fraud_details", "radar_options"}, Require: []string{"amount", "currency"}},
 	{Package: "refund", CreatePath: "/v1/refunds", UpdatePath: "/v1/refunds/{refund}"},
 	{Package: "dispute", ReadPath: "/v1/disputes/{dispute}"},
 	// `collected_information` is set only by an update, which the suite has not proven, so it
@@ -136,7 +149,10 @@ var Resources = []Resource{
 	// Its `account` is the parent ID. The Omit entries are the card's update parameters, which
 	// the register keeps out, and the documents, which need a file. The account type is refused
 	// on a US account; the suite leaves the countries that take one for later.
-	{Package: "account_external_account", Exclude: map[string]string{
+	{Package: "account_external_account", AcceptedOnly: map[string]string{
+		"bank_account.account_number": "Its effect shows in `last4`, and the hash form needs it.",
+		"external_account":            "Its effect shows in the bank details Stripe reads from the token.",
+	}, Exclude: map[string]string{
 		"account":         parentHolds,
 		"address_city":    fmt.Sprintf(cardOnly, "address_city"),
 		"address_country": fmt.Sprintf(cardOnly, "address_country"),
@@ -164,7 +180,7 @@ var Resources = []Resource{
 		Keep: []string{"address", "created", "dob", "email", "first_name", "future_requirements", "id", "id_number", "id_number_provided", "last_name", "metadata", "phone",
 			"relationship", "requirements", "ssn_last_4", "ssn_last_4_provided", "verification"},
 		ReadOnly: []string{"relationship.authorizer", "relationship.legal_guardian", "verification"}},
-	{Package: "account_v2", CreatePath: "/v2/core/accounts", UpdatePath: "/v2/core/accounts/{id}",
+	{Package: "account_v2", AcceptedOnly: map[string]string{"configuration.recipient.capabilities.stripe_balance.stripe_transfers.requested": acceptedKept}, CreatePath: "/v2/core/accounts", UpdatePath: "/v2/core/accounts/{id}",
 		Keep: []string{"applied_configurations", "closed",
 			"configuration.customer.applied", "configuration.customer.capabilities.automatic_indirect_tax",
 			"configuration.merchant.applied", "configuration.merchant.capabilities.card_payments", "configuration.merchant.capabilities.stripe_balance.payouts",
@@ -271,7 +287,7 @@ var Resources = []Resource{
 	// response's copy is left out.
 	// Stripe requires a transfer's `amount`, which the spec leaves optional (suite: "missing amount").
 	{Package: "transfer", CreatePath: "/v1/transfers", UpdatePath: "/v1/transfers/{transfer}", PagedLists: map[string]string{"reversals": "stripe_transfer_reversal"}, Require: []string{"amount"}},
-	{Package: "transfer_reversal", Exclude: map[string]string{"transfer": parentHolds}, CreatePath: "/v1/transfers/{id}/reversals", UpdatePath: "/v1/transfers/{transfer}/reversals/{id}", Omit: []string{"transfer"}, ParentDefaults: []string{"amount"}},
+	{Package: "transfer_reversal", AcceptedOnly: map[string]string{"description": acceptedKept, "refund_application_fee": acceptedKept}, Exclude: map[string]string{"transfer": parentHolds}, CreatePath: "/v1/transfers/{id}/reversals", UpdatePath: "/v1/transfers/{transfer}/reversals/{id}", Omit: []string{"transfer"}, ParentDefaults: []string{"amount"}},
 	{Package: "application_fee", ReadPath: "/v1/application_fees/{id}", PagedLists: map[string]string{"refunds": "stripe_application_fee_refund"}},
 	{Package: "application_fee_refund", Exclude: map[string]string{"fee": parentHolds}, CreatePath: "/v1/application_fees/{id}/refunds", UpdatePath: "/v1/application_fees/{fee}/refunds/{id}", Omit: []string{"fee"}, ParentDefaults: []string{"amount"}},
 	{Package: "customer_card", Exclude: map[string]string{"customer": parentHolds}, ReadPath: "/v1/customers/{customer}/cards/{id}", Omit: []string{"customer"}},

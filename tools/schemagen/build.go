@@ -86,6 +86,11 @@ type Resource struct {
 	// which names its evidence (a suite test, a Stripe doc URL or a framework limit). The
 	// product owner approves each new entry in review.
 	Exclude map[string]string
+	// AcceptedOnly is the register of the leaves of class `verified_accepted_only` the table
+	// keeps in spite of rule X6: a dotted path to the reason, which says where the argument's
+	// effect shows or that the provider keeps it from configuration (PreserveConfig). The
+	// product owner approves each entry.
+	AcceptedOnly map[string]string
 	// StatusConfirms says that the declaration's `status` transition confirms the object, so
 	// the request's `confirm` is left out by rule X5.
 	StatusConfirms bool
@@ -290,6 +295,9 @@ type gate struct {
 	// stable holds the response fields that no update the suite made changed as a side effect,
 	// nor fills from another field (E5).
 	stable map[string]bool
+	// dropCreate and dropUpdate hold the table paths rule X6 takes out of that request: every
+	// leaf on or below them is one Stripe accepts and never returns.
+	dropCreate, dropUpdate map[string]bool
 }
 
 // near reports whether a table path is on, above or below a path of one side of the gate: on
@@ -432,6 +440,12 @@ func (b *builder) object(l level, where string, depth int) ([]fields.Field, erro
 			cv = nil
 		}
 		if readOnly && !near(g.update, at) {
+			uv = nil
+		}
+		if g.dropCreate[at] {
+			cv = nil
+		}
+		if g.dropUpdate[at] {
 			uv = nil
 		}
 		rv, err := b.classify(prop(l.resp, name), at, depth, l.stacks.resp)

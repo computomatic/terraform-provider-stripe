@@ -108,7 +108,13 @@ var Declaration = engine.Declaration{
 		"individual.address.state":       {"company.address.state"},
 		"individual.phone":               {"company.phone"},
 	},
-	SendChangedMembers: []string{"individual", "company"},
+	SendChangedMembers: []string{
+		"individual", "individual.address", "individual.registered_address", "individual.relationship",
+		"individual.verification", "individual.verification.document", "individual.verification.additional_document",
+		"company", "company.address", "company.administrative_address", "company.principal_place_of_business",
+	},
+	// Neither the record's `families` nor the fake's suite-proven declaration states these.
+	SendWholeMembers: []string{"company.directorship_declaration", "company.ownership_declaration"},
 	// suite: "TestAccountAttributes/leaves/response/account/company.directors_provided", and
 	// `executives_provided` and `owners_provided` beside it: the variants `company`, `individual`
 	// and `individual_gb` of the minimal create.

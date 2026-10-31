@@ -44,6 +44,9 @@ type attr struct {
 	// Removal is, on a resource's Optional and Computed argument, the engine's sentence on what
 	// removing it from the configuration does.
 	Removal string
+	// Refused is the sentence with Stripe's recorded refusal of an argument it has only ever
+	// refused.
+	Refused string
 	// Copy is, on an embedded copy of another Stripe object, the data source type that reads it.
 	Copy string
 }

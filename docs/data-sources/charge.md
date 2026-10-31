@@ -51,7 +51,7 @@ This data source exports the following attributes in addition to the arguments a
 * `failure_balance_transaction` - ID of the balance transaction that describes the reversal of the balance on your account due to payment failure.
 * `failure_code` - Error code explaining reason for charge failure if available (see [the errors section](https://docs.stripe.com/error-codes) for a list of codes).
 * `failure_message` - Message to user further explaining reason for charge failure if available.
-* `fraud_details` - Information on fraud assessments for the charge. See [`fraud_details`](#fraud_details) below.
+* `fraud_details` - A set of key-value pairs you can attach to a charge giving information about its riskiness. If you believe a charge is fraudulent, include a `user_report` key with a value of `fraudulent`. If you believe a charge is safe, include a `user_report` key with a value of `safe`. Stripe will use the information you send to improve our fraud detection algorithms. See [`fraud_details`](#fraud_details) below.
 * `livemode` - If the object exists in live mode, the value is `true`. If the object exists in test mode, the value is `false`.
 * `metadata` - Set of [key-value pairs](https://docs.stripe.com/api/metadata) that you can attach to an object. This can be useful for storing additional information about the object in a structured format. Individual keys can be unset by posting an empty value to them. All keys can be unset by posting an empty value to `metadata`.
 * `on_behalf_of` - The Stripe account ID for which these funds are intended. You can specify the business of record as the connected account using the `on_behalf_of` attribute on the charge. For details, see [Creating Separate Charges and Transfers](https://docs.stripe.com/connect/separate-charges-and-transfers#settlement-merchant).
@@ -107,7 +107,7 @@ The `billing_details.address` attribute supports:
 The `fraud_details` attribute supports:
 
 * `stripe_report` - Assessments from Stripe. If set, the value is `fraudulent`.
-* `user_report` - Assessments reported by you. If set, possible values of are `safe` and `fraudulent`.
+* `user_report` - Assessments reported by you. If set, possible values of are `safe` and `fraudulent`. Possible values: `fraudulent`, `safe`.
 
 <a id="outcome"></a>
 ### `outcome`

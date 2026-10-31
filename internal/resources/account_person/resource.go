@@ -50,7 +50,7 @@ var Declaration = engine.Declaration{
 	GoneOnForbidden:    "account_invalid",
 	RefuseChange:       []string{"id_number", "ssn_last_4"},
 	Sensitive:          []string{"id_number", "ssn_last_4"},
-	SendChangedMembers: []string{"registered_address", "verification"},
+	SendChangedMembers: []string{"registered_address", "verification", "verification.document", "verification.additional_document"},
 	PreserveConfig: []string{
 		"phone",
 		"verification.document.front", "verification.document.back",

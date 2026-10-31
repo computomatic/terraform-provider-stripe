@@ -14,7 +14,7 @@ var Table = []fields.Field{
 		{Name: "last4", Shape: fields.String, Response: true, Description: "Last four digits of the bank account number."},
 		{Name: "transit_number", Shape: fields.String, Response: true, Description: "Transit number of the bank account."},
 	}},
-	{Name: "allow_redisplay", Shape: fields.String, Response: true, Enum: []string{"always", "limited", "unspecified"}, Description: "This field indicates whether this payment method can be shown again to its customer in a checkout flow. Stripe products such as Checkout and Elements use this field to determine whether a payment method can be shown as a saved payment method in a checkout flow. The field defaults to “unspecified”."},
+	{Name: "allow_redisplay", Shape: fields.String, Update: true, Response: true, ServerDefaulted: true, Stable: true, Enum: []string{"always", "limited", "unspecified"}, Description: "This field indicates whether this payment method can be shown again to its customer in a checkout flow. Stripe products such as Checkout and Elements use this field to determine whether a payment method can be shown as a saved payment method in a checkout flow. The field defaults to `unspecified`.", Default: &fields.Default{Kind: fields.DefaultNotSent}},
 	{Name: "au_becs_debit", Shape: fields.Object, Response: true, Fields: []fields.Field{
 		{Name: "bsb_number", Shape: fields.String, Response: true, Description: "Six-digit number identifying bank and branch associated with this bank account."},
 		{Name: "fingerprint", Shape: fields.String, Response: true, Description: "Uniquely identifies this particular bank account. You can use this attribute to check whether two bank accounts are the same."},
@@ -27,17 +27,17 @@ var Table = []fields.Field{
 	}},
 	{Name: "billing_details", Shape: fields.Object, Update: true, Response: true, Description: "Billing information associated with the PaymentMethod that may be used or required by particular types of payment methods.", Fields: []fields.Field{
 		{Name: "address", Shape: fields.Object, Update: true, Response: true, Description: "Billing address.", Fields: []fields.Field{
-			{Name: "city", Shape: fields.String, Update: true, Response: true, Description: "City, district, suburb, town, or village.", Default: &fields.Default{Kind: fields.DefaultNotSent}},
-			{Name: "country", Shape: fields.String, Update: true, Response: true, Description: "Two-letter country code ([ISO 3166-1 alpha-2](https://en.wikipedia.org/wiki/ISO_3166-1_alpha-2)).", Default: &fields.Default{Kind: fields.DefaultNotSent}},
-			{Name: "line1", Shape: fields.String, Update: true, Response: true, Description: "Address line 1, such as the street, PO Box, or company name.", Default: &fields.Default{Kind: fields.DefaultNotSent}},
-			{Name: "line2", Shape: fields.String, Update: true, Response: true, Description: "Address line 2, such as the apartment, suite, unit, or building.", Default: &fields.Default{Kind: fields.DefaultNotSent}},
-			{Name: "postal_code", Shape: fields.String, Update: true, Response: true, Description: "ZIP or postal code.", Default: &fields.Default{Kind: fields.DefaultNotSent}},
-			{Name: "state", Shape: fields.String, Update: true, Response: true, Description: "State, county, province, or region ([ISO 3166-2](https://en.wikipedia.org/wiki/ISO_3166-2)).", Default: &fields.Default{Kind: fields.DefaultNotSent}},
+			{Name: "city", Shape: fields.String, Update: true, Response: true, Stable: true, Description: "City, district, suburb, town, or village.", Default: &fields.Default{Kind: fields.DefaultNotSent}},
+			{Name: "country", Shape: fields.String, Update: true, Response: true, Stable: true, Description: "Two-letter country code ([ISO 3166-1 alpha-2](https://en.wikipedia.org/wiki/ISO_3166-1_alpha-2)).", Default: &fields.Default{Kind: fields.DefaultNotSent}},
+			{Name: "line1", Shape: fields.String, Update: true, Response: true, Stable: true, Description: "Address line 1, such as the street, PO Box, or company name.", Default: &fields.Default{Kind: fields.DefaultNotSent}},
+			{Name: "line2", Shape: fields.String, Update: true, Response: true, Stable: true, Description: "Address line 2, such as the apartment, suite, unit, or building.", Default: &fields.Default{Kind: fields.DefaultNotSent}},
+			{Name: "postal_code", Shape: fields.String, Update: true, Response: true, Stable: true, Description: "ZIP or postal code.", Default: &fields.Default{Kind: fields.DefaultNotSent}},
+			{Name: "state", Shape: fields.String, Update: true, Response: true, Stable: true, Description: "State, county, province, or region ([ISO 3166-2](https://en.wikipedia.org/wiki/ISO_3166-2)).", Default: &fields.Default{Kind: fields.DefaultNotSent}},
 		}},
-		{Name: "email", Shape: fields.String, Update: true, Response: true, Description: "Email address.", Default: &fields.Default{Kind: fields.DefaultNotSent}},
-		{Name: "name", Shape: fields.String, Update: true, Response: true, Description: "Full name.", Default: &fields.Default{Kind: fields.DefaultNotSent}},
-		{Name: "phone", Shape: fields.String, Update: true, Response: true, Description: "Billing phone number (including extension).", Default: &fields.Default{Kind: fields.DefaultNotSent}},
-		{Name: "tax_id", Shape: fields.String, Update: true, Response: true, Description: "Taxpayer identification number. Used only for transactions between LATAM buyers and non-LATAM sellers.", Default: &fields.Default{Kind: fields.DefaultNotSent}},
+		{Name: "email", Shape: fields.String, Update: true, Response: true, Stable: true, Description: "Email address.", Default: &fields.Default{Kind: fields.DefaultNotSent}},
+		{Name: "name", Shape: fields.String, Update: true, Response: true, Stable: true, Description: "Full name.", Default: &fields.Default{Kind: fields.DefaultNotSent}},
+		{Name: "phone", Shape: fields.String, Update: true, Response: true, Stable: true, Description: "Billing phone number (including extension).", Default: &fields.Default{Kind: fields.DefaultNotSent}},
+		{Name: "tax_id", Shape: fields.String, Update: true, Response: true, Stable: true, Description: "Taxpayer identification number. Used only for transactions between LATAM buyers and non-LATAM sellers.", Default: &fields.Default{Kind: fields.DefaultNotSent}, Refused: "Stripe refused it on a US account on update: \"A tax identifier may not be provided on this payment method as it is not required.\"."},
 	}},
 	{Name: "bizum", Shape: fields.Object, Response: true, Fields: []fields.Field{
 		{Name: "buyer_id", Shape: fields.String, Response: true, Description: "A unique identifier for the buyer as determined by the local payment processor."},
@@ -58,7 +58,7 @@ var Table = []fields.Field{
 		{Name: "country", Shape: fields.String, Response: true, Description: "Two-letter ISO code representing the country of the card. You could use this attribute to get a sense of the international breakdown of cards you've collected."},
 		{Name: "display_brand", Shape: fields.String, Response: true, Description: "The brand to use when displaying the card, this accounts for customer's brand choice on dual-branded cards. Can be `american_express`, `cartes_bancaires`, `diners_club`, `discover`, `eftpos_australia`, `interac`, `jcb`, `mastercard`, `union_pay`, `visa`, or `other` and may contain more values in the future."},
 		{Name: "exp_month", Shape: fields.Int, Response: true, Description: "Two-digit number representing the card's expiration month."},
-		{Name: "exp_year", Shape: fields.Int, Update: true, Response: true, Description: "Four-digit number representing the card's expiration year.", Default: &fields.Default{Kind: fields.DefaultNotSent}},
+		{Name: "exp_year", Shape: fields.Int, Response: true, Description: "Four-digit number representing the card's expiration year."},
 		{Name: "fingerprint", Shape: fields.String, Response: true, Description: "Uniquely identifies this particular card number. You can use this attribute to check whether two customers who’ve signed up with you are using the same card number, for example. For payment methods that tokenize card information (Apple Pay, Google Pay), the tokenized number might be provided instead of the underlying card number. *As of May 1, 2021, card fingerprint in India for Connect changed to allow two fingerprints for the same card---one for India and one for the rest of the world.*"},
 		{Name: "funding", Shape: fields.String, Response: true, Description: "Card funding type. Can be `credit`, `debit`, `prepaid`, or `unknown`."},
 		{Name: "generated_from", Shape: fields.Object, Response: true, Description: "Details of the original PaymentMethod that created this object.", Fields: []fields.Field{
@@ -112,9 +112,9 @@ var Table = []fields.Field{
 			{Name: "setup_attempt", Shape: fields.String, Response: true, Description: "The ID of the SetupAttempt that generated this PaymentMethod, if any."},
 		}},
 		{Name: "last4", Shape: fields.String, Response: true, Description: "The last four digits of the card."},
-		{Name: "networks", Shape: fields.Object, Response: true, Description: "Contains information about card networks that can be used to process the payment.", Fields: []fields.Field{
+		{Name: "networks", Shape: fields.Object, Update: true, Response: true, ServerDefaulted: true, Description: "Contains information about card networks that can be used to process the payment.", Fields: []fields.Field{
 			{Name: "available", Shape: fields.ScalarList, Elem: fields.String, Response: true, Description: "All networks available for selection via [payment_method_options.card.network](https://docs.stripe.com/api/payment_intents/confirm#confirm_payment_intent-payment_method_options-card-network)."},
-			{Name: "preferred", Shape: fields.String, Response: true, Description: "The preferred network for co-branded cards. Can be `cartes_bancaires`, `mastercard`, `visa` or `invalid_preference` if requested network is not valid for the card."},
+			{Name: "preferred", Shape: fields.String, Update: true, Response: true, ServerDefaulted: true, Stable: true, Enum: []string{"cartes_bancaires", "mastercard", "visa"}, Description: "The preferred network for co-branded cards. Can be `cartes_bancaires`, `mastercard`, `visa` or `invalid_preference` if requested network is not valid for the card.", Default: &fields.Default{Kind: fields.DefaultNotSent}},
 		}},
 		{Name: "regulated_status", Shape: fields.String, Response: true, Enum: []string{"regulated", "unregulated"}, Description: "Status of a card based on the card issuer."},
 		{Name: "three_d_secure_usage", Shape: fields.Object, Response: true, Description: "Contains details on how this Card may be used for 3D Secure authentication.", Fields: []fields.Field{
@@ -204,6 +204,7 @@ var Table = []fields.Field{
 		}},
 		{Name: "type", Shape: fields.String, Response: true, Description: "ID of the Dashboard-only CustomPaymentMethodType. Not expandable."},
 	}},
+	{Name: "customer_account", Shape: fields.String, Create: true, Response: true, Description: "The ID of the Account representing the customer to which to attach the PaymentMethod.", Default: &fields.Default{Kind: fields.DefaultNone}, Refused: "Stripe refused it on a US account on create: \"The supplied ID is not a valid Customer. V2 Accounts must be configured as Customers before they can be used in the Customers API.\"."},
 	{Name: "eps", Shape: fields.Object, Response: true, Fields: []fields.Field{
 		{Name: "bank", Shape: fields.String, Response: true, Enum: []string{"arzte_und_apotheker_bank", "austrian_anadi_bank_ag", "bank_austria", "bankhaus_carl_spangler", "bankhaus_schelhammer_und_schattera_ag", "bawag_psk_ag", "bks_bank_ag", "brull_kallmus_bank_ag", "btv_vier_lander_bank", "capital_bank_grawe_gruppe_ag", "deutsche_bank_ag", "dolomitenbank", "easybank_ag", "erste_bank_und_sparkassen", "hypo_alpeadriabank_international_ag", "hypo_bank_burgenland_aktiengesellschaft", "hypo_noe_lb_fur_niederosterreich_u_wien", "hypo_oberosterreich_salzburg_steiermark", "hypo_tirol_bank_ag", "hypo_vorarlberg_bank_ag", "marchfelder_bank", "oberbank_ag", "raiffeisen_bankengruppe_osterreich", "schoellerbank_ag", "sparda_bank_wien", "volksbank_gruppe", "volkskreditbank_ag", "vr_bank_braunau"}, Description: "The customer's bank. Should be one of `arzte_und_apotheker_bank`, `austrian_anadi_bank_ag`, `bank_austria`, `bankhaus_carl_spangler`, `bankhaus_schelhammer_und_schattera_ag`, `bawag_psk_ag`, `bks_bank_ag`, `brull_kallmus_bank_ag`, `btv_vier_lander_bank`, `capital_bank_grawe_gruppe_ag`, `deutsche_bank_ag`, `dolomitenbank`, `easybank_ag`, `erste_bank_und_sparkassen`, `hypo_alpeadriabank_international_ag`, `hypo_noe_lb_fur_niederosterreich_u_wien`, `hypo_oberosterreich_salzburg_steiermark`, `hypo_tirol_bank_ag`, `hypo_vorarlberg_bank_ag`, `hypo_bank_burgenland_aktiengesellschaft`, `marchfelder_bank`, `oberbank_ag`, `raiffeisen_bankengruppe_osterreich`, `schoellerbank_ag`, `sparda_bank_wien`, `volksbank_gruppe`, `volkskreditbank_ag`, or `vr_bank_braunau`."},
 	}},
@@ -248,7 +249,7 @@ var Table = []fields.Field{
 		{Name: "email", Shape: fields.String, Response: true, Description: "Account owner's email address."},
 	}},
 	{Name: "livemode", Shape: fields.Bool, Response: true, Description: "If the object exists in live mode, the value is `true`. If the object exists in test mode, the value is `false`."},
-	{Name: "metadata", Shape: fields.StringMap, Update: true, Response: true, Description: "Set of [key-value pairs](https://docs.stripe.com/api/metadata) that you can attach to an object. This can be useful for storing additional information about the object in a structured format. Individual keys can be unset by posting an empty value to them. All keys can be unset by posting an empty value to `metadata`.", Default: &fields.Default{Kind: fields.DefaultNotSent}},
+	{Name: "metadata", Shape: fields.StringMap, Update: true, Response: true, Stable: true, Description: "Set of [key-value pairs](https://docs.stripe.com/api/metadata) that you can attach to an object. This can be useful for storing additional information about the object in a structured format. Individual keys can be unset by posting an empty value to them. All keys can be unset by posting an empty value to `metadata`.", Default: &fields.Default{Kind: fields.DefaultNotSent}},
 	{Name: "naver_pay", Shape: fields.Object, Response: true, Fields: []fields.Field{
 		{Name: "buyer_id", Shape: fields.String, Response: true, Description: "Uniquely identifies this particular Naver Pay account. You can use this attribute to check whether two Naver Pay accounts are the same."},
 		{Name: "funding", Shape: fields.String, Response: true, Enum: []string{"card", "points"}, Description: "Whether to fund this transaction with Naver Pay points or a card."},

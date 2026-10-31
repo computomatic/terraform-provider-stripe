@@ -413,8 +413,9 @@ func TestAccAccountV2_updateDefaults(t *testing.T) {
 							return nil
 						}
 						u := lastUpdate(t, acct, path)
-						if defaults, _ := u.Get("defaults"); !jsonIs(defaults, `{"locales":["bg","ar-SA"],"profile":{"doing_business_as":"`+renamed+`"}}`) {
-							return fmt.Errorf("the update must send only the defaults that changed: %+v", defaults)
+						// `profile` goes whole, because the record does not list that hash.
+						if defaults, _ := u.Get("defaults"); !jsonIs(defaults, `{"locales":["bg","ar-SA"],"profile":{"business_url":"https://accessible.stripe.com","doing_business_as":"`+renamed+`","product_description":"`+product+`"}}`) {
+							return fmt.Errorf("the update must send only the defaults that changed, and `profile` whole: %+v", defaults)
 						}
 						for _, never := range []string{"configuration", "identity"} {
 							if _, sent := u.Get(never); sent {
@@ -550,8 +551,8 @@ func TestAccAccountV2_updateRecipient(t *testing.T) {
 						if acct.Smoke {
 							return nil
 						}
-						if configuration, _ := lastUpdate(t, acct, path).Get("configuration"); !jsonIs(configuration, `{"recipient":{"capabilities":{"stripe_balance":{"stripe_transfers":{"requested":false}}}}}`) {
-							return fmt.Errorf("the update must send only the request: %+v", configuration)
+						if configuration, _ := lastUpdate(t, acct, path).Get("configuration"); !jsonIs(configuration, `{"recipient":{"applied":true,"capabilities":{"stripe_balance":{"stripe_transfers":{"requested":false}}}}}`) {
+							return fmt.Errorf("the update must send only the recipient, whole: %+v", configuration)
 						}
 						return nil
 					},

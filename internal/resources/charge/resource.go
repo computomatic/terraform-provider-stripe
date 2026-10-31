@@ -29,8 +29,9 @@ var Declaration = engine.Declaration{
 		List:     "/v1/charges",
 	},
 	MovesMoney: true,
-	// The spec's update takes these, which the suite has not proven.
-	ReplaceOn:    []string{"customer", "receipt_email", "shipping", "transfer_group"},
+	// Stripe refuses a change of these once they are set (suite:
+	// TestChargeAttributes/leaves/request/PostChargesCharge/customer and transfer_group).
+	ReplaceOn:    []string{"customer", "transfer_group"},
 	Delete:       engine.Refuse,
 	RefuseReason: "Stripe cannot delete a charge; refund it with a `stripe_refund`.",
 	Transitions: []engine.Transition{
