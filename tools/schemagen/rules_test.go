@@ -63,6 +63,30 @@ func TestEvidenceReaderTakesTheSuiteFixtureAndRefusesTheUnknown(t *testing.T) {
 	}
 }
 
+// A family's per-hash facts are read strictly, a hash's update from a closed set, and a matcher
+// holds the days of a `time_within`.
+func TestEvidenceReaderTakesTheFormsOfTheFourthPin(t *testing.T) {
+	record := func(update string) []byte {
+		return []byte(fmt.Sprintf(`{"format_version": 1, "families": [{"family": "v1-payments", "objects": ["charge"], "nested_hash_update": "siblings_cleared",
+			"hashes": [{"hash": "shipping.address", "update": %q}], "array_update": "replaced", "map_key_removal": "empty_string", "scalar_unset": "empty_string", "tests": []}],
+			"rules": [{"object": "charge", "operation": "PostCharges", "path": "x", "rule": "a rule no leaf cites", "tests": [],
+				"observations": [{"condition": {"account_country": "US", "variant": ""}, "value": {"kind": "time_within", "days": 1}}]}]}`, update))
+	}
+	e, err := decodeEvidence(record(HashSiblingsCleared))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if h := e.Families[0].Hashes[0]; h.Hash != "shipping.address" || h.Update != HashSiblingsCleared {
+		t.Errorf("the hash: %+v", h)
+	}
+	if o := e.Rules[0].Observations[0].Value; o.Days == nil || *o.Days != 1 {
+		t.Errorf("the observation: %+v", o)
+	}
+	if _, err := decodeEvidence(record("sometimes")); err == nil || !strings.Contains(err.Error(), `hash update "sometimes"`) {
+		t.Errorf("an unknown hash update: %v", err)
+	}
+}
+
 // A rule's observation is the one matcher the generator reads, so the reader refuses a kind the
 // format does not define and a condition it cannot weigh, and reads every kind the record holds.
 func TestEvidenceReaderReadsRuleObservationsStrictly(t *testing.T) {

@@ -3,12 +3,12 @@
 page_title: "stripe_customer_payment_method Resource - Stripe"
 subcategory: ""
 description: |-
-  A payment method attached to a customer. The resource is the attachment. The payment method itself is not created here, because creating one takes raw card data: create it with Stripe.js or a SetupIntent, or use a Stripe test payment method such as pm_card_visa, and give its ID as payment_method. Attaching a test payment method returns a new payment method, so the id can differ from payment_method. Only billing_details, metadata and card.exp_year change in place; Stripe's other updatable payment method fields are read-only here.
+  A payment method attached to a customer. The resource is the attachment. The payment method itself is not created here, because creating one takes raw card data: create it with Stripe.js or a SetupIntent, or use a Stripe test payment method such as pm_card_visa, and give its ID as payment_method. Attaching a test payment method returns a new payment method, so the id can differ from payment_method. Only allow_redisplay, billing_details, card.networks.preferred and metadata change in place; Stripe's other updatable payment method fields are read-only here.
 ---
 
 # Resource: stripe_customer_payment_method
 
-A payment method attached to a customer. The resource is the attachment. The payment method itself is not created here, because creating one takes raw card data: create it with Stripe.js or a SetupIntent, or use a Stripe test payment method such as `pm_card_visa`, and give its ID as `payment_method`. Attaching a test payment method returns a new payment method, so the `id` can differ from `payment_method`. Only `billing_details`, `metadata` and `card.exp_year` change in place; Stripe's other updatable payment method fields are read-only here.
+A payment method attached to a customer. The resource is the attachment. The payment method itself is not created here, because creating one takes raw card data: create it with Stripe.js or a SetupIntent, or use a Stripe test payment method such as `pm_card_visa`, and give its ID as `payment_method`. Attaching a test payment method returns a new payment method, so the `id` can differ from `payment_method`. Only `allow_redisplay`, `billing_details`, `card.networks.preferred` and `metadata` change in place; Stripe's other updatable payment method fields are read-only here.
 
 ~> Stripe has no delete for the attachment of a payment method to a customer, only a detach, which is final: a detached payment method cannot be attached again. `terraform destroy`, and a change that would replace the customer payment method, fail at plan time. To stop managing a customer payment method, remove it from the state as [Removing from State](#removing-from-state) shows; it stays in the Stripe account.
 
@@ -45,8 +45,10 @@ The following arguments are required:
 
 The following arguments are optional:
 
+* `allow_redisplay` - (Optional) This field indicates whether this payment method can be shown again to its customer in a checkout flow. Stripe products such as Checkout and Elements use this field to determine whether a payment method can be shown as a saved payment method in a checkout flow. The field defaults to `unspecified`. Possible values: `always`, `limited`, `unspecified`. Default: not sent. Removing it from the configuration leaves the current value.
 * `billing_details` - (Optional) Billing information associated with the PaymentMethod that may be used or required by particular types of payment methods. Removing it from the configuration leaves the current value. See [`billing_details`](#billing_details) below.
 * `card` - (Optional) If this is a `card` PaymentMethod, this hash contains the user's card details. Removing it from the configuration leaves the current value. See [`card`](#card) below.
+* `customer_account` - (Optional) The ID of the Account representing the customer to which to attach the PaymentMethod. Changing it fails the plan, because this resource cannot be replaced. Stripe refused it on a US account on create: "The supplied ID is not a valid Customer. V2 Accounts must be configured as Customers before they can be used in the Customers API.". Default: none.
 * `metadata` - (Optional) Set of [key-value pairs](https://docs.stripe.com/api/metadata) that you can attach to an object. This can be useful for storing additional information about the object in a structured format. Individual keys can be unset by posting an empty value to them. All keys can be unset by posting an empty value to `metadata`. Default: not sent.
 
 <a id="billing_details"></a>
@@ -55,22 +57,22 @@ The following arguments are optional:
 The `billing_details` attribute supports:
 
 * `address` - (Optional) Billing address. Removing it from the configuration leaves the current value. See [`billing_details.address`](#billing_details.address) below.
-* `email` - (Optional) Email address. Default: not sent. Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
-* `name` - (Optional) Full name. Default: not sent. Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
-* `phone` - (Optional) Billing phone number (including extension). Default: not sent. Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
-* `tax_id` - (Optional) Taxpayer identification number. Used only for transactions between LATAM buyers and non-LATAM sellers. Default: not sent. Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
+* `email` - (Optional) Email address. Default: not sent. Removing it from the configuration leaves the current value.
+* `name` - (Optional) Full name. Default: not sent. Removing it from the configuration leaves the current value.
+* `phone` - (Optional) Billing phone number (including extension). Default: not sent. Removing it from the configuration leaves the current value.
+* `tax_id` - (Optional) Taxpayer identification number. Used only for transactions between LATAM buyers and non-LATAM sellers. Stripe refused it on a US account on update: "A tax identifier may not be provided on this payment method as it is not required.". Default: not sent. Removing it from the configuration leaves the current value.
 
 <a id="billing_details.address"></a>
 ### `billing_details.address`
 
 The `billing_details.address` attribute supports:
 
-* `city` - (Optional) City, district, suburb, town, or village. Default: not sent. Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
-* `country` - (Optional) Two-letter country code ([ISO 3166-1 alpha-2](https://en.wikipedia.org/wiki/ISO_3166-1_alpha-2)). Default: not sent. Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
-* `line1` - (Optional) Address line 1, such as the street, PO Box, or company name. Default: not sent. Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
-* `line2` - (Optional) Address line 2, such as the apartment, suite, unit, or building. Default: not sent. Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
-* `postal_code` - (Optional) ZIP or postal code. Default: not sent. Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
-* `state` - (Optional) State, county, province, or region ([ISO 3166-2](https://en.wikipedia.org/wiki/ISO_3166-2)). Default: not sent. Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
+* `city` - (Optional) City, district, suburb, town, or village. Default: not sent. Removing it from the configuration leaves the current value.
+* `country` - (Optional) Two-letter country code ([ISO 3166-1 alpha-2](https://en.wikipedia.org/wiki/ISO_3166-1_alpha-2)). Default: not sent. Removing it from the configuration leaves the current value.
+* `line1` - (Optional) Address line 1, such as the street, PO Box, or company name. Default: not sent. Removing it from the configuration leaves the current value.
+* `line2` - (Optional) Address line 2, such as the apartment, suite, unit, or building. Default: not sent. Removing it from the configuration leaves the current value.
+* `postal_code` - (Optional) ZIP or postal code. Default: not sent. Removing it from the configuration leaves the current value.
+* `state` - (Optional) State, county, province, or region ([ISO 3166-2](https://en.wikipedia.org/wiki/ISO_3166-2)). Default: not sent. Removing it from the configuration leaves the current value.
 
 <a id="card"></a>
 ### `card`
@@ -82,12 +84,12 @@ The `card` attribute supports:
 * `country` - (Read-Only) Two-letter ISO code representing the country of the card. You could use this attribute to get a sense of the international breakdown of cards you've collected.
 * `display_brand` - (Read-Only) The brand to use when displaying the card, this accounts for customer's brand choice on dual-branded cards. Can be `american_express`, `cartes_bancaires`, `diners_club`, `discover`, `eftpos_australia`, `interac`, `jcb`, `mastercard`, `union_pay`, `visa`, or `other` and may contain more values in the future.
 * `exp_month` - (Read-Only) Two-digit number representing the card's expiration month.
-* `exp_year` - (Optional) Four-digit number representing the card's expiration year. Default: not sent. Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
+* `exp_year` - (Read-Only) Four-digit number representing the card's expiration year.
 * `fingerprint` - (Read-Only) Uniquely identifies this particular card number. You can use this attribute to check whether two customers who’ve signed up with you are using the same card number, for example. For payment methods that tokenize card information (Apple Pay, Google Pay), the tokenized number might be provided instead of the underlying card number. *As of May 1, 2021, card fingerprint in India for Connect changed to allow two fingerprints for the same card---one for India and one for the rest of the world.*
 * `funding` - (Read-Only) Card funding type. Can be `credit`, `debit`, `prepaid`, or `unknown`.
 * `generated_from` - (Read-Only) Details of the original PaymentMethod that created this object. See [`card.generated_from`](#card.generated_from) below.
 * `last4` - (Read-Only) The last four digits of the card.
-* `networks` - (Read-Only) Contains information about card networks that can be used to process the payment. See [`card.networks`](#card.networks) below.
+* `networks` - (Optional) Contains information about card networks that can be used to process the payment. Removing it from the configuration leaves the current value. See [`card.networks`](#card.networks) below.
 * `regulated_status` - (Read-Only) Status of a card based on the card issuer. Possible values: `regulated`, `unregulated`.
 * `three_d_secure_usage` - (Read-Only) Contains details on how this Card may be used for 3D Secure authentication. See [`card.three_d_secure_usage`](#card.three_d_secure_usage) below.
 * `wallet` - (Read-Only) If this Card is part of a card wallet, this contains the details of the card wallet. See [`card.wallet`](#card.wallet) below.
@@ -185,8 +187,8 @@ The `card.generated_from.payment_method_details.card_present.wallet` attribute s
 
 The `card.networks` attribute supports:
 
-* `available` - All networks available for selection via [payment_method_options.card.network](https://docs.stripe.com/api/payment_intents/confirm#confirm_payment_intent-payment_method_options-card-network).
-* `preferred` - The preferred network for co-branded cards. Can be `cartes_bancaires`, `mastercard`, `visa` or `invalid_preference` if requested network is not valid for the card.
+* `available` - (Read-Only) All networks available for selection via [payment_method_options.card.network](https://docs.stripe.com/api/payment_intents/confirm#confirm_payment_intent-payment_method_options-card-network).
+* `preferred` - (Optional) The preferred network for co-branded cards. Can be `cartes_bancaires`, `mastercard`, `visa` or `invalid_preference` if requested network is not valid for the card. Possible values: `cartes_bancaires`, `mastercard`, `visa`. Default: not sent. Removing it from the configuration leaves the current value.
 
 <a id="card.three_d_secure_usage"></a>
 ### `card.three_d_secure_usage`
@@ -279,7 +281,6 @@ This resource exports the following attributes in addition to the arguments abov
 
 * `id` - Unique identifier for the object.
 * `acss_debit` - See [`acss_debit`](#acss_debit) below.
-* `allow_redisplay` - This field indicates whether this payment method can be shown again to its customer in a checkout flow. Stripe products such as Checkout and Elements use this field to determine whether a payment method can be shown as a saved payment method in a checkout flow. The field defaults to “unspecified”. Possible values: `always`, `limited`, `unspecified`.
 * `au_becs_debit` - See [`au_becs_debit`](#au_becs_debit) below.
 * `bacs_debit` - See [`bacs_debit`](#bacs_debit) below.
 * `bizum` - See [`bizum`](#bizum) below.

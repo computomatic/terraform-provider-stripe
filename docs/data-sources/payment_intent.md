@@ -3,12 +3,12 @@
 page_title: "stripe_payment_intent Data Source - Stripe"
 subcategory: ""
 description: |-
-  A customer payment, such as the one behind an invoice. The intent's amount_details, payment_method_options and the nested objects of its last payment error are not available.
+  A customer payment, such as the one behind an invoice. The nested objects of its last payment error are not available.
 ---
 
 # Data Source: stripe_payment_intent
 
-A customer payment, such as the one behind an invoice. The intent's `amount_details`, `payment_method_options` and the nested objects of its last payment error are not available.
+A customer payment, such as the one behind an invoice. The nested objects of its last payment error are not available.
 
 ## Example Usage
 
@@ -31,6 +31,7 @@ This data source exports the following attributes in addition to the arguments a
 * `allowed_payment_method_types` - The list of payment method types allowed for use with this payment. Stripe automatically returns compatible payment methods from this list in the `payment_method_types` field of the response, based on the other PaymentIntent parameters, such as `currency`, `amount`, and `customer`.
 * `amount` - Amount intended to be collected by this PaymentIntent. A positive integer representing how much to charge in the [smallest currency unit](https://docs.stripe.com/currencies#zero-decimal) (e.g., 100 cents to charge $1.00 or 100 to charge ¥100, a zero-decimal currency). The minimum amount is $0.50 US or [equivalent in charge currency](https://docs.stripe.com/currencies#minimum-and-maximum-charge-amounts). The amount value supports up to eight digits (e.g., a value of 99999999 for a USD charge of $999,999.99).
 * `amount_capturable` - Amount that can be captured from this PaymentIntent.
+* `amount_details` - Provides industry-specific information about the amount. See [`amount_details`](#amount_details) below.
 * `amount_received` - Amount that this PaymentIntent collects.
 * `application` - ID of the Connect application that created the PaymentIntent.
 * `application_fee_amount` - The amount of the application fee (if any) that will be requested to be applied to the payment and transferred to the application owner's Stripe account. The amount of the application fee collected will be capped at the total amount captured. For more information, see the PaymentIntents [use case for connected accounts](https://docs.stripe.com/payments/connected-accounts).
@@ -40,17 +41,19 @@ This data source exports the following attributes in addition to the arguments a
 * `capture_method` - Controls when the funds will be captured from the customer's account. Possible values: `automatic`, `automatic_async`, `manual`.
 * `client_secret` - (Sensitive) The client secret of this PaymentIntent. Used for client-side retrieval using a publishable key. The client secret can be used to complete a payment from your frontend. It should not be stored, logged, or exposed to anyone other than the customer. Make sure that you have TLS enabled on any page that includes the client secret. Refer to our docs to [accept a payment](https://docs.stripe.com/payments/accept-a-payment?ui=elements) and learn about how `client_secret` should be handled.
 * `confirmation_method` - Describes whether we can confirm this PaymentIntent automatically, or if it requires customer action to confirm the payment. Possible values: `automatic`, `manual`.
+* `confirmation_token` - ID of the ConfirmationToken used to confirm this PaymentIntent. If the provided ConfirmationToken contains properties that are also being provided in this request, such as `payment_method`, then the values in this request will take precedence.
 * `created` - Time at which the object was created. Measured in seconds since the Unix epoch.
 * `currency` - Three-letter [ISO currency code](https://www.iso.org/iso-4217-currency-codes.html), in lowercase. Must be a [supported currency](https://stripe.com/docs/currencies).
 * `customer` - ID of the Customer this PaymentIntent belongs to, if one exists. Payment methods attached to other Customers cannot be used with this PaymentIntent. If [setup_future_usage](https://docs.stripe.com/api#payment_intent_object-setup_future_usage) is set and this PaymentIntent's payment method is not `card_present`, then the payment method attaches to the Customer after the PaymentIntent has been confirmed and any required actions from the user are complete. If the payment method is `card_present` and isn't a digital wallet, then a [generated_card](https://docs.stripe.com/api/charges/object#charge_object-payment_method_details-card_present-generated_card) payment method representing the card is created and attached to the Customer instead.
 * `customer_account` - ID of the Account representing the customer that this PaymentIntent belongs to, if one exists. Payment methods attached to other Accounts cannot be used with this PaymentIntent. If [setup_future_usage](https://docs.stripe.com/api#payment_intent_object-setup_future_usage) is set and this PaymentIntent's payment method is not `card_present`, then the payment method attaches to the Account after the PaymentIntent has been confirmed and any required actions from the user are complete. If the payment method is `card_present` and isn't a digital wallet, then a [generated_card](https://docs.stripe.com/api/charges/object#charge_object-payment_method_details-card_present-generated_card) payment method representing the card is created and attached to the Account instead.
 * `description` - An arbitrary string attached to the object. Often useful for displaying to users.
 * `excluded_payment_method_types` - The list of payment method types to exclude from use with this payment.
-* `hooks` - See [`hooks`](#hooks) below.
+* `hooks` - Automations to be run during the PaymentIntent lifecycle See [`hooks`](#hooks) below.
 * `last_payment_error` - The payment error encountered in the previous PaymentIntent confirmation. It will be cleared if the PaymentIntent is later updated for any reason. See [`last_payment_error`](#last_payment_error) below.
 * `latest_charge` - ID of the latest [Charge object](https://docs.stripe.com/api/charges) created by this PaymentIntent. This property is `null` until PaymentIntent confirmation is attempted.
 * `livemode` - If the object exists in live mode, the value is `true`. If the object exists in test mode, the value is `false`.
 * `managed_payments` - Settings for Managed Payments. See [`managed_payments`](#managed_payments) below.
+* `mandate` - ID of the mandate that's used for this payment. This parameter can only be used with [`confirm=true`](https://docs.stripe.com/api/payment_intents/create#create_payment_intent-confirm).
 * `metadata` - Set of [key-value pairs](https://docs.stripe.com/api/metadata) that you can attach to an object. This can be useful for storing additional information about the object in a structured format. Individual keys can be unset by posting an empty value to them. All keys can be unset by posting an empty value to `metadata`.
 * `next_action` - If present, this property tells you what actions you need to take in order for your customer to fulfill a payment using the provided source. See [`next_action`](#next_action) below.
 * `on_behalf_of` - The Stripe account ID that these funds are intended for. Learn more about the [use case for connected accounts](https://docs.stripe.com/payments/connected-accounts).
@@ -58,10 +61,13 @@ This data source exports the following attributes in addition to the arguments a
 * `payment_method` - ID of the payment method (a PaymentMethod, Card, or [compatible Source](https://docs.stripe.com/payments/payment-methods/transitioning#compatibility) object) to attach to this PaymentIntent. If you omit this parameter with `confirm=true`, `customer.default_source` attaches as this PaymentIntent's payment instrument to improve migration for users of the Charges API. We recommend that you explicitly provide the `payment_method` moving forward. If the payment method is attached to a Customer, you must also provide the ID of that Customer as the [customer](https://docs.stripe.com/api#create_payment_intent-customer) parameter of this PaymentIntent.
 * `payment_method_configuration` - The ID of the [payment method configuration](https://docs.stripe.com/api/payment_method_configurations) to use with this PaymentIntent.
 * `payment_method_configuration_details` - Information about the [payment method configuration](https://docs.stripe.com/api/payment_method_configurations) used for this PaymentIntent. See [`payment_method_configuration_details`](#payment_method_configuration_details) below.
+* `payment_method_data` - If provided, this hash will be used to create a PaymentMethod. The new PaymentMethod will appear in the [payment_method](https://docs.stripe.com/api/payment_intents/object#payment_intent_object-payment_method) property on the PaymentIntent. See [`payment_method_data`](#payment_method_data) below.
+* `payment_method_options` - Payment method-specific configuration for this PaymentIntent. See [`payment_method_options`](#payment_method_options) below.
 * `payment_method_types` - The list of payment method types (e.g. card) that this PaymentIntent is allowed to use. A comprehensive list of valid payment method types can be found [here](https://docs.stripe.com/api/payment_methods/object#payment_method_object-type).
 * `payment_record` - ID of the [Payment Record object](https://docs.stripe.com/api/payment-record) created by this PaymentIntent.
 * `presentment_details` - See [`presentment_details`](#presentment_details) below.
 * `processing` - If present, this property tells you about the processing state of the payment. See [`processing`](#processing) below.
+* `radar_options` - Options to configure Radar. Learn more about [Radar Sessions](https://docs.stripe.com/radar/radar-session). See [`radar_options`](#radar_options) below.
 * `receipt_email` - Email address to send the receipt to. If you specify `receipt_email` for a payment in live mode, you send a receipt regardless of your [email settings](https://dashboard.stripe.com/account/emails).
 * `review` - ID of the review associated with this PaymentIntent, if any.
 * `setup_future_usage` - Indicates that you intend to make future payments with this PaymentIntent's payment method. If you provide a Customer with the PaymentIntent, you can use this parameter to [attach the payment method](https://docs.stripe.com/payments/save-during-payment) to the Customer after the PaymentIntent is confirmed and the customer completes any required actions. If you don't provide a Customer, you can still [attach](https://docs.stripe.com/api/payment_methods/attach) the payment method to a Customer after the transaction completes. If the payment method is `card_present` and isn't a digital wallet, Stripe creates and attaches a [generated_card](https://docs.stripe.com/api/charges/object#charge_object-payment_method_details-card_present-generated_card) payment method representing the card to the Customer instead. When processing card payments, Stripe uses `setup_future_usage` to help you comply with regional legislation and network rules, such as [SCA](https://docs.stripe.com/strong-customer-authentication). Possible values: `off_session`, `on_session`.
@@ -71,6 +77,39 @@ This data source exports the following attributes in addition to the arguments a
 * `status` - Status of this PaymentIntent, one of `requires_payment_method`, `requires_confirmation`, `requires_action`, `processing`, `requires_capture`, `canceled`, or `succeeded`. Read more about each PaymentIntent [status](https://docs.stripe.com/payments/intents#intent-statuses). Possible values: `canceled`, `processing`, `requires_action`, `requires_capture`, `requires_confirmation`, `requires_payment_method`, `succeeded`.
 * `transfer_data` - The parameters that you can use to automatically create a Transfer. Learn more about the [use case for connected accounts](https://docs.stripe.com/payments/connected-accounts). See [`transfer_data`](#transfer_data) below.
 * `transfer_group` - A string that identifies the resulting payment as part of a group. Learn more about the [use case for connected accounts](https://docs.stripe.com/connect/separate-charges-and-transfers).
+
+<a id="amount_details"></a>
+### `amount_details`
+
+The `amount_details` attribute supports:
+
+* `discount_amount` - The total discount applied on the transaction represented in the [smallest currency unit](https://docs.stripe.com/currencies#zero-decimal). An integer greater than 0. This field is mutually exclusive with the `amount_details[line_items][#][discount_amount]` field.
+* `shipping` - See [`amount_details.shipping`](#amount_details.shipping) below.
+* `tax` - See [`amount_details.tax`](#amount_details.tax) below.
+* `tip` - See [`amount_details.tip`](#amount_details.tip) below.
+
+<a id="amount_details.shipping"></a>
+### `amount_details.shipping`
+
+The `amount_details.shipping` attribute supports:
+
+* `amount` - If a physical good is being shipped, the cost of shipping represented in the [smallest currency unit](https://docs.stripe.com/currencies#zero-decimal). An integer greater than or equal to 0.
+* `from_postal_code` - If a physical good is being shipped, the postal code of where it is being shipped from. At most 10 alphanumeric characters long, hyphens and spaces are allowed.
+* `to_postal_code` - If a physical good is being shipped, the postal code of where it is being shipped to. At most 10 alphanumeric characters long, hyphens and spaces are allowed.
+
+<a id="amount_details.tax"></a>
+### `amount_details.tax`
+
+The `amount_details.tax` attribute supports:
+
+* `total_tax_amount` - The total amount of tax on the transaction represented in the [smallest currency unit](https://docs.stripe.com/currencies#zero-decimal). Required for L2 rates. An integer greater than or equal to 0. This field is mutually exclusive with the `amount_details[line_items][#][tax][total_tax_amount]` field.
+
+<a id="amount_details.tip"></a>
+### `amount_details.tip`
+
+The `amount_details.tip` attribute supports:
+
+* `amount` - Portion of the amount that corresponds to a tip.
 
 <a id="automatic_payment_methods"></a>
 ### `automatic_payment_methods`
@@ -123,601 +162,7 @@ The `last_payment_error` attribute supports:
 <a id="last_payment_error.payment_method"></a>
 ### `last_payment_error.payment_method`
 
-The `last_payment_error.payment_method` attribute supports:
-
-* `acss_debit` - See [`last_payment_error.payment_method.acss_debit`](#last_payment_error.payment_method.acss_debit) below.
-* `allow_redisplay` - This field indicates whether this payment method can be shown again to its customer in a checkout flow. Stripe products such as Checkout and Elements use this field to determine whether a payment method can be shown as a saved payment method in a checkout flow. The field defaults to “unspecified”. Possible values: `always`, `limited`, `unspecified`.
-* `au_becs_debit` - See [`last_payment_error.payment_method.au_becs_debit`](#last_payment_error.payment_method.au_becs_debit) below.
-* `bacs_debit` - See [`last_payment_error.payment_method.bacs_debit`](#last_payment_error.payment_method.bacs_debit) below.
-* `billing_details` - See [`last_payment_error.payment_method.billing_details`](#last_payment_error.payment_method.billing_details) below.
-* `bizum` - See [`last_payment_error.payment_method.bizum`](#last_payment_error.payment_method.bizum) below.
-* `blik` - See [`last_payment_error.payment_method.blik`](#last_payment_error.payment_method.blik) below.
-* `boleto` - See [`last_payment_error.payment_method.boleto`](#last_payment_error.payment_method.boleto) below.
-* `card` - See [`last_payment_error.payment_method.card`](#last_payment_error.payment_method.card) below.
-* `card_present` - See [`last_payment_error.payment_method.card_present`](#last_payment_error.payment_method.card_present) below.
-* `cashapp` - See [`last_payment_error.payment_method.cashapp`](#last_payment_error.payment_method.cashapp) below.
-* `created` - Time at which the object was created. Measured in seconds since the Unix epoch.
-* `custom` - See [`last_payment_error.payment_method.custom`](#last_payment_error.payment_method.custom) below.
-* `customer` - The ID of the Customer to which this PaymentMethod is saved. This will not be set when the PaymentMethod has not been saved to a Customer.
-* `customer_account` -
-* `eps` - See [`last_payment_error.payment_method.eps`](#last_payment_error.payment_method.eps) below.
-* `fpx` - See [`last_payment_error.payment_method.fpx`](#last_payment_error.payment_method.fpx) below.
-* `id` - Unique identifier for the object.
-* `ideal` - See [`last_payment_error.payment_method.ideal`](#last_payment_error.payment_method.ideal) below.
-* `interac_present` - See [`last_payment_error.payment_method.interac_present`](#last_payment_error.payment_method.interac_present) below.
-* `klarna` - See [`last_payment_error.payment_method.klarna`](#last_payment_error.payment_method.klarna) below.
-* `kr_card` - See [`last_payment_error.payment_method.kr_card`](#last_payment_error.payment_method.kr_card) below.
-* `link` - See [`last_payment_error.payment_method.link`](#last_payment_error.payment_method.link) below.
-* `livemode` - If the object exists in live mode, the value is `true`. If the object exists in test mode, the value is `false`.
-* `metadata` - Set of [key-value pairs](https://docs.stripe.com/api/metadata) that you can attach to an object. This can be useful for storing additional information about the object in a structured format.
-* `naver_pay` - See [`last_payment_error.payment_method.naver_pay`](#last_payment_error.payment_method.naver_pay) below.
-* `nz_bank_account` - See [`last_payment_error.payment_method.nz_bank_account`](#last_payment_error.payment_method.nz_bank_account) below.
-* `object` - String representing the object's type. Objects of the same type share the same value. Possible values: `payment_method`.
-* `p24` - See [`last_payment_error.payment_method.p24`](#last_payment_error.payment_method.p24) below.
-* `paypal` - See [`last_payment_error.payment_method.paypal`](#last_payment_error.payment_method.paypal) below.
-* `payto` - See [`last_payment_error.payment_method.payto`](#last_payment_error.payment_method.payto) below.
-* `pix` - See [`last_payment_error.payment_method.pix`](#last_payment_error.payment_method.pix) below.
-* `radar_options` - Options to configure Radar. See [Radar Session](https://docs.stripe.com/radar/radar-session) for more information. See [`last_payment_error.payment_method.radar_options`](#last_payment_error.payment_method.radar_options) below.
-* `sepa_debit` - See [`last_payment_error.payment_method.sepa_debit`](#last_payment_error.payment_method.sepa_debit) below.
-* `sofort` - See [`last_payment_error.payment_method.sofort`](#last_payment_error.payment_method.sofort) below.
-* `type` - The type of the PaymentMethod. An additional hash is included on the PaymentMethod with a name matching this value. It contains additional information specific to the PaymentMethod type. Possible values: `acss_debit`, `affirm`, `afterpay_clearpay`, `alipay`, `alma`, `amazon_pay`, `au_becs_debit`, `bacs_debit`, `bancontact`, `billie`, `bizum`, `blik`, `boleto`, `card`, `card_present`, `cashapp`, `crypto`, `custom`, `customer_balance`, `eps`, `fpx`, `giropay`, `grabpay`, `ideal`, `interac_present`, `kakao_pay`, `klarna`, `konbini`, `kr_card`, `link`, `mb_way`, `mobilepay`, `multibanco`, `naver_pay`, `nz_bank_account`, `oxxo`, `p24`, `pay_by_bank`, `payco`, `paynow`, `paypal`, `paypay`, `payto`, `pix`, `promptpay`, `revolut_pay`, `samsung_pay`, `satispay`, `scalapay`, `sepa_debit`, `sequra`, `sofort`, `sunbit`, `swish`, `twint`, `upi`, `us_bank_account`, `wechat_pay`, `zip`.
-* `upi` - See [`last_payment_error.payment_method.upi`](#last_payment_error.payment_method.upi) below.
-* `us_bank_account` - See [`last_payment_error.payment_method.us_bank_account`](#last_payment_error.payment_method.us_bank_account) below.
-
-<a id="last_payment_error.payment_method.acss_debit"></a>
-### `last_payment_error.payment_method.acss_debit`
-
-The `last_payment_error.payment_method.acss_debit` attribute supports:
-
-* `bank_name` - Name of the bank associated with the bank account.
-* `fingerprint` - Uniquely identifies this particular bank account. You can use this attribute to check whether two bank accounts are the same.
-* `institution_number` - Institution number of the bank account.
-* `last4` - Last four digits of the bank account number.
-* `transit_number` - Transit number of the bank account.
-
-<a id="last_payment_error.payment_method.au_becs_debit"></a>
-### `last_payment_error.payment_method.au_becs_debit`
-
-The `last_payment_error.payment_method.au_becs_debit` attribute supports:
-
-* `bsb_number` - Six-digit number identifying bank and branch associated with this bank account.
-* `fingerprint` - Uniquely identifies this particular bank account. You can use this attribute to check whether two bank accounts are the same.
-* `last4` - Last four digits of the bank account number.
-
-<a id="last_payment_error.payment_method.bacs_debit"></a>
-### `last_payment_error.payment_method.bacs_debit`
-
-The `last_payment_error.payment_method.bacs_debit` attribute supports:
-
-* `fingerprint` - Uniquely identifies this particular bank account. You can use this attribute to check whether two bank accounts are the same.
-* `last4` - Last four digits of the bank account number.
-* `sort_code` - Sort code of the bank account. (e.g., `10-20-30`)
-
-<a id="last_payment_error.payment_method.billing_details"></a>
-### `last_payment_error.payment_method.billing_details`
-
-The `last_payment_error.payment_method.billing_details` attribute supports:
-
-* `address` - Billing address. See [`last_payment_error.payment_method.billing_details.address`](#last_payment_error.payment_method.billing_details.address) below.
-* `email` - Email address.
-* `name` - Full name.
-* `phone` - Billing phone number (including extension).
-* `tax_id` - Taxpayer identification number. Used only for transactions between LATAM buyers and non-LATAM sellers.
-
-<a id="last_payment_error.payment_method.billing_details.address"></a>
-### `last_payment_error.payment_method.billing_details.address`
-
-The `last_payment_error.payment_method.billing_details.address` attribute supports:
-
-* `city` - City, district, suburb, town, or village.
-* `country` - Two-letter country code ([ISO 3166-1 alpha-2](https://en.wikipedia.org/wiki/ISO_3166-1_alpha-2)).
-* `line1` - Address line 1, such as the street, PO Box, or company name.
-* `line2` - Address line 2, such as the apartment, suite, unit, or building.
-* `postal_code` - ZIP or postal code.
-* `state` - State, county, province, or region ([ISO 3166-2](https://en.wikipedia.org/wiki/ISO_3166-2)).
-
-<a id="last_payment_error.payment_method.bizum"></a>
-### `last_payment_error.payment_method.bizum`
-
-The `last_payment_error.payment_method.bizum` attribute supports:
-
-* `buyer_id` - A unique identifier for the buyer as determined by the local payment processor.
-
-<a id="last_payment_error.payment_method.blik"></a>
-### `last_payment_error.payment_method.blik`
-
-The `last_payment_error.payment_method.blik` attribute supports:
-
-* `buyer_id` - A unique and immutable identifier assigned by BLIK to every buyer.
-
-<a id="last_payment_error.payment_method.boleto"></a>
-### `last_payment_error.payment_method.boleto`
-
-The `last_payment_error.payment_method.boleto` attribute supports:
-
-* `tax_id` - Uniquely identifies the customer tax id (CNPJ or CPF)
-
-<a id="last_payment_error.payment_method.card"></a>
-### `last_payment_error.payment_method.card`
-
-The `last_payment_error.payment_method.card` attribute supports:
-
-* `brand` - Card brand. Can be `amex`, `cartes_bancaires`, `diners`, `discover`, `eftpos_au`, `jcb`, `link`, `mastercard`, `unionpay`, `visa` or `unknown`.
-* `checks` - Checks on Card address and CVC if provided. See [`last_payment_error.payment_method.card.checks`](#last_payment_error.payment_method.card.checks) below.
-* `country` - Two-letter ISO code representing the country of the card. You could use this attribute to get a sense of the international breakdown of cards you've collected.
-* `display_brand` - The brand to use when displaying the card, this accounts for customer's brand choice on dual-branded cards. Can be `american_express`, `cartes_bancaires`, `diners_club`, `discover`, `eftpos_australia`, `interac`, `jcb`, `mastercard`, `union_pay`, `visa`, or `other` and may contain more values in the future.
-* `exp_month` - Two-digit number representing the card's expiration month.
-* `exp_year` - Four-digit number representing the card's expiration year.
-* `fingerprint` - Uniquely identifies this particular card number. You can use this attribute to check whether two customers who’ve signed up with you are using the same card number, for example. For payment methods that tokenize card information (Apple Pay, Google Pay), the tokenized number might be provided instead of the underlying card number. *As of May 1, 2021, card fingerprint in India for Connect changed to allow two fingerprints for the same card---one for India and one for the rest of the world.*
-* `funding` - Card funding type. Can be `credit`, `debit`, `prepaid`, or `unknown`.
-* `generated_from` - Details of the original PaymentMethod that created this object. See [`last_payment_error.payment_method.card.generated_from`](#last_payment_error.payment_method.card.generated_from) below.
-* `last4` - The last four digits of the card.
-* `networks` - Contains information about card networks that can be used to process the payment. See [`last_payment_error.payment_method.card.networks`](#last_payment_error.payment_method.card.networks) below.
-* `regulated_status` - Status of a card based on the card issuer. Possible values: `regulated`, `unregulated`.
-* `three_d_secure_usage` - Contains details on how this Card may be used for 3D Secure authentication. See [`last_payment_error.payment_method.card.three_d_secure_usage`](#last_payment_error.payment_method.card.three_d_secure_usage) below.
-* `wallet` - If this Card is part of a card wallet, this contains the details of the card wallet. See [`last_payment_error.payment_method.card.wallet`](#last_payment_error.payment_method.card.wallet) below.
-
-<a id="last_payment_error.payment_method.card.checks"></a>
-### `last_payment_error.payment_method.card.checks`
-
-The `last_payment_error.payment_method.card.checks` attribute supports:
-
-* `address_line1_check` - If a address line1 was provided, results of the check, one of `pass`, `fail`, `unavailable`, or `unchecked`.
-* `address_postal_code_check` - If a address postal code was provided, results of the check, one of `pass`, `fail`, `unavailable`, or `unchecked`.
-* `cvc_check` - If a CVC was provided, results of the check, one of `pass`, `fail`, `unavailable`, or `unchecked`.
-
-<a id="last_payment_error.payment_method.card.generated_from"></a>
-### `last_payment_error.payment_method.card.generated_from`
-
-The `last_payment_error.payment_method.card.generated_from` attribute supports:
-
-* `charge` - The charge that created this object.
-* `payment_method_details` - Transaction-specific details of the payment method used in the payment. See [`last_payment_error.payment_method.card.generated_from.payment_method_details`](#last_payment_error.payment_method.card.generated_from.payment_method_details) below.
-* `setup_attempt` - The ID of the SetupAttempt that generated this PaymentMethod, if any.
-
-<a id="last_payment_error.payment_method.card.generated_from.payment_method_details"></a>
-### `last_payment_error.payment_method.card.generated_from.payment_method_details`
-
-The `last_payment_error.payment_method.card.generated_from.payment_method_details` attribute supports:
-
-* `card_present` - See [`last_payment_error.payment_method.card.generated_from.payment_method_details.card_present`](#last_payment_error.payment_method.card.generated_from.payment_method_details.card_present) below.
-* `type` - The type of payment method transaction-specific details from the transaction that generated this `card` payment method. Always `card_present`.
-
-<a id="last_payment_error.payment_method.card.generated_from.payment_method_details.card_present"></a>
-### `last_payment_error.payment_method.card.generated_from.payment_method_details.card_present`
-
-The `last_payment_error.payment_method.card.generated_from.payment_method_details.card_present` attribute supports:
-
-* `amount_authorized` - The authorized amount
-* `brand` - Card brand. Can be `amex`, `cartes_bancaires`, `diners`, `discover`, `eftpos_au`, `jcb`, `link`, `mastercard`, `unionpay`, `visa` or `unknown`.
-* `brand_product` - The [product code](https://stripe.com/docs/card-product-codes) that identifies the specific program or product associated with a card.
-* `capture_before` - When using manual capture, a future timestamp after which the charge will be automatically refunded if uncaptured.
-* `cardholder_name` - The cardholder name as read from the card, in [ISO 7813](https://en.wikipedia.org/wiki/ISO/IEC_7813) format. May include alphanumeric characters, special characters and first/last name separator (`/`). In some cases, the cardholder name may not be available depending on how the issuer has configured the card. Cardholder name is typically not available on swipe or contactless payments, such as those made with Apple Pay and Google Pay.
-* `country` - Two-letter ISO code representing the country of the card. You could use this attribute to get a sense of the international breakdown of cards you've collected.
-* `description` - A high-level description of the type of cards issued in this range.
-* `emv_auth_data` - Authorization response cryptogram.
-* `exp_month` - Two-digit number representing the card's expiration month.
-* `exp_year` - Four-digit number representing the card's expiration year.
-* `fingerprint` - Uniquely identifies this particular card number. You can use this attribute to check whether two customers who’ve signed up with you are using the same card number, for example. For payment methods that tokenize card information (Apple Pay, Google Pay), the tokenized number might be provided instead of the underlying card number. *As of May 1, 2021, card fingerprint in India for Connect changed to allow two fingerprints for the same card---one for India and one for the rest of the world.*
-* `funding` - Card funding type. Can be `credit`, `debit`, `prepaid`, or `unknown`.
-* `generated_card` - ID of a card PaymentMethod generated from the card_present PaymentMethod that may be attached to a Customer for future transactions. Only present if it was possible to generate a card PaymentMethod.
-* `incremental_authorization_supported` - Whether this [PaymentIntent](https://docs.stripe.com/api/payment_intents) is eligible for incremental authorizations. Request support using [request_incremental_authorization_support](https://docs.stripe.com/api/payment_intents/create#create_payment_intent-payment_method_options-card_present-request_incremental_authorization_support).
-* `issuer` - The name of the card's issuing bank.
-* `last4` - The last four digits of the card.
-* `location` - ID of the [location](https://docs.stripe.com/api/terminal/locations) that this transaction's reader is assigned to.
-* `network` - Identifies which network this charge was processed on. Can be `amex`, `cartes_bancaires`, `diners`, `discover`, `eftpos_au`, `interac`, `jcb`, `link`, `mastercard`, `unionpay`, `visa`, or `unknown`.
-* `network_transaction_id` - This is used by the financial networks to identify a transaction. Visa calls this the Transaction ID, Mastercard calls this the Trace ID, and American Express calls this the Acquirer Reference Data. This value will be present if it is returned by the financial network in the authorization response, and null otherwise.
-* `offline` - Details about payments collected offline. See [`last_payment_error.payment_method.card.generated_from.payment_method_details.card_present.offline`](#last_payment_error.payment_method.card.generated_from.payment_method_details.card_present.offline) below.
-* `overcapture_supported` - Defines whether the authorized amount can be over-captured or not
-* `preferred_locales` - The languages that the issuing bank recommends using for localizing any customer-facing text, as read from the card. Referenced from EMV tag 5F2D, data encoded on the card's chip.
-* `read_method` - How card details were read in this transaction. Possible values: `contact_emv`, `contactless_emv`, `contactless_magstripe_mode`, `magnetic_stripe_fallback`, `magnetic_stripe_track2`.
-* `reader` - ID of the [reader](https://docs.stripe.com/api/terminal/readers) this transaction was made on.
-* `receipt` - A collection of fields required to be displayed on receipts. Only required for EMV transactions. See [`last_payment_error.payment_method.card.generated_from.payment_method_details.card_present.receipt`](#last_payment_error.payment_method.card.generated_from.payment_method_details.card_present.receipt) below.
-* `wallet` - See [`last_payment_error.payment_method.card.generated_from.payment_method_details.card_present.wallet`](#last_payment_error.payment_method.card.generated_from.payment_method_details.card_present.wallet) below.
-
-<a id="last_payment_error.payment_method.card.generated_from.payment_method_details.card_present.offline"></a>
-### `last_payment_error.payment_method.card.generated_from.payment_method_details.card_present.offline`
-
-The `last_payment_error.payment_method.card.generated_from.payment_method_details.card_present.offline` attribute supports:
-
-* `stored_at` - Time at which the payment was collected while offline
-* `type` - The method used to process this payment method offline. Only deferred is allowed. Possible values: `deferred`.
-
-<a id="last_payment_error.payment_method.card.generated_from.payment_method_details.card_present.receipt"></a>
-### `last_payment_error.payment_method.card.generated_from.payment_method_details.card_present.receipt`
-
-The `last_payment_error.payment_method.card.generated_from.payment_method_details.card_present.receipt` attribute supports:
-
-* `account_type` - The type of account being debited or credited Possible values: `checking`, `credit`, `prepaid`, `unknown`.
-* `application_cryptogram` - The Application Cryptogram, a unique value generated by the card to authenticate the transaction with issuers.
-* `application_preferred_name` - The Application Identifier (AID) on the card used to determine which networks are eligible to process the transaction. Referenced from EMV tag 9F12, data encoded on the card's chip.
-* `authorization_code` - Identifier for this transaction.
-* `authorization_response_code` - EMV tag 8A. A code returned by the card issuer.
-* `cardholder_verification_method` - Describes the method used by the cardholder to verify ownership of the card. One of the following: `approval`, `failure`, `none`, `offline_pin`, `offline_pin_and_signature`, `online_pin`, or `signature`.
-* `dedicated_file_name` - Similar to the application_preferred_name, identifying the applications (AIDs) available on the card. Referenced from EMV tag 84.
-* `terminal_verification_results` - A 5-byte string that records the checks and validations that occur between the card and the terminal. These checks determine how the terminal processes the transaction and what risk tolerance is acceptable. Referenced from EMV Tag 95.
-* `transaction_status_information` - An indication of which steps were completed during the card read process. Referenced from EMV Tag 9B.
-
-<a id="last_payment_error.payment_method.card.generated_from.payment_method_details.card_present.wallet"></a>
-### `last_payment_error.payment_method.card.generated_from.payment_method_details.card_present.wallet`
-
-The `last_payment_error.payment_method.card.generated_from.payment_method_details.card_present.wallet` attribute supports:
-
-* `type` - The type of mobile wallet, one of `apple_pay`, `google_pay`, `samsung_pay`, or `unknown`. Possible values: `apple_pay`, `google_pay`, `samsung_pay`, `unknown`.
-
-<a id="last_payment_error.payment_method.card.networks"></a>
-### `last_payment_error.payment_method.card.networks`
-
-The `last_payment_error.payment_method.card.networks` attribute supports:
-
-* `available` - All networks available for selection via [payment_method_options.card.network](https://docs.stripe.com/api/payment_intents/confirm#confirm_payment_intent-payment_method_options-card-network).
-* `preferred` - The preferred network for co-branded cards. Can be `cartes_bancaires`, `mastercard`, `visa` or `invalid_preference` if requested network is not valid for the card.
-
-<a id="last_payment_error.payment_method.card.three_d_secure_usage"></a>
-### `last_payment_error.payment_method.card.three_d_secure_usage`
-
-The `last_payment_error.payment_method.card.three_d_secure_usage` attribute supports:
-
-* `supported` - Whether 3D Secure is supported on this card.
-
-<a id="last_payment_error.payment_method.card.wallet"></a>
-### `last_payment_error.payment_method.card.wallet`
-
-The `last_payment_error.payment_method.card.wallet` attribute supports:
-
-* `dynamic_last4` - (For tokenized numbers only.) The last four digits of the device account number.
-* `masterpass` - See [`last_payment_error.payment_method.card.wallet.masterpass`](#last_payment_error.payment_method.card.wallet.masterpass) below.
-* `type` - The type of the card wallet, one of `amex_express_checkout`, `apple_pay`, `google_pay`, `masterpass`, `samsung_pay`, `visa_checkout`, or `link`. An additional hash is included on the Wallet subhash with a name matching this value. It contains additional information specific to the card wallet type. Possible values: `amex_express_checkout`, `apple_pay`, `google_pay`, `link`, `masterpass`, `samsung_pay`, `visa_checkout`.
-* `visa_checkout` - See [`last_payment_error.payment_method.card.wallet.visa_checkout`](#last_payment_error.payment_method.card.wallet.visa_checkout) below.
-
-<a id="last_payment_error.payment_method.card.wallet.masterpass"></a>
-### `last_payment_error.payment_method.card.wallet.masterpass`
-
-The `last_payment_error.payment_method.card.wallet.masterpass` attribute supports:
-
-* `billing_address` - Owner's verified billing address. Values are verified or provided by the wallet directly (if supported) at the time of authorization or settlement. They cannot be set or mutated. See [`last_payment_error.payment_method.card.wallet.masterpass.billing_address`](#last_payment_error.payment_method.card.wallet.masterpass.billing_address) below.
-* `email` - Owner's verified email. Values are verified or provided by the wallet directly (if supported) at the time of authorization or settlement. They cannot be set or mutated.
-* `name` - Owner's verified full name. Values are verified or provided by the wallet directly (if supported) at the time of authorization or settlement. They cannot be set or mutated.
-* `shipping_address` - Owner's verified shipping address. Values are verified or provided by the wallet directly (if supported) at the time of authorization or settlement. They cannot be set or mutated. See [`last_payment_error.payment_method.card.wallet.masterpass.shipping_address`](#last_payment_error.payment_method.card.wallet.masterpass.shipping_address) below.
-
-<a id="last_payment_error.payment_method.card.wallet.masterpass.billing_address"></a>
-### `last_payment_error.payment_method.card.wallet.masterpass.billing_address`
-
-The `last_payment_error.payment_method.card.wallet.masterpass.billing_address` attribute supports:
-
-* `city` - City, district, suburb, town, or village.
-* `country` - Two-letter country code ([ISO 3166-1 alpha-2](https://en.wikipedia.org/wiki/ISO_3166-1_alpha-2)).
-* `line1` - Address line 1, such as the street, PO Box, or company name.
-* `line2` - Address line 2, such as the apartment, suite, unit, or building.
-* `postal_code` - ZIP or postal code.
-* `state` - State, county, province, or region ([ISO 3166-2](https://en.wikipedia.org/wiki/ISO_3166-2)).
-
-<a id="last_payment_error.payment_method.card.wallet.masterpass.shipping_address"></a>
-### `last_payment_error.payment_method.card.wallet.masterpass.shipping_address`
-
-The `last_payment_error.payment_method.card.wallet.masterpass.shipping_address` attribute supports:
-
-* `city` - City, district, suburb, town, or village.
-* `country` - Two-letter country code ([ISO 3166-1 alpha-2](https://en.wikipedia.org/wiki/ISO_3166-1_alpha-2)).
-* `line1` - Address line 1, such as the street, PO Box, or company name.
-* `line2` - Address line 2, such as the apartment, suite, unit, or building.
-* `postal_code` - ZIP or postal code.
-* `state` - State, county, province, or region ([ISO 3166-2](https://en.wikipedia.org/wiki/ISO_3166-2)).
-
-<a id="last_payment_error.payment_method.card.wallet.visa_checkout"></a>
-### `last_payment_error.payment_method.card.wallet.visa_checkout`
-
-The `last_payment_error.payment_method.card.wallet.visa_checkout` attribute supports:
-
-* `billing_address` - Owner's verified billing address. Values are verified or provided by the wallet directly (if supported) at the time of authorization or settlement. They cannot be set or mutated. See [`last_payment_error.payment_method.card.wallet.visa_checkout.billing_address`](#last_payment_error.payment_method.card.wallet.visa_checkout.billing_address) below.
-* `email` - Owner's verified email. Values are verified or provided by the wallet directly (if supported) at the time of authorization or settlement. They cannot be set or mutated.
-* `name` - Owner's verified full name. Values are verified or provided by the wallet directly (if supported) at the time of authorization or settlement. They cannot be set or mutated.
-* `shipping_address` - Owner's verified shipping address. Values are verified or provided by the wallet directly (if supported) at the time of authorization or settlement. They cannot be set or mutated. See [`last_payment_error.payment_method.card.wallet.visa_checkout.shipping_address`](#last_payment_error.payment_method.card.wallet.visa_checkout.shipping_address) below.
-
-<a id="last_payment_error.payment_method.card.wallet.visa_checkout.billing_address"></a>
-### `last_payment_error.payment_method.card.wallet.visa_checkout.billing_address`
-
-The `last_payment_error.payment_method.card.wallet.visa_checkout.billing_address` attribute supports:
-
-* `city` - City, district, suburb, town, or village.
-* `country` - Two-letter country code ([ISO 3166-1 alpha-2](https://en.wikipedia.org/wiki/ISO_3166-1_alpha-2)).
-* `line1` - Address line 1, such as the street, PO Box, or company name.
-* `line2` - Address line 2, such as the apartment, suite, unit, or building.
-* `postal_code` - ZIP or postal code.
-* `state` - State, county, province, or region ([ISO 3166-2](https://en.wikipedia.org/wiki/ISO_3166-2)).
-
-<a id="last_payment_error.payment_method.card.wallet.visa_checkout.shipping_address"></a>
-### `last_payment_error.payment_method.card.wallet.visa_checkout.shipping_address`
-
-The `last_payment_error.payment_method.card.wallet.visa_checkout.shipping_address` attribute supports:
-
-* `city` - City, district, suburb, town, or village.
-* `country` - Two-letter country code ([ISO 3166-1 alpha-2](https://en.wikipedia.org/wiki/ISO_3166-1_alpha-2)).
-* `line1` - Address line 1, such as the street, PO Box, or company name.
-* `line2` - Address line 2, such as the apartment, suite, unit, or building.
-* `postal_code` - ZIP or postal code.
-* `state` - State, county, province, or region ([ISO 3166-2](https://en.wikipedia.org/wiki/ISO_3166-2)).
-
-<a id="last_payment_error.payment_method.card_present"></a>
-### `last_payment_error.payment_method.card_present`
-
-The `last_payment_error.payment_method.card_present` attribute supports:
-
-* `brand` - Card brand. Can be `amex`, `cartes_bancaires`, `diners`, `discover`, `eftpos_au`, `jcb`, `link`, `mastercard`, `unionpay`, `visa` or `unknown`.
-* `brand_product` - The [product code](https://stripe.com/docs/card-product-codes) that identifies the specific program or product associated with a card.
-* `cardholder_name` - The cardholder name as read from the card, in [ISO 7813](https://en.wikipedia.org/wiki/ISO/IEC_7813) format. May include alphanumeric characters, special characters and first/last name separator (`/`). In some cases, the cardholder name may not be available depending on how the issuer has configured the card. Cardholder name is typically not available on swipe or contactless payments, such as those made with Apple Pay and Google Pay.
-* `country` - Two-letter ISO code representing the country of the card. You could use this attribute to get a sense of the international breakdown of cards you've collected.
-* `description` - A high-level description of the type of cards issued in this range.
-* `exp_month` - Two-digit number representing the card's expiration month.
-* `exp_year` - Four-digit number representing the card's expiration year.
-* `fingerprint` - Uniquely identifies this particular card number. You can use this attribute to check whether two customers who’ve signed up with you are using the same card number, for example. For payment methods that tokenize card information (Apple Pay, Google Pay), the tokenized number might be provided instead of the underlying card number. *As of May 1, 2021, card fingerprint in India for Connect changed to allow two fingerprints for the same card---one for India and one for the rest of the world.*
-* `funding` - Card funding type. Can be `credit`, `debit`, `prepaid`, or `unknown`.
-* `issuer` - The name of the card's issuing bank.
-* `last4` - The last four digits of the card.
-* `networks` - Contains information about card networks that can be used to process the payment. See [`last_payment_error.payment_method.card_present.networks`](#last_payment_error.payment_method.card_present.networks) below.
-* `offline` - Details about payment methods collected offline. See [`last_payment_error.payment_method.card_present.offline`](#last_payment_error.payment_method.card_present.offline) below.
-* `preferred_locales` - The languages that the issuing bank recommends using for localizing any customer-facing text, as read from the card. Referenced from EMV tag 5F2D, data encoded on the card's chip.
-* `read_method` - How card details were read in this transaction. Possible values: `contact_emv`, `contactless_emv`, `contactless_magstripe_mode`, `magnetic_stripe_fallback`, `magnetic_stripe_track2`.
-* `wallet` - See [`last_payment_error.payment_method.card_present.wallet`](#last_payment_error.payment_method.card_present.wallet) below.
-
-<a id="last_payment_error.payment_method.card_present.networks"></a>
-### `last_payment_error.payment_method.card_present.networks`
-
-The `last_payment_error.payment_method.card_present.networks` attribute supports:
-
-* `available` - All networks available for selection via [payment_method_options.card.network](https://docs.stripe.com/api/payment_intents/confirm#confirm_payment_intent-payment_method_options-card-network).
-* `preferred` - The preferred network for the card.
-
-<a id="last_payment_error.payment_method.card_present.offline"></a>
-### `last_payment_error.payment_method.card_present.offline`
-
-The `last_payment_error.payment_method.card_present.offline` attribute supports:
-
-* `stored_at` - Time at which the payment was collected while offline
-* `type` - The method used to process this payment method offline. Only deferred is allowed. Possible values: `deferred`.
-
-<a id="last_payment_error.payment_method.card_present.wallet"></a>
-### `last_payment_error.payment_method.card_present.wallet`
-
-The `last_payment_error.payment_method.card_present.wallet` attribute supports:
-
-* `type` - The type of mobile wallet, one of `apple_pay`, `google_pay`, `samsung_pay`, or `unknown`. Possible values: `apple_pay`, `google_pay`, `samsung_pay`, `unknown`.
-
-<a id="last_payment_error.payment_method.cashapp"></a>
-### `last_payment_error.payment_method.cashapp`
-
-The `last_payment_error.payment_method.cashapp` attribute supports:
-
-* `buyer_id` - A unique and immutable identifier assigned by Cash App to every buyer.
-* `cashtag` - A public identifier for buyers using Cash App.
-
-<a id="last_payment_error.payment_method.custom"></a>
-### `last_payment_error.payment_method.custom`
-
-The `last_payment_error.payment_method.custom` attribute supports:
-
-* `display_name` - Display name of the Dashboard-only CustomPaymentMethodType.
-* `logo` - Contains information about the Dashboard-only CustomPaymentMethodType logo. See [`last_payment_error.payment_method.custom.logo`](#last_payment_error.payment_method.custom.logo) below.
-* `type` - ID of the Dashboard-only CustomPaymentMethodType. Not expandable.
-
-<a id="last_payment_error.payment_method.custom.logo"></a>
-### `last_payment_error.payment_method.custom.logo`
-
-The `last_payment_error.payment_method.custom.logo` attribute supports:
-
-* `content_type` - Content type of the Dashboard-only CustomPaymentMethodType logo.
-* `url` - URL of the Dashboard-only CustomPaymentMethodType logo.
-
-<a id="last_payment_error.payment_method.eps"></a>
-### `last_payment_error.payment_method.eps`
-
-The `last_payment_error.payment_method.eps` attribute supports:
-
-* `bank` - The customer's bank. Should be one of `arzte_und_apotheker_bank`, `austrian_anadi_bank_ag`, `bank_austria`, `bankhaus_carl_spangler`, `bankhaus_schelhammer_und_schattera_ag`, `bawag_psk_ag`, `bks_bank_ag`, `brull_kallmus_bank_ag`, `btv_vier_lander_bank`, `capital_bank_grawe_gruppe_ag`, `deutsche_bank_ag`, `dolomitenbank`, `easybank_ag`, `erste_bank_und_sparkassen`, `hypo_alpeadriabank_international_ag`, `hypo_noe_lb_fur_niederosterreich_u_wien`, `hypo_oberosterreich_salzburg_steiermark`, `hypo_tirol_bank_ag`, `hypo_vorarlberg_bank_ag`, `hypo_bank_burgenland_aktiengesellschaft`, `marchfelder_bank`, `oberbank_ag`, `raiffeisen_bankengruppe_osterreich`, `schoellerbank_ag`, `sparda_bank_wien`, `volksbank_gruppe`, `volkskreditbank_ag`, or `vr_bank_braunau`. Possible values: `arzte_und_apotheker_bank`, `austrian_anadi_bank_ag`, `bank_austria`, `bankhaus_carl_spangler`, `bankhaus_schelhammer_und_schattera_ag`, `bawag_psk_ag`, `bks_bank_ag`, `brull_kallmus_bank_ag`, `btv_vier_lander_bank`, `capital_bank_grawe_gruppe_ag`, `deutsche_bank_ag`, `dolomitenbank`, `easybank_ag`, `erste_bank_und_sparkassen`, `hypo_alpeadriabank_international_ag`, `hypo_bank_burgenland_aktiengesellschaft`, `hypo_noe_lb_fur_niederosterreich_u_wien`, `hypo_oberosterreich_salzburg_steiermark`, `hypo_tirol_bank_ag`, `hypo_vorarlberg_bank_ag`, `marchfelder_bank`, `oberbank_ag`, `raiffeisen_bankengruppe_osterreich`, `schoellerbank_ag`, `sparda_bank_wien`, `volksbank_gruppe`, `volkskreditbank_ag`, `vr_bank_braunau`.
-
-<a id="last_payment_error.payment_method.fpx"></a>
-### `last_payment_error.payment_method.fpx`
-
-The `last_payment_error.payment_method.fpx` attribute supports:
-
-* `bank` - The customer's bank, if provided. Can be one of `affin_bank`, `agrobank`, `alliance_bank`, `ambank`, `bank_islam`, `bank_muamalat`, `bnp_paribas`, `bank_rakyat`, `bsn`, `cimb`, `citibank`, `hong_leong_bank`, `hsbc`, `kfh`, `maybank2u`, `ocbc`, `public_bank`, `rhb`, `standard_chartered`, `uob`, `deutsche_bank`, `maybank2e`, `mbsb_bank`, `pb_enterprise`, or `bank_of_china`. Possible values: `affin_bank`, `agrobank`, `alliance_bank`, `ambank`, `bank_islam`, `bank_muamalat`, `bank_of_china`, `bank_rakyat`, `bnp_paribas`, `bsn`, `cimb`, `citibank`, `deutsche_bank`, `hong_leong_bank`, `hsbc`, `kfh`, `maybank2e`, `maybank2u`, `mbsb_bank`, `ocbc`, `pb_enterprise`, `public_bank`, `rhb`, `standard_chartered`, `uob`.
-
-<a id="last_payment_error.payment_method.ideal"></a>
-### `last_payment_error.payment_method.ideal`
-
-The `last_payment_error.payment_method.ideal` attribute supports:
-
-* `bank` - The customer's bank, if provided. Can be one of `abn_amro`, `adyen`, `asn_bank`, `bunq`, `buut`, `finom`, `handelsbanken`, `ing`, `knab`, `mollie`, `moneyou`, `n26`, `nn`, `rabobank`, `regiobank`, `revolut`, `sns_bank`, `triodos_bank`, `van_lanschot`, or `yoursafe`. Possible values: `abn_amro`, `adyen`, `asn_bank`, `bunq`, `buut`, `finom`, `handelsbanken`, `ing`, `knab`, `mollie`, `moneyou`, `n26`, `nn`, `rabobank`, `regiobank`, `revolut`, `sns_bank`, `triodos_bank`, `van_lanschot`, `yoursafe`.
-* `bic` - The Bank Identifier Code of the customer's bank, if the bank was provided. Possible values: `ABNANL2A`, `ADYBNL2A`, `ASNBNL21`, `BITSNL2A`, `BUNQNL2A`, `BUUTNL2A`, `FNOMNL22`, `FVLBNL22`, `HANDNL2A`, `INGBNL2A`, `KNABNL2H`, `MLLENL2A`, `MOYONL21`, `NNBANL2G`, `NTSBDEB1`, `RABONL2U`, `RBRBNL21`, `REVOIE23`, `REVOLT21`, `SNSBNL2A`, `TRIONL2U`.
-
-<a id="last_payment_error.payment_method.interac_present"></a>
-### `last_payment_error.payment_method.interac_present`
-
-The `last_payment_error.payment_method.interac_present` attribute supports:
-
-* `brand` - Card brand. Can be `interac`, `mastercard` or `visa`.
-* `cardholder_name` - The cardholder name as read from the card, in [ISO 7813](https://en.wikipedia.org/wiki/ISO/IEC_7813) format. May include alphanumeric characters, special characters and first/last name separator (`/`). In some cases, the cardholder name may not be available depending on how the issuer has configured the card. Cardholder name is typically not available on swipe or contactless payments, such as those made with Apple Pay and Google Pay.
-* `country` - Two-letter ISO code representing the country of the card. You could use this attribute to get a sense of the international breakdown of cards you've collected.
-* `description` - A high-level description of the type of cards issued in this range.
-* `exp_month` - Two-digit number representing the card's expiration month.
-* `exp_year` - Four-digit number representing the card's expiration year.
-* `fingerprint` - Uniquely identifies this particular card number. You can use this attribute to check whether two customers who’ve signed up with you are using the same card number, for example. For payment methods that tokenize card information (Apple Pay, Google Pay), the tokenized number might be provided instead of the underlying card number. *As of May 1, 2021, card fingerprint in India for Connect changed to allow two fingerprints for the same card---one for India and one for the rest of the world.*
-* `funding` - Card funding type. Can be `credit`, `debit`, `prepaid`, or `unknown`.
-* `issuer` - The name of the card's issuing bank.
-* `last4` - The last four digits of the card.
-* `networks` - Contains information about card networks that can be used to process the payment. See [`last_payment_error.payment_method.interac_present.networks`](#last_payment_error.payment_method.interac_present.networks) below.
-* `preferred_locales` - The languages that the issuing bank recommends using for localizing any customer-facing text, as read from the card. Referenced from EMV tag 5F2D, data encoded on the card's chip.
-* `read_method` - How card details were read in this transaction. Possible values: `contact_emv`, `contactless_emv`, `contactless_magstripe_mode`, `magnetic_stripe_fallback`, `magnetic_stripe_track2`.
-
-<a id="last_payment_error.payment_method.interac_present.networks"></a>
-### `last_payment_error.payment_method.interac_present.networks`
-
-The `last_payment_error.payment_method.interac_present.networks` attribute supports:
-
-* `available` - All networks available for selection via [payment_method_options.card.network](https://docs.stripe.com/api/payment_intents/confirm#confirm_payment_intent-payment_method_options-card-network).
-* `preferred` - The preferred network for the card.
-
-<a id="last_payment_error.payment_method.klarna"></a>
-### `last_payment_error.payment_method.klarna`
-
-The `last_payment_error.payment_method.klarna` attribute supports:
-
-* `dob` - The customer's date of birth, if provided. See [`last_payment_error.payment_method.klarna.dob`](#last_payment_error.payment_method.klarna.dob) below.
-
-<a id="last_payment_error.payment_method.klarna.dob"></a>
-### `last_payment_error.payment_method.klarna.dob`
-
-The `last_payment_error.payment_method.klarna.dob` attribute supports:
-
-* `day` - The day of birth, between 1 and 31.
-* `month` - The month of birth, between 1 and 12.
-* `year` - The four-digit year of birth.
-
-<a id="last_payment_error.payment_method.kr_card"></a>
-### `last_payment_error.payment_method.kr_card`
-
-The `last_payment_error.payment_method.kr_card` attribute supports:
-
-* `brand` - The local credit or debit card brand. Possible values: `bc`, `citi`, `hana`, `hyundai`, `jeju`, `jeonbuk`, `kakaobank`, `kbank`, `kdbbank`, `kookmin`, `kwangju`, `lotte`, `mg`, `nh`, `post`, `samsung`, `savingsbank`, `shinhan`, `shinhyup`, `suhyup`, `tossbank`, `woori`.
-* `last4` - The last four digits of the card. This may not be present for American Express cards.
-
-<a id="last_payment_error.payment_method.link"></a>
-### `last_payment_error.payment_method.link`
-
-The `last_payment_error.payment_method.link` attribute supports:
-
-* `email` - Account owner's email address.
-
-<a id="last_payment_error.payment_method.naver_pay"></a>
-### `last_payment_error.payment_method.naver_pay`
-
-The `last_payment_error.payment_method.naver_pay` attribute supports:
-
-* `buyer_id` - Uniquely identifies this particular Naver Pay account. You can use this attribute to check whether two Naver Pay accounts are the same.
-* `funding` - Whether to fund this transaction with Naver Pay points or a card. Possible values: `card`, `points`.
-
-<a id="last_payment_error.payment_method.nz_bank_account"></a>
-### `last_payment_error.payment_method.nz_bank_account`
-
-The `last_payment_error.payment_method.nz_bank_account` attribute supports:
-
-* `account_holder_name` - The name on the bank account. Only present if the account holder name is different from the name of the authorized signatory collected in the PaymentMethod’s billing details.
-* `bank_code` - The numeric code for the bank account's bank.
-* `bank_name` - The name of the bank.
-* `branch_code` - The numeric code for the bank account's bank branch.
-* `last4` - Last four digits of the bank account number.
-* `suffix` - The suffix of the bank account number.
-
-<a id="last_payment_error.payment_method.p24"></a>
-### `last_payment_error.payment_method.p24`
-
-The `last_payment_error.payment_method.p24` attribute supports:
-
-* `bank` - The customer's bank, if provided. Possible values: `alior_bank`, `bank_millennium`, `bank_nowy_bfg_sa`, `bank_pekao_sa`, `banki_spbdzielcze`, `blik`, `bnp_paribas`, `boz`, `citi_handlowy`, `credit_agricole`, `envelobank`, `etransfer_pocztowy24`, `getin_bank`, `ideabank`, `ing`, `inteligo`, `mbank_mtransfer`, `nest_przelew`, `noble_pay`, `pbac_z_ipko`, `plus_bank`, `santander_przelew24`, `tmobile_usbugi_bankowe`, `toyota_bank`, `velobank`, `volkswagen_bank`.
-
-<a id="last_payment_error.payment_method.paypal"></a>
-### `last_payment_error.payment_method.paypal`
-
-The `last_payment_error.payment_method.paypal` attribute supports:
-
-* `country` - Two-letter ISO code representing the buyer's country. Values are provided by PayPal directly (if supported) at the time of authorization or settlement. They cannot be set or mutated.
-* `payer_email` - Owner's email. Values are provided by PayPal directly (if supported) at the time of authorization or settlement. They cannot be set or mutated.
-* `payer_id` - PayPal account PayerID. This identifier uniquely identifies the PayPal customer.
-
-<a id="last_payment_error.payment_method.payto"></a>
-### `last_payment_error.payment_method.payto`
-
-The `last_payment_error.payment_method.payto` attribute supports:
-
-* `bsb_number` - Bank-State-Branch number of the bank account.
-* `last4` - Last four digits of the bank account number.
-* `pay_id` - The PayID alias for the bank account.
-
-<a id="last_payment_error.payment_method.pix"></a>
-### `last_payment_error.payment_method.pix`
-
-The `last_payment_error.payment_method.pix` attribute supports:
-
-* `fingerprint` - Uniquely identifies this particular Pix account. You can use this attribute to check whether two Pix accounts are the same.
-
-<a id="last_payment_error.payment_method.radar_options"></a>
-### `last_payment_error.payment_method.radar_options`
-
-The `last_payment_error.payment_method.radar_options` attribute supports:
-
-* `session` - A [Radar Session](https://docs.stripe.com/radar/radar-session) is a snapshot of the browser metadata and device details that help Radar make more accurate predictions on your payments.
-
-<a id="last_payment_error.payment_method.sepa_debit"></a>
-### `last_payment_error.payment_method.sepa_debit`
-
-The `last_payment_error.payment_method.sepa_debit` attribute supports:
-
-* `bank_code` - Bank code of bank associated with the bank account.
-* `branch_code` - Branch code of bank associated with the bank account.
-* `country` - Two-letter ISO code representing the country the bank account is located in.
-* `fingerprint` - Uniquely identifies this particular bank account. You can use this attribute to check whether two bank accounts are the same.
-* `generated_from` - Information about the object that generated this PaymentMethod. See [`last_payment_error.payment_method.sepa_debit.generated_from`](#last_payment_error.payment_method.sepa_debit.generated_from) below.
-* `last4` - Last four characters of the IBAN.
-
-<a id="last_payment_error.payment_method.sepa_debit.generated_from"></a>
-### `last_payment_error.payment_method.sepa_debit.generated_from`
-
-The `last_payment_error.payment_method.sepa_debit.generated_from` attribute supports:
-
-* `charge` - The ID of the Charge that generated this PaymentMethod, if any.
-* `setup_attempt` - The ID of the SetupAttempt that generated this PaymentMethod, if any.
-
-<a id="last_payment_error.payment_method.sofort"></a>
-### `last_payment_error.payment_method.sofort`
-
-The `last_payment_error.payment_method.sofort` attribute supports:
-
-* `country` - Two-letter ISO code representing the country the bank account is located in.
-
-<a id="last_payment_error.payment_method.upi"></a>
-### `last_payment_error.payment_method.upi`
-
-The `last_payment_error.payment_method.upi` attribute supports:
-
-* `vpa` - Customer's unique Virtual Payment Address
-
-<a id="last_payment_error.payment_method.us_bank_account"></a>
-### `last_payment_error.payment_method.us_bank_account`
-
-The `last_payment_error.payment_method.us_bank_account` attribute supports:
-
-* `account_holder_type` - Account holder type: individual or company. Possible values: `company`, `individual`.
-* `account_type` - Account type: checkings or savings. Defaults to checking if omitted. Possible values: `checking`, `savings`.
-* `bank_name` - The name of the bank.
-* `financial_connections_account` - The ID of the Financial Connections Account used to create the payment method.
-* `fingerprint` - Uniquely identifies this particular bank account. You can use this attribute to check whether two bank accounts are the same.
-* `last4` - Last four digits of the bank account number.
-* `networks` - Contains information about US bank account networks that can be used. See [`last_payment_error.payment_method.us_bank_account.networks`](#last_payment_error.payment_method.us_bank_account.networks) below.
-* `routing_number` - Routing number of the bank account.
-* `status_details` - Contains information about the future reusability of this PaymentMethod. See [`last_payment_error.payment_method.us_bank_account.status_details`](#last_payment_error.payment_method.us_bank_account.status_details) below.
-
-<a id="last_payment_error.payment_method.us_bank_account.networks"></a>
-### `last_payment_error.payment_method.us_bank_account.networks`
-
-The `last_payment_error.payment_method.us_bank_account.networks` attribute supports:
-
-* `preferred` - The preferred network.
-* `supported` - All supported networks.
-
-<a id="last_payment_error.payment_method.us_bank_account.status_details"></a>
-### `last_payment_error.payment_method.us_bank_account.status_details`
-
-The `last_payment_error.payment_method.us_bank_account.status_details` attribute supports:
-
-* `blocked` - See [`last_payment_error.payment_method.us_bank_account.status_details.blocked`](#last_payment_error.payment_method.us_bank_account.status_details.blocked) below.
-
-<a id="last_payment_error.payment_method.us_bank_account.status_details.blocked"></a>
-### `last_payment_error.payment_method.us_bank_account.status_details.blocked`
-
-The `last_payment_error.payment_method.us_bank_account.status_details.blocked` attribute supports:
-
-* `network_code` - The ACH network code that resulted in this block. Possible values: `R02`, `R03`, `R04`, `R05`, `R07`, `R08`, `R10`, `R11`, `R16`, `R20`, `R29`, `R31`.
-* `reason` - The reason why this PaymentMethod's fingerprint has been blocked Possible values: `bank_account_closed`, `bank_account_frozen`, `bank_account_invalid_details`, `bank_account_restricted`, `bank_account_unusable`, `debit_not_authorized`, `tokenized_account_number_deactivated`.
+The `last_payment_error.payment_method` attribute holds a customer payment method, with the attributes of the [`stripe_customer_payment_method`](../data-sources/customer_payment_method) data source and `object`, the name of its type.
 
 <a id="managed_payments"></a>
 ### `managed_payments`
@@ -1254,6 +699,64 @@ The `payment_method_configuration_details` attribute supports:
 * `id` - ID of the payment method configuration used.
 * `parent` - ID of the parent payment method configuration used.
 
+<a id="payment_method_data"></a>
+### `payment_method_data`
+
+The `payment_method_data` attribute supports:
+
+* `allow_redisplay` - Possible values: `always`, `limited`, `unspecified`.
+* `billing_details` - See [`payment_method_data.billing_details`](#payment_method_data.billing_details) below.
+* `metadata` -
+* `radar_options` - See [`payment_method_data.radar_options`](#payment_method_data.radar_options) below.
+* `type` - Possible values: `acss_debit`, `affirm`, `afterpay_clearpay`, `alipay`, `alma`, `amazon_pay`, `au_becs_debit`, `bacs_debit`, `bancontact`, `billie`, `bizum`, `blik`, `boleto`, `cashapp`, `crypto`, `customer_balance`, `eps`, `fpx`, `giropay`, `grabpay`, `ideal`, `kakao_pay`, `klarna`, `konbini`, `kr_card`, `link`, `mb_way`, `mobilepay`, `multibanco`, `naver_pay`, `nz_bank_account`, `oxxo`, `p24`, `pay_by_bank`, `payco`, `paynow`, `paypal`, `paypay`, `payto`, `pix`, `promptpay`, `revolut_pay`, `samsung_pay`, `satispay`, `scalapay`, `sepa_debit`, `sequra`, `sofort`, `sunbit`, `swish`, `twint`, `upi`, `us_bank_account`, `wechat_pay`, `zip`.
+
+<a id="payment_method_data.billing_details"></a>
+### `payment_method_data.billing_details`
+
+The `payment_method_data.billing_details` attribute supports:
+
+* `address` - See [`payment_method_data.billing_details.address`](#payment_method_data.billing_details.address) below.
+* `email` -
+* `name` -
+* `phone` -
+* `tax_id` -
+
+<a id="payment_method_data.billing_details.address"></a>
+### `payment_method_data.billing_details.address`
+
+The `payment_method_data.billing_details.address` attribute supports:
+
+* `city` -
+* `country` -
+* `line1` -
+* `line2` -
+* `postal_code` -
+* `state` -
+
+<a id="payment_method_data.radar_options"></a>
+### `payment_method_data.radar_options`
+
+The `payment_method_data.radar_options` attribute supports:
+
+* `session` -
+
+<a id="payment_method_options"></a>
+### `payment_method_options`
+
+The `payment_method_options` attribute supports:
+
+* `card` - See [`payment_method_options.card`](#payment_method_options.card) below.
+
+<a id="payment_method_options.card"></a>
+### `payment_method_options.card`
+
+The `payment_method_options.card` attribute supports:
+
+* `capture_method` - Controls when the funds will be captured from the customer's account. Possible values: `manual`.
+* `request_three_d_secure` - We strongly recommend that you rely on our SCA Engine to automatically prompt your customers for authentication based on risk level and [other requirements](https://docs.stripe.com/strong-customer-authentication). However, if you wish to request 3D Secure based on logic from your own fraud engine, provide this option. If not provided, this value defaults to `automatic`. Read our guide on [manually requesting 3D Secure](https://docs.stripe.com/payments/3d-secure/authentication-flow#manual-three-ds) for more information on how this configuration interacts with Radar and our SCA Engine. Possible values: `any`, `automatic`, `challenge`.
+* `require_cvc_recollection` - When enabled, using a card that is attached to a customer will require the CVC to be provided again (i.e. using the cvc_token parameter).
+* `setup_future_usage` - Indicates that you intend to make future payments with this PaymentIntent's payment method. If you provide a Customer with the PaymentIntent, you can use this parameter to [attach the payment method](https://docs.stripe.com/payments/save-during-payment) to the Customer after the PaymentIntent is confirmed and the customer completes any required actions. If you don't provide a Customer, you can still [attach](https://docs.stripe.com/api/payment_methods/attach) the payment method to a Customer after the transaction completes. If the payment method is `card_present` and isn't a digital wallet, Stripe creates and attaches a [generated_card](https://docs.stripe.com/api/charges/object#charge_object-payment_method_details-card_present-generated_card) payment method representing the card to the Customer instead. When processing card payments, Stripe uses `setup_future_usage` to help you comply with regional legislation and network rules, such as [SCA](https://docs.stripe.com/strong-customer-authentication). Possible values: `none`, `off_session`, `on_session`.
+
 <a id="presentment_details"></a>
 ### `presentment_details`
 
@@ -1284,6 +787,13 @@ The `processing.card.customer_notification` attribute supports:
 
 * `approval_requested` - Whether customer approval has been requested for this payment. For payments greater than INR 15000 or mandate amount, the customer must provide explicit approval of the payment with their bank.
 * `completes_at` - If customer approval is required, they need to provide approval before this time.
+
+<a id="radar_options"></a>
+### `radar_options`
+
+The `radar_options` attribute supports:
+
+* `session` -
 
 <a id="shipping"></a>
 ### `shipping`

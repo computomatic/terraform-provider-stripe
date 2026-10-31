@@ -62,8 +62,8 @@ The `azure_event_grid` attribute supports:
 * `azure_partner_topic_name` - (Read-Only) The name of the Stripe-created partner topic that receives events.
 * `azure_partner_topic_status` - (Read-Only) The Azure-reported lifecycle state of the partner topic. Possible values: `activated`, `deleted`, `never_activated`, `unknown`.
 * `azure_region` - (Required) The Azure region where Stripe creates the partner topic.
-* `azure_resource_group_name` - (Required) The Azure resource group where Stripe creates the partner topic.
-* `azure_subscription_id` - (Required) The Azure subscription where Stripe creates the partner topic.
+* `azure_resource_group_name` - (Required) The Azure resource group where Stripe creates the partner topic. Stripe refused it on a US account on create: "The provided resource group 'conformance' or subscription ID '8f14e45f-ceea-467a-9c4b-7d1a2b3c4d5e' does not exist in Azure.".
+* `azure_subscription_id` - (Required) The Azure subscription where Stripe creates the partner topic. Stripe refused it on a US account on create: "The provided resource group 'conformance' or subscription ID '8f14e45f-ceea-467a-9c4b-7d1a2b3c4d5e' does not exist in Azure.".
 
 <a id="webhook_endpoint"></a>
 ### `webhook_endpoint`

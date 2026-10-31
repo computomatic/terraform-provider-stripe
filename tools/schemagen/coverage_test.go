@@ -223,8 +223,117 @@ func TestGateExposesNoOtherClass(t *testing.T) {
 		if _, ok := index(tc.table).request["color"]; ok {
 			t.Errorf("%s: color is in the table", class)
 		}
-		if r := byKey(tc)["request/PostGadgets/color"]; r.State != StateAwaiting || r.Class != class {
-			t.Errorf("%s: %s with class %s, want awaiting proof", class, r.State, r.Class)
+		want := StateAwaiting
+		if class == ClassAcceptedOnly {
+			want = StateExcluded
+		}
+		if r := byKey(tc)["request/PostGadgets/color"]; r.State != want || r.Class != class {
+			t.Errorf("%s: %s with class %s, want %s", class, r.State, r.Class, want)
+		}
+	}
+}
+
+// Rule X6 takes a leaf Stripe never returns out of the table, even one exposed today, with the
+// hash that holds nothing else, unless the register keeps it.
+func TestAcceptedOnlyLeavesTheTable(t *testing.T) {
+	res := gadget()
+	key := "request/PostGadgets/source.number@object"
+	ops := pinned(t, res, map[string]string{key: ClassAcceptedOnly})
+	tc := cover(t, res, ops)
+	if r := byKey(tc)[key]; r.State != StateExcluded || r.Rule != RuleAcceptedOnly {
+		t.Errorf("source.number: %+v", r)
+	}
+	res.AcceptedOnly = map[string]string{"source.number": "Fixture: kept."}
+	tc = cover(t, res, ops)
+	if r := byKey(tc)[key]; r.State != StateExposed || r.Reason != "Fixture: kept." || r.Rule != "" {
+		t.Errorf("kept source.number: %+v", r)
+	}
+	if err := checkAcceptedOnly([]Resource{res}, tc.records); err != nil {
+		t.Error(err)
+	}
+	if err := checkAcceptedOnly([]Resource{res}, nil); err == nil || !strings.Contains(err.Error(), `"source.number"`) {
+		t.Errorf("a stale entry: %v", err)
+	}
+	res.Exclude = map[string]string{"source.number": "Fixture: excluded."}
+	tc = cover(t, res, ops)
+	if r := byKey(tc)[key]; r.Rule != RuleRegister {
+		t.Fatalf("the register must leave it out: %+v", r)
+	}
+	if err := checkAcceptedOnly([]Resource{res}, tc.records); err == nil || !strings.Contains(err.Error(), `"source.number"`) {
+		t.Errorf("an entry whose leaf the register leaves out is stale: %v", err)
+	}
+}
+
+// A class or a reason outside its closed set fails, so that a later fake's new reason is not
+// ignored.
+func TestAttributesCheckRefusesTheUnknown(t *testing.T) {
+	leaf := func(class, reason string) *Attributes {
+		return &Attributes{Leaves: []AttributeLeaf{{Key: Key{Side: SideRequest, Operation: "PostGadgets", Path: "color"}, Class: class, Reason: reason}}}
+	}
+	if err := leaf(ClassVerified, ReasonRefusedOnly).check(); err != nil {
+		t.Error(err)
+	}
+	if err := leaf(ClassUnproven, "not_proven").check(); err != nil {
+		t.Error(err)
+	}
+	if err := leaf(ClassVerified, "refused_mostly").check(); err == nil || !strings.Contains(err.Error(), `unknown reason "refused_mostly"`) {
+		t.Errorf("an unknown reason: %v", err)
+	}
+	if err := leaf("verified_mostly", "").check(); err == nil || !strings.Contains(err.Error(), `unknown class "verified_mostly"`) {
+		t.Errorf("an unknown class: %v", err)
+	}
+}
+
+// The docs line of an argument Stripe has only ever refused quotes the refusal and its condition,
+// with the record's placeholders in words, and an unknown placeholder fails.
+func TestRefusedSentence(t *testing.T) {
+	got, err := refusedSentence([]refusedOn{
+		{on: "create", country: "US", message: "No such radar session: '<id:rse_>'"},
+		{on: "update", country: "US", message: "No such radar session: '<id:rse_>'"},
+		{on: "update", country: "FR", message: "Too late, at <time>."},
+	})
+	want := `Stripe refused it on a US account on create and update: "No such radar session: 'rse_...'". Stripe refused it on an FR account on update: "Too late, at a time.".`
+	if err != nil || got != want {
+		t.Errorf("got %q, %v, want %q", got, err, want)
+	}
+	if _, err := refusedSentence([]refusedOn{{on: "create", country: "US", message: "at <when>"}}); err == nil {
+		t.Error("an unknown placeholder passed")
+	}
+}
+
+// A hash exposed without a member its request requires fails, naming the member, unless the
+// register leaves it out.
+func TestCheckRequiredMembers(t *testing.T) {
+	member := Record{Table: "gadget", Key: Key{Side: SideRequest, Operation: "PostGadgets", Path: "plan.interval"}, State: StateExposed}
+	required := Record{Table: "gadget", Key: Key{Side: SideRequest, Operation: "PostGadgets", Path: "plan.type"}, Required: true, State: StateAwaiting}
+	err := checkRequiredMembers([]Record{member, required})
+	if err == nil || !strings.Contains(err.Error(), "plan.type") {
+		t.Errorf("got %v", err)
+	}
+	required.State, required.Rule = StateExcluded, RuleRegister
+	member.State, member.Rule = StateExcluded, RuleRegister
+	if err := checkRequiredMembers([]Record{member, required}); err != nil {
+		t.Error(err)
+	}
+}
+
+func TestDroppedPaths(t *testing.T) {
+	leaves := []Leaf{
+		{Key: Key{Side: SideRequest, Operation: "op", Path: "a.b.c"}, At: "a.b.c"},
+		{Key: Key{Side: SideRequest, Operation: "op", Path: "a.b.d"}, At: "a.b.d"},
+		{Key: Key{Side: SideRequest, Operation: "op", Path: "a.e.f"}, At: "a.e.f"},
+		{Key: Key{Side: SideRequest, Operation: "other", Path: "a.e.f"}, At: "a.e.f"},
+	}
+	records := []Record{{Rule: RuleAcceptedOnly}, {}, {Rule: RuleAcceptedOnly}, {}}
+	got := dropped(leaves, records, "op")
+	for _, p := range []string{"a.b.c", "a.e.f", "a.e"} {
+		if !got[p] {
+			t.Errorf("%s is not dropped: %v", p, got)
+		}
+	}
+	for _, p := range []string{"a", "a.b", "a.b.d"} {
+		if got[p] {
+			t.Errorf("%s is dropped: %v", p, got)
 		}
 	}
 }
@@ -381,11 +490,11 @@ func TestDefaultStatementsComeFromTheEvidence(t *testing.T) {
 	// pinned, is `not sent` too, but one not exposed has no statement.
 	update := Leaf{Key: Key{Object: "gadget", Side: SideRequest, Operation: "PostGadgetsId", Path: "settings.limit"}}
 	for _, p := range []*Pinned{ev, nil} {
-		if d := defaultOf(update, Record{State: StateExposed}, "PostGadgets", nil, p); d == nil || d.Statement() != "Default: not sent." {
+		if d := defaultOf(update, Record{State: StateExposed}, "PostGadgets", nil, nil, p); d == nil || d.Statement() != "Default: not sent." {
 			t.Errorf("an argument only the update takes: %+v", d)
 		}
 	}
-	if d := defaultOf(update, Record{State: StateAwaiting}, "PostGadgets", nil, nil); d != nil {
+	if d := defaultOf(update, Record{State: StateAwaiting}, "PostGadgets", nil, nil, nil); d != nil {
 		t.Errorf("an update-only leaf awaiting proof has the statement %+v", d)
 	}
 

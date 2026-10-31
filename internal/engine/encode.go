@@ -349,7 +349,7 @@ func (m *model) encodeChanges(plan, state basetypes.ObjectValue, config tftypes.
 		case pv.IsNull():
 			out = append(out, wire.Field{Name: n.Name, Value: wire.Null{}})
 		case slices.Contains(m.decl.SendChangedMembers, n.Name):
-			v, err := changedMembers(n, pv, sv, updatable)
+			v, err := m.changedMembers(n, pv, sv, updatable)
 			if err != nil {
 				return nil, err
 			}
@@ -635,9 +635,10 @@ func (m *model) carryOnUpdate(n *node, state attr.Value, v wire.Value) wire.Valu
 }
 
 // changedMembers is what an update sends of an object in SendChangedMembers: the members
-// whose planned value differs from the state's. A member the plan leaves unknown is Stripe's
+// whose planned value differs from the state's, those of a nested object in SendChangedMembers
+// likewise, and the whole of any other that has one. A member the plan leaves unknown is Stripe's
 // to fill in, so it is not sent.
-func changedMembers(n *node, plan, state attr.Value, allow func(*node) bool) (wire.Object, error) {
+func (m *model) changedMembers(n *node, plan, state attr.Value, allow func(*node) bool) (wire.Object, error) {
 	planned, held := objectAttrs(plan), objectAttrs(state)
 	var out wire.Object
 	for _, k := range n.Kids {
@@ -652,8 +653,14 @@ func changedMembers(n *node, plan, state attr.Value, allow func(*node) bool) (wi
 				continue
 			}
 			v = wire.Null{}
-		case k.Shape == fields.Object && !hasRequiredMember(k):
-			members, err := changedMembers(k, pv, sv, allow)
+		case slices.Contains(m.decl.SendWholeMembers, k.Path):
+			members, err := wholeMembers(k, pv, sv)
+			if err != nil {
+				return nil, err
+			}
+			v = members
+		case k.Shape == fields.Object && slices.Contains(m.decl.SendChangedMembers, k.Path):
+			members, err := m.changedMembers(k, pv, sv, allow)
 			if err != nil {
 				return nil, err
 			}
@@ -674,6 +681,54 @@ func changedMembers(n *node, plan, state attr.Value, allow func(*node) bool) (wi
 			var ok bool
 			var err error
 			if v, ok, err = encodeValue(k, pv, allow); err != nil {
+				return nil, err
+			} else if !ok {
+				continue
+			}
+		}
+		out = append(out, wire.Field{Name: k.Name, Value: v})
+	}
+	return out, nil
+}
+
+// wholeMembers is what an update sends of an object in SendWholeMembers: every member an update
+// takes, and null for one removed from the configuration, which an update of a hash whose update
+// nothing proves must name. Stripe may clear what the request leaves out, so a member the plan
+// leaves unknown goes with the state's value, and one RefuseChange refuses, which the plan cannot
+// change, goes with the value it holds.
+func wholeMembers(n *node, plan, state attr.Value) (wire.Object, error) {
+	planned, held := objectAttrs(plan), objectAttrs(state)
+	var out wire.Object
+	for _, k := range n.Kids {
+		if !k.Update {
+			continue
+		}
+		pv, sv := planned[k.AttrName()], held[k.AttrName()]
+		if pv == nil || pv.IsUnknown() || k.Shape != fields.Object && !fullyKnown(pv) {
+			pv = sv
+		}
+		var v wire.Value
+		switch {
+		case pv == nil:
+			continue
+		case pv.IsNull():
+			if sv == nil || sv.IsNull() {
+				continue
+			}
+			v = wire.Null{}
+		case k.Shape == fields.Object:
+			members, err := wholeMembers(k, pv, sv)
+			if err != nil {
+				return nil, err
+			}
+			if len(members) == 0 {
+				continue
+			}
+			v = members
+		default:
+			var ok bool
+			var err error
+			if v, ok, err = encodeValue(k, pv, func(m *node) bool { return m.Update }); err != nil {
 				return nil, err
 			} else if !ok {
 				continue

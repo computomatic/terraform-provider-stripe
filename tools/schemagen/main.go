@@ -124,6 +124,14 @@ func Generate(root string, resources []Resource) ([]File, error) {
 	if err := checkStates(records); err != nil {
 		return nil, err
 	}
+	if ev != nil {
+		if err := checkAcceptedOnly(resources, records); err != nil {
+			return nil, err
+		}
+		if err := checkRequiredMembers(records); err != nil {
+			return nil, err
+		}
+	}
 	h := coverageHeader{APIVersion: pin.APIVersion, SpecTag: pin.Tag}
 	if ev != nil {
 		h.Evidence = &ev.Pin

@@ -3,6 +3,7 @@ package payment_method_configuration_test
 import (
 	"fmt"
 	"os"
+	"regexp"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
@@ -152,6 +153,37 @@ resource "terraform_data" "trigger" {
 					}
 					return nil
 				}),
+			},
+		},
+	})
+}
+
+// Stripe takes the preference of a method other than `bancontact`, `card` and `link` and never
+// returns it (suite: TestPaymentMethodConfigurationAttributes), so it is not an argument.
+func TestAccPaymentMethodConfiguration_acceptedOnlyPreferenceIsReadOnly(t *testing.T) {
+	acct := acctest.NewAccount(t)
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: tfacc.ProviderFactories,
+		Steps: []resource.TestStep{{
+			Config:      configurationConfig(acct, "Checkout", preference("acss_debit", "on")),
+			PlanOnly:    true,
+			ExpectError: regexp.MustCompile(`(?i)read-only`),
+		}},
+	})
+}
+
+// A preference Stripe has only ever refused on this account fails the apply with its refusal,
+// which the docs quote (suite: TestPaymentMethodConfigurationAttributes/leaves/request/
+// PostPaymentMethodConfigurationsConfiguration/alma.display_preference.preference).
+func TestAccPaymentMethodConfiguration_refusedPreference(t *testing.T) {
+	acct := acctest.NewAccount(t)
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: tfacc.ProviderFactories,
+		Steps: []resource.TestStep{
+			{Config: configurationConfig(acct, "Checkout", preference("card", "on"))},
+			{
+				Config:      configurationConfig(acct, "Checkout", preference("card", "on")+preference("alma", "on")),
+				ExpectError: regexp.MustCompile("`alma` is not available to this merchant"),
 			},
 		},
 	})

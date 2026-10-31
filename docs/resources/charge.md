@@ -36,20 +36,38 @@ The following arguments are required:
 
 The following arguments are optional:
 
+* `application_fee` - (Optional) The application fee (if any) for the charge. [See the Connect documentation](https://docs.stripe.com/connect/direct-charges#collect-fees) for details. Changing it fails the plan, because this resource cannot be replaced. Stripe refused it on a US account on create: "Can only apply an application_fee when the request is made on behalf of another account (using an OAuth key, the Stripe-Account header, or the destination parameter).". Removing it from the configuration leaves the current value.
 * `application_fee_amount` - (Optional) A fee in cents (or local equivalent) that will be applied to the charge and transferred to the application owner's Stripe account. The request must be made with an OAuth key or the `Stripe-Account` header in order to take an application fee. For more information, see the application fees [documentation](https://docs.stripe.com/connect/direct-charges#collect-fees). Changing it fails the plan, because this resource cannot be replaced.
 * `capture` - (Optional) Whether to immediately capture the charge. Defaults to `true`. When `false`, the charge issues an authorization (or pre-authorization), and will need to be [captured](https://docs.stripe.com/api#capture_charge) later. Uncaptured charges expire after a set number of days (7 by default). For more information, see the [authorizing charges and settling later](https://docs.stripe.com/charges/placing-a-hold) documentation. Changing it fails the plan, because this resource cannot be replaced.
 * `captured` - (Optional) If the charge was created without capturing, this Boolean represents whether it is still uncaptured or has since been captured. Possible values: `true`. Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
-* `customer` - (Optional) The ID of an existing customer that will be charged in this request. Changing it fails the plan, because this resource cannot be replaced.
+* `customer` - (Optional) The ID of an existing customer that will be charged in this request. Changing it fails the plan, because this resource cannot be replaced. Stripe refused it on a US account on update: "This charge is already associated with a customer".
 * `description` - (Optional) An arbitrary string which you can attach to a `Charge` object. It is displayed when in the web interface alongside the charge. Note that if you use Stripe to send automatic email receipts to your customers, your receipt emails will include the `description` of the charge(s) that they are describing.
+* `fraud_details` - (Optional) A set of key-value pairs you can attach to a charge giving information about its riskiness. If you believe a charge is fraudulent, include a `user_report` key with a value of `fraudulent`. If you believe a charge is safe, include a `user_report` key with a value of `safe`. Stripe will use the information you send to improve our fraud detection algorithms. Removing it from the configuration leaves the current value. See [`fraud_details`](#fraud_details) below.
 * `metadata` - (Optional) Set of [key-value pairs](https://docs.stripe.com/api/metadata) that you can attach to an object. This can be useful for storing additional information about the object in a structured format. Individual keys can be unset by posting an empty value to them. All keys can be unset by posting an empty value to `metadata`.
 * `on_behalf_of` - (Optional) The Stripe account ID for which these funds are intended. You can specify the business of record as the connected account using the `on_behalf_of` attribute on the charge. For details, see [Creating Separate Charges and Transfers](https://docs.stripe.com/connect/separate-charges-and-transfers#settlement-merchant). Changing it fails the plan, because this resource cannot be replaced.
-* `receipt_email` - (Optional) The email address to which this charge's [receipt](https://docs.stripe.com/dashboard/receipts) will be sent. The receipt will not be sent until the charge is paid, and no receipts will be sent for test mode charges. If this charge is for a [Customer](https://docs.stripe.com/api/customers/object), the email address specified here will override the customer's email address. If `receipt_email` is specified for a charge in live mode, a receipt will be sent regardless of your [email settings](https://dashboard.stripe.com/account/emails). Changing it fails the plan, because this resource cannot be replaced.
-* `shipping` - (Optional) Shipping information for the charge. Helps prevent fraud on charges for physical goods. Changing it fails the plan, because this resource cannot be replaced. See [`shipping`](#shipping) below.
+* `radar_options` - (Optional) Options to configure Radar. See [Radar Session](https://docs.stripe.com/radar/radar-session) for more information. Changing it fails the plan, because this resource cannot be replaced. Removing it from the configuration leaves the current value. See [`radar_options`](#radar_options) below.
+* `receipt_email` - (Optional) The email address to which this charge's [receipt](https://docs.stripe.com/dashboard/receipts) will be sent. The receipt will not be sent until the charge is paid, and no receipts will be sent for test mode charges. If this charge is for a [Customer](https://docs.stripe.com/api/customers/object), the email address specified here will override the customer's email address. If `receipt_email` is specified for a charge in live mode, a receipt will be sent regardless of your [email settings](https://dashboard.stripe.com/account/emails).
+* `shipping` - (Optional) Shipping information for the charge. Helps prevent fraud on charges for physical goods. See [`shipping`](#shipping) below.
 * `source` - (Optional) A payment source to be charged. This can be the ID of a [card](https://docs.stripe.com/api#cards) (i.e., credit or debit card), a [bank account](https://docs.stripe.com/api#bank_accounts), a [source](https://docs.stripe.com/api#sources), a [token](https://docs.stripe.com/api#tokens), or a [connected account](https://docs.stripe.com/connect/account-debits#charging-a-connected-account). For certain sources---namely, [cards](https://docs.stripe.com/api#cards), [bank accounts](https://docs.stripe.com/api#bank_accounts), and attached [sources](https://docs.stripe.com/api#sources)---you must also pass the ID of the associated customer. Changing it fails the plan, because this resource cannot be replaced.
 * `statement_descriptor` - (Optional) For a non-card charge, text that appears on the customer's statement as the statement descriptor. This value overrides the account's default statement descriptor. For information about requirements, including the 22-character limit, see [the Statement Descriptor docs](https://docs.stripe.com/get-started/account/statement-descriptors). For a card charge, this value is ignored unless you don't specify a `statement_descriptor_suffix`, in which case this value is used as the suffix. Changing it fails the plan, because this resource cannot be replaced.
 * `statement_descriptor_suffix` - (Optional) Provides information about a card charge. Concatenated to the account's [statement descriptor prefix](https://docs.stripe.com/get-started/account/statement-descriptors#static) to form the complete statement descriptor that appears on the customer's statement. If the account has no prefix value, the suffix is concatenated to the account's statement descriptor. Changing it fails the plan, because this resource cannot be replaced.
 * `transfer_data` - (Optional) An optional dictionary including the account to automatically transfer to as part of a destination charge. [See the Connect documentation](https://docs.stripe.com/connect/destination-charges) for details. Changing it fails the plan, because this resource cannot be replaced. See [`transfer_data`](#transfer_data) below.
-* `transfer_group` - (Optional) A string that identifies this transaction as part of a group. For details, see [Grouping transactions](https://docs.stripe.com/connect/separate-charges-and-transfers#transfer-options). Changing it fails the plan, because this resource cannot be replaced.
+* `transfer_group` - (Optional) A string that identifies this transaction as part of a group. For details, see [Grouping transactions](https://docs.stripe.com/connect/separate-charges-and-transfers#transfer-options). Changing it fails the plan, because this resource cannot be replaced. Stripe refused it on a US account on update: "You cannot change `transfer_group` via API once it has been set.".
+
+<a id="fraud_details"></a>
+### `fraud_details`
+
+The `fraud_details` attribute supports:
+
+* `stripe_report` - (Read-Only) Assessments from Stripe. If set, the value is `fraudulent`.
+* `user_report` - (Optional) Assessments reported by you. If set, possible values of are `safe` and `fraudulent`. Possible values: `fraudulent`, `safe`. Default: not sent. Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
+
+<a id="radar_options"></a>
+### `radar_options`
+
+The `radar_options` attribute supports:
+
+* `session` - (Optional) A [Radar Session](https://docs.stripe.com/radar/radar-session) is a snapshot of the browser metadata and device details that help Radar make more accurate predictions on your payments. Stripe refused it on a US account on create: "No such radar session: 'rse_...'". Removing it from the configuration leaves the current value.
 
 <a id="shipping"></a>
 ### `shipping`
@@ -91,7 +109,6 @@ This resource exports the following attributes in addition to the arguments abov
 * `amount_captured` - Amount in cents (or local equivalent) captured (can be less than the amount attribute on the charge if a partial capture was made).
 * `amount_refunded` - Amount in cents (or local equivalent) refunded (can be less than the amount attribute on the charge if a partial refund was issued).
 * `application` - ID of the Connect application that created the charge.
-* `application_fee` - The application fee (if any) for the charge. [See the Connect documentation](https://docs.stripe.com/connect/direct-charges#collect-fees) for details.
 * `balance_transaction` - ID of the balance transaction that describes the impact of this charge on your account balance (not including refunds or disputes).
 * `billing_details` - See [`billing_details`](#billing_details) below.
 * `calculated_statement_descriptor` - The full statement descriptor that is passed to card networks, and that is displayed on your customers' credit card and bank statements. Allows you to see what the statement descriptor looks like after the static and dynamic portions are combined. This value only exists for card payments.
@@ -100,7 +117,6 @@ This resource exports the following attributes in addition to the arguments abov
 * `failure_balance_transaction` - ID of the balance transaction that describes the reversal of the balance on your account due to payment failure.
 * `failure_code` - Error code explaining reason for charge failure if available (see [the errors section](https://docs.stripe.com/error-codes) for a list of codes).
 * `failure_message` - Message to user further explaining reason for charge failure if available.
-* `fraud_details` - Information on fraud assessments for the charge. See [`fraud_details`](#fraud_details) below.
 * `livemode` - If the object exists in live mode, the value is `true`. If the object exists in test mode, the value is `false`.
 * `outcome` - Details about whether the payment was accepted, and why. See [understanding declines](https://docs.stripe.com/declines) for details. See [`outcome`](#outcome) below.
 * `paid` - `true` if the charge succeeded, or was successfully authorized for later capture.
@@ -108,7 +124,6 @@ This resource exports the following attributes in addition to the arguments abov
 * `payment_method` - ID of the payment method used in this charge.
 * `payment_method_details` - Details about the payment method at the time of the transaction. See [`payment_method_details`](#payment_method_details) below.
 * `presentment_details` - See [`presentment_details`](#presentment_details) below.
-* `radar_options` - Options to configure Radar. See [Radar Session](https://docs.stripe.com/radar/radar-session) for more information. See [`radar_options`](#radar_options) below.
 * `receipt_number` - This is the transaction number that appears on email receipts sent for this charge. This attribute will be `null` until a receipt has been sent.
 * `receipt_url` - This is the URL to view the receipt for this charge. The receipt is kept up-to-date to the latest state of the charge, including any refunds. If the charge is for an Invoice, the receipt will be stylized as an Invoice receipt.
 * `refunded` - Whether the charge has been fully refunded. If the charge is only partially refunded, this attribute will still be false.
@@ -140,14 +155,6 @@ The `billing_details.address` attribute supports:
 * `line2` - Address line 2, such as the apartment, suite, unit, or building.
 * `postal_code` - ZIP or postal code.
 * `state` - State, county, province, or region ([ISO 3166-2](https://en.wikipedia.org/wiki/ISO_3166-2)).
-
-<a id="fraud_details"></a>
-### `fraud_details`
-
-The `fraud_details` attribute supports:
-
-* `stripe_report` - Assessments from Stripe. If set, the value is `fraudulent`.
-* `user_report` - Assessments reported by you. If set, possible values of are `safe` and `fraudulent`.
 
 <a id="outcome"></a>
 ### `outcome`
@@ -1093,13 +1100,6 @@ The `presentment_details` attribute supports:
 
 * `presentment_amount` - Amount intended to be collected by this payment, denominated in `presentment_currency`.
 * `presentment_currency` - Currency presented to the customer during payment.
-
-<a id="radar_options"></a>
-### `radar_options`
-
-The `radar_options` attribute supports:
-
-* `session` - A [Radar Session](https://docs.stripe.com/radar/radar-session) is a snapshot of the browser metadata and device details that help Radar make more accurate predictions on your payments.
 
 <a id="refunds"></a>
 ### `refunds`

@@ -85,6 +85,9 @@ type Field struct {
 	// or else what the pinned evidence records, or nil where it records none (ADR
 	// 2026-10-29-full-attribute-coverage, D4).
 	Default *Default
+	// Refused is, on an argument Stripe refused on every request the conformance suite sent it,
+	// the sentence that says so, with the recorded refusal and its condition.
+	Refused string
 	// Copy is, on an embedded copy of another Stripe object, the data source type that reads
 	// that object (D3).
 	Copy string

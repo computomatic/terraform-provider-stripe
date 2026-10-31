@@ -535,6 +535,104 @@ func TestRefuseChangeKeepsRefusedFieldsOutOfTheUpdate(t *testing.T) {
 	}
 }
 
+// A nested object in SendWholeMembers goes whole once a member changes, with a removed member as
+// null, a member the plan leaves unknown with the state's value, and a refused one with the value
+// it holds, and stays out while none changes.
+func TestSendWholeMembers(t *testing.T) {
+	member := func(name string, shape fields.Shape) fields.Field {
+		return fields.Field{Name: name, Shape: shape, Create: true, Update: true, Response: true}
+	}
+	geo := member("geo", fields.Object)
+	geo.Fields = []fields.Field{member("lat", fields.String), member("long", fields.String)}
+	home := member("home", fields.Object)
+	home.Fields = []fields.Field{member("city", fields.String), member("line1", fields.String), member("zip", fields.String), member("code", fields.String), geo}
+	person := member("person", fields.Object)
+	person.Fields = []fields.Field{member("first", fields.String), home}
+	decl := fixtureDeclaration()
+	decl.RefuseChange = []string{"person.home.code"}
+	decl.SendChangedMembers = []string{"person"}
+	decl.SendWholeMembers = []string{"person.home"}
+	r := configured(t, decl, append(refuseTable(), person), noCalls(t))
+	personType := r.objType.AttrTypes["person"].(basetypes.ObjectType)
+	homeType := personType.AttrTypes["home"].(basetypes.ObjectType).AttrTypes
+	geoType := homeType["geo"].(basetypes.ObjectType).AttrTypes
+	build := func(first, city, zip, lat attr.Value) attr.Value {
+		return types.ObjectValueMust(personType.AttrTypes, map[string]attr.Value{
+			"first": first,
+			"home": types.ObjectValueMust(homeType, map[string]attr.Value{"city": city, "line1": types.StringValue("1 Main"), "zip": zip, "code": types.StringValue("c"),
+				"geo": types.ObjectValueMust(geoType, map[string]attr.Value{"lat": lat, "long": types.StringValue("2")})}),
+		})
+	}
+	a, b, zip, one := types.StringValue("A"), types.StringValue("B"), types.StringValue("10001"), types.StringValue("1")
+	jenny := types.StringValue("Jenny")
+	state := r.fill(map[string]attr.Value{"id": types.StringValue("wid_1"), "name": types.StringValue("w"), "person": build(jenny, a, zip, one)})
+	whole := func(city, zip string) string {
+		return `{"person":{"home":{"city":` + city + `,"line1":"1 Main","zip":` + zip + `,"code":"c","geo":{"lat":"1","long":"2"}}}}`
+	}
+	for _, tc := range []struct {
+		name   string
+		person attr.Value
+		want   string
+	}{
+		{"a change and a removal", build(jenny, b, types.StringNull(), one), whole(`"B"`, "null")},
+		{"a member the plan leaves unknown", build(jenny, b, types.StringUnknown(), one), whole(`"B"`, `"10001"`)},
+		{"a nested member the plan leaves unknown", build(jenny, b, zip, types.StringUnknown()), whole(`"B"`, `"10001"`)},
+		{"no change of the hash", build(types.StringValue("Jen"), a, zip, one), `{"person":{"first":"Jen"}}`},
+	} {
+		params, err := r.m.encodeUpdate(r.fill(with(state, map[string]attr.Value{"person": tc.person})), state, tftypes.Value{})
+		if err != nil {
+			t.Fatal(err)
+		}
+		if got := wireOf(t, params); got != tc.want {
+			t.Errorf("%s: update body %s, want %s", tc.name, got, tc.want)
+		}
+	}
+}
+
+// How an update sends a hash is never left open: an entry must be a hash inside an object that
+// sends changed members, and every hash below such an object is named, but for one with a
+// Required member, which goes whole, and a refused one.
+func TestSentMembersAreChecked(t *testing.T) {
+	member := func(name string, shape fields.Shape) fields.Field {
+		return fields.Field{Name: name, Shape: shape, Create: true, Update: true, Response: true}
+	}
+	home := member("home", fields.Object)
+	home.Fields = []fields.Field{member("city", fields.String)}
+	dob := member("dob", fields.Object)
+	day := member("day", fields.Int)
+	day.Required = true
+	dob.Fields = []fields.Field{day}
+	person := member("person", fields.Object)
+	person.Fields = []fields.Field{member("first", fields.String), home, dob}
+	table := append(refuseTable(), person)
+	for name, tc := range map[string]struct {
+		changed, whole, refused []string
+		want                    string
+	}{
+		"named changed":      {changed: []string{"person", "person.home"}},
+		"named whole":        {changed: []string{"person"}, whole: []string{"person.home"}},
+		"refused":            {changed: []string{"person"}, refused: []string{"person.home"}},
+		"not named":          {changed: []string{"person"}, want: "the hash `person.home` is inside"},
+		"not a hash":         {changed: []string{"person"}, whole: []string{"person.first"}, want: "send-whole-members entry"},
+		"no such path":       {changed: []string{"person"}, whole: []string{"person.gone"}, want: "send-whole-members entry"},
+		"top-level whole":    {changed: []string{"person"}, whole: []string{"person"}, want: "send-whole-members entry"},
+		"in both lists":      {changed: []string{"person", "person.home"}, whole: []string{"person.home"}, want: "send-whole-members entry"},
+		"outside":            {changed: []string{"person.home"}, want: "send-changed-members entry"},
+		"a required member":  {changed: []string{"person", "person.home", "person.dob"}, want: "send-changed-members entry"},
+		"a top-level scalar": {changed: []string{"name"}, want: "send-changed-members entry"},
+	} {
+		decl := fixtureDeclaration()
+		decl.SendChangedMembers, decl.SendWholeMembers, decl.RefuseChange = tc.changed, tc.whole, tc.refused
+		_, err := compile(decl, table)
+		switch {
+		case tc.want == "" && err != nil:
+			t.Errorf("%s: %v", name, err)
+		case tc.want != "" && (err == nil || !strings.Contains(err.Error(), tc.want)):
+			t.Errorf("%s: %v, want %q", name, err, tc.want)
+		}
+	}
+}
+
 // An object in SendChangedMembers sends only what changed: a removed member as null, a nested
 // object's changed members, one with a Required member whole, a removed map key as null,
 // never a member the plan leaves unknown or one that is refused, and nothing when only those
@@ -554,7 +652,7 @@ func TestSendChangedMembers(t *testing.T) {
 	person.Fields = []fields.Field{member("first", fields.String), member("last", fields.String), member("secret", fields.String), member("filled", fields.Bool), dob, home, tags}
 	decl := fixtureDeclaration()
 	decl.RefuseChange = []string{"person.secret"}
-	decl.SendChangedMembers = []string{"person"}
+	decl.SendChangedMembers = []string{"person", "person.home"}
 	r := configured(t, decl, append(refuseTable(), person), noCalls(t))
 	personType := r.objType.AttrTypes["person"].(basetypes.ObjectType)
 	dobType := personType.AttrTypes["dob"].(basetypes.ObjectType).AttrTypes
@@ -593,10 +691,6 @@ func TestSendChangedMembers(t *testing.T) {
 		if got := wireOf(t, params); got != tc.want {
 			t.Errorf("%s: update body %s, want %s", name, got, tc.want)
 		}
-	}
-	decl.SendChangedMembers = []string{"name"}
-	if _, err := compile(decl, append(refuseTable(), person)); err == nil {
-		t.Error("an entry that is no object must be refused")
 	}
 }
 

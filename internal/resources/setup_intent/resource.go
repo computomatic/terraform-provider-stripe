@@ -26,15 +26,17 @@ var Declaration = engine.Declaration{
 	},
 	// Stripe returns the client secret to the server that created the intent.
 	OnceReturned: []string{"client_secret"},
-	// Stripe reports `attach_to_self` as false when the request leaves it out.
-	ServerDefaulted: []string{"attach_to_self"},
-	// The suite proves updates of `description`, `customer`, `payment_method` and `metadata`
-	// ("update", "update payment method moves status"). The other fields the spec takes on
-	// update are not proven, so they are treated as create-only.
-	ReplaceOn: []string{
-		"allowed_payment_method_types", "attach_to_self", "customer_account", "excluded_payment_method_types",
-		"flow_directions", "payment_method_configuration",
-	},
+	// Stripe reports `attach_to_self` as false when the request leaves it out, turns on
+	// `automatic_payment_methods` on a create with no payment method types (the record's default
+	// of `enabled`, true).
+	ServerDefaulted: []string{"attach_to_self", "automatic_payment_methods"},
+	// Stripe answers `payment_method_data` with the method it made (the record's `returned`,
+	// `inline_object`), which `payment_method` then leaves to it.
+	MadeBy: map[string]string{"payment_method": "payment_method_data"},
+	// Stripe refuses a change of `attach_to_self` once it is set (suite:
+	// TestSetupIntentAttributes/leaves/request/PostSetupIntentsIntent/attach_to_self), refuses
+	// every `customer_account`, and the suite has not proven `flow_directions`' update.
+	ReplaceOn:    []string{"attach_to_self", "customer_account", "flow_directions"},
 	Delete:       engine.Refuse,
 	RefuseReason: "Stripe cannot delete a setup intent; set `status` to `canceled` to cancel one.",
 	// A succeeded intent cannot be cancelled (suite: "cancel errors", "already succeeded").

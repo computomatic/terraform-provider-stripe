@@ -78,9 +78,12 @@ var Declaration = engine.Declaration{
 		"dashboard", "defaults.currency", "defaults.responsibilities", "identity.country",
 	},
 	SendChangedMembers: []string{"configuration", "defaults", "identity"},
-	ClearsWithNull:     []string{"contact_phone"},
-	PreserveConfig:     []string{"identity.country", "configuration.recipient.capabilities.stripe_balance.stripe_transfers.requested"},
-	KeepWhenClosed:     "closed",
+	// Neither the record's `families` nor the fake's suite-proven declaration states these, and
+	// the fake refuses a partial update of `defaults.profile` as `fake_unproven`.
+	SendWholeMembers: []string{"configuration.recipient", "defaults.profile", "identity.business_details"},
+	ClearsWithNull:   []string{"contact_phone"},
+	PreserveConfig:   []string{"identity.country", "configuration.recipient.capabilities.stripe_balance.stripe_transfers.requested"},
+	KeepWhenClosed:   "closed",
 	ServerDefaulted: []string{
 		"configuration", "dashboard", "defaults", "defaults.currency",
 		"identity", "identity.business_details", "identity.business_details.registered_name", "identity.country",

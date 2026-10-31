@@ -156,6 +156,72 @@ func TestAccSetupIntent_replace(t *testing.T) {
 	})
 }
 
+// The payment method lists change in place, with the record's enum values (suite:
+// TestSetupIntentAttributes).
+func TestAccSetupIntent_listsChangeInPlace(t *testing.T) {
+	acct := acctest.NewAccount(t)
+	var first string
+	cfg := func(allowed string) string {
+		return acct.ProviderBlock() + fmt.Sprintf(`
+resource "stripe_setup_intent" "test" {
+  allowed_payment_method_types = [%s]
+}
+`, allowed)
+	}
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: tfacc.ProviderFactories,
+		Steps: acctest.Forget(t, []resource.TestStep{
+			{
+				Config: cfg(`"card"`),
+				Check:  idOf(&first),
+			},
+			{
+				Config: cfg(`"card", "link"`),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply:             []plancheck.PlanCheck{plancheck.ExpectResourceAction(address, plancheck.ResourceActionUpdate)},
+					PostApplyPostRefresh: []plancheck.PlanCheck{plancheck.ExpectEmptyPlan()},
+				},
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttrPtr(address, "id", &first),
+					resource.TestCheckResourceAttr(address, "allowed_payment_method_types.1", "link"),
+				),
+			},
+		}, nil, "stripe_setup_intent"),
+	})
+}
+
+// The record's `bancontact` variant: a payment method made inline, kept from the configuration,
+// and a payment method configuration Stripe never returns (suite: minimal create `bancontact`).
+func TestAccSetupIntent_paymentMethodData(t *testing.T) {
+	acct := acctest.NewAccount(t)
+	cfg := acct.ProviderBlock() + fmt.Sprintf(`
+resource "stripe_payment_method_configuration" "test" {
+  name = %q
+  bancontact = {
+    display_preference = { preference = "on" }
+  }
+}
+
+resource "stripe_setup_intent" "test" {
+  payment_method_configuration = stripe_payment_method_configuration.test.id
+  payment_method_data = {
+    type            = "bancontact"
+    billing_details = { name = "Jenny Rosen" }
+  }
+}
+`, acct.Name("Bancontact"))
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: tfacc.ProviderFactories,
+		Steps: acctest.Forget(t, []resource.TestStep{
+			{
+				Config:           cfg,
+				ConfigPlanChecks: resource.ConfigPlanChecks{PostApplyPostRefresh: []plancheck.PlanCheck{plancheck.ExpectEmptyPlan()}},
+				Check:            resource.TestCheckResourceAttr(address, "payment_method_data.type", "bancontact"),
+			},
+		}, nil, "stripe_setup_intent"),
+	})
+}
+
 func TestAccSetupIntent_import(t *testing.T) {
 	acct := acctest.NewAccount(t)
 	cfg := intentConfig(acct, "  customer = stripe_customer.test.id\n  description = \"Card on file\"\n  metadata = { team = \"a\" }\n")
