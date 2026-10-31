@@ -1,0 +1,7426 @@
+{
+ "suite_ref": "5d756eafed59f4756ff0a6a34e913e44f7d2b961",
+ "leaves": [
+  {
+   "object": "account",
+   "operation": "PostAccounts",
+   "path": "company.address.city",
+   "held": [
+    {
+     "kind": "from",
+     "probe": "every_field/1"
+    }
+   ]
+  },
+  {
+   "object": "account",
+   "operation": "PostAccounts",
+   "path": "company.address.country",
+   "held": [
+    {
+     "kind": "from",
+     "probe": "enums/1"
+    }
+   ]
+  },
+  {
+   "object": "account",
+   "operation": "PostAccounts",
+   "path": "company.address.line1",
+   "held": [
+    {
+     "kind": "from",
+     "probe": "every_field/1"
+    }
+   ]
+  },
+  {
+   "object": "account",
+   "operation": "PostAccounts",
+   "path": "company.address.line2",
+   "held": [
+    {
+     "kind": "from",
+     "probe": "every_field/1"
+    }
+   ]
+  },
+  {
+   "object": "account",
+   "operation": "PostAccounts",
+   "path": "company.address.postal_code",
+   "held": [
+    {
+     "kind": "from",
+     "probe": "every_field/1"
+    }
+   ]
+  },
+  {
+   "object": "account",
+   "operation": "PostAccounts",
+   "path": "company.address.state",
+   "held": [
+    {
+     "kind": "from",
+     "probe": "every_field/1"
+    }
+   ]
+  },
+  {
+   "object": "account",
+   "operation": "PostAccounts",
+   "path": "company.directors_provided",
+   "held": [
+    {
+     "kind": "value",
+     "value": false,
+     "probe": "enums/11"
+    },
+    {
+     "kind": "value",
+     "value": true,
+     "probe": "enums/1"
+    }
+   ]
+  },
+  {
+   "object": "account",
+   "operation": "PostAccounts",
+   "path": "company.executives_provided",
+   "held": [
+    {
+     "kind": "value",
+     "value": false,
+     "probe": "enums/11"
+    },
+    {
+     "kind": "value",
+     "value": true,
+     "probe": "enums/1"
+    }
+   ]
+  },
+  {
+   "object": "account",
+   "operation": "PostAccounts",
+   "path": "company.owners_provided",
+   "held": [
+    {
+     "kind": "value",
+     "value": false,
+     "probe": "enums/11"
+    },
+    {
+     "kind": "value",
+     "value": true,
+     "probe": "enums/1"
+    }
+   ]
+  },
+  {
+   "object": "account",
+   "operation": "PostAccounts",
+   "path": "company.phone",
+   "held": [
+    {
+     "kind": "value",
+     "value": "+10000000000",
+     "probe": "every_field/1"
+    }
+   ]
+  },
+  {
+   "object": "account",
+   "operation": "PostAccounts",
+   "path": "individual.address.country",
+   "held": [
+    {
+     "kind": "from",
+     "probe": "enums/1"
+    }
+   ]
+  },
+  {
+   "object": "account",
+   "operation": "PostAccounts",
+   "path": "individual.metadata",
+   "held": [
+    {
+     "kind": "value",
+     "value": {},
+     "probe": "enums/1"
+    }
+   ]
+  },
+  {
+   "object": "account",
+   "operation": "PostAccounts",
+   "path": "individual.relationship.director",
+   "held": [
+    {
+     "kind": "value",
+     "value": false,
+     "probe": "enums/1"
+    }
+   ]
+  },
+  {
+   "object": "account",
+   "operation": "PostAccounts",
+   "path": "individual.relationship.executive",
+   "held": [
+    {
+     "kind": "value",
+     "value": false,
+     "probe": "enums/1"
+    }
+   ]
+  },
+  {
+   "object": "account",
+   "operation": "PostAccounts",
+   "path": "individual.relationship.owner",
+   "held": [
+    {
+     "kind": "value",
+     "value": false,
+     "probe": "enums/1"
+    }
+   ]
+  },
+  {
+   "object": "account",
+   "operation": "PostAccounts",
+   "path": "metadata",
+   "held": [
+    {
+     "kind": "value",
+     "value": {},
+     "probe": "enums/1"
+    }
+   ]
+  },
+  {
+   "object": "bank_account",
+   "operation": "PostAccountsAccountExternalAccounts",
+   "path": "bank_account.account_holder_name",
+   "held": [
+    {
+     "kind": "sent",
+     "probe": "every_field/1"
+    },
+    {
+     "kind": "value",
+     "value": "Jenny Rosen",
+     "probe": "every_field/3"
+    }
+   ]
+  },
+  {
+   "object": "bank_account",
+   "operation": "PostAccountsAccountExternalAccounts",
+   "path": "bank_account.account_holder_type",
+   "held": [
+    {
+     "kind": "sent",
+     "probe": "enums/1"
+    },
+    {
+     "kind": "value",
+     "value": "individual",
+     "probe": "every_field/3"
+    }
+   ]
+  },
+  {
+   "object": "bank_account",
+   "operation": "PostAccountsAccountExternalAccounts",
+   "path": "bank_account.country",
+   "held": [
+    {
+     "kind": "sent",
+     "probe": "enums/1"
+    },
+    {
+     "kind": "value",
+     "value": "US",
+     "probe": "every_field/3"
+    }
+   ]
+  },
+  {
+   "object": "bank_account",
+   "operation": "PostAccountsAccountExternalAccounts",
+   "path": "bank_account.currency",
+   "held": [
+    {
+     "kind": "sent",
+     "probe": "enums/1"
+    },
+    {
+     "kind": "value",
+     "value": "usd",
+     "probe": "every_field/3"
+    }
+   ]
+  },
+  {
+   "object": "bank_account",
+   "operation": "PostAccountsAccountExternalAccounts",
+   "path": "bank_account.routing_number",
+   "held": [
+    {
+     "kind": "sent",
+     "probe": "enums/1"
+    },
+    {
+     "kind": "value",
+     "value": "110000000",
+     "probe": "every_field/3"
+    }
+   ]
+  },
+  {
+   "object": "bank_account",
+   "operation": "PostAccountsAccountExternalAccounts",
+   "path": "default_for_currency",
+   "held": [
+    {
+     "kind": "value",
+     "value": false,
+     "probe": "enums/1"
+    },
+    {
+     "kind": "value",
+     "value": true,
+     "probe": "minimal/first_in_currency"
+    }
+   ]
+  },
+  {
+   "object": "bank_account",
+   "operation": "PostAccountsAccountExternalAccounts",
+   "path": "metadata",
+   "held": [
+    {
+     "kind": "value",
+     "value": {},
+     "probe": "enums/1"
+    }
+   ]
+  },
+  {
+   "object": "billing.credit_grant",
+   "operation": "PostBillingCreditGrants",
+   "path": "category",
+   "held": [
+    {
+     "kind": "value",
+     "value": "paid",
+     "probe": "minimal"
+    }
+   ]
+  },
+  {
+   "object": "billing.credit_grant",
+   "operation": "PostBillingCreditGrants",
+   "path": "customer",
+   "held": [
+    {
+     "kind": "id",
+     "probe": "minimal/customer_account"
+    }
+   ]
+  },
+  {
+   "object": "billing.credit_grant",
+   "operation": "PostBillingCreditGrants",
+   "path": "effective_at",
+   "held": [
+    {
+     "kind": "timestamp",
+     "probe": "enums/1"
+    }
+   ]
+  },
+  {
+   "object": "billing.credit_grant",
+   "operation": "PostBillingCreditGrants",
+   "path": "metadata",
+   "held": [
+    {
+     "kind": "value",
+     "value": {},
+     "probe": "enums/1"
+    }
+   ]
+  },
+  {
+   "object": "billing.credit_grant",
+   "operation": "PostBillingCreditGrants",
+   "path": "name",
+   "held": [
+    {
+     "kind": "value",
+     "value": "",
+     "probe": "enums/1"
+    }
+   ]
+  },
+  {
+   "object": "billing.credit_grant",
+   "operation": "PostBillingCreditGrants",
+   "path": "priority",
+   "held": [
+    {
+     "kind": "value",
+     "value": 50,
+     "probe": "enums/1"
+    }
+   ]
+  },
+  {
+   "object": "billing.meter",
+   "operation": "PostBillingMeters",
+   "path": "customer_mapping.event_payload_key",
+   "held": [
+    {
+     "kind": "value",
+     "value": "stripe_customer_id",
+     "probe": "enums/1"
+    }
+   ]
+  },
+  {
+   "object": "billing.meter",
+   "operation": "PostBillingMeters",
+   "path": "customer_mapping.type",
+   "held": [
+    {
+     "kind": "value",
+     "value": "by_id",
+     "probe": "enums/1"
+    }
+   ]
+  },
+  {
+   "object": "billing.meter",
+   "operation": "PostBillingMeters",
+   "path": "value_settings.event_payload_key",
+   "held": [
+    {
+     "kind": "value",
+     "value": "value",
+     "probe": "enums/1"
+    }
+   ]
+  },
+  {
+   "object": "billing_portal.configuration",
+   "operation": "PostBillingPortalConfigurations",
+   "path": "features.customer_update.allowed_updates",
+   "held": [
+    {
+     "kind": "value",
+     "value": [],
+     "probe": "enums/1"
+    }
+   ]
+  },
+  {
+   "object": "billing_portal.configuration",
+   "operation": "PostBillingPortalConfigurations",
+   "path": "features.customer_update.enabled",
+   "held": [
+    {
+     "kind": "value",
+     "value": false,
+     "probe": "enums/1"
+    }
+   ]
+  },
+  {
+   "object": "billing_portal.configuration",
+   "operation": "PostBillingPortalConfigurations",
+   "path": "features.payment_method_update.enabled",
+   "held": [
+    {
+     "kind": "value",
+     "value": false,
+     "probe": "enums/1"
+    }
+   ]
+  },
+  {
+   "object": "billing_portal.configuration",
+   "operation": "PostBillingPortalConfigurations",
+   "path": "features.subscription_cancel.cancellation_reason.enabled",
+   "held": [
+    {
+     "kind": "value",
+     "value": false,
+     "probe": "enums/1"
+    }
+   ]
+  },
+  {
+   "object": "billing_portal.configuration",
+   "operation": "PostBillingPortalConfigurations",
+   "path": "features.subscription_cancel.cancellation_reason.feedback_options",
+   "held": [
+    {
+     "kind": "value",
+     "value": [],
+     "probe": "enums/1"
+    }
+   ]
+  },
+  {
+   "object": "billing_portal.configuration",
+   "operation": "PostBillingPortalConfigurations",
+   "path": "features.subscription_cancel.cancellation_reason.options",
+   "held": [
+    {
+     "kind": "value",
+     "value": [
+      "too_expensive",
+      "missing_features",
+      "switched_service",
+      "unused",
+      "other"
+     ],
+     "probe": "enums/1"
+    }
+   ]
+  },
+  {
+   "object": "billing_portal.configuration",
+   "operation": "PostBillingPortalConfigurations",
+   "path": "features.subscription_cancel.enabled",
+   "held": [
+    {
+     "kind": "value",
+     "value": false,
+     "probe": "enums/2"
+    }
+   ]
+  },
+  {
+   "object": "billing_portal.configuration",
+   "operation": "PostBillingPortalConfigurations",
+   "path": "features.subscription_cancel.mode",
+   "held": [
+    {
+     "kind": "value",
+     "value": "at_period_end",
+     "probe": "enums/2"
+    }
+   ]
+  },
+  {
+   "object": "billing_portal.configuration",
+   "operation": "PostBillingPortalConfigurations",
+   "path": "features.subscription_cancel.proration_behavior",
+   "held": [
+    {
+     "kind": "value",
+     "value": "none",
+     "probe": "enums/2"
+    }
+   ]
+  },
+  {
+   "object": "billing_portal.configuration",
+   "operation": "PostBillingPortalConfigurations",
+   "path": "features.subscription_update.billing_cycle_anchor",
+   "held": [
+    {
+     "kind": "value",
+     "value": "unchanged",
+     "probe": "enums/1"
+    }
+   ]
+  },
+  {
+   "object": "billing_portal.configuration",
+   "operation": "PostBillingPortalConfigurations",
+   "path": "features.subscription_update.default_allowed_updates",
+   "held": [
+    {
+     "kind": "value",
+     "value": [],
+     "probe": "enums/1"
+    }
+   ]
+  },
+  {
+   "object": "billing_portal.configuration",
+   "operation": "PostBillingPortalConfigurations",
+   "path": "features.subscription_update.enabled",
+   "held": [
+    {
+     "kind": "value",
+     "value": false,
+     "probe": "enums/1"
+    }
+   ]
+  },
+  {
+   "object": "billing_portal.configuration",
+   "operation": "PostBillingPortalConfigurations",
+   "path": "features.subscription_update.products.adjustable_quantity.maximum",
+   "held": [
+    {
+     "kind": "value",
+     "value": [
+      null
+     ],
+     "probe": "enums/2"
+    }
+   ]
+  },
+  {
+   "object": "billing_portal.configuration",
+   "operation": "PostBillingPortalConfigurations",
+   "path": "features.subscription_update.products.adjustable_quantity.minimum",
+   "held": [
+    {
+     "kind": "value",
+     "value": [
+      1
+     ],
+     "probe": "enums/2"
+    }
+   ]
+  },
+  {
+   "object": "billing_portal.configuration",
+   "operation": "PostBillingPortalConfigurations",
+   "path": "features.subscription_update.proration_behavior",
+   "held": [
+    {
+     "kind": "value",
+     "value": "none",
+     "probe": "enums/1"
+    }
+   ]
+  },
+  {
+   "object": "billing_portal.configuration",
+   "operation": "PostBillingPortalConfigurations",
+   "path": "features.subscription_update.trial_update_behavior",
+   "held": [
+    {
+     "kind": "value",
+     "value": "end_trial",
+     "probe": "enums/1"
+    }
+   ]
+  },
+  {
+   "object": "billing_portal.configuration",
+   "operation": "PostBillingPortalConfigurations",
+   "path": "login_page.enabled",
+   "held": [
+    {
+     "kind": "value",
+     "value": false,
+     "probe": "enums/1"
+    }
+   ]
+  },
+  {
+   "object": "billing_portal.configuration",
+   "operation": "PostBillingPortalConfigurations",
+   "path": "metadata",
+   "held": [
+    {
+     "kind": "value",
+     "value": {},
+     "probe": "enums/1"
+    }
+   ]
+  },
+  {
+   "object": "charge",
+   "operation": "PostCharges",
+   "path": "metadata",
+   "held": [
+    {
+     "kind": "value",
+     "value": {},
+     "probe": "every_field/3"
+    }
+   ]
+  },
+  {
+   "object": "charge",
+   "operation": "PostCharges",
+   "path": "statement_descriptor_suffix",
+   "held": [
+    {
+     "kind": "sent",
+     "probe": "minimal/descriptor"
+    }
+   ]
+  },
+  {
+   "object": "charge",
+   "operation": "PostCharges",
+   "path": "transfer_group",
+   "held": [
+    {
+     "kind": "created",
+     "probe": "every_field/3"
+    }
+   ]
+  },
+  {
+   "object": "checkout.session",
+   "operation": "PostCheckoutSessions",
+   "path": "adaptive_pricing.enabled",
+   "held": [
+    {
+     "kind": "value",
+     "value": false,
+     "probe": "every_field/28"
+    },
+    {
+     "kind": "value",
+     "value": true,
+     "probe": "enums/10"
+    }
+   ]
+  },
+  {
+   "object": "checkout.session",
+   "operation": "PostCheckoutSessions",
+   "path": "after_expiration.recovery.allow_promotion_codes",
+   "held": [
+    {
+     "kind": "value",
+     "value": false,
+     "probe": "nested_minimal/2"
+    }
+   ]
+  },
+  {
+   "object": "checkout.session",
+   "operation": "PostCheckoutSessions",
+   "path": "automatic_tax.enabled",
+   "held": [
+    {
+     "kind": "value",
+     "value": false,
+     "probe": "enums/10"
+    }
+   ]
+  },
+  {
+   "object": "checkout.session",
+   "operation": "PostCheckoutSessions",
+   "path": "automatic_tax.liability.type",
+   "held": [
+    {
+     "kind": "value",
+     "value": "self",
+     "probe": "nested_minimal/5"
+    }
+   ]
+  },
+  {
+   "object": "checkout.session",
+   "operation": "PostCheckoutSessions",
+   "path": "branding_settings.background_color",
+   "held": [
+    {
+     "kind": "value",
+     "value": "#ffffff",
+     "probe": "enums/10"
+    }
+   ]
+  },
+  {
+   "object": "checkout.session",
+   "operation": "PostCheckoutSessions",
+   "path": "branding_settings.border_style",
+   "held": [
+    {
+     "kind": "value",
+     "value": "rounded",
+     "probe": "enums/10"
+    }
+   ]
+  },
+  {
+   "object": "checkout.session",
+   "operation": "PostCheckoutSessions",
+   "path": "branding_settings.button_color",
+   "held": [
+    {
+     "kind": "value",
+     "value": "#0074d4",
+     "probe": "enums/10"
+    }
+   ]
+  },
+  {
+   "object": "checkout.session",
+   "operation": "PostCheckoutSessions",
+   "path": "branding_settings.display_name",
+   "held": [
+    {
+     "kind": "url",
+     "probe": "enums/10"
+    }
+   ]
+  },
+  {
+   "object": "checkout.session",
+   "operation": "PostCheckoutSessions",
+   "path": "branding_settings.font_family",
+   "held": [
+    {
+     "kind": "value",
+     "value": "default",
+     "probe": "enums/10"
+    }
+   ]
+  },
+  {
+   "object": "checkout.session",
+   "operation": "PostCheckoutSessions",
+   "path": "consent_collection.promotions",
+   "held": [
+    {
+     "kind": "value",
+     "value": "none",
+     "probe": "enums/11"
+    }
+   ]
+  },
+  {
+   "object": "checkout.session",
+   "operation": "PostCheckoutSessions",
+   "path": "consent_collection.terms_of_service",
+   "held": [
+    {
+     "kind": "value",
+     "value": "none",
+     "probe": "enums/11"
+    }
+   ]
+  },
+  {
+   "object": "checkout.session",
+   "operation": "PostCheckoutSessions",
+   "path": "currency",
+   "held": [
+    {
+     "kind": "value",
+     "value": "aud",
+     "probe": "enums/33"
+    },
+    {
+     "kind": "value",
+     "value": "brl",
+     "probe": "enums/35"
+    },
+    {
+     "kind": "value",
+     "value": "cad",
+     "probe": "enums/31"
+    },
+    {
+     "kind": "value",
+     "value": "chf",
+     "probe": "enums/37"
+    },
+    {
+     "kind": "value",
+     "value": "dkk",
+     "probe": "every_field/47"
+    },
+    {
+     "kind": "value",
+     "value": "eur",
+     "probe": "enums/29"
+    },
+    {
+     "kind": "value",
+     "value": "gbp",
+     "probe": "enums/30"
+    },
+    {
+     "kind": "value",
+     "value": "inr",
+     "probe": "enums/36"
+    },
+    {
+     "kind": "value",
+     "value": "jpy",
+     "probe": "every_field/43"
+    },
+    {
+     "kind": "value",
+     "value": "krw",
+     "probe": "enums/38"
+    },
+    {
+     "kind": "value",
+     "value": "mxn",
+     "probe": "every_field/44"
+    },
+    {
+     "kind": "value",
+     "value": "myr",
+     "probe": "every_field/46"
+    },
+    {
+     "kind": "value",
+     "value": "pln",
+     "probe": "enums/39"
+    },
+    {
+     "kind": "value",
+     "value": "sek",
+     "probe": "every_field/48"
+    },
+    {
+     "kind": "value",
+     "value": "sgd",
+     "probe": "every_field/45"
+    },
+    {
+     "kind": "value",
+     "value": "usd",
+     "probe": "enums/10"
+    }
+   ]
+  },
+  {
+   "object": "checkout.session",
+   "operation": "PostCheckoutSessions",
+   "path": "customer_creation",
+   "held": [
+    {
+     "kind": "value",
+     "value": "always",
+     "probe": "enums/137"
+    },
+    {
+     "kind": "value",
+     "value": "if_required",
+     "probe": "enums/10"
+    }
+   ]
+  },
+  {
+   "object": "checkout.session",
+   "operation": "PostCheckoutSessions",
+   "path": "discounts.coupon",
+   "held": [
+    {
+     "kind": "value",
+     "value": [
+      null
+     ],
+     "probe": "every_field/10"
+    }
+   ]
+  },
+  {
+   "object": "checkout.session",
+   "operation": "PostCheckoutSessions",
+   "path": "discounts.promotion_code",
+   "held": [
+    {
+     "kind": "value",
+     "value": [
+      null
+     ],
+     "probe": "every_field/9"
+    }
+   ]
+  },
+  {
+   "object": "checkout.session",
+   "operation": "PostCheckoutSessions",
+   "path": "expires_at",
+   "held": [
+    {
+     "kind": "time_within",
+     "probe": "enums/10"
+    }
+   ]
+  },
+  {
+   "object": "checkout.session",
+   "operation": "PostCheckoutSessions",
+   "path": "invoice_creation.enabled",
+   "held": [
+    {
+     "kind": "value",
+     "value": false,
+     "probe": "enums/10"
+    }
+   ]
+  },
+  {
+   "object": "checkout.session",
+   "operation": "PostCheckoutSessions",
+   "path": "invoice_creation.invoice_data.issuer.type",
+   "held": [
+    {
+     "kind": "value",
+     "value": "self",
+     "probe": "every_field/14"
+    }
+   ]
+  },
+  {
+   "object": "checkout.session",
+   "operation": "PostCheckoutSessions",
+   "path": "invoice_creation.invoice_data.metadata",
+   "held": [
+    {
+     "kind": "value",
+     "value": {},
+     "probe": "enums/10"
+    }
+   ]
+  },
+  {
+   "object": "checkout.session",
+   "operation": "PostCheckoutSessions",
+   "path": "line_items.price_data.currency",
+   "held": [
+    {
+     "kind": "sent",
+     "probe": "enums/10"
+    }
+   ]
+  },
+  {
+   "object": "checkout.session",
+   "operation": "PostCheckoutSessions",
+   "path": "line_items.price_data.product",
+   "held": [
+    {
+     "kind": "sent",
+     "probe": "enums/10"
+    }
+   ]
+  },
+  {
+   "object": "checkout.session",
+   "operation": "PostCheckoutSessions",
+   "path": "line_items.price_data.recurring.interval",
+   "held": [
+    {
+     "kind": "sent",
+     "probe": "enums/10"
+    }
+   ]
+  },
+  {
+   "object": "checkout.session",
+   "operation": "PostCheckoutSessions",
+   "path": "line_items.price_data.recurring.interval_count",
+   "held": [
+    {
+     "kind": "sent",
+     "probe": "enums/10"
+    }
+   ]
+  },
+  {
+   "object": "checkout.session",
+   "operation": "PostCheckoutSessions",
+   "path": "line_items.price_data.tax_behavior",
+   "held": [
+    {
+     "kind": "sent",
+     "probe": "enums/10"
+    }
+   ]
+  },
+  {
+   "object": "checkout.session",
+   "operation": "PostCheckoutSessions",
+   "path": "line_items.price_data.unit_amount",
+   "held": [
+    {
+     "kind": "sent",
+     "probe": "enums/10"
+    }
+   ]
+  },
+  {
+   "object": "checkout.session",
+   "operation": "PostCheckoutSessions",
+   "path": "line_items.price_data.unit_amount_decimal",
+   "held": [
+    {
+     "kind": "sent",
+     "probe": "enums/10"
+    }
+   ]
+  },
+  {
+   "object": "checkout.session",
+   "operation": "PostCheckoutSessions",
+   "path": "managed_payments.enabled",
+   "held": [
+    {
+     "kind": "value",
+     "value": false,
+     "probe": "enums/10"
+    }
+   ]
+  },
+  {
+   "object": "checkout.session",
+   "operation": "PostCheckoutSessions",
+   "path": "metadata",
+   "held": [
+    {
+     "kind": "value",
+     "value": {},
+     "probe": "enums/10"
+    }
+   ]
+  },
+  {
+   "object": "checkout.session",
+   "operation": "PostCheckoutSessions",
+   "path": "name_collection.business.optional",
+   "held": [
+    {
+     "kind": "value",
+     "value": false,
+     "probe": "every_field/3"
+    }
+   ]
+  },
+  {
+   "object": "checkout.session",
+   "operation": "PostCheckoutSessions",
+   "path": "name_collection.individual.optional",
+   "held": [
+    {
+     "kind": "value",
+     "value": false,
+     "probe": "nested_minimal/2"
+    }
+   ]
+  },
+  {
+   "object": "checkout.session",
+   "operation": "PostCheckoutSessions",
+   "path": "optional_items.adjustable_quantity.maximum",
+   "held": [
+    {
+     "kind": "value",
+     "value": [
+      99
+     ],
+     "probe": "nested_minimal/14"
+    }
+   ]
+  },
+  {
+   "object": "checkout.session",
+   "operation": "PostCheckoutSessions",
+   "path": "optional_items.adjustable_quantity.minimum",
+   "held": [
+    {
+     "kind": "value",
+     "value": [
+      0
+     ],
+     "probe": "nested_minimal/14"
+    }
+   ]
+  },
+  {
+   "object": "checkout.session",
+   "operation": "PostCheckoutSessions",
+   "path": "payment_method_collection",
+   "held": [
+    {
+     "kind": "value",
+     "value": "always",
+     "probe": "enums/137"
+    },
+    {
+     "kind": "value",
+     "value": "if_required",
+     "probe": "enums/10"
+    }
+   ]
+  },
+  {
+   "object": "checkout.session",
+   "operation": "PostCheckoutSessions",
+   "path": "payment_method_options.acss_debit.verification_method",
+   "held": [
+    {
+     "kind": "value",
+     "value": "automatic",
+     "probe": "enums/51"
+    }
+   ]
+  },
+  {
+   "object": "checkout.session",
+   "operation": "PostCheckoutSessions",
+   "path": "payment_method_options.boleto.expires_after_days",
+   "held": [
+    {
+     "kind": "value",
+     "value": 3,
+     "probe": "enums/35"
+    }
+   ]
+  },
+  {
+   "object": "checkout.session",
+   "operation": "PostCheckoutSessions",
+   "path": "payment_method_options.card.request_three_d_secure",
+   "held": [
+    {
+     "kind": "value",
+     "value": "automatic",
+     "probe": "enums/10"
+    }
+   ]
+  },
+  {
+   "object": "checkout.session",
+   "operation": "PostCheckoutSessions",
+   "path": "payment_method_options.us_bank_account.verification_method",
+   "held": [
+    {
+     "kind": "value",
+     "value": "automatic",
+     "probe": "enums/47"
+    }
+   ]
+  },
+  {
+   "object": "checkout.session",
+   "operation": "PostCheckoutSessions",
+   "path": "phone_number_collection.enabled",
+   "held": [
+    {
+     "kind": "value",
+     "value": false,
+     "probe": "enums/10"
+    }
+   ]
+  },
+  {
+   "object": "checkout.session",
+   "operation": "PostCheckoutSessions",
+   "path": "redirect_on_completion",
+   "held": [
+    {
+     "kind": "value",
+     "value": "always",
+     "probe": "minimal/embedded"
+    }
+   ]
+  },
+  {
+   "object": "checkout.session",
+   "operation": "PostCheckoutSessions",
+   "path": "saved_payment_method_options.allow_redisplay_filters",
+   "held": [
+    {
+     "kind": "normalised",
+     "probe": "every_field/19"
+    },
+    {
+     "kind": "value",
+     "value": [
+      "always"
+     ],
+     "probe": "enums/137"
+    }
+   ]
+  },
+  {
+   "object": "checkout.session",
+   "operation": "PostCheckoutSessions",
+   "path": "saved_payment_method_options.payment_method_remove",
+   "held": [
+    {
+     "kind": "value",
+     "value": "disabled",
+     "probe": "enums/137"
+    }
+   ]
+  },
+  {
+   "object": "checkout.session",
+   "operation": "PostCheckoutSessions",
+   "path": "shipping_options.shipping_rate",
+   "held": [
+    {
+     "kind": "list",
+     "probe": "enums/23"
+    }
+   ]
+  },
+  {
+   "object": "checkout.session",
+   "operation": "PostCheckoutSessions",
+   "path": "shipping_options.shipping_rate_data.delivery_estimate.maximum.unit",
+   "held": [
+    {
+     "kind": "list",
+     "probe": "enums/61"
+    },
+    {
+     "kind": "sent",
+     "probe": "every_field/30"
+    }
+   ]
+  },
+  {
+   "object": "checkout.session",
+   "operation": "PostCheckoutSessions",
+   "path": "shipping_options.shipping_rate_data.delivery_estimate.maximum.value",
+   "held": [
+    {
+     "kind": "list",
+     "probe": "enums/23"
+    },
+    {
+     "kind": "sent",
+     "probe": "every_field/30"
+    }
+   ]
+  },
+  {
+   "object": "checkout.session",
+   "operation": "PostCheckoutSessions",
+   "path": "shipping_options.shipping_rate_data.delivery_estimate.minimum.unit",
+   "held": [
+    {
+     "kind": "list",
+     "probe": "enums/61"
+    },
+    {
+     "kind": "sent",
+     "probe": "every_field/30"
+    }
+   ]
+  },
+  {
+   "object": "checkout.session",
+   "operation": "PostCheckoutSessions",
+   "path": "shipping_options.shipping_rate_data.delivery_estimate.minimum.value",
+   "held": [
+    {
+     "kind": "list",
+     "probe": "enums/23"
+    },
+    {
+     "kind": "sent",
+     "probe": "every_field/30"
+    }
+   ]
+  },
+  {
+   "object": "checkout.session",
+   "operation": "PostCheckoutSessions",
+   "path": "shipping_options.shipping_rate_data.display_name",
+   "held": [
+    {
+     "kind": "list",
+     "probe": "enums/23"
+    },
+    {
+     "kind": "sent",
+     "probe": "every_field/30"
+    }
+   ]
+  },
+  {
+   "object": "checkout.session",
+   "operation": "PostCheckoutSessions",
+   "path": "shipping_options.shipping_rate_data.fixed_amount.amount",
+   "held": [
+    {
+     "kind": "list",
+     "probe": "enums/23"
+    },
+    {
+     "kind": "sent",
+     "probe": "every_field/30"
+    }
+   ]
+  },
+  {
+   "object": "checkout.session",
+   "operation": "PostCheckoutSessions",
+   "path": "shipping_options.shipping_rate_data.fixed_amount.currency",
+   "held": [
+    {
+     "kind": "list",
+     "probe": "enums/23"
+    },
+    {
+     "kind": "sent",
+     "probe": "every_field/30"
+    }
+   ]
+  },
+  {
+   "object": "checkout.session",
+   "operation": "PostCheckoutSessions",
+   "path": "shipping_options.shipping_rate_data.fixed_amount.currency_options.amount",
+   "held": [
+    {
+     "kind": "list",
+     "probe": "enums/23"
+    },
+    {
+     "kind": "sent",
+     "probe": "every_field/30"
+    }
+   ]
+  },
+  {
+   "object": "checkout.session",
+   "operation": "PostCheckoutSessions",
+   "path": "shipping_options.shipping_rate_data.fixed_amount.currency_options.tax_behavior",
+   "held": [
+    {
+     "kind": "list",
+     "probe": "enums/70"
+    },
+    {
+     "kind": "sent",
+     "probe": "every_field/30"
+    }
+   ]
+  },
+  {
+   "object": "checkout.session",
+   "operation": "PostCheckoutSessions",
+   "path": "shipping_options.shipping_rate_data.metadata",
+   "held": [
+    {
+     "kind": "list",
+     "probe": "enums/23"
+    },
+    {
+     "kind": "sent",
+     "probe": "every_field/30"
+    }
+   ]
+  },
+  {
+   "object": "checkout.session",
+   "operation": "PostCheckoutSessions",
+   "path": "shipping_options.shipping_rate_data.tax_behavior",
+   "held": [
+    {
+     "kind": "list",
+     "probe": "enums/61"
+    },
+    {
+     "kind": "sent",
+     "probe": "every_field/30"
+    }
+   ]
+  },
+  {
+   "object": "checkout.session",
+   "operation": "PostCheckoutSessions",
+   "path": "shipping_options.shipping_rate_data.tax_code",
+   "held": [
+    {
+     "kind": "list",
+     "probe": "enums/23"
+    },
+    {
+     "kind": "sent",
+     "probe": "every_field/30"
+    }
+   ]
+  },
+  {
+   "object": "checkout.session",
+   "operation": "PostCheckoutSessions",
+   "path": "shipping_options.shipping_rate_data.type",
+   "held": [
+    {
+     "kind": "list",
+     "probe": "enums/23"
+    },
+    {
+     "kind": "sent",
+     "probe": "every_field/30"
+    }
+   ]
+  },
+  {
+   "object": "checkout.session",
+   "operation": "PostCheckoutSessions",
+   "path": "tax_id_collection.required",
+   "held": [
+    {
+     "kind": "value",
+     "value": "never",
+     "probe": "nested_minimal/2"
+    }
+   ]
+  },
+  {
+   "object": "checkout.session",
+   "operation": "PostCheckoutSessions",
+   "path": "ui_mode",
+   "held": [
+    {
+     "kind": "value",
+     "value": "hosted_page",
+     "probe": "enums/10"
+    }
+   ]
+  },
+  {
+   "object": "climate.order",
+   "operation": "PostClimateOrders",
+   "path": "beneficiary.public_name",
+   "held": [
+    {
+     "kind": "url",
+     "probe": "minimal"
+    }
+   ]
+  },
+  {
+   "object": "climate.order",
+   "operation": "PostClimateOrders",
+   "path": "currency",
+   "held": [
+    {
+     "kind": "account",
+     "probe": "minimal"
+    }
+   ]
+  },
+  {
+   "object": "climate.order",
+   "operation": "PostClimateOrders",
+   "path": "metadata",
+   "held": [
+    {
+     "kind": "value",
+     "value": {},
+     "probe": "minimal"
+    }
+   ]
+  },
+  {
+   "object": "climate.order",
+   "operation": "PostClimateOrders",
+   "path": "metric_tons",
+   "held": [
+    {
+     "kind": "value",
+     "value": "1",
+     "probe": "minimal/amount"
+    }
+   ]
+  },
+  {
+   "object": "coupon",
+   "operation": "PostCoupons",
+   "path": "currency_options.amount_off",
+   "held": [
+    {
+     "kind": "normalised",
+     "probe": "minimal/amount_off"
+    }
+   ]
+  },
+  {
+   "object": "coupon",
+   "operation": "PostCoupons",
+   "path": "duration",
+   "held": [
+    {
+     "kind": "value",
+     "value": "once",
+     "probe": "every_field/2"
+    }
+   ]
+  },
+  {
+   "object": "coupon",
+   "operation": "PostCoupons",
+   "path": "id",
+   "held": [
+    {
+     "kind": "created",
+     "probe": "enums/1"
+    }
+   ]
+  },
+  {
+   "object": "coupon",
+   "operation": "PostCoupons",
+   "path": "metadata",
+   "held": [
+    {
+     "kind": "value",
+     "value": {},
+     "probe": "enums/1"
+    }
+   ]
+  },
+  {
+   "object": "credit_note",
+   "operation": "PostCreditNotes",
+   "path": "amount",
+   "held": [
+    {
+     "kind": "value",
+     "value": 500,
+     "probe": "minimal/line_item"
+    },
+    {
+     "kind": "value",
+     "value": 550,
+     "probe": "every_field/2"
+    }
+   ]
+  },
+  {
+   "object": "credit_note",
+   "operation": "PostCreditNotes",
+   "path": "effective_at",
+   "held": [
+    {
+     "kind": "timestamp",
+     "probe": "enums/1"
+    }
+   ]
+  },
+  {
+   "object": "credit_note",
+   "operation": "PostCreditNotes",
+   "path": "metadata",
+   "held": [
+    {
+     "kind": "value",
+     "value": {},
+     "probe": "enums/1"
+    }
+   ]
+  },
+  {
+   "object": "credit_note",
+   "operation": "PostCreditNotes",
+   "path": "refunds.amount_refunded",
+   "held": [
+    {
+     "kind": "normalised",
+     "probe": "minimal/refund"
+    }
+   ]
+  },
+  {
+   "object": "credit_note",
+   "operation": "PostCreditNotes",
+   "path": "refunds.refund",
+   "held": [
+    {
+     "kind": "list",
+     "probe": "minimal/refund"
+    }
+   ]
+  },
+  {
+   "object": "credit_note",
+   "operation": "PostCreditNotes",
+   "path": "refunds.type",
+   "held": [
+    {
+     "kind": "value",
+     "value": [
+      "refund"
+     ],
+     "probe": "minimal/refund"
+    }
+   ]
+  },
+  {
+   "object": "customer",
+   "operation": "PostCustomers",
+   "path": "balance",
+   "held": [
+    {
+     "kind": "value",
+     "value": 0,
+     "probe": "enums/10"
+    }
+   ]
+  },
+  {
+   "object": "customer",
+   "operation": "PostCustomers",
+   "path": "cash_balance.settings.reconciliation_mode",
+   "held": [
+    {
+     "kind": "value",
+     "value": "automatic",
+     "probe": "enums/10"
+    }
+   ]
+  },
+  {
+   "object": "customer",
+   "operation": "PostCustomers",
+   "path": "invoice_prefix",
+   "held": [
+    {
+     "kind": "url",
+     "probe": "enums/10"
+    }
+   ]
+  },
+  {
+   "object": "customer",
+   "operation": "PostCustomers",
+   "path": "metadata",
+   "held": [
+    {
+     "kind": "value",
+     "value": {},
+     "probe": "enums/10"
+    }
+   ]
+  },
+  {
+   "object": "customer",
+   "operation": "PostCustomers",
+   "path": "next_invoice_sequence",
+   "held": [
+    {
+     "kind": "value",
+     "value": 1,
+     "probe": "enums/10"
+    }
+   ]
+  },
+  {
+   "object": "customer",
+   "operation": "PostCustomers",
+   "path": "preferred_locales",
+   "held": [
+    {
+     "kind": "value",
+     "value": [],
+     "probe": "enums/10"
+    }
+   ]
+  },
+  {
+   "object": "customer",
+   "operation": "PostCustomers",
+   "path": "tax_exempt",
+   "held": [
+    {
+     "kind": "value",
+     "value": "none",
+     "probe": "enums/2"
+    }
+   ]
+  },
+  {
+   "object": "customer_balance_transaction",
+   "operation": "PostCustomersCustomerBalanceTransactions",
+   "path": "metadata",
+   "held": [
+    {
+     "kind": "value",
+     "value": {},
+     "probe": "minimal"
+    }
+   ]
+  },
+  {
+   "object": "entitlements.feature",
+   "operation": "PostEntitlementsFeatures",
+   "path": "metadata",
+   "held": [
+    {
+     "kind": "value",
+     "value": {},
+     "probe": "isolated/archived"
+    }
+   ]
+  },
+  {
+   "object": "fee_refund",
+   "operation": "PostApplicationFeesIdRefunds",
+   "path": "amount",
+   "held": [
+    {
+     "kind": "value",
+     "value": 100,
+     "probe": "minimal"
+    }
+   ]
+  },
+  {
+   "object": "fee_refund",
+   "operation": "PostApplicationFeesIdRefunds",
+   "path": "metadata",
+   "held": [
+    {
+     "kind": "value",
+     "value": {},
+     "probe": "minimal"
+    }
+   ]
+  },
+  {
+   "object": "file_link",
+   "operation": "PostFileLinks",
+   "path": "metadata",
+   "held": [
+    {
+     "kind": "value",
+     "value": {},
+     "probe": "minimal"
+    }
+   ]
+  },
+  {
+   "object": "identity.verification_session",
+   "operation": "PostIdentityVerificationSessions",
+   "path": "metadata",
+   "held": [
+    {
+     "kind": "value",
+     "value": {},
+     "probe": "enums/1"
+    }
+   ]
+  },
+  {
+   "object": "identity.verification_session",
+   "operation": "PostIdentityVerificationSessions",
+   "path": "provided_details.email",
+   "held": [
+    {
+     "kind": "value",
+     "value": "identity-suite@example.com",
+     "probe": "minimal/customer"
+    }
+   ]
+  },
+  {
+   "object": "identity.verification_session",
+   "operation": "PostIdentityVerificationSessions",
+   "path": "related_customer",
+   "held": [
+    {
+     "kind": "id",
+     "probe": "every_field/2"
+    }
+   ]
+  },
+  {
+   "object": "invoice",
+   "operation": "PostInvoices",
+   "path": "auto_advance",
+   "held": [
+    {
+     "kind": "value",
+     "value": false,
+     "probe": "enums/1"
+    }
+   ]
+  },
+  {
+   "object": "invoice",
+   "operation": "PostInvoices",
+   "path": "automatic_tax.enabled",
+   "held": [
+    {
+     "kind": "value",
+     "value": false,
+     "probe": "enums/1"
+    }
+   ]
+  },
+  {
+   "object": "invoice",
+   "operation": "PostInvoices",
+   "path": "collection_method",
+   "held": [
+    {
+     "kind": "value",
+     "value": "charge_automatically",
+     "probe": "enums/1"
+    },
+    {
+     "kind": "value",
+     "value": "send_invoice",
+     "probe": "minimal/revision"
+    }
+   ]
+  },
+  {
+   "object": "invoice",
+   "operation": "PostInvoices",
+   "path": "currency",
+   "held": [
+    {
+     "kind": "account",
+     "probe": "enums/1"
+    }
+   ]
+  },
+  {
+   "object": "invoice",
+   "operation": "PostInvoices",
+   "path": "customer",
+   "held": [
+    {
+     "kind": "id",
+     "probe": "minimal/customer_account"
+    }
+   ]
+  },
+  {
+   "object": "invoice",
+   "operation": "PostInvoices",
+   "path": "due_date",
+   "held": [
+    {
+     "kind": "time_within",
+     "probe": "enums/10"
+    }
+   ]
+  },
+  {
+   "object": "invoice",
+   "operation": "PostInvoices",
+   "path": "effective_at",
+   "held": [
+    {
+     "kind": "timestamp",
+     "probe": "minimal/revision"
+    }
+   ]
+  },
+  {
+   "object": "invoice",
+   "operation": "PostInvoices",
+   "path": "issuer.account",
+   "held": [
+    {
+     "kind": "ref",
+     "probe": "enums/36"
+    }
+   ]
+  },
+  {
+   "object": "invoice",
+   "operation": "PostInvoices",
+   "path": "issuer.type",
+   "held": [
+    {
+     "kind": "value",
+     "value": "account",
+     "probe": "enums/36"
+    },
+    {
+     "kind": "value",
+     "value": "self",
+     "probe": "enums/1"
+    }
+   ]
+  },
+  {
+   "object": "invoice",
+   "operation": "PostInvoices",
+   "path": "metadata",
+   "held": [
+    {
+     "kind": "value",
+     "value": {
+      "conformance": "invoice"
+     },
+     "probe": "minimal/revision"
+    },
+    {
+     "kind": "value",
+     "value": {},
+     "probe": "enums/1"
+    }
+   ]
+  },
+  {
+   "object": "invoice",
+   "operation": "PostInvoices",
+   "path": "payment_settings.payment_method_options.card.installments.enabled",
+   "held": [
+    {
+     "kind": "value",
+     "value": false,
+     "probe": "enums/12"
+    }
+   ]
+  },
+  {
+   "object": "invoice",
+   "operation": "PostInvoices",
+   "path": "payment_settings.payment_method_options.card.request_three_d_secure",
+   "held": [
+    {
+     "kind": "value",
+     "value": "automatic",
+     "probe": "nested_minimal/6"
+    }
+   ]
+  },
+  {
+   "object": "invoice",
+   "operation": "PostInvoices",
+   "path": "rendering.pdf.page_size",
+   "held": [
+    {
+     "kind": "value",
+     "value": "auto",
+     "probe": "enums/10"
+    }
+   ]
+  },
+  {
+   "object": "invoice",
+   "operation": "PostInvoices",
+   "path": "shipping_cost.shipping_rate",
+   "held": [
+    {
+     "kind": "id",
+     "probe": "enums/13"
+    }
+   ]
+  },
+  {
+   "object": "invoice",
+   "operation": "PostInvoices",
+   "path": "shipping_cost.shipping_rate_data.delivery_estimate.maximum.unit",
+   "held": [
+    {
+     "kind": "sent",
+     "probe": "every_field/16"
+    }
+   ]
+  },
+  {
+   "object": "invoice",
+   "operation": "PostInvoices",
+   "path": "shipping_cost.shipping_rate_data.delivery_estimate.maximum.value",
+   "held": [
+    {
+     "kind": "id",
+     "probe": "enums/13"
+    },
+    {
+     "kind": "sent",
+     "probe": "every_field/16"
+    }
+   ]
+  },
+  {
+   "object": "invoice",
+   "operation": "PostInvoices",
+   "path": "shipping_cost.shipping_rate_data.delivery_estimate.minimum.unit",
+   "held": [
+    {
+     "kind": "sent",
+     "probe": "every_field/16"
+    }
+   ]
+  },
+  {
+   "object": "invoice",
+   "operation": "PostInvoices",
+   "path": "shipping_cost.shipping_rate_data.delivery_estimate.minimum.value",
+   "held": [
+    {
+     "kind": "id",
+     "probe": "enums/13"
+    },
+    {
+     "kind": "sent",
+     "probe": "every_field/16"
+    }
+   ]
+  },
+  {
+   "object": "invoice",
+   "operation": "PostInvoices",
+   "path": "shipping_cost.shipping_rate_data.display_name",
+   "held": [
+    {
+     "kind": "id",
+     "probe": "enums/13"
+    },
+    {
+     "kind": "sent",
+     "probe": "every_field/16"
+    }
+   ]
+  },
+  {
+   "object": "invoice",
+   "operation": "PostInvoices",
+   "path": "shipping_cost.shipping_rate_data.fixed_amount.amount",
+   "held": [
+    {
+     "kind": "id",
+     "probe": "enums/13"
+    },
+    {
+     "kind": "sent",
+     "probe": "every_field/16"
+    }
+   ]
+  },
+  {
+   "object": "invoice",
+   "operation": "PostInvoices",
+   "path": "shipping_cost.shipping_rate_data.fixed_amount.currency",
+   "held": [
+    {
+     "kind": "id",
+     "probe": "enums/13"
+    },
+    {
+     "kind": "sent",
+     "probe": "every_field/16"
+    }
+   ]
+  },
+  {
+   "object": "invoice",
+   "operation": "PostInvoices",
+   "path": "shipping_cost.shipping_rate_data.fixed_amount.currency_options.amount",
+   "held": [
+    {
+     "kind": "id",
+     "probe": "enums/13"
+    },
+    {
+     "kind": "sent",
+     "probe": "every_field/16"
+    }
+   ]
+  },
+  {
+   "object": "invoice",
+   "operation": "PostInvoices",
+   "path": "shipping_cost.shipping_rate_data.fixed_amount.currency_options.tax_behavior",
+   "held": [
+    {
+     "kind": "id",
+     "probe": "enums/19"
+    },
+    {
+     "kind": "sent",
+     "probe": "every_field/16"
+    }
+   ]
+  },
+  {
+   "object": "invoice",
+   "operation": "PostInvoices",
+   "path": "shipping_cost.shipping_rate_data.metadata",
+   "held": [
+    {
+     "kind": "id",
+     "probe": "enums/13"
+    },
+    {
+     "kind": "sent",
+     "probe": "every_field/16"
+    }
+   ]
+  },
+  {
+   "object": "invoice",
+   "operation": "PostInvoices",
+   "path": "shipping_cost.shipping_rate_data.tax_behavior",
+   "held": [
+    {
+     "kind": "id",
+     "probe": "enums/16"
+    },
+    {
+     "kind": "sent",
+     "probe": "every_field/16"
+    }
+   ]
+  },
+  {
+   "object": "invoice",
+   "operation": "PostInvoices",
+   "path": "shipping_cost.shipping_rate_data.tax_code",
+   "held": [
+    {
+     "kind": "id",
+     "probe": "enums/13"
+    },
+    {
+     "kind": "sent",
+     "probe": "every_field/16"
+    }
+   ]
+  },
+  {
+   "object": "invoice",
+   "operation": "PostInvoices",
+   "path": "shipping_cost.shipping_rate_data.type",
+   "held": [
+    {
+     "kind": "id",
+     "probe": "enums/13"
+    },
+    {
+     "kind": "sent",
+     "probe": "every_field/16"
+    }
+   ]
+  },
+  {
+   "object": "invoiceitem",
+   "operation": "PostInvoiceitems",
+   "path": "amount",
+   "held": [
+    {
+     "kind": "value",
+     "value": 1500,
+     "probe": "enums/2"
+    },
+    {
+     "kind": "value",
+     "value": 1800,
+     "probe": "every_field/8"
+    },
+    {
+     "kind": "value",
+     "value": 2000,
+     "probe": "every_field/7"
+    },
+    {
+     "kind": "value",
+     "value": 2500,
+     "probe": "every_field/6"
+    }
+   ]
+  },
+  {
+   "object": "invoiceitem",
+   "operation": "PostInvoiceitems",
+   "path": "currency",
+   "held": [
+    {
+     "kind": "value",
+     "value": "eur",
+     "probe": "minimal/price_eur"
+    },
+    {
+     "kind": "value",
+     "value": "usd",
+     "probe": "enums/2"
+    }
+   ]
+  },
+  {
+   "object": "invoiceitem",
+   "operation": "PostInvoiceitems",
+   "path": "description",
+   "held": [
+    {
+     "kind": "value",
+     "value": "Attrs product",
+     "probe": "enums/2"
+    }
+   ]
+  },
+  {
+   "object": "invoiceitem",
+   "operation": "PostInvoiceitems",
+   "path": "discountable",
+   "held": [
+    {
+     "kind": "value",
+     "value": true,
+     "probe": "enums/1"
+    }
+   ]
+  },
+  {
+   "object": "invoiceitem",
+   "operation": "PostInvoiceitems",
+   "path": "metadata",
+   "held": [
+    {
+     "kind": "value",
+     "value": {},
+     "probe": "enums/1"
+    }
+   ]
+  },
+  {
+   "object": "invoiceitem",
+   "operation": "PostInvoiceitems",
+   "path": "period.end",
+   "held": [
+    {
+     "kind": "timestamp",
+     "probe": "enums/1"
+    }
+   ]
+  },
+  {
+   "object": "invoiceitem",
+   "operation": "PostInvoiceitems",
+   "path": "period.start",
+   "held": [
+    {
+     "kind": "timestamp",
+     "probe": "enums/1"
+    }
+   ]
+  },
+  {
+   "object": "invoiceitem",
+   "operation": "PostInvoiceitems",
+   "path": "price_data.currency",
+   "held": [
+    {
+     "kind": "id",
+     "probe": "enums/1"
+    },
+    {
+     "kind": "ref",
+     "probe": "every_field/7"
+    }
+   ]
+  },
+  {
+   "object": "invoiceitem",
+   "operation": "PostInvoiceitems",
+   "path": "price_data.product",
+   "held": [
+    {
+     "kind": "id",
+     "probe": "enums/1"
+    },
+    {
+     "kind": "ref",
+     "probe": "every_field/7"
+    }
+   ]
+  },
+  {
+   "object": "invoiceitem",
+   "operation": "PostInvoiceitems",
+   "path": "price_data.tax_behavior",
+   "held": [
+    {
+     "kind": "id",
+     "probe": "enums/1"
+    },
+    {
+     "kind": "ref",
+     "probe": "every_field/7"
+    }
+   ]
+  },
+  {
+   "object": "invoiceitem",
+   "operation": "PostInvoiceitems",
+   "path": "price_data.unit_amount",
+   "held": [
+    {
+     "kind": "id",
+     "probe": "enums/1"
+    },
+    {
+     "kind": "ref",
+     "probe": "every_field/7"
+    }
+   ]
+  },
+  {
+   "object": "invoiceitem",
+   "operation": "PostInvoiceitems",
+   "path": "price_data.unit_amount_decimal",
+   "held": [
+    {
+     "kind": "id",
+     "probe": "enums/1"
+    },
+    {
+     "kind": "ref",
+     "probe": "every_field/7"
+    }
+   ]
+  },
+  {
+   "object": "invoiceitem",
+   "operation": "PostInvoiceitems",
+   "path": "quantity",
+   "held": [
+    {
+     "kind": "value",
+     "value": 1,
+     "probe": "enums/1"
+    },
+    {
+     "kind": "value",
+     "value": 2,
+     "probe": "every_field/6"
+    }
+   ]
+  },
+  {
+   "object": "invoiceitem",
+   "operation": "PostInvoiceitems",
+   "path": "quantity_decimal",
+   "held": [
+    {
+     "kind": "value",
+     "value": "1",
+     "probe": "enums/1"
+    },
+    {
+     "kind": "value",
+     "value": "3",
+     "probe": "every_field/9"
+    }
+   ]
+  },
+  {
+   "object": "issuing.card",
+   "operation": "PostIssuingCards",
+   "path": "exp_month",
+   "held": [
+    {
+     "kind": "url",
+     "probe": "enums/1"
+    }
+   ]
+  },
+  {
+   "object": "issuing.card",
+   "operation": "PostIssuingCards",
+   "path": "exp_year",
+   "held": [
+    {
+     "kind": "url",
+     "probe": "enums/1"
+    }
+   ]
+  },
+  {
+   "object": "issuing.card",
+   "operation": "PostIssuingCards",
+   "path": "metadata",
+   "held": [
+    {
+     "kind": "value",
+     "value": {},
+     "probe": "enums/1"
+    }
+   ]
+  },
+  {
+   "object": "issuing.card",
+   "operation": "PostIssuingCards",
+   "path": "shipping.address_validation.mode",
+   "held": [
+    {
+     "kind": "value",
+     "value": "validation_and_normalization",
+     "probe": "enums/11"
+    }
+   ]
+  },
+  {
+   "object": "issuing.card",
+   "operation": "PostIssuingCards",
+   "path": "shipping.require_signature",
+   "held": [
+    {
+     "kind": "value",
+     "value": false,
+     "probe": "enums/11"
+    }
+   ]
+  },
+  {
+   "object": "issuing.card",
+   "operation": "PostIssuingCards",
+   "path": "shipping.service",
+   "held": [
+    {
+     "kind": "value",
+     "value": "standard",
+     "probe": "enums/11"
+    }
+   ]
+  },
+  {
+   "object": "issuing.card",
+   "operation": "PostIssuingCards",
+   "path": "shipping.type",
+   "held": [
+    {
+     "kind": "value",
+     "value": "individual",
+     "probe": "enums/11"
+    }
+   ]
+  },
+  {
+   "object": "issuing.card",
+   "operation": "PostIssuingCards",
+   "path": "spending_controls.spending_limits.amount",
+   "held": [
+    {
+     "kind": "value",
+     "value": [
+      50000
+     ],
+     "probe": "enums/10"
+    }
+   ]
+  },
+  {
+   "object": "issuing.card",
+   "operation": "PostIssuingCards",
+   "path": "spending_controls.spending_limits.categories",
+   "held": [
+    {
+     "kind": "value",
+     "value": [
+      []
+     ],
+     "probe": "enums/1"
+    }
+   ]
+  },
+  {
+   "object": "issuing.card",
+   "operation": "PostIssuingCards",
+   "path": "spending_controls.spending_limits.interval",
+   "held": [
+    {
+     "kind": "value",
+     "value": [
+      "daily"
+     ],
+     "probe": "enums/10"
+    }
+   ]
+  },
+  {
+   "object": "issuing.card",
+   "operation": "PostIssuingCards",
+   "path": "status",
+   "held": [
+    {
+     "kind": "value",
+     "value": "inactive",
+     "probe": "enums/10"
+    }
+   ]
+  },
+  {
+   "object": "issuing.cardholder",
+   "operation": "PostIssuingCardholders",
+   "path": "metadata",
+   "held": [
+    {
+     "kind": "value",
+     "value": {},
+     "probe": "enums/1"
+    }
+   ]
+  },
+  {
+   "object": "issuing.cardholder",
+   "operation": "PostIssuingCardholders",
+   "path": "preferred_locales",
+   "held": [
+    {
+     "kind": "value",
+     "value": [],
+     "probe": "enums/1"
+    }
+   ]
+  },
+  {
+   "object": "issuing.cardholder",
+   "operation": "PostIssuingCardholders",
+   "path": "spending_controls.allowed_card_presences",
+   "held": [
+    {
+     "kind": "value",
+     "value": [],
+     "probe": "enums/1"
+    }
+   ]
+  },
+  {
+   "object": "issuing.cardholder",
+   "operation": "PostIssuingCardholders",
+   "path": "spending_controls.allowed_categories",
+   "held": [
+    {
+     "kind": "value",
+     "value": [],
+     "probe": "enums/1"
+    }
+   ]
+  },
+  {
+   "object": "issuing.cardholder",
+   "operation": "PostIssuingCardholders",
+   "path": "spending_controls.allowed_merchant_countries",
+   "held": [
+    {
+     "kind": "value",
+     "value": [],
+     "probe": "enums/1"
+    }
+   ]
+  },
+  {
+   "object": "issuing.cardholder",
+   "operation": "PostIssuingCardholders",
+   "path": "spending_controls.blocked_card_presences",
+   "held": [
+    {
+     "kind": "value",
+     "value": [],
+     "probe": "enums/1"
+    }
+   ]
+  },
+  {
+   "object": "issuing.cardholder",
+   "operation": "PostIssuingCardholders",
+   "path": "spending_controls.blocked_categories",
+   "held": [
+    {
+     "kind": "value",
+     "value": [],
+     "probe": "enums/1"
+    }
+   ]
+  },
+  {
+   "object": "issuing.cardholder",
+   "operation": "PostIssuingCardholders",
+   "path": "spending_controls.blocked_merchant_countries",
+   "held": [
+    {
+     "kind": "value",
+     "value": [],
+     "probe": "enums/1"
+    }
+   ]
+  },
+  {
+   "object": "issuing.cardholder",
+   "operation": "PostIssuingCardholders",
+   "path": "spending_controls.spending_limits.categories",
+   "held": [
+    {
+     "kind": "value",
+     "value": [
+      []
+     ],
+     "probe": "enums/1"
+    }
+   ]
+  },
+  {
+   "object": "issuing.cardholder",
+   "operation": "PostIssuingCardholders",
+   "path": "spending_controls.spending_limits_currency",
+   "held": [
+    {
+     "kind": "account",
+     "probe": "enums/1"
+    }
+   ]
+  },
+  {
+   "object": "issuing.cardholder",
+   "operation": "PostIssuingCardholders",
+   "path": "status",
+   "held": [
+    {
+     "kind": "value",
+     "value": "active",
+     "probe": "enums/1"
+    }
+   ]
+  },
+  {
+   "object": "issuing.cardholder",
+   "operation": "PostIssuingCardholders",
+   "path": "type",
+   "held": [
+    {
+     "kind": "value",
+     "value": "individual",
+     "probe": "enums/1"
+    }
+   ]
+  },
+  {
+   "object": "issuing.dispute",
+   "operation": "PostIssuingDisputes",
+   "path": "amount",
+   "held": [
+    {
+     "kind": "value",
+     "value": 150,
+     "probe": "minimal/small_transaction"
+    },
+    {
+     "kind": "value",
+     "value": 200,
+     "probe": "enums/1"
+    }
+   ]
+  },
+  {
+   "object": "issuing.dispute",
+   "operation": "PostIssuingDisputes",
+   "path": "metadata",
+   "held": [
+    {
+     "kind": "value",
+     "value": {},
+     "probe": "enums/1"
+    }
+   ]
+  },
+  {
+   "object": "issuing.dispute",
+   "operation": "PostIssuingDisputes",
+   "path": "transaction",
+   "held": [
+    {
+     "kind": "id",
+     "probe": "minimal/received_debit"
+    }
+   ]
+  },
+  {
+   "object": "issuing.dispute",
+   "operation": "PostIssuingDisputes",
+   "path": "treasury.received_debit",
+   "held": [
+    {
+     "kind": "id",
+     "probe": "enums/1"
+    }
+   ]
+  },
+  {
+   "object": "issuing.personalization_design",
+   "operation": "PostIssuingPersonalizationDesigns",
+   "path": "metadata",
+   "held": [
+    {
+     "kind": "value",
+     "value": {},
+     "probe": "isolated/in_review"
+    }
+   ]
+  },
+  {
+   "object": "issuing.personalization_design",
+   "operation": "PostIssuingPersonalizationDesigns",
+   "path": "preferences.is_default",
+   "held": [
+    {
+     "kind": "value",
+     "value": false,
+     "probe": "isolated/in_review"
+    }
+   ]
+  },
+  {
+   "object": "payment_intent",
+   "operation": "PostPaymentIntents",
+   "path": "automatic_payment_methods.allow_redirects",
+   "held": [
+    {
+     "kind": "value",
+     "value": "always",
+     "probe": "enums/1"
+    }
+   ]
+  },
+  {
+   "object": "payment_intent",
+   "operation": "PostPaymentIntents",
+   "path": "automatic_payment_methods.enabled",
+   "held": [
+    {
+     "kind": "value",
+     "value": true,
+     "probe": "enums/1"
+    }
+   ]
+  },
+  {
+   "object": "payment_intent",
+   "operation": "PostPaymentIntents",
+   "path": "capture_method",
+   "held": [
+    {
+     "kind": "value",
+     "value": "automatic_async",
+     "probe": "enums/10"
+    }
+   ]
+  },
+  {
+   "object": "payment_intent",
+   "operation": "PostPaymentIntents",
+   "path": "confirmation_method",
+   "held": [
+    {
+     "kind": "value",
+     "value": "automatic",
+     "probe": "enums/10"
+    }
+   ]
+  },
+  {
+   "object": "payment_intent",
+   "operation": "PostPaymentIntents",
+   "path": "metadata",
+   "held": [
+    {
+     "kind": "value",
+     "value": {},
+     "probe": "enums/1"
+    }
+   ]
+  },
+  {
+   "object": "payment_intent",
+   "operation": "PostPaymentIntents",
+   "path": "payment_method",
+   "held": [
+    {
+     "kind": "id",
+     "probe": "enums/25"
+    }
+   ]
+  },
+  {
+   "object": "payment_intent",
+   "operation": "PostPaymentIntents",
+   "path": "payment_method_data.allow_redisplay",
+   "held": [
+    {
+     "kind": "id",
+     "probe": "enums/68"
+    },
+    {
+     "kind": "sent",
+     "probe": "enums/4"
+    }
+   ]
+  },
+  {
+   "object": "payment_intent",
+   "operation": "PostPaymentIntents",
+   "path": "payment_method_data.billing_details.address.city",
+   "held": [
+    {
+     "kind": "id",
+     "probe": "enums/25"
+    },
+    {
+     "kind": "sent",
+     "probe": "enums/4"
+    }
+   ]
+  },
+  {
+   "object": "payment_intent",
+   "operation": "PostPaymentIntents",
+   "path": "payment_method_data.billing_details.address.country",
+   "held": [
+    {
+     "kind": "id",
+     "probe": "enums/25"
+    },
+    {
+     "kind": "sent",
+     "probe": "enums/4"
+    }
+   ]
+  },
+  {
+   "object": "payment_intent",
+   "operation": "PostPaymentIntents",
+   "path": "payment_method_data.billing_details.address.line1",
+   "held": [
+    {
+     "kind": "id",
+     "probe": "enums/25"
+    },
+    {
+     "kind": "sent",
+     "probe": "enums/4"
+    }
+   ]
+  },
+  {
+   "object": "payment_intent",
+   "operation": "PostPaymentIntents",
+   "path": "payment_method_data.billing_details.address.line2",
+   "held": [
+    {
+     "kind": "id",
+     "probe": "enums/25"
+    },
+    {
+     "kind": "sent",
+     "probe": "enums/4"
+    }
+   ]
+  },
+  {
+   "object": "payment_intent",
+   "operation": "PostPaymentIntents",
+   "path": "payment_method_data.billing_details.address.postal_code",
+   "held": [
+    {
+     "kind": "id",
+     "probe": "enums/25"
+    },
+    {
+     "kind": "sent",
+     "probe": "enums/4"
+    }
+   ]
+  },
+  {
+   "object": "payment_intent",
+   "operation": "PostPaymentIntents",
+   "path": "payment_method_data.billing_details.address.state",
+   "held": [
+    {
+     "kind": "id",
+     "probe": "enums/25"
+    },
+    {
+     "kind": "sent",
+     "probe": "enums/4"
+    }
+   ]
+  },
+  {
+   "object": "payment_intent",
+   "operation": "PostPaymentIntents",
+   "path": "payment_method_data.billing_details.email",
+   "held": [
+    {
+     "kind": "id",
+     "probe": "enums/25"
+    },
+    {
+     "kind": "sent",
+     "probe": "enums/4"
+    }
+   ]
+  },
+  {
+   "object": "payment_intent",
+   "operation": "PostPaymentIntents",
+   "path": "payment_method_data.billing_details.name",
+   "held": [
+    {
+     "kind": "sent",
+     "probe": "enums/4"
+    }
+   ]
+  },
+  {
+   "object": "payment_intent",
+   "operation": "PostPaymentIntents",
+   "path": "payment_method_data.billing_details.phone",
+   "held": [
+    {
+     "kind": "id",
+     "probe": "enums/25"
+    },
+    {
+     "kind": "sent",
+     "probe": "enums/4"
+    }
+   ]
+  },
+  {
+   "object": "payment_intent",
+   "operation": "PostPaymentIntents",
+   "path": "payment_method_data.metadata",
+   "held": [
+    {
+     "kind": "id",
+     "probe": "enums/25"
+    },
+    {
+     "kind": "sent",
+     "probe": "enums/4"
+    }
+   ]
+  },
+  {
+   "object": "payment_intent",
+   "operation": "PostPaymentIntents",
+   "path": "payment_method_data.type",
+   "held": [
+    {
+     "kind": "sent",
+     "probe": "enums/4"
+    }
+   ]
+  },
+  {
+   "object": "payment_link",
+   "operation": "PostPaymentLinks",
+   "path": "after_completion.type",
+   "held": [
+    {
+     "kind": "value",
+     "value": "hosted_confirmation",
+     "probe": "enums/10"
+    }
+   ]
+  },
+  {
+   "object": "payment_link",
+   "operation": "PostPaymentLinks",
+   "path": "allow_promotion_codes",
+   "held": [
+    {
+     "kind": "value",
+     "value": false,
+     "probe": "enums/10"
+    }
+   ]
+  },
+  {
+   "object": "payment_link",
+   "operation": "PostPaymentLinks",
+   "path": "automatic_tax.enabled",
+   "held": [
+    {
+     "kind": "value",
+     "value": false,
+     "probe": "enums/10"
+    },
+    {
+     "kind": "value",
+     "value": true,
+     "probe": "minimal/managed"
+    }
+   ]
+  },
+  {
+   "object": "payment_link",
+   "operation": "PostPaymentLinks",
+   "path": "automatic_tax.liability.type",
+   "held": [
+    {
+     "kind": "value",
+     "value": "self",
+     "probe": "nested_minimal/4"
+    },
+    {
+     "kind": "value",
+     "value": "stripe",
+     "probe": "minimal/managed"
+    }
+   ]
+  },
+  {
+   "object": "payment_link",
+   "operation": "PostPaymentLinks",
+   "path": "billing_address_collection",
+   "held": [
+    {
+     "kind": "value",
+     "value": "auto",
+     "probe": "enums/10"
+    }
+   ]
+  },
+  {
+   "object": "payment_link",
+   "operation": "PostPaymentLinks",
+   "path": "consent_collection.promotions",
+   "held": [
+    {
+     "kind": "value",
+     "value": "none",
+     "probe": "enums/6"
+    }
+   ]
+  },
+  {
+   "object": "payment_link",
+   "operation": "PostPaymentLinks",
+   "path": "consent_collection.terms_of_service",
+   "held": [
+    {
+     "kind": "value",
+     "value": "none",
+     "probe": "enums/6"
+    }
+   ]
+  },
+  {
+   "object": "payment_link",
+   "operation": "PostPaymentLinks",
+   "path": "currency",
+   "held": [
+    {
+     "kind": "value",
+     "value": "eur",
+     "probe": "minimal/price_eur"
+    },
+    {
+     "kind": "value",
+     "value": "usd",
+     "probe": "enums/10"
+    }
+   ]
+  },
+  {
+   "object": "payment_link",
+   "operation": "PostPaymentLinks",
+   "path": "customer_creation",
+   "held": [
+    {
+     "kind": "value",
+     "value": "if_required",
+     "probe": "enums/10"
+    }
+   ]
+  },
+  {
+   "object": "payment_link",
+   "operation": "PostPaymentLinks",
+   "path": "invoice_creation.enabled",
+   "held": [
+    {
+     "kind": "value",
+     "value": false,
+     "probe": "enums/10"
+    },
+    {
+     "kind": "value",
+     "value": true,
+     "probe": "minimal/managed"
+    }
+   ]
+  },
+  {
+   "object": "payment_link",
+   "operation": "PostPaymentLinks",
+   "path": "invoice_creation.invoice_data.issuer.type",
+   "held": [
+    {
+     "kind": "value",
+     "value": "self",
+     "probe": "every_field/9"
+    },
+    {
+     "kind": "value",
+     "value": "stripe",
+     "probe": "minimal/managed"
+    }
+   ]
+  },
+  {
+   "object": "payment_link",
+   "operation": "PostPaymentLinks",
+   "path": "invoice_creation.invoice_data.metadata",
+   "held": [
+    {
+     "kind": "value",
+     "value": {},
+     "probe": "enums/10"
+    }
+   ]
+  },
+  {
+   "object": "payment_link",
+   "operation": "PostPaymentLinks",
+   "path": "line_items.price_data.currency",
+   "held": [
+    {
+     "kind": "sent",
+     "probe": "enums/12"
+    }
+   ]
+  },
+  {
+   "object": "payment_link",
+   "operation": "PostPaymentLinks",
+   "path": "line_items.price_data.product",
+   "held": [
+    {
+     "kind": "sent",
+     "probe": "enums/12"
+    }
+   ]
+  },
+  {
+   "object": "payment_link",
+   "operation": "PostPaymentLinks",
+   "path": "line_items.price_data.recurring.interval",
+   "held": [
+    {
+     "kind": "sent",
+     "probe": "enums/12"
+    }
+   ]
+  },
+  {
+   "object": "payment_link",
+   "operation": "PostPaymentLinks",
+   "path": "line_items.price_data.recurring.interval_count",
+   "held": [
+    {
+     "kind": "sent",
+     "probe": "enums/12"
+    }
+   ]
+  },
+  {
+   "object": "payment_link",
+   "operation": "PostPaymentLinks",
+   "path": "line_items.price_data.tax_behavior",
+   "held": [
+    {
+     "kind": "sent",
+     "probe": "enums/12"
+    }
+   ]
+  },
+  {
+   "object": "payment_link",
+   "operation": "PostPaymentLinks",
+   "path": "line_items.price_data.unit_amount",
+   "held": [
+    {
+     "kind": "sent",
+     "probe": "enums/12"
+    }
+   ]
+  },
+  {
+   "object": "payment_link",
+   "operation": "PostPaymentLinks",
+   "path": "line_items.price_data.unit_amount_decimal",
+   "held": [
+    {
+     "kind": "sent",
+     "probe": "enums/12"
+    }
+   ]
+  },
+  {
+   "object": "payment_link",
+   "operation": "PostPaymentLinks",
+   "path": "managed_payments.enabled",
+   "held": [
+    {
+     "kind": "value",
+     "value": false,
+     "probe": "enums/10"
+    }
+   ]
+  },
+  {
+   "object": "payment_link",
+   "operation": "PostPaymentLinks",
+   "path": "metadata",
+   "held": [
+    {
+     "kind": "value",
+     "value": {},
+     "probe": "enums/10"
+    }
+   ]
+  },
+  {
+   "object": "payment_link",
+   "operation": "PostPaymentLinks",
+   "path": "name_collection.business.optional",
+   "held": [
+    {
+     "kind": "value",
+     "value": false,
+     "probe": "every_field/3"
+    }
+   ]
+  },
+  {
+   "object": "payment_link",
+   "operation": "PostPaymentLinks",
+   "path": "name_collection.individual.optional",
+   "held": [
+    {
+     "kind": "value",
+     "value": false,
+     "probe": "nested_minimal/1"
+    }
+   ]
+  },
+  {
+   "object": "payment_link",
+   "operation": "PostPaymentLinks",
+   "path": "optional_items.adjustable_quantity.maximum",
+   "held": [
+    {
+     "kind": "value",
+     "value": [
+      99
+     ],
+     "probe": "nested_minimal/11"
+    }
+   ]
+  },
+  {
+   "object": "payment_link",
+   "operation": "PostPaymentLinks",
+   "path": "optional_items.adjustable_quantity.minimum",
+   "held": [
+    {
+     "kind": "value",
+     "value": [
+      0
+     ],
+     "probe": "nested_minimal/11"
+    }
+   ]
+  },
+  {
+   "object": "payment_link",
+   "operation": "PostPaymentLinks",
+   "path": "payment_intent_data.metadata",
+   "held": [
+    {
+     "kind": "value",
+     "value": {},
+     "probe": "enums/12"
+    }
+   ]
+  },
+  {
+   "object": "payment_link",
+   "operation": "PostPaymentLinks",
+   "path": "payment_method_collection",
+   "held": [
+    {
+     "kind": "value",
+     "value": "always",
+     "probe": "enums/15"
+    },
+    {
+     "kind": "value",
+     "value": "if_required",
+     "probe": "enums/10"
+    }
+   ]
+  },
+  {
+   "object": "payment_link",
+   "operation": "PostPaymentLinks",
+   "path": "phone_number_collection.enabled",
+   "held": [
+    {
+     "kind": "value",
+     "value": false,
+     "probe": "enums/10"
+    }
+   ]
+  },
+  {
+   "object": "payment_link",
+   "operation": "PostPaymentLinks",
+   "path": "submit_type",
+   "held": [
+    {
+     "kind": "value",
+     "value": "auto",
+     "probe": "enums/10"
+    }
+   ]
+  },
+  {
+   "object": "payment_link",
+   "operation": "PostPaymentLinks",
+   "path": "subscription_data.invoice_settings.issuer.type",
+   "held": [
+    {
+     "kind": "value",
+     "value": "self",
+     "probe": "enums/15"
+    }
+   ]
+  },
+  {
+   "object": "payment_link",
+   "operation": "PostPaymentLinks",
+   "path": "subscription_data.metadata",
+   "held": [
+    {
+     "kind": "value",
+     "value": {},
+     "probe": "enums/11"
+    }
+   ]
+  },
+  {
+   "object": "payment_link",
+   "operation": "PostPaymentLinks",
+   "path": "subscription_data.trial_settings.end_behavior.missing_payment_method",
+   "held": [
+    {
+     "kind": "value",
+     "value": "create_invoice",
+     "probe": "enums/18"
+    }
+   ]
+  },
+  {
+   "object": "payment_link",
+   "operation": "PostPaymentLinks",
+   "path": "tax_id_collection.enabled",
+   "held": [
+    {
+     "kind": "value",
+     "value": false,
+     "probe": "enums/10"
+    },
+    {
+     "kind": "value",
+     "value": true,
+     "probe": "minimal/managed"
+    }
+   ]
+  },
+  {
+   "object": "payment_link",
+   "operation": "PostPaymentLinks",
+   "path": "tax_id_collection.required",
+   "held": [
+    {
+     "kind": "value",
+     "value": "never",
+     "probe": "enums/10"
+    }
+   ]
+  },
+  {
+   "object": "payment_method_configuration",
+   "operation": "PostPaymentMethodConfigurations",
+   "path": "bancontact.display_preference.preference",
+   "held": [
+    {
+     "kind": "value",
+     "value": "off",
+     "probe": "enums/3"
+    }
+   ]
+  },
+  {
+   "object": "payment_method_configuration",
+   "operation": "PostPaymentMethodConfigurations",
+   "path": "card.display_preference.preference",
+   "held": [
+    {
+     "kind": "value",
+     "value": "off",
+     "probe": "enums/3"
+    }
+   ]
+  },
+  {
+   "object": "payment_method_configuration",
+   "operation": "PostPaymentMethodConfigurations",
+   "path": "link.display_preference.preference",
+   "held": [
+    {
+     "kind": "value",
+     "value": "off",
+     "probe": "enums/3"
+    }
+   ]
+  },
+  {
+   "object": "payout",
+   "operation": "PostPayouts",
+   "path": "destination",
+   "held": [
+    {
+     "kind": "ref",
+     "probe": "enums/1"
+    }
+   ]
+  },
+  {
+   "object": "payout",
+   "operation": "PostPayouts",
+   "path": "metadata",
+   "held": [
+    {
+     "kind": "value",
+     "value": {},
+     "probe": "enums/1"
+    }
+   ]
+  },
+  {
+   "object": "payout",
+   "operation": "PostPayouts",
+   "path": "method",
+   "held": [
+    {
+     "kind": "value",
+     "value": "standard",
+     "probe": "enums/2"
+    }
+   ]
+  },
+  {
+   "object": "payout",
+   "operation": "PostPayouts",
+   "path": "source_type",
+   "held": [
+    {
+     "kind": "value",
+     "value": "card",
+     "probe": "enums/1"
+    }
+   ]
+  },
+  {
+   "object": "person",
+   "operation": "PostAccountsAccountPersons",
+   "path": "address.country",
+   "held": [
+    {
+     "kind": "from",
+     "probe": "enums/1"
+    }
+   ]
+  },
+  {
+   "object": "person",
+   "operation": "PostAccountsAccountPersons",
+   "path": "metadata",
+   "held": [
+    {
+     "kind": "value",
+     "value": {},
+     "probe": "enums/1"
+    }
+   ]
+  },
+  {
+   "object": "person",
+   "operation": "PostAccountsAccountPersons",
+   "path": "relationship.director",
+   "held": [
+    {
+     "kind": "value",
+     "value": false,
+     "probe": "enums/1"
+    }
+   ]
+  },
+  {
+   "object": "person",
+   "operation": "PostAccountsAccountPersons",
+   "path": "relationship.executive",
+   "held": [
+    {
+     "kind": "value",
+     "value": false,
+     "probe": "enums/1"
+    }
+   ]
+  },
+  {
+   "object": "person",
+   "operation": "PostAccountsAccountPersons",
+   "path": "relationship.owner",
+   "held": [
+    {
+     "kind": "value",
+     "value": false,
+     "probe": "enums/1"
+    }
+   ]
+  },
+  {
+   "object": "person",
+   "operation": "PostAccountsAccountPersons",
+   "path": "relationship.representative",
+   "held": [
+    {
+     "kind": "value",
+     "value": false,
+     "probe": "enums/1"
+    }
+   ]
+  },
+  {
+   "object": "plan",
+   "operation": "PostPlans",
+   "path": "active",
+   "held": [
+    {
+     "kind": "value",
+     "value": true,
+     "probe": "enums/1"
+    }
+   ]
+  },
+  {
+   "object": "plan",
+   "operation": "PostPlans",
+   "path": "amount_decimal",
+   "held": [
+    {
+     "kind": "value",
+     "value": "1500",
+     "probe": "enums/1"
+    },
+    {
+     "kind": "value",
+     "value": "2500",
+     "probe": "minimal/amount_other"
+    }
+   ]
+  },
+  {
+   "object": "plan",
+   "operation": "PostPlans",
+   "path": "billing_scheme",
+   "held": [
+    {
+     "kind": "value",
+     "value": "per_unit",
+     "probe": "enums/3"
+    }
+   ]
+  },
+  {
+   "object": "plan",
+   "operation": "PostPlans",
+   "path": "id",
+   "held": [
+    {
+     "kind": "created",
+     "probe": "enums/1"
+    }
+   ]
+  },
+  {
+   "object": "plan",
+   "operation": "PostPlans",
+   "path": "interval_count",
+   "held": [
+    {
+     "kind": "value",
+     "value": 1,
+     "probe": "enums/1"
+    }
+   ]
+  },
+  {
+   "object": "plan",
+   "operation": "PostPlans",
+   "path": "metadata",
+   "held": [
+    {
+     "kind": "value",
+     "value": {},
+     "probe": "enums/1"
+    }
+   ]
+  },
+  {
+   "object": "plan",
+   "operation": "PostPlans",
+   "path": "product.active",
+   "held": [
+    {
+     "kind": "sent",
+     "probe": "enums/1"
+    }
+   ]
+  },
+  {
+   "object": "plan",
+   "operation": "PostPlans",
+   "path": "product.id",
+   "held": [
+    {
+     "kind": "sent",
+     "probe": "enums/1"
+    }
+   ]
+  },
+  {
+   "object": "plan",
+   "operation": "PostPlans",
+   "path": "product.metadata",
+   "held": [
+    {
+     "kind": "sent",
+     "probe": "enums/1"
+    }
+   ]
+  },
+  {
+   "object": "plan",
+   "operation": "PostPlans",
+   "path": "product.name",
+   "held": [
+    {
+     "kind": "sent",
+     "probe": "enums/1"
+    }
+   ]
+  },
+  {
+   "object": "plan",
+   "operation": "PostPlans",
+   "path": "product.statement_descriptor",
+   "held": [
+    {
+     "kind": "sent",
+     "probe": "enums/1"
+    }
+   ]
+  },
+  {
+   "object": "plan",
+   "operation": "PostPlans",
+   "path": "product.tax_code",
+   "held": [
+    {
+     "kind": "sent",
+     "probe": "enums/1"
+    }
+   ]
+  },
+  {
+   "object": "plan",
+   "operation": "PostPlans",
+   "path": "product.tax_details.performance_location",
+   "held": [
+    {
+     "kind": "sent",
+     "probe": "enums/1"
+    }
+   ]
+  },
+  {
+   "object": "plan",
+   "operation": "PostPlans",
+   "path": "product.tax_details.tax_code",
+   "held": [
+    {
+     "kind": "sent",
+     "probe": "enums/1"
+    }
+   ]
+  },
+  {
+   "object": "plan",
+   "operation": "PostPlans",
+   "path": "product.unit_label",
+   "held": [
+    {
+     "kind": "sent",
+     "probe": "enums/1"
+    }
+   ]
+  },
+  {
+   "object": "plan",
+   "operation": "PostPlans",
+   "path": "tiers.flat_amount",
+   "held": [
+    {
+     "kind": "value",
+     "value": [
+      400
+     ],
+     "probe": "every_field/3"
+    },
+    {
+     "kind": "value",
+     "value": [
+      null
+     ],
+     "probe": "enums/2"
+    },
+    {
+     "kind": "value",
+     "value": [
+      null,
+      null
+     ],
+     "probe": "nested_minimal/2"
+    }
+   ]
+  },
+  {
+   "object": "plan",
+   "operation": "PostPlans",
+   "path": "tiers.flat_amount_decimal",
+   "held": [
+    {
+     "kind": "value",
+     "value": [
+      "400",
+      null
+     ],
+     "probe": "every_field/4"
+    },
+    {
+     "kind": "value",
+     "value": [
+      null
+     ],
+     "probe": "enums/2"
+    },
+    {
+     "kind": "value",
+     "value": [
+      null,
+      null
+     ],
+     "probe": "nested_minimal/2"
+    }
+   ]
+  },
+  {
+   "object": "plan",
+   "operation": "PostPlans",
+   "path": "tiers.unit_amount",
+   "held": [
+    {
+     "kind": "value",
+     "value": [
+      null
+     ],
+     "probe": "every_field/3"
+    }
+   ]
+  },
+  {
+   "object": "plan",
+   "operation": "PostPlans",
+   "path": "tiers.unit_amount_decimal",
+   "held": [
+    {
+     "kind": "value",
+     "value": [
+      "300"
+     ],
+     "probe": "enums/2"
+    },
+    {
+     "kind": "value",
+     "value": [
+      "300",
+      "100"
+     ],
+     "probe": "every_field/4"
+    }
+   ]
+  },
+  {
+   "object": "plan",
+   "operation": "PostPlans",
+   "path": "tiers.up_to",
+   "held": [
+    {
+     "kind": "value",
+     "value": [
+      null
+     ],
+     "probe": "enums/2"
+    }
+   ]
+  },
+  {
+   "object": "plan",
+   "operation": "PostPlans",
+   "path": "usage_type",
+   "held": [
+    {
+     "kind": "value",
+     "value": "licensed",
+     "probe": "enums/2"
+    }
+   ]
+  },
+  {
+   "object": "price",
+   "operation": "PostPrices",
+   "path": "active",
+   "held": [
+    {
+     "kind": "value",
+     "value": true,
+     "probe": "enums/1"
+    }
+   ]
+  },
+  {
+   "object": "price",
+   "operation": "PostPrices",
+   "path": "billing_scheme",
+   "held": [
+    {
+     "kind": "value",
+     "value": "per_unit",
+     "probe": "enums/10"
+    }
+   ]
+  },
+  {
+   "object": "price",
+   "operation": "PostPrices",
+   "path": "currency_options.custom_unit_amount.maximum",
+   "held": [
+    {
+     "kind": "normalised",
+     "probe": "every_field/7"
+    },
+    {
+     "kind": "value",
+     "value": {
+      "eur": null,
+      "usd": null
+     },
+     "probe": "minimal/options_custom"
+    },
+    {
+     "kind": "value",
+     "value": {
+      "usd": null
+     },
+     "probe": "minimal/custom_amount"
+    }
+   ]
+  },
+  {
+   "object": "price",
+   "operation": "PostPrices",
+   "path": "currency_options.custom_unit_amount.minimum",
+   "held": [
+    {
+     "kind": "normalised",
+     "probe": "every_field/7"
+    },
+    {
+     "kind": "value",
+     "value": {
+      "eur": null,
+      "usd": null
+     },
+     "probe": "minimal/options_custom"
+    },
+    {
+     "kind": "value",
+     "value": {
+      "usd": null
+     },
+     "probe": "minimal/custom_amount"
+    }
+   ]
+  },
+  {
+   "object": "price",
+   "operation": "PostPrices",
+   "path": "currency_options.custom_unit_amount.preset",
+   "held": [
+    {
+     "kind": "normalised",
+     "probe": "every_field/7"
+    },
+    {
+     "kind": "value",
+     "value": {
+      "eur": null,
+      "usd": null
+     },
+     "probe": "minimal/options_custom"
+    },
+    {
+     "kind": "value",
+     "value": {
+      "usd": null
+     },
+     "probe": "minimal/custom_amount"
+    }
+   ]
+  },
+  {
+   "object": "price",
+   "operation": "PostPrices",
+   "path": "currency_options.tax_behavior",
+   "held": [
+    {
+     "kind": "normalised",
+     "probe": "enums/1"
+    },
+    {
+     "kind": "value",
+     "value": {
+      "eur": "unspecified"
+     },
+     "probe": "minimal/currency_eur"
+    },
+    {
+     "kind": "value",
+     "value": {
+      "eur": "unspecified",
+      "usd": "unspecified"
+     },
+     "probe": "enums/11"
+    },
+    {
+     "kind": "value",
+     "value": {
+      "usd": "unspecified"
+     },
+     "probe": "enums/10"
+    }
+   ]
+  },
+  {
+   "object": "price",
+   "operation": "PostPrices",
+   "path": "currency_options.tiers.flat_amount",
+   "held": [
+    {
+     "kind": "value",
+     "value": {
+      "eur": [
+       400
+      ],
+      "usd": [
+       null
+      ]
+     },
+     "probe": "every_field/3"
+    },
+    {
+     "kind": "value",
+     "value": {
+      "eur": [
+       null
+      ],
+      "usd": [
+       null
+      ]
+     },
+     "probe": "enums/11"
+    },
+    {
+     "kind": "value",
+     "value": {
+      "eur": [
+       null,
+       null
+      ],
+      "usd": [
+       null
+      ]
+     },
+     "probe": "nested_minimal/2"
+    },
+    {
+     "kind": "value",
+     "value": {
+      "usd": [
+       400
+      ]
+     },
+     "probe": "every_field/11"
+    },
+    {
+     "kind": "value",
+     "value": {
+      "usd": [
+       400,
+       null
+      ]
+     },
+     "probe": "every_field/12"
+    },
+    {
+     "kind": "value",
+     "value": {
+      "usd": [
+       null
+      ]
+     },
+     "probe": "enums/4"
+    },
+    {
+     "kind": "value",
+     "value": {
+      "usd": [
+       null,
+       null
+      ]
+     },
+     "probe": "nested_minimal/3"
+    }
+   ]
+  },
+  {
+   "object": "price",
+   "operation": "PostPrices",
+   "path": "currency_options.tiers.flat_amount_decimal",
+   "held": [
+    {
+     "kind": "value",
+     "value": {
+      "eur": [
+       "400",
+       null
+      ],
+      "usd": [
+       null
+      ]
+     },
+     "probe": "every_field/4"
+    },
+    {
+     "kind": "value",
+     "value": {
+      "eur": [
+       null
+      ],
+      "usd": [
+       null
+      ]
+     },
+     "probe": "enums/11"
+    },
+    {
+     "kind": "value",
+     "value": {
+      "eur": [
+       null,
+       null
+      ],
+      "usd": [
+       null
+      ]
+     },
+     "probe": "nested_minimal/2"
+    },
+    {
+     "kind": "value",
+     "value": {
+      "usd": [
+       "400"
+      ]
+     },
+     "probe": "every_field/11"
+    },
+    {
+     "kind": "value",
+     "value": {
+      "usd": [
+       "400",
+       null
+      ]
+     },
+     "probe": "every_field/12"
+    },
+    {
+     "kind": "value",
+     "value": {
+      "usd": [
+       null
+      ]
+     },
+     "probe": "enums/4"
+    },
+    {
+     "kind": "value",
+     "value": {
+      "usd": [
+       null,
+       null
+      ]
+     },
+     "probe": "nested_minimal/3"
+    }
+   ]
+  },
+  {
+   "object": "price",
+   "operation": "PostPrices",
+   "path": "currency_options.tiers.unit_amount",
+   "held": [
+    {
+     "kind": "value",
+     "value": {
+      "eur": [
+       null
+      ],
+      "usd": [
+       300
+      ]
+     },
+     "probe": "every_field/3"
+    },
+    {
+     "kind": "value",
+     "value": {
+      "usd": [
+       300
+      ]
+     },
+     "probe": "enums/4"
+    },
+    {
+     "kind": "value",
+     "value": {
+      "usd": [
+       300,
+       100
+      ]
+     },
+     "probe": "every_field/12"
+    },
+    {
+     "kind": "value",
+     "value": {
+      "usd": [
+       null
+      ]
+     },
+     "probe": "every_field/11"
+    }
+   ]
+  },
+  {
+   "object": "price",
+   "operation": "PostPrices",
+   "path": "currency_options.tiers.unit_amount_decimal",
+   "held": [
+    {
+     "kind": "value",
+     "value": {
+      "eur": [
+       "200"
+      ],
+      "usd": [
+       "300"
+      ]
+     },
+     "probe": "enums/11"
+    },
+    {
+     "kind": "value",
+     "value": {
+      "eur": [
+       "200",
+       "100"
+      ],
+      "usd": [
+       "300"
+      ]
+     },
+     "probe": "every_field/4"
+    },
+    {
+     "kind": "value",
+     "value": {
+      "usd": [
+       "300"
+      ]
+     },
+     "probe": "enums/4"
+    },
+    {
+     "kind": "value",
+     "value": {
+      "usd": [
+       "300",
+       "100"
+      ]
+     },
+     "probe": "every_field/12"
+    },
+    {
+     "kind": "value",
+     "value": {
+      "usd": [
+       "300.5"
+      ]
+     },
+     "probe": "every_field/11"
+    }
+   ]
+  },
+  {
+   "object": "price",
+   "operation": "PostPrices",
+   "path": "currency_options.tiers.up_to",
+   "held": [
+    {
+     "kind": "value",
+     "value": {
+      "eur": [
+       null
+      ],
+      "usd": [
+       null
+      ]
+     },
+     "probe": "enums/11"
+    },
+    {
+     "kind": "value",
+     "value": {
+      "usd": [
+       10,
+       null
+      ]
+     },
+     "probe": "every_field/12"
+    },
+    {
+     "kind": "value",
+     "value": {
+      "usd": [
+       null
+      ]
+     },
+     "probe": "enums/4"
+    }
+   ]
+  },
+  {
+   "object": "price",
+   "operation": "PostPrices",
+   "path": "currency_options.unit_amount",
+   "held": [
+    {
+     "kind": "normalised",
+     "probe": "enums/1"
+    },
+    {
+     "kind": "value",
+     "value": {
+      "eur": null,
+      "usd": null
+     },
+     "probe": "enums/11"
+    },
+    {
+     "kind": "value",
+     "value": {
+      "usd": null
+     },
+     "probe": "enums/4"
+    }
+   ]
+  },
+  {
+   "object": "price",
+   "operation": "PostPrices",
+   "path": "currency_options.unit_amount_decimal",
+   "held": [
+    {
+     "kind": "value",
+     "value": {
+      "eur": "2000"
+     },
+     "probe": "minimal/currency_eur"
+    },
+    {
+     "kind": "value",
+     "value": {
+      "eur": "900",
+      "usd": "1500"
+     },
+     "probe": "enums/12"
+    },
+    {
+     "kind": "value",
+     "value": {
+      "eur": null,
+      "usd": null
+     },
+     "probe": "enums/11"
+    },
+    {
+     "kind": "value",
+     "value": {
+      "usd": "1500"
+     },
+     "probe": "enums/1"
+    },
+    {
+     "kind": "value",
+     "value": {
+      "usd": "1500.5"
+     },
+     "probe": "minimal/decimal"
+    },
+    {
+     "kind": "value",
+     "value": {
+      "usd": null
+     },
+     "probe": "enums/4"
+    }
+   ]
+  },
+  {
+   "object": "price",
+   "operation": "PostPrices",
+   "path": "metadata",
+   "held": [
+    {
+     "kind": "value",
+     "value": {},
+     "probe": "enums/1"
+    }
+   ]
+  },
+  {
+   "object": "price",
+   "operation": "PostPrices",
+   "path": "product",
+   "held": [
+    {
+     "kind": "id",
+     "probe": "every_field/8"
+    }
+   ]
+  },
+  {
+   "object": "price",
+   "operation": "PostPrices",
+   "path": "product_data.active",
+   "held": [
+    {
+     "kind": "id",
+     "probe": "every_field/8"
+    },
+    {
+     "kind": "sent",
+     "probe": "enums/1"
+    }
+   ]
+  },
+  {
+   "object": "price",
+   "operation": "PostPrices",
+   "path": "product_data.id",
+   "held": [
+    {
+     "kind": "id",
+     "probe": "every_field/8"
+    },
+    {
+     "kind": "sent",
+     "probe": "enums/1"
+    }
+   ]
+  },
+  {
+   "object": "price",
+   "operation": "PostPrices",
+   "path": "product_data.metadata",
+   "held": [
+    {
+     "kind": "id",
+     "probe": "every_field/8"
+    },
+    {
+     "kind": "sent",
+     "probe": "enums/1"
+    }
+   ]
+  },
+  {
+   "object": "price",
+   "operation": "PostPrices",
+   "path": "product_data.name",
+   "held": [
+    {
+     "kind": "sent",
+     "probe": "enums/1"
+    }
+   ]
+  },
+  {
+   "object": "price",
+   "operation": "PostPrices",
+   "path": "product_data.statement_descriptor",
+   "held": [
+    {
+     "kind": "id",
+     "probe": "every_field/8"
+    },
+    {
+     "kind": "sent",
+     "probe": "enums/1"
+    }
+   ]
+  },
+  {
+   "object": "price",
+   "operation": "PostPrices",
+   "path": "product_data.tax_code",
+   "held": [
+    {
+     "kind": "id",
+     "probe": "every_field/8"
+    },
+    {
+     "kind": "sent",
+     "probe": "enums/1"
+    }
+   ]
+  },
+  {
+   "object": "price",
+   "operation": "PostPrices",
+   "path": "product_data.tax_details.performance_location",
+   "held": [
+    {
+     "kind": "id",
+     "probe": "every_field/9"
+    },
+    {
+     "kind": "sent",
+     "probe": "enums/1"
+    }
+   ]
+  },
+  {
+   "object": "price",
+   "operation": "PostPrices",
+   "path": "product_data.tax_details.tax_code",
+   "held": [
+    {
+     "kind": "id",
+     "probe": "every_field/9"
+    },
+    {
+     "kind": "sent",
+     "probe": "enums/1"
+    }
+   ]
+  },
+  {
+   "object": "price",
+   "operation": "PostPrices",
+   "path": "product_data.unit_label",
+   "held": [
+    {
+     "kind": "id",
+     "probe": "every_field/8"
+    },
+    {
+     "kind": "sent",
+     "probe": "enums/1"
+    }
+   ]
+  },
+  {
+   "object": "price",
+   "operation": "PostPrices",
+   "path": "recurring.interval_count",
+   "held": [
+    {
+     "kind": "value",
+     "value": 1,
+     "probe": "enums/11"
+    }
+   ]
+  },
+  {
+   "object": "price",
+   "operation": "PostPrices",
+   "path": "recurring.usage_type",
+   "held": [
+    {
+     "kind": "value",
+     "value": "licensed",
+     "probe": "enums/11"
+    }
+   ]
+  },
+  {
+   "object": "price",
+   "operation": "PostPrices",
+   "path": "tax_behavior",
+   "held": [
+    {
+     "kind": "value",
+     "value": "unspecified",
+     "probe": "enums/10"
+    }
+   ]
+  },
+  {
+   "object": "price",
+   "operation": "PostPrices",
+   "path": "tiers.flat_amount",
+   "held": [
+    {
+     "kind": "value",
+     "value": [
+      400
+     ],
+     "probe": "every_field/11"
+    },
+    {
+     "kind": "value",
+     "value": [
+      null
+     ],
+     "probe": "enums/11"
+    },
+    {
+     "kind": "value",
+     "value": [
+      null,
+      null
+     ],
+     "probe": "nested_minimal/3"
+    }
+   ]
+  },
+  {
+   "object": "price",
+   "operation": "PostPrices",
+   "path": "tiers.flat_amount_decimal",
+   "held": [
+    {
+     "kind": "value",
+     "value": [
+      "400",
+      null
+     ],
+     "probe": "every_field/12"
+    },
+    {
+     "kind": "value",
+     "value": [
+      null
+     ],
+     "probe": "enums/11"
+    },
+    {
+     "kind": "value",
+     "value": [
+      null,
+      null
+     ],
+     "probe": "nested_minimal/3"
+    }
+   ]
+  },
+  {
+   "object": "price",
+   "operation": "PostPrices",
+   "path": "tiers.unit_amount",
+   "held": [
+    {
+     "kind": "value",
+     "value": [
+      null
+     ],
+     "probe": "every_field/11"
+    }
+   ]
+  },
+  {
+   "object": "price",
+   "operation": "PostPrices",
+   "path": "tiers.unit_amount_decimal",
+   "held": [
+    {
+     "kind": "value",
+     "value": [
+      "300"
+     ],
+     "probe": "enums/11"
+    },
+    {
+     "kind": "value",
+     "value": [
+      "300",
+      "100"
+     ],
+     "probe": "every_field/12"
+    }
+   ]
+  },
+  {
+   "object": "price",
+   "operation": "PostPrices",
+   "path": "tiers.up_to",
+   "held": [
+    {
+     "kind": "value",
+     "value": [
+      null
+     ],
+     "probe": "enums/11"
+    }
+   ]
+  },
+  {
+   "object": "price",
+   "operation": "PostPrices",
+   "path": "unit_amount_decimal",
+   "held": [
+    {
+     "kind": "value",
+     "value": "1500",
+     "probe": "enums/1"
+    },
+    {
+     "kind": "value",
+     "value": "2000",
+     "probe": "minimal/currency_eur"
+    }
+   ]
+  },
+  {
+   "object": "product",
+   "operation": "PostProducts",
+   "path": "active",
+   "held": [
+    {
+     "kind": "value",
+     "value": true,
+     "probe": "enums/11"
+    }
+   ]
+  },
+  {
+   "object": "product",
+   "operation": "PostProducts",
+   "path": "default_price_data.currency_options.tax_behavior",
+   "held": [
+    {
+     "kind": "id",
+     "probe": "enums/12"
+    }
+   ]
+  },
+  {
+   "object": "product",
+   "operation": "PostProducts",
+   "path": "default_price_data.currency_options.unit_amount",
+   "held": [
+    {
+     "kind": "id",
+     "probe": "enums/12"
+    }
+   ]
+  },
+  {
+   "object": "product",
+   "operation": "PostProducts",
+   "path": "default_price_data.currency_options.unit_amount_decimal",
+   "held": [
+    {
+     "kind": "id",
+     "probe": "enums/11"
+    }
+   ]
+  },
+  {
+   "object": "product",
+   "operation": "PostProducts",
+   "path": "default_price_data.custom_unit_amount.maximum",
+   "held": [
+    {
+     "kind": "id",
+     "probe": "enums/11"
+    }
+   ]
+  },
+  {
+   "object": "product",
+   "operation": "PostProducts",
+   "path": "default_price_data.custom_unit_amount.minimum",
+   "held": [
+    {
+     "kind": "id",
+     "probe": "enums/11"
+    }
+   ]
+  },
+  {
+   "object": "product",
+   "operation": "PostProducts",
+   "path": "default_price_data.custom_unit_amount.preset",
+   "held": [
+    {
+     "kind": "id",
+     "probe": "enums/11"
+    }
+   ]
+  },
+  {
+   "object": "product",
+   "operation": "PostProducts",
+   "path": "default_price_data.metadata",
+   "held": [
+    {
+     "kind": "id",
+     "probe": "enums/11"
+    }
+   ]
+  },
+  {
+   "object": "product",
+   "operation": "PostProducts",
+   "path": "default_price_data.recurring.interval",
+   "held": [
+    {
+     "kind": "id",
+     "probe": "enums/11"
+    }
+   ]
+  },
+  {
+   "object": "product",
+   "operation": "PostProducts",
+   "path": "default_price_data.recurring.interval_count",
+   "held": [
+    {
+     "kind": "id",
+     "probe": "enums/11"
+    }
+   ]
+  },
+  {
+   "object": "product",
+   "operation": "PostProducts",
+   "path": "default_price_data.tax_behavior",
+   "held": [
+    {
+     "kind": "id",
+     "probe": "enums/11"
+    }
+   ]
+  },
+  {
+   "object": "product",
+   "operation": "PostProducts",
+   "path": "default_price_data.unit_amount",
+   "held": [
+    {
+     "kind": "id",
+     "probe": "every_field/15"
+    }
+   ]
+  },
+  {
+   "object": "product",
+   "operation": "PostProducts",
+   "path": "default_price_data.unit_amount_decimal",
+   "held": [
+    {
+     "kind": "id",
+     "probe": "enums/11"
+    }
+   ]
+  },
+  {
+   "object": "product",
+   "operation": "PostProducts",
+   "path": "id",
+   "held": [
+    {
+     "kind": "created",
+     "probe": "enums/11"
+    }
+   ]
+  },
+  {
+   "object": "product",
+   "operation": "PostProducts",
+   "path": "images",
+   "held": [
+    {
+     "kind": "value",
+     "value": [],
+     "probe": "enums/11"
+    }
+   ]
+  },
+  {
+   "object": "product",
+   "operation": "PostProducts",
+   "path": "metadata",
+   "held": [
+    {
+     "kind": "value",
+     "value": {},
+     "probe": "enums/11"
+    }
+   ]
+  },
+  {
+   "object": "product",
+   "operation": "PostProducts",
+   "path": "tax_code",
+   "held": [
+    {
+     "kind": "id",
+     "probe": "every_field/20"
+    }
+   ]
+  },
+  {
+   "object": "product",
+   "operation": "PostProducts",
+   "path": "tax_details.tax_code",
+   "held": [
+    {
+     "kind": "id",
+     "probe": "every_field/1"
+    }
+   ]
+  },
+  {
+   "object": "product_catalog.trial_offer",
+   "operation": "PostProductCatalogTrialOffers",
+   "path": "active",
+   "held": [
+    {
+     "kind": "value",
+     "value": true,
+     "probe": "minimal"
+    }
+   ]
+  },
+  {
+   "object": "promotion_code",
+   "operation": "PostPromotionCodes",
+   "path": "active",
+   "held": [
+    {
+     "kind": "value",
+     "value": true,
+     "probe": "every_field/2"
+    }
+   ]
+  },
+  {
+   "object": "promotion_code",
+   "operation": "PostPromotionCodes",
+   "path": "code",
+   "held": [
+    {
+     "kind": "url",
+     "probe": "every_field/2"
+    }
+   ]
+  },
+  {
+   "object": "promotion_code",
+   "operation": "PostPromotionCodes",
+   "path": "metadata",
+   "held": [
+    {
+     "kind": "value",
+     "value": {},
+     "probe": "every_field/2"
+    }
+   ]
+  },
+  {
+   "object": "promotion_code",
+   "operation": "PostPromotionCodes",
+   "path": "restrictions.first_time_transaction",
+   "held": [
+    {
+     "kind": "value",
+     "value": false,
+     "probe": "every_field/2"
+    }
+   ]
+  },
+  {
+   "object": "quote",
+   "operation": "PostQuotes",
+   "path": "automatic_tax.enabled",
+   "held": [
+    {
+     "kind": "value",
+     "value": false,
+     "probe": "enums/1"
+    }
+   ]
+  },
+  {
+   "object": "quote",
+   "operation": "PostQuotes",
+   "path": "collection_method",
+   "held": [
+    {
+     "kind": "value",
+     "value": "charge_automatically",
+     "probe": "enums/1"
+    },
+    {
+     "kind": "value",
+     "value": "send_invoice",
+     "probe": "every_field/2"
+    }
+   ]
+  },
+  {
+   "object": "quote",
+   "operation": "PostQuotes",
+   "path": "customer",
+   "held": [
+    {
+     "kind": "id",
+     "probe": "every_field/2"
+    }
+   ]
+  },
+  {
+   "object": "quote",
+   "operation": "PostQuotes",
+   "path": "default_tax_rates",
+   "held": [
+    {
+     "kind": "value",
+     "value": [],
+     "probe": "enums/1"
+    }
+   ]
+  },
+  {
+   "object": "quote",
+   "operation": "PostQuotes",
+   "path": "expires_at",
+   "held": [
+    {
+     "kind": "time_within",
+     "probe": "enums/1"
+    }
+   ]
+  },
+  {
+   "object": "quote",
+   "operation": "PostQuotes",
+   "path": "from_quote.is_revision",
+   "held": [
+    {
+     "kind": "value",
+     "value": false,
+     "probe": "minimal/from_quote"
+    }
+   ]
+  },
+  {
+   "object": "quote",
+   "operation": "PostQuotes",
+   "path": "invoice_settings.days_until_due",
+   "held": [
+    {
+     "kind": "value",
+     "value": 30,
+     "probe": "every_field/2"
+    }
+   ]
+  },
+  {
+   "object": "quote",
+   "operation": "PostQuotes",
+   "path": "invoice_settings.issuer.account",
+   "held": [
+    {
+     "kind": "ref",
+     "probe": "enums/8"
+    }
+   ]
+  },
+  {
+   "object": "quote",
+   "operation": "PostQuotes",
+   "path": "invoice_settings.issuer.type",
+   "held": [
+    {
+     "kind": "value",
+     "value": "account",
+     "probe": "enums/8"
+    },
+    {
+     "kind": "value",
+     "value": "self",
+     "probe": "enums/1"
+    }
+   ]
+  },
+  {
+   "object": "quote",
+   "operation": "PostQuotes",
+   "path": "line_items.price_data.currency",
+   "held": [
+    {
+     "kind": "sent",
+     "probe": "enums/2"
+    }
+   ]
+  },
+  {
+   "object": "quote",
+   "operation": "PostQuotes",
+   "path": "line_items.price_data.product",
+   "held": [
+    {
+     "kind": "sent",
+     "probe": "enums/2"
+    }
+   ]
+  },
+  {
+   "object": "quote",
+   "operation": "PostQuotes",
+   "path": "line_items.price_data.recurring.interval",
+   "held": [
+    {
+     "kind": "sent",
+     "probe": "enums/2"
+    }
+   ]
+  },
+  {
+   "object": "quote",
+   "operation": "PostQuotes",
+   "path": "line_items.price_data.recurring.interval_count",
+   "held": [
+    {
+     "kind": "sent",
+     "probe": "enums/2"
+    }
+   ]
+  },
+  {
+   "object": "quote",
+   "operation": "PostQuotes",
+   "path": "line_items.price_data.tax_behavior",
+   "held": [
+    {
+     "kind": "sent",
+     "probe": "enums/2"
+    }
+   ]
+  },
+  {
+   "object": "quote",
+   "operation": "PostQuotes",
+   "path": "line_items.price_data.unit_amount",
+   "held": [
+    {
+     "kind": "sent",
+     "probe": "enums/2"
+    }
+   ]
+  },
+  {
+   "object": "quote",
+   "operation": "PostQuotes",
+   "path": "line_items.price_data.unit_amount_decimal",
+   "held": [
+    {
+     "kind": "sent",
+     "probe": "enums/2"
+    }
+   ]
+  },
+  {
+   "object": "quote",
+   "operation": "PostQuotes",
+   "path": "metadata",
+   "held": [
+    {
+     "kind": "value",
+     "value": {},
+     "probe": "enums/1"
+    }
+   ]
+  },
+  {
+   "object": "quote",
+   "operation": "PostQuotes",
+   "path": "subscription_data.billing_mode.flexible.proration_discounts",
+   "held": [
+    {
+     "kind": "value",
+     "value": "included",
+     "probe": "enums/1"
+    }
+   ]
+  },
+  {
+   "object": "quote",
+   "operation": "PostQuotes",
+   "path": "subscription_data.billing_mode.type",
+   "held": [
+    {
+     "kind": "value",
+     "value": "flexible",
+     "probe": "enums/1"
+    }
+   ]
+  },
+  {
+   "object": "radar.value_list",
+   "operation": "PostRadarValueLists",
+   "path": "item_type",
+   "held": [
+    {
+     "kind": "value",
+     "value": "string",
+     "probe": "minimal"
+    }
+   ]
+  },
+  {
+   "object": "radar.value_list",
+   "operation": "PostRadarValueLists",
+   "path": "metadata",
+   "held": [
+    {
+     "kind": "value",
+     "value": {},
+     "probe": "enums/1"
+    }
+   ]
+  },
+  {
+   "object": "refund",
+   "operation": "PostRefunds",
+   "path": "amount",
+   "held": [
+    {
+     "kind": "from",
+     "probe": "enums/1"
+    }
+   ]
+  },
+  {
+   "object": "refund",
+   "operation": "PostRefunds",
+   "path": "charge",
+   "held": [
+    {
+     "kind": "id",
+     "probe": "isolated/fraudulent"
+    }
+   ]
+  },
+  {
+   "object": "refund",
+   "operation": "PostRefunds",
+   "path": "currency",
+   "held": [
+    {
+     "kind": "account",
+     "probe": "enums/1"
+    }
+   ]
+  },
+  {
+   "object": "refund",
+   "operation": "PostRefunds",
+   "path": "metadata",
+   "held": [
+    {
+     "kind": "value",
+     "value": {},
+     "probe": "enums/1"
+    }
+   ]
+  },
+  {
+   "object": "refund",
+   "operation": "PostRefunds",
+   "path": "payment_intent",
+   "held": [
+    {
+     "kind": "id",
+     "probe": "enums/1"
+    }
+   ]
+  },
+  {
+   "object": "setup_intent",
+   "operation": "PostSetupIntents",
+   "path": "automatic_payment_methods.allow_redirects",
+   "held": [
+    {
+     "kind": "value",
+     "value": "always",
+     "probe": "enums/1"
+    }
+   ]
+  },
+  {
+   "object": "setup_intent",
+   "operation": "PostSetupIntents",
+   "path": "automatic_payment_methods.enabled",
+   "held": [
+    {
+     "kind": "value",
+     "value": true,
+     "probe": "enums/1"
+    }
+   ]
+  },
+  {
+   "object": "setup_intent",
+   "operation": "PostSetupIntents",
+   "path": "metadata",
+   "held": [
+    {
+     "kind": "value",
+     "value": {},
+     "probe": "enums/1"
+    }
+   ]
+  },
+  {
+   "object": "setup_intent",
+   "operation": "PostSetupIntents",
+   "path": "payment_method",
+   "held": [
+    {
+     "kind": "id",
+     "probe": "enums/12"
+    }
+   ]
+  },
+  {
+   "object": "setup_intent",
+   "operation": "PostSetupIntents",
+   "path": "payment_method_data.allow_redisplay",
+   "held": [
+    {
+     "kind": "id",
+     "probe": "enums/42"
+    },
+    {
+     "kind": "sent",
+     "probe": "every_field/12"
+    }
+   ]
+  },
+  {
+   "object": "setup_intent",
+   "operation": "PostSetupIntents",
+   "path": "payment_method_data.billing_details.address.city",
+   "held": [
+    {
+     "kind": "id",
+     "probe": "enums/12"
+    },
+    {
+     "kind": "sent",
+     "probe": "every_field/12"
+    }
+   ]
+  },
+  {
+   "object": "setup_intent",
+   "operation": "PostSetupIntents",
+   "path": "payment_method_data.billing_details.address.country",
+   "held": [
+    {
+     "kind": "id",
+     "probe": "enums/12"
+    },
+    {
+     "kind": "sent",
+     "probe": "every_field/12"
+    }
+   ]
+  },
+  {
+   "object": "setup_intent",
+   "operation": "PostSetupIntents",
+   "path": "payment_method_data.billing_details.address.line1",
+   "held": [
+    {
+     "kind": "id",
+     "probe": "enums/12"
+    },
+    {
+     "kind": "sent",
+     "probe": "every_field/12"
+    }
+   ]
+  },
+  {
+   "object": "setup_intent",
+   "operation": "PostSetupIntents",
+   "path": "payment_method_data.billing_details.address.line2",
+   "held": [
+    {
+     "kind": "id",
+     "probe": "enums/12"
+    },
+    {
+     "kind": "sent",
+     "probe": "every_field/12"
+    }
+   ]
+  },
+  {
+   "object": "setup_intent",
+   "operation": "PostSetupIntents",
+   "path": "payment_method_data.billing_details.address.postal_code",
+   "held": [
+    {
+     "kind": "id",
+     "probe": "enums/12"
+    },
+    {
+     "kind": "sent",
+     "probe": "every_field/12"
+    }
+   ]
+  },
+  {
+   "object": "setup_intent",
+   "operation": "PostSetupIntents",
+   "path": "payment_method_data.billing_details.address.state",
+   "held": [
+    {
+     "kind": "id",
+     "probe": "enums/12"
+    },
+    {
+     "kind": "sent",
+     "probe": "every_field/12"
+    }
+   ]
+  },
+  {
+   "object": "setup_intent",
+   "operation": "PostSetupIntents",
+   "path": "payment_method_data.billing_details.email",
+   "held": [
+    {
+     "kind": "id",
+     "probe": "enums/12"
+    },
+    {
+     "kind": "sent",
+     "probe": "every_field/12"
+    }
+   ]
+  },
+  {
+   "object": "setup_intent",
+   "operation": "PostSetupIntents",
+   "path": "payment_method_data.billing_details.name",
+   "held": [
+    {
+     "kind": "sent",
+     "probe": "every_field/12"
+    }
+   ]
+  },
+  {
+   "object": "setup_intent",
+   "operation": "PostSetupIntents",
+   "path": "payment_method_data.billing_details.phone",
+   "held": [
+    {
+     "kind": "id",
+     "probe": "enums/12"
+    },
+    {
+     "kind": "sent",
+     "probe": "every_field/12"
+    }
+   ]
+  },
+  {
+   "object": "setup_intent",
+   "operation": "PostSetupIntents",
+   "path": "payment_method_data.metadata",
+   "held": [
+    {
+     "kind": "id",
+     "probe": "enums/12"
+    },
+    {
+     "kind": "sent",
+     "probe": "every_field/12"
+    }
+   ]
+  },
+  {
+   "object": "setup_intent",
+   "operation": "PostSetupIntents",
+   "path": "payment_method_data.type",
+   "held": [
+    {
+     "kind": "sent",
+     "probe": "every_field/12"
+    }
+   ]
+  },
+  {
+   "object": "setup_intent",
+   "operation": "PostSetupIntents",
+   "path": "usage",
+   "held": [
+    {
+     "kind": "value",
+     "value": "off_session",
+     "probe": "enums/12"
+    }
+   ]
+  },
+  {
+   "object": "shipping_rate",
+   "operation": "PostShippingRates",
+   "path": "fixed_amount.currency_options.amount",
+   "held": [
+    {
+     "kind": "normalised",
+     "probe": "enums/5"
+    }
+   ]
+  },
+  {
+   "object": "shipping_rate",
+   "operation": "PostShippingRates",
+   "path": "fixed_amount.currency_options.tax_behavior",
+   "held": [
+    {
+     "kind": "value",
+     "value": {
+      "eur": "unspecified"
+     },
+     "probe": "minimal/currency_eur"
+    },
+    {
+     "kind": "value",
+     "value": {
+      "eur": "unspecified",
+      "usd": "unspecified"
+     },
+     "probe": "nested_minimal/1"
+    },
+    {
+     "kind": "value",
+     "value": {
+      "usd": "unspecified"
+     },
+     "probe": "enums/5"
+    }
+   ]
+  },
+  {
+   "object": "shipping_rate",
+   "operation": "PostShippingRates",
+   "path": "metadata",
+   "held": [
+    {
+     "kind": "value",
+     "value": {},
+     "probe": "enums/1"
+    }
+   ]
+  },
+  {
+   "object": "shipping_rate",
+   "operation": "PostShippingRates",
+   "path": "tax_behavior",
+   "held": [
+    {
+     "kind": "value",
+     "value": "unspecified",
+     "probe": "enums/3"
+    }
+   ]
+  },
+  {
+   "object": "subscription",
+   "operation": "PostSubscriptions",
+   "path": "automatic_tax.enabled",
+   "held": [
+    {
+     "kind": "value",
+     "value": false,
+     "probe": "enums/1"
+    }
+   ]
+  },
+  {
+   "object": "subscription",
+   "operation": "PostSubscriptions",
+   "path": "automatic_tax.liability.type",
+   "held": [
+    {
+     "kind": "value",
+     "value": "self",
+     "probe": "nested_minimal/7"
+    }
+   ]
+  },
+  {
+   "object": "subscription",
+   "operation": "PostSubscriptions",
+   "path": "billing_cycle_anchor",
+   "held": [
+    {
+     "kind": "time_within",
+     "probe": "every_field/10"
+    },
+    {
+     "kind": "timestamp",
+     "probe": "enums/1"
+    }
+   ]
+  },
+  {
+   "object": "subscription",
+   "operation": "PostSubscriptions",
+   "path": "billing_mode.flexible.proration_discounts",
+   "held": [
+    {
+     "kind": "value",
+     "value": "included",
+     "probe": "enums/1"
+    }
+   ]
+  },
+  {
+   "object": "subscription",
+   "operation": "PostSubscriptions",
+   "path": "billing_mode.type",
+   "held": [
+    {
+     "kind": "value",
+     "value": "flexible",
+     "probe": "enums/1"
+    }
+   ]
+  },
+  {
+   "object": "subscription",
+   "operation": "PostSubscriptions",
+   "path": "billing_schedules.bill_until.duration.interval_count",
+   "held": [
+    {
+     "kind": "value",
+     "value": [
+      1
+     ],
+     "probe": "enums/127"
+    }
+   ]
+  },
+  {
+   "object": "subscription",
+   "operation": "PostSubscriptions",
+   "path": "billing_schedules.bill_until.timestamp",
+   "held": [
+    {
+     "kind": "value",
+     "value": [
+      null
+     ],
+     "probe": "enums/127"
+    }
+   ]
+  },
+  {
+   "object": "subscription",
+   "operation": "PostSubscriptions",
+   "path": "billing_schedules.key",
+   "held": [
+    {
+     "kind": "list",
+     "probe": "enums/127"
+    }
+   ]
+  },
+  {
+   "object": "subscription",
+   "operation": "PostSubscriptions",
+   "path": "cancel_at",
+   "held": [
+    {
+     "kind": "time_within",
+     "probe": "enums/11"
+    }
+   ]
+  },
+  {
+   "object": "subscription",
+   "operation": "PostSubscriptions",
+   "path": "cancel_at_period_end",
+   "held": [
+    {
+     "kind": "value",
+     "value": false,
+     "probe": "enums/1"
+    }
+   ]
+  },
+  {
+   "object": "subscription",
+   "operation": "PostSubscriptions",
+   "path": "collection_method",
+   "held": [
+    {
+     "kind": "value",
+     "value": "charge_automatically",
+     "probe": "enums/1"
+    }
+   ]
+  },
+  {
+   "object": "subscription",
+   "operation": "PostSubscriptions",
+   "path": "currency",
+   "held": [
+    {
+     "kind": "value",
+     "value": "aud",
+     "probe": "enums/137"
+    },
+    {
+     "kind": "value",
+     "value": "brl",
+     "probe": "enums/138"
+    },
+    {
+     "kind": "value",
+     "value": "eur",
+     "probe": "enums/134"
+    },
+    {
+     "kind": "value",
+     "value": "inr",
+     "probe": "enums/139"
+    },
+    {
+     "kind": "value",
+     "value": "pln",
+     "probe": "every_field/34"
+    },
+    {
+     "kind": "value",
+     "value": "usd",
+     "probe": "enums/1"
+    }
+   ]
+  },
+  {
+   "object": "subscription",
+   "operation": "PostSubscriptions",
+   "path": "customer",
+   "held": [
+    {
+     "kind": "id",
+     "probe": "minimal/customer_account"
+    }
+   ]
+  },
+  {
+   "object": "subscription",
+   "operation": "PostSubscriptions",
+   "path": "invoice_settings.issuer.account",
+   "held": [
+    {
+     "kind": "ref",
+     "probe": "every_field/19"
+    }
+   ]
+  },
+  {
+   "object": "subscription",
+   "operation": "PostSubscriptions",
+   "path": "invoice_settings.issuer.type",
+   "held": [
+    {
+     "kind": "value",
+     "value": "account",
+     "probe": "every_field/19"
+    },
+    {
+     "kind": "value",
+     "value": "self",
+     "probe": "enums/1"
+    }
+   ]
+  },
+  {
+   "object": "subscription",
+   "operation": "PostSubscriptions",
+   "path": "items.price_data.currency",
+   "held": [
+    {
+     "kind": "sent",
+     "probe": "enums/1"
+    }
+   ]
+  },
+  {
+   "object": "subscription",
+   "operation": "PostSubscriptions",
+   "path": "items.price_data.product",
+   "held": [
+    {
+     "kind": "sent",
+     "probe": "enums/1"
+    }
+   ]
+  },
+  {
+   "object": "subscription",
+   "operation": "PostSubscriptions",
+   "path": "items.price_data.recurring.interval",
+   "held": [
+    {
+     "kind": "sent",
+     "probe": "enums/1"
+    }
+   ]
+  },
+  {
+   "object": "subscription",
+   "operation": "PostSubscriptions",
+   "path": "items.price_data.recurring.interval_count",
+   "held": [
+    {
+     "kind": "sent",
+     "probe": "enums/1"
+    }
+   ]
+  },
+  {
+   "object": "subscription",
+   "operation": "PostSubscriptions",
+   "path": "items.price_data.tax_behavior",
+   "held": [
+    {
+     "kind": "sent",
+     "probe": "enums/1"
+    }
+   ]
+  },
+  {
+   "object": "subscription",
+   "operation": "PostSubscriptions",
+   "path": "items.price_data.unit_amount",
+   "held": [
+    {
+     "kind": "sent",
+     "probe": "enums/1"
+    }
+   ]
+  },
+  {
+   "object": "subscription",
+   "operation": "PostSubscriptions",
+   "path": "items.price_data.unit_amount_decimal",
+   "held": [
+    {
+     "kind": "sent",
+     "probe": "enums/1"
+    }
+   ]
+  },
+  {
+   "object": "subscription",
+   "operation": "PostSubscriptions",
+   "path": "metadata",
+   "held": [
+    {
+     "kind": "value",
+     "value": {},
+     "probe": "enums/1"
+    }
+   ]
+  },
+  {
+   "object": "subscription",
+   "operation": "PostSubscriptions",
+   "path": "payment_settings.save_default_payment_method",
+   "held": [
+    {
+     "kind": "value",
+     "value": "off",
+     "probe": "enums/100"
+    }
+   ]
+  },
+  {
+   "object": "subscription",
+   "operation": "PostSubscriptions",
+   "path": "pending_invoice_item_interval.interval_count",
+   "held": [
+    {
+     "kind": "value",
+     "value": 1,
+     "probe": "enums/1"
+    }
+   ]
+  },
+  {
+   "object": "subscription",
+   "operation": "PostSubscriptions",
+   "path": "trial_end",
+   "held": [
+    {
+     "kind": "time_within",
+     "probe": "minimal/trial"
+    }
+   ]
+  },
+  {
+   "object": "subscription",
+   "operation": "PostSubscriptions",
+   "path": "trial_settings.end_behavior.billing_cycle_anchor",
+   "held": [
+    {
+     "kind": "value",
+     "value": "now",
+     "probe": "enums/1"
+    }
+   ]
+  },
+  {
+   "object": "subscription",
+   "operation": "PostSubscriptions",
+   "path": "trial_settings.end_behavior.missing_payment_method",
+   "held": [
+    {
+     "kind": "value",
+     "value": "create_invoice",
+     "probe": "enums/1"
+    }
+   ]
+  },
+  {
+   "object": "subscription_item",
+   "operation": "PostSubscriptionItems",
+   "path": "metadata",
+   "held": [
+    {
+     "kind": "value",
+     "value": {},
+     "probe": "enums/1"
+    }
+   ]
+  },
+  {
+   "object": "subscription_item",
+   "operation": "PostSubscriptionItems",
+   "path": "price_data.currency",
+   "held": [
+    {
+     "kind": "sent",
+     "probe": "enums/1"
+    }
+   ]
+  },
+  {
+   "object": "subscription_item",
+   "operation": "PostSubscriptionItems",
+   "path": "price_data.product",
+   "held": [
+    {
+     "kind": "sent",
+     "probe": "enums/1"
+    }
+   ]
+  },
+  {
+   "object": "subscription_item",
+   "operation": "PostSubscriptionItems",
+   "path": "price_data.recurring.interval",
+   "held": [
+    {
+     "kind": "sent",
+     "probe": "enums/1"
+    }
+   ]
+  },
+  {
+   "object": "subscription_item",
+   "operation": "PostSubscriptionItems",
+   "path": "price_data.recurring.interval_count",
+   "held": [
+    {
+     "kind": "sent",
+     "probe": "enums/1"
+    }
+   ]
+  },
+  {
+   "object": "subscription_item",
+   "operation": "PostSubscriptionItems",
+   "path": "price_data.tax_behavior",
+   "held": [
+    {
+     "kind": "sent",
+     "probe": "enums/1"
+    }
+   ]
+  },
+  {
+   "object": "subscription_item",
+   "operation": "PostSubscriptionItems",
+   "path": "price_data.unit_amount",
+   "held": [
+    {
+     "kind": "sent",
+     "probe": "enums/1"
+    }
+   ]
+  },
+  {
+   "object": "subscription_item",
+   "operation": "PostSubscriptionItems",
+   "path": "price_data.unit_amount_decimal",
+   "held": [
+    {
+     "kind": "sent",
+     "probe": "enums/1"
+    }
+   ]
+  },
+  {
+   "object": "subscription_item",
+   "operation": "PostSubscriptionItems",
+   "path": "quantity",
+   "held": [
+    {
+     "kind": "value",
+     "value": 1,
+     "probe": "enums/1"
+    }
+   ]
+  },
+  {
+   "object": "subscription_schedule",
+   "operation": "PostSubscriptionSchedules",
+   "path": "billing_mode.flexible.proration_discounts",
+   "held": [
+    {
+     "kind": "value",
+     "value": "included",
+     "probe": "enums/1"
+    }
+   ]
+  },
+  {
+   "object": "subscription_schedule",
+   "operation": "PostSubscriptionSchedules",
+   "path": "billing_mode.type",
+   "held": [
+    {
+     "kind": "value",
+     "value": "flexible",
+     "probe": "enums/1"
+    }
+   ]
+  },
+  {
+   "object": "subscription_schedule",
+   "operation": "PostSubscriptionSchedules",
+   "path": "customer",
+   "held": [
+    {
+     "kind": "id",
+     "probe": "minimal/customer_account"
+    },
+    {
+     "kind": "ref",
+     "probe": "minimal/from_subscription"
+    }
+   ]
+  },
+  {
+   "object": "subscription_schedule",
+   "operation": "PostSubscriptionSchedules",
+   "path": "default_settings.automatic_tax.enabled",
+   "held": [
+    {
+     "kind": "value",
+     "value": false,
+     "probe": "enums/1"
+    }
+   ]
+  },
+  {
+   "object": "subscription_schedule",
+   "operation": "PostSubscriptionSchedules",
+   "path": "default_settings.automatic_tax.liability.type",
+   "held": [
+    {
+     "kind": "value",
+     "value": "self",
+     "probe": "nested_minimal/5"
+    }
+   ]
+  },
+  {
+   "object": "subscription_schedule",
+   "operation": "PostSubscriptionSchedules",
+   "path": "default_settings.billing_cycle_anchor",
+   "held": [
+    {
+     "kind": "value",
+     "value": "automatic",
+     "probe": "enums/12"
+    }
+   ]
+  },
+  {
+   "object": "subscription_schedule",
+   "operation": "PostSubscriptionSchedules",
+   "path": "default_settings.collection_method",
+   "held": [
+    {
+     "kind": "value",
+     "value": "charge_automatically",
+     "probe": "enums/12"
+    }
+   ]
+  },
+  {
+   "object": "subscription_schedule",
+   "operation": "PostSubscriptionSchedules",
+   "path": "default_settings.invoice_settings.issuer.account",
+   "held": [
+    {
+     "kind": "ref",
+     "probe": "every_field/11"
+    }
+   ]
+  },
+  {
+   "object": "subscription_schedule",
+   "operation": "PostSubscriptionSchedules",
+   "path": "default_settings.invoice_settings.issuer.type",
+   "held": [
+    {
+     "kind": "value",
+     "value": "account",
+     "probe": "every_field/11"
+    },
+    {
+     "kind": "value",
+     "value": "self",
+     "probe": "enums/1"
+    }
+   ]
+  },
+  {
+   "object": "subscription_schedule",
+   "operation": "PostSubscriptionSchedules",
+   "path": "end_behavior",
+   "held": [
+    {
+     "kind": "value",
+     "value": "release",
+     "probe": "enums/1"
+    }
+   ]
+  },
+  {
+   "object": "subscription_schedule",
+   "operation": "PostSubscriptionSchedules",
+   "path": "metadata",
+   "held": [
+    {
+     "kind": "value",
+     "value": {},
+     "probe": "enums/1"
+    }
+   ]
+  },
+  {
+   "object": "subscription_schedule",
+   "operation": "PostSubscriptionSchedules",
+   "path": "pause_schedules.key",
+   "held": [
+    {
+     "kind": "list",
+     "probe": "enums/12"
+    }
+   ]
+  },
+  {
+   "object": "subscription_schedule",
+   "operation": "PostSubscriptionSchedules",
+   "path": "pause_schedules.pause.settings.bill_for.outstanding_usage_through.type",
+   "held": [
+    {
+     "kind": "value",
+     "value": [
+      "pause_at"
+     ],
+     "probe": "enums/13"
+    }
+   ]
+  },
+  {
+   "object": "subscription_schedule",
+   "operation": "PostSubscriptionSchedules",
+   "path": "pause_schedules.pause.settings.bill_for.unused_time_from.type",
+   "held": [
+    {
+     "kind": "value",
+     "value": [
+      "pause_at"
+     ],
+     "probe": "enums/12"
+    }
+   ]
+  },
+  {
+   "object": "subscription_schedule",
+   "operation": "PostSubscriptionSchedules",
+   "path": "pause_schedules.pause.settings.invoicing_behavior",
+   "held": [
+    {
+     "kind": "value",
+     "value": [
+      "pending_invoice_item"
+     ],
+     "probe": "enums/12"
+    }
+   ]
+  },
+  {
+   "object": "subscription_schedule",
+   "operation": "PostSubscriptionSchedules",
+   "path": "pause_schedules.pause.settings.type",
+   "held": [
+    {
+     "kind": "value",
+     "value": [
+      "subscription"
+     ],
+     "probe": "enums/12"
+    }
+   ]
+  },
+  {
+   "object": "subscription_schedule",
+   "operation": "PostSubscriptionSchedules",
+   "path": "pause_schedules.resume.settings.billing_cycle_anchor",
+   "held": [
+    {
+     "kind": "value",
+     "value": [
+      "resume_at"
+     ],
+     "probe": "enums/12"
+    }
+   ]
+  },
+  {
+   "object": "subscription_schedule",
+   "operation": "PostSubscriptionSchedules",
+   "path": "pause_schedules.resume.settings.payment_behavior",
+   "held": [
+    {
+     "kind": "value",
+     "value": [
+      "resume_on_payment_success"
+     ],
+     "probe": "enums/12"
+    }
+   ]
+  },
+  {
+   "object": "subscription_schedule",
+   "operation": "PostSubscriptionSchedules",
+   "path": "pause_schedules.resume.settings.proration_behavior",
+   "held": [
+    {
+     "kind": "value",
+     "value": [
+      "create_prorations"
+     ],
+     "probe": "enums/12"
+    }
+   ]
+  },
+  {
+   "object": "subscription_schedule",
+   "operation": "PostSubscriptionSchedules",
+   "path": "phases.add_invoice_items.discountable",
+   "held": [
+    {
+     "kind": "value",
+     "value": [
+      [
+       true
+      ]
+     ],
+     "probe": "every_field/21"
+    }
+   ]
+  },
+  {
+   "object": "subscription_schedule",
+   "operation": "PostSubscriptionSchedules",
+   "path": "phases.add_invoice_items.discounts.coupon",
+   "held": [
+    {
+     "kind": "value",
+     "value": [
+      [
+       [
+        null
+       ]
+      ]
+     ],
+     "probe": "every_field/23"
+    }
+   ]
+  },
+  {
+   "object": "subscription_schedule",
+   "operation": "PostSubscriptionSchedules",
+   "path": "phases.add_invoice_items.discounts.discount",
+   "held": [
+    {
+     "kind": "value",
+     "value": [
+      [
+       [
+        null
+       ]
+      ]
+     ],
+     "probe": "every_field/21"
+    }
+   ]
+  },
+  {
+   "object": "subscription_schedule",
+   "operation": "PostSubscriptionSchedules",
+   "path": "phases.add_invoice_items.discounts.promotion_code",
+   "held": [
+    {
+     "kind": "value",
+     "value": [
+      [
+       [
+        null
+       ]
+      ]
+     ],
+     "probe": "every_field/21"
+    }
+   ]
+  },
+  {
+   "object": "subscription_schedule",
+   "operation": "PostSubscriptionSchedules",
+   "path": "phases.add_invoice_items.metadata",
+   "held": [
+    {
+     "kind": "value",
+     "value": [
+      [
+       {}
+      ]
+     ],
+     "probe": "every_field/21"
+    }
+   ]
+  },
+  {
+   "object": "subscription_schedule",
+   "operation": "PostSubscriptionSchedules",
+   "path": "phases.add_invoice_items.period.end.type",
+   "held": [
+    {
+     "kind": "value",
+     "value": [
+      [
+       "min_item_period_end"
+      ]
+     ],
+     "probe": "every_field/21"
+    }
+   ]
+  },
+  {
+   "object": "subscription_schedule",
+   "operation": "PostSubscriptionSchedules",
+   "path": "phases.add_invoice_items.period.start.type",
+   "held": [
+    {
+     "kind": "value",
+     "value": [
+      [
+       "max_item_period_start"
+      ]
+     ],
+     "probe": "every_field/21"
+    }
+   ]
+  },
+  {
+   "object": "subscription_schedule",
+   "operation": "PostSubscriptionSchedules",
+   "path": "phases.add_invoice_items.price",
+   "held": [
+    {
+     "kind": "list",
+     "probe": "every_field/25"
+    }
+   ]
+  },
+  {
+   "object": "subscription_schedule",
+   "operation": "PostSubscriptionSchedules",
+   "path": "phases.add_invoice_items.price_data.currency",
+   "held": [
+    {
+     "kind": "list",
+     "probe": "nested_minimal/13"
+    },
+    {
+     "kind": "sent",
+     "probe": "every_field/21"
+    }
+   ]
+  },
+  {
+   "object": "subscription_schedule",
+   "operation": "PostSubscriptionSchedules",
+   "path": "phases.add_invoice_items.price_data.product",
+   "held": [
+    {
+     "kind": "list",
+     "probe": "nested_minimal/13"
+    },
+    {
+     "kind": "sent",
+     "probe": "every_field/21"
+    }
+   ]
+  },
+  {
+   "object": "subscription_schedule",
+   "operation": "PostSubscriptionSchedules",
+   "path": "phases.add_invoice_items.price_data.tax_behavior",
+   "held": [
+    {
+     "kind": "list",
+     "probe": "every_field/29"
+    },
+    {
+     "kind": "sent",
+     "probe": "every_field/21"
+    }
+   ]
+  },
+  {
+   "object": "subscription_schedule",
+   "operation": "PostSubscriptionSchedules",
+   "path": "phases.add_invoice_items.price_data.unit_amount",
+   "held": [
+    {
+     "kind": "list",
+     "probe": "every_field/29"
+    },
+    {
+     "kind": "sent",
+     "probe": "every_field/21"
+    }
+   ]
+  },
+  {
+   "object": "subscription_schedule",
+   "operation": "PostSubscriptionSchedules",
+   "path": "phases.add_invoice_items.price_data.unit_amount_decimal",
+   "held": [
+    {
+     "kind": "list",
+     "probe": "every_field/25"
+    },
+    {
+     "kind": "sent",
+     "probe": "every_field/21"
+    }
+   ]
+  },
+  {
+   "object": "subscription_schedule",
+   "operation": "PostSubscriptionSchedules",
+   "path": "phases.add_invoice_items.quantity",
+   "held": [
+    {
+     "kind": "value",
+     "value": [
+      [
+       1
+      ]
+     ],
+     "probe": "every_field/21"
+    }
+   ]
+  },
+  {
+   "object": "subscription_schedule",
+   "operation": "PostSubscriptionSchedules",
+   "path": "phases.application_fee_percent",
+   "held": [
+    {
+     "kind": "value",
+     "value": [
+      null
+     ],
+     "probe": "enums/1"
+    }
+   ]
+  },
+  {
+   "object": "subscription_schedule",
+   "operation": "PostSubscriptionSchedules",
+   "path": "phases.automatic_tax.enabled",
+   "held": [
+    {
+     "kind": "value",
+     "value": [
+      false
+     ],
+     "probe": "minimal/from_subscription"
+    }
+   ]
+  },
+  {
+   "object": "subscription_schedule",
+   "operation": "PostSubscriptionSchedules",
+   "path": "phases.automatic_tax.liability.type",
+   "held": [
+    {
+     "kind": "value",
+     "value": [
+      "self"
+     ],
+     "probe": "nested_minimal/12"
+    }
+   ]
+  },
+  {
+   "object": "subscription_schedule",
+   "operation": "PostSubscriptionSchedules",
+   "path": "phases.billing_cycle_anchor",
+   "held": [
+    {
+     "kind": "value",
+     "value": [
+      null
+     ],
+     "probe": "enums/1"
+    }
+   ]
+  },
+  {
+   "object": "subscription_schedule",
+   "operation": "PostSubscriptionSchedules",
+   "path": "phases.collection_method",
+   "held": [
+    {
+     "kind": "value",
+     "value": [
+      null
+     ],
+     "probe": "enums/1"
+    }
+   ]
+  },
+  {
+   "object": "subscription_schedule",
+   "operation": "PostSubscriptionSchedules",
+   "path": "phases.currency",
+   "held": [
+    {
+     "kind": "value",
+     "value": [
+      "eur"
+     ],
+     "probe": "minimal/price_eur"
+    },
+    {
+     "kind": "value",
+     "value": [
+      "usd"
+     ],
+     "probe": "enums/1"
+    }
+   ]
+  },
+  {
+   "object": "subscription_schedule",
+   "operation": "PostSubscriptionSchedules",
+   "path": "phases.default_payment_method",
+   "held": [
+    {
+     "kind": "value",
+     "value": [
+      null
+     ],
+     "probe": "enums/1"
+    }
+   ]
+  },
+  {
+   "object": "subscription_schedule",
+   "operation": "PostSubscriptionSchedules",
+   "path": "phases.description",
+   "held": [
+    {
+     "kind": "value",
+     "value": [
+      null
+     ],
+     "probe": "enums/1"
+    }
+   ]
+  },
+  {
+   "object": "subscription_schedule",
+   "operation": "PostSubscriptionSchedules",
+   "path": "phases.discounts.coupon",
+   "held": [
+    {
+     "kind": "value",
+     "value": [
+      [
+       null
+      ]
+     ],
+     "probe": "every_field/17"
+    }
+   ]
+  },
+  {
+   "object": "subscription_schedule",
+   "operation": "PostSubscriptionSchedules",
+   "path": "phases.discounts.discount",
+   "held": [
+    {
+     "kind": "value",
+     "value": [
+      [
+       null
+      ]
+     ],
+     "probe": "every_field/15"
+    }
+   ]
+  },
+  {
+   "object": "subscription_schedule",
+   "operation": "PostSubscriptionSchedules",
+   "path": "phases.discounts.promotion_code",
+   "held": [
+    {
+     "kind": "value",
+     "value": [
+      [
+       null
+      ]
+     ],
+     "probe": "every_field/15"
+    }
+   ]
+  },
+  {
+   "object": "subscription_schedule",
+   "operation": "PostSubscriptionSchedules",
+   "path": "phases.end_date",
+   "held": [
+    {
+     "kind": "time_within",
+     "probe": "enums/1"
+    }
+   ]
+  },
+  {
+   "object": "subscription_schedule",
+   "operation": "PostSubscriptionSchedules",
+   "path": "phases.invoice_settings.account_tax_ids",
+   "held": [
+    {
+     "kind": "value",
+     "value": [
+      null
+     ],
+     "probe": "every_field/12"
+    }
+   ]
+  },
+  {
+   "object": "subscription_schedule",
+   "operation": "PostSubscriptionSchedules",
+   "path": "phases.invoice_settings.days_until_due",
+   "held": [
+    {
+     "kind": "value",
+     "value": [
+      null
+     ],
+     "probe": "every_field/12"
+    }
+   ]
+  },
+  {
+   "object": "subscription_schedule",
+   "operation": "PostSubscriptionSchedules",
+   "path": "phases.invoice_settings.description",
+   "held": [
+    {
+     "kind": "value",
+     "value": [
+      null
+     ],
+     "probe": "every_field/12"
+    }
+   ]
+  },
+  {
+   "object": "subscription_schedule",
+   "operation": "PostSubscriptionSchedules",
+   "path": "phases.invoice_settings.footer",
+   "held": [
+    {
+     "kind": "value",
+     "value": [
+      null
+     ],
+     "probe": "every_field/12"
+    }
+   ]
+  },
+  {
+   "object": "subscription_schedule",
+   "operation": "PostSubscriptionSchedules",
+   "path": "phases.invoice_settings.issuer.account",
+   "held": [
+    {
+     "kind": "list",
+     "probe": "every_field/14"
+    }
+   ]
+  },
+  {
+   "object": "subscription_schedule",
+   "operation": "PostSubscriptionSchedules",
+   "path": "phases.invoice_settings.issuer.type",
+   "held": [
+    {
+     "kind": "value",
+     "value": [
+      "account"
+     ],
+     "probe": "every_field/14"
+    }
+   ]
+  },
+  {
+   "object": "subscription_schedule",
+   "operation": "PostSubscriptionSchedules",
+   "path": "phases.items.discounts.coupon",
+   "held": [
+    {
+     "kind": "value",
+     "value": [
+      [
+       [
+        null
+       ]
+      ]
+     ],
+     "probe": "every_field/20"
+    }
+   ]
+  },
+  {
+   "object": "subscription_schedule",
+   "operation": "PostSubscriptionSchedules",
+   "path": "phases.items.discounts.discount",
+   "held": [
+    {
+     "kind": "value",
+     "value": [
+      [
+       [
+        null
+       ]
+      ]
+     ],
+     "probe": "every_field/18"
+    }
+   ]
+  },
+  {
+   "object": "subscription_schedule",
+   "operation": "PostSubscriptionSchedules",
+   "path": "phases.items.discounts.promotion_code",
+   "held": [
+    {
+     "kind": "value",
+     "value": [
+      [
+       [
+        null
+       ]
+      ]
+     ],
+     "probe": "every_field/18"
+    }
+   ]
+  },
+  {
+   "object": "subscription_schedule",
+   "operation": "PostSubscriptionSchedules",
+   "path": "phases.items.metadata",
+   "held": [
+    {
+     "kind": "value",
+     "value": [
+      [
+       {}
+      ]
+     ],
+     "probe": "enums/1"
+    }
+   ]
+  },
+  {
+   "object": "subscription_schedule",
+   "operation": "PostSubscriptionSchedules",
+   "path": "phases.items.price",
+   "held": [
+    {
+     "kind": "list",
+     "probe": "enums/49"
+    }
+   ]
+  },
+  {
+   "object": "subscription_schedule",
+   "operation": "PostSubscriptionSchedules",
+   "path": "phases.items.price_data.currency",
+   "held": [
+    {
+     "kind": "list",
+     "probe": "minimal/from_subscription"
+    },
+    {
+     "kind": "sent",
+     "probe": "enums/1"
+    }
+   ]
+  },
+  {
+   "object": "subscription_schedule",
+   "operation": "PostSubscriptionSchedules",
+   "path": "phases.items.price_data.product",
+   "held": [
+    {
+     "kind": "list",
+     "probe": "minimal/from_subscription"
+    },
+    {
+     "kind": "sent",
+     "probe": "enums/1"
+    }
+   ]
+  },
+  {
+   "object": "subscription_schedule",
+   "operation": "PostSubscriptionSchedules",
+   "path": "phases.items.price_data.recurring.interval",
+   "held": [
+    {
+     "kind": "list",
+     "probe": "minimal/from_subscription"
+    },
+    {
+     "kind": "sent",
+     "probe": "enums/1"
+    }
+   ]
+  },
+  {
+   "object": "subscription_schedule",
+   "operation": "PostSubscriptionSchedules",
+   "path": "phases.items.price_data.recurring.interval_count",
+   "held": [
+    {
+     "kind": "list",
+     "probe": "enums/49"
+    },
+    {
+     "kind": "sent",
+     "probe": "enums/1"
+    }
+   ]
+  },
+  {
+   "object": "subscription_schedule",
+   "operation": "PostSubscriptionSchedules",
+   "path": "phases.items.price_data.tax_behavior",
+   "held": [
+    {
+     "kind": "list",
+     "probe": "enums/49"
+    },
+    {
+     "kind": "sent",
+     "probe": "enums/1"
+    }
+   ]
+  },
+  {
+   "object": "subscription_schedule",
+   "operation": "PostSubscriptionSchedules",
+   "path": "phases.items.price_data.unit_amount",
+   "held": [
+    {
+     "kind": "list",
+     "probe": "every_field/28"
+    },
+    {
+     "kind": "sent",
+     "probe": "enums/1"
+    }
+   ]
+  },
+  {
+   "object": "subscription_schedule",
+   "operation": "PostSubscriptionSchedules",
+   "path": "phases.items.price_data.unit_amount_decimal",
+   "held": [
+    {
+     "kind": "list",
+     "probe": "enums/49"
+    },
+    {
+     "kind": "sent",
+     "probe": "enums/1"
+    }
+   ]
+  },
+  {
+   "object": "subscription_schedule",
+   "operation": "PostSubscriptionSchedules",
+   "path": "phases.items.quantity",
+   "held": [
+    {
+     "kind": "value",
+     "value": [
+      [
+       1
+      ]
+     ],
+     "probe": "enums/1"
+    }
+   ]
+  },
+  {
+   "object": "subscription_schedule",
+   "operation": "PostSubscriptionSchedules",
+   "path": "phases.metadata",
+   "held": [
+    {
+     "kind": "value",
+     "value": [
+      {}
+     ],
+     "probe": "enums/1"
+    }
+   ]
+  },
+  {
+   "object": "subscription_schedule",
+   "operation": "PostSubscriptionSchedules",
+   "path": "phases.on_behalf_of",
+   "held": [
+    {
+     "kind": "value",
+     "value": [
+      null
+     ],
+     "probe": "enums/1"
+    }
+   ]
+  },
+  {
+   "object": "subscription_schedule",
+   "operation": "PostSubscriptionSchedules",
+   "path": "phases.proration_behavior",
+   "held": [
+    {
+     "kind": "value",
+     "value": [
+      "create_prorations"
+     ],
+     "probe": "enums/1"
+    }
+   ]
+  },
+  {
+   "object": "subscription_schedule",
+   "operation": "PostSubscriptionSchedules",
+   "path": "phases.transfer_data.amount_percent",
+   "held": [
+    {
+     "kind": "value",
+     "value": [
+      null
+     ],
+     "probe": "every_field/27"
+    }
+   ]
+  },
+  {
+   "object": "subscription_schedule",
+   "operation": "PostSubscriptionSchedules",
+   "path": "phases.trial_end",
+   "held": [
+    {
+     "kind": "time_within",
+     "probe": "every_field/6"
+    },
+    {
+     "kind": "value",
+     "value": [
+      null
+     ],
+     "probe": "enums/1"
+    }
+   ]
+  },
+  {
+   "object": "tax.registration",
+   "operation": "PostTaxRegistrations",
+   "path": "active_from",
+   "held": [
+    {
+     "kind": "time_within",
+     "probe": "enums/1"
+    }
+   ]
+  },
+  {
+   "object": "tax_id",
+   "operation": "PostTaxIds",
+   "path": "owner.type",
+   "held": [
+    {
+     "kind": "value",
+     "value": "self",
+     "probe": "enums/103"
+    }
+   ]
+  },
+  {
+   "object": "tax_rate",
+   "operation": "PostTaxRates",
+   "path": "active",
+   "held": [
+    {
+     "kind": "value",
+     "value": true,
+     "probe": "enums/1"
+    }
+   ]
+  },
+  {
+   "object": "tax_rate",
+   "operation": "PostTaxRates",
+   "path": "metadata",
+   "held": [
+    {
+     "kind": "value",
+     "value": {},
+     "probe": "enums/1"
+    }
+   ]
+  },
+  {
+   "object": "terminal.configuration",
+   "operation": "PostTerminalConfigurations",
+   "path": "name",
+   "held": [
+    {
+     "kind": "value",
+     "value": "",
+     "probe": "every_field/2"
+    }
+   ]
+  },
+  {
+   "object": "terminal.location",
+   "operation": "PostTerminalLocations",
+   "path": "address.line2",
+   "held": [
+    {
+     "kind": "value",
+     "value": "",
+     "probe": "minimal"
+    }
+   ]
+  },
+  {
+   "object": "terminal.location",
+   "operation": "PostTerminalLocations",
+   "path": "metadata",
+   "held": [
+    {
+     "kind": "value",
+     "value": {},
+     "probe": "minimal"
+    }
+   ]
+  },
+  {
+   "object": "terminal.reader",
+   "operation": "PostTerminalReaders",
+   "path": "label",
+   "held": [
+    {
+     "kind": "url",
+     "probe": "minimal"
+    }
+   ]
+  },
+  {
+   "object": "terminal.reader",
+   "operation": "PostTerminalReaders",
+   "path": "metadata",
+   "held": [
+    {
+     "kind": "value",
+     "value": {},
+     "probe": "minimal"
+    }
+   ]
+  },
+  {
+   "object": "topup",
+   "operation": "PostTopups",
+   "path": "metadata",
+   "held": [
+    {
+     "kind": "value",
+     "value": {},
+     "probe": "every_field/2"
+    }
+   ]
+  },
+  {
+   "object": "topup",
+   "operation": "PostTopups",
+   "path": "payment_method",
+   "held": [
+    {
+     "kind": "id",
+     "probe": "minimal"
+    }
+   ]
+  },
+  {
+   "object": "topup",
+   "operation": "PostTopups",
+   "path": "payment_method_options.us_bank_account.network",
+   "held": [
+    {
+     "kind": "value",
+     "value": "ach",
+     "probe": "minimal"
+    }
+   ]
+  },
+  {
+   "object": "transfer",
+   "operation": "PostTransfers",
+   "path": "metadata",
+   "held": [
+    {
+     "kind": "value",
+     "value": {},
+     "probe": "enums/1"
+    }
+   ]
+  },
+  {
+   "object": "transfer",
+   "operation": "PostTransfers",
+   "path": "source_type",
+   "held": [
+    {
+     "kind": "value",
+     "value": "card",
+     "probe": "every_field/1"
+    }
+   ]
+  },
+  {
+   "object": "transfer",
+   "operation": "PostTransfers",
+   "path": "transfer_group",
+   "held": [
+    {
+     "kind": "ref",
+     "probe": "every_field/2"
+    }
+   ]
+  },
+  {
+   "object": "transfer_reversal",
+   "operation": "PostTransfersIdReversals",
+   "path": "amount",
+   "held": [
+    {
+     "kind": "value",
+     "value": 100,
+     "probe": "minimal"
+    }
+   ]
+  },
+  {
+   "object": "transfer_reversal",
+   "operation": "PostTransfersIdReversals",
+   "path": "metadata",
+   "held": [
+    {
+     "kind": "value",
+     "value": {},
+     "probe": "minimal"
+    }
+   ]
+  },
+  {
+   "object": "treasury.financial_account",
+   "operation": "PostTreasuryFinancialAccounts",
+   "path": "metadata",
+   "held": [
+    {
+     "kind": "value",
+     "value": {},
+     "probe": "enums/1"
+    }
+   ]
+  },
+  {
+   "object": "treasury.financial_account",
+   "operation": "PostTreasuryFinancialAccounts",
+   "path": "platform_restrictions.inbound_flows",
+   "held": [
+    {
+     "kind": "value",
+     "value": "unrestricted",
+     "probe": "enums/2"
+    }
+   ]
+  },
+  {
+   "object": "treasury.financial_account",
+   "operation": "PostTreasuryFinancialAccounts",
+   "path": "platform_restrictions.outbound_flows",
+   "held": [
+    {
+     "kind": "value",
+     "value": "unrestricted",
+     "probe": "enums/2"
+    }
+   ]
+  },
+  {
+   "object": "v2.core.account",
+   "operation": "PostV2CoreAccounts",
+   "path": "defaults.currency",
+   "held": [
+    {
+     "kind": "value",
+     "value": "gbp",
+     "probe": "minimal/uk_identity"
+    },
+    {
+     "kind": "value",
+     "value": "usd",
+     "probe": "enums/1"
+    }
+   ]
+  },
+  {
+   "object": "v2.core.account",
+   "operation": "PostV2CoreAccounts",
+   "path": "defaults.locales",
+   "held": [
+    {
+     "kind": "value",
+     "value": [],
+     "probe": "enums/1"
+    }
+   ]
+  },
+  {
+   "object": "v2.core.account",
+   "operation": "PostV2CoreAccounts",
+   "path": "metadata",
+   "held": [
+    {
+     "kind": "value",
+     "value": {},
+     "probe": "enums/1"
+    }
+   ]
+  },
+  {
+   "object": "v2.core.account_person",
+   "operation": "PostV2CoreAccountsAccountIdPersons",
+   "path": "metadata",
+   "held": [
+    {
+     "kind": "value",
+     "value": {},
+     "probe": "enums/1"
+    }
+   ]
+  },
+  {
+   "object": "v2.core.account_person",
+   "operation": "PostV2CoreAccountsAccountIdPersons",
+   "path": "nationalities",
+   "held": [
+    {
+     "kind": "value",
+     "value": [],
+     "probe": "enums/1"
+    }
+   ]
+  },
+  {
+   "object": "v2.core.event_destination",
+   "operation": "PostV2CoreEventDestinations",
+   "path": "description",
+   "held": [
+    {
+     "kind": "value",
+     "value": "",
+     "probe": "minimal"
+    }
+   ]
+  },
+  {
+   "object": "v2.core.event_destination",
+   "operation": "PostV2CoreEventDestinations",
+   "path": "events_from",
+   "held": [
+    {
+     "kind": "value",
+     "value": [
+      "@self"
+     ],
+     "probe": "minimal"
+    }
+   ]
+  },
+  {
+   "object": "v2.core.event_destination",
+   "operation": "PostV2CoreEventDestinations",
+   "path": "metadata",
+   "held": [
+    {
+     "kind": "value",
+     "value": {},
+     "probe": "minimal"
+    }
+   ]
+  },
+  {
+   "object": "webhook_endpoint",
+   "operation": "PostWebhookEndpoints",
+   "path": "metadata",
+   "held": [
+    {
+     "kind": "value",
+     "value": {},
+     "probe": "enums/1"
+    }
+   ]
+  }
+ ]
+}

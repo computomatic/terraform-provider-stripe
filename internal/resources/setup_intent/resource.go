@@ -28,11 +28,16 @@ var Declaration = engine.Declaration{
 	OnceReturned: []string{"client_secret"},
 	// Stripe reports `attach_to_self` as false when the request leaves it out, turns on
 	// `automatic_payment_methods` on a create with no payment method types (the record's default
-	// of `enabled`, true).
-	ServerDefaulted: []string{"attach_to_self", "automatic_payment_methods"},
+	// of `enabled`, true), and fills `allow_redirects` when the request turns them on without it
+	// (suite: `minimal/automatic`).
+	ServerDefaulted: []string{"attach_to_self", "automatic_payment_methods", "automatic_payment_methods.allow_redirects"},
 	// Stripe answers `payment_method_data` with the method it made (the record's `returned`,
 	// `inline_object`), which `payment_method` then leaves to it.
 	MadeBy: map[string]string{"payment_method": "payment_method_data"},
+	Defaults: map[string]string{
+		// suite: variant `bancontact`, which the resource keeps null
+		"payment_method": "none, or the method Stripe makes from `payment_method_data`, which this attribute does not hold",
+	},
 	// Stripe refuses a change of `attach_to_self` once it is set (suite:
 	// TestSetupIntentAttributes/leaves/request/PostSetupIntentsIntent/attach_to_self), refuses
 	// every `customer_account`, and the suite has not proven `flow_directions`' update.

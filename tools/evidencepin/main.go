@@ -1,7 +1,8 @@
 // Command evidencepin vendors a fake release's `attributes.json` as spec/attributes.json and
-// the conformance suite's evidence record it names as spec/evidence.json, writes their pin,
+// the conformance suite's evidence record it names as spec/evidence.json, digests the suite's
+// observations at that commit into spec/create_probes.json, writes their pin,
 // spec/EVIDENCE_PIN.json, and moves .fake-version to the release. With -verify it fetches
-// both again and fails unless the vendored files, the pin and .fake-version still match them.
+// them again and fails unless the vendored files, the pin and .fake-version still match them.
 // It fetches with `gh`, so it needs read access to both repositories.
 //
 //	evidencepin [-root .] [-fake vX.Y.Z]
@@ -37,6 +38,8 @@ type Pin struct {
 	RunID       int64      `json:"run_id"`
 	Attributes  PinnedFile `json:"attributes"`
 	Evidence    PinnedFile `json:"evidence"`
+	// CreateProbes is the digest of the suite's observations at SuiteRef.
+	CreateProbes PinnedFile `json:"create_probes"`
 }
 
 // PinnedFile is the size and SHA-256 of one vendored file.
@@ -45,11 +48,13 @@ type PinnedFile struct {
 	SHA256 string `json:"sha256"`
 }
 
-// Fetched is a fake release's `attributes.json`, the evidence record it names, and their pin.
+// Fetched is a fake release's `attributes.json`, the evidence record it names, the digest of the
+// suite's observations at that commit, and their pin.
 type Fetched struct {
-	Pin        Pin
-	Attributes []byte
-	Evidence   []byte
+	Pin          Pin
+	Attributes   []byte
+	Evidence     []byte
+	CreateProbes []byte
 }
 
 // gh runs the GitHub CLI and returns its standard output.
@@ -128,17 +133,50 @@ func Fetch(root, fake string, run gh) (*Fetched, error) {
 		return nil, fmt.Errorf("%s of the suite's results branch: %w", path, err)
 	}
 
+	probes, err := fetchCreateProbes(a.SuiteRef, evidence, run)
+	if err != nil {
+		return nil, err
+	}
+
 	return &Fetched{
 		Pin: Pin{
-			FakeVersion: fake,
-			SuiteRef:    a.SuiteRef,
-			RunID:       a.RunID,
-			Attributes:  pinned(attributes),
-			Evidence:    pinned(evidence),
+			FakeVersion:  fake,
+			SuiteRef:     a.SuiteRef,
+			RunID:        a.RunID,
+			Attributes:   pinned(attributes),
+			Evidence:     pinned(evidence),
+			CreateProbes: pinned(probes),
 		},
-		Attributes: attributes,
-		Evidence:   evidence,
+		Attributes:   attributes,
+		Evidence:     evidence,
+		CreateProbes: probes,
 	}, nil
+}
+
+// fetchCreateProbes digests the suite's observation files at the commit the record names.
+func fetchCreateProbes(ref string, evidence []byte, run gh) ([]byte, error) {
+	listing, err := run("api", fmt.Sprintf("repos/%s/contents/observations?ref=%s", suiteRepo, ref))
+	if err != nil {
+		return nil, err
+	}
+	var entries []struct {
+		Name string `json:"name"`
+	}
+	if err := json.Unmarshal(listing, &entries); err != nil {
+		return nil, fmt.Errorf("decode the suite's observations listing: %w", err)
+	}
+	var files [][]byte
+	for _, e := range entries {
+		if !strings.HasSuffix(e.Name, ".json") {
+			continue
+		}
+		data, err := run("api", "-H", "Accept: application/vnd.github.raw", fmt.Sprintf("repos/%s/contents/observations/%s?ref=%s", suiteRepo, e.Name, ref))
+		if err != nil {
+			return nil, err
+		}
+		files = append(files, data)
+	}
+	return evidencecheck.BuildCreateProbes(ref, evidence, files)
 }
 
 // Write fetches the release's files and vendors them with their pin under root. An empty fake
@@ -159,10 +197,11 @@ func Write(root, fake string, run gh) error {
 		return err
 	}
 	for name, data := range map[string][]byte{
-		"spec/attributes.json":   f.Attributes,
-		"spec/evidence.json":     f.Evidence,
-		"spec/EVIDENCE_PIN.json": pin,
-		".fake-version":          []byte(fake + "\n"),
+		"spec/attributes.json":    f.Attributes,
+		"spec/evidence.json":      f.Evidence,
+		"spec/create_probes.json": f.CreateProbes,
+		"spec/EVIDENCE_PIN.json":  pin,
+		".fake-version":           []byte(fake + "\n"),
 	} {
 		if err := os.WriteFile(filepath.Join(root, name), data, 0o644); err != nil {
 			return err
@@ -188,9 +227,10 @@ func Verify(root string, run gh) error {
 	}
 	var stale []string
 	for name, want := range map[string][]byte{
-		"spec/attributes.json":   f.Attributes,
-		"spec/evidence.json":     f.Evidence,
-		"spec/EVIDENCE_PIN.json": pin,
+		"spec/attributes.json":    f.Attributes,
+		"spec/evidence.json":      f.Evidence,
+		"spec/create_probes.json": f.CreateProbes,
+		"spec/EVIDENCE_PIN.json":  pin,
 	} {
 		got, err := os.ReadFile(filepath.Join(root, name))
 		if err != nil && !errors.Is(err, os.ErrNotExist) {

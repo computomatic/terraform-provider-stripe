@@ -264,6 +264,41 @@ func TestAccSubscription_reorderItems(t *testing.T) {
 	})
 }
 
+// A value not known at plan may yet resolve to an item that names its price one way, so the plan
+// passes and the plan Terraform makes at apply decides: `terraform_data`'s `id` is known only then.
+func TestAccSubscription_itemKnownAtApply(t *testing.T) {
+	const (
+		data    = `price_data = { currency = "usd", product = stripe_product.test.id, recurring = { interval = "month" }, unit_amount = 1000 }`
+		toNull  = `terraform_data.late.id != "" ? null : stripe_price.one.id`
+		toPrice = `terraform_data.late.id != "" ? stripe_price.one.id : null`
+	)
+	for name, tc := range map[string]struct {
+		items, input string
+		refused      string
+	}{
+		"an unknown price beside data": {items: `[{ price = ` + toNull + `, ` + data + ` }]`, input: `"late"`},
+		"an unknown element":           {items: `[terraform_data.late.output]`, input: `{ price = stripe_price.one.id }`},
+		"both, known at apply":         {items: `[{ price = ` + toPrice + `, ` + data + ` }]`, input: `"late"`, refused: "sets exactly one"},
+		"neither, known at apply":      {items: `[{ price = ` + toNull + ` }]`, input: `"late"`, refused: "Empty object"},
+	} {
+		t.Run(name, func(t *testing.T) {
+			acct := acctest.NewAccount(t)
+			cfg := subscriptionConfig(acct, tc.items, "") + fmt.Sprintf(`
+resource "terraform_data" "late" {
+  input = %s
+}
+`, tc.input)
+			steps := []resource.TestStep{{Config: cfg}}
+			if tc.refused != "" {
+				steps[0].ExpectError = regexp.MustCompile(tc.refused)
+			} else {
+				steps = append(steps, resource.TestStep{Config: cfg, PlanOnly: true})
+			}
+			resource.ParallelTest(t, resource.TestCase{ProtoV6ProviderFactories: tfacc.ProviderFactories, Steps: steps})
+		})
+	}
+}
+
 // An item that sets price_data has no price in the plan: adding one on update keeps the item
 // Stripe creates in the state, and changing its data replaces the item.
 func TestAccSubscription_priceDataItems(t *testing.T) {

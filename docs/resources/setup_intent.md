@@ -51,7 +51,7 @@ The following arguments are optional:
 * `flow_directions` - (Optional) Indicates the directions of money movement for which this payment method is intended to be used. Include `inbound` if you intend to use the payment method as the origin to pull funds from. Include `outbound` if you intend to use the payment method as the destination to send funds to. You can include both if you intend to use the payment method for both purposes. Changing it fails the plan, because this resource cannot be replaced.
 * `metadata` - (Optional) Set of [key-value pairs](https://docs.stripe.com/api/metadata) that you can attach to an object. This can be useful for storing additional information about the object in a structured format. Individual keys can be unset by posting an empty value to them. All keys can be unset by posting an empty value to `metadata`. Default (Stripe): `{}`.
 * `on_behalf_of` - (Optional) The Stripe account ID created for this SetupIntent. Changing it fails the plan, because this resource cannot be replaced. Default: none.
-* `payment_method` - (Optional) ID of the payment method (a PaymentMethod, Card, or saved Source object) to attach to this SetupIntent. Default: none.
+* `payment_method` - (Optional) ID of the payment method (a PaymentMethod, Card, or saved Source object) to attach to this SetupIntent. Default (Stripe): none, or the method Stripe makes from `payment_method_data`, which this attribute does not hold.
 * `payment_method_configuration` - (Optional) The ID of the [payment method configuration](https://docs.stripe.com/api/payment_method_configurations) to use with this SetupIntent.
 * `payment_method_data` - (Optional) When included, this hash creates a PaymentMethod that is set as the [`payment_method`](https://docs.stripe.com/api/setup_intents/object#setup_intent_object-payment_method) value in the SetupIntent. See [`payment_method_data`](#payment_method_data) below.
 * `payment_method_options` - (Optional) Payment method-specific configuration for this SetupIntent. See [`payment_method_options`](#payment_method_options) below.
@@ -63,7 +63,7 @@ The following arguments are optional:
 
 The `automatic_payment_methods` attribute supports:
 
-* `allow_redirects` - (Optional) Controls whether this SetupIntent will accept redirect-based payment methods. Redirect-based payment methods may require your customer to be redirected to a payment method's app or site for authentication or additional steps. To [confirm](https://docs.stripe.com/api/setup_intents/confirm) this SetupIntent, you may be required to provide a `return_url` to redirect customers back to your site after they authenticate or complete the setup. Possible values: `always`, `never`. Default (Stripe): `always`.
+* `allow_redirects` - (Optional) Controls whether this SetupIntent will accept redirect-based payment methods. Redirect-based payment methods may require your customer to be redirected to a payment method's app or site for authentication or additional steps. To [confirm](https://docs.stripe.com/api/setup_intents/confirm) this SetupIntent, you may be required to provide a `return_url` to redirect customers back to your site after they authenticate or complete the setup. Possible values: `always`, `never`. Default (Stripe): `always`. Removing it from the configuration leaves the current value.
 * `enabled` - (Required) Automatically calculates compatible payment methods
 
 <a id="payment_method_data"></a>
@@ -126,9 +126,27 @@ The `payment_method_options.card` attribute supports:
 
 The `payment_method_options.card.three_d_secure` attribute supports:
 
+* `ares_trans_status` - (Optional) Possible values: `A`, `C`, `I`, `N`, `R`, `U`, `Y`. Stripe refused it on a US account on update: "The parameter `payment_method_options[card][three_d_secure]` cannot be used when creating a SetupIntent unless `confirm` is set to true.". Default: not sent.
 * `cryptogram` - (Optional) Stripe refused it on a US account on create and update: "You may only specify all or none of these parameters: version, cryptogram, transaction_id.".
+* `electronic_commerce_indicator` - (Optional) Possible values: `01`, `02`, `05`, `06`, `07`. Stripe refused it on a US account on update: "The parameter `payment_method_options[card][three_d_secure]` cannot be used when creating a SetupIntent unless `confirm` is set to true.". Default: not sent.
+* `network_options` - (Optional) See [`payment_method_options.card.three_d_secure.network_options`](#payment_method_options.card.three_d_secure.network_options) below.
+* `requestor_challenge_indicator` - (Optional) Stripe refused it on a US account on update: "The parameter `payment_method_options[card][three_d_secure]` cannot be used when creating a SetupIntent unless `confirm` is set to true.". Default: not sent.
 * `transaction_id` - (Optional) Stripe refused it on a US account on create and update: "You may only specify all or none of these parameters: version, cryptogram, transaction_id.".
 * `version` - (Optional) Possible values: `1.0.2`, `2.1.0`, `2.2.0`, `2.3.0`, `2.3.1`. Stripe refused it on a US account on create and update: "You may only specify all or none of these parameters: version, cryptogram, transaction_id.".
+
+<a id="payment_method_options.card.three_d_secure.network_options"></a>
+### `payment_method_options.card.three_d_secure.network_options`
+
+The `payment_method_options.card.three_d_secure.network_options` attribute supports:
+
+* `cartes_bancaires` - (Optional) See [`payment_method_options.card.three_d_secure.network_options.cartes_bancaires`](#payment_method_options.card.three_d_secure.network_options.cartes_bancaires) below.
+
+<a id="payment_method_options.card.three_d_secure.network_options.cartes_bancaires"></a>
+### `payment_method_options.card.three_d_secure.network_options.cartes_bancaires`
+
+The `payment_method_options.card.three_d_secure.network_options.cartes_bancaires` attribute supports:
+
+* `cb_avalgo` - (Optional) Possible values: `0`, `1`, `2`, `3`, `4`, `A`. Stripe refused it on a US account on update: "The parameter `payment_method_options[card][three_d_secure]` cannot be used when creating a SetupIntent unless `confirm` is set to true.". Default: not sent.
 
 ## Attribute Reference
 

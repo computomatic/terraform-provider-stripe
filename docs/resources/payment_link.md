@@ -3,12 +3,12 @@
 page_title: "stripe_payment_link Resource - Stripe"
 subcategory: ""
 description: |-
-  A shareable link to a Stripe-hosted page that takes a payment. terraform destroy deactivates the link (active = false), because Stripe cannot delete one: the link stays in the account and stops taking payments. active is an ordinary argument, so a link can be deactivated and activated again. line_items are matched by price, never by position: a reorder changes nothing, and a changed quantity updates the item in place. Adding a price, dropping one or changing an item's other settings replaces the link, and so does a change to any argument other than active, allow_promotion_codes, billing_address_collection, submit_type, metadata and the quantity of a line item. A replaced link has a new url. A price may appear once. A line item names its price: price_data, which would create the price with the link, is not available, because an item without a price of its own cannot be told from another when Stripe returns them, so create the price with stripe_price first. A link takes at most 20 line items, and the provider reads at most the first 10 of them: a link with more is an error.
+  A shareable link to a Stripe-hosted page that takes a payment. terraform destroy deactivates the link (active = false), because Stripe cannot delete one: the link stays in the account and stops taking payments. active is an ordinary argument, so a link can be deactivated and activated again. line_items are matched by price, never by position: a reorder changes nothing, and a changed quantity updates the item in place. Each item names a price, or sets price_data to make one with the link; Stripe then fills in price, and the item is matched by its price_data. Adding a price, dropping one or changing an item's other settings replaces the link, and so does a change of currency, managed_payments, optional_items or a member Stripe takes only on creation, or removing a hash Stripe cannot unset. Other changes apply in place. A replaced link has a new url. A price may appear once. A link takes at most 20 line items, and the provider reads at most the first 10 of them: a link with more is an error.
 ---
 
 # Resource: stripe_payment_link
 
-A shareable link to a Stripe-hosted page that takes a payment. `terraform destroy` deactivates the link (`active = false`), because Stripe cannot delete one: the link stays in the account and stops taking payments. `active` is an ordinary argument, so a link can be deactivated and activated again. `line_items` are matched by `price`, never by position: a reorder changes nothing, and a changed `quantity` updates the item in place. Adding a price, dropping one or changing an item's other settings replaces the link, and so does a change to any argument other than `active`, `allow_promotion_codes`, `billing_address_collection`, `submit_type`, `metadata` and the quantity of a line item. A replaced link has a new `url`. A price may appear once. A line item names its `price`: `price_data`, which would create the price with the link, is not available, because an item without a price of its own cannot be told from another when Stripe returns them, so create the price with `stripe_price` first. A link takes at most 20 line items, and the provider reads at most the first 10 of them: a link with more is an error.
+A shareable link to a Stripe-hosted page that takes a payment. `terraform destroy` deactivates the link (`active = false`), because Stripe cannot delete one: the link stays in the account and stops taking payments. `active` is an ordinary argument, so a link can be deactivated and activated again. `line_items` are matched by `price`, never by position: a reorder changes nothing, and a changed `quantity` updates the item in place. Each item names a `price`, or sets `price_data` to make one with the link; Stripe then fills in `price`, and the item is matched by its `price_data`. Adding a price, dropping one or changing an item's other settings replaces the link, and so does a change of `currency`, `managed_payments`, `optional_items` or a member Stripe takes only on creation, or removing a hash Stripe cannot unset. Other changes apply in place. A replaced link has a new `url`. A price may appear once. A link takes at most 20 line items, and the provider reads at most the first 10 of them: a link with more is an error.
 
 ## Example Usage
 
@@ -52,37 +52,37 @@ The following arguments are required:
 
 The following arguments are optional:
 
-* `active` - (Optional) Whether the payment link's `url` is active. If `false`, customers visiting the URL will be shown a page saying that the link has been deactivated. Default: not sent. Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
-* `after_completion` - (Optional) Behavior after the purchase is complete. Changing it replaces the resource. Removing it from the configuration leaves the current value. See [`after_completion`](#after_completion) below.
-* `allow_promotion_codes` - (Optional) Enables user redeemable promotion codes. Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
-* `application_fee_amount` - (Optional) The amount of the application fee (if any) that will be requested to be applied to the payment and transferred to the application owner's Stripe account. Can only be applied when there are no line items with recurring prices. Changing it replaces the resource.
-* `application_fee_percent` - (Optional) A non-negative decimal between 0 and 100, with at most two decimal places. This represents the percentage of the subscription invoice total that will be transferred to the application owner's Stripe account. There must be at least 1 line item with a recurring price to use this field. Changing it replaces the resource.
-* `automatic_tax` - (Optional) Configuration for automatic tax collection. Changing it replaces the resource. Removing it from the configuration leaves the current value. See [`automatic_tax`](#automatic_tax) below.
-* `billing_address_collection` - (Optional) Configuration for collecting the customer's billing address. Defaults to `auto`. Possible values: `auto`, `required`. Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
-* `consent_collection` - (Optional) Configure fields to gather active consent from customers. Changing it replaces the resource. See [`consent_collection`](#consent_collection) below.
-* `currency` - (Optional) Three-letter [ISO currency code](https://www.iso.org/iso-4217-currency-codes.html), in lowercase. Must be a [supported currency](https://stripe.com/docs/currencies) and supported by each line item's price. Changing it replaces the resource. Removing it from the configuration leaves the current value.
-* `custom_fields` - (Optional) Collect additional information from your customer using custom fields. Up to 3 fields are supported. You can't set this parameter if `ui_mode` is `elements`. Changing it replaces the resource. Removing it from the configuration leaves the current value. See [`custom_fields`](#custom_fields) below.
-* `custom_text` - (Optional) Display additional text for your customers using custom text. You can't set this parameter if `ui_mode` is `elements`. Changing it replaces the resource. Removing it from the configuration leaves the current value. See [`custom_text`](#custom_text) below.
-* `customer_creation` - (Optional) Configures whether [checkout sessions](https://docs.stripe.com/api/checkout/sessions) created by this payment link create a [Customer](https://docs.stripe.com/api/customers). Possible values: `always`, `if_required`. Changing it replaces the resource. Removing it from the configuration leaves the current value.
-* `inactive_message` - (Optional) The custom message to be displayed to a customer when a payment link is no longer active. Changing it replaces the resource.
-* `invoice_creation` - (Optional) Generate a post-purchase Invoice for one-time payments. Changing it replaces the resource. Removing it from the configuration leaves the current value. See [`invoice_creation`](#invoice_creation) below.
+* `active` - (Optional) Whether the payment link's `url` is active. If `false`, customers visiting the URL will be shown a page saying that the link has been deactivated. Default: not sent. Removing it from the configuration leaves the current value.
+* `after_completion` - (Optional) Behavior after the purchase is complete. Removing it from the configuration leaves the current value. See [`after_completion`](#after_completion) below.
+* `allow_promotion_codes` - (Optional) Enables user redeemable promotion codes. Default (Stripe): `false`. Removing it from the configuration leaves the current value.
+* `application_fee_amount` - (Optional) The amount of the application fee (if any) that will be requested to be applied to the payment and transferred to the application owner's Stripe account. Can only be applied when there are no line items with recurring prices. Default: none.
+* `application_fee_percent` - (Optional) A non-negative decimal between 0 and 100, with at most two decimal places. This represents the percentage of the subscription invoice total that will be transferred to the application owner's Stripe account. There must be at least 1 line item with a recurring price to use this field. Default: none.
+* `automatic_tax` - (Optional) Configuration for automatic tax collection. Removing it from the configuration leaves the current value. See [`automatic_tax`](#automatic_tax) below.
+* `billing_address_collection` - (Optional) Configuration for collecting the customer's billing address. Defaults to `auto`. Possible values: `auto`, `required`. Default (Stripe): `auto`. Removing it from the configuration leaves the current value.
+* `consent_collection` - (Optional) Configure fields to gather active consent from customers. See [`consent_collection`](#consent_collection) below.
+* `currency` - (Optional) Three-letter [ISO currency code](https://www.iso.org/iso-4217-currency-codes.html), in lowercase. Must be a [supported currency](https://stripe.com/docs/currencies) and supported by each line item's price. Changing it replaces the resource. Default (Stripe): the currency of the link's line items (`usd` on a US account). Removing it from the configuration leaves the current value.
+* `custom_fields` - (Optional) Collect additional information from your customer using custom fields. Up to 3 fields are supported. You can't set this parameter if `ui_mode` is `elements`. Removing it from the configuration leaves the current value. See [`custom_fields`](#custom_fields) below.
+* `custom_text` - (Optional) Display additional text for your customers using custom text. You can't set this parameter if `ui_mode` is `elements`. Removing it from the configuration leaves the current value. See [`custom_text`](#custom_text) below.
+* `customer_creation` - (Optional) Configures whether [checkout sessions](https://docs.stripe.com/api/checkout/sessions) created by this payment link create a [Customer](https://docs.stripe.com/api/customers). Possible values: `always`, `if_required`. Default (Stripe): `if_required`. Removing it from the configuration leaves the current value.
+* `inactive_message` - (Optional) The custom message to be displayed to a customer when a payment link is no longer active. Default: none.
+* `invoice_creation` - (Optional) Generate a post-purchase Invoice for one-time payments. Removing it from the configuration leaves the current value. See [`invoice_creation`](#invoice_creation) below.
 * `managed_payments` - (Optional) Settings for Managed Payments for this Payment Link and resulting [CheckoutSessions](https://docs.stripe.com/api/checkout/sessions/object), [PaymentIntents](https://docs.stripe.com/api/payment_intents/object), [Invoices](https://docs.stripe.com/api/invoices/object), and [Subscriptions](https://docs.stripe.com/api/subscriptions/object). Changing it replaces the resource. Removing it from the configuration leaves the current value. See [`managed_payments`](#managed_payments) below.
-* `metadata` - (Optional) Set of [key-value pairs](https://docs.stripe.com/api/metadata) that you can attach to an object. This can be useful for storing additional information about the object in a structured format. Individual keys can be unset by posting an empty value to them. All keys can be unset by posting an empty value to `metadata`. Metadata associated with this Payment Link will automatically be copied to [checkout sessions](https://docs.stripe.com/api/checkout/sessions) created by this payment link.
-* `name_collection` - (Optional) Controls settings applied for collecting the customer's name. Changing it replaces the resource. See [`name_collection`](#name_collection) below.
-* `on_behalf_of` - (Optional) The account on behalf of which to charge. Changing it replaces the resource.
+* `metadata` - (Optional) Set of [key-value pairs](https://docs.stripe.com/api/metadata) that you can attach to an object. This can be useful for storing additional information about the object in a structured format. Individual keys can be unset by posting an empty value to them. All keys can be unset by posting an empty value to `metadata`. Metadata associated with this Payment Link will automatically be copied to [checkout sessions](https://docs.stripe.com/api/checkout/sessions) created by this payment link. Default (Stripe): `{}`.
+* `name_collection` - (Optional) Controls settings applied for collecting the customer's name. See [`name_collection`](#name_collection) below.
+* `on_behalf_of` - (Optional) The account on behalf of which to charge. Default: none.
 * `optional_items` - (Optional) A list of optional items the customer can add to their order at checkout. Use this parameter to pass one-time or recurring [Prices](https://docs.stripe.com/api/prices). There is a maximum of 10 optional items allowed on a payment link, and the existing limits on the number of line items allowed on a payment link apply to the combined number of line items and optional items. There is a maximum of 20 combined line items and optional items. Changing it replaces the resource. See [`optional_items`](#optional_items) below.
-* `payment_intent_data` - (Optional) A subset of parameters to be passed to PaymentIntent creation for Checkout Sessions in `payment` mode. Changing it replaces the resource. See [`payment_intent_data`](#payment_intent_data) below.
-* `payment_method_collection` - (Optional) Specify whether Checkout should collect a payment method. When set to `if_required`, Checkout will not collect a payment method when the total due for the session is 0.This may occur if the Checkout Session includes a free trial or a discount. Can only be set in `subscription` mode. Defaults to `always`. If you'd like information on how to collect a payment method outside of Checkout, read the guide on [configuring subscriptions with a free trial](https://docs.stripe.com/payments/checkout/free-trials). Possible values: `always`, `if_required`. Changing it replaces the resource. Removing it from the configuration leaves the current value.
-* `payment_method_options` - (Optional) Payment-method-specific configuration. Changing it replaces the resource. See [`payment_method_options`](#payment_method_options) below.
-* `payment_method_types` - (Optional) The list of payment method types that customers can use. If no value is passed, Stripe will dynamically show relevant payment methods from your [payment method settings](https://dashboard.stripe.com/settings/payment_methods) (20+ payment methods [supported](https://docs.stripe.com/payments/payment-methods/integration-options#payment-method-product-support)). Changing it replaces the resource.
-* `phone_number_collection` - (Optional) Controls phone number collection settings during checkout. We recommend that you review your privacy policy and check with your legal contacts. Changing it replaces the resource. Removing it from the configuration leaves the current value. See [`phone_number_collection`](#phone_number_collection) below.
-* `restrictions` - (Optional) Settings that restrict the usage of a payment link. Changing it replaces the resource. See [`restrictions`](#restrictions) below.
-* `shipping_address_collection` - (Optional) Configuration for collecting the customer's shipping address. Changing it replaces the resource. See [`shipping_address_collection`](#shipping_address_collection) below.
-* `shipping_options` - (Optional) The shipping rate options to apply to [checkout sessions](https://docs.stripe.com/api/checkout/sessions) created by this payment link. Changing it replaces the resource. Removing it from the configuration leaves the current value. See [`shipping_options`](#shipping_options) below.
-* `submit_type` - (Optional) Describes the type of transaction being performed in order to customize relevant text on the page, such as the submit button. Changing this value will also affect the hostname in the [url](https://docs.stripe.com/api/payment_links/payment_links/object#url) property (example: `donate.stripe.com`). Possible values: `auto`, `book`, `donate`, `pay`, `subscribe`. Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
-* `subscription_data` - (Optional) When creating a subscription, the specified configuration data will be used. There must be at least one line item with a recurring price to use `subscription_data`. Changing it replaces the resource. See [`subscription_data`](#subscription_data) below.
-* `tax_id_collection` - (Optional) Controls tax ID collection during checkout. Changing it replaces the resource. Removing it from the configuration leaves the current value. See [`tax_id_collection`](#tax_id_collection) below.
-* `transfer_data` - (Optional) The account (if any) the payments will be attributed to for tax reporting, and where funds from each payment will be transferred to. Changing it replaces the resource. See [`transfer_data`](#transfer_data) below.
+* `payment_intent_data` - (Optional) A subset of parameters to be passed to PaymentIntent creation for Checkout Sessions in `payment` mode. Removing it from the configuration leaves the current value. See [`payment_intent_data`](#payment_intent_data) below.
+* `payment_method_collection` - (Optional) Specify whether Checkout should collect a payment method. When set to `if_required`, Checkout will not collect a payment method when the total due for the session is 0.This may occur if the Checkout Session includes a free trial or a discount. Can only be set in `subscription` mode. Defaults to `always`. If you'd like information on how to collect a payment method outside of Checkout, read the guide on [configuring subscriptions with a free trial](https://docs.stripe.com/payments/checkout/free-trials). Possible values: `always`, `if_required`. Removing it from the configuration leaves the current value.
+* `payment_method_options` - (Optional) Payment-method-specific configuration. See [`payment_method_options`](#payment_method_options) below.
+* `payment_method_types` - (Optional) The list of payment method types that customers can use. If no value is passed, Stripe will dynamically show relevant payment methods from your [payment method settings](https://dashboard.stripe.com/settings/payment_methods) (20+ payment methods [supported](https://docs.stripe.com/payments/payment-methods/integration-options#payment-method-product-support)). Default: none.
+* `phone_number_collection` - (Optional) Controls phone number collection settings during checkout. We recommend that you review your privacy policy and check with your legal contacts. Removing it from the configuration leaves the current value. See [`phone_number_collection`](#phone_number_collection) below.
+* `restrictions` - (Optional) Settings that restrict the usage of a payment link. See [`restrictions`](#restrictions) below.
+* `shipping_address_collection` - (Optional) Configuration for collecting the customer's shipping address. See [`shipping_address_collection`](#shipping_address_collection) below.
+* `shipping_options` - (Optional) The shipping rate options to apply to [checkout sessions](https://docs.stripe.com/api/checkout/sessions) created by this payment link. Removing it from the configuration leaves the current value. See [`shipping_options`](#shipping_options) below.
+* `submit_type` - (Optional) Describes the type of transaction being performed in order to customize relevant text on the page, such as the submit button. Changing this value will also affect the hostname in the [url](https://docs.stripe.com/api/payment_links/payment_links/object#url) property (example: `donate.stripe.com`). Possible values: `auto`, `book`, `donate`, `pay`, `subscribe`. Default (Stripe): `auto`. Removing it from the configuration leaves the current value.
+* `subscription_data` - (Optional) When creating a subscription, the specified configuration data will be used. There must be at least one line item with a recurring price to use `subscription_data`. Removing it from the configuration leaves the current value. See [`subscription_data`](#subscription_data) below.
+* `tax_id_collection` - (Optional) Controls tax ID collection during checkout. Removing it from the configuration leaves the current value. See [`tax_id_collection`](#tax_id_collection) below.
+* `transfer_data` - (Optional) The account (if any) the payments will be attributed to for tax reporting, and where funds from each payment will be transferred to. See [`transfer_data`](#transfer_data) below.
 
 <a id="after_completion"></a>
 ### `after_completion`
@@ -98,7 +98,7 @@ The `after_completion` attribute supports:
 
 The `after_completion.hosted_confirmation` attribute supports:
 
-* `custom_message` - (Optional) The custom message that is displayed to the customer after the purchase is complete.
+* `custom_message` - (Optional) The custom message that is displayed to the customer after the purchase is complete. Default: none.
 
 <a id="after_completion.redirect"></a>
 ### `after_completion.redirect`
@@ -113,14 +113,14 @@ The `after_completion.redirect` attribute supports:
 The `automatic_tax` attribute supports:
 
 * `enabled` - (Required) If `true`, tax will be calculated automatically using the customer's location.
-* `liability` - (Optional) The account that's liable for tax. If set, the business address and tax registrations required to perform the tax calculation are loaded from this account. The tax transaction is returned in the report of the connected account. See [`automatic_tax.liability`](#automatic_tax.liability) below.
+* `liability` - (Optional) The account that's liable for tax. If set, the business address and tax registrations required to perform the tax calculation are loaded from this account. The tax transaction is returned in the report of the connected account. Removing it from the configuration leaves the current value. See [`automatic_tax.liability`](#automatic_tax.liability) below.
 
 <a id="automatic_tax.liability"></a>
 ### `automatic_tax.liability`
 
 The `automatic_tax.liability` attribute supports:
 
-* `account` - (Optional) The connected account being referenced when `type` is `account`.
+* `account` - (Optional) The connected account being referenced when `type` is `account`. Default: none.
 * `type` - (Required) Type of the account referenced. Possible values: `account`, `self`.
 
 <a id="consent_collection"></a>
@@ -129,8 +129,8 @@ The `automatic_tax.liability` attribute supports:
 The `consent_collection` attribute supports:
 
 * `payment_method_reuse_agreement` - (Optional) Settings related to the payment method reuse text shown in the Checkout UI. See [`consent_collection.payment_method_reuse_agreement`](#consent_collection.payment_method_reuse_agreement) below.
-* `promotions` - (Optional) If set to `auto`, enables the collection of customer consent for promotional communications. Possible values: `auto`, `none`.
-* `terms_of_service` - (Optional) If set to `required`, it requires cutomers to accept the terms of service before being able to pay. If set to `none`, customers won't be shown a checkbox to accept the terms of service. Possible values: `none`, `required`.
+* `promotions` - (Optional) If set to `auto`, enables the collection of customer consent for promotional communications. Possible values: `auto`, `none`. Stripe refused it on a US account on create: "To set `consent_collection.promotions`, please visit https://dashboard.stripe.com/settings/checkout to agree to the Terms of Service.". Default (Stripe): `none` once `consent_collection` is set. Removing it from the configuration leaves the current value.
+* `terms_of_service` - (Optional) If set to `required`, it requires cutomers to accept the terms of service before being able to pay. If set to `none`, customers won't be shown a checkbox to accept the terms of service. Possible values: `none`, `required`. Default (Stripe): `none` once `consent_collection` is set. Removing it from the configuration leaves the current value.
 
 <a id="consent_collection.payment_method_reuse_agreement"></a>
 ### `consent_collection.payment_method_reuse_agreement`
@@ -148,7 +148,7 @@ The `custom_fields` attribute is a list. Each element supports:
 * `key` - (Required) String of your choice that your integration can use to reconcile this field. Must be unique to this field, alphanumeric, and up to 200 characters.
 * `label` - (Required) See [`custom_fields.label`](#custom_fields.label) below.
 * `numeric` - (Optional) See [`custom_fields.numeric`](#custom_fields.numeric) below.
-* `optional` - (Optional) Whether the customer is required to complete the field before completing the Checkout Session. Defaults to `false`. Removing it from the configuration leaves the current value.
+* `optional` - (Optional) Whether the customer is required to complete the field before completing the Checkout Session. Defaults to `false`. Default: none. Removing it from the configuration lets Stripe set it when the list is next sent.
 * `text` - (Optional) See [`custom_fields.text`](#custom_fields.text) below.
 * `type` - (Required) The type of the field. Possible values: `dropdown`, `numeric`, `text`.
 
@@ -157,7 +157,7 @@ The `custom_fields` attribute is a list. Each element supports:
 
 The `custom_fields.dropdown` attribute supports:
 
-* `default_value` - (Optional) The value that pre-fills on the payment page.
+* `default_value` - (Optional) The value that pre-fills on the payment page. Default: none.
 * `options` - (Required) The options available for the customer to select. Up to 200 options allowed. See [`custom_fields.dropdown.options`](#custom_fields.dropdown.options) below.
 
 <a id="custom_fields.dropdown.options"></a>
@@ -181,18 +181,18 @@ The `custom_fields.label` attribute supports:
 
 The `custom_fields.numeric` attribute supports:
 
-* `default_value` - (Optional) The value that pre-fills the field on the payment page.
-* `maximum_length` - (Optional) The maximum character length constraint for the customer's input.
-* `minimum_length` - (Optional) The minimum character length requirement for the customer's input.
+* `default_value` - (Optional) The value that pre-fills the field on the payment page. Default: none.
+* `maximum_length` - (Optional) The maximum character length constraint for the customer's input. Default: none.
+* `minimum_length` - (Optional) The minimum character length requirement for the customer's input. Default: none.
 
 <a id="custom_fields.text"></a>
 ### `custom_fields.text`
 
 The `custom_fields.text` attribute supports:
 
-* `default_value` - (Optional) The value that pre-fills the field on the payment page.
-* `maximum_length` - (Optional) The maximum character length constraint for the customer's input.
-* `minimum_length` - (Optional) The minimum character length requirement for the customer's input.
+* `default_value` - (Optional) The value that pre-fills the field on the payment page. Default: none.
+* `maximum_length` - (Optional) The maximum character length constraint for the customer's input. Default: none.
+* `minimum_length` - (Optional) The minimum character length requirement for the customer's input. Default: none.
 
 <a id="custom_text"></a>
 ### `custom_text`
@@ -245,11 +245,11 @@ The `invoice_creation` attribute supports:
 
 The `invoice_creation.invoice_data` attribute supports:
 
-* `account_tax_ids` - (Optional) The account tax IDs associated with the invoice.
+* `account_tax_ids` - (Optional) The account tax IDs associated with the invoice. Default: none.
 * `custom_fields` - (Optional) A list of up to 4 custom fields to be displayed on the invoice. See [`invoice_creation.invoice_data.custom_fields`](#invoice_creation.invoice_data.custom_fields) below.
-* `description` - (Optional) An arbitrary string attached to the object. Often useful for displaying to users.
-* `footer` - (Optional) Footer to be displayed on the invoice.
-* `issuer` - (Optional) The connected account that issues the invoice. The invoice is presented with the branding and support information of the specified account. See [`invoice_creation.invoice_data.issuer`](#invoice_creation.invoice_data.issuer) below.
+* `description` - (Optional) An arbitrary string attached to the object. Often useful for displaying to users. Default: none.
+* `footer` - (Optional) Footer to be displayed on the invoice. Default: none.
+* `issuer` - (Optional) The connected account that issues the invoice. The invoice is presented with the branding and support information of the specified account. Removing it from the configuration leaves the current value. See [`invoice_creation.invoice_data.issuer`](#invoice_creation.invoice_data.issuer) below.
 * `metadata` - (Optional) Set of [key-value pairs](https://docs.stripe.com/api/metadata) that you can attach to an object. This can be useful for storing additional information about the object in a structured format.
 * `rendering_options` - (Optional) Options for invoice PDF rendering. See [`invoice_creation.invoice_data.rendering_options`](#invoice_creation.invoice_data.rendering_options) below.
 
@@ -266,7 +266,7 @@ The `invoice_creation.invoice_data.custom_fields` attribute is a list. Each elem
 
 The `invoice_creation.invoice_data.issuer` attribute supports:
 
-* `account` - (Optional) The connected account being referenced when `type` is `account`.
+* `account` - (Optional) The connected account being referenced when `type` is `account`. Stripe refused it on a US account on update: "The parameter `invoice_creation[invoice_data][issuer][account]` is not compatible with `type=self`.". Default: none.
 * `type` - (Required) Type of the account referenced. Possible values: `account`, `self`.
 
 <a id="invoice_creation.invoice_data.rendering_options"></a>
@@ -274,8 +274,8 @@ The `invoice_creation.invoice_data.issuer` attribute supports:
 
 The `invoice_creation.invoice_data.rendering_options` attribute supports:
 
-* `amount_tax_display` - (Optional) How line-item prices and amounts will be displayed with respect to tax on invoice PDFs. Possible values: `exclude_tax`, `include_inclusive_tax`.
-* `template` - (Optional) ID of the invoice rendering template to be used for the generated invoice.
+* `amount_tax_display` - (Optional) How line-item prices and amounts will be displayed with respect to tax on invoice PDFs. Possible values: `exclude_tax`, `include_inclusive_tax`. Default: none.
+* `template` - (Optional) ID of the invoice rendering template to be used for the generated invoice. Stripe refused it on a US account on create and update: "No such invoice rendering template: 'inrtem_...'".
 
 <a id="line_items"></a>
 ### `line_items`
@@ -293,7 +293,8 @@ The `line_items` attribute is a list. Each element supports:
 * `id` - (Optional) Unique identifier for the object. Default: not sent. Removing it from the configuration lets Stripe set it when the list is next sent.
 * `metadata` - (Read-Only) Set of [key-value pairs](https://docs.stripe.com/api/metadata) that you can attach to an object. This can be useful for storing additional information about the object in a structured format.
 * `object` - (Read-Only) String representing the object's type. Objects of the same type share the same value. Possible values: `item`.
-* `price` - (Required) The price used to generate the line item.
+* `price` - (Optional) The price used to generate the line item. Removing it from the configuration lets Stripe set it when the list is next sent.
+* `price_data` - (Optional) See [`line_items.price_data`](#line_items.price_data) below.
 * `quantity` - (Required) The quantity of products being purchased.
 * `taxes` - (Read-Only) The taxes applied to the line item. See [`line_items.taxes`](#line_items.taxes) below.
 
@@ -303,8 +304,8 @@ The `line_items` attribute is a list. Each element supports:
 The `line_items.adjustable_quantity` attribute supports:
 
 * `enabled` - (Required)
-* `maximum` - (Optional)
-* `minimum` - (Optional)
+* `maximum` - (Optional) Stripe refused it on a US account on update: "You cannot specify `adjustable_quantity[minimum]` or `adjustable_quantity[maximum]` when `adjustable_quantity[enabled]=false`.".
+* `minimum` - (Optional) Stripe refused it on a US account on update: "You cannot specify `adjustable_quantity[minimum]` or `adjustable_quantity[maximum]` when `adjustable_quantity[enabled]=false`.".
 
 <a id="line_items.discounts"></a>
 ### `line_items.discounts`
@@ -340,6 +341,47 @@ The `line_items.discounts.discount.source` attribute supports:
 
 * `coupon` - The coupon that was redeemed to create this discount.
 * `type` - The source type of the discount. Possible values: `coupon`.
+
+<a id="line_items.price_data"></a>
+### `line_items.price_data`
+
+The `line_items.price_data` attribute supports:
+
+* `currency` - (Required)
+* `product` - (Optional)
+* `product_data` - (Optional) See [`line_items.price_data.product_data`](#line_items.price_data.product_data) below.
+* `recurring` - (Optional) See [`line_items.price_data.recurring`](#line_items.price_data.recurring) below.
+* `tax_behavior` - (Optional) Possible values: `exclusive`, `inclusive`, `unspecified`.
+* `unit_amount` - (Optional)
+* `unit_amount_decimal` - (Optional)
+
+<a id="line_items.price_data.product_data"></a>
+### `line_items.price_data.product_data`
+
+The `line_items.price_data.product_data` attribute supports:
+
+* `description` - (Optional)
+* `images` - (Optional)
+* `metadata` - (Optional)
+* `name` - (Required)
+* `tax_code` - (Optional)
+* `tax_details` - (Optional) See [`line_items.price_data.product_data.tax_details`](#line_items.price_data.product_data.tax_details) below.
+* `unit_label` - (Optional)
+
+<a id="line_items.price_data.product_data.tax_details"></a>
+### `line_items.price_data.product_data.tax_details`
+
+The `line_items.price_data.product_data.tax_details` attribute supports:
+
+* `tax_code` - (Optional)
+
+<a id="line_items.price_data.recurring"></a>
+### `line_items.price_data.recurring`
+
+The `line_items.price_data.recurring` attribute supports:
+
+* `interval` - (Required) Possible values: `day`, `month`, `week`, `year`.
+* `interval_count` - (Optional)
 
 <a id="line_items.taxes"></a>
 ### `line_items.taxes`
@@ -388,7 +430,7 @@ The `line_items.taxes.rate.flat_amount` attribute supports:
 
 The `managed_payments` attribute supports:
 
-* `enabled` - (Optional) Set to `true` to enable [Managed Payments](https://docs.stripe.com/payments/managed-payments), Stripe's merchant of record solution, for this session. Removing it from the configuration leaves the current value.
+* `enabled` - (Optional) Set to `true` to enable [Managed Payments](https://docs.stripe.com/payments/managed-payments), Stripe's merchant of record solution, for this session. Default (Stripe): `false`. Removing it from the configuration leaves the current value.
 
 <a id="name_collection"></a>
 ### `name_collection`
@@ -404,7 +446,7 @@ The `name_collection` attribute supports:
 The `name_collection.business` attribute supports:
 
 * `enabled` - (Required) Indicates whether business name collection is enabled for the payment link.
-* `optional` - (Optional) Whether the customer is required to complete the field before checking out. Defaults to `false`. Removing it from the configuration leaves the current value.
+* `optional` - (Optional) Whether the customer is required to complete the field before checking out. Defaults to `false`. Default (Stripe): `false` once `name_collection.business` is set. Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
 
 <a id="name_collection.individual"></a>
 ### `name_collection.individual`
@@ -412,7 +454,7 @@ The `name_collection.business` attribute supports:
 The `name_collection.individual` attribute supports:
 
 * `enabled` - (Required) Indicates whether individual name collection is enabled for the payment link.
-* `optional` - (Optional) Whether the customer is required to complete the field before checking out. Defaults to `false`. Removing it from the configuration leaves the current value.
+* `optional` - (Optional) Whether the customer is required to complete the field before checking out. Defaults to `false`. Default (Stripe): `false` once `name_collection.individual` is set. Removing it from the configuration leaves the current value.
 
 <a id="optional_items"></a>
 ### `optional_items`
@@ -429,21 +471,21 @@ The `optional_items` attribute is a list. Each element supports:
 The `optional_items.adjustable_quantity` attribute supports:
 
 * `enabled` - (Required) Set to true if the quantity can be adjusted to any non-negative integer.
-* `maximum` - (Optional) The maximum quantity of this item the customer can purchase. By default this value is 99.
-* `minimum` - (Optional) The minimum quantity of this item the customer must purchase, if they choose to purchase it. Because this item is optional, the customer will always be able to remove it from their order, even if the `minimum` configured here is greater than 0. By default this value is 0.
+* `maximum` - (Optional) The maximum quantity of this item the customer can purchase. By default this value is 99. Stripe refused it on a US account on update: "You cannot specify `adjustable_quantity[maximum]` when `adjustable_quantity[enabled]=false`.". Default (Stripe): `99` once `adjustable_quantity` is set. Removing it from the configuration leaves the current value.
+* `minimum` - (Optional) The minimum quantity of this item the customer must purchase, if they choose to purchase it. Because this item is optional, the customer will always be able to remove it from their order, even if the `minimum` configured here is greater than 0. By default this value is 0. Stripe refused it on a US account on update: "You cannot specify `adjustable_quantity[minimum]` when `adjustable_quantity[enabled]=false`.". Default (Stripe): `0` once `adjustable_quantity` is set. Removing it from the configuration leaves the current value.
 
 <a id="payment_intent_data"></a>
 ### `payment_intent_data`
 
 The `payment_intent_data` attribute supports:
 
-* `capture_method` - (Optional) Indicates when the funds will be captured from the customer's account. Possible values: `automatic`, `automatic_async`, `manual`.
-* `description` - (Optional) An arbitrary string attached to the object. Often useful for displaying to users.
+* `capture_method` - (Optional) Indicates when the funds will be captured from the customer's account. Possible values: `automatic`, `automatic_async`, `manual`. Changing it replaces the resource. Default: none.
+* `description` - (Optional) An arbitrary string attached to the object. Often useful for displaying to users. Default: none.
 * `metadata` - (Optional) Set of [key-value pairs](https://docs.stripe.com/api/metadata) that will set metadata on [Payment Intents](https://docs.stripe.com/api/payment_intents) generated from this payment link. Removing it from the configuration leaves the current value.
-* `setup_future_usage` - (Optional) Indicates that you intend to make future payments with the payment method collected during checkout. Possible values: `off_session`, `on_session`.
-* `statement_descriptor` - (Optional) For a non-card payment, information about the charge that appears on the customer's statement when this payment succeeds in creating a charge.
-* `statement_descriptor_suffix` - (Optional) For a card payment, information about the charge that appears on the customer's statement when this payment succeeds in creating a charge. Concatenated with the account's statement descriptor prefix to form the complete statement descriptor.
-* `transfer_group` - (Optional) A string that identifies the resulting payment as part of a group. See the PaymentIntents [use case for connected accounts](https://docs.stripe.com/connect/separate-charges-and-transfers) for details.
+* `setup_future_usage` - (Optional) Indicates that you intend to make future payments with the payment method collected during checkout. Possible values: `off_session`, `on_session`. Default: none.
+* `statement_descriptor` - (Optional) For a non-card payment, information about the charge that appears on the customer's statement when this payment succeeds in creating a charge. Default: none.
+* `statement_descriptor_suffix` - (Optional) For a card payment, information about the charge that appears on the customer's statement when this payment succeeds in creating a charge. Concatenated with the account's statement descriptor prefix to form the complete statement descriptor. Default: none.
+* `transfer_group` - (Optional) A string that identifies the resulting payment as part of a group. See the PaymentIntents [use case for connected accounts](https://docs.stripe.com/connect/separate-charges-and-transfers) for details. Default: none.
 
 <a id="payment_method_options"></a>
 ### `payment_method_options`
@@ -464,7 +506,7 @@ The `payment_method_options.card` attribute supports:
 
 The `payment_method_options.card.restrictions` attribute supports:
 
-* `brands_blocked` - (Optional) The card brands to block. If a customer enters or selects a card belonging to a blocked brand, they can't complete the payment. Removing it from the configuration leaves the current value.
+* `brands_blocked` - (Optional) The card brands to block. If a customer enters or selects a card belonging to a blocked brand, they can't complete the payment. Default: none. Removing it from the configuration leaves the current value.
 
 <a id="phone_number_collection"></a>
 ### `phone_number_collection`
@@ -501,18 +543,18 @@ The `shipping_address_collection` attribute supports:
 The `shipping_options` attribute is a list. Each element supports:
 
 * `shipping_amount` - (Read-Only) A non-negative integer in cents representing how much to charge.
-* `shipping_rate` - (Optional) The ID of the Shipping Rate to use for this shipping option. Removing it from the configuration leaves the current value.
+* `shipping_rate` - (Optional) The ID of the Shipping Rate to use for this shipping option. Default: none. Removing it from the configuration lets Stripe set it when the list is next sent.
 
 <a id="subscription_data"></a>
 ### `subscription_data`
 
 The `subscription_data` attribute supports:
 
-* `description` - (Optional) The subscription's description, meant to be displayable to the customer. Use this field to optionally store an explanation of the subscription for rendering in Stripe surfaces and certain local payment methods UIs.
+* `description` - (Optional) The subscription's description, meant to be displayable to the customer. Use this field to optionally store an explanation of the subscription for rendering in Stripe surfaces and certain local payment methods UIs. Changing it replaces the resource. Default: none.
 * `invoice_settings` - (Optional) Removing it from the configuration leaves the current value. See [`subscription_data.invoice_settings`](#subscription_data.invoice_settings) below.
 * `metadata` - (Optional) Set of [key-value pairs](https://docs.stripe.com/api/metadata) that will set metadata on [Subscriptions](https://docs.stripe.com/api/subscriptions) generated from this payment link. Removing it from the configuration leaves the current value.
-* `trial_period_days` - (Optional) Integer representing the number of trial period days before the customer is charged for the first time.
-* `trial_settings` - (Optional) Settings related to subscription trials. See [`subscription_data.trial_settings`](#subscription_data.trial_settings) below.
+* `trial_period_days` - (Optional) Integer representing the number of trial period days before the customer is charged for the first time. Default: none.
+* `trial_settings` - (Optional) Settings related to subscription trials. Removing it from the configuration leaves the current value. See [`subscription_data.trial_settings`](#subscription_data.trial_settings) below.
 
 <a id="subscription_data.invoice_settings"></a>
 ### `subscription_data.invoice_settings`
@@ -526,7 +568,7 @@ The `subscription_data.invoice_settings` attribute supports:
 
 The `subscription_data.invoice_settings.issuer` attribute supports:
 
-* `account` - (Optional) The connected account being referenced when `type` is `account`.
+* `account` - (Optional) The connected account being referenced when `type` is `account`. Default: none.
 * `type` - (Required) Type of the account referenced. Possible values: `account`, `self`.
 
 <a id="subscription_data.trial_settings"></a>
@@ -549,14 +591,14 @@ The `subscription_data.trial_settings.end_behavior` attribute supports:
 The `tax_id_collection` attribute supports:
 
 * `enabled` - (Required) Indicates whether tax ID collection is enabled for the session.
-* `required` - (Optional) Possible values: `if_supported`, `never`. Removing it from the configuration leaves the current value.
+* `required` - (Optional) Possible values: `if_supported`, `never`. Default (Stripe): `never`. Removing it from the configuration leaves the current value.
 
 <a id="transfer_data"></a>
 ### `transfer_data`
 
 The `transfer_data` attribute supports:
 
-* `amount` - (Optional) The amount in cents (or local equivalent) that will be transferred to the destination account. By default, the entire amount is transferred to the destination.
+* `amount` - (Optional) The amount in cents (or local equivalent) that will be transferred to the destination account. By default, the entire amount is transferred to the destination. Default: none.
 * `destination` - (Required) The connected account receiving the transfer.
 
 ## Attribute Reference
@@ -609,3 +651,5 @@ Using `terraform import`, import a payment link using its ID. For example:
 ```console
 % terraform import stripe_payment_link.course plink_123
 ```
+
+~> Stripe returns the price of a line item, never the `price_data` that made it, so an imported link holds `price` alone. A configuration that keeps `price_data` plans a replacement: name the `price` instead. Stripe does not return `line_items.price_data`, so an imported payment link has it null: a configuration that sets it plans a replacement after the import.

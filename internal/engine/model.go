@@ -303,6 +303,9 @@ func compile(decl Declaration, table []fields.Field) (*model, error) {
 			}
 		}
 	}
+	if err := m.checkReplaceOnRemoval(); err != nil {
+		return nil, err
+	}
 	if err := m.checkSentMembers(); err != nil {
 		return nil, err
 	}
@@ -528,7 +531,7 @@ func (m *model) checkListEntries() error {
 		if _, keyed := m.decl.MatchBy[name]; !keyed {
 			return fmt.Errorf("match_data entry `%s` is not a match_by list", name)
 		}
-		if k := kidNamed(n, field); k == nil || k.Shape != fields.Object || !k.Update {
+		if k := kidNamed(n, field); k == nil || k.Shape != fields.Object || !k.Update && !slices.Contains(m.decl.FixedKeys, name) {
 			return fmt.Errorf("match_data entry `%s` names `%s`, which is not an updatable object field of its elements", name, field)
 		}
 	}
@@ -736,7 +739,7 @@ func (c *compiler) build(table []fields.Field, prefix string, top, parentOutput,
 		}
 		n := &node{Field: f, Path: path, IsHashForm: hashForm, InList: inList}
 		if rule, ok := c.decl.Defaults[path]; ok {
-			if f.Default == nil || f.Default.Kind != fields.DefaultRule && f.Default.Kind != fields.DefaultVaries {
+			if f.Default == nil || f.Default.Kind != fields.DefaultRule && f.Default.Kind != fields.DefaultVaries && f.Default.Kind != fields.DefaultNone {
 				return nil, fmt.Errorf("defaults entry `%s` words a rule the evidence does not record for the field", path)
 			}
 			n.Default = &fields.Default{Kind: fields.DefaultRule, Rule: rule, Observed: f.Default.Observed}
@@ -860,8 +863,19 @@ func (c *compiler) build(table []fields.Field, prefix string, top, parentOutput,
 	return out, nil
 }
 
+// checkReplaceOnRemoval refuses an entry that is not an optional field an update takes, whose
+// removal an update would otherwise send, on an object a replacement can make again.
+func (m *model) checkReplaceOnRemoval() error {
+	for _, name := range m.decl.ReplaceOnRemoval {
+		if n, _, ok := m.at(name); !ok || !n.Update || !n.Optional || n.Computed || m.decl.Delete == Refuse {
+			return fmt.Errorf("%s: replace-on-removal entry `%s` is not an optional, not computed field an update takes on an object that can be replaced", m.decl.TypeName, name)
+		}
+	}
+	return nil
+}
+
 // checkSentMembers refuses a declaration that leaves open how an update sends a hash. Each entry of
-// SendChangedMembers and SendWholeMembers is a hash an update takes, a nested one inside an object
+// SendChangedMembers and SendWholeMembers is a hash an update takes, top-level or inside an object
 // that sends changed members, and every hash below such an object is named in one or the other,
 // so that a hash the gate newly exposes is never sent in part by default. A hash with a Required
 // member, sent whole as Stripe takes it, and one refused in RefuseChange, never sent, need no entry.
@@ -886,8 +900,8 @@ func (m *model) checkSentMembers() error {
 		}
 	}
 	for _, name := range whole {
-		if _, ok := hash(name); !ok || !inside(name) || slices.Contains(changed, name) {
-			return fmt.Errorf("%s: send-whole-members entry `%s` is not a hash inside a send-changed-members object and in that list alone", decl.TypeName, name)
+		if _, ok := hash(name); !ok || strings.Contains(name, ".") && !inside(name) || slices.Contains(changed, name) {
+			return fmt.Errorf("%s: send-whole-members entry `%s` is not a top-level hash, or one inside a send-changed-members object, in that list alone", decl.TypeName, name)
 		}
 	}
 	var walk func(n *node) error

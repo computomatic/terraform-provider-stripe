@@ -18,6 +18,44 @@ const mandateData = "`customer_acceptance.type`, which the hash requires, is acc
 // configuration says (the product owner's decision of 2026-10-31).
 const acceptedKept = "Stripe never returns it, and the provider keeps it from configuration (PreserveConfig)."
 
+// sessionKept is the Resource.AcceptedOnly reason of what a checkout session takes on its create
+// alone (the product owner's decision of 2026-10-31).
+const sessionKept = "A checkout session cannot be updated in this, so a kept value cannot drift, and the provider keeps it from configuration (PreserveConfig); nothing else sets it."
+
+// sessionKeptLeaves are the leaves of sessionKept.
+var sessionKeptLeaves = []string{
+	"customer_update.address", "customer_update.name", "customer_update.shipping", "line_items.tax_rates",
+	"payment_intent_data.capture_method", "payment_intent_data.description", "payment_intent_data.metadata",
+	"payment_intent_data.on_behalf_of", "payment_intent_data.receipt_email", "payment_intent_data.setup_future_usage",
+	"payment_intent_data.shipping.address.city", "payment_intent_data.shipping.address.country",
+	"payment_intent_data.shipping.address.line1", "payment_intent_data.shipping.address.line2",
+	"payment_intent_data.shipping.address.postal_code", "payment_intent_data.shipping.address.state",
+	"payment_intent_data.shipping.carrier", "payment_intent_data.shipping.name", "payment_intent_data.shipping.phone",
+	"payment_intent_data.shipping.tracking_number", "payment_intent_data.statement_descriptor",
+	"payment_intent_data.statement_descriptor_suffix", "payment_intent_data.transfer_data.amount",
+	"payment_intent_data.transfer_data.destination", "payment_intent_data.transfer_group", "payment_method_configuration",
+	"setup_intent_data.description", "setup_intent_data.metadata", "setup_intent_data.on_behalf_of",
+	"subscription_data.application_fee_percent", "subscription_data.billing_cycle_anchor",
+	"subscription_data.billing_cycle_anchor_config.day_of_month", "subscription_data.billing_cycle_anchor_config.hour",
+	"subscription_data.billing_cycle_anchor_config.minute", "subscription_data.billing_cycle_anchor_config.month",
+	"subscription_data.billing_cycle_anchor_config.second", "subscription_data.billing_mode.flexible.proration_discounts",
+	"subscription_data.billing_mode.type", "subscription_data.default_tax_rates", "subscription_data.description",
+	"subscription_data.invoice_settings.issuer.account", "subscription_data.invoice_settings.issuer.type",
+	"subscription_data.metadata", "subscription_data.on_behalf_of", "subscription_data.pending_invoice_item_interval.interval",
+	"subscription_data.pending_invoice_item_interval.interval_count", "subscription_data.proration_behavior",
+	"subscription_data.transfer_data.amount_percent", "subscription_data.transfer_data.destination", "subscription_data.trial_end",
+	"subscription_data.trial_period_days", "subscription_data.trial_settings.end_behavior.missing_payment_method",
+}
+
+// keptFor gives every path the same Resource.AcceptedOnly reason.
+func keptFor(reason string, paths []string) map[string]string {
+	out := make(map[string]string, len(paths))
+	for _, p := range paths {
+		out[p] = reason
+	}
+	return out
+}
+
 // Resources lists the objects the generator writes tables for. A resource joins the list
 // when its declaration is written.
 var Resources = []Resource{
@@ -80,7 +118,8 @@ var Resources = []Resource{
 	// offered only as the gate exposes it. The Omit entries of the read-only objects are unions
 	// and recursions the tables cannot hold. The ReadOnly entries are the payment method updates
 	// the suite does not prove, on an object that cannot be replaced.
-	{Package: "payment_link", CreatePath: "/v1/payment_links", UpdatePath: "/v1/payment_links/{payment_link}", Omit: []string{"line_items.price_data"}, Require: []string{"line_items.price"}},
+	// The Omit entry is the one `price_data` leaf the suite has not proven against Stripe.
+	{Package: "payment_link", CreatePath: "/v1/payment_links", UpdatePath: "/v1/payment_links/{payment_link}", Omit: []string{"line_items.price_data.product_data.tax_details"}},
 	{Package: "setup_intent", AcceptedOnly: map[string]string{"payment_method_configuration": acceptedKept},
 		Exclude: map[string]string{"mandate_data": mandateData}, CreatePath: "/v1/setup_intents", UpdatePath: "/v1/setup_intents/{intent}", Omit: []string{"last_setup_error.payment_intent", "last_setup_error.setup_intent", "last_setup_error.source", "confirm", "mandate_data", "payment_method_data", "return_url", "use_stripe_sdk", "single_use", "payment_method_options", "confirmation_token"}},
 	{Package: "customer_payment_method", Exclude: map[string]string{"customer": parentHolds}, CreatePath: "/v1/payment_methods/{payment_method}/attach", UpdatePath: "/v1/payment_methods/{payment_method}", Omit: []string{"customer", "customer_account"}, ReadOnly: []string{"allow_redisplay", "card.exp_month", "card.networks", "us_bank_account"}},
@@ -89,7 +128,7 @@ var Resources = []Resource{
 	{Package: "payment_intent", StatusConfirms: true, AcceptedOnly: map[string]string{"payment_method_configuration": acceptedKept},
 		Exclude: map[string]string{
 			"mandate_data": mandateData,
-			"payment_method_options.card.installments.plan": "`type`, which a plan requires, is not verified, so that no configuration could send the plan (suite: TestPaymentIntentAttributes/leaves/request/PostPaymentIntents/payment_method_options.card.installments.plan.count, refused without `fixed_count`).",
+			"payment_method_options.card.installments.plan": "`type`, which a plan requires, is unproven on the create and verified on the update only by Stripe's refusal, so that no configuration could send the plan (suite: TestPaymentIntentAttributes/leaves/request/PostPaymentIntents/payment_method_options.card.installments.plan.count, refused without `fixed_count`, and PostPaymentIntentsIntent/payment_method_options.card.installments.plan.type, refused unless `confirm` is true).",
 		}, CreatePath: "/v1/payment_intents", UpdatePath: "/v1/payment_intents/{intent}", Omit: []string{
 			"payment_method_options", "amount_details", "last_payment_error.payment_intent", "last_payment_error.setup_intent", "last_payment_error.source",
 			"confirm", "confirmation_token", "error_on_requires_action", "mandate", "mandate_data", "off_session", "payment_method_data", "return_url",
@@ -97,17 +136,16 @@ var Resources = []Resource{
 		}, ReadOnly: []string{"hooks"}},
 	// A direct charge (ADR 2026-10-22-money-moving-resources, D6.2). The spec deprecates the
 	// create in favour of payment intents, but Stripe serves it. Its deprecated `card` and
-	// `destination` are left out; `application_fee` is also the response's fee ID, and
-	// `radar_options` is set by a front end, as for payment intents, so both stay readable, as
-	// does `fraud_details`, which only the update takes and the suite has not proven. Stripe
-	// requires `amount` and `currency`, which the spec leaves optional (suite: "missing amount",
-	// "missing currency").
-	{Package: "charge", AcceptedOnly: map[string]string{"capture": "Its effect shows in `captured`."}, CreatePath: "/v1/charges", UpdatePath: "/v1/charges/{charge}", Omit: []string{"card", "destination"}, ReadOnly: []string{"application_fee", "fraud_details", "radar_options"}, Require: []string{"amount", "currency"}},
+	// `destination` are left out; the gate exposes `application_fee`, `fraud_details` and
+	// `radar_options`, which `ReadOnly` keeps out of the baseline. Stripe requires `amount` and
+	// `currency`, which the spec leaves optional (suite: "missing amount", "missing currency").
+	{Package: "charge", AcceptedOnly: map[string]string{
+		"capture": "Its effect shows in `captured`.",
+		"source":  "The token becomes the charge's card, read back at `source` and `payment_method`; without it a charge needs a customer with a default source.",
+	}, CreatePath: "/v1/charges", UpdatePath: "/v1/charges/{charge}", Omit: []string{"card", "destination"}, ReadOnly: []string{"application_fee", "fraud_details", "radar_options"}, Require: []string{"amount", "currency"}},
 	{Package: "refund", CreatePath: "/v1/refunds", UpdatePath: "/v1/refunds/{refund}"},
 	{Package: "dispute", ReadPath: "/v1/disputes/{dispute}"},
-	// `collected_information` is set only by an update, which the suite has not proven, so it
-	// stays readable.
-	{Package: "checkout_session", CreatePath: "/v1/checkout/sessions", UpdatePath: "/v1/checkout/sessions/{session}", Omit: []string{"payment_method_options.pay_by_bank"}, ReadOnly: []string{"collected_information"}},
+	{Package: "checkout_session", AcceptedOnly: keptFor(sessionKept, sessionKeptLeaves), CreatePath: "/v1/checkout/sessions", UpdatePath: "/v1/checkout/sessions/{session}", Omit: []string{"payment_method_options.pay_by_bank"}},
 	{Package: "mandate", ReadPath: "/v1/mandates/{mandate}"},
 	// Wave 7 batch a. The Climate catalogue is read-only. The identity session leaves out
 	// verification flows and related persons, which the suite does not prove, so it takes a

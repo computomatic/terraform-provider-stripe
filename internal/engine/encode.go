@@ -344,10 +344,20 @@ func (m *model) encodeChanges(plan, state basetypes.ObjectValue, config tftypes.
 			}
 		case pv.IsNull() && m.v2 && !slices.Contains(m.decl.ClearsWithNull, n.Name):
 			return nil, fmt.Errorf("clearing `%s` is not supported on this resource: Stripe's /v2 behaviour for null is not yet verified for it", n.Path)
+		case pv.IsNull() && emptyCollection(sv):
+			// Nothing is held, so there is nothing to unset.
 		case pv.IsNull() && m.otherFormSet(n, planAttrs):
 			// The other form of a token-or-hash parameter takes its place under the same name.
 		case pv.IsNull():
 			out = append(out, wire.Field{Name: n.Name, Value: wire.Null{}})
+		case slices.Contains(m.decl.SendWholeMembers, n.Name):
+			v, err := wholeMembers(n, pv, sv)
+			if err != nil {
+				return nil, err
+			}
+			if len(v) > 0 {
+				out = append(out, wire.Field{Name: n.Name, Value: v})
+			}
 		case slices.Contains(m.decl.SendChangedMembers, n.Name):
 			v, err := m.changedMembers(n, pv, sv, updatable)
 			if err != nil {
@@ -695,7 +705,8 @@ func (m *model) changedMembers(n *node, plan, state attr.Value, allow func(*node
 // takes, and null for one removed from the configuration, which an update of a hash whose update
 // nothing proves must name. Stripe may clear what the request leaves out, so a member the plan
 // leaves unknown goes with the state's value, and one RefuseChange refuses, which the plan cannot
-// change, goes with the value it holds.
+// change, goes with the value it holds. An empty collection that stays empty is left out: sending
+// it would ask Stripe to unset what it does not hold.
 func wholeMembers(n *node, plan, state attr.Value) (wire.Object, error) {
 	planned, held := objectAttrs(plan), objectAttrs(state)
 	var out wire.Object
@@ -712,10 +723,12 @@ func wholeMembers(n *node, plan, state attr.Value) (wire.Object, error) {
 		case pv == nil:
 			continue
 		case pv.IsNull():
-			if sv == nil || sv.IsNull() {
+			if sv == nil || sv.IsNull() || emptyCollection(sv) {
 				continue
 			}
 			v = wire.Null{}
+		case emptyCollection(pv) && (sv == nil || sv.IsNull() || emptyCollection(sv)):
+			continue
 		case k.Shape == fields.Object:
 			members, err := wholeMembers(k, pv, sv)
 			if err != nil {

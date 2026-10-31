@@ -159,6 +159,48 @@ func TestAccCharge_verifiedUpdates(t *testing.T) {
 	})
 }
 
+// The direct charge's Connect arguments and descriptor, each in the variant that sends it: an
+// application fee needs a destination, and Stripe refuses it beside a transfer amount (suite
+// variants `destination`, `transfer_amount` and `descriptor`).
+func TestAccCharge_verifiedCreates(t *testing.T) {
+	t.Run("destination", func(t *testing.T) {
+		acct := acctest.NewAccount(t)
+		account := tfacc.TransfersAccount(t, acct)
+		resource.ParallelTest(t, resource.TestCase{
+			ProtoV6ProviderFactories: tfacc.ProviderFactories,
+			Steps: acctest.Forget(t, []resource.TestStep{{
+				Config: chargeConfig(acct, 500, fmt.Sprintf("  application_fee_amount = 100\n  transfer_data = { destination = %q }\n", account)),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr(resAddress, "application_fee_amount", "100"),
+					resource.TestCheckResourceAttr(resAddress, "transfer_data.destination", account),
+				),
+			}}, nil, "stripe_charge"),
+		})
+	})
+	t.Run("transfer_amount", func(t *testing.T) {
+		acct := acctest.NewAccount(t)
+		account := tfacc.TransfersAccount(t, acct)
+		resource.ParallelTest(t, resource.TestCase{
+			ProtoV6ProviderFactories: tfacc.ProviderFactories,
+			Steps: acctest.Forget(t, []resource.TestStep{{
+				Config: chargeConfig(acct, 500, fmt.Sprintf("  transfer_data = { amount = 100, destination = %q }\n", account)),
+				Check:  resource.TestCheckResourceAttr(resAddress, "transfer_data.amount", "100"),
+			}}, nil, "stripe_charge"),
+		})
+	})
+	t.Run("descriptor", func(t *testing.T) {
+		acct := acctest.NewAccount(t)
+		cfg := chargeConfig(acct, 500, "  statement_descriptor = \"ATTRS PROBE\"\n")
+		resource.ParallelTest(t, resource.TestCase{
+			ProtoV6ProviderFactories: tfacc.ProviderFactories,
+			Steps: acctest.Forget(t, []resource.TestStep{
+				{Config: cfg, Check: resource.TestCheckResourceAttr(resAddress, "statement_descriptor", "ATTRS PROBE")},
+				{Config: cfg, PlanOnly: true},
+			}, nil, "stripe_charge"),
+		})
+	})
+}
+
 func TestAccCharge_import(t *testing.T) {
 	acct := acctest.NewAccount(t)
 	cfg := chargeConfig(acct, 1000, "  description = \"Direct charge\"\n  metadata = { team = \"a\" }\n")
