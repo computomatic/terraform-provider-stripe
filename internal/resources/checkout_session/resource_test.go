@@ -101,6 +101,362 @@ func TestAccCheckoutSession_update(t *testing.T) {
 	})
 }
 
+// elementsConfig is a session of the `elements` UI mode, which the hosted page refuses
+// `collected_information` on (suite variant `elements`). extra lands inside the session.
+func elementsConfig(c acctest.Config, extra string) string {
+	return c.ProviderBlock() + fmt.Sprintf(`
+resource "stripe_product" "test" {
+  name = %q
+}
+
+resource "stripe_price" "test" {
+  product     = stripe_product.test.id
+  currency    = "usd"
+  unit_amount = 2000
+}
+
+resource "stripe_checkout_session" "test" {
+  mode       = "payment"
+  ui_mode    = "elements"
+  return_url = "https://example.com/return"
+
+  line_items = [{
+    price    = stripe_price.test.id
+    quantity = 2
+  }]
+
+  permissions                 = { update_shipping_details = "server_only" }
+  shipping_address_collection = { allowed_countries = ["US"] }
+%s}
+`, c.Name("Checkout product"), extra)
+}
+
+// shippingDetails is what the suite's update sends, and movedDetails the same hash with the address
+// the suite's create sends elsewhere: an update sends the hash whole.
+const (
+	shippingDetails = `
+  collected_information = {
+    shipping_details = {
+      name    = "Jenny Rosen"
+      address = { line1 = "400 Pine St", city = "Seattle", state = "WA", postal_code = "98101", country = "US" }
+    }
+  }
+`
+	movedDetails = `
+  collected_information = {
+    shipping_details = {
+      name    = "Jenny Rosen"
+      address = { line1 = "354 Oyster Point Blvd", city = "South San Francisco", state = "CA", postal_code = "94080", country = "US" }
+    }
+  }
+`
+)
+
+// `collected_information` is an update's: it goes after the create on a new session and changes
+// in place on an open one (suite: TestCheckoutSessionAttributes, base `elements`).
+func TestAccCheckoutSession_collectedInformation(t *testing.T) {
+	acct := acctest.NewAccount(t)
+	collected := resource.ComposeAggregateTestCheckFunc(
+		resource.TestCheckResourceAttr(resAddress, "collected_information.shipping_details.name", "Jenny Rosen"),
+		resource.TestCheckResourceAttr(resAddress, "collected_information.shipping_details.address.city", "Seattle"),
+		resource.TestCheckResourceAttr(resAddress, "status", "open"),
+	)
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: tfacc.ProviderFactories,
+		Steps: acctest.Forget(t, []resource.TestStep{
+			{Config: elementsConfig(acct, "")},
+			{
+				Config: elementsConfig(acct, shippingDetails),
+				ConfigPlanChecks: resource.ConfigPlanChecks{PreApply: []plancheck.PlanCheck{
+					plancheck.ExpectResourceAction(resAddress, plancheck.ResourceActionUpdate),
+				}},
+				Check: collected,
+			},
+			{Config: elementsConfig(acct, shippingDetails), PlanOnly: true},
+			{
+				Config: elementsConfig(acct, movedDetails),
+				Check:  resource.TestCheckResourceAttr(resAddress, "collected_information.shipping_details.address.city", "South San Francisco"),
+			},
+			{Config: elementsConfig(acct, ""), PlanOnly: true},
+		}, nil, "stripe_checkout_session"),
+	})
+}
+
+func TestAccCheckoutSession_collectedInformationOnCreate(t *testing.T) {
+	acct := acctest.NewAccount(t)
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: tfacc.ProviderFactories,
+		Steps: acctest.Forget(t, []resource.TestStep{{
+			Config: elementsConfig(acct, shippingDetails),
+			Check:  resource.TestCheckResourceAttr(resAddress, "collected_information.shipping_details.name", "Jenny Rosen"),
+		}}, nil, "stripe_checkout_session"),
+	})
+}
+
+// The hosted page refuses it, with Stripe's words (suite: "update errors").
+func TestAccCheckoutSession_collectedInformationRefusedOnTheHostedPage(t *testing.T) {
+	acct := acctest.NewAccount(t)
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: tfacc.ProviderFactories,
+		Steps: acctest.Forget(t, []resource.TestStep{
+			{Config: sessionConfig(acct, "")},
+			{Config: sessionConfig(acct, shippingDetails), ExpectError: regexp.MustCompile("not supported with")},
+		}, nil, "stripe_checkout_session"),
+	})
+}
+
+// An item that sets `price_data` has the price Stripe makes for it (suite variant `inline_product`).
+func TestAccCheckoutSession_priceData(t *testing.T) {
+	acct := acctest.NewAccount(t)
+	cfg := acct.ProviderBlock() + fmt.Sprintf(`
+resource "stripe_checkout_session" "test" {
+  mode        = "payment"
+  success_url = "https://example.com/thanks"
+
+  line_items = [{
+    quantity   = 2
+    price_data = { currency = "usd", unit_amount = 5000, product_data = { name = %q } }
+  }]
+}
+`, acct.Name("Inline"))
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: tfacc.ProviderFactories,
+		Steps: acctest.Forget(t, []resource.TestStep{
+			{Config: cfg, Check: resource.TestCheckResourceAttr(resAddress, "amount_total", "10000")},
+			{Config: cfg, PlanOnly: true},
+		}, nil, "stripe_checkout_session"),
+	})
+}
+
+// sessionProduct is the product of a session's inline price.
+func sessionProduct(c acctest.Config) string {
+	return c.ProviderBlock() + fmt.Sprintf(`
+resource "stripe_product" "test" {
+  name = %q
+}
+`, c.Name("Checkout product"))
+}
+
+// What a session takes and Stripe never returns stays as configured, in the context the suite sent
+// it: `every_field/19` and `/25`, `/7`, `/26` and `/28`, and the `elements` of a line item. A
+// configuration turns a method on, because Stripe refuses a session with no method to offer in its
+// currency (dev sandbox): the suite's is `bancontact` beside a price in `eur` (`methodConfiguration`).
+func TestAccCheckoutSession_keptFromConfiguration(t *testing.T) {
+	monthly := `[{
+    quantity   = 2
+    price_data = { currency = "usd", product = stripe_product.test.id, unit_amount = 5000, recurring = { interval = "month" } }
+  }]`
+	for _, tc := range []struct {
+		name   string
+		config func(acctest.Config) string
+		check  resource.TestCheckFunc
+	}{
+		{"payment_intent_data", func(c acctest.Config) string {
+			return sessionConfig(c, `  payment_intent_data = {
+    description                 = "attrs"
+    metadata                    = { a = "b" }
+    setup_future_usage          = "off_session"
+    statement_descriptor        = "ATTRS PROBE"
+    statement_descriptor_suffix = "ATTRS"
+    transfer_group              = "attrs"
+    shipping = {
+      name    = "Jenny Rosen"
+      address = { line1 = "354 Oyster Point Blvd", city = "South San Francisco", state = "CA", postal_code = "94080", country = "US" }
+    }
+  }
+`)
+		}, resource.TestCheckResourceAttr(resAddress, "payment_intent_data.statement_descriptor", "ATTRS PROBE")},
+		{"subscription_data", func(c acctest.Config) string {
+			return sessionProduct(c) + fmt.Sprintf(`
+resource "stripe_checkout_session" "test" {
+  mode                      = "subscription"
+  success_url               = "https://example.com/thanks"
+  payment_method_collection = "always"
+  line_items                = %s
+
+  subscription_data = {
+    description       = "attrs"
+    metadata          = { a = "b" }
+    trial_period_days = 7
+    trial_settings    = { end_behavior = { missing_payment_method = "cancel" } }
+  }
+}
+`, monthly)
+		}, resource.TestCheckResourceAttr(resAddress, "subscription_data.trial_period_days", "7")},
+		{"setup_intent_data", func(c acctest.Config) string {
+			return c.ProviderBlock() + `
+resource "stripe_checkout_session" "test" {
+  mode        = "setup"
+  currency    = "usd"
+  success_url = "https://example.com/thanks"
+
+  setup_intent_data = { description = "attrs", metadata = { a = "b" } }
+}
+`
+		}, resource.TestCheckResourceAttr(resAddress, "setup_intent_data.description", "attrs")},
+		{"customer_update", func(c acctest.Config) string {
+			return sessionConfig(c, `  customer        = stripe_customer.test.id
+  customer_update = { address = "auto", name = "auto", shipping = "auto" }
+`) + `
+resource "stripe_customer" "test" {
+  email = "kept@example.com"
+}
+`
+		}, resource.TestCheckResourceAttr(resAddress, "customer_update.address", "auto")},
+		{"payment_method_configuration", func(c acctest.Config) string {
+			return sessionProduct(c) + fmt.Sprintf(`
+resource "stripe_payment_method_configuration" "test" {
+  name       = %q
+  bancontact = { display_preference = { preference = "on" } }
+}
+
+resource "stripe_checkout_session" "test" {
+  mode                         = "payment"
+  success_url                  = "https://example.com/thanks"
+  payment_method_configuration = stripe_payment_method_configuration.test.id
+
+  line_items = [{
+    quantity   = 2
+    price_data = { currency = "eur", product = stripe_product.test.id, unit_amount = 5000 }
+  }]
+}
+`, c.Name("Kept"))
+		}, resource.TestCheckResourceAttrPair(resAddress, "payment_method_configuration", "stripe_payment_method_configuration.test", "id")},
+		{"line_items.tax_rates", func(c acctest.Config) string {
+			return sessionProduct(c) + fmt.Sprintf(`
+resource "stripe_price" "test" {
+  product     = stripe_product.test.id
+  currency    = "usd"
+  unit_amount = 2000
+}
+
+resource "stripe_tax_rate" "test" {
+  display_name = %q
+  inclusive    = false
+  percentage   = 7
+}
+
+resource "stripe_checkout_session" "test" {
+  mode        = "payment"
+  success_url = "https://example.com/thanks"
+
+  line_items = [{
+    price     = stripe_price.test.id
+    quantity  = 2
+    tax_rates = [stripe_tax_rate.test.id]
+  }]
+}
+`, c.Name("Tax"))
+		}, resource.TestCheckResourceAttrPair(resAddress, "line_items.0.tax_rates.0", "stripe_tax_rate.test", "id")},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			acct := acctest.NewAccount(t)
+			cfg := tc.config(acct)
+			resource.ParallelTest(t, resource.TestCase{
+				ProtoV6ProviderFactories: tfacc.ProviderFactories,
+				Steps: acctest.Forget(t, []resource.TestStep{
+					{Config: cfg, Check: tc.check},
+					{Config: cfg, PlanOnly: true},
+				}, nil, "stripe_checkout_session"),
+			})
+		})
+	}
+}
+
+// A kept value cannot change, because a session cannot be updated in it or replaced.
+func TestAccCheckoutSession_keptArgumentsCannotChange(t *testing.T) {
+	acct := acctest.NewAccount(t)
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: tfacc.ProviderFactories,
+		Steps: acctest.Forget(t, []resource.TestStep{
+			{Config: sessionConfig(acct, "  payment_intent_data = { description = \"attrs\" }\n")},
+			{
+				Config:      sessionConfig(acct, "  payment_intent_data = { description = \"other\" }\n"),
+				PlanOnly:    true,
+				ExpectError: regexp.MustCompile("(?i)cannot delete a checkout session"),
+			},
+		}, nil, "stripe_checkout_session"),
+	})
+}
+
+// Stripe fills the rest of a hash a create sends in part, and the docs say what it holds (suite:
+// `nested_minimal/2`).
+func TestAccCheckoutSession_hashesStripeFills(t *testing.T) {
+	acct := acctest.NewAccount(t)
+	cfg := sessionConfig(acct, `  after_expiration   = { recovery = { enabled = true } }
+  consent_collection = { payment_method_reuse_agreement = { position = "auto" } }
+  name_collection    = { business = { enabled = true }, individual = { enabled = true } }
+  tax_id_collection  = { enabled = true }
+`)
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: tfacc.ProviderFactories,
+		Steps: acctest.Forget(t, []resource.TestStep{
+			{
+				Config: cfg,
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr(resAddress, "after_expiration.recovery.allow_promotion_codes", "false"),
+					resource.TestCheckResourceAttr(resAddress, "consent_collection.promotions", "none"),
+					resource.TestCheckResourceAttr(resAddress, "consent_collection.terms_of_service", "none"),
+					resource.TestCheckResourceAttr(resAddress, "name_collection.business.optional", "false"),
+					resource.TestCheckResourceAttr(resAddress, "tax_id_collection.required", "never"),
+				),
+			},
+			{Config: cfg, PlanOnly: true},
+		}, nil, "stripe_checkout_session"),
+	})
+}
+
+// So does a payment method's hash (suite: `enums/51`).
+func TestAccCheckoutSession_paymentMethodOptionsStripeFills(t *testing.T) {
+	acct := acctest.NewAccount(t)
+	cfg := sessionProduct(acct) + `
+resource "stripe_checkout_session" "test" {
+  mode        = "payment"
+  success_url = "https://example.com/thanks"
+
+  line_items = [{
+    quantity   = 2
+    price_data = { currency = "cad", product = stripe_product.test.id, unit_amount = 5000 }
+  }]
+
+  payment_method_options = { acss_debit = { setup_future_usage = "on_session" } }
+}
+`
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: tfacc.ProviderFactories,
+		Steps: acctest.Forget(t, []resource.TestStep{
+			{Config: cfg, Check: resource.TestCheckResourceAttr(resAddress, "payment_method_options.acss_debit.verification_method", "automatic")},
+			{Config: cfg, PlanOnly: true},
+		}, nil, "stripe_checkout_session"),
+	})
+}
+
+// What the product owner dropped of a session leaves it, and a configuration that sets it fails
+// validation (rule X6).
+func TestAccCheckoutSession_acceptedOnlyArgumentsAreGone(t *testing.T) {
+	acct := acctest.NewAccount(t)
+	for name, argument := range map[string]string{
+		"payment_method_data":  "payment_method_data = { allow_redisplay = \"always\" }",
+		"blik":                 "payment_method_options = { blik = { setup_future_usage = \"none\" } }",
+		"crypto":               "payment_method_options = { crypto = { setup_future_usage = \"none\" } }",
+		"demo_pay":             "payment_method_options = { demo_pay = { setup_future_usage = \"none\" } }",
+		"klarna.subscriptions": "payment_method_options = { klarna = { subscriptions = [] } }",
+		"p24":                  "payment_method_options = { p24 = { tos_shown_and_accepted = true } }",
+		"paypal":               "payment_method_options = { paypal = { risk_correlation_id = \"attrs\" } }",
+	} {
+		t.Run(name, func(t *testing.T) {
+			resource.ParallelTest(t, resource.TestCase{
+				ProtoV6ProviderFactories: tfacc.ProviderFactories,
+				Steps: []resource.TestStep{{
+					Config:      sessionConfig(acct, "  "+argument+"\n"),
+					PlanOnly:    true,
+					ExpectError: regexp.MustCompile(`(?i)unsupported|Object Attribute|Invalid|Empty object|Incorrect attribute`),
+				}},
+			})
+		})
+	}
+}
+
 // shippingOption is a fixed-amount shipping option in usd, for a `shipping_options` list.
 func shippingOption(name string, amount int) string {
 	return fmt.Sprintf(`{

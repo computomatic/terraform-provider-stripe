@@ -589,6 +589,41 @@ func TestSendWholeMembers(t *testing.T) {
 	}
 }
 
+// A top-level hash in SendWholeMembers goes whole too, with a removed member as null, its map
+// whole, and an empty map that stays empty left out, which Stripe would read as an unset.
+func TestSendWholeMembersAtTopLevel(t *testing.T) {
+	member := func(name string, shape fields.Shape) fields.Field {
+		return fields.Field{Name: name, Shape: shape, Create: true, Update: true, Response: true}
+	}
+	tags := member("tags", fields.StringMap)
+	data := member("data", fields.Object)
+	data.Fields = []fields.Field{member("note", fields.String), member("group", fields.String), tags}
+	decl := fixtureDeclaration()
+	decl.SendWholeMembers = []string{"data"}
+	r := configured(t, decl, append(refuseTable(), data), noCalls(t))
+	dataType := r.objType.AttrTypes["data"].(basetypes.ObjectType).AttrTypes
+	build := func(note attr.Value, tags map[string]attr.Value) attr.Value {
+		return types.ObjectValueMust(dataType, map[string]attr.Value{"note": note, "group": types.StringValue("g"), "tags": types.MapValueMust(types.StringType, tags)})
+	}
+	state := r.fill(map[string]attr.Value{"id": types.StringValue("wid_1"), "name": types.StringValue("w"), "data": build(types.StringValue("a"), nil)})
+	for _, tc := range []struct {
+		name string
+		data attr.Value
+		want string
+	}{
+		{"a removal beside an empty map", build(types.StringNull(), nil), `{"data":{"note":null,"group":"g"}}`},
+		{"a map", build(types.StringValue("a"), map[string]attr.Value{"k": types.StringValue("v")}), `{"data":{"note":"a","group":"g","tags":{"k":"v"}}}`},
+	} {
+		params, err := r.m.encodeUpdate(r.fill(with(state, map[string]attr.Value{"data": tc.data})), state, tftypes.Value{})
+		if err != nil {
+			t.Fatal(err)
+		}
+		if got := wireOf(t, params); got != tc.want {
+			t.Errorf("%s: update body %s, want %s", tc.name, got, tc.want)
+		}
+	}
+}
+
 // How an update sends a hash is never left open: an entry must be a hash inside an object that
 // sends changed members, and every hash below such an object is named, but for one with a
 // Required member, which goes whole, and a refused one.
@@ -615,7 +650,9 @@ func TestSentMembersAreChecked(t *testing.T) {
 		"not named":          {changed: []string{"person"}, want: "the hash `person.home` is inside"},
 		"not a hash":         {changed: []string{"person"}, whole: []string{"person.first"}, want: "send-whole-members entry"},
 		"no such path":       {changed: []string{"person"}, whole: []string{"person.gone"}, want: "send-whole-members entry"},
-		"top-level whole":    {changed: []string{"person"}, whole: []string{"person"}, want: "send-whole-members entry"},
+		"top-level whole":    {whole: []string{"person"}},
+		"both at top level":  {changed: []string{"person"}, whole: []string{"person"}, want: "send-whole-members entry"},
+		"nested whole alone": {whole: []string{"person.home"}, want: "send-whole-members entry"},
 		"in both lists":      {changed: []string{"person", "person.home"}, whole: []string{"person.home"}, want: "send-whole-members entry"},
 		"outside":            {changed: []string{"person.home"}, want: "send-changed-members entry"},
 		"a required member":  {changed: []string{"person", "person.home", "person.dob"}, want: "send-changed-members entry"},

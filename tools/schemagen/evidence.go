@@ -29,6 +29,8 @@ type EvidencePin struct {
 	RunID       int64      `json:"run_id"`
 	Attributes  PinnedFile `json:"attributes"`
 	Evidence    PinnedFile `json:"evidence"`
+	// CreateProbes is spec/create_probes.json, the digest of the suite's observations at SuiteRef.
+	CreateProbes PinnedFile `json:"create_probes"`
 }
 
 // PinnedFile is the size and SHA-256 of one vendored file.
@@ -309,11 +311,26 @@ var (
 	hashUpdates   = []string{HashSiblingsKept, HashSiblingsCleared}
 )
 
+// minimalCreate is one variant of a minimal create in the record: what it sent and what each
+// response path then held. Unlike a leaf's `default.variants`, which holds only the variants with
+// a literal or none, it gives a value Stripe generates or copies from another argument.
+type minimalCreate struct {
+	Object    string             `json:"object"`
+	Operation string             `json:"operation"`
+	Status    int                `json:"status"`
+	Params    any                `json:"params"`
+	Response  map[string]Matcher `json:"response"`
+}
+
 // Pinned is the vendored evidence, read and checked against its pin and the spec's.
 type Pinned struct {
 	Pin        EvidencePin
 	Attributes *Attributes
 	Evidence   *Evidence
+	// creates holds the record's minimal creates by object and operation.
+	creates map[string][]minimalCreate
+	// probed holds what the suite's create probes show of a leaf they left out, by key.
+	probed map[Key][]evidencecheck.ProbedValue
 	// classes, refused and leaves index the two files by key, built on first use.
 	classes map[Key]string
 	refused map[Key]bool
@@ -389,6 +406,16 @@ func LoadEvidence(root string, spec Pin) (*Pinned, error) {
 	if err := evidencecheck.CheckEvidence(e.header(), a.header(), pinnedSpec); err != nil {
 		return nil, err
 	}
+	var creates []minimalCreate
+	if len(e.MinimalCreates) > 0 {
+		if err := json.Unmarshal(e.MinimalCreates, &creates); err != nil {
+			return nil, fmt.Errorf("spec/evidence.json: minimal_creates: %w", err)
+		}
+	}
+	p.creates = map[string][]minimalCreate{}
+	for _, c := range creates {
+		p.creates[c.Object+" "+c.Operation] = append(p.creates[c.Object+" "+c.Operation], c)
+	}
 	proven := map[Key]bool{}
 	for _, l := range e.Leaves {
 		if _, dup := proven[l.Key]; dup {
@@ -398,6 +425,9 @@ func LoadEvidence(root string, spec Pin) (*Pinned, error) {
 	}
 	// The fake verifies only what the record proves; a verified leaf the pinned record does
 	// not prove means the two files do not belong together.
+	if err := p.loadCreateProbes(root); err != nil {
+		return nil, err
+	}
 	var unproven []string
 	for _, l := range a.Leaves {
 		if l.Class == ClassVerified && !proven[l.Key] {
@@ -408,6 +438,27 @@ func LoadEvidence(root string, spec Pin) (*Pinned, error) {
 		return nil, fmt.Errorf("spec/attributes.json verifies leaves that spec/evidence.json does not prove: %s", strings.Join(unproven, ", "))
 	}
 	return &p, nil
+}
+
+// loadCreateProbes reads the digest of the suite's create probes, which must be of the pinned
+// suite commit. It is not optional: without it nothing checks a default statement against them.
+func (p *Pinned) loadCreateProbes(root string) error {
+	data, err := readPinned(root, "create_probes.json", p.Pin.CreateProbes)
+	if err != nil {
+		return err
+	}
+	var digest evidencecheck.CreateProbes
+	if err := json.Unmarshal(data, &digest); err != nil {
+		return fmt.Errorf("decode spec/create_probes.json: %w", err)
+	}
+	if digest.SuiteRef != p.Pin.SuiteRef {
+		return fmt.Errorf("spec/create_probes.json is of suite commit %s, spec/EVIDENCE_PIN.json pins %s", digest.SuiteRef, p.Pin.SuiteRef)
+	}
+	p.probed = map[Key][]evidencecheck.ProbedValue{}
+	for _, l := range digest.Leaves {
+		p.probed[Key{Object: l.Object, Side: SideRequest, Operation: l.Operation, Path: l.Path}] = l.Held
+	}
+	return nil
 }
 
 // check refuses a class or a reason outside its closed set, and a key listed twice.

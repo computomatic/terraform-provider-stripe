@@ -753,7 +753,7 @@ The `company` attribute supports:
 * `name` - (Optional) The company's legal name. Also available for accounts where [controller.requirement_collection](https://docs.stripe.com/api/accounts/object#account_object-controller-requirement_collection) is `stripe`. Default: none.
 * `owners_provided` - (Optional) Whether the company's owners have been provided. This Boolean will be `true` if you've manually indicated that all owners are provided via [the `owners_provided` parameter](https://docs.stripe.com/api/accounts/update#update_account-company-owners_provided), or if Stripe determined that sufficient owners were provided. Stripe determines ownership requirements using both the number of owners provided and their total percent ownership (calculated by adding the `percent_ownership` of each owner together). Default (Stripe): `false` on a company account, `true` on an individual one. Removing it from the configuration leaves the current value.
 * `ownership_declaration` - (Optional) This hash is used to attest that the beneficial owner information provided to Stripe is both current and correct. Removing it from the configuration leaves the current value. See [`company.ownership_declaration`](#company.ownership_declaration) below.
-* `phone` - (Optional) The company's phone number (used for verification). Default: none. Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
+* `phone` - (Optional) The company's phone number (used for verification). Default (Stripe): none, or the individual's on an individual account, such as `+10000000000`. Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
 * `principal_place_of_business` - (Optional) Removing it from the configuration leaves the current value. See [`company.principal_place_of_business`](#company.principal_place_of_business) below.
 * `registration_date` - (Optional) Removing it from the configuration leaves the current value. See [`company.registration_date`](#company.registration_date) below.
 * `structure` - (Optional) The category identifying the legal structure of the company or legal entity. Also available for accounts where [controller.requirement_collection](https://docs.stripe.com/api/accounts/object#account_object-controller-requirement_collection) is `stripe`. See [Business structure](https://docs.stripe.com/connect/identity-verification#business-structure) for more details. Possible values: `free_zone_establishment`, `free_zone_llc`, `government_instrumentality`, `governmental_unit`, `incorporated_non_profit`, `incorporated_partnership`, `limited_liability_partnership`, `llc`, `multi_member_llc`, `private_company`, `private_corporation`, `private_partnership`, `public_company`, `public_corporation`, `public_partnership`, `registered_charity`, `single_member_llc`, `sole_establishment`, `sole_proprietorship`, `tax_exempt_government_instrumentality`, `unincorporated_association`, `unincorporated_non_profit`, `unincorporated_partnership`. Default: none.
@@ -763,12 +763,12 @@ The `company` attribute supports:
 
 The `company.address` attribute supports:
 
-* `city` - (Optional) City, district, suburb, town, or village. Default: none. Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
-* `country` - (Optional) Two-letter country code ([ISO 3166-1 alpha-2](https://en.wikipedia.org/wiki/ISO_3166-1_alpha-2)). Default: none. Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
-* `line1` - (Optional) Address line 1, such as the street, PO Box, or company name. Default: none. Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
-* `line2` - (Optional) Address line 2, such as the apartment, suite, unit, or building. Default: none. Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
-* `postal_code` - (Optional) ZIP or postal code. Default: none. Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
-* `state` - (Optional) State, county, province, or region ([ISO 3166-2](https://en.wikipedia.org/wiki/ISO_3166-2)). Default: none. Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
+* `city` - (Optional) City, district, suburb, town, or village. Default (Stripe): none, or the individual's on an individual account. Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
+* `country` - (Optional) Two-letter country code ([ISO 3166-1 alpha-2](https://en.wikipedia.org/wiki/ISO_3166-1_alpha-2)). Default (Stripe): none, or the account's `country` on an account with a `business_type`. Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
+* `line1` - (Optional) Address line 1, such as the street, PO Box, or company name. Default (Stripe): none, or the individual's on an individual account. Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
+* `line2` - (Optional) Address line 2, such as the apartment, suite, unit, or building. Default (Stripe): none, or the individual's on an individual account. Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
+* `postal_code` - (Optional) ZIP or postal code. Default (Stripe): none, or the individual's on an individual account. Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
+* `state` - (Optional) State, county, province, or region ([ISO 3166-2](https://en.wikipedia.org/wiki/ISO_3166-2)). Default (Stripe): none, or the individual's on an individual account. Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
 
 <a id="company.administrative_address"></a>
 ### `company.administrative_address`
@@ -882,7 +882,7 @@ The `individual` attribute supports:
 The `individual.address` attribute supports:
 
 * `city` - (Optional) City, district, suburb, town, or village. Default: none.
-* `country` - (Optional) Two-letter country code ([ISO 3166-1 alpha-2](https://en.wikipedia.org/wiki/ISO_3166-1_alpha-2)). Default: none. Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
+* `country` - (Optional) Two-letter country code ([ISO 3166-1 alpha-2](https://en.wikipedia.org/wiki/ISO_3166-1_alpha-2)). Default (Stripe): the account's `country` once `individual` is set. Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
 * `line1` - (Optional) Address line 1, such as the street, PO Box, or company name. Default: none.
 * `line2` - (Optional) Address line 2, such as the apartment, suite, unit, or building. Default: none.
 * `postal_code` - (Optional) ZIP or postal code. Default: none.
@@ -914,9 +914,9 @@ The `individual.registered_address` attribute supports:
 
 The `individual.relationship` attribute supports:
 
-* `director` - (Optional) Whether the person is a director of the account's legal entity. Directors are typically members of the governing board of the company, or responsible for ensuring the company meets its regulatory obligations. Default: none. Removing it from the configuration leaves the current value.
-* `executive` - (Optional) Whether the person has significant responsibility to control, manage, or direct the organization. Default: none. Removing it from the configuration leaves the current value.
-* `owner` - (Optional) Whether the person is an owner of the account’s legal entity. Default: none. Removing it from the configuration leaves the current value.
+* `director` - (Optional) Whether the person is a director of the account's legal entity. Directors are typically members of the governing board of the company, or responsible for ensuring the company meets its regulatory obligations. Default (Stripe): `false` once `individual` is set. Removing it from the configuration leaves the current value.
+* `executive` - (Optional) Whether the person has significant responsibility to control, manage, or direct the organization. Default (Stripe): `false` once `individual` is set. Removing it from the configuration leaves the current value.
+* `owner` - (Optional) Whether the person is an owner of the account’s legal entity. Default (Stripe): `false` once `individual` is set. Removing it from the configuration leaves the current value.
 * `percent_ownership` - (Optional) The percent owned by the person of the account's legal entity. Default: none. Removing it from the configuration leaves the current value.
 * `title` - (Optional) The person's title (e.g., CEO, Support Engineer). Default: none.
 

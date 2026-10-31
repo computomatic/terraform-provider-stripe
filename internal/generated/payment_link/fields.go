@@ -7,39 +7,39 @@ import "github.com/computomatic/terraform-provider-stripe/internal/fields"
 
 // Table lists every request and response field of the object.
 var Table = []fields.Field{
-	{Name: "active", Shape: fields.Bool, Update: true, Response: true, Description: "Whether the payment link's `url` is active. If `false`, customers visiting the URL will be shown a page saying that the link has been deactivated.", Default: &fields.Default{Kind: fields.DefaultNotSent}},
+	{Name: "active", Shape: fields.Bool, Update: true, Response: true, Stable: true, Description: "Whether the payment link's `url` is active. If `false`, customers visiting the URL will be shown a page saying that the link has been deactivated.", Default: &fields.Default{Kind: fields.DefaultNotSent}},
 	{Name: "after_completion", Shape: fields.Object, Create: true, Update: true, Response: true, ServerDefaulted: true, Description: "Behavior after the purchase is complete.", Fields: []fields.Field{
 		{Name: "hosted_confirmation", Shape: fields.Object, Create: true, Update: true, Response: true, Fields: []fields.Field{
-			{Name: "custom_message", Shape: fields.String, Create: true, Update: true, Response: true, Description: "The custom message that is displayed to the customer after the purchase is complete."},
+			{Name: "custom_message", Shape: fields.String, Create: true, Update: true, Response: true, Stable: true, Description: "The custom message that is displayed to the customer after the purchase is complete.", Default: &fields.Default{Kind: fields.DefaultNone}},
 		}},
 		{Name: "redirect", Shape: fields.Object, Create: true, Update: true, Response: true, Fields: []fields.Field{
 			{Name: "url", Shape: fields.String, Required: true, Create: true, Update: true, Response: true, Description: "The URL the customer will be redirected to after the purchase is complete."},
 		}},
 		{Name: "type", Shape: fields.String, Required: true, Create: true, Update: true, Response: true, Enum: []string{"hosted_confirmation", "redirect"}, Description: "The specified behavior after the purchase is complete."},
 	}},
-	{Name: "allow_promotion_codes", Shape: fields.Bool, Create: true, Update: true, Response: true, ServerDefaulted: true, Description: "Enables user redeemable promotion codes."},
+	{Name: "allow_promotion_codes", Shape: fields.Bool, Create: true, Update: true, Response: true, ServerDefaulted: true, Stable: true, Description: "Enables user redeemable promotion codes.", Default: &fields.Default{Kind: fields.DefaultValue, Value: "false"}},
 	{Name: "application", Shape: fields.String, Response: true, Description: "The ID of the Connect application that created the Payment Link."},
-	{Name: "application_fee_amount", Shape: fields.Int, Create: true, Update: true, Response: true, Description: "The amount of the application fee (if any) that will be requested to be applied to the payment and transferred to the application owner's Stripe account. Can only be applied when there are no line items with recurring prices."},
-	{Name: "application_fee_percent", Shape: fields.Float, Create: true, Update: true, Response: true, Description: "A non-negative decimal between 0 and 100, with at most two decimal places. This represents the percentage of the subscription invoice total that will be transferred to the application owner's Stripe account. There must be at least 1 line item with a recurring price to use this field."},
+	{Name: "application_fee_amount", Shape: fields.Int, Create: true, Update: true, Response: true, Stable: true, Description: "The amount of the application fee (if any) that will be requested to be applied to the payment and transferred to the application owner's Stripe account. Can only be applied when there are no line items with recurring prices.", Default: &fields.Default{Kind: fields.DefaultNone}},
+	{Name: "application_fee_percent", Shape: fields.Float, Create: true, Update: true, Response: true, Stable: true, Description: "A non-negative decimal between 0 and 100, with at most two decimal places. This represents the percentage of the subscription invoice total that will be transferred to the application owner's Stripe account. There must be at least 1 line item with a recurring price to use this field.", Default: &fields.Default{Kind: fields.DefaultNone}},
 	{Name: "automatic_tax", Shape: fields.Object, Create: true, Update: true, Response: true, ServerDefaulted: true, Description: "Configuration for automatic tax collection.", Fields: []fields.Field{
 		{Name: "enabled", Shape: fields.Bool, Required: true, Create: true, Update: true, Response: true, Description: "If `true`, tax will be calculated automatically using the customer's location."},
 		{Name: "liability", Shape: fields.Object, Create: true, Update: true, Response: true, Description: "The account that's liable for tax. If set, the business address and tax registrations required to perform the tax calculation are loaded from this account. The tax transaction is returned in the report of the connected account.", Fields: []fields.Field{
-			{Name: "account", Shape: fields.String, Create: true, Update: true, Response: true, Description: "The connected account being referenced when `type` is `account`."},
+			{Name: "account", Shape: fields.String, Create: true, Update: true, Response: true, Stable: true, Description: "The connected account being referenced when `type` is `account`.", Default: &fields.Default{Kind: fields.DefaultNone}},
 			{Name: "type", Shape: fields.String, Required: true, Create: true, Update: true, Response: true, Enum: []string{"account", "self"}, Description: "Type of the account referenced."},
 		}},
 	}},
-	{Name: "billing_address_collection", Shape: fields.String, Create: true, Update: true, Response: true, ServerDefaulted: true, Enum: []string{"auto", "required"}, Description: "Configuration for collecting the customer's billing address. Defaults to `auto`."},
+	{Name: "billing_address_collection", Shape: fields.String, Create: true, Update: true, Response: true, ServerDefaulted: true, Stable: true, Enum: []string{"auto", "required"}, Description: "Configuration for collecting the customer's billing address. Defaults to `auto`.", Default: &fields.Default{Kind: fields.DefaultValue, Value: "auto"}},
 	{Name: "consent_collection", Shape: fields.Object, Create: true, Update: true, Response: true, Description: "Configure fields to gather active consent from customers.", Fields: []fields.Field{
 		{Name: "payment_method_reuse_agreement", Shape: fields.Object, Create: true, Update: true, Response: true, Description: "Settings related to the payment method reuse text shown in the Checkout UI.", Fields: []fields.Field{
 			{Name: "position", Shape: fields.String, Required: true, Create: true, Update: true, Response: true, Enum: []string{"auto", "hidden"}, Description: "Determines the position and visibility of the payment method reuse agreement in the UI. When set to `auto`, Stripe's defaults will be used. When set to `hidden`, the payment method reuse agreement text will always be hidden in the UI."},
 		}},
-		{Name: "promotions", Shape: fields.String, Create: true, Update: true, Response: true, Enum: []string{"auto", "none"}, Description: "If set to `auto`, enables the collection of customer consent for promotional communications."},
-		{Name: "terms_of_service", Shape: fields.String, Create: true, Update: true, Response: true, Enum: []string{"none", "required"}, Description: "If set to `required`, it requires cutomers to accept the terms of service before being able to pay. If set to `none`, customers won't be shown a checkbox to accept the terms of service."},
+		{Name: "promotions", Shape: fields.String, Create: true, Update: true, Response: true, Stable: true, Enum: []string{"auto", "none"}, Description: "If set to `auto`, enables the collection of customer consent for promotional communications.", Default: &fields.Default{Kind: fields.DefaultNone}, Refused: "Stripe refused it on a US account on create: \"To set `consent_collection.promotions`, please visit https://dashboard.stripe.com/settings/checkout to agree to the Terms of Service.\"."},
+		{Name: "terms_of_service", Shape: fields.String, Create: true, Update: true, Response: true, Stable: true, Enum: []string{"none", "required"}, Description: "If set to `required`, it requires cutomers to accept the terms of service before being able to pay. If set to `none`, customers won't be shown a checkbox to accept the terms of service.", Default: &fields.Default{Kind: fields.DefaultNone}},
 	}},
-	{Name: "currency", Shape: fields.String, Create: true, Response: true, ServerDefaulted: true, Description: "Three-letter [ISO currency code](https://www.iso.org/iso-4217-currency-codes.html), in lowercase. Must be a [supported currency](https://stripe.com/docs/currencies) and supported by each line item's price."},
+	{Name: "currency", Shape: fields.String, Create: true, Response: true, ServerDefaulted: true, Description: "Three-letter [ISO currency code](https://www.iso.org/iso-4217-currency-codes.html), in lowercase. Must be a [supported currency](https://stripe.com/docs/currencies) and supported by each line item's price.", Default: &fields.Default{Kind: fields.DefaultRule, Rule: "the currency of the link's line items", Observed: "`usd` on a US account"}},
 	{Name: "custom_fields", Shape: fields.ObjectList, Create: true, Update: true, Response: true, ServerDefaulted: true, Description: "Collect additional information from your customer using custom fields. Up to 3 fields are supported. You can't set this parameter if `ui_mode` is `elements`.", Fields: []fields.Field{
 		{Name: "dropdown", Shape: fields.Object, Create: true, Update: true, Response: true, Fields: []fields.Field{
-			{Name: "default_value", Shape: fields.String, Create: true, Update: true, Response: true, Description: "The value that pre-fills on the payment page."},
+			{Name: "default_value", Shape: fields.String, Create: true, Update: true, Response: true, Stable: true, Description: "The value that pre-fills on the payment page.", Default: &fields.Default{Kind: fields.DefaultNone}},
 			{Name: "options", Shape: fields.ObjectList, Required: true, Create: true, Update: true, Response: true, Description: "The options available for the customer to select. Up to 200 options allowed.", Fields: []fields.Field{
 				{Name: "label", Shape: fields.String, Required: true, Create: true, Update: true, Response: true, Description: "The label for the option, displayed to the customer. Up to 100 characters."},
 				{Name: "value", Shape: fields.String, Required: true, Create: true, Update: true, Response: true, Description: "The value for this option, not displayed to the customer, used by your integration to reconcile the option selected by the customer. Must be unique to this option, alphanumeric, and up to 100 characters."},
@@ -51,15 +51,15 @@ var Table = []fields.Field{
 			{Name: "type", Shape: fields.String, Required: true, Create: true, Update: true, Response: true, Enum: []string{"custom"}, Description: "The type of the label."},
 		}},
 		{Name: "numeric", Shape: fields.Object, Create: true, Update: true, Response: true, Fields: []fields.Field{
-			{Name: "default_value", Shape: fields.String, Create: true, Update: true, Response: true, Description: "The value that pre-fills the field on the payment page."},
-			{Name: "maximum_length", Shape: fields.Int, Create: true, Update: true, Response: true, Description: "The maximum character length constraint for the customer's input."},
-			{Name: "minimum_length", Shape: fields.Int, Create: true, Update: true, Response: true, Description: "The minimum character length requirement for the customer's input."},
+			{Name: "default_value", Shape: fields.String, Create: true, Update: true, Response: true, Stable: true, Description: "The value that pre-fills the field on the payment page.", Default: &fields.Default{Kind: fields.DefaultNone}},
+			{Name: "maximum_length", Shape: fields.Int, Create: true, Update: true, Response: true, Stable: true, Description: "The maximum character length constraint for the customer's input.", Default: &fields.Default{Kind: fields.DefaultNone}},
+			{Name: "minimum_length", Shape: fields.Int, Create: true, Update: true, Response: true, Stable: true, Description: "The minimum character length requirement for the customer's input.", Default: &fields.Default{Kind: fields.DefaultNone}},
 		}},
-		{Name: "optional", Shape: fields.Bool, Create: true, Update: true, Response: true, ServerDefaulted: true, Description: "Whether the customer is required to complete the field before completing the Checkout Session. Defaults to `false`."},
+		{Name: "optional", Shape: fields.Bool, Create: true, Update: true, Response: true, ServerDefaulted: true, Stable: true, Description: "Whether the customer is required to complete the field before completing the Checkout Session. Defaults to `false`.", Default: &fields.Default{Kind: fields.DefaultNone}},
 		{Name: "text", Shape: fields.Object, Create: true, Update: true, Response: true, Fields: []fields.Field{
-			{Name: "default_value", Shape: fields.String, Create: true, Update: true, Response: true, Description: "The value that pre-fills the field on the payment page."},
-			{Name: "maximum_length", Shape: fields.Int, Create: true, Update: true, Response: true, Description: "The maximum character length constraint for the customer's input."},
-			{Name: "minimum_length", Shape: fields.Int, Create: true, Update: true, Response: true, Description: "The minimum character length requirement for the customer's input."},
+			{Name: "default_value", Shape: fields.String, Create: true, Update: true, Response: true, Stable: true, Description: "The value that pre-fills the field on the payment page.", Default: &fields.Default{Kind: fields.DefaultNone}},
+			{Name: "maximum_length", Shape: fields.Int, Create: true, Update: true, Response: true, Stable: true, Description: "The maximum character length constraint for the customer's input.", Default: &fields.Default{Kind: fields.DefaultNone}},
+			{Name: "minimum_length", Shape: fields.Int, Create: true, Update: true, Response: true, Stable: true, Description: "The minimum character length requirement for the customer's input.", Default: &fields.Default{Kind: fields.DefaultNone}},
 		}},
 		{Name: "type", Shape: fields.String, Required: true, Create: true, Update: true, Response: true, Enum: []string{"dropdown", "numeric", "text"}, Description: "The type of the field."},
 	}},
@@ -77,35 +77,35 @@ var Table = []fields.Field{
 			{Name: "message", Shape: fields.String, Required: true, Create: true, Update: true, Response: true, Description: "Text can be up to 1200 characters in length."},
 		}},
 	}},
-	{Name: "customer_creation", Shape: fields.String, Create: true, Update: true, Response: true, ServerDefaulted: true, Enum: []string{"always", "if_required"}, Description: "Configures whether [checkout sessions](https://docs.stripe.com/api/checkout/sessions) created by this payment link create a [Customer](https://docs.stripe.com/api/customers)."},
+	{Name: "customer_creation", Shape: fields.String, Create: true, Update: true, Response: true, ServerDefaulted: true, Stable: true, Enum: []string{"always", "if_required"}, Description: "Configures whether [checkout sessions](https://docs.stripe.com/api/checkout/sessions) created by this payment link create a [Customer](https://docs.stripe.com/api/customers).", Default: &fields.Default{Kind: fields.DefaultValue, Value: "if_required"}},
 	{Name: "id", Shape: fields.String, Response: true, Description: "Unique identifier for the object."},
-	{Name: "inactive_message", Shape: fields.String, Create: true, Update: true, Response: true, Description: "The custom message to be displayed to a customer when a payment link is no longer active."},
+	{Name: "inactive_message", Shape: fields.String, Create: true, Update: true, Response: true, Stable: true, Description: "The custom message to be displayed to a customer when a payment link is no longer active.", Default: &fields.Default{Kind: fields.DefaultNone}},
 	{Name: "invoice_creation", Shape: fields.Object, Create: true, Update: true, Response: true, Description: "Generate a post-purchase Invoice for one-time payments.", Fields: []fields.Field{
 		{Name: "enabled", Shape: fields.Bool, Required: true, Create: true, Update: true, Response: true, Description: "Enable creating an invoice on successful payment."},
 		{Name: "invoice_data", Shape: fields.Object, Create: true, Update: true, Response: true, Description: "Configuration for the invoice. Default invoice values will be used if unspecified.", Fields: []fields.Field{
-			{Name: "account_tax_ids", Shape: fields.ScalarList, Elem: fields.String, Create: true, Update: true, Response: true, Description: "The account tax IDs associated with the invoice."},
+			{Name: "account_tax_ids", Shape: fields.ScalarList, Elem: fields.String, Create: true, Update: true, Response: true, Stable: true, Description: "The account tax IDs associated with the invoice.", Default: &fields.Default{Kind: fields.DefaultNone}},
 			{Name: "custom_fields", Shape: fields.ObjectList, Create: true, Update: true, Response: true, Description: "A list of up to 4 custom fields to be displayed on the invoice.", Fields: []fields.Field{
 				{Name: "name", Shape: fields.String, Required: true, Create: true, Update: true, Response: true, Description: "The name of the custom field."},
 				{Name: "value", Shape: fields.String, Required: true, Create: true, Update: true, Response: true, Description: "The value of the custom field."},
 			}},
-			{Name: "description", Shape: fields.String, Create: true, Update: true, Response: true, Description: "An arbitrary string attached to the object. Often useful for displaying to users."},
-			{Name: "footer", Shape: fields.String, Create: true, Update: true, Response: true, Description: "Footer to be displayed on the invoice."},
+			{Name: "description", Shape: fields.String, Create: true, Update: true, Response: true, Stable: true, Description: "An arbitrary string attached to the object. Often useful for displaying to users.", Default: &fields.Default{Kind: fields.DefaultNone}},
+			{Name: "footer", Shape: fields.String, Create: true, Update: true, Response: true, Stable: true, Description: "Footer to be displayed on the invoice.", Default: &fields.Default{Kind: fields.DefaultNone}},
 			{Name: "issuer", Shape: fields.Object, Create: true, Update: true, Response: true, Description: "The connected account that issues the invoice. The invoice is presented with the branding and support information of the specified account.", Fields: []fields.Field{
-				{Name: "account", Shape: fields.String, Create: true, Update: true, Response: true, Description: "The connected account being referenced when `type` is `account`."},
+				{Name: "account", Shape: fields.String, Create: true, Update: true, Response: true, Stable: true, Description: "The connected account being referenced when `type` is `account`.", Default: &fields.Default{Kind: fields.DefaultNone}, Refused: "Stripe refused it on a US account on update: \"The parameter `invoice_creation[invoice_data][issuer][account]` is not compatible with `type=self`.\"."},
 				{Name: "type", Shape: fields.String, Required: true, Create: true, Update: true, Response: true, Enum: []string{"account", "self"}, Description: "Type of the account referenced."},
 			}},
-			{Name: "metadata", Shape: fields.StringMap, Create: true, Update: true, Response: true, Description: "Set of [key-value pairs](https://docs.stripe.com/api/metadata) that you can attach to an object. This can be useful for storing additional information about the object in a structured format."},
+			{Name: "metadata", Shape: fields.StringMap, Create: true, Update: true, Response: true, Stable: true, Description: "Set of [key-value pairs](https://docs.stripe.com/api/metadata) that you can attach to an object. This can be useful for storing additional information about the object in a structured format.", Default: &fields.Default{Kind: fields.DefaultVaries}},
 			{Name: "rendering_options", Shape: fields.Object, Create: true, Update: true, Response: true, Description: "Options for invoice PDF rendering.", Fields: []fields.Field{
-				{Name: "amount_tax_display", Shape: fields.String, Create: true, Update: true, Response: true, Enum: []string{"exclude_tax", "include_inclusive_tax"}, Description: "How line-item prices and amounts will be displayed with respect to tax on invoice PDFs."},
-				{Name: "template", Shape: fields.String, Create: true, Update: true, Response: true, Description: "ID of the invoice rendering template to be used for the generated invoice."},
+				{Name: "amount_tax_display", Shape: fields.String, Create: true, Update: true, Response: true, Stable: true, Enum: []string{"exclude_tax", "include_inclusive_tax"}, Description: "How line-item prices and amounts will be displayed with respect to tax on invoice PDFs.", Default: &fields.Default{Kind: fields.DefaultNone}},
+				{Name: "template", Shape: fields.String, Create: true, Update: true, Response: true, Description: "ID of the invoice rendering template to be used for the generated invoice.", Refused: "Stripe refused it on a US account on create and update: \"No such invoice rendering template: 'inrtem_...'\"."},
 			}},
 		}},
 	}},
 	{Name: "line_items", Shape: fields.ObjectList, Required: true, Create: true, Update: true, Response: true, Description: "The line items representing what is being sold. Each line item represents an item being sold. Up to 20 line items are supported.", Fields: []fields.Field{
 		{Name: "adjustable_quantity", Shape: fields.Object, Create: true, Update: true, Response: true, Fields: []fields.Field{
 			{Name: "enabled", Shape: fields.Bool, Required: true, Create: true, Update: true, Response: true},
-			{Name: "maximum", Shape: fields.Int, Create: true, Update: true, Response: true},
-			{Name: "minimum", Shape: fields.Int, Create: true, Update: true, Response: true},
+			{Name: "maximum", Shape: fields.Int, Create: true, Update: true, Response: true, Refused: "Stripe refused it on a US account on update: \"You cannot specify `adjustable_quantity[minimum]` or `adjustable_quantity[maximum]` when `adjustable_quantity[enabled]=false`.\"."},
+			{Name: "minimum", Shape: fields.Int, Create: true, Update: true, Response: true, Refused: "Stripe refused it on a US account on update: \"You cannot specify `adjustable_quantity[minimum]` or `adjustable_quantity[maximum]` when `adjustable_quantity[enabled]=false`.\"."},
 		}},
 		{Name: "amount_discount", Shape: fields.Int, Response: true, Description: "Total discount amount applied. If no discounts were applied, defaults to 0."},
 		{Name: "amount_subtotal", Shape: fields.Int, Response: true, Description: "Total before any discounts or taxes are applied."},
@@ -137,7 +137,29 @@ var Table = []fields.Field{
 		{Name: "id", Shape: fields.String, Update: true, Response: true, Description: "Unique identifier for the object.", Default: &fields.Default{Kind: fields.DefaultNotSent}},
 		{Name: "metadata", Shape: fields.StringMap, Response: true, Description: "Set of [key-value pairs](https://docs.stripe.com/api/metadata) that you can attach to an object. This can be useful for storing additional information about the object in a structured format."},
 		{Name: "object", Shape: fields.String, Response: true, Enum: []string{"item"}, Description: "String representing the object's type. Objects of the same type share the same value."},
-		{Name: "price", Shape: fields.String, Required: true, Create: true, Response: true, Description: "The price used to generate the line item."},
+		{Name: "price", Shape: fields.String, Create: true, Response: true, Description: "The price used to generate the line item."},
+		{Name: "price_data", Shape: fields.Object, Create: true, Fields: []fields.Field{
+			{Name: "currency", Shape: fields.String, Required: true, Create: true},
+			{Name: "product", Shape: fields.String, Create: true},
+			{Name: "product_data", Shape: fields.Object, Create: true, Fields: []fields.Field{
+				{Name: "description", Shape: fields.String, Create: true},
+				{Name: "images", Shape: fields.ScalarList, Elem: fields.String, Create: true},
+				{Name: "metadata", Shape: fields.StringMap, Create: true},
+				{Name: "name", Shape: fields.String, Required: true, Create: true},
+				{Name: "tax_code", Shape: fields.String, Create: true},
+				{Name: "tax_details", Shape: fields.Object, Create: true, Fields: []fields.Field{
+					{Name: "tax_code", Shape: fields.String, Create: true},
+				}},
+				{Name: "unit_label", Shape: fields.String, Create: true},
+			}},
+			{Name: "recurring", Shape: fields.Object, Create: true, Fields: []fields.Field{
+				{Name: "interval", Shape: fields.String, Required: true, Create: true, Enum: []string{"day", "month", "week", "year"}},
+				{Name: "interval_count", Shape: fields.Int, Create: true},
+			}},
+			{Name: "tax_behavior", Shape: fields.String, Create: true, Enum: []string{"exclusive", "inclusive", "unspecified"}},
+			{Name: "unit_amount", Shape: fields.Int, Create: true},
+			{Name: "unit_amount_decimal", Shape: fields.String, Create: true},
+		}},
 		{Name: "quantity", Shape: fields.Int, Required: true, Create: true, Update: true, Response: true, Description: "The quantity of products being purchased."},
 		{Name: "taxes", Shape: fields.ObjectList, Response: true, Description: "The taxes applied to the line item.", Fields: []fields.Field{
 			{Name: "amount", Shape: fields.Int, Response: true, Description: "Amount of tax applied for this rate."},
@@ -170,47 +192,47 @@ var Table = []fields.Field{
 	}},
 	{Name: "livemode", Shape: fields.Bool, Response: true, Description: "If the object exists in live mode, the value is `true`. If the object exists in test mode, the value is `false`."},
 	{Name: "managed_payments", Shape: fields.Object, Create: true, Response: true, Description: "Settings for Managed Payments for this Payment Link and resulting [CheckoutSessions](https://docs.stripe.com/api/checkout/sessions/object), [PaymentIntents](https://docs.stripe.com/api/payment_intents/object), [Invoices](https://docs.stripe.com/api/invoices/object), and [Subscriptions](https://docs.stripe.com/api/subscriptions/object).", Fields: []fields.Field{
-		{Name: "enabled", Shape: fields.Bool, Create: true, Response: true, ServerDefaulted: true, Description: "Set to `true` to enable [Managed Payments](https://docs.stripe.com/payments/managed-payments), Stripe's merchant of record solution, for this session."},
+		{Name: "enabled", Shape: fields.Bool, Create: true, Response: true, ServerDefaulted: true, Description: "Set to `true` to enable [Managed Payments](https://docs.stripe.com/payments/managed-payments), Stripe's merchant of record solution, for this session.", Default: &fields.Default{Kind: fields.DefaultValue, Value: "false"}},
 	}},
-	{Name: "metadata", Shape: fields.StringMap, Create: true, Update: true, Response: true, ServerDefaulted: true, Description: "Set of [key-value pairs](https://docs.stripe.com/api/metadata) that you can attach to an object. This can be useful for storing additional information about the object in a structured format. Individual keys can be unset by posting an empty value to them. All keys can be unset by posting an empty value to `metadata`. Metadata associated with this Payment Link will automatically be copied to [checkout sessions](https://docs.stripe.com/api/checkout/sessions) created by this payment link."},
+	{Name: "metadata", Shape: fields.StringMap, Create: true, Update: true, Response: true, ServerDefaulted: true, Stable: true, Description: "Set of [key-value pairs](https://docs.stripe.com/api/metadata) that you can attach to an object. This can be useful for storing additional information about the object in a structured format. Individual keys can be unset by posting an empty value to them. All keys can be unset by posting an empty value to `metadata`. Metadata associated with this Payment Link will automatically be copied to [checkout sessions](https://docs.stripe.com/api/checkout/sessions) created by this payment link.", Default: &fields.Default{Kind: fields.DefaultValue, Value: "{}"}},
 	{Name: "name_collection", Shape: fields.Object, Create: true, Update: true, Response: true, Description: "Controls settings applied for collecting the customer's name.", Fields: []fields.Field{
 		{Name: "business", Shape: fields.Object, Create: true, Update: true, Response: true, Fields: []fields.Field{
 			{Name: "enabled", Shape: fields.Bool, Required: true, Create: true, Update: true, Response: true, Description: "Indicates whether business name collection is enabled for the payment link."},
-			{Name: "optional", Shape: fields.Bool, Create: true, Update: true, Response: true, ServerDefaulted: true, Description: "Whether the customer is required to complete the field before checking out. Defaults to `false`."},
+			{Name: "optional", Shape: fields.Bool, Create: true, Update: true, Response: true, ServerDefaulted: true, Description: "Whether the customer is required to complete the field before checking out. Defaults to `false`.", Default: &fields.Default{Kind: fields.DefaultNone}},
 		}},
 		{Name: "individual", Shape: fields.Object, Create: true, Update: true, Response: true, Fields: []fields.Field{
 			{Name: "enabled", Shape: fields.Bool, Required: true, Create: true, Update: true, Response: true, Description: "Indicates whether individual name collection is enabled for the payment link."},
-			{Name: "optional", Shape: fields.Bool, Create: true, Update: true, Response: true, ServerDefaulted: true, Description: "Whether the customer is required to complete the field before checking out. Defaults to `false`."},
+			{Name: "optional", Shape: fields.Bool, Create: true, Update: true, Response: true, ServerDefaulted: true, Stable: true, Description: "Whether the customer is required to complete the field before checking out. Defaults to `false`.", Default: &fields.Default{Kind: fields.DefaultNone}},
 		}},
 	}},
-	{Name: "on_behalf_of", Shape: fields.String, Create: true, Update: true, Response: true, Description: "The account on behalf of which to charge."},
+	{Name: "on_behalf_of", Shape: fields.String, Create: true, Update: true, Response: true, Stable: true, Description: "The account on behalf of which to charge.", Default: &fields.Default{Kind: fields.DefaultNone}},
 	{Name: "optional_items", Shape: fields.ObjectList, Create: true, Update: true, Response: true, Description: "A list of optional items the customer can add to their order at checkout. Use this parameter to pass one-time or recurring [Prices](https://docs.stripe.com/api/prices).\nThere is a maximum of 10 optional items allowed on a payment link, and the existing limits on the number of line items allowed on a payment link apply to the combined number of line items and optional items.\nThere is a maximum of 20 combined line items and optional items.", Fields: []fields.Field{
 		{Name: "adjustable_quantity", Shape: fields.Object, Create: true, Update: true, Response: true, Fields: []fields.Field{
 			{Name: "enabled", Shape: fields.Bool, Required: true, Create: true, Update: true, Response: true, Description: "Set to true if the quantity can be adjusted to any non-negative integer."},
-			{Name: "maximum", Shape: fields.Int, Create: true, Update: true, Response: true, Description: "The maximum quantity of this item the customer can purchase. By default this value is 99."},
-			{Name: "minimum", Shape: fields.Int, Create: true, Update: true, Response: true, Description: "The minimum quantity of this item the customer must purchase, if they choose to purchase it. Because this item is optional, the customer will always be able to remove it from their order, even if the `minimum` configured here is greater than 0. By default this value is 0."},
+			{Name: "maximum", Shape: fields.Int, Create: true, Update: true, Response: true, Stable: true, Description: "The maximum quantity of this item the customer can purchase. By default this value is 99.", Default: &fields.Default{Kind: fields.DefaultNone}, Refused: "Stripe refused it on a US account on update: \"You cannot specify `adjustable_quantity[maximum]` when `adjustable_quantity[enabled]=false`.\"."},
+			{Name: "minimum", Shape: fields.Int, Create: true, Update: true, Response: true, Stable: true, Description: "The minimum quantity of this item the customer must purchase, if they choose to purchase it. Because this item is optional, the customer will always be able to remove it from their order, even if the `minimum` configured here is greater than 0. By default this value is 0.", Default: &fields.Default{Kind: fields.DefaultNone}, Refused: "Stripe refused it on a US account on update: \"You cannot specify `adjustable_quantity[minimum]` when `adjustable_quantity[enabled]=false`.\"."},
 		}},
 		{Name: "price", Shape: fields.String, Required: true, Create: true, Update: true, Response: true},
 		{Name: "quantity", Shape: fields.Int, Required: true, Create: true, Update: true, Response: true},
 	}},
 	{Name: "payment_intent_data", Shape: fields.Object, Create: true, Update: true, Response: true, Description: "A subset of parameters to be passed to PaymentIntent creation for Checkout Sessions in `payment` mode.", Fields: []fields.Field{
-		{Name: "capture_method", Shape: fields.String, Create: true, Response: true, Enum: []string{"automatic", "automatic_async", "manual"}, Description: "Indicates when the funds will be captured from the customer's account."},
-		{Name: "description", Shape: fields.String, Create: true, Update: true, Response: true, Description: "An arbitrary string attached to the object. Often useful for displaying to users."},
-		{Name: "metadata", Shape: fields.StringMap, Create: true, Update: true, Response: true, ServerDefaulted: true, Description: "Set of [key-value pairs](https://docs.stripe.com/api/metadata) that will set metadata on [Payment Intents](https://docs.stripe.com/api/payment_intents) generated from this payment link."},
-		{Name: "setup_future_usage", Shape: fields.String, Create: true, Update: true, Response: true, Enum: []string{"off_session", "on_session"}, Description: "Indicates that you intend to make future payments with the payment method collected during checkout."},
-		{Name: "statement_descriptor", Shape: fields.String, Create: true, Update: true, Response: true, Description: "For a non-card payment, information about the charge that appears on the customer's statement when this payment succeeds in creating a charge."},
-		{Name: "statement_descriptor_suffix", Shape: fields.String, Create: true, Update: true, Response: true, Description: "For a card payment, information about the charge that appears on the customer's statement when this payment succeeds in creating a charge. Concatenated with the account's statement descriptor prefix to form the complete statement descriptor."},
-		{Name: "transfer_group", Shape: fields.String, Create: true, Update: true, Response: true, Description: "A string that identifies the resulting payment as part of a group. See the PaymentIntents [use case for connected accounts](https://docs.stripe.com/connect/separate-charges-and-transfers) for details."},
+		{Name: "capture_method", Shape: fields.String, Create: true, Response: true, Enum: []string{"automatic", "automatic_async", "manual"}, Description: "Indicates when the funds will be captured from the customer's account.", Default: &fields.Default{Kind: fields.DefaultNone}},
+		{Name: "description", Shape: fields.String, Create: true, Update: true, Response: true, Stable: true, Description: "An arbitrary string attached to the object. Often useful for displaying to users.", Default: &fields.Default{Kind: fields.DefaultNone}},
+		{Name: "metadata", Shape: fields.StringMap, Create: true, Update: true, Response: true, ServerDefaulted: true, Stable: true, Description: "Set of [key-value pairs](https://docs.stripe.com/api/metadata) that will set metadata on [Payment Intents](https://docs.stripe.com/api/payment_intents) generated from this payment link.", Default: &fields.Default{Kind: fields.DefaultVaries}},
+		{Name: "setup_future_usage", Shape: fields.String, Create: true, Update: true, Response: true, Stable: true, Enum: []string{"off_session", "on_session"}, Description: "Indicates that you intend to make future payments with the payment method collected during checkout.", Default: &fields.Default{Kind: fields.DefaultNone}},
+		{Name: "statement_descriptor", Shape: fields.String, Create: true, Update: true, Response: true, Stable: true, Description: "For a non-card payment, information about the charge that appears on the customer's statement when this payment succeeds in creating a charge.", Default: &fields.Default{Kind: fields.DefaultNone}},
+		{Name: "statement_descriptor_suffix", Shape: fields.String, Create: true, Update: true, Response: true, Stable: true, Description: "For a card payment, information about the charge that appears on the customer's statement when this payment succeeds in creating a charge. Concatenated with the account's statement descriptor prefix to form the complete statement descriptor.", Default: &fields.Default{Kind: fields.DefaultNone}},
+		{Name: "transfer_group", Shape: fields.String, Create: true, Update: true, Response: true, Stable: true, Description: "A string that identifies the resulting payment as part of a group. See the PaymentIntents [use case for connected accounts](https://docs.stripe.com/connect/separate-charges-and-transfers) for details.", Default: &fields.Default{Kind: fields.DefaultNone}},
 	}},
-	{Name: "payment_method_collection", Shape: fields.String, Create: true, Update: true, Response: true, ServerDefaulted: true, Enum: []string{"always", "if_required"}, Description: "Specify whether Checkout should collect a payment method. When set to `if_required`, Checkout will not collect a payment method when the total due for the session is 0.This may occur if the Checkout Session includes a free trial or a discount. Can only be set in `subscription` mode. Defaults to `always`. If you'd like information on how to collect a payment method outside of Checkout, read the guide on [configuring subscriptions with a free trial](https://docs.stripe.com/payments/checkout/free-trials)."},
+	{Name: "payment_method_collection", Shape: fields.String, Create: true, Update: true, Response: true, ServerDefaulted: true, Stable: true, Enum: []string{"always", "if_required"}, Description: "Specify whether Checkout should collect a payment method. When set to `if_required`, Checkout will not collect a payment method when the total due for the session is 0.This may occur if the Checkout Session includes a free trial or a discount. Can only be set in `subscription` mode. Defaults to `always`. If you'd like information on how to collect a payment method outside of Checkout, read the guide on [configuring subscriptions with a free trial](https://docs.stripe.com/payments/checkout/free-trials).", Default: &fields.Default{Kind: fields.DefaultVaries}},
 	{Name: "payment_method_options", Shape: fields.Object, Create: true, Update: true, Response: true, Description: "Payment-method-specific configuration.", Fields: []fields.Field{
 		{Name: "card", Shape: fields.Object, Create: true, Update: true, Response: true, Description: "Configuration for `card` payment methods.", Fields: []fields.Field{
 			{Name: "restrictions", Shape: fields.Object, Create: true, Update: true, Response: true, Description: "Restrictions to apply to the card payment method. For example, you can block specific card brands.", Fields: []fields.Field{
-				{Name: "brands_blocked", Shape: fields.ScalarList, Elem: fields.String, Create: true, Update: true, Response: true, ServerDefaulted: true, Description: "The card brands to block. If a customer enters or selects a card belonging to a blocked brand, they can't complete the payment."},
+				{Name: "brands_blocked", Shape: fields.ScalarList, Elem: fields.String, Create: true, Update: true, Response: true, ServerDefaulted: true, Stable: true, Description: "The card brands to block. If a customer enters or selects a card belonging to a blocked brand, they can't complete the payment.", Default: &fields.Default{Kind: fields.DefaultNone}},
 			}},
 		}},
 	}},
-	{Name: "payment_method_types", Shape: fields.ScalarList, Elem: fields.String, Create: true, Update: true, Response: true, Description: "The list of payment method types that customers can use. If no value is passed, Stripe will dynamically show relevant payment methods from your [payment method settings](https://dashboard.stripe.com/settings/payment_methods) (20+ payment methods [supported](https://docs.stripe.com/payments/payment-methods/integration-options#payment-method-product-support))."},
+	{Name: "payment_method_types", Shape: fields.ScalarList, Elem: fields.String, Create: true, Update: true, Response: true, Stable: true, Description: "The list of payment method types that customers can use. If no value is passed, Stripe will dynamically show relevant payment methods from your [payment method settings](https://dashboard.stripe.com/settings/payment_methods) (20+ payment methods [supported](https://docs.stripe.com/payments/payment-methods/integration-options#payment-method-product-support)).", Default: &fields.Default{Kind: fields.DefaultNone}},
 	{Name: "phone_number_collection", Shape: fields.Object, Create: true, Update: true, Response: true, ServerDefaulted: true, Description: "Controls phone number collection settings during checkout. We recommend that you review your privacy policy and check with your legal contacts.", Fields: []fields.Field{
 		{Name: "enabled", Shape: fields.Bool, Required: true, Create: true, Update: true, Response: true, Description: "If `true`, a phone number will be collected during checkout."},
 	}},
@@ -225,19 +247,19 @@ var Table = []fields.Field{
 	}},
 	{Name: "shipping_options", Shape: fields.ObjectList, Create: true, Update: true, Response: true, ServerDefaulted: true, Description: "The shipping rate options to apply to [checkout sessions](https://docs.stripe.com/api/checkout/sessions) created by this payment link.", Fields: []fields.Field{
 		{Name: "shipping_amount", Shape: fields.Int, Response: true, Description: "A non-negative integer in cents representing how much to charge."},
-		{Name: "shipping_rate", Shape: fields.String, Create: true, Update: true, Response: true, ServerDefaulted: true, Description: "The ID of the Shipping Rate to use for this shipping option."},
+		{Name: "shipping_rate", Shape: fields.String, Create: true, Update: true, Response: true, ServerDefaulted: true, Stable: true, Description: "The ID of the Shipping Rate to use for this shipping option.", Default: &fields.Default{Kind: fields.DefaultNone}},
 	}},
-	{Name: "submit_type", Shape: fields.String, Create: true, Update: true, Response: true, ServerDefaulted: true, Enum: []string{"auto", "book", "donate", "pay", "subscribe"}, Description: "Describes the type of transaction being performed in order to customize relevant text on the page, such as the submit button. Changing this value will also affect the hostname in the [url](https://docs.stripe.com/api/payment_links/payment_links/object#url) property (example: `donate.stripe.com`)."},
+	{Name: "submit_type", Shape: fields.String, Create: true, Update: true, Response: true, ServerDefaulted: true, Stable: true, Enum: []string{"auto", "book", "donate", "pay", "subscribe"}, Description: "Describes the type of transaction being performed in order to customize relevant text on the page, such as the submit button. Changing this value will also affect the hostname in the [url](https://docs.stripe.com/api/payment_links/payment_links/object#url) property (example: `donate.stripe.com`).", Default: &fields.Default{Kind: fields.DefaultValue, Value: "auto"}},
 	{Name: "subscription_data", Shape: fields.Object, Create: true, Update: true, Response: true, Description: "When creating a subscription, the specified configuration data will be used. There must be at least one line item with a recurring price to use `subscription_data`.", Fields: []fields.Field{
-		{Name: "description", Shape: fields.String, Create: true, Response: true, Description: "The subscription's description, meant to be displayable to the customer. Use this field to optionally store an explanation of the subscription for rendering in Stripe surfaces and certain local payment methods UIs."},
+		{Name: "description", Shape: fields.String, Create: true, Response: true, Description: "The subscription's description, meant to be displayable to the customer. Use this field to optionally store an explanation of the subscription for rendering in Stripe surfaces and certain local payment methods UIs.", Default: &fields.Default{Kind: fields.DefaultNone}},
 		{Name: "invoice_settings", Shape: fields.Object, Create: true, Update: true, Response: true, ServerDefaulted: true, Fields: []fields.Field{
 			{Name: "issuer", Shape: fields.Object, Create: true, Update: true, Response: true, ServerDefaulted: true, Fields: []fields.Field{
-				{Name: "account", Shape: fields.String, Create: true, Update: true, Response: true, Description: "The connected account being referenced when `type` is `account`."},
+				{Name: "account", Shape: fields.String, Create: true, Update: true, Response: true, Stable: true, Description: "The connected account being referenced when `type` is `account`.", Default: &fields.Default{Kind: fields.DefaultNone}},
 				{Name: "type", Shape: fields.String, Required: true, Create: true, Update: true, Response: true, Enum: []string{"account", "self"}, Description: "Type of the account referenced."},
 			}},
 		}},
-		{Name: "metadata", Shape: fields.StringMap, Create: true, Update: true, Response: true, ServerDefaulted: true, Description: "Set of [key-value pairs](https://docs.stripe.com/api/metadata) that will set metadata on [Subscriptions](https://docs.stripe.com/api/subscriptions) generated from this payment link."},
-		{Name: "trial_period_days", Shape: fields.Int, Create: true, Update: true, Response: true, Description: "Integer representing the number of trial period days before the customer is charged for the first time."},
+		{Name: "metadata", Shape: fields.StringMap, Create: true, Update: true, Response: true, ServerDefaulted: true, Stable: true, Description: "Set of [key-value pairs](https://docs.stripe.com/api/metadata) that will set metadata on [Subscriptions](https://docs.stripe.com/api/subscriptions) generated from this payment link.", Default: &fields.Default{Kind: fields.DefaultVaries}},
+		{Name: "trial_period_days", Shape: fields.Int, Create: true, Update: true, Response: true, Stable: true, Description: "Integer representing the number of trial period days before the customer is charged for the first time.", Default: &fields.Default{Kind: fields.DefaultNone}},
 		{Name: "trial_settings", Shape: fields.Object, Create: true, Update: true, Response: true, Description: "Settings related to subscription trials.", Fields: []fields.Field{
 			{Name: "end_behavior", Shape: fields.Object, Required: true, Create: true, Update: true, Response: true, Description: "Defines how a subscription behaves when a free trial ends.", Fields: []fields.Field{
 				{Name: "missing_payment_method", Shape: fields.String, Required: true, Create: true, Update: true, Response: true, Enum: []string{"cancel", "create_invoice", "pause"}, Description: "Indicates how the subscription should change when the trial ends if the user did not provide a payment method."},
@@ -246,10 +268,10 @@ var Table = []fields.Field{
 	}},
 	{Name: "tax_id_collection", Shape: fields.Object, Create: true, Update: true, Response: true, ServerDefaulted: true, Description: "Controls tax ID collection during checkout.", Fields: []fields.Field{
 		{Name: "enabled", Shape: fields.Bool, Required: true, Create: true, Update: true, Response: true, Description: "Indicates whether tax ID collection is enabled for the session."},
-		{Name: "required", Shape: fields.String, Create: true, Update: true, Response: true, ServerDefaulted: true, Enum: []string{"if_supported", "never"}},
+		{Name: "required", Shape: fields.String, Create: true, Update: true, Response: true, ServerDefaulted: true, Stable: true, Enum: []string{"if_supported", "never"}, Default: &fields.Default{Kind: fields.DefaultValue, Value: "never"}},
 	}},
 	{Name: "transfer_data", Shape: fields.Object, Create: true, Update: true, Response: true, Description: "The account (if any) the payments will be attributed to for tax reporting, and where funds from each payment will be transferred to.", Fields: []fields.Field{
-		{Name: "amount", Shape: fields.Int, Create: true, Update: true, Response: true, Description: "The amount in cents (or local equivalent) that will be transferred to the destination account. By default, the entire amount is transferred to the destination."},
+		{Name: "amount", Shape: fields.Int, Create: true, Update: true, Response: true, Stable: true, Description: "The amount in cents (or local equivalent) that will be transferred to the destination account. By default, the entire amount is transferred to the destination.", Default: &fields.Default{Kind: fields.DefaultNone}},
 		{Name: "destination", Shape: fields.String, Required: true, Create: true, Update: true, Response: true, Description: "The connected account receiving the transfer."},
 	}},
 	{Name: "url", Shape: fields.String, Response: true, Description: "The public URL that can be shared with customers."},

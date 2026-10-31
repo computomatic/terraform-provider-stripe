@@ -47,6 +47,16 @@ func CustomerPaymentIntent(t *testing.T, c acctest.Config, base, paymentMethod s
 	return customer, intent, charge
 }
 
+// SourceCharge is a succeeded platform payment of amount whose funds are available at once, for a
+// transfer's `source_transaction`, and returns its payment intent and charge.
+func SourceCharge(t *testing.T, c acctest.Config, currency string, amount int) (intent, charge string) {
+	t.Helper()
+	return succeededIntent(t, c, wire.Object{
+		{Name: "amount", Value: wire.Int(amount)},
+		{Name: "currency", Value: wire.String(currency)},
+	}, "pm_card_bypassPending")
+}
+
 // succeededIntent creates and confirms a payment intent of params with paymentMethod, and
 // returns the intent's ID and its charge's.
 func succeededIntent(t *testing.T, c acctest.Config, params wire.Object, paymentMethod string) (intent, charge string) {

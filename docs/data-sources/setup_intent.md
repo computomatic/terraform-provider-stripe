@@ -241,6 +241,24 @@ The `payment_method_options.card` attribute supports:
 
 The `payment_method_options.card.three_d_secure` attribute supports:
 
+* `ares_trans_status` - Possible values: `A`, `C`, `I`, `N`, `R`, `U`, `Y`.
 * `cryptogram` -
+* `electronic_commerce_indicator` - Possible values: `01`, `02`, `05`, `06`, `07`.
+* `network_options` - See [`payment_method_options.card.three_d_secure.network_options`](#payment_method_options.card.three_d_secure.network_options) below.
+* `requestor_challenge_indicator` -
 * `transaction_id` -
 * `version` - Possible values: `1.0.2`, `2.1.0`, `2.2.0`, `2.3.0`, `2.3.1`.
+
+<a id="payment_method_options.card.three_d_secure.network_options"></a>
+### `payment_method_options.card.three_d_secure.network_options`
+
+The `payment_method_options.card.three_d_secure.network_options` attribute supports:
+
+* `cartes_bancaires` - See [`payment_method_options.card.three_d_secure.network_options.cartes_bancaires`](#payment_method_options.card.three_d_secure.network_options.cartes_bancaires) below.
+
+<a id="payment_method_options.card.three_d_secure.network_options.cartes_bancaires"></a>
+### `payment_method_options.card.three_d_secure.network_options.cartes_bancaires`
+
+The `payment_method_options.card.three_d_secure.network_options.cartes_bancaires` attribute supports:
+
+* `cb_avalgo` - Possible values: `0`, `1`, `2`, `3`, `4`, `A`.

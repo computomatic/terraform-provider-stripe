@@ -274,6 +274,7 @@ The `line_items` attribute is a list. Each element supports:
 * `metadata` - Set of [key-value pairs](https://docs.stripe.com/api/metadata) that you can attach to an object. This can be useful for storing additional information about the object in a structured format.
 * `object` - String representing the object's type. Objects of the same type share the same value. Possible values: `item`.
 * `price` - The price used to generate the line item.
+* `price_data` - See [`line_items.price_data`](#line_items.price_data) below.
 * `quantity` - The quantity of products being purchased.
 * `taxes` - The taxes applied to the line item. See [`line_items.taxes`](#line_items.taxes) below.
 
@@ -320,6 +321,47 @@ The `line_items.discounts.discount.source` attribute supports:
 
 * `coupon` - The coupon that was redeemed to create this discount.
 * `type` - The source type of the discount. Possible values: `coupon`.
+
+<a id="line_items.price_data"></a>
+### `line_items.price_data`
+
+The `line_items.price_data` attribute supports:
+
+* `currency` -
+* `product` -
+* `product_data` - See [`line_items.price_data.product_data`](#line_items.price_data.product_data) below.
+* `recurring` - See [`line_items.price_data.recurring`](#line_items.price_data.recurring) below.
+* `tax_behavior` - Possible values: `exclusive`, `inclusive`, `unspecified`.
+* `unit_amount` -
+* `unit_amount_decimal` -
+
+<a id="line_items.price_data.product_data"></a>
+### `line_items.price_data.product_data`
+
+The `line_items.price_data.product_data` attribute supports:
+
+* `description` -
+* `images` -
+* `metadata` -
+* `name` -
+* `tax_code` -
+* `tax_details` - See [`line_items.price_data.product_data.tax_details`](#line_items.price_data.product_data.tax_details) below.
+* `unit_label` -
+
+<a id="line_items.price_data.product_data.tax_details"></a>
+### `line_items.price_data.product_data.tax_details`
+
+The `line_items.price_data.product_data.tax_details` attribute supports:
+
+* `tax_code` -
+
+<a id="line_items.price_data.recurring"></a>
+### `line_items.price_data.recurring`
+
+The `line_items.price_data.recurring` attribute supports:
+
+* `interval` - Possible values: `day`, `month`, `week`, `year`.
+* `interval_count` -
 
 <a id="line_items.taxes"></a>
 ### `line_items.taxes`
