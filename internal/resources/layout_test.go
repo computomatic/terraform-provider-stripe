@@ -21,7 +21,7 @@ var requiredTests = []string{"create", "update", "replace", "import", "delete", 
 // acceptedDepartures are the hashes that send changed members though the record's
 // `families[].hashes` does not list them, which the product owner accepted on 2026-10-31 until the
 // suite proves them: each table's own entries, and below them the hashes the fake's declarations
-// (`ProvenByTest.Hashes`, fake v0.29.0) state as kept from suite tests. `individual` and
+// (`ProvenByTest.Hashes`, fake v0.30.0) state as kept from suite tests. `individual` and
 // `configuration` are the owner's own entries, which the fake's declarations do not state.
 var acceptedDepartures = map[string][]string{
 	"account": {

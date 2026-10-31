@@ -26,10 +26,16 @@ var Declaration = engine.Declaration{
 		List:     "/v1/transfers",
 	},
 	MovesMoney: true,
-	// Stripe names the balance the transfer came from when the request leaves it out.
-	ServerDefaulted: []string{"source_type"},
-	Delete:          engine.Refuse,
-	RefuseReason:    "Stripe cannot delete a transfer; reverse it with a `stripe_transfer_reversal`, which destroy does not create.",
+	// Stripe names the balance the transfer came from when the request leaves it out, and gives a
+	// transfer with a `source_transaction` the group of the payment's intent (`group_pi_...`,
+	// suite: TestTransferAttributes, probe `every_field/2`).
+	ServerDefaulted: []string{"source_type", "transfer_group"},
+	Defaults: map[string]string{
+		// suite: TestTransferAttributes, probe `every_field/2`
+		"transfer_group": "none, or the group of the payment behind `source_transaction`",
+	},
+	Delete:       engine.Refuse,
+	RefuseReason: "Stripe cannot delete a transfer; reverse it with a `stripe_transfer_reversal`, which destroy does not create.",
 }
 
 // NewResource returns the resource constructor the provider registers.

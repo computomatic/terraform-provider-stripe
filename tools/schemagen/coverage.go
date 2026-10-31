@@ -4,12 +4,14 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"net/http"
 	"regexp"
 	"slices"
 	"sort"
 	"strings"
 
 	"github.com/computomatic/terraform-provider-stripe/internal/fields"
+	"github.com/computomatic/terraform-provider-stripe/tools/internal/evidencecheck"
 )
 
 // State is where a spec leaf stands in the provider (ADR 2026-10-29-full-attribute-coverage,
@@ -231,6 +233,9 @@ func coverTable(spec *Spec, res Resource, ev *Pinned) (*tableCoverage, error) {
 		case ev == nil || r.Class != "":
 			r.State = StateAwaiting
 		}
+	}
+	for i, l := range leaves {
+		r := &records[i]
 		if d := defaultOf(l, *r, create, leaves, records, ev); d != nil {
 			r.Default = defaultRecord(d)
 			if f := fieldAt(tc.table, l.At); f != nil {
@@ -398,8 +403,8 @@ var (
 // defaultOf is the default of an exposed optional request leaf (D4): `not sent` for one only
 // the update takes, which needs no evidence, or else what the pinned evidence records for a
 // verified one. A leaf only the update takes is an optional argument even where its hash in the
-// update requires it, because the create never sends it, and so is one whose create leaf rule X6
-// leaves out.
+// update requires it, because the create never sends it, and so is one whose create leaf is not
+// exposed: rule X6 leaves it out, or the gate exposes only the update's.
 func defaultOf(l Leaf, r Record, create string, leaves []Leaf, records []Record, ev *Pinned) *fields.Default {
 	if l.Side != SideRequest || r.State != StateExposed {
 		return nil
@@ -407,7 +412,7 @@ func defaultOf(l Leaf, r Record, create string, leaves []Leaf, records []Record,
 	if l.Operation != create {
 		onCreate := false
 		for i, c := range leaves {
-			if c.Operation == create && c.At == l.At && records[i].Rule != RuleAcceptedOnly {
+			if c.Operation == create && c.At == l.At && records[i].State == StateExposed {
 				onCreate = true
 			}
 		}
@@ -779,7 +784,9 @@ func (p *Pinned) facts(res Resource, object, create, update string, leaves []Lea
 
 // leafDefault is an optional create leaf's default from the evidence (D4): what Stripe set on
 // a minimal create. A default the variants of the minimal create give differently, or that the
-// table's ParentDefaults names, is DefaultVaries, which a declaration words.
+// table's ParentDefaults names, is DefaultVaries, which a declaration words. So is one a variant
+// that leaves the leaf out contradicts with a value Stripe generates or copies, such as a charge's
+// `transfer_group` on a destination charge, which the leaf's own `default.variants` does not hold.
 func (p *Pinned) leafDefault(k Key) *fields.Default {
 	e := p.leaf(k)
 	if e == nil || e.Status != "proven" {
@@ -797,6 +804,9 @@ func (p *Pinned) leafDefault(k Key) *fields.Default {
 			return &fields.Default{Kind: fields.DefaultVaries}
 		}
 	}
+	if d.Kind != "rule" && p.contradicted(k, e) {
+		return &fields.Default{Kind: fields.DefaultVaries}
+	}
 	switch d.Kind {
 	case "value":
 		return &fields.Default{Kind: fields.DefaultValue, Value: literal(d.Value)}
@@ -807,6 +817,142 @@ func (p *Pinned) leafDefault(k Key) *fields.Default {
 		return &fields.Default{Kind: fields.DefaultRule, Rule: r.Rule, Observed: p.observed(r)}
 	}
 	return nil
+}
+
+// contradicted reports a minimal create that leaves the leaf out and that Stripe answers at the
+// leaf's response path with anything but the leaf's default.
+func (p *Pinned) contradicted(k Key, e *EvidenceLeaf) bool {
+	at := k.Path
+	var returned struct {
+		ResponsePath string `json:"response_path"`
+	}
+	if e.Returned != nil && json.Unmarshal(e.Returned, &returned) == nil && returned.ResponsePath != "" {
+		at = returned.ResponsePath
+	}
+	for _, c := range p.creates[k.Object+" "+k.Operation] {
+		held, ok := c.Response[at]
+		if !ok || c.Status != http.StatusOK || sends(c.Params, strings.Split(k.Path, ".")) {
+			continue
+		}
+		if !e.Default.same(&EvidenceDefault{Kind: held.Kind, Value: held.Value}) {
+			return true
+		}
+	}
+	return false
+}
+
+// checkCreateProbes returns a line for each default statement the suite's create probes do not
+// bear out. A probe that leaves a leaf out and holds something else contradicts a none or a literal
+// from the record, which holds only for the minimal create, so a declaration has to word it. A
+// worded default names each literal the probes show, unless the table's ParentDefaults says it is
+// what the suite's parent object held, and words a none only where a probe contradicts it. A rule
+// from the record is prose about another argument, so nothing here can weigh it.
+func (tc *tableCoverage) checkCreateProbes(res Resource, worded map[string]string, ev *Pinned) []string {
+	if ev == nil || res.CreatePath == "" {
+		return nil
+	}
+	var out []string
+	seen := map[string]bool{}
+	for i, l := range tc.leaves {
+		f := fieldAt(tc.table, l.At)
+		if l.Side != SideRequest || l.Operation != tc.ops[0] || tc.records[i].State != StateExposed || f == nil || f.Default == nil || seen[l.At] {
+			continue
+		}
+		held := ev.probed[l.Key]
+		rule, isWorded := worded[l.At]
+		var found []string
+		switch {
+		case isWorded && !slices.Contains(res.ParentDefaults, l.At):
+			for _, v := range held {
+				for _, s := range literalsOf(v) {
+					if !strings.Contains(rule, fields.Code(s)) {
+						found = append(found, fmt.Sprintf("probe %s holds %s, which the wording does not name", v.Probe, s))
+					}
+				}
+			}
+			if f.Default.Kind == fields.DefaultNone && !slices.ContainsFunc(held, func(v evidencecheck.ProbedValue) bool { return !noneLike(v) }) {
+				found = append(found, "the record says none, and no probe contradicts it")
+			}
+		case isWorded:
+		case f.Default.Kind == fields.DefaultNone:
+			for _, v := range held {
+				if !noneLike(v) {
+					found = append(found, fmt.Sprintf("probe %s holds %s", v.Probe, heldWords(v)))
+				}
+			}
+		case f.Default.Kind == fields.DefaultValue:
+			for _, v := range held {
+				if !slices.Contains(append(literalsOf(v), literal(v.Value)), f.Default.Value) {
+					found = append(found, fmt.Sprintf("probe %s holds %s", v.Probe, heldWords(v)))
+				}
+			}
+		}
+		if len(found) > 0 {
+			seen[l.At] = true
+			out = append(out, fmt.Sprintf("%s %s (%s): %s", res.Package, l.At, f.Default.Statement(), strings.Join(found, "; ")))
+		}
+	}
+	return out
+}
+
+// noneLike reports a value the docs call none: null, an empty string or collection, or a list of
+// nothing but those, which is how a probe holds a member several elements leave unset.
+func noneLike(v evidencecheck.ProbedValue) bool {
+	if v.Kind != "value" {
+		return false
+	}
+	var items []json.RawMessage
+	if json.Unmarshal(v.Value, &items) == nil {
+		return !slices.ContainsFunc(items, func(item json.RawMessage) bool {
+			return !noneLike(evidencecheck.ProbedValue{Kind: "value", Value: item})
+		})
+	}
+	switch strings.TrimSpace(string(v.Value)) {
+	case "null", `""`, "{}":
+		return true
+	}
+	return false
+}
+
+// literalsOf is a probe's literal as the docs show it, each element of a list by itself, because
+// a probe holds a member of a list's elements as a list. A value none is no literal, and a kind
+// that names what Stripe made or copied has none.
+func literalsOf(v evidencecheck.ProbedValue) []string {
+	if v.Kind != "value" || noneLike(v) {
+		return nil
+	}
+	var items []json.RawMessage
+	if json.Unmarshal(v.Value, &items) != nil {
+		return []string{literal(v.Value)}
+	}
+	out := make([]string, len(items))
+	for i, item := range items {
+		out[i] = literal(item)
+	}
+	return out
+}
+
+// heldWords says what a probe held, for an error.
+func heldWords(v evidencecheck.ProbedValue) string {
+	if v.Kind == "value" {
+		return literal(v.Value)
+	}
+	return "a value of kind " + v.Kind
+}
+
+// sends reports whether params name path, through the hashes and lists on the way.
+func sends(params any, path []string) bool {
+	if len(path) == 0 {
+		return true
+	}
+	switch v := params.(type) {
+	case map[string]any:
+		next, ok := v[path[0]]
+		return ok && sends(next, path[1:])
+	case []any:
+		return slices.ContainsFunc(v, func(item any) bool { return sends(item, path) })
+	}
+	return false
 }
 
 // same reports whether two defaults state the same thing: null and absent both state none. Two

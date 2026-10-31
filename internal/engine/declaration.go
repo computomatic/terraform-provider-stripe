@@ -345,6 +345,10 @@ type Declaration struct {
 	// or gives the value differently in the variants of its minimal create. Its page then says
 	// `Default (Stripe): <text>.`, with the value the suite observed where the evidence has one
 	// (ADR 2026-10-29-full-attribute-coverage, D4). Each entry cites the suite test in a comment.
+	// It may also word a default the record gives as none, which holds for the minimal create,
+	// where a create that sends something else shows Stripe filling it, such as a member of a hash
+	// sent in part (the suite's `nested_minimal` probes). The generator refuses that wording unless
+	// a probe contradicts the none (checkCreateProbes).
 	Defaults map[string]string
 	// NotServerDefaulted prunes fields the generator marked as server-defaulted.
 	NotServerDefaulted []string
@@ -383,6 +387,11 @@ type Declaration struct {
 	// change on update, such as a terminal location's `address.country`. A change forces
 	// replacement, as for a create-only field.
 	ReplaceOn []string
+	// ReplaceOnRemoval lists updatable fields, by dotted path through nested objects, that change
+	// in place but that Stripe cannot unset, such as a payment link's `transfer_data`. A plan that
+	// removes one the object holds replaces the resource, so no unset goes to Stripe. Any other
+	// change is an update. A Computed field needs no entry, because its removal keeps the value.
+	ReplaceOnRemoval []string
 	// FixedOnceSet maps a top-level updatable string field to the one value Stripe lets it
 	// change from, such as a price's `tax_behavior` to `unspecified`. Once the field holds any
 	// other value Stripe refuses to change it, so a configured change from such a value
@@ -413,8 +422,9 @@ type Declaration struct {
 	// such as `items` to `price_data`, which creates the price the key names. An element with
 	// no key of its own pairs with a state element that has equal data, and keeps its item when
 	// only other fields change; it is matched to the response element whose key object (the
-	// price) the data describes. Changing the data replaces the element. A plan that carries
-	// the same data twice is refused.
+	// price) the data describes. Changing the data replaces the element, or the resource in a
+	// FixedKeys list, whose update never sends the data. A configuration that sets both or
+	// neither of the key and the data, and a plan that carries the same data twice, are refused.
 	MatchData map[string]string
 	// MatchOnRead maps the name of a top-level list of objects that Stripe adds elements to on
 	// its own to the string field that identifies its elements, such as a v2 person's
@@ -465,11 +475,12 @@ type Declaration struct {
 	// removed from the configuration is sent as null, a map member's removed key likewise, and an
 	// object with Required members is sent whole, as Stripe takes it, and needs no entry.
 	SendChangedMembers []string
-	// SendWholeMembers lists the hashes, by dotted path, inside a SendChangedMembers object that
-	// an update sends whole once a member changes, because nothing proves Stripe keeps the members
-	// a request leaves out: every hash there is in one list or the other (checkSentMembers). Every
-	// member an update takes is sent, one removed from the configuration as null, and one the plan
-	// leaves unknown with the state's value.
+	// SendWholeMembers lists the hashes, by dotted path, that an update sends whole once a member
+	// changes: inside a SendChangedMembers object, where nothing proves Stripe keeps the members a
+	// request leaves out, every hash is in one list or the other (checkSentMembers), and at the top
+	// level, a hash Stripe keeps left-out members of and whose maps it replaces whole. Every member
+	// an update takes is sent, one removed from the configuration as null, and one the plan leaves
+	// unknown with the state's value.
 	SendWholeMembers []string
 	// Sets lists scalar arrays that are sets of values.
 	Sets []string

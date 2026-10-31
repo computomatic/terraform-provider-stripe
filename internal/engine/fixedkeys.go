@@ -37,6 +37,42 @@ func (r *Resource) requiresReplaceForFixedKeys(ctx context.Context, req resource
 	return replace
 }
 
+// requiresReplaceOnRemoval flags a plan that removes a ReplaceOnRemoval field the state holds. A
+// field below one the plan removes is not walked: its parent's own entry decides. An empty
+// collection holds nothing: a read keeps `[]` where the configuration set it or Stripe emptied a
+// known list, so its removal removes nothing, and a plan of `[]` over a list that holds values
+// asks for the unset Stripe cannot do.
+func (r *Resource) requiresReplaceOnRemoval(req resource.ModifyPlanRequest, resp *resource.ModifyPlanResponse) {
+	holds := func(raw tftypes.Value, at *tftypes.AttributePath) bool {
+		found, _, err := tftypes.WalkAttributePath(raw, at)
+		v, ok := found.(tftypes.Value)
+		return err == nil && ok && !v.IsNull() && !emptyRaw(v)
+	}
+	for _, name := range r.m.decl.ReplaceOnRemoval {
+		_, at, ok := r.m.at(name)
+		if !ok || !holds(req.State.Raw, at) || holds(req.Plan.Raw, at) || !holds(req.Plan.Raw, at.WithoutLastStep()) {
+			continue
+		}
+		attr := path.Empty()
+		for _, step := range at.Steps() {
+			if name, isName := step.(tftypes.AttributeName); isName {
+				attr = attr.AtName(string(name))
+			}
+		}
+		resp.RequiresReplace = append(resp.RequiresReplace, attr)
+	}
+}
+
+// emptyRaw reports a known list, set or map with no elements.
+func emptyRaw(v tftypes.Value) bool {
+	if !v.IsKnown() {
+		return false
+	}
+	var list []tftypes.Value
+	var byName map[string]tftypes.Value
+	return v.As(&list) == nil && len(list) == 0 || v.Type().Is(tftypes.Map{}) && v.As(&byName) == nil && len(byName) == 0
+}
+
 // fixedKeysChanged reports whether the plan of a FixedKeys list adds, drops or reorders into
 // a different set of keys, or changes a field of an element that Stripe cannot change in
 // place. An element with no key of its own (it sets `price_data`) pairs with a state element

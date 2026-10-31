@@ -193,6 +193,7 @@ func (r *Resource) planChange(ctx context.Context, req resource.ModifyPlanReques
 	if r.requiresReplaceForCurrencyOptions(ctx, req, resp) || r.requiresReplaceForFixedKeys(ctx, req, resp) {
 		return
 	}
+	r.requiresReplaceOnRemoval(req, resp)
 	if r.refuseGoingBack(ctx, req, resp) {
 		return
 	}
@@ -1231,6 +1232,7 @@ func (r *Resource) refuseDuplicateKeys(ctx context.Context, req resource.ModifyP
 		if data == "" {
 			continue
 		}
+		r.refuseKeyAndData(req, resp, n, key, data)
 		var built []attr.Value
 		for i, e := range listElements(plan.Attributes()[n.AttrName()]) {
 			if _, has := attrKey(e, key); has {
@@ -1252,6 +1254,33 @@ func (r *Resource) refuseDuplicateKeys(ctx context.Context, req resource.ModifyP
 				}
 			}
 			built = append(built, d)
+		}
+	}
+}
+
+// refuseKeyAndData fails a configured element of a MatchData list that sets both or neither of
+// its key and the data that makes one, which Stripe would refuse once the plan is applied. An
+// element, or either field, not known at plan may yet resolve to one that is fine, so it passes:
+// Terraform plans again at apply, when the configuration is known, and this then decides.
+func (r *Resource) refuseKeyAndData(req resource.ModifyPlanRequest, resp *resource.ModifyPlanResponse, n *node, key, data string) {
+	found, _, err := tftypes.WalkAttributePath(req.Config.Raw, tftypes.NewAttributePath().WithAttributeName(n.AttrName()))
+	config, isValue := found.(tftypes.Value)
+	if err != nil || !isValue || config.IsNull() || !config.IsKnown() {
+		return
+	}
+	var elements []tftypes.Value
+	if config.As(&elements) != nil {
+		return
+	}
+	for i, e := range elements {
+		var fields map[string]tftypes.Value
+		if !e.IsKnown() || e.As(&fields) == nil && (!fields[key].IsKnown() || !fields[data].IsKnown()) {
+			continue
+		}
+		if configSets(req.Config.Raw, n.AttrName(), i, key) == configSets(req.Config.Raw, n.AttrName(), i, data) {
+			resp.Diagnostics.AddAttributeError(path.Root(n.AttrName()).AtListIndex(i),
+				"Invalid element of "+n.AttrName(),
+				fmt.Sprintf("An element of `%s` sets exactly one of `%s` and `%s`.", n.AttrName(), key, data))
 		}
 	}
 }

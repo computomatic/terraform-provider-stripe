@@ -726,3 +726,17 @@ func TestAccPaymentIntent_liveMode(t *testing.T) {
 		}, nil, "stripe_payment_intent"),
 	})
 }
+
+// Stripe fills `allow_redirects` when the request turns automatic payment methods on and leaves it
+// out (suite: `minimal/automatic`).
+func TestAccPaymentIntent_allowRedirectsFilledByStripe(t *testing.T) {
+	acct := acctest.NewAccount(t)
+	cfg := bareIntent(acct, "  automatic_payment_methods = { enabled = true }\n")
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: tfacc.ProviderFactories,
+		Steps: acctest.Forget(t, []resource.TestStep{
+			{Config: cfg, Check: resource.TestCheckResourceAttr(address, "automatic_payment_methods.allow_redirects", "always")},
+			{Config: cfg, PlanOnly: true},
+		}, nil, "stripe_payment_intent"),
+	})
+}

@@ -13,6 +13,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 )
 
 // Pin is spec/PIN.json.
@@ -92,6 +93,7 @@ func Generate(root string, resources []Resource) ([]File, error) {
 	}
 	var covered []*tableCoverage
 	var records []Record
+	var contradicted []string
 	readers := map[string][]string{}
 	for _, res := range resources {
 		tc, err := coverTable(spec, res, ev)
@@ -99,8 +101,12 @@ func Generate(root string, resources []Resource) ([]File, error) {
 			return nil, err
 		}
 		tc.applyDeclaredDefaults(worded[res.Package])
+		contradicted = append(contradicted, tc.checkCreateProbes(res, worded[res.Package], ev)...)
 		covered = append(covered, tc)
 		readers[tc.object] = append(readers[tc.object], "stripe_"+res.Package)
+	}
+	if len(contradicted) > 0 {
+		return nil, fmt.Errorf("default statements the suite's create probes do not bear out, which a declaration's `Defaults` words:\n%s", strings.Join(contradicted, "\n"))
 	}
 	for i, res := range resources {
 		tc := covered[i]

@@ -119,9 +119,23 @@ var Declaration = engine.Declaration{
 	// `executives_provided` and `owners_provided` beside it: the variants `company`, `individual`
 	// and `individual_gb` of the minimal create.
 	Defaults: map[string]string{
-		"company.directors_provided":  "`false` on a company account, `true` on an individual one",
-		"company.executives_provided": "`false` on a company account, `true` on an individual one",
-		"company.owners_provided":     "`false` on a company account, `true` on an individual one",
+		// suite: TestAccountAttributes, variants `company`, `individual` and `individual_gb`
+		"company.address.country": "none, or the account's `country` on an account with a `business_type`",
+		// suite: TestAccountAttributes, probe `every_field/1`, which copies the individual's
+		"company.address.city":        "none, or the individual's on an individual account",
+		"company.address.line1":       "none, or the individual's on an individual account",
+		"company.address.line2":       "none, or the individual's on an individual account",
+		"company.address.postal_code": "none, or the individual's on an individual account",
+		"company.address.state":       "none, or the individual's on an individual account",
+		"company.phone":               "none, or the individual's on an individual account, such as `+10000000000`",
+		// suite: TestAccountAttributes, probe `enums/1`, which sends part of `individual`
+		"individual.address.country":        "the account's `country` once `individual` is set",
+		"individual.relationship.director":  "`false` once `individual` is set",
+		"individual.relationship.executive": "`false` once `individual` is set",
+		"individual.relationship.owner":     "`false` once `individual` is set",
+		"company.directors_provided":        "`false` on a company account, `true` on an individual one",
+		"company.executives_provided":       "`false` on a company account, `true` on an individual one",
+		"company.owners_provided":           "`false` on a company account, `true` on an individual one",
 	},
 	ServerDefaulted: []string{
 		"type", "email", "business_type", "company", "company.address.city", "company.address.line1", "company.address.line2",

@@ -27,6 +27,10 @@ func fakeGH(attributes, evidence string) gh {
 			return []byte(attributes), nil
 		case slices.Equal(args, []string{"api", "-H", "Accept: application/vnd.github.raw", fmt.Sprintf("repos/%s/contents/evidence/%s/%d.json?ref=results", suiteRepo, testRef, testRun)}):
 			return []byte(evidence), nil
+		case slices.Equal(args, []string{"api", fmt.Sprintf("repos/%s/contents/observations?ref=%s", suiteRepo, testRef)}):
+			return []byte(`[{"name":"gadget.json"},{"name":"README.md"}]`), nil
+		case slices.Equal(args, []string{"api", "-H", "Accept: application/vnd.github.raw", fmt.Sprintf("repos/%s/contents/observations/gadget.json?ref=%s", suiteRepo, testRef)}):
+			return []byte(`{"object":"gadget","probes":{}}`), nil
 		}
 		return nil, fmt.Errorf("unexpected gh %s", strings.Join(args, " "))
 	}
@@ -71,7 +75,7 @@ func TestWriteThenVerify(t *testing.T) {
 	if err := json.Unmarshal(read("spec/EVIDENCE_PIN.json"), &pin); err != nil {
 		t.Fatal(err)
 	}
-	want := Pin{FakeVersion: testFake, SuiteRef: testRef, RunID: testRun, Attributes: pinned([]byte(testAttrs)), Evidence: pinned([]byte(testEvid))}
+	want := Pin{FakeVersion: testFake, SuiteRef: testRef, RunID: testRun, Attributes: pinned([]byte(testAttrs)), Evidence: pinned([]byte(testEvid)), CreateProbes: pinned(read("spec/create_probes.json"))}
 	if pin != want {
 		t.Errorf("pin is %+v, want %+v", pin, want)
 	}

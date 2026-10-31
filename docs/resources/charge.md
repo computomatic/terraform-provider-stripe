@@ -3,12 +3,12 @@
 page_title: "stripe_charge Resource - Stripe"
 subcategory: ""
 description: |-
-  A direct charge of a payment source, such as Stripe's test token tok_visa. Stripe's API deprecates direct charges in favour of payment intents, and a stripe_payment_intent makes a charge too. With capture = false the charge only authorizes the payment; set captured = true to capture it in full. Stripe releases an authorization that is not captured within 7 days. Only description and metadata change after creation.
+  A direct charge of a payment source, such as Stripe's test token tok_visa. Stripe's API deprecates direct charges in favour of payment intents, and a stripe_payment_intent makes a charge too. With capture = false the charge only authorizes the payment; set captured = true to capture it in full. Stripe releases an authorization that is not captured within 7 days. Only description, metadata, receipt_email, shipping and fraud_details.user_report change after creation.
 ---
 
 # Resource: stripe_charge
 
-A direct charge of a payment source, such as Stripe's test token `tok_visa`. Stripe's API deprecates direct charges in favour of payment intents, and a `stripe_payment_intent` makes a charge too. With `capture = false` the charge only authorizes the payment; set `captured = true` to capture it in full. Stripe releases an authorization that is not captured within 7 days. Only `description` and `metadata` change after creation.
+A direct charge of a payment source, such as Stripe's test token `tok_visa`. Stripe's API deprecates direct charges in favour of payment intents, and a `stripe_payment_intent` makes a charge too. With `capture = false` the charge only authorizes the payment; set `captured = true` to capture it in full. Stripe releases an authorization that is not captured within 7 days. Only `description`, `metadata`, `receipt_email`, `shipping` and `fraud_details.user_report` change after creation.
 
 ~> A charge can move real money. In a live-mode Stripe account, creating or changing one, including setting its `captured`, fails at plan time unless the provider sets `allow_live_money_movement = true`. Reading or importing one never does. The provider asks Stripe for the account's mode. See the Managing Test Data guide.
 
@@ -37,22 +37,22 @@ The following arguments are required:
 The following arguments are optional:
 
 * `application_fee` - (Optional) The application fee (if any) for the charge. [See the Connect documentation](https://docs.stripe.com/connect/direct-charges#collect-fees) for details. Changing it fails the plan, because this resource cannot be replaced. Stripe refused it on a US account on create: "Can only apply an application_fee when the request is made on behalf of another account (using an OAuth key, the Stripe-Account header, or the destination parameter).". Removing it from the configuration leaves the current value.
-* `application_fee_amount` - (Optional) A fee in cents (or local equivalent) that will be applied to the charge and transferred to the application owner's Stripe account. The request must be made with an OAuth key or the `Stripe-Account` header in order to take an application fee. For more information, see the application fees [documentation](https://docs.stripe.com/connect/direct-charges#collect-fees). Changing it fails the plan, because this resource cannot be replaced.
+* `application_fee_amount` - (Optional) A fee in cents (or local equivalent) that will be applied to the charge and transferred to the application owner's Stripe account. The request must be made with an OAuth key or the `Stripe-Account` header in order to take an application fee. For more information, see the application fees [documentation](https://docs.stripe.com/connect/direct-charges#collect-fees). Changing it fails the plan, because this resource cannot be replaced. Default: none.
 * `capture` - (Optional) Whether to immediately capture the charge. Defaults to `true`. When `false`, the charge issues an authorization (or pre-authorization), and will need to be [captured](https://docs.stripe.com/api#capture_charge) later. Uncaptured charges expire after a set number of days (7 by default). For more information, see the [authorizing charges and settling later](https://docs.stripe.com/charges/placing-a-hold) documentation. Changing it fails the plan, because this resource cannot be replaced.
 * `captured` - (Optional) If the charge was created without capturing, this Boolean represents whether it is still uncaptured or has since been captured. Possible values: `true`. Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
-* `customer` - (Optional) The ID of an existing customer that will be charged in this request. Changing it fails the plan, because this resource cannot be replaced. Stripe refused it on a US account on update: "This charge is already associated with a customer".
-* `description` - (Optional) An arbitrary string which you can attach to a `Charge` object. It is displayed when in the web interface alongside the charge. Note that if you use Stripe to send automatic email receipts to your customers, your receipt emails will include the `description` of the charge(s) that they are describing.
+* `customer` - (Optional) The ID of an existing customer that will be charged in this request. Changing it fails the plan, because this resource cannot be replaced. Stripe refused it on a US account on update: "This charge is already associated with a customer". Default: none.
+* `description` - (Optional) An arbitrary string which you can attach to a `Charge` object. It is displayed when in the web interface alongside the charge. Note that if you use Stripe to send automatic email receipts to your customers, your receipt emails will include the `description` of the charge(s) that they are describing. Default: none.
 * `fraud_details` - (Optional) A set of key-value pairs you can attach to a charge giving information about its riskiness. If you believe a charge is fraudulent, include a `user_report` key with a value of `fraudulent`. If you believe a charge is safe, include a `user_report` key with a value of `safe`. Stripe will use the information you send to improve our fraud detection algorithms. Removing it from the configuration leaves the current value. See [`fraud_details`](#fraud_details) below.
-* `metadata` - (Optional) Set of [key-value pairs](https://docs.stripe.com/api/metadata) that you can attach to an object. This can be useful for storing additional information about the object in a structured format. Individual keys can be unset by posting an empty value to them. All keys can be unset by posting an empty value to `metadata`.
-* `on_behalf_of` - (Optional) The Stripe account ID for which these funds are intended. You can specify the business of record as the connected account using the `on_behalf_of` attribute on the charge. For details, see [Creating Separate Charges and Transfers](https://docs.stripe.com/connect/separate-charges-and-transfers#settlement-merchant). Changing it fails the plan, because this resource cannot be replaced.
+* `metadata` - (Optional) Set of [key-value pairs](https://docs.stripe.com/api/metadata) that you can attach to an object. This can be useful for storing additional information about the object in a structured format. Individual keys can be unset by posting an empty value to them. All keys can be unset by posting an empty value to `metadata`. Default (Stripe): `{}`.
+* `on_behalf_of` - (Optional) The Stripe account ID for which these funds are intended. You can specify the business of record as the connected account using the `on_behalf_of` attribute on the charge. For details, see [Creating Separate Charges and Transfers](https://docs.stripe.com/connect/separate-charges-and-transfers#settlement-merchant). Changing it fails the plan, because this resource cannot be replaced. Stripe refused it on a US account on create: "You cannot create a charge with the `on_behalf_of` parameter set to a connected account with `transfers` but without the `card_payments` capability enabled.". Default: none.
 * `radar_options` - (Optional) Options to configure Radar. See [Radar Session](https://docs.stripe.com/radar/radar-session) for more information. Changing it fails the plan, because this resource cannot be replaced. Removing it from the configuration leaves the current value. See [`radar_options`](#radar_options) below.
-* `receipt_email` - (Optional) The email address to which this charge's [receipt](https://docs.stripe.com/dashboard/receipts) will be sent. The receipt will not be sent until the charge is paid, and no receipts will be sent for test mode charges. If this charge is for a [Customer](https://docs.stripe.com/api/customers/object), the email address specified here will override the customer's email address. If `receipt_email` is specified for a charge in live mode, a receipt will be sent regardless of your [email settings](https://dashboard.stripe.com/account/emails).
+* `receipt_email` - (Optional) The email address to which this charge's [receipt](https://docs.stripe.com/dashboard/receipts) will be sent. The receipt will not be sent until the charge is paid, and no receipts will be sent for test mode charges. If this charge is for a [Customer](https://docs.stripe.com/api/customers/object), the email address specified here will override the customer's email address. If `receipt_email` is specified for a charge in live mode, a receipt will be sent regardless of your [email settings](https://dashboard.stripe.com/account/emails). Default: none.
 * `shipping` - (Optional) Shipping information for the charge. Helps prevent fraud on charges for physical goods. See [`shipping`](#shipping) below.
 * `source` - (Optional) A payment source to be charged. This can be the ID of a [card](https://docs.stripe.com/api#cards) (i.e., credit or debit card), a [bank account](https://docs.stripe.com/api#bank_accounts), a [source](https://docs.stripe.com/api#sources), a [token](https://docs.stripe.com/api#tokens), or a [connected account](https://docs.stripe.com/connect/account-debits#charging-a-connected-account). For certain sources---namely, [cards](https://docs.stripe.com/api#cards), [bank accounts](https://docs.stripe.com/api#bank_accounts), and attached [sources](https://docs.stripe.com/api#sources)---you must also pass the ID of the associated customer. Changing it fails the plan, because this resource cannot be replaced.
-* `statement_descriptor` - (Optional) For a non-card charge, text that appears on the customer's statement as the statement descriptor. This value overrides the account's default statement descriptor. For information about requirements, including the 22-character limit, see [the Statement Descriptor docs](https://docs.stripe.com/get-started/account/statement-descriptors). For a card charge, this value is ignored unless you don't specify a `statement_descriptor_suffix`, in which case this value is used as the suffix. Changing it fails the plan, because this resource cannot be replaced.
-* `statement_descriptor_suffix` - (Optional) Provides information about a card charge. Concatenated to the account's [statement descriptor prefix](https://docs.stripe.com/get-started/account/statement-descriptors#static) to form the complete statement descriptor that appears on the customer's statement. If the account has no prefix value, the suffix is concatenated to the account's statement descriptor. Changing it fails the plan, because this resource cannot be replaced.
+* `statement_descriptor` - (Optional) For a non-card charge, text that appears on the customer's statement as the statement descriptor. This value overrides the account's default statement descriptor. For information about requirements, including the 22-character limit, see [the Statement Descriptor docs](https://docs.stripe.com/get-started/account/statement-descriptors). For a card charge, this value is ignored unless you don't specify a `statement_descriptor_suffix`, in which case this value is used as the suffix. Changing it fails the plan, because this resource cannot be replaced. Default: none.
+* `statement_descriptor_suffix` - (Optional) Provides information about a card charge. Concatenated to the account's [statement descriptor prefix](https://docs.stripe.com/get-started/account/statement-descriptors#static) to form the complete statement descriptor that appears on the customer's statement. If the account has no prefix value, the suffix is concatenated to the account's statement descriptor. Changing it fails the plan, because this resource cannot be replaced. Default (Stripe): none, or the `statement_descriptor` the charge sends. Removing it from the configuration leaves the current value.
 * `transfer_data` - (Optional) An optional dictionary including the account to automatically transfer to as part of a destination charge. [See the Connect documentation](https://docs.stripe.com/connect/destination-charges) for details. Changing it fails the plan, because this resource cannot be replaced. See [`transfer_data`](#transfer_data) below.
-* `transfer_group` - (Optional) A string that identifies this transaction as part of a group. For details, see [Grouping transactions](https://docs.stripe.com/connect/separate-charges-and-transfers#transfer-options). Changing it fails the plan, because this resource cannot be replaced. Stripe refused it on a US account on update: "You cannot change `transfer_group` via API once it has been set.".
+* `transfer_group` - (Optional) A string that identifies this transaction as part of a group. For details, see [Grouping transactions](https://docs.stripe.com/connect/separate-charges-and-transfers#transfer-options). Changing it fails the plan, because this resource cannot be replaced. Stripe refused it on a US account on update: "You cannot change `transfer_group` via API once it has been set.". Default (Stripe): none, or a `group_` ID Stripe makes for a charge with `transfer_data`. Removing it from the configuration leaves the current value.
 
 <a id="fraud_details"></a>
 ### `fraud_details`
@@ -60,7 +60,7 @@ The following arguments are optional:
 The `fraud_details` attribute supports:
 
 * `stripe_report` - (Read-Only) Assessments from Stripe. If set, the value is `fraudulent`.
-* `user_report` - (Optional) Assessments reported by you. If set, possible values of are `safe` and `fraudulent`. Possible values: `fraudulent`, `safe`. Default: not sent. Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
+* `user_report` - (Optional) Assessments reported by you. If set, possible values of are `safe` and `fraudulent`. Possible values: `fraudulent`, `safe`. Default: not sent. Removing it from the configuration leaves the current value.
 
 <a id="radar_options"></a>
 ### `radar_options`
@@ -75,30 +75,29 @@ The `radar_options` attribute supports:
 The `shipping` attribute supports:
 
 * `address` - (Required) See [`shipping.address`](#shipping.address) below.
-* `carrier` - (Optional) The delivery service that shipped a physical product, such as Fedex, UPS, USPS, etc.
+* `carrier` - (Optional) The delivery service that shipped a physical product, such as Fedex, UPS, USPS, etc. Default: none.
 * `name` - (Required) Recipient name.
-* `phone` - (Optional) Recipient phone (including extension).
-* `tracking_number` - (Optional) The tracking number for a physical product, obtained from the delivery service. If multiple tracking numbers were generated for this purchase, please separate them with commas.
+* `phone` - (Optional) Recipient phone (including extension). Default: none.
+* `tracking_number` - (Optional) The tracking number for a physical product, obtained from the delivery service. If multiple tracking numbers were generated for this purchase, please separate them with commas. Default: none.
 
 <a id="shipping.address"></a>
 ### `shipping.address`
 
 The `shipping.address` attribute supports:
 
-* `city` - (Optional) City, district, suburb, town, or village.
-* `country` - (Optional) Two-letter country code ([ISO 3166-1 alpha-2](https://en.wikipedia.org/wiki/ISO_3166-1_alpha-2)).
-* `line1` - (Optional) Address line 1, such as the street, PO Box, or company name.
-* `line2` - (Optional) Address line 2, such as the apartment, suite, unit, or building.
-* `postal_code` - (Optional) ZIP or postal code.
-* `state` - (Optional) State, county, province, or region ([ISO 3166-2](https://en.wikipedia.org/wiki/ISO_3166-2)).
+* `city` - (Optional) City, district, suburb, town, or village. Default: none.
+* `country` - (Optional) Two-letter country code ([ISO 3166-1 alpha-2](https://en.wikipedia.org/wiki/ISO_3166-1_alpha-2)). Default: none.
+* `line1` - (Optional) Address line 1, such as the street, PO Box, or company name. Default: none.
+* `line2` - (Optional) Address line 2, such as the apartment, suite, unit, or building. Default: none.
+* `postal_code` - (Optional) ZIP or postal code. Default: none.
+* `state` - (Optional) State, county, province, or region ([ISO 3166-2](https://en.wikipedia.org/wiki/ISO_3166-2)). Default: none.
 
 <a id="transfer_data"></a>
 ### `transfer_data`
 
 The `transfer_data` attribute supports:
 
-* `amount` - (Optional) The amount transferred to the destination account, if specified. By default, the entire charge amount is transferred to the destination account.
-* `description` - (Optional)
+* `amount` - (Optional) The amount transferred to the destination account, if specified. By default, the entire charge amount is transferred to the destination account. Default: none.
 * `destination` - (Required) ID of an existing, connected Stripe account to transfer funds to if `transfer_data` was specified in the charge request.
 
 ## Attribute Reference
@@ -1382,4 +1381,4 @@ Using `terraform import`, import a charge using its ID. For example:
 % terraform import stripe_charge.deposit ch_123
 ```
 
-~> Stripe does not return `source` as it was sent, or `capture`, so an imported charge has them null. Leave them out of its configuration: changing either needs a new charge. Stripe does not return `transfer_data.description`, so an imported charge has it null: a configuration that sets it plans a replacement after the import.
+-> Stripe does not return `source` as it was sent, or `capture`, so an imported charge has them null. Leave them out of its configuration: changing either needs a new charge.

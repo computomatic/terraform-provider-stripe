@@ -37,11 +37,16 @@ var Declaration = engine.Declaration{
 	// `transfer_group` (suite: "transfer_group cannot be unset"), so it is computed too: removing
 	// it from the configuration keeps the current value and sends nothing. Stripe also turns on
 	// `automatic_payment_methods` on a create with no payment method types (the record's default
-	// of `enabled`, true).
-	ServerDefaulted: []string{"automatic_payment_methods", "capture_method", "confirmation_method", "transfer_group"},
+	// of `enabled`, true), and fills `allow_redirects` when the request turns them on without it
+	// (suite: `minimal/automatic`).
+	ServerDefaulted: []string{"automatic_payment_methods", "automatic_payment_methods.allow_redirects", "capture_method", "confirmation_method", "transfer_group"},
 	// Stripe answers `payment_method_data` with the method it made (the record's `returned`,
 	// `inline_object`), which `payment_method` then leaves to it.
 	MadeBy: map[string]string{"payment_method": "payment_method_data"},
+	Defaults: map[string]string{
+		// suite: variant `bancontact`, which the resource keeps null
+		"payment_method": "none, or the method Stripe makes from `payment_method_data`, which this attribute does not hold",
+	},
 	// Stripe refuses to change `transfer_group` once set (suite: "update transfer_group once
 	// set"), and a payment intent cannot be replaced, so a change fails the plan. It is sent on
 	// create only.

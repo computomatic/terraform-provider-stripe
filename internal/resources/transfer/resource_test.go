@@ -5,7 +5,9 @@ import (
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
+	"github.com/hashicorp/terraform-plugin-testing/knownvalue"
 	"github.com/hashicorp/terraform-plugin-testing/plancheck"
+	"github.com/hashicorp/terraform-plugin-testing/tfjsonpath"
 
 	"github.com/computomatic/terraform-provider-stripe/internal/acctest"
 	"github.com/computomatic/terraform-provider-stripe/internal/acctest/tfacc"
@@ -39,6 +41,60 @@ func transferPath(dst *string) resource.TestCheckFunc {
 	return resource.TestCheckResourceAttrWith(resAddress, "id", func(v string) error {
 		*dst = "/v1/transfers/" + v
 		return nil
+	})
+}
+
+// A transfer funded by a payment takes the transfer group of the payment's intent, which it holds
+// through an update, as the suite's fixture of it does (TestTransferAttributes, probe
+// `every_field/2`, whose `source_transaction` Stripe refuses beside a `source_type`).
+func TestAccTransfer_sourceTransaction(t *testing.T) {
+	acct := acctest.NewAccount(t)
+	destination, currency := transferSetup(t, acct)
+	intent, charge := tfacc.SourceCharge(t, acct, currency, 2000)
+	group := "group_" + intent
+	source := fmt.Sprintf("  source_transaction = %q\n", charge)
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: tfacc.ProviderFactories,
+		Steps: acctest.Forget(t, []resource.TestStep{
+			{
+				Config: transferConfig(acct, destination, currency, 100, source),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr(resAddress, "source_transaction", charge),
+					resource.TestCheckResourceAttr(resAddress, "transfer_group", group),
+				),
+			},
+			{Config: transferConfig(acct, destination, currency, 100, source), PlanOnly: true},
+			{
+				Config: transferConfig(acct, destination, currency, 100, source+"  description = \"Seller share\"\n"),
+				ConfigPlanChecks: resource.ConfigPlanChecks{PreApply: []plancheck.PlanCheck{
+					plancheck.ExpectResourceAction(resAddress, plancheck.ResourceActionUpdate),
+					plancheck.ExpectKnownValue(resAddress, tfjsonpath.New("transfer_group"), knownvalue.StringExact(group)),
+				}},
+				Check: resource.TestCheckResourceAttr(resAddress, "transfer_group", group),
+			},
+		}, nil, "stripe_transfer"),
+	})
+}
+
+// A transfer of the balance has no group, and an update plans that as known.
+func TestAccTransfer_noGroup(t *testing.T) {
+	acct := acctest.NewAccount(t)
+	destination, currency := transferSetup(t, acct)
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: tfacc.ProviderFactories,
+		Steps: acctest.Forget(t, []resource.TestStep{
+			{
+				Config: transferConfig(acct, destination, currency, 100, ""),
+				Check:  resource.TestCheckNoResourceAttr(resAddress, "transfer_group"),
+			},
+			{
+				Config: transferConfig(acct, destination, currency, 100, "  description = \"Seller share\"\n"),
+				ConfigPlanChecks: resource.ConfigPlanChecks{PreApply: []plancheck.PlanCheck{
+					plancheck.ExpectResourceAction(resAddress, plancheck.ResourceActionUpdate),
+					plancheck.ExpectKnownValue(resAddress, tfjsonpath.New("transfer_group"), knownvalue.Null()),
+				}},
+			},
+		}, nil, "stripe_transfer"),
 	})
 }
 

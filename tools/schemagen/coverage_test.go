@@ -19,6 +19,7 @@ import (
 	"github.com/computomatic/terraform-provider-stripe/internal/fields"
 	"github.com/computomatic/terraform-provider-stripe/internal/resources/payment_intent"
 	"github.com/computomatic/terraform-provider-stripe/internal/resources/setup_intent"
+	"github.com/computomatic/terraform-provider-stripe/tools/internal/evidencecheck"
 )
 
 const coverageSpecFile = "coverage_spec.json"
@@ -497,6 +498,21 @@ func TestDefaultStatementsComeFromTheEvidence(t *testing.T) {
 	if d := defaultOf(update, Record{State: StateAwaiting}, "PostGadgets", nil, nil, nil); d != nil {
 		t.Errorf("an update-only leaf awaiting proof has the statement %+v", d)
 	}
+	// The create's leaf decides only once it is exposed: one the gate leaves out sends nothing, so
+	// the update's leaf is the argument's only one.
+	both := []Leaf{{Key: Key{Object: "gadget", Side: SideRequest, Operation: "PostGadgets", Path: "settings.limit"}}, update}
+	for _, tc := range []struct {
+		state State
+		want  string
+	}{{StateAwaiting, "Default: not sent."}, {StateExcluded, "Default: not sent."}, {StateExposed, ""}} {
+		got := ""
+		if d := defaultOf(update, Record{State: StateExposed}, "PostGadgets", both, []Record{{State: tc.state}, {State: StateExposed}}, ev); d != nil {
+			got = d.Statement()
+		}
+		if got != tc.want {
+			t.Errorf("a create leaf %s: %q, want %q", tc.state, got, tc.want)
+		}
+	}
 
 	// The spec's "Defaults to `red`" disagrees with the evidence's `blue`, and its "Defaults to
 	// `sale`" with none; neither is a source.
@@ -581,6 +597,7 @@ func fixtureRoot(t *testing.T, attributes *Attributes, evidence *Evidence) strin
 	pin := EvidencePin{FakeVersion: "v9.9.9", SuiteRef: "abc123", RunID: 42}
 	pin.Attributes = write("spec/attributes.json", must(json.Marshal(attributes)))
 	pin.Evidence = write("spec/evidence.json", must(json.Marshal(evidence)))
+	pin.CreateProbes = write("spec/create_probes.json", must(json.Marshal(evidencecheck.CreateProbes{SuiteRef: "abc123"})))
 	write("spec/EVIDENCE_PIN.json", must(json.Marshal(pin)))
 	return root
 }
@@ -881,5 +898,127 @@ func TestTokenFormLeavesTheHashOptional(t *testing.T) {
 	}
 	if f := fieldAt(table, "number"); f == nil || f.Required {
 		t.Errorf("a token form leaves number optional: %+v", f)
+	}
+}
+
+// A leaf's `default.variants` holds only literals, so a minimal create that leaves the leaf out and
+// that Stripe answers with a value it generates or copies contradicts the leaf's default, which then
+// states nothing until a declaration words it. A create that sends the leaf says nothing of it.
+func TestMinimalCreatesContradictADefault(t *testing.T) {
+	key := Key{Object: "gadget", Side: SideRequest, Operation: "PostGadgets", Path: "group"}
+	create := func(params any, held Matcher) minimalCreate {
+		return minimalCreate{Object: "gadget", Operation: "PostGadgets", Status: 200, Params: params, Response: map[string]Matcher{"group": held}}
+	}
+	sent := map[string]any{"group": "g"}
+	for name, tc := range map[string]struct {
+		def     EvidenceDefault
+		creates []minimalCreate
+		want    fields.DefaultKind
+	}{
+		"nothing against it": {EvidenceDefault{Kind: "null"}, []minimalCreate{create(map[string]any{}, Matcher{Kind: "null"})}, fields.DefaultNone},
+		"absent is none":     {EvidenceDefault{Kind: "null"}, []minimalCreate{create(map[string]any{}, Matcher{Kind: "absent"})}, fields.DefaultNone},
+		"a generated value":  {EvidenceDefault{Kind: "null"}, []minimalCreate{create(map[string]any{}, Matcher{Kind: "created"})}, fields.DefaultVaries},
+		"a copied value":     {EvidenceDefault{Kind: "null"}, []minimalCreate{create(map[string]any{}, Matcher{Kind: "sent", Path: "name"})}, fields.DefaultVaries},
+		"sends the leaf":     {EvidenceDefault{Kind: "null"}, []minimalCreate{create(sent, Matcher{Kind: "sent", Path: "group"})}, fields.DefaultNone},
+		"a refused create": {EvidenceDefault{Kind: "null"}, []minimalCreate{{Object: "gadget", Operation: "PostGadgets", Status: 400,
+			Response: map[string]Matcher{"group": {Kind: "created"}}}}, fields.DefaultNone},
+		"another literal": {EvidenceDefault{Kind: "value", Value: json.RawMessage(`"a"`)},
+			[]minimalCreate{create(map[string]any{}, Matcher{Kind: "value", Value: json.RawMessage(`"b"`)})}, fields.DefaultVaries},
+		"the same literal": {EvidenceDefault{Kind: "value", Value: json.RawMessage(`"a"`)},
+			[]minimalCreate{create(map[string]any{}, Matcher{Kind: "value", Value: json.RawMessage(`"a"`)})}, fields.DefaultValue},
+	} {
+		def := tc.def
+		p := &Pinned{
+			Evidence: &Evidence{Leaves: []EvidenceLeaf{{Key: key, Status: "proven", Default: &def}}},
+			creates:  map[string][]minimalCreate{"gadget PostGadgets": tc.creates},
+		}
+		if got := p.leafDefault(key); got == nil || got.Kind != tc.want {
+			t.Errorf("%s: %+v, want kind %v", name, got, tc.want)
+		}
+	}
+}
+
+// A parameter is sent through the hashes and lists on its way.
+func TestSends(t *testing.T) {
+	params := map[string]any{"data": map[string]any{"note": "a"}, "items": []any{map[string]any{"price": "p"}}}
+	for path, want := range map[string]bool{"data": true, "data.note": true, "data.other": false, "items.price": true, "items.quantity": false, "gone": false} {
+		if got := sends(params, strings.Split(path, ".")); got != want {
+			t.Errorf("%s: %v, want %v", path, got, want)
+		}
+	}
+}
+
+// A none or a literal from the record stands only if no create probe holds something else, and a
+// worded default names each literal a probe holds and words a none only against a probe. A rule
+// from the record is prose nothing here can weigh, and a default the variants leave open has no
+// statement to check.
+func TestCreateProbesCheckDefaultStatements(t *testing.T) {
+	key := Key{Object: "gadget", Side: SideRequest, Operation: "PostGadgets", Path: "group"}
+	value := func(v string) evidencecheck.ProbedValue {
+		return evidencecheck.ProbedValue{Kind: "value", Value: json.RawMessage(v), Probe: "p"}
+	}
+	made := evidencecheck.ProbedValue{Kind: "created", Probe: "p"}
+	none, literalA := &fields.Default{Kind: fields.DefaultNone}, &fields.Default{Kind: fields.DefaultValue, Value: "a"}
+	rule := &fields.Default{Kind: fields.DefaultRule, Rule: "the name"}
+	varies := &fields.Default{Kind: fields.DefaultVaries}
+	for name, tc := range map[string]struct {
+		def     *fields.Default
+		held    []evidencecheck.ProbedValue
+		worded  string
+		parents []string
+		want    string
+	}{
+		"a none no probe touches":         {def: none},
+		"a none, and an empty list":       {def: none, held: []evidencecheck.ProbedValue{value("[]")}},
+		"a none, and a list of nulls":     {def: none, held: []evidencecheck.ProbedValue{value("[null]")}},
+		"a none, and an empty hash":       {def: none, held: []evidencecheck.ProbedValue{value("{}")}},
+		"a none against a literal":        {def: none, held: []evidencecheck.ProbedValue{value("false")}, want: "probe p holds false"},
+		"a none against a made value":     {def: none, held: []evidencecheck.ProbedValue{made}, want: "kind created"},
+		"a literal it matches":            {def: literalA, held: []evidencecheck.ProbedValue{value(`"a"`)}},
+		"a literal in a list":             {def: literalA, held: []evidencecheck.ProbedValue{value(`["a"]`)}},
+		"a literal against another":       {def: literalA, held: []evidencecheck.ProbedValue{value(`"b"`)}, want: "probe p holds b"},
+		"a literal against a made value":  {def: literalA, held: []evidencecheck.ProbedValue{made}, want: "kind created"},
+		"a rule from the record":          {def: rule, held: []evidencecheck.ProbedValue{value(`"b"`)}},
+		"a default the variants leave":    {def: varies, held: []evidencecheck.ProbedValue{value(`"b"`)}},
+		"worded, naming the literal":      {def: varies, held: []evidencecheck.ProbedValue{value("[99]")}, worded: "`99` once set"},
+		"worded, without the literal":     {def: varies, held: []evidencecheck.ProbedValue{value("7")}, worded: "`99` once set", want: "does not name"},
+		"worded, a made value":            {def: varies, held: []evidencecheck.ProbedValue{made}, worded: "none, or one Stripe makes"},
+		"worded, a parent's value":        {def: varies, held: []evidencecheck.ProbedValue{value("100")}, worded: "what remains", parents: []string{"group"}},
+		"worded none, with a probe":       {def: none, held: []evidencecheck.ProbedValue{made}, worded: "none, or one Stripe makes"},
+		"worded none, with no probe":      {def: none, worded: "none, or one Stripe makes", want: "no probe contradicts"},
+		"worded none, with an empty list": {def: none, held: []evidencecheck.ProbedValue{value("[]")}, worded: "none, or []", want: "no probe contradicts"},
+	} {
+		table := []fields.Field{{Name: "group", Shape: fields.String, Create: true, Default: tc.def}}
+		cov := &tableCoverage{ops: []string{"PostGadgets"}, table: table, leaves: []Leaf{{Key: key, At: "group"}}, records: []Record{{State: StateExposed}}}
+		worded := map[string]string{}
+		if tc.worded != "" {
+			worded["group"] = tc.worded
+		}
+		p := &Pinned{probed: map[Key][]evidencecheck.ProbedValue{key: tc.held}}
+		got := strings.Join(cov.checkCreateProbes(Resource{Package: "gadget", CreatePath: "/v1/gadgets", ParentDefaults: tc.parents}, worded, p), "\n")
+		if tc.want == "" && got != "" || tc.want != "" && !strings.Contains(got, tc.want) {
+			t.Errorf("%s: %q, want %q", name, got, tc.want)
+		}
+	}
+}
+
+// The digest is part of the pin: generation refuses it from another commit, and refuses a pin
+// without it, so that the check cannot quietly stop running.
+func TestGenerateRefusesACreateProbeDigestThatDoesNotBelong(t *testing.T) {
+	a, e := fixtureEvidence(t)
+	root := fixtureRoot(t, a, e)
+	if err := os.WriteFile(filepath.Join(root, "spec", "create_probes.json"), []byte(`{"suite_ref":"def456","leaves":[]}`), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := Generate(root, []Resource{trimmed()}); err == nil || !strings.Contains(err.Error(), "spec/create_probes.json is") {
+		t.Errorf("a digest that differs from its pin: %v", err)
+	}
+	a, e = fixtureEvidence(t)
+	root = fixtureRoot(t, a, e)
+	if err := os.Remove(filepath.Join(root, "spec", "create_probes.json")); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := Generate(root, []Resource{trimmed()}); err == nil || !strings.Contains(err.Error(), "create_probes.json") {
+		t.Errorf("a pin with no digest: %v", err)
 	}
 }
