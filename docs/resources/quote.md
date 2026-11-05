@@ -49,26 +49,26 @@ resource "stripe_quote" "onboarding" {
 
 The following arguments are optional:
 
-* `application_fee_amount` - (Optional) The amount of the application fee (if any) that will be requested to be applied to the payment and transferred to the application owner's Stripe account. There cannot be any line items with recurring prices when using this field.
-* `application_fee_percent` - (Optional) A non-negative decimal between 0 and 100, with at most two decimal places. This represents the percentage of the subscription invoice total that will be transferred to the application owner's Stripe account. There must be at least 1 line item with a recurring price to use this field.
+* `application_fee_amount` - (Optional) The amount of the application fee (if any) that will be requested to be applied to the payment and transferred to the application owner's Stripe account. There cannot be any line items with recurring prices when using this field. Default: none.
+* `application_fee_percent` - (Optional) A non-negative decimal between 0 and 100, with at most two decimal places. This represents the percentage of the subscription invoice total that will be transferred to the application owner's Stripe account. There must be at least 1 line item with a recurring price to use this field. Default: none.
 * `automatic_tax` - (Optional) Settings for automatic tax lookup for this quote and resulting invoices and subscriptions. Removing it from the configuration leaves the current value. See [`automatic_tax`](#automatic_tax) below.
-* `collection_method` - (Optional) Either `charge_automatically`, or `send_invoice`. When charging automatically, Stripe will attempt to pay invoices at the end of the subscription cycle or at invoice finalization using the default payment method attached to the subscription or customer. When sending an invoice, Stripe will email your customer an invoice with payment instructions and mark the subscription as `active`. Defaults to `charge_automatically`. Possible values: `charge_automatically`, `send_invoice`. Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
-* `customer` - (Optional) The customer for which this quote belongs to. A customer is required before finalizing the quote. Once specified, it cannot be changed. Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
-* `customer_account` - (Optional) The account for which this quote belongs to. A customer or account is required before finalizing the quote. Once specified, it cannot be changed.
-* `default_tax_rates` - (Optional) The tax rates that will apply to any line item that does not have `tax_rates` set.
-* `description` - (Optional) A description that will be displayed on the quote PDF. If no value is passed, the default description configured in your [quote template settings](https://dashboard.stripe.com/settings/billing/quote) will be used.
-* `discounts` - (Optional) The discounts applied to the quote. Changing it fails the plan, because this resource cannot be replaced. See [`discounts`](#discounts) below.
-* `expires_at` - (Optional) A future timestamp on which the quote will be canceled if in `open` or `draft` status. Measured in seconds since the Unix epoch. If no value is passed, the default expiration date configured in your [quote template settings](https://dashboard.stripe.com/settings/billing/quote) will be used. Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
-* `footer` - (Optional) A footer that will be displayed on the quote PDF. If no value is passed, the default footer configured in your [quote template settings](https://dashboard.stripe.com/settings/billing/quote) will be used.
+* `collection_method` - (Optional) Either `charge_automatically`, or `send_invoice`. When charging automatically, Stripe will attempt to pay invoices at the end of the subscription cycle or at invoice finalization using the default payment method attached to the subscription or customer. When sending an invoice, Stripe will email your customer an invoice with payment instructions and mark the subscription as `active`. Defaults to `charge_automatically`. Possible values: `charge_automatically`, `send_invoice`. Removing it from the configuration leaves the current value.
+* `customer` - (Optional) The customer for which this quote belongs to. A customer is required before finalizing the quote. Once specified, it cannot be changed. Removing it from the configuration leaves the current value.
+* `customer_account` - (Optional) The account for which this quote belongs to. A customer or account is required before finalizing the quote. Once specified, it cannot be changed. Default: none.
+* `default_tax_rates` - (Optional) The tax rates that will apply to any line item that does not have `tax_rates` set. Default (Stripe): `[]`.
+* `description` - (Optional) A description that will be displayed on the quote PDF. If no value is passed, the default description configured in your [quote template settings](https://dashboard.stripe.com/settings/billing/quote) will be used. Default: none.
+* `discounts` - (Optional) The discounts applied to the quote. Removing it from the configuration leaves the current value. See [`discounts`](#discounts) below.
+* `expires_at` - (Optional) A future timestamp on which the quote will be canceled if in `open` or `draft` status. Measured in seconds since the Unix epoch. If no value is passed, the default expiration date configured in your [quote template settings](https://dashboard.stripe.com/settings/billing/quote) will be used. Default (Stripe): the expiry of the quote template settings, 30 days from the create on a platform that left them alone. Removing it from the configuration leaves the current value.
+* `footer` - (Optional) A footer that will be displayed on the quote PDF. If no value is passed, the default footer configured in your [quote template settings](https://dashboard.stripe.com/settings/billing/quote) will be used. Default: none.
 * `from_quote` - (Optional) Clone an existing quote. The new quote will be created in `status=draft`. When using this parameter, you cannot specify any other parameters except for `expires_at`. Changing it fails the plan, because this resource cannot be replaced. See [`from_quote`](#from_quote) below.
-* `header` - (Optional) A header that will be displayed on the quote PDF. If no value is passed, the default header configured in your [quote template settings](https://dashboard.stripe.com/settings/billing/quote) will be used.
+* `header` - (Optional) A header that will be displayed on the quote PDF. If no value is passed, the default header configured in your [quote template settings](https://dashboard.stripe.com/settings/billing/quote) will be used. Default: none.
 * `invoice_settings` - (Optional) All invoices will be billed using the specified settings. Removing it from the configuration leaves the current value. See [`invoice_settings`](#invoice_settings) below.
 * `line_items` - (Optional) A list of line items the customer is being quoted for. Each line item includes information about the product, the quantity, and the resulting cost. See [`line_items`](#line_items) below.
-* `metadata` - (Optional) Set of [key-value pairs](https://docs.stripe.com/api/metadata) that you can attach to an object. This can be useful for storing additional information about the object in a structured format. Individual keys can be unset by posting an empty value to them. All keys can be unset by posting an empty value to `metadata`.
-* `on_behalf_of` - (Optional) The account on behalf of which to charge.
+* `metadata` - (Optional) Set of [key-value pairs](https://docs.stripe.com/api/metadata) that you can attach to an object. This can be useful for storing additional information about the object in a structured format. Individual keys can be unset by posting an empty value to them. All keys can be unset by posting an empty value to `metadata`. Default (Stripe): `{}`.
+* `on_behalf_of` - (Optional) The account on behalf of which to charge. Default: none.
 * `status` - (Optional) The status of the quote. Possible values: `canceled`. Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
 * `subscription_data` - (Optional) When creating a subscription or subscription schedule, the specified configuration data will be used. There must be at least one line item with a recurring price for a subscription or subscription schedule to be created. A subscription schedule is created if `subscription_data[effective_date]` is present and in the future, otherwise a subscription is created. Removing it from the configuration leaves the current value. See [`subscription_data`](#subscription_data) below.
-* `test_clock` - (Optional) ID of the test clock to attach to the quote. Changing it fails the plan, because this resource cannot be replaced.
+* `test_clock` - (Optional) ID of the test clock to attach to the quote. Changing it fails the plan, because this resource cannot be replaced. Default: none.
 * `transfer_data` - (Optional) The data with which to automatically create a Transfer for each of the invoices. See [`transfer_data`](#transfer_data) below.
 
 <a id="automatic_tax"></a>
@@ -86,7 +86,7 @@ The `automatic_tax` attribute supports:
 
 The `automatic_tax.liability` attribute supports:
 
-* `account` - (Optional) The connected account being referenced when `type` is `account`.
+* `account` - (Optional) The connected account being referenced when `type` is `account`. Default: none.
 * `type` - (Required) Type of the account referenced. Possible values: `account`, `self`.
 
 <a id="discounts"></a>
@@ -94,7 +94,9 @@ The `automatic_tax.liability` attribute supports:
 
 The `discounts` attribute is a list. Each element supports:
 
+* `coupon` - (Optional) Stripe takes a coupon that has not expired, and on an update not in the same element as a `discount`. Elsewhere Stripe refused it on a US account on create: "Coupon attrs_expired is expired and cannot be applied.". Elsewhere Stripe refused it on a US account on update: "You may only specify one of these parameters: coupon, discount.".
 * `discount` - (Optional) Stripe refused it on a US account on create: "No such discount: 'di_...'".
+* `promotion_code` - (Optional) Stripe takes an active promotion code. Elsewhere Stripe refused it on a US account on create: "This promotion code is inactive.".
 
 <a id="from_quote"></a>
 ### `from_quote`
@@ -111,8 +113,8 @@ The `invoice_settings` attribute supports:
 
 * `custom_fields` - (Optional) A list of up to 4 custom fields to be displayed on the invoice. See [`invoice_settings.custom_fields`](#invoice_settings.custom_fields) below.
 * `days_until_due` - (Optional) Number of days within which a customer must pay invoices generated by this quote. This value will be `null` for quotes where `collection_method=charge_automatically`.
-* `description` - (Optional) An arbitrary string attached to the object. Often useful for displaying to users.
-* `footer` - (Optional) Footer to be displayed on the invoice.
+* `description` - (Optional) An arbitrary string attached to the object. Often useful for displaying to users. Default: none.
+* `footer` - (Optional) Footer to be displayed on the invoice. Default: none.
 * `issuer` - (Optional) Removing it from the configuration leaves the current value. See [`invoice_settings.issuer`](#invoice_settings.issuer) below.
 
 <a id="invoice_settings.custom_fields"></a>
@@ -168,9 +170,9 @@ The `line_items.adjustable_quantity` attribute supports:
 The `line_items.discounts` attribute is a list. Each element supports:
 
 * `amount` - (Read-Only) The amount discounted.
-* `coupon` - (Optional)
-* `discount` - (Optional) A discount represents the actual application of a [coupon](https://docs.stripe.com/api#coupons) or [promotion code](https://docs.stripe.com/api#promotion_codes). It contains information about when the discount began, when it will end, and what it is applied to. Related guide: [Applying discounts to subscriptions](https://docs.stripe.com/billing/subscriptions/discounts). Removing it from the configuration lets Stripe set it when the list is next sent.
-* `promotion_code` - (Optional)
+* `coupon` - (Optional) Stripe takes a coupon that has not expired, and on an update not in the same element as a `discount`. Elsewhere Stripe refused it on a US account on create: "Coupon attrs_expired is expired and cannot be applied.". Elsewhere Stripe refused it on a US account on update: "You may only specify one of these parameters: coupon, discount.".
+* `discount` - (Optional) A discount represents the actual application of a [coupon](https://docs.stripe.com/api#coupons) or [promotion code](https://docs.stripe.com/api#promotion_codes). It contains information about when the discount began, when it will end, and what it is applied to. Related guide: [Applying discounts to subscriptions](https://docs.stripe.com/billing/subscriptions/discounts). Stripe refused it on a US account on create: "No such discount: 'di_...'". On an update Stripe takes a discount the line already holds, not one the quote holds. Elsewhere Stripe refused it on a US account on update: "Discount di_... does not already exist on the item. Discounts can only be applied to an item when they already exist on the item.". Removing it from the configuration lets Stripe set it when the list is next sent.
+* `promotion_code` - (Optional) Stripe takes an active promotion code. Elsewhere Stripe refused it on a US account on create: "This promotion code is inactive.".
 
 <a id="line_items.price_data"></a>
 ### `line_items.price_data`
@@ -240,10 +242,10 @@ The `line_items.taxes.rate.flat_amount` attribute supports:
 The `subscription_data` attribute supports:
 
 * `billing_mode` - (Optional) The billing mode of the quote. Changing it fails the plan, because this resource cannot be replaced. Removing it from the configuration leaves the current value. See [`subscription_data.billing_mode`](#subscription_data.billing_mode) below.
-* `description` - (Optional) The subscription's description, meant to be displayable to the customer. Use this field to optionally store an explanation of the subscription for rendering in Stripe surfaces and certain local payment methods UIs.
-* `effective_date` - (Optional) When creating a new subscription, the date of which the subscription schedule will start after the quote is accepted. This date is ignored if it is in the past when the quote is accepted. Measured in seconds since the Unix epoch. Stripe refused it on a US account on create and update: "You can only set `effective_date` to `current_period_end` when updating a subscription.".
-* `metadata` - (Optional) Set of [key-value pairs](https://docs.stripe.com/api/metadata) that will set metadata on the subscription or subscription schedule when the quote is accepted. If a recurring price is included in `line_items`, this field will be passed to the resulting subscription's `metadata` field. If `subscription_data.effective_date` is used, this field will be passed to the resulting subscription schedule's `phases.metadata` field. Unlike object-level metadata, this field is declarative. Updates will clear prior values.
-* `trial_period_days` - (Optional) Integer representing the number of trial period days before the customer is charged for the first time.
+* `description` - (Optional) The subscription's description, meant to be displayable to the customer. Use this field to optionally store an explanation of the subscription for rendering in Stripe surfaces and certain local payment methods UIs. Default: none.
+* `effective_date` - (Optional) When creating a new subscription, the date of which the subscription schedule will start after the quote is accepted. This date is ignored if it is in the past when the quote is accepted. Measured in seconds since the Unix epoch. Stripe refused it on a US account on create and update: "You can only set `effective_date` to `current_period_end` when updating a subscription.". Default: none.
+* `metadata` - (Optional) Set of [key-value pairs](https://docs.stripe.com/api/metadata) that will set metadata on the subscription or subscription schedule when the quote is accepted. If a recurring price is included in `line_items`, this field will be passed to the resulting subscription's `metadata` field. If `subscription_data.effective_date` is used, this field will be passed to the resulting subscription schedule's `phases.metadata` field. Unlike object-level metadata, this field is declarative. Updates will clear prior values. Default: none.
+* `trial_period_days` - (Optional) Integer representing the number of trial period days before the customer is charged for the first time. Default: none.
 
 <a id="subscription_data.billing_mode"></a>
 ### `subscription_data.billing_mode`
@@ -265,8 +267,8 @@ The `subscription_data.billing_mode.flexible` attribute supports:
 
 The `transfer_data` attribute supports:
 
-* `amount` - (Optional) The amount in cents (or local equivalent) that will be transferred to the destination account when the invoice is paid. By default, the entire amount is transferred to the destination.
-* `amount_percent` - (Optional) A non-negative decimal between 0 and 100, with at most two decimal places. This represents the percentage of the subscription invoice total that will be transferred to the destination account. By default, the entire amount will be transferred to the destination.
+* `amount` - (Optional) The amount in cents (or local equivalent) that will be transferred to the destination account when the invoice is paid. By default, the entire amount is transferred to the destination. Default: none.
+* `amount_percent` - (Optional) A non-negative decimal between 0 and 100, with at most two decimal places. This represents the percentage of the subscription invoice total that will be transferred to the destination account. By default, the entire amount will be transferred to the destination. Default: none.
 * `destination` - (Required) The account where funds from the payment will be transferred to upon payment success.
 
 ## Attribute Reference
@@ -806,4 +808,4 @@ Using `terraform import`, import a quote using its ID. For example:
 % terraform import stripe_quote.onboarding qt_123
 ```
 
-~> Stripe does not return `line_items.discounts.coupon`, `line_items.discounts.promotion_code`, `line_items.price_data`, `line_items.tax_rates` or `discounts`, so an imported quote has them null: a configuration that sets `line_items.discounts.coupon`, `line_items.discounts.promotion_code`, `line_items.price_data` or `line_items.tax_rates` plans an update after the import, and one that sets `discounts` plans a replacement.
+-> An imported quote names each of its discounts, and each of its lines' discounts, by its ID in `discount`, so a configuration that names one by `coupon` or `promotion_code` plans an update that applies it again. Name each discount of an imported quote by `discount`. Stripe does not return `line_items.price_data` or `line_items.tax_rates`, so an imported quote has them null: a configuration that sets one plans an update after the import.

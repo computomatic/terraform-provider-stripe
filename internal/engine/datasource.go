@@ -25,6 +25,9 @@ func NewDataSource(decl Declaration, table []fields.Field) (func() datasource.Da
 	if err != nil {
 		return nil, err
 	}
+	// The data source reads what Stripe returns unexpanded, as it reads a top-level `discounts`
+	// as IDs: a list's elements then hold no discounts.
+	m.lineDiscounts = nil
 	s := m.dataSourceSchema()
 	objType, ok := s.Type().(basetypes.ObjectType)
 	if !ok {

@@ -30,7 +30,10 @@ import (
 // Stripe takes a country on an account with none and fills the currency from it, and it refused
 // `GB` on a recipient that requests `stripe_transfers` (probe
 // `isolated/change_country_on_recipient`). Stripe changes `applied_configurations` with the
-// recipient's `applied` and its request (the record's `side_effects`). An update of
+// recipient's `applied` and its request (the record's `side_effects`); the record shows the
+// request's effect only with `dashboard` `none` and both collectors `application` carried beside
+// it (`carried` of probe `isolated/change_adds_recipient_with_collectors`), which is all
+// `FilledFrom` needs, as it only leaves `applied_configurations` unknown. An update of
 // `configuration`, `defaults`, `defaults.profile` or `identity` sends only the members that
 // changed, because Stripe keeps those a request leaves out (family `v2`, `hashes`);
 // `configuration.recipient` and `identity.business_details`, which the record does not list, go

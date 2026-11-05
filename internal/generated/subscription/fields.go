@@ -10,9 +10,9 @@ var Table = []fields.Field{
 	{Name: "add_invoice_items", Shape: fields.ObjectList, Create: true, Update: true, Description: "A list of prices and quantities that will generate invoice items appended to the next invoice for this subscription. You may pass up to 20 items.", Fields: []fields.Field{
 		{Name: "discountable", Shape: fields.Bool, Create: true, Update: true},
 		{Name: "discounts", Shape: fields.ObjectList, Create: true, Update: true, Fields: []fields.Field{
-			{Name: "coupon", Shape: fields.String, Create: true, Update: true},
-			{Name: "discount", Shape: fields.String, Create: true, Update: true},
-			{Name: "promotion_code", Shape: fields.String, Create: true, Update: true},
+			{Name: "coupon", Shape: fields.String, Create: true, Update: true, Answer: "Elsewhere Stripe refused it on a US account on create: \"Coupon attrs_expired is expired and cannot be applied.\"."},
+			{Name: "discount", Shape: fields.String, Create: true, Update: true, Answer: "Elsewhere Stripe refused it on a US account on update: \"Discount di_... does not exist on the subscription, or the subscription's customer (cus_...). Discounts can only be applied to a subscription when they already exist on the subscription, or the subscription's customer.\"."},
+			{Name: "promotion_code", Shape: fields.String, Create: true, Update: true, Answer: "Elsewhere Stripe refused it on a US account on create: \"This promotion code is inactive.\"."},
 		}},
 		{Name: "metadata", Shape: fields.StringMap, Create: true, Update: true},
 		{Name: "period", Shape: fields.Object, Create: true, Update: true, Fields: []fields.Field{
@@ -155,7 +155,7 @@ var Table = []fields.Field{
 	{Name: "managed_payments", Shape: fields.Object, Response: true, Description: "Settings for Managed Payments for this Subscription and resulting [Invoices](https://docs.stripe.com/api/invoices/object) and [PaymentIntents](https://docs.stripe.com/api/payment_intents/object).", Fields: []fields.Field{
 		{Name: "enabled", Shape: fields.Bool, Response: true, Description: "Set to `true` to enable [Managed Payments](https://docs.stripe.com/payments/managed-payments), Stripe's merchant of record solution, for this session."},
 	}},
-	{Name: "metadata", Shape: fields.StringMap, Create: true, Update: true, Response: true, ServerDefaulted: true, Description: "Set of [key-value pairs](https://docs.stripe.com/api/metadata) that you can attach to an object. This can be useful for storing additional information about the object in a structured format. Individual keys can be unset by posting an empty value to them. All keys can be unset by posting an empty value to `metadata`."},
+	{Name: "metadata", Shape: fields.StringMap, Create: true, Update: true, Response: true, ServerDefaulted: true, Description: "Set of [key-value pairs](https://docs.stripe.com/api/metadata) that you can attach to an object. This can be useful for storing additional information about the object in a structured format. Individual keys can be unset by posting an empty value to them. All keys can be unset by posting an empty value to `metadata`.", MapUpdate: &fields.MapUpdate{Replaced: false, EmptyKept: false}},
 	{Name: "next_pending_invoice_item_invoice", Shape: fields.Int, Response: true, Description: "Specifies the approximate timestamp on which any pending invoice items will be billed according to the schedule provided at `pending_invoice_item_interval`."},
 	{Name: "off_session", Shape: fields.Bool, Create: true, Update: true, Description: "Indicates if a customer is on or off-session while an invoice payment is attempted. Defaults to `false` (on-session)."},
 	{Name: "on_behalf_of", Shape: fields.String, Create: true, Update: true, Response: true, Description: "The account on behalf of which to charge, for each of the subscription's invoices."},

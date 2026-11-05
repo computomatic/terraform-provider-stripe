@@ -85,6 +85,9 @@ type model struct {
 	// discounts is the resource's top-level `discounts`, which it maps by key (discounts.go),
 	// or nil.
 	discounts *node
+	// lineDiscounts are the `discounts` of the elements of a top-level list, such as a quote's
+	// line items, which the resource expands and maps by key too (discounts.go).
+	lineDiscounts []*node
 }
 
 // reservedNames are the root attribute names Terraform does not allow.
@@ -179,7 +182,7 @@ func compile(decl Declaration, table []fields.Field) (*model, error) {
 		return nil, fmt.Errorf("%s: %w", decl.TypeName, err)
 	}
 
-	m := &model{decl: decl, nodes: nodes, v2: v2, discounts: discountsNode(nodes)}
+	m := &model{decl: decl, nodes: nodes, v2: v2, discounts: discountsNode(nodes), lineDiscounts: lineDiscountsNodes(nodes)}
 	if decl.Attach != "" && (decl.Parent == "" || !strings.Contains(decl.Paths.Create, "{"+decl.Attach+"}")) {
 		return nil, fmt.Errorf("%s: an attachment needs a parent and a create path that names `{%s}`", decl.TypeName, decl.Attach)
 	}
@@ -258,6 +261,9 @@ func compile(decl Declaration, table []fields.Field) (*model, error) {
 		if n, ok := m.top("metadata"); !ok || n.Shape != fields.StringMap || !n.Update {
 			return nil, fmt.Errorf("%s: metadata-keys-stay needs an updatable top-level `metadata` map", decl.TypeName)
 		}
+	}
+	if err := m.checkMapUpdates(); err != nil {
+		return nil, err
 	}
 	if !v2 && (len(decl.Include)+len(decl.IncludeOnCreate) > 0 || len(decl.ClearsWithNull) > 0) {
 		return nil, fmt.Errorf("%s: include and clears-with-null belong to /v2 declarations", decl.TypeName)
@@ -898,9 +904,38 @@ func (m *model) checkReplaceOnRemoval() error {
 	return nil
 }
 
+// checkMapUpdates refuses a declaration that disagrees with the record on how Stripe updates a
+// map (the table's MapUpdate): MetadataKeysStay where the record shows a key of `metadata` sent
+// empty removed, or its absence where the record shows the key kept in a merged map. Any other
+// merged map an update takes in which Stripe keeps a key sent empty fails too: no update could
+// remove a key of it, and nothing in a declaration says so yet.
+func (m *model) checkMapUpdates() error {
+	var walk func(nodes []*node) error
+	walk = func(nodes []*node) error {
+		for _, n := range nodes {
+			if err := walk(n.Kids); err != nil {
+				return err
+			}
+			u := n.MapUpdate
+			if n.Shape != fields.StringMap || !n.Update || u == nil {
+				continue
+			}
+			keeps := !u.Replaced && u.EmptyKept
+			switch {
+			case n.Path == "metadata" && keeps != m.decl.MetadataKeysStay:
+				return fmt.Errorf("%s: metadata-keys-stay is %t, but the record shows Stripe %s a `metadata` key sent empty", m.decl.TypeName, m.decl.MetadataKeysStay, map[bool]string{true: "keeping", false: "removing"}[keeps])
+			case n.Path != "metadata" && keeps:
+				return fmt.Errorf("%s: the record shows Stripe merging `%s` and keeping a key sent empty, so no update could remove a key of it", m.decl.TypeName, n.Path)
+			}
+		}
+		return nil
+	}
+	return walk(m.nodes)
+}
+
 // checkSentMembers refuses a declaration that leaves open how an update sends a hash. Each entry of
 // SendChangedMembers and SendWholeMembers is a hash an update takes, top-level or inside an object
-// that sends changed members, each entry of ReplacedMaps a map an update takes inside such an object, and every hash below such an object is named in one or the other,
+// that sends changed members, and every hash below such an object is named in one or the other,
 // so that a hash the gate newly exposes is never sent in part by default. A hash with a Required
 // member, sent whole as Stripe takes it, and one refused in RefuseChange, never sent, need no entry.
 func (m *model) checkSentMembers() error {
@@ -930,11 +965,6 @@ func (m *model) checkSentMembers() error {
 		}
 		if list, member := computedInElements(n); list != "" {
 			return fmt.Errorf("%s: send-whole-members entry `%s` holds `%s`, whose elements have the computed member `%s`: a whole send could not send the list as planned", decl.TypeName, name, list, member)
-		}
-	}
-	for _, name := range decl.ReplacedMaps {
-		if n, _, ok := m.at(name); !ok || n.Shape != fields.StringMap || !n.Update || !inside(name) {
-			return fmt.Errorf("%s: replaced-maps entry `%s` is not a map an update takes inside a send-changed-members object", decl.TypeName, name)
 		}
 	}
 	var walk func(n *node) error

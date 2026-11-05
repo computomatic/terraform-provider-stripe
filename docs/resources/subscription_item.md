@@ -55,6 +55,7 @@ The following arguments are optional:
 
 * `billing_thresholds` - (Optional) Define thresholds at which an invoice will be sent, and the subscription advanced to a new billing period. Pass an empty string to remove previously-defined thresholds. See [`billing_thresholds`](#billing_thresholds) below.
 * `current_trial` - (Optional) The trial offer to apply to this subscription item. See [`current_trial`](#current_trial) below.
+* `discounts` - (Optional) The coupons to redeem into discounts for the subscription item. Changing it replaces the resource. See [`discounts`](#discounts) below.
 * `metadata` - (Optional) Set of [key-value pairs](https://docs.stripe.com/api/metadata) that you can attach to an object. This can be useful for storing additional information about the object in a structured format. Individual keys can be unset by posting an empty value to them. All keys can be unset by posting an empty value to `metadata`.
 * `off_session` - (Optional) Indicates if a customer is on or off-session while an invoice payment is attempted. Defaults to `false` (on-session). Default: not sent.
 * `payment_behavior` - (Optional) Controls how Stripe handles payment when a subscription update requires payment and `collection_method=charge_automatically`. Possible values: `allow_incomplete`, `default_incomplete`, `error_if_incomplete`, `pending_if_incomplete`.
@@ -80,6 +81,13 @@ The `current_trial` attribute supports:
 * `end_date` - (Read-Only)
 * `start_date` - (Read-Only)
 * `trial_offer` - (Required)
+
+<a id="discounts"></a>
+### `discounts`
+
+The `discounts` attribute is a list. Each element supports:
+
+* `discount` - (Optional) Stripe refused it on a US account on create: "No such discount: 'di_...'".
 
 <a id="price_data"></a>
 ### `price_data`
@@ -153,4 +161,4 @@ Using `terraform import`, import a subscription item using its ID. For example:
 % terraform import stripe_subscription_item.addon si_123
 ```
 
--> Stripe does not return `off_session`, `payment_behavior`, `price_data`, `proration_behavior` or `proration_date`, so an imported subscription item has them null: a configuration that sets one plans an update after the import.
+~> Stripe does not return `off_session`, `payment_behavior`, `price_data`, `proration_behavior`, `proration_date` or `discounts`, so an imported subscription item has them null: a configuration that sets `off_session`, `payment_behavior`, `price_data`, `proration_behavior` or `proration_date` plans an update after the import, and one that sets `discounts` plans a replacement.

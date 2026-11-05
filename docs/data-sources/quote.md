@@ -42,7 +42,7 @@ This data source exports the following attributes in addition to the arguments a
 * `customer_account` - The account for which this quote belongs to. A customer or account is required before finalizing the quote. Once specified, it cannot be changed.
 * `default_tax_rates` - The tax rates that will apply to any line item that does not have `tax_rates` set.
 * `description` - A description that will be displayed on the quote PDF. If no value is passed, the default description configured in your [quote template settings](https://dashboard.stripe.com/settings/billing/quote) will be used.
-* `discounts` - The discounts applied to the quote. See [`discounts`](#discounts) below.
+* `discounts` - The discounts applied to this quote.
 * `expires_at` - A future timestamp on which the quote will be canceled if in `open` or `draft` status. Measured in seconds since the Unix epoch. If no value is passed, the default expiration date configured in your [quote template settings](https://dashboard.stripe.com/settings/billing/quote) will be used.
 * `footer` - A footer that will be displayed on the quote PDF. If no value is passed, the default footer configured in your [quote template settings](https://dashboard.stripe.com/settings/billing/quote) will be used.
 * `from_quote` - Clone an existing quote. The new quote will be created in `status=draft`. When using this parameter, you cannot specify any other parameters except for `expires_at`. See [`from_quote`](#from_quote) below.
@@ -457,13 +457,6 @@ The `computed.upfront.total_details.breakdown.taxes` attribute is a list. Each e
 ### `computed.upfront.total_details.breakdown.taxes.rate`
 
 The `computed.upfront.total_details.breakdown.taxes.rate` attribute holds a tax rate, with the attributes of the [`stripe_tax_rate`](../data-sources/tax_rate) data source and `object`, the name of its type.
-
-<a id="discounts"></a>
-### `discounts`
-
-The `discounts` attribute is a list. Each element supports:
-
-* `discount` -
 
 <a id="from_quote"></a>
 ### `from_quote`

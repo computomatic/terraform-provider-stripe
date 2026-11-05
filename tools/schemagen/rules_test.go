@@ -487,3 +487,170 @@ func TestEvidenceReaderRefusesARuleDefaultWithoutItsRule(t *testing.T) {
 func variantDefault(d map[string]any) map[string]any {
 	return d["variants"].([]any)[0].(map[string]any)["default"].(map[string]any)
 }
+
+// The ninth pin's forms: a map's update on an update leaf, a discount's list, response path and
+// holder, a Beside rule with a leaf's `returned.rule_ref` naming it, and what a side effect carried
+// beside its triggers. The reader refuses what the generator cannot use of each.
+func TestEvidenceReaderTakesTheFormsOfTheNinthPin(t *testing.T) {
+	const (
+		mapLeaf  = `{"object": "coupon", "side": "request", "operation": "PostCouponsCoupon", "path": "metadata", "status": "proven", "on": ["update"], "tests": [], "map": {"update": "merged", "empty_value": {"by": "empty_string", "result": "removed"}}}`
+		discount = `{"object": "quote", "operation": "PostQuotes", "path": "line_items.discounts", "form": "coupon", "response_path": "line_items.data.discounts.discount", "returned": "discount_object", "expanded": "discount", "relation": "coupon", "tests": []}`
+		clock    = `{"object": "test_helpers.test_clock", "side": "request", "operation": "PostTestHelpersTestClocks", "path": "frozen_time", "status": "proven", "tests": [], "returned": {"form": "as_sent", "response_path": "frozen_time", "rule_ref": 0}}`
+		beside   = `{"object": "test_helpers.test_clock", "operation": "PostTestHelpersTestClocks", "path": "frozen_time", "beside": "customer", "rule": "the clock's ` + "`created`" + `, on a create with a ` + "`customer`" + `", "tests": [], "observations": [
+			{"condition": {"account_country": "US", "probe": "minimal/customer", "params": {"customer": {"$gen": "fresh"}, "frozen_time": 1}}, "value": {"kind": "from", "path": "created"}},
+			{"condition": {"account_country": "US", "probe": "minimal", "params": {"frozen_time": 1}}, "value": {"kind": "sent", "path": "frozen_time"}}]}`
+		effect = `{"object": "quote", "operation": "PostQuotesQuote", "probe": "update/1", "triggers": ["line_items.quantity"], "carried": {"line_items.id": ["li_1"]}, "changed": [{"path": "amount_total", "before": {"kind": "value", "value": 1}, "after": {"kind": "value", "value": 2}}], "tests": []}`
+	)
+	record := func(leaves, discounts, rules, effects string) []byte {
+		return []byte(`{"format_version": 1, "leaves": [` + leaves + `], "discounts": [` + discounts + `], "rules": [` + rules + `], "side_effects": [` + effects + `]}`)
+	}
+	e, err := decodeEvidence(record(mapLeaf+", "+clock, discount, beside, effect))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if m := e.Leaves[0].Map; m == nil || m.Update != MapMerged || m.EmptyValue == nil || m.EmptyValue.Result != MapRemoved {
+		t.Errorf("the map: %+v", m)
+	}
+	if d := e.Discounts[0]; d.Path != "line_items.discounts" || d.ResponsePath != "line_items.data.discounts.discount" || d.Returned != DiscountObject {
+		t.Errorf("the discount: %+v", d)
+	}
+	if r := e.Rules[0]; r.Beside != "customer" || r.answer() {
+		t.Errorf("the beside rule: %+v", r)
+	}
+	if ref := e.Leaves[1].returnedRule(); ref == nil || *ref != 0 {
+		t.Errorf("the returned rule: %v", ref)
+	}
+	if c := e.SideEffects[0].Carried; len(c) != 1 || c["line_items.id"] == nil {
+		t.Errorf("the carried leaves: %v", c)
+	}
+	replace := func(s, old, new string) string {
+		t.Helper()
+		if !strings.Contains(s, old) {
+			t.Fatalf("no %s in %s", old, s)
+		}
+		return strings.Replace(s, old, new, 1)
+	}
+	for _, tc := range []struct{ name, leaves, discounts, rules, effects, want string }{
+		{"a map on a create leaf", replace(mapLeaf, `["update"]`, `["create"]`), discount, beside, effect, "not an update's"},
+		{"an unknown map update", replace(mapLeaf, `"merged"`, `"patched"`), discount, beside, effect, `map update "patched"`},
+		{"an unknown empty value", replace(mapLeaf, `"removed"`, `"nulled"`), discount, beside, effect, `map empty value result "nulled"`},
+		{"an unknown discount return", mapLeaf, replace(discount, `"discount_object"`, `"discount_ref"`), beside, effect, `discounts returned "discount_ref"`},
+		{"a relation of another form", mapLeaf, replace(discount, `"relation": "coupon"`, `"relation": "promotion_code"`), beside, effect, "relation"},
+		{"a discount with no list", mapLeaf, replace(discount, `"line_items.discounts"`, `"line_items"`), beside, effect, "names no list of discounts"},
+		{"a beside rule always beside", mapLeaf + ", " + clock, discount, replace(beside, `"params": {"frozen_time": 1}`, `"params": {"customer": 1, "frozen_time": 1}`), effect, "both with and without"},
+		{"a returned rule that is no beside rule", mapLeaf + ", " + clock, discount, replace(beside, `"beside": "customer", `, ``), effect, "not a beside rule of the leaf"},
+		{"a carried trigger", mapLeaf, discount, beside, replace(effect, `"line_items.id"`, `"line_items.quantity"`), "one of its triggers"},
+	} {
+		if _, err := decodeEvidence(record(tc.leaves, tc.discounts, tc.rules, tc.effects)); err == nil || !strings.Contains(err.Error(), tc.want) {
+			t.Errorf("%s: %v, want %q", tc.name, err, tc.want)
+		}
+	}
+}
+
+// A map's update becomes the table's MapUpdate: merged or replaced, and whether a key sent empty
+// stays, which a merged map whose record does not say is taken to do. A record that sends the
+// empty key otherwise than the engine sends an unset on the table's API fails.
+func TestMapUpdateFollowsTheRecord(t *testing.T) {
+	leaf := func(update, by, result string) *EvidenceLeaf {
+		m := &EvidenceMap{Update: update}
+		if by != "" {
+			m.EmptyValue = &struct {
+				By     string `json:"by"`
+				Result string `json:"result"`
+			}{by, result}
+		}
+		return &EvidenceLeaf{Map: m}
+	}
+	for name, tc := range map[string]struct {
+		leaf *EvidenceLeaf
+		want *fields.MapUpdate
+	}{
+		"merged, removed":        {leaf("merged", "empty_string", "removed"), &fields.MapUpdate{}},
+		"merged, stored":         {leaf("merged", "empty_string", "stored"), &fields.MapUpdate{EmptyKept: true}},
+		"replaced, stored":       {leaf("replaced", "empty_string", "stored"), &fields.MapUpdate{Replaced: true, EmptyKept: true}},
+		"merged, no empty value": {leaf("merged", "", ""), &fields.MapUpdate{EmptyKept: true}},
+		"no update":              {leaf("", "empty_string", "removed"), nil},
+		"no map":                 {&EvidenceLeaf{}, nil},
+	} {
+		got, err := mapUpdate(Key{Path: "metadata"}, tc.leaf, "empty_string")
+		if err != nil || !reflect.DeepEqual(got, tc.want) {
+			t.Errorf("%s: %+v, %v, want %+v", name, got, err, tc.want)
+		}
+	}
+	if _, err := mapUpdate(Key{Path: "metadata"}, leaf("merged", "empty_string", "removed"), "null"); err == nil || !strings.Contains(err.Error(), "sends an unset on this API as null") {
+		t.Errorf("a /v2 map the record empties with a string: %v", err)
+	}
+}
+
+// A default that holds only beside another argument names it: a record's Beside rule that does
+// not has no statement until a declaration words it, and a declaration's wording that leaves the
+// argument out fails.
+func TestBesideDefaultsNameTheirArgument(t *testing.T) {
+	rule := 0
+	key := Key{Object: "gadget", Side: SideRequest, Operation: "PostGadgets", Path: "color"}
+	p := &Pinned{Evidence: &Evidence{
+		Leaves: []EvidenceLeaf{{Key: key, Status: "proven", Default: &EvidenceDefault{Kind: "rule", RuleRef: &rule}}},
+		Rules:  []EvidenceRule{{Path: "color", Beside: "owner.email", Rule: "the owner's colour"}},
+	}}
+	if d := p.leafDefault(key); d == nil || d.Kind != fields.DefaultVaries {
+		t.Errorf("a beside rule that does not name its argument: %+v", d)
+	}
+	p.Evidence.Rules[0].Rule, p.leaves = "the colour of `owner.email`'s account", nil
+	if d := p.leafDefault(key); d == nil || d.Kind != fields.DefaultRule {
+		t.Errorf("a beside rule that names its argument: %+v", d)
+	}
+	tc := &tableCoverage{
+		leaves:  []Leaf{{Key: key, At: "color"}},
+		records: []Record{{Table: "gadget", Key: key, State: StateExposed, Class: ClassVerified, Default: &DefaultRecord{Source: "evidence", Varies: true}}},
+		table:   []fields.Field{{Name: "color", Default: &fields.Default{Kind: fields.DefaultVaries}}},
+	}
+	if err := tc.applyDeclaredDefaults(map[string]string{"color": "blue"}, p); err == nil || !strings.Contains(err.Error(), "only beside `owner.email`") {
+		t.Errorf("a declared default that leaves the argument out: %v", err)
+	}
+	if err := tc.applyDeclaredDefaults(map[string]string{"color": "blue, or the colour `owner.email` names"}, p); err != nil {
+		t.Errorf("a declared default that names the argument: %v", err)
+	}
+}
+
+// A table may not expose a leaf whose returned form holds only without another leaf beside that
+// leaf; nor keep an accepted-only discount form the record does not show returned where the
+// engine reads it back.
+func TestBesideReturnsAndKeptDiscountsFollowTheRecord(t *testing.T) {
+	rule := json.RawMessage(`{"form": "as_sent", "response_path": "frozen_time", "rule_ref": 0}`)
+	frozen := Key{Object: "test_helpers.test_clock", Side: SideRequest, Operation: "PostTestHelpersTestClocks", Path: "frozen_time"}
+	customer := frozen
+	customer.Path = "customer"
+	p := &Pinned{Evidence: &Evidence{
+		Leaves: []EvidenceLeaf{{Key: frozen, Status: "proven", Returned: rule}},
+		Rules:  []EvidenceRule{{Object: frozen.Object, Operation: frozen.Operation, Path: "frozen_time", Beside: "customer", Rule: "the clock's `created`"}},
+	}}
+	leaves := []Leaf{{Key: frozen}, {Key: customer}}
+	exposedBoth := []Record{{State: StateExposed}, {State: StateExposed}}
+	if err := checkBesideReturns("test_helpers_test_clock", leaves, exposedBoth, p); err == nil || !strings.Contains(err.Error(), "reads back as sent only without `customer`") {
+		t.Errorf("both exposed: %v", err)
+	}
+	if err := checkBesideReturns("test_helpers_test_clock", leaves, []Record{{State: StateExposed}, {State: StateExcluded}}, p); err != nil {
+		t.Errorf("the beside leaf left out: %v", err)
+	}
+
+	line := Key{Object: "quote", Side: SideRequest, Operation: "PostQuotes", Path: "line_items.discounts.coupon"}
+	top := line
+	top.Path = "discounts.coupon"
+	kept := []Record{{State: StateExposed, Class: ClassAcceptedOnly}, {State: StateExposed, Class: ClassAcceptedOnly}}
+	p.Evidence.Discounts = []Discount{
+		{Object: "quote", Operation: "PostQuotes", Path: "discounts", Form: "coupon", ResponsePath: "discounts", Returned: DiscountID},
+		{Object: "quote", Operation: "PostQuotes", Path: "line_items.discounts", Form: "coupon", ResponsePath: "line_items.data.discounts.discount", Returned: DiscountObject},
+	}
+	if err := checkKeptDiscounts(Resource{Package: "quote"}, []Leaf{{Key: line}, {Key: top}}, kept, p); err != nil {
+		t.Errorf("forms read back as the record shows: %v", err)
+	}
+	p.Evidence.Discounts[1].HeldBy = "invoiceitem"
+	if err := checkKeptDiscounts(Resource{Package: "quote"}, []Leaf{{Key: line}, {Key: top}}, kept, p); err == nil || !strings.Contains(err.Error(), "line_items.discounts.coupon") {
+		t.Errorf("a line's discount another object holds: %v", err)
+	}
+	p.Evidence.Discounts = p.Evidence.Discounts[:1]
+	p.Evidence.Discounts[0].Returned = "discount_hash"
+	if err := checkKeptDiscounts(Resource{Package: "quote"}, []Leaf{{Key: top}}, kept[:1], p); err == nil {
+		t.Error("a discount returned as a hash is kept")
+	}
+}

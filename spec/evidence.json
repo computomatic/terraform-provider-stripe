@@ -64,7 +64,9 @@
       "form": "coupon",
       "object": "checkout.session",
       "operation": "PostCheckoutSessions",
+      "path": "discounts",
       "relation": "coupon",
+      "response_path": "discounts",
       "returned": "discount_hash",
       "tests": [
         "TestCheckoutSessionAttributes/state/discount_coupon/leaves/request/PostCheckoutSessions/discounts.coupon"
@@ -75,7 +77,9 @@
       "form": "promotion_code",
       "object": "checkout.session",
       "operation": "PostCheckoutSessions",
+      "path": "discounts",
       "relation": "promotion_code",
+      "response_path": "discounts",
       "returned": "discount_hash",
       "tests": [
         "TestCheckoutSessionAttributes/state/discount_promotion_code/leaves/request/PostCheckoutSessions/discounts.promotion_code"
@@ -86,7 +90,9 @@
       "form": "coupon",
       "object": "invoice",
       "operation": "PostInvoices",
+      "path": "discounts",
       "relation": "coupon",
+      "response_path": "discounts",
       "returned": "discount_id",
       "tests": [
         "TestInvoiceAttributes/state/discount_coupon/leaves/request/PostInvoices/discounts.coupon"
@@ -97,7 +103,9 @@
       "form": "promotion_code",
       "object": "invoice",
       "operation": "PostInvoices",
+      "path": "discounts",
       "relation": "promotion_code",
+      "response_path": "discounts",
       "returned": "discount_id",
       "tests": [
         "TestInvoiceAttributes/state/discount_promotion_code/leaves/request/PostInvoices/discounts.promotion_code"
@@ -108,7 +116,9 @@
       "form": "coupon",
       "object": "invoice",
       "operation": "PostInvoicesInvoice",
+      "path": "discounts",
       "relation": "coupon",
+      "response_path": "discounts",
       "returned": "discount_id",
       "tests": [
         "TestInvoiceAttributes/state/discount_coupon/leaves/request/PostInvoicesInvoice/discounts.coupon"
@@ -119,7 +129,9 @@
       "form": "discount",
       "object": "invoice",
       "operation": "PostInvoicesInvoice",
+      "path": "discounts",
       "relation": "existing_discount",
+      "response_path": "discounts",
       "returned": "discount_id",
       "tests": [
         "TestInvoiceAttributes/state/discount_existing/leaves/request/PostInvoicesInvoice/discounts.discount"
@@ -130,7 +142,9 @@
       "form": "promotion_code",
       "object": "invoice",
       "operation": "PostInvoicesInvoice",
+      "path": "discounts",
       "relation": "promotion_code",
+      "response_path": "discounts",
       "returned": "discount_id",
       "tests": [
         "TestInvoiceAttributes/state/discount_promotion_code/leaves/request/PostInvoicesInvoice/discounts.promotion_code"
@@ -141,7 +155,9 @@
       "form": "coupon",
       "object": "invoiceitem",
       "operation": "PostInvoiceitems",
+      "path": "discounts",
       "relation": "coupon",
+      "response_path": "discounts",
       "returned": "discount_id",
       "tests": [
         "TestInvoiceItemAttributes/state/discount_coupon/leaves/request/PostInvoiceitems/discounts.coupon"
@@ -152,7 +168,9 @@
       "form": "promotion_code",
       "object": "invoiceitem",
       "operation": "PostInvoiceitems",
+      "path": "discounts",
       "relation": "promotion_code",
+      "response_path": "discounts",
       "returned": "discount_id",
       "tests": [
         "TestInvoiceItemAttributes/state/discount_promotion_code/leaves/request/PostInvoiceitems/discounts.promotion_code"
@@ -163,7 +181,9 @@
       "form": "coupon",
       "object": "invoiceitem",
       "operation": "PostInvoiceitemsInvoiceitem",
+      "path": "discounts",
       "relation": "coupon",
+      "response_path": "discounts",
       "returned": "discount_id",
       "tests": [
         "TestInvoiceItemAttributes/state/discount_coupon/leaves/request/PostInvoiceitemsInvoiceitem/discounts.coupon"
@@ -174,7 +194,9 @@
       "form": "discount",
       "object": "invoiceitem",
       "operation": "PostInvoiceitemsInvoiceitem",
+      "path": "discounts",
       "relation": "existing_discount",
+      "response_path": "discounts",
       "returned": "discount_id",
       "tests": [
         "TestInvoiceItemAttributes/state/discount_existing/leaves/request/PostInvoiceitemsInvoiceitem/discounts.discount"
@@ -185,7 +207,9 @@
       "form": "promotion_code",
       "object": "invoiceitem",
       "operation": "PostInvoiceitemsInvoiceitem",
+      "path": "discounts",
       "relation": "promotion_code",
+      "response_path": "discounts",
       "returned": "discount_id",
       "tests": [
         "TestInvoiceItemAttributes/state/discount_promotion_code/leaves/request/PostInvoiceitemsInvoiceitem/discounts.promotion_code"
@@ -196,7 +220,9 @@
       "form": "coupon",
       "object": "quote",
       "operation": "PostQuotes",
+      "path": "discounts",
       "relation": "coupon",
+      "response_path": "discounts",
       "returned": "discount_id",
       "tests": [
         "TestQuoteAttributes/state/discount_coupon/leaves/request/PostQuotes/discounts.coupon"
@@ -207,7 +233,9 @@
       "form": "promotion_code",
       "object": "quote",
       "operation": "PostQuotes",
+      "path": "discounts",
       "relation": "promotion_code",
+      "response_path": "discounts",
       "returned": "discount_id",
       "tests": [
         "TestQuoteAttributes/state/discount_promotion_code/leaves/request/PostQuotes/discounts.promotion_code"
@@ -217,8 +245,36 @@
       "expanded": "discount",
       "form": "coupon",
       "object": "quote",
-      "operation": "PostQuotesQuote",
+      "operation": "PostQuotes",
+      "path": "line_items.discounts",
       "relation": "coupon",
+      "response_path": "line_items.data.discounts.discount",
+      "returned": "discount_object",
+      "tests": [
+        "TestQuoteAttributes/state/line_discount_coupon/leaves/request/PostQuotes/line_items.discounts.coupon"
+      ]
+    },
+    {
+      "expanded": "discount",
+      "form": "promotion_code",
+      "object": "quote",
+      "operation": "PostQuotes",
+      "path": "line_items.discounts",
+      "relation": "promotion_code",
+      "response_path": "line_items.data.discounts.discount",
+      "returned": "discount_object",
+      "tests": [
+        "TestQuoteAttributes/state/line_discount_promotion_code/leaves/request/PostQuotes/line_items.discounts.promotion_code"
+      ]
+    },
+    {
+      "expanded": "discount",
+      "form": "coupon",
+      "object": "quote",
+      "operation": "PostQuotesQuote",
+      "path": "discounts",
+      "relation": "coupon",
+      "response_path": "discounts",
       "returned": "discount_id",
       "tests": [
         "TestQuoteAttributes/state/discount_coupon/leaves/request/PostQuotesQuote/discounts.coupon"
@@ -229,7 +285,9 @@
       "form": "discount",
       "object": "quote",
       "operation": "PostQuotesQuote",
+      "path": "discounts",
       "relation": "existing_discount",
+      "response_path": "discounts",
       "returned": "discount_id",
       "tests": [
         "TestQuoteAttributes/state/discount_existing/leaves/request/PostQuotesQuote/discounts.discount"
@@ -240,7 +298,9 @@
       "form": "promotion_code",
       "object": "quote",
       "operation": "PostQuotesQuote",
+      "path": "discounts",
       "relation": "promotion_code",
+      "response_path": "discounts",
       "returned": "discount_id",
       "tests": [
         "TestQuoteAttributes/state/discount_promotion_code/leaves/request/PostQuotesQuote/discounts.promotion_code"
@@ -249,9 +309,78 @@
     {
       "expanded": "discount",
       "form": "coupon",
+      "object": "quote",
+      "operation": "PostQuotesQuote",
+      "path": "line_items.discounts",
+      "relation": "coupon",
+      "response_path": "line_items.data.discounts.discount",
+      "returned": "discount_object",
+      "tests": [
+        "TestQuoteAttributes/state/line_discount_coupon/leaves/request/PostQuotesQuote/line_items.discounts.coupon"
+      ]
+    },
+    {
+      "expanded": "discount",
+      "form": "discount",
+      "object": "quote",
+      "operation": "PostQuotesQuote",
+      "path": "line_items.discounts",
+      "relation": "existing_discount",
+      "response_path": "line_items.data.discounts.discount",
+      "returned": "discount_object",
+      "tests": [
+        "TestQuoteAttributes/state/line_discount_existing/leaves/request/PostQuotesQuote/line_items.discounts.discount"
+      ]
+    },
+    {
+      "expanded": "discount",
+      "form": "promotion_code",
+      "object": "quote",
+      "operation": "PostQuotesQuote",
+      "path": "line_items.discounts",
+      "relation": "promotion_code",
+      "response_path": "line_items.data.discounts.discount",
+      "returned": "discount_object",
+      "tests": [
+        "TestQuoteAttributes/state/line_discount_promotion_code/leaves/request/PostQuotesQuote/line_items.discounts.promotion_code"
+      ]
+    },
+    {
+      "expanded": "discount",
+      "form": "coupon",
+      "held_by": "invoiceitem",
       "object": "subscription",
       "operation": "PostSubscriptions",
+      "path": "add_invoice_items.discounts",
       "relation": "coupon",
+      "response_path": "discounts",
+      "returned": "discount_id",
+      "tests": [
+        "TestSubscriptionAttributes/state/invoice_item_discount_coupon/leaves/request/PostSubscriptions/add_invoice_items.discounts.coupon"
+      ]
+    },
+    {
+      "expanded": "discount",
+      "form": "promotion_code",
+      "held_by": "invoiceitem",
+      "object": "subscription",
+      "operation": "PostSubscriptions",
+      "path": "add_invoice_items.discounts",
+      "relation": "promotion_code",
+      "response_path": "discounts",
+      "returned": "discount_id",
+      "tests": [
+        "TestSubscriptionAttributes/state/invoice_item_discount_promotion_code/leaves/request/PostSubscriptions/add_invoice_items.discounts.promotion_code"
+      ]
+    },
+    {
+      "expanded": "discount",
+      "form": "coupon",
+      "object": "subscription",
+      "operation": "PostSubscriptions",
+      "path": "discounts",
+      "relation": "coupon",
+      "response_path": "discounts",
       "returned": "discount_id",
       "tests": [
         "TestSubscriptionAttributes/state/discount_coupon/leaves/request/PostSubscriptions/discounts.coupon"
@@ -262,7 +391,9 @@
       "form": "promotion_code",
       "object": "subscription",
       "operation": "PostSubscriptions",
+      "path": "discounts",
       "relation": "promotion_code",
+      "response_path": "discounts",
       "returned": "discount_id",
       "tests": [
         "TestSubscriptionAttributes/state/discount_promotion_code/leaves/request/PostSubscriptions/discounts.promotion_code"
@@ -272,8 +403,64 @@
       "expanded": "discount",
       "form": "coupon",
       "object": "subscription",
-      "operation": "PostSubscriptionsSubscriptionExposedId",
+      "operation": "PostSubscriptions",
+      "path": "items.discounts",
       "relation": "coupon",
+      "response_path": "items.data.discounts",
+      "returned": "discount_id",
+      "tests": [
+        "TestSubscriptionAttributes/state/item_discount_coupon/leaves/request/PostSubscriptions/items.discounts.coupon"
+      ]
+    },
+    {
+      "expanded": "discount",
+      "form": "promotion_code",
+      "object": "subscription",
+      "operation": "PostSubscriptions",
+      "path": "items.discounts",
+      "relation": "promotion_code",
+      "response_path": "items.data.discounts",
+      "returned": "discount_id",
+      "tests": [
+        "TestSubscriptionAttributes/state/item_discount_promotion_code/leaves/request/PostSubscriptions/items.discounts.promotion_code"
+      ]
+    },
+    {
+      "expanded": "discount",
+      "form": "coupon",
+      "held_by": "invoiceitem",
+      "object": "subscription",
+      "operation": "PostSubscriptionsSubscriptionExposedId",
+      "path": "add_invoice_items.discounts",
+      "relation": "coupon",
+      "response_path": "discounts",
+      "returned": "discount_id",
+      "tests": [
+        "TestSubscriptionAttributes/state/invoice_item_discount_coupon/leaves/request/PostSubscriptionsSubscriptionExposedId/add_invoice_items.discounts.coupon"
+      ]
+    },
+    {
+      "expanded": "discount",
+      "form": "promotion_code",
+      "held_by": "invoiceitem",
+      "object": "subscription",
+      "operation": "PostSubscriptionsSubscriptionExposedId",
+      "path": "add_invoice_items.discounts",
+      "relation": "promotion_code",
+      "response_path": "discounts",
+      "returned": "discount_id",
+      "tests": [
+        "TestSubscriptionAttributes/state/invoice_item_discount_promotion_code/leaves/request/PostSubscriptionsSubscriptionExposedId/add_invoice_items.discounts.promotion_code"
+      ]
+    },
+    {
+      "expanded": "discount",
+      "form": "coupon",
+      "object": "subscription",
+      "operation": "PostSubscriptionsSubscriptionExposedId",
+      "path": "discounts",
+      "relation": "coupon",
+      "response_path": "discounts",
       "returned": "discount_id",
       "tests": [
         "TestSubscriptionAttributes/state/discount_coupon/leaves/request/PostSubscriptionsSubscriptionExposedId/discounts.coupon"
@@ -284,7 +471,9 @@
       "form": "discount",
       "object": "subscription",
       "operation": "PostSubscriptionsSubscriptionExposedId",
+      "path": "discounts",
       "relation": "existing_discount",
+      "response_path": "discounts",
       "returned": "discount_id",
       "tests": [
         "TestSubscriptionAttributes/state/discount_existing/leaves/request/PostSubscriptionsSubscriptionExposedId/discounts.discount"
@@ -295,10 +484,51 @@
       "form": "promotion_code",
       "object": "subscription",
       "operation": "PostSubscriptionsSubscriptionExposedId",
+      "path": "discounts",
       "relation": "promotion_code",
+      "response_path": "discounts",
       "returned": "discount_id",
       "tests": [
         "TestSubscriptionAttributes/state/discount_promotion_code/leaves/request/PostSubscriptionsSubscriptionExposedId/discounts.promotion_code"
+      ]
+    },
+    {
+      "expanded": "discount",
+      "form": "coupon",
+      "object": "subscription",
+      "operation": "PostSubscriptionsSubscriptionExposedId",
+      "path": "items.discounts",
+      "relation": "coupon",
+      "response_path": "items.data.discounts",
+      "returned": "discount_id",
+      "tests": [
+        "TestSubscriptionAttributes/state/item_discount_coupon/leaves/request/PostSubscriptionsSubscriptionExposedId/items.discounts.coupon"
+      ]
+    },
+    {
+      "expanded": "discount",
+      "form": "discount",
+      "object": "subscription",
+      "operation": "PostSubscriptionsSubscriptionExposedId",
+      "path": "items.discounts",
+      "relation": "existing_discount",
+      "response_path": "items.data.discounts",
+      "returned": "discount_id",
+      "tests": [
+        "TestSubscriptionAttributes/state/item_discount_existing/leaves/request/PostSubscriptionsSubscriptionExposedId/items.discounts.discount"
+      ]
+    },
+    {
+      "expanded": "discount",
+      "form": "promotion_code",
+      "object": "subscription",
+      "operation": "PostSubscriptionsSubscriptionExposedId",
+      "path": "items.discounts",
+      "relation": "promotion_code",
+      "response_path": "items.data.discounts",
+      "returned": "discount_id",
+      "tests": [
+        "TestSubscriptionAttributes/state/item_discount_promotion_code/leaves/request/PostSubscriptionsSubscriptionExposedId/items.discounts.promotion_code"
       ]
     }
   ],
@@ -9810,6 +10040,13 @@
         "US"
       ],
       "branch": "",
+      "map": {
+        "empty_value": {
+          "by": "empty_string",
+          "result": "removed"
+        },
+        "update": "merged"
+      },
       "object": "account",
       "on": [
         "update"
@@ -10444,6 +10681,13 @@
         "US"
       ],
       "branch": "",
+      "map": {
+        "empty_value": {
+          "by": "empty_string",
+          "result": "removed"
+        },
+        "update": "merged"
+      },
       "object": "account",
       "on": [
         "update"
@@ -18329,6 +18573,13 @@
         "US"
       ],
       "branch": "",
+      "map": {
+        "empty_value": {
+          "by": "empty_string",
+          "result": "removed"
+        },
+        "update": "merged"
+      },
       "object": "bank_account",
       "on": [
         "update"
@@ -20394,6 +20645,13 @@
         "US"
       ],
       "branch": "",
+      "map": {
+        "empty_value": {
+          "by": "empty_string",
+          "result": "stored"
+        },
+        "update": "merged"
+      },
       "object": "billing.credit_grant",
       "on": [
         "update"
@@ -24793,6 +25051,13 @@
         "US"
       ],
       "branch": "",
+      "map": {
+        "empty_value": {
+          "by": "empty_string",
+          "result": "removed"
+        },
+        "update": "merged"
+      },
       "object": "billing_portal.configuration",
       "on": [
         "update"
@@ -28917,6 +29182,13 @@
         "US"
       ],
       "branch": "",
+      "map": {
+        "empty_value": {
+          "by": "empty_string",
+          "result": "removed"
+        },
+        "update": "merged"
+      },
       "object": "charge",
       "on": [
         "update"
@@ -92567,6 +92839,13 @@
         "US"
       ],
       "branch": "",
+      "map": {
+        "empty_value": {
+          "by": "empty_string",
+          "result": "removed"
+        },
+        "update": "merged"
+      },
       "object": "checkout.session",
       "on": [
         "update"
@@ -157193,6 +157472,13 @@
         "US"
       ],
       "branch": "",
+      "map": {
+        "empty_value": {
+          "by": "empty_string",
+          "result": "removed"
+        },
+        "update": "merged"
+      },
       "object": "climate.order",
       "on": [
         "update"
@@ -158860,6 +159146,13 @@
         "US"
       ],
       "branch": "",
+      "map": {
+        "empty_value": {
+          "by": "empty_string",
+          "result": "removed"
+        },
+        "update": "merged"
+      },
       "object": "coupon",
       "on": [
         "update"
@@ -160690,6 +160983,13 @@
         "US"
       ],
       "branch": "",
+      "map": {
+        "empty_value": {
+          "by": "empty_string",
+          "result": "removed"
+        },
+        "update": "merged"
+      },
       "object": "credit_note",
       "on": [
         "update"
@@ -170064,6 +170364,13 @@
         "US"
       ],
       "branch": "",
+      "map": {
+        "empty_value": {
+          "by": "empty_string",
+          "result": "removed"
+        },
+        "update": "merged"
+      },
       "object": "customer",
       "on": [
         "update"
@@ -174229,6 +174536,13 @@
         "US"
       ],
       "branch": "",
+      "map": {
+        "empty_value": {
+          "by": "empty_string",
+          "result": "removed"
+        },
+        "update": "merged"
+      },
       "object": "customer_balance_transaction",
       "on": [
         "update"
@@ -175983,6 +176297,13 @@
         "US"
       ],
       "branch": "",
+      "map": {
+        "empty_value": {
+          "by": "empty_string",
+          "result": "removed"
+        },
+        "update": "merged"
+      },
       "object": "entitlements.feature",
       "on": [
         "update"
@@ -176366,6 +176687,13 @@
         "US"
       ],
       "branch": "",
+      "map": {
+        "empty_value": {
+          "by": "empty_string",
+          "result": "removed"
+        },
+        "update": "merged"
+      },
       "object": "fee_refund",
       "on": [
         "update"
@@ -177105,6 +177433,13 @@
         "US"
       ],
       "branch": "",
+      "map": {
+        "empty_value": {
+          "by": "empty_string",
+          "result": "removed"
+        },
+        "update": "merged"
+      },
       "object": "file_link",
       "on": [
         "update"
@@ -179218,6 +179553,13 @@
         "US"
       ],
       "branch": "",
+      "map": {
+        "empty_value": {
+          "by": "empty_string",
+          "result": "removed"
+        },
+        "update": "merged"
+      },
       "object": "identity.verification_session",
       "on": [
         "update"
@@ -187831,6 +188173,7 @@
       "refusals": [],
       "returned": {
         "form": "normalised",
+        "name": "sorted",
         "pairs": [
           {
             "returned": [
@@ -191187,6 +191530,13 @@
         "US"
       ],
       "branch": "",
+      "map": {
+        "empty_value": {
+          "by": "empty_string",
+          "result": "removed"
+        },
+        "update": "merged"
+      },
       "object": "invoice",
       "on": [
         "update"
@@ -192635,16 +192985,61 @@
       }
     },
     {
+      "accepted_in": [
+        "US"
+      ],
       "branch": "",
+      "enum_values": [
+        {
+          "accepted": true,
+          "value": "checking"
+        },
+        {
+          "accepted": true,
+          "value": "savings"
+        }
+      ],
       "object": "invoice",
+      "on": [
+        "update"
+      ],
       "operation": "PostInvoicesInvoice",
       "path": "payment_settings.payment_method_options.us_bank_account.financial_connections.filters.account_subcategories",
-      "reason": "accepted but ignored: Stripe answered a non-null value with a success, and every read of it back was null, absent or the value held before",
+      "refusals": [],
+      "returned": {
+        "form": "normalised",
+        "name": "sorted",
+        "pairs": [
+          {
+            "returned": [
+              "checking",
+              "savings"
+            ],
+            "sent": [
+              "savings",
+              "checking"
+            ]
+          }
+        ],
+        "response_path": "payment_settings.payment_method_options.us_bank_account.financial_connections.filters.account_subcategories"
+      },
       "side": "request",
-      "status": "unproven",
+      "status": "proven",
+      "targets": [
+        "fake",
+        "stripe"
+      ],
       "tests": [
         "TestInvoiceAttributes/leaves/request/PostInvoicesInvoice/payment_settings.payment_method_options.us_bank_account.financial_connections.filters.account_subcategories"
-      ]
+      ],
+      "unset": {
+        "by": "shorter_array",
+        "matcher": {
+          "kind": "sent",
+          "path": "payment_settings.payment_method_options.us_bank_account.financial_connections.filters.account_subcategories"
+        },
+        "result": "as_sent"
+      }
     },
     {
       "accepted_in": [
@@ -192691,16 +193086,61 @@
       }
     },
     {
+      "accepted_in": [
+        "US"
+      ],
       "branch": "",
+      "enum_values": [
+        {
+          "accepted": true,
+          "value": "balances"
+        },
+        {
+          "accepted": true,
+          "value": "ownership"
+        }
+      ],
       "object": "invoice",
+      "on": [
+        "update"
+      ],
       "operation": "PostInvoicesInvoice",
       "path": "payment_settings.payment_method_options.us_bank_account.financial_connections.prefetch",
-      "reason": "accepted but ignored: Stripe answered a non-null value with a success, and every read of it back was null, absent or the value held before",
+      "refusals": [],
+      "returned": {
+        "form": "normalised",
+        "name": "sorted",
+        "pairs": [
+          {
+            "returned": [
+              "balances",
+              "ownership"
+            ],
+            "sent": [
+              "ownership",
+              "balances"
+            ]
+          }
+        ],
+        "response_path": "payment_settings.payment_method_options.us_bank_account.financial_connections.prefetch"
+      },
       "side": "request",
-      "status": "unproven",
+      "status": "proven",
+      "targets": [
+        "fake",
+        "stripe"
+      ],
       "tests": [
         "TestInvoiceAttributes/leaves/request/PostInvoicesInvoice/payment_settings.payment_method_options.us_bank_account.financial_connections.prefetch"
-      ]
+      ],
+      "unset": {
+        "by": "shorter_array",
+        "matcher": {
+          "kind": "sent",
+          "path": "payment_settings.payment_method_options.us_bank_account.financial_connections.prefetch"
+        },
+        "result": "as_sent"
+      }
     },
     {
       "accepted_in": [
@@ -219381,6 +219821,13 @@
         "US"
       ],
       "branch": "",
+      "map": {
+        "empty_value": {
+          "by": "empty_string",
+          "result": "removed"
+        },
+        "update": "merged"
+      },
       "object": "invoiceitem",
       "on": [
         "update"
@@ -231003,6 +231450,13 @@
         "US"
       ],
       "branch": "",
+      "map": {
+        "empty_value": {
+          "by": "empty_string",
+          "result": "removed"
+        },
+        "update": "merged"
+      },
       "object": "issuing.card",
       "on": [
         "update"
@@ -248799,6 +249253,13 @@
         "US"
       ],
       "branch": "",
+      "map": {
+        "empty_value": {
+          "by": "empty_string",
+          "result": "removed"
+        },
+        "update": "merged"
+      },
       "object": "issuing.cardholder",
       "on": [
         "update"
@@ -259712,6 +260173,13 @@
         "US"
       ],
       "branch": "",
+      "map": {
+        "empty_value": {
+          "by": "empty_string",
+          "result": "removed"
+        },
+        "update": "merged"
+      },
       "object": "issuing.dispute",
       "on": [
         "update"
@@ -265196,6 +265664,13 @@
         "US"
       ],
       "branch": "",
+      "map": {
+        "empty_value": {
+          "by": "empty_string",
+          "result": "removed"
+        },
+        "update": "merged"
+      },
       "object": "issuing.personalization_design",
       "on": [
         "update"
@@ -275745,6 +276220,13 @@
         "US"
       ],
       "branch": "",
+      "map": {
+        "empty_value": {
+          "by": "empty_string",
+          "result": "removed"
+        },
+        "update": "merged"
+      },
       "object": "payment_intent",
       "on": [
         "update"
@@ -280262,6 +280744,13 @@
         "US"
       ],
       "branch": "",
+      "map": {
+        "empty_value": {
+          "by": "empty_string",
+          "result": "removed"
+        },
+        "update": "merged"
+      },
       "object": "payment_intent",
       "on": [
         "update"
@@ -280333,6 +280822,13 @@
         "US"
       ],
       "branch": "",
+      "map": {
+        "empty_value": {
+          "by": "empty_string",
+          "result": "removed"
+        },
+        "update": "merged"
+      },
       "object": "payment_intent",
       "on": [
         "update"
@@ -307512,6 +308008,13 @@
         "US"
       ],
       "branch": "",
+      "map": {
+        "empty_value": {
+          "by": "empty_string",
+          "result": "stored"
+        },
+        "update": "replaced"
+      },
       "object": "payment_link",
       "on": [
         "update"
@@ -307796,6 +308299,13 @@
         "US"
       ],
       "branch": "",
+      "map": {
+        "empty_value": {
+          "by": "empty_string",
+          "result": "removed"
+        },
+        "update": "merged"
+      },
       "object": "payment_link",
       "on": [
         "update"
@@ -308192,6 +308702,13 @@
         "US"
       ],
       "branch": "",
+      "map": {
+        "empty_value": {
+          "by": "empty_string",
+          "result": "stored"
+        },
+        "update": "replaced"
+      },
       "object": "payment_link",
       "on": [
         "update"
@@ -308772,6 +309289,13 @@
         "US"
       ],
       "branch": "",
+      "map": {
+        "empty_value": {
+          "by": "empty_string",
+          "result": "stored"
+        },
+        "update": "replaced"
+      },
       "object": "payment_link",
       "on": [
         "update"
@@ -319750,6 +320274,13 @@
         "US"
       ],
       "branch": "",
+      "map": {
+        "empty_value": {
+          "by": "empty_string",
+          "result": "removed"
+        },
+        "update": "merged"
+      },
       "object": "payment_method",
       "on": [
         "update"
@@ -334748,6 +335279,13 @@
         "US"
       ],
       "branch": "",
+      "map": {
+        "empty_value": {
+          "by": "empty_string",
+          "result": "removed"
+        },
+        "update": "merged"
+      },
       "object": "payout",
       "on": [
         "update"
@@ -337423,6 +337961,13 @@
         "US"
       ],
       "branch": "",
+      "map": {
+        "empty_value": {
+          "by": "empty_string",
+          "result": "removed"
+        },
+        "update": "merged"
+      },
       "object": "person",
       "on": [
         "update"
@@ -341340,6 +341885,13 @@
         "US"
       ],
       "branch": "",
+      "map": {
+        "empty_value": {
+          "by": "empty_string",
+          "result": "removed"
+        },
+        "update": "merged"
+      },
       "object": "plan",
       "on": [
         "update"
@@ -347984,6 +348536,13 @@
         "US"
       ],
       "branch": "",
+      "map": {
+        "empty_value": {
+          "by": "empty_string",
+          "result": "removed"
+        },
+        "update": "merged"
+      },
       "object": "price",
       "on": [
         "update"
@@ -354524,6 +355083,13 @@
         "US"
       ],
       "branch": "",
+      "map": {
+        "empty_value": {
+          "by": "empty_string",
+          "result": "removed"
+        },
+        "update": "merged"
+      },
       "object": "product",
       "on": [
         "update"
@@ -357322,6 +357888,13 @@
         "US"
       ],
       "branch": "",
+      "map": {
+        "empty_value": {
+          "by": "empty_string",
+          "result": "removed"
+        },
+        "update": "merged"
+      },
       "object": "promotion_code",
       "on": [
         "update"
@@ -360591,7 +361164,8 @@
         "stripe"
       ],
       "tests": [
-        "TestQuoteAttributes/leaves/request/PostQuotes/line_items.discounts.coupon"
+        "TestQuoteAttributes/leaves/request/PostQuotes/line_items.discounts.coupon",
+        "TestQuoteAttributes/state/line_discount_coupon/leaves/request/PostQuotes/line_items.discounts.coupon"
       ]
     },
     {
@@ -360637,7 +361211,20 @@
       ],
       "operation": "PostQuotes",
       "path": "line_items.discounts.promotion_code",
-      "refusals": [],
+      "refusals": [
+        {
+          "account_country": "US",
+          "code": "",
+          "message": "This promotion code is inactive.",
+          "param": "",
+          "status": 400,
+          "tests": [
+            "TestQuoteAttributes/leaves/request/PostQuotes/line_items.discounts.promotion_code",
+            "TestQuoteAttributes/state/line_discount_promotion_code/leaves/request/PostQuotes/line_items.discounts.promotion_code"
+          ],
+          "type": "invalid_request_error"
+        }
+      ],
       "returned": {
         "form": "not_returned",
         "response_path": ""
@@ -360649,7 +361236,8 @@
         "stripe"
       ],
       "tests": [
-        "TestQuoteAttributes/leaves/request/PostQuotes/line_items.discounts.promotion_code"
+        "TestQuoteAttributes/leaves/request/PostQuotes/line_items.discounts.promotion_code",
+        "TestQuoteAttributes/state/line_discount_promotion_code/leaves/request/PostQuotes/line_items.discounts.promotion_code"
       ]
     },
     {
@@ -363347,7 +363935,20 @@
       ],
       "operation": "PostQuotesQuote",
       "path": "line_items.discounts.coupon",
-      "refusals": [],
+      "refusals": [
+        {
+          "account_country": "US",
+          "code": "",
+          "message": "You may only specify one of these parameters: coupon, discount.",
+          "param": "line_items[0][discounts][0][coupon]",
+          "status": 400,
+          "tests": [
+            "TestQuoteAttributes/leaves/request/PostQuotesQuote/line_items.discounts.coupon",
+            "TestQuoteAttributes/state/line_discount_coupon/leaves/request/PostQuotesQuote/line_items.discounts.coupon"
+          ],
+          "type": "invalid_request_error"
+        }
+      ],
       "returned": {
         "form": "not_returned",
         "response_path": ""
@@ -363359,11 +363960,14 @@
         "stripe"
       ],
       "tests": [
-        "TestQuoteAttributes/leaves/request/PostQuotesQuote/line_items.discounts.coupon"
+        "TestQuoteAttributes/leaves/request/PostQuotesQuote/line_items.discounts.coupon",
+        "TestQuoteAttributes/state/line_discount_coupon/leaves/request/PostQuotesQuote/line_items.discounts.coupon"
       ]
     },
     {
-      "accepted_in": [],
+      "accepted_in": [
+        "US"
+      ],
       "branch": "",
       "object": "quote",
       "on": [
@@ -363379,11 +363983,16 @@
           "param": "line_items[0][discounts][0][discount]",
           "status": 400,
           "tests": [
-            "TestQuoteAttributes/leaves/request/PostQuotesQuote/line_items.discounts.discount"
+            "TestQuoteAttributes/leaves/request/PostQuotesQuote/line_items.discounts.discount",
+            "TestQuoteAttributes/state/line_discount_existing/leaves/request/PostQuotesQuote/line_items.discounts.discount"
           ],
           "type": "invalid_request_error"
         }
       ],
+      "returned": {
+        "form": "as_sent",
+        "response_path": "line_items.data.discounts.discount"
+      },
       "side": "request",
       "status": "proven",
       "targets": [
@@ -363391,7 +364000,8 @@
         "stripe"
       ],
       "tests": [
-        "TestQuoteAttributes/leaves/request/PostQuotesQuote/line_items.discounts.discount"
+        "TestQuoteAttributes/leaves/request/PostQuotesQuote/line_items.discounts.discount",
+        "TestQuoteAttributes/state/line_discount_existing/leaves/request/PostQuotesQuote/line_items.discounts.discount"
       ]
     },
     {
@@ -363417,7 +364027,8 @@
         "stripe"
       ],
       "tests": [
-        "TestQuoteAttributes/leaves/request/PostQuotesQuote/line_items.discounts.promotion_code"
+        "TestQuoteAttributes/leaves/request/PostQuotesQuote/line_items.discounts.promotion_code",
+        "TestQuoteAttributes/state/line_discount_promotion_code/leaves/request/PostQuotesQuote/line_items.discounts.promotion_code"
       ]
     },
     {
@@ -363823,6 +364434,13 @@
         "US"
       ],
       "branch": "",
+      "map": {
+        "empty_value": {
+          "by": "empty_string",
+          "result": "removed"
+        },
+        "update": "merged"
+      },
       "object": "quote",
       "on": [
         "update"
@@ -364001,6 +364619,13 @@
         "US"
       ],
       "branch": "",
+      "map": {
+        "empty_value": {
+          "by": "empty_string",
+          "result": "removed"
+        },
+        "update": "replaced"
+      },
       "object": "quote",
       "on": [
         "update"
@@ -374520,6 +375145,13 @@
         "US"
       ],
       "branch": "",
+      "map": {
+        "empty_value": {
+          "by": "empty_string",
+          "result": "removed"
+        },
+        "update": "merged"
+      },
       "object": "radar.value_list",
       "on": [
         "update"
@@ -374934,12 +375566,12 @@
       "branch": "",
       "default": {
         "kind": "rule",
-        "rule_ref": 72,
+        "rule_ref": 76,
         "variants": [
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 72
+              "rule_ref": 76
             },
             "variant": "charge"
           }
@@ -380426,6 +381058,13 @@
         "US"
       ],
       "branch": "",
+      "map": {
+        "empty_value": {
+          "by": "empty_string",
+          "result": "removed"
+        },
+        "update": "merged"
+      },
       "object": "setup_intent",
       "on": [
         "update"
@@ -386207,12 +386846,12 @@
       "branch": "",
       "default": {
         "kind": "rule",
-        "rule_ref": 73,
+        "rule_ref": 77,
         "variants": [
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 73
+              "rule_ref": 77
             },
             "variant": "currency_eur"
           }
@@ -386681,6 +387320,13 @@
         "US"
       ],
       "branch": "",
+      "map": {
+        "empty_value": {
+          "by": "empty_string",
+          "result": "removed"
+        },
+        "update": "merged"
+      },
       "object": "shipping_rate",
       "on": [
         "update"
@@ -387448,7 +388094,8 @@
         "stripe"
       ],
       "tests": [
-        "TestSubscriptionAttributes/leaves/request/PostSubscriptions/add_invoice_items.discounts.coupon"
+        "TestSubscriptionAttributes/leaves/request/PostSubscriptions/add_invoice_items.discounts.coupon",
+        "TestSubscriptionAttributes/state/invoice_item_discount_coupon/leaves/request/PostSubscriptions/add_invoice_items.discounts.coupon"
       ]
     },
     {
@@ -387506,7 +388153,8 @@
         "stripe"
       ],
       "tests": [
-        "TestSubscriptionAttributes/leaves/request/PostSubscriptions/add_invoice_items.discounts.promotion_code"
+        "TestSubscriptionAttributes/leaves/request/PostSubscriptions/add_invoice_items.discounts.promotion_code",
+        "TestSubscriptionAttributes/state/invoice_item_discount_promotion_code/leaves/request/PostSubscriptions/add_invoice_items.discounts.promotion_code"
       ]
     },
     {
@@ -388668,180 +389316,180 @@
       "branch": "",
       "default": {
         "kind": "rule",
-        "rule_ref": 74,
+        "rule_ref": 80,
         "variants": [
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 74
+              "rule_ref": 80
             },
             "variant": "anchor_yearly"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 74
+              "rule_ref": 80
             },
             "variant": "canceling"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 74
+              "rule_ref": 80
             },
             "variant": "canceling_option"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 74
+              "rule_ref": 80
             },
             "variant": "customer_account"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 74
+              "rule_ref": 80
             },
             "variant": "decimal_price"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 74
+              "rule_ref": 80
             },
             "variant": "fee"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 74
+              "rule_ref": 80
             },
             "variant": "flexible"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 74
+              "rule_ref": 80
             },
             "variant": "inline_price"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 74
+              "rule_ref": 80
             },
             "variant": "invoice_decimal"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 74
+              "rule_ref": 80
             },
             "variant": "invoice_item"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 74
+              "rule_ref": 80
             },
             "variant": "metered"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 74
+              "rule_ref": 80
             },
             "variant": "method_aud"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 74
+              "rule_ref": 80
             },
             "variant": "method_brl"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 74
+              "rule_ref": 80
             },
             "variant": "method_eur"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 74
+              "rule_ref": 80
             },
             "variant": "method_inr"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 74
+              "rule_ref": 80
             },
             "variant": "method_pln"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 74
+              "rule_ref": 80
             },
             "variant": "prebilled"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 74
+              "rule_ref": 80
             },
             "variant": "prebilled_timestamp"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 74
+              "rule_ref": 80
             },
             "variant": "price_eur"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 74
+              "rule_ref": 80
             },
             "variant": "send_invoice"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 74
+              "rule_ref": 80
             },
             "variant": "setup_pending"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 74
+              "rule_ref": 80
             },
             "variant": "tax_coded"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 74
+              "rule_ref": 80
             },
             "variant": "test_clock"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 74
+              "rule_ref": 80
             },
             "variant": "trial"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 74
+              "rule_ref": 80
             },
             "variant": "trial_offer"
           }
@@ -392621,180 +393269,180 @@
       "branch": "",
       "default": {
         "kind": "rule",
-        "rule_ref": 75,
+        "rule_ref": 81,
         "variants": [
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 75
+              "rule_ref": 81
             },
             "variant": "anchor_yearly"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 75
+              "rule_ref": 81
             },
             "variant": "canceling"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 75
+              "rule_ref": 81
             },
             "variant": "canceling_option"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 75
+              "rule_ref": 81
             },
             "variant": "customer_account"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 75
+              "rule_ref": 81
             },
             "variant": "decimal_price"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 75
+              "rule_ref": 81
             },
             "variant": "fee"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 75
+              "rule_ref": 81
             },
             "variant": "flexible"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 75
+              "rule_ref": 81
             },
             "variant": "inline_price"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 75
+              "rule_ref": 81
             },
             "variant": "invoice_decimal"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 75
+              "rule_ref": 81
             },
             "variant": "invoice_item"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 75
+              "rule_ref": 81
             },
             "variant": "metered"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 75
+              "rule_ref": 81
             },
             "variant": "method_aud"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 75
+              "rule_ref": 81
             },
             "variant": "method_brl"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 75
+              "rule_ref": 81
             },
             "variant": "method_eur"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 75
+              "rule_ref": 81
             },
             "variant": "method_inr"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 75
+              "rule_ref": 81
             },
             "variant": "method_pln"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 75
+              "rule_ref": 81
             },
             "variant": "prebilled"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 75
+              "rule_ref": 81
             },
             "variant": "prebilled_timestamp"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 75
+              "rule_ref": 81
             },
             "variant": "price_eur"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 75
+              "rule_ref": 81
             },
             "variant": "send_invoice"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 75
+              "rule_ref": 81
             },
             "variant": "setup_pending"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 75
+              "rule_ref": 81
             },
             "variant": "tax_coded"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 75
+              "rule_ref": 81
             },
             "variant": "test_clock"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 75
+              "rule_ref": 81
             },
             "variant": "trial"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 75
+              "rule_ref": 81
             },
             "variant": "trial_offer"
           }
@@ -395213,7 +395861,8 @@
         "stripe"
       ],
       "tests": [
-        "TestSubscriptionAttributes/leaves/request/PostSubscriptions/items.discounts.coupon"
+        "TestSubscriptionAttributes/leaves/request/PostSubscriptions/items.discounts.coupon",
+        "TestSubscriptionAttributes/state/item_discount_coupon/leaves/request/PostSubscriptions/items.discounts.coupon"
       ]
     },
     {
@@ -395271,7 +395920,8 @@
         "stripe"
       ],
       "tests": [
-        "TestSubscriptionAttributes/leaves/request/PostSubscriptions/items.discounts.promotion_code"
+        "TestSubscriptionAttributes/leaves/request/PostSubscriptions/items.discounts.promotion_code",
+        "TestSubscriptionAttributes/state/item_discount_promotion_code/leaves/request/PostSubscriptions/items.discounts.promotion_code"
       ]
     },
     {
@@ -405685,7 +406335,8 @@
         "stripe"
       ],
       "tests": [
-        "TestSubscriptionAttributes/leaves/request/PostSubscriptionsSubscriptionExposedId/add_invoice_items.discounts.coupon"
+        "TestSubscriptionAttributes/leaves/request/PostSubscriptionsSubscriptionExposedId/add_invoice_items.discounts.coupon",
+        "TestSubscriptionAttributes/state/invoice_item_discount_coupon/leaves/request/PostSubscriptionsSubscriptionExposedId/add_invoice_items.discounts.coupon"
       ]
     },
     {
@@ -405743,7 +406394,8 @@
         "stripe"
       ],
       "tests": [
-        "TestSubscriptionAttributes/leaves/request/PostSubscriptionsSubscriptionExposedId/add_invoice_items.discounts.promotion_code"
+        "TestSubscriptionAttributes/leaves/request/PostSubscriptionsSubscriptionExposedId/add_invoice_items.discounts.promotion_code",
+        "TestSubscriptionAttributes/state/invoice_item_discount_promotion_code/leaves/request/PostSubscriptionsSubscriptionExposedId/add_invoice_items.discounts.promotion_code"
       ]
     },
     {
@@ -407599,7 +408251,20 @@
       ],
       "operation": "PostSubscriptionsSubscriptionExposedId",
       "path": "items.discounts.coupon",
-      "refusals": [],
+      "refusals": [
+        {
+          "account_country": "US",
+          "code": "",
+          "message": "You may only specify one of these parameters: coupon, discount.",
+          "param": "items[0][discounts][0][coupon]",
+          "status": 400,
+          "tests": [
+            "TestSubscriptionAttributes/leaves/request/PostSubscriptionsSubscriptionExposedId/items.discounts.coupon",
+            "TestSubscriptionAttributes/state/item_discount_coupon/leaves/request/PostSubscriptionsSubscriptionExposedId/items.discounts.coupon"
+          ],
+          "type": "invalid_request_error"
+        }
+      ],
       "returned": {
         "form": "not_returned",
         "response_path": ""
@@ -407611,11 +408276,14 @@
         "stripe"
       ],
       "tests": [
-        "TestSubscriptionAttributes/leaves/request/PostSubscriptionsSubscriptionExposedId/items.discounts.coupon"
+        "TestSubscriptionAttributes/leaves/request/PostSubscriptionsSubscriptionExposedId/items.discounts.coupon",
+        "TestSubscriptionAttributes/state/item_discount_coupon/leaves/request/PostSubscriptionsSubscriptionExposedId/items.discounts.coupon"
       ]
     },
     {
-      "accepted_in": [],
+      "accepted_in": [
+        "US"
+      ],
       "branch": "",
       "object": "subscription",
       "on": [
@@ -407631,11 +408299,16 @@
           "param": "items[0][discounts][0][discount]",
           "status": 400,
           "tests": [
-            "TestSubscriptionAttributes/leaves/request/PostSubscriptionsSubscriptionExposedId/items.discounts.discount"
+            "TestSubscriptionAttributes/leaves/request/PostSubscriptionsSubscriptionExposedId/items.discounts.discount",
+            "TestSubscriptionAttributes/state/item_discount_existing/leaves/request/PostSubscriptionsSubscriptionExposedId/items.discounts.discount"
           ],
           "type": "invalid_request_error"
         }
       ],
+      "returned": {
+        "form": "not_returned",
+        "response_path": ""
+      },
       "side": "request",
       "status": "proven",
       "targets": [
@@ -407643,7 +408316,8 @@
         "stripe"
       ],
       "tests": [
-        "TestSubscriptionAttributes/leaves/request/PostSubscriptionsSubscriptionExposedId/items.discounts.discount"
+        "TestSubscriptionAttributes/leaves/request/PostSubscriptionsSubscriptionExposedId/items.discounts.discount",
+        "TestSubscriptionAttributes/state/item_discount_existing/leaves/request/PostSubscriptionsSubscriptionExposedId/items.discounts.discount"
       ]
     },
     {
@@ -407669,7 +408343,8 @@
         "stripe"
       ],
       "tests": [
-        "TestSubscriptionAttributes/leaves/request/PostSubscriptionsSubscriptionExposedId/items.discounts.promotion_code"
+        "TestSubscriptionAttributes/leaves/request/PostSubscriptionsSubscriptionExposedId/items.discounts.promotion_code",
+        "TestSubscriptionAttributes/state/item_discount_promotion_code/leaves/request/PostSubscriptionsSubscriptionExposedId/items.discounts.promotion_code"
       ]
     },
     {
@@ -408102,6 +408777,13 @@
         "US"
       ],
       "branch": "",
+      "map": {
+        "empty_value": {
+          "by": "empty_string",
+          "result": "removed"
+        },
+        "update": "merged"
+      },
       "object": "subscription",
       "on": [
         "update"
@@ -438414,6 +439096,13 @@
         "US"
       ],
       "branch": "",
+      "map": {
+        "empty_value": {
+          "by": "empty_string",
+          "result": "removed"
+        },
+        "update": "merged"
+      },
       "object": "subscription_item",
       "on": [
         "update"
@@ -452001,124 +452690,124 @@
       "branch": "",
       "default": {
         "kind": "rule",
-        "rule_ref": 76,
+        "rule_ref": 87,
         "variants": [
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 76
+              "rule_ref": 87
             },
             "variant": "customer_account"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 76
+              "rule_ref": 87
             },
             "variant": "end_dated"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 76
+              "rule_ref": 87
             },
             "variant": "fee_defaults"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 76
+              "rule_ref": 87
             },
             "variant": "fee_phase"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 76
+              "rule_ref": 87
             },
             "variant": "flexible"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 76
+              "rule_ref": 87
             },
             "variant": "from_subscription"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 76
+              "rule_ref": 87
             },
             "variant": "inline_decimal"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 76
+              "rule_ref": 87
             },
             "variant": "inline_price"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 76
+              "rule_ref": 87
             },
             "variant": "invoice_decimal"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 76
+              "rule_ref": 87
             },
             "variant": "invoice_item"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 76
+              "rule_ref": 87
             },
             "variant": "metered"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 76
+              "rule_ref": 87
             },
             "variant": "pause_duration"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 76
+              "rule_ref": 87
             },
             "variant": "pause_timestamp"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 76
+              "rule_ref": 87
             },
             "variant": "price_eur"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 76
+              "rule_ref": 87
             },
             "variant": "started"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 76
+              "rule_ref": 87
             },
             "variant": "tax_coded"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 76
+              "rule_ref": 87
             },
             "variant": "test_clock"
           }
@@ -453021,117 +453710,117 @@
       "branch": "",
       "default": {
         "kind": "rule",
-        "rule_ref": 77,
+        "rule_ref": 88,
         "variants": [
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 77
+              "rule_ref": 88
             },
             "variant": "customer_account"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 77
+              "rule_ref": 88
             },
             "variant": "fee_defaults"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 77
+              "rule_ref": 88
             },
             "variant": "fee_phase"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 77
+              "rule_ref": 88
             },
             "variant": "flexible"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 77
+              "rule_ref": 88
             },
             "variant": "from_subscription"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 77
+              "rule_ref": 88
             },
             "variant": "inline_decimal"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 77
+              "rule_ref": 88
             },
             "variant": "inline_price"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 77
+              "rule_ref": 88
             },
             "variant": "invoice_decimal"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 77
+              "rule_ref": 88
             },
             "variant": "invoice_item"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 77
+              "rule_ref": 88
             },
             "variant": "metered"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 77
+              "rule_ref": 88
             },
             "variant": "pause_duration"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 77
+              "rule_ref": 88
             },
             "variant": "pause_timestamp"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 77
+              "rule_ref": 88
             },
             "variant": "price_eur"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 77
+              "rule_ref": 88
             },
             "variant": "started"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 77
+              "rule_ref": 88
             },
             "variant": "tax_coded"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 77
+              "rule_ref": 88
             },
             "variant": "test_clock"
           }
@@ -457484,6 +458173,13 @@
         "US"
       ],
       "branch": "",
+      "map": {
+        "empty_value": {
+          "by": "empty_string",
+          "result": "removed"
+        },
+        "update": "merged"
+      },
       "object": "subscription_schedule",
       "on": [
         "update"
@@ -484102,7 +484798,7 @@
       "branch": "",
       "default": {
         "kind": "rule",
-        "rule_ref": 78,
+        "rule_ref": 89,
         "variants": [
           {
             "default": {
@@ -496823,6 +497519,13 @@
         "US"
       ],
       "branch": "",
+      "map": {
+        "empty_value": {
+          "by": "empty_string",
+          "result": "removed"
+        },
+        "update": "merged"
+      },
       "object": "tax_rate",
       "on": [
         "update"
@@ -510730,6 +511433,13 @@
         "US"
       ],
       "branch": "",
+      "map": {
+        "empty_value": {
+          "by": "empty_string",
+          "result": "removed"
+        },
+        "update": "merged"
+      },
       "object": "terminal.location",
       "on": [
         "update"
@@ -511556,12 +512266,12 @@
       "branch": "",
       "default": {
         "kind": "rule",
-        "rule_ref": 80,
+        "rule_ref": 91,
         "variants": [
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 80
+              "rule_ref": 91
             },
             "variant": "s700"
           }
@@ -511720,6 +512430,13 @@
         "US"
       ],
       "branch": "",
+      "map": {
+        "empty_value": {
+          "by": "empty_string",
+          "result": "removed"
+        },
+        "update": "merged"
+      },
       "object": "terminal.reader",
       "on": [
         "update"
@@ -514553,7 +515270,8 @@
       "refusals": [],
       "returned": {
         "form": "as_sent",
-        "response_path": "frozen_time"
+        "response_path": "frozen_time",
+        "rule_ref": 92
       },
       "side": "request",
       "status": "proven",
@@ -514562,7 +515280,8 @@
         "stripe"
       ],
       "tests": [
-        "TestTestClockAttributes/leaves/request/PostTestHelpersTestClocks/frozen_time"
+        "TestTestClockAttributes/leaves/request/PostTestHelpersTestClocks/frozen_time",
+        "TestTestClockAttributes/leaves/response/test_helpers.test_clock/frozen_time"
       ]
     },
     {
@@ -515211,6 +515930,13 @@
         "US"
       ],
       "branch": "",
+      "map": {
+        "empty_value": {
+          "by": "empty_string",
+          "result": "removed"
+        },
+        "update": "merged"
+      },
       "object": "topup",
       "on": [
         "update"
@@ -517902,6 +518628,13 @@
         "US"
       ],
       "branch": "",
+      "map": {
+        "empty_value": {
+          "by": "empty_string",
+          "result": "removed"
+        },
+        "update": "merged"
+      },
       "object": "transfer",
       "on": [
         "update"
@@ -518410,12 +519143,12 @@
       "branch": "",
       "default": {
         "kind": "rule",
-        "rule_ref": 81,
+        "rule_ref": 93,
         "variants": [
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 81
+              "rule_ref": 93
             },
             "variant": "partly_reversed"
           }
@@ -518540,6 +519273,13 @@
         "US"
       ],
       "branch": "",
+      "map": {
+        "empty_value": {
+          "by": "empty_string",
+          "result": "removed"
+        },
+        "update": "merged"
+      },
       "object": "transfer_reversal",
       "on": [
         "update"
@@ -519925,6 +520665,13 @@
         "US"
       ],
       "branch": "",
+      "map": {
+        "empty_value": {
+          "by": "empty_string",
+          "result": "removed"
+        },
+        "update": "merged"
+      },
       "object": "treasury.financial_account",
       "on": [
         "update"
@@ -530365,6 +531112,13 @@
         "US"
       ],
       "branch": "",
+      "map": {
+        "empty_value": {
+          "by": "null",
+          "result": "removed"
+        },
+        "update": "merged"
+      },
       "object": "v2.core.account",
       "on": [
         "update"
@@ -537159,6 +537913,13 @@
         "US"
       ],
       "branch": "",
+      "map": {
+        "empty_value": {
+          "by": "null",
+          "result": "removed"
+        },
+        "update": "merged"
+      },
       "object": "v2.core.account_person",
       "on": [
         "update"
@@ -539571,7 +540332,7 @@
       "branch": "",
       "default": {
         "kind": "rule",
-        "rule_ref": 87,
+        "rule_ref": 99,
         "variants": [
           {
             "default": {
@@ -539682,6 +540443,13 @@
         "US"
       ],
       "branch": "",
+      "map": {
+        "empty_value": {
+          "by": "null",
+          "result": "removed"
+        },
+        "update": "merged"
+      },
       "object": "v2.core.event_destination",
       "on": [
         "update"
@@ -544145,6 +544913,13 @@
         "US"
       ],
       "branch": "",
+      "map": {
+        "empty_value": {
+          "by": "empty_string",
+          "result": "removed"
+        },
+        "update": "merged"
+      },
       "object": "webhook_endpoint",
       "on": [
         "update"
@@ -689468,6 +690243,100 @@
         {
           "condition": {
             "account_country": "US",
+            "params": {
+              "customer": {
+                "$gen": "ref",
+                "arg": "customer"
+              },
+              "line_items": [
+                {
+                  "discounts": [
+                    {
+                      "coupon": {
+                        "$gen": "ref",
+                        "arg": "coupon:expired"
+                      }
+                    }
+                  ],
+                  "price": {
+                    "$gen": "ref",
+                    "arg": "price"
+                  },
+                  "quantity": 2
+                }
+              ]
+            },
+            "probe": "isolated/line_coupon_expired"
+          },
+          "value": {
+            "code": "coupon_expired",
+            "message": "Coupon attrs_expired is expired and cannot be applied.",
+            "param": "discounts",
+            "status": 400,
+            "type": "invalid_request_error"
+          }
+        }
+      ],
+      "operation": "PostQuotes",
+      "path": "line_items.discounts.coupon",
+      "rule": "Stripe's answer turns on the request: accepted in []; refused in [isolated/line_coupon_expired]",
+      "tests": [
+        "TestQuoteAttributes/leaves/request/PostQuotes/line_items.discounts.coupon",
+        "TestQuoteAttributes/state/line_discount_coupon/leaves/request/PostQuotes/line_items.discounts.coupon"
+      ]
+    },
+    {
+      "object": "quote",
+      "observations": [
+        {
+          "condition": {
+            "account_country": "US",
+            "params": {
+              "customer": {
+                "$gen": "ref",
+                "arg": "customer"
+              },
+              "line_items": [
+                {
+                  "discounts": [
+                    {
+                      "promotion_code": {
+                        "$gen": "ref",
+                        "arg": "promotion_code:inactive"
+                      }
+                    }
+                  ],
+                  "price": {
+                    "$gen": "ref",
+                    "arg": "price"
+                  },
+                  "quantity": 2
+                }
+              ]
+            },
+            "probe": "isolated/line_promotion_code_inactive"
+          },
+          "value": {
+            "message": "This promotion code is inactive.",
+            "status": 400,
+            "type": "invalid_request_error"
+          }
+        }
+      ],
+      "operation": "PostQuotes",
+      "path": "line_items.discounts.promotion_code",
+      "rule": "Stripe's answer turns on the request: accepted in []; refused in [isolated/line_promotion_code_inactive]",
+      "tests": [
+        "TestQuoteAttributes/leaves/request/PostQuotes/line_items.discounts.promotion_code",
+        "TestQuoteAttributes/state/line_discount_promotion_code/leaves/request/PostQuotes/line_items.discounts.promotion_code"
+      ]
+    },
+    {
+      "object": "quote",
+      "observations": [
+        {
+          "condition": {
+            "account_country": "US",
             "created_with": {
               "customer": {
                 "$gen": "ref",
@@ -689521,6 +690390,194 @@
       "tests": [
         "TestQuoteAttributes/leaves/request/PostQuotesQuote/discounts.coupon",
         "TestQuoteAttributes/state/discount_coupon/leaves/request/PostQuotesQuote/discounts.coupon"
+      ]
+    },
+    {
+      "object": "quote",
+      "observations": [
+        {
+          "condition": {
+            "account_country": "US",
+            "created_with": {
+              "customer": {
+                "$gen": "ref",
+                "arg": "customer"
+              },
+              "line_items": [
+                {
+                  "discounts": [
+                    {
+                      "coupon": {
+                        "$gen": "ref",
+                        "arg": "coupon"
+                      }
+                    }
+                  ],
+                  "price": {
+                    "$gen": "ref",
+                    "arg": "price"
+                  },
+                  "quantity": 2
+                }
+              ]
+            },
+            "params": {
+              "line_items": [
+                {
+                  "discounts": [
+                    {
+                      "coupon": {
+                        "$gen": "ref",
+                        "arg": "coupon"
+                      },
+                      "discount": {
+                        "$gen": "read",
+                        "arg": "line_items.data.0.discounts.0.discount.id"
+                      }
+                    }
+                  ],
+                  "id": {
+                    "$gen": "read",
+                    "arg": "line_items.data.0.id"
+                  }
+                }
+              ]
+            },
+            "probe": "isolated/line_coupon_beside_held"
+          },
+          "value": {
+            "message": "You may only specify one of these parameters: coupon, discount.",
+            "param": "line_items[0][discounts][0][coupon]",
+            "status": 400,
+            "type": "invalid_request_error"
+          }
+        }
+      ],
+      "operation": "PostQuotesQuote",
+      "path": "line_items.discounts.coupon",
+      "rule": "Stripe's answer turns on the request: accepted in []; refused in [isolated/line_coupon_beside_held]",
+      "tests": [
+        "TestQuoteAttributes/leaves/request/PostQuotesQuote/line_items.discounts.coupon",
+        "TestQuoteAttributes/state/line_discount_coupon/leaves/request/PostQuotesQuote/line_items.discounts.coupon"
+      ]
+    },
+    {
+      "object": "quote",
+      "observations": [
+        {
+          "condition": {
+            "account_country": "US",
+            "created_with": {
+              "customer": {
+                "$gen": "ref",
+                "arg": "customer"
+              },
+              "discounts": [
+                {
+                  "coupon": {
+                    "$gen": "ref",
+                    "arg": "coupon"
+                  }
+                }
+              ],
+              "line_items": [
+                {
+                  "price": {
+                    "$gen": "ref",
+                    "arg": "price"
+                  },
+                  "quantity": 2
+                }
+              ]
+            },
+            "params": {
+              "line_items": [
+                {
+                  "discounts": [
+                    {
+                      "discount": {
+                        "$gen": "read",
+                        "arg": "discounts.0"
+                      }
+                    }
+                  ],
+                  "id": {
+                    "$gen": "read",
+                    "arg": "line_items.data.0.id"
+                  }
+                }
+              ]
+            },
+            "probe": "isolated/line_discount_of_quote"
+          },
+          "value": {
+            "message": "Discount <id:di_> does not already exist on the item. Discounts can only be applied to an item when they already exist on the item.",
+            "param": "discounts",
+            "status": 400,
+            "type": "invalid_request_error"
+          }
+        },
+        {
+          "condition": {
+            "account_country": "US",
+            "created_with": {
+              "customer": {
+                "$gen": "ref",
+                "arg": "customer"
+              },
+              "line_items": [
+                {
+                  "discounts": [
+                    {
+                      "coupon": {
+                        "$gen": "ref",
+                        "arg": "coupon"
+                      }
+                    }
+                  ],
+                  "price": {
+                    "$gen": "ref",
+                    "arg": "price"
+                  },
+                  "quantity": 2
+                }
+              ]
+            },
+            "params": {
+              "line_items": [
+                {
+                  "discounts": [
+                    {
+                      "discount": {
+                        "$gen": "read",
+                        "arg": "line_items.data.0.discounts.0.discount.id"
+                      }
+                    }
+                  ],
+                  "id": {
+                    "$gen": "read",
+                    "arg": "line_items.data.0.id"
+                  }
+                }
+              ]
+            },
+            "probe": "isolated/line_discount_held"
+          },
+          "value": {
+            "read": {
+              "kind": "sent",
+              "path": "line_items.discounts.discount"
+            },
+            "status": 200
+          }
+        }
+      ],
+      "operation": "PostQuotesQuote",
+      "path": "line_items.discounts.discount",
+      "rule": "Stripe's answer turns on the request: accepted in [isolated/line_discount_held]; refused in [isolated/line_discount_of_quote]",
+      "tests": [
+        "TestQuoteAttributes/leaves/request/PostQuotesQuote/line_items.discounts.discount",
+        "TestQuoteAttributes/state/line_discount_existing/leaves/request/PostQuotesQuote/line_items.discounts.discount"
       ]
     },
     {
@@ -689591,6 +690648,115 @@
       "rule": "derived by Stripe from what the create sends: the minimal create gets {\n                \"usd\": 500\n              }, built from the value it sends at fixed_amount.amount; variant currency_eur gets {\n                \"eur\": 700\n              }, built from the value it sends at fixed_amount.amount",
       "tests": [
         "TestShippingRateAttributes/leaves/response/shipping_rate/fixed_amount.currency_options.amount"
+      ]
+    },
+    {
+      "object": "subscription",
+      "observations": [
+        {
+          "condition": {
+            "account_country": "US",
+            "params": {
+              "add_invoice_items": [
+                {
+                  "discounts": [
+                    {
+                      "coupon": {
+                        "$gen": "ref",
+                        "arg": "coupon:expired"
+                      }
+                    }
+                  ],
+                  "price": {
+                    "$gen": "ref",
+                    "arg": "price:one_time"
+                  }
+                }
+              ],
+              "customer": {
+                "$gen": "ref",
+                "arg": "customer"
+              },
+              "items": [
+                {
+                  "price": {
+                    "$gen": "ref",
+                    "arg": "price"
+                  }
+                }
+              ]
+            },
+            "probe": "isolated/invoice_item_coupon_expired"
+          },
+          "value": {
+            "code": "coupon_expired",
+            "message": "Coupon attrs_expired is expired and cannot be applied.",
+            "param": "discounts",
+            "status": 400,
+            "type": "invalid_request_error"
+          }
+        }
+      ],
+      "operation": "PostSubscriptions",
+      "path": "add_invoice_items.discounts.coupon",
+      "rule": "Stripe's answer turns on the request: accepted in []; refused in [isolated/invoice_item_coupon_expired]",
+      "tests": [
+        "TestSubscriptionAttributes/leaves/request/PostSubscriptions/add_invoice_items.discounts.coupon",
+        "TestSubscriptionAttributes/state/invoice_item_discount_coupon/leaves/request/PostSubscriptions/add_invoice_items.discounts.coupon"
+      ]
+    },
+    {
+      "object": "subscription",
+      "observations": [
+        {
+          "condition": {
+            "account_country": "US",
+            "params": {
+              "add_invoice_items": [
+                {
+                  "discounts": [
+                    {
+                      "promotion_code": {
+                        "$gen": "ref",
+                        "arg": "promotion_code:inactive"
+                      }
+                    }
+                  ],
+                  "price": {
+                    "$gen": "ref",
+                    "arg": "price:one_time"
+                  }
+                }
+              ],
+              "customer": {
+                "$gen": "ref",
+                "arg": "customer"
+              },
+              "items": [
+                {
+                  "price": {
+                    "$gen": "ref",
+                    "arg": "price"
+                  }
+                }
+              ]
+            },
+            "probe": "isolated/invoice_item_promotion_code_inactive"
+          },
+          "value": {
+            "message": "This promotion code is inactive.",
+            "param": "promotion_code",
+            "status": 400,
+            "type": "invalid_request_error"
+          }
+        }
+      ],
+      "operation": "PostSubscriptions",
+      "path": "add_invoice_items.discounts.promotion_code",
+      "rule": "Stripe's answer turns on the request: accepted in []; refused in [isolated/invoice_item_promotion_code_inactive]",
+      "tests": [
+        "TestSubscriptionAttributes/leaves/request/PostSubscriptions/add_invoice_items.discounts.promotion_code",
+        "TestSubscriptionAttributes/state/invoice_item_discount_promotion_code/leaves/request/PostSubscriptions/add_invoice_items.discounts.promotion_code"
       ]
     },
     {
@@ -690109,6 +691275,343 @@
       "rule": "the currency of the subscription's items",
       "tests": [
         "TestSubscriptionAttributes/leaves/response/subscription/currency"
+      ]
+    },
+    {
+      "object": "subscription",
+      "observations": [
+        {
+          "condition": {
+            "account_country": "US",
+            "params": {
+              "customer": {
+                "$gen": "ref",
+                "arg": "customer"
+              },
+              "items": [
+                {
+                  "discounts": [
+                    {
+                      "coupon": {
+                        "$gen": "ref",
+                        "arg": "coupon:expired"
+                      }
+                    }
+                  ],
+                  "price": {
+                    "$gen": "ref",
+                    "arg": "price"
+                  }
+                }
+              ]
+            },
+            "probe": "isolated/item_coupon_expired"
+          },
+          "value": {
+            "code": "coupon_expired",
+            "message": "Coupon attrs_expired is expired and cannot be applied.",
+            "param": "discounts",
+            "status": 400,
+            "type": "invalid_request_error"
+          }
+        }
+      ],
+      "operation": "PostSubscriptions",
+      "path": "items.discounts.coupon",
+      "rule": "Stripe's answer turns on the request: accepted in []; refused in [isolated/item_coupon_expired]",
+      "tests": [
+        "TestSubscriptionAttributes/leaves/request/PostSubscriptions/items.discounts.coupon",
+        "TestSubscriptionAttributes/state/item_discount_coupon/leaves/request/PostSubscriptions/items.discounts.coupon"
+      ]
+    },
+    {
+      "object": "subscription",
+      "observations": [
+        {
+          "condition": {
+            "account_country": "US",
+            "params": {
+              "customer": {
+                "$gen": "ref",
+                "arg": "customer"
+              },
+              "items": [
+                {
+                  "discounts": [
+                    {
+                      "promotion_code": {
+                        "$gen": "ref",
+                        "arg": "promotion_code:inactive"
+                      }
+                    }
+                  ],
+                  "price": {
+                    "$gen": "ref",
+                    "arg": "price"
+                  }
+                }
+              ]
+            },
+            "probe": "isolated/item_promotion_code_inactive"
+          },
+          "value": {
+            "message": "This promotion code is inactive.",
+            "param": "promotion_code",
+            "status": 400,
+            "type": "invalid_request_error"
+          }
+        }
+      ],
+      "operation": "PostSubscriptions",
+      "path": "items.discounts.promotion_code",
+      "rule": "Stripe's answer turns on the request: accepted in []; refused in [isolated/item_promotion_code_inactive]",
+      "tests": [
+        "TestSubscriptionAttributes/leaves/request/PostSubscriptions/items.discounts.promotion_code",
+        "TestSubscriptionAttributes/state/item_discount_promotion_code/leaves/request/PostSubscriptions/items.discounts.promotion_code"
+      ]
+    },
+    {
+      "object": "subscription",
+      "observations": [
+        {
+          "condition": {
+            "account_country": "US",
+            "created_with": {
+              "customer": {
+                "$gen": "ref",
+                "arg": "customer"
+              },
+              "discounts": [
+                {
+                  "coupon": {
+                    "$gen": "ref",
+                    "arg": "coupon"
+                  }
+                }
+              ],
+              "items": [
+                {
+                  "price": {
+                    "$gen": "ref",
+                    "arg": "price"
+                  }
+                }
+              ]
+            },
+            "params": {
+              "add_invoice_items": [
+                {
+                  "discounts": [
+                    {
+                      "discount": {
+                        "$gen": "read",
+                        "arg": "discounts.0"
+                      }
+                    }
+                  ],
+                  "price": {
+                    "$gen": "ref",
+                    "arg": "price:one_time"
+                  }
+                }
+              ]
+            },
+            "probe": "isolated/invoice_item_discount_of_subscription"
+          },
+          "value": {
+            "message": "Discount <id:di_> does not exist on the subscription, or the subscription's customer (<id:cus_>). Discounts can only be applied to a subscription when they already exist on the subscription, or the subscription's customer.",
+            "param": "discounts",
+            "status": 400,
+            "type": "invalid_request_error"
+          }
+        }
+      ],
+      "operation": "PostSubscriptionsSubscriptionExposedId",
+      "path": "add_invoice_items.discounts.discount",
+      "rule": "Stripe's answer turns on the request: accepted in []; refused in [isolated/invoice_item_discount_of_subscription]",
+      "tests": [
+        "TestSubscriptionAttributes/leaves/request/PostSubscriptionsSubscriptionExposedId/add_invoice_items.discounts.discount"
+      ]
+    },
+    {
+      "object": "subscription",
+      "observations": [
+        {
+          "condition": {
+            "account_country": "US",
+            "created_with": {
+              "customer": {
+                "$gen": "ref",
+                "arg": "customer"
+              },
+              "items": [
+                {
+                  "discounts": [
+                    {
+                      "coupon": {
+                        "$gen": "ref",
+                        "arg": "coupon"
+                      }
+                    }
+                  ],
+                  "price": {
+                    "$gen": "ref",
+                    "arg": "price"
+                  }
+                }
+              ]
+            },
+            "params": {
+              "items": [
+                {
+                  "discounts": [
+                    {
+                      "coupon": {
+                        "$gen": "ref",
+                        "arg": "coupon"
+                      },
+                      "discount": {
+                        "$gen": "read",
+                        "arg": "items.data.0.discounts.0"
+                      }
+                    }
+                  ],
+                  "id": {
+                    "$gen": "read",
+                    "arg": "items.data.0.id"
+                  }
+                }
+              ]
+            },
+            "probe": "isolated/item_coupon_beside_held"
+          },
+          "value": {
+            "message": "You may only specify one of these parameters: coupon, discount.",
+            "param": "items[0][discounts][0][coupon]",
+            "status": 400,
+            "type": "invalid_request_error"
+          }
+        }
+      ],
+      "operation": "PostSubscriptionsSubscriptionExposedId",
+      "path": "items.discounts.coupon",
+      "rule": "Stripe's answer turns on the request: accepted in []; refused in [isolated/item_coupon_beside_held]",
+      "tests": [
+        "TestSubscriptionAttributes/leaves/request/PostSubscriptionsSubscriptionExposedId/items.discounts.coupon",
+        "TestSubscriptionAttributes/state/item_discount_coupon/leaves/request/PostSubscriptionsSubscriptionExposedId/items.discounts.coupon"
+      ]
+    },
+    {
+      "object": "subscription",
+      "observations": [
+        {
+          "condition": {
+            "account_country": "US",
+            "created_with": {
+              "customer": {
+                "$gen": "ref",
+                "arg": "customer"
+              },
+              "discounts": [
+                {
+                  "coupon": {
+                    "$gen": "ref",
+                    "arg": "coupon"
+                  }
+                }
+              ],
+              "items": [
+                {
+                  "price": {
+                    "$gen": "ref",
+                    "arg": "price"
+                  }
+                }
+              ]
+            },
+            "params": {
+              "items": [
+                {
+                  "discounts": [
+                    {
+                      "discount": {
+                        "$gen": "read",
+                        "arg": "discounts.0"
+                      }
+                    }
+                  ],
+                  "id": {
+                    "$gen": "read",
+                    "arg": "items.data.0.id"
+                  }
+                }
+              ]
+            },
+            "probe": "isolated/item_discount_of_subscription"
+          },
+          "value": {
+            "message": "Discount <id:di_> does not exist on the subscription item. Discounts can only be applied to a subscription item when they already exist on the subscription item.",
+            "param": "discounts",
+            "status": 400,
+            "type": "invalid_request_error"
+          }
+        },
+        {
+          "condition": {
+            "account_country": "US",
+            "created_with": {
+              "customer": {
+                "$gen": "ref",
+                "arg": "customer"
+              },
+              "items": [
+                {
+                  "discounts": [
+                    {
+                      "coupon": {
+                        "$gen": "ref",
+                        "arg": "coupon"
+                      }
+                    }
+                  ],
+                  "price": {
+                    "$gen": "ref",
+                    "arg": "price"
+                  }
+                }
+              ]
+            },
+            "params": {
+              "items": [
+                {
+                  "discounts": [
+                    {
+                      "discount": {
+                        "$gen": "read",
+                        "arg": "items.data.0.discounts.0"
+                      }
+                    }
+                  ],
+                  "id": {
+                    "$gen": "read",
+                    "arg": "items.data.0.id"
+                  }
+                }
+              ]
+            },
+            "probe": "isolated/item_discount_held"
+          },
+          "value": {
+            "status": 200
+          }
+        }
+      ],
+      "operation": "PostSubscriptionsSubscriptionExposedId",
+      "path": "items.discounts.discount",
+      "rule": "Stripe's answer turns on the request: accepted in [isolated/item_discount_held]; refused in [isolated/item_discount_of_subscription]",
+      "tests": [
+        "TestSubscriptionAttributes/leaves/request/PostSubscriptionsSubscriptionExposedId/items.discounts.discount",
+        "TestSubscriptionAttributes/state/item_discount_existing/leaves/request/PostSubscriptionsSubscriptionExposedId/items.discounts.discount"
       ]
     },
     {
@@ -690810,6 +692313,81 @@
       "rule": "the registration code, a hyphen and a UUID",
       "tests": [
         "TestTerminalReaderAttributes/leaves/response/terminal.reader/label"
+      ]
+    },
+    {
+      "beside": "customer",
+      "object": "test_helpers.test_clock",
+      "observations": [
+        {
+          "condition": {
+            "account_country": "US",
+            "params": {
+              "customer": {
+                "$gen": "fresh",
+                "arg": "customer"
+              },
+              "frozen_time": {
+                "$gen": "now",
+                "offset": 180,
+                "round": 60
+              }
+            },
+            "probe": "minimal/customer"
+          },
+          "value": {
+            "kind": "from",
+            "path": "created"
+          }
+        },
+        {
+          "condition": {
+            "account_country": "US",
+            "params": {
+              "customer": {
+                "$gen": "fresh",
+                "arg": "customer"
+              },
+              "frozen_time": {
+                "$gen": "now",
+                "offset": 180,
+                "round": 60
+              },
+              "name": {
+                "$gen": "unique",
+                "arg": "300"
+              }
+            },
+            "probe": "every_field/1"
+          },
+          "value": {
+            "kind": "from",
+            "path": "created"
+          }
+        },
+        {
+          "condition": {
+            "account_country": "US",
+            "params": {
+              "frozen_time": {
+                "$gen": "now",
+                "offset": 180,
+                "round": 60
+              }
+            },
+            "probe": "minimal"
+          },
+          "value": {
+            "kind": "sent",
+            "path": "frozen_time"
+          }
+        }
+      ],
+      "operation": "PostTestHelpersTestClocks",
+      "path": "frozen_time",
+      "rule": "the clock's `created`, on a create with a `customer`",
+      "tests": [
+        "TestTestClockAttributes/leaves/response/test_helpers.test_clock/frozen_time"
       ]
     },
     {
@@ -691817,6 +693395,15 @@
       ]
     },
     {
+      "carried": {
+        "price_data.currency": {
+          "$gen": "account_currency"
+        },
+        "price_data.product": {
+          "$gen": "ref",
+          "arg": "product"
+        }
+      },
       "changed": [
         {
           "after": {
@@ -692493,6 +694080,13 @@
       ]
     },
     {
+      "carried": {
+        "currency_options.tiers.unit_amount": {
+          "cad": [
+            200
+          ]
+        }
+      },
       "changed": [
         {
           "after": {
@@ -692728,6 +694322,14 @@
       ]
     },
     {
+      "carried": {
+        "line_items.id": [
+          {
+            "$gen": "read",
+            "arg": "line_items.data.0.id"
+          }
+        ]
+      },
       "changed": [
         {
           "after": {
@@ -692884,6 +694486,19 @@
       ]
     },
     {
+      "carried": {
+        "line_items.price_data.currency": [
+          {
+            "$gen": "account_currency"
+          }
+        ],
+        "line_items.price_data.product": [
+          {
+            "$gen": "ref",
+            "arg": "product"
+          }
+        ]
+      },
       "changed": [
         {
           "after": {
@@ -693208,6 +694823,11 @@
       ]
     },
     {
+      "carried": {
+        "dashboard": "none",
+        "defaults.responsibilities.fees_collector": "application",
+        "defaults.responsibilities.losses_collector": "application"
+      },
       "changed": [
         {
           "after": {
@@ -693455,11 +695075,11 @@
   "spec_sha256": "9119e72c7ff8ad142e94f7efa9cf49d8e6eec69df3592e17e8fba15099726ed7",
   "stripe_run": {
     "event": "push",
-    "id": 41972314571,
+    "id": 42047800580,
     "passed": true,
     "platform_country": "US",
     "sandbox": "ci",
-    "time": "2026-11-05T06:55:21Z"
+    "time": "2026-11-05T16:33:22Z"
   },
-  "suite_commit": "76e466e81b9828d486f921608d4296ed549c0b09"
+  "suite_commit": "2f881eed914732f30d2277f76e79380ba7cdf159"
 }

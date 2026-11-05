@@ -336,7 +336,7 @@ func (m *model) encodeChanges(plan, state basetypes.ObjectValue, config tftypes.
 			continue
 		}
 		switch {
-		case n.Name == "metadata" && n.Shape == fields.StringMap:
+		case n.Shape == fields.StringMap && keyByKey(n, n.Name == "metadata"):
 			diff, err := metadataDiff(pv, sv)
 			if err != nil {
 				return nil, err
@@ -382,6 +382,9 @@ func (m *model) encodeChanges(plan, state basetypes.ObjectValue, config tftypes.
 				return nil, err
 			}
 			if ok {
+				if v, err = withRemovedKeys(n, v, pv, sv); err != nil {
+					return nil, err
+				}
 				v = m.carryOnUpdate(n, sv, v)
 				out = append(out, wire.Field{Name: n.Name, Value: v})
 			}
@@ -650,11 +653,11 @@ func (m *model) carryOnUpdate(n *node, state attr.Value, v wire.Value) wire.Valu
 // whose planned value differs from the state's, those of a nested object in SendChangedMembers
 // likewise, and the whole of any other that has one. A map sends its changed keys and a removed
 // key as null, as Stripe merges it (the suite's probes `update/1` and `unset/1` of an account's
-// `individual.metadata`), unless ReplacedMaps names it, which goes whole without the keys it
-// lost. A member the plan leaves unknown is Stripe's to fill in, so it is not sent, and a hash
-// in SendWholeMembers that differs only by such members is not sent either, which would send
-// Stripe its own values back. at is the path of n in config, the configuration; the zero
-// value turns that check off.
+// `individual.metadata`), unless the record shows Stripe replacing it, when it goes whole
+// without the keys it lost (keyByKey). A member the plan leaves unknown is Stripe's to fill
+// in, so it is not sent, and a hash in SendWholeMembers that differs only by such members is
+// not sent either, which would send Stripe its own values back. at is the path of n in config,
+// the configuration; the zero value turns that check off.
 func (m *model) changedMembers(n *node, plan, state attr.Value, allow func(*node) bool, at *tftypes.AttributePath, config tftypes.Value) (wire.Object, error) {
 	planned, held := objectAttrs(plan), objectAttrs(state)
 	var out wire.Object
@@ -688,7 +691,7 @@ func (m *model) changedMembers(n *node, plan, state attr.Value, allow func(*node
 				continue
 			}
 			v = members
-		case k.Shape == fields.StringMap && !slices.Contains(m.decl.ReplacedMaps, k.Path):
+		case k.Shape == fields.StringMap && keyByKey(k, true):
 			diff, err := metadataDiff(pv, sv)
 			if err != nil {
 				return nil, err
@@ -750,6 +753,12 @@ func wholeMembers(n *node, plan, state attr.Value) (wire.Object, error) {
 				continue
 			}
 			v = members
+		case merges(k):
+			members, err := mergedMap(pv, sv)
+			if err != nil {
+				return nil, err
+			}
+			v = members
 		default:
 			var ok bool
 			var err error
@@ -794,6 +803,97 @@ func withoutUnchangedDefaults(n *node, plan, state attr.Value) attr.Value {
 		return plan
 	}
 	return out
+}
+
+// keyByKey reports whether an update sends a map's changed keys alone, with a removed key as
+// the unset: where the record shows Stripe merging it, and where it shows nothing, as def says.
+// A map Stripe replaces whole goes whole, without the keys it lost.
+func keyByKey(n *node, def bool) bool {
+	if n.MapUpdate != nil {
+		return !n.MapUpdate.Replaced
+	}
+	return def
+}
+
+// merges reports a map the record shows Stripe merging key by key, which a hash sent whole
+// still sends with its removed keys as the unset, or they would stay.
+func merges(n *node) bool {
+	return n.Shape == fields.StringMap && n.MapUpdate != nil && !n.MapUpdate.Replaced
+}
+
+// mergedMap is a merged map as a whole send sends it: every planned key, and each key the state
+// holds and the plan does not as null, which Stripe takes as the removal.
+func mergedMap(plan, state attr.Value) (wire.Object, error) {
+	want, err := stringMap(plan)
+	if err != nil {
+		return nil, err
+	}
+	have, err := stringMap(state)
+	if err != nil {
+		return nil, err
+	}
+	out := wire.Object{}
+	for k, v := range want {
+		out = append(out, wire.Field{Name: k, Value: wire.String(v)})
+	}
+	for k := range have {
+		if _, kept := want[k]; !kept {
+			out = append(out, wire.Field{Name: k, Value: wire.Null{}})
+		}
+	}
+	slices.SortFunc(out, func(a, b wire.Field) int { return strings.Compare(a.Name, b.Name) })
+	return out, nil
+}
+
+// withRemovedKeys adds to a hash an update sends whole, at any depth of nested hashes, the keys
+// each merged map in it lost, as null: Stripe keeps the keys a merged map's update leaves out. It
+// walks the hash's members rather than what was encoded, because the encoding leaves out a map
+// the plan removes outright, whose keys the state holds, and a nested hash the plan removes that
+// holds one.
+func withRemovedKeys(n *node, sent wire.Value, plan, state attr.Value) (wire.Value, error) {
+	obj, ok := sent.(wire.Object)
+	if !ok || n.Shape != fields.Object {
+		return sent, nil
+	}
+	planned, held := objectAttrs(plan), objectAttrs(state)
+	put := func(name string, v wire.Value) {
+		for i := range obj {
+			if obj[i].Name == name {
+				obj[i].Value = v
+				return
+			}
+		}
+		obj = append(obj, wire.Field{Name: name, Value: v})
+	}
+	for _, k := range n.Kids {
+		pv, sv := planned[k.AttrName()], held[k.AttrName()]
+		if !k.Update || pv != nil && pv.IsUnknown() {
+			continue
+		}
+		f, encoded := obj.Get(k.Name)
+		switch {
+		case merges(k) && (known(pv) || known(sv) && !emptyCollection(sv)):
+			members, err := mergedMap(pv, sv)
+			if err != nil {
+				return nil, err
+			}
+			if len(members) > 0 {
+				put(k.Name, members)
+			}
+		case k.Shape == fields.Object && (encoded || known(sv)):
+			if !encoded {
+				f = wire.Object{}
+			}
+			v, err := withRemovedKeys(k, f, pv, sv)
+			if err != nil {
+				return nil, err
+			}
+			if o, isObj := v.(wire.Object); encoded || isObj && len(o) > 0 {
+				put(k.Name, v)
+			}
+		}
+	}
+	return obj, nil
 }
 
 func metadataDiff(plan, state attr.Value) (wire.Object, error) {

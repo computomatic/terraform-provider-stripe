@@ -411,7 +411,8 @@ type Declaration struct {
 	FixedOnceSet map[string]string
 	// MetadataKeysStay says Stripe keeps a `metadata` key sent with an empty value, with the
 	// value "", where most objects remove it, such as a credit grant. A plan that drops a key
-	// the object holds fails and says to set the key to "" instead.
+	// the object holds fails and says to set the key to "" instead. It must agree with the
+	// record's `map` of the update's `metadata`, where the record has one.
 	MetadataKeysStay bool
 	// MatchBy maps the name of a top-level list of objects to the string field that identifies
 	// its elements, such as `items` to `price` for a subscription. Elements are matched by
@@ -489,15 +490,10 @@ type Declaration struct {
 	// record's `families[].hashes` lists the hash as `siblings_kept` for the table's object, which
 	// `TestSendChangedMembersFollowTheEvidence` checks. A nested entry sits inside another, so the
 	// request never sends Stripe's own values back. A member removed from the configuration is
-	// sent as null, a map member's removed key likewise (unless ReplacedMaps names the map), and
+	// sent as null, a map member's removed key likewise, unless the record shows Stripe replacing
+	// the map whole (the table's MapUpdate), when the map goes whole without the keys it lost, and
 	// an object with Required members is sent whole, as Stripe takes it, and needs no entry.
 	SendChangedMembers []string
-	// ReplacedMaps lists maps, by dotted path, inside a SendChangedMembers object that Stripe
-	// replaces whole on update, where the suite's recipe says so (its `Replaced`) and its run
-	// against Stripe agrees, such as a payment link's `payment_intent_data.metadata`. A change
-	// sends the whole map without the keys it lost, because Stripe keeps a key sent empty as an
-	// empty value there. Any other such map merges key by key, as an object's own metadata does.
-	ReplacedMaps []string
 	// SendWholeMembers lists the hashes, by dotted path, that an update sends whole once a member
 	// changes: inside a SendChangedMembers object, where nothing proves Stripe keeps the members a
 	// request leaves out, every hash is in one list or the other (checkSentMembers), and at the top

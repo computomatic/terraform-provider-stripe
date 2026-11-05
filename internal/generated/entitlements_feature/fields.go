@@ -11,6 +11,6 @@ var Table = []fields.Field{
 	{Name: "id", Shape: fields.String, Response: true, Description: "Unique identifier for the object."},
 	{Name: "livemode", Shape: fields.Bool, Response: true, Description: "If the object exists in live mode, the value is `true`. If the object exists in test mode, the value is `false`."},
 	{Name: "lookup_key", Shape: fields.String, Required: true, Create: true, Response: true, Description: "A unique key you provide as your own system identifier. This may be up to 80 characters."},
-	{Name: "metadata", Shape: fields.StringMap, Create: true, Update: true, Response: true, ServerDefaulted: true, Stable: true, Description: "Set of key-value pairs that you can attach to an object. This can be useful for storing additional information about the object in a structured format.", Default: &fields.Default{Kind: fields.DefaultValue, Value: "{}"}},
+	{Name: "metadata", Shape: fields.StringMap, Create: true, Update: true, Response: true, ServerDefaulted: true, Stable: true, Description: "Set of key-value pairs that you can attach to an object. This can be useful for storing additional information about the object in a structured format.", Default: &fields.Default{Kind: fields.DefaultValue, Value: "{}"}, MapUpdate: &fields.MapUpdate{Replaced: false, EmptyKept: false}},
 	{Name: "name", Shape: fields.String, Required: true, Create: true, Update: true, Response: true, Description: "The feature's name, for your own purpose, not meant to be displayable to the customer."},
 }

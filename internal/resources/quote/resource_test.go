@@ -274,3 +274,111 @@ func TestAccQuote_cancelAccepted(t *testing.T) {
 		}, nil, "stripe_quote"),
 	})
 }
+
+// discountConfig is a quote as the suite's discount states make one, for a customer of its own
+// with a line of two of a 2000-cent price (suite: TestQuoteAttributes, `newDiscountQuote`), beside
+// the coupon and promotion codes of `newPromotionCouponID` and `promotionCodeForm`. quote lands
+// inside the quote.
+func discountConfig(c acctest.Config, quote string) string {
+	return c.ProviderBlock() + fmt.Sprintf(`
+resource "stripe_customer" "test" {
+  email = "quote@example.com"
+}
+
+resource "stripe_product" "test" {
+  name = %q
+}
+
+resource "stripe_price" "test" {
+  product     = stripe_product.test.id
+  currency    = "usd"
+  unit_amount = 2000
+}
+
+resource "stripe_coupon" "test" {
+  percent_off = 10
+  duration    = "once"
+}
+
+resource "stripe_promotion_code" "first" {
+  promotion = {
+    type   = "coupon"
+    coupon = stripe_coupon.test.id
+  }
+}
+
+resource "stripe_promotion_code" "second" {
+  promotion = {
+    type   = "coupon"
+    coupon = stripe_coupon.test.id
+  }
+}
+
+resource "stripe_quote" "test" {
+  customer = stripe_customer.test.id
+%s}
+`, c.Name("Package"), quote)
+}
+
+// A quote takes a promotion code as a discount and changes it to a second one in place, which
+// the resource reads back by the form configured from the discounts Stripe expands (suite:
+// TestQuoteAttributes, state `discount_promotion_code`); the data source reads the discounts' IDs.
+// The line sets no discounts, and Stripe lists the quote's discount on it too (dev sandbox), so
+// in strict mode the create fails unless the line's `discounts` leaves the quote's own out.
+func TestAccQuote_discounts(t *testing.T) {
+	acct := acctest.NewAccount(t)
+	withCode := func(code string) string {
+		return discountConfig(acct, "  line_items = [{ price = stripe_price.test.id, quantity = 2 }]\n  discounts = [{ promotion_code = stripe_promotion_code."+code+".id }]\n")
+	}
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: tfacc.ProviderFactories,
+		Steps: acctest.Forget(t, []resource.TestStep{
+			{
+				Config: withCode("first") + `
+data "stripe_quote" "by_id" {
+  id = stripe_quote.test.id
+}
+`,
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr(address, "discounts.#", "1"),
+					resource.TestCheckResourceAttrPair(address, "discounts.0.promotion_code", "stripe_promotion_code.first", "id"),
+					resource.TestCheckNoResourceAttr(address, "discounts.0.coupon"),
+					resource.TestCheckNoResourceAttr(address, "discounts.0.discount"),
+					resource.TestCheckResourceAttr("data.stripe_quote.by_id", "discounts.#", "1"),
+					resource.TestMatchResourceAttr("data.stripe_quote.by_id", "discounts.0", regexp.MustCompile(`^di_`)),
+				),
+			},
+			{
+				Config: withCode("second"),
+				ConfigPlanChecks: resource.ConfigPlanChecks{PreApply: []plancheck.PlanCheck{
+					plancheck.ExpectResourceAction(address, plancheck.ResourceActionUpdate),
+				}},
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr(address, "discounts.#", "1"),
+					resource.TestCheckResourceAttrPair(address, "discounts.0.promotion_code", "stripe_promotion_code.second", "id"),
+				),
+			},
+		}, nil, "stripe_quote"),
+	})
+}
+
+// A quote's line takes a coupon as a discount, which the resource reads back from the discount
+// the line holds whole, with the amount it takes off (suite: TestQuoteAttributes, state
+// `line_discount_coupon` on create).
+func TestAccQuote_lineDiscounts(t *testing.T) {
+	acct := acctest.NewAccount(t)
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: tfacc.ProviderFactories,
+		Steps: acctest.Forget(t, []resource.TestStep{{
+			Config: discountConfig(acct, "  line_items = [{\n    price     = stripe_price.test.id\n    quantity  = 2\n    discounts = [{ coupon = stripe_coupon.test.id }]\n  }]\n"),
+			Check: resource.ComposeAggregateTestCheckFunc(
+				resource.TestCheckResourceAttr(address, "line_items.0.discounts.#", "1"),
+				resource.TestCheckResourceAttrPair(address, "line_items.0.discounts.0.coupon", "stripe_coupon.test", "id"),
+				resource.TestCheckNoResourceAttr(address, "line_items.0.discounts.0.discount"),
+				resource.TestCheckNoResourceAttr(address, "line_items.0.discounts.0.promotion_code"),
+				resource.TestCheckResourceAttr(address, "line_items.0.discounts.0.amount", "400"),
+				resource.TestCheckNoResourceAttr(address, "discounts.#"),
+			),
+		}}, nil, "stripe_quote"),
+	})
+}

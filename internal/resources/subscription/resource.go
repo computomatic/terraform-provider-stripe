@@ -51,7 +51,15 @@ var Declaration = engine.Declaration{
 	// `hashes`), so an update sends only those that changed; `issuer` requires its `type` and
 	// goes whole.
 	SendChangedMembers: []string{"invoice_settings"},
-	Delete:             engine.Delete,
+	Answers: map[string]string{
+		// suite: TestSubscriptionAttributes, probe `isolated/invoice_item_coupon_expired`
+		"add_invoice_items.discounts.coupon": "Stripe takes a coupon that has not expired.",
+		// suite: TestSubscriptionAttributes, probe `isolated/invoice_item_discount_of_subscription`
+		"add_invoice_items.discounts.discount": "Stripe takes a discount the subscription or its customer already holds.",
+		// suite: TestSubscriptionAttributes, probe `isolated/invoice_item_promotion_code_inactive`
+		"add_invoice_items.discounts.promotion_code": "Stripe takes an active promotion code.",
+	},
+	Delete: engine.Delete,
 }
 
 // NewResource returns the resource constructor the provider registers.
