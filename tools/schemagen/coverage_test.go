@@ -277,11 +277,48 @@ func TestAttributesCheckRefusesTheUnknown(t *testing.T) {
 	if err := leaf(ClassUnproven, "not_proven").check(); err != nil {
 		t.Error(err)
 	}
+	if err := leaf(ClassUnproven, ReasonAcceptedIgnored).check(); err != nil {
+		t.Error(err)
+	}
+	if err := leaf(ClassVerified, ReasonAcceptedIgnored).check(); err == nil || !strings.Contains(err.Error(), `reads it only on "unproven"`) {
+		t.Errorf("an accepted but ignored leaf of another class: %v", err)
+	}
 	if err := leaf(ClassVerified, "refused_mostly").check(); err == nil || !strings.Contains(err.Error(), `unknown reason "refused_mostly"`) {
 		t.Errorf("an unknown reason: %v", err)
 	}
 	if err := leaf("verified_mostly", "").check(); err == nil || !strings.Contains(err.Error(), `unknown class "verified_mostly"`) {
 		t.Errorf("an unknown class: %v", err)
+	}
+}
+
+// An embedded copy that `attributes.json` keys by its members takes the class they share, and
+// none where they differ or it lists none; a member of a copy the walk holds is no missing key.
+func TestCopyClassFoldsMembers(t *testing.T) {
+	member := func(path, class string) AttributeLeaf {
+		return AttributeLeaf{Key: Key{Object: "gadget", Side: SideResponse, Path: path}, Class: class}
+	}
+	copied := Key{Object: "gadget", Side: SideResponse, Path: "rates"}
+	p := &Pinned{Attributes: &Attributes{Leaves: []AttributeLeaf{
+		member("rates.id", ClassVerified), member("rates.percentage", ClassVerified), member("rates_total", ClassUnproven),
+		member("parts.id", ClassVerified), member("parts.name", ClassUnproven),
+	}}}
+	if got := p.copyClass(copied); got != ClassVerified {
+		t.Errorf("members that share a class: got %q", got)
+	}
+	if got := p.copyClass(Key{Object: "gadget", Side: SideResponse, Path: "parts"}); got != "" {
+		t.Errorf("members that differ: got %q", got)
+	}
+	if got := p.copyClass(Key{Object: "gadget", Side: SideResponse, Path: "other"}); got != "" {
+		t.Errorf("no members: got %q", got)
+	}
+	tc := &tableCoverage{object: "gadget", leaves: []Leaf{{Key: copied, Kind: KindEmbedded}}, records: []Record{{Key: copied}}}
+	p.Attributes.Leaves = p.Attributes.Leaves[:2]
+	if err := checkVerifiedKeys(p, []*tableCoverage{tc}); err != nil {
+		t.Errorf("a verified member of a walked copy: %v", err)
+	}
+	p.Attributes.Leaves = append(p.Attributes.Leaves, member("loose.id", ClassVerified))
+	if err := checkVerifiedKeys(p, []*tableCoverage{tc}); err == nil || !strings.Contains(err.Error(), "loose.id") {
+		t.Errorf("a verified leaf outside any copy: %v", err)
 	}
 }
 

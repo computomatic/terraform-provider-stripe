@@ -84,10 +84,15 @@ type AttributeLeaf struct {
 // ReasonRefusedOnly is the reason of a leaf Stripe has only ever refused.
 const ReasonRefusedOnly = "refused_only"
 
+// ReasonAcceptedIgnored is the reason of a leaf the fake serves whose request Stripe accepted
+// with no effect the suite could observe. It qualifies ClassUnproven alone, so such a leaf awaits
+// proof like any other unproven leaf.
+const ReasonAcceptedIgnored = "accepted_ignored"
+
 // attributeReasons is the closed set of reasons `attributes.json` gives. A reason outside it can
 // change what a class means, so a later fake's new one fails generation until the generator reads
 // it.
-var attributeReasons = []string{ReasonRefusedOnly, "accepted_only", "country_profile_missing", "needs_declaration", "not_proven", "operation_not_registered", "stripe_only"}
+var attributeReasons = []string{ReasonRefusedOnly, ReasonAcceptedIgnored, "accepted_only", "country_profile_missing", "needs_declaration", "not_proven", "operation_not_registered", "stripe_only"}
 
 // Evidence is the suite's evidence record, format version 1 (suite ADR
 // 2026-10-29-attribute-coverage, A7; its JSON Schema is `internal/evidence/schema/v1.json` in
@@ -505,6 +510,9 @@ func (a *Attributes) check() error {
 		}
 		if l.Reason != "" && !slices.Contains(attributeReasons, l.Reason) {
 			return fmt.Errorf("spec/attributes.json: %s has the unknown reason %q", l.Key, l.Reason)
+		}
+		if l.Reason == ReasonAcceptedIgnored && l.Class != ClassUnproven {
+			return fmt.Errorf("spec/attributes.json: %s has the reason %q on the class %q; the generator reads it only on %q", l.Key, l.Reason, l.Class, ClassUnproven)
 		}
 		if seen[l.Key] {
 			return fmt.Errorf("spec/attributes.json lists %s twice", l.Key)

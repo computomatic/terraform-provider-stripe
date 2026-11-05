@@ -19,7 +19,9 @@ import (
 // NewDataSource compiles the declaration against its table and returns the data source
 // constructor the provider registers.
 func NewDataSource(decl Declaration, table []fields.Field) (func() datasource.DataSource, error) {
-	m, err := compile(decl, fields.ForDataSource(table))
+	dsTable := fields.ForDataSource(table)
+	decl.Answers = answersIn(decl.Answers, dsTable)
+	m, err := compile(decl, dsTable)
 	if err != nil {
 		return nil, err
 	}
@@ -400,4 +402,26 @@ func appendLabels(labels []string, name string, value wire.Value) []string {
 		s, _ := v.(wire.String)
 		return append(labels, name+"="+string(s))
 	}
+}
+
+// answersIn keeps the answers entries that name a field of the data source's table. The data
+// source holds a field the resource takes in another shape in the response's, such as the
+// discount IDs of a request's `discounts`, so the wording of an argument below it is the
+// resource's alone.
+func answersIn(answers map[string]string, table []fields.Field) map[string]string {
+	out := make(map[string]string, len(answers))
+	for p, wording := range answers {
+		level, ok := table, false
+		for _, name := range strings.Split(p, ".") {
+			var f fields.Field
+			if f, ok = fields.Find(level, name); !ok {
+				break
+			}
+			level = f.Fields
+		}
+		if ok {
+			out[p] = wording
+		}
+	}
+	return out
 }

@@ -3,12 +3,12 @@
 page_title: "stripe_invoice Data Source - Stripe"
 subcategory: ""
 description: |-
-  A bill sent to a customer, such as the latest_invoice of a subscription. The invoice's last_finalization_error is not available.
+  A bill sent to a customer, such as the latest_invoice of a subscription.
 ---
 
 # Data Source: stripe_invoice
 
-A bill sent to a customer, such as the `latest_invoice` of a subscription. The invoice's `last_finalization_error` is not available.
+A bill sent to a customer, such as the `latest_invoice` of a subscription.
 
 ## Example Usage
 
@@ -39,7 +39,6 @@ This data source exports the following attributes in addition to the arguments a
 * `amount_remaining` - The difference between amount_due and amount_paid, in cents (or local equivalent).
 * `amount_shipping` - This is the sum of all the shipping amounts.
 * `application` - ID of the Connect Application that created the invoice.
-* `application_fee_amount` - A fee in cents (or local equivalent) that will be applied to the invoice and transferred to the application owner's Stripe account. The request must be made with an OAuth key or the Stripe-Account header in order to take an application fee. For more information, see the application fees [documentation](https://docs.stripe.com/billing/invoices/connect#collecting-fees).
 * `attempt_count` - Number of payment attempts made for this invoice, from the perspective of the payment retry schedule. Any payment attempt counts as the first attempt, and subsequently only automatic retries increment the attempt count. In other words, manual payment attempts after the first attempt do not affect the retry schedule. If a failure is returned with a non-retryable return code, the invoice can no longer be retried unless a new payment method is obtained. Retries will continue to be scheduled, and attempt_count will continue to increment, but retries will only be executed if a new payment method is obtained.
 * `attempted` - Whether an attempt has been made to pay the invoice. An invoice is not attempted until 1 hour after the `invoice.created` webhook, for example, so you might not want to display that invoice as unpaid to your users.
 * `auto_advance` - Controls whether Stripe performs [automatic collection](https://docs.stripe.com/invoicing/integration/automatic-advancement-collection) of the invoice. If `false`, the invoice's state doesn't automatically advance without an explicit action. Defaults to false.
@@ -65,6 +64,7 @@ This data source exports the following attributes in addition to the arguments a
 * `default_source` - ID of the default payment source for the invoice. It must belong to the customer associated with the invoice and be in a chargeable state. If not set, defaults to the subscription's default source, if any, or to the customer's default source.
 * `default_tax_rates` - The tax rates that will apply to any line item that does not have `tax_rates` set.
 * `description` - An arbitrary string attached to the object. Often useful for displaying to users. Referenced as 'memo' in the Dashboard.
+* `discounts` - The discounts applied to the invoice. Line item discounts are applied before invoice discounts. Use `expand[]=discounts` to expand each discount.
 * `due_date` - The date on which payment for this invoice is due. Valid only for invoices where `collection_method=send_invoice`.
 * `effective_at` - The date when this invoice is in effect. Same as `finalized_at` unless overwritten. When defined, this value replaces the system-generated 'Date of issue' printed on the invoice PDF and receipt.
 * `ending_balance` - Ending customer balance after the invoice is finalized. Invoices are finalized approximately an hour after successful webhook delivery or when payment collection is attempted for the invoice. If the invoice has not been finalized yet, this will be null.
@@ -73,6 +73,7 @@ This data source exports the following attributes in addition to the arguments a
 * `hosted_invoice_url` - The URL for the hosted invoice page, which allows customers to view and pay an invoice. If the invoice has not been finalized yet, this will be null.
 * `invoice_pdf` - The link to download the PDF for the invoice. If the invoice has not been finalized yet, this will be null.
 * `issuer` - The connected account that issues the invoice. The invoice is presented with the branding and support information of the specified account. See [`issuer`](#issuer) below.
+* `last_finalization_error` - The error encountered during the previous attempt to finalize the invoice. This field is cleared when the invoice is successfully finalized. See [`last_finalization_error`](../guides/invoice-data-source-last_finalization_error) on its own page.
 * `latest_revision` - The ID of the most recent non-draft revision of this invoice
 * `lines` - The individual line items that make up the invoice. `lines` is sorted as follows: (1) pending invoice items (including prorations) in reverse chronological order, (2) subscription items in reverse chronological order, and (3) invoice items added after invoice creation in chronological order. Holds the first page of the list Stripe returns with the object; `has_more` is true when there are more. Read every element with the `stripe_invoice_line` data source. See [`lines`](#lines) below.
 * `livemode` - If the object exists in live mode, the value is `true`. If the object exists in test mode, the value is `false`.
@@ -107,7 +108,6 @@ This data source exports the following attributes in addition to the arguments a
 * `total_excluding_tax` - The integer amount in cents (or local equivalent) representing the total amount of the invoice including all discounts but excluding all tax.
 * `total_pretax_credit_amounts` - Contains pretax credit amounts (ex: discount, credit grants, etc) that apply to this invoice. This is a combined list of total_pretax_credit_amounts across all invoice line items. See [`total_pretax_credit_amounts`](#total_pretax_credit_amounts) below.
 * `total_taxes` - The aggregate tax information of all line items. See [`total_taxes`](#total_taxes) below.
-* `transfer_data` - If specified, the funds from the invoice will be transferred to the destination and the ID of the resulting transfer will be found on the invoice's charge. See [`transfer_data`](#transfer_data) below.
 * `webhooks_delivered_at` - Invoices are automatically paid or sent 1 hour after webhooks are delivered, or until all webhook delivery attempts have [been exhausted](https://docs.stripe.com/billing/webhooks#understand). This field tracks the time when webhooks for this invoice were successfully delivered. If the invoice had no webhooks to deliver, this will be set while the invoice is being created.
 
 <a id="automatic_tax"></a>
@@ -478,16 +478,6 @@ The `payment_settings.payment_method_options.card` attribute supports:
 The `payment_settings.payment_method_options.card.installments` attribute supports:
 
 * `enabled` - Whether Installments are enabled for this Invoice.
-* `plan` - See [`payment_settings.payment_method_options.card.installments.plan`](#payment_settings.payment_method_options.card.installments.plan) below.
-
-<a id="payment_settings.payment_method_options.card.installments.plan"></a>
-### `payment_settings.payment_method_options.card.installments.plan`
-
-The `payment_settings.payment_method_options.card.installments.plan` attribute supports:
-
-* `count` -
-* `interval` - Possible values: `month`.
-* `type` - Possible values: `bonus`, `fixed_count`, `revolving`.
 
 <a id="payment_settings.payment_method_options.customer_balance"></a>
 ### `payment_settings.payment_method_options.customer_balance`
@@ -820,11 +810,3 @@ The `total_taxes` attribute is a list. Each element supports:
 The `total_taxes.tax_rate_details` attribute supports:
 
 * `tax_rate` - ID of the tax rate
-
-<a id="transfer_data"></a>
-### `transfer_data`
-
-The `transfer_data` attribute supports:
-
-* `amount` -
-* `destination` -

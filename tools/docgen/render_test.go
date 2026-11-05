@@ -484,6 +484,33 @@ func TestGuideSplit(t *testing.T) {
 	}
 }
 
+// A guide page over the budget moves its largest nested block to a guide page of its own in
+// turn, linked from the block's line, and fails when it stays over with every block moved.
+func TestGuideSplitsAgain(t *testing.T) {
+	s := withDefaults(t, fixture(t))
+	gadget := byType(s.Resources, "widget_gadget")
+	in := pageInput{DataSources: dataSources(s)}
+	parts := at(gadget.Attrs, "parts")
+	whole := renderGuide(gadget, "resources", parts, "parts", parts.argument(), in)
+	pages, err := guidePages(gadget, "resources", parts, "parts", parts.argument(), in, len(whole)-1)
+	if err != nil {
+		t.Fatal(err)
+	}
+	guide, nested := pages[filepath.Join("guides", "widget_gadget-resource-parts.md")], pages[filepath.Join("guides", "widget_gadget-resource-parts.options.md")]
+	if len(pages) != 2 || guide == "" || nested == "" {
+		t.Fatalf("got pages %v, want the guide and one for `parts.options`", slices.Collect(maps.Keys(pages)))
+	}
+	if !strings.Contains(guide, "See [`parts.options`](../guides/widget_gadget-resource-parts.options) on its own page.") || strings.Contains(guide, "### `parts.options`") {
+		t.Errorf("the guide must link `parts.options` and leave its subsections out:\n%s", guide)
+	}
+	if !strings.Contains(nested, "# widget_gadget resource: `parts.options`") || !strings.Contains(nested, "### `parts.options.finish`") {
+		t.Errorf("the nested guide must hold `parts.options` and what is below it:\n%s", nested)
+	}
+	if _, err := guidePages(gadget, "resources", parts, "parts", parts.argument(), in, 100); err == nil {
+		t.Error("a guide over the budget with every block moved must fail")
+	}
+}
+
 // An optional argument only the update takes, and every argument of the provider, must state a
 // default, but one whose default the evidence has not recorded need not, verified or not; in the
 // total mode every optional argument must, but for a nested object with members.

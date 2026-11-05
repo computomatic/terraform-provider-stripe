@@ -431,3 +431,111 @@ func TestAccInvoice_liveMode(t *testing.T) {
 		},
 	})
 }
+
+// A draft changes the arguments a change used to replace it for in place (suite:
+// TestInvoiceAttributes, probes `update/1` and `enums/35`).
+func TestAccInvoice_updateInPlace(t *testing.T) {
+	acct := acctest.NewAccount(t)
+	var path string
+	shipping := func(city, line1, line2, postal, state string) string {
+		return fmt.Sprintf(`  shipping_details = {
+    name    = "Attrs Receiver"
+    phone   = "+15555550100"
+    address = { city = %q, country = "US", line1 = %q, line2 = %q, postal_code = %q, state = %q }
+  }
+`, city, line1, line2, postal, state)
+	}
+	first := shipping("Portland", "1 Oak St", "Unit 1", "97201", "OR") + "  rendering = { amount_tax_display = \"exclude_tax\", pdf = { page_size = \"a4\" } }\n"
+	second := shipping("Seattle", "400 Pine St", "Suite 5", "98101", "WA") + "  rendering = { amount_tax_display = \"include_inclusive_tax\", pdf = { page_size = \"auto\" } }\n"
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: tfacc.ProviderFactories,
+		Steps: []resource.TestStep{
+			{Config: emptyDraftConfig(acct, "stripe_customer.a", first), Check: idPath(resAddress, "/v1/invoices/", &path)},
+			{
+				Config: emptyDraftConfig(acct, "stripe_customer.a", second),
+				ConfigPlanChecks: resource.ConfigPlanChecks{PreApply: []plancheck.PlanCheck{
+					plancheck.ExpectResourceAction(resAddress, plancheck.ResourceActionUpdate),
+				}},
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr(resAddress, "shipping_details.address.city", "Seattle"),
+					resource.TestCheckResourceAttr(resAddress, "rendering.amount_tax_display", "include_inclusive_tax"),
+					resource.TestCheckResourceAttr(resAddress, "rendering.pdf.page_size", "auto"),
+					tfacc.Holds(t, acct, &path, "shipping_details", wire.Object{
+						{Name: "address", Value: wire.Object{
+							{Name: "city", Value: wire.String("Seattle")},
+							{Name: "country", Value: wire.String("US")},
+							{Name: "line1", Value: wire.String("400 Pine St")},
+							{Name: "line2", Value: wire.String("Suite 5")},
+							{Name: "postal_code", Value: wire.String("98101")},
+							{Name: "state", Value: wire.String("WA")},
+						}},
+						{Name: "name", Value: wire.String("Attrs Receiver")},
+						{Name: "phone", Value: wire.String("+15555550100")},
+					}),
+				),
+			},
+			// Stripe cannot unset `shipping_details` (the record shows no unset of it), so a removal
+			// replaces the draft.
+			{
+				Config: emptyDraftConfig(acct, "stripe_customer.a", "  rendering = { amount_tax_display = \"include_inclusive_tax\", pdf = { page_size = \"auto\" } }\n"),
+				ConfigPlanChecks: resource.ConfigPlanChecks{PreApply: []plancheck.PlanCheck{
+					plancheck.ExpectResourceAction(resAddress, plancheck.ResourceActionDestroyBeforeCreate),
+				}},
+				Check: resource.TestCheckNoResourceAttr(resAddress, "shipping_details"),
+			},
+		},
+	})
+}
+
+// A draft takes a coupon, or a promotion code, as a discount, which the resource reads back by
+// the form configured from the discounts Stripe expands (suite: TestInvoiceAttributes, states
+// `discount_coupon` and `discount_promotion_code`, and the coupon and promotion code of
+// `newPromotionCouponID` and `promotionCodeForm`); the data source reads the discounts' IDs.
+func TestAccInvoice_discounts(t *testing.T) {
+	acct := acctest.NewAccount(t)
+	catalogue := `
+resource "stripe_coupon" "test" {
+  percent_off = 10
+  duration    = "once"
+}
+
+resource "stripe_promotion_code" "test" {
+  promotion = {
+    type   = "coupon"
+    coupon = stripe_coupon.test.id
+  }
+}
+`
+	withCoupon := emptyDraftConfig(acct, "stripe_customer.a", "  discounts = [{ coupon = stripe_coupon.test.id }]\n") + catalogue
+	withCode := emptyDraftConfig(acct, "stripe_customer.a", "  discounts = [{ promotion_code = stripe_promotion_code.test.id }]\n") + catalogue
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: tfacc.ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: withCoupon + `
+data "stripe_invoice" "by_id" {
+  id = stripe_invoice.test.id
+}
+`,
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr(resAddress, "discounts.#", "1"),
+					resource.TestCheckResourceAttrPair(resAddress, "discounts.0.coupon", "stripe_coupon.test", "id"),
+					resource.TestCheckNoResourceAttr(resAddress, "discounts.0.promotion_code"),
+					resource.TestCheckResourceAttr("data.stripe_invoice.by_id", "discounts.#", "1"),
+					resource.TestMatchResourceAttr("data.stripe_invoice.by_id", "discounts.0", regexp.MustCompile(`^di_`)),
+				),
+			},
+			{
+				Config: withCode,
+				ConfigPlanChecks: resource.ConfigPlanChecks{PreApply: []plancheck.PlanCheck{
+					plancheck.ExpectResourceAction(resAddress, plancheck.ResourceActionUpdate),
+				}},
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr(resAddress, "discounts.#", "1"),
+					resource.TestCheckResourceAttrPair(resAddress, "discounts.0.promotion_code", "stripe_promotion_code.test", "id"),
+					resource.TestCheckNoResourceAttr(resAddress, "discounts.0.coupon"),
+				),
+			},
+		},
+	})
+}

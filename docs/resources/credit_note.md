@@ -64,12 +64,11 @@ The following arguments are optional:
 * `amount` - (Optional) The integer amount in cents (or local equivalent) representing the total amount of the credit note. One of `amount`, `lines`, or `shipping_cost` must be provided. Changing it fails the plan, because this resource cannot be replaced. Removing it from the configuration leaves the current value.
 * `credit_amount` - (Optional) The integer amount in cents (or local equivalent) representing the amount to credit the customer's balance, which will be automatically applied to their next invoice. Changing it fails the plan, because this resource cannot be replaced.
 * `effective_at` - (Optional) The date when this credit note is in effect. Same as `created` unless overwritten. When defined, this value replaces the system-generated 'Date of issue' printed on the credit note PDF. Changing it fails the plan, because this resource cannot be replaced. Removing it from the configuration leaves the current value.
-* `email_type` - (Optional) Type of email to send to the customer, one of `credit_note` or `none` and the default is `credit_note`. Possible values: `credit_note`, `none`. Changing it fails the plan, because this resource cannot be replaced.
 * `lines` - (Optional) Line items that make up the credit note. One of `amount`, `lines`, or `shipping_cost` must be provided. Holds the first page of the list Stripe returns with the object; `has_more` is true when there are more. Read every element with the `stripe_credit_note_line` data source. Changing it fails the plan, because this resource cannot be replaced. Removing it from the configuration leaves the current value. See [`lines`](#lines) below.
-* `memo` - (Optional) The credit note's memo appears on the credit note PDF.
-* `metadata` - (Optional) Set of [key-value pairs](https://docs.stripe.com/api/metadata) that you can attach to an object. This can be useful for storing additional information about the object in a structured format. Individual keys can be unset by posting an empty value to them. All keys can be unset by posting an empty value to `metadata`.
-* `out_of_band_amount` - (Optional) The integer amount in cents (or local equivalent) representing the amount that is credited outside of Stripe. Changing it fails the plan, because this resource cannot be replaced.
-* `reason` - (Optional) Reason for issuing this credit note, one of `duplicate`, `fraudulent`, `order_change`, or `product_unsatisfactory` Possible values: `duplicate`, `fraudulent`, `order_change`, `product_unsatisfactory`. Changing it fails the plan, because this resource cannot be replaced.
+* `memo` - (Optional) The credit note's memo appears on the credit note PDF. Default: none.
+* `metadata` - (Optional) Set of [key-value pairs](https://docs.stripe.com/api/metadata) that you can attach to an object. This can be useful for storing additional information about the object in a structured format. Individual keys can be unset by posting an empty value to them. All keys can be unset by posting an empty value to `metadata`. Default (Stripe): `{}`.
+* `out_of_band_amount` - (Optional) The integer amount in cents (or local equivalent) representing the amount that is credited outside of Stripe. Changing it fails the plan, because this resource cannot be replaced. Default: none.
+* `reason` - (Optional) Reason for issuing this credit note, one of `duplicate`, `fraudulent`, `order_change`, or `product_unsatisfactory` Possible values: `duplicate`, `fraudulent`, `order_change`, `product_unsatisfactory`. Changing it fails the plan, because this resource cannot be replaced. Default: none.
 * `refund_amount` - (Optional) The integer amount in cents (or local equivalent) representing the amount to refund. If set, a refund will be created for the charge associated with the invoice. Changing it fails the plan, because this resource cannot be replaced.
 * `refunds` - (Optional) Refunds to link to this credit note. Changing it fails the plan, because this resource cannot be replaced. Removing it from the configuration leaves the current value. See [`refunds`](#refunds) below.
 * `shipping_cost` - (Optional) When shipping_cost contains the shipping_rate from the invoice, the shipping_cost is included in the credit note. One of `amount`, `lines`, or `shipping_cost` must be provided. Changing it fails the plan, because this resource cannot be replaced. See [`shipping_cost`](#shipping_cost) below.
@@ -170,7 +169,7 @@ The `shipping_cost` attribute supports:
 * `amount_subtotal` - (Read-Only) Total shipping cost before any taxes are applied.
 * `amount_tax` - (Read-Only) Total tax amount applied due to shipping costs. If no tax was applied, defaults to 0.
 * `amount_total` - (Read-Only) Total shipping cost after taxes are applied.
-* `shipping_rate` - (Optional) The ID of the ShippingRate for this invoice.
+* `shipping_rate` - (Optional) The ID of the ShippingRate for this invoice. Default: none.
 * `taxes` - (Read-Only) The taxes applied to the shipping rate. See [`shipping_cost.taxes`](#shipping_cost.taxes) below.
 
 <a id="shipping_cost.taxes"></a>
@@ -316,4 +315,4 @@ Using `terraform import`, import a credit note using its ID. For example:
 % terraform import stripe_credit_note.goodwill cn_123
 ```
 
-~> Stripe does not return `credit_amount`, `email_type`, `lines.tax_amounts` or `refund_amount`, so an imported credit note has them null: a configuration that sets one plans a replacement after the import.
+~> Stripe does not return `credit_amount`, `lines.tax_amounts` or `refund_amount`, so an imported credit note has them null: a configuration that sets one plans a replacement after the import.

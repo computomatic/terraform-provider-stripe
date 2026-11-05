@@ -64,6 +64,27 @@ func keptFor(reason string, paths []string) map[string]string {
 	return out
 }
 
+// discountsKept keeps the forms of a `discounts` element, which Stripe returns as discount IDs:
+// the record's `discounts` shows each form returned as `discount_id` and expanded to the discount,
+// which the engine maps back by key (D3), so the configured element is read back (the brief of
+// the eighth pin, 2026-11-05).
+var discountsKept = map[string]string{
+	"discounts.coupon":         "Read back from the expanded discount's `source.coupon`, on a discount with no promotion code (record: `discounts`, relation `coupon`; the brief of the eighth pin, 2026-11-05).",
+	"discounts.discount":       "Read back as the expanded discount's `id` (record: `discounts`, relation `existing_discount`; the brief of the eighth pin, 2026-11-05).",
+	"discounts.promotion_code": "Read back from the expanded discount's `promotion_code` (record: `discounts`, relation `promotion_code`; the brief of the eighth pin, 2026-11-05).",
+}
+
+// invoiceKept is the invoice's register of accepted-only leaves: the forms of its `discounts`,
+// and the arguments whose effect shows elsewhere on the invoice.
+var invoiceKept = map[string]string{
+	"discounts.coupon":               discountsKept["discounts.coupon"],
+	"discounts.discount":             discountsKept["discounts.discount"],
+	"discounts.promotion_code":       discountsKept["discounts.promotion_code"],
+	"days_until_due":                 "Its effect shows in `due_date` (the product owner's decision of 2026-11-05).",
+	"pending_invoice_items_behavior": "Its effect shows in `lines` and the amounts, and it lets one apply make a draft with its items (the product owner's decision of 2026-11-05).",
+	"subscription":                   "Its effect shows in `parent.subscription_details.subscription` (the product owner's decision of 2026-11-05).",
+}
+
 // Resources lists the objects the generator writes tables for. A resource joins the list
 // when its declaration is written.
 var Resources = []Resource{
@@ -110,18 +131,30 @@ var Resources = []Resource{
 	{Package: "terminal_configuration", CreatePath: "/v1/terminal/configurations", UpdatePath: "/v1/terminal/configurations/{configuration}"},
 	{Package: "terminal_location", CreatePath: "/v1/terminal/locations", UpdatePath: "/v1/terminal/locations/{location}"},
 	// The Omit entries of the billing objects: `discounts` is sent as objects and returned as
-	// IDs, which no attribute holds both ways, so discounts wait for a decision on them.
+	// IDs, which D3 maps back by key once the gate exposes them, as it does an invoice's and an
+	// invoice item's (discountsKept).
 	{Package: "billing_credit_grant", CreatePath: "/v1/billing/credit_grants", UpdatePath: "/v1/billing/credit_grants/{id}"},
-	{Package: "credit_note", CreatePath: "/v1/credit_notes", UpdatePath: "/v1/credit_notes/{id}", PagedLists: map[string]string{"lines": "stripe_credit_note_line"}},
+	{Package: "credit_note", AcceptedOnly: map[string]string{
+		"credit_amount":   "Its effect shows in `amount` (the product owner's decision of 2026-11-05).",
+		"lines.tax_rates": "Its effect shows in the tax rates Stripe returns for each line, and the argument keeps its shape, so a state that holds tax rate IDs stays readable (the product owner's decision of 2026-11-05).",
+		"refund_amount":   "Its effect shows in `amount` and `refunds` (the product owner's decision of 2026-11-05).",
+	}, CreatePath: "/v1/credit_notes", UpdatePath: "/v1/credit_notes/{id}", PagedLists: map[string]string{"lines": "stripe_credit_note_line"}},
 	// An invoice's payment error is a nested payment intent that repeats without end, and
 	// three payment method options are empty objects in the response.
-	{Package: "invoice", CreatePath: "/v1/invoices", UpdatePath: "/v1/invoices/{invoice}", PagedLists: map[string]string{"lines": "stripe_invoice_line"}, Omit: []string{"discounts", "last_finalization_error", "payment_settings.payment_method_options.blik", "payment_settings.payment_method_options.konbini", "payment_settings.payment_method_options.sepa_debit"}},
+	{Package: "invoice", AcceptedOnly: invoiceKept, CreatePath: "/v1/invoices", UpdatePath: "/v1/invoices/{invoice}", PagedLists: map[string]string{"lines": "stripe_invoice_line"}, Omit: []string{"discounts", "last_finalization_error", "payment_settings.payment_method_options.blik", "payment_settings.payment_method_options.konbini", "payment_settings.payment_method_options.sepa_debit"}},
 	{Package: "invoiceitem", AcceptedOnly: map[string]string{
-		"pricing.price":       "Its effect shows in `pricing.price_details.price` (the product owner's decision of 2026-11-04).",
-		"subscription":        "Its effect shows in `parent.subscription_details.subscription` (the product owner's decision of 2026-11-04).",
-		"unit_amount_decimal": "Its effect shows in `pricing.unit_amount_decimal` (the product owner's decision of 2026-11-04).",
+		"pricing.price":            "Its effect shows in `pricing.price_details.price` (the product owner's decision of 2026-11-04).",
+		"subscription":             "Its effect shows in `parent.subscription_details.subscription` (the product owner's decision of 2026-11-04).",
+		"unit_amount_decimal":      "Its effect shows in `pricing.unit_amount_decimal` (the product owner's decision of 2026-11-04).",
+		"discounts.coupon":         discountsKept["discounts.coupon"],
+		"discounts.discount":       discountsKept["discounts.discount"],
+		"discounts.promotion_code": discountsKept["discounts.promotion_code"],
 	}, CreatePath: "/v1/invoiceitems", UpdatePath: "/v1/invoiceitems/{invoiceitem}", Omit: []string{"discounts"}},
-	{Package: "quote", CreatePath: "/v1/quotes", UpdatePath: "/v1/quotes/{quote}", Omit: []string{"discounts"}},
+	// A quote's response `discounts` awaits proof, so it cannot read a discount back, and keeps
+	// none of discountsKept.
+	{Package: "quote", AcceptedOnly: map[string]string{
+		"line_items.tax_rates": "Its effect shows on the quote's line items (`stripe_quote_line_item`) (the product owner's decision of 2026-11-05).",
+	}, CreatePath: "/v1/quotes", UpdatePath: "/v1/quotes/{quote}", Omit: []string{"discounts"}},
 	{Package: "subscription", CreatePath: "/v1/subscriptions", UpdatePath: "/v1/subscriptions/{subscription_exposed_id}", PagedLists: map[string]string{"items": "stripe_subscription_item"}, Omit: []string{"discounts", "payment_settings.payment_method_options.konbini", "payment_settings.payment_method_options.sepa_debit", "items.discounts"}, CreateOnly: []string{"billing_cycle_anchor"}},
 	{Package: "subscription_item", CreatePath: "/v1/subscription_items", UpdatePath: "/v1/subscription_items/{item}", Omit: []string{"discounts"}},
 	{Package: "subscription_schedule", CreatePath: "/v1/subscription_schedules", UpdatePath: "/v1/subscription_schedules/{schedule}", Omit: []string{"from_subscription", "pause_schedules"}},

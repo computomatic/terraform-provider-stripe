@@ -57,6 +57,7 @@ The following arguments are optional:
 * `customer_account` - (Optional) The account for which this quote belongs to. A customer or account is required before finalizing the quote. Once specified, it cannot be changed.
 * `default_tax_rates` - (Optional) The tax rates that will apply to any line item that does not have `tax_rates` set.
 * `description` - (Optional) A description that will be displayed on the quote PDF. If no value is passed, the default description configured in your [quote template settings](https://dashboard.stripe.com/settings/billing/quote) will be used.
+* `discounts` - (Optional) The discounts applied to the quote. Changing it fails the plan, because this resource cannot be replaced. See [`discounts`](#discounts) below.
 * `expires_at` - (Optional) A future timestamp on which the quote will be canceled if in `open` or `draft` status. Measured in seconds since the Unix epoch. If no value is passed, the default expiration date configured in your [quote template settings](https://dashboard.stripe.com/settings/billing/quote) will be used. Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
 * `footer` - (Optional) A footer that will be displayed on the quote PDF. If no value is passed, the default footer configured in your [quote template settings](https://dashboard.stripe.com/settings/billing/quote) will be used.
 * `from_quote` - (Optional) Clone an existing quote. The new quote will be created in `status=draft`. When using this parameter, you cannot specify any other parameters except for `expires_at`. Changing it fails the plan, because this resource cannot be replaced. See [`from_quote`](#from_quote) below.
@@ -87,6 +88,13 @@ The `automatic_tax.liability` attribute supports:
 
 * `account` - (Optional) The connected account being referenced when `type` is `account`.
 * `type` - (Required) Type of the account referenced. Possible values: `account`, `self`.
+
+<a id="discounts"></a>
+### `discounts`
+
+The `discounts` attribute is a list. Each element supports:
+
+* `discount` - (Optional) Stripe refused it on a US account on create: "No such discount: 'di_...'".
 
 <a id="from_quote"></a>
 ### `from_quote`
@@ -233,7 +241,7 @@ The `subscription_data` attribute supports:
 
 * `billing_mode` - (Optional) The billing mode of the quote. Changing it fails the plan, because this resource cannot be replaced. Removing it from the configuration leaves the current value. See [`subscription_data.billing_mode`](#subscription_data.billing_mode) below.
 * `description` - (Optional) The subscription's description, meant to be displayable to the customer. Use this field to optionally store an explanation of the subscription for rendering in Stripe surfaces and certain local payment methods UIs.
-* `effective_date` - (Optional) When creating a new subscription, the date of which the subscription schedule will start after the quote is accepted. This date is ignored if it is in the past when the quote is accepted. Measured in seconds since the Unix epoch.
+* `effective_date` - (Optional) When creating a new subscription, the date of which the subscription schedule will start after the quote is accepted. This date is ignored if it is in the past when the quote is accepted. Measured in seconds since the Unix epoch. Stripe refused it on a US account on create and update: "You can only set `effective_date` to `current_period_end` when updating a subscription.".
 * `metadata` - (Optional) Set of [key-value pairs](https://docs.stripe.com/api/metadata) that will set metadata on the subscription or subscription schedule when the quote is accepted. If a recurring price is included in `line_items`, this field will be passed to the resulting subscription's `metadata` field. If `subscription_data.effective_date` is used, this field will be passed to the resulting subscription schedule's `phases.metadata` field. Unlike object-level metadata, this field is declarative. Updates will clear prior values.
 * `trial_period_days` - (Optional) Integer representing the number of trial period days before the customer is charged for the first time.
 
@@ -798,4 +806,4 @@ Using `terraform import`, import a quote using its ID. For example:
 % terraform import stripe_quote.onboarding qt_123
 ```
 
--> Stripe does not return `line_items.discounts.coupon`, `line_items.discounts.promotion_code`, `line_items.price_data` or `line_items.tax_rates`, so an imported quote has them null: a configuration that sets one plans an update after the import.
+~> Stripe does not return `line_items.discounts.coupon`, `line_items.discounts.promotion_code`, `line_items.price_data`, `line_items.tax_rates` or `discounts`, so an imported quote has them null: a configuration that sets `line_items.discounts.coupon`, `line_items.discounts.promotion_code`, `line_items.price_data` or `line_items.tax_rates` plans an update after the import, and one that sets `discounts` plans a replacement.

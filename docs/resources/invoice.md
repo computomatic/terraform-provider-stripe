@@ -3,12 +3,12 @@
 page_title: "stripe_invoice Resource - Stripe"
 subcategory: ""
 description: |-
-  A bill for a customer. With pending_invoice_items_behavior = "include" it takes the customer's pending invoice items when it is created. terraform destroy deletes a draft invoice, and Stripe deletes the invoice items on it too. Set status to open to finalize a draft, to paid to finalize it if need be and charge its default_payment_method, to void to void an open or uncollectible invoice, or to uncollectible to mark an open one uncollectible. With auto_advance, Stripe finalizes a draft and collects payment by itself. Once an invoice is finalized Stripe refuses changes to most arguments, but metadata still changes. Finalizing turns a rendering.pdf.page_size of auto into the page size Stripe picks, such as letter, so set a4 or letter on an invoice you finalize, or leave rendering unset. The invoice's last_finalization_error is not available.
+  A bill for a customer. With pending_invoice_items_behavior = "include" it takes the customer's pending invoice items when it is created. terraform destroy deletes a draft invoice, and Stripe deletes the invoice items on it too. Set status to open to finalize a draft, to paid to finalize it if need be and charge its default_payment_method, to void to void an open or uncollectible invoice, or to uncollectible to mark an open one uncollectible. With auto_advance, Stripe finalizes a draft and collects payment by itself. Once an invoice is finalized Stripe refuses changes to most arguments, but metadata still changes. Finalizing turns a rendering.pdf.page_size of auto into the page size Stripe picks, such as letter, so set a4 or letter on an invoice you finalize, or leave rendering unset. A change that Stripe cannot make in place, such as removing shipping_details, replaces a draft and fails the plan of a finalized invoice.
 ---
 
 # Resource: stripe_invoice
 
-A bill for a customer. With `pending_invoice_items_behavior = "include"` it takes the customer's pending invoice items when it is created. `terraform destroy` deletes a draft invoice, and Stripe deletes the invoice items on it too. Set `status` to `open` to finalize a draft, to `paid` to finalize it if need be and charge its `default_payment_method`, to `void` to void an open or uncollectible invoice, or to `uncollectible` to mark an open one uncollectible. With `auto_advance`, Stripe finalizes a draft and collects payment by itself. Once an invoice is finalized Stripe refuses changes to most arguments, but `metadata` still changes. Finalizing turns a `rendering.pdf.page_size` of `auto` into the page size Stripe picks, such as `letter`, so set `a4` or `letter` on an invoice you finalize, or leave `rendering` unset. The invoice's `last_finalization_error` is not available.
+A bill for a customer. With `pending_invoice_items_behavior = "include"` it takes the customer's pending invoice items when it is created. `terraform destroy` deletes a draft invoice, and Stripe deletes the invoice items on it too. Set `status` to `open` to finalize a draft, to `paid` to finalize it if need be and charge its `default_payment_method`, to `void` to void an open or uncollectible invoice, or to `uncollectible` to mark an open one uncollectible. With `auto_advance`, Stripe finalizes a draft and collects payment by itself. Once an invoice is finalized Stripe refuses changes to most arguments, but `metadata` still changes. Finalizing turns a `rendering.pdf.page_size` of `auto` into the page size Stripe picks, such as `letter`, so set `a4` or `letter` on an invoice you finalize, or leave `rendering` unset. A change that Stripe cannot make in place, such as removing `shipping_details`, replaces a draft and fails the plan of a finalized invoice.
 
 ~> An invoice can move real money. In a live-mode Stripe account, creating or changing one, including setting its `status`, fails at plan time unless the provider sets `allow_live_money_movement = true`. Reading or importing one never does. The provider asks Stripe for the account's mode. See the Managing Test Data guide.
 
@@ -47,38 +47,37 @@ resource "stripe_invoice" "setup" {
 
 The following arguments are optional:
 
-* `account_tax_ids` - (Optional) The account tax IDs associated with the invoice. Only editable when the invoice is a draft. Changing it replaces the resource.
-* `application_fee_amount` - (Optional) A fee in cents (or local equivalent) that will be applied to the invoice and transferred to the application owner's Stripe account. The request must be made with an OAuth key or the Stripe-Account header in order to take an application fee. For more information, see the application fees [documentation](https://docs.stripe.com/billing/invoices/connect#collecting-fees). Changing it replaces the resource.
-* `auto_advance` - (Optional) Controls whether Stripe performs [automatic collection](https://docs.stripe.com/invoicing/integration/automatic-advancement-collection) of the invoice. If `false`, the invoice's state doesn't automatically advance without an explicit action. Defaults to false. Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
-* `automatic_tax` - (Optional) Settings for automatic tax lookup for this invoice. Changing it replaces the resource. Removing it from the configuration leaves the current value. See [`automatic_tax`](#automatic_tax) below.
-* `automatically_finalizes_at` - (Optional) The time when this invoice should be scheduled to finalize (up to 5 years in the future). The invoice is finalized at this time if it's still in draft state. Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
-* `collection_method` - (Optional) Either `charge_automatically`, or `send_invoice`. When charging automatically, Stripe will attempt to pay this invoice using the default source attached to the customer. When sending an invoice, Stripe will email this invoice to the customer with payment instructions. Defaults to `charge_automatically`. Possible values: `charge_automatically`, `send_invoice`. Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
+* `account_tax_ids` - (Optional) The account tax IDs associated with the invoice. Only editable when the invoice is a draft. Default: none.
+* `auto_advance` - (Optional) Controls whether Stripe performs [automatic collection](https://docs.stripe.com/invoicing/integration/automatic-advancement-collection) of the invoice. If `false`, the invoice's state doesn't automatically advance without an explicit action. Defaults to false. Default (Stripe): `false`. Removing it from the configuration leaves the current value.
+* `automatic_tax` - (Optional) Settings for automatic tax lookup for this invoice. Removing it from the configuration leaves the current value. See [`automatic_tax`](#automatic_tax) below.
+* `automatically_finalizes_at` - (Optional) The time when this invoice should be scheduled to finalize (up to 5 years in the future). The invoice is finalized at this time if it's still in draft state. Stripe refused it on a US account on update: "You must enable `auto_advance` in order to set `automatically_finalizes_at`.". Default: none. Removing it from the configuration leaves the current value.
+* `collection_method` - (Optional) Either `charge_automatically`, or `send_invoice`. When charging automatically, Stripe will attempt to pay this invoice using the default source attached to the customer. When sending an invoice, Stripe will email this invoice to the customer with payment instructions. Defaults to `charge_automatically`. Possible values: `charge_automatically`, `send_invoice`. Removing it from the configuration leaves the current value.
 * `currency` - (Optional) The currency to create this invoice in. Defaults to that of `customer` if not specified. Changing it replaces the resource. Removing it from the configuration leaves the current value.
 * `custom_fields` - (Optional) A list of up to 4 custom fields to be displayed on the invoice. See [`custom_fields`](#custom_fields) below.
 * `customer` - (Optional) The ID of the customer to bill. Changing it replaces the resource. Removing it from the configuration leaves the current value.
-* `customer_account` - (Optional) The ID of the account to bill. Changing it replaces the resource.
+* `customer_account` - (Optional) The ID of the account to bill. Changing it replaces the resource. Default: none.
 * `days_until_due` - (Optional) The number of days from when the invoice is created until it is due. Valid only for invoices where `collection_method=send_invoice`.
-* `default_payment_method` - (Optional) ID of the default payment method for the invoice. It must belong to the customer associated with the invoice. If not set, defaults to the subscription's default payment method, if any, or to the default payment method in the customer's invoice settings.
-* `default_source` - (Optional) ID of the default payment source for the invoice. It must belong to the customer associated with the invoice and be in a chargeable state. If not set, defaults to the subscription's default source, if any, or to the customer's default source. Changing it replaces the resource.
-* `default_tax_rates` - (Optional) The tax rates that will apply to any line item that does not have `tax_rates` set. Changing it replaces the resource. Removing it from the configuration leaves the current value.
-* `description` - (Optional) An arbitrary string attached to the object. Often useful for displaying to users. Referenced as 'memo' in the Dashboard.
-* `due_date` - (Optional) The date on which payment for this invoice is due. Valid only for invoices where `collection_method=send_invoice`. Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
-* `effective_at` - (Optional) The date when this invoice is in effect. Same as `finalized_at` unless overwritten. When defined, this value replaces the system-generated 'Date of issue' printed on the invoice PDF and receipt. Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
-* `footer` - (Optional) Footer to be displayed on the invoice.
+* `default_payment_method` - (Optional) ID of the default payment method for the invoice. It must belong to the customer associated with the invoice. If not set, defaults to the subscription's default payment method, if any, or to the default payment method in the customer's invoice settings. Default: none.
+* `default_source` - (Optional) ID of the default payment source for the invoice. It must belong to the customer associated with the invoice and be in a chargeable state. If not set, defaults to the subscription's default source, if any, or to the customer's default source. Default: none.
+* `default_tax_rates` - (Optional) The tax rates that will apply to any line item that does not have `tax_rates` set. Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
+* `description` - (Optional) An arbitrary string attached to the object. Often useful for displaying to users. Referenced as 'memo' in the Dashboard. Default: none.
+* `discounts` - (Optional) The coupons and promotion codes to redeem into discounts for the invoice. If not specified, inherits the discount from the invoice's customer. Pass an empty string to avoid inheriting any discounts. Removing it from the configuration leaves the current value. See [`discounts`](#discounts) below.
+* `due_date` - (Optional) The date on which payment for this invoice is due. Valid only for invoices where `collection_method=send_invoice`. Removing it from the configuration leaves the current value.
+* `effective_at` - (Optional) The date when this invoice is in effect. Same as `finalized_at` unless overwritten. When defined, this value replaces the system-generated 'Date of issue' printed on the invoice PDF and receipt. Removing it from the configuration leaves the current value.
+* `footer` - (Optional) Footer to be displayed on the invoice. Default: none.
 * `from_invoice` - (Optional) Revise an existing invoice. The new invoice will be created in `status=draft`. See the [revision documentation](https://docs.stripe.com/invoicing/invoice-revisions) for more details. Changing it replaces the resource. See [`from_invoice`](#from_invoice) below.
-* `issuer` - (Optional) The connected account that issues the invoice. The invoice is presented with the branding and support information of the specified account. Changing it replaces the resource. Removing it from the configuration leaves the current value. See [`issuer`](#issuer) below.
-* `metadata` - (Optional) Set of [key-value pairs](https://docs.stripe.com/api/metadata) that you can attach to an object. This can be useful for storing additional information about the object in a structured format. Individual keys can be unset by posting an empty value to them. All keys can be unset by posting an empty value to `metadata`.
-* `number` - (Optional) Set the number for this invoice. If no number is present then a number will be assigned automatically when the invoice is finalized. In many markets, regulations require invoices to be unique, sequential and / or gapless. You are responsible for ensuring this is true across all your different invoicing systems in the event that you edit the invoice number using our API. If you use only Stripe for your invoices and do not change invoice numbers, Stripe handles this aspect of compliance for you automatically. Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
-* `on_behalf_of` - (Optional) The account (if any) for which the funds of the invoice payment are intended. If set, the invoice will be presented with the branding and support information of the specified account. See the [Invoices with Connect](https://docs.stripe.com/billing/invoices/connect) documentation for details. Changing it replaces the resource.
-* `payment_settings` - (Optional) Configuration settings for the PaymentIntent that is generated when the invoice is finalized. Changing it replaces the resource. Removing it from the configuration leaves the current value. See [`payment_settings`](#payment_settings) below.
+* `issuer` - (Optional) The connected account that issues the invoice. The invoice is presented with the branding and support information of the specified account. Removing it from the configuration leaves the current value. See [`issuer`](#issuer) below.
+* `metadata` - (Optional) Set of [key-value pairs](https://docs.stripe.com/api/metadata) that you can attach to an object. This can be useful for storing additional information about the object in a structured format. Individual keys can be unset by posting an empty value to them. All keys can be unset by posting an empty value to `metadata`. Default (Stripe): none, or on a revision the metadata of the invoice `from_invoice` revises, such as `{"conformance":"invoice"}` in the suite.
+* `number` - (Optional) Set the number for this invoice. If no number is present then a number will be assigned automatically when the invoice is finalized. In many markets, regulations require invoices to be unique, sequential and / or gapless. You are responsible for ensuring this is true across all your different invoicing systems in the event that you edit the invoice number using our API. If you use only Stripe for your invoices and do not change invoice numbers, Stripe handles this aspect of compliance for you automatically. Default: none. Removing it from the configuration leaves the current value.
+* `on_behalf_of` - (Optional) The account (if any) for which the funds of the invoice payment are intended. If set, the invoice will be presented with the branding and support information of the specified account. See the [Invoices with Connect](https://docs.stripe.com/billing/invoices/connect) documentation for details. Default: none.
+* `payment_settings` - (Optional) Configuration settings for the PaymentIntent that is generated when the invoice is finalized. Removing it from the configuration leaves the current value. See [`payment_settings`](#payment_settings) below.
 * `pending_invoice_items_behavior` - (Optional) How to handle pending invoice items on invoice creation. Defaults to `exclude` if the parameter is omitted. Possible values: `exclude`, `include`. Changing it replaces the resource.
-* `rendering` - (Optional) The rendering-related settings that control how invoices render in customer-facing interfaces such as the PDF or hosted invoice page. Changing it replaces the resource. Removing it from the configuration leaves the current value. See [`rendering`](#rendering) below.
-* `shipping_cost` - (Optional) Settings for the cost of shipping for this invoice. Changing it replaces the resource. See [`shipping_cost`](#shipping_cost) below.
-* `shipping_details` - (Optional) Shipping details for the invoice. The Invoice PDF will use the `shipping_details` value if it is set, otherwise the PDF will render the shipping address from the customer. Changing it replaces the resource. See [`shipping_details`](#shipping_details) below.
-* `statement_descriptor` - (Optional) Extra information about a charge for the customer's credit card statement. It must contain at least one letter. If not specified and this invoice is part of a subscription, the default `statement_descriptor` will be set to the first subscription item's product's `statement_descriptor`.
+* `rendering` - (Optional) The rendering-related settings that control how invoices render in customer-facing interfaces such as the PDF or hosted invoice page. Removing it from the configuration leaves the current value. See [`rendering`](#rendering) below.
+* `shipping_cost` - (Optional) Settings for the cost of shipping for this invoice. See [`shipping_cost`](#shipping_cost) below.
+* `shipping_details` - (Optional) Shipping details for the invoice. The Invoice PDF will use the `shipping_details` value if it is set, otherwise the PDF will render the shipping address from the customer. See [`shipping_details`](#shipping_details) below.
+* `statement_descriptor` - (Optional) Extra information about a charge for the customer's credit card statement. It must contain at least one letter. If not specified and this invoice is part of a subscription, the default `statement_descriptor` will be set to the first subscription item's product's `statement_descriptor`. Default: none.
 * `status` - (Optional) The status of the invoice, one of `draft`, `open`, `paid`, `uncollectible`, or `void`. [Learn more](https://docs.stripe.com/billing/invoices/workflow#workflow-overview) Possible values: `open`, `paid`, `void`, `uncollectible`. Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
 * `subscription` - (Optional) The ID of the subscription to invoice, if any. If set, the created invoice will only include pending invoice items for that subscription. The subscription's billing cycle and regular subscription events won't be affected. Changing it replaces the resource.
-* `transfer_data` - (Optional) If specified, the funds from the invoice will be transferred to the destination and the ID of the resulting transfer will be found on the invoice's charge. Changing it replaces the resource. See [`transfer_data`](#transfer_data) below.
 
 <a id="automatic_tax"></a>
 ### `automatic_tax`
@@ -96,7 +95,7 @@ The `automatic_tax` attribute supports:
 
 The `automatic_tax.liability` attribute supports:
 
-* `account` - (Optional) The connected account being referenced when `type` is `account`.
+* `account` - (Optional) The connected account being referenced when `type` is `account`. Default: none.
 * `type` - (Required) Type of the account referenced. Possible values: `account`, `self`.
 
 <a id="custom_fields"></a>
@@ -106,6 +105,15 @@ The `custom_fields` attribute is a list. Each element supports:
 
 * `name` - (Required) The name of the custom field.
 * `value` - (Required) The value of the custom field.
+
+<a id="discounts"></a>
+### `discounts`
+
+The `discounts` attribute is a list. Each element supports:
+
+* `coupon` - (Optional) Stripe takes a coupon that has not expired, and on an update not in the same element as a `discount`. Elsewhere Stripe refused it on a US account on create: "Coupon attrs_expired is expired and cannot be applied.". Elsewhere Stripe refused it on a US account on update: "You may only specify one of these parameters: coupon, discount.".
+* `discount` - (Optional) Default: not sent.
+* `promotion_code` - (Optional) Stripe takes an active promotion code. Elsewhere Stripe refused it on a US account on create: "This promotion code is inactive.".
 
 <a id="from_invoice"></a>
 ### `from_invoice`
@@ -128,9 +136,9 @@ The `issuer` attribute supports:
 
 The `payment_settings` attribute supports:
 
-* `default_mandate` - (Optional) ID of the mandate to be used for this invoice. It must correspond to the payment method used to pay the invoice, including the invoice's default_payment_method or default_source, if set.
+* `default_mandate` - (Optional) ID of the mandate to be used for this invoice. It must correspond to the payment method used to pay the invoice, including the invoice's default_payment_method or default_source, if set. Stripe refused it on a US account on create and update: "The mandate id is invalid or could not be found.". Default: none.
 * `payment_method_options` - (Optional) Payment-method-specific configuration to provide to the invoice’s PaymentIntent. See [`payment_settings.payment_method_options`](#payment_settings.payment_method_options) below.
-* `payment_method_types` - (Optional) The list of payment method types (e.g. card) to provide to the invoice’s PaymentIntent. If not set, Stripe attempts to automatically determine the types to use by looking at the invoice’s default payment method, the subscription’s default payment method, the customer’s default payment method, and your [invoice template settings](https://dashboard.stripe.com/settings/billing/invoice).
+* `payment_method_types` - (Optional) The list of payment method types (e.g. card) to provide to the invoice’s PaymentIntent. If not set, Stripe attempts to automatically determine the types to use by looking at the invoice’s default payment method, the subscription’s default payment method, the customer’s default payment method, and your [invoice template settings](https://dashboard.stripe.com/settings/billing/invoice). Default: none.
 
 <a id="payment_settings.payment_method_options"></a>
 ### `payment_settings.payment_method_options`
@@ -153,21 +161,21 @@ The `payment_settings.payment_method_options` attribute supports:
 The `payment_settings.payment_method_options.acss_debit` attribute supports:
 
 * `mandate_options` - (Optional) See [`payment_settings.payment_method_options.acss_debit.mandate_options`](#payment_settings.payment_method_options.acss_debit.mandate_options) below.
-* `verification_method` - (Optional) Bank account verification method. The default value is `automatic`. Possible values: `automatic`, `instant`, `microdeposits`.
+* `verification_method` - (Optional) Bank account verification method. The default value is `automatic`. Possible values: `automatic`, `instant`, `microdeposits`. Default: none.
 
 <a id="payment_settings.payment_method_options.acss_debit.mandate_options"></a>
 ### `payment_settings.payment_method_options.acss_debit.mandate_options`
 
 The `payment_settings.payment_method_options.acss_debit.mandate_options` attribute supports:
 
-* `transaction_type` - (Optional) Transaction type of the mandate. Possible values: `business`, `personal`.
+* `transaction_type` - (Optional) Transaction type of the mandate. Possible values: `business`, `personal`. Default: none.
 
 <a id="payment_settings.payment_method_options.bancontact"></a>
 ### `payment_settings.payment_method_options.bancontact`
 
 The `payment_settings.payment_method_options.bancontact` attribute supports:
 
-* `preferred_language` - (Optional) Preferred language of the Bancontact authorization page that the customer is redirected to. Possible values: `de`, `en`, `fr`, `nl`. Removing it from the configuration leaves the current value.
+* `preferred_language` - (Optional) Preferred language of the Bancontact authorization page that the customer is redirected to. Possible values: `de`, `en`, `fr`, `nl`. Default: none. Removing it from the configuration leaves the current value.
 
 <a id="payment_settings.payment_method_options.billie"></a>
 ### `payment_settings.payment_method_options.billie`
@@ -175,7 +183,7 @@ The `payment_settings.payment_method_options.bancontact` attribute supports:
 The `payment_settings.payment_method_options.billie` attribute supports:
 
 * `company_details` - (Optional) See [`payment_settings.payment_method_options.billie.company_details`](#payment_settings.payment_method_options.billie.company_details) below.
-* `reference` - (Optional) An identifier or reference that this payment corresponds to.
+* `reference` - (Optional) An identifier or reference that this payment corresponds to. Default: none.
 
 <a id="payment_settings.payment_method_options.billie.company_details"></a>
 ### `payment_settings.payment_method_options.billie.company_details`
@@ -183,22 +191,22 @@ The `payment_settings.payment_method_options.billie` attribute supports:
 The `payment_settings.payment_method_options.billie.company_details` attribute supports:
 
 * `registered_address` - (Optional) See [`payment_settings.payment_method_options.billie.company_details.registered_address`](#payment_settings.payment_method_options.billie.company_details.registered_address) below.
-* `registered_name` - (Optional) Company or entity name.
-* `registration_number` - (Optional) The official registration number for the given registration type.
-* `registration_type` - (Optional) Type of registration the company or entity holds in their registered country. Possible values: `ch_ein`, `de_hrb`, `dk_cvr`, `es_cif`, `fi_tunnus`, `fr_siren`, `fr_siret`, `it_rea`, `nl_kvk`, `no_org_number`, `no_pno`, `se_org_number`, `se_pno`, `uk_crn`.
-* `vat` - (Optional) VAT ID number.
+* `registered_name` - (Optional) Company or entity name. Default: none.
+* `registration_number` - (Optional) The official registration number for the given registration type. Default: none.
+* `registration_type` - (Optional) Type of registration the company or entity holds in their registered country. Possible values: `ch_ein`, `de_hrb`, `dk_cvr`, `es_cif`, `fi_tunnus`, `fr_siren`, `fr_siret`, `it_rea`, `nl_kvk`, `no_org_number`, `no_pno`, `se_org_number`, `se_pno`, `uk_crn`. Default: none.
+* `vat` - (Optional) VAT ID number. Default: none.
 
 <a id="payment_settings.payment_method_options.billie.company_details.registered_address"></a>
 ### `payment_settings.payment_method_options.billie.company_details.registered_address`
 
 The `payment_settings.payment_method_options.billie.company_details.registered_address` attribute supports:
 
-* `city` - (Optional) City, district, suburb, town, or village.
-* `country` - (Optional) Two-letter country code.
-* `line1` - (Optional) Address line 1 (for example, street, PO Box, or company name).
-* `line2` - (Optional) Address line 2 (for example, apartment, suite, unit, or building).
-* `postal_code` - (Optional) ZIP or postal code.
-* `state` - (Optional) State, county, province, or region.
+* `city` - (Optional) City, district, suburb, town, or village. Default: none.
+* `country` - (Optional) Two-letter country code. Default: none.
+* `line1` - (Optional) Address line 1 (for example, street, PO Box, or company name). Default: none.
+* `line2` - (Optional) Address line 2 (for example, apartment, suite, unit, or building). Default: none.
+* `postal_code` - (Optional) ZIP or postal code. Default: none.
+* `state` - (Optional) State, county, province, or region. Default: none.
 
 <a id="payment_settings.payment_method_options.card"></a>
 ### `payment_settings.payment_method_options.card`
@@ -206,24 +214,14 @@ The `payment_settings.payment_method_options.billie.company_details.registered_a
 The `payment_settings.payment_method_options.card` attribute supports:
 
 * `installments` - (Optional) See [`payment_settings.payment_method_options.card.installments`](#payment_settings.payment_method_options.card.installments) below.
-* `request_three_d_secure` - (Optional) We strongly recommend that you rely on our SCA Engine to automatically prompt your customers for authentication based on risk level and [other requirements](https://docs.stripe.com/strong-customer-authentication). However, if you wish to request 3D Secure based on logic from your own fraud engine, provide this option. Read our guide on [manually requesting 3D Secure](https://docs.stripe.com/payments/3d-secure/authentication-flow#manual-three-ds) for more information on how this configuration interacts with Radar and our SCA Engine. Possible values: `any`, `automatic`, `challenge`.
+* `request_three_d_secure` - (Optional) We strongly recommend that you rely on our SCA Engine to automatically prompt your customers for authentication based on risk level and [other requirements](https://docs.stripe.com/strong-customer-authentication). However, if you wish to request 3D Secure based on logic from your own fraud engine, provide this option. Read our guide on [manually requesting 3D Secure](https://docs.stripe.com/payments/3d-secure/authentication-flow#manual-three-ds) for more information on how this configuration interacts with Radar and our SCA Engine. Possible values: `any`, `automatic`, `challenge`. Default (Stripe): none, or `automatic` where `card` is sent without it. Removing it from the configuration leaves the current value.
 
 <a id="payment_settings.payment_method_options.card.installments"></a>
 ### `payment_settings.payment_method_options.card.installments`
 
 The `payment_settings.payment_method_options.card.installments` attribute supports:
 
-* `enabled` - (Optional) Whether Installments are enabled for this Invoice.
-* `plan` - (Optional) See [`payment_settings.payment_method_options.card.installments.plan`](#payment_settings.payment_method_options.card.installments.plan) below.
-
-<a id="payment_settings.payment_method_options.card.installments.plan"></a>
-### `payment_settings.payment_method_options.card.installments.plan`
-
-The `payment_settings.payment_method_options.card.installments.plan` attribute supports:
-
-* `count` - (Optional)
-* `interval` - (Optional) Possible values: `month`.
-* `type` - (Required) Possible values: `bonus`, `fixed_count`, `revolving`.
+* `enabled` - (Optional) Whether Installments are enabled for this Invoice. Default (Stripe): none, or `false` where `installments` is sent without it. Removing it from the configuration leaves the current value.
 
 <a id="payment_settings.payment_method_options.customer_balance"></a>
 ### `payment_settings.payment_method_options.customer_balance`
@@ -231,7 +229,7 @@ The `payment_settings.payment_method_options.card.installments.plan` attribute s
 The `payment_settings.payment_method_options.customer_balance` attribute supports:
 
 * `bank_transfer` - (Optional) See [`payment_settings.payment_method_options.customer_balance.bank_transfer`](#payment_settings.payment_method_options.customer_balance.bank_transfer) below.
-* `funding_type` - (Optional) The funding method type to be used when there are not enough funds in the customer balance. Permitted values include: `bank_transfer`. Possible values: `bank_transfer`.
+* `funding_type` - (Optional) The funding method type to be used when there are not enough funds in the customer balance. Permitted values include: `bank_transfer`. Possible values: `bank_transfer`. Default: none.
 
 <a id="payment_settings.payment_method_options.customer_balance.bank_transfer"></a>
 ### `payment_settings.payment_method_options.customer_balance.bank_transfer`
@@ -239,7 +237,7 @@ The `payment_settings.payment_method_options.customer_balance` attribute support
 The `payment_settings.payment_method_options.customer_balance.bank_transfer` attribute supports:
 
 * `eu_bank_transfer` - (Optional) See [`payment_settings.payment_method_options.customer_balance.bank_transfer.eu_bank_transfer`](#payment_settings.payment_method_options.customer_balance.bank_transfer.eu_bank_transfer) below.
-* `type` - (Optional) The bank transfer type that can be used for funding. Permitted values include: `eu_bank_transfer`, `gb_bank_transfer`, `jp_bank_transfer`, `mx_bank_transfer`, or `us_bank_transfer`.
+* `type` - (Optional) The bank transfer type that can be used for funding. Permitted values include: `eu_bank_transfer`, `gb_bank_transfer`, `jp_bank_transfer`, `mx_bank_transfer`, or `us_bank_transfer`. Default: none.
 
 <a id="payment_settings.payment_method_options.customer_balance.bank_transfer.eu_bank_transfer"></a>
 ### `payment_settings.payment_method_options.customer_balance.bank_transfer.eu_bank_transfer`
@@ -260,17 +258,17 @@ The `payment_settings.payment_method_options.payto` attribute supports:
 
 The `payment_settings.payment_method_options.payto.mandate_options` attribute supports:
 
-* `amount` - (Optional) The maximum amount that can be collected in a single invoice. If you don't specify a maximum, then there is no limit.
+* `amount` - (Optional) The maximum amount that can be collected in a single invoice. If you don't specify a maximum, then there is no limit. Default: none.
 * `amount_type` - (Read-Only) Only `maximum` is supported. Possible values: `fixed`, `maximum`.
-* `purpose` - (Optional) The purpose for which payments are made. Has a default value based on your merchant category code. Possible values: `dependant_support`, `government`, `loan`, `mortgage`, `other`, `pension`, `personal`, `retail`, `salary`, `tax`, `utility`.
+* `purpose` - (Optional) The purpose for which payments are made. Has a default value based on your merchant category code. Possible values: `dependant_support`, `government`, `loan`, `mortgage`, `other`, `pension`, `personal`, `retail`, `salary`, `tax`, `utility`. Default: none.
 
 <a id="payment_settings.payment_method_options.pix"></a>
 ### `payment_settings.payment_method_options.pix`
 
 The `payment_settings.payment_method_options.pix` attribute supports:
 
-* `amount_includes_iof` - (Optional) Determines if the amount includes the IOF tax. Possible values: `always`, `never`.
-* `expires_after_seconds` - (Optional) The number of seconds (between 10 and 1209600) after which Pix payment will expire. Defaults to 86400 seconds.
+* `amount_includes_iof` - (Optional) Determines if the amount includes the IOF tax. Possible values: `always`, `never`. Default: none.
+* `expires_after_seconds` - (Optional) The number of seconds (between 10 and 1209600) after which Pix payment will expire. Defaults to 86400 seconds. Default: none.
 
 <a id="payment_settings.payment_method_options.upi"></a>
 ### `payment_settings.payment_method_options.upi`
@@ -284,10 +282,10 @@ The `payment_settings.payment_method_options.upi` attribute supports:
 
 The `payment_settings.payment_method_options.upi.mandate_options` attribute supports:
 
-* `amount` - (Optional) Amount to be charged for future payments.
-* `amount_type` - (Optional) One of `fixed` or `maximum`. If `fixed`, the `amount` param refers to the exact amount to be charged in future payments. If `maximum`, the amount charged can be up to the value passed for the `amount` param. Possible values: `fixed`, `maximum`.
-* `description` - (Optional) A description of the mandate or subscription that is meant to be displayed to the customer.
-* `end_date` - (Optional) End date of the mandate or subscription.
+* `amount` - (Optional) Amount to be charged for future payments. Default: none.
+* `amount_type` - (Optional) One of `fixed` or `maximum`. If `fixed`, the `amount` param refers to the exact amount to be charged in future payments. If `maximum`, the amount charged can be up to the value passed for the `amount` param. Possible values: `fixed`, `maximum`. Default: none.
+* `description` - (Optional) A description of the mandate or subscription that is meant to be displayed to the customer. Default: none.
+* `end_date` - (Optional) End date of the mandate or subscription. Default: none.
 
 <a id="payment_settings.payment_method_options.us_bank_account"></a>
 ### `payment_settings.payment_method_options.us_bank_account`
@@ -295,7 +293,7 @@ The `payment_settings.payment_method_options.upi.mandate_options` attribute supp
 The `payment_settings.payment_method_options.us_bank_account` attribute supports:
 
 * `financial_connections` - (Optional) See [`payment_settings.payment_method_options.us_bank_account.financial_connections`](#payment_settings.payment_method_options.us_bank_account.financial_connections) below.
-* `verification_method` - (Optional) Bank account verification method. The default value is `automatic`. Possible values: `automatic`, `instant`, `microdeposits`.
+* `verification_method` - (Optional) Bank account verification method. The default value is `automatic`. Possible values: `automatic`, `instant`, `microdeposits`. Default: none.
 
 <a id="payment_settings.payment_method_options.us_bank_account.financial_connections"></a>
 ### `payment_settings.payment_method_options.us_bank_account.financial_connections`
@@ -303,24 +301,24 @@ The `payment_settings.payment_method_options.us_bank_account` attribute supports
 The `payment_settings.payment_method_options.us_bank_account.financial_connections` attribute supports:
 
 * `filters` - (Optional) See [`payment_settings.payment_method_options.us_bank_account.financial_connections.filters`](#payment_settings.payment_method_options.us_bank_account.financial_connections.filters) below.
-* `permissions` - (Optional) The list of permissions to request. The `payment_method` permission must be included.
-* `prefetch` - (Optional) Data features requested to be retrieved upon account creation.
+* `permissions` - (Optional) The list of permissions to request. The `payment_method` permission must be included. Default: none.
+* `prefetch` - (Optional) Data features requested to be retrieved upon account creation. Default: none.
 
 <a id="payment_settings.payment_method_options.us_bank_account.financial_connections.filters"></a>
 ### `payment_settings.payment_method_options.us_bank_account.financial_connections.filters`
 
 The `payment_settings.payment_method_options.us_bank_account.financial_connections.filters` attribute supports:
 
-* `account_subcategories` - (Optional) The account subcategories to use to filter for possible accounts to link. Valid subcategories are `checking` and `savings`.
+* `account_subcategories` - (Optional) The account subcategories to use to filter for possible accounts to link. Valid subcategories are `checking` and `savings`. Default: none.
 
 <a id="rendering"></a>
 ### `rendering`
 
 The `rendering` attribute supports:
 
-* `amount_tax_display` - (Optional) How line-item prices and amounts will be displayed with respect to tax on invoice PDFs. Possible values: `exclude_tax`, `include_inclusive_tax`.
+* `amount_tax_display` - (Optional) How line-item prices and amounts will be displayed with respect to tax on invoice PDFs. Possible values: `exclude_tax`, `include_inclusive_tax`. Default: none.
 * `pdf` - (Optional) Invoice pdf rendering options See [`rendering.pdf`](#rendering.pdf) below.
-* `template` - (Optional) ID of the rendering template that the invoice is formatted by.
+* `template` - (Optional) ID of the rendering template that the invoice is formatted by. Stripe refused it on a US account on create and update: "No such invoice rendering template: 'inrtem_...'". Default: none.
 * `template_version` - (Optional) Version of the rendering template that the invoice is using.
 
 <a id="rendering.pdf"></a>
@@ -338,7 +336,7 @@ The `shipping_cost` attribute supports:
 * `amount_subtotal` - (Read-Only) Total shipping cost before any taxes are applied.
 * `amount_tax` - (Read-Only) Total tax amount applied due to shipping costs. If no tax was applied, defaults to 0.
 * `amount_total` - (Read-Only) Total shipping cost after taxes are applied.
-* `shipping_rate` - (Optional) The ID of the ShippingRate for this invoice.
+* `shipping_rate` - (Optional) The ID of the ShippingRate for this invoice. Default (Stripe): none, or the shipping rate Stripe makes from `shipping_rate_data`. Removing it from the configuration leaves the current value.
 * `shipping_rate_data` - (Optional) See [`shipping_cost.shipping_rate_data`](#shipping_cost.shipping_rate_data) below.
 * `taxes` - (Read-Only) The taxes applied to the shipping rate. See [`shipping_cost.taxes`](#shipping_cost.taxes) below.
 
@@ -419,7 +417,7 @@ The `shipping_details` attribute supports:
 * `address` - (Required) See [`shipping_details.address`](#shipping_details.address) below.
 * `carrier` - (Read-Only) The delivery service that shipped a physical product, such as Fedex, UPS, USPS, etc.
 * `name` - (Required) Recipient name.
-* `phone` - (Optional) Recipient phone (including extension).
+* `phone` - (Optional) Recipient phone (including extension). Default: none.
 * `tracking_number` - (Read-Only) The tracking number for a physical product, obtained from the delivery service. If multiple tracking numbers were generated for this purchase, please separate them with commas.
 
 <a id="shipping_details.address"></a>
@@ -427,20 +425,12 @@ The `shipping_details` attribute supports:
 
 The `shipping_details.address` attribute supports:
 
-* `city` - (Optional) City, district, suburb, town, or village.
-* `country` - (Optional) Two-letter country code ([ISO 3166-1 alpha-2](https://en.wikipedia.org/wiki/ISO_3166-1_alpha-2)).
-* `line1` - (Optional) Address line 1, such as the street, PO Box, or company name.
-* `line2` - (Optional) Address line 2, such as the apartment, suite, unit, or building.
-* `postal_code` - (Optional) ZIP or postal code.
-* `state` - (Optional) State, county, province, or region ([ISO 3166-2](https://en.wikipedia.org/wiki/ISO_3166-2)).
-
-<a id="transfer_data"></a>
-### `transfer_data`
-
-The `transfer_data` attribute supports:
-
-* `amount` - (Optional)
-* `destination` - (Required)
+* `city` - (Optional) City, district, suburb, town, or village. Default: none.
+* `country` - (Optional) Two-letter country code ([ISO 3166-1 alpha-2](https://en.wikipedia.org/wiki/ISO_3166-1_alpha-2)). Default: none.
+* `line1` - (Optional) Address line 1, such as the street, PO Box, or company name. Default: none.
+* `line2` - (Optional) Address line 2, such as the apartment, suite, unit, or building. Default: none.
+* `postal_code` - (Optional) ZIP or postal code. Default: none.
+* `state` - (Optional) State, county, province, or region ([ISO 3166-2](https://en.wikipedia.org/wiki/ISO_3166-2)). Default: none.
 
 ## Attribute Reference
 
@@ -471,6 +461,7 @@ This resource exports the following attributes in addition to the arguments abov
 * `ending_balance` - Ending customer balance after the invoice is finalized. Invoices are finalized approximately an hour after successful webhook delivery or when payment collection is attempted for the invoice. If the invoice has not been finalized yet, this will be null.
 * `hosted_invoice_url` - The URL for the hosted invoice page, which allows customers to view and pay an invoice. If the invoice has not been finalized yet, this will be null.
 * `invoice_pdf` - The link to download the PDF for the invoice. If the invoice has not been finalized yet, this will be null.
+* `last_finalization_error` - The error encountered during the previous attempt to finalize the invoice. This field is cleared when the invoice is successfully finalized. See [`last_finalization_error`](../guides/invoice-resource-last_finalization_error) on its own page.
 * `latest_revision` - The ID of the most recent non-draft revision of this invoice
 * `lines` - The individual line items that make up the invoice. `lines` is sorted as follows: (1) pending invoice items (including prorations) in reverse chronological order, (2) subscription items in reverse chronological order, and (3) invoice items added after invoice creation in chronological order. Holds the first page of the list Stripe returns with the object; `has_more` is true when there are more. Read every element with the `stripe_invoice_line` data source. See [`lines`](#lines) below.
 * `livemode` - If the object exists in live mode, the value is `true`. If the object exists in test mode, the value is `false`.
@@ -917,4 +908,4 @@ Using `terraform import`, import an invoice using its ID. For example:
 % terraform import stripe_invoice.setup in_123
 ```
 
-~> Stripe does not return `days_until_due`, `pending_invoice_items_behavior`, `application_fee_amount`, `subscription` or `transfer_data`, so an imported invoice has them null. Leave them out of its configuration: setting one is a change, which Stripe refuses once the invoice is finalized. Stripe does not return `payment_settings.payment_method_options.card.installments.plan` or `shipping_cost.shipping_rate_data`, so an imported invoice has them null: a configuration that sets one plans a replacement after the import.
+-> Stripe does not return `days_until_due`, `pending_invoice_items_behavior` or `subscription`, so an imported invoice has them null. Leave them out of its configuration: setting one is a change, which Stripe refuses once the invoice is finalized. An imported invoice names each of its discounts by its ID in `discount`, so a configuration that names one by `coupon` or `promotion_code` plans an update that applies it again, which Stripe refuses once the invoice is finalized. Name each discount of an imported invoice by `discount`. Stripe does not return `discounts` or `shipping_cost.shipping_rate_data`, so an imported invoice has them null: a configuration that sets one plans an update after the import.
