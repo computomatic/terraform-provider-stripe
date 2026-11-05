@@ -259,8 +259,13 @@ func compile(decl Declaration, table []fields.Field) (*model, error) {
 			return nil, fmt.Errorf("%s: metadata-keys-stay needs an updatable top-level `metadata` map", decl.TypeName)
 		}
 	}
-	if !v2 && (len(decl.Include) > 0 || len(decl.ClearsWithNull) > 0) {
+	if !v2 && (len(decl.Include)+len(decl.IncludeOnCreate) > 0 || len(decl.ClearsWithNull) > 0) {
 		return nil, fmt.Errorf("%s: include and clears-with-null belong to /v2 declarations", decl.TypeName)
+	}
+	for _, v := range decl.IncludeOnCreate {
+		if !slices.Contains(decl.OnceReturned, v) || slices.Contains(decl.Include, v) {
+			return nil, fmt.Errorf("%s: include-on-create entry `%s` is not a once-returned field, or is also in include", decl.TypeName, v)
+		}
 	}
 	for _, name := range decl.ClearsWithNull {
 		if n, ok := m.top(name); !ok || !n.Update || n.Required {
@@ -919,8 +924,12 @@ func (m *model) checkSentMembers() error {
 		}
 	}
 	for _, name := range whole {
-		if _, ok := hash(name); !ok || strings.Contains(name, ".") && !inside(name) || slices.Contains(changed, name) {
+		n, ok := hash(name)
+		if !ok || strings.Contains(name, ".") && !inside(name) || slices.Contains(changed, name) {
 			return fmt.Errorf("%s: send-whole-members entry `%s` is not a top-level hash, or one inside a send-changed-members object, in that list alone", decl.TypeName, name)
+		}
+		if list, member := computedInElements(n); list != "" {
+			return fmt.Errorf("%s: send-whole-members entry `%s` holds `%s`, whose elements have the computed member `%s`: a whole send could not send the list as planned", decl.TypeName, name, list, member)
 		}
 	}
 	for _, name := range decl.ReplacedMaps {
@@ -951,6 +960,42 @@ func (m *model) checkSentMembers() error {
 		}
 	}
 	return nil
+}
+
+// computedInElements finds, among what a whole send of n sends, a list or map of hashes whose
+// elements have a computed member, and returns their paths. Terraform plans such a member
+// unknown on any change of the list, and wholeMembers sends a value not fully known as the state
+// holds it, so the list's change would be lost.
+func computedInElements(n *node) (list, member string) {
+	for _, k := range n.Kids {
+		if !k.Update {
+			continue
+		}
+		switch k.Shape {
+		case fields.Object:
+			if list, member = computedInElements(k); list != "" {
+				return list, member
+			}
+		case fields.ObjectList, fields.ObjectMap:
+			if member = computedBelow(k); member != "" {
+				return k.Path, member
+			}
+		}
+	}
+	return "", ""
+}
+
+// computedBelow returns the path of a computed member of n at any depth, or "".
+func computedBelow(n *node) string {
+	for _, k := range n.Kids {
+		if k.Computed {
+			return k.Path
+		}
+		if p := computedBelow(k); p != "" {
+			return p
+		}
+	}
+	return ""
 }
 
 // nestedShape reports a shape that becomes a nested attribute.

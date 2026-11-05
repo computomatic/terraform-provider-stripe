@@ -3,12 +3,12 @@
 page_title: "stripe_event_destination_v2 Resource - Stripe"
 subcategory: ""
 description: |-
-  A destination for Stripe's events, delivered as thin or snapshot payloads: a webhook endpoint, an Amazon EventBridge partner event source or an Azure Event Grid partner topic. terraform destroy deletes the destination. The destination's signing secret is not available yet. status is read-only: Terraform cannot enable or disable a destination yet.
+  A destination for Stripe's events, delivered as thin or snapshot payloads: a webhook endpoint, an Amazon EventBridge partner event source or an Azure Event Grid partner topic. terraform destroy deletes the destination. A webhook endpoint's signing_secret is returned once, at creation, and is kept in state as a sensitive value. status is read-only: Terraform cannot enable or disable a destination yet.
 ---
 
 # Resource: stripe_event_destination_v2
 
-A destination for Stripe's events, delivered as thin or snapshot payloads: a webhook endpoint, an Amazon EventBridge partner event source or an Azure Event Grid partner topic. `terraform destroy` deletes the destination. The destination's signing secret is not available yet. `status` is read-only: Terraform cannot enable or disable a destination yet.
+A destination for Stripe's events, delivered as thin or snapshot payloads: a webhook endpoint, an Amazon EventBridge partner event source or an Azure Event Grid partner topic. `terraform destroy` deletes the destination. A webhook endpoint's `signing_secret` is returned once, at creation, and is kept in state as a sensitive value. `status` is read-only: Terraform cannot enable or disable a destination yet.
 
 ## Example Usage
 
@@ -22,6 +22,12 @@ resource "stripe_event_destination_v2" "billing" {
   webhook_endpoint = {
     url = "https://example.com/stripe/events"
   }
+}
+
+# The signing secret is sensitive and set once, when the destination is created.
+output "billing_signing_secret" {
+  value     = stripe_event_destination_v2.billing.webhook_endpoint.signing_secret
+  sensitive = true
 }
 ```
 
@@ -70,6 +76,7 @@ The `azure_event_grid` attribute supports:
 
 The `webhook_endpoint` attribute supports:
 
+* `signing_secret` - (Read-Only, Sensitive) The secret used to verify Stripe signatures on delivered events. Returned only in the create response when explicitly included; public API clients cannot retrieve it later.
 * `url` - (Required) The URL where Stripe sends matching events. Live mode requires HTTPS; sandbox mode also supports HTTP.
 
 ## Attribute Reference
@@ -139,4 +146,4 @@ Using `terraform import`, import a v2 event destination using its ID. For exampl
 % terraform import stripe_event_destination_v2.billing ed_123
 ```
 
-~> Stripe does not return `amazon_eventbridge.aws_region`, so an imported v2 event destination has it null: a configuration that sets it plans a replacement after the import.
+~> An imported destination has no `webhook_endpoint.signing_secret`, because Stripe returns it only at creation. Replacing the destination, as `terraform apply -replace` does, creates one with a new secret in state. Stripe does not return `amazon_eventbridge.aws_region`, so an imported v2 event destination has it null: a configuration that sets it plans a replacement after the import.

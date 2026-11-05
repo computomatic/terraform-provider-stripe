@@ -7,7 +7,7 @@ Every leaf of each table's create and update requests and of its object is expos
 |Side|Exposed|Excluded|Awaiting proof|Total|
 |-|-|-|-|-|
 |Request|3363|374|1846|5583|
-|Response|5372|125|1997|7494|
+|Response|5373|124|1997|7494|
 
 ## Per table
 
@@ -57,7 +57,7 @@ Defaults not yet recorded counts the optional arguments a table exposes whose do
 |`entitlements_active_entitlement`|`entitlements.active_entitlement`|0|0|0|4|0|0|0|
 |`entitlements_feature`|`entitlements.feature`|6|2|0|6|0|0|0|
 |`event`|`event`|0|0|0|10|2|0|0|
-|`event_destination_v2`|`v2.core.event_destination`|19|2|0|23|1|0|0|
+|`event_destination_v2`|`v2.core.event_destination`|19|2|0|24|0|0|0|
 |`event_v2`|`v2.core.event`|0|0|0|12|2|0|0|
 |`file`|`file`|1|2|3|10|0|0|0|
 |`file_link`|`file_link`|6|2|0|8|0|0|2|
@@ -781,7 +781,6 @@ None.
 - `customer_cash_balance_transaction` response `customer` (reference): the parent attribute holds it
 - `customer_payment_method` PostPaymentMethodsPaymentMethodAttach `customer` (string): the parent attribute holds it
 - `customer_payment_method` response `customer` (reference): the parent attribute holds it
-- `event_destination_v2` response `webhook_endpoint.signing_secret` (string): Stripe returns it only to a create that sends `include` with it (suite: TestEventDestinationAttributes/leaves/response/v2.core.event_destination/webhook_endpoint.signing_secret), and the engine cannot yet send `include` on create alone to read it once, as `OnceReturned` (adrs/1-pending/2026-10-17-v2-support).
 - `file` PostFiles `file` (string): Sent by the declaration as the upload of the local file `source` names: Terraform cannot send file content from HCL (framework limit; internal/resources/file).
 - `invoice_line` response `invoice` (string): the parent attribute holds it
 - `payment_intent` PostPaymentIntents `mandate_data.customer_acceptance.accepted_at` (integer): `customer_acceptance.type`, which the hash requires, is accepted only, so that no configuration could send it (suite: TestSetupIntentAttributes/leaves/request/PostSetupIntents/mandate_data.customer_acceptance.type).

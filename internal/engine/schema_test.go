@@ -169,7 +169,12 @@ func TestParentAttribute(t *testing.T) {
 
 func dataSource(t *testing.T, decl Declaration, client Client) *DataSource {
 	t.Helper()
-	ctor, err := NewDataSource(decl, fixtureTable())
+	return dataSourceOf(t, decl, fixtureTable(), client)
+}
+
+func dataSourceOf(t *testing.T, decl Declaration, table []fields.Field, client Client) *DataSource {
+	t.Helper()
+	ctor, err := NewDataSource(decl, table)
 	if err != nil {
 		t.Fatal(err)
 	}

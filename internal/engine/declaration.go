@@ -311,6 +311,11 @@ type Declaration struct {
 	// sends them on every request that returns the object, so the value is read back and
 	// drift in it is detected. `include` is never an attribute.
 	Include []string
+	// IncludeOnCreate lists the `include` values a `/v2` create sends beside Include, for an
+	// OnceReturned field Stripe returns only to the create that asks for it, such as an event
+	// destination's `webhook_endpoint.signing_secret`. No other request sends them, because
+	// Stripe never returns the field again. Each names an OnceReturned entry.
+	IncludeOnCreate []string
 	// ClearsWithNull lists top-level fields of a `/v2` object that Stripe is known to unset
 	// when sent `null`. Removing any other field from the configuration fails the update,
 	// because `/v2` has proven null only for a `metadata` key. A field joins the list when the

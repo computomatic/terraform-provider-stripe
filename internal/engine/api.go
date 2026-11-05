@@ -68,22 +68,28 @@ func (a *api) call(ctx context.Context, method, target string, params wire.Objec
 // where the resource maps them, or its `include` values for a `/v2` object. prefix is `data.` for a `/v1` list response; `include` has no
 // prefix. A declaration that expands and includes nothing gets params back.
 func (a *api) expanded(params wire.Object, prefix string) wire.Object {
-	return a.withExpand(params, prefix, a.m.decl.Expand)
+	return a.withExpand(params, prefix, a.m.decl.Expand, a.m.decl.Include)
 }
 
 // retrieved is expanded for a retrieve, which also asks for the fields Stripe expands only
 // there.
 func (a *api) retrieved(params wire.Object) wire.Object {
-	return a.withExpand(params, "", slices.Concat(a.m.decl.Expand, a.m.decl.ExpandOnRetrieve))
+	return a.withExpand(params, "", slices.Concat(a.m.decl.Expand, a.m.decl.ExpandOnRetrieve), a.m.decl.Include)
 }
 
-func (a *api) withExpand(params wire.Object, prefix string, expand []string) wire.Object {
+// created is expanded for a create, which also includes the once-returned fields Stripe
+// returns only to the create that asks for them.
+func (a *api) created(params wire.Object) wire.Object {
+	return a.withExpand(params, "", a.m.decl.Expand, slices.Concat(a.m.decl.Include, a.m.decl.IncludeOnCreate))
+}
+
+func (a *api) withExpand(params wire.Object, prefix string, expand, include []string) wire.Object {
 	if a.m.discounts != nil {
 		expand = append(slices.Clone(expand), "discounts")
 	}
-	if len(a.m.decl.Include) > 0 {
-		values := make(wire.Array, len(a.m.decl.Include))
-		for i, v := range a.m.decl.Include {
+	if len(include) > 0 {
+		values := make(wire.Array, len(include))
+		for i, v := range include {
 			values[i] = wire.String(v)
 		}
 		return append(append(wire.Object(nil), params...), wire.Field{Name: "include", Value: values})

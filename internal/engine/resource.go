@@ -644,9 +644,9 @@ func (r *Resource) Create(ctx context.Context, req resource.CreateRequest, resp 
 	}
 	var body wire.Object
 	if r.m.decl.Upload != nil {
-		body, err = r.api.upload(ctx, createPath, r.api.expanded(params, ""), stringAttr(plan, sourceAttr), content)
+		body, err = r.api.upload(ctx, createPath, r.api.created(params), stringAttr(plan, sourceAttr), content)
 	} else {
-		body, err = r.api.call(ctx, "POST", createPath, r.api.expanded(params, ""))
+		body, err = r.api.call(ctx, "POST", createPath, r.api.created(params))
 	}
 	if err != nil {
 		r.api.fail(&resp.Diagnostics, err)
@@ -681,8 +681,9 @@ func (r *Resource) Create(ctx context.Context, req resource.CreateRequest, resp 
 				return
 			}
 			// Stripe sends once-returned fields, such as a webhook secret, on the create
-			// response only.
-			body = mergeBodies(body, updated)
+			// response only, and a `/v2` object's beside the fields it includes, so the
+			// update's copy of those is dropped.
+			body = mergeBodies(body, withoutIncluded(updated, r.m.decl.IncludeOnCreate))
 		}
 	}
 	body, refusals, err := r.applyTransitions(ctx, body, plan, id, parent)
@@ -1007,7 +1008,7 @@ func (r *Resource) applyTransitions(ctx context.Context, body wire.Object, plan 
 		if err != nil {
 			return nil, nil, err
 		}
-		next = withoutIncluded(next, r.m.decl.Include)
+		next = withoutIncluded(next, slices.Concat(r.m.decl.Include, r.m.decl.IncludeOnCreate))
 		// A once-returned field is in the create response only, so the action's does not replace it.
 		body = mergeBodies(body, next)
 	}
@@ -1027,8 +1028,9 @@ func (r *Resource) retrieveExpandOnRetrieve(ctx context.Context, body wire.Objec
 	return mergeBodies(body, got), nil
 }
 
-// withoutIncluded drops from a `/v2` action's response the top-level fields the declaration
-// includes, which the action, sent no `include`, returns as null.
+// withoutIncluded drops from a `/v2` response the top-level fields that hold the include
+// values given: an action, sent no `include`, returns them as null, and no request but the
+// create returns a once-returned one.
 func withoutIncluded(body wire.Object, include []string) wire.Object {
 	if len(include) == 0 {
 		return body
