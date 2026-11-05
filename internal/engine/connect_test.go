@@ -798,8 +798,8 @@ func TestSentMembersAreChecked(t *testing.T) {
 
 // An object in SendChangedMembers sends only what changed: a removed member as null, a nested
 // object's changed members, one with a Required member whole, a removed map key as null, or a
-// map in ReplacedMaps whole without the key, never a member the plan leaves unknown or one that
-// is refused, and nothing when only those differ.
+// map the record shows Stripe replacing whole without the key, never a member the plan leaves
+// unknown or one that is refused, and nothing when only those differ.
 func TestSendChangedMembers(t *testing.T) {
 	member := func(name string, shape fields.Shape) fields.Field {
 		return fields.Field{Name: name, Shape: shape, Create: true, Update: true, Response: true}
@@ -855,7 +855,7 @@ func TestSendChangedMembers(t *testing.T) {
 			t.Errorf("%s: update body %s, want %s", name, got, tc.want)
 		}
 	}
-	decl.ReplacedMaps = []string{"person.tags"}
+	person.Fields[len(person.Fields)-1].MapUpdate = &fields.MapUpdate{Replaced: true, EmptyKept: true}
 	replaced := configured(t, decl, append(refuseTable(), person), noCalls(t))
 	held := replaced.fill(map[string]attr.Value{"id": types.StringValue("wid_1"), "name": types.StringValue("w"), "person": build(nil)})
 	oneTag := map[string]attr.Value{"tags": types.MapValueMust(types.StringType, map[string]attr.Value{"a": types.StringValue("1")})}
@@ -868,24 +868,95 @@ func TestSendChangedMembers(t *testing.T) {
 	}
 }
 
-// A replaced-maps entry is a map an update takes inside a send-changed-members object.
-func TestReplacedMapsAreChecked(t *testing.T) {
+// A hash an update sends whole still sends the keys a merged map in it lost, as null, since
+// Stripe keeps the keys such an update leaves out; a replaced map goes as planned.
+func TestWholeSendsRemoveMergedKeys(t *testing.T) {
 	tags := fields.Field{Name: "tags", Shape: fields.StringMap, Create: true, Update: true, Response: true}
 	person := fields.Field{Name: "person", Shape: fields.Object, Create: true, Update: true, Response: true, Fields: []fields.Field{
-		{Name: "first", Shape: fields.String, Create: true, Update: true, Response: true}, tags,
+		{Name: "first", Shape: fields.String, Required: true, Create: true, Update: true, Response: true}, tags,
 	}}
 	for name, tc := range map[string]struct {
-		changed, replaced []string
-		ok                bool
+		update *fields.MapUpdate
+		want   string
 	}{
-		"a map inside":            {[]string{"person"}, []string{"person.tags"}, true},
-		"outside changed members": {nil, []string{"person.tags"}, false},
-		"not a map":               {[]string{"person"}, []string{"person.first"}, false},
-		"no such field":           {[]string{"person"}, []string{"person.none"}, false},
+		"merged":   {&fields.MapUpdate{}, `{"person":{"first":"Jenny","tags":{"a":"1","b":null}}}`},
+		"replaced": {&fields.MapUpdate{Replaced: true}, `{"person":{"first":"Jenny","tags":{"a":"1"}}}`},
+		"unknown":  {nil, `{"person":{"first":"Jenny","tags":{"a":"1"}}}`},
 	} {
+		person.Fields[1].MapUpdate = tc.update
+		r := configured(t, fixtureDeclaration(), append(refuseTable(), person), noCalls(t))
+		personType := r.objType.AttrTypes["person"].(basetypes.ObjectType).AttrTypes
+		build := func(tags map[string]attr.Value) attr.Value {
+			return types.ObjectValueMust(personType, map[string]attr.Value{"first": types.StringValue("Jenny"), "tags": types.MapValueMust(types.StringType, tags)})
+		}
+		state := r.fill(map[string]attr.Value{"id": types.StringValue("wid_1"), "name": types.StringValue("w"), "person": build(map[string]attr.Value{"a": types.StringValue("1"), "b": types.StringValue("2")})})
+		plan := r.fill(with(state, map[string]attr.Value{"person": build(map[string]attr.Value{"a": types.StringValue("1")})}))
+		params, err := r.m.encodeUpdate(plan, state, tftypes.Value{})
+		if err != nil {
+			t.Fatal(err)
+		}
+		if got := wireOf(t, params); got != tc.want {
+			t.Errorf("%s: update body %s, want %s", name, got, tc.want)
+		}
+	}
+}
+
+// A hash an update sends whole clears every key of a merged map the plan removes outright,
+// and of one inside a nested hash the plan removes, beside the member that changed: the
+// encoding of the plan leaves both out, and Stripe would keep their keys.
+func TestWholeSendsClearRemovedMergedMaps(t *testing.T) {
+	merged := &fields.MapUpdate{}
+	tags := fields.Field{Name: "tags", Shape: fields.StringMap, Create: true, Update: true, Response: true, MapUpdate: merged}
+	person := fields.Field{Name: "person", Shape: fields.Object, Create: true, Update: true, Response: true, Fields: []fields.Field{
+		{Name: "first", Shape: fields.String, Required: true, Create: true, Update: true, Response: true}, tags,
+		{Name: "home", Shape: fields.Object, Create: true, Update: true, Response: true, Fields: []fields.Field{
+			{Name: "city", Shape: fields.String, Create: true, Update: true, Response: true}, tags,
+		}},
+	}}
+	r := configured(t, fixtureDeclaration(), append(refuseTable(), person), noCalls(t))
+	personType := r.objType.AttrTypes["person"].(basetypes.ObjectType).AttrTypes
+	homeType := personType["home"].(basetypes.ObjectType)
+	held := types.MapValueMust(types.StringType, map[string]attr.Value{"a": types.StringValue("1")})
+	build := func(first string, tags, home attr.Value) attr.Value {
+		return types.ObjectValueMust(personType, map[string]attr.Value{"first": types.StringValue(first), "tags": tags, "home": home})
+	}
+	home := types.ObjectValueMust(homeType.AttrTypes, map[string]attr.Value{"city": types.StringValue("A"), "tags": held})
+	state := r.fill(map[string]attr.Value{"id": types.StringValue("wid_1"), "name": types.StringValue("w"), "person": build("Jenny", held, home)})
+	plan := r.fill(with(state, map[string]attr.Value{"person": build("Jane", types.MapNull(types.StringType), types.ObjectNull(homeType.AttrTypes))}))
+	params, err := r.m.encodeUpdate(plan, state, tftypes.Value{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got, want := wireOf(t, params), `{"person":{"first":"Jane","tags":{"a":null},"home":{"tags":{"a":null}}}}`; got != want {
+		t.Errorf("update body %s, want %s", got, want)
+	}
+}
+
+// A declaration must agree with the record on a map: MetadataKeysStay says what the record's
+// `metadata` shows, and no other merged map may keep a key sent empty, which no update could
+// remove.
+func TestMapUpdatesAreChecked(t *testing.T) {
+	for name, tc := range map[string]struct {
+		field  string
+		update fields.MapUpdate
+		stay   bool
+		ok     bool
+	}{
+		"metadata removes keys":           {"metadata", fields.MapUpdate{}, false, true},
+		"metadata keeps keys, declared":   {"metadata", fields.MapUpdate{EmptyKept: true}, true, true},
+		"metadata keeps keys, undeclared": {"metadata", fields.MapUpdate{EmptyKept: true}, false, false},
+		"metadata removes keys, declared": {"metadata", fields.MapUpdate{}, true, false},
+		"a replaced map keeping keys":     {"tags", fields.MapUpdate{Replaced: true, EmptyKept: true}, false, true},
+		"a merged map keeping keys":       {"tags", fields.MapUpdate{EmptyKept: true}, false, false},
+	} {
+		update := tc.update
+		table := append(refuseTable(), fields.Field{Name: tc.field, Shape: fields.StringMap, Create: true, Update: true, Response: true, MapUpdate: &update})
+		if tc.field != "metadata" {
+			table = append(table, fields.Field{Name: "metadata", Shape: fields.StringMap, Create: true, Update: true, Response: true})
+		}
 		decl := fixtureDeclaration()
-		decl.SendChangedMembers, decl.ReplacedMaps = tc.changed, tc.replaced
-		_, err := NewResource(decl, append(refuseTable(), person))
+		decl.MetadataKeysStay = tc.stay
+		_, err := NewResource(decl, table)
 		if (err == nil) != tc.ok {
 			t.Errorf("%s: %v", name, err)
 		}

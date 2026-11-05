@@ -105,9 +105,9 @@ The `add_invoice_items` attribute is a list. Each element supports:
 
 The `add_invoice_items.discounts` attribute is a list. Each element supports:
 
-* `coupon` - (Optional)
-* `discount` - (Optional)
-* `promotion_code` - (Optional)
+* `coupon` - (Optional) Stripe takes a coupon that has not expired. Elsewhere Stripe refused it on a US account on create: "Coupon attrs_expired is expired and cannot be applied.".
+* `discount` - (Optional) Stripe takes a discount the subscription or its customer already holds. Elsewhere Stripe refused it on a US account on update: "Discount di_... does not exist on the subscription, or the subscription's customer (cus_...). Discounts can only be applied to a subscription when they already exist on the subscription, or the subscription's customer.".
+* `promotion_code` - (Optional) Stripe takes an active promotion code. Elsewhere Stripe refused it on a US account on create: "This promotion code is inactive.".
 
 <a id="add_invoice_items.period"></a>
 ### `add_invoice_items.period`

@@ -108,7 +108,9 @@ func TestDeclaredDefaultsCountAsRecorded(t *testing.T) {
 			{Name: "plain", Default: &fields.Default{Kind: fields.DefaultVaries}},
 		},
 	}
-	tc.applyDeclaredDefaults(map[string]string{"worded": "the rule"})
+	if err := tc.applyDeclaredDefaults(map[string]string{"worded": "the rule"}, nil); err != nil {
+		t.Fatal(err)
+	}
 	got := defaultsNotRecorded(tc.records)["widget"]
 	if len(got.Verified) != 1 || got.Verified[0] != "plain" {
 		t.Errorf("not recorded: %v, want only plain", got.Verified)

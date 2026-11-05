@@ -137,7 +137,10 @@ type EvidenceLeaf struct {
 	Tests   []string         `json:"tests"`
 	Default *EvidenceDefault `json:"default,omitempty"`
 	// Unset is, on an update leaf, what an update that unsets the leaf did (P4).
-	Unset      *EvidenceUnset  `json:"unset,omitempty"`
+	Unset *EvidenceUnset `json:"unset,omitempty"`
+	// Map is, on an update leaf of a map, how the update treats the keys it leaves out and a key
+	// it sends empty.
+	Map        *EvidenceMap    `json:"map,omitempty"`
 	Returned   json.RawMessage `json:"returned,omitempty"`
 	EnumValues json.RawMessage `json:"enum_values,omitempty"`
 	WriteOnly  json.RawMessage `json:"write_only,omitempty"`
@@ -207,12 +210,33 @@ type EvidenceUnset struct {
 	Error   json.RawMessage `json:"error,omitempty"`
 }
 
+// EvidenceMap is what an update of a map does: `merged` keeps the keys it leaves out and
+// `replaced` drops them, and a key sent empty (`by`) is then `removed` or `stored` as sent.
+// Either is absent where no probe showed it.
+type EvidenceMap struct {
+	Update     string `json:"update,omitempty"`
+	EmptyValue *struct {
+		By     string `json:"by"`
+		Result string `json:"result"`
+	} `json:"empty_value,omitempty"`
+}
+
+// The values of EvidenceMap.
+const (
+	MapMerged   = "merged"
+	MapReplaced = "replaced"
+	MapRemoved  = "removed"
+)
+
 // EvidenceRule is a default that depends on the account or another argument.
 type EvidenceRule struct {
-	Object       string            `json:"object"`
-	Operation    string            `json:"operation"`
-	Path         string            `json:"path"`
-	Rule         string            `json:"rule"`
+	Object    string `json:"object"`
+	Operation string `json:"operation"`
+	Path      string `json:"path"`
+	Rule      string `json:"rule"`
+	// Beside is, on a rule that holds only beside another create leaf, that leaf: a create that
+	// sends it reads the rule's value at Path, and one that does not reads as the others.
+	Beside       string            `json:"beside,omitempty"`
 	Observations []RuleObservation `json:"observations,omitempty"`
 	Tests        []string          `json:"tests"`
 }
@@ -247,9 +271,10 @@ type RuleValue struct {
 }
 
 // answer reports a rule whose observations are Stripe's answers to the requests its probes sent,
-// which says when Stripe takes an argument rather than what it defaults to.
+// which says when Stripe takes an argument rather than what it defaults to. A Beside rule's
+// observations name their probes too, but hold what the response path held.
 func (r EvidenceRule) answer() bool {
-	return len(r.Observations) > 0 && r.Observations[0].Condition.Probe != ""
+	return r.Beside == "" && len(r.Observations) > 0 && r.Observations[0].Condition.Probe != ""
 }
 
 // Matcher is what a response path held, in every form the format defines. Each kind carries the
@@ -279,9 +304,12 @@ type SideEffect struct {
 	Operation string `json:"operation"`
 	Probe     string `json:"probe"`
 	// Triggers are the request leaves the update sent, which the effect is known to follow.
-	Triggers []string      `json:"triggers"`
-	Changed  []ChangedPath `json:"changed"`
-	Tests    []string      `json:"tests"`
+	Triggers []string `json:"triggers"`
+	// Carried are the leaves the update sent beside the triggers, with the values sent: the
+	// effect is known to follow the triggers only with these beside them.
+	Carried map[string]json.RawMessage `json:"carried,omitempty"`
+	Changed []ChangedPath              `json:"changed"`
+	Tests   []string                   `json:"tests"`
 }
 
 // ChangedPath is one path a side effect changed, with matchers of the values before and after.
@@ -320,6 +348,13 @@ type HashUpdate struct {
 	Update string `json:"update"`
 }
 
+// The values of Discount.Returned the engine reads back: a discount ID at the top-level
+// `discounts`, and the discount whole at a list element's.
+const (
+	DiscountID     = "discount_id"
+	DiscountObject = "discount_object"
+)
+
 // The values of HashUpdate.Update. HashRefused is a hash Stripe refused to update in part, for a
 // member the update left out.
 const (
@@ -328,15 +363,21 @@ const (
 	HashRefused         = "refused"
 )
 
-// Discount is what one form of a `discounts` element sent to one operation returned (P11).
+// Discount is what one form of a `discounts` element sent to one operation returned (P11): Path
+// is the request's list of discounts the form is a member of, the top-level one or a line's, and
+// ResponsePath where the response holds what Returned names, in the object HeldBy names where
+// another object holds the discount.
 type Discount struct {
-	Object    string   `json:"object"`
-	Operation string   `json:"operation"`
-	Form      string   `json:"form"`
-	Returned  string   `json:"returned"`
-	Expanded  string   `json:"expanded"`
-	Relation  string   `json:"relation"`
-	Tests     []string `json:"tests"`
+	Object       string   `json:"object"`
+	Operation    string   `json:"operation"`
+	Path         string   `json:"path"`
+	Form         string   `json:"form"`
+	ResponsePath string   `json:"response_path"`
+	HeldBy       string   `json:"held_by,omitempty"`
+	Returned     string   `json:"returned"`
+	Expanded     string   `json:"expanded"`
+	Relation     string   `json:"relation"`
+	Tests        []string `json:"tests"`
 }
 
 // The values of the record's closed sets that the generator reads. A value outside them is a
@@ -349,8 +390,16 @@ var (
 	unsetBy       = []string{"empty_string", "null", "shorter_array"}
 	unsetResults  = []string{"null", "absent", "as_sent", "unchanged", "value", "refused"}
 	discountForms = []string{"coupon", "discount", "promotion_code"}
-	matcherKinds  = []string{"sent", "normalised", "value", "null", "absent", "id", "created", "ref", "account_id", "account", "from", "timestamp", "url", "secret", "list", "unchanged", "fingerprint", "day_within", "time_within"}
-	hashUpdates   = []string{HashSiblingsKept, HashSiblingsCleared, HashRefused}
+	// discountReturns are what a discount form returns: the discount's ID, the discount as a
+	// hash in the holder's own shape, or the discount whole.
+	discountReturns = []string{DiscountID, "discount_hash", DiscountObject}
+	// discountRelations gives, by form, what the discount Stripe returns was made from.
+	discountRelations = map[string]string{"coupon": "coupon", "discount": "existing_discount", "promotion_code": "promotion_code"}
+	mapUpdates        = []string{MapMerged, MapReplaced}
+	mapEmptyBy        = []string{"empty_string", "null"}
+	mapEmptyResults   = []string{MapRemoved, "stored"}
+	matcherKinds      = []string{"sent", "normalised", "value", "null", "absent", "id", "created", "ref", "account_id", "account", "from", "timestamp", "url", "secret", "list", "unchanged", "fingerprint", "day_within", "time_within"}
+	hashUpdates       = []string{HashSiblingsKept, HashSiblingsCleared, HashRefused}
 )
 
 // minimalCreate is one variant of a minimal create in the record: what it sent and what each
@@ -663,12 +712,33 @@ func (e *Evidence) check() error {
 		if u := l.Unset; u != nil {
 			errs = append(errs, unknown(l.Key.String()+": unset by", u.By, unsetBy), unknown(l.Key.String()+": unset result", u.Result, unsetResults))
 		}
-		errs = append(errs, l.checkUnreachable())
+		if m := l.Map; m != nil {
+			switch {
+			case l.Side != SideRequest || l.Operation == "" || !slices.Contains(l.On, "update"):
+				errs = append(errs, fmt.Errorf("%s: a map's update on a leaf that is not an update's", l.Key))
+			case m.Update != "":
+				errs = append(errs, unknown(l.Key.String()+": map update", m.Update, mapUpdates))
+			}
+			if v := m.EmptyValue; v != nil {
+				errs = append(errs, unknown(l.Key.String()+": map empty value by", v.By, mapEmptyBy), unknown(l.Key.String()+": map empty value result", v.Result, mapEmptyResults))
+			}
+		}
+		errs = append(errs, l.checkUnreachable(), e.checkReturnedRule(l))
 		if err := errors.Join(errs...); err != nil {
 			return err
 		}
 	}
+	for _, s := range e.SideEffects {
+		for leaf, v := range s.Carried {
+			if leaf == "" || len(v) == 0 || slices.Contains(s.Triggers, leaf) {
+				return fmt.Errorf("side effect %s %s %s: carried %q is empty or one of its triggers", s.Object, s.Operation, s.Probe, leaf)
+			}
+		}
+	}
 	for _, r := range e.Rules {
+		if err := r.checkBeside(); err != nil {
+			return fmt.Errorf("%s %s %s: %w", r.Object, r.Operation, r.Path, err)
+		}
 		for _, o := range r.Observations {
 			if err := r.checkObservation(o); err != nil {
 				return fmt.Errorf("%s %s %s: observation: %w", r.Object, r.Operation, r.Path, err)
@@ -693,9 +763,68 @@ func (e *Evidence) check() error {
 		}
 	}
 	for _, d := range e.Discounts {
-		if err := unknown(d.Object+" "+d.Operation+": discounts form", d.Form, discountForms); err != nil {
+		at := d.Object + " " + d.Operation + " " + d.Path
+		if err := errors.Join(unknown(at+": discounts form", d.Form, discountForms), unknown(at+": discounts returned", d.Returned, discountReturns)); err != nil {
 			return err
 		}
+		switch {
+		case d.Relation != discountRelations[d.Form]:
+			return fmt.Errorf("%s: the form %s returns a discount of relation %q, not %q", at, d.Form, d.Relation, discountRelations[d.Form])
+		case d.Path != "discounts" && !strings.HasSuffix(d.Path, ".discounts") || d.ResponsePath == "":
+			return fmt.Errorf("%s: a discounts entry names no list of discounts, or no response path", at)
+		}
+	}
+	return nil
+}
+
+// checkReturnedRule refuses a leaf's `returned.rule_ref` that names no Beside rule of its own
+// object, operation and path: the form it gives holds only for a create without the rule's
+// beside leaf.
+func (e *Evidence) checkReturnedRule(l EvidenceLeaf) error {
+	ref := l.returnedRule()
+	if ref == nil {
+		return nil
+	}
+	if *ref < 0 || *ref >= len(e.Rules) {
+		return fmt.Errorf("%s: returned names rule %d, which the record does not hold", l.Key, *ref)
+	}
+	if r := e.Rules[*ref]; r.Beside == "" || r.Object != l.Object || r.Operation != l.Operation || r.Path != l.Path {
+		return fmt.Errorf("%s: returned names rule %d, which is not a beside rule of the leaf", l.Key, *ref)
+	}
+	return nil
+}
+
+// returnedRule is the index of the Beside rule a leaf's `returned` names, or nil.
+func (l EvidenceLeaf) returnedRule() *int {
+	var returned struct {
+		RuleRef *int `json:"rule_ref"`
+	}
+	if l.Returned == nil || json.Unmarshal(l.Returned, &returned) != nil {
+		return nil
+	}
+	return returned.RuleRef
+}
+
+// checkBeside refuses a Beside rule none of whose observations sends its beside leaf, or all of
+// which do: the rule says what a create reads beside the leaf and what one without it reads.
+func (r EvidenceRule) checkBeside() error {
+	if r.Beside == "" {
+		return nil
+	}
+	with := 0
+	for _, o := range r.Observations {
+		var params any
+		if err := json.Unmarshal(o.Condition.Params, &params); err != nil {
+			return fmt.Errorf("beside rule observation %s: params: %w", o.Condition.Probe, err)
+		}
+		leaf, _, _ := strings.Cut(r.Beside, "@")
+		flat, _ := params.(map[string]any)
+		if _, named := flat[leaf]; named || sends(params, strings.Split(leaf, ".")) {
+			with++
+		}
+	}
+	if with == 0 || with == len(r.Observations) {
+		return fmt.Errorf("beside rule on %q has no observation both with and without it", r.Beside)
 	}
 	return nil
 }
@@ -746,6 +875,17 @@ func (l EvidenceLeaf) checkUnreachable() error {
 // acceptance that also refuses, and a matcher kind outside the format's.
 func (r EvidenceRule) checkObservation(o RuleObservation) error {
 	c, v := o.Condition, o.Value
+	if r.Beside != "" {
+		switch {
+		case c.Probe == "" || c.Params == nil:
+			return errors.New("a beside rule's observation names no probe or params")
+		case c.Variant != "" || c.CreatedWith != nil || v.Status != 0 || v.Read != nil || v.Message != "" || v.Type != "" || v.Code != "" || v.Param != "":
+			return fmt.Errorf("beside rule observation %s holds an answer's members", c.Probe)
+		case !slices.Contains(matcherKinds, v.Kind):
+			return fmt.Errorf("kind %q is not one the generator knows (%s)", v.Kind, strings.Join(matcherKinds, ", "))
+		}
+		return nil
+	}
 	if (c.Probe != "") != r.answer() {
 		return errors.New("a rule mixes answers to probes with a default's observations")
 	}

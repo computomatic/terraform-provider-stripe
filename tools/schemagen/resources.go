@@ -1,6 +1,9 @@
 package main
 
-import "fmt"
+import (
+	"fmt"
+	"maps"
+)
 
 // parentHolds is the register's reason for a table's own copy of the parent ID that the
 // engine adds as the declaration's Parent attribute.
@@ -74,6 +77,25 @@ var discountsKept = map[string]string{
 	"discounts.promotion_code": "Read back from the expanded discount's `promotion_code` (record: `discounts`, relation `promotion_code`; the brief of the eighth pin, 2026-11-05).",
 }
 
+// lineDiscountsKept keeps the coupon and promotion code forms of a list element's `discounts`,
+// such as a quote line's (its `discount` form is verified),
+// which Stripe returns each whole beside the amount it takes off where the resource expands them:
+// the record's `discounts` shows each form returned as `discount_object` at
+// `line_items.data.discounts.discount`, which the engine maps back by key (D3) (the brief of the
+// ninth pin, 2026-11-05).
+func lineDiscountsKept(list string) map[string]string {
+	return map[string]string{
+		list + ".discounts.coupon":         "Read back from the `source.coupon` of the discount Stripe returns whole on the line, on a discount with no promotion code (record: `discounts`, relation `coupon`; the brief of the ninth pin, 2026-11-05).",
+		list + ".discounts.promotion_code": "Read back from the `promotion_code` of the discount Stripe returns whole on the line (record: `discounts`, relation `promotion_code`; the brief of the ninth pin, 2026-11-05).",
+	}
+}
+
+// requestBehaviour is the Resource.AcceptedOnly reason of an argument that says how Stripe
+// handles the request it comes with, which Stripe never returns, so that a kept value cannot
+// drift, and the provider keeps it from configuration (the product owner's decision of
+// 2026-11-05, as for a customer's `tax.validate_location`).
+const requestBehaviour = "It says how Stripe handles the request it comes with, as a customer's `tax.validate_location` does, so a kept value cannot drift, and the provider keeps it from configuration (the product owner's decision of 2026-11-05)."
+
 // invoiceKept is the invoice's register of accepted-only leaves: the forms of its `discounts`,
 // and the arguments whose effect shows elsewhere on the invoice.
 var invoiceKept = map[string]string{
@@ -83,6 +105,17 @@ var invoiceKept = map[string]string{
 	"days_until_due":                 "Its effect shows in `due_date` (the product owner's decision of 2026-11-05).",
 	"pending_invoice_items_behavior": "Its effect shows in `lines` and the amounts, and it lets one apply make a draft with its items (the product owner's decision of 2026-11-05).",
 	"subscription":                   "Its effect shows in `parent.subscription_details.subscription` (the product owner's decision of 2026-11-05).",
+}
+
+// quoteKept is the quote's register of accepted-only leaves: the forms of its `discounts` and of
+// its lines', and the lines' tax rates.
+func quoteKept() map[string]string {
+	kept := map[string]string{
+		"line_items.tax_rates": "Its effect shows on the quote's line items (`stripe_quote_line_item`) (the product owner's decision of 2026-11-05).",
+	}
+	maps.Copy(kept, discountsKept)
+	maps.Copy(kept, lineDiscountsKept("line_items"))
+	return kept
 }
 
 // Resources lists the objects the generator writes tables for. A resource joins the list
@@ -150,13 +183,12 @@ var Resources = []Resource{
 		"discounts.discount":       discountsKept["discounts.discount"],
 		"discounts.promotion_code": discountsKept["discounts.promotion_code"],
 	}, CreatePath: "/v1/invoiceitems", UpdatePath: "/v1/invoiceitems/{invoiceitem}", Omit: []string{"discounts"}},
-	// A quote's response `discounts` awaits proof, so it cannot read a discount back, and keeps
-	// none of discountsKept.
-	{Package: "quote", AcceptedOnly: map[string]string{
-		"line_items.tax_rates": "Its effect shows on the quote's line items (`stripe_quote_line_item`) (the product owner's decision of 2026-11-05).",
-	}, CreatePath: "/v1/quotes", UpdatePath: "/v1/quotes/{quote}", Omit: []string{"discounts"}},
+	// A quote reads its discounts back as an invoice does, and its lines' from the discounts
+	// each line holds whole.
+	{Package: "quote", AcceptedOnly: quoteKept(), CreatePath: "/v1/quotes", UpdatePath: "/v1/quotes/{quote}", Omit: []string{"discounts"}},
 	{Package: "subscription", CreatePath: "/v1/subscriptions", UpdatePath: "/v1/subscriptions/{subscription_exposed_id}", PagedLists: map[string]string{"items": "stripe_subscription_item"}, Omit: []string{"discounts", "payment_settings.payment_method_options.konbini", "payment_settings.payment_method_options.sepa_debit", "items.discounts"}, CreateOnly: []string{"billing_cycle_anchor"}},
-	{Package: "subscription_item", CreatePath: "/v1/subscription_items", UpdatePath: "/v1/subscription_items/{item}", Omit: []string{"discounts"}},
+	{Package: "subscription_item", AcceptedOnly: keptFor(requestBehaviour, []string{"off_session", "payment_behavior", "proration_behavior", "proration_date"}),
+		CreatePath: "/v1/subscription_items", UpdatePath: "/v1/subscription_items/{item}", Omit: []string{"discounts"}},
 	{Package: "subscription_schedule", CreatePath: "/v1/subscription_schedules", UpdatePath: "/v1/subscription_schedules/{schedule}", Omit: []string{"from_subscription", "pause_schedules"}},
 	// Wave 6. The setup intent leaves out what only confirming it uses, and its payment
 	// method options, until the gate exposes them. The customer payment method is an

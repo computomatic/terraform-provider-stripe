@@ -64,8 +64,8 @@ func (a *api) call(ctx context.Context, method, target string, params wire.Objec
 	return obj, nil
 }
 
-// expanded returns params with the declaration's `expand[]` entries added, and `discounts`
-// where the resource maps them, or its `include` values for a `/v2` object. prefix is `data.` for a `/v1` list response; `include` has no
+// expanded returns params with the declaration's `expand[]` entries added, and `discounts`, or
+// a list's `<list>.data.discounts`, where the resource maps them, or its `include` values for a `/v2` object. prefix is `data.` for a `/v1` list response; `include` has no
 // prefix. A declaration that expands and includes nothing gets params back.
 func (a *api) expanded(params wire.Object, prefix string) wire.Object {
 	return a.withExpand(params, prefix, a.m.decl.Expand, a.m.decl.Include)
@@ -86,6 +86,9 @@ func (a *api) created(params wire.Object) wire.Object {
 func (a *api) withExpand(params wire.Object, prefix string, expand, include []string) wire.Object {
 	if a.m.discounts != nil {
 		expand = append(slices.Clone(expand), "discounts")
+	}
+	for _, n := range a.m.lineDiscounts {
+		expand = append(slices.Clone(expand), lineDiscountsExpand(n))
 	}
 	if len(include) > 0 {
 		values := make(wire.Array, len(include))

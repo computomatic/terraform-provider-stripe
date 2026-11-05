@@ -2,6 +2,7 @@ package engine
 
 import (
 	"fmt"
+	"slices"
 	"strings"
 )
 
@@ -18,7 +19,8 @@ func (m *model) importNote() (string, NoteLevel) {
 		for _, n := range nodes {
 			name := prefix + n.AttrName()
 			replaces := replacing || n.Replace || n.ReplaceIfSet || n.Fixed
-			if n.computedOnly() {
+			// A list of discounts the resource maps back by key is read back too.
+			if n.computedOnly() || n == m.discounts || slices.Contains(m.lineDiscounts, n) {
 				continue
 			}
 			if n.Response || n.Once {

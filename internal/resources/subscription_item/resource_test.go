@@ -3,6 +3,7 @@ package subscription_item_test
 import (
 	"fmt"
 	"os"
+	"regexp"
 	"strings"
 	"testing"
 
@@ -105,6 +106,20 @@ data "stripe_subscription_item" "by_id" {
 				resource.TestCheckResourceAttrPair("data.stripe_subscription_item.by_id", "id", address, "id"),
 				resource.TestCheckResourceAttr("data.stripe_subscription_item.by_id", "quantity", "3"),
 			),
+		}},
+	})
+}
+
+// Stripe refuses a discount an item does not hold, the one the suite could send it on create
+// (suite: TestSubscriptionItemAttributes, `discounts.discount` with `di_attrs00000000`), and the
+// apply says so with Stripe's message.
+func TestAccSubscriptionItem_discountRefused(t *testing.T) {
+	acct := acctest.NewAccount(t)
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: tfacc.ProviderFactories,
+		Steps: []resource.TestStep{{
+			Config:      itemConfig(acct, "one", "  discounts = [{ discount = \"di_attrs00000000\" }]\n"),
+			ExpectError: regexp.MustCompile(`No such discount`),
 		}},
 	})
 }

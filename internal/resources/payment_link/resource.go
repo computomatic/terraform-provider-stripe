@@ -80,12 +80,9 @@ var Declaration = engine.Declaration{
 	},
 	// Stripe keeps the members an update of these leaves out (family `v1-payments`, `hashes`), so
 	// an update sends only the members that changed. `subscription_data.invoice_settings`, which
-	// the record does not list, goes whole.
+	// the record does not list, goes whole. The record shows Stripe replacing the `metadata` of
+	// both whole (their `map`), which the engine then sends whole.
 	SendChangedMembers: []string{"consent_collection", "payment_intent_data", "subscription_data"},
-	// Stripe replaces these maps whole on update and keeps a key sent empty as an empty value (the
-	// suite's payment link recipe, `Replaced`, with its probes `update/11`, `update/9`, `unset/11`
-	// and `unset/9`), so a change sends the whole map.
-	ReplacedMaps: []string{"payment_intent_data.metadata", "subscription_data.metadata"},
 	// Stripe keeps the members of `invoice_creation` and its `invoice_data` an update leaves out
 	// too, but `invoice_creation` requires `enabled`, so it goes whole, with a removed member as
 	// null. Stripe clears what an update leaves out of `transfer_data`, `name_collection` and

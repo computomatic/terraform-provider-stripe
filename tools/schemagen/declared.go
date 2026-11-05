@@ -93,17 +93,23 @@ func stringLiteral(e ast.Expr) (string, error) {
 }
 
 // applyDeclaredDefaults gives a request leaf its declaration's statement, the one the engine
-// gives the docs (Declaration.Defaults), where the evidence alone has none or another rule.
-func (tc *tableCoverage) applyDeclaredDefaults(rules map[string]string) {
+// gives the docs (Declaration.Defaults), where the evidence alone has none or another rule. It
+// refuses a statement of a default the record holds only beside another argument (a Beside
+// rule) that does not name that argument.
+func (tc *tableCoverage) applyDeclaredDefaults(rules map[string]string, ev *Pinned) error {
 	for i, l := range tc.leaves {
 		r := &tc.records[i]
 		rule, ok := rules[l.At]
 		if !ok || r.Default == nil {
 			continue
 		}
+		if beside := ev.besideOf(l.Key); beside != "" && !strings.Contains(rule, "`"+beside+"`") {
+			return fmt.Errorf("%s: the declared default of `%s` holds only beside `%s` (the record's rule), which it does not name", r.Table, l.At, beside)
+		}
 		if f := fieldAt(tc.table, l.At); f != nil && f.Default != nil {
 			d := fields.Default{Kind: fields.DefaultRule, Rule: rule, Observed: f.Default.Observed}
 			r.Default.Statement, r.Default.Source = d.Statement(), "declaration"
 		}
 	}
+	return nil
 }

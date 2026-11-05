@@ -102,6 +102,17 @@ type Field struct {
 	// PagedBy is, on a list Stripe returns a page at a time on every read, the type that reads
 	// every element (D3).
 	PagedBy string
+	// MapUpdate is, on a map an update takes, how the pinned evidence shows Stripe updating it
+	// (the record's `map`), or nil where it shows nothing.
+	MapUpdate *MapUpdate
+}
+
+// MapUpdate is how Stripe updates a map. A merged map keeps the keys an update leaves out, and
+// one replaced drops them. A key sent empty, as the engine sends an unset, is removed or, where
+// EmptyKept, held as an empty value, so that no update can remove a key of a merged map.
+type MapUpdate struct {
+	Replaced  bool
+	EmptyKept bool
 }
 
 // DefaultKind is where an optional argument's value comes from when the configuration leaves

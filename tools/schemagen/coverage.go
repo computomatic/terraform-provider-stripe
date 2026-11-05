@@ -237,6 +237,12 @@ func coverTable(spec *Spec, res Resource, ev *Pinned) (*tableCoverage, error) {
 			r.State = StateAwaiting
 		}
 	}
+	if err := checkBesideReturns(res.Package, leaves, records, ev); err != nil {
+		return nil, err
+	}
+	if err := checkKeptDiscounts(res, leaves, records, ev); err != nil {
+		return nil, err
+	}
 	for i, l := range leaves {
 		r := &records[i]
 		if d := defaultOf(l, *r, create, leaves, records, ev); d != nil {
@@ -246,7 +252,7 @@ func coverTable(spec *Spec, res Resource, ev *Pinned) (*tableCoverage, error) {
 			}
 		}
 	}
-	if err := annotate(tc.table, leaves, records, create, ev); err != nil {
+	if err := annotate(tc.table, leaves, records, create, unsetFor(res), ev); err != nil {
 		return nil, fmt.Errorf("%s: %w", res.Package, err)
 	}
 	if err := newRequired(create, leaves, records, before); err != nil {
@@ -301,9 +307,10 @@ func dropped(leaves []Leaf, records []Record, operation string) map[string]bool 
 
 // annotate records on the table's fields the default of each optional argument an exposed
 // request leaf holds, for its docs line (D4), Stripe's refusal of each argument it has only
-// ever refused, which it fails on where the record holds none, and the values of an argument
-// Stripe fails on every attempt. The create's default comes before an update's `not sent`.
-func annotate(table []fields.Field, leaves []Leaf, records []Record, create string, ev *Pinned) error {
+// ever refused, which it fails on where the record holds none, the values of an argument
+// Stripe fails on every attempt, and how an update of a map treats the keys it leaves out and a
+// key sent empty (the record's `map`). The create's default comes before an update's `not sent`.
+func annotate(table []fields.Field, leaves []Leaf, records []Record, create, unsetBy string, ev *Pinned) error {
 	refused, answered := map[string][]refusedOn{}, map[string][]refusedOn{}
 	unreachable := map[string][]UnreachableValue{}
 	var paths, answeredPaths, unreachablePaths []string
@@ -315,6 +322,15 @@ func annotate(table []fields.Field, leaves []Leaf, records []Record, create stri
 		f := fieldAt(table, l.At)
 		if f == nil {
 			continue
+		}
+		if f.Shape == fields.StringMap && l.Operation != create {
+			if e := ev.leaf(l.Key); e != nil && e.Status == "proven" {
+				m, err := mapUpdate(l.Key, e, unsetBy)
+				if err != nil {
+					return err
+				}
+				f.MapUpdate = m
+			}
 		}
 		if r.Refused {
 			on := "update"
@@ -811,10 +827,7 @@ func (p *Pinned) leaf(k Key) *EvidenceLeaf {
 // update shows nothing unless the suite proved a leaf of the table's update, whose probes
 // record the side effects. A field holding several leaves needs each of them to show it.
 func (p *Pinned) facts(res Resource, object, create, update string, leaves []Leaf, g *gate) {
-	unsetBy := "empty_string"
-	if strings.HasPrefix(res.CreatePath, "/v2/") || strings.HasPrefix(res.ReadPath, "/v2/") {
-		unsetBy = "null"
-	}
+	unsetBy := unsetFor(res)
 	updated := false
 	var changed []string
 	filled := map[string]bool{}
@@ -858,6 +871,34 @@ func (p *Pinned) facts(res Resource, object, create, update string, leaves []Lea
 	}
 }
 
+// unsetFor is how the engine unsets a field of the table's API, in the record's terms: an empty
+// string on `/v1`, null on `/v2`.
+func unsetFor(res Resource) string {
+	if strings.HasPrefix(res.CreatePath, "/v2/") || strings.HasPrefix(res.ReadPath, "/v2/") {
+		return "null"
+	}
+	return "empty_string"
+}
+
+// mapUpdate is how the record shows an update of a map leaf: merged or replaced, and whether a key
+// sent empty stays as an empty value. A merged map whose record does not show what a key sent
+// empty becomes keeps it, as far as the provider knows, so no key removal is sent. It refuses a
+// record whose empty value is sent otherwise than the engine sends an unset, which the engine
+// could not send.
+func mapUpdate(k Key, e *EvidenceLeaf, unsetBy string) (*fields.MapUpdate, error) {
+	if e == nil || e.Map == nil || e.Map.Update == "" {
+		return nil, nil
+	}
+	m := &fields.MapUpdate{Replaced: e.Map.Update == MapReplaced, EmptyKept: true}
+	if ev := e.Map.EmptyValue; ev != nil {
+		if ev.By != unsetBy {
+			return nil, fmt.Errorf("%s: the record shows a key of the map sent empty as %s, but the engine sends an unset on this API as %s", k, ev.By, unsetBy)
+		}
+		m.EmptyKept = ev.Result != MapRemoved
+	}
+	return m, nil
+}
+
 // leafDefault is an optional create leaf's default from the evidence (D4): what Stripe set on
 // a minimal create. A default the variants of the minimal create give differently is
 // DefaultVaries, which a declaration words, and so is a rule whose text runs over several lines.
@@ -888,12 +929,111 @@ func (p *Pinned) leafDefault(k Key) *fields.Default {
 		return &fields.Default{Kind: fields.DefaultNone}
 	case "rule":
 		r := p.Evidence.Rules[*d.RuleRef]
-		if strings.Contains(r.Rule, "\n") {
+		if strings.Contains(r.Rule, "\n") || r.Beside != "" && !strings.Contains(r.Rule, "`"+besideLeaf(r.Beside)+"`") {
 			// A rule that quotes the values it derived, as JSON over several lines, cannot be a
-			// docs line, so a declaration words it.
+			// docs line, and one that holds only beside another argument must name it, so a
+			// declaration words either.
 			return &fields.Default{Kind: fields.DefaultVaries}
 		}
 		return &fields.Default{Kind: fields.DefaultRule, Rule: r.Rule, Observed: p.observed(r)}
+	}
+	return nil
+}
+
+// besideLeaf is the request path of a Beside rule's leaf, without its union branch.
+func besideLeaf(beside string) string {
+	leaf, _, _ := strings.Cut(beside, "@")
+	return leaf
+}
+
+// besideOf is the argument beside which alone the record's default of a leaf holds (a Beside
+// rule's leaf), or "".
+func (p *Pinned) besideOf(k Key) string {
+	e := p.leaf(k)
+	if e == nil || e.Default == nil {
+		return ""
+	}
+	for _, d := range append([]EvidenceDefault{*e.Default}, variantDefaults(e.Default)...) {
+		if d.Kind == "rule" && d.RuleRef != nil {
+			if r := p.Evidence.Rules[*d.RuleRef]; r.Beside != "" {
+				return besideLeaf(r.Beside)
+			}
+		}
+	}
+	return ""
+}
+
+func variantDefaults(d *EvidenceDefault) []EvidenceDefault {
+	out := make([]EvidenceDefault, len(d.Variants))
+	for i, v := range d.Variants {
+		out[i] = v.Default
+	}
+	return out
+}
+
+// checkBesideReturns refuses a table that exposes a request leaf whose returned form holds only
+// for a create without another leaf (its `returned.rule_ref`, a Beside rule), beside that leaf:
+// a create that sent both would read back another value than the one configured, as a test
+// clock created with a `customer` freezes at its `created`.
+func checkBesideReturns(table string, leaves []Leaf, records []Record, ev *Pinned) error {
+	exposedAt := map[Key]bool{}
+	for i, l := range leaves {
+		if records[i].State == StateExposed {
+			exposedAt[l.Key] = true
+		}
+	}
+	for i, l := range leaves {
+		e := ev.leaf(l.Key)
+		if records[i].State != StateExposed || l.Side != SideRequest || e == nil {
+			continue
+		}
+		ref := e.returnedRule()
+		if ref == nil {
+			continue
+		}
+		r := ev.Evidence.Rules[*ref]
+		path, branch, _ := strings.Cut(r.Beside, "@")
+		beside := l.Key
+		beside.Path, beside.Branch = path, branch
+		if exposedAt[beside] {
+			return fmt.Errorf("%s: %s reads back as sent only without `%s`, which the table exposes too (the record's rule: %s)", table, l.Key, r.Beside, r.Rule)
+		}
+	}
+	return nil
+}
+
+// checkKeptDiscounts refuses an accepted-only form of a list of discounts that a table keeps
+// (Resource.AcceptedOnly) where the engine could not read it back as the record shows Stripe
+// returning it: the top-level `discounts` as discount IDs at `discounts`, and a list element's,
+// such as a quote line's, as each discount whole at `<list>.data.discounts.discount`, in the
+// table's own object. The engine maps either back by what each form names (D3).
+func checkKeptDiscounts(res Resource, leaves []Leaf, records []Record, ev *Pinned) error {
+	if ev == nil {
+		return nil
+	}
+	for i, l := range leaves {
+		list, form, ok := strings.Cut(l.Path, ".discounts.")
+		if ok {
+			list += ".discounts"
+		} else {
+			list, form, ok = strings.Cut(l.Path, ".")
+		}
+		if !ok || l.Side != SideRequest || records[i].State != StateExposed || records[i].Class != ClassAcceptedOnly || discountRelations[form] == "" || !strings.HasSuffix(list, "discounts") {
+			continue
+		}
+		want, returned := "discounts", DiscountID
+		if list != "discounts" {
+			want, returned = strings.TrimSuffix(list, "discounts")+"data.discounts.discount", DiscountObject
+		}
+		var found *Discount
+		for j, d := range ev.Evidence.Discounts {
+			if d.Object == l.Object && d.Operation == l.Operation && d.Path == list && d.Form == form {
+				found = &ev.Evidence.Discounts[j]
+			}
+		}
+		if found == nil || found.HeldBy != "" || found.Returned != returned || found.ResponsePath != want {
+			return fmt.Errorf("%s: kept accepted-only %s is read back as the record shows Stripe returning it only as %s at %s in the object itself, which the record's discounts do not show", res.Package, l.Key, returned, want)
+		}
 	}
 	return nil
 }

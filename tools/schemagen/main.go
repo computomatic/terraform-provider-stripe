@@ -100,7 +100,9 @@ func Generate(root string, resources []Resource) ([]File, error) {
 		if err != nil {
 			return nil, err
 		}
-		tc.applyDeclaredDefaults(worded[res.Package])
+		if err := tc.applyDeclaredDefaults(worded[res.Package], ev); err != nil {
+			return nil, err
+		}
 		contradicted = append(contradicted, tc.checkCreateProbes(res, worded[res.Package], ev)...)
 		covered = append(covered, tc)
 		readers[tc.object] = append(readers[tc.object], "stripe_"+res.Package)

@@ -318,6 +318,102 @@ func TestDiscountsAreExpandedOnResourceRequestsOnly(t *testing.T) {
 	}
 }
 
+// lineDiscountsTable is an object whose `lines` each take discounts in Stripe's request shape,
+// which the response holds whole beside the amount each takes off, as a quote's line items do.
+func lineDiscountsTable() []fields.Field {
+	form := func(name string) fields.Field {
+		return fields.Field{Name: name, Shape: fields.String, Create: true, Update: true}
+	}
+	discountForm := form("discount")
+	discountForm.Response, discountForm.ServerDefaulted = true, true
+	return []fields.Field{
+		{Name: "id", Shape: fields.String, Response: true},
+		{Name: "name", Shape: fields.String, Required: true, Create: true, Update: true, Response: true},
+		{Name: "lines", Shape: fields.ObjectList, Create: true, Update: true, Response: true, Fields: []fields.Field{
+			{Name: "quantity", Shape: fields.Int, Create: true, Update: true, Response: true},
+			{Name: "discounts", Shape: fields.ObjectList, Create: true, Update: true, Response: true, Fields: []fields.Field{
+				{Name: "amount", Shape: fields.Int, Response: true}, form("coupon"), discountForm, form("promotion_code"),
+			}},
+		}},
+	}
+}
+
+// A line's discounts map back by key as the top-level ones do, each from the discount the line
+// holds whole, with the amount it takes off; a form the plan left unknown is null. The resource
+// expands `lines.data.discounts`, and the data source maps none.
+func TestLineDiscountsMapBackByKey(t *testing.T) {
+	stub := newStub()
+	r := configured(t, planDecl(), lineDiscountsTable(), stub)
+	if len(r.m.lineDiscounts) != 1 {
+		t.Fatalf("line discounts: %v", r.m.lineDiscounts)
+	}
+	lineType := r.objType.AttrTypes["lines"].(basetypes.ListType).ElemType.(basetypes.ObjectType)
+	elemType := lineType.AttrTypes["discounts"].(basetypes.ListType).ElemType.(basetypes.ObjectType)
+	elem := func(form, id string, amount, discount attr.Value) attr.Value {
+		attrs := map[string]attr.Value{"amount": amount, "coupon": types.StringNull(), "discount": discount, "promotion_code": types.StringNull()}
+		attrs[form] = types.StringValue(id)
+		return types.ObjectValueMust(elemType.AttrTypes, attrs)
+	}
+	lines := func(discounts ...attr.Value) attr.Value {
+		line := types.ObjectValueMust(lineType.AttrTypes, map[string]attr.Value{"quantity": types.Int64Value(2), "discounts": types.ListValueMust(elemType, discounts)})
+		return types.ListValueMust(lineType, []attr.Value{line})
+	}
+	held := func(amount int64, d wire.Object) wire.Object {
+		return wire.Object{{Name: "amount", Value: wire.Int(amount)}, {Name: "discount", Value: d}}
+	}
+	body := wire.Object{{Name: "id", Value: wire.String("wid_1")}, {Name: "name", Value: wire.String("w")}, {Name: "lines", Value: wire.Object{
+		{Name: "object", Value: wire.String("list")},
+		{Name: "data", Value: wire.Array{wire.Object{{Name: "quantity", Value: wire.Int(2)}, {Name: "discounts", Value: wire.Array{
+			held(300, discount("di_2", "co_2", wire.String("promo_2"))), held(200, discount("di_1", "co_1", wire.Null{})), held(100, discount("di_9", "co_9", wire.Null{})),
+		}}}}},
+	}}}
+	planned := lines(elem("coupon", "co_1", types.Int64Unknown(), types.StringUnknown()), elem("promotion_code", "promo_2", types.Int64Unknown(), types.StringUnknown()))
+	got, diags := r.m.decodeState(body, r.fill(map[string]attr.Value{"name": types.StringValue("w"), "lines": planned}), r.objType, false, nil)
+	noErrors(t, diags)
+	want := lines(
+		elem("coupon", "co_1", types.Int64Value(200), types.StringNull()),
+		elem("promotion_code", "promo_2", types.Int64Value(300), types.StringNull()),
+		elem("discount", "di_9", types.Int64Value(100), types.StringValue("di_9")))
+	if !got.Attributes()["lines"].Equal(want) {
+		t.Errorf("mapped %v, want %v", got.Attributes()["lines"], want)
+	}
+
+	// Stripe lists the object's own discount on each line too; the line's `discounts` leave it
+	// out, as a line the configuration gives no discounts holds none (dev sandbox).
+	own := append(append(wire.Object(nil), body...), wire.Field{Name: "discounts", Value: wire.Array{discount("di_9", "co_9", wire.Null{})}})
+	got, diags = r.m.decodeState(own, r.fill(map[string]attr.Value{"name": types.StringValue("w"), "lines": planned}), r.objType, false, nil)
+	noErrors(t, diags)
+	if want := lines(elem("coupon", "co_1", types.Int64Value(200), types.StringNull()), elem("promotion_code", "promo_2", types.Int64Value(300), types.StringNull())); !got.Attributes()["lines"].Equal(want) {
+		t.Errorf("with the object's own discount: mapped %v, want %v", got.Attributes()["lines"], want)
+	}
+	none := types.ListValueMust(lineType, []attr.Value{types.ObjectValueMust(lineType.AttrTypes, map[string]attr.Value{"quantity": types.Int64Value(2), "discounts": types.ListNull(elemType)})})
+	onlyOwn := wire.Object{{Name: "id", Value: wire.String("wid_1")}, {Name: "name", Value: wire.String("w")},
+		{Name: "discounts", Value: wire.Array{wire.String("di_9")}},
+		{Name: "lines", Value: wire.Object{{Name: "object", Value: wire.String("list")}, {Name: "data", Value: wire.Array{wire.Object{
+			{Name: "quantity", Value: wire.Int(2)}, {Name: "discounts", Value: wire.Array{held(100, discount("di_9", "co_9", wire.Null{}))}}}}}}}}
+	got, diags = r.m.decodeState(onlyOwn, r.fill(map[string]attr.Value{"name": types.StringValue("w"), "lines": none}), r.objType, false, nil)
+	noErrors(t, diags)
+	if !got.Attributes()["lines"].Equal(none) {
+		t.Errorf("a line with only the object's discount: %v, want %v", got.Attributes()["lines"], none)
+	}
+
+	state, _ := r.create(t, r.fill(map[string]attr.Value{"name": types.StringValue("w"), "lines": types.ListValueMust(lineType, nil)}))
+	r.read(t, state)
+	for _, req := range stub.requests() {
+		expand, _ := req.Params.Get("expand")
+		if arr, ok := expand.(wire.Array); !ok || len(arr) != 1 || arr[0] != wire.String("lines.data.discounts") {
+			t.Errorf("%s %s: expand %v", req.Method, req.Path, expand)
+		}
+	}
+	newDS, err := NewDataSource(planDecl(), lineDiscountsTable())
+	if err != nil {
+		t.Fatal(err)
+	}
+	if ds, ok := newDS().(*DataSource); !ok || len(ds.m.lineDiscounts) != 0 {
+		t.Error("the data source maps line discounts")
+	}
+}
+
 // E3: the Import section lists the arguments Stripe never returns, unless the declaration's
 // note names them, and flags a replacement as a warning.
 func TestImportNoteListsTheArgumentsStripeNeverReturns(t *testing.T) {

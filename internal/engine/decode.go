@@ -33,9 +33,14 @@ type decoder struct {
 	closed bool
 	// fixed lists the keyed lists whose elements must all be matched by key.
 	fixed []string
-	// discounts is the resource's `discounts`, mapped by key, or nil.
-	discounts *node
-	diags     diag.Diagnostics
+	// discounts is the resource's `discounts`, mapped by key, or nil, and lineDiscounts the
+	// `discounts` of a list's elements, each discount held whole beside its amount.
+	discounts     *node
+	lineDiscounts []*node
+	// ownDiscounts are the IDs of the discounts the object itself holds, which Stripe lists on
+	// each line too and which no line's `discounts` holds.
+	ownDiscounts map[string]bool
+	diags        diag.Diagnostics
 }
 
 // decodeState maps the response onto the top-level attribute object. prior is the plan
@@ -45,9 +50,12 @@ type decoder struct {
 // keep limits each keyed list to the elements the resource manages (see managedKeys); nil
 // keeps all of them.
 func (m *model) decodeState(body wire.Object, prior basetypes.ObjectValue, objType basetypes.ObjectType, dataSource bool, keep map[string]*managedSet) (basetypes.ObjectValue, diag.Diagnostics) {
-	d := decoder{dataSource: dataSource, matchBy: m.keyedLists(), matchData: m.decl.MatchData, keep: keep, fixed: m.decl.FixedKeys, discounts: m.discounts}
+	d := decoder{dataSource: dataSource, matchBy: m.keyedLists(), matchData: m.decl.MatchData, keep: keep, fixed: m.decl.FixedKeys, discounts: m.discounts, lineDiscounts: m.lineDiscounts}
 	if f := m.decl.KeepWhenClosed; f != "" {
 		d.closed, _ = body.GetBool(f)
+	}
+	if len(m.lineDiscounts) > 0 {
+		d.ownDiscounts = heldDiscountIDs(body)
 	}
 	priorAttrs := prior.Attributes()
 	byAttr := make(map[string]*node, len(m.nodes))
@@ -117,7 +125,10 @@ func (d *decoder) node(n *node, w wire.Value, prior attr.Value) attr.Value {
 		return nullOf(attrType(n))
 	}
 	if !d.dataSource && n == d.discounts {
-		return d.mapDiscounts(n, w, prior)
+		return d.mapDiscounts(n, w, prior, "")
+	}
+	if !d.dataSource && slices.Contains(d.lineDiscounts, n) {
+		return d.mapDiscounts(n, w, prior, "discount")
 	}
 	if !d.dataSource {
 		switch {
