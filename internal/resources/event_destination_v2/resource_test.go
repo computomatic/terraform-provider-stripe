@@ -19,6 +19,10 @@ import (
 
 func TestMain(m *testing.M) { os.Exit(acctest.Main(m)) }
 
+// signingSecret is the form of a webhook endpoint's signing secret (suite: "create including
+// signing secret").
+var signingSecret = regexp.MustCompile(`^whsec_[A-Za-z0-9]+$`)
+
 const (
 	address   = "stripe_event_destination_v2.test"
 	thinEvent = "v1.billing.meter.error_report_triggered"
@@ -86,8 +90,12 @@ data "stripe_event_destination_v2" "test" {
 				// Stripe redacts the URL unless asked, so state holding it proves the
 				// provider asks on create.
 				resource.TestCheckResourceAttr(address, "webhook_endpoint.url", "https://example.com/hook"),
+				// Stripe returns the signing secret only to a create that includes it, so
+				// state holding it proves the create asks, and no later read takes it away.
+				resource.TestMatchResourceAttr(address, "webhook_endpoint.signing_secret", signingSecret),
 				resource.TestCheckResourceAttrPair("data.stripe_event_destination_v2.test", "id", address, "id"),
 				resource.TestCheckResourceAttr("data.stripe_event_destination_v2.test", "webhook_endpoint.url", "https://example.com/hook"),
+				resource.TestCheckNoResourceAttr("data.stripe_event_destination_v2.test", "webhook_endpoint.signing_secret"),
 				resource.TestCheckResourceAttr("data.stripe_event_destination_v2.test", "status", "enabled"),
 			),
 		}},
@@ -96,13 +104,19 @@ data "stripe_event_destination_v2" "test" {
 
 func TestAccEventDestinationV2_update(t *testing.T) {
 	acct := acctest.NewAccount(t)
-	var id string
+	var id, secret string
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: tfacc.ProviderFactories,
 		Steps: []resource.TestStep{
 			{
 				Config: destinationConfig(acct, basic(acct)+"  description = \"one\"\n  metadata = { keep = \"me\", drop = \"me\" }\n"),
-				Check:  idOf(&id),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					idOf(&id),
+					resource.TestCheckResourceAttrWith(address, "webhook_endpoint.signing_secret", func(v string) error {
+						secret = v
+						return nil
+					}),
+				),
 			},
 			{
 				Config: destinationConfig(acct, `
@@ -133,6 +147,14 @@ func TestAccEventDestinationV2_update(t *testing.T) {
 					resource.TestCheckResourceAttr(address, "metadata.keep", "me"),
 					resource.TestCheckResourceAttr(address, "metadata.new", "v"),
 					resource.TestCheckResourceAttr(address, "webhook_endpoint.url", "https://example.com/other"),
+					// An update response holds no secret, so state keeps the one from creation,
+					// though the URL beside it changed.
+					resource.TestCheckResourceAttrWith(address, "webhook_endpoint.signing_secret", func(v string) error {
+						if v == "" || v != secret {
+							return fmt.Errorf("signing secret changed on update: %q was %q", v, secret)
+						}
+						return nil
+					}),
 					func(*terraform.State) error { return checkUpdateRequests(t, acct, id) },
 				),
 			},
@@ -155,10 +177,11 @@ func TestAccEventDestinationV2_update(t *testing.T) {
 	})
 }
 
-// checkUpdateRequests reads the fake's request log: the create is JSON with the include,
-// the update never sends a create-only field, sends the removed metadata key as null and
-// the whole `enabled_events` array, and every POST carries an idempotency key. It checks
-// nothing in smoke mode, where there is no log.
+// checkUpdateRequests reads the fake's request log: the create is JSON that includes the URL
+// and the signing secret, the update never sends a create-only field, sends the removed
+// metadata key as null and the whole `enabled_events` array, the update and the reads include
+// the URL alone, and every POST carries an idempotency key. It checks nothing in smoke mode,
+// where there is no log.
 func checkUpdateRequests(t *testing.T, acct acctest.Config, id string) error {
 	if acct.Smoke {
 		return nil
@@ -174,11 +197,14 @@ func checkUpdateRequests(t *testing.T, acct acctest.Config, id string) error {
 		switch {
 		case entry.Method == "POST" && entry.Path == basePath:
 			sawCreate = true
-			if !includesURL(params) {
-				return fmt.Errorf("create did not include webhook_endpoint.url: %v", entry.Params)
+			if v, _ := params.Get("include"); !jsonIs(v, `["webhook_endpoint.url","webhook_endpoint.signing_secret"]`) {
+				return fmt.Errorf("create did not include webhook_endpoint.url and webhook_endpoint.signing_secret: %v", entry.Params)
 			}
 		case entry.Method == "POST" && entry.Path == basePath+"/"+id:
 			sawUpdate = true
+			if !includesURL(params) {
+				return fmt.Errorf("update did not include webhook_endpoint.url alone: %v", entry.Params)
+			}
 			for _, createOnly := range []string{"type", "event_payload", "snapshot_api_version"} {
 				if _, sent := params.Get(createOnly); sent {
 					return fmt.Errorf("update sent the create-only field %s", createOnly)
@@ -260,9 +286,12 @@ func TestAccEventDestinationV2_import(t *testing.T) {
 		Steps: []resource.TestStep{
 			{Config: cfg},
 			{
-				ResourceName:      address,
-				ImportState:       true,
-				ImportStateVerify: true,
+				ResourceName: address,
+				ImportState:  true,
+				// Stripe returns the signing secret only at creation, so an imported
+				// destination has none.
+				ImportStateVerify:       true,
+				ImportStateVerifyIgnore: []string{"webhook_endpoint.signing_secret"},
 			},
 			{
 				ResourceName:    address,

@@ -3,12 +3,12 @@
 page_title: "stripe_event_destination_v2 Data Source - Stripe"
 subcategory: ""
 description: |-
-  A destination for Stripe's events, delivered as thin or snapshot payloads: a webhook endpoint, an Amazon EventBridge partner event source or an Azure Event Grid partner topic.
+  A destination for Stripe's events, delivered as thin or snapshot payloads: a webhook endpoint, an Amazon EventBridge partner event source or an Azure Event Grid partner topic. Stripe returns a webhook endpoint's signing_secret only at creation, so the data source has none.
 ---
 
 # Data Source: stripe_event_destination_v2
 
-A destination for Stripe's events, delivered as thin or snapshot payloads: a webhook endpoint, an Amazon EventBridge partner event source or an Azure Event Grid partner topic.
+A destination for Stripe's events, delivered as thin or snapshot payloads: a webhook endpoint, an Amazon EventBridge partner event source or an Azure Event Grid partner topic. Stripe returns a webhook endpoint's `signing_secret` only at creation, so the data source has none.
 
 ## Example Usage
 
@@ -85,4 +85,5 @@ The `status_details.disabled` attribute supports:
 
 The `webhook_endpoint` attribute supports:
 
+* `signing_secret` - (Sensitive) The secret used to verify Stripe signatures on delivered events. Returned only in the create response when explicitly included; public API clients cannot retrieve it later.
 * `url` - The URL where Stripe sends matching events. Live mode requires HTTPS; sandbox mode also supports HTTP.

@@ -26,8 +26,8 @@
         "awaiting_proof": 1846
       },
       "response": {
-        "exposed": 5372,
-        "excluded": 125,
+        "exposed": 5373,
+        "excluded": 124,
         "awaiting_proof": 1997
       }
     }
@@ -4830,7 +4830,7 @@
     {"table":"event_destination_v2","object":"v2.core.event_destination","side":"response","path":"status_details.disabled.reason","shape":"string","state":"exposed","class":"verified","tests":["TestEventDestination/disable_records_the_reason/leaves/response/v2.core.event_destination/status_details.disabled.reason"]},
     {"table":"event_destination_v2","object":"v2.core.event_destination","side":"response","path":"type","shape":"string","state":"exposed","class":"verified","tests":["TestEventDestinationAttributes/leaves/response/v2.core.event_destination/type"]},
     {"table":"event_destination_v2","object":"v2.core.event_destination","side":"response","path":"updated","shape":"string","state":"exposed","class":"verified","tests":["TestEventDestinationAttributes/leaves/response/v2.core.event_destination/updated"]},
-    {"table":"event_destination_v2","object":"v2.core.event_destination","side":"response","path":"webhook_endpoint.signing_secret","shape":"string","state":"excluded","rule":"register","reason":"Stripe returns it only to a create that sends `include` with it (suite: TestEventDestinationAttributes/leaves/response/v2.core.event_destination/webhook_endpoint.signing_secret), and the engine cannot yet send `include` on create alone to read it once, as `OnceReturned` (adrs/1-pending/2026-10-17-v2-support).","class":"verified","tests":["TestEventDestinationAttributes/leaves/response/v2.core.event_destination/webhook_endpoint.signing_secret"]},
+    {"table":"event_destination_v2","object":"v2.core.event_destination","side":"response","path":"webhook_endpoint.signing_secret","shape":"string","state":"exposed","class":"verified","tests":["TestEventDestinationAttributes/leaves/response/v2.core.event_destination/webhook_endpoint.signing_secret"]},
     {"table":"event_destination_v2","object":"v2.core.event_destination","side":"response","path":"webhook_endpoint.url","shape":"string","state":"exposed","class":"verified","tests":["TestEventDestinationAttributes/leaves/response/v2.core.event_destination/webhook_endpoint.url"]},
     {"table":"event_v2","object":"v2.core.event","side":"response","path":"changes","shape":"empty_hash","state":"excluded","rule":"X2","class":"proven_by_test"},
     {"table":"event_v2","object":"v2.core.event","side":"response","path":"context","shape":"string","state":"exposed","class":"proven_by_test"},

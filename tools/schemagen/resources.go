@@ -71,11 +71,9 @@ var Resources = []Resource{
 	{Package: "billing_meter", CreatePath: "/v1/billing/meters", UpdatePath: "/v1/billing/meters/{id}"},
 	{Package: "billing_portal_configuration", CreatePath: "/v1/billing_portal/configurations", UpdatePath: "/v1/billing_portal/configurations/{configuration}"},
 	{Package: "country_spec", ReadPath: "/v1/country_specs/{country}", Omit: []string{"supported_bank_account_currencies"}},
-	// The Omit entries: `include` is a request parameter, not an object field, and the signing
-	// secret waits for the conformance suite and the fake to prove it (ADR 2026-10-17-v2-support).
-	{Package: "event_destination_v2", CreatePath: "/v2/core/event_destinations", UpdatePath: "/v2/core/event_destinations/{id}", Omit: []string{"include", "webhook_endpoint.signing_secret"},
-		AcceptedOnly: map[string]string{"amazon_eventbridge.aws_region": "Its effect shows in `amazon_eventbridge.aws_event_source_arn`, which names the region."},
-		Exclude:      map[string]string{"webhook_endpoint.signing_secret": "Stripe returns it only to a create that sends `include` with it (suite: TestEventDestinationAttributes/leaves/response/v2.core.event_destination/webhook_endpoint.signing_secret), and the engine cannot yet send `include` on create alone to read it once, as `OnceReturned` (adrs/1-pending/2026-10-17-v2-support)."}},
+	// The Omit entry: `include` is a request parameter, not an object field.
+	{Package: "event_destination_v2", CreatePath: "/v2/core/event_destinations", UpdatePath: "/v2/core/event_destinations/{id}", Omit: []string{"include"},
+		AcceptedOnly: map[string]string{"amazon_eventbridge.aws_region": "Its effect shows in `amazon_eventbridge.aws_event_source_arn`, which names the region."}},
 	{Package: "coupon", CreatePath: "/v1/coupons", UpdatePath: "/v1/coupons/{coupon}"},
 	{Package: "customer", AcceptedOnly: map[string]string{
 		"source":                "The token becomes the customer's default source, read back at `default_source` (the product owner's decision of 2026-11-04).",

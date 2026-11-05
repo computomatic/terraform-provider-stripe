@@ -3,14 +3,17 @@ package engine
 import (
 	"context"
 	"strings"
+	"sync"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
+	rschema "github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/tfsdk"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 
+	"github.com/computomatic/terraform-provider-stripe/internal/fields"
 	"github.com/computomatic/terraform-provider-stripe/internal/stripeapi"
 	"github.com/computomatic/terraform-provider-stripe/internal/wire"
 )
@@ -45,12 +48,16 @@ func TestV2NounPutsTheVersionFirst(t *testing.T) {
 
 func TestV2DeclarationRules(t *testing.T) {
 	cases := map[string]func(*Declaration){
-		"mixed namespaces":      func(d *Declaration) { d.Paths.List = "/v1/widgets" },
-		"neither namespace":     func(d *Declaration) { d.Paths.Create = "/widgets" },
-		"expand on v2":          func(d *Declaration) { d.Expand = []string{"options"} },
-		"clears an unknown":     func(d *Declaration) { d.ClearsWithNull = []string{"nope"} },
-		"clears a create-only":  func(d *Declaration) { d.ClearsWithNull = []string{"kind"} },
-		"clears a required one": func(d *Declaration) { d.ClearsWithNull = []string{"name"} },
+		"mixed namespaces":                          func(d *Declaration) { d.Paths.List = "/v1/widgets" },
+		"neither namespace":                         func(d *Declaration) { d.Paths.Create = "/widgets" },
+		"expand on v2":                              func(d *Declaration) { d.Expand = []string{"options"} },
+		"clears an unknown":                         func(d *Declaration) { d.ClearsWithNull = []string{"nope"} },
+		"clears a create-only":                      func(d *Declaration) { d.ClearsWithNull = []string{"kind"} },
+		"clears a required one":                     func(d *Declaration) { d.ClearsWithNull = []string{"name"} },
+		"includes on create a field returned again": func(d *Declaration) { d.IncludeOnCreate = []string{"name"} },
+		"includes on create what it always includes": func(d *Declaration) {
+			d.Include, d.IncludeOnCreate = []string{"url", "secret"}, []string{"secret"}
+		},
 	}
 	for name, mutate := range cases {
 		t.Run(name, func(t *testing.T) {
@@ -65,6 +72,11 @@ func TestV2DeclarationRules(t *testing.T) {
 	v1.Include = []string{"url"}
 	if _, err := NewResource(v1, fixtureTable()); err == nil {
 		t.Error("include belongs to /v2 declarations")
+	}
+	v1 = fixtureDeclaration()
+	v1.IncludeOnCreate = []string{"secret"}
+	if _, err := NewResource(v1, fixtureTable()); err == nil {
+		t.Error("include-on-create belongs to /v2 declarations")
 	}
 	v1 = fixtureDeclaration()
 	v1.ClearsWithNull = []string{"quantity"}
@@ -118,6 +130,113 @@ func TestV2IncludeIsSentOnEveryRequestThatReturnsTheObject(t *testing.T) {
 				t.Errorf("%s %s sent no include: %+v", req.Method, req.Path, req.Params)
 			}
 		}
+	}
+}
+
+// A once-returned field Stripe returns only to a create that includes it, such as an event
+// destination's `webhook_endpoint.signing_secret`, is included on the create alone. State
+// keeps it, sensitive, across a read and an update whose responses hold it null, and a data
+// source never asks for it.
+func TestV2IncludeOnCreateReadsAOnceReturnedFieldOnce(t *testing.T) {
+	decl := Declaration{
+		TypeName:    "stripe_hook_v2",
+		IDPrefix:    "hk_",
+		Description: "A hook.",
+		Paths: Paths{
+			Create:   "/v2/core/hooks",
+			Retrieve: "/v2/core/hooks/{id}",
+			Update:   "/v2/core/hooks/{id}",
+			Delete:   "/v2/core/hooks/{id}",
+		},
+		Delete:          Delete,
+		Include:         []string{"hook.url"},
+		IncludeOnCreate: []string{"hook.signing_secret"},
+		OnceReturned:    []string{"hook.signing_secret"},
+	}
+	table := []fields.Field{
+		{Name: "id", Shape: fields.String, Response: true},
+		{Name: "name", Shape: fields.String, Required: true, Create: true, Update: true, Response: true},
+		{Name: "hook", Shape: fields.Object, Create: true, Update: true, Response: true, Fields: []fields.Field{
+			{Name: "url", Shape: fields.String, Required: true, Create: true, Update: true, Response: true},
+			{Name: "signing_secret", Shape: fields.String, Response: true},
+		}},
+	}
+	var mu sync.Mutex
+	var log []stripeapi.Request
+	name, url := wire.Value(wire.String("h")), wire.Value(wire.String("https://a.example"))
+	client := clientFunc(func(_ context.Context, req stripeapi.Request) (*stripeapi.Response, error) {
+		mu.Lock()
+		defer mu.Unlock()
+		log = append(log, req)
+		if v, ok := req.Params.Get("name"); ok {
+			name = v
+		}
+		if hook, ok := req.Params.GetObject("hook"); ok {
+			url, _ = hook.Get("url")
+		}
+		var secret wire.Value = wire.Null{}
+		if req.Method == "POST" && req.Path == "/v2/core/hooks" && hasInclude(req, `["hook.url","hook.signing_secret"]`) {
+			secret = wire.String("whsec_1")
+		}
+		return &stripeapi.Response{Status: 200, Body: wire.Object{
+			{Name: "id", Value: wire.String("hk_1")},
+			{Name: "name", Value: name},
+			{Name: "hook", Value: wire.Object{{Name: "signing_secret", Value: secret}, {Name: "url", Value: url}}},
+		}}, nil
+	})
+	r := configured(t, decl, table, client)
+	hook := r.schema.Attributes["hook"].(rschema.SingleNestedAttribute).Attributes["signing_secret"].(rschema.StringAttribute)
+	if !hook.Computed || hook.Optional || !hook.Sensitive || len(hook.PlanModifiers) != 1 {
+		t.Errorf("the once-returned secret is Computed, Sensitive and kept from state: %#v", hook)
+	}
+	hookType := r.objType.AttrTypes["hook"]
+	secretOf := func(state basetypes.ObjectValue) string {
+		t.Helper()
+		s, _ := state.Attributes()["hook"].(basetypes.ObjectValue).Attributes()["signing_secret"].(basetypes.StringValue)
+		return s.ValueString()
+	}
+
+	state, _ := r.create(t, r.fill(map[string]attr.Value{
+		"name": types.StringValue("h"),
+		"hook": object(hookType, map[string]attr.Value{"url": types.StringValue("https://a.example"), "signing_secret": types.StringUnknown()}),
+	}))
+	if got := secretOf(state); got != "whsec_1" {
+		t.Fatalf("create kept secret %q, want the one Stripe returned", got)
+	}
+	read, _ := r.read(t, state)
+	if got := secretOf(read); got != "whsec_1" {
+		t.Errorf("a read that holds no secret kept %q", got)
+	}
+	// The plan keeps the secret from state (UseStateForUnknown), as Terraform plans it.
+	planned := r.fill(with(read, map[string]attr.Value{
+		"hook": object(hookType, map[string]attr.Value{"url": types.StringValue("https://b.example"), "signing_secret": types.StringValue("whsec_1")}),
+	}))
+	updated := r.update(t, planned, read)
+	if got := secretOf(updated); got != "whsec_1" {
+		t.Errorf("an update that holds no secret kept %q", got)
+	}
+	ds := dataSourceOf(t, decl, table, client)
+	found, resp := ds.read(t, ds.config(map[string]string{"id": "hk_1"}))
+	noErrors(t, resp.Diagnostics)
+	if got := secretOf(found); got != "" {
+		t.Errorf("the data source read secret %q", got)
+	}
+
+	mu.Lock()
+	defer mu.Unlock()
+	if len(log) != 4 {
+		t.Fatalf("requests: %+v", log)
+	}
+	if !hasInclude(log[0], `["hook.url","hook.signing_secret"]`) {
+		t.Errorf("create include: %+v", log[0].Params)
+	}
+	for _, req := range log[1:] {
+		if !hasInclude(req, `["hook.url"]`) {
+			t.Errorf("%s %s must include the url alone: %+v", req.Method, req.Path, req.Params)
+		}
+	}
+	if got := wireOf(t, log[2].Params); got != `{"hook":{"url":"https://b.example"},"include":["hook.url"]}` {
+		t.Errorf("update body: %s", got)
 	}
 }
 

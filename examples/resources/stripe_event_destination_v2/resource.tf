@@ -8,3 +8,9 @@ resource "stripe_event_destination_v2" "billing" {
     url = "https://example.com/stripe/events"
   }
 }
+
+# The signing secret is sensitive and set once, when the destination is created.
+output "billing_signing_secret" {
+  value     = stripe_event_destination_v2.billing.webhook_endpoint.signing_secret
+  sensitive = true
+}

@@ -628,6 +628,93 @@ func TestSendWholeMembers(t *testing.T) {
 	}
 }
 
+// A nested hash in SendWholeMembers whose plan differs from the state only by a computed member
+// the configuration leaves unset, which Terraform plans unknown, is not sent: it would send
+// Stripe its own values back. A change beside that member still sends the hash whole, the
+// member with the state's value.
+func TestSendWholeMembersSkipsAComputedOnlyDifference(t *testing.T) {
+	member := func(name string, shape fields.Shape) fields.Field {
+		return fields.Field{Name: name, Shape: shape, Create: true, Update: true, Response: true}
+	}
+	zip := member("zip", fields.String)
+	zip.ServerDefaulted = true
+	home := member("home", fields.Object)
+	home.Fields = []fields.Field{member("city", fields.String), zip}
+	person := member("person", fields.Object)
+	person.Fields = []fields.Field{member("first", fields.String), home}
+	decl := fixtureDeclaration()
+	decl.SendChangedMembers = []string{"person"}
+	decl.SendWholeMembers = []string{"person.home"}
+	r := configured(t, decl, append(refuseTable(), person), noCalls(t))
+	personType := r.objType.AttrTypes["person"].(basetypes.ObjectType)
+	homeType := personType.AttrTypes["home"].(basetypes.ObjectType).AttrTypes
+	build := func(first, city, zip attr.Value) attr.Value {
+		return types.ObjectValueMust(personType.AttrTypes, map[string]attr.Value{
+			"first": first,
+			"home":  types.ObjectValueMust(homeType, map[string]attr.Value{"city": city, "zip": zip}),
+		})
+	}
+	jenny, a := types.StringValue("Jenny"), types.StringValue("A")
+	state := r.fill(map[string]attr.Value{"id": types.StringValue("wid_1"), "name": types.StringValue("w"), "person": build(jenny, a, types.StringValue("10001"))})
+	for _, tc := range []struct {
+		name   string
+		person attr.Value
+		want   string
+	}{
+		{"only the computed member is unknown", build(types.StringValue("Jen"), a, types.StringUnknown()), `{"person":{"first":"Jen"}}`},
+		{"a change beside it", build(jenny, types.StringValue("B"), types.StringUnknown()), `{"person":{"home":{"city":"B","zip":"10001"}}}`},
+	} {
+		plan := r.fill(with(state, map[string]attr.Value{"person": tc.person}))
+		params, err := r.m.encodeUpdate(plan, state, configOf(t, plan))
+		if err != nil {
+			t.Fatal(err)
+		}
+		if got := wireOf(t, params); got != tc.want {
+			t.Errorf("%s: update body %s, want %s", tc.name, got, tc.want)
+		}
+	}
+}
+
+// A whole send fills a value not fully known from the state, so a hash in SendWholeMembers may
+// not hold, at any depth, a list or map of hashes whose elements have a computed member, which
+// Terraform plans unknown: the list's change would be lost. The engine refuses the declaration.
+func TestSendWholeMembersRefusesComputedMembersInElements(t *testing.T) {
+	member := func(name string, shape fields.Shape) fields.Field {
+		return fields.Field{Name: name, Shape: shape, Create: true, Update: true, Response: true}
+	}
+	for name, tc := range map[string]struct {
+		element fields.Field
+		shape   fields.Shape
+		deeper  bool
+		want    string
+	}{
+		"a list element's output":      {element: fields.Field{Name: "id", Shape: fields.String, Response: true}, shape: fields.ObjectList, want: "`data.lines.id`"},
+		"a map element's default":      {element: fields.Field{Name: "id", Shape: fields.String, Create: true, Update: true, Response: true, ServerDefaulted: true}, shape: fields.ObjectMap, want: "`data.lines.id`"},
+		"a list inside a nested hash":  {element: fields.Field{Name: "id", Shape: fields.String, Response: true}, shape: fields.ObjectList, deeper: true, want: "`data.inner.lines.id`"},
+		"a list of configured members": {element: member("id", fields.String), shape: fields.ObjectList},
+		"a map of configured members":  {element: member("id", fields.String), shape: fields.ObjectMap},
+	} {
+		lines := member("lines", tc.shape)
+		lines.Fields = []fields.Field{member("text", fields.String), tc.element}
+		data := member("data", fields.Object)
+		data.Fields = []fields.Field{member("note", fields.String), lines}
+		if tc.deeper {
+			inner := member("inner", fields.Object)
+			inner.Fields = []fields.Field{lines}
+			data.Fields = []fields.Field{member("note", fields.String), inner}
+		}
+		decl := fixtureDeclaration()
+		decl.SendWholeMembers = []string{"data"}
+		_, err := compile(decl, append(refuseTable(), data))
+		switch {
+		case tc.want == "" && err != nil:
+			t.Errorf("%s: %v", name, err)
+		case tc.want != "" && (err == nil || !strings.Contains(err.Error(), tc.want)):
+			t.Errorf("%s: %v, want %s", name, err, tc.want)
+		}
+	}
+}
+
 // A top-level hash in SendWholeMembers goes whole too, with a removed member as null, its map
 // whole, and an empty map that stays empty left out, which Stripe would read as an unset.
 func TestSendWholeMembersAtTopLevel(t *testing.T) {

@@ -39,6 +39,7 @@ var Table = []fields.Field{
 	{Name: "type", Shape: fields.String, Required: true, Create: true, Response: true, Enum: []string{"amazon_eventbridge", "azure_event_grid", "webhook_endpoint"}, Description: "The delivery transport. Chosen when the destination is created and cannot be changed by update."},
 	{Name: "updated", Shape: fields.String, Response: true, Description: "The time when the destination object was last updated."},
 	{Name: "webhook_endpoint", Shape: fields.Object, Create: true, Update: true, Response: true, Description: "Delivery target for the webhook endpoint. Live mode requires HTTPS; sandbox mode also supports HTTP.", Fields: []fields.Field{
+		{Name: "signing_secret", Shape: fields.String, Response: true, Description: "The secret used to verify Stripe signatures on delivered events. Returned only in the create response when explicitly included; public API clients cannot retrieve it later."},
 		{Name: "url", Shape: fields.String, Required: true, Create: true, Update: true, Response: true, Description: "The URL where Stripe sends matching events. Live mode requires HTTPS; sandbox mode also supports HTTP."},
 	}},
 }

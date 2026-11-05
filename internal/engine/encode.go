@@ -361,7 +361,7 @@ func (m *model) encodeChanges(plan, state basetypes.ObjectValue, config tftypes.
 				out = append(out, wire.Field{Name: n.Name, Value: v})
 			}
 		case slices.Contains(m.decl.SendChangedMembers, n.Name):
-			v, err := m.changedMembers(n, pv, sv, updatable)
+			v, err := m.changedMembers(n, pv, sv, updatable, tftypes.NewAttributePath().WithAttributeName(n.AttrName()), config)
 			if err != nil {
 				return nil, err
 			}
@@ -651,8 +651,11 @@ func (m *model) carryOnUpdate(n *node, state attr.Value, v wire.Value) wire.Valu
 // likewise, and the whole of any other that has one. A map sends its changed keys and a removed
 // key as null, as Stripe merges it (the suite's probes `update/1` and `unset/1` of an account's
 // `individual.metadata`), unless ReplacedMaps names it, which goes whole without the keys it
-// lost. A member the plan leaves unknown is Stripe's to fill in, so it is not sent.
-func (m *model) changedMembers(n *node, plan, state attr.Value, allow func(*node) bool) (wire.Object, error) {
+// lost. A member the plan leaves unknown is Stripe's to fill in, so it is not sent, and a hash
+// in SendWholeMembers that differs only by such members is not sent either, which would send
+// Stripe its own values back. at is the path of n in config, the configuration; the zero
+// value turns that check off.
+func (m *model) changedMembers(n *node, plan, state attr.Value, allow func(*node) bool, at *tftypes.AttributePath, config tftypes.Value) (wire.Object, error) {
 	planned, held := objectAttrs(plan), objectAttrs(state)
 	var out wire.Object
 	for _, k := range n.Kids {
@@ -668,13 +671,16 @@ func (m *model) changedMembers(n *node, plan, state attr.Value, allow func(*node
 			}
 			v = wire.Null{}
 		case slices.Contains(m.decl.SendWholeMembers, k.Path):
+			if sameBesidesComputed(at.WithAttributeName(k.AttrName()), pv, sv, config) {
+				continue
+			}
 			members, err := wholeMembers(k, pv, sv)
 			if err != nil {
 				return nil, err
 			}
 			v = members
 		case k.Shape == fields.Object && slices.Contains(m.decl.SendChangedMembers, k.Path):
-			members, err := m.changedMembers(k, pv, sv, allow)
+			members, err := m.changedMembers(k, pv, sv, allow, at.WithAttributeName(k.AttrName()), config)
 			if err != nil {
 				return nil, err
 			}
@@ -710,7 +716,9 @@ func (m *model) changedMembers(n *node, plan, state attr.Value, allow func(*node
 // nothing proves must name. Stripe may clear what the request leaves out, so a member the plan
 // leaves unknown goes with the state's value, and one RefuseChange refuses, which the plan cannot
 // change, goes with the value it holds. An empty collection that stays empty is left out: sending
-// it would ask Stripe to unset what it does not hold.
+// it would ask Stripe to unset what it does not hold. A list or map of hashes not fully known
+// goes with the state's value too, which would drop a change of it, so checkSentMembers refuses
+// one whose elements have a computed member, the only source of an unknown at apply.
 func wholeMembers(n *node, plan, state attr.Value) (wire.Object, error) {
 	planned, held := objectAttrs(plan), objectAttrs(state)
 	var out wire.Object

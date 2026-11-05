@@ -13,14 +13,16 @@ import (
 // Declaration is what the spec cannot say about an event destination. Stripe redacts
 // `webhook_endpoint.url` unless a request includes it, so the engine includes it on every
 // request and the URL is read back like any other field. `status` is read-only: enabling
-// and disabling are separate action endpoints that the provider does not call yet. The
-// signing secret is in the exclusion register until the engine can send `include` on create
-// alone to read it once (ADR adrs/1-pending/2026-10-17-v2-support).
+// and disabling are separate action endpoints that the provider does not call yet. Stripe
+// returns the webhook endpoint's signing secret only to a create that includes it, so the
+// create alone includes it and state keeps it (suite: "create including signing secret";
+// ADR adrs/1-pending/2026-10-17-v2-support).
 var Declaration = engine.Declaration{
 	TypeName:              "stripe_event_destination_v2",
 	IDPrefix:              "ed_",
-	Description:           "A destination for Stripe's events, delivered as thin or snapshot payloads: a webhook endpoint, an Amazon EventBridge partner event source or an Azure Event Grid partner topic. `terraform destroy` deletes the destination. The destination's signing secret is not available yet. `status` is read-only: Terraform cannot enable or disable a destination yet.",
-	DataSourceDescription: "A destination for Stripe's events, delivered as thin or snapshot payloads: a webhook endpoint, an Amazon EventBridge partner event source or an Azure Event Grid partner topic.",
+	Description:           "A destination for Stripe's events, delivered as thin or snapshot payloads: a webhook endpoint, an Amazon EventBridge partner event source or an Azure Event Grid partner topic. `terraform destroy` deletes the destination. A webhook endpoint's `signing_secret` is returned once, at creation, and is kept in state as a sensitive value. `status` is read-only: Terraform cannot enable or disable a destination yet.",
+	DataSourceDescription: "A destination for Stripe's events, delivered as thin or snapshot payloads: a webhook endpoint, an Amazon EventBridge partner event source or an Azure Event Grid partner topic. Stripe returns a webhook endpoint's `signing_secret` only at creation, so the data source has none.",
+	ImportNote:            "An imported destination has no `webhook_endpoint.signing_secret`, because Stripe returns it only at creation. Replacing the destination, as `terraform apply -replace` does, creates one with a new secret in state.",
 	Paths: engine.Paths{
 		Create:   "/v2/core/event_destinations",
 		Retrieve: "/v2/core/event_destinations/{id}",
@@ -28,8 +30,10 @@ var Declaration = engine.Declaration{
 		Delete:   "/v2/core/event_destinations/{id}",
 		List:     "/v2/core/event_destinations",
 	},
-	Delete:  engine.Delete,
-	Include: []string{"webhook_endpoint.url"},
+	Delete:          engine.Delete,
+	Include:         []string{"webhook_endpoint.url"},
+	IncludeOnCreate: []string{"webhook_endpoint.signing_secret"},
+	OnceReturned:    []string{"webhook_endpoint.signing_secret"},
 	// Stripe defaults `events_from` to `["@self"]` when a request omits it.
 	ServerDefaulted: []string{"events_from"},
 }
