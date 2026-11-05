@@ -7,7 +7,7 @@ import "github.com/computomatic/terraform-provider-stripe/internal/fields"
 
 // Table lists every request and response field of the object.
 var Table = []fields.Field{
-	{Name: "amount", Shape: fields.Int, Create: true, Response: true, ServerDefaulted: true, Description: "A positive integer, in _cents (or local equivalent)_, representing how much of this fee to refund. Can refund only up to the remaining unrefunded amount of the fee.", Default: &fields.Default{Kind: fields.DefaultVaries}},
+	{Name: "amount", Shape: fields.Int, Create: true, Response: true, ServerDefaulted: true, Description: "A positive integer, in _cents (or local equivalent)_, representing how much of this fee to refund. Can refund only up to the remaining unrefunded amount of the fee.", Default: &fields.Default{Kind: fields.DefaultRule, Rule: "what remains of the application fee: its amount less what it has refunded", Observed: "`100` on a US account"}},
 	{Name: "balance_transaction", Shape: fields.String, Response: true, Description: "Balance transaction that describes the impact on your account balance."},
 	{Name: "created", Shape: fields.Int, Response: true, Description: "Time at which the object was created. Measured in seconds since the Unix epoch."},
 	{Name: "currency", Shape: fields.String, Response: true, Description: "Three-letter [ISO currency code](https://www.iso.org/iso-4217-currency-codes.html), in lowercase. Must be a [supported currency](https://stripe.com/docs/currencies)."},

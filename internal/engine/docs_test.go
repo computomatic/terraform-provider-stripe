@@ -98,3 +98,43 @@ func TestDeclarationDefaultsAreChecked(t *testing.T) {
 		}
 	}
 }
+
+// An argument the evidence records Stripe taking in some requests and refusing in others needs
+// the declaration's wording of where Stripe takes it, which its page gives before the recorded
+// refusals, and the wording needs such an argument.
+func TestDeclarationAnswers(t *testing.T) {
+	const refused = "Elsewhere Stripe refused it on a US account on create: \"No.\"."
+	answered := func() []fields.Field {
+		table := docsTable()
+		for i := range table {
+			if table[i].Name == "kind" {
+				table[i].Answer = refused
+			}
+		}
+		return table
+	}
+	decl := fixtureDeclaration()
+	decl.Answers = map[string]string{"kind": "Stripe takes it beside a `name`."}
+	ctor, err := NewResource(decl, answered())
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got, want := ctor().(*Resource).AttributeDocs()["kind"].Answer, "Stripe takes it beside a `name`. "+refused; got != want {
+		t.Errorf("kind: %q, want %q", got, want)
+	}
+	for name, tc := range map[string]struct {
+		answers map[string]string
+		table   []fields.Field
+		want    string
+	}{
+		"no wording": {nil, answered(), "needs an answers entry"},
+		"no answers": {map[string]string{"kind": "a rule"}, docsTable(), "records no answers"},
+		"no field":   {map[string]string{"colour": "a rule"}, docsTable(), "names no field"},
+	} {
+		decl := fixtureDeclaration()
+		decl.Answers = tc.answers
+		if _, err := NewResource(decl, tc.table); err == nil || !strings.Contains(err.Error(), tc.want) {
+			t.Errorf("%s: err = %v, want %q", name, err, tc.want)
+		}
+	}
+}

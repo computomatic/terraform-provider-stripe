@@ -38,6 +38,11 @@ var Declaration = engine.Declaration{
 		"currency_options.tiers.unit_amount", "currency_options.tiers.unit_amount_decimal",
 		"currency_options.tiers.flat_amount", "currency_options.tiers.flat_amount_decimal",
 	},
+	Defaults: map[string]string{
+		// suite: TestPriceAttributes, the record's rule for currency_options.unit_amount, which
+		// quotes the options it derived
+		"currency_options.unit_amount": "the `unit_amount` sent, under the `currency` sent",
+	},
 	// Stripe returns the price's own currency among the options and refuses it as one.
 	CurrencyOptions: "currency_options",
 	// Stripe refuses to change a `tax_behavior` once it is set (suite: "update tax behavior").

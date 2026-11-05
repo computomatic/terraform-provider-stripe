@@ -535,6 +535,45 @@ func TestRefuseChangeKeepsRefusedFieldsOutOfTheUpdate(t *testing.T) {
 	}
 }
 
+// A SetOnce field, such as a v2 account's `dashboard`, is planned and sent while the state holds
+// none of it, null or an object of nulls, and refused like any RefuseChange field once it is set.
+func TestSetOnce(t *testing.T) {
+	decl := fixtureDeclaration()
+	decl.RefuseChange = []string{"url", "address"}
+	decl.SetOnce = []string{"url", "address"}
+	r := configured(t, decl, refuseTable(), noCalls(t))
+	addressType := r.objType.AttrTypes["address"].(basetypes.ObjectType).AttrTypes
+	address := func(line1, zip attr.Value) attr.Value {
+		return types.ObjectValueMust(addressType, map[string]attr.Value{"line1": line1, "zip": zip})
+	}
+	set := address(types.StringValue("1 Main St"), types.StringValue("94080"))
+	empty := r.fill(map[string]attr.Value{"id": types.StringValue("wid_1"), "name": types.StringValue("w"), "address": address(types.StringNull(), types.StringNull())})
+	plan := r.fill(with(empty, map[string]attr.Value{"url": types.StringValue("https://a.example"), "address": set}))
+	if resp := r.modifyPlan(t, plan, empty); resp.Diagnostics.HasError() {
+		t.Errorf("setting what the state holds none of must pass: %v", resp.Diagnostics)
+	}
+	params, err := r.m.encodeUpdate(plan, empty, tftypes.Value{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got, want := wireOf(t, params), `{"address":{"line1":"1 Main St","zip":"94080"},"url":"https://a.example"}`; got != want {
+		t.Errorf("update body %s, want %s", got, want)
+	}
+	for name, changed := range map[string]map[string]attr.Value{
+		"url":     {"url": types.StringValue("https://b.example")},
+		"address": {"address": address(types.StringValue("2 Main St"), types.StringValue("94080"))},
+		"removed": {"url": types.StringNull()},
+	} {
+		if resp := r.modifyPlan(t, r.fill(with(plan, changed)), plan); !resp.Diagnostics.HasError() {
+			t.Errorf("%s: a change of a set value must fail the plan", name)
+		}
+	}
+	decl.SetOnce = []string{"name"}
+	if _, err := NewResource(decl, refuseTable()); err == nil {
+		t.Error("a set-once entry outside RefuseChange must not compile")
+	}
+}
+
 // A nested object in SendWholeMembers goes whole once a member changes, with a removed member as
 // null, a member the plan leaves unknown with the state's value, and a refused one with the value
 // it holds, and stays out while none changes.

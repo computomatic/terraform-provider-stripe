@@ -43,6 +43,12 @@ var Declaration = engine.Declaration{
 	// Stripe answers `payment_method_data` with the method it made (the record's `returned`,
 	// `inline_object`), which `payment_method` then leaves to it.
 	MadeBy: map[string]string{"payment_method": "payment_method_data"},
+	Answers: map[string]string{
+		// suite: TestPaymentIntentAttributes, probes `isolated/descriptor_*`: a create took it
+		// beside a suffix with a card or with no payment method, and refused it without one in
+		// either; an update took it beside a suffix it sent or one the intent held.
+		"statement_descriptor": "Stripe takes it only beside a `statement_descriptor_suffix` that the same request sends or, on an update, that the intent already holds, as the conformance suite recorded with a card payment method and with none.",
+	},
 	Defaults: map[string]string{
 		// suite: variant `bancontact`, which the resource keeps null
 		"payment_method": "none, or the method Stripe makes from `payment_method_data`, which this attribute does not hold",

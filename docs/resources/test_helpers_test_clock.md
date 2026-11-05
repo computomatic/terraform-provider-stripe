@@ -34,7 +34,7 @@ The following arguments are required:
 
 The following arguments are optional:
 
-* `name` - (Optional) The name for this test clock. Changing it replaces the resource.
+* `name` - (Optional) The name for this test clock. Changing it replaces the resource. Default: none.
 
 ## Attribute Reference
 

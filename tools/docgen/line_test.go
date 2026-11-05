@@ -55,6 +55,17 @@ func TestRefusalPrecedesTheDefaultStatement(t *testing.T) {
 	}
 }
 
+// Where Stripe takes an argument it refuses in other requests follows the description and comes
+// before the default statement.
+func TestAnswerPrecedesTheDefaultStatement(t *testing.T) {
+	p := &page{resource: true}
+	answer := `Stripe takes it beside a suffix. Elsewhere Stripe refused it on a US account on create: "No".`
+	got := p.line(&attr{Name: "x", Description: "A thing", Optional: true, Default: "Default: none.", Answer: answer}, "x", true)
+	if want := `A thing. ` + answer + ` Default: none.`; !strings.HasSuffix(got, want) {
+		t.Errorf("%s, want it to end %s", got, want)
+	}
+}
+
 // Inside a list element the engine keeps no prior value (an insert or a reorder would pair it
 // with another element), so a subscription item's Optional and Computed `price` and `quantity`
 // say that Stripe sets them when the list is next sent, not that the value stays.

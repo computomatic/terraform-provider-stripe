@@ -1,8 +1,11 @@
 package customer_test
 
 import (
+	"encoding/json"
+	"errors"
 	"fmt"
 	"os"
+	"reflect"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
@@ -192,6 +195,75 @@ func TestAccCustomer_drift(t *testing.T) {
 					plancheck.ExpectResourceAction(address, plancheck.ResourceActionUpdate),
 				}},
 				Check: resource.TestCheckResourceAttr(address, "name", acct.Name("Acme")),
+			},
+		},
+	})
+}
+
+// Stripe keeps the invoice settings an update leaves out and clears the members of the address it
+// leaves out (the record's family `v1-billing`), so an update sends only the invoice settings that
+// changed, and the address whole. The address is the record's `customerAddress`, with the line2 of
+// its `customerAddressCA` on update.
+func TestAccCustomer_updatesEachHashAsStripeKeepsIt(t *testing.T) {
+	acct := acctest.NewAccount(t)
+	var id string
+	cfg := func(line2, footer string) string {
+		return customerConfig(acct, named(acct, "Acme", fmt.Sprintf(`  address = {
+    line1       = "1 Market St"
+    line2       = %q
+    city        = "San Francisco"
+    state       = "CA"
+    postal_code = "94105"
+    country     = "US"
+  }
+  invoice_settings = {
+    footer            = %q
+    rendering_options = { amount_tax_display = "exclude_tax" }
+  }
+`, line2, footer)))
+	}
+	sent := func(field, want string) resource.TestCheckFunc {
+		return func(*terraform.State) error {
+			if acct.Smoke {
+				return nil
+			}
+			for _, entry := range acctest.RequestLog(t, acct) {
+				params, ok := entry.Params.(wire.Object)
+				if !ok || entry.Method != "POST" || entry.Path != "/v1/customers/"+id {
+					continue
+				}
+				v, _ := params.Get(field)
+				var got, wanted any
+				b, err := wire.EncodeJSON(v)
+				if err == nil {
+					err = errors.Join(json.Unmarshal(b, &got), json.Unmarshal([]byte(want), &wanted))
+				}
+				if err != nil || !reflect.DeepEqual(got, wanted) {
+					return fmt.Errorf("the update sent %s as %s, want %s (%v)", field, b, want, err)
+				}
+				return nil
+			}
+			return fmt.Errorf("no update of %s", id)
+		}
+	}
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: tfacc.ProviderFactories,
+		Steps: []resource.TestStep{
+			{Config: cfg("Floor 1", "Thank you"), Check: idOf(&id)},
+			{
+				Config: cfg("Floor 2", "Thank you again"),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply:             []plancheck.PlanCheck{plancheck.ExpectResourceAction(address, plancheck.ResourceActionUpdate)},
+					PostApplyPostRefresh: []plancheck.PlanCheck{plancheck.ExpectEmptyPlan()},
+				},
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr(address, "address.line2", "Floor 2"),
+					resource.TestCheckResourceAttr(address, "address.city", "San Francisco"),
+					resource.TestCheckResourceAttr(address, "invoice_settings.footer", "Thank you again"),
+					resource.TestCheckResourceAttr(address, "invoice_settings.rendering_options.amount_tax_display", "exclude_tax"),
+					sent("invoice_settings", `{"footer":"Thank you again"}`),
+					sent("address", `{"city":"San Francisco","country":"US","line1":"1 Market St","line2":"Floor 2","postal_code":"94105","state":"CA"}`),
+				),
 			},
 		},
 	})

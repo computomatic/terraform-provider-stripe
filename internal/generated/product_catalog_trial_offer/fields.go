@@ -7,7 +7,7 @@ import "github.com/computomatic/terraform-provider-stripe/internal/fields"
 
 // Table lists every request and response field of the object.
 var Table = []fields.Field{
-	{Name: "active", Shape: fields.Bool, Create: true, Update: true, Response: true, ServerDefaulted: true, Description: "Whether the trial offer can be used for new subscriptions. Defaults to true."},
+	{Name: "active", Shape: fields.Bool, Create: true, Update: true, Response: true, ServerDefaulted: true, Stable: true, Description: "Whether the trial offer can be used for new subscriptions. Defaults to true.", Default: &fields.Default{Kind: fields.DefaultValue, Value: "true"}},
 	{Name: "duration", Shape: fields.Object, Required: true, Create: true, Response: true, Description: "Duration of one service period of the trial.", Fields: []fields.Field{
 		{Name: "relative", Shape: fields.Object, Create: true, Response: true, Fields: []fields.Field{
 			{Name: "iterations", Shape: fields.Int, Required: true, Create: true, Response: true, Description: "The number of iterations of the price's interval for this trial offer."},
@@ -22,6 +22,6 @@ var Table = []fields.Field{
 	}},
 	{Name: "id", Shape: fields.String, Response: true, Description: "Unique identifier for the object."},
 	{Name: "livemode", Shape: fields.Bool, Response: true, Description: "If the object exists in live mode, the value is `true`. If the object exists in test mode, the value is `false`."},
-	{Name: "nickname", Shape: fields.String, Create: true, Response: true, Description: "A brief description of the trial offer, hidden from customers."},
+	{Name: "nickname", Shape: fields.String, Create: true, Response: true, Description: "A brief description of the trial offer, hidden from customers.", Default: &fields.Default{Kind: fields.DefaultNone}},
 	{Name: "price", Shape: fields.String, Required: true, Create: true, Response: true, Description: "Price configuration during the trial period (amount, billing scheme, etc)."},
 }

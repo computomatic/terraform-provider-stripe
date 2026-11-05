@@ -127,12 +127,12 @@ The `payment_method_options.card` attribute supports:
 The `payment_method_options.card.three_d_secure` attribute supports:
 
 * `ares_trans_status` - (Optional) Possible values: `A`, `C`, `I`, `N`, `R`, `U`, `Y`. Stripe refused it on a US account on update: "The parameter `payment_method_options[card][three_d_secure]` cannot be used when creating a SetupIntent unless `confirm` is set to true.". Default: not sent.
-* `cryptogram` - (Optional) Stripe refused it on a US account on create and update: "You may only specify all or none of these parameters: version, cryptogram, transaction_id.".
+* `cryptogram` - (Optional) Stripe refused it on a US account on update: "The parameter `payment_method_options[card][three_d_secure]` cannot be used when creating a SetupIntent unless `confirm` is set to true.". Default: not sent.
 * `electronic_commerce_indicator` - (Optional) Possible values: `01`, `02`, `05`, `06`, `07`. Stripe refused it on a US account on update: "The parameter `payment_method_options[card][three_d_secure]` cannot be used when creating a SetupIntent unless `confirm` is set to true.". Default: not sent.
 * `network_options` - (Optional) See [`payment_method_options.card.three_d_secure.network_options`](#payment_method_options.card.three_d_secure.network_options) below.
 * `requestor_challenge_indicator` - (Optional) Stripe refused it on a US account on update: "The parameter `payment_method_options[card][three_d_secure]` cannot be used when creating a SetupIntent unless `confirm` is set to true.". Default: not sent.
-* `transaction_id` - (Optional) Stripe refused it on a US account on create and update: "You may only specify all or none of these parameters: version, cryptogram, transaction_id.".
-* `version` - (Optional) Possible values: `1.0.2`, `2.1.0`, `2.2.0`, `2.3.0`, `2.3.1`. Stripe refused it on a US account on create and update: "You may only specify all or none of these parameters: version, cryptogram, transaction_id.".
+* `transaction_id` - (Optional) Stripe refused it on a US account on update: "The parameter `payment_method_options[card][three_d_secure]` cannot be used when creating a SetupIntent unless `confirm` is set to true.". Default: not sent.
+* `version` - (Optional) Possible values: `1.0.2`, `2.1.0`, `2.2.0`, `2.3.0`, `2.3.1`. Stripe refused it on a US account on update: "The parameter `payment_method_options[card][three_d_secure]` cannot be used when creating a SetupIntent unless `confirm` is set to true.". Default: not sent.
 
 <a id="payment_method_options.card.three_d_secure.network_options"></a>
 ### `payment_method_options.card.three_d_secure.network_options`

@@ -30,6 +30,21 @@ var Declaration = engine.Declaration{
 	Delete:    engine.DeleteOrArchive,
 	Archive:   &engine.ArchiveAction{Field: "active", Value: wire.Bool(false)},
 	ArchiveOn: &engine.Refusal{Status: http.StatusBadRequest, Type: "invalid_request_error"},
+	// Stripe fills each tax code from the other: a create or an update that sends only
+	// `tax_code` gets it in `tax_details.tax_code` too, and one that sends only
+	// `tax_details.tax_code` gets it in `tax_code` (suite: TestProductAttributes, probes
+	// `every_field/1`, `every_field/20`, `update/1` and `update/7`), and so `tax_details` too.
+	ServerDefaulted: []string{"tax_code", "tax_details", "tax_details.tax_code"},
+	FilledFrom: map[string][]string{
+		"tax_code":             {"tax_details.tax_code"},
+		"tax_details.tax_code": {"tax_code"},
+	},
+	Defaults: map[string]string{
+		// suite: TestProductAttributes, probe `every_field/20`
+		"tax_code": "none, or the code sent in `tax_details.tax_code`",
+		// suite: TestProductAttributes, probe `every_field/1`
+		"tax_details.tax_code": "none, or the code sent in `tax_code`",
+	},
 }
 
 // NewResource returns the resource constructor the provider registers.

@@ -3,6 +3,7 @@ package plan_test
 import (
 	"fmt"
 	"os"
+	"regexp"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
@@ -241,6 +242,35 @@ resource "stripe_plan" "test" {
 					resource.TestCheckResourceAttr(address, "tiers.#", "2"),
 					resource.TestCheckResourceAttr(address, "tiers.0.up_to", "100"),
 					resource.TestCheckResourceAttr(address, "tiers.1.up_to", "inf"),
+				),
+			},
+			{Config: cfg, PlanOnly: true},
+		},
+	})
+}
+
+// A plan makes its product from `product_data`, which `product` then names (the record's probe
+// `nested_minimal/1`: a monthly plan in the account's currency whose product has a name alone).
+// The product outlives the plan's destroy, as Stripe leaves it.
+func TestAccPlan_productData(t *testing.T) {
+	acct := acctest.NewAccount(t)
+	cfg := acct.ProviderBlock() + fmt.Sprintf(`
+resource "stripe_plan" "test" {
+  currency     = "usd"
+  interval     = "month"
+  amount       = 1500
+  product_data = { name = %q }
+}
+`, acct.Name("Inline plan product"))
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: tfacc.ProviderFactories,
+		ErrorCheck:               tfacc.SkipWhenFakeLacks(t, "expand["),
+		Steps: []resource.TestStep{
+			{
+				Config: cfg,
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestMatchResourceAttr(address, "product", regexp.MustCompile(`^prod_`)),
+					resource.TestCheckResourceAttr(address, "product_data.name", acct.Name("Inline plan product")),
 				),
 			},
 			{Config: cfg, PlanOnly: true},

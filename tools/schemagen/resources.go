@@ -47,6 +47,14 @@ var sessionKeptLeaves = []string{
 	"subscription_data.trial_period_days", "subscription_data.trial_settings.end_behavior.missing_payment_method",
 }
 
+// priceKept is a price's Resource.AcceptedOnly register (the product owner's decision of
+// 2026-11-04).
+var priceKept = map[string]string{
+	"custom_unit_amount.enabled":                  "Its effect shows in the `custom_unit_amount` Stripe returns, which holds the bounds only where it is true, and the provider keeps it from configuration.",
+	"currency_options.custom_unit_amount.enabled": "Its effect shows in the `custom_unit_amount` Stripe returns, which holds the bounds only where it is true, and the provider keeps it from configuration.",
+	"transfer_lookup_key":                         "Its effect shows in `lookup_key`, which the price takes from the price that held it, as a replacement price does, and the provider keeps it from configuration.",
+}
+
 // keptFor gives every path the same Resource.AcceptedOnly reason.
 func keptFor(reason string, paths []string) map[string]string {
 	out := make(map[string]string, len(paths))
@@ -69,10 +77,13 @@ var Resources = []Resource{
 		AcceptedOnly: map[string]string{"amazon_eventbridge.aws_region": "Its effect shows in `amazon_eventbridge.aws_event_source_arn`, which names the region."},
 		Exclude:      map[string]string{"webhook_endpoint.signing_secret": "Stripe returns it only to a create that sends `include` with it (suite: TestEventDestinationAttributes/leaves/response/v2.core.event_destination/webhook_endpoint.signing_secret), and the engine cannot yet send `include` on create alone to read it once, as `OnceReturned` (adrs/1-pending/2026-10-17-v2-support)."}},
 	{Package: "coupon", CreatePath: "/v1/coupons", UpdatePath: "/v1/coupons/{coupon}"},
-	{Package: "customer", CreatePath: "/v1/customers", UpdatePath: "/v1/customers/{customer}", Omit: []string{"sources", "subscriptions"}},
+	{Package: "customer", AcceptedOnly: map[string]string{
+		"source":                "The token becomes the customer's default source, read back at `default_source` (the product owner's decision of 2026-11-04).",
+		"tax.validate_location": "It says how Stripe checks the location of the request it comes with, so a kept value cannot drift, and the provider keeps it from configuration (the product owner's decision of 2026-11-04).",
+	}, CreatePath: "/v1/customers", UpdatePath: "/v1/customers/{customer}", Omit: []string{"sources", "subscriptions"}},
 	{Package: "entitlements_feature", CreatePath: "/v1/entitlements/features", UpdatePath: "/v1/entitlements/features/{id}"},
 	{Package: "plan", CreatePath: "/v1/plans", UpdatePath: "/v1/plans/{plan}"},
-	{Package: "price", CreatePath: "/v1/prices", UpdatePath: "/v1/prices/{price}"},
+	{Package: "price", AcceptedOnly: priceKept, CreatePath: "/v1/prices", UpdatePath: "/v1/prices/{price}"},
 	{Package: "product", CreatePath: "/v1/products", UpdatePath: "/v1/products/{id}"},
 	{Package: "product_catalog_trial_offer", CreatePath: "/v1/product_catalog/trial_offers", UpdatePath: "/v1/product_catalog/trial_offers/{id}"},
 	{Package: "product_feature", CreatePath: "/v1/products/{product}/features"},
@@ -128,6 +139,7 @@ var Resources = []Resource{
 	{Package: "payment_intent", StatusConfirms: true, AcceptedOnly: map[string]string{"payment_method_configuration": acceptedKept},
 		Exclude: map[string]string{
 			"mandate_data": mandateData,
+			"payment_method_options.card.three_d_secure":    "Stripe never returns the hash, which its create takes only beside `confirm`, and its update refuses it unless `confirm` is true, with `cryptogram` and `transaction_id`, which it requires, unproven there, so that no configuration could send it (suite: TestPaymentIntentAttributes/leaves/request/PostPaymentIntentsIntent/payment_method_options.card.three_d_secure.version).",
 			"payment_method_options.card.installments.plan": "`type`, which a plan requires, is unproven on the create and verified on the update only by Stripe's refusal, so that no configuration could send the plan (suite: TestPaymentIntentAttributes/leaves/request/PostPaymentIntents/payment_method_options.card.installments.plan.count, refused without `fixed_count`, and PostPaymentIntentsIntent/payment_method_options.card.installments.plan.type, refused unless `confirm` is true).",
 		}, CreatePath: "/v1/payment_intents", UpdatePath: "/v1/payment_intents/{intent}", Omit: []string{
 			"payment_method_options", "amount_details", "last_payment_error.payment_intent", "last_payment_error.setup_intent", "last_payment_error.source",
@@ -325,9 +337,9 @@ var Resources = []Resource{
 	// response's copy is left out.
 	// Stripe requires a transfer's `amount`, which the spec leaves optional (suite: "missing amount").
 	{Package: "transfer", CreatePath: "/v1/transfers", UpdatePath: "/v1/transfers/{transfer}", PagedLists: map[string]string{"reversals": "stripe_transfer_reversal"}, Require: []string{"amount"}},
-	{Package: "transfer_reversal", AcceptedOnly: map[string]string{"description": acceptedKept, "refund_application_fee": acceptedKept}, Exclude: map[string]string{"transfer": parentHolds}, CreatePath: "/v1/transfers/{id}/reversals", UpdatePath: "/v1/transfers/{transfer}/reversals/{id}", Omit: []string{"transfer"}, ParentDefaults: []string{"amount"}},
+	{Package: "transfer_reversal", AcceptedOnly: map[string]string{"description": acceptedKept, "refund_application_fee": acceptedKept}, Exclude: map[string]string{"transfer": parentHolds}, CreatePath: "/v1/transfers/{id}/reversals", UpdatePath: "/v1/transfers/{transfer}/reversals/{id}", Omit: []string{"transfer"}},
 	{Package: "application_fee", ReadPath: "/v1/application_fees/{id}", PagedLists: map[string]string{"refunds": "stripe_application_fee_refund"}},
-	{Package: "application_fee_refund", Exclude: map[string]string{"fee": parentHolds}, CreatePath: "/v1/application_fees/{id}/refunds", UpdatePath: "/v1/application_fees/{fee}/refunds/{id}", Omit: []string{"fee"}, ParentDefaults: []string{"amount"}},
+	{Package: "application_fee_refund", Exclude: map[string]string{"fee": parentHolds}, CreatePath: "/v1/application_fees/{id}/refunds", UpdatePath: "/v1/application_fees/{fee}/refunds/{id}", Omit: []string{"fee"}},
 	{Package: "customer_card", Exclude: map[string]string{"customer": parentHolds}, ReadPath: "/v1/customers/{customer}/cards/{id}", Omit: []string{"customer"}},
 	{Package: "customer_bank_account", Exclude: map[string]string{"customer": parentHolds}, ReadPath: "/v1/customers/{customer}/bank_accounts/{id}", Omit: []string{"customer"}},
 	// The line items of a checkout session and of a payment link have no retrieve, only the

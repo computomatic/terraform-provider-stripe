@@ -16980,6 +16980,13 @@
               "kind": "null"
             },
             "variant": "first_in_currency"
+          },
+          {
+            "default": {
+              "kind": "value",
+              "value": "Jenny Rosen"
+            },
+            "variant": "token"
           }
         ]
       },
@@ -17018,6 +17025,13 @@
               "kind": "null"
             },
             "variant": "first_in_currency"
+          },
+          {
+            "default": {
+              "kind": "value",
+              "value": "individual"
+            },
+            "variant": "token"
           }
         ]
       },
@@ -17134,6 +17148,19 @@
         "US"
       ],
       "branch": "object",
+      "default": {
+        "kind": "rule",
+        "rule_ref": 0,
+        "variants": [
+          {
+            "default": {
+              "kind": "value",
+              "value": "US"
+            },
+            "variant": "token"
+          }
+        ]
+      },
       "object": "bank_account",
       "on": [
         "create"
@@ -17152,7 +17179,8 @@
         "stripe"
       ],
       "tests": [
-        "TestAccountExternalAccountAttributes/leaves/request/PostAccountsAccountExternalAccounts/bank_account.country@object"
+        "TestAccountExternalAccountAttributes/leaves/request/PostAccountsAccountExternalAccounts/bank_account.country@object",
+        "TestAccountExternalAccountAttributes/leaves/response/bank_account/country"
       ]
     },
     {
@@ -17160,6 +17188,19 @@
         "US"
       ],
       "branch": "object",
+      "default": {
+        "kind": "rule",
+        "rule_ref": 1,
+        "variants": [
+          {
+            "default": {
+              "kind": "value",
+              "value": "usd"
+            },
+            "variant": "token"
+          }
+        ]
+      },
       "object": "bank_account",
       "on": [
         "create"
@@ -17178,7 +17219,8 @@
         "stripe"
       ],
       "tests": [
-        "TestAccountExternalAccountAttributes/leaves/request/PostAccountsAccountExternalAccounts/bank_account.currency@object"
+        "TestAccountExternalAccountAttributes/leaves/request/PostAccountsAccountExternalAccounts/bank_account.currency@object",
+        "TestAccountExternalAccountAttributes/leaves/response/bank_account/currency"
       ]
     },
     {
@@ -17204,6 +17246,19 @@
         "US"
       ],
       "branch": "object",
+      "default": {
+        "kind": "rule",
+        "rule_ref": 2,
+        "variants": [
+          {
+            "default": {
+              "kind": "value",
+              "value": "110000000"
+            },
+            "variant": "token"
+          }
+        ]
+      },
       "object": "bank_account",
       "on": [
         "create"
@@ -17222,7 +17277,8 @@
         "stripe"
       ],
       "tests": [
-        "TestAccountExternalAccountAttributes/leaves/request/PostAccountsAccountExternalAccounts/bank_account.routing_number@object"
+        "TestAccountExternalAccountAttributes/leaves/request/PostAccountsAccountExternalAccounts/bank_account.routing_number@object",
+        "TestAccountExternalAccountAttributes/leaves/response/bank_account/routing_number"
       ]
     },
     {
@@ -17232,14 +17288,21 @@
       "branch": "",
       "default": {
         "kind": "rule",
-        "rule_ref": 0,
+        "rule_ref": 3,
         "variants": [
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 0
+              "rule_ref": 3
             },
             "variant": "first_in_currency"
+          },
+          {
+            "default": {
+              "kind": "rule",
+              "rule_ref": 3
+            },
+            "variant": "token"
           }
         ]
       },
@@ -17306,6 +17369,13 @@
               "value": {}
             },
             "variant": "first_in_currency"
+          },
+          {
+            "default": {
+              "kind": "value",
+              "value": {}
+            },
+            "variant": "token"
           }
         ]
       },
@@ -17848,6 +17918,13 @@
             "prefix": "acct_"
           },
           "variant": "first_in_currency"
+        },
+        {
+          "matcher": {
+            "kind": "ref",
+            "ref": "account"
+          },
+          "variant": "token"
         }
       ],
       "nullable": {
@@ -17881,6 +17958,13 @@
             "kind": "null"
           },
           "variant": "first_in_currency"
+        },
+        {
+          "matcher": {
+            "kind": "value",
+            "value": "Jenny Rosen"
+          },
+          "variant": "token"
         }
       ],
       "nullable": {
@@ -17914,6 +17998,13 @@
             "kind": "null"
           },
           "variant": "first_in_currency"
+        },
+        {
+          "matcher": {
+            "kind": "value",
+            "value": "individual"
+          },
+          "variant": "token"
         }
       ],
       "nullable": {
@@ -17964,6 +18055,16 @@
             ]
           },
           "variant": "first_in_currency"
+        },
+        {
+          "matcher": {
+            "kind": "value",
+            "value": [
+              "standard",
+              "instant"
+            ]
+          },
+          "variant": "token"
         }
       ],
       "nullable": {
@@ -17999,6 +18100,13 @@
             "value": "STRIPE TEST BANK"
           },
           "variant": "first_in_currency"
+        },
+        {
+          "matcher": {
+            "kind": "value",
+            "value": "STRIPE TEST BANK"
+          },
+          "variant": "token"
         }
       ],
       "nullable": {
@@ -18034,6 +18142,13 @@
             "path": "country"
           },
           "variant": "first_in_currency"
+        },
+        {
+          "matcher": {
+            "kind": "value",
+            "value": "US"
+          },
+          "variant": "token"
         }
       ],
       "nullable": {
@@ -18069,6 +18184,13 @@
             "path": "currency"
           },
           "variant": "first_in_currency"
+        },
+        {
+          "matcher": {
+            "kind": "value",
+            "value": "usd"
+          },
+          "variant": "token"
         }
       ],
       "nullable": {
@@ -18116,6 +18238,13 @@
             "value": true
           },
           "variant": "first_in_currency"
+        },
+        {
+          "matcher": {
+            "kind": "value",
+            "value": false
+          },
+          "variant": "token"
         }
       ],
       "nullable": {
@@ -18151,6 +18280,13 @@
             "path": "account_number"
           },
           "variant": "first_in_currency"
+        },
+        {
+          "matcher": {
+            "kind": "fingerprint",
+            "path": "external_account"
+          },
+          "variant": "token"
         }
       ],
       "nullable": {
@@ -18238,6 +18374,12 @@
             "kind": "created"
           },
           "variant": "first_in_currency"
+        },
+        {
+          "matcher": {
+            "kind": "created"
+          },
+          "variant": "token"
         }
       ],
       "nullable": {
@@ -18273,6 +18415,13 @@
             "value": "1116"
           },
           "variant": "first_in_currency"
+        },
+        {
+          "matcher": {
+            "kind": "value",
+            "value": "6789"
+          },
+          "variant": "token"
         }
       ],
       "nullable": {
@@ -18308,6 +18457,13 @@
             "value": {}
           },
           "variant": "first_in_currency"
+        },
+        {
+          "matcher": {
+            "kind": "value",
+            "value": {}
+          },
+          "variant": "token"
         }
       ],
       "nullable": {
@@ -18406,6 +18562,13 @@
             "path": "routing_number"
           },
           "variant": "first_in_currency"
+        },
+        {
+          "matcher": {
+            "kind": "value",
+            "value": "110000000"
+          },
+          "variant": "token"
         }
       ],
       "nullable": {
@@ -18441,6 +18604,13 @@
             "value": "new"
           },
           "variant": "first_in_currency"
+        },
+        {
+          "matcher": {
+            "kind": "value",
+            "value": "verified"
+          },
+          "variant": "token"
         }
       ],
       "nullable": {
@@ -19244,7 +19414,7 @@
       "branch": "",
       "default": {
         "kind": "rule",
-        "rule_ref": 1,
+        "rule_ref": 4,
         "variants": [
           {
             "default": {
@@ -38490,250 +38660,250 @@
       "branch": "",
       "default": {
         "kind": "rule",
-        "rule_ref": 3,
+        "rule_ref": 6,
         "variants": [
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 3
+              "rule_ref": 6
             },
             "variant": "branding_files"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 3
+              "rule_ref": 6
             },
             "variant": "branding_urls"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 3
+              "rule_ref": 6
             },
             "variant": "card_manual"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 3
+              "rule_ref": 6
             },
             "variant": "custom_dropdown"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 3
+              "rule_ref": 6
             },
             "variant": "custom_numeric"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 3
+              "rule_ref": 6
             },
             "variant": "custom_text"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 3
+              "rule_ref": 6
             },
             "variant": "decimal_price"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 3
+              "rule_ref": 6
             },
             "variant": "elements"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 3
+              "rule_ref": 6
             },
             "variant": "embedded"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 3
+              "rule_ref": 6
             },
             "variant": "form"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 3
+              "rule_ref": 6
             },
             "variant": "inline_product"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 3
+              "rule_ref": 6
             },
             "variant": "methods_aud"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 3
+              "rule_ref": 6
             },
             "variant": "methods_brl"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 3
+              "rule_ref": 6
             },
             "variant": "methods_cad"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 3
+              "rule_ref": 6
             },
             "variant": "methods_chf"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 3
+              "rule_ref": 6
             },
             "variant": "methods_dkk"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 3
+              "rule_ref": 6
             },
             "variant": "methods_eur"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 3
+              "rule_ref": 6
             },
             "variant": "methods_gbp"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 3
+              "rule_ref": 6
             },
             "variant": "methods_inr"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 3
+              "rule_ref": 6
             },
             "variant": "methods_jpy"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 3
+              "rule_ref": 6
             },
             "variant": "methods_krw"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 3
+              "rule_ref": 6
             },
             "variant": "methods_mxn"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 3
+              "rule_ref": 6
             },
             "variant": "methods_myr"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 3
+              "rule_ref": 6
             },
             "variant": "methods_pln"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 3
+              "rule_ref": 6
             },
             "variant": "methods_sek"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 3
+              "rule_ref": 6
             },
             "variant": "methods_sgd"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 3
+              "rule_ref": 6
             },
             "variant": "optional_item"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 3
+              "rule_ref": 6
             },
             "variant": "setup"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 3
+              "rule_ref": 6
             },
             "variant": "subscription"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 3
+              "rule_ref": 6
             },
             "variant": "subscription_anchor"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 3
+              "rule_ref": 6
             },
             "variant": "subscription_anchor_time"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 3
+              "rule_ref": 6
             },
             "variant": "subscription_fee"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 3
+              "rule_ref": 6
             },
             "variant": "subscription_prorated"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 3
+              "rule_ref": 6
             },
             "variant": "subscription_yearly"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 3
+              "rule_ref": 6
             },
             "variant": "tax_coded"
           }
@@ -41834,243 +42004,243 @@
       "branch": "",
       "default": {
         "kind": "rule",
-        "rule_ref": 4,
+        "rule_ref": 7,
         "variants": [
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 4
+              "rule_ref": 7
             },
             "variant": "branding_files"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 4
+              "rule_ref": 7
             },
             "variant": "branding_urls"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 4
+              "rule_ref": 7
             },
             "variant": "card_manual"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 4
+              "rule_ref": 7
             },
             "variant": "custom_dropdown"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 4
+              "rule_ref": 7
             },
             "variant": "custom_numeric"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 4
+              "rule_ref": 7
             },
             "variant": "custom_text"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 4
+              "rule_ref": 7
             },
             "variant": "decimal_price"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 4
+              "rule_ref": 7
             },
             "variant": "elements"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 4
+              "rule_ref": 7
             },
             "variant": "embedded"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 4
+              "rule_ref": 7
             },
             "variant": "form"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 4
+              "rule_ref": 7
             },
             "variant": "inline_product"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 4
+              "rule_ref": 7
             },
             "variant": "methods_aud"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 4
+              "rule_ref": 7
             },
             "variant": "methods_brl"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 4
+              "rule_ref": 7
             },
             "variant": "methods_cad"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 4
+              "rule_ref": 7
             },
             "variant": "methods_chf"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 4
+              "rule_ref": 7
             },
             "variant": "methods_dkk"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 4
+              "rule_ref": 7
             },
             "variant": "methods_eur"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 4
+              "rule_ref": 7
             },
             "variant": "methods_gbp"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 4
+              "rule_ref": 7
             },
             "variant": "methods_inr"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 4
+              "rule_ref": 7
             },
             "variant": "methods_jpy"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 4
+              "rule_ref": 7
             },
             "variant": "methods_krw"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 4
+              "rule_ref": 7
             },
             "variant": "methods_mxn"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 4
+              "rule_ref": 7
             },
             "variant": "methods_myr"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 4
+              "rule_ref": 7
             },
             "variant": "methods_pln"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 4
+              "rule_ref": 7
             },
             "variant": "methods_sek"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 4
+              "rule_ref": 7
             },
             "variant": "methods_sgd"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 4
+              "rule_ref": 7
             },
             "variant": "optional_item"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 4
+              "rule_ref": 7
             },
             "variant": "subscription"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 4
+              "rule_ref": 7
             },
             "variant": "subscription_anchor"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 4
+              "rule_ref": 7
             },
             "variant": "subscription_anchor_time"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 4
+              "rule_ref": 7
             },
             "variant": "subscription_fee"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 4
+              "rule_ref": 7
             },
             "variant": "subscription_prorated"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 4
+              "rule_ref": 7
             },
             "variant": "subscription_yearly"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 4
+              "rule_ref": 7
             },
             "variant": "tax_coded"
           }
@@ -47973,250 +48143,250 @@
       "branch": "",
       "default": {
         "kind": "rule",
-        "rule_ref": 5,
+        "rule_ref": 8,
         "variants": [
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 5
+              "rule_ref": 8
             },
             "variant": "branding_files"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 5
+              "rule_ref": 8
             },
             "variant": "branding_urls"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 5
+              "rule_ref": 8
             },
             "variant": "card_manual"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 5
+              "rule_ref": 8
             },
             "variant": "custom_dropdown"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 5
+              "rule_ref": 8
             },
             "variant": "custom_numeric"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 5
+              "rule_ref": 8
             },
             "variant": "custom_text"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 5
+              "rule_ref": 8
             },
             "variant": "decimal_price"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 5
+              "rule_ref": 8
             },
             "variant": "elements"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 5
+              "rule_ref": 8
             },
             "variant": "embedded"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 5
+              "rule_ref": 8
             },
             "variant": "form"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 5
+              "rule_ref": 8
             },
             "variant": "inline_product"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 5
+              "rule_ref": 8
             },
             "variant": "methods_aud"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 5
+              "rule_ref": 8
             },
             "variant": "methods_brl"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 5
+              "rule_ref": 8
             },
             "variant": "methods_cad"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 5
+              "rule_ref": 8
             },
             "variant": "methods_chf"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 5
+              "rule_ref": 8
             },
             "variant": "methods_dkk"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 5
+              "rule_ref": 8
             },
             "variant": "methods_eur"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 5
+              "rule_ref": 8
             },
             "variant": "methods_gbp"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 5
+              "rule_ref": 8
             },
             "variant": "methods_inr"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 5
+              "rule_ref": 8
             },
             "variant": "methods_jpy"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 5
+              "rule_ref": 8
             },
             "variant": "methods_krw"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 5
+              "rule_ref": 8
             },
             "variant": "methods_mxn"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 5
+              "rule_ref": 8
             },
             "variant": "methods_myr"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 5
+              "rule_ref": 8
             },
             "variant": "methods_pln"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 5
+              "rule_ref": 8
             },
             "variant": "methods_sek"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 5
+              "rule_ref": 8
             },
             "variant": "methods_sgd"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 5
+              "rule_ref": 8
             },
             "variant": "optional_item"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 5
+              "rule_ref": 8
             },
             "variant": "setup"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 5
+              "rule_ref": 8
             },
             "variant": "subscription"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 5
+              "rule_ref": 8
             },
             "variant": "subscription_anchor"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 5
+              "rule_ref": 8
             },
             "variant": "subscription_anchor_time"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 5
+              "rule_ref": 8
             },
             "variant": "subscription_fee"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 5
+              "rule_ref": 8
             },
             "variant": "subscription_prorated"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 5
+              "rule_ref": 8
             },
             "variant": "subscription_yearly"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 5
+              "rule_ref": 8
             },
             "variant": "tax_coded"
           }
@@ -89722,7 +89892,7 @@
       "branch": "",
       "default": {
         "kind": "rule",
-        "rule_ref": 8,
+        "rule_ref": 11,
         "variants": [
           {
             "default": {
@@ -156305,12 +156475,12 @@
       "branch": "",
       "default": {
         "kind": "rule",
-        "rule_ref": 9,
+        "rule_ref": 12,
         "variants": [
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 9
+              "rule_ref": 12
             },
             "variant": "amount"
           }
@@ -156345,12 +156515,12 @@
       "branch": "",
       "default": {
         "kind": "rule",
-        "rule_ref": 10,
+        "rule_ref": 13,
         "variants": [
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 10
+              "rule_ref": 13
             },
             "variant": "amount"
           }
@@ -156425,7 +156595,7 @@
       "branch": "",
       "default": {
         "kind": "rule",
-        "rule_ref": 11,
+        "rule_ref": 14,
         "variants": [
           {
             "default": {
@@ -157783,7 +157953,7 @@
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 12
+              "rule_ref": 15
             },
             "variant": "amount_off"
           }
@@ -157921,12 +158091,12 @@
       "branch": "",
       "default": {
         "kind": "rule",
-        "rule_ref": 13,
+        "rule_ref": 16,
         "variants": [
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 13
+              "rule_ref": 16
             },
             "variant": "amount_off"
           }
@@ -158077,7 +158247,7 @@
       "branch": "",
       "default": {
         "kind": "rule",
-        "rule_ref": 14,
+        "rule_ref": 17,
         "variants": [
           {
             "default": {
@@ -158843,7 +159013,7 @@
       "branch": "",
       "default": {
         "kind": "rule",
-        "rule_ref": 15,
+        "rule_ref": 18,
         "variants": [
           {
             "default": {
@@ -159699,7 +159869,7 @@
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 16
+              "rule_ref": 19
             },
             "variant": "refund"
           },
@@ -165283,40 +165453,40 @@
       "branch": "",
       "default": {
         "kind": "rule",
-        "rule_ref": 17,
+        "rule_ref": 20,
         "variants": [
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 17
+              "rule_ref": 20
             },
             "variant": "balance"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 17
+              "rule_ref": 20
             },
             "variant": "located_ca"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 17
+              "rule_ref": 20
             },
             "variant": "payment_method"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 17
+              "rule_ref": 20
             },
             "variant": "source"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 17
+              "rule_ref": 20
             },
             "variant": "test_clock"
           }
@@ -166645,7 +166815,7 @@
           "value": "deferred"
         },
         {
-          "accepted": false,
+          "accepted": true,
           "value": "immediately"
         }
       ],
@@ -166655,19 +166825,7 @@
       ],
       "operation": "PostCustomers",
       "path": "tax.validate_location",
-      "refusals": [
-        {
-          "account_country": "US",
-          "code": "customer_tax_location_invalid",
-          "message": "The customer's location isn't recognized. Set a valid customer address in order to automatically calculate tax.",
-          "param": "",
-          "status": 400,
-          "tests": [
-            "TestCustomerAttributes/leaves/request/PostCustomers/tax.validate_location"
-          ],
-          "type": "invalid_request_error"
-        }
-      ],
+      "refusals": [],
       "returned": {
         "form": "not_returned",
         "response_path": ""
@@ -169921,7 +170079,7 @@
           "value": "deferred"
         },
         {
-          "accepted": false,
+          "accepted": true,
           "value": "immediately"
         }
       ],
@@ -169931,19 +170089,7 @@
       ],
       "operation": "PostCustomersCustomer",
       "path": "tax.validate_location",
-      "refusals": [
-        {
-          "account_country": "US",
-          "code": "customer_tax_location_invalid",
-          "message": "The customer's location isn't recognized. Set a valid customer address in order to automatically calculate tax.",
-          "param": "",
-          "status": 400,
-          "tests": [
-            "TestCustomerAttributes/leaves/request/PostCustomersCustomer/tax.validate_location"
-          ],
-          "type": "invalid_request_error"
-        }
-      ],
+      "refusals": [],
       "returned": {
         "form": "not_returned",
         "response_path": ""
@@ -175755,8 +175901,17 @@
       ],
       "branch": "",
       "default": {
-        "kind": "value",
-        "value": 100
+        "kind": "rule",
+        "rule_ref": 23,
+        "variants": [
+          {
+            "default": {
+              "kind": "rule",
+              "rule_ref": 23
+            },
+            "variant": "partly_refunded"
+          }
+        ]
       },
       "object": "fee_refund",
       "on": [
@@ -175787,7 +175942,16 @@
       "branch": "",
       "default": {
         "kind": "value",
-        "value": {}
+        "value": {},
+        "variants": [
+          {
+            "default": {
+              "kind": "value",
+              "value": {}
+            },
+            "variant": "partly_refunded"
+          }
+        ]
       },
       "object": "fee_refund",
       "on": [
@@ -175820,6 +175984,13 @@
             "value": 100
           },
           "variant": ""
+        },
+        {
+          "matcher": {
+            "kind": "value",
+            "value": 70
+          },
+          "variant": "partly_refunded"
         }
       ],
       "nullable": {
@@ -175848,6 +176019,13 @@
             "prefix": "txn_"
           },
           "variant": ""
+        },
+        {
+          "matcher": {
+            "kind": "id",
+            "prefix": "txn_"
+          },
+          "variant": "partly_refunded"
         }
       ],
       "nullable": {
@@ -175875,6 +176053,12 @@
             "kind": "timestamp"
           },
           "variant": ""
+        },
+        {
+          "matcher": {
+            "kind": "timestamp"
+          },
+          "variant": "partly_refunded"
         }
       ],
       "nullable": {
@@ -175904,6 +176088,14 @@
             "ref": "application_fee"
           },
           "variant": ""
+        },
+        {
+          "matcher": {
+            "kind": "from",
+            "path": "currency",
+            "ref": "application_fee"
+          },
+          "variant": "partly_refunded"
         }
       ],
       "nullable": {
@@ -175932,6 +176124,13 @@
             "prefix": "fee_"
           },
           "variant": ""
+        },
+        {
+          "matcher": {
+            "kind": "id",
+            "prefix": "fee_"
+          },
+          "variant": "partly_refunded"
         }
       ],
       "nullable": {
@@ -175959,6 +176158,12 @@
             "kind": "created"
           },
           "variant": ""
+        },
+        {
+          "matcher": {
+            "kind": "created"
+          },
+          "variant": "partly_refunded"
         }
       ],
       "nullable": {
@@ -175987,6 +176192,13 @@
             "value": {}
           },
           "variant": ""
+        },
+        {
+          "matcher": {
+            "kind": "value",
+            "value": {}
+          },
+          "variant": "partly_refunded"
         }
       ],
       "nullable": {
@@ -176015,6 +176227,13 @@
             "value": "fee_refund"
           },
           "variant": ""
+        },
+        {
+          "matcher": {
+            "kind": "value",
+            "value": "fee_refund"
+          },
+          "variant": "partly_refunded"
         }
       ],
       "nullable": {
@@ -178230,19 +178449,19 @@
       "branch": "",
       "default": {
         "kind": "rule",
-        "rule_ref": 20,
+        "rule_ref": 24,
         "variants": [
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 20
+              "rule_ref": 24
             },
             "variant": "customer"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 20
+              "rule_ref": 24
             },
             "variant": "id_number"
           }
@@ -217087,7 +217306,7 @@
       "branch": "",
       "default": {
         "kind": "rule",
-        "rule_ref": 21,
+        "rule_ref": 25,
         "variants": [
           {
             "default": {
@@ -217162,7 +217381,7 @@
       "branch": "",
       "default": {
         "kind": "rule",
-        "rule_ref": 22,
+        "rule_ref": 26,
         "variants": [
           {
             "default": {
@@ -217335,61 +217554,61 @@
       "branch": "",
       "default": {
         "kind": "rule",
-        "rule_ref": 23,
+        "rule_ref": 27,
         "variants": [
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 23
+              "rule_ref": 27
             },
             "variant": "decimal"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 23
+              "rule_ref": 27
             },
             "variant": "invoice"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 23
+              "rule_ref": 27
             },
             "variant": "price"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 23
+              "rule_ref": 27
             },
             "variant": "price_data"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 23
+              "rule_ref": 27
             },
             "variant": "price_data_decimal"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 23
+              "rule_ref": 27
             },
             "variant": "price_eur"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 23
+              "rule_ref": 27
             },
             "variant": "quantity"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 23
+              "rule_ref": 27
             },
             "variant": "subscription"
           }
@@ -224134,54 +224353,54 @@
       "branch": "",
       "default": {
         "kind": "rule",
-        "rule_ref": 25,
+        "rule_ref": 29,
         "variants": [
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 25
+              "rule_ref": 29
             },
             "variant": "in_review"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 25
+              "rule_ref": 29
             },
             "variant": "physical"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 25
+              "rule_ref": 29
             },
             "variant": "replacement"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 25
+              "rule_ref": 29
             },
             "variant": "replacement_damaged"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 25
+              "rule_ref": 29
             },
             "variant": "replacement_lost"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 25
+              "rule_ref": 29
             },
             "variant": "replacement_stolen"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 25
+              "rule_ref": 29
             },
             "variant": "validated"
           }
@@ -224216,54 +224435,54 @@
       "branch": "",
       "default": {
         "kind": "rule",
-        "rule_ref": 26,
+        "rule_ref": 30,
         "variants": [
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 26
+              "rule_ref": 30
             },
             "variant": "in_review"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 26
+              "rule_ref": 30
             },
             "variant": "physical"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 26
+              "rule_ref": 30
             },
             "variant": "replacement"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 26
+              "rule_ref": 30
             },
             "variant": "replacement_damaged"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 26
+              "rule_ref": 30
             },
             "variant": "replacement_lost"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 26
+              "rule_ref": 30
             },
             "variant": "replacement_stolen"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 26
+              "rule_ref": 30
             },
             "variant": "validated"
           }
@@ -242692,7 +242911,7 @@
       "branch": "",
       "default": {
         "kind": "rule",
-        "rule_ref": 33,
+        "rule_ref": 37,
         "variants": [
           {
             "default": {
@@ -253350,75 +253569,75 @@
       "branch": "",
       "default": {
         "kind": "rule",
-        "rule_ref": 34,
+        "rule_ref": 38,
         "variants": [
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 34
+              "rule_ref": 38
             },
             "variant": "canceled"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 34
+              "rule_ref": 38
             },
             "variant": "duplicate"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 34
+              "rule_ref": 38
             },
             "variant": "fraudulent"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 34
+              "rule_ref": 38
             },
             "variant": "merchandise_not_as_described"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 34
+              "rule_ref": 38
             },
             "variant": "no_valid_authorization"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 34
+              "rule_ref": 38
             },
             "variant": "not_received"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 34
+              "rule_ref": 38
             },
             "variant": "other"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 34
+              "rule_ref": 38
             },
             "variant": "received_debit"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 34
+              "rule_ref": 38
             },
             "variant": "service_not_as_described"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 34
+              "rule_ref": 38
             },
             "variant": "small_transaction"
           }
@@ -263755,7 +263974,7 @@
       "branch": "",
       "default": {
         "kind": "rule",
-        "rule_ref": 35,
+        "rule_ref": 39,
         "variants": [
           {
             "default": {
@@ -263794,7 +264013,7 @@
       "branch": "",
       "default": {
         "kind": "rule",
-        "rule_ref": 36,
+        "rule_ref": 40,
         "variants": [
           {
             "default": {
@@ -263833,7 +264052,7 @@
       "branch": "",
       "default": {
         "kind": "rule",
-        "rule_ref": 37,
+        "rule_ref": 41,
         "variants": [
           {
             "default": {
@@ -263872,7 +264091,7 @@
       "branch": "",
       "default": {
         "kind": "rule",
-        "rule_ref": 38,
+        "rule_ref": 42,
         "variants": [
           {
             "default": {
@@ -270645,13 +270864,33 @@
       ]
     },
     {
+      "accepted_in": [],
       "branch": "",
       "object": "payment_intent",
+      "on": [
+        "create"
+      ],
       "operation": "PostPaymentIntents",
       "path": "payment_method_options.card.cvc_token",
-      "reason": "no answer of its own: Stripe refused every request that sent it, and each refusal names something else or nothing",
+      "refusals": [
+        {
+          "account_country": "US",
+          "code": "resource_missing",
+          "message": "No such cvc_update: '<id:cvctok_>'",
+          "param": "payment_method_options[card][cvc_token]",
+          "status": 400,
+          "tests": [
+            "TestPaymentIntentAttributes/leaves/request/PostPaymentIntents/payment_method_options.card.cvc_token"
+          ],
+          "type": "invalid_request_error"
+        }
+      ],
       "side": "request",
-      "status": "unproven",
+      "status": "proven",
+      "targets": [
+        "fake",
+        "stripe"
+      ],
       "tests": [
         "TestPaymentIntentAttributes/leaves/request/PostPaymentIntents/payment_method_options.card.cvc_token"
       ]
@@ -270753,9 +270992,9 @@
       "object": "payment_intent",
       "operation": "PostPaymentIntents",
       "path": "payment_method_options.card.installments.plan.type",
-      "reason": "no answer of its own: Stripe refused every request that sent it, and each refusal names something else or nothing",
+      "reason": "Stripe refuses every plan on the platform's test card: `The selected installment plan is not supported for this payment method. You can retrieve valid installment plans on the PaymentIntent in `payment_method_options[card][installments][plans]`.`",
       "side": "request",
-      "status": "unproven",
+      "status": "unreachable",
       "tests": [
         "TestPaymentIntentAttributes/leaves/request/PostPaymentIntents/payment_method_options.card.installments.plan.type"
       ]
@@ -270981,13 +271220,29 @@
       ]
     },
     {
+      "accepted_in": [
+        "US"
+      ],
       "branch": "",
+      "enum_values": [
+        {
+          "accepted": true,
+          "value": "visa"
+        }
+      ],
       "object": "payment_intent",
+      "on": [
+        "create"
+      ],
       "operation": "PostPaymentIntents",
       "path": "payment_method_options.card.network",
-      "reason": "no answer of its own: Stripe refused every request that sent it, and each refusal names something else or nothing",
+      "refusals": [],
       "side": "request",
-      "status": "unproven",
+      "status": "proven",
+      "targets": [
+        "fake",
+        "stripe"
+      ],
       "tests": [
         "TestPaymentIntentAttributes/leaves/request/PostPaymentIntents/payment_method_options.card.network"
       ]
@@ -271271,49 +271526,155 @@
       ]
     },
     {
+      "accepted_in": [
+        "US"
+      ],
       "branch": "",
+      "enum_values": [
+        {
+          "accepted": true,
+          "value": "A"
+        },
+        {
+          "accepted": true,
+          "value": "I"
+        },
+        {
+          "accepted": true,
+          "value": "N"
+        },
+        {
+          "accepted": true,
+          "value": "R"
+        },
+        {
+          "accepted": true,
+          "value": "U"
+        },
+        {
+          "accepted": true,
+          "value": "Y"
+        }
+      ],
       "object": "payment_intent",
+      "on": [
+        "create"
+      ],
       "operation": "PostPaymentIntents",
       "path": "payment_method_options.card.three_d_secure.ares_trans_status",
-      "reason": "no answer of its own: Stripe refused every request that sent it, and each refusal names something else or nothing",
+      "refusals": [],
+      "returned": {
+        "form": "not_returned",
+        "response_path": ""
+      },
       "side": "request",
-      "status": "unproven",
+      "status": "proven",
+      "targets": [
+        "fake",
+        "stripe"
+      ],
       "tests": [
         "TestPaymentIntentAttributes/leaves/request/PostPaymentIntents/payment_method_options.card.three_d_secure.ares_trans_status"
       ]
     },
     {
+      "accepted_in": [
+        "US"
+      ],
       "branch": "",
       "object": "payment_intent",
+      "on": [
+        "create"
+      ],
       "operation": "PostPaymentIntents",
       "path": "payment_method_options.card.three_d_secure.cryptogram",
-      "reason": "no answer of its own: Stripe refused every request that sent it, and each refusal names something else or nothing",
+      "refusals": [],
+      "returned": {
+        "form": "not_returned",
+        "response_path": ""
+      },
       "side": "request",
-      "status": "unproven",
+      "status": "proven",
+      "targets": [
+        "fake",
+        "stripe"
+      ],
       "tests": [
         "TestPaymentIntentAttributes/leaves/request/PostPaymentIntents/payment_method_options.card.three_d_secure.cryptogram"
       ]
     },
     {
+      "accepted_in": [
+        "US"
+      ],
       "branch": "",
+      "enum_values": [
+        {
+          "accepted": true,
+          "value": "02"
+        },
+        {
+          "accepted": true,
+          "value": "05"
+        },
+        {
+          "accepted": true,
+          "value": "06"
+        },
+        {
+          "accepted": true,
+          "value": "07"
+        }
+      ],
       "object": "payment_intent",
+      "on": [
+        "create"
+      ],
       "operation": "PostPaymentIntents",
       "path": "payment_method_options.card.three_d_secure.electronic_commerce_indicator",
-      "reason": "no answer of its own: Stripe refused every request that sent it, and each refusal names something else or nothing",
+      "refusals": [],
+      "returned": {
+        "form": "not_returned",
+        "response_path": ""
+      },
       "side": "request",
-      "status": "unproven",
+      "status": "proven",
+      "targets": [
+        "fake",
+        "stripe"
+      ],
       "tests": [
         "TestPaymentIntentAttributes/leaves/request/PostPaymentIntents/payment_method_options.card.three_d_secure.electronic_commerce_indicator"
       ]
     },
     {
+      "accepted_in": [
+        "US"
+      ],
       "branch": "",
+      "enum_values": [
+        {
+          "accepted": true,
+          "value": "low_risk"
+        }
+      ],
       "object": "payment_intent",
+      "on": [
+        "create"
+      ],
       "operation": "PostPaymentIntents",
       "path": "payment_method_options.card.three_d_secure.exemption_indicator",
-      "reason": "no answer of its own: Stripe refused every request that sent it, and each refusal names something else or nothing",
+      "refusals": [],
+      "returned": {
+        "form": "not_returned",
+        "response_path": ""
+      },
       "side": "request",
-      "status": "unproven",
+      "status": "proven",
+      "targets": [
+        "fake",
+        "stripe"
+      ],
       "tests": [
         "TestPaymentIntentAttributes/leaves/request/PostPaymentIntents/payment_method_options.card.three_d_secure.exemption_indicator"
       ]
@@ -271355,37 +271716,97 @@
       ]
     },
     {
+      "accepted_in": [
+        "US"
+      ],
       "branch": "",
       "object": "payment_intent",
+      "on": [
+        "create"
+      ],
       "operation": "PostPaymentIntents",
       "path": "payment_method_options.card.three_d_secure.requestor_challenge_indicator",
-      "reason": "no answer of its own: Stripe refused every request that sent it, and each refusal names something else or nothing",
+      "refusals": [],
+      "returned": {
+        "form": "not_returned",
+        "response_path": ""
+      },
       "side": "request",
-      "status": "unproven",
+      "status": "proven",
+      "targets": [
+        "fake",
+        "stripe"
+      ],
       "tests": [
         "TestPaymentIntentAttributes/leaves/request/PostPaymentIntents/payment_method_options.card.three_d_secure.requestor_challenge_indicator"
       ]
     },
     {
+      "accepted_in": [
+        "US"
+      ],
       "branch": "",
       "object": "payment_intent",
+      "on": [
+        "create"
+      ],
       "operation": "PostPaymentIntents",
       "path": "payment_method_options.card.three_d_secure.transaction_id",
-      "reason": "no answer of its own: Stripe refused every request that sent it, and each refusal names something else or nothing",
+      "refusals": [],
+      "returned": {
+        "form": "not_returned",
+        "response_path": ""
+      },
       "side": "request",
-      "status": "unproven",
+      "status": "proven",
+      "targets": [
+        "fake",
+        "stripe"
+      ],
       "tests": [
         "TestPaymentIntentAttributes/leaves/request/PostPaymentIntents/payment_method_options.card.three_d_secure.transaction_id"
       ]
     },
     {
+      "accepted_in": [
+        "US"
+      ],
       "branch": "",
+      "enum_values": [
+        {
+          "accepted": true,
+          "value": "2.1.0"
+        },
+        {
+          "accepted": true,
+          "value": "2.2.0"
+        },
+        {
+          "accepted": true,
+          "value": "2.3.0"
+        },
+        {
+          "accepted": true,
+          "value": "2.3.1"
+        }
+      ],
       "object": "payment_intent",
+      "on": [
+        "create"
+      ],
       "operation": "PostPaymentIntents",
       "path": "payment_method_options.card.three_d_secure.version",
-      "reason": "no answer of its own: Stripe refused every request that sent it, and each refusal names something else or nothing",
+      "refusals": [],
+      "returned": {
+        "form": "not_returned",
+        "response_path": ""
+      },
       "side": "request",
-      "status": "unproven",
+      "status": "proven",
+      "targets": [
+        "fake",
+        "stripe"
+      ],
       "tests": [
         "TestPaymentIntentAttributes/leaves/request/PostPaymentIntents/payment_method_options.card.three_d_secure.version"
       ]
@@ -273381,7 +273802,19 @@
       ],
       "operation": "PostPaymentIntents",
       "path": "statement_descriptor",
-      "refusals": [],
+      "refusals": [
+        {
+          "account_country": "US",
+          "code": "",
+          "message": "The statement_descriptor parameter is not supported for the payment_method_type `card`. To continue supporting payment_method_type `card`, please pass in `statement_descriptor_suffix` or remove the `statement_descriptor` parameter altogether. Please see https://support.stripe.com/questions/use-of-the-statement-descriptor-parameter-on-paymentintents-for-card-charges for additional details.",
+          "param": "",
+          "status": 400,
+          "tests": [
+            "TestPaymentIntentAttributes/leaves/request/PostPaymentIntents/statement_descriptor"
+          ],
+          "type": "invalid_request_error"
+        }
+      ],
       "returned": {
         "form": "as_sent",
         "response_path": "statement_descriptor"
@@ -277257,13 +277690,43 @@
       ]
     },
     {
+      "accepted_in": [],
       "branch": "",
+      "enum_values": [
+        {
+          "accepted": false,
+          "value": "U"
+        },
+        {
+          "accepted": false,
+          "value": "Y"
+        }
+      ],
       "object": "payment_intent",
+      "on": [
+        "update"
+      ],
       "operation": "PostPaymentIntentsIntent",
       "path": "payment_method_options.card.three_d_secure.ares_trans_status",
-      "reason": "no answer of its own: Stripe refused every request that sent it, and each refusal names something else or nothing",
+      "refusals": [
+        {
+          "account_country": "US",
+          "code": "",
+          "message": "The parameter `payment_method_options[card][three_d_secure]` cannot be used when creating a PaymentIntent unless `confirm` is set to true.",
+          "param": "",
+          "status": 400,
+          "tests": [
+            "TestPaymentIntentAttributes/leaves/request/PostPaymentIntentsIntent/payment_method_options.card.three_d_secure.ares_trans_status"
+          ],
+          "type": "invalid_request_error"
+        }
+      ],
       "side": "request",
-      "status": "unproven",
+      "status": "proven",
+      "targets": [
+        "fake",
+        "stripe"
+      ],
       "tests": [
         "TestPaymentIntentAttributes/leaves/request/PostPaymentIntentsIntent/payment_method_options.card.three_d_secure.ares_trans_status"
       ]
@@ -277305,13 +277768,39 @@
       ]
     },
     {
+      "accepted_in": [],
       "branch": "",
+      "enum_values": [
+        {
+          "accepted": false,
+          "value": "A"
+        }
+      ],
       "object": "payment_intent",
+      "on": [
+        "update"
+      ],
       "operation": "PostPaymentIntentsIntent",
       "path": "payment_method_options.card.three_d_secure.network_options.cartes_bancaires.cb_avalgo",
-      "reason": "no answer of its own: Stripe refused every request that sent it, and each refusal names something else or nothing",
+      "refusals": [
+        {
+          "account_country": "US",
+          "code": "",
+          "message": "The parameter `payment_method_options[card][three_d_secure]` cannot be used when creating a PaymentIntent unless `confirm` is set to true.",
+          "param": "",
+          "status": 400,
+          "tests": [
+            "TestPaymentIntentAttributes/leaves/request/PostPaymentIntentsIntent/payment_method_options.card.three_d_secure.network_options.cartes_bancaires.cb_avalgo"
+          ],
+          "type": "invalid_request_error"
+        }
+      ],
       "side": "request",
-      "status": "unproven",
+      "status": "proven",
+      "targets": [
+        "fake",
+        "stripe"
+      ],
       "tests": [
         "TestPaymentIntentAttributes/leaves/request/PostPaymentIntentsIntent/payment_method_options.card.three_d_secure.network_options.cartes_bancaires.cb_avalgo"
       ]
@@ -277365,13 +277854,51 @@
       ]
     },
     {
+      "accepted_in": [],
       "branch": "",
+      "enum_values": [
+        {
+          "accepted": false,
+          "value": "1.0.2"
+        },
+        {
+          "accepted": false,
+          "value": "2.1.0"
+        },
+        {
+          "accepted": false,
+          "value": "2.3.0"
+        },
+        {
+          "accepted": false,
+          "value": "2.3.1"
+        }
+      ],
       "object": "payment_intent",
+      "on": [
+        "update"
+      ],
       "operation": "PostPaymentIntentsIntent",
       "path": "payment_method_options.card.three_d_secure.version",
-      "reason": "no answer of its own: Stripe refused every request that sent it, and each refusal names something else or nothing",
+      "refusals": [
+        {
+          "account_country": "US",
+          "code": "",
+          "message": "The parameter `payment_method_options[card][three_d_secure]` cannot be used when creating a PaymentIntent unless `confirm` is set to true.",
+          "param": "",
+          "status": 400,
+          "tests": [
+            "TestPaymentIntentAttributes/leaves/request/PostPaymentIntentsIntent/payment_method_options.card.three_d_secure.version"
+          ],
+          "type": "invalid_request_error"
+        }
+      ],
       "side": "request",
-      "status": "unproven",
+      "status": "proven",
+      "targets": [
+        "fake",
+        "stripe"
+      ],
       "tests": [
         "TestPaymentIntentAttributes/leaves/request/PostPaymentIntentsIntent/payment_method_options.card.three_d_secure.version"
       ]
@@ -278902,7 +279429,19 @@
       ],
       "operation": "PostPaymentIntentsIntent",
       "path": "statement_descriptor",
-      "refusals": [],
+      "refusals": [
+        {
+          "account_country": "US",
+          "code": "",
+          "message": "The statement_descriptor parameter is not supported for the payment_method_type `card`. To continue supporting payment_method_type `card`, please pass in `statement_descriptor_suffix` or remove the `statement_descriptor` parameter altogether. Please see https://support.stripe.com/questions/use-of-the-statement-descriptor-parameter-on-paymentintents-for-card-charges for additional details.",
+          "param": "",
+          "status": 400,
+          "tests": [
+            "TestPaymentIntentAttributes/leaves/request/PostPaymentIntentsIntent/statement_descriptor"
+          ],
+          "type": "invalid_request_error"
+        }
+      ],
       "returned": {
         "form": "as_sent",
         "response_path": "statement_descriptor"
@@ -296294,103 +296833,103 @@
       "branch": "",
       "default": {
         "kind": "rule",
-        "rule_ref": 39,
+        "rule_ref": 45,
         "variants": [
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 39
+              "rule_ref": 45
             },
             "variant": "custom_dropdown"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 39
+              "rule_ref": 45
             },
             "variant": "custom_numeric"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 39
+              "rule_ref": 45
             },
             "variant": "custom_text"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 39
+              "rule_ref": 45
             },
             "variant": "decimal_price"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 39
+              "rule_ref": 45
             },
             "variant": "destination"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 39
+              "rule_ref": 45
             },
             "variant": "inline_product"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 39
+              "rule_ref": 45
             },
             "variant": "managed"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 39
+              "rule_ref": 45
             },
             "variant": "optional_item"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 39
+              "rule_ref": 45
             },
             "variant": "price_eur"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 39
+              "rule_ref": 45
             },
             "variant": "redirect"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 39
+              "rule_ref": 45
             },
             "variant": "subscription"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 39
+              "rule_ref": 45
             },
             "variant": "subscription_fee"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 39
+              "rule_ref": 45
             },
             "variant": "tax_coded"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 39
+              "rule_ref": 45
             },
             "variant": "transfer_amount"
           }
@@ -319144,30 +319683,85 @@
     },
     {
       "branch": "",
+      "initial": [
+        {
+          "matcher": {
+            "kind": "null"
+          },
+          "variant": ""
+        }
+      ],
+      "nullable": {
+        "non_null_observed": true,
+        "null_observed": true
+      },
       "object": "payment_method",
       "operation": "",
       "path": "card.checks.address_line1_check",
       "side": "response",
-      "status": "unproven",
-      "tests": []
+      "status": "proven",
+      "targets": [
+        "fake",
+        "stripe"
+      ],
+      "tests": [
+        "TestCustomerPaymentMethodAttributes/leaves/response/payment_method/card.checks.address_line1_check"
+      ]
     },
     {
       "branch": "",
+      "initial": [
+        {
+          "matcher": {
+            "kind": "null"
+          },
+          "variant": ""
+        }
+      ],
+      "nullable": {
+        "non_null_observed": true,
+        "null_observed": true
+      },
       "object": "payment_method",
       "operation": "",
       "path": "card.checks.address_postal_code_check",
       "side": "response",
-      "status": "unproven",
-      "tests": []
+      "status": "proven",
+      "targets": [
+        "fake",
+        "stripe"
+      ],
+      "tests": [
+        "TestCustomerPaymentMethodAttributes/leaves/response/payment_method/card.checks.address_postal_code_check"
+      ]
     },
     {
       "branch": "",
+      "initial": [
+        {
+          "matcher": {
+            "kind": "value",
+            "value": "pass"
+          },
+          "variant": ""
+        }
+      ],
+      "nullable": {
+        "non_null_observed": true,
+        "null_observed": false
+      },
       "object": "payment_method",
       "operation": "",
       "path": "card.checks.cvc_check",
       "side": "response",
-      "status": "unproven",
-      "tests": []
+      "status": "proven",
+      "targets": [
+        "fake",
+        "stripe"
+      ],
+      "tests": [
+        "TestCustomerPaymentMethodAttributes/leaves/response/payment_method/card.checks.cvc_check"
+      ]
     },
     {
       "branch": "",
@@ -333208,7 +333802,7 @@
       "branch": "",
       "default": {
         "kind": "rule",
-        "rule_ref": 40
+        "rule_ref": 46
       },
       "object": "payout",
       "on": [
@@ -338477,7 +339071,7 @@
       "branch": "",
       "default": {
         "kind": "rule",
-        "rule_ref": 41,
+        "rule_ref": 47,
         "variants": [
           {
             "default": {
@@ -338528,33 +339122,33 @@
       "branch": "",
       "default": {
         "kind": "rule",
-        "rule_ref": 42,
+        "rule_ref": 48,
         "variants": [
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 42
+              "rule_ref": 48
             },
             "variant": "amount_other"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 42
+              "rule_ref": 48
             },
             "variant": "metered"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 42
+              "rule_ref": 48
             },
             "variant": "tiered"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 42
+              "rule_ref": 48
             },
             "variant": "tiered_decimal"
           }
@@ -338679,40 +339273,40 @@
       "branch": "",
       "default": {
         "kind": "rule",
-        "rule_ref": 43,
+        "rule_ref": 49,
         "variants": [
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 43
+              "rule_ref": 49
             },
             "variant": "amount_other"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 43
+              "rule_ref": 49
             },
             "variant": "decimal"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 43
+              "rule_ref": 49
             },
             "variant": "metered"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 43
+              "rule_ref": 49
             },
             "variant": "tiered"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 43
+              "rule_ref": 49
             },
             "variant": "tiered_decimal"
           }
@@ -342347,89 +342941,89 @@
       "branch": "",
       "default": {
         "kind": "rule",
-        "rule_ref": 44,
+        "rule_ref": 50,
         "variants": [
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 44
+              "rule_ref": 50
             },
             "variant": "currency_eur"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 44
+              "rule_ref": 50
             },
             "variant": "custom_amount"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 44
+              "rule_ref": 50
             },
             "variant": "decimal"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 44
+              "rule_ref": 50
             },
             "variant": "inline_product"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 44
+              "rule_ref": 50
             },
             "variant": "metered"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 44
+              "rule_ref": 50
             },
             "variant": "monthly"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 44
+              "rule_ref": 50
             },
             "variant": "options"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 44
+              "rule_ref": 50
             },
             "variant": "options_custom"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 44
+              "rule_ref": 50
             },
             "variant": "options_tiered"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 44
+              "rule_ref": 50
             },
             "variant": "options_tiered_decimal"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 44
+              "rule_ref": 50
             },
             "variant": "tiered"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 44
+              "rule_ref": 50
             },
             "variant": "tiered_decimal"
           }
@@ -343249,33 +343843,33 @@
       "branch": "",
       "default": {
         "kind": "rule",
-        "rule_ref": 45,
+        "rule_ref": 51,
         "variants": [
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 45
+              "rule_ref": 51
             },
             "variant": "currency_eur"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 45
+              "rule_ref": 51
             },
             "variant": "inline_product"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 45
+              "rule_ref": 51
             },
             "variant": "metered"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 45
+              "rule_ref": 51
             },
             "variant": "monthly"
           }
@@ -343321,89 +343915,89 @@
       "branch": "",
       "default": {
         "kind": "rule",
-        "rule_ref": 46,
+        "rule_ref": 52,
         "variants": [
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 46
+              "rule_ref": 52
             },
             "variant": "currency_eur"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 46
+              "rule_ref": 52
             },
             "variant": "custom_amount"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 46
+              "rule_ref": 52
             },
             "variant": "decimal"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 46
+              "rule_ref": 52
             },
             "variant": "inline_product"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 46
+              "rule_ref": 52
             },
             "variant": "metered"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 46
+              "rule_ref": 52
             },
             "variant": "monthly"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 46
+              "rule_ref": 52
             },
             "variant": "options"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 46
+              "rule_ref": 52
             },
             "variant": "options_custom"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 46
+              "rule_ref": 52
             },
             "variant": "options_tiered"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 46
+              "rule_ref": 52
             },
             "variant": "options_tiered_decimal"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 46
+              "rule_ref": 52
             },
             "variant": "tiered"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 46
+              "rule_ref": 52
             },
             "variant": "tiered_decimal"
           }
@@ -345844,7 +346438,7 @@
       "branch": "",
       "default": {
         "kind": "rule",
-        "rule_ref": 47,
+        "rule_ref": 53,
         "variants": [
           {
             "default": {
@@ -345919,82 +346513,82 @@
       "branch": "",
       "default": {
         "kind": "rule",
-        "rule_ref": 48,
+        "rule_ref": 54,
         "variants": [
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 48
+              "rule_ref": 54
             },
             "variant": "currency_eur"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 48
+              "rule_ref": 54
             },
             "variant": "custom_amount"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 48
+              "rule_ref": 54
             },
             "variant": "inline_product"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 48
+              "rule_ref": 54
             },
             "variant": "metered"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 48
+              "rule_ref": 54
             },
             "variant": "monthly"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 48
+              "rule_ref": 54
             },
             "variant": "options"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 48
+              "rule_ref": 54
             },
             "variant": "options_custom"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 48
+              "rule_ref": 54
             },
             "variant": "options_tiered"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 48
+              "rule_ref": 54
             },
             "variant": "options_tiered_decimal"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 48
+              "rule_ref": 54
             },
             "variant": "tiered"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 48
+              "rule_ref": 54
             },
             "variant": "tiered_decimal"
           }
@@ -352096,40 +352690,40 @@
       "branch": "",
       "default": {
         "kind": "rule",
-        "rule_ref": 49,
+        "rule_ref": 55,
         "variants": [
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 49
+              "rule_ref": 55
             },
             "variant": "price"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 49
+              "rule_ref": 55
             },
             "variant": "price_custom"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 49
+              "rule_ref": 55
             },
             "variant": "price_decimal"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 49
+              "rule_ref": 55
             },
             "variant": "price_monthly"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 49
+              "rule_ref": 55
             },
             "variant": "price_options"
           }
@@ -355616,7 +356210,7 @@
       "branch": "",
       "default": {
         "kind": "rule",
-        "rule_ref": 50
+        "rule_ref": 56
       },
       "object": "promotion_code",
       "on": [
@@ -357838,103 +358432,103 @@
       "branch": "",
       "default": {
         "kind": "rule",
-        "rule_ref": 52,
+        "rule_ref": 58,
         "variants": [
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 52
+              "rule_ref": 58
             },
             "variant": "charge_automatically"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 52
+              "rule_ref": 58
             },
             "variant": "classic"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 52
+              "rule_ref": 58
             },
             "variant": "customer"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 52
+              "rule_ref": 58
             },
             "variant": "destination"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 52
+              "rule_ref": 58
             },
             "variant": "destination_recurring"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 52
+              "rule_ref": 58
             },
             "variant": "from_quote"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 52
+              "rule_ref": 58
             },
             "variant": "line_items"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 52
+              "rule_ref": 58
             },
             "variant": "price_data"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 52
+              "rule_ref": 58
             },
             "variant": "price_data_decimal"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 52
+              "rule_ref": 58
             },
             "variant": "price_eur"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 52
+              "rule_ref": 58
             },
             "variant": "recurring"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 52
+              "rule_ref": 58
             },
             "variant": "send_invoice"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 52
+              "rule_ref": 58
             },
             "variant": "tax_account"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 52
+              "rule_ref": 58
             },
             "variant": "test_clock"
           }
@@ -373590,12 +374184,12 @@
       "branch": "",
       "default": {
         "kind": "rule",
-        "rule_ref": 53,
+        "rule_ref": 59,
         "variants": [
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 53
+              "rule_ref": 59
             },
             "variant": "charge"
           }
@@ -377875,13 +378469,29 @@
       ]
     },
     {
+      "accepted_in": [
+        "US"
+      ],
       "branch": "",
+      "enum_values": [
+        {
+          "accepted": true,
+          "value": "visa"
+        }
+      ],
       "object": "setup_intent",
+      "on": [
+        "create"
+      ],
       "operation": "PostSetupIntents",
       "path": "payment_method_options.card.network",
-      "reason": "no answer of its own: Stripe refused every request that sent it, and each refusal names something else or nothing",
+      "refusals": [],
       "side": "request",
-      "status": "unproven",
+      "status": "proven",
+      "targets": [
+        "fake",
+        "stripe"
+      ],
       "tests": [
         "TestSetupIntentAttributes/leaves/request/PostSetupIntents/payment_method_options.card.network"
       ]
@@ -377923,19 +378533,65 @@
       ]
     },
     {
+      "accepted_in": [
+        "US"
+      ],
       "branch": "",
+      "enum_values": [
+        {
+          "accepted": true,
+          "value": "A"
+        },
+        {
+          "accepted": true,
+          "value": "C"
+        },
+        {
+          "accepted": true,
+          "value": "I"
+        },
+        {
+          "accepted": true,
+          "value": "N"
+        },
+        {
+          "accepted": true,
+          "value": "R"
+        },
+        {
+          "accepted": true,
+          "value": "U"
+        },
+        {
+          "accepted": true,
+          "value": "Y"
+        }
+      ],
       "object": "setup_intent",
+      "on": [
+        "create"
+      ],
       "operation": "PostSetupIntents",
       "path": "payment_method_options.card.three_d_secure.ares_trans_status",
-      "reason": "no answer of its own: Stripe refused every request that sent it, and each refusal names something else or nothing",
+      "refusals": [],
+      "returned": {
+        "form": "not_returned",
+        "response_path": ""
+      },
       "side": "request",
-      "status": "unproven",
+      "status": "proven",
+      "targets": [
+        "fake",
+        "stripe"
+      ],
       "tests": [
         "TestSetupIntentAttributes/leaves/request/PostSetupIntents/payment_method_options.card.three_d_secure.ares_trans_status"
       ]
     },
     {
-      "accepted_in": [],
+      "accepted_in": [
+        "US"
+      ],
       "branch": "",
       "object": "setup_intent",
       "on": [
@@ -377943,19 +378599,11 @@
       ],
       "operation": "PostSetupIntents",
       "path": "payment_method_options.card.three_d_secure.cryptogram",
-      "refusals": [
-        {
-          "account_country": "US",
-          "code": "",
-          "message": "You may only specify all or none of these parameters: version, cryptogram, transaction_id.",
-          "param": "payment_method_options[card][three_d_secure][cryptogram]",
-          "status": 400,
-          "tests": [
-            "TestSetupIntentAttributes/leaves/request/PostSetupIntents/payment_method_options.card.three_d_secure.cryptogram"
-          ],
-          "type": "invalid_request_error"
-        }
-      ],
+      "refusals": [],
+      "returned": {
+        "form": "not_returned",
+        "response_path": ""
+      },
       "side": "request",
       "status": "proven",
       "targets": [
@@ -377967,13 +378615,49 @@
       ]
     },
     {
+      "accepted_in": [
+        "US"
+      ],
       "branch": "",
+      "enum_values": [
+        {
+          "accepted": true,
+          "value": "01"
+        },
+        {
+          "accepted": true,
+          "value": "02"
+        },
+        {
+          "accepted": true,
+          "value": "05"
+        },
+        {
+          "accepted": true,
+          "value": "06"
+        },
+        {
+          "accepted": true,
+          "value": "07"
+        }
+      ],
       "object": "setup_intent",
+      "on": [
+        "create"
+      ],
       "operation": "PostSetupIntents",
       "path": "payment_method_options.card.three_d_secure.electronic_commerce_indicator",
-      "reason": "no answer of its own: Stripe refused every request that sent it, and each refusal names something else or nothing",
+      "refusals": [],
+      "returned": {
+        "form": "not_returned",
+        "response_path": ""
+      },
       "side": "request",
-      "status": "unproven",
+      "status": "proven",
+      "targets": [
+        "fake",
+        "stripe"
+      ],
       "tests": [
         "TestSetupIntentAttributes/leaves/request/PostSetupIntents/payment_method_options.card.three_d_secure.electronic_commerce_indicator"
       ]
@@ -378015,19 +378699,35 @@
       ]
     },
     {
+      "accepted_in": [
+        "US"
+      ],
       "branch": "",
       "object": "setup_intent",
+      "on": [
+        "create"
+      ],
       "operation": "PostSetupIntents",
       "path": "payment_method_options.card.three_d_secure.requestor_challenge_indicator",
-      "reason": "no answer of its own: Stripe refused every request that sent it, and each refusal names something else or nothing",
+      "refusals": [],
+      "returned": {
+        "form": "not_returned",
+        "response_path": ""
+      },
       "side": "request",
-      "status": "unproven",
+      "status": "proven",
+      "targets": [
+        "fake",
+        "stripe"
+      ],
       "tests": [
         "TestSetupIntentAttributes/leaves/request/PostSetupIntents/payment_method_options.card.three_d_secure.requestor_challenge_indicator"
       ]
     },
     {
-      "accepted_in": [],
+      "accepted_in": [
+        "US"
+      ],
       "branch": "",
       "object": "setup_intent",
       "on": [
@@ -378035,19 +378735,11 @@
       ],
       "operation": "PostSetupIntents",
       "path": "payment_method_options.card.three_d_secure.transaction_id",
-      "refusals": [
-        {
-          "account_country": "US",
-          "code": "",
-          "message": "You may only specify all or none of these parameters: version, cryptogram, transaction_id.",
-          "param": "payment_method_options[card][three_d_secure][transaction_id]",
-          "status": 400,
-          "tests": [
-            "TestSetupIntentAttributes/leaves/request/PostSetupIntents/payment_method_options.card.three_d_secure.transaction_id"
-          ],
-          "type": "invalid_request_error"
-        }
-      ],
+      "refusals": [],
+      "returned": {
+        "form": "not_returned",
+        "response_path": ""
+      },
       "side": "request",
       "status": "proven",
       "targets": [
@@ -378059,27 +378751,25 @@
       ]
     },
     {
-      "accepted_in": [],
+      "accepted_in": [
+        "US"
+      ],
       "branch": "",
       "enum_values": [
         {
-          "accepted": false,
-          "value": "1.0.2"
-        },
-        {
-          "accepted": false,
+          "accepted": true,
           "value": "2.1.0"
         },
         {
-          "accepted": false,
+          "accepted": true,
           "value": "2.2.0"
         },
         {
-          "accepted": false,
+          "accepted": true,
           "value": "2.3.0"
         },
         {
-          "accepted": false,
+          "accepted": true,
           "value": "2.3.1"
         }
       ],
@@ -378089,19 +378779,11 @@
       ],
       "operation": "PostSetupIntents",
       "path": "payment_method_options.card.three_d_secure.version",
-      "refusals": [
-        {
-          "account_country": "US",
-          "code": "",
-          "message": "You may only specify all or none of these parameters: version, cryptogram, transaction_id.",
-          "param": "payment_method_options[card][three_d_secure][version]",
-          "status": 400,
-          "tests": [
-            "TestSetupIntentAttributes/leaves/request/PostSetupIntents/payment_method_options.card.three_d_secure.version"
-          ],
-          "type": "invalid_request_error"
-        }
-      ],
+      "refusals": [],
+      "returned": {
+        "form": "not_returned",
+        "response_path": ""
+      },
       "side": "request",
       "status": "proven",
       "targets": [
@@ -380784,8 +381466,8 @@
         {
           "account_country": "US",
           "code": "",
-          "message": "You may only specify all or none of these parameters: version, cryptogram, transaction_id.",
-          "param": "payment_method_options[card][three_d_secure][cryptogram]",
+          "message": "The parameter `payment_method_options[card][three_d_secure]` cannot be used when creating a SetupIntent unless `confirm` is set to true.",
+          "param": "",
           "status": 400,
           "tests": [
             "TestSetupIntentAttributes/leaves/request/PostSetupIntentsIntent/payment_method_options.card.three_d_secure.cryptogram"
@@ -380984,8 +381666,8 @@
         {
           "account_country": "US",
           "code": "",
-          "message": "You may only specify all or none of these parameters: version, cryptogram, transaction_id.",
-          "param": "payment_method_options[card][three_d_secure][transaction_id]",
+          "message": "The parameter `payment_method_options[card][three_d_secure]` cannot be used when creating a SetupIntent unless `confirm` is set to true.",
+          "param": "",
           "status": 400,
           "tests": [
             "TestSetupIntentAttributes/leaves/request/PostSetupIntentsIntent/payment_method_options.card.three_d_secure.transaction_id"
@@ -381038,8 +381720,8 @@
         {
           "account_country": "US",
           "code": "",
-          "message": "You may only specify all or none of these parameters: version, cryptogram, transaction_id.",
-          "param": "payment_method_options[card][three_d_secure][version]",
+          "message": "The parameter `payment_method_options[card][three_d_secure]` cannot be used when creating a SetupIntent unless `confirm` is set to true.",
+          "param": "",
           "status": 400,
           "tests": [
             "TestSetupIntentAttributes/leaves/request/PostSetupIntentsIntent/payment_method_options.card.three_d_secure.version"
@@ -384707,12 +385389,12 @@
       "branch": "",
       "default": {
         "kind": "rule",
-        "rule_ref": 54,
+        "rule_ref": 60,
         "variants": [
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 54
+              "rule_ref": 60
             },
             "variant": "currency_eur"
           }
@@ -387168,180 +387850,180 @@
       "branch": "",
       "default": {
         "kind": "rule",
-        "rule_ref": 55,
+        "rule_ref": 61,
         "variants": [
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 55
+              "rule_ref": 61
             },
             "variant": "anchor_yearly"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 55
+              "rule_ref": 61
             },
             "variant": "canceling"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 55
+              "rule_ref": 61
             },
             "variant": "canceling_option"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 55
+              "rule_ref": 61
             },
             "variant": "customer_account"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 55
+              "rule_ref": 61
             },
             "variant": "decimal_price"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 55
+              "rule_ref": 61
             },
             "variant": "fee"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 55
+              "rule_ref": 61
             },
             "variant": "flexible"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 55
+              "rule_ref": 61
             },
             "variant": "inline_price"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 55
+              "rule_ref": 61
             },
             "variant": "invoice_decimal"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 55
+              "rule_ref": 61
             },
             "variant": "invoice_item"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 55
+              "rule_ref": 61
             },
             "variant": "metered"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 55
+              "rule_ref": 61
             },
             "variant": "method_aud"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 55
+              "rule_ref": 61
             },
             "variant": "method_brl"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 55
+              "rule_ref": 61
             },
             "variant": "method_eur"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 55
+              "rule_ref": 61
             },
             "variant": "method_inr"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 55
+              "rule_ref": 61
             },
             "variant": "method_pln"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 55
+              "rule_ref": 61
             },
             "variant": "prebilled"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 55
+              "rule_ref": 61
             },
             "variant": "prebilled_timestamp"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 55
+              "rule_ref": 61
             },
             "variant": "price_eur"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 55
+              "rule_ref": 61
             },
             "variant": "send_invoice"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 55
+              "rule_ref": 61
             },
             "variant": "setup_pending"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 55
+              "rule_ref": 61
             },
             "variant": "tax_coded"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 55
+              "rule_ref": 61
             },
             "variant": "test_clock"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 55
+              "rule_ref": 61
             },
             "variant": "trial"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 55
+              "rule_ref": 61
             },
             "variant": "trial_offer"
           }
@@ -391121,180 +391803,180 @@
       "branch": "",
       "default": {
         "kind": "rule",
-        "rule_ref": 56,
+        "rule_ref": 62,
         "variants": [
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 56
+              "rule_ref": 62
             },
             "variant": "anchor_yearly"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 56
+              "rule_ref": 62
             },
             "variant": "canceling"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 56
+              "rule_ref": 62
             },
             "variant": "canceling_option"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 56
+              "rule_ref": 62
             },
             "variant": "customer_account"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 56
+              "rule_ref": 62
             },
             "variant": "decimal_price"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 56
+              "rule_ref": 62
             },
             "variant": "fee"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 56
+              "rule_ref": 62
             },
             "variant": "flexible"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 56
+              "rule_ref": 62
             },
             "variant": "inline_price"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 56
+              "rule_ref": 62
             },
             "variant": "invoice_decimal"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 56
+              "rule_ref": 62
             },
             "variant": "invoice_item"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 56
+              "rule_ref": 62
             },
             "variant": "metered"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 56
+              "rule_ref": 62
             },
             "variant": "method_aud"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 56
+              "rule_ref": 62
             },
             "variant": "method_brl"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 56
+              "rule_ref": 62
             },
             "variant": "method_eur"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 56
+              "rule_ref": 62
             },
             "variant": "method_inr"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 56
+              "rule_ref": 62
             },
             "variant": "method_pln"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 56
+              "rule_ref": 62
             },
             "variant": "prebilled"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 56
+              "rule_ref": 62
             },
             "variant": "prebilled_timestamp"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 56
+              "rule_ref": 62
             },
             "variant": "price_eur"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 56
+              "rule_ref": 62
             },
             "variant": "send_invoice"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 56
+              "rule_ref": 62
             },
             "variant": "setup_pending"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 56
+              "rule_ref": 62
             },
             "variant": "tax_coded"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 56
+              "rule_ref": 62
             },
             "variant": "test_clock"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 56
+              "rule_ref": 62
             },
             "variant": "trial"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 56
+              "rule_ref": 62
             },
             "variant": "trial_offer"
           }
@@ -397944,54 +398626,6 @@
       },
       "enum_values": [
         {
-          "accepted": false,
-          "value": "amex"
-        },
-        {
-          "accepted": false,
-          "value": "cartes_bancaires"
-        },
-        {
-          "accepted": false,
-          "value": "diners"
-        },
-        {
-          "accepted": false,
-          "value": "discover"
-        },
-        {
-          "accepted": false,
-          "value": "eftpos_au"
-        },
-        {
-          "accepted": false,
-          "value": "girocard"
-        },
-        {
-          "accepted": false,
-          "value": "interac"
-        },
-        {
-          "accepted": false,
-          "value": "jcb"
-        },
-        {
-          "accepted": false,
-          "value": "link"
-        },
-        {
-          "accepted": false,
-          "value": "mastercard"
-        },
-        {
-          "accepted": false,
-          "value": "unionpay"
-        },
-        {
-          "accepted": false,
-          "value": "unknown"
-        },
-        {
           "accepted": true,
           "value": "visa"
         }
@@ -398002,140 +398636,7 @@
       ],
       "operation": "PostSubscriptions",
       "path": "payment_settings.payment_method_options.card.network",
-      "refusals": [
-        {
-          "account_country": "US",
-          "code": "",
-          "message": "The parameter `payment_settings[payment_method_options][card][network]` provided (amex) is not allowed for this card. Please select one of the following networks: visa.",
-          "param": "",
-          "status": 400,
-          "tests": [
-            "TestSubscriptionAttributes/leaves/request/PostSubscriptions/payment_settings.payment_method_options.card.network"
-          ],
-          "type": "invalid_request_error"
-        },
-        {
-          "account_country": "US",
-          "code": "",
-          "message": "The parameter `payment_settings[payment_method_options][card][network]` provided (cartes_bancaires) is not allowed for this card. Please select one of the following networks: visa.",
-          "param": "",
-          "status": 400,
-          "tests": [
-            "TestSubscriptionAttributes/leaves/request/PostSubscriptions/payment_settings.payment_method_options.card.network"
-          ],
-          "type": "invalid_request_error"
-        },
-        {
-          "account_country": "US",
-          "code": "",
-          "message": "The parameter `payment_settings[payment_method_options][card][network]` provided (diners) is not allowed for this card. Please select one of the following networks: visa.",
-          "param": "",
-          "status": 400,
-          "tests": [
-            "TestSubscriptionAttributes/leaves/request/PostSubscriptions/payment_settings.payment_method_options.card.network"
-          ],
-          "type": "invalid_request_error"
-        },
-        {
-          "account_country": "US",
-          "code": "",
-          "message": "The parameter `payment_settings[payment_method_options][card][network]` provided (discover) is not allowed for this card. Please select one of the following networks: visa.",
-          "param": "",
-          "status": 400,
-          "tests": [
-            "TestSubscriptionAttributes/leaves/request/PostSubscriptions/payment_settings.payment_method_options.card.network"
-          ],
-          "type": "invalid_request_error"
-        },
-        {
-          "account_country": "US",
-          "code": "",
-          "message": "The parameter `payment_settings[payment_method_options][card][network]` provided (eftpos_au) is not allowed for this card. Please select one of the following networks: visa.",
-          "param": "",
-          "status": 400,
-          "tests": [
-            "TestSubscriptionAttributes/leaves/request/PostSubscriptions/payment_settings.payment_method_options.card.network"
-          ],
-          "type": "invalid_request_error"
-        },
-        {
-          "account_country": "US",
-          "code": "",
-          "message": "The parameter `payment_settings[payment_method_options][card][network]` provided (girocard) is not allowed for this card. Please select one of the following networks: visa.",
-          "param": "",
-          "status": 400,
-          "tests": [
-            "TestSubscriptionAttributes/leaves/request/PostSubscriptions/payment_settings.payment_method_options.card.network"
-          ],
-          "type": "invalid_request_error"
-        },
-        {
-          "account_country": "US",
-          "code": "",
-          "message": "The parameter `payment_settings[payment_method_options][card][network]` provided (interac) is not allowed for this card. Please select one of the following networks: visa.",
-          "param": "",
-          "status": 400,
-          "tests": [
-            "TestSubscriptionAttributes/leaves/request/PostSubscriptions/payment_settings.payment_method_options.card.network"
-          ],
-          "type": "invalid_request_error"
-        },
-        {
-          "account_country": "US",
-          "code": "",
-          "message": "The parameter `payment_settings[payment_method_options][card][network]` provided (jcb) is not allowed for this card. Please select one of the following networks: visa.",
-          "param": "",
-          "status": 400,
-          "tests": [
-            "TestSubscriptionAttributes/leaves/request/PostSubscriptions/payment_settings.payment_method_options.card.network"
-          ],
-          "type": "invalid_request_error"
-        },
-        {
-          "account_country": "US",
-          "code": "",
-          "message": "The parameter `payment_settings[payment_method_options][card][network]` provided (link) is not allowed for this card. Please select one of the following networks: visa.",
-          "param": "",
-          "status": 400,
-          "tests": [
-            "TestSubscriptionAttributes/leaves/request/PostSubscriptions/payment_settings.payment_method_options.card.network"
-          ],
-          "type": "invalid_request_error"
-        },
-        {
-          "account_country": "US",
-          "code": "",
-          "message": "The parameter `payment_settings[payment_method_options][card][network]` provided (mastercard) is not allowed for this card. Please select one of the following networks: visa.",
-          "param": "",
-          "status": 400,
-          "tests": [
-            "TestSubscriptionAttributes/leaves/request/PostSubscriptions/payment_settings.payment_method_options.card.network"
-          ],
-          "type": "invalid_request_error"
-        },
-        {
-          "account_country": "US",
-          "code": "",
-          "message": "The parameter `payment_settings[payment_method_options][card][network]` provided (unionpay) is not allowed for this card. Please select one of the following networks: visa.",
-          "param": "",
-          "status": 400,
-          "tests": [
-            "TestSubscriptionAttributes/leaves/request/PostSubscriptions/payment_settings.payment_method_options.card.network"
-          ],
-          "type": "invalid_request_error"
-        },
-        {
-          "account_country": "US",
-          "code": "",
-          "message": "The parameter `payment_settings[payment_method_options][card][network]` provided (unknown) is not allowed for this card. Please select one of the following networks: visa.",
-          "param": "",
-          "status": 400,
-          "tests": [
-            "TestSubscriptionAttributes/leaves/request/PostSubscriptions/payment_settings.payment_method_options.card.network"
-          ],
-          "type": "invalid_request_error"
-        }
-      ],
+      "refusals": [],
       "returned": {
         "form": "as_sent",
         "response_path": "payment_settings.payment_method_options.card.network"
@@ -407745,54 +408246,6 @@
       "branch": "",
       "enum_values": [
         {
-          "accepted": false,
-          "value": "amex"
-        },
-        {
-          "accepted": false,
-          "value": "cartes_bancaires"
-        },
-        {
-          "accepted": false,
-          "value": "diners"
-        },
-        {
-          "accepted": false,
-          "value": "discover"
-        },
-        {
-          "accepted": false,
-          "value": "eftpos_au"
-        },
-        {
-          "accepted": false,
-          "value": "girocard"
-        },
-        {
-          "accepted": false,
-          "value": "interac"
-        },
-        {
-          "accepted": false,
-          "value": "jcb"
-        },
-        {
-          "accepted": false,
-          "value": "link"
-        },
-        {
-          "accepted": false,
-          "value": "mastercard"
-        },
-        {
-          "accepted": false,
-          "value": "unionpay"
-        },
-        {
-          "accepted": false,
-          "value": "unknown"
-        },
-        {
           "accepted": true,
           "value": "visa"
         }
@@ -407803,140 +408256,7 @@
       ],
       "operation": "PostSubscriptionsSubscriptionExposedId",
       "path": "payment_settings.payment_method_options.card.network",
-      "refusals": [
-        {
-          "account_country": "US",
-          "code": "",
-          "message": "The parameter `payment_settings[payment_method_options][card][network]` provided (amex) is not allowed for this card. Please select one of the following networks: visa.",
-          "param": "",
-          "status": 400,
-          "tests": [
-            "TestSubscriptionAttributes/leaves/request/PostSubscriptionsSubscriptionExposedId/payment_settings.payment_method_options.card.network"
-          ],
-          "type": "invalid_request_error"
-        },
-        {
-          "account_country": "US",
-          "code": "",
-          "message": "The parameter `payment_settings[payment_method_options][card][network]` provided (cartes_bancaires) is not allowed for this card. Please select one of the following networks: visa.",
-          "param": "",
-          "status": 400,
-          "tests": [
-            "TestSubscriptionAttributes/leaves/request/PostSubscriptionsSubscriptionExposedId/payment_settings.payment_method_options.card.network"
-          ],
-          "type": "invalid_request_error"
-        },
-        {
-          "account_country": "US",
-          "code": "",
-          "message": "The parameter `payment_settings[payment_method_options][card][network]` provided (diners) is not allowed for this card. Please select one of the following networks: visa.",
-          "param": "",
-          "status": 400,
-          "tests": [
-            "TestSubscriptionAttributes/leaves/request/PostSubscriptionsSubscriptionExposedId/payment_settings.payment_method_options.card.network"
-          ],
-          "type": "invalid_request_error"
-        },
-        {
-          "account_country": "US",
-          "code": "",
-          "message": "The parameter `payment_settings[payment_method_options][card][network]` provided (discover) is not allowed for this card. Please select one of the following networks: visa.",
-          "param": "",
-          "status": 400,
-          "tests": [
-            "TestSubscriptionAttributes/leaves/request/PostSubscriptionsSubscriptionExposedId/payment_settings.payment_method_options.card.network"
-          ],
-          "type": "invalid_request_error"
-        },
-        {
-          "account_country": "US",
-          "code": "",
-          "message": "The parameter `payment_settings[payment_method_options][card][network]` provided (eftpos_au) is not allowed for this card. Please select one of the following networks: visa.",
-          "param": "",
-          "status": 400,
-          "tests": [
-            "TestSubscriptionAttributes/leaves/request/PostSubscriptionsSubscriptionExposedId/payment_settings.payment_method_options.card.network"
-          ],
-          "type": "invalid_request_error"
-        },
-        {
-          "account_country": "US",
-          "code": "",
-          "message": "The parameter `payment_settings[payment_method_options][card][network]` provided (girocard) is not allowed for this card. Please select one of the following networks: visa.",
-          "param": "",
-          "status": 400,
-          "tests": [
-            "TestSubscriptionAttributes/leaves/request/PostSubscriptionsSubscriptionExposedId/payment_settings.payment_method_options.card.network"
-          ],
-          "type": "invalid_request_error"
-        },
-        {
-          "account_country": "US",
-          "code": "",
-          "message": "The parameter `payment_settings[payment_method_options][card][network]` provided (interac) is not allowed for this card. Please select one of the following networks: visa.",
-          "param": "",
-          "status": 400,
-          "tests": [
-            "TestSubscriptionAttributes/leaves/request/PostSubscriptionsSubscriptionExposedId/payment_settings.payment_method_options.card.network"
-          ],
-          "type": "invalid_request_error"
-        },
-        {
-          "account_country": "US",
-          "code": "",
-          "message": "The parameter `payment_settings[payment_method_options][card][network]` provided (jcb) is not allowed for this card. Please select one of the following networks: visa.",
-          "param": "",
-          "status": 400,
-          "tests": [
-            "TestSubscriptionAttributes/leaves/request/PostSubscriptionsSubscriptionExposedId/payment_settings.payment_method_options.card.network"
-          ],
-          "type": "invalid_request_error"
-        },
-        {
-          "account_country": "US",
-          "code": "",
-          "message": "The parameter `payment_settings[payment_method_options][card][network]` provided (link) is not allowed for this card. Please select one of the following networks: visa.",
-          "param": "",
-          "status": 400,
-          "tests": [
-            "TestSubscriptionAttributes/leaves/request/PostSubscriptionsSubscriptionExposedId/payment_settings.payment_method_options.card.network"
-          ],
-          "type": "invalid_request_error"
-        },
-        {
-          "account_country": "US",
-          "code": "",
-          "message": "The parameter `payment_settings[payment_method_options][card][network]` provided (mastercard) is not allowed for this card. Please select one of the following networks: visa.",
-          "param": "",
-          "status": 400,
-          "tests": [
-            "TestSubscriptionAttributes/leaves/request/PostSubscriptionsSubscriptionExposedId/payment_settings.payment_method_options.card.network"
-          ],
-          "type": "invalid_request_error"
-        },
-        {
-          "account_country": "US",
-          "code": "",
-          "message": "The parameter `payment_settings[payment_method_options][card][network]` provided (unionpay) is not allowed for this card. Please select one of the following networks: visa.",
-          "param": "",
-          "status": 400,
-          "tests": [
-            "TestSubscriptionAttributes/leaves/request/PostSubscriptionsSubscriptionExposedId/payment_settings.payment_method_options.card.network"
-          ],
-          "type": "invalid_request_error"
-        },
-        {
-          "account_country": "US",
-          "code": "",
-          "message": "The parameter `payment_settings[payment_method_options][card][network]` provided (unknown) is not allowed for this card. Please select one of the following networks: visa.",
-          "param": "",
-          "status": 400,
-          "tests": [
-            "TestSubscriptionAttributes/leaves/request/PostSubscriptionsSubscriptionExposedId/payment_settings.payment_method_options.card.network"
-          ],
-          "type": "invalid_request_error"
-        }
-      ],
+      "refusals": [],
       "returned": {
         "form": "as_sent",
         "response_path": "payment_settings.payment_method_options.card.network"
@@ -450863,124 +451183,124 @@
       "branch": "",
       "default": {
         "kind": "rule",
-        "rule_ref": 57,
+        "rule_ref": 63,
         "variants": [
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 57
+              "rule_ref": 63
             },
             "variant": "customer_account"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 57
+              "rule_ref": 63
             },
             "variant": "end_dated"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 57
+              "rule_ref": 63
             },
             "variant": "fee_defaults"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 57
+              "rule_ref": 63
             },
             "variant": "fee_phase"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 57
+              "rule_ref": 63
             },
             "variant": "flexible"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 57
+              "rule_ref": 63
             },
             "variant": "from_subscription"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 57
+              "rule_ref": 63
             },
             "variant": "inline_decimal"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 57
+              "rule_ref": 63
             },
             "variant": "inline_price"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 57
+              "rule_ref": 63
             },
             "variant": "invoice_decimal"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 57
+              "rule_ref": 63
             },
             "variant": "invoice_item"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 57
+              "rule_ref": 63
             },
             "variant": "metered"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 57
+              "rule_ref": 63
             },
             "variant": "pause_duration"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 57
+              "rule_ref": 63
             },
             "variant": "pause_timestamp"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 57
+              "rule_ref": 63
             },
             "variant": "price_eur"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 57
+              "rule_ref": 63
             },
             "variant": "started"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 57
+              "rule_ref": 63
             },
             "variant": "tax_coded"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 57
+              "rule_ref": 63
             },
             "variant": "test_clock"
           }
@@ -451883,117 +452203,117 @@
       "branch": "",
       "default": {
         "kind": "rule",
-        "rule_ref": 58,
+        "rule_ref": 64,
         "variants": [
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 58
+              "rule_ref": 64
             },
             "variant": "customer_account"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 58
+              "rule_ref": 64
             },
             "variant": "fee_defaults"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 58
+              "rule_ref": 64
             },
             "variant": "fee_phase"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 58
+              "rule_ref": 64
             },
             "variant": "flexible"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 58
+              "rule_ref": 64
             },
             "variant": "from_subscription"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 58
+              "rule_ref": 64
             },
             "variant": "inline_decimal"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 58
+              "rule_ref": 64
             },
             "variant": "inline_price"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 58
+              "rule_ref": 64
             },
             "variant": "invoice_decimal"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 58
+              "rule_ref": 64
             },
             "variant": "invoice_item"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 58
+              "rule_ref": 64
             },
             "variant": "metered"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 58
+              "rule_ref": 64
             },
             "variant": "pause_duration"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 58
+              "rule_ref": 64
             },
             "variant": "pause_timestamp"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 58
+              "rule_ref": 64
             },
             "variant": "price_eur"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 58
+              "rule_ref": 64
             },
             "variant": "started"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 58
+              "rule_ref": 64
             },
             "variant": "tax_coded"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 58
+              "rule_ref": 64
             },
             "variant": "test_clock"
           }
@@ -482964,7 +483284,7 @@
       "branch": "",
       "default": {
         "kind": "rule",
-        "rule_ref": 59,
+        "rule_ref": 65,
         "variants": [
           {
             "default": {
@@ -510418,12 +510738,12 @@
       "branch": "",
       "default": {
         "kind": "rule",
-        "rule_ref": 61,
+        "rule_ref": 67,
         "variants": [
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 61
+              "rule_ref": 67
             },
             "variant": "s700"
           }
@@ -517265,8 +517585,17 @@
       ],
       "branch": "",
       "default": {
-        "kind": "value",
-        "value": 100
+        "kind": "rule",
+        "rule_ref": 68,
+        "variants": [
+          {
+            "default": {
+              "kind": "rule",
+              "rule_ref": 68
+            },
+            "variant": "partly_reversed"
+          }
+        ]
       },
       "object": "transfer_reversal",
       "on": [
@@ -517323,7 +517652,16 @@
       "branch": "",
       "default": {
         "kind": "value",
-        "value": {}
+        "value": {},
+        "variants": [
+          {
+            "default": {
+              "kind": "value",
+              "value": {}
+            },
+            "variant": "partly_reversed"
+          }
+        ]
       },
       "object": "transfer_reversal",
       "on": [
@@ -517416,6 +517754,13 @@
             "value": 100
           },
           "variant": ""
+        },
+        {
+          "matcher": {
+            "kind": "value",
+            "value": 70
+          },
+          "variant": "partly_reversed"
         }
       ],
       "nullable": {
@@ -517444,6 +517789,13 @@
             "prefix": "txn_"
           },
           "variant": ""
+        },
+        {
+          "matcher": {
+            "kind": "id",
+            "prefix": "txn_"
+          },
+          "variant": "partly_reversed"
         }
       ],
       "nullable": {
@@ -517471,6 +517823,12 @@
             "kind": "timestamp"
           },
           "variant": ""
+        },
+        {
+          "matcher": {
+            "kind": "timestamp"
+          },
+          "variant": "partly_reversed"
         }
       ],
       "nullable": {
@@ -517500,6 +517858,14 @@
             "ref": "transfer"
           },
           "variant": ""
+        },
+        {
+          "matcher": {
+            "kind": "from",
+            "path": "currency",
+            "ref": "transfer"
+          },
+          "variant": "partly_reversed"
         }
       ],
       "nullable": {
@@ -517528,6 +517894,13 @@
             "prefix": "pyr_"
           },
           "variant": ""
+        },
+        {
+          "matcher": {
+            "kind": "id",
+            "prefix": "pyr_"
+          },
+          "variant": "partly_reversed"
         }
       ],
       "nullable": {
@@ -517555,6 +517928,12 @@
             "kind": "created"
           },
           "variant": ""
+        },
+        {
+          "matcher": {
+            "kind": "created"
+          },
+          "variant": "partly_reversed"
         }
       ],
       "nullable": {
@@ -517583,6 +517962,13 @@
             "value": {}
           },
           "variant": ""
+        },
+        {
+          "matcher": {
+            "kind": "value",
+            "value": {}
+          },
+          "variant": "partly_reversed"
         }
       ],
       "nullable": {
@@ -517611,6 +517997,13 @@
             "value": "transfer_reversal"
           },
           "variant": ""
+        },
+        {
+          "matcher": {
+            "kind": "value",
+            "value": "transfer_reversal"
+          },
+          "variant": "partly_reversed"
         }
       ],
       "nullable": {
@@ -517651,6 +518044,13 @@
             "prefix": "tr_"
           },
           "variant": ""
+        },
+        {
+          "matcher": {
+            "kind": "id",
+            "prefix": "tr_"
+          },
+          "variant": "partly_reversed"
         }
       ],
       "nullable": {
@@ -524383,7 +524783,19 @@
       ],
       "operation": "PostV2CoreAccounts",
       "path": "defaults.profile.business_url",
-      "refusals": [],
+      "refusals": [
+        {
+          "account_country": "US",
+          "code": "url_invalid",
+          "message": "Invalid URL.",
+          "param": "defaults.profile.business_url",
+          "status": 400,
+          "tests": [
+            "TestV2CoreAccountAttributes/leaves/request/PostV2CoreAccounts/defaults.profile.business_url"
+          ],
+          "type": ""
+        }
+      ],
       "returned": {
         "form": "as_sent",
         "response_path": "defaults.profile.business_url"
@@ -527170,7 +527582,15 @@
       ],
       "tests": [
         "TestV2CoreAccountAttributes/leaves/request/PostV2CoreAccountsId/contact_email"
-      ]
+      ],
+      "unset": {
+        "by": "null",
+        "matcher": {
+          "kind": "unchanged",
+          "path": "contact_email"
+        },
+        "result": "unchanged"
+      }
     },
     {
       "accepted_in": [
@@ -527235,17 +527655,6 @@
           "account_country": "US",
           "code": "invalid_fields",
           "message": "Some fields in the request were invalid: 'dashboard: You cannot change dashboard via API once it has been set.'",
-          "param": "dashboard",
-          "status": 400,
-          "tests": [
-            "TestV2CoreAccountAttributes/leaves/request/PostV2CoreAccountsId/dashboard"
-          ],
-          "type": ""
-        },
-        {
-          "account_country": "US",
-          "code": "unsupported_field_for_configs",
-          "message": "You cannot set `dashboard` unless the account is configured as a merchant or a recipient with the stripe_balance.stripe_transfers capability.",
           "param": "dashboard",
           "status": 400,
           "tests": [
@@ -527365,7 +527774,19 @@
       ],
       "operation": "PostV2CoreAccountsId",
       "path": "defaults.profile.business_url",
-      "refusals": [],
+      "refusals": [
+        {
+          "account_country": "US",
+          "code": "url_invalid",
+          "message": "Invalid URL.",
+          "param": "defaults.profile.business_url",
+          "status": 400,
+          "tests": [
+            "TestV2CoreAccountAttributes/leaves/request/PostV2CoreAccountsId/defaults.profile.business_url"
+          ],
+          "type": ""
+        }
+      ],
       "returned": {
         "form": "as_sent",
         "response_path": "defaults.profile.business_url"
@@ -527514,6 +527935,10 @@
         {
           "accepted": true,
           "value": "application"
+        },
+        {
+          "accepted": false,
+          "value": "stripe"
         }
       ],
       "object": "v2.core.account",
@@ -527522,7 +527947,19 @@
       ],
       "operation": "PostV2CoreAccountsId",
       "path": "defaults.responsibilities.losses_collector",
-      "refusals": [],
+      "refusals": [
+        {
+          "account_country": "US",
+          "code": "invalid_fields",
+          "message": "Some fields in the request were invalid: 'defaults.responsibilities.losses_collector: You cannot change defaults.responsibilities.losses_collector via API once it has been set.'; 'defaults.responsibilities.fees_collector: You cannot change defaults.responsibilities.fees_collector via API once it has been set.'",
+          "param": "defaults.responsibilities.losses_collector",
+          "status": 400,
+          "tests": [
+            "TestV2CoreAccountAttributes/leaves/request/PostV2CoreAccountsId/defaults.responsibilities.losses_collector"
+          ],
+          "type": ""
+        }
+      ],
       "returned": {
         "form": "as_sent",
         "response_path": "defaults.responsibilities.losses_collector"
@@ -528401,7 +528838,19 @@
       ],
       "operation": "PostV2CoreAccountsId",
       "path": "identity.country",
-      "refusals": [],
+      "refusals": [
+        {
+          "account_country": "US",
+          "code": "",
+          "message": "Error: When requesting the `transfers` capability for accounts in GB, you must either specify the `recipient` service agreement, or request the `card_payments` capability along with `transfers`. To specify the `recipient` service agreement, see https://stripe.com/docs/connect/service-agreement-types#choosing-type-with-api. For more information on cross-border transfers, see https://stripe.com/docs/connect/account-capabilities#transfers-cross-border.",
+          "param": "",
+          "status": 400,
+          "tests": [
+            "TestV2CoreAccountAttributes/leaves/request/PostV2CoreAccountsId/identity.country"
+          ],
+          "type": ""
+        }
+      ],
       "returned": {
         "form": "as_sent",
         "response_path": "identity.country"
@@ -538255,7 +538704,7 @@
       "branch": "",
       "default": {
         "kind": "rule",
-        "rule_ref": 62,
+        "rule_ref": 73,
         "variants": [
           {
             "default": {
@@ -544605,6 +545054,95 @@
         "TestAccountExternalAccountAttributes/leaves/response/bank_account/status"
       ],
       "variant": "first_in_currency"
+    },
+    {
+      "account_country": "US",
+      "object": "bank_account",
+      "operation": "PostAccountsAccountExternalAccounts",
+      "params": {
+        "external_account": "btok_us_verified"
+      },
+      "response": {
+        "account": {
+          "kind": "ref",
+          "ref": "account"
+        },
+        "account_holder_name": {
+          "kind": "value",
+          "value": "Jenny Rosen"
+        },
+        "account_holder_type": {
+          "kind": "value",
+          "value": "individual"
+        },
+        "available_payout_methods": {
+          "kind": "value",
+          "value": [
+            "standard",
+            "instant"
+          ]
+        },
+        "bank_name": {
+          "kind": "value",
+          "value": "STRIPE TEST BANK"
+        },
+        "country": {
+          "kind": "value",
+          "value": "US"
+        },
+        "currency": {
+          "kind": "value",
+          "value": "usd"
+        },
+        "default_for_currency": {
+          "kind": "value",
+          "value": false
+        },
+        "fingerprint": {
+          "kind": "fingerprint",
+          "path": "external_account"
+        },
+        "id": {
+          "kind": "created"
+        },
+        "last4": {
+          "kind": "value",
+          "value": "6789"
+        },
+        "metadata": {
+          "kind": "value",
+          "value": {}
+        },
+        "routing_number": {
+          "kind": "value",
+          "value": "110000000"
+        },
+        "status": {
+          "kind": "value",
+          "value": "verified"
+        }
+      },
+      "selected_by": {
+        "external_account": "btok_us_verified"
+      },
+      "status": 200,
+      "tests": [
+        "TestAccountExternalAccountAttributes/leaves/response/bank_account/account",
+        "TestAccountExternalAccountAttributes/leaves/response/bank_account/account_holder_name",
+        "TestAccountExternalAccountAttributes/leaves/response/bank_account/account_holder_type",
+        "TestAccountExternalAccountAttributes/leaves/response/bank_account/available_payout_methods",
+        "TestAccountExternalAccountAttributes/leaves/response/bank_account/bank_name",
+        "TestAccountExternalAccountAttributes/leaves/response/bank_account/country",
+        "TestAccountExternalAccountAttributes/leaves/response/bank_account/currency",
+        "TestAccountExternalAccountAttributes/leaves/response/bank_account/default_for_currency",
+        "TestAccountExternalAccountAttributes/leaves/response/bank_account/fingerprint",
+        "TestAccountExternalAccountAttributes/leaves/response/bank_account/id",
+        "TestAccountExternalAccountAttributes/leaves/response/bank_account/last4",
+        "TestAccountExternalAccountAttributes/leaves/response/bank_account/metadata",
+        "TestAccountExternalAccountAttributes/leaves/response/bank_account/routing_number",
+        "TestAccountExternalAccountAttributes/leaves/response/bank_account/status"
+      ],
+      "variant": "token"
     },
     {
       "account_country": "US",
@@ -593679,6 +594217,58 @@
     },
     {
       "account_country": "US",
+      "object": "fee_refund",
+      "operation": "PostApplicationFeesIdRefunds",
+      "params": {},
+      "response": {
+        "amount": {
+          "kind": "value",
+          "value": 70
+        },
+        "balance_transaction": {
+          "kind": "id",
+          "prefix": "txn_"
+        },
+        "created": {
+          "kind": "timestamp"
+        },
+        "currency": {
+          "kind": "from",
+          "path": "currency",
+          "ref": "application_fee"
+        },
+        "fee": {
+          "kind": "id",
+          "prefix": "fee_"
+        },
+        "id": {
+          "kind": "created"
+        },
+        "metadata": {
+          "kind": "value",
+          "value": {}
+        },
+        "object": {
+          "kind": "value",
+          "value": "fee_refund"
+        }
+      },
+      "selected_by": {},
+      "status": 200,
+      "tests": [
+        "TestApplicationFeeRefundAttributes/leaves/response/fee_refund/amount",
+        "TestApplicationFeeRefundAttributes/leaves/response/fee_refund/balance_transaction",
+        "TestApplicationFeeRefundAttributes/leaves/response/fee_refund/created",
+        "TestApplicationFeeRefundAttributes/leaves/response/fee_refund/currency",
+        "TestApplicationFeeRefundAttributes/leaves/response/fee_refund/fee",
+        "TestApplicationFeeRefundAttributes/leaves/response/fee_refund/id",
+        "TestApplicationFeeRefundAttributes/leaves/response/fee_refund/metadata",
+        "TestApplicationFeeRefundAttributes/leaves/response/fee_refund/object"
+      ],
+      "variant": "partly_refunded"
+    },
+    {
+      "account_country": "US",
       "object": "file_link",
       "operation": "PostFileLinks",
       "params": {
@@ -626342,6 +626932,16 @@
           "kind": "value",
           "value": "visa"
         },
+        "card.checks.address_line1_check": {
+          "kind": "null"
+        },
+        "card.checks.address_postal_code_check": {
+          "kind": "null"
+        },
+        "card.checks.cvc_check": {
+          "kind": "value",
+          "value": "pass"
+        },
         "card.country": {
           "kind": "value",
           "value": "US"
@@ -626422,6 +627022,9 @@
         "TestCustomerPaymentMethodAttributes/leaves/response/payment_method/billing_details.phone",
         "TestCustomerPaymentMethodAttributes/leaves/response/payment_method/billing_details.tax_id",
         "TestCustomerPaymentMethodAttributes/leaves/response/payment_method/card.brand",
+        "TestCustomerPaymentMethodAttributes/leaves/response/payment_method/card.checks.address_line1_check",
+        "TestCustomerPaymentMethodAttributes/leaves/response/payment_method/card.checks.address_postal_code_check",
+        "TestCustomerPaymentMethodAttributes/leaves/response/payment_method/card.checks.cvc_check",
         "TestCustomerPaymentMethodAttributes/leaves/response/payment_method/card.country",
         "TestCustomerPaymentMethodAttributes/leaves/response/payment_method/card.display_brand",
         "TestCustomerPaymentMethodAttributes/leaves/response/payment_method/card.funding",
@@ -679286,6 +679889,63 @@
     },
     {
       "account_country": "US",
+      "object": "transfer_reversal",
+      "operation": "PostTransfersIdReversals",
+      "params": {},
+      "response": {
+        "amount": {
+          "kind": "value",
+          "value": 70
+        },
+        "balance_transaction": {
+          "kind": "id",
+          "prefix": "txn_"
+        },
+        "created": {
+          "kind": "timestamp"
+        },
+        "currency": {
+          "kind": "from",
+          "path": "currency",
+          "ref": "transfer"
+        },
+        "destination_payment_refund": {
+          "kind": "id",
+          "prefix": "pyr_"
+        },
+        "id": {
+          "kind": "created"
+        },
+        "metadata": {
+          "kind": "value",
+          "value": {}
+        },
+        "object": {
+          "kind": "value",
+          "value": "transfer_reversal"
+        },
+        "transfer": {
+          "kind": "id",
+          "prefix": "tr_"
+        }
+      },
+      "selected_by": {},
+      "status": 200,
+      "tests": [
+        "TestTransferReversalAttributes/leaves/response/transfer_reversal/amount",
+        "TestTransferReversalAttributes/leaves/response/transfer_reversal/balance_transaction",
+        "TestTransferReversalAttributes/leaves/response/transfer_reversal/created",
+        "TestTransferReversalAttributes/leaves/response/transfer_reversal/currency",
+        "TestTransferReversalAttributes/leaves/response/transfer_reversal/destination_payment_refund",
+        "TestTransferReversalAttributes/leaves/response/transfer_reversal/id",
+        "TestTransferReversalAttributes/leaves/response/transfer_reversal/metadata",
+        "TestTransferReversalAttributes/leaves/response/transfer_reversal/object",
+        "TestTransferReversalAttributes/leaves/response/transfer_reversal/transfer"
+      ],
+      "variant": "partly_reversed"
+    },
+    {
+      "account_country": "US",
       "object": "treasury.financial_account",
       "operation": "PostTreasuryFinancialAccounts",
       "params": {
@@ -680829,6 +681489,129 @@
             "variant": ""
           },
           "value": {
+            "kind": "sent",
+            "path": "country"
+          }
+        },
+        {
+          "condition": {
+            "account_country": "US",
+            "variant": "first_in_currency"
+          },
+          "value": {
+            "kind": "sent",
+            "path": "country"
+          }
+        },
+        {
+          "condition": {
+            "account_country": "US",
+            "variant": "token"
+          },
+          "value": {
+            "kind": "value",
+            "value": "US"
+          }
+        }
+      ],
+      "operation": "PostAccountsAccountExternalAccounts",
+      "path": "bank_account.country",
+      "rule": "the minimal create sends it; a create that leaves it out and sends external_account (variant token) gets \"US\"",
+      "tests": [
+        "TestAccountExternalAccountAttributes/leaves/response/bank_account/country"
+      ]
+    },
+    {
+      "object": "bank_account",
+      "observations": [
+        {
+          "condition": {
+            "account_country": "US",
+            "variant": ""
+          },
+          "value": {
+            "kind": "sent",
+            "path": "currency"
+          }
+        },
+        {
+          "condition": {
+            "account_country": "US",
+            "variant": "first_in_currency"
+          },
+          "value": {
+            "kind": "sent",
+            "path": "currency"
+          }
+        },
+        {
+          "condition": {
+            "account_country": "US",
+            "variant": "token"
+          },
+          "value": {
+            "kind": "value",
+            "value": "usd"
+          }
+        }
+      ],
+      "operation": "PostAccountsAccountExternalAccounts",
+      "path": "bank_account.currency",
+      "rule": "the minimal create sends it; a create that leaves it out and sends external_account (variant token) gets \"usd\"",
+      "tests": [
+        "TestAccountExternalAccountAttributes/leaves/response/bank_account/currency"
+      ]
+    },
+    {
+      "object": "bank_account",
+      "observations": [
+        {
+          "condition": {
+            "account_country": "US",
+            "variant": ""
+          },
+          "value": {
+            "kind": "sent",
+            "path": "routing_number"
+          }
+        },
+        {
+          "condition": {
+            "account_country": "US",
+            "variant": "first_in_currency"
+          },
+          "value": {
+            "kind": "sent",
+            "path": "routing_number"
+          }
+        },
+        {
+          "condition": {
+            "account_country": "US",
+            "variant": "token"
+          },
+          "value": {
+            "kind": "value",
+            "value": "110000000"
+          }
+        }
+      ],
+      "operation": "PostAccountsAccountExternalAccounts",
+      "path": "bank_account.routing_number",
+      "rule": "the minimal create sends it; a create that leaves it out and sends external_account (variant token) gets \"110000000\"",
+      "tests": [
+        "TestAccountExternalAccountAttributes/leaves/response/bank_account/routing_number"
+      ]
+    },
+    {
+      "object": "bank_account",
+      "observations": [
+        {
+          "condition": {
+            "account_country": "US",
+            "variant": ""
+          },
+          "value": {
             "kind": "value",
             "value": false
           }
@@ -680841,6 +681624,16 @@
           "value": {
             "kind": "value",
             "value": true
+          }
+        },
+        {
+          "condition": {
+            "account_country": "US",
+            "variant": "token"
+          },
+          "value": {
+            "kind": "value",
+            "value": false
           }
         }
       ],
@@ -683716,6 +684509,37 @@
       ]
     },
     {
+      "object": "fee_refund",
+      "observations": [
+        {
+          "condition": {
+            "account_country": "US",
+            "variant": ""
+          },
+          "value": {
+            "kind": "value",
+            "value": 100
+          }
+        },
+        {
+          "condition": {
+            "account_country": "US",
+            "variant": "partly_refunded"
+          },
+          "value": {
+            "kind": "value",
+            "value": 70
+          }
+        }
+      ],
+      "operation": "PostApplicationFeesIdRefunds",
+      "path": "amount",
+      "rule": "what remains of the application fee: its amount less what it has refunded",
+      "tests": [
+        "TestApplicationFeeRefundAttributes/leaves/response/fee_refund/amount"
+      ]
+    },
+    {
       "object": "identity.verification_session",
       "observations": [
         {
@@ -685163,6 +685987,388 @@
       "rule": "the minimal create sends it; a create that leaves it out and sends carrier_text (variant no_header) gets null",
       "tests": [
         "TestIssuingPersonalizationDesignAttributes/leaves/response/issuing.personalization_design/carrier_text.header_title"
+      ]
+    },
+    {
+      "object": "payment_intent",
+      "observations": [
+        {
+          "condition": {
+            "account_country": "US",
+            "params": {
+              "amount": 500,
+              "capture_method": "automatic",
+              "confirmation_method": "manual",
+              "currency": {
+                "$gen": "account_currency"
+              },
+              "customer": {
+                "$gen": "ref",
+                "arg": "customer"
+              },
+              "excluded_payment_method_types": [
+                "affirm",
+                "cashapp"
+              ],
+              "payment_method": {
+                "$gen": "fresh",
+                "arg": "payment_method"
+              },
+              "setup_future_usage": "off_session",
+              "statement_descriptor": "ATTRS PROBE"
+            },
+            "probe": "isolated/descriptor_context_less_statement_descriptor_suffix"
+          },
+          "value": {
+            "message": "The statement_descriptor parameter is not supported for the payment_method_type `card`. To continue supporting payment_method_type `card`, please pass in `statement_descriptor_suffix` or remove the `statement_descriptor` parameter altogether. Please see https://support.stripe.com/questions/use-of-the-statement-descriptor-parameter-on-paymentintents-for-card-charges for additional details.",
+            "status": 400,
+            "type": "invalid_request_error"
+          }
+        },
+        {
+          "condition": {
+            "account_country": "US",
+            "params": {
+              "amount": 500,
+              "capture_method": "automatic",
+              "confirmation_method": "manual",
+              "currency": {
+                "$gen": "account_currency"
+              },
+              "customer": {
+                "$gen": "ref",
+                "arg": "customer"
+              },
+              "excluded_payment_method_types": [
+                "affirm",
+                "cashapp"
+              ],
+              "setup_future_usage": "off_session",
+              "statement_descriptor": "ATTRS PROBE",
+              "statement_descriptor_suffix": "ATTRS"
+            },
+            "probe": "isolated/descriptor_context_less_payment_method"
+          },
+          "value": {
+            "read": {
+              "kind": "sent",
+              "path": "statement_descriptor"
+            },
+            "status": 200
+          }
+        },
+        {
+          "condition": {
+            "account_country": "US",
+            "params": {
+              "amount": 500,
+              "currency": {
+                "$gen": "account_currency"
+              },
+              "payment_method": {
+                "$gen": "fresh",
+                "arg": "payment_method"
+              },
+              "statement_descriptor": "ATTRS PROBE"
+            },
+            "probe": "isolated/descriptor_card"
+          },
+          "value": {
+            "message": "The statement_descriptor parameter is not supported for the payment_method_type `card`. To continue supporting payment_method_type `card`, please pass in `statement_descriptor_suffix` or remove the `statement_descriptor` parameter altogether. Please see https://support.stripe.com/questions/use-of-the-statement-descriptor-parameter-on-paymentintents-for-card-charges for additional details.",
+            "status": 400,
+            "type": "invalid_request_error"
+          }
+        },
+        {
+          "condition": {
+            "account_country": "US",
+            "params": {
+              "amount": 500,
+              "currency": {
+                "$gen": "account_currency"
+              },
+              "payment_method": {
+                "$gen": "fresh",
+                "arg": "payment_method"
+              },
+              "statement_descriptor": "ATTRS PROBE",
+              "statement_descriptor_suffix": "ATTRS"
+            },
+            "probe": "isolated/descriptor_card_statement_descriptor_suffix"
+          },
+          "value": {
+            "read": {
+              "kind": "sent",
+              "path": "statement_descriptor"
+            },
+            "status": 200
+          }
+        },
+        {
+          "condition": {
+            "account_country": "US",
+            "params": {
+              "amount": 500,
+              "currency": {
+                "$gen": "account_currency"
+              },
+              "statement_descriptor": "ATTRS PROBE"
+            },
+            "probe": "isolated/descriptor_alone"
+          },
+          "value": {
+            "message": "The statement_descriptor parameter is not supported for the payment_method_type `card`. To continue supporting payment_method_type `card`, please pass in `statement_descriptor_suffix` or remove the `statement_descriptor` parameter altogether. Please see https://support.stripe.com/questions/use-of-the-statement-descriptor-parameter-on-paymentintents-for-card-charges for additional details.",
+            "status": 400,
+            "type": "invalid_request_error"
+          }
+        }
+      ],
+      "operation": "PostPaymentIntents",
+      "path": "statement_descriptor",
+      "rule": "Stripe's answer turns on the request: accepted in [isolated/descriptor_card_statement_descriptor_suffix, isolated/descriptor_context_less_payment_method]; refused in [isolated/descriptor_alone, isolated/descriptor_card, isolated/descriptor_context_less_statement_descriptor_suffix]",
+      "tests": [
+        "TestPaymentIntentAttributes/leaves/request/PostPaymentIntents/statement_descriptor",
+        "TestPaymentIntentAttributes/leaves/response/payment_intent/statement_descriptor"
+      ]
+    },
+    {
+      "object": "payment_intent",
+      "observations": [
+        {
+          "condition": {
+            "account_country": "US",
+            "created_with": {
+              "amount": 500,
+              "capture_method": "automatic",
+              "currency": {
+                "$gen": "account_currency"
+              },
+              "payment_method": {
+                "$gen": "fresh",
+                "arg": "payment_method"
+              }
+            },
+            "params": {
+              "statement_descriptor": "ATTRS UPDATED"
+            },
+            "probe": "isolated/descriptor_update_card_capture_method"
+          },
+          "value": {
+            "message": "The statement_descriptor parameter is not supported for the payment_method_type `card`. To continue supporting payment_method_type `card`, please pass in `statement_descriptor_suffix` or remove the `statement_descriptor` parameter altogether. Please see https://support.stripe.com/questions/use-of-the-statement-descriptor-parameter-on-paymentintents-for-card-charges for additional details.",
+            "status": 400,
+            "type": "invalid_request_error"
+          }
+        },
+        {
+          "condition": {
+            "account_country": "US",
+            "created_with": {
+              "amount": 500,
+              "confirmation_method": "manual",
+              "currency": {
+                "$gen": "account_currency"
+              },
+              "payment_method": {
+                "$gen": "fresh",
+                "arg": "payment_method"
+              }
+            },
+            "params": {
+              "statement_descriptor": "ATTRS UPDATED"
+            },
+            "probe": "isolated/descriptor_update_card_confirmation_method"
+          },
+          "value": {
+            "message": "The statement_descriptor parameter is not supported for the payment_method_type `card`. To continue supporting payment_method_type `card`, please pass in `statement_descriptor_suffix` or remove the `statement_descriptor` parameter altogether. Please see https://support.stripe.com/questions/use-of-the-statement-descriptor-parameter-on-paymentintents-for-card-charges for additional details.",
+            "status": 400,
+            "type": "invalid_request_error"
+          }
+        },
+        {
+          "condition": {
+            "account_country": "US",
+            "created_with": {
+              "amount": 500,
+              "currency": {
+                "$gen": "account_currency"
+              }
+            },
+            "params": {
+              "statement_descriptor": "ATTRS UPDATED"
+            },
+            "probe": "isolated/descriptor_update_alone"
+          },
+          "value": {
+            "message": "The statement_descriptor parameter is not supported for the payment_method_type `card`. To continue supporting payment_method_type `card`, please pass in `statement_descriptor_suffix` or remove the `statement_descriptor` parameter altogether. Please see https://support.stripe.com/questions/use-of-the-statement-descriptor-parameter-on-paymentintents-for-card-charges for additional details.",
+            "status": 400,
+            "type": "invalid_request_error"
+          }
+        },
+        {
+          "condition": {
+            "account_country": "US",
+            "created_with": {
+              "amount": 500,
+              "currency": {
+                "$gen": "account_currency"
+              },
+              "customer": {
+                "$gen": "ref",
+                "arg": "customer"
+              },
+              "payment_method": {
+                "$gen": "fresh",
+                "arg": "payment_method"
+              }
+            },
+            "params": {
+              "statement_descriptor": "ATTRS UPDATED"
+            },
+            "probe": "isolated/descriptor_update_card_customer"
+          },
+          "value": {
+            "message": "The statement_descriptor parameter is not supported for the payment_method_type `card`. To continue supporting payment_method_type `card`, please pass in `statement_descriptor_suffix` or remove the `statement_descriptor` parameter altogether. Please see https://support.stripe.com/questions/use-of-the-statement-descriptor-parameter-on-paymentintents-for-card-charges for additional details.",
+            "status": 400,
+            "type": "invalid_request_error"
+          }
+        },
+        {
+          "condition": {
+            "account_country": "US",
+            "created_with": {
+              "amount": 500,
+              "currency": {
+                "$gen": "account_currency"
+              },
+              "excluded_payment_method_types": [
+                "affirm",
+                "cashapp"
+              ],
+              "payment_method": {
+                "$gen": "fresh",
+                "arg": "payment_method"
+              }
+            },
+            "params": {
+              "statement_descriptor": "ATTRS UPDATED"
+            },
+            "probe": "isolated/descriptor_update_card_excluded_payment_method_types"
+          },
+          "value": {
+            "message": "The statement_descriptor parameter is not supported for the payment_method_type `card`. To continue supporting payment_method_type `card`, please pass in `statement_descriptor_suffix` or remove the `statement_descriptor` parameter altogether. Please see https://support.stripe.com/questions/use-of-the-statement-descriptor-parameter-on-paymentintents-for-card-charges for additional details.",
+            "status": 400,
+            "type": "invalid_request_error"
+          }
+        },
+        {
+          "condition": {
+            "account_country": "US",
+            "created_with": {
+              "amount": 500,
+              "currency": {
+                "$gen": "account_currency"
+              },
+              "payment_method": {
+                "$gen": "fresh",
+                "arg": "payment_method"
+              }
+            },
+            "params": {
+              "statement_descriptor": "ATTRS UPDATED"
+            },
+            "probe": "isolated/descriptor_update_card"
+          },
+          "value": {
+            "message": "The statement_descriptor parameter is not supported for the payment_method_type `card`. To continue supporting payment_method_type `card`, please pass in `statement_descriptor_suffix` or remove the `statement_descriptor` parameter altogether. Please see https://support.stripe.com/questions/use-of-the-statement-descriptor-parameter-on-paymentintents-for-card-charges for additional details.",
+            "status": 400,
+            "type": "invalid_request_error"
+          }
+        },
+        {
+          "condition": {
+            "account_country": "US",
+            "created_with": {
+              "amount": 500,
+              "currency": {
+                "$gen": "account_currency"
+              },
+              "payment_method": {
+                "$gen": "fresh",
+                "arg": "payment_method"
+              }
+            },
+            "params": {
+              "statement_descriptor": "ATTRS UPDATED",
+              "statement_descriptor_suffix": "ATTRS"
+            },
+            "probe": "isolated/descriptor_update_beside_statement_descriptor_suffix"
+          },
+          "value": {
+            "read": {
+              "kind": "sent",
+              "path": "statement_descriptor"
+            },
+            "status": 200
+          }
+        },
+        {
+          "condition": {
+            "account_country": "US",
+            "created_with": {
+              "amount": 500,
+              "currency": {
+                "$gen": "account_currency"
+              },
+              "payment_method": {
+                "$gen": "fresh",
+                "arg": "payment_method"
+              },
+              "setup_future_usage": "off_session"
+            },
+            "params": {
+              "statement_descriptor": "ATTRS UPDATED"
+            },
+            "probe": "isolated/descriptor_update_card_setup_future_usage"
+          },
+          "value": {
+            "message": "The statement_descriptor parameter is not supported for the payment_method_type `card`. To continue supporting payment_method_type `card`, please pass in `statement_descriptor_suffix` or remove the `statement_descriptor` parameter altogether. Please see https://support.stripe.com/questions/use-of-the-statement-descriptor-parameter-on-paymentintents-for-card-charges for additional details.",
+            "status": 400,
+            "type": "invalid_request_error"
+          }
+        },
+        {
+          "condition": {
+            "account_country": "US",
+            "created_with": {
+              "amount": 500,
+              "currency": {
+                "$gen": "account_currency"
+              },
+              "payment_method": {
+                "$gen": "fresh",
+                "arg": "payment_method"
+              },
+              "statement_descriptor_suffix": "ATTRS"
+            },
+            "params": {
+              "statement_descriptor": "ATTRS UPDATED"
+            },
+            "probe": "isolated/descriptor_update_card_statement_descriptor_suffix"
+          },
+          "value": {
+            "read": {
+              "kind": "sent",
+              "path": "statement_descriptor"
+            },
+            "status": 200
+          }
+        }
+      ],
+      "operation": "PostPaymentIntentsIntent",
+      "path": "statement_descriptor",
+      "rule": "Stripe's answer turns on the request: accepted in [isolated/descriptor_update_beside_statement_descriptor_suffix, isolated/descriptor_update_card_statement_descriptor_suffix]; refused in [isolated/descriptor_update_alone, isolated/descriptor_update_card, isolated/descriptor_update_card_capture_method, isolated/descriptor_update_card_confirmation_method, isolated/descriptor_update_card_customer, isolated/descriptor_update_card_excluded_payment_method_types, isolated/descriptor_update_card_setup_future_usage]",
+      "tests": [
+        "TestPaymentIntentAttributes/leaves/request/PostPaymentIntentsIntent/statement_descriptor"
       ]
     },
     {
@@ -688032,6 +689238,592 @@
       ]
     },
     {
+      "object": "transfer_reversal",
+      "observations": [
+        {
+          "condition": {
+            "account_country": "US",
+            "variant": ""
+          },
+          "value": {
+            "kind": "value",
+            "value": 100
+          }
+        },
+        {
+          "condition": {
+            "account_country": "US",
+            "variant": "partly_reversed"
+          },
+          "value": {
+            "kind": "value",
+            "value": 70
+          }
+        }
+      ],
+      "operation": "PostTransfersIdReversals",
+      "path": "amount",
+      "rule": "what remains of the transfer: its amount less what it has reversed",
+      "tests": [
+        "TestTransferReversalAttributes/leaves/response/transfer_reversal/amount"
+      ]
+    },
+    {
+      "object": "v2.core.account",
+      "observations": [
+        {
+          "condition": {
+            "account_country": "US",
+            "params": {
+              "configuration": {
+                "recipient": {
+                  "capabilities": {
+                    "stripe_balance": {
+                      "stripe_transfers": {
+                        "requested": true
+                      }
+                    }
+                  }
+                }
+              },
+              "contact_email": {
+                "$gen": "email"
+              },
+              "dashboard": "none",
+              "defaults": {
+                "profile": {
+                  "business_url": "https://accessible.stripe.com"
+                },
+                "responsibilities": {
+                  "fees_collector": "application",
+                  "losses_collector": "application"
+                }
+              },
+              "identity": {
+                "country": "US"
+              }
+            },
+            "probe": "isolated/url_create_on_recipient_accessible"
+          },
+          "value": {
+            "read": {
+              "kind": "sent",
+              "path": "defaults.profile.business_url"
+            },
+            "status": 200
+          }
+        },
+        {
+          "condition": {
+            "account_country": "US",
+            "params": {
+              "configuration": {
+                "recipient": {
+                  "capabilities": {
+                    "stripe_balance": {
+                      "stripe_transfers": {
+                        "requested": true
+                      }
+                    }
+                  }
+                }
+              },
+              "contact_email": {
+                "$gen": "email"
+              },
+              "dashboard": "none",
+              "defaults": {
+                "profile": {
+                  "business_url": "https://stripe.com"
+                },
+                "responsibilities": {
+                  "fees_collector": "application",
+                  "losses_collector": "application"
+                }
+              },
+              "identity": {
+                "country": "US"
+              }
+            },
+            "probe": "isolated/url_create_on_recipient_stripe"
+          },
+          "value": {
+            "code": "url_invalid",
+            "message": "Invalid URL.",
+            "param": "defaults.profile.business_url",
+            "status": 400
+          }
+        },
+        {
+          "condition": {
+            "account_country": "US",
+            "params": {
+              "defaults": {
+                "profile": {
+                  "business_url": "https://example.com/acme"
+                }
+              }
+            },
+            "probe": "isolated/url_create_example_path"
+          },
+          "value": {
+            "read": {
+              "kind": "sent",
+              "path": "defaults.profile.business_url"
+            },
+            "status": 200
+          }
+        },
+        {
+          "condition": {
+            "account_country": "US",
+            "params": {
+              "defaults": {
+                "profile": {
+                  "business_url": "https://stripe.com"
+                }
+              }
+            },
+            "probe": "isolated/url_create_stripe"
+          },
+          "value": {
+            "read": {
+              "kind": "sent",
+              "path": "defaults.profile.business_url"
+            },
+            "status": 200
+          }
+        }
+      ],
+      "operation": "PostV2CoreAccounts",
+      "path": "defaults.profile.business_url",
+      "rule": "Stripe's answer turns on the request: accepted in [isolated/url_create_example_path, isolated/url_create_on_recipient_accessible, isolated/url_create_stripe]; refused in [isolated/url_create_on_recipient_stripe]",
+      "tests": [
+        "TestV2CoreAccountAttributes/leaves/request/PostV2CoreAccounts/defaults.profile.business_url",
+        "TestV2CoreAccountAttributes/leaves/response/v2.core.account/defaults.profile.business_url"
+      ]
+    },
+    {
+      "object": "v2.core.account",
+      "observations": [
+        {
+          "condition": {
+            "account_country": "US",
+            "created_with": {
+              "contact_email": {
+                "$gen": "email"
+              },
+              "identity": {
+                "country": "US"
+              }
+            },
+            "params": {
+              "configuration": {
+                "recipient": {
+                  "capabilities": {
+                    "stripe_balance": {
+                      "stripe_transfers": {
+                        "requested": true
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "probe": "isolated/change_adds_recipient"
+          },
+          "value": {
+            "code": "invalid_fields",
+            "message": "Some fields in the request were invalid: 'dashboard: You must set dashboard when the account is configured as a merchant or a recipient with the stripe_balance.stripe_transfers capability.'; 'defaults.responsibilities.losses_collector: You must set defaults.responsibilities.losses_collector when the account is configured as a merchant or a recipient with the stripe_balance.stripe_transfers capability.'; 'defaults.responsibilities.fees_collector: You must set defaults.responsibilities.fees_collector when the account is configured as a merchant or a recipient with the stripe_balance.stripe_transfers capability.'",
+            "param": "dashboard",
+            "status": 400
+          }
+        },
+        {
+          "condition": {
+            "account_country": "US",
+            "created_with": {
+              "contact_email": {
+                "$gen": "email"
+              },
+              "identity": {
+                "country": "US"
+              }
+            },
+            "params": {
+              "configuration": {
+                "recipient": {
+                  "capabilities": {
+                    "stripe_balance": {
+                      "stripe_transfers": {
+                        "requested": true
+                      }
+                    }
+                  }
+                }
+              },
+              "dashboard": "none",
+              "defaults": {
+                "responsibilities": {
+                  "fees_collector": "application",
+                  "losses_collector": "application"
+                }
+              }
+            },
+            "probe": "isolated/change_adds_recipient_with_collectors"
+          },
+          "value": {
+            "status": 200
+          }
+        }
+      ],
+      "operation": "PostV2CoreAccountsId",
+      "path": "configuration.recipient.capabilities.stripe_balance.stripe_transfers.requested",
+      "rule": "Stripe's answer turns on the request: accepted in [isolated/change_adds_recipient_with_collectors]; refused in [isolated/change_adds_recipient]",
+      "tests": [
+        "TestV2CoreAccountAttributes/leaves/request/PostV2CoreAccountsId/configuration.recipient.capabilities.stripe_balance.stripe_transfers.requested"
+      ]
+    },
+    {
+      "object": "v2.core.account",
+      "observations": [
+        {
+          "condition": {
+            "account_country": "US",
+            "created_with": {
+              "configuration": {
+                "recipient": {
+                  "capabilities": {
+                    "stripe_balance": {
+                      "stripe_transfers": {
+                        "requested": true
+                      }
+                    }
+                  }
+                }
+              },
+              "contact_email": {
+                "$gen": "email"
+              },
+              "dashboard": "none",
+              "defaults": {
+                "responsibilities": {
+                  "fees_collector": "application",
+                  "losses_collector": "application"
+                }
+              },
+              "identity": {
+                "country": "US"
+              }
+            },
+            "params": {
+              "defaults": {
+                "profile": {
+                  "business_url": "https://accessible.stripe.com"
+                }
+              }
+            },
+            "probe": "isolated/url_update_on_recipient_accessible"
+          },
+          "value": {
+            "read": {
+              "kind": "sent",
+              "path": "defaults.profile.business_url"
+            },
+            "status": 200
+          }
+        },
+        {
+          "condition": {
+            "account_country": "US",
+            "created_with": {
+              "configuration": {
+                "recipient": {
+                  "capabilities": {
+                    "stripe_balance": {
+                      "stripe_transfers": {
+                        "requested": true
+                      }
+                    }
+                  }
+                }
+              },
+              "contact_email": {
+                "$gen": "email"
+              },
+              "dashboard": "none",
+              "defaults": {
+                "responsibilities": {
+                  "fees_collector": "application",
+                  "losses_collector": "application"
+                }
+              },
+              "identity": {
+                "country": "US"
+              }
+            },
+            "params": {
+              "defaults": {
+                "profile": {
+                  "business_url": "https://stripe.com"
+                }
+              }
+            },
+            "probe": "isolated/url_update_on_recipient_stripe"
+          },
+          "value": {
+            "code": "url_invalid",
+            "message": "Invalid URL.",
+            "param": "defaults.profile.business_url",
+            "status": 400
+          }
+        },
+        {
+          "condition": {
+            "account_country": "US",
+            "created_with": {},
+            "params": {
+              "defaults": {
+                "profile": {
+                  "business_url": "https://accessible.stripe.com"
+                }
+              }
+            },
+            "probe": "isolated/url_update_accessible"
+          },
+          "value": {
+            "read": {
+              "kind": "sent",
+              "path": "defaults.profile.business_url"
+            },
+            "status": 200
+          }
+        },
+        {
+          "condition": {
+            "account_country": "US",
+            "created_with": {},
+            "params": {
+              "defaults": {
+                "profile": {
+                  "business_url": "https://docs.stripe.com"
+                }
+              }
+            },
+            "probe": "isolated/url_update_stripe_docs"
+          },
+          "value": {
+            "code": "url_invalid",
+            "message": "Invalid URL.",
+            "param": "defaults.profile.business_url",
+            "status": 400
+          }
+        },
+        {
+          "condition": {
+            "account_country": "US",
+            "created_with": {},
+            "params": {
+              "defaults": {
+                "profile": {
+                  "business_url": "https://example.com"
+                }
+              }
+            },
+            "probe": "isolated/url_update_example"
+          },
+          "value": {
+            "code": "url_invalid",
+            "message": "Invalid URL.",
+            "param": "defaults.profile.business_url",
+            "status": 400
+          }
+        },
+        {
+          "condition": {
+            "account_country": "US",
+            "created_with": {},
+            "params": {
+              "defaults": {
+                "profile": {
+                  "business_url": "https://example.com/acme"
+                }
+              }
+            },
+            "probe": "isolated/url_update_example_path"
+          },
+          "value": {
+            "code": "url_invalid",
+            "message": "Invalid URL.",
+            "param": "defaults.profile.business_url",
+            "status": 400
+          }
+        },
+        {
+          "condition": {
+            "account_country": "US",
+            "created_with": {},
+            "params": {
+              "defaults": {
+                "profile": {
+                  "business_url": "https://no-such-host.invalid"
+                }
+              }
+            },
+            "probe": "isolated/url_update_unresolvable"
+          },
+          "value": {
+            "read": {
+              "kind": "sent",
+              "path": "defaults.profile.business_url"
+            },
+            "status": 200
+          }
+        },
+        {
+          "condition": {
+            "account_country": "US",
+            "created_with": {},
+            "params": {
+              "defaults": {
+                "profile": {
+                  "business_url": "https://stripe.com"
+                }
+              }
+            },
+            "probe": "isolated/url_update_stripe"
+          },
+          "value": {
+            "code": "url_invalid",
+            "message": "Invalid URL.",
+            "param": "defaults.profile.business_url",
+            "status": 400
+          }
+        },
+        {
+          "condition": {
+            "account_country": "US",
+            "created_with": {},
+            "params": {
+              "defaults": {
+                "profile": {
+                  "business_url": "https://www.iana.org"
+                }
+              }
+            },
+            "probe": "isolated/url_update_iana"
+          },
+          "value": {
+            "read": {
+              "kind": "sent",
+              "path": "defaults.profile.business_url"
+            },
+            "status": 200
+          }
+        }
+      ],
+      "operation": "PostV2CoreAccountsId",
+      "path": "defaults.profile.business_url",
+      "rule": "Stripe's answer turns on the request: accepted in [isolated/url_update_accessible, isolated/url_update_iana, isolated/url_update_on_recipient_accessible, isolated/url_update_unresolvable]; refused in [isolated/url_update_example, isolated/url_update_example_path, isolated/url_update_on_recipient_stripe, isolated/url_update_stripe, isolated/url_update_stripe_docs]",
+      "tests": [
+        "TestV2CoreAccountAttributes/leaves/request/PostV2CoreAccountsId/defaults.profile.business_url"
+      ]
+    },
+    {
+      "object": "v2.core.account",
+      "observations": [
+        {
+          "condition": {
+            "account_country": "US",
+            "created_with": {
+              "configuration": {
+                "recipient": {
+                  "capabilities": {
+                    "stripe_balance": {
+                      "stripe_transfers": {
+                        "requested": true
+                      }
+                    }
+                  }
+                }
+              },
+              "contact_email": {
+                "$gen": "email"
+              },
+              "dashboard": "none",
+              "defaults": {
+                "responsibilities": {
+                  "fees_collector": "application",
+                  "losses_collector": "application"
+                }
+              },
+              "identity": {
+                "country": "US"
+              }
+            },
+            "params": {
+              "identity": {
+                "country": "GB"
+              }
+            },
+            "probe": "isolated/change_country_on_recipient"
+          },
+          "value": {
+            "message": "Error: When requesting the `transfers` capability for accounts in GB, you must either specify the `recipient` service agreement, or request the `card_payments` capability along with `transfers`. To specify the `recipient` service agreement, see https://stripe.com/docs/connect/service-agreement-types#choosing-type-with-api. For more information on cross-border transfers, see https://stripe.com/docs/connect/account-capabilities#transfers-cross-border.",
+            "status": 400
+          }
+        },
+        {
+          "condition": {
+            "account_country": "US",
+            "created_with": {
+              "identity": {
+                "country": "US"
+              }
+            },
+            "params": {
+              "identity": {
+                "country": "GB"
+              }
+            },
+            "probe": "isolated/change_country"
+          },
+          "value": {
+            "read": {
+              "kind": "sent",
+              "path": "identity.country"
+            },
+            "status": 200
+          }
+        },
+        {
+          "condition": {
+            "account_country": "US",
+            "created_with": {},
+            "params": {
+              "identity": {
+                "country": "US"
+              }
+            },
+            "probe": "isolated/change_country_from_none"
+          },
+          "value": {
+            "read": {
+              "kind": "sent",
+              "path": "identity.country"
+            },
+            "status": 200
+          }
+        }
+      ],
+      "operation": "PostV2CoreAccountsId",
+      "path": "identity.country",
+      "rule": "Stripe's answer turns on the request: accepted in [isolated/change_country, isolated/change_country_from_none]; refused in [isolated/change_country_on_recipient]",
+      "tests": [
+        "TestV2CoreAccountAttributes/leaves/request/PostV2CoreAccountsId/identity.country"
+      ]
+    },
+    {
       "object": "v2.core.event_destination",
       "observations": [
         {
@@ -688713,6 +690505,98 @@
       ],
       "triggers": [
         "name_collection.individual.enabled"
+      ]
+    },
+    {
+      "changed": [
+        {
+          "after": {
+            "kind": "value",
+            "value": "pass"
+          },
+          "before": {
+            "kind": "null"
+          },
+          "path": "card.checks.address_line1_check"
+        }
+      ],
+      "object": "payment_method",
+      "operation": "PostPaymentMethodsPaymentMethod",
+      "probe": "isolated/checks_line1",
+      "tests": [
+        "TestCustomerPaymentMethodAttributes/leaves/response/payment_method/card.checks.address_line1_check"
+      ],
+      "triggers": [
+        "billing_details.address.line1"
+      ]
+    },
+    {
+      "changed": [
+        {
+          "after": {
+            "kind": "value",
+            "value": "pass"
+          },
+          "before": {
+            "kind": "null"
+          },
+          "path": "card.checks.address_postal_code_check"
+        }
+      ],
+      "object": "payment_method",
+      "operation": "PostPaymentMethodsPaymentMethod",
+      "probe": "isolated/checks_postal_code",
+      "tests": [
+        "TestCustomerPaymentMethodAttributes/leaves/response/payment_method/card.checks.address_postal_code_check"
+      ],
+      "triggers": [
+        "billing_details.address.postal_code"
+      ]
+    },
+    {
+      "changed": [
+        {
+          "after": {
+            "kind": "value",
+            "value": "pass"
+          },
+          "before": {
+            "kind": "null"
+          },
+          "path": "card.checks.address_line1_check"
+        }
+      ],
+      "object": "payment_method",
+      "operation": "PostPaymentMethodsPaymentMethod",
+      "probe": "update/1",
+      "tests": [
+        "TestCustomerPaymentMethodAttributes/leaves/response/payment_method/card.checks.address_line1_check"
+      ],
+      "triggers": [
+        "billing_details.address.line1"
+      ]
+    },
+    {
+      "changed": [
+        {
+          "after": {
+            "kind": "value",
+            "value": "pass"
+          },
+          "before": {
+            "kind": "null"
+          },
+          "path": "card.checks.address_postal_code_check"
+        }
+      ],
+      "object": "payment_method",
+      "operation": "PostPaymentMethodsPaymentMethod",
+      "probe": "update/1",
+      "tests": [
+        "TestCustomerPaymentMethodAttributes/leaves/response/payment_method/card.checks.address_postal_code_check"
+      ],
+      "triggers": [
+        "billing_details.address.postal_code"
       ]
     },
     {
@@ -689642,6 +691526,118 @@
         {
           "after": {
             "kind": "value",
+            "value": [
+              "recipient"
+            ]
+          },
+          "before": {
+            "kind": "value",
+            "value": []
+          },
+          "path": "applied_configurations"
+        },
+        {
+          "after": {
+            "kind": "value",
+            "value": true
+          },
+          "before": {
+            "kind": "absent"
+          },
+          "path": "configuration.recipient.applied"
+        }
+      ],
+      "object": "v2.core.account",
+      "operation": "PostV2CoreAccountsId",
+      "probe": "isolated/change_adds_recipient_with_collectors",
+      "tests": [
+        "TestV2CoreAccountAttributes/leaves/response/v2.core.account/applied_configurations",
+        "TestV2CoreAccountAttributes/leaves/response/v2.core.account/configuration.recipient.applied"
+      ],
+      "triggers": [
+        "configuration.recipient.capabilities.stripe_balance.stripe_transfers.requested"
+      ]
+    },
+    {
+      "changed": [
+        {
+          "after": {
+            "kind": "value",
+            "value": []
+          },
+          "before": {
+            "kind": "value",
+            "value": [
+              "recipient"
+            ]
+          },
+          "path": "applied_configurations"
+        }
+      ],
+      "object": "v2.core.account",
+      "operation": "PostV2CoreAccountsId",
+      "probe": "isolated/change_applied_to_false",
+      "tests": [
+        "TestV2CoreAccountAttributes/leaves/response/v2.core.account/applied_configurations"
+      ],
+      "triggers": [
+        "configuration.recipient.applied"
+      ]
+    },
+    {
+      "changed": [
+        {
+          "after": {
+            "kind": "value",
+            "value": [
+              "recipient"
+            ]
+          },
+          "before": {
+            "kind": "value",
+            "value": []
+          },
+          "path": "applied_configurations"
+        }
+      ],
+      "object": "v2.core.account",
+      "operation": "PostV2CoreAccountsId",
+      "probe": "isolated/change_applied_with_no_config",
+      "tests": [
+        "TestV2CoreAccountAttributes/leaves/response/v2.core.account/applied_configurations"
+      ],
+      "triggers": [
+        "configuration.recipient.applied"
+      ]
+    },
+    {
+      "changed": [
+        {
+          "after": {
+            "kind": "value",
+            "value": "usd"
+          },
+          "before": {
+            "kind": "null"
+          },
+          "path": "defaults.currency"
+        }
+      ],
+      "object": "v2.core.account",
+      "operation": "PostV2CoreAccountsId",
+      "probe": "isolated/change_country_from_none",
+      "tests": [
+        "TestV2CoreAccountAttributes/leaves/response/v2.core.account/defaults.currency"
+      ],
+      "triggers": [
+        "identity.country"
+      ]
+    },
+    {
+      "changed": [
+        {
+          "after": {
+            "kind": "value",
             "value": "pending"
           },
           "before": {
@@ -689682,7 +691678,8 @@
         },
         {
           "after": {
-            "kind": "absent"
+            "kind": "value",
+            "value": "pending"
           },
           "before": {
             "kind": "value",
@@ -689692,7 +691689,10 @@
         },
         {
           "after": {
-            "kind": "absent"
+            "kind": "value",
+            "value": [
+              "determining_status"
+            ]
           },
           "before": {
             "kind": "value",
@@ -689704,7 +691704,10 @@
         },
         {
           "after": {
-            "kind": "absent"
+            "kind": "value",
+            "value": [
+              "no_resolution"
+            ]
           },
           "before": {
             "kind": "value",
@@ -689728,7 +691731,7 @@
       ],
       "triggers": [
         "configuration.recipient.applied",
-        "configuration.recipient.capabilities.stripe_balance.stripe_transfers.requested",
+        "contact_email",
         "defaults.currency",
         "identity.country",
         "identity.entity_type"
@@ -689766,11 +691769,11 @@
   "spec_sha256": "9119e72c7ff8ad142e94f7efa9cf49d8e6eec69df3592e17e8fba15099726ed7",
   "stripe_run": {
     "event": "push",
-    "id": 41178837971,
+    "id": 41217619203,
     "passed": true,
     "platform_country": "US",
     "sandbox": "ci",
-    "time": "2026-10-31T09:06:06Z"
+    "time": "2026-10-31T17:40:10Z"
   },
-  "suite_commit": "5d756eafed59f4756ff0a6a34e913e44f7d2b961"
+  "suite_commit": "6b9aeaabfd08d0477f43ff1f6dea5d19247f3a5d"
 }

@@ -322,6 +322,11 @@ func compile(decl Declaration, table []fields.Field) (*model, error) {
 			return nil, fmt.Errorf("%s: refuse-change entry `%s` is not a configurable field outside a list", decl.TypeName, name)
 		}
 	}
+	for _, name := range decl.SetOnce {
+		if !slices.Contains(decl.RefuseChange, name) {
+			return nil, fmt.Errorf("%s: set-once entry `%s` is not in RefuseChange", decl.TypeName, name)
+		}
+	}
 	// refuseChanges tells a replace only by its top-level sources. A resource that refuses
 	// destroy fails every real replacement in the attribute plan modifier, before refuseChanges
 	// runs, so a source below the top level needs no telling there.
@@ -709,6 +714,11 @@ func (c *compiler) unused() error {
 			return fmt.Errorf("defaults entry `%s` names no field", p)
 		}
 	}
+	for p := range c.decl.Answers {
+		if !c.used["answers/"+p] {
+			return fmt.Errorf("answers entry `%s` names no field", p)
+		}
+	}
 	for p := range c.decl.Rename {
 		if !c.used["rename/"+p] {
 			return fmt.Errorf("rename entry `%s` names no field", p)
@@ -744,6 +754,15 @@ func (c *compiler) build(table []fields.Field, prefix string, top, parentOutput,
 			}
 			n.Default = &fields.Default{Kind: fields.DefaultRule, Rule: rule, Observed: f.Default.Observed}
 			c.used["defaults/"+path] = true
+		}
+		if wording, ok := c.decl.Answers[path]; ok {
+			if f.Answer == "" {
+				return nil, fmt.Errorf("answers entry `%s` names a field the evidence records no answers for", path)
+			}
+			n.Answer = wording + " " + f.Answer
+			c.used["answers/"+path] = true
+		} else if f.Answer != "" {
+			return nil, fmt.Errorf("field `%s` has the answers the evidence records, and needs an answers entry that words where Stripe takes it", path)
 		}
 		if v, ok := c.decl.NullAs[path]; ok {
 			if f.Shape != fields.String {

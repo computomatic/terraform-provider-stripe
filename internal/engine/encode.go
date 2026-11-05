@@ -302,7 +302,9 @@ func (m *model) encodeChanges(plan, state basetypes.ObjectValue, config tftypes.
 	if err := m.checkUpdateForms(plan, config); err != nil {
 		return nil, err
 	}
-	updatable := func(k *node) bool { return k.Update && !slices.Contains(m.decl.RefuseChange, k.Path) }
+	updatable := func(k *node) bool {
+		return k.Update && (!slices.Contains(m.decl.RefuseChange, k.Path) || slices.Contains(m.decl.SetOnce, k.Path))
+	}
 	for _, n := range m.nodes {
 		if !updatable(n) || slices.Contains(m.decl.SendWithUpdate, n.Name) {
 			continue

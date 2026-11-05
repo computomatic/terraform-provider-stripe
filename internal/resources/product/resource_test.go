@@ -9,6 +9,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/hashicorp/terraform-plugin-testing/plancheck"
 	"github.com/hashicorp/terraform-plugin-testing/terraform"
+	"github.com/hashicorp/terraform-plugin-testing/tfjsonpath"
 
 	"github.com/computomatic/terraform-provider-stripe/internal/acctest"
 	"github.com/computomatic/terraform-provider-stripe/internal/acctest/tfacc"
@@ -272,6 +273,40 @@ func TestAccProduct_drift(t *testing.T) {
 					plancheck.ExpectResourceAction(address, plancheck.ResourceActionUpdate),
 				}},
 				Check: resource.TestCheckResourceAttr(address, "name", acct.Name("Gold plan")),
+			},
+		},
+	})
+}
+
+// Stripe fills each tax code from the other (the record's probes `every_field/1` and `update/1`,
+// with the suite's codes `txcd_10000000` and `txcd_20030000`), so a product that sets `tax_code`
+// alone reads the same code in `tax_details.tax_code`, plans nothing more, and a change of
+// `tax_code` shows the other as known after apply.
+func TestAccProduct_taxCodesFillEachOther(t *testing.T) {
+	acct := acctest.NewAccount(t)
+	code := func(c string) string {
+		return productConfig(acct, "taxed", "Taxed", fmt.Sprintf("  tax_code = %q\n", c))
+	}
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: tfacc.ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: code("txcd_10000000"),
+				ConfigPlanChecks: resource.ConfigPlanChecks{PostApplyPostRefresh: []plancheck.PlanCheck{
+					plancheck.ExpectEmptyPlan(),
+				}},
+				Check: resource.TestCheckResourceAttr(address, "tax_details.tax_code", "txcd_10000000"),
+			},
+			{
+				Config: code("txcd_20030000"),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectResourceAction(address, plancheck.ResourceActionUpdate),
+						plancheck.ExpectUnknownValue(address, tfjsonpath.New("tax_details").AtMapKey("tax_code")),
+					},
+					PostApplyPostRefresh: []plancheck.PlanCheck{plancheck.ExpectEmptyPlan()},
+				},
+				Check: resource.TestCheckResourceAttr(address, "tax_details.tax_code", "txcd_20030000"),
 			},
 		},
 	})

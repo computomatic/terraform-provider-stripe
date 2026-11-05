@@ -288,7 +288,7 @@ func TestAttributesCheckRefusesTheUnknown(t *testing.T) {
 // The docs line of an argument Stripe has only ever refused quotes the refusal and its condition,
 // with the record's placeholders in words, and an unknown placeholder fails.
 func TestRefusedSentence(t *testing.T) {
-	got, err := refusedSentence([]refusedOn{
+	got, err := refusedSentence("Stripe refused it", []refusedOn{
 		{on: "create", country: "US", message: "No such radar session: '<id:rse_>'"},
 		{on: "update", country: "US", message: "No such radar session: '<id:rse_>'"},
 		{on: "update", country: "FR", message: "Too late, at <time>."},
@@ -297,7 +297,7 @@ func TestRefusedSentence(t *testing.T) {
 	if err != nil || got != want {
 		t.Errorf("got %q, %v, want %q", got, err, want)
 	}
-	if _, err := refusedSentence([]refusedOn{{on: "create", country: "US", message: "at <when>"}}); err == nil {
+	if _, err := refusedSentence("Stripe refused it", []refusedOn{{on: "create", country: "US", message: "at <when>"}}); err == nil {
 		t.Error("an unknown placeholder passed")
 	}
 }
@@ -427,6 +427,56 @@ func TestRegisterEntriesAreChecked(t *testing.T) {
 	}
 }
 
+// Stripe's answers to the requests that sent an exposed argument, which took it in some and refused
+// it in others, put the recorded refusals on its field, for the declaration's wording of where
+// Stripe takes it; answers that refuse nothing fail generation.
+func TestAnswersQuoteTheirRefusals(t *testing.T) {
+	res := gadget()
+	ev := pinned(t, res, map[string]string{"request/PostGadgets/color": ClassVerified, "request/PostGadgetsId/color": ClassVerified})
+	var keys []Key
+	for _, l := range ev.Attributes.Leaves {
+		if l.Path == "color" && l.Side == SideRequest {
+			keys = append(keys, l.Key)
+			ev.Evidence.Leaves = append(ev.Evidence.Leaves, EvidenceLeaf{Key: l.Key, Status: "proven", Tests: []string{"TestGadgetAttributes/leaves/" + l.Key.String()}})
+		}
+	}
+	answer := func(probe string, status int, message string) (o RuleObservation) {
+		o.Condition.AccountCountry, o.Condition.Probe, o.Condition.Params = "US", probe, json.RawMessage(`{}`)
+		o.Value = RuleValue{Status: status, Message: message}
+		return o
+	}
+	for _, k := range keys {
+		ev.Evidence.Rules = append(ev.Evidence.Rules, EvidenceRule{Object: k.Object, Operation: k.Operation, Path: k.Path, Rule: "Stripe's answer turns on the request",
+			Observations: []RuleObservation{answer("isolated/beside", 200, ""), answer("isolated/alone", 400, "Not alone.")}})
+	}
+	if f := fieldAt(cover(t, res, ev).table, "color"); f == nil || f.Answer != `Elsewhere Stripe refused it on a US account on create and update: "Not alone.".` {
+		t.Errorf("color: %+v", f)
+	}
+	for i := range ev.Evidence.Rules {
+		ev.Evidence.Rules[i].Observations = ev.Evidence.Rules[i].Observations[:1]
+	}
+	if _, err := coverTable(coverageSpec(t), res, ev); err == nil || !strings.Contains(err.Error(), "hold no refusal") {
+		t.Errorf("answers that refuse nothing: %v", err)
+	}
+}
+
+// A rule that quotes the values Stripe derived, as JSON over several lines, cannot be a docs line,
+// so the leaf has no statement until a declaration words it.
+func TestAMultiLineRuleHasNoStatement(t *testing.T) {
+	res := gadget()
+	ev := pinned(t, res, map[string]string{"request/PostGadgets/price": ClassVerified})
+	rule := 0
+	ev.Evidence.Rules = []EvidenceRule{{Rule: "derived by Stripe from what the create sends: the minimal create gets {\n  \"usd\": 1500\n}"}}
+	for _, l := range ev.Attributes.Leaves {
+		if l.Key.String() == "request/PostGadgets/price" {
+			ev.Evidence.Leaves = []EvidenceLeaf{{Key: l.Key, Status: "proven", Tests: []string{"TestGadgetAttributes/leaves/request/PostGadgets/price"}, Default: &EvidenceDefault{Kind: "rule", RuleRef: &rule}}}
+		}
+	}
+	if f := fieldAt(cover(t, res, ev).table, "price"); f == nil || f.Default == nil || f.Default.Kind != fields.DefaultVaries {
+		t.Errorf("price: %+v", f)
+	}
+}
+
 // The default statement of a verified leaf comes from the evidence: a value, none, a rule with
 // the value observed on the suite's account, or `not sent` for an argument only the update
 // takes. Variants that disagree leave the declaration to word the rule. The table's fields
@@ -441,7 +491,7 @@ func TestDefaultStatementsComeFromTheEvidence(t *testing.T) {
 	rule := 0
 	observation := func(variant, value string) (o RuleObservation) {
 		o.Condition.AccountCountry, o.Condition.Variant = "US", variant
-		o.Value = Matcher{Kind: "value", Value: json.RawMessage(value)}
+		o.Value = RuleValue{Matcher: Matcher{Kind: "value", Value: json.RawMessage(value)}}
 		return o
 	}
 	ev.Evidence.Rules = []EvidenceRule{{Rule: "the customer's currency, else the account's default currency",
@@ -854,24 +904,6 @@ func declaredParents(t *testing.T) map[string]string {
 	return out
 }
 
-// A default the suite read from its parent object, which the record gives as a literal, has no
-// statement until the declaration words the rule, as a default the variants give differently.
-func TestParentDefaultHasNoStatementUntilWorded(t *testing.T) {
-	res := gadget()
-	res.ParentDefaults = []string{"color"}
-	ev := pinned(t, res, map[string]string{"request/PostGadgets/color": ClassVerified})
-	for _, l := range ev.Attributes.Leaves {
-		if l.Key.String() == "request/PostGadgets/color" {
-			ev.Evidence.Leaves = []EvidenceLeaf{{Key: l.Key, Status: "proven", Default: &EvidenceDefault{Kind: "value", Value: json.RawMessage(`100`)}}}
-		}
-	}
-	tc := cover(t, res, ev)
-	f := fieldAt(tc.table, "color")
-	if f == nil || f.Default == nil || f.Default.Kind != fields.DefaultVaries {
-		t.Fatalf("color's default: %+v", f)
-	}
-}
-
 // A token form leaves no member of the spread hash required, because a create sends one form or
 // the other, and the table holds the token beside them once the gate verifies it.
 func TestTokenFormLeavesTheHashOptional(t *testing.T) {
@@ -962,15 +994,16 @@ func TestCreateProbesCheckDefaultStatements(t *testing.T) {
 	rule := &fields.Default{Kind: fields.DefaultRule, Rule: "the name"}
 	varies := &fields.Default{Kind: fields.DefaultVaries}
 	for name, tc := range map[string]struct {
-		def     *fields.Default
-		held    []evidencecheck.ProbedValue
-		worded  string
-		parents []string
-		want    string
+		def    *fields.Default
+		held   []evidencecheck.ProbedValue
+		worded string
+		want   string
 	}{
 		"a none no probe touches":         {def: none},
 		"a none, and an empty list":       {def: none, held: []evidencecheck.ProbedValue{value("[]")}},
 		"a none, and a list of nulls":     {def: none, held: []evidencecheck.ProbedValue{value("[null]")}},
+		"a none, and a map of nulls":      {def: none, held: []evidencecheck.ProbedValue{value(`{"eur":null,"usd":null}`)}},
+		"a none against a map's literal":  {def: none, held: []evidencecheck.ProbedValue{value(`{"usd":1500}`)}, want: "probe p holds"},
 		"a none, and an empty hash":       {def: none, held: []evidencecheck.ProbedValue{value("{}")}},
 		"a none against a literal":        {def: none, held: []evidencecheck.ProbedValue{value("false")}, want: "probe p holds false"},
 		"a none against a made value":     {def: none, held: []evidencecheck.ProbedValue{made}, want: "kind created"},
@@ -983,7 +1016,6 @@ func TestCreateProbesCheckDefaultStatements(t *testing.T) {
 		"worded, naming the literal":      {def: varies, held: []evidencecheck.ProbedValue{value("[99]")}, worded: "`99` once set"},
 		"worded, without the literal":     {def: varies, held: []evidencecheck.ProbedValue{value("7")}, worded: "`99` once set", want: "does not name"},
 		"worded, a made value":            {def: varies, held: []evidencecheck.ProbedValue{made}, worded: "none, or one Stripe makes"},
-		"worded, a parent's value":        {def: varies, held: []evidencecheck.ProbedValue{value("100")}, worded: "what remains", parents: []string{"group"}},
 		"worded none, with a probe":       {def: none, held: []evidencecheck.ProbedValue{made}, worded: "none, or one Stripe makes"},
 		"worded none, with no probe":      {def: none, worded: "none, or one Stripe makes", want: "no probe contradicts"},
 		"worded none, with an empty list": {def: none, held: []evidencecheck.ProbedValue{value("[]")}, worded: "none, or []", want: "no probe contradicts"},
@@ -995,7 +1027,7 @@ func TestCreateProbesCheckDefaultStatements(t *testing.T) {
 			worded["group"] = tc.worded
 		}
 		p := &Pinned{probed: map[Key][]evidencecheck.ProbedValue{key: tc.held}}
-		got := strings.Join(cov.checkCreateProbes(Resource{Package: "gadget", CreatePath: "/v1/gadgets", ParentDefaults: tc.parents}, worded, p), "\n")
+		got := strings.Join(cov.checkCreateProbes(Resource{Package: "gadget", CreatePath: "/v1/gadgets"}, worded, p), "\n")
 		if tc.want == "" && got != "" || tc.want != "" && !strings.Contains(got, tc.want) {
 			t.Errorf("%s: %q, want %q", name, got, tc.want)
 		}

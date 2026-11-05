@@ -62,8 +62,8 @@ The following arguments are required:
 
 The following arguments are optional:
 
-* `active` - (Optional) Whether the trial offer can be used for new subscriptions. Defaults to true. Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
-* `nickname` - (Optional) A brief description of the trial offer, hidden from customers. Changing it replaces the resource.
+* `active` - (Optional) Whether the trial offer can be used for new subscriptions. Defaults to true. Default (Stripe): `true`. Removing it from the configuration leaves the current value.
+* `nickname` - (Optional) A brief description of the trial offer, hidden from customers. Changing it replaces the resource. Default: none.
 
 <a id="duration"></a>
 ### `duration`

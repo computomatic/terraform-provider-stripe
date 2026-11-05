@@ -47,6 +47,9 @@ type attr struct {
 	// Refused is the sentence with Stripe's recorded refusal of an argument it has only ever
 	// refused.
 	Refused string
+	// Answer is the declaration's wording of where Stripe takes an argument it refuses in other
+	// requests, with the recorded refusals.
+	Answer string
 	// Copy is, on an embedded copy of another Stripe object, the data source type that reads it.
 	Copy string
 }

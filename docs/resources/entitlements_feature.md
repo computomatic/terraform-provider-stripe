@@ -30,8 +30,8 @@ The following arguments are required:
 
 The following arguments are optional:
 
-* `active` - (Optional) Inactive features cannot be attached to new products and will not be returned from the features list endpoint. Default: not sent. Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
-* `metadata` - (Optional) Set of key-value pairs that you can attach to an object. This can be useful for storing additional information about the object in a structured format.
+* `active` - (Optional) Inactive features cannot be attached to new products and will not be returned from the features list endpoint. Default: not sent. Removing it from the configuration leaves the current value.
+* `metadata` - (Optional) Set of key-value pairs that you can attach to an object. This can be useful for storing additional information about the object in a structured format. Default (Stripe): `{}`.
 
 ## Attribute Reference
 

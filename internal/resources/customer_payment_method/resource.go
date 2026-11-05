@@ -34,12 +34,15 @@ var Declaration = engine.Declaration{
 		Update:   "/v1/payment_methods/{id}",
 		List:     "/v1/customers/{customer}/payment_methods",
 	},
-	// Stripe reruns the card's address checks when the billing address changes: the dev sandbox
-	// answered an update of `billing_details.address` with `pass` for both (smoke run of
-	// 2026-10-31, `TestAccCustomerPaymentMethod_update`). The record never observes
-	// `card.checks`, and its updates of the address send only `city`.
+	// Stripe reruns a card's address check when the part of the billing address it checks
+	// changes: the record's `side_effects` show an update of `billing_details.address.line1`
+	// moving `card.checks.address_line1_check` and one of `postal_code` moving
+	// `address_postal_code_check` (suite: TestCustomerPaymentMethodAttributes, probes `update/1`,
+	// `isolated/checks_line1` and `isolated/checks_postal_code`), as the dev sandbox showed for
+	// the whole address (smoke run of 2026-10-31, `TestAccCustomerPaymentMethod_update`).
 	FilledFrom: map[string][]string{
-		"billing_details.address": {"card.checks.address_line1_check", "card.checks.address_postal_code_check"},
+		"billing_details.address.line1":       {"card.checks.address_line1_check"},
+		"billing_details.address.postal_code": {"card.checks.address_postal_code_check"},
 	},
 	// Stripe stores a preferred network the card does not have as `invalid_preference` (the
 	// record's `returned`), so the configured value stays in state.

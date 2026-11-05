@@ -17,7 +17,7 @@ var Table = []fields.Field{
 	}},
 	{Name: "display_name", Shape: fields.String, Required: true, Create: true, Update: true, Response: true, Description: "The meter’s name. Not visible to the customer."},
 	{Name: "event_name", Shape: fields.String, Required: true, Create: true, Response: true, Description: "The name of the meter event to record usage for. Corresponds with the `event_name` field on meter events."},
-	{Name: "event_time_window", Shape: fields.String, Create: true, Response: true, Enum: []string{"day", "hour"}, Description: "The time window which meter events have been pre-aggregated for, if any."},
+	{Name: "event_time_window", Shape: fields.String, Create: true, Response: true, Enum: []string{"day", "hour"}, Description: "The time window which meter events have been pre-aggregated for, if any.", Default: &fields.Default{Kind: fields.DefaultNone}},
 	{Name: "id", Shape: fields.String, Response: true, Description: "Unique identifier for the object."},
 	{Name: "livemode", Shape: fields.Bool, Response: true, Description: "If the object exists in live mode, the value is `true`. If the object exists in test mode, the value is `false`."},
 	{Name: "status", Shape: fields.String, Response: true, Enum: []string{"active", "inactive"}, Description: "The meter's status."},
