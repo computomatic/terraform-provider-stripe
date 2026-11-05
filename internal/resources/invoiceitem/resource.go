@@ -31,7 +31,16 @@ var Declaration = engine.Declaration{
 	// its description when the create sends none (the suite's create probes `minimal/price_data`
 	// and `enums/2`, in spec/create_probes.json).
 	ServerDefaulted: []string{"description", "invoice", "pricing"},
-	Delete:          engine.Delete,
+	Answers: map[string]string{
+		// suite: TestInvoiceItemAttributes, probes `isolated/coupon_expired` and `isolated/coupon_beside_held`
+		"discounts.coupon": "Stripe takes a coupon that has not expired, and on an update not in the same element as a `discount`.",
+		// suite: TestInvoiceItemAttributes, probe `isolated/promotion_code_inactive`
+		"discounts.promotion_code": "Stripe takes an active promotion code.",
+		// suite: TestInvoiceItemAttributes, probe `isolated/discount_of_invoice` and the
+		// update's relation `existing_discount` in the record's `discounts`
+		"discounts.discount": "Stripe takes, on an update, a discount the item already holds; a create cannot name one, not even its invoice's.",
+	},
+	Delete: engine.Delete,
 }
 
 // NewResource returns the resource constructor the provider registers.

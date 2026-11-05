@@ -138,3 +138,30 @@ func TestDeclarationAnswers(t *testing.T) {
 		}
 	}
 }
+
+// A data source holds a field the resource takes in another shape in the response's, so the
+// answers worded for the request's members compile into the resource alone.
+func TestDataSourceKeepsTheAnswersOfItsFields(t *testing.T) {
+	table := []fields.Field{
+		{Name: "id", Shape: fields.String, Response: true},
+		{Name: "code", Shape: fields.String, Create: true, Response: true, Answer: "Elsewhere Stripe refused it."},
+		{Name: "discounts", Shape: fields.ObjectList, Create: true, Fields: []fields.Field{
+			{Name: "coupon", Shape: fields.String, Create: true, Answer: "Elsewhere Stripe refused it."},
+		}, DataSource: &fields.Field{Name: "discounts", Shape: fields.ScalarList, Elem: fields.String, Response: true}},
+	}
+	decl := Declaration{
+		TypeName: "stripe_gadget", IDPrefix: "gad_", Delete: Delete,
+		Paths:   Paths{Create: "/v1/gadgets", Retrieve: "/v1/gadgets/{id}", Delete: "/v1/gadgets/{id}"},
+		Answers: map[string]string{"code": "Stripe takes a fresh code.", "discounts.coupon": "Stripe takes a live coupon."},
+	}
+	if _, err := NewResource(decl, table); err != nil {
+		t.Fatalf("resource: %v", err)
+	}
+	if _, err := NewDataSource(decl, table); err != nil {
+		t.Fatalf("data source: %v", err)
+	}
+	got := answersIn(decl.Answers, fields.ForDataSource(table))
+	if len(got) != 1 || got["code"] == "" {
+		t.Errorf("got %v, want only `code`", got)
+	}
+}

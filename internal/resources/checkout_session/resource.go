@@ -54,6 +54,11 @@ var Declaration = engine.Declaration{
 	// TestCheckoutSessionAttributes, probes `nested_minimal/2` and `enums/35`, `enums/47` and
 	// `enums/51`), and makes a rate from an option's data (`enums/23`); the record's none is of a
 	// create that leaves the hash out.
+	Answers: map[string]string{
+		// suite: TestCheckoutSessionAttributes, probes `isolated/configuration_bancontact` and
+		// `isolated/configuration_no_methods`
+		"payment_method_configuration": "Stripe takes a configuration that turns on a payment method the session's currency and mode can use.",
+	},
 	Defaults: map[string]string{
 		"after_expiration.recovery.allow_promotion_codes":            "`false` once `recovery` is set",
 		"consent_collection.promotions":                              "`none` once `consent_collection` is set",

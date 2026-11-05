@@ -166,6 +166,9 @@ func coverTable(spec *Spec, res Resource, ev *Pinned) (*tableCoverage, error) {
 		}
 		if ev != nil {
 			r.Class = ev.class(l.Key)
+			if r.Class == "" && l.Kind == KindEmbedded {
+				r.Class = ev.copyClass(l.Key)
+			}
 			if e := ev.leaf(l.Key); e != nil && e.Status == "proven" {
 				r.Tests = e.Tests
 			}
@@ -742,6 +745,24 @@ func (p *Pinned) class(k Key) string {
 	return p.classes[k]
 }
 
+// copyClass is the class of an embedded copy that `attributes.json` keys by its members rather
+// than as one leaf, as it keys an invoice's `default_tax_rates`: the class its members share, or
+// none where they differ or it lists none. The copy is read in full, so one class must hold for
+// all of it.
+func (p *Pinned) copyClass(k Key) string {
+	class := ""
+	for _, l := range p.Attributes.Leaves {
+		if l.Object != k.Object || l.Side != k.Side || l.Operation != k.Operation || l.Branch != k.Branch || !strings.HasPrefix(l.Path, k.Path+".") {
+			continue
+		}
+		if class != "" && l.Class != class {
+			return ""
+		}
+		class = l.Class
+	}
+	return class
+}
+
 // refusedOnly reports a leaf `attributes.json` marks as one Stripe has only ever refused.
 // answers is what Stripe answered each probe of a rule the record keeps for the request leaf,
 // which takes it in some requests and refuses it in others.
@@ -1115,22 +1136,32 @@ func disagreement(desc string, d *fields.Default) string {
 // checkVerifiedKeys fails on a verified leaf of a table's object and operations that no
 // table's walk reaches, so that a difference between the provider's path language and the
 // fake's shows as a list of keys. The response's own `object` field, which the provider's
-// walk leaves out, is not one.
+// walk leaves out, is not one, and nor is a member of an embedded copy the walk holds as one
+// leaf (copyClass).
 func checkVerifiedKeys(ev *Pinned, covered []*tableCoverage) error {
 	walked := map[Key]bool{}
+	var copies []Key
 	objects, ops := map[string]bool{}, map[string]bool{}
 	for _, tc := range covered {
 		objects[tc.object] = true
 		for _, op := range tc.ops {
 			ops[op] = true
 		}
-		for _, r := range tc.records {
+		for i, r := range tc.records {
 			walked[r.Key] = true
+			if tc.leaves[i].Kind == KindEmbedded {
+				copies = append(copies, r.Key)
+			}
 		}
+	}
+	inCopy := func(k Key) bool {
+		return slices.ContainsFunc(copies, func(c Key) bool {
+			return c.Object == k.Object && c.Side == k.Side && c.Operation == k.Operation && c.Branch == k.Branch && strings.HasPrefix(k.Path, c.Path+".")
+		})
 	}
 	var missing []string
 	for _, l := range ev.Attributes.Leaves {
-		if l.Class != ClassVerified || walked[l.Key] || !objects[l.Object] {
+		if l.Class != ClassVerified || walked[l.Key] || !objects[l.Object] || inCopy(l.Key) {
 			continue
 		}
 		if l.Side == SideResponse && l.Path != "object" || l.Side == SideRequest && ops[l.Operation] {

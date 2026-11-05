@@ -7,7 +7,7 @@ import "github.com/computomatic/terraform-provider-stripe/internal/fields"
 
 // Table lists every request and response field of the object.
 var Table = []fields.Field{
-	{Name: "amount", Shape: fields.Int, Create: true, Response: true, ServerDefaulted: true, Description: "The integer amount in cents (or local equivalent) representing the total amount of the credit note. One of `amount`, `lines`, or `shipping_cost` must be provided."},
+	{Name: "amount", Shape: fields.Int, Create: true, Response: true, ServerDefaulted: true, Description: "The integer amount in cents (or local equivalent) representing the total amount of the credit note. One of `amount`, `lines`, or `shipping_cost` must be provided.", Default: &fields.Default{Kind: fields.DefaultVaries}},
 	{Name: "amount_shipping", Shape: fields.Int, Response: true, Description: "This is the sum of all the shipping amounts."},
 	{Name: "created", Shape: fields.Int, Response: true, Description: "Time at which the object was created. Measured in seconds since the Unix epoch."},
 	{Name: "credit_amount", Shape: fields.Int, Create: true, Description: "The integer amount in cents (or local equivalent) representing the amount to credit the customer's balance, which will be automatically applied to their next invoice."},
@@ -21,7 +21,6 @@ var Table = []fields.Field{
 		{Name: "discount", Shape: fields.String, Response: true, Description: "The discount that was applied to get this discount amount."},
 	}},
 	{Name: "effective_at", Shape: fields.Int, Create: true, Response: true, Description: "The date when this credit note is in effect. Same as `created` unless overwritten. When defined, this value replaces the system-generated 'Date of issue' printed on the credit note PDF."},
-	{Name: "email_type", Shape: fields.String, Create: true, Enum: []string{"credit_note", "none"}, Description: "Type of email to send to the customer, one of `credit_note` or `none` and the default is `credit_note`."},
 	{Name: "id", Shape: fields.String, Response: true, Description: "Unique identifier for the object."},
 	{Name: "invoice", Shape: fields.String, Required: true, Create: true, Response: true, Description: "ID of the invoice."},
 	{Name: "lines", Shape: fields.ObjectList, Create: true, Response: true, ServerDefaulted: true, Description: "Line items that make up the credit note. One of `amount`, `lines`, or `shipping_cost` must be provided.", PagedBy: "stripe_credit_note_line", Fields: []fields.Field{
@@ -65,10 +64,10 @@ var Table = []fields.Field{
 		{Name: "unit_amount_decimal", Shape: fields.String, Create: true, Response: true, Description: "Same as `unit_amount`, but contains a decimal value with at most 12 decimal places."},
 	}},
 	{Name: "livemode", Shape: fields.Bool, Response: true, Description: "If the object exists in live mode, the value is `true`. If the object exists in test mode, the value is `false`."},
-	{Name: "memo", Shape: fields.String, Create: true, Update: true, Response: true, Description: "The credit note's memo appears on the credit note PDF."},
-	{Name: "metadata", Shape: fields.StringMap, Create: true, Update: true, Response: true, Description: "Set of [key-value pairs](https://docs.stripe.com/api/metadata) that you can attach to an object. This can be useful for storing additional information about the object in a structured format. Individual keys can be unset by posting an empty value to them. All keys can be unset by posting an empty value to `metadata`."},
+	{Name: "memo", Shape: fields.String, Create: true, Update: true, Response: true, Stable: true, Description: "The credit note's memo appears on the credit note PDF.", Default: &fields.Default{Kind: fields.DefaultNone}},
+	{Name: "metadata", Shape: fields.StringMap, Create: true, Update: true, Response: true, Stable: true, Description: "Set of [key-value pairs](https://docs.stripe.com/api/metadata) that you can attach to an object. This can be useful for storing additional information about the object in a structured format. Individual keys can be unset by posting an empty value to them. All keys can be unset by posting an empty value to `metadata`.", Default: &fields.Default{Kind: fields.DefaultValue, Value: "{}"}},
 	{Name: "number", Shape: fields.String, Response: true, Description: "A unique number that identifies this particular credit note and appears on the PDF of the credit note and its associated invoice."},
-	{Name: "out_of_band_amount", Shape: fields.Int, Create: true, Response: true, Description: "The integer amount in cents (or local equivalent) representing the amount that is credited outside of Stripe."},
+	{Name: "out_of_band_amount", Shape: fields.Int, Create: true, Response: true, Description: "The integer amount in cents (or local equivalent) representing the amount that is credited outside of Stripe.", Default: &fields.Default{Kind: fields.DefaultNone}},
 	{Name: "pdf", Shape: fields.String, Response: true, Description: "The link to download the PDF of the credit note."},
 	{Name: "post_payment_amount", Shape: fields.Int, Response: true, Description: "The amount of the credit note that was refunded to the customer, credited to the customer's balance, credited outside of Stripe, or any combination thereof."},
 	{Name: "pre_payment_amount", Shape: fields.Int, Response: true, Description: "The amount of the credit note by which the invoice's `amount_remaining` and `amount_due` were reduced."},
@@ -78,22 +77,22 @@ var Table = []fields.Field{
 		{Name: "discount", Shape: fields.String, Response: true, Description: "The discount that was applied to get this pretax credit amount."},
 		{Name: "type", Shape: fields.String, Response: true, Enum: []string{"credit_balance_transaction", "discount"}, Description: "Type of the pretax credit amount referenced."},
 	}},
-	{Name: "reason", Shape: fields.String, Create: true, Response: true, Enum: []string{"duplicate", "fraudulent", "order_change", "product_unsatisfactory"}, Description: "Reason for issuing this credit note, one of `duplicate`, `fraudulent`, `order_change`, or `product_unsatisfactory`"},
+	{Name: "reason", Shape: fields.String, Create: true, Response: true, Enum: []string{"duplicate", "fraudulent", "order_change", "product_unsatisfactory"}, Description: "Reason for issuing this credit note, one of `duplicate`, `fraudulent`, `order_change`, or `product_unsatisfactory`", Default: &fields.Default{Kind: fields.DefaultNone}},
 	{Name: "refund_amount", Shape: fields.Int, Create: true, Description: "The integer amount in cents (or local equivalent) representing the amount to refund. If set, a refund will be created for the charge associated with the invoice."},
 	{Name: "refunds", Shape: fields.ObjectList, Create: true, Response: true, ServerDefaulted: true, Description: "Refunds to link to this credit note.", Fields: []fields.Field{
-		{Name: "amount_refunded", Shape: fields.Int, Create: true, Response: true, ServerDefaulted: true, Description: "Amount of the refund that applies to this credit note, in cents (or local equivalent)."},
+		{Name: "amount_refunded", Shape: fields.Int, Create: true, Response: true, ServerDefaulted: true, Description: "Amount of the refund that applies to this credit note, in cents (or local equivalent).", Default: &fields.Default{Kind: fields.DefaultVaries}},
 		{Name: "payment_record_refund", Shape: fields.Object, Create: true, Response: true, Description: "The PaymentRecord refund details associated with this credit note refund.", Fields: []fields.Field{
 			{Name: "payment_record", Shape: fields.String, Required: true, Create: true, Response: true, Description: "ID of the payment record."},
 			{Name: "refund_group", Shape: fields.String, Required: true, Create: true, Response: true, Description: "ID of the refund group."},
 		}},
-		{Name: "refund", Shape: fields.String, Create: true, Response: true, ServerDefaulted: true, Description: "ID of the refund."},
-		{Name: "type", Shape: fields.String, Create: true, Response: true, Enum: []string{"payment_record_refund", "refund"}, Description: "Type of the refund, one of `refund` or `payment_record_refund`."},
+		{Name: "refund", Shape: fields.String, Create: true, Response: true, ServerDefaulted: true, Description: "ID of the refund.", Default: &fields.Default{Kind: fields.DefaultVaries}},
+		{Name: "type", Shape: fields.String, Create: true, Response: true, Enum: []string{"payment_record_refund", "refund"}, Description: "Type of the refund, one of `refund` or `payment_record_refund`.", Default: &fields.Default{Kind: fields.DefaultVaries}},
 	}},
 	{Name: "shipping_cost", Shape: fields.Object, Create: true, Response: true, Description: "When shipping_cost contains the shipping_rate from the invoice, the shipping_cost is included in the credit note. One of `amount`, `lines`, or `shipping_cost` must be provided.", Fields: []fields.Field{
 		{Name: "amount_subtotal", Shape: fields.Int, Response: true, Description: "Total shipping cost before any taxes are applied."},
 		{Name: "amount_tax", Shape: fields.Int, Response: true, Description: "Total tax amount applied due to shipping costs. If no tax was applied, defaults to 0."},
 		{Name: "amount_total", Shape: fields.Int, Response: true, Description: "Total shipping cost after taxes are applied."},
-		{Name: "shipping_rate", Shape: fields.String, Create: true, Response: true, Description: "The ID of the ShippingRate for this invoice."},
+		{Name: "shipping_rate", Shape: fields.String, Create: true, Response: true, Description: "The ID of the ShippingRate for this invoice.", Default: &fields.Default{Kind: fields.DefaultNone}},
 		{Name: "taxes", Shape: fields.ObjectList, Response: true, Description: "The taxes applied to the shipping rate.", Fields: []fields.Field{
 			{Name: "amount", Shape: fields.Int, Response: true, Description: "Amount of tax applied for this rate."},
 			{Name: "rate", Shape: fields.Object, Response: true, Description: "Tax rates can be applied to [invoices](https://docs.stripe.com/invoicing/taxes/tax-rates), [subscriptions](https://docs.stripe.com/billing/taxes/tax-rates) and [Checkout Sessions](https://docs.stripe.com/payments/checkout/use-manual-tax-rates) to collect tax. Related guide: [Tax rates](https://docs.stripe.com/billing/taxes/tax-rates)", Copy: "stripe_tax_rate", Fields: []fields.Field{

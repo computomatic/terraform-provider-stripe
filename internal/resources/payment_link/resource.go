@@ -47,6 +47,8 @@ var Declaration = engine.Declaration{
 	Answers: map[string]string{
 		// suite: TestPaymentLinkAttributes, probe `isolated/hash_after_completion`
 		"after_completion.redirect.url": "Stripe takes it on an update only beside `after_completion.type`, which an update sends with it.",
+		// suite: TestPaymentLinkAttributes, probes `isolated/collection_*`
+		"payment_method_collection": "Stripe takes it only on a link whose line items hold a recurring price.",
 	},
 	Defaults: map[string]string{
 		"consent_collection.promotions":              "`none` once `consent_collection` is set",

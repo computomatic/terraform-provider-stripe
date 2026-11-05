@@ -3,6 +3,7 @@ package invoiceitem_test
 import (
 	"fmt"
 	"os"
+	"regexp"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
@@ -207,6 +208,68 @@ func TestAccInvoiceitem_drift(t *testing.T) {
 					plancheck.ExpectResourceAction(address, plancheck.ResourceActionUpdate),
 				}},
 				Check: resource.TestCheckResourceAttr(address, "description", "Setup fee"),
+			},
+		},
+	})
+}
+
+// A pending item takes a coupon, or a promotion code, as a discount, which the resource reads
+// back by the form configured from the discounts Stripe expands; an update to a promotion code
+// replaces the coupon's discount in place (suite: TestInvoiceItemAttributes, states
+// `discount_coupon` and `discount_promotion_code`, on an item of 1500 in `usd`, with the coupon of
+// `newPromotionCouponID` and the promotion code of `promotionCodeForm`).
+func TestAccInvoiceitem_discounts(t *testing.T) {
+	acct := acctest.NewAccount(t)
+	catalogue := `
+resource "stripe_coupon" "test" {
+  percent_off = 10
+  duration    = "once"
+}
+
+resource "stripe_promotion_code" "test" {
+  promotion = {
+    type   = "coupon"
+    coupon = stripe_coupon.test.id
+  }
+}
+`
+	item := func(discount string) string {
+		return acct.ProviderBlock() + catalogue + fmt.Sprintf(`
+resource "stripe_customer" "test" {}
+
+resource "stripe_invoiceitem" "test" {
+  customer  = stripe_customer.test.id
+  currency  = "usd"
+  amount    = 1500
+  discounts = [{ %s }]
+}
+`, discount)
+	}
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: tfacc.ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: item("coupon = stripe_coupon.test.id") + `
+data "stripe_invoiceitem" "by_id" {
+  id = stripe_invoiceitem.test.id
+}
+`,
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr(address, "discounts.#", "1"),
+					resource.TestCheckResourceAttrPair(address, "discounts.0.coupon", "stripe_coupon.test", "id"),
+					resource.TestMatchResourceAttr("data.stripe_invoiceitem.by_id", "discounts.0", regexp.MustCompile(`^di_`)),
+				),
+			},
+			{
+				Config: item("promotion_code = stripe_promotion_code.test.id"),
+				ConfigPlanChecks: resource.ConfigPlanChecks{PreApply: []plancheck.PlanCheck{
+					plancheck.ExpectResourceAction(address, plancheck.ResourceActionUpdate),
+				}},
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr(address, "discounts.#", "1"),
+					resource.TestCheckResourceAttrPair(address, "discounts.0.promotion_code", "stripe_promotion_code.test", "id"),
+					resource.TestCheckNoResourceAttr(address, "discounts.0.coupon"),
+				),
 			},
 		},
 	})

@@ -35,6 +35,7 @@ This data source exports the following attributes in addition to the arguments a
 * `date` - Time at which the object was created. Measured in seconds since the Unix epoch.
 * `description` - An arbitrary string which you can attach to the invoice item. The description is displayed in the invoice for easy tracking.
 * `discountable` - Controls whether discounts apply to this invoice item. Defaults to false for prorations or negative invoice items, and true for all other invoice items.
+* `discounts` - The discounts which apply to the invoice item. Item discounts are applied before invoice discounts. Use `expand[]=discounts` to expand each discount.
 * `frozen_fields` - Array of field names that can't be modified. Attempting to update a frozen field returns an error.
 * `invoice` - The ID of an existing invoice to add this invoice item to. For subscription invoices, when left blank, the invoice item will be added to the next upcoming scheduled invoice. For standalone invoices, the invoice item won't be automatically added unless you pass `pending_invoice_item_behavior: 'include'` when creating the invoice. This is useful when adding invoice items in response to an invoice.created webhook. You can only add invoice items to draft invoices and there is a maximum of 250 items per invoice.
 * `invoicing_rules` - The rules that control when this invoice item is eligible for invoicing. All rules must be satisfied for the item to be invoiced. See [`invoicing_rules`](#invoicing_rules) below.

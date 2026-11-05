@@ -47,21 +47,21 @@ The following arguments are required:
 
 The following arguments are optional:
 
-* `active` - (Optional) Whether the configuration is active and can be used to create portal sessions. Default: not sent. Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
+* `active` - (Optional) Whether the configuration is active and can be used to create portal sessions. Default: not sent. Removing it from the configuration leaves the current value.
 * `business_profile` - (Optional) The business information shown to customers in the portal. Removing it from the configuration leaves the current value. See [`business_profile`](#business_profile) below.
-* `default_return_url` - (Optional) The default URL to redirect customers to when they click on the portal's link to return to your website. This can be [overridden](https://docs.stripe.com/api/customer_portal/sessions/create#create_portal_session-return_url) when creating the session.
+* `default_return_url` - (Optional) The default URL to redirect customers to when they click on the portal's link to return to your website. This can be [overridden](https://docs.stripe.com/api/customer_portal/sessions/create#create_portal_session-return_url) when creating the session. Default: none.
 * `login_page` - (Optional) The hosted login page for this configuration. Learn more about the portal login page in our [integration docs](https://stripe.com/docs/billing/subscriptions/integrating-customer-portal#share). Removing it from the configuration leaves the current value. See [`login_page`](#login_page) below.
-* `metadata` - (Optional) Set of [key-value pairs](https://docs.stripe.com/api/metadata) that you can attach to an object. This can be useful for storing additional information about the object in a structured format. Individual keys can be unset by posting an empty value to them. All keys can be unset by posting an empty value to `metadata`.
-* `name` - (Optional) The name of the configuration.
+* `metadata` - (Optional) Set of [key-value pairs](https://docs.stripe.com/api/metadata) that you can attach to an object. This can be useful for storing additional information about the object in a structured format. Individual keys can be unset by posting an empty value to them. All keys can be unset by posting an empty value to `metadata`. Default (Stripe): `{}`.
+* `name` - (Optional) The name of the configuration. Default: none.
 
 <a id="business_profile"></a>
 ### `business_profile`
 
 The `business_profile` attribute supports:
 
-* `headline` - (Optional) The messaging shown to customers in the portal.
-* `privacy_policy_url` - (Optional) A link to the business’s publicly available privacy policy.
-* `terms_of_service_url` - (Optional) A link to the business’s publicly available terms of service.
+* `headline` - (Optional) The messaging shown to customers in the portal. Default: none.
+* `privacy_policy_url` - (Optional) A link to the business’s publicly available privacy policy. Default: none.
+* `terms_of_service_url` - (Optional) A link to the business’s publicly available terms of service. Default: none.
 
 <a id="features"></a>
 ### `features`
@@ -79,7 +79,7 @@ The `features` attribute supports:
 
 The `features.customer_update` attribute supports:
 
-* `allowed_updates` - (Optional) The types of customer updates that are supported. When empty, customers are not updateable. Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
+* `allowed_updates` - (Optional) The types of customer updates that are supported. When empty, customers are not updateable. Default (Stripe): `[]`. Removing it from the configuration leaves the current value.
 * `enabled` - (Required) Whether the feature is enabled.
 
 <a id="features.invoice_history"></a>
@@ -95,7 +95,7 @@ The `features.invoice_history` attribute supports:
 The `features.payment_method_update` attribute supports:
 
 * `enabled` - (Required) Whether the feature is enabled.
-* `payment_method_configuration` - (Optional) The [Payment Method Configuration](https://docs.stripe.com/api/payment_method_configurations) to use for this portal session. When specified, customers will be able to update their payment method to one of the options specified by the payment method configuration. If not set, the default payment method configuration is used.
+* `payment_method_configuration` - (Optional) The [Payment Method Configuration](https://docs.stripe.com/api/payment_method_configurations) to use for this portal session. When specified, customers will be able to update their payment method to one of the options specified by the payment method configuration. If not set, the default payment method configuration is used. Default: none.
 
 <a id="features.subscription_cancel"></a>
 ### `features.subscription_cancel`
@@ -104,8 +104,8 @@ The `features.subscription_cancel` attribute supports:
 
 * `cancellation_reason` - (Optional) Removing it from the configuration leaves the current value. See [`features.subscription_cancel.cancellation_reason`](#features.subscription_cancel.cancellation_reason) below.
 * `enabled` - (Required) Whether the feature is enabled.
-* `mode` - (Optional) Whether to cancel subscriptions immediately or at the end of the billing period. Possible values: `at_period_end`, `immediately`. Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
-* `proration_behavior` - (Optional) Whether to create prorations when canceling subscriptions. Possible values are `none` and `create_prorations`. Possible values: `always_invoice`, `create_prorations`, `none`. Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
+* `mode` - (Optional) Whether to cancel subscriptions immediately or at the end of the billing period. Possible values: `at_period_end`, `immediately`. Default (Stripe): `at_period_end`. Removing it from the configuration leaves the current value.
+* `proration_behavior` - (Optional) Whether to create prorations when canceling subscriptions. Possible values are `none` and `create_prorations`. Possible values: `always_invoice`, `create_prorations`, `none`. Default (Stripe): `none`. Removing it from the configuration leaves the current value.
 
 <a id="features.subscription_cancel.cancellation_reason"></a>
 ### `features.subscription_cancel.cancellation_reason`
@@ -113,7 +113,7 @@ The `features.subscription_cancel` attribute supports:
 The `features.subscription_cancel.cancellation_reason` attribute supports:
 
 * `enabled` - (Required) Whether the feature is enabled.
-* `feedback_options` - (Optional) The IDs of custom feedback options configured for this cancellation reason.
+* `feedback_options` - (Optional) The IDs of custom feedback options configured for this cancellation reason. Default (Stripe): `[]`.
 * `options` - (Required) Which cancellation reasons will be given as options to the customer.
 
 <a id="features.subscription_update"></a>
@@ -121,13 +121,13 @@ The `features.subscription_cancel.cancellation_reason` attribute supports:
 
 The `features.subscription_update` attribute supports:
 
-* `billing_cycle_anchor` - (Optional) Determines the value to use for the billing cycle anchor on subscription updates. Valid values are `now` or `unchanged`, and the default value is `unchanged`. Setting the value to `now` resets the subscription's billing cycle anchor to the current time (in UTC). For more information, see the billing cycle [documentation](https://docs.stripe.com/billing/subscriptions/billing-cycle). Possible values: `now`, `unchanged`.
-* `default_allowed_updates` - (Optional) The types of subscription updates that are supported for items listed in the `products` attribute. When empty, subscriptions are not updateable. Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
+* `billing_cycle_anchor` - (Optional) Determines the value to use for the billing cycle anchor on subscription updates. Valid values are `now` or `unchanged`, and the default value is `unchanged`. Setting the value to `now` resets the subscription's billing cycle anchor to the current time (in UTC). For more information, see the billing cycle [documentation](https://docs.stripe.com/billing/subscriptions/billing-cycle). Possible values: `now`, `unchanged`. Default (Stripe): `unchanged`.
+* `default_allowed_updates` - (Optional) The types of subscription updates that are supported for items listed in the `products` attribute. When empty, subscriptions are not updateable. Default (Stripe): `[]`. Removing it from the configuration leaves the current value.
 * `enabled` - (Required) Whether the feature is enabled.
 * `products` - (Optional) The list of up to 10 products that support subscription updates. See [`features.subscription_update.products`](#features.subscription_update.products) below.
-* `proration_behavior` - (Optional) Determines how to handle prorations resulting from subscription updates. Valid values are `none`, `create_prorations`, and `always_invoice`. Defaults to a value of `none` if you don't set it during creation. Possible values: `always_invoice`, `create_prorations`, `none`. Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
+* `proration_behavior` - (Optional) Determines how to handle prorations resulting from subscription updates. Valid values are `none`, `create_prorations`, and `always_invoice`. Defaults to a value of `none` if you don't set it during creation. Possible values: `always_invoice`, `create_prorations`, `none`. Default (Stripe): `none`. Removing it from the configuration leaves the current value.
 * `schedule_at_period_end` - (Optional) Removing it from the configuration leaves the current value. See [`features.subscription_update.schedule_at_period_end`](#features.subscription_update.schedule_at_period_end) below.
-* `trial_update_behavior` - (Optional) Determines how handle updates to trialing subscriptions. Valid values are `end_trial` and `continue_trial`. Defaults to a value of `end_trial` if you don't set it during creation. Possible values: `continue_trial`, `end_trial`. Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
+* `trial_update_behavior` - (Optional) Determines how handle updates to trialing subscriptions. Valid values are `end_trial` and `continue_trial`. Defaults to a value of `end_trial` if you don't set it during creation. Possible values: `continue_trial`, `end_trial`. Default (Stripe): `end_trial`. Removing it from the configuration leaves the current value.
 
 <a id="features.subscription_update.products"></a>
 ### `features.subscription_update.products`

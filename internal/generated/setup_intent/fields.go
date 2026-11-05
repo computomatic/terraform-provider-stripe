@@ -429,7 +429,7 @@ var Table = []fields.Field{
 		{Name: "card", Shape: fields.Object, Update: true, Fields: []fields.Field{
 			{Name: "three_d_secure", Shape: fields.Object, Update: true, Fields: []fields.Field{
 				{Name: "ares_trans_status", Shape: fields.String, Update: true, Enum: []string{"A", "C", "I", "N", "R", "U", "Y"}, Default: &fields.Default{Kind: fields.DefaultNotSent}, Refused: "Stripe refused it on a US account on update: \"The parameter `payment_method_options[card][three_d_secure]` cannot be used when creating a SetupIntent unless `confirm` is set to true.\"."},
-				{Name: "cryptogram", Shape: fields.String, Update: true, Default: &fields.Default{Kind: fields.DefaultNotSent}, Refused: "Stripe refused it on a US account on update: \"The parameter `payment_method_options[card][three_d_secure]` cannot be used when creating a SetupIntent unless `confirm` is set to true.\"."},
+				{Name: "cryptogram", Shape: fields.String, Update: true, Default: &fields.Default{Kind: fields.DefaultNotSent}, Refused: "Stripe refused it on a US account on update: \"You may only specify all or none of these parameters: version, cryptogram, transaction_id.\"."},
 				{Name: "electronic_commerce_indicator", Shape: fields.String, Update: true, Enum: []string{"01", "02", "05", "06", "07"}, Default: &fields.Default{Kind: fields.DefaultNotSent}, Refused: "Stripe refused it on a US account on update: \"The parameter `payment_method_options[card][three_d_secure]` cannot be used when creating a SetupIntent unless `confirm` is set to true.\"."},
 				{Name: "network_options", Shape: fields.Object, Update: true, Fields: []fields.Field{
 					{Name: "cartes_bancaires", Shape: fields.Object, Update: true, Fields: []fields.Field{
@@ -437,8 +437,8 @@ var Table = []fields.Field{
 					}},
 				}},
 				{Name: "requestor_challenge_indicator", Shape: fields.String, Update: true, Default: &fields.Default{Kind: fields.DefaultNotSent}, Refused: "Stripe refused it on a US account on update: \"The parameter `payment_method_options[card][three_d_secure]` cannot be used when creating a SetupIntent unless `confirm` is set to true.\"."},
-				{Name: "transaction_id", Shape: fields.String, Update: true, Default: &fields.Default{Kind: fields.DefaultNotSent}, Refused: "Stripe refused it on a US account on update: \"The parameter `payment_method_options[card][three_d_secure]` cannot be used when creating a SetupIntent unless `confirm` is set to true.\"."},
-				{Name: "version", Shape: fields.String, Update: true, Enum: []string{"1.0.2", "2.1.0", "2.2.0", "2.3.0", "2.3.1"}, Default: &fields.Default{Kind: fields.DefaultNotSent}, Refused: "Stripe refused it on a US account on update: \"The parameter `payment_method_options[card][three_d_secure]` cannot be used when creating a SetupIntent unless `confirm` is set to true.\"."},
+				{Name: "transaction_id", Shape: fields.String, Update: true, Default: &fields.Default{Kind: fields.DefaultNotSent}, Refused: "Stripe refused it on a US account on update: \"You may only specify all or none of these parameters: version, cryptogram, transaction_id.\"."},
+				{Name: "version", Shape: fields.String, Update: true, Enum: []string{"1.0.2", "2.1.0", "2.2.0", "2.3.0", "2.3.1"}, Default: &fields.Default{Kind: fields.DefaultNotSent}, Refused: "Stripe refused it on a US account on update: \"You may only specify all or none of these parameters: version, cryptogram, transaction_id.\"."},
 			}},
 		}},
 	}},
