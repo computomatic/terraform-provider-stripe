@@ -54,14 +54,42 @@ jobs:
       - name: Docs are current
         run: bash scripts/check-docs.sh
 
-  acceptance:
-    # The fake image is not public, so pull requests from forks skip this job.
+  acceptance-groups:
+    # The fake image is not public, so pull requests from forks skip acceptance.
     if: github.event_name == 'push' || github.event.pull_request.head.repo.full_name == github.repository
     runs-on: ubuntu-latest
-    timeout-minutes: 45
+    timeout-minutes: 5
+    env:
+      # Raise this when a shard nears 20 minutes.
+      ACCEPTANCE_GROUPS: "4"
+    outputs:
+      groups: ${{ steps.groups.outputs.groups }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version-file: go.mod
+          cache: false
+      - name: Group the acceptance packages
+        id: groups
+        run: |
+          groups=$(bash scripts/acceptance-groups.sh "${ACCEPTANCE_GROUPS}")
+          echo "groups=${groups}" >> "$GITHUB_OUTPUT"
+          jq -r '.[] | "group \(.index): \(.packages)"' <<< "${groups}"
+
+  acceptance-shard:
+    name: acceptance group ${{ matrix.group.index }} (${{ matrix.cli }})
+    needs: acceptance-groups
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
     permissions:
       contents: read
       packages: read
+    strategy:
+      fail-fast: false
+      matrix:
+        group: ${{ fromJSON(needs.acceptance-groups.outputs.groups) }}
+        cli: [terraform, opentofu]
     env:
       TF_ACC: "1"
       FAKE_PORT: "12111"
@@ -107,19 +135,37 @@ jobs:
           docker logs fake-stripe-api
           echo "the fake did not become healthy"
           exit 1
-      - name: Acceptance tests (Terraform)
-        run: go test -count=1 -timeout 30m ./internal/resources/...
-      - name: Acceptance tests (OpenTofu)
+      - name: Acceptance tests
         env:
-          TF_ACC_PROVIDER_NAMESPACE: hashicorp
-          TF_ACC_PROVIDER_HOST: registry.opentofu.org
+          CLI: ${{ matrix.cli }}
+          PACKAGES: ${{ matrix.group.packages }}
         run: |
-          TF_ACC_TERRAFORM_PATH=$(command -v tofu)
-          export TF_ACC_TERRAFORM_PATH
-          go test -count=1 -timeout 30m ./internal/resources/...
+          if [ "${CLI}" = opentofu ]; then
+            TF_ACC_TERRAFORM_PATH=$(command -v tofu)
+            export TF_ACC_TERRAFORM_PATH
+            export TF_ACC_PROVIDER_NAMESPACE=hashicorp
+            export TF_ACC_PROVIDER_HOST=registry.opentofu.org
+          fi
+          read -ra packages <<< "${PACKAGES}"
+          go test -count=1 -timeout 20m "${packages[@]}"
       - name: Fake logs
         if: failure()
         run: docker logs fake-stripe-api
       - name: Stop the fake
         if: always()
         run: docker rm -f fake-stripe-api
+
+  # Branch protection requires this check: it passes only when every shard passed.
+  acceptance:
+    if: always() && (github.event_name == 'push' || github.event.pull_request.head.repo.full_name == github.repository)
+    needs: [acceptance-groups, acceptance-shard]
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Every shard passed
+        env:
+          GROUPS_RESULT: ${{ needs.acceptance-groups.result }}
+          SHARDS_RESULT: ${{ needs.acceptance-shard.result }}
+        run: |
+          echo "grouping: ${GROUPS_RESULT}, shards: ${SHARDS_RESULT}"
+          [ "${GROUPS_RESULT}" = success ] && [ "${SHARDS_RESULT}" = success ]

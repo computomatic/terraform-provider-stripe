@@ -176,7 +176,7 @@ A sandbox problem, such as a rate limit or objects left by a cancelled run, is r
 
 ### CI
 
-CI (`.github/workflows/ci.yml`) runs the checks as the `unit` job, the docs check (`scripts/check-docs.sh`) as the `docs` job, and the acceptance tests as the `acceptance` job, under Terraform and then OpenTofu, against the released fake image named by `.fake-version`. To move to a newer fake, re-pin with `tools/evidencepin` (see "Generated code"), which moves that line with the evidence, and regenerate. The `acceptance` job is skipped for pull requests from forks, because the fake image is private.
+CI (`.github/workflows/ci.yml`) runs the checks as the `unit` job, the docs check (`scripts/check-docs.sh`) as the `docs` job, and the acceptance tests against the released fake image named by `.fake-version`. `scripts/acceptance-groups.sh` splits the packages under `internal/resources` into groups of about equal weight, the number of top-level tests in each, and fails unless every package is in exactly one group; one job runs each group under Terraform and another under OpenTofu, and the `acceptance` job, the check branch protection requires, passes only when all of them did. When a group's job nears 20 minutes, raise `ACCEPTANCE_GROUPS` in the workflow. To move to a newer fake, re-pin with `tools/evidencepin` (see "Generated code"), which moves that line with the evidence, and regenerate. These jobs are skipped for pull requests from forks, because the fake image is private.
 
 ### Trying a build against the fake
 
