@@ -27,8 +27,10 @@ var Declaration = engine.Declaration{
 	// Stripe reports the price an item was made from, or a one-off amount stood for, in
 	// `pricing` (suite: "the object has `pricing`"), although the request may name none. A
 	// pending item names the draft invoice that sweeps it up (suite: "draft produced by a
-	// pending invoice item").
-	ServerDefaulted: []string{"invoice", "pricing"},
+	// pending invoice item"). Stripe gives an item made from `price_data` the product's name as
+	// its description when the create sends none (the suite's create probes `minimal/price_data`
+	// and `enums/2`, in spec/create_probes.json).
+	ServerDefaulted: []string{"description", "invoice", "pricing"},
 	Delete:          engine.Delete,
 }
 

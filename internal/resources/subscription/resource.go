@@ -47,7 +47,11 @@ var Declaration = engine.Declaration{
 	// update the suite proves them with.
 	SendWithUpdate:   []string{"payment_behavior", "proration_behavior"},
 	SendWithUpdateOn: []string{"items"},
-	Delete:           engine.Delete,
+	// Stripe keeps the members of `invoice_settings` an update leaves out (family `v1-billing`,
+	// `hashes`), so an update sends only those that changed; `issuer` requires its `type` and
+	// goes whole.
+	SendChangedMembers: []string{"invoice_settings"},
+	Delete:             engine.Delete,
 }
 
 // NewResource returns the resource constructor the provider registers.

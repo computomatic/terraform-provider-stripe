@@ -92,6 +92,10 @@ type Field struct {
 	// refused in others, the sentence with the refusals it recorded. The declaration words where
 	// Stripe takes it (engine.Declaration.Answers).
 	Answer string
+	// Unreachable is, on an argument with a value Stripe fails on every attempt, which the
+	// conformance suite therefore never sends, the sentence that names the value and the suite's
+	// reason.
+	Unreachable string
 	// Copy is, on an embedded copy of another Stripe object, the data source type that reads
 	// that object (D3).
 	Copy string

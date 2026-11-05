@@ -167,7 +167,9 @@ data "stripe_account_person_v2" "test" {
 
 // Stripe merges `relationship`, `address` and `metadata` and removes a metadata key sent as
 // null (suite: "update relationship address and metadata", "update unsets metadata key with
-// null"); the engine sends each of the first two whole, and never the ID numbers. A whole
+// null"); the engine sends the members of `relationship` that changed, because Stripe keeps the
+// others (family `v2`, `hashes`), `address`, which requires its `country`, whole, and never the ID
+// numbers. A whole
 // percent ownership comes back with `.0`, and state keeps the configured one. Removing the
 // phone fails, because nothing proves Stripe clears it with null.
 func TestAccAccountPersonV2_update(t *testing.T) {
@@ -231,8 +233,8 @@ func TestAccAccountPersonV2_update(t *testing.T) {
 							return fmt.Errorf("want 2 updates, got %d", len(updates))
 						}
 						first := updates[0]
-						if rel, _ := first.Get("relationship"); !jsonIs(rel, `{"director":true,"owner":true,"percent_ownership":"40.5","title":"Chair"}`) {
-							return fmt.Errorf("the update must send the whole relationship: %+v", rel)
+						if rel, _ := first.Get("relationship"); !jsonIs(rel, `{"director":true,"percent_ownership":"40.5","title":"Chair"}`) {
+							return fmt.Errorf("the update must send the relationship members that changed: %+v", rel)
 						}
 						if addr, _ := first.Get("address"); !jsonIs(addr, `{"city":"South San Francisco","country":"us","line1":"address_full_match","line2":"Suite 1","postal_code":"94080","state":"CA"}`) {
 							return fmt.Errorf("the update must send the whole address: %+v", addr)

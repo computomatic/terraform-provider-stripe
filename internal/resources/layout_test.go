@@ -18,36 +18,30 @@ import (
 // suffixes of `TestAcc<Resource>_<suffix>`.
 var requiredTests = []string{"create", "update", "replace", "import", "delete", "drift"}
 
-// acceptedDepartures are the hashes that send changed members though the record's
-// `families[].hashes` does not list them, which the product owner accepted on 2026-10-31 until the
-// suite proves them: each table's own entries, and below them the hashes the fake's declarations
-// (`ProvenByTest.Hashes`, fake v0.30.0) state as kept from suite tests. `individual` and
-// `configuration` are the owner's own entries, which the fake's declarations do not state.
-var acceptedDepartures = map[string][]string{
-	"account": {
-		"individual", "individual.registered_address", "individual.relationship", "individual.verification",
-		"individual.verification.document", "individual.verification.additional_document",
-		"company", "company.address", "company.administrative_address", "company.principal_place_of_business",
-	},
-	"account_person": {"registered_address", "verification", "verification.document", "verification.additional_document"},
-	"account_v2":     {"configuration", "defaults", "identity"},
-}
-
-// A hash sends only its changed members where `families[].hashes` lists it as `siblings_kept`, or
-// it is an accepted departure; a departure the record has since listed must go, and the
-// summary `nested_hash_update` proves nothing of a hash. SendWholeMembers holds no hash the record
-// lists as kept, which would send Stripe's own values back for nothing. The engine's
-// checkSentMembers makes each entry a hash and every hash below these objects an entry.
+// An update sends a hash as the record's `families[].hashes` answers for the table's object; the
+// summary `nested_hash_update` proves nothing of a hash. A hash listed as `siblings_kept` that the
+// update takes sends only its changed members (SendChangedMembers) wherever its parent is sent in
+// part, unless it has a member Stripe requires, which the engine sends whole, or RefuseChange
+// refuses its change. SendChangedMembers holds no other hash: none the record lists as
+// `siblings_cleared` or `refused`, or does not list. SendWholeMembers holds no hash listed as
+// kept, which would send Stripe's own values back for nothing, unless the hash goes whole for a
+// member it requires. A hash listed as `refused`, which Stripe will not take in part, goes whole:
+// it has a member Stripe requires, whose absence is what Stripe refuses, or SendWholeMembers names
+// it or a hash it sits in. The engine's checkSentMembers makes each entry a hash and every hash
+// below these objects an entry.
 func TestSendChangedMembersFollowTheEvidence(t *testing.T) {
-	type family struct {
-		Objects []string `json:"objects"`
-		Hashes  []struct {
-			Hash   string `json:"hash"`
-			Update string `json:"update"`
-		} `json:"hashes"`
-	}
 	var evidence struct {
-		Families []family `json:"families"`
+		Families []struct {
+			Hashes []struct {
+				Object string `json:"object"`
+				Hash   string `json:"hash"`
+				Update string `json:"update"`
+			} `json:"hashes"`
+		} `json:"families"`
+		MinimalCreates []struct {
+			Object    string `json:"object"`
+			Operation string `json:"operation"`
+		} `json:"minimal_creates"`
 	}
 	raw, err := os.ReadFile(filepath.Join("..", "..", "spec", "evidence.json"))
 	if err != nil {
@@ -57,7 +51,10 @@ func TestSendChangedMembersFollowTheEvidence(t *testing.T) {
 		t.Fatal(err)
 	}
 	var coverage struct {
-		Leaves []struct{ Table, Object string } `json:"leaves"`
+		Leaves []struct {
+			Table, Object, Side, Operation, Path, State string
+			Required                                    bool
+		} `json:"leaves"`
 	}
 	if raw, err = os.ReadFile(filepath.Join("..", "generated", "coverage.json")); err != nil {
 		t.Fatal(err)
@@ -65,14 +62,48 @@ func TestSendChangedMembersFollowTheEvidence(t *testing.T) {
 	if err := json.Unmarshal(raw, &coverage); err != nil {
 		t.Fatal(err)
 	}
-	objects := map[string]string{}
+	creates := map[string]bool{}
+	for _, c := range evidence.MinimalCreates {
+		creates[c.Object+" "+c.Operation] = true
+	}
+	answers := map[string]map[string]string{}
+	for _, f := range evidence.Families {
+		for _, h := range f.Hashes {
+			if answers[h.Object] == nil {
+				answers[h.Object] = map[string]string{}
+			}
+			answers[h.Object][h.Hash] = h.Update
+		}
+	}
+	// updated holds, per table, each path below which the update takes an exposed leaf, and
+	// required each hash with a member Stripe requires.
+	objects, updated, required := map[string]string{}, map[string]map[string]bool{}, map[string]map[string]bool{}
 	for _, l := range coverage.Leaves {
 		objects[l.Table] = l.Object
+		if l.Side != "request" {
+			continue
+		}
+		parent := l.Path[:max(strings.LastIndex(l.Path, "."), 0)]
+		if l.Required && parent != "" {
+			if required[l.Table] == nil {
+				required[l.Table] = map[string]bool{}
+			}
+			required[l.Table][parent] = true
+		}
+		if l.State != "exposed" || creates[l.Object+" "+l.Operation] {
+			continue
+		}
+		if updated[l.Table] == nil {
+			updated[l.Table] = map[string]bool{}
+		}
+		for p := parent; p != ""; p = p[:max(strings.LastIndex(p, "."), 0)] {
+			updated[l.Table][p] = true
+		}
 	}
 	list := func(field string) *regexp.Regexp {
 		return regexp.MustCompile(field + `:\s*\[\]string\{([^}]*)\}`)
 	}
-	changed, whole, name := list("SendChangedMembers"), list("SendWholeMembers"), regexp.MustCompile(`"([^"]+)"`)
+	changed, whole, refused, name := list("SendChangedMembers"), list("SendWholeMembers"), list("RefuseChange"), regexp.MustCompile(`"([^"]+)"`)
 	entries := func(re *regexp.Regexp, src []byte) []string {
 		var out []string
 		if m := re.FindSubmatch(src); m != nil {
@@ -86,53 +117,49 @@ func TestSendChangedMembersFollowTheEvidence(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	seen := map[string]bool{}
+	checked := 0
 	for _, file := range declarations {
 		src, err := os.ReadFile(file)
 		if err != nil {
 			t.Fatal(err)
 		}
-		sent, kept := entries(changed, src), entries(whole, src)
-		if len(sent)+len(kept) == 0 {
-			continue
-		}
 		table := filepath.Dir(file)
-		i := slices.IndexFunc(evidence.Families, func(f family) bool { return slices.Contains(f.Objects, objects[table]) })
-		if i < 0 {
-			t.Errorf("%s: no family holds its object %q", table, objects[table])
-			continue
+		sent, kept, fixed := entries(changed, src), entries(whole, src), entries(refused, src)
+		record := answers[objects[table]]
+		goesWhole := func(hash string) bool {
+			return required[table][hash] || slices.Contains(kept, hash)
 		}
-		record := map[string]string{}
-		for _, h := range evidence.Families[i].Hashes {
-			record[h.Hash] = h.Update
+		// within reports a hash that sits in, or is, one the list names.
+		within := func(names []string, hash string) bool {
+			return slices.ContainsFunc(names, func(n string) bool { return hash == n || strings.HasPrefix(hash, n+".") })
 		}
 		for _, hash := range sent {
-			seen[table+" "+hash] = true
-			accepted := slices.Contains(acceptedDepartures[table], hash)
-			switch update, listed := record[hash]; {
-			case listed && update != "siblings_kept":
-				t.Errorf("%s sends only the changed members of %s, which the record gives as %s", table, hash, update)
-			case listed && accepted:
-				t.Errorf("%s: the record now lists %s; take it out of acceptedDepartures", table, hash)
-			case !listed && !accepted:
-				t.Errorf("%s sends only the changed members of %s, which the record does not list and no departure accepts", table, hash)
+			if update := record[hash]; update != "siblings_kept" {
+				t.Errorf("%s sends only the changed members of %s, which the record gives as %q", table, hash, update)
 			}
 		}
 		for _, hash := range kept {
-			if record[hash] == "siblings_kept" {
+			if record[hash] == "siblings_kept" && !required[table][hash] {
 				t.Errorf("%s sends %s whole, which the record lists as keeping its siblings: send its changed members", table, hash)
 			}
 		}
-	}
-	if len(seen) == 0 {
-		t.Error("no declaration sends only changed members; the pattern no longer matches")
-	}
-	for table, hashes := range acceptedDepartures {
-		for _, hash := range hashes {
-			if !seen[table+" "+hash] {
-				t.Errorf("acceptedDepartures names %s %s, which no declaration sends in part", table, hash)
+		for hash, update := range record {
+			if !updated[table][hash] {
+				continue
+			}
+			checked++
+			i := strings.LastIndex(hash, ".")
+			inPart := i < 0 || slices.Contains(sent, hash[:i])
+			switch {
+			case update == "siblings_kept" && inPart && !slices.Contains(sent, hash) && !goesWhole(hash) && !within(fixed, hash):
+				t.Errorf("%s sends %s whole, which the record lists as keeping its siblings: name it in SendChangedMembers", table, hash)
+			case update == "refused" && !required[table][hash] && !within(kept, hash):
+				t.Errorf("%s can send %s in part, which Stripe refuses: name it in SendWholeMembers", table, hash)
 			}
 		}
+	}
+	if checked == 0 {
+		t.Error("no table's update takes a hash the record lists; the record or the pattern no longer matches")
 	}
 }
 

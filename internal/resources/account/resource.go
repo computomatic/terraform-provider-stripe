@@ -53,7 +53,7 @@ import (
 //
 // The record proves updates of every member of `individual` and `company` but the ID number
 // and SSN, which stay refused, so the rest change in place, one member at a time, because
-// Stripe keeps the members a request leaves out (family `v1-connect`, `siblings_kept`) and some
+// Stripe keeps the members a request leaves out (family `v1-connect`, `hashes`) and some
 // of them, such as `company.directors_provided`, are attestations it should not be sent back.
 // Stripe's refusal of a change it will not take, as of a verified individual, fails the apply.
 //
@@ -113,7 +113,7 @@ var Declaration = engine.Declaration{
 		"individual.verification", "individual.verification.document", "individual.verification.additional_document",
 		"company", "company.address", "company.administrative_address", "company.principal_place_of_business",
 	},
-	// Neither the record's `families` nor the fake's suite-proven declaration states these.
+	// The record's `families[].hashes` does not list these.
 	SendWholeMembers: []string{"company.directorship_declaration", "company.ownership_declaration"},
 	// suite: "TestAccountAttributes/leaves/response/account/company.directors_provided", and
 	// `executives_provided` and `owners_provided` beside it: the variants `company`, `individual`

@@ -917,7 +917,7 @@ The `individual.relationship` attribute supports:
 * `director` - (Optional) Whether the person is a director of the account's legal entity. Directors are typically members of the governing board of the company, or responsible for ensuring the company meets its regulatory obligations. Default (Stripe): `false` once `individual` is set. Removing it from the configuration leaves the current value.
 * `executive` - (Optional) Whether the person has significant responsibility to control, manage, or direct the organization. Default (Stripe): `false` once `individual` is set. Removing it from the configuration leaves the current value.
 * `owner` - (Optional) Whether the person is an owner of the account’s legal entity. Default (Stripe): `false` once `individual` is set. Removing it from the configuration leaves the current value.
-* `percent_ownership` - (Optional) The percent owned by the person of the account's legal entity. Default: none. Removing it from the configuration leaves the current value.
+* `percent_ownership` - (Optional) The percent owned by the person of the account's legal entity. Default: none.
 * `title` - (Optional) The person's title (e.g., CEO, Support Engineer). Default: none.
 
 <a id="individual.verification"></a>

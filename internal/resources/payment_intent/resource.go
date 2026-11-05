@@ -59,9 +59,13 @@ var Declaration = engine.Declaration{
 	RefuseChange: []string{"transfer_group"},
 	// `customer_account` is verified only by Stripe's refusal of every value, on create and on
 	// update, so a change stays refused.
-	ReplaceOn:    []string{"customer_account"},
-	Delete:       engine.Refuse,
-	RefuseReason: "Stripe cannot delete a payment intent; set `status` to `canceled` to cancel one that has not succeeded.",
+	ReplaceOn: []string{"customer_account"},
+	// Stripe keeps the members of `payment_details` an update leaves out and clears those of
+	// `shipping.address` (family `v1-payments`, `hashes`), so an update sends only the payment
+	// details that changed and `shipping`, which requires its `address` and `name`, whole.
+	SendChangedMembers: []string{"payment_details"},
+	Delete:             engine.Refuse,
+	RefuseReason:       "Stripe cannot delete a payment intent; set `status` to `canceled` to cancel one that has not succeeded.",
 	Transitions: []engine.Transition{
 		{Field: "status", Value: "succeeded", Path: "/v1/payment_intents/{id}/confirm", From: []string{"requires_confirmation"}, Final: []string{"canceled"}},
 		{Field: "status", Value: "succeeded", Path: "/v1/payment_intents/{id}/capture", From: []string{"requires_capture"}, Final: []string{"canceled"}},

@@ -795,6 +795,43 @@ func TestAccAccount_individualUpdate(t *testing.T) {
 	})
 }
 
+// A key removed from `individual.metadata` leaves it, and the next plan is empty: the update
+// sends the key empty, because Stripe merges the map key by key and an empty value removes the
+// key (the record's probes `update/1`, which sends `attrs_a` alone over `attrs_a` and `attrs_b`
+// and reads both back, and `unset/1`, which sends `attrs_a` empty and reads `attrs_b` alone).
+func TestAccAccount_individualMetadataKeyRemoved(t *testing.T) {
+	acct := acctest.NewAccount(t)
+	var id string
+	cfg := func(metadata string) string {
+		return customConfig(acct, capabilities+`  business_type = "individual"
+  individual = {
+    first_name = "Jenny"
+    last_name  = "Rosen"
+    metadata   = `+metadata+`
+  }
+`)
+	}
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: tfacc.ProviderFactories,
+		Steps: []resource.TestStep{
+			{Config: cfg(`{ attrs_a = "one", attrs_b = "two" }`), Check: idOf(&id)},
+			{
+				Config: cfg(`{ attrs_a = "one" }`),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply:             []plancheck.PlanCheck{plancheck.ExpectResourceAction(address, plancheck.ResourceActionUpdate)},
+					PostApplyPostRefresh: []plancheck.PlanCheck{plancheck.ExpectEmptyPlan()},
+				},
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttrPtr(address, "id", &id),
+					resource.TestCheckResourceAttr(address, "individual.metadata.%", "1"),
+					resource.TestCheckResourceAttr(address, "individual.metadata.attrs_a", "one"),
+					resource.TestCheckNoResourceAttr(address, "individual.metadata.attrs_b"),
+				),
+			},
+		},
+	})
+}
+
 // On an individual account with no `company` in the configuration, Stripe copies the individual's
 // address and phone into `company`, and the copy follows the individual's (the record's
 // `filled_from`).

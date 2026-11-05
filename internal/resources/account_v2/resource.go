@@ -30,9 +30,13 @@ import (
 // Stripe takes a country on an account with none and fills the currency from it, and it refused
 // `GB` on a recipient that requests `stripe_transfers` (probe
 // `isolated/change_country_on_recipient`). Stripe changes `applied_configurations` with the
-// recipient's `applied` and its request (the record's `side_effects`). An update sends only the
-// members that changed, because Stripe keeps those a request leaves out (family `v2`,
-// `siblings_kept`). Stripe does not return the capabilities a configuration requested, only
+// recipient's `applied` and its request (the record's `side_effects`). An update of
+// `configuration`, `defaults`, `defaults.profile` or `identity` sends only the members that
+// changed, because Stripe keeps those a request leaves out (family `v2`, `hashes`);
+// `configuration.recipient` and `identity.business_details`, which the record does not list, go
+// whole. Stripe refuses `defaults.responsibilities` in part (`hashes`, `refused`:
+// `losses_collector: Required request field missing`), and it is only ever sent whole, with both
+// collectors it requires. Stripe does not return the capabilities a configuration requested, only
 // their status, so the `requested` flags stay in state from the configuration, and Stripe drops
 // the recipient's `stripe_transfers` from its answer once it is no longer requested (the record's
 // `side_effects`, probe `update/2`), so that flag is kept even then. Stripe answers an account
@@ -89,6 +93,8 @@ var Declaration = engine.Declaration{
 		"configuration.recipient.capabilities.stripe_balance.stripe_transfers.requested": {"applied_configurations"},
 	},
 	Answers: map[string]string{
+		// suite: TestV2CoreAccountAttributes, probe `isolated/hash_responsibilities`
+		"defaults.responsibilities.fees_collector": "Stripe takes it on an update only beside `losses_collector`, which an update sends with it.",
 		// suite: TestV2CoreAccountAttributes, probes `isolated/change_adds_recipient` and
 		// `isolated/change_adds_recipient_with_collectors`
 		"configuration.recipient.capabilities.stripe_balance.stripe_transfers.requested": "Stripe takes the request on an update of an account without a dashboard only beside `dashboard` and both collectors of `defaults.responsibilities`.",
@@ -98,13 +104,11 @@ var Declaration = engine.Declaration{
 		// `isolated/change_country_from_none` and `isolated/change_country_on_recipient`
 		"identity.country": "Stripe took `GB` on an update of an account in `US`, and `US` on an account that had no country, and refused `GB` on an account whose recipient configuration requests `stripe_transfers`.",
 	},
-	SendChangedMembers: []string{"configuration", "defaults", "identity"},
-	// Neither the record's `families` nor the fake's suite-proven declaration states these, and
-	// the fake refuses a partial update of `defaults.profile` as `fake_unproven`.
-	SendWholeMembers: []string{"configuration.recipient", "defaults.profile", "identity.business_details"},
-	ClearsWithNull:   []string{"contact_phone"},
-	PreserveConfig:   []string{"identity.country", "configuration.recipient.capabilities.stripe_balance.stripe_transfers.requested"},
-	KeepWhenClosed:   "closed",
+	SendChangedMembers: []string{"configuration", "defaults", "defaults.profile", "identity"},
+	SendWholeMembers:   []string{"configuration.recipient", "identity.business_details"},
+	ClearsWithNull:     []string{"contact_phone"},
+	PreserveConfig:     []string{"identity.country", "configuration.recipient.capabilities.stripe_balance.stripe_transfers.requested"},
+	KeepWhenClosed:     "closed",
 	ServerDefaulted: []string{
 		"configuration", "dashboard", "defaults", "defaults.currency",
 		"identity", "identity.business_details", "identity.business_details.registered_name", "identity.country",

@@ -648,8 +648,10 @@ func (m *model) carryOnUpdate(n *node, state attr.Value, v wire.Value) wire.Valu
 
 // changedMembers is what an update sends of an object in SendChangedMembers: the members
 // whose planned value differs from the state's, those of a nested object in SendChangedMembers
-// likewise, and the whole of any other that has one. A member the plan leaves unknown is Stripe's
-// to fill in, so it is not sent.
+// likewise, and the whole of any other that has one. A map sends its changed keys and a removed
+// key as null, as Stripe merges it (the suite's probes `update/1` and `unset/1` of an account's
+// `individual.metadata`), unless ReplacedMaps names it, which goes whole without the keys it
+// lost. A member the plan leaves unknown is Stripe's to fill in, so it is not sent.
 func (m *model) changedMembers(n *node, plan, state attr.Value, allow func(*node) bool) (wire.Object, error) {
 	planned, held := objectAttrs(plan), objectAttrs(state)
 	var out wire.Object
@@ -680,7 +682,7 @@ func (m *model) changedMembers(n *node, plan, state attr.Value, allow func(*node
 				continue
 			}
 			v = members
-		case k.Shape == fields.StringMap:
+		case k.Shape == fields.StringMap && !slices.Contains(m.decl.ReplacedMaps, k.Path):
 			diff, err := metadataDiff(pv, sv)
 			if err != nil {
 				return nil, err

@@ -50,6 +50,9 @@ type attr struct {
 	// Answer is the declaration's wording of where Stripe takes an argument it refuses in other
 	// requests, with the recorded refusals.
 	Answer string
+	// Unreachable is the sentence that names a value of an argument Stripe fails on every
+	// attempt, and why.
+	Unreachable string
 	// Copy is, on an embedded copy of another Stripe object, the data source type that reads it.
 	Copy string
 }

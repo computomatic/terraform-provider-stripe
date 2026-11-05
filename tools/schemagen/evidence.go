@@ -138,9 +138,19 @@ type EvidenceLeaf struct {
 	WriteOnly  json.RawMessage `json:"write_only,omitempty"`
 	AcceptedIn json.RawMessage `json:"accepted_in,omitempty"`
 	Refusals   []Refusal       `json:"refusals,omitempty"`
-	Initial    json.RawMessage `json:"initial,omitempty"`
-	Nullable   json.RawMessage `json:"nullable,omitempty"`
-	Failure    json.RawMessage `json:"failure,omitempty"`
+	// Unreachable is, on a proven request leaf, the values Stripe fails on every attempt, which the
+	// suite therefore never sends.
+	Unreachable []UnreachableValue `json:"unreachable_values,omitempty"`
+	Initial     json.RawMessage    `json:"initial,omitempty"`
+	Nullable    json.RawMessage    `json:"nullable,omitempty"`
+	Failure     json.RawMessage    `json:"failure,omitempty"`
+}
+
+// UnreachableValue is a value of a request leaf that Stripe fails on every attempt, with the
+// suite's reason.
+type UnreachableValue struct {
+	Value  string `json:"value"`
+	Reason string `json:"reason"`
 }
 
 // Refusal is one refusal of a request that sent the leaf, on an account of a country. The message
@@ -285,8 +295,8 @@ type FilledFrom struct {
 }
 
 // Family is what a partial update of the family's objects does (P4). Hashes, where given, says
-// per hash whether it keeps the siblings a partial update leaves out; a hash it does not list is
-// unknown, whatever NestedHashUpdate says of the family.
+// per object and hash whether it keeps the siblings a partial update leaves out; a hash it does
+// not list for an object is unknown, whatever NestedHashUpdate says of the family.
 type Family struct {
 	Family           string       `json:"family"`
 	Objects          []string     `json:"objects"`
@@ -298,16 +308,19 @@ type Family struct {
 	Tests            []string     `json:"tests"`
 }
 
-// HashUpdate is what a partial update of one hash did to the members it left out.
+// HashUpdate is what a partial update of one hash of one object did to the members it left out.
 type HashUpdate struct {
+	Object string `json:"object"`
 	Hash   string `json:"hash"`
 	Update string `json:"update"`
 }
 
-// The values of HashUpdate.Update.
+// The values of HashUpdate.Update. HashRefused is a hash Stripe refused to update in part, for a
+// member the update left out.
 const (
 	HashSiblingsKept    = "siblings_kept"
 	HashSiblingsCleared = "siblings_cleared"
+	HashRefused         = "refused"
 )
 
 // Discount is what one form of a `discounts` element sent to one operation returned (P11).
@@ -332,7 +345,7 @@ var (
 	unsetResults  = []string{"null", "absent", "as_sent", "unchanged", "value", "refused"}
 	discountForms = []string{"coupon", "discount", "promotion_code"}
 	matcherKinds  = []string{"sent", "normalised", "value", "null", "absent", "id", "created", "ref", "account_id", "account", "from", "timestamp", "url", "secret", "list", "unchanged", "fingerprint", "day_within", "time_within"}
-	hashUpdates   = []string{HashSiblingsKept, HashSiblingsCleared}
+	hashUpdates   = []string{HashSiblingsKept, HashSiblingsCleared, HashRefused}
 )
 
 // minimalCreate is one variant of a minimal create in the record: what it sent and what each
@@ -642,6 +655,7 @@ func (e *Evidence) check() error {
 		if u := l.Unset; u != nil {
 			errs = append(errs, unknown(l.Key.String()+": unset by", u.By, unsetBy), unknown(l.Key.String()+": unset result", u.Result, unsetResults))
 		}
+		errs = append(errs, l.checkUnreachable())
 		if err := errors.Join(errs...); err != nil {
 			return err
 		}
@@ -654,16 +668,66 @@ func (e *Evidence) check() error {
 		}
 	}
 	for _, f := range e.Families {
+		seen := map[[2]string]bool{}
 		for _, h := range f.Hashes {
-			if err := unknown(f.Family+" "+h.Hash+": hash update", h.Update, hashUpdates); err != nil {
+			if err := unknown(f.Family+" "+h.Object+" "+h.Hash+": hash update", h.Update, hashUpdates); err != nil {
 				return err
 			}
+			switch {
+			case !slices.Contains(f.Objects, h.Object):
+				return fmt.Errorf("family %s gives hash %s of %q, which is not one of its objects", f.Family, h.Hash, h.Object)
+			case h.Hash == "":
+				return fmt.Errorf("family %s gives a hash of %s with no path", f.Family, h.Object)
+			case seen[[2]string{h.Object, h.Hash}]:
+				return fmt.Errorf("family %s gives hash %s of %s twice", f.Family, h.Hash, h.Object)
+			}
+			seen[[2]string{h.Object, h.Hash}] = true
 		}
 	}
 	for _, d := range e.Discounts {
 		if err := unknown(d.Object+" "+d.Operation+": discounts form", d.Form, discountForms); err != nil {
 			return err
 		}
+	}
+	return nil
+}
+
+// checkUnreachable refuses unreachable values the generator cannot use: on a leaf other than a
+// proven request leaf, with no reason, listed twice, or among the values the suite sent.
+func (l EvidenceLeaf) checkUnreachable() error {
+	if len(l.Unreachable) == 0 {
+		return nil
+	}
+	if l.Side != SideRequest || l.Status != "proven" {
+		return fmt.Errorf("%s: unreachable values on a leaf that is not a proven request leaf", l.Key)
+	}
+	var sent []struct {
+		Value json.RawMessage `json:"value"`
+	}
+	if len(l.EnumValues) > 0 {
+		if err := json.Unmarshal(l.EnumValues, &sent); err != nil {
+			return fmt.Errorf("%s: enum_values: %w", l.Key, err)
+		}
+	}
+	sentValues := map[string]bool{}
+	for _, e := range sent {
+		sentValues[string(e.Value)] = true
+	}
+	seen := map[string]bool{}
+	for _, u := range l.Unreachable {
+		quoted, err := json.Marshal(u.Value)
+		if err != nil {
+			return err
+		}
+		switch {
+		case strings.TrimSpace(u.Reason) == "":
+			return fmt.Errorf("%s: unreachable value %q has no reason", l.Key, u.Value)
+		case seen[u.Value]:
+			return fmt.Errorf("%s: unreachable value %q is listed twice", l.Key, u.Value)
+		case sentValues[string(quoted)]:
+			return fmt.Errorf("%s: unreachable value %q is among the values the suite sent", l.Key, u.Value)
+		}
+		seen[u.Value] = true
 	}
 	return nil
 }

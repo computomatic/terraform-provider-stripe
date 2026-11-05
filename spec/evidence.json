@@ -196,10 +196,22 @@
       "hashes": [
         {
           "hash": "address",
+          "object": "customer",
           "update": "siblings_cleared"
         },
         {
           "hash": "invoice_settings",
+          "object": "customer",
+          "update": "siblings_kept"
+        },
+        {
+          "hash": "invoice_settings",
+          "object": "quote",
+          "update": "siblings_kept"
+        },
+        {
+          "hash": "invoice_settings",
+          "object": "subscription",
           "update": "siblings_kept"
         }
       ],
@@ -244,7 +256,12 @@
         "TestCustomerAttributes/leaves/response/customer/address.line2",
         "TestCustomerAttributes/leaves/response/customer/address.postal_code",
         "TestCustomerAttributes/leaves/response/customer/address.state",
-        "TestCustomerAttributes/leaves/response/customer/invoice_settings.default_payment_method"
+        "TestCustomerAttributes/leaves/response/customer/invoice_settings.default_payment_method",
+        "TestQuoteAttributes/leaves/request/PostQuotesQuote/invoice_settings.footer",
+        "TestQuoteAttributes/leaves/response/quote/invoice_settings.description",
+        "TestSubscriptionAttributes/leaves/request/PostSubscriptionsSubscriptionExposedId/invoice_settings.footer",
+        "TestSubscriptionAttributes/leaves/response/subscription/invoice_settings.account_tax_ids",
+        "TestSubscriptionAttributes/leaves/response/subscription/invoice_settings.description"
       ]
     },
     {
@@ -252,7 +269,88 @@
       "family": "v1-connect",
       "hashes": [
         {
+          "hash": "company",
+          "object": "account",
+          "update": "siblings_kept"
+        },
+        {
+          "hash": "company.address",
+          "object": "account",
+          "update": "siblings_kept"
+        },
+        {
+          "hash": "company.administrative_address",
+          "object": "account",
+          "update": "siblings_kept"
+        },
+        {
+          "hash": "company.principal_place_of_business",
+          "object": "account",
+          "update": "siblings_kept"
+        },
+        {
+          "hash": "individual",
+          "object": "account",
+          "update": "siblings_kept"
+        },
+        {
           "hash": "individual.address",
+          "object": "account",
+          "update": "siblings_kept"
+        },
+        {
+          "hash": "individual.registered_address",
+          "object": "account",
+          "update": "siblings_kept"
+        },
+        {
+          "hash": "individual.relationship",
+          "object": "account",
+          "update": "siblings_kept"
+        },
+        {
+          "hash": "individual.verification",
+          "object": "account",
+          "update": "siblings_kept"
+        },
+        {
+          "hash": "individual.verification.additional_document",
+          "object": "account",
+          "update": "siblings_kept"
+        },
+        {
+          "hash": "individual.verification.document",
+          "object": "account",
+          "update": "siblings_kept"
+        },
+        {
+          "hash": "address",
+          "object": "person",
+          "update": "siblings_kept"
+        },
+        {
+          "hash": "registered_address",
+          "object": "person",
+          "update": "siblings_kept"
+        },
+        {
+          "hash": "relationship",
+          "object": "person",
+          "update": "siblings_kept"
+        },
+        {
+          "hash": "verification",
+          "object": "person",
+          "update": "siblings_kept"
+        },
+        {
+          "hash": "verification.additional_document",
+          "object": "person",
+          "update": "siblings_kept"
+        },
+        {
+          "hash": "verification.document",
+          "object": "person",
           "update": "siblings_kept"
         }
       ],
@@ -269,14 +367,85 @@
       "scalar_unset": "empty_string",
       "tests": [
         "TestAccountAttributes/leaves/request/PostAccountsAccount/company.address.city",
+        "TestAccountAttributes/leaves/request/PostAccountsAccount/company.administrative_address.city",
+        "TestAccountAttributes/leaves/request/PostAccountsAccount/company.name",
+        "TestAccountAttributes/leaves/request/PostAccountsAccount/company.principal_place_of_business.city",
         "TestAccountAttributes/leaves/request/PostAccountsAccount/individual.address.city",
+        "TestAccountAttributes/leaves/request/PostAccountsAccount/individual.first_name",
         "TestAccountAttributes/leaves/request/PostAccountsAccount/individual.full_name_aliases",
         "TestAccountAttributes/leaves/request/PostAccountsAccount/individual.metadata",
+        "TestAccountAttributes/leaves/request/PostAccountsAccount/individual.registered_address.city",
+        "TestAccountAttributes/leaves/request/PostAccountsAccount/individual.relationship.title",
+        "TestAccountAttributes/leaves/request/PostAccountsAccount/individual.verification.additional_document.front",
+        "TestAccountAttributes/leaves/request/PostAccountsAccount/individual.verification.document.front",
+        "TestAccountAttributes/leaves/response/account/company.address.country",
+        "TestAccountAttributes/leaves/response/account/company.address.line1",
+        "TestAccountAttributes/leaves/response/account/company.address.line2",
+        "TestAccountAttributes/leaves/response/account/company.address.postal_code",
+        "TestAccountAttributes/leaves/response/account/company.address.state",
+        "TestAccountAttributes/leaves/response/account/company.administrative_address.country",
+        "TestAccountAttributes/leaves/response/account/company.administrative_address.line1",
+        "TestAccountAttributes/leaves/response/account/company.administrative_address.line2",
+        "TestAccountAttributes/leaves/response/account/company.administrative_address.postal_code",
+        "TestAccountAttributes/leaves/response/account/company.administrative_address.state",
+        "TestAccountAttributes/leaves/response/account/company.directors_provided",
+        "TestAccountAttributes/leaves/response/account/company.executives_provided",
+        "TestAccountAttributes/leaves/response/account/company.owners_provided",
+        "TestAccountAttributes/leaves/response/account/company.phone",
+        "TestAccountAttributes/leaves/response/account/company.principal_place_of_business.country",
+        "TestAccountAttributes/leaves/response/account/company.principal_place_of_business.line1",
+        "TestAccountAttributes/leaves/response/account/company.principal_place_of_business.line2",
+        "TestAccountAttributes/leaves/response/account/company.principal_place_of_business.postal_code",
+        "TestAccountAttributes/leaves/response/account/company.principal_place_of_business.state",
+        "TestAccountAttributes/leaves/response/account/company.structure",
         "TestAccountAttributes/leaves/response/account/individual.address.country",
         "TestAccountAttributes/leaves/response/account/individual.address.line1",
         "TestAccountAttributes/leaves/response/account/individual.address.line2",
         "TestAccountAttributes/leaves/response/account/individual.address.postal_code",
-        "TestAccountAttributes/leaves/response/account/individual.address.state"
+        "TestAccountAttributes/leaves/response/account/individual.address.state",
+        "TestAccountAttributes/leaves/response/account/individual.email",
+        "TestAccountAttributes/leaves/response/account/individual.full_name_aliases",
+        "TestAccountAttributes/leaves/response/account/individual.gender",
+        "TestAccountAttributes/leaves/response/account/individual.last_name",
+        "TestAccountAttributes/leaves/response/account/individual.maiden_name",
+        "TestAccountAttributes/leaves/response/account/individual.metadata",
+        "TestAccountAttributes/leaves/response/account/individual.phone",
+        "TestAccountAttributes/leaves/response/account/individual.political_exposure",
+        "TestAccountAttributes/leaves/response/account/individual.registered_address.country",
+        "TestAccountAttributes/leaves/response/account/individual.registered_address.line1",
+        "TestAccountAttributes/leaves/response/account/individual.registered_address.line2",
+        "TestAccountAttributes/leaves/response/account/individual.registered_address.postal_code",
+        "TestAccountAttributes/leaves/response/account/individual.registered_address.state",
+        "TestAccountAttributes/leaves/response/account/individual.relationship.director",
+        "TestAccountAttributes/leaves/response/account/individual.relationship.executive",
+        "TestAccountAttributes/leaves/response/account/individual.relationship.owner",
+        "TestAccountAttributes/leaves/response/account/individual.relationship.percent_ownership",
+        "TestAccountAttributes/leaves/response/account/individual.verification.additional_document.back",
+        "TestAccountAttributes/leaves/response/account/individual.verification.additional_document.front",
+        "TestAccountAttributes/leaves/response/account/individual.verification.document.back",
+        "TestAccountPersonAttributes/leaves/request/PostAccountsAccountPersonsPerson/address.city",
+        "TestAccountPersonAttributes/leaves/request/PostAccountsAccountPersonsPerson/registered_address.city",
+        "TestAccountPersonAttributes/leaves/request/PostAccountsAccountPersonsPerson/relationship.title",
+        "TestAccountPersonAttributes/leaves/request/PostAccountsAccountPersonsPerson/verification.additional_document.front",
+        "TestAccountPersonAttributes/leaves/request/PostAccountsAccountPersonsPerson/verification.document.front",
+        "TestAccountPersonAttributes/leaves/response/person/address.country",
+        "TestAccountPersonAttributes/leaves/response/person/address.line1",
+        "TestAccountPersonAttributes/leaves/response/person/address.line2",
+        "TestAccountPersonAttributes/leaves/response/person/address.postal_code",
+        "TestAccountPersonAttributes/leaves/response/person/address.state",
+        "TestAccountPersonAttributes/leaves/response/person/registered_address.country",
+        "TestAccountPersonAttributes/leaves/response/person/registered_address.line1",
+        "TestAccountPersonAttributes/leaves/response/person/registered_address.line2",
+        "TestAccountPersonAttributes/leaves/response/person/registered_address.postal_code",
+        "TestAccountPersonAttributes/leaves/response/person/registered_address.state",
+        "TestAccountPersonAttributes/leaves/response/person/relationship.director",
+        "TestAccountPersonAttributes/leaves/response/person/relationship.executive",
+        "TestAccountPersonAttributes/leaves/response/person/relationship.owner",
+        "TestAccountPersonAttributes/leaves/response/person/relationship.percent_ownership",
+        "TestAccountPersonAttributes/leaves/response/person/relationship.representative",
+        "TestAccountPersonAttributes/leaves/response/person/verification.additional_document.back",
+        "TestAccountPersonAttributes/leaves/response/person/verification.additional_document.front",
+        "TestAccountPersonAttributes/leaves/response/person/verification.document.back"
       ]
     },
     {
@@ -284,19 +453,28 @@
       "family": "v1-issuing-treasury",
       "hashes": [
         {
+          "hash": "spending_controls",
+          "object": "issuing.card",
+          "update": "siblings_kept"
+        },
+        {
           "hash": "billing.address",
+          "object": "issuing.cardholder",
           "update": "siblings_cleared"
         },
         {
           "hash": "individual",
+          "object": "issuing.cardholder",
           "update": "siblings_kept"
         },
         {
           "hash": "individual.card_issuing.user_terms_acceptance",
+          "object": "issuing.cardholder",
           "update": "siblings_cleared"
         },
         {
           "hash": "spending_controls",
+          "object": "issuing.cardholder",
           "update": "siblings_kept"
         }
       ],
@@ -314,6 +492,8 @@
       ],
       "scalar_unset": "empty_string",
       "tests": [
+        "TestIssuingCardAttributes/leaves/request/PostIssuingCardsCard/spending_controls.blocked_merchant_countries",
+        "TestIssuingCardAttributes/leaves/response/issuing.card/spending_controls.blocked_card_presences",
         "TestIssuingCardholderAttributes/leaves/request/PostIssuingCardholdersCardholder/billing.address.city",
         "TestIssuingCardholderAttributes/leaves/request/PostIssuingCardholdersCardholder/email",
         "TestIssuingCardholderAttributes/leaves/request/PostIssuingCardholdersCardholder/individual.card_issuing.user_terms_acceptance.ip",
@@ -336,11 +516,67 @@
       "hashes": [
         {
           "hash": "shipping.address",
+          "object": "charge",
+          "update": "siblings_kept"
+        },
+        {
+          "hash": "payment_details",
+          "object": "payment_intent",
+          "update": "siblings_kept"
+        },
+        {
+          "hash": "shipping.address",
+          "object": "payment_intent",
+          "update": "siblings_cleared"
+        },
+        {
+          "hash": "after_completion",
+          "object": "payment_link",
+          "update": "refused"
+        },
+        {
+          "hash": "consent_collection",
+          "object": "payment_link",
+          "update": "siblings_kept"
+        },
+        {
+          "hash": "invoice_creation",
+          "object": "payment_link",
+          "update": "siblings_kept"
+        },
+        {
+          "hash": "invoice_creation.invoice_data",
+          "object": "payment_link",
+          "update": "siblings_kept"
+        },
+        {
+          "hash": "name_collection",
+          "object": "payment_link",
+          "update": "siblings_cleared"
+        },
+        {
+          "hash": "payment_intent_data",
+          "object": "payment_link",
+          "update": "siblings_kept"
+        },
+        {
+          "hash": "subscription_data",
+          "object": "payment_link",
+          "update": "siblings_kept"
+        },
+        {
+          "hash": "tax_id_collection",
+          "object": "payment_link",
+          "update": "siblings_cleared"
+        },
+        {
+          "hash": "transfer_data",
+          "object": "payment_link",
           "update": "siblings_cleared"
         }
       ],
       "map_key_removal": "empty_string",
-      "nested_hash_update": "siblings_cleared",
+      "nested_hash_update": "mixed",
       "objects": [
         "charge",
         "checkout.session",
@@ -362,15 +598,50 @@
       ],
       "scalar_unset": "empty_string",
       "tests": [
+        "TestChargeAttributes/leaves/request/PostChargesCharge/shipping.address.city",
+        "TestChargeAttributes/leaves/response/charge/shipping.address.country",
+        "TestChargeAttributes/leaves/response/charge/shipping.address.line1",
+        "TestChargeAttributes/leaves/response/charge/shipping.address.line2",
+        "TestChargeAttributes/leaves/response/charge/shipping.address.postal_code",
+        "TestChargeAttributes/leaves/response/charge/shipping.address.state",
         "TestPaymentIntentAttributes/leaves/request/PostPaymentIntentsIntent/amount_details.discount_amount",
         "TestPaymentIntentAttributes/leaves/request/PostPaymentIntentsIntent/excluded_payment_method_types",
         "TestPaymentIntentAttributes/leaves/request/PostPaymentIntentsIntent/metadata",
+        "TestPaymentIntentAttributes/leaves/request/PostPaymentIntentsIntent/payment_details.customer_reference",
         "TestPaymentIntentAttributes/leaves/request/PostPaymentIntentsIntent/shipping.address.city",
+        "TestPaymentIntentAttributes/leaves/response/payment_intent/payment_details.order_reference",
         "TestPaymentIntentAttributes/leaves/response/payment_intent/shipping.address.country",
         "TestPaymentIntentAttributes/leaves/response/payment_intent/shipping.address.line1",
         "TestPaymentIntentAttributes/leaves/response/payment_intent/shipping.address.line2",
         "TestPaymentIntentAttributes/leaves/response/payment_intent/shipping.address.postal_code",
-        "TestPaymentIntentAttributes/leaves/response/payment_intent/shipping.address.state"
+        "TestPaymentIntentAttributes/leaves/response/payment_intent/shipping.address.state",
+        "TestPaymentLinkAttributes/leaves/request/PostPaymentLinksPaymentLink/after_completion.redirect.url",
+        "TestPaymentLinkAttributes/leaves/request/PostPaymentLinksPaymentLink/consent_collection.payment_method_reuse_agreement.position",
+        "TestPaymentLinkAttributes/leaves/request/PostPaymentLinksPaymentLink/invoice_creation.enabled",
+        "TestPaymentLinkAttributes/leaves/request/PostPaymentLinksPaymentLink/invoice_creation.invoice_data.description",
+        "TestPaymentLinkAttributes/leaves/request/PostPaymentLinksPaymentLink/name_collection.business.enabled",
+        "TestPaymentLinkAttributes/leaves/request/PostPaymentLinksPaymentLink/payment_intent_data.description",
+        "TestPaymentLinkAttributes/leaves/request/PostPaymentLinksPaymentLink/subscription_data.trial_period_days",
+        "TestPaymentLinkAttributes/leaves/request/PostPaymentLinksPaymentLink/tax_id_collection.enabled",
+        "TestPaymentLinkAttributes/leaves/request/PostPaymentLinksPaymentLink/transfer_data.destination",
+        "TestPaymentLinkAttributes/leaves/response/payment_link/consent_collection.terms_of_service",
+        "TestPaymentLinkAttributes/leaves/response/payment_link/invoice_creation.invoice_data.account_tax_ids",
+        "TestPaymentLinkAttributes/leaves/response/payment_link/invoice_creation.invoice_data.description",
+        "TestPaymentLinkAttributes/leaves/response/payment_link/invoice_creation.invoice_data.footer",
+        "TestPaymentLinkAttributes/leaves/response/payment_link/invoice_creation.invoice_data.issuer.type",
+        "TestPaymentLinkAttributes/leaves/response/payment_link/invoice_creation.invoice_data.metadata",
+        "TestPaymentLinkAttributes/leaves/response/payment_link/name_collection.individual.enabled",
+        "TestPaymentLinkAttributes/leaves/response/payment_link/name_collection.individual.optional",
+        "TestPaymentLinkAttributes/leaves/response/payment_link/payment_intent_data.capture_method",
+        "TestPaymentLinkAttributes/leaves/response/payment_link/payment_intent_data.metadata",
+        "TestPaymentLinkAttributes/leaves/response/payment_link/payment_intent_data.setup_future_usage",
+        "TestPaymentLinkAttributes/leaves/response/payment_link/payment_intent_data.statement_descriptor",
+        "TestPaymentLinkAttributes/leaves/response/payment_link/payment_intent_data.statement_descriptor_suffix",
+        "TestPaymentLinkAttributes/leaves/response/payment_link/payment_intent_data.transfer_group",
+        "TestPaymentLinkAttributes/leaves/response/payment_link/subscription_data.description",
+        "TestPaymentLinkAttributes/leaves/response/payment_link/subscription_data.metadata",
+        "TestPaymentLinkAttributes/leaves/response/payment_link/tax_id_collection.required",
+        "TestPaymentLinkAttributes/leaves/response/payment_link/transfer_data.amount"
       ]
     },
     {
@@ -378,7 +649,38 @@
       "family": "v2",
       "hashes": [
         {
+          "hash": "configuration",
+          "object": "v2.core.account",
+          "update": "siblings_kept"
+        },
+        {
+          "hash": "defaults",
+          "object": "v2.core.account",
+          "update": "siblings_kept"
+        },
+        {
+          "hash": "defaults.profile",
+          "object": "v2.core.account",
+          "update": "siblings_kept"
+        },
+        {
+          "hash": "defaults.responsibilities",
+          "object": "v2.core.account",
+          "update": "refused"
+        },
+        {
+          "hash": "identity",
+          "object": "v2.core.account",
+          "update": "siblings_kept"
+        },
+        {
           "hash": "address",
+          "object": "v2.core.account_person",
+          "update": "siblings_kept"
+        },
+        {
+          "hash": "relationship",
+          "object": "v2.core.account_person",
           "update": "siblings_kept"
         }
       ],
@@ -391,14 +693,28 @@
       ],
       "scalar_unset": "null",
       "tests": [
+        "TestV2CoreAccountAttributes/leaves/request/PostV2CoreAccountsId/configuration.recipient.capabilities.stripe_balance.stripe_transfers.requested",
+        "TestV2CoreAccountAttributes/leaves/request/PostV2CoreAccountsId/defaults.profile.doing_business_as",
+        "TestV2CoreAccountAttributes/leaves/request/PostV2CoreAccountsId/defaults.responsibilities.fees_collector",
+        "TestV2CoreAccountAttributes/leaves/request/PostV2CoreAccountsId/identity.entity_type",
+        "TestV2CoreAccountAttributes/leaves/response/v2.core.account/configuration.merchant.applied",
+        "TestV2CoreAccountAttributes/leaves/response/v2.core.account/defaults.locales",
+        "TestV2CoreAccountAttributes/leaves/response/v2.core.account/defaults.profile.business_url",
+        "TestV2CoreAccountAttributes/leaves/response/v2.core.account/defaults.profile.product_description",
+        "TestV2CoreAccountAttributes/leaves/response/v2.core.account/identity.country",
         "TestV2CoreAccountPersonAttributes/leaves/request/PostV2CoreAccountsAccountIdPersonsId/address.city",
         "TestV2CoreAccountPersonAttributes/leaves/request/PostV2CoreAccountsAccountIdPersonsId/metadata",
+        "TestV2CoreAccountPersonAttributes/leaves/request/PostV2CoreAccountsAccountIdPersonsId/relationship.title",
         "TestV2CoreAccountPersonAttributes/leaves/response/v2.core.account_person/address.country",
         "TestV2CoreAccountPersonAttributes/leaves/response/v2.core.account_person/address.line1",
         "TestV2CoreAccountPersonAttributes/leaves/response/v2.core.account_person/address.line2",
         "TestV2CoreAccountPersonAttributes/leaves/response/v2.core.account_person/address.postal_code",
         "TestV2CoreAccountPersonAttributes/leaves/response/v2.core.account_person/address.state",
-        "TestV2CoreAccountPersonAttributes/leaves/response/v2.core.account_person/address.town"
+        "TestV2CoreAccountPersonAttributes/leaves/response/v2.core.account_person/address.town",
+        "TestV2CoreAccountPersonAttributes/leaves/response/v2.core.account_person/relationship.director",
+        "TestV2CoreAccountPersonAttributes/leaves/response/v2.core.account_person/relationship.executive",
+        "TestV2CoreAccountPersonAttributes/leaves/response/v2.core.account_person/relationship.owner",
+        "TestV2CoreAccountPersonAttributes/leaves/response/v2.core.account_person/relationship.percent_ownership"
       ]
     }
   ],
@@ -9470,9 +9786,9 @@
       "unset": {
         "by": "empty_string",
         "matcher": {
-          "kind": "null"
+          "kind": "absent"
         },
-        "result": "null"
+        "result": "absent"
       }
     },
     {
@@ -9503,9 +9819,9 @@
       "unset": {
         "by": "empty_string",
         "matcher": {
-          "kind": "null"
+          "kind": "absent"
         },
-        "result": "null"
+        "result": "absent"
       }
     },
     {
@@ -9536,9 +9852,9 @@
       "unset": {
         "by": "empty_string",
         "matcher": {
-          "kind": "null"
+          "kind": "absent"
         },
-        "result": "null"
+        "result": "absent"
       }
     },
     {
@@ -9569,9 +9885,9 @@
       "unset": {
         "by": "empty_string",
         "matcher": {
-          "kind": "null"
+          "kind": "absent"
         },
-        "result": "null"
+        "result": "absent"
       }
     },
     {
@@ -9602,9 +9918,9 @@
       "unset": {
         "by": "empty_string",
         "matcher": {
-          "kind": "null"
+          "kind": "absent"
         },
-        "result": "null"
+        "result": "absent"
       }
     },
     {
@@ -9775,7 +10091,14 @@
       ],
       "tests": [
         "TestAccountAttributes/leaves/request/PostAccountsAccount/individual.relationship.percent_ownership"
-      ]
+      ],
+      "unset": {
+        "by": "empty_string",
+        "matcher": {
+          "kind": "null"
+        },
+        "result": "null"
+      }
     },
     {
       "accepted_in": [
@@ -14347,7 +14670,7 @@
       ],
       "nullable": {
         "non_null_observed": true,
-        "null_observed": true
+        "null_observed": false
       },
       "object": "account",
       "operation": "",
@@ -14392,7 +14715,7 @@
       ],
       "nullable": {
         "non_null_observed": true,
-        "null_observed": true
+        "null_observed": false
       },
       "object": "account",
       "operation": "",
@@ -14437,7 +14760,7 @@
       ],
       "nullable": {
         "non_null_observed": true,
-        "null_observed": true
+        "null_observed": false
       },
       "object": "account",
       "operation": "",
@@ -14482,7 +14805,7 @@
       ],
       "nullable": {
         "non_null_observed": true,
-        "null_observed": true
+        "null_observed": false
       },
       "object": "account",
       "operation": "",
@@ -14527,7 +14850,7 @@
       ],
       "nullable": {
         "non_null_observed": true,
-        "null_observed": true
+        "null_observed": false
       },
       "object": "account",
       "operation": "",
@@ -333802,7 +334125,7 @@
       "branch": "",
       "default": {
         "kind": "rule",
-        "rule_ref": 46
+        "rule_ref": 47
       },
       "object": "payout",
       "on": [
@@ -339071,7 +339394,7 @@
       "branch": "",
       "default": {
         "kind": "rule",
-        "rule_ref": 47,
+        "rule_ref": 48,
         "variants": [
           {
             "default": {
@@ -339122,33 +339445,33 @@
       "branch": "",
       "default": {
         "kind": "rule",
-        "rule_ref": 48,
+        "rule_ref": 49,
         "variants": [
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 48
+              "rule_ref": 49
             },
             "variant": "amount_other"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 48
+              "rule_ref": 49
             },
             "variant": "metered"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 48
+              "rule_ref": 49
             },
             "variant": "tiered"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 48
+              "rule_ref": 49
             },
             "variant": "tiered_decimal"
           }
@@ -339273,40 +339596,40 @@
       "branch": "",
       "default": {
         "kind": "rule",
-        "rule_ref": 49,
+        "rule_ref": 50,
         "variants": [
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 49
+              "rule_ref": 50
             },
             "variant": "amount_other"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 49
+              "rule_ref": 50
             },
             "variant": "decimal"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 49
+              "rule_ref": 50
             },
             "variant": "metered"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 49
+              "rule_ref": 50
             },
             "variant": "tiered"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 49
+              "rule_ref": 50
             },
             "variant": "tiered_decimal"
           }
@@ -342941,89 +343264,89 @@
       "branch": "",
       "default": {
         "kind": "rule",
-        "rule_ref": 50,
+        "rule_ref": 51,
         "variants": [
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 50
+              "rule_ref": 51
             },
             "variant": "currency_eur"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 50
+              "rule_ref": 51
             },
             "variant": "custom_amount"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 50
+              "rule_ref": 51
             },
             "variant": "decimal"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 50
+              "rule_ref": 51
             },
             "variant": "inline_product"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 50
+              "rule_ref": 51
             },
             "variant": "metered"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 50
+              "rule_ref": 51
             },
             "variant": "monthly"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 50
+              "rule_ref": 51
             },
             "variant": "options"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 50
+              "rule_ref": 51
             },
             "variant": "options_custom"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 50
+              "rule_ref": 51
             },
             "variant": "options_tiered"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 50
+              "rule_ref": 51
             },
             "variant": "options_tiered_decimal"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 50
+              "rule_ref": 51
             },
             "variant": "tiered"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 50
+              "rule_ref": 51
             },
             "variant": "tiered_decimal"
           }
@@ -343843,33 +344166,33 @@
       "branch": "",
       "default": {
         "kind": "rule",
-        "rule_ref": 51,
+        "rule_ref": 52,
         "variants": [
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 51
+              "rule_ref": 52
             },
             "variant": "currency_eur"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 51
+              "rule_ref": 52
             },
             "variant": "inline_product"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 51
+              "rule_ref": 52
             },
             "variant": "metered"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 51
+              "rule_ref": 52
             },
             "variant": "monthly"
           }
@@ -343915,89 +344238,89 @@
       "branch": "",
       "default": {
         "kind": "rule",
-        "rule_ref": 52,
+        "rule_ref": 53,
         "variants": [
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 52
+              "rule_ref": 53
             },
             "variant": "currency_eur"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 52
+              "rule_ref": 53
             },
             "variant": "custom_amount"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 52
+              "rule_ref": 53
             },
             "variant": "decimal"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 52
+              "rule_ref": 53
             },
             "variant": "inline_product"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 52
+              "rule_ref": 53
             },
             "variant": "metered"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 52
+              "rule_ref": 53
             },
             "variant": "monthly"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 52
+              "rule_ref": 53
             },
             "variant": "options"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 52
+              "rule_ref": 53
             },
             "variant": "options_custom"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 52
+              "rule_ref": 53
             },
             "variant": "options_tiered"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 52
+              "rule_ref": 53
             },
             "variant": "options_tiered_decimal"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 52
+              "rule_ref": 53
             },
             "variant": "tiered"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 52
+              "rule_ref": 53
             },
             "variant": "tiered_decimal"
           }
@@ -346438,7 +346761,7 @@
       "branch": "",
       "default": {
         "kind": "rule",
-        "rule_ref": 53,
+        "rule_ref": 54,
         "variants": [
           {
             "default": {
@@ -346513,82 +346836,82 @@
       "branch": "",
       "default": {
         "kind": "rule",
-        "rule_ref": 54,
+        "rule_ref": 55,
         "variants": [
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 54
+              "rule_ref": 55
             },
             "variant": "currency_eur"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 54
+              "rule_ref": 55
             },
             "variant": "custom_amount"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 54
+              "rule_ref": 55
             },
             "variant": "inline_product"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 54
+              "rule_ref": 55
             },
             "variant": "metered"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 54
+              "rule_ref": 55
             },
             "variant": "monthly"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 54
+              "rule_ref": 55
             },
             "variant": "options"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 54
+              "rule_ref": 55
             },
             "variant": "options_custom"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 54
+              "rule_ref": 55
             },
             "variant": "options_tiered"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 54
+              "rule_ref": 55
             },
             "variant": "options_tiered_decimal"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 54
+              "rule_ref": 55
             },
             "variant": "tiered"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 54
+              "rule_ref": 55
             },
             "variant": "tiered_decimal"
           }
@@ -352690,40 +353013,40 @@
       "branch": "",
       "default": {
         "kind": "rule",
-        "rule_ref": 55,
+        "rule_ref": 56,
         "variants": [
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 55
+              "rule_ref": 56
             },
             "variant": "price"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 55
+              "rule_ref": 56
             },
             "variant": "price_custom"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 55
+              "rule_ref": 56
             },
             "variant": "price_decimal"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 55
+              "rule_ref": 56
             },
             "variant": "price_monthly"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 55
+              "rule_ref": 56
             },
             "variant": "price_options"
           }
@@ -356210,7 +356533,7 @@
       "branch": "",
       "default": {
         "kind": "rule",
-        "rule_ref": 56
+        "rule_ref": 57
       },
       "object": "promotion_code",
       "on": [
@@ -358432,103 +358755,103 @@
       "branch": "",
       "default": {
         "kind": "rule",
-        "rule_ref": 58,
+        "rule_ref": 59,
         "variants": [
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 58
+              "rule_ref": 59
             },
             "variant": "charge_automatically"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 58
+              "rule_ref": 59
             },
             "variant": "classic"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 58
+              "rule_ref": 59
             },
             "variant": "customer"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 58
+              "rule_ref": 59
             },
             "variant": "destination"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 58
+              "rule_ref": 59
             },
             "variant": "destination_recurring"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 58
+              "rule_ref": 59
             },
             "variant": "from_quote"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 58
+              "rule_ref": 59
             },
             "variant": "line_items"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 58
+              "rule_ref": 59
             },
             "variant": "price_data"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 58
+              "rule_ref": 59
             },
             "variant": "price_data_decimal"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 58
+              "rule_ref": 59
             },
             "variant": "price_eur"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 58
+              "rule_ref": 59
             },
             "variant": "recurring"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 58
+              "rule_ref": 59
             },
             "variant": "send_invoice"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 58
+              "rule_ref": 59
             },
             "variant": "tax_account"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 58
+              "rule_ref": 59
             },
             "variant": "test_clock"
           }
@@ -374184,12 +374507,12 @@
       "branch": "",
       "default": {
         "kind": "rule",
-        "rule_ref": 59,
+        "rule_ref": 60,
         "variants": [
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 59
+              "rule_ref": 60
             },
             "variant": "charge"
           }
@@ -385389,12 +385712,12 @@
       "branch": "",
       "default": {
         "kind": "rule",
-        "rule_ref": 60,
+        "rule_ref": 61,
         "variants": [
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 60
+              "rule_ref": 61
             },
             "variant": "currency_eur"
           }
@@ -387850,180 +388173,180 @@
       "branch": "",
       "default": {
         "kind": "rule",
-        "rule_ref": 61,
+        "rule_ref": 62,
         "variants": [
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 61
+              "rule_ref": 62
             },
             "variant": "anchor_yearly"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 61
+              "rule_ref": 62
             },
             "variant": "canceling"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 61
+              "rule_ref": 62
             },
             "variant": "canceling_option"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 61
+              "rule_ref": 62
             },
             "variant": "customer_account"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 61
+              "rule_ref": 62
             },
             "variant": "decimal_price"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 61
+              "rule_ref": 62
             },
             "variant": "fee"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 61
+              "rule_ref": 62
             },
             "variant": "flexible"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 61
+              "rule_ref": 62
             },
             "variant": "inline_price"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 61
+              "rule_ref": 62
             },
             "variant": "invoice_decimal"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 61
+              "rule_ref": 62
             },
             "variant": "invoice_item"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 61
+              "rule_ref": 62
             },
             "variant": "metered"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 61
+              "rule_ref": 62
             },
             "variant": "method_aud"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 61
+              "rule_ref": 62
             },
             "variant": "method_brl"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 61
+              "rule_ref": 62
             },
             "variant": "method_eur"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 61
+              "rule_ref": 62
             },
             "variant": "method_inr"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 61
+              "rule_ref": 62
             },
             "variant": "method_pln"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 61
+              "rule_ref": 62
             },
             "variant": "prebilled"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 61
+              "rule_ref": 62
             },
             "variant": "prebilled_timestamp"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 61
+              "rule_ref": 62
             },
             "variant": "price_eur"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 61
+              "rule_ref": 62
             },
             "variant": "send_invoice"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 61
+              "rule_ref": 62
             },
             "variant": "setup_pending"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 61
+              "rule_ref": 62
             },
             "variant": "tax_coded"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 61
+              "rule_ref": 62
             },
             "variant": "test_clock"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 61
+              "rule_ref": 62
             },
             "variant": "trial"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 61
+              "rule_ref": 62
             },
             "variant": "trial_offer"
           }
@@ -391803,180 +392126,180 @@
       "branch": "",
       "default": {
         "kind": "rule",
-        "rule_ref": 62,
+        "rule_ref": 63,
         "variants": [
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 62
+              "rule_ref": 63
             },
             "variant": "anchor_yearly"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 62
+              "rule_ref": 63
             },
             "variant": "canceling"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 62
+              "rule_ref": 63
             },
             "variant": "canceling_option"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 62
+              "rule_ref": 63
             },
             "variant": "customer_account"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 62
+              "rule_ref": 63
             },
             "variant": "decimal_price"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 62
+              "rule_ref": 63
             },
             "variant": "fee"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 62
+              "rule_ref": 63
             },
             "variant": "flexible"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 62
+              "rule_ref": 63
             },
             "variant": "inline_price"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 62
+              "rule_ref": 63
             },
             "variant": "invoice_decimal"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 62
+              "rule_ref": 63
             },
             "variant": "invoice_item"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 62
+              "rule_ref": 63
             },
             "variant": "metered"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 62
+              "rule_ref": 63
             },
             "variant": "method_aud"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 62
+              "rule_ref": 63
             },
             "variant": "method_brl"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 62
+              "rule_ref": 63
             },
             "variant": "method_eur"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 62
+              "rule_ref": 63
             },
             "variant": "method_inr"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 62
+              "rule_ref": 63
             },
             "variant": "method_pln"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 62
+              "rule_ref": 63
             },
             "variant": "prebilled"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 62
+              "rule_ref": 63
             },
             "variant": "prebilled_timestamp"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 62
+              "rule_ref": 63
             },
             "variant": "price_eur"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 62
+              "rule_ref": 63
             },
             "variant": "send_invoice"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 62
+              "rule_ref": 63
             },
             "variant": "setup_pending"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 62
+              "rule_ref": 63
             },
             "variant": "tax_coded"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 62
+              "rule_ref": 63
             },
             "variant": "test_clock"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 62
+              "rule_ref": 63
             },
             "variant": "trial"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 62
+              "rule_ref": 63
             },
             "variant": "trial_offer"
           }
@@ -451183,124 +451506,124 @@
       "branch": "",
       "default": {
         "kind": "rule",
-        "rule_ref": 63,
+        "rule_ref": 64,
         "variants": [
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 63
+              "rule_ref": 64
             },
             "variant": "customer_account"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 63
+              "rule_ref": 64
             },
             "variant": "end_dated"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 63
+              "rule_ref": 64
             },
             "variant": "fee_defaults"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 63
+              "rule_ref": 64
             },
             "variant": "fee_phase"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 63
+              "rule_ref": 64
             },
             "variant": "flexible"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 63
+              "rule_ref": 64
             },
             "variant": "from_subscription"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 63
+              "rule_ref": 64
             },
             "variant": "inline_decimal"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 63
+              "rule_ref": 64
             },
             "variant": "inline_price"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 63
+              "rule_ref": 64
             },
             "variant": "invoice_decimal"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 63
+              "rule_ref": 64
             },
             "variant": "invoice_item"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 63
+              "rule_ref": 64
             },
             "variant": "metered"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 63
+              "rule_ref": 64
             },
             "variant": "pause_duration"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 63
+              "rule_ref": 64
             },
             "variant": "pause_timestamp"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 63
+              "rule_ref": 64
             },
             "variant": "price_eur"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 63
+              "rule_ref": 64
             },
             "variant": "started"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 63
+              "rule_ref": 64
             },
             "variant": "tax_coded"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 63
+              "rule_ref": 64
             },
             "variant": "test_clock"
           }
@@ -452203,117 +452526,117 @@
       "branch": "",
       "default": {
         "kind": "rule",
-        "rule_ref": 64,
+        "rule_ref": 65,
         "variants": [
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 64
+              "rule_ref": 65
             },
             "variant": "customer_account"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 64
+              "rule_ref": 65
             },
             "variant": "fee_defaults"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 64
+              "rule_ref": 65
             },
             "variant": "fee_phase"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 64
+              "rule_ref": 65
             },
             "variant": "flexible"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 64
+              "rule_ref": 65
             },
             "variant": "from_subscription"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 64
+              "rule_ref": 65
             },
             "variant": "inline_decimal"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 64
+              "rule_ref": 65
             },
             "variant": "inline_price"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 64
+              "rule_ref": 65
             },
             "variant": "invoice_decimal"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 64
+              "rule_ref": 65
             },
             "variant": "invoice_item"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 64
+              "rule_ref": 65
             },
             "variant": "metered"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 64
+              "rule_ref": 65
             },
             "variant": "pause_duration"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 64
+              "rule_ref": 65
             },
             "variant": "pause_timestamp"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 64
+              "rule_ref": 65
             },
             "variant": "price_eur"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 64
+              "rule_ref": 65
             },
             "variant": "started"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 64
+              "rule_ref": 65
             },
             "variant": "tax_coded"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 64
+              "rule_ref": 65
             },
             "variant": "test_clock"
           }
@@ -483284,7 +483607,7 @@
       "branch": "",
       "default": {
         "kind": "rule",
-        "rule_ref": 65,
+        "rule_ref": 66,
         "variants": [
           {
             "default": {
@@ -510738,12 +511061,12 @@
       "branch": "",
       "default": {
         "kind": "rule",
-        "rule_ref": 67,
+        "rule_ref": 68,
         "variants": [
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 67
+              "rule_ref": 68
             },
             "variant": "s700"
           }
@@ -517008,6 +517331,12 @@
       "tests": [
         "TestTransferAttributes/leaves/request/PostTransfers/source_type",
         "TestTransferAttributes/leaves/response/transfer/source_type"
+      ],
+      "unreachable_values": [
+        {
+          "reason": "Stripe answers 500 api_error 'An unknown error occurred' to every attempt (dev, 2026-10-31 and 2026-11-04)",
+          "value": "fpx"
+        }
       ]
     },
     {
@@ -517586,12 +517915,12 @@
       "branch": "",
       "default": {
         "kind": "rule",
-        "rule_ref": 68,
+        "rule_ref": 69,
         "variants": [
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 68
+              "rule_ref": 69
             },
             "variant": "partly_reversed"
           }
@@ -519039,9 +519368,9 @@
       "object": "treasury.financial_account",
       "operation": "PostTreasuryFinancialAccountsFinancialAccount",
       "path": "forwarding_settings.payment_method",
-      "reason": "not_reached: probe isolated/forward_to_bank was skipped (see its log)",
+      "reason": "Stripe answers 500 api_error 'An unknown error occurred' to every attempt (dev, 2026-10-31 and 2026-11-04)",
       "side": "request",
-      "status": "not_reached",
+      "status": "unreachable",
       "tests": [
         "TestTreasuryFinancialAccountAttributes/leaves/request/PostTreasuryFinancialAccountsFinancialAccount/forwarding_settings.payment_method"
       ]
@@ -519088,6 +519417,12 @@
       ],
       "tests": [
         "TestTreasuryFinancialAccountAttributes/leaves/request/PostTreasuryFinancialAccountsFinancialAccount/forwarding_settings.type"
+      ],
+      "unreachable_values": [
+        {
+          "reason": "Stripe answers 500 api_error 'An unknown error occurred' to every attempt (dev, 2026-10-31 and 2026-11-04)",
+          "value": "payment_method"
+        }
       ]
     },
     {
@@ -529902,12 +530237,49 @@
     },
     {
       "branch": "",
+      "initial": [
+        {
+          "matcher": {
+            "kind": "absent"
+          },
+          "variant": ""
+        },
+        {
+          "matcher": {
+            "kind": "absent"
+          },
+          "variant": "recipient"
+        },
+        {
+          "matcher": {
+            "kind": "value",
+            "value": true
+          },
+          "variant": "stripe_collectors_merchant"
+        },
+        {
+          "matcher": {
+            "kind": "absent"
+          },
+          "variant": "uk_identity"
+        }
+      ],
+      "nullable": {
+        "non_null_observed": true,
+        "null_observed": false
+      },
       "object": "v2.core.account",
       "operation": "",
       "path": "configuration.merchant.applied",
       "side": "response",
-      "status": "unproven",
-      "tests": []
+      "status": "proven",
+      "targets": [
+        "fake",
+        "stripe"
+      ],
+      "tests": [
+        "TestV2CoreAccountAttributes/leaves/response/v2.core.account/configuration.merchant.applied"
+      ]
     },
     {
       "branch": "",
@@ -538704,7 +539076,7 @@
       "branch": "",
       "default": {
         "kind": "rule",
-        "rule_ref": 73,
+        "rule_ref": 75,
         "variants": [
           {
             "default": {
@@ -680236,6 +680608,9 @@
           "kind": "value",
           "value": false
         },
+        "configuration.merchant.applied": {
+          "kind": "absent"
+        },
         "configuration.recipient.applied": {
           "kind": "absent"
         },
@@ -680321,6 +680696,7 @@
       "tests": [
         "TestV2CoreAccountAttributes/leaves/response/v2.core.account/applied_configurations",
         "TestV2CoreAccountAttributes/leaves/response/v2.core.account/closed",
+        "TestV2CoreAccountAttributes/leaves/response/v2.core.account/configuration.merchant.applied",
         "TestV2CoreAccountAttributes/leaves/response/v2.core.account/configuration.recipient.applied",
         "TestV2CoreAccountAttributes/leaves/response/v2.core.account/configuration.recipient.capabilities.stripe_balance.payouts.status",
         "TestV2CoreAccountAttributes/leaves/response/v2.core.account/configuration.recipient.capabilities.stripe_balance.payouts.status_details.code",
@@ -680389,6 +680765,9 @@
         "closed": {
           "kind": "value",
           "value": false
+        },
+        "configuration.merchant.applied": {
+          "kind": "absent"
         },
         "configuration.recipient.applied": {
           "kind": "value",
@@ -680521,6 +680900,7 @@
       "tests": [
         "TestV2CoreAccountAttributes/leaves/response/v2.core.account/applied_configurations",
         "TestV2CoreAccountAttributes/leaves/response/v2.core.account/closed",
+        "TestV2CoreAccountAttributes/leaves/response/v2.core.account/configuration.merchant.applied",
         "TestV2CoreAccountAttributes/leaves/response/v2.core.account/configuration.recipient.applied",
         "TestV2CoreAccountAttributes/leaves/response/v2.core.account/configuration.recipient.capabilities.stripe_balance.payouts.status",
         "TestV2CoreAccountAttributes/leaves/response/v2.core.account/configuration.recipient.capabilities.stripe_balance.payouts.status_details.code",
@@ -680587,6 +680967,10 @@
         "closed": {
           "kind": "value",
           "value": false
+        },
+        "configuration.merchant.applied": {
+          "kind": "value",
+          "value": true
         },
         "configuration.recipient.applied": {
           "kind": "absent"
@@ -680702,6 +681086,7 @@
       "tests": [
         "TestV2CoreAccountAttributes/leaves/response/v2.core.account/applied_configurations",
         "TestV2CoreAccountAttributes/leaves/response/v2.core.account/closed",
+        "TestV2CoreAccountAttributes/leaves/response/v2.core.account/configuration.merchant.applied",
         "TestV2CoreAccountAttributes/leaves/response/v2.core.account/configuration.recipient.applied",
         "TestV2CoreAccountAttributes/leaves/response/v2.core.account/configuration.recipient.capabilities.stripe_balance.payouts.status",
         "TestV2CoreAccountAttributes/leaves/response/v2.core.account/configuration.recipient.capabilities.stripe_balance.payouts.status_details.code",
@@ -680747,6 +681132,9 @@
         "closed": {
           "kind": "value",
           "value": false
+        },
+        "configuration.merchant.applied": {
+          "kind": "absent"
         },
         "configuration.recipient.applied": {
           "kind": "absent"
@@ -680839,6 +681227,7 @@
       "tests": [
         "TestV2CoreAccountAttributes/leaves/response/v2.core.account/applied_configurations",
         "TestV2CoreAccountAttributes/leaves/response/v2.core.account/closed",
+        "TestV2CoreAccountAttributes/leaves/response/v2.core.account/configuration.merchant.applied",
         "TestV2CoreAccountAttributes/leaves/response/v2.core.account/configuration.recipient.applied",
         "TestV2CoreAccountAttributes/leaves/response/v2.core.account/configuration.recipient.capabilities.stripe_balance.payouts.status",
         "TestV2CoreAccountAttributes/leaves/response/v2.core.account/configuration.recipient.capabilities.stripe_balance.payouts.status_details.code",
@@ -686533,6 +686922,58 @@
       ]
     },
     {
+      "object": "payment_link",
+      "observations": [
+        {
+          "condition": {
+            "account_country": "US",
+            "created_with": {
+              "after_completion": {
+                "redirect": {
+                  "url": {
+                    "$gen": "url"
+                  }
+                },
+                "type": "redirect"
+              },
+              "line_items": [
+                {
+                  "price": {
+                    "$gen": "ref",
+                    "arg": "price"
+                  },
+                  "quantity": 2
+                }
+              ]
+            },
+            "params": {
+              "after_completion": {
+                "redirect": {
+                  "url": {
+                    "$gen": "url"
+                  }
+                }
+              }
+            },
+            "probe": "isolated/hash_after_completion"
+          },
+          "value": {
+            "code": "parameter_missing",
+            "message": "Missing required param: after_completion[type].",
+            "param": "after_completion[type]",
+            "status": 400,
+            "type": "invalid_request_error"
+          }
+        }
+      ],
+      "operation": "PostPaymentLinksPaymentLink",
+      "path": "after_completion.redirect.url",
+      "rule": "Stripe's answer turns on the request: accepted in []; refused in [isolated/hash_after_completion]",
+      "tests": [
+        "TestPaymentLinkAttributes/leaves/request/PostPaymentLinksPaymentLink/after_completion.redirect.url"
+      ]
+    },
+    {
       "object": "payout",
       "observations": [
         {
@@ -689410,6 +689851,61 @@
           "condition": {
             "account_country": "US",
             "created_with": {
+              "configuration": {
+                "merchant": {
+                  "capabilities": {
+                    "card_payments": {
+                      "requested": true
+                    }
+                  }
+                },
+                "recipient": {
+                  "capabilities": {
+                    "stripe_balance": {
+                      "stripe_transfers": {
+                        "requested": true
+                      }
+                    }
+                  }
+                }
+              },
+              "contact_email": {
+                "$gen": "email"
+              },
+              "dashboard": "none",
+              "defaults": {
+                "responsibilities": {
+                  "fees_collector": "application",
+                  "losses_collector": "application"
+                }
+              },
+              "identity": {
+                "country": "US"
+              }
+            },
+            "params": {
+              "configuration": {
+                "recipient": {
+                  "capabilities": {
+                    "stripe_balance": {
+                      "stripe_transfers": {
+                        "requested": false
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "probe": "isolated/hash_configuration"
+          },
+          "value": {
+            "status": 200
+          }
+        },
+        {
+          "condition": {
+            "account_country": "US",
+            "created_with": {
               "contact_email": {
                 "$gen": "email"
               },
@@ -689479,7 +689975,7 @@
       ],
       "operation": "PostV2CoreAccountsId",
       "path": "configuration.recipient.capabilities.stripe_balance.stripe_transfers.requested",
-      "rule": "Stripe's answer turns on the request: accepted in [isolated/change_adds_recipient_with_collectors]; refused in [isolated/change_adds_recipient]",
+      "rule": "Stripe's answer turns on the request: accepted in [isolated/change_adds_recipient_with_collectors, isolated/hash_configuration]; refused in [isolated/change_adds_recipient]",
       "tests": [
         "TestV2CoreAccountAttributes/leaves/request/PostV2CoreAccountsId/configuration.recipient.capabilities.stripe_balance.stripe_transfers.requested"
       ]
@@ -689727,6 +690223,62 @@
       "rule": "Stripe's answer turns on the request: accepted in [isolated/url_update_accessible, isolated/url_update_iana, isolated/url_update_on_recipient_accessible, isolated/url_update_unresolvable]; refused in [isolated/url_update_example, isolated/url_update_example_path, isolated/url_update_on_recipient_stripe, isolated/url_update_stripe, isolated/url_update_stripe_docs]",
       "tests": [
         "TestV2CoreAccountAttributes/leaves/request/PostV2CoreAccountsId/defaults.profile.business_url"
+      ]
+    },
+    {
+      "object": "v2.core.account",
+      "observations": [
+        {
+          "condition": {
+            "account_country": "US",
+            "created_with": {
+              "configuration": {
+                "recipient": {
+                  "capabilities": {
+                    "stripe_balance": {
+                      "stripe_transfers": {
+                        "requested": true
+                      }
+                    }
+                  }
+                }
+              },
+              "contact_email": {
+                "$gen": "email"
+              },
+              "dashboard": "none",
+              "defaults": {
+                "responsibilities": {
+                  "fees_collector": "application",
+                  "losses_collector": "application"
+                }
+              },
+              "identity": {
+                "country": "US"
+              }
+            },
+            "params": {
+              "defaults": {
+                "responsibilities": {
+                  "fees_collector": "application"
+                }
+              }
+            },
+            "probe": "isolated/hash_responsibilities"
+          },
+          "value": {
+            "code": "invalid_fields",
+            "message": "Some fields in the request were invalid: 'defaults.responsibilities.losses_collector: Required request field missing'",
+            "param": "defaults.responsibilities.losses_collector",
+            "status": 400
+          }
+        }
+      ],
+      "operation": "PostV2CoreAccountsId",
+      "path": "defaults.responsibilities.fees_collector",
+      "rule": "Stripe's answer turns on the request: accepted in []; refused in [isolated/hash_responsibilities]",
+      "tests": [
+        "TestV2CoreAccountAttributes/leaves/request/PostV2CoreAccountsId/defaults.responsibilities.fees_collector"
       ]
     },
     {
@@ -691769,11 +692321,11 @@
   "spec_sha256": "9119e72c7ff8ad142e94f7efa9cf49d8e6eec69df3592e17e8fba15099726ed7",
   "stripe_run": {
     "event": "push",
-    "id": 41217619203,
+    "id": 41927792000,
     "passed": true,
     "platform_country": "US",
     "sandbox": "ci",
-    "time": "2026-10-31T17:40:10Z"
+    "time": "2026-11-05T00:31:03Z"
   },
-  "suite_commit": "6b9aeaabfd08d0477f43ff1f6dea5d19247f3a5d"
+  "suite_commit": "50ffc82cc482fe1d96b977debe2c3282ba29e3fb"
 }

@@ -25,9 +25,10 @@ import (
 // configured phone stays in state. A verification document keeps what the configuration says:
 // the record's uploaded files return as sent, but on the dev sandbox `stripe_account`'s
 // `individual`, the same object, had a test token such as `file_identity_document_success`
-// replaced with a new `file_...` ID. An update sends only the members of `registered_address`
-// and `verification` that changed, because Stripe keeps the others (family `v1-connect`,
-// `siblings_kept`) and refuses a new document once it has verified the person.
+// replaced with a new `file_...` ID. An update sends only the members of `address`,
+// `registered_address`, `relationship` and `verification` that changed, because Stripe keeps the
+// others (family `v1-connect`, `hashes`) and refuses a new document once it has verified the
+// person.
 // Stripe deletes a person with DELETE and answers it, and any person it does not know, with a
 // 404 (suite: "delete"). A person under a deleted account is the 403 `account_invalid`, which
 // means gone.
@@ -50,7 +51,7 @@ var Declaration = engine.Declaration{
 	GoneOnForbidden:    "account_invalid",
 	RefuseChange:       []string{"id_number", "ssn_last_4"},
 	Sensitive:          []string{"id_number", "ssn_last_4"},
-	SendChangedMembers: []string{"registered_address", "verification", "verification.document", "verification.additional_document"},
+	SendChangedMembers: []string{"address", "registered_address", "relationship", "verification", "verification.document", "verification.additional_document"},
 	PreserveConfig: []string{
 		"phone",
 		"verification.document.front", "verification.document.back",

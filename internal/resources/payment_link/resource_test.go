@@ -465,6 +465,21 @@ func TestAccPaymentLink_updatesInPlace(t *testing.T) {
 				resource.TestCheckResourceAttr(address, "payment_intent_data.metadata.%", "1"),
 				resource.TestCheckResourceAttr(address, "payment_intent_data.metadata.c", "d"),
 			}},
+		// A key removed from a data hash's metadata leaves it: Stripe replaces the map (the record's
+		// probes `update/11` and `update/9` send `attrs_a` alone over `attrs_a` and `attrs_b`).
+		{name: "payment_intent_data metadata key", before: "  payment_intent_data = { description = \"attrs\", metadata = { attrs_a = \"one\", attrs_b = \"two\" } }\n",
+			after: "  payment_intent_data = { description = \"attrs\", metadata = { attrs_a = \"one\" } }\n",
+			check: []resource.TestCheckFunc{
+				resource.TestCheckResourceAttr(address, "payment_intent_data.metadata.%", "1"),
+				resource.TestCheckResourceAttr(address, "payment_intent_data.metadata.attrs_a", "one"),
+			}},
+		{name: "subscription_data metadata key", items: func(acctest.Config) string { return monthlyItem },
+			before: "  payment_method_collection = \"always\"\n  subscription_data = { trial_period_days = 8, metadata = { attrs_a = \"one\", attrs_b = \"two\" } }\n",
+			after:  "  payment_method_collection = \"always\"\n  subscription_data = { trial_period_days = 8, metadata = { attrs_a = \"one\" } }\n",
+			check: []resource.TestCheckFunc{
+				resource.TestCheckResourceAttr(address, "subscription_data.metadata.%", "1"),
+				resource.TestCheckResourceAttr(address, "subscription_data.metadata.attrs_a", "one"),
+			}},
 		// Stripe takes it only on a link with a recurring price (dev sandbox), beside the
 		// subscription's data (suite: `update/9`).
 		{name: "payment_method_collection", items: func(acctest.Config) string { return monthlyItem },

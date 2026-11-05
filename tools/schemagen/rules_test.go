@@ -68,7 +68,7 @@ func TestEvidenceReaderTakesTheSuiteFixtureAndRefusesTheUnknown(t *testing.T) {
 func TestEvidenceReaderTakesTheFormsOfTheFourthPin(t *testing.T) {
 	record := func(update string) []byte {
 		return []byte(fmt.Sprintf(`{"format_version": 1, "families": [{"family": "v1-payments", "objects": ["charge"], "nested_hash_update": "siblings_cleared",
-			"hashes": [{"hash": "shipping.address", "update": %q}], "array_update": "replaced", "map_key_removal": "empty_string", "scalar_unset": "empty_string", "tests": []}],
+			"hashes": [{"object": "charge", "hash": "shipping.address", "update": %q}], "array_update": "replaced", "map_key_removal": "empty_string", "scalar_unset": "empty_string", "tests": []}],
 			"rules": [{"object": "charge", "operation": "PostCharges", "path": "x", "rule": "a rule no leaf cites", "tests": [],
 				"observations": [{"condition": {"account_country": "US", "variant": ""}, "value": {"kind": "time_within", "days": 1}}]}]}`, update))
 	}
@@ -84,6 +84,46 @@ func TestEvidenceReaderTakesTheFormsOfTheFourthPin(t *testing.T) {
 	}
 	if _, err := decodeEvidence(record("sometimes")); err == nil || !strings.Contains(err.Error(), `hash update "sometimes"`) {
 		t.Errorf("an unknown hash update: %v", err)
+	}
+}
+
+// A hash's answer belongs to one object of its family and may be `refused`, and a proven request
+// leaf may carry the values Stripe fails on every attempt; the reader refuses what the generator
+// cannot use of either.
+func TestEvidenceReaderTakesTheFormsOfTheSeventhPin(t *testing.T) {
+	record := func(hashes, unreachable string) []byte {
+		return []byte(`{"format_version": 1, "families": [{"family": "v1-payments", "objects": ["payment_link", "transfer"], "nested_hash_update": "mixed",
+			"hashes": ` + hashes + `, "array_update": "replaced", "map_key_removal": "empty_string", "scalar_unset": "empty_string", "tests": []}],
+			"leaves": [{"object": "transfer", "side": "request", "operation": "PostTransfers", "path": "source_type", "status": "proven", "tests": [],
+				"enum_values": [{"accepted": true, "value": "card"}], "unreachable_values": ` + unreachable + `}]}`)
+	}
+	const refused = `[{"object": "payment_link", "hash": "after_completion", "update": "refused"}]`
+	const fpx = `[{"value": "fpx", "reason": "Stripe answers 500 to every attempt"}]`
+	e, err := decodeEvidence(record(refused, fpx))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if h := e.Families[0].Hashes[0]; h.Object != "payment_link" || h.Hash != "after_completion" || h.Update != HashRefused {
+		t.Errorf("the hash: %+v", h)
+	}
+	if u := e.Leaves[0].Unreachable; len(u) != 1 || u[0].Value != "fpx" || u[0].Reason == "" {
+		t.Errorf("the unreachable values: %+v", u)
+	}
+	for _, tc := range []struct{ name, hashes, unreachable, want string }{
+		{"a hash of another family's object", `[{"object": "charge", "hash": "shipping", "update": "siblings_kept"}]`, fpx, "not one of its objects"},
+		{"a hash given twice", `[{"object": "payment_link", "hash": "x", "update": "refused"}, {"object": "payment_link", "hash": "x", "update": "siblings_kept"}]`, fpx, "twice"},
+		{"a hash with no member", `[{"object": "payment_link", "hash": "x", "update": "refused", "since": "now"}]`, fpx, "is a member the format does not define"},
+		{"an unreachable value with no reason", refused, `[{"value": "fpx", "reason": " "}]`, "has no reason"},
+		{"an unreachable value listed twice", refused, `[{"value": "fpx", "reason": "a"}, {"value": "fpx", "reason": "b"}]`, "listed twice"},
+		{"an unreachable value the suite sent", refused, `[{"value": "card", "reason": "a"}]`, "among the values the suite sent"},
+	} {
+		if _, err := decodeEvidence(record(tc.hashes, tc.unreachable)); err == nil || !strings.Contains(err.Error(), tc.want) {
+			t.Errorf("%s: %v, want %q", tc.name, err, tc.want)
+		}
+	}
+	onResponse := bytes.Replace(record(refused, fpx), []byte(`"side": "request"`), []byte(`"side": "response"`), 1)
+	if _, err := decodeEvidence(onResponse); err == nil || !strings.Contains(err.Error(), "not a proven request leaf") {
+		t.Errorf("unreachable values on a response leaf: %v", err)
 	}
 }
 
