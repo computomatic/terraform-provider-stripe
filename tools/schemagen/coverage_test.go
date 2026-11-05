@@ -460,6 +460,43 @@ func TestAnswersQuoteTheirRefusals(t *testing.T) {
 	}
 }
 
+// A value of an exposed argument that Stripe fails on every attempt is named on the field with
+// the suite's reason, once whatever operations hold it, and one the argument does not document
+// fails generation.
+func TestUnreachableValuesAreNamedOnTheField(t *testing.T) {
+	res := gadget()
+	ev := pinned(t, res, map[string]string{"request/PostGadgets/color": ClassVerified, "request/PostGadgetsId/color": ClassVerified})
+	for _, l := range ev.Attributes.Leaves {
+		if l.Path == "color" && l.Side == SideRequest {
+			ev.Evidence.Leaves = append(ev.Evidence.Leaves, EvidenceLeaf{Key: l.Key, Status: "proven", Tests: []string{"TestGadgetAttributes/leaves/" + l.Key.String()},
+				Unreachable: []UnreachableValue{{Value: "ultraviolet", Reason: "Stripe answers 500 to every attempt."}}})
+		}
+	}
+	spec := coverageSpec(t)
+	color := func(values ...string) {
+		for _, op := range []string{"/v1/gadgets", "/v1/gadgets/{id}"} {
+			c := spec.Paths[op]["post"].RequestBody.Content["application/x-www-form-urlencoded"].Schema.Properties["color"]
+			c.Enum = nil
+			for _, v := range values {
+				c.Enum = append(c.Enum, json.RawMessage(strconv.Quote(v)))
+			}
+		}
+	}
+	color("red", "ultraviolet")
+	tc, err := coverTable(spec, res, ev)
+	if err != nil {
+		t.Fatal(err)
+	}
+	want := `Stripe fails ` + "`ultraviolet`" + ` on every attempt, so the conformance suite never sends it: "Stripe answers 500 to every attempt".`
+	if f := fieldAt(tc.table, "color"); f == nil || f.Unreachable != want {
+		t.Errorf("color: %+v", f)
+	}
+	color("red")
+	if _, err := coverTable(spec, res, ev); err == nil || !strings.Contains(err.Error(), "not one of the argument's documented values") {
+		t.Errorf("an undocumented unreachable value: %v", err)
+	}
+}
+
 // A rule that quotes the values Stripe derived, as JSON over several lines, cannot be a docs line,
 // so the leaf has no statement until a declaration words it.
 func TestAMultiLineRuleHasNoStatement(t *testing.T) {

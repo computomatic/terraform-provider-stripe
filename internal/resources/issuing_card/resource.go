@@ -48,6 +48,9 @@ var Declaration = engine.Declaration{
 	},
 	ExpandOnRetrieve: []string{"number", "cvc"},
 	Sensitive:        []string{"number", "cvc"},
+	// Stripe keeps the members of `spending_controls` an update leaves out (family
+	// `v1-issuing-treasury`, `hashes`), so an update sends only those that changed.
+	SendChangedMembers: []string{"spending_controls"},
 }
 
 // NewResource returns the resource constructor the provider registers.

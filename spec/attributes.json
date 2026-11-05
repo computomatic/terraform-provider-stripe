@@ -1,17 +1,18 @@
 {
-  "fake_version": "v0.31.0",
-  "suite_ref": "6b9aeaabfd08d0477f43ff1f6dea5d19247f3a5d",
-  "run_id": 41217619203,
+  "fake_version": "v0.32.0",
+  "suite_ref": "50ffc82cc482fe1d96b977debe2c3282ba29e3fb",
+  "run_id": 41927792000,
   "api_version": "2026-09-30.endive",
   "spec_sha256": "9119e72c7ff8ad142e94f7efa9cf49d8e6eec69df3592e17e8fba15099726ed7",
   "counts": {
     "gap_placeholder_null": 43,
-    "gap_proven_not_served": 2938,
+    "gap_proven_not_served": 2853,
     "gap_stripe_only": 33,
-    "proven_by_test": 5691,
+    "proven_by_test": 5690,
+    "served_unverified": 53,
     "unproven": 7284,
-    "verified": 2548,
-    "verified_accepted_only": 282
+    "verified": 2571,
+    "verified_accepted_only": 292
   },
   "refused_only": 141,
   "objects": [
@@ -535,7 +536,10 @@
     {
       "object": "invoiceitem",
       "counts": {
-        "gap_proven_not_served": 102
+        "gap_proven_not_served": 17,
+        "served_unverified": 53,
+        "verified": 22,
+        "verified_accepted_only": 10
       }
     },
     {
@@ -1132,9 +1136,9 @@
     {
       "object": "v2.core.account",
       "counts": {
-        "proven_by_test": 47,
+        "proven_by_test": 46,
         "unproven": 857,
-        "verified": 56,
+        "verified": 57,
         "verified_accepted_only": 2
       }
     },
@@ -68922,13 +68926,33 @@
       "path": "amount",
       "branch": "",
       "shape": "integer",
-      "state": "proven_by_test",
+      "state": "served",
       "status": "proven",
       "tests": [
         "TestInvoiceItemAttributes/leaves/request/PostInvoiceitems/amount",
         "TestInvoiceItemAttributes/leaves/response/invoiceitem/amount"
       ],
-      "class": "gap_proven_not_served"
+      "class": "served_unverified",
+      "detail": {
+        "test": "TestInvoiceItemAttributes/leaves/request/PostInvoiceitems/amount",
+        "base_url": "http://127.0.0.1:18111",
+        "object": "invoiceitem",
+        "side": "request",
+        "operation": "PostInvoiceitems",
+        "path": "amount",
+        "branch": "",
+        "probe": "every_field/2",
+        "verdict": "mismatch",
+        "expected": null,
+        "observed": null,
+        "error": {
+          "status": 501,
+          "type": "api_error",
+          "code": "fake_not_implemented",
+          "param": "",
+          "message": "fake-stripe-api: parameter discounts[0][coupon] of operation PostInvoiceitems is not implemented"
+        }
+      }
     },
     {
       "object": "invoiceitem",
@@ -68937,13 +68961,33 @@
       "path": "currency",
       "branch": "",
       "shape": "string",
-      "state": "proven_by_test",
+      "state": "served",
       "status": "proven",
       "tests": [
         "TestInvoiceItemAttributes/leaves/request/PostInvoiceitems/currency",
         "TestInvoiceItemAttributes/leaves/response/invoiceitem/currency"
       ],
-      "class": "gap_proven_not_served"
+      "class": "served_unverified",
+      "detail": {
+        "test": "TestInvoiceItemAttributes/leaves/request/PostInvoiceitems/currency",
+        "base_url": "http://127.0.0.1:18111",
+        "object": "invoiceitem",
+        "side": "request",
+        "operation": "PostInvoiceitems",
+        "path": "currency",
+        "branch": "",
+        "probe": "every_field/2",
+        "verdict": "mismatch",
+        "expected": null,
+        "observed": null,
+        "error": {
+          "status": 501,
+          "type": "api_error",
+          "code": "fake_not_implemented",
+          "param": "",
+          "message": "fake-stripe-api: parameter discounts[0][coupon] of operation PostInvoiceitems is not implemented"
+        }
+      }
     },
     {
       "object": "invoiceitem",
@@ -68952,12 +68996,32 @@
       "path": "customer",
       "branch": "",
       "shape": "string",
-      "state": "proven_by_test",
+      "state": "served",
       "status": "proven",
       "tests": [
         "TestInvoiceItemAttributes/leaves/request/PostInvoiceitems/customer"
       ],
-      "class": "gap_proven_not_served"
+      "class": "served_unverified",
+      "detail": {
+        "test": "TestInvoiceItemAttributes/leaves/request/PostInvoiceitems/customer",
+        "base_url": "http://127.0.0.1:18111",
+        "object": "invoiceitem",
+        "side": "request",
+        "operation": "PostInvoiceitems",
+        "path": "customer",
+        "branch": "",
+        "probe": "every_field/2",
+        "verdict": "mismatch",
+        "expected": null,
+        "observed": null,
+        "error": {
+          "status": 501,
+          "type": "api_error",
+          "code": "fake_not_implemented",
+          "param": "",
+          "message": "fake-stripe-api: parameter discounts[0][coupon] of operation PostInvoiceitems is not implemented"
+        }
+      }
     },
     {
       "object": "invoiceitem",
@@ -68966,14 +69030,36 @@
       "path": "customer_account",
       "branch": "",
       "shape": "string",
-      "state": "unserved",
-      "reason": "needs_declaration",
+      "state": "served",
+      "reason": "refused_only",
       "status": "proven",
       "tests": [
         "TestInvoiceItemAttributes/leaves/request/PostInvoiceitems/customer_account",
         "TestInvoiceItemAttributes/leaves/response/invoiceitem/customer_account"
       ],
-      "class": "gap_proven_not_served"
+      "class": "served_unverified",
+      "detail": {
+        "test": "TestInvoiceItemAttributes/leaves/response/invoiceitem/customer_account",
+        "base_url": "http://127.0.0.1:18111",
+        "object": "invoiceitem",
+        "side": "response",
+        "operation": "",
+        "path": "customer_account",
+        "branch": "",
+        "probe": "every_field/2",
+        "verdict": "mismatch",
+        "expected": {
+          "kind": "null"
+        },
+        "observed": null,
+        "error": {
+          "status": 501,
+          "type": "api_error",
+          "code": "fake_not_implemented",
+          "param": "",
+          "message": "fake-stripe-api: parameter discounts[0][coupon] of operation PostInvoiceitems is not implemented"
+        }
+      }
     },
     {
       "object": "invoiceitem",
@@ -68982,13 +69068,35 @@
       "path": "description",
       "branch": "",
       "shape": "string",
-      "state": "proven_by_test",
+      "state": "served",
       "status": "proven",
       "tests": [
         "TestInvoiceItemAttributes/leaves/request/PostInvoiceitems/description",
         "TestInvoiceItemAttributes/leaves/response/invoiceitem/description"
       ],
-      "class": "gap_proven_not_served"
+      "class": "served_unverified",
+      "detail": {
+        "test": "TestInvoiceItemAttributes/leaves/response/invoiceitem/description",
+        "base_url": "http://127.0.0.1:18111",
+        "object": "invoiceitem",
+        "side": "response",
+        "operation": "",
+        "path": "description",
+        "branch": "",
+        "probe": "every_field/2",
+        "verdict": "mismatch",
+        "expected": {
+          "kind": "null"
+        },
+        "observed": null,
+        "error": {
+          "status": 501,
+          "type": "api_error",
+          "code": "fake_not_implemented",
+          "param": "",
+          "message": "fake-stripe-api: parameter discounts[0][coupon] of operation PostInvoiceitems is not implemented"
+        }
+      }
     },
     {
       "object": "invoiceitem",
@@ -68997,13 +69105,36 @@
       "path": "discountable",
       "branch": "",
       "shape": "boolean",
-      "state": "proven_by_test",
+      "state": "served",
       "status": "proven",
       "tests": [
         "TestInvoiceItemAttributes/leaves/request/PostInvoiceitems/discountable",
         "TestInvoiceItemAttributes/leaves/response/invoiceitem/discountable"
       ],
-      "class": "gap_proven_not_served"
+      "class": "served_unverified",
+      "detail": {
+        "test": "TestInvoiceItemAttributes/leaves/response/invoiceitem/discountable",
+        "base_url": "http://127.0.0.1:18111",
+        "object": "invoiceitem",
+        "side": "response",
+        "operation": "",
+        "path": "discountable",
+        "branch": "",
+        "probe": "every_field/2",
+        "verdict": "mismatch",
+        "expected": {
+          "kind": "value",
+          "value": true
+        },
+        "observed": null,
+        "error": {
+          "status": 501,
+          "type": "api_error",
+          "code": "fake_not_implemented",
+          "param": "",
+          "message": "fake-stripe-api: parameter discounts[0][coupon] of operation PostInvoiceitems is not implemented"
+        }
+      }
     },
     {
       "object": "invoiceitem",
@@ -69057,13 +69188,35 @@
       "path": "invoice",
       "branch": "",
       "shape": "string",
-      "state": "proven_by_test",
+      "state": "served",
       "status": "proven",
       "tests": [
         "TestInvoiceItemAttributes/leaves/request/PostInvoiceitems/invoice",
         "TestInvoiceItemAttributes/leaves/response/invoiceitem/invoice"
       ],
-      "class": "gap_proven_not_served"
+      "class": "served_unverified",
+      "detail": {
+        "test": "TestInvoiceItemAttributes/leaves/response/invoiceitem/invoice",
+        "base_url": "http://127.0.0.1:18111",
+        "object": "invoiceitem",
+        "side": "response",
+        "operation": "",
+        "path": "invoice",
+        "branch": "",
+        "probe": "every_field/2",
+        "verdict": "mismatch",
+        "expected": {
+          "kind": "null"
+        },
+        "observed": null,
+        "error": {
+          "status": 501,
+          "type": "api_error",
+          "code": "fake_not_implemented",
+          "param": "",
+          "message": "fake-stripe-api: parameter discounts[0][coupon] of operation PostInvoiceitems is not implemented"
+        }
+      }
     },
     {
       "object": "invoiceitem",
@@ -69072,13 +69225,36 @@
       "path": "metadata",
       "branch": "",
       "shape": "map",
-      "state": "proven_by_test",
+      "state": "served",
       "status": "proven",
       "tests": [
         "TestInvoiceItemAttributes/leaves/request/PostInvoiceitems/metadata",
         "TestInvoiceItemAttributes/leaves/response/invoiceitem/metadata"
       ],
-      "class": "gap_proven_not_served"
+      "class": "served_unverified",
+      "detail": {
+        "test": "TestInvoiceItemAttributes/leaves/response/invoiceitem/metadata",
+        "base_url": "http://127.0.0.1:18111",
+        "object": "invoiceitem",
+        "side": "response",
+        "operation": "",
+        "path": "metadata",
+        "branch": "",
+        "probe": "every_field/2",
+        "verdict": "mismatch",
+        "expected": {
+          "kind": "value",
+          "value": {}
+        },
+        "observed": null,
+        "error": {
+          "status": 501,
+          "type": "api_error",
+          "code": "fake_not_implemented",
+          "param": "",
+          "message": "fake-stripe-api: parameter discounts[0][coupon] of operation PostInvoiceitems is not implemented"
+        }
+      }
     },
     {
       "object": "invoiceitem",
@@ -69087,12 +69263,12 @@
       "path": "period.end",
       "branch": "",
       "shape": "integer",
-      "state": "proven_by_test",
+      "state": "served",
       "status": "proven",
       "tests": [
         "TestInvoiceItemAttributes/leaves/request/PostInvoiceitems/period.end"
       ],
-      "class": "gap_proven_not_served"
+      "class": "verified"
     },
     {
       "object": "invoiceitem",
@@ -69101,12 +69277,12 @@
       "path": "period.start",
       "branch": "",
       "shape": "integer",
-      "state": "proven_by_test",
+      "state": "served",
       "status": "proven",
       "tests": [
         "TestInvoiceItemAttributes/leaves/request/PostInvoiceitems/period.start"
       ],
-      "class": "gap_proven_not_served"
+      "class": "verified"
     },
     {
       "object": "invoiceitem",
@@ -69115,12 +69291,12 @@
       "path": "price_data.currency",
       "branch": "",
       "shape": "string",
-      "state": "proven_by_test",
+      "state": "served",
       "status": "proven",
       "tests": [
         "TestInvoiceItemAttributes/leaves/request/PostInvoiceitems/price_data.currency"
       ],
-      "class": "gap_proven_not_served"
+      "class": "verified"
     },
     {
       "object": "invoiceitem",
@@ -69129,12 +69305,12 @@
       "path": "price_data.product",
       "branch": "",
       "shape": "string",
-      "state": "proven_by_test",
+      "state": "served",
       "status": "proven",
       "tests": [
         "TestInvoiceItemAttributes/leaves/request/PostInvoiceitems/price_data.product"
       ],
-      "class": "gap_proven_not_served"
+      "class": "verified"
     },
     {
       "object": "invoiceitem",
@@ -69143,12 +69319,12 @@
       "path": "price_data.tax_behavior",
       "branch": "",
       "shape": "enum",
-      "state": "proven_by_test",
+      "state": "served",
       "status": "proven",
       "tests": [
         "TestInvoiceItemAttributes/leaves/request/PostInvoiceitems/price_data.tax_behavior"
       ],
-      "class": "gap_proven_not_served"
+      "class": "verified"
     },
     {
       "object": "invoiceitem",
@@ -69157,12 +69333,12 @@
       "path": "price_data.unit_amount",
       "branch": "",
       "shape": "integer",
-      "state": "proven_by_test",
+      "state": "served",
       "status": "proven",
       "tests": [
         "TestInvoiceItemAttributes/leaves/request/PostInvoiceitems/price_data.unit_amount"
       ],
-      "class": "gap_proven_not_served"
+      "class": "verified"
     },
     {
       "object": "invoiceitem",
@@ -69171,12 +69347,12 @@
       "path": "price_data.unit_amount_decimal",
       "branch": "",
       "shape": "string",
-      "state": "proven_by_test",
+      "state": "served",
       "status": "proven",
       "tests": [
         "TestInvoiceItemAttributes/leaves/request/PostInvoiceitems/price_data.unit_amount_decimal"
       ],
-      "class": "gap_proven_not_served"
+      "class": "verified"
     },
     {
       "object": "invoiceitem",
@@ -69185,13 +69361,13 @@
       "path": "pricing.price",
       "branch": "",
       "shape": "string",
-      "state": "unserved",
-      "reason": "needs_declaration",
+      "state": "served",
+      "reason": "accepted_only",
       "status": "proven",
       "tests": [
         "TestInvoiceItemAttributes/leaves/request/PostInvoiceitems/pricing.price"
       ],
-      "class": "gap_proven_not_served"
+      "class": "verified_accepted_only"
     },
     {
       "object": "invoiceitem",
@@ -69200,13 +69376,36 @@
       "path": "quantity",
       "branch": "",
       "shape": "integer",
-      "state": "proven_by_test",
+      "state": "served",
       "status": "proven",
       "tests": [
         "TestInvoiceItemAttributes/leaves/request/PostInvoiceitems/quantity",
         "TestInvoiceItemAttributes/leaves/response/invoiceitem/quantity"
       ],
-      "class": "gap_proven_not_served"
+      "class": "served_unverified",
+      "detail": {
+        "test": "TestInvoiceItemAttributes/leaves/response/invoiceitem/quantity",
+        "base_url": "http://127.0.0.1:18111",
+        "object": "invoiceitem",
+        "side": "response",
+        "operation": "",
+        "path": "quantity",
+        "branch": "",
+        "probe": "every_field/2",
+        "verdict": "mismatch",
+        "expected": {
+          "kind": "value",
+          "value": 1
+        },
+        "observed": null,
+        "error": {
+          "status": 501,
+          "type": "api_error",
+          "code": "fake_not_implemented",
+          "param": "",
+          "message": "fake-stripe-api: parameter discounts[0][coupon] of operation PostInvoiceitems is not implemented"
+        }
+      }
     },
     {
       "object": "invoiceitem",
@@ -69215,14 +69414,36 @@
       "path": "quantity_decimal",
       "branch": "",
       "shape": "string",
-      "state": "unserved",
-      "reason": "needs_declaration",
+      "state": "served",
       "status": "proven",
       "tests": [
         "TestInvoiceItemAttributes/leaves/request/PostInvoiceitems/quantity_decimal",
         "TestInvoiceItemAttributes/leaves/response/invoiceitem/quantity_decimal"
       ],
-      "class": "gap_proven_not_served"
+      "class": "served_unverified",
+      "detail": {
+        "test": "TestInvoiceItemAttributes/leaves/response/invoiceitem/quantity_decimal",
+        "base_url": "http://127.0.0.1:18111",
+        "object": "invoiceitem",
+        "side": "response",
+        "operation": "",
+        "path": "quantity_decimal",
+        "branch": "",
+        "probe": "every_field/2",
+        "verdict": "mismatch",
+        "expected": {
+          "kind": "value",
+          "value": "1"
+        },
+        "observed": null,
+        "error": {
+          "status": 501,
+          "type": "api_error",
+          "code": "fake_not_implemented",
+          "param": "",
+          "message": "fake-stripe-api: parameter discounts[0][coupon] of operation PostInvoiceitems is not implemented"
+        }
+      }
     },
     {
       "object": "invoiceitem",
@@ -69231,13 +69452,13 @@
       "path": "subscription",
       "branch": "",
       "shape": "string",
-      "state": "unserved",
-      "reason": "needs_declaration",
+      "state": "served",
+      "reason": "accepted_only",
       "status": "proven",
       "tests": [
         "TestInvoiceItemAttributes/leaves/request/PostInvoiceitems/subscription"
       ],
-      "class": "gap_proven_not_served"
+      "class": "verified_accepted_only"
     },
     {
       "object": "invoiceitem",
@@ -69246,12 +69467,13 @@
       "path": "tax_behavior",
       "branch": "",
       "shape": "enum",
-      "state": "proven_by_test",
+      "state": "served",
+      "reason": "accepted_only",
       "status": "proven",
       "tests": [
         "TestInvoiceItemAttributes/leaves/request/PostInvoiceitems/tax_behavior"
       ],
-      "class": "gap_proven_not_served"
+      "class": "verified_accepted_only"
     },
     {
       "object": "invoiceitem",
@@ -69260,13 +69482,13 @@
       "path": "tax_code",
       "branch": "",
       "shape": "string",
-      "state": "unserved",
-      "reason": "needs_declaration",
+      "state": "served",
+      "reason": "accepted_only",
       "status": "proven",
       "tests": [
         "TestInvoiceItemAttributes/leaves/request/PostInvoiceitems/tax_code"
       ],
-      "class": "gap_proven_not_served"
+      "class": "verified_accepted_only"
     },
     {
       "object": "invoiceitem",
@@ -69275,13 +69497,12 @@
       "path": "tax_rates",
       "branch": "",
       "shape": "list",
-      "state": "unserved",
-      "reason": "needs_declaration",
+      "state": "served",
       "status": "proven",
       "tests": [
         "TestInvoiceItemAttributes/leaves/request/PostInvoiceitems/tax_rates"
       ],
-      "class": "gap_proven_not_served"
+      "class": "verified"
     },
     {
       "object": "invoiceitem",
@@ -69290,13 +69511,13 @@
       "path": "unit_amount_decimal",
       "branch": "",
       "shape": "string",
-      "state": "unserved",
-      "reason": "needs_declaration",
+      "state": "served",
+      "reason": "accepted_only",
       "status": "proven",
       "tests": [
         "TestInvoiceItemAttributes/leaves/request/PostInvoiceitems/unit_amount_decimal"
       ],
-      "class": "gap_proven_not_served"
+      "class": "verified_accepted_only"
     },
     {
       "object": "invoiceitem",
@@ -69305,12 +69526,12 @@
       "path": "amount",
       "branch": "",
       "shape": "integer",
-      "state": "proven_by_test",
+      "state": "served",
       "status": "proven",
       "tests": [
         "TestInvoiceItemAttributes/leaves/request/PostInvoiceitemsInvoiceitem/amount"
       ],
-      "class": "gap_proven_not_served"
+      "class": "verified"
     },
     {
       "object": "invoiceitem",
@@ -69319,12 +69540,12 @@
       "path": "description",
       "branch": "",
       "shape": "string",
-      "state": "proven_by_test",
+      "state": "served",
       "status": "proven",
       "tests": [
         "TestInvoiceItemAttributes/leaves/request/PostInvoiceitemsInvoiceitem/description"
       ],
-      "class": "gap_proven_not_served"
+      "class": "verified"
     },
     {
       "object": "invoiceitem",
@@ -69333,12 +69554,12 @@
       "path": "discountable",
       "branch": "",
       "shape": "boolean",
-      "state": "proven_by_test",
+      "state": "served",
       "status": "proven",
       "tests": [
         "TestInvoiceItemAttributes/leaves/request/PostInvoiceitemsInvoiceitem/discountable"
       ],
-      "class": "gap_proven_not_served"
+      "class": "verified"
     },
     {
       "object": "invoiceitem",
@@ -69392,13 +69613,13 @@
       "path": "invoicing_rules",
       "branch": "",
       "shape": "enum",
-      "state": "unserved",
-      "reason": "needs_declaration",
+      "state": "served",
+      "reason": "accepted_only",
       "status": "proven",
       "tests": [
         "TestInvoiceItemAttributes/leaves/request/PostInvoiceitemsInvoiceitem/invoicing_rules"
       ],
-      "class": "gap_proven_not_served"
+      "class": "verified_accepted_only"
     },
     {
       "object": "invoiceitem",
@@ -69407,12 +69628,12 @@
       "path": "metadata",
       "branch": "",
       "shape": "map",
-      "state": "proven_by_test",
+      "state": "served",
       "status": "proven",
       "tests": [
         "TestInvoiceItemAttributes/leaves/request/PostInvoiceitemsInvoiceitem/metadata"
       ],
-      "class": "gap_proven_not_served"
+      "class": "verified"
     },
     {
       "object": "invoiceitem",
@@ -69421,12 +69642,12 @@
       "path": "period.end",
       "branch": "",
       "shape": "integer",
-      "state": "proven_by_test",
+      "state": "served",
       "status": "proven",
       "tests": [
         "TestInvoiceItemAttributes/leaves/request/PostInvoiceitemsInvoiceitem/period.end"
       ],
-      "class": "gap_proven_not_served"
+      "class": "verified"
     },
     {
       "object": "invoiceitem",
@@ -69435,12 +69656,12 @@
       "path": "period.start",
       "branch": "",
       "shape": "integer",
-      "state": "proven_by_test",
+      "state": "served",
       "status": "proven",
       "tests": [
         "TestInvoiceItemAttributes/leaves/request/PostInvoiceitemsInvoiceitem/period.start"
       ],
-      "class": "gap_proven_not_served"
+      "class": "verified"
     },
     {
       "object": "invoiceitem",
@@ -69449,13 +69670,12 @@
       "path": "price_data.currency",
       "branch": "",
       "shape": "string",
-      "state": "unserved",
-      "reason": "needs_declaration",
+      "state": "served",
       "status": "proven",
       "tests": [
         "TestInvoiceItemAttributes/leaves/request/PostInvoiceitemsInvoiceitem/price_data.currency"
       ],
-      "class": "gap_proven_not_served"
+      "class": "verified"
     },
     {
       "object": "invoiceitem",
@@ -69464,13 +69684,12 @@
       "path": "price_data.product",
       "branch": "",
       "shape": "string",
-      "state": "unserved",
-      "reason": "needs_declaration",
+      "state": "served",
       "status": "proven",
       "tests": [
         "TestInvoiceItemAttributes/leaves/request/PostInvoiceitemsInvoiceitem/price_data.product"
       ],
-      "class": "gap_proven_not_served"
+      "class": "verified"
     },
     {
       "object": "invoiceitem",
@@ -69479,13 +69698,12 @@
       "path": "price_data.tax_behavior",
       "branch": "",
       "shape": "enum",
-      "state": "unserved",
-      "reason": "needs_declaration",
+      "state": "served",
       "status": "proven",
       "tests": [
         "TestInvoiceItemAttributes/leaves/request/PostInvoiceitemsInvoiceitem/price_data.tax_behavior"
       ],
-      "class": "gap_proven_not_served"
+      "class": "verified"
     },
     {
       "object": "invoiceitem",
@@ -69494,13 +69712,12 @@
       "path": "price_data.unit_amount",
       "branch": "",
       "shape": "integer",
-      "state": "unserved",
-      "reason": "needs_declaration",
+      "state": "served",
       "status": "proven",
       "tests": [
         "TestInvoiceItemAttributes/leaves/request/PostInvoiceitemsInvoiceitem/price_data.unit_amount"
       ],
-      "class": "gap_proven_not_served"
+      "class": "verified"
     },
     {
       "object": "invoiceitem",
@@ -69509,13 +69726,12 @@
       "path": "price_data.unit_amount_decimal",
       "branch": "",
       "shape": "string",
-      "state": "unserved",
-      "reason": "needs_declaration",
+      "state": "served",
       "status": "proven",
       "tests": [
         "TestInvoiceItemAttributes/leaves/request/PostInvoiceitemsInvoiceitem/price_data.unit_amount_decimal"
       ],
-      "class": "gap_proven_not_served"
+      "class": "verified"
     },
     {
       "object": "invoiceitem",
@@ -69524,13 +69740,13 @@
       "path": "pricing.price",
       "branch": "",
       "shape": "string",
-      "state": "unserved",
-      "reason": "needs_declaration",
+      "state": "served",
+      "reason": "accepted_only",
       "status": "proven",
       "tests": [
         "TestInvoiceItemAttributes/leaves/request/PostInvoiceitemsInvoiceitem/pricing.price"
       ],
-      "class": "gap_proven_not_served"
+      "class": "verified_accepted_only"
     },
     {
       "object": "invoiceitem",
@@ -69539,13 +69755,12 @@
       "path": "quantity",
       "branch": "",
       "shape": "integer",
-      "state": "unserved",
-      "reason": "needs_declaration",
+      "state": "served",
       "status": "proven",
       "tests": [
         "TestInvoiceItemAttributes/leaves/request/PostInvoiceitemsInvoiceitem/quantity"
       ],
-      "class": "gap_proven_not_served"
+      "class": "verified"
     },
     {
       "object": "invoiceitem",
@@ -69554,13 +69769,12 @@
       "path": "quantity_decimal",
       "branch": "",
       "shape": "string",
-      "state": "unserved",
-      "reason": "needs_declaration",
+      "state": "served",
       "status": "proven",
       "tests": [
         "TestInvoiceItemAttributes/leaves/request/PostInvoiceitemsInvoiceitem/quantity_decimal"
       ],
-      "class": "gap_proven_not_served"
+      "class": "verified"
     },
     {
       "object": "invoiceitem",
@@ -69569,12 +69783,13 @@
       "path": "tax_behavior",
       "branch": "",
       "shape": "enum",
-      "state": "proven_by_test",
+      "state": "served",
+      "reason": "accepted_only",
       "status": "proven",
       "tests": [
         "TestInvoiceItemAttributes/leaves/request/PostInvoiceitemsInvoiceitem/tax_behavior"
       ],
-      "class": "gap_proven_not_served"
+      "class": "verified_accepted_only"
     },
     {
       "object": "invoiceitem",
@@ -69583,13 +69798,13 @@
       "path": "tax_code",
       "branch": "",
       "shape": "string",
-      "state": "unserved",
-      "reason": "needs_declaration",
+      "state": "served",
+      "reason": "accepted_only",
       "status": "proven",
       "tests": [
         "TestInvoiceItemAttributes/leaves/request/PostInvoiceitemsInvoiceitem/tax_code"
       ],
-      "class": "gap_proven_not_served"
+      "class": "verified_accepted_only"
     },
     {
       "object": "invoiceitem",
@@ -69598,13 +69813,12 @@
       "path": "tax_rates",
       "branch": "",
       "shape": "list",
-      "state": "unserved",
-      "reason": "needs_declaration",
+      "state": "served",
       "status": "proven",
       "tests": [
         "TestInvoiceItemAttributes/leaves/request/PostInvoiceitemsInvoiceitem/tax_rates"
       ],
-      "class": "gap_proven_not_served"
+      "class": "verified"
     },
     {
       "object": "invoiceitem",
@@ -69613,13 +69827,13 @@
       "path": "unit_amount_decimal",
       "branch": "",
       "shape": "string",
-      "state": "unserved",
-      "reason": "needs_declaration",
+      "state": "served",
+      "reason": "accepted_only",
       "status": "proven",
       "tests": [
         "TestInvoiceItemAttributes/leaves/request/PostInvoiceitemsInvoiceitem/unit_amount_decimal"
       ],
-      "class": "gap_proven_not_served"
+      "class": "verified_accepted_only"
     },
     {
       "object": "invoiceitem",
@@ -69628,12 +69842,35 @@
       "path": "amount",
       "branch": "",
       "shape": "integer",
-      "state": "proven_by_test",
+      "state": "served",
       "status": "proven",
       "tests": [
         "TestInvoiceItemAttributes/leaves/response/invoiceitem/amount"
       ],
-      "class": "gap_proven_not_served"
+      "class": "served_unverified",
+      "detail": {
+        "test": "TestInvoiceItemAttributes/leaves/response/invoiceitem/amount",
+        "base_url": "http://127.0.0.1:18111",
+        "object": "invoiceitem",
+        "side": "response",
+        "operation": "",
+        "path": "amount",
+        "branch": "",
+        "probe": "every_field/2",
+        "verdict": "mismatch",
+        "expected": {
+          "kind": "sent",
+          "path": "amount"
+        },
+        "observed": null,
+        "error": {
+          "status": 501,
+          "type": "api_error",
+          "code": "fake_not_implemented",
+          "param": "",
+          "message": "fake-stripe-api: parameter discounts[0][coupon] of operation PostInvoiceitems is not implemented"
+        }
+      }
     },
     {
       "object": "invoiceitem",
@@ -69642,12 +69879,35 @@
       "path": "currency",
       "branch": "",
       "shape": "string",
-      "state": "proven_by_test",
+      "state": "served",
       "status": "proven",
       "tests": [
         "TestInvoiceItemAttributes/leaves/response/invoiceitem/currency"
       ],
-      "class": "gap_proven_not_served"
+      "class": "served_unverified",
+      "detail": {
+        "test": "TestInvoiceItemAttributes/leaves/response/invoiceitem/currency",
+        "base_url": "http://127.0.0.1:18111",
+        "object": "invoiceitem",
+        "side": "response",
+        "operation": "",
+        "path": "currency",
+        "branch": "",
+        "probe": "every_field/2",
+        "verdict": "mismatch",
+        "expected": {
+          "kind": "sent",
+          "path": "currency"
+        },
+        "observed": null,
+        "error": {
+          "status": 501,
+          "type": "api_error",
+          "code": "fake_not_implemented",
+          "param": "",
+          "message": "fake-stripe-api: parameter discounts[0][coupon] of operation PostInvoiceitems is not implemented"
+        }
+      }
     },
     {
       "object": "invoiceitem",
@@ -69656,12 +69916,35 @@
       "path": "customer",
       "branch": "",
       "shape": "reference",
-      "state": "proven_by_test",
+      "state": "served",
       "status": "proven",
       "tests": [
         "TestInvoiceItemAttributes/leaves/response/invoiceitem/customer"
       ],
-      "class": "gap_proven_not_served"
+      "class": "served_unverified",
+      "detail": {
+        "test": "TestInvoiceItemAttributes/leaves/response/invoiceitem/customer",
+        "base_url": "http://127.0.0.1:18111",
+        "object": "invoiceitem",
+        "side": "response",
+        "operation": "",
+        "path": "customer",
+        "branch": "",
+        "probe": "every_field/2",
+        "verdict": "mismatch",
+        "expected": {
+          "kind": "sent",
+          "path": "customer"
+        },
+        "observed": null,
+        "error": {
+          "status": 501,
+          "type": "api_error",
+          "code": "fake_not_implemented",
+          "param": "",
+          "message": "fake-stripe-api: parameter discounts[0][coupon] of operation PostInvoiceitems is not implemented"
+        }
+      }
     },
     {
       "object": "invoiceitem",
@@ -69670,12 +69953,34 @@
       "path": "customer_account",
       "branch": "",
       "shape": "string",
-      "state": "proven_by_test",
+      "state": "served",
       "status": "proven",
       "tests": [
         "TestInvoiceItemAttributes/leaves/response/invoiceitem/customer_account"
       ],
-      "class": "gap_proven_not_served"
+      "class": "served_unverified",
+      "detail": {
+        "test": "TestInvoiceItemAttributes/leaves/response/invoiceitem/customer_account",
+        "base_url": "http://127.0.0.1:18111",
+        "object": "invoiceitem",
+        "side": "response",
+        "operation": "",
+        "path": "customer_account",
+        "branch": "",
+        "probe": "every_field/2",
+        "verdict": "mismatch",
+        "expected": {
+          "kind": "null"
+        },
+        "observed": null,
+        "error": {
+          "status": 501,
+          "type": "api_error",
+          "code": "fake_not_implemented",
+          "param": "",
+          "message": "fake-stripe-api: parameter discounts[0][coupon] of operation PostInvoiceitems is not implemented"
+        }
+      }
     },
     {
       "object": "invoiceitem",
@@ -69684,12 +69989,34 @@
       "path": "date",
       "branch": "",
       "shape": "integer",
-      "state": "proven_by_test",
+      "state": "served",
       "status": "proven",
       "tests": [
         "TestInvoiceItemAttributes/leaves/response/invoiceitem/date"
       ],
-      "class": "gap_proven_not_served"
+      "class": "served_unverified",
+      "detail": {
+        "test": "TestInvoiceItemAttributes/leaves/response/invoiceitem/date",
+        "base_url": "http://127.0.0.1:18111",
+        "object": "invoiceitem",
+        "side": "response",
+        "operation": "",
+        "path": "date",
+        "branch": "",
+        "probe": "every_field/2",
+        "verdict": "mismatch",
+        "expected": {
+          "kind": "timestamp"
+        },
+        "observed": null,
+        "error": {
+          "status": 501,
+          "type": "api_error",
+          "code": "fake_not_implemented",
+          "param": "",
+          "message": "fake-stripe-api: parameter discounts[0][coupon] of operation PostInvoiceitems is not implemented"
+        }
+      }
     },
     {
       "object": "invoiceitem",
@@ -69698,12 +70025,34 @@
       "path": "description",
       "branch": "",
       "shape": "string",
-      "state": "proven_by_test",
+      "state": "served",
       "status": "proven",
       "tests": [
         "TestInvoiceItemAttributes/leaves/response/invoiceitem/description"
       ],
-      "class": "gap_proven_not_served"
+      "class": "served_unverified",
+      "detail": {
+        "test": "TestInvoiceItemAttributes/leaves/response/invoiceitem/description",
+        "base_url": "http://127.0.0.1:18111",
+        "object": "invoiceitem",
+        "side": "response",
+        "operation": "",
+        "path": "description",
+        "branch": "",
+        "probe": "every_field/2",
+        "verdict": "mismatch",
+        "expected": {
+          "kind": "null"
+        },
+        "observed": null,
+        "error": {
+          "status": 501,
+          "type": "api_error",
+          "code": "fake_not_implemented",
+          "param": "",
+          "message": "fake-stripe-api: parameter discounts[0][coupon] of operation PostInvoiceitems is not implemented"
+        }
+      }
     },
     {
       "object": "invoiceitem",
@@ -69712,12 +70061,35 @@
       "path": "discountable",
       "branch": "",
       "shape": "boolean",
-      "state": "proven_by_test",
+      "state": "served",
       "status": "proven",
       "tests": [
         "TestInvoiceItemAttributes/leaves/response/invoiceitem/discountable"
       ],
-      "class": "gap_proven_not_served"
+      "class": "served_unverified",
+      "detail": {
+        "test": "TestInvoiceItemAttributes/leaves/response/invoiceitem/discountable",
+        "base_url": "http://127.0.0.1:18111",
+        "object": "invoiceitem",
+        "side": "response",
+        "operation": "",
+        "path": "discountable",
+        "branch": "",
+        "probe": "every_field/2",
+        "verdict": "mismatch",
+        "expected": {
+          "kind": "value",
+          "value": true
+        },
+        "observed": null,
+        "error": {
+          "status": 501,
+          "type": "api_error",
+          "code": "fake_not_implemented",
+          "param": "",
+          "message": "fake-stripe-api: parameter discounts[0][coupon] of operation PostInvoiceitems is not implemented"
+        }
+      }
     },
     {
       "object": "invoiceitem",
@@ -69726,12 +70098,39 @@
       "path": "discounts",
       "branch": "",
       "shape": "reference",
-      "state": "proven_by_test",
+      "state": "served",
       "status": "proven",
       "tests": [
         "TestInvoiceItemAttributes/leaves/response/invoiceitem/discounts"
       ],
-      "class": "gap_proven_not_served"
+      "class": "served_unverified",
+      "detail": {
+        "test": "TestInvoiceItemAttributes/leaves/response/invoiceitem/discounts",
+        "base_url": "http://127.0.0.1:18111",
+        "object": "invoiceitem",
+        "side": "response",
+        "operation": "",
+        "path": "discounts",
+        "branch": "",
+        "probe": "every_field/2",
+        "verdict": "mismatch",
+        "expected": {
+          "kind": "list",
+          "element": {
+            "kind": "id",
+            "prefix": "di_"
+          },
+          "count": 1
+        },
+        "observed": null,
+        "error": {
+          "status": 501,
+          "type": "api_error",
+          "code": "fake_not_implemented",
+          "param": "",
+          "message": "fake-stripe-api: parameter discounts[0][coupon] of operation PostInvoiceitems is not implemented"
+        }
+      }
     },
     {
       "object": "invoiceitem",
@@ -69740,7 +70139,8 @@
       "path": "frozen_fields",
       "branch": "",
       "shape": "list",
-      "state": "proven_by_test",
+      "state": "unserved",
+      "reason": "needs_declaration",
       "status": "proven",
       "tests": [
         "TestInvoiceItemAttributes/leaves/response/invoiceitem/frozen_fields"
@@ -69754,12 +70154,34 @@
       "path": "id",
       "branch": "",
       "shape": "string",
-      "state": "proven_by_test",
+      "state": "served",
       "status": "proven",
       "tests": [
         "TestInvoiceItemAttributes/leaves/response/invoiceitem/id"
       ],
-      "class": "gap_proven_not_served"
+      "class": "served_unverified",
+      "detail": {
+        "test": "TestInvoiceItemAttributes/leaves/response/invoiceitem/id",
+        "base_url": "http://127.0.0.1:18111",
+        "object": "invoiceitem",
+        "side": "response",
+        "operation": "",
+        "path": "id",
+        "branch": "",
+        "probe": "every_field/2",
+        "verdict": "mismatch",
+        "expected": {
+          "kind": "created"
+        },
+        "observed": null,
+        "error": {
+          "status": 501,
+          "type": "api_error",
+          "code": "fake_not_implemented",
+          "param": "",
+          "message": "fake-stripe-api: parameter discounts[0][coupon] of operation PostInvoiceitems is not implemented"
+        }
+      }
     },
     {
       "object": "invoiceitem",
@@ -69768,12 +70190,34 @@
       "path": "invoice",
       "branch": "",
       "shape": "reference",
-      "state": "proven_by_test",
+      "state": "served",
       "status": "proven",
       "tests": [
         "TestInvoiceItemAttributes/leaves/response/invoiceitem/invoice"
       ],
-      "class": "gap_proven_not_served"
+      "class": "served_unverified",
+      "detail": {
+        "test": "TestInvoiceItemAttributes/leaves/response/invoiceitem/invoice",
+        "base_url": "http://127.0.0.1:18111",
+        "object": "invoiceitem",
+        "side": "response",
+        "operation": "",
+        "path": "invoice",
+        "branch": "",
+        "probe": "every_field/2",
+        "verdict": "mismatch",
+        "expected": {
+          "kind": "null"
+        },
+        "observed": null,
+        "error": {
+          "status": 501,
+          "type": "api_error",
+          "code": "fake_not_implemented",
+          "param": "",
+          "message": "fake-stripe-api: parameter discounts[0][coupon] of operation PostInvoiceitems is not implemented"
+        }
+      }
     },
     {
       "object": "invoiceitem",
@@ -69782,12 +70226,34 @@
       "path": "invoicing_rules.type",
       "branch": "",
       "shape": "enum",
-      "state": "proven_by_test",
+      "state": "served",
       "status": "proven",
       "tests": [
         "TestInvoiceItemAttributes/leaves/response/invoiceitem/invoicing_rules.type"
       ],
-      "class": "gap_proven_not_served"
+      "class": "served_unverified",
+      "detail": {
+        "test": "TestInvoiceItemAttributes/leaves/response/invoiceitem/invoicing_rules.type",
+        "base_url": "http://127.0.0.1:18111",
+        "object": "invoiceitem",
+        "side": "response",
+        "operation": "",
+        "path": "invoicing_rules.type",
+        "branch": "",
+        "probe": "every_field/2",
+        "verdict": "mismatch",
+        "expected": {
+          "kind": "absent"
+        },
+        "observed": null,
+        "error": {
+          "status": 501,
+          "type": "api_error",
+          "code": "fake_not_implemented",
+          "param": "",
+          "message": "fake-stripe-api: parameter discounts[0][coupon] of operation PostInvoiceitems is not implemented"
+        }
+      }
     },
     {
       "object": "invoiceitem",
@@ -69796,12 +70262,35 @@
       "path": "livemode",
       "branch": "",
       "shape": "boolean",
-      "state": "proven_by_test",
+      "state": "served",
       "status": "proven",
       "tests": [
         "TestInvoiceItemAttributes/leaves/response/invoiceitem/livemode"
       ],
-      "class": "gap_proven_not_served"
+      "class": "served_unverified",
+      "detail": {
+        "test": "TestInvoiceItemAttributes/leaves/response/invoiceitem/livemode",
+        "base_url": "http://127.0.0.1:18111",
+        "object": "invoiceitem",
+        "side": "response",
+        "operation": "",
+        "path": "livemode",
+        "branch": "",
+        "probe": "every_field/2",
+        "verdict": "mismatch",
+        "expected": {
+          "kind": "value",
+          "value": false
+        },
+        "observed": null,
+        "error": {
+          "status": 501,
+          "type": "api_error",
+          "code": "fake_not_implemented",
+          "param": "",
+          "message": "fake-stripe-api: parameter discounts[0][coupon] of operation PostInvoiceitems is not implemented"
+        }
+      }
     },
     {
       "object": "invoiceitem",
@@ -69810,12 +70299,35 @@
       "path": "metadata",
       "branch": "",
       "shape": "map",
-      "state": "proven_by_test",
+      "state": "served",
       "status": "proven",
       "tests": [
         "TestInvoiceItemAttributes/leaves/response/invoiceitem/metadata"
       ],
-      "class": "gap_proven_not_served"
+      "class": "served_unverified",
+      "detail": {
+        "test": "TestInvoiceItemAttributes/leaves/response/invoiceitem/metadata",
+        "base_url": "http://127.0.0.1:18111",
+        "object": "invoiceitem",
+        "side": "response",
+        "operation": "",
+        "path": "metadata",
+        "branch": "",
+        "probe": "every_field/2",
+        "verdict": "mismatch",
+        "expected": {
+          "kind": "value",
+          "value": {}
+        },
+        "observed": null,
+        "error": {
+          "status": 501,
+          "type": "api_error",
+          "code": "fake_not_implemented",
+          "param": "",
+          "message": "fake-stripe-api: parameter discounts[0][coupon] of operation PostInvoiceitems is not implemented"
+        }
+      }
     },
     {
       "object": "invoiceitem",
@@ -69824,12 +70336,34 @@
       "path": "net_amount",
       "branch": "",
       "shape": "integer",
-      "state": "proven_by_test",
+      "state": "served",
       "status": "proven",
       "tests": [
         "TestInvoiceItemAttributes/leaves/response/invoiceitem/net_amount"
       ],
-      "class": "gap_proven_not_served"
+      "class": "served_unverified",
+      "detail": {
+        "test": "TestInvoiceItemAttributes/leaves/response/invoiceitem/net_amount",
+        "base_url": "http://127.0.0.1:18111",
+        "object": "invoiceitem",
+        "side": "response",
+        "operation": "",
+        "path": "net_amount",
+        "branch": "",
+        "probe": "every_field/2",
+        "verdict": "mismatch",
+        "expected": {
+          "kind": "absent"
+        },
+        "observed": null,
+        "error": {
+          "status": 501,
+          "type": "api_error",
+          "code": "fake_not_implemented",
+          "param": "",
+          "message": "fake-stripe-api: parameter discounts[0][coupon] of operation PostInvoiceitems is not implemented"
+        }
+      }
     },
     {
       "object": "invoiceitem",
@@ -69838,12 +70372,35 @@
       "path": "object",
       "branch": "",
       "shape": "enum",
-      "state": "proven_by_test",
+      "state": "served",
       "status": "proven",
       "tests": [
         "TestInvoiceItemAttributes/leaves/response/invoiceitem/object"
       ],
-      "class": "gap_proven_not_served"
+      "class": "served_unverified",
+      "detail": {
+        "test": "TestInvoiceItemAttributes/leaves/response/invoiceitem/object",
+        "base_url": "http://127.0.0.1:18111",
+        "object": "invoiceitem",
+        "side": "response",
+        "operation": "",
+        "path": "object",
+        "branch": "",
+        "probe": "every_field/2",
+        "verdict": "mismatch",
+        "expected": {
+          "kind": "value",
+          "value": "invoiceitem"
+        },
+        "observed": null,
+        "error": {
+          "status": 501,
+          "type": "api_error",
+          "code": "fake_not_implemented",
+          "param": "",
+          "message": "fake-stripe-api: parameter discounts[0][coupon] of operation PostInvoiceitems is not implemented"
+        }
+      }
     },
     {
       "object": "invoiceitem",
@@ -69852,7 +70409,8 @@
       "path": "parent.subscription_details.subscription",
       "branch": "",
       "shape": "string",
-      "state": "proven_by_test",
+      "state": "unserved",
+      "reason": "needs_declaration",
       "status": "proven",
       "tests": [
         "TestInvoiceItemAttributes/leaves/response/invoiceitem/parent.subscription_details.subscription"
@@ -69866,7 +70424,8 @@
       "path": "parent.subscription_details.subscription_item",
       "branch": "",
       "shape": "string",
-      "state": "proven_by_test",
+      "state": "unserved",
+      "reason": "needs_declaration",
       "status": "proven",
       "tests": [
         "TestInvoiceItemAttributes/leaves/response/invoiceitem/parent.subscription_details.subscription_item"
@@ -69880,7 +70439,8 @@
       "path": "parent.type",
       "branch": "",
       "shape": "enum",
-      "state": "proven_by_test",
+      "state": "unserved",
+      "reason": "needs_declaration",
       "status": "proven",
       "tests": [
         "TestInvoiceItemAttributes/leaves/response/invoiceitem/parent.type"
@@ -69894,12 +70454,34 @@
       "path": "period.end",
       "branch": "",
       "shape": "integer",
-      "state": "proven_by_test",
+      "state": "served",
       "status": "proven",
       "tests": [
         "TestInvoiceItemAttributes/leaves/response/invoiceitem/period.end"
       ],
-      "class": "gap_proven_not_served"
+      "class": "served_unverified",
+      "detail": {
+        "test": "TestInvoiceItemAttributes/leaves/response/invoiceitem/period.end",
+        "base_url": "http://127.0.0.1:18111",
+        "object": "invoiceitem",
+        "side": "response",
+        "operation": "",
+        "path": "period.end",
+        "branch": "",
+        "probe": "every_field/2",
+        "verdict": "mismatch",
+        "expected": {
+          "kind": "timestamp"
+        },
+        "observed": null,
+        "error": {
+          "status": 501,
+          "type": "api_error",
+          "code": "fake_not_implemented",
+          "param": "",
+          "message": "fake-stripe-api: parameter discounts[0][coupon] of operation PostInvoiceitems is not implemented"
+        }
+      }
     },
     {
       "object": "invoiceitem",
@@ -69908,12 +70490,34 @@
       "path": "period.start",
       "branch": "",
       "shape": "integer",
-      "state": "proven_by_test",
+      "state": "served",
       "status": "proven",
       "tests": [
         "TestInvoiceItemAttributes/leaves/response/invoiceitem/period.start"
       ],
-      "class": "gap_proven_not_served"
+      "class": "served_unverified",
+      "detail": {
+        "test": "TestInvoiceItemAttributes/leaves/response/invoiceitem/period.start",
+        "base_url": "http://127.0.0.1:18111",
+        "object": "invoiceitem",
+        "side": "response",
+        "operation": "",
+        "path": "period.start",
+        "branch": "",
+        "probe": "every_field/2",
+        "verdict": "mismatch",
+        "expected": {
+          "kind": "timestamp"
+        },
+        "observed": null,
+        "error": {
+          "status": 501,
+          "type": "api_error",
+          "code": "fake_not_implemented",
+          "param": "",
+          "message": "fake-stripe-api: parameter discounts[0][coupon] of operation PostInvoiceitems is not implemented"
+        }
+      }
     },
     {
       "object": "invoiceitem",
@@ -69922,12 +70526,35 @@
       "path": "pricing.price_details.price",
       "branch": "",
       "shape": "reference",
-      "state": "proven_by_test",
+      "state": "served",
       "status": "proven",
       "tests": [
         "TestInvoiceItemAttributes/leaves/response/invoiceitem/pricing.price_details.price"
       ],
-      "class": "gap_proven_not_served"
+      "class": "served_unverified",
+      "detail": {
+        "test": "TestInvoiceItemAttributes/leaves/response/invoiceitem/pricing.price_details.price",
+        "base_url": "http://127.0.0.1:18111",
+        "object": "invoiceitem",
+        "side": "response",
+        "operation": "",
+        "path": "pricing.price_details.price",
+        "branch": "",
+        "probe": "every_field/2",
+        "verdict": "mismatch",
+        "expected": {
+          "kind": "id",
+          "prefix": "price_"
+        },
+        "observed": null,
+        "error": {
+          "status": 501,
+          "type": "api_error",
+          "code": "fake_not_implemented",
+          "param": "",
+          "message": "fake-stripe-api: parameter discounts[0][coupon] of operation PostInvoiceitems is not implemented"
+        }
+      }
     },
     {
       "object": "invoiceitem",
@@ -69936,12 +70563,35 @@
       "path": "pricing.price_details.product",
       "branch": "",
       "shape": "string",
-      "state": "proven_by_test",
+      "state": "served",
       "status": "proven",
       "tests": [
         "TestInvoiceItemAttributes/leaves/response/invoiceitem/pricing.price_details.product"
       ],
-      "class": "gap_proven_not_served"
+      "class": "served_unverified",
+      "detail": {
+        "test": "TestInvoiceItemAttributes/leaves/response/invoiceitem/pricing.price_details.product",
+        "base_url": "http://127.0.0.1:18111",
+        "object": "invoiceitem",
+        "side": "response",
+        "operation": "",
+        "path": "pricing.price_details.product",
+        "branch": "",
+        "probe": "every_field/2",
+        "verdict": "mismatch",
+        "expected": {
+          "kind": "id",
+          "prefix": "prod_"
+        },
+        "observed": null,
+        "error": {
+          "status": 501,
+          "type": "api_error",
+          "code": "fake_not_implemented",
+          "param": "",
+          "message": "fake-stripe-api: parameter discounts[0][coupon] of operation PostInvoiceitems is not implemented"
+        }
+      }
     },
     {
       "object": "invoiceitem",
@@ -69950,12 +70600,35 @@
       "path": "pricing.type",
       "branch": "",
       "shape": "enum",
-      "state": "proven_by_test",
+      "state": "served",
       "status": "proven",
       "tests": [
         "TestInvoiceItemAttributes/leaves/response/invoiceitem/pricing.type"
       ],
-      "class": "gap_proven_not_served"
+      "class": "served_unverified",
+      "detail": {
+        "test": "TestInvoiceItemAttributes/leaves/response/invoiceitem/pricing.type",
+        "base_url": "http://127.0.0.1:18111",
+        "object": "invoiceitem",
+        "side": "response",
+        "operation": "",
+        "path": "pricing.type",
+        "branch": "",
+        "probe": "every_field/2",
+        "verdict": "mismatch",
+        "expected": {
+          "kind": "value",
+          "value": "price_details"
+        },
+        "observed": null,
+        "error": {
+          "status": 501,
+          "type": "api_error",
+          "code": "fake_not_implemented",
+          "param": "",
+          "message": "fake-stripe-api: parameter discounts[0][coupon] of operation PostInvoiceitems is not implemented"
+        }
+      }
     },
     {
       "object": "invoiceitem",
@@ -69964,12 +70637,35 @@
       "path": "pricing.unit_amount_decimal",
       "branch": "",
       "shape": "string",
-      "state": "proven_by_test",
+      "state": "served",
       "status": "proven",
       "tests": [
         "TestInvoiceItemAttributes/leaves/response/invoiceitem/pricing.unit_amount_decimal"
       ],
-      "class": "gap_proven_not_served"
+      "class": "served_unverified",
+      "detail": {
+        "test": "TestInvoiceItemAttributes/leaves/response/invoiceitem/pricing.unit_amount_decimal",
+        "base_url": "http://127.0.0.1:18111",
+        "object": "invoiceitem",
+        "side": "response",
+        "operation": "",
+        "path": "pricing.unit_amount_decimal",
+        "branch": "",
+        "probe": "every_field/2",
+        "verdict": "mismatch",
+        "expected": {
+          "kind": "value",
+          "value": "1500"
+        },
+        "observed": null,
+        "error": {
+          "status": 501,
+          "type": "api_error",
+          "code": "fake_not_implemented",
+          "param": "",
+          "message": "fake-stripe-api: parameter discounts[0][coupon] of operation PostInvoiceitems is not implemented"
+        }
+      }
     },
     {
       "object": "invoiceitem",
@@ -69978,7 +70674,8 @@
       "path": "proration",
       "branch": "",
       "shape": "boolean",
-      "state": "proven_by_test",
+      "state": "unserved",
+      "reason": "needs_declaration",
       "status": "proven",
       "tests": [
         "TestInvoiceItemAttributes/leaves/response/invoiceitem/proration"
@@ -69992,7 +70689,8 @@
       "path": "proration_details.credited_items.invoice_item",
       "branch": "",
       "shape": "string",
-      "state": "proven_by_test",
+      "state": "unserved",
+      "reason": "needs_declaration",
       "status": "proven",
       "tests": [
         "TestInvoiceItemAttributes/leaves/response/invoiceitem/proration_details.credited_items.invoice_item"
@@ -70006,7 +70704,8 @@
       "path": "proration_details.credited_items.invoice_line_item_details.invoice",
       "branch": "",
       "shape": "string",
-      "state": "proven_by_test",
+      "state": "unserved",
+      "reason": "needs_declaration",
       "status": "proven",
       "tests": [
         "TestInvoiceItemAttributes/leaves/response/invoiceitem/proration_details.credited_items.invoice_line_item_details.invoice"
@@ -70020,7 +70719,8 @@
       "path": "proration_details.credited_items.invoice_line_item_details.invoice_line_items",
       "branch": "",
       "shape": "list",
-      "state": "proven_by_test",
+      "state": "unserved",
+      "reason": "needs_declaration",
       "status": "proven",
       "tests": [
         "TestInvoiceItemAttributes/leaves/response/invoiceitem/proration_details.credited_items.invoice_line_item_details.invoice_line_items"
@@ -70034,7 +70734,8 @@
       "path": "proration_details.credited_items.type",
       "branch": "",
       "shape": "enum",
-      "state": "proven_by_test",
+      "state": "unserved",
+      "reason": "needs_declaration",
       "status": "proven",
       "tests": [
         "TestInvoiceItemAttributes/leaves/response/invoiceitem/proration_details.credited_items.type"
@@ -70048,7 +70749,8 @@
       "path": "proration_details.discount_amounts.amount",
       "branch": "",
       "shape": "integer",
-      "state": "proven_by_test",
+      "state": "unserved",
+      "reason": "needs_declaration",
       "status": "proven",
       "tests": [
         "TestInvoiceItemAttributes/leaves/response/invoiceitem/proration_details.discount_amounts.amount"
@@ -70062,7 +70764,8 @@
       "path": "proration_details.discount_amounts.discount",
       "branch": "",
       "shape": "reference",
-      "state": "proven_by_test",
+      "state": "unserved",
+      "reason": "needs_declaration",
       "status": "proven",
       "tests": [
         "TestInvoiceItemAttributes/leaves/response/invoiceitem/proration_details.discount_amounts.discount"
@@ -70076,12 +70779,35 @@
       "path": "quantity",
       "branch": "",
       "shape": "integer",
-      "state": "proven_by_test",
+      "state": "served",
       "status": "proven",
       "tests": [
         "TestInvoiceItemAttributes/leaves/response/invoiceitem/quantity"
       ],
-      "class": "gap_proven_not_served"
+      "class": "served_unverified",
+      "detail": {
+        "test": "TestInvoiceItemAttributes/leaves/response/invoiceitem/quantity",
+        "base_url": "http://127.0.0.1:18111",
+        "object": "invoiceitem",
+        "side": "response",
+        "operation": "",
+        "path": "quantity",
+        "branch": "",
+        "probe": "every_field/2",
+        "verdict": "mismatch",
+        "expected": {
+          "kind": "value",
+          "value": 1
+        },
+        "observed": null,
+        "error": {
+          "status": 501,
+          "type": "api_error",
+          "code": "fake_not_implemented",
+          "param": "",
+          "message": "fake-stripe-api: parameter discounts[0][coupon] of operation PostInvoiceitems is not implemented"
+        }
+      }
     },
     {
       "object": "invoiceitem",
@@ -70090,12 +70816,35 @@
       "path": "quantity_decimal",
       "branch": "",
       "shape": "string",
-      "state": "proven_by_test",
+      "state": "served",
       "status": "proven",
       "tests": [
         "TestInvoiceItemAttributes/leaves/response/invoiceitem/quantity_decimal"
       ],
-      "class": "gap_proven_not_served"
+      "class": "served_unverified",
+      "detail": {
+        "test": "TestInvoiceItemAttributes/leaves/response/invoiceitem/quantity_decimal",
+        "base_url": "http://127.0.0.1:18111",
+        "object": "invoiceitem",
+        "side": "response",
+        "operation": "",
+        "path": "quantity_decimal",
+        "branch": "",
+        "probe": "every_field/2",
+        "verdict": "mismatch",
+        "expected": {
+          "kind": "value",
+          "value": "1"
+        },
+        "observed": null,
+        "error": {
+          "status": 501,
+          "type": "api_error",
+          "code": "fake_not_implemented",
+          "param": "",
+          "message": "fake-stripe-api: parameter discounts[0][coupon] of operation PostInvoiceitems is not implemented"
+        }
+      }
     },
     {
       "object": "invoiceitem",
@@ -70104,12 +70853,34 @@
       "path": "tax_rates.active",
       "branch": "",
       "shape": "boolean",
-      "state": "proven_by_test",
+      "state": "served",
       "status": "proven",
       "tests": [
         "TestInvoiceItemAttributes/leaves/response/invoiceitem/tax_rates.active"
       ],
-      "class": "gap_proven_not_served"
+      "class": "served_unverified",
+      "detail": {
+        "test": "TestInvoiceItemAttributes/leaves/response/invoiceitem/tax_rates.active",
+        "base_url": "http://127.0.0.1:18111",
+        "object": "invoiceitem",
+        "side": "response",
+        "operation": "",
+        "path": "tax_rates.active",
+        "branch": "",
+        "probe": "every_field/2",
+        "verdict": "mismatch",
+        "expected": {
+          "kind": "absent"
+        },
+        "observed": null,
+        "error": {
+          "status": 501,
+          "type": "api_error",
+          "code": "fake_not_implemented",
+          "param": "",
+          "message": "fake-stripe-api: parameter discounts[0][coupon] of operation PostInvoiceitems is not implemented"
+        }
+      }
     },
     {
       "object": "invoiceitem",
@@ -70118,12 +70889,34 @@
       "path": "tax_rates.country",
       "branch": "",
       "shape": "string",
-      "state": "proven_by_test",
+      "state": "served",
       "status": "proven",
       "tests": [
         "TestInvoiceItemAttributes/leaves/response/invoiceitem/tax_rates.country"
       ],
-      "class": "gap_proven_not_served"
+      "class": "served_unverified",
+      "detail": {
+        "test": "TestInvoiceItemAttributes/leaves/response/invoiceitem/tax_rates.country",
+        "base_url": "http://127.0.0.1:18111",
+        "object": "invoiceitem",
+        "side": "response",
+        "operation": "",
+        "path": "tax_rates.country",
+        "branch": "",
+        "probe": "every_field/2",
+        "verdict": "mismatch",
+        "expected": {
+          "kind": "absent"
+        },
+        "observed": null,
+        "error": {
+          "status": 501,
+          "type": "api_error",
+          "code": "fake_not_implemented",
+          "param": "",
+          "message": "fake-stripe-api: parameter discounts[0][coupon] of operation PostInvoiceitems is not implemented"
+        }
+      }
     },
     {
       "object": "invoiceitem",
@@ -70132,12 +70925,34 @@
       "path": "tax_rates.created",
       "branch": "",
       "shape": "integer",
-      "state": "proven_by_test",
+      "state": "served",
       "status": "proven",
       "tests": [
         "TestInvoiceItemAttributes/leaves/response/invoiceitem/tax_rates.created"
       ],
-      "class": "gap_proven_not_served"
+      "class": "served_unverified",
+      "detail": {
+        "test": "TestInvoiceItemAttributes/leaves/response/invoiceitem/tax_rates.created",
+        "base_url": "http://127.0.0.1:18111",
+        "object": "invoiceitem",
+        "side": "response",
+        "operation": "",
+        "path": "tax_rates.created",
+        "branch": "",
+        "probe": "every_field/2",
+        "verdict": "mismatch",
+        "expected": {
+          "kind": "absent"
+        },
+        "observed": null,
+        "error": {
+          "status": 501,
+          "type": "api_error",
+          "code": "fake_not_implemented",
+          "param": "",
+          "message": "fake-stripe-api: parameter discounts[0][coupon] of operation PostInvoiceitems is not implemented"
+        }
+      }
     },
     {
       "object": "invoiceitem",
@@ -70146,12 +70961,34 @@
       "path": "tax_rates.description",
       "branch": "",
       "shape": "string",
-      "state": "proven_by_test",
+      "state": "served",
       "status": "proven",
       "tests": [
         "TestInvoiceItemAttributes/leaves/response/invoiceitem/tax_rates.description"
       ],
-      "class": "gap_proven_not_served"
+      "class": "served_unverified",
+      "detail": {
+        "test": "TestInvoiceItemAttributes/leaves/response/invoiceitem/tax_rates.description",
+        "base_url": "http://127.0.0.1:18111",
+        "object": "invoiceitem",
+        "side": "response",
+        "operation": "",
+        "path": "tax_rates.description",
+        "branch": "",
+        "probe": "every_field/2",
+        "verdict": "mismatch",
+        "expected": {
+          "kind": "absent"
+        },
+        "observed": null,
+        "error": {
+          "status": 501,
+          "type": "api_error",
+          "code": "fake_not_implemented",
+          "param": "",
+          "message": "fake-stripe-api: parameter discounts[0][coupon] of operation PostInvoiceitems is not implemented"
+        }
+      }
     },
     {
       "object": "invoiceitem",
@@ -70160,12 +70997,34 @@
       "path": "tax_rates.display_name",
       "branch": "",
       "shape": "string",
-      "state": "proven_by_test",
+      "state": "served",
       "status": "proven",
       "tests": [
         "TestInvoiceItemAttributes/leaves/response/invoiceitem/tax_rates.display_name"
       ],
-      "class": "gap_proven_not_served"
+      "class": "served_unverified",
+      "detail": {
+        "test": "TestInvoiceItemAttributes/leaves/response/invoiceitem/tax_rates.display_name",
+        "base_url": "http://127.0.0.1:18111",
+        "object": "invoiceitem",
+        "side": "response",
+        "operation": "",
+        "path": "tax_rates.display_name",
+        "branch": "",
+        "probe": "every_field/2",
+        "verdict": "mismatch",
+        "expected": {
+          "kind": "absent"
+        },
+        "observed": null,
+        "error": {
+          "status": 501,
+          "type": "api_error",
+          "code": "fake_not_implemented",
+          "param": "",
+          "message": "fake-stripe-api: parameter discounts[0][coupon] of operation PostInvoiceitems is not implemented"
+        }
+      }
     },
     {
       "object": "invoiceitem",
@@ -70174,12 +71033,34 @@
       "path": "tax_rates.effective_percentage",
       "branch": "",
       "shape": "number",
-      "state": "proven_by_test",
+      "state": "served",
       "status": "proven",
       "tests": [
         "TestInvoiceItemAttributes/leaves/response/invoiceitem/tax_rates.effective_percentage"
       ],
-      "class": "gap_proven_not_served"
+      "class": "served_unverified",
+      "detail": {
+        "test": "TestInvoiceItemAttributes/leaves/response/invoiceitem/tax_rates.effective_percentage",
+        "base_url": "http://127.0.0.1:18111",
+        "object": "invoiceitem",
+        "side": "response",
+        "operation": "",
+        "path": "tax_rates.effective_percentage",
+        "branch": "",
+        "probe": "every_field/2",
+        "verdict": "mismatch",
+        "expected": {
+          "kind": "absent"
+        },
+        "observed": null,
+        "error": {
+          "status": 501,
+          "type": "api_error",
+          "code": "fake_not_implemented",
+          "param": "",
+          "message": "fake-stripe-api: parameter discounts[0][coupon] of operation PostInvoiceitems is not implemented"
+        }
+      }
     },
     {
       "object": "invoiceitem",
@@ -70188,12 +71069,34 @@
       "path": "tax_rates.flat_amount.amount",
       "branch": "",
       "shape": "integer",
-      "state": "proven_by_test",
+      "state": "served",
       "status": "proven",
       "tests": [
         "TestInvoiceItemAttributes/leaves/response/invoiceitem/tax_rates.flat_amount.amount"
       ],
-      "class": "gap_proven_not_served"
+      "class": "served_unverified",
+      "detail": {
+        "test": "TestInvoiceItemAttributes/leaves/response/invoiceitem/tax_rates.flat_amount.amount",
+        "base_url": "http://127.0.0.1:18111",
+        "object": "invoiceitem",
+        "side": "response",
+        "operation": "",
+        "path": "tax_rates.flat_amount.amount",
+        "branch": "",
+        "probe": "every_field/2",
+        "verdict": "mismatch",
+        "expected": {
+          "kind": "absent"
+        },
+        "observed": null,
+        "error": {
+          "status": 501,
+          "type": "api_error",
+          "code": "fake_not_implemented",
+          "param": "",
+          "message": "fake-stripe-api: parameter discounts[0][coupon] of operation PostInvoiceitems is not implemented"
+        }
+      }
     },
     {
       "object": "invoiceitem",
@@ -70202,12 +71105,34 @@
       "path": "tax_rates.flat_amount.currency",
       "branch": "",
       "shape": "string",
-      "state": "proven_by_test",
+      "state": "served",
       "status": "proven",
       "tests": [
         "TestInvoiceItemAttributes/leaves/response/invoiceitem/tax_rates.flat_amount.currency"
       ],
-      "class": "gap_proven_not_served"
+      "class": "served_unverified",
+      "detail": {
+        "test": "TestInvoiceItemAttributes/leaves/response/invoiceitem/tax_rates.flat_amount.currency",
+        "base_url": "http://127.0.0.1:18111",
+        "object": "invoiceitem",
+        "side": "response",
+        "operation": "",
+        "path": "tax_rates.flat_amount.currency",
+        "branch": "",
+        "probe": "every_field/2",
+        "verdict": "mismatch",
+        "expected": {
+          "kind": "absent"
+        },
+        "observed": null,
+        "error": {
+          "status": 501,
+          "type": "api_error",
+          "code": "fake_not_implemented",
+          "param": "",
+          "message": "fake-stripe-api: parameter discounts[0][coupon] of operation PostInvoiceitems is not implemented"
+        }
+      }
     },
     {
       "object": "invoiceitem",
@@ -70216,12 +71141,34 @@
       "path": "tax_rates.id",
       "branch": "",
       "shape": "string",
-      "state": "proven_by_test",
+      "state": "served",
       "status": "proven",
       "tests": [
         "TestInvoiceItemAttributes/leaves/response/invoiceitem/tax_rates.id"
       ],
-      "class": "gap_proven_not_served"
+      "class": "served_unverified",
+      "detail": {
+        "test": "TestInvoiceItemAttributes/leaves/response/invoiceitem/tax_rates.id",
+        "base_url": "http://127.0.0.1:18111",
+        "object": "invoiceitem",
+        "side": "response",
+        "operation": "",
+        "path": "tax_rates.id",
+        "branch": "",
+        "probe": "every_field/2",
+        "verdict": "mismatch",
+        "expected": {
+          "kind": "absent"
+        },
+        "observed": null,
+        "error": {
+          "status": 501,
+          "type": "api_error",
+          "code": "fake_not_implemented",
+          "param": "",
+          "message": "fake-stripe-api: parameter discounts[0][coupon] of operation PostInvoiceitems is not implemented"
+        }
+      }
     },
     {
       "object": "invoiceitem",
@@ -70230,12 +71177,34 @@
       "path": "tax_rates.inclusive",
       "branch": "",
       "shape": "boolean",
-      "state": "proven_by_test",
+      "state": "served",
       "status": "proven",
       "tests": [
         "TestInvoiceItemAttributes/leaves/response/invoiceitem/tax_rates.inclusive"
       ],
-      "class": "gap_proven_not_served"
+      "class": "served_unverified",
+      "detail": {
+        "test": "TestInvoiceItemAttributes/leaves/response/invoiceitem/tax_rates.inclusive",
+        "base_url": "http://127.0.0.1:18111",
+        "object": "invoiceitem",
+        "side": "response",
+        "operation": "",
+        "path": "tax_rates.inclusive",
+        "branch": "",
+        "probe": "every_field/2",
+        "verdict": "mismatch",
+        "expected": {
+          "kind": "absent"
+        },
+        "observed": null,
+        "error": {
+          "status": 501,
+          "type": "api_error",
+          "code": "fake_not_implemented",
+          "param": "",
+          "message": "fake-stripe-api: parameter discounts[0][coupon] of operation PostInvoiceitems is not implemented"
+        }
+      }
     },
     {
       "object": "invoiceitem",
@@ -70244,12 +71213,34 @@
       "path": "tax_rates.jurisdiction",
       "branch": "",
       "shape": "string",
-      "state": "proven_by_test",
+      "state": "served",
       "status": "proven",
       "tests": [
         "TestInvoiceItemAttributes/leaves/response/invoiceitem/tax_rates.jurisdiction"
       ],
-      "class": "gap_proven_not_served"
+      "class": "served_unverified",
+      "detail": {
+        "test": "TestInvoiceItemAttributes/leaves/response/invoiceitem/tax_rates.jurisdiction",
+        "base_url": "http://127.0.0.1:18111",
+        "object": "invoiceitem",
+        "side": "response",
+        "operation": "",
+        "path": "tax_rates.jurisdiction",
+        "branch": "",
+        "probe": "every_field/2",
+        "verdict": "mismatch",
+        "expected": {
+          "kind": "absent"
+        },
+        "observed": null,
+        "error": {
+          "status": 501,
+          "type": "api_error",
+          "code": "fake_not_implemented",
+          "param": "",
+          "message": "fake-stripe-api: parameter discounts[0][coupon] of operation PostInvoiceitems is not implemented"
+        }
+      }
     },
     {
       "object": "invoiceitem",
@@ -70258,12 +71249,34 @@
       "path": "tax_rates.jurisdiction_level",
       "branch": "",
       "shape": "enum",
-      "state": "proven_by_test",
+      "state": "served",
       "status": "proven",
       "tests": [
         "TestInvoiceItemAttributes/leaves/response/invoiceitem/tax_rates.jurisdiction_level"
       ],
-      "class": "gap_proven_not_served"
+      "class": "served_unverified",
+      "detail": {
+        "test": "TestInvoiceItemAttributes/leaves/response/invoiceitem/tax_rates.jurisdiction_level",
+        "base_url": "http://127.0.0.1:18111",
+        "object": "invoiceitem",
+        "side": "response",
+        "operation": "",
+        "path": "tax_rates.jurisdiction_level",
+        "branch": "",
+        "probe": "every_field/2",
+        "verdict": "mismatch",
+        "expected": {
+          "kind": "absent"
+        },
+        "observed": null,
+        "error": {
+          "status": 501,
+          "type": "api_error",
+          "code": "fake_not_implemented",
+          "param": "",
+          "message": "fake-stripe-api: parameter discounts[0][coupon] of operation PostInvoiceitems is not implemented"
+        }
+      }
     },
     {
       "object": "invoiceitem",
@@ -70272,12 +71285,34 @@
       "path": "tax_rates.livemode",
       "branch": "",
       "shape": "boolean",
-      "state": "proven_by_test",
+      "state": "served",
       "status": "proven",
       "tests": [
         "TestInvoiceItemAttributes/leaves/response/invoiceitem/tax_rates.livemode"
       ],
-      "class": "gap_proven_not_served"
+      "class": "served_unverified",
+      "detail": {
+        "test": "TestInvoiceItemAttributes/leaves/response/invoiceitem/tax_rates.livemode",
+        "base_url": "http://127.0.0.1:18111",
+        "object": "invoiceitem",
+        "side": "response",
+        "operation": "",
+        "path": "tax_rates.livemode",
+        "branch": "",
+        "probe": "every_field/2",
+        "verdict": "mismatch",
+        "expected": {
+          "kind": "absent"
+        },
+        "observed": null,
+        "error": {
+          "status": 501,
+          "type": "api_error",
+          "code": "fake_not_implemented",
+          "param": "",
+          "message": "fake-stripe-api: parameter discounts[0][coupon] of operation PostInvoiceitems is not implemented"
+        }
+      }
     },
     {
       "object": "invoiceitem",
@@ -70286,12 +71321,34 @@
       "path": "tax_rates.metadata",
       "branch": "",
       "shape": "map",
-      "state": "proven_by_test",
+      "state": "served",
       "status": "proven",
       "tests": [
         "TestInvoiceItemAttributes/leaves/response/invoiceitem/tax_rates.metadata"
       ],
-      "class": "gap_proven_not_served"
+      "class": "served_unverified",
+      "detail": {
+        "test": "TestInvoiceItemAttributes/leaves/response/invoiceitem/tax_rates.metadata",
+        "base_url": "http://127.0.0.1:18111",
+        "object": "invoiceitem",
+        "side": "response",
+        "operation": "",
+        "path": "tax_rates.metadata",
+        "branch": "",
+        "probe": "every_field/2",
+        "verdict": "mismatch",
+        "expected": {
+          "kind": "absent"
+        },
+        "observed": null,
+        "error": {
+          "status": 501,
+          "type": "api_error",
+          "code": "fake_not_implemented",
+          "param": "",
+          "message": "fake-stripe-api: parameter discounts[0][coupon] of operation PostInvoiceitems is not implemented"
+        }
+      }
     },
     {
       "object": "invoiceitem",
@@ -70300,12 +71357,34 @@
       "path": "tax_rates.object",
       "branch": "",
       "shape": "enum",
-      "state": "proven_by_test",
+      "state": "served",
       "status": "proven",
       "tests": [
         "TestInvoiceItemAttributes/leaves/response/invoiceitem/tax_rates.object"
       ],
-      "class": "gap_proven_not_served"
+      "class": "served_unverified",
+      "detail": {
+        "test": "TestInvoiceItemAttributes/leaves/response/invoiceitem/tax_rates.object",
+        "base_url": "http://127.0.0.1:18111",
+        "object": "invoiceitem",
+        "side": "response",
+        "operation": "",
+        "path": "tax_rates.object",
+        "branch": "",
+        "probe": "every_field/2",
+        "verdict": "mismatch",
+        "expected": {
+          "kind": "absent"
+        },
+        "observed": null,
+        "error": {
+          "status": 501,
+          "type": "api_error",
+          "code": "fake_not_implemented",
+          "param": "",
+          "message": "fake-stripe-api: parameter discounts[0][coupon] of operation PostInvoiceitems is not implemented"
+        }
+      }
     },
     {
       "object": "invoiceitem",
@@ -70314,12 +71393,34 @@
       "path": "tax_rates.percentage",
       "branch": "",
       "shape": "number",
-      "state": "proven_by_test",
+      "state": "served",
       "status": "proven",
       "tests": [
         "TestInvoiceItemAttributes/leaves/response/invoiceitem/tax_rates.percentage"
       ],
-      "class": "gap_proven_not_served"
+      "class": "served_unverified",
+      "detail": {
+        "test": "TestInvoiceItemAttributes/leaves/response/invoiceitem/tax_rates.percentage",
+        "base_url": "http://127.0.0.1:18111",
+        "object": "invoiceitem",
+        "side": "response",
+        "operation": "",
+        "path": "tax_rates.percentage",
+        "branch": "",
+        "probe": "every_field/2",
+        "verdict": "mismatch",
+        "expected": {
+          "kind": "absent"
+        },
+        "observed": null,
+        "error": {
+          "status": 501,
+          "type": "api_error",
+          "code": "fake_not_implemented",
+          "param": "",
+          "message": "fake-stripe-api: parameter discounts[0][coupon] of operation PostInvoiceitems is not implemented"
+        }
+      }
     },
     {
       "object": "invoiceitem",
@@ -70328,12 +71429,34 @@
       "path": "tax_rates.rate_type",
       "branch": "",
       "shape": "enum",
-      "state": "proven_by_test",
+      "state": "served",
       "status": "proven",
       "tests": [
         "TestInvoiceItemAttributes/leaves/response/invoiceitem/tax_rates.rate_type"
       ],
-      "class": "gap_proven_not_served"
+      "class": "served_unverified",
+      "detail": {
+        "test": "TestInvoiceItemAttributes/leaves/response/invoiceitem/tax_rates.rate_type",
+        "base_url": "http://127.0.0.1:18111",
+        "object": "invoiceitem",
+        "side": "response",
+        "operation": "",
+        "path": "tax_rates.rate_type",
+        "branch": "",
+        "probe": "every_field/2",
+        "verdict": "mismatch",
+        "expected": {
+          "kind": "absent"
+        },
+        "observed": null,
+        "error": {
+          "status": 501,
+          "type": "api_error",
+          "code": "fake_not_implemented",
+          "param": "",
+          "message": "fake-stripe-api: parameter discounts[0][coupon] of operation PostInvoiceitems is not implemented"
+        }
+      }
     },
     {
       "object": "invoiceitem",
@@ -70342,12 +71465,34 @@
       "path": "tax_rates.state",
       "branch": "",
       "shape": "string",
-      "state": "proven_by_test",
+      "state": "served",
       "status": "proven",
       "tests": [
         "TestInvoiceItemAttributes/leaves/response/invoiceitem/tax_rates.state"
       ],
-      "class": "gap_proven_not_served"
+      "class": "served_unverified",
+      "detail": {
+        "test": "TestInvoiceItemAttributes/leaves/response/invoiceitem/tax_rates.state",
+        "base_url": "http://127.0.0.1:18111",
+        "object": "invoiceitem",
+        "side": "response",
+        "operation": "",
+        "path": "tax_rates.state",
+        "branch": "",
+        "probe": "every_field/2",
+        "verdict": "mismatch",
+        "expected": {
+          "kind": "absent"
+        },
+        "observed": null,
+        "error": {
+          "status": 501,
+          "type": "api_error",
+          "code": "fake_not_implemented",
+          "param": "",
+          "message": "fake-stripe-api: parameter discounts[0][coupon] of operation PostInvoiceitems is not implemented"
+        }
+      }
     },
     {
       "object": "invoiceitem",
@@ -70356,12 +71501,34 @@
       "path": "tax_rates.tax_type",
       "branch": "",
       "shape": "enum",
-      "state": "proven_by_test",
+      "state": "served",
       "status": "proven",
       "tests": [
         "TestInvoiceItemAttributes/leaves/response/invoiceitem/tax_rates.tax_type"
       ],
-      "class": "gap_proven_not_served"
+      "class": "served_unverified",
+      "detail": {
+        "test": "TestInvoiceItemAttributes/leaves/response/invoiceitem/tax_rates.tax_type",
+        "base_url": "http://127.0.0.1:18111",
+        "object": "invoiceitem",
+        "side": "response",
+        "operation": "",
+        "path": "tax_rates.tax_type",
+        "branch": "",
+        "probe": "every_field/2",
+        "verdict": "mismatch",
+        "expected": {
+          "kind": "absent"
+        },
+        "observed": null,
+        "error": {
+          "status": 501,
+          "type": "api_error",
+          "code": "fake_not_implemented",
+          "param": "",
+          "message": "fake-stripe-api: parameter discounts[0][coupon] of operation PostInvoiceitems is not implemented"
+        }
+      }
     },
     {
       "object": "invoiceitem",
@@ -70370,12 +71537,34 @@
       "path": "test_clock",
       "branch": "",
       "shape": "reference",
-      "state": "proven_by_test",
+      "state": "served",
       "status": "proven",
       "tests": [
         "TestInvoiceItemAttributes/leaves/response/invoiceitem/test_clock"
       ],
-      "class": "gap_proven_not_served"
+      "class": "served_unverified",
+      "detail": {
+        "test": "TestInvoiceItemAttributes/leaves/response/invoiceitem/test_clock",
+        "base_url": "http://127.0.0.1:18111",
+        "object": "invoiceitem",
+        "side": "response",
+        "operation": "",
+        "path": "test_clock",
+        "branch": "",
+        "probe": "every_field/2",
+        "verdict": "mismatch",
+        "expected": {
+          "kind": "null"
+        },
+        "observed": null,
+        "error": {
+          "status": 501,
+          "type": "api_error",
+          "code": "fake_not_implemented",
+          "param": "",
+          "message": "fake-stripe-api: parameter discounts[0][coupon] of operation PostInvoiceitems is not implemented"
+        }
+      }
     },
     {
       "object": "issuing.authorization",
@@ -205961,7 +207150,7 @@
       "shape": "string",
       "state": "unserved",
       "reason": "operation_not_registered",
-      "status": "not_reached",
+      "status": "unreachable",
       "tests": [
         "TestTreasuryFinancialAccountAttributes/leaves/request/PostTreasuryFinancialAccountsFinancialAccount/forwarding_settings.payment_method"
       ],
@@ -218804,9 +219993,12 @@
       "path": "configuration.merchant.applied",
       "branch": "",
       "shape": "boolean",
-      "state": "proven_by_test",
-      "status": "unproven",
-      "class": "proven_by_test"
+      "state": "served",
+      "status": "proven",
+      "tests": [
+        "TestV2CoreAccountAttributes/leaves/response/v2.core.account/configuration.merchant.applied"
+      ],
+      "class": "verified"
     },
     {
       "object": "v2.core.account",

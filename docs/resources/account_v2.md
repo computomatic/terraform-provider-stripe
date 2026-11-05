@@ -243,7 +243,7 @@ The `defaults.profile` attribute supports:
 
 The `defaults.responsibilities` attribute supports:
 
-* `fees_collector` - (Required) A value indicating the party responsible for collecting fees from this account. Possible values: `application`, `application_custom`, `application_express`, `stripe`.
+* `fees_collector` - (Required) A value indicating the party responsible for collecting fees from this account. Possible values: `application`, `application_custom`, `application_express`, `stripe`. Stripe takes it on an update only beside `losses_collector`, which an update sends with it. Elsewhere Stripe refused it on a US account on update: "Some fields in the request were invalid: 'defaults.responsibilities.losses_collector: Required request field missing'".
 * `losses_collector` - (Required) A value indicating who is responsible for losses when this Account can’t pay back negative balances from payments. Possible values: `application`, `stripe`.
 * `requirements_collector` - (Read-Only) A value indicating responsibility for collecting requirements on this account. Possible values: `application`, `stripe`.
 

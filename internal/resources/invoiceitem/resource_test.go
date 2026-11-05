@@ -65,6 +65,39 @@ data "stripe_invoiceitem" "by_id" {
 	})
 }
 
+// Stripe names an item made from `price_data` after the product when the create sends no
+// description, which then stays in state with no plan. The item sends what the suite's create
+// probe `minimal/price_data` sends: a customer, and `price_data` with the account's currency, a
+// product and `unit_amount` 1500.
+func TestAccInvoiceitem_descriptionFromProduct(t *testing.T) {
+	acct := acctest.NewAccount(t)
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: tfacc.ProviderFactories,
+		Steps: []resource.TestStep{{
+			Config: acct.ProviderBlock() + fmt.Sprintf(`
+resource "stripe_customer" "test" {}
+
+resource "stripe_product" "test" {
+  name = %q
+}
+
+resource "stripe_invoiceitem" "test" {
+  customer = stripe_customer.test.id
+  price_data = {
+    currency    = "usd"
+    product     = stripe_product.test.id
+    unit_amount = 1500
+  }
+}
+`, acct.Name("Invoice item product")),
+			Check: resource.ComposeAggregateTestCheckFunc(
+				resource.TestCheckResourceAttrPair(address, "description", "stripe_product.test", "name"),
+				resource.TestCheckResourceAttr(address, "amount", "1500"),
+			),
+		}},
+	})
+}
+
 func TestAccInvoiceitem_update(t *testing.T) {
 	acct := acctest.NewAccount(t)
 	resource.ParallelTest(t, resource.TestCase{

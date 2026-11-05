@@ -297,12 +297,13 @@ func dropped(leaves []Leaf, records []Record, operation string) map[string]bool 
 }
 
 // annotate records on the table's fields the default of each optional argument an exposed
-// request leaf holds, for its docs line (D4), and Stripe's refusal of each argument it has only
-// ever refused, which it fails on where the record holds none. The create's default comes before
-// an update's `not sent`.
+// request leaf holds, for its docs line (D4), Stripe's refusal of each argument it has only
+// ever refused, which it fails on where the record holds none, and the values of an argument
+// Stripe fails on every attempt. The create's default comes before an update's `not sent`.
 func annotate(table []fields.Field, leaves []Leaf, records []Record, create string, ev *Pinned) error {
 	refused, answered := map[string][]refusedOn{}, map[string][]refusedOn{}
-	var paths, answeredPaths []string
+	unreachable := map[string][]UnreachableValue{}
+	var paths, answeredPaths, unreachablePaths []string
 	for i, l := range leaves {
 		r := records[i]
 		if l.Side != SideRequest || r.State != StateExposed {
@@ -326,6 +327,19 @@ func annotate(table []fields.Field, leaves []Leaf, records []Record, create stri
 			}
 			for _, x := range e.Refusals {
 				refused[l.At] = append(refused[l.At], refusedOn{on: on, country: x.AccountCountry, message: x.Message})
+			}
+		}
+		if e := ev.leaf(l.Key); e != nil {
+			for _, u := range e.Unreachable {
+				if !slices.Contains(f.Enum, u.Value) {
+					return fmt.Errorf("%s: the record marks %q unreachable, which is not one of the argument's documented values", l.Key, u.Value)
+				}
+				if _, seen := unreachable[l.At]; !seen {
+					unreachablePaths = append(unreachablePaths, l.At)
+				}
+				if !slices.Contains(unreachable[l.At], u) {
+					unreachable[l.At] = append(unreachable[l.At], u)
+				}
 			}
 		}
 		if obs := ev.answers(l.Key); len(obs) > 0 {
@@ -365,6 +379,13 @@ func annotate(table []fields.Field, leaves []Leaf, records []Record, create stri
 			return fmt.Errorf("%s: %w", at, err)
 		}
 		fieldAt(table, at).Answer = s
+	}
+	for _, at := range unreachablePaths {
+		sentences := make([]string, len(unreachable[at]))
+		for i, u := range unreachable[at] {
+			sentences[i] = fmt.Sprintf("Stripe fails %s on every attempt, so the conformance suite never sends it: %q.", fields.Code(u.Value), strings.TrimSuffix(u.Reason, "."))
+		}
+		fieldAt(table, at).Unreachable = strings.Join(sentences, " ")
 	}
 	return nil
 }
@@ -750,6 +771,9 @@ func (p *Pinned) refusedOnly(k Key) bool {
 }
 
 func (p *Pinned) leaf(k Key) *EvidenceLeaf {
+	if p == nil {
+		return nil
+	}
 	if p.leaves == nil {
 		p.leaves = map[Key]*EvidenceLeaf{}
 		for i := range p.Evidence.Leaves {

@@ -22,9 +22,11 @@ import (
 // its own value. A person created without ID numbers keeps an empty list. The suite sets ID
 // numbers on create only, so a change to `id_numbers` is refused, and so is a plan after
 // Stripe stopped listing a configured number, which a refresh shows. An update merges `address` and `relationship` (suite: "update
-// relationship address and metadata"), and the engine sends each whole, so their members are
-// server-filled: one removed from the configuration keeps its value, though the record shows
-// null unsets most of them. Stripe shows the country in upper case and a whole percent ownership with `.0`,
+// relationship address and metadata"), and Stripe keeps the members an update of either leaves
+// out (family `v2`, `hashes`), so an update sends only the members of `relationship` that changed
+// and `address`, which requires its `country`, whole. Their members are server-filled, because
+// the engine sent both whole before the record listed them: one removed from the configuration
+// keeps its value, though the record shows null unsets most of them. Stripe shows the country in upper case and a whole percent ownership with `.0`,
 // so the configured values stay in state. The record proves null unsets `given_name`, `surname`,
 // `email` and `legal_gender`, and Stripe refuses it for `phone` and `political_exposure`.
 //
@@ -45,12 +47,13 @@ var Declaration = engine.Declaration{
 		Delete:   "/v2/core/accounts/{account_id}/persons/{id}",
 		List:     "/v2/core/accounts/{account_id}/persons",
 	},
-	Delete:         engine.Delete,
-	ClearsWithNull: []string{"email", "given_name", "legal_gender", "surname"},
-	MatchOnRead:    map[string]string{"id_numbers": "type"},
-	RefuseChange:   []string{"id_numbers"},
-	Sensitive:      []string{"id_numbers.value"},
-	PreserveConfig: []string{"address.country", "relationship.percent_ownership"},
+	Delete:             engine.Delete,
+	ClearsWithNull:     []string{"email", "given_name", "legal_gender", "surname"},
+	MatchOnRead:        map[string]string{"id_numbers": "type"},
+	RefuseChange:       []string{"id_numbers"},
+	Sensitive:          []string{"id_numbers.value"},
+	PreserveConfig:     []string{"address.country", "relationship.percent_ownership"},
+	SendChangedMembers: []string{"relationship"},
 	ServerDefaulted: []string{
 		"address.city", "address.line1", "address.line2", "address.postal_code", "address.state", "address.town",
 		"relationship", "relationship.director", "relationship.executive", "relationship.legal_guardian", "relationship.owner",

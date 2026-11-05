@@ -66,6 +66,17 @@ func TestAnswerPrecedesTheDefaultStatement(t *testing.T) {
 	}
 }
 
+// A value Stripe fails on every attempt is named after the description and before the default
+// statement.
+func TestUnreachableValuePrecedesTheDefaultStatement(t *testing.T) {
+	p := &page{resource: true}
+	unreachable := "Stripe fails `fpx` on every attempt, so the conformance suite never sends it: \"Stripe answers 500\"."
+	got := p.line(&attr{Name: "x", Description: "A thing", Optional: true, Default: "Default (Stripe): `card`.", Unreachable: unreachable}, "x", true)
+	if want := `A thing. ` + unreachable + " Default (Stripe): `card`."; !strings.HasSuffix(got, want) {
+		t.Errorf("%s, want it to end %s", got, want)
+	}
+}
+
 // Inside a list element the engine keeps no prior value (an insert or a reorder would pair it
 // with another element), so a subscription item's Optional and Computed `price` and `quantity`
 // say that Stripe sets them when the list is next sent, not that the value stays.

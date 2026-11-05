@@ -526,7 +526,7 @@ const (
 // by its value (the record's probes `isolated/url_*`): an update of an account with no
 // configuration takes `https://accessible.stripe.com`, which the record holds on no such create,
 // so the create leaves the URL out and the update adds it, and it stays in every later step,
-// because the profile goes whole.
+// because Stripe keeps the profile's members an update leaves out.
 func TestAccAccountV2_updateDefaults(t *testing.T) {
 	acct := acctest.NewAccount(t)
 	var path string
@@ -583,9 +583,10 @@ func TestAccAccountV2_updateDefaults(t *testing.T) {
 							return nil
 						}
 						u := lastUpdate(t, acct, path)
-						// `profile` goes whole, because the record does not list that hash.
-						if defaults, _ := u.Get("defaults"); !jsonIs(defaults, `{"locales":["bg","ar-SA"],"profile":{"business_url":"https://accessible.stripe.com","doing_business_as":"`+renamed+`","product_description":"`+product+`"}}`) {
-							return fmt.Errorf("the update must send only the defaults that changed, and `profile` whole: %+v", defaults)
+						// The record lists `defaults.profile` as keeping its siblings, so the
+						// unchanged product description is not sent.
+						if defaults, _ := u.Get("defaults"); !jsonIs(defaults, `{"locales":["bg","ar-SA"],"profile":{"business_url":"https://accessible.stripe.com","doing_business_as":"`+renamed+`"}}`) {
+							return fmt.Errorf("the update must send only the defaults and the profile members that changed: %+v", defaults)
 						}
 						for _, never := range []string{"configuration", "identity"} {
 							if _, sent := u.Get(never); sent {

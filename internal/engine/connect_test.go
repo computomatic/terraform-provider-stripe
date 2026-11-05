@@ -710,9 +710,9 @@ func TestSentMembersAreChecked(t *testing.T) {
 }
 
 // An object in SendChangedMembers sends only what changed: a removed member as null, a nested
-// object's changed members, one with a Required member whole, a removed map key as null,
-// never a member the plan leaves unknown or one that is refused, and nothing when only those
-// differ.
+// object's changed members, one with a Required member whole, a removed map key as null, or a
+// map in ReplacedMaps whole without the key, never a member the plan leaves unknown or one that
+// is refused, and nothing when only those differ.
 func TestSendChangedMembers(t *testing.T) {
 	member := func(name string, shape fields.Shape) fields.Field {
 		return fields.Field{Name: name, Shape: shape, Create: true, Update: true, Response: true}
@@ -766,6 +766,41 @@ func TestSendChangedMembers(t *testing.T) {
 		}
 		if got := wireOf(t, params); got != tc.want {
 			t.Errorf("%s: update body %s, want %s", name, got, tc.want)
+		}
+	}
+	decl.ReplacedMaps = []string{"person.tags"}
+	replaced := configured(t, decl, append(refuseTable(), person), noCalls(t))
+	held := replaced.fill(map[string]attr.Value{"id": types.StringValue("wid_1"), "name": types.StringValue("w"), "person": build(nil)})
+	oneTag := map[string]attr.Value{"tags": types.MapValueMust(types.StringType, map[string]attr.Value{"a": types.StringValue("1")})}
+	params, err := replaced.m.encodeUpdate(replaced.fill(with(held, map[string]attr.Value{"person": build(oneTag)})), held, tftypes.Value{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got, want := wireOf(t, params), `{"person":{"tags":{"a":"1"}}}`; got != want {
+		t.Errorf("a replaced map: update body %s, want %s", got, want)
+	}
+}
+
+// A replaced-maps entry is a map an update takes inside a send-changed-members object.
+func TestReplacedMapsAreChecked(t *testing.T) {
+	tags := fields.Field{Name: "tags", Shape: fields.StringMap, Create: true, Update: true, Response: true}
+	person := fields.Field{Name: "person", Shape: fields.Object, Create: true, Update: true, Response: true, Fields: []fields.Field{
+		{Name: "first", Shape: fields.String, Create: true, Update: true, Response: true}, tags,
+	}}
+	for name, tc := range map[string]struct {
+		changed, replaced []string
+		ok                bool
+	}{
+		"a map inside":            {[]string{"person"}, []string{"person.tags"}, true},
+		"outside changed members": {nil, []string{"person.tags"}, false},
+		"not a map":               {[]string{"person"}, []string{"person.first"}, false},
+		"no such field":           {[]string{"person"}, []string{"person.none"}, false},
+	} {
+		decl := fixtureDeclaration()
+		decl.SendChangedMembers, decl.ReplacedMaps = tc.changed, tc.replaced
+		_, err := NewResource(decl, append(refuseTable(), person))
+		if (err == nil) != tc.ok {
+			t.Errorf("%s: %v", name, err)
 		}
 	}
 }

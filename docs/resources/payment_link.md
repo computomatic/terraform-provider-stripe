@@ -105,7 +105,7 @@ The `after_completion.hosted_confirmation` attribute supports:
 
 The `after_completion.redirect` attribute supports:
 
-* `url` - (Required) The URL the customer will be redirected to after the purchase is complete.
+* `url` - (Required) The URL the customer will be redirected to after the purchase is complete. Stripe takes it on an update only beside `after_completion.type`, which an update sends with it. Elsewhere Stripe refused it on a US account on update: "Missing required param: after_completion[type].".
 
 <a id="automatic_tax"></a>
 ### `automatic_tax`

@@ -42,6 +42,14 @@ var Declaration = engine.Declaration{
 	// currency from the account's when limits are set without one (suite: "TestIssuingCardholder").
 	ServerDefaulted: []string{"individual.verification", "spending_controls", "spending_controls.spending_limits_currency"},
 	Sensitive:       []string{"company.tax_id"},
+	// Stripe keeps the members of `individual` and `spending_controls` an update leaves out
+	// (family `v1-issuing-treasury`, `hashes`), so an update sends only those that changed. It
+	// clears what an update leaves out of `individual.card_issuing.user_terms_acceptance` and of
+	// `billing.address`, and the record does not list `individual.card_issuing` or
+	// `individual.verification`, so those go whole; `billing` and `individual.dob` require their
+	// members and go whole too.
+	SendChangedMembers: []string{"individual", "spending_controls"},
+	SendWholeMembers:   []string{"individual.card_issuing", "individual.verification"},
 }
 
 // NewResource returns the resource constructor the provider registers.

@@ -895,7 +895,7 @@ func (m *model) checkReplaceOnRemoval() error {
 
 // checkSentMembers refuses a declaration that leaves open how an update sends a hash. Each entry of
 // SendChangedMembers and SendWholeMembers is a hash an update takes, top-level or inside an object
-// that sends changed members, and every hash below such an object is named in one or the other,
+// that sends changed members, each entry of ReplacedMaps a map an update takes inside such an object, and every hash below such an object is named in one or the other,
 // so that a hash the gate newly exposes is never sent in part by default. A hash with a Required
 // member, sent whole as Stripe takes it, and one refused in RefuseChange, never sent, need no entry.
 func (m *model) checkSentMembers() error {
@@ -921,6 +921,11 @@ func (m *model) checkSentMembers() error {
 	for _, name := range whole {
 		if _, ok := hash(name); !ok || strings.Contains(name, ".") && !inside(name) || slices.Contains(changed, name) {
 			return fmt.Errorf("%s: send-whole-members entry `%s` is not a top-level hash, or one inside a send-changed-members object, in that list alone", decl.TypeName, name)
+		}
+	}
+	for _, name := range decl.ReplacedMaps {
+		if n, _, ok := m.at(name); !ok || n.Shape != fields.StringMap || !n.Update || !inside(name) {
+			return fmt.Errorf("%s: replaced-maps entry `%s` is not a map an update takes inside a send-changed-members object", decl.TypeName, name)
 		}
 	}
 	var walk func(n *node) error

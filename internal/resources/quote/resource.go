@@ -28,8 +28,12 @@ var Declaration = engine.Declaration{
 	Expand: []string{"line_items"},
 	// A quote created from another one takes its customer from the source.
 	ServerDefaulted: []string{"customer"},
-	Delete:          engine.Refuse,
-	RefuseReason:    "Stripe cannot delete a quote; set `status` to `canceled` to cancel one.",
+	// Stripe keeps the members of `invoice_settings` an update leaves out (family `v1-billing`,
+	// `hashes`), so an update sends only those that changed; `issuer` requires its `type` and
+	// goes whole.
+	SendChangedMembers: []string{"invoice_settings"},
+	Delete:             engine.Refuse,
+	RefuseReason:       "Stripe cannot delete a quote; set `status` to `canceled` to cancel one.",
 	// An accepted quote cannot be cancelled (suite: "cancel once accepted").
 	Transitions: []engine.Transition{{Field: "status", Value: "canceled", Path: "/v1/quotes/{id}/cancel", Final: []string{"accepted"}}},
 }

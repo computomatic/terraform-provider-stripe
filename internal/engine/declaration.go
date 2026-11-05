@@ -481,12 +481,18 @@ type Declaration struct {
 	SetOnce []string
 	// SendChangedMembers lists objects, by dotted path, whose update sends only the members that
 	// changed, where the evidence shows Stripe keeps the members a request leaves out: the
-	// record's `families[].hashes` lists the hash as `siblings_kept`, or it is a departure the
-	// product owner accepted, which `TestSendChangedMembersFollowTheEvidence` names. A nested
-	// entry sits inside another, so the request never sends Stripe's own values back. A member
-	// removed from the configuration is sent as null, a map member's removed key likewise, and an
-	// object with Required members is sent whole, as Stripe takes it, and needs no entry.
+	// record's `families[].hashes` lists the hash as `siblings_kept` for the table's object, which
+	// `TestSendChangedMembersFollowTheEvidence` checks. A nested entry sits inside another, so the
+	// request never sends Stripe's own values back. A member removed from the configuration is
+	// sent as null, a map member's removed key likewise (unless ReplacedMaps names the map), and
+	// an object with Required members is sent whole, as Stripe takes it, and needs no entry.
 	SendChangedMembers []string
+	// ReplacedMaps lists maps, by dotted path, inside a SendChangedMembers object that Stripe
+	// replaces whole on update, where the suite's recipe says so (its `Replaced`) and its run
+	// against Stripe agrees, such as a payment link's `payment_intent_data.metadata`. A change
+	// sends the whole map without the keys it lost, because Stripe keeps a key sent empty as an
+	// empty value there. Any other such map merges key by key, as an object's own metadata does.
+	ReplacedMaps []string
 	// SendWholeMembers lists the hashes, by dotted path, that an update sends whole once a member
 	// changes: inside a SendChangedMembers object, where nothing proves Stripe keeps the members a
 	// request leaves out, every hash is in one list or the other (checkSentMembers), and at the top
