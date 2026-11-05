@@ -7,10 +7,10 @@ import "github.com/computomatic/terraform-provider-stripe/internal/fields"
 
 // Table lists every request and response field of the object.
 var Table = []fields.Field{
-	{Name: "active", Shape: fields.Bool, Update: true, Response: true, Description: "Inactive features cannot be attached to new products and will not be returned from the features list endpoint.", Default: &fields.Default{Kind: fields.DefaultNotSent}},
+	{Name: "active", Shape: fields.Bool, Update: true, Response: true, Stable: true, Description: "Inactive features cannot be attached to new products and will not be returned from the features list endpoint.", Default: &fields.Default{Kind: fields.DefaultNotSent}},
 	{Name: "id", Shape: fields.String, Response: true, Description: "Unique identifier for the object."},
 	{Name: "livemode", Shape: fields.Bool, Response: true, Description: "If the object exists in live mode, the value is `true`. If the object exists in test mode, the value is `false`."},
 	{Name: "lookup_key", Shape: fields.String, Required: true, Create: true, Response: true, Description: "A unique key you provide as your own system identifier. This may be up to 80 characters."},
-	{Name: "metadata", Shape: fields.StringMap, Create: true, Update: true, Response: true, ServerDefaulted: true, Description: "Set of key-value pairs that you can attach to an object. This can be useful for storing additional information about the object in a structured format."},
+	{Name: "metadata", Shape: fields.StringMap, Create: true, Update: true, Response: true, ServerDefaulted: true, Stable: true, Description: "Set of key-value pairs that you can attach to an object. This can be useful for storing additional information about the object in a structured format.", Default: &fields.Default{Kind: fields.DefaultValue, Value: "{}"}},
 	{Name: "name", Shape: fields.String, Required: true, Create: true, Update: true, Response: true, Description: "The feature's name, for your own purpose, not meant to be displayable to the customer."},
 }

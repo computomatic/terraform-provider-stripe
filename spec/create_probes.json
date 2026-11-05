@@ -1,5 +1,5 @@
 {
- "suite_ref": "5d756eafed59f4756ff0a6a34e913e44f7d2b961",
+ "suite_ref": "6b9aeaabfd08d0477f43ff1f6dea5d19247f3a5d",
  "leaves": [
   {
    "object": "account",
@@ -213,7 +213,7 @@
     {
      "kind": "value",
      "value": "Jenny Rosen",
-     "probe": "every_field/3"
+     "probe": "minimal/token"
     }
    ]
   },
@@ -229,7 +229,7 @@
     {
      "kind": "value",
      "value": "individual",
-     "probe": "every_field/3"
+     "probe": "minimal/token"
     }
    ]
   },
@@ -245,7 +245,7 @@
     {
      "kind": "value",
      "value": "US",
-     "probe": "every_field/3"
+     "probe": "minimal/token"
     }
    ]
   },
@@ -261,7 +261,7 @@
     {
      "kind": "value",
      "value": "usd",
-     "probe": "every_field/3"
+     "probe": "minimal/token"
     }
    ]
   },
@@ -277,7 +277,7 @@
     {
      "kind": "value",
      "value": "110000000",
-     "probe": "every_field/3"
+     "probe": "minimal/token"
     }
    ]
   },
@@ -1669,7 +1669,7 @@
     {
      "kind": "value",
      "value": 0,
-     "probe": "enums/10"
+     "probe": "enums/1"
     }
    ]
   },
@@ -1681,7 +1681,7 @@
     {
      "kind": "value",
      "value": "automatic",
-     "probe": "enums/10"
+     "probe": "enums/104"
     }
    ]
   },
@@ -1692,7 +1692,7 @@
    "held": [
     {
      "kind": "url",
-     "probe": "enums/10"
+     "probe": "enums/1"
     }
    ]
   },
@@ -1704,7 +1704,7 @@
     {
      "kind": "value",
      "value": {},
-     "probe": "enums/10"
+     "probe": "enums/1"
     }
    ]
   },
@@ -1716,7 +1716,7 @@
     {
      "kind": "value",
      "value": 1,
-     "probe": "enums/10"
+     "probe": "enums/1"
     }
    ]
   },
@@ -1728,7 +1728,7 @@
     {
      "kind": "value",
      "value": [],
-     "probe": "enums/10"
+     "probe": "enums/1"
     }
    ]
   },
@@ -1740,7 +1740,7 @@
     {
      "kind": "value",
      "value": "none",
-     "probe": "enums/2"
+     "probe": "enums/1"
     }
    ]
   },
@@ -1777,6 +1777,11 @@
      "kind": "value",
      "value": 100,
      "probe": "minimal"
+    },
+    {
+     "kind": "value",
+     "value": 70,
+     "probe": "minimal/partly_refunded"
     }
    ]
   },
@@ -2804,7 +2809,7 @@
     {
      "kind": "value",
      "value": "automatic_async",
-     "probe": "enums/10"
+     "probe": "enums/16"
     }
    ]
   },
@@ -2816,7 +2821,7 @@
     {
      "kind": "value",
      "value": "automatic",
-     "probe": "enums/10"
+     "probe": "enums/16"
     }
    ]
   },
@@ -2839,7 +2844,7 @@
    "held": [
     {
      "kind": "id",
-     "probe": "enums/25"
+     "probe": "enums/23"
     }
    ]
   },
@@ -2850,11 +2855,11 @@
    "held": [
     {
      "kind": "id",
-     "probe": "enums/68"
+     "probe": "enums/48"
     },
     {
      "kind": "sent",
-     "probe": "enums/4"
+     "probe": "enums/25"
     }
    ]
   },
@@ -2865,11 +2870,11 @@
    "held": [
     {
      "kind": "id",
-     "probe": "enums/25"
+     "probe": "enums/23"
     },
     {
      "kind": "sent",
-     "probe": "enums/4"
+     "probe": "enums/25"
     }
    ]
   },
@@ -2880,11 +2885,11 @@
    "held": [
     {
      "kind": "id",
-     "probe": "enums/25"
+     "probe": "enums/23"
     },
     {
      "kind": "sent",
-     "probe": "enums/4"
+     "probe": "enums/25"
     }
    ]
   },
@@ -2895,11 +2900,11 @@
    "held": [
     {
      "kind": "id",
-     "probe": "enums/25"
+     "probe": "enums/23"
     },
     {
      "kind": "sent",
-     "probe": "enums/4"
+     "probe": "enums/25"
     }
    ]
   },
@@ -2910,11 +2915,11 @@
    "held": [
     {
      "kind": "id",
-     "probe": "enums/25"
+     "probe": "enums/23"
     },
     {
      "kind": "sent",
-     "probe": "enums/4"
+     "probe": "enums/25"
     }
    ]
   },
@@ -2925,11 +2930,11 @@
    "held": [
     {
      "kind": "id",
-     "probe": "enums/25"
+     "probe": "enums/23"
     },
     {
      "kind": "sent",
-     "probe": "enums/4"
+     "probe": "enums/25"
     }
    ]
   },
@@ -2940,11 +2945,11 @@
    "held": [
     {
      "kind": "id",
-     "probe": "enums/25"
+     "probe": "enums/23"
     },
     {
      "kind": "sent",
-     "probe": "enums/4"
+     "probe": "enums/25"
     }
    ]
   },
@@ -2955,11 +2960,11 @@
    "held": [
     {
      "kind": "id",
-     "probe": "enums/25"
+     "probe": "enums/23"
     },
     {
      "kind": "sent",
-     "probe": "enums/4"
+     "probe": "enums/25"
     }
    ]
   },
@@ -2970,7 +2975,7 @@
    "held": [
     {
      "kind": "sent",
-     "probe": "enums/4"
+     "probe": "enums/25"
     }
    ]
   },
@@ -2981,11 +2986,11 @@
    "held": [
     {
      "kind": "id",
-     "probe": "enums/25"
+     "probe": "enums/23"
     },
     {
      "kind": "sent",
-     "probe": "enums/4"
+     "probe": "enums/25"
     }
    ]
   },
@@ -2996,11 +3001,11 @@
    "held": [
     {
      "kind": "id",
-     "probe": "enums/25"
+     "probe": "enums/23"
     },
     {
      "kind": "sent",
-     "probe": "enums/4"
+     "probe": "enums/25"
     }
    ]
   },
@@ -3011,7 +3016,7 @@
    "held": [
     {
      "kind": "sent",
-     "probe": "enums/4"
+     "probe": "enums/25"
     }
    ]
   },
@@ -5365,11 +5370,11 @@
    "held": [
     {
      "kind": "id",
-     "probe": "enums/42"
+     "probe": "enums/36"
     },
     {
      "kind": "sent",
-     "probe": "every_field/12"
+     "probe": "enums/14"
     }
    ]
   },
@@ -5384,7 +5389,7 @@
     },
     {
      "kind": "sent",
-     "probe": "every_field/12"
+     "probe": "enums/14"
     }
    ]
   },
@@ -5399,7 +5404,7 @@
     },
     {
      "kind": "sent",
-     "probe": "every_field/12"
+     "probe": "enums/14"
     }
    ]
   },
@@ -5414,7 +5419,7 @@
     },
     {
      "kind": "sent",
-     "probe": "every_field/12"
+     "probe": "enums/14"
     }
    ]
   },
@@ -5429,7 +5434,7 @@
     },
     {
      "kind": "sent",
-     "probe": "every_field/12"
+     "probe": "enums/14"
     }
    ]
   },
@@ -5444,7 +5449,7 @@
     },
     {
      "kind": "sent",
-     "probe": "every_field/12"
+     "probe": "enums/14"
     }
    ]
   },
@@ -5459,7 +5464,7 @@
     },
     {
      "kind": "sent",
-     "probe": "every_field/12"
+     "probe": "enums/14"
     }
    ]
   },
@@ -5474,7 +5479,7 @@
     },
     {
      "kind": "sent",
-     "probe": "every_field/12"
+     "probe": "enums/14"
     }
    ]
   },
@@ -5485,7 +5490,7 @@
    "held": [
     {
      "kind": "sent",
-     "probe": "every_field/12"
+     "probe": "enums/14"
     }
    ]
   },
@@ -5500,7 +5505,7 @@
     },
     {
      "kind": "sent",
-     "probe": "every_field/12"
+     "probe": "enums/14"
     }
    ]
   },
@@ -5515,7 +5520,7 @@
     },
     {
      "kind": "sent",
-     "probe": "every_field/12"
+     "probe": "enums/14"
     }
    ]
   },
@@ -5526,7 +5531,7 @@
    "held": [
     {
      "kind": "sent",
-     "probe": "every_field/12"
+     "probe": "enums/14"
     }
    ]
   },
@@ -5538,7 +5543,7 @@
     {
      "kind": "value",
      "value": "off_session",
-     "probe": "enums/12"
+     "probe": "enums/11"
     }
    ]
   },
@@ -7256,6 +7261,11 @@
      "kind": "value",
      "value": 100,
      "probe": "minimal"
+    },
+    {
+     "kind": "value",
+     "value": 70,
+     "probe": "minimal/partly_reversed"
     }
    ]
   },

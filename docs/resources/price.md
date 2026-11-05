@@ -37,23 +37,23 @@ The following arguments are required:
 
 The following arguments are optional:
 
-* `active` - (Optional) Whether the price can be used for new purchases. Defaults to `true`. Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
-* `billing_scheme` - (Optional) Describes how to compute the price per period. Either `per_unit` or `tiered`. `per_unit` indicates that the fixed amount (specified in `unit_amount` or `unit_amount_decimal`) will be charged per unit in `quantity` (for prices with `usage_type=licensed`), or per unit of total usage (for prices with `usage_type=metered`). `tiered` indicates that the unit pricing will be computed using a tiering strategy as defined using the `tiers` and `tiers_mode` attributes. Possible values: `per_unit`, `tiered`. Changing it replaces the resource. Removing it from the configuration leaves the current value.
+* `active` - (Optional) Whether the price can be used for new purchases. Defaults to `true`. Default (Stripe): `true`. Removing it from the configuration leaves the current value.
+* `billing_scheme` - (Optional) Describes how to compute the price per period. Either `per_unit` or `tiered`. `per_unit` indicates that the fixed amount (specified in `unit_amount` or `unit_amount_decimal`) will be charged per unit in `quantity` (for prices with `usage_type=licensed`), or per unit of total usage (for prices with `usage_type=metered`). `tiered` indicates that the unit pricing will be computed using a tiering strategy as defined using the `tiers` and `tiers_mode` attributes. Possible values: `per_unit`, `tiered`. Changing it replaces the resource. Default (Stripe): `per_unit`. Removing it from the configuration leaves the current value.
 * `currency_options` - (Optional) Prices defined in each available currency option. Each key must be a three-letter [ISO currency code](https://www.iso.org/iso-4217-currency-codes.html) and a [supported currency](https://stripe.com/docs/currencies). See [`currency_options`](#currency_options) below.
 * `custom_unit_amount` - (Optional) When set, provides configuration for the amount to be adjusted by the customer during Checkout Sessions and Payment Links. Changing it replaces the resource. See [`custom_unit_amount`](#custom_unit_amount) below.
-* `lookup_key` - (Optional) A lookup key used to retrieve prices dynamically from a static string. This may be up to 200 characters.
-* `metadata` - (Optional) Set of [key-value pairs](https://docs.stripe.com/api/metadata) that you can attach to an object. This can be useful for storing additional information about the object in a structured format. Individual keys can be unset by posting an empty value to them. All keys can be unset by posting an empty value to `metadata`.
-* `nickname` - (Optional) A brief description of the price, hidden from customers.
+* `lookup_key` - (Optional) A lookup key used to retrieve prices dynamically from a static string. This may be up to 200 characters. Default: none.
+* `metadata` - (Optional) Set of [key-value pairs](https://docs.stripe.com/api/metadata) that you can attach to an object. This can be useful for storing additional information about the object in a structured format. Individual keys can be unset by posting an empty value to them. All keys can be unset by posting an empty value to `metadata`. Default (Stripe): `{}`.
+* `nickname` - (Optional) A brief description of the price, hidden from customers. Default: none.
 * `product` - (Optional) The ID of the [Product](https://docs.stripe.com/api/products) that this [Price](https://docs.stripe.com/api/prices) will belong to. Changing it replaces the resource. Removing it from the configuration leaves the current value.
 * `product_data` - (Optional) These fields can be used to create a new product that this price will belong to. Changing it replaces the resource. See [`product_data`](#product_data) below.
 * `recurring` - (Optional) The recurring components of a price such as `interval` and `usage_type`. Changing it replaces the resource. See [`recurring`](#recurring) below.
-* `tax_behavior` - (Optional) Only required if a [default tax behavior](https://docs.stripe.com/tax/products-prices-tax-categories-tax-behavior#setting-a-default-tax-behavior-(recommended)) was not provided in the Stripe Tax settings. Specifies whether the price is considered inclusive of taxes or exclusive of taxes. One of `inclusive`, `exclusive`, or `unspecified`. Once specified as either `inclusive` or `exclusive`, it cannot be changed. Possible values: `exclusive`, `inclusive`, `unspecified`. Stripe changes it only from `unspecified`, so changing it from any other value replaces the resource. Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
+* `tax_behavior` - (Optional) Only required if a [default tax behavior](https://docs.stripe.com/tax/products-prices-tax-categories-tax-behavior#setting-a-default-tax-behavior-(recommended)) was not provided in the Stripe Tax settings. Specifies whether the price is considered inclusive of taxes or exclusive of taxes. One of `inclusive`, `exclusive`, or `unspecified`. Once specified as either `inclusive` or `exclusive`, it cannot be changed. Possible values: `exclusive`, `inclusive`, `unspecified`. Stripe changes it only from `unspecified`, so changing it from any other value replaces the resource. Default (Stripe): `unspecified`. Removing it from the configuration leaves the current value.
 * `tiers` - (Optional) Each element represents a pricing tier. This parameter requires `billing_scheme` to be set to `tiered`. See also the documentation for `billing_scheme`. Changing it replaces the resource. See [`tiers`](#tiers) below.
-* `tiers_mode` - (Optional) Defines if the tiering price should be `graduated` or `volume` based. In `volume`-based tiering, the maximum quantity within a period determines the per unit price, in `graduated` tiering pricing can successively change as the quantity grows. Possible values: `graduated`, `volume`. Changing it replaces the resource.
+* `tiers_mode` - (Optional) Defines if the tiering price should be `graduated` or `volume` based. In `volume`-based tiering, the maximum quantity within a period determines the per unit price, in `graduated` tiering pricing can successively change as the quantity grows. Possible values: `graduated`, `volume`. Changing it replaces the resource. Default: none.
 * `transfer_lookup_key` - (Optional) If set to true, will atomically remove the lookup key from the existing price, and assign it to this price.
 * `transform_quantity` - (Optional) Apply a transformation to the reported usage or set quantity before computing the billed price. Cannot be combined with `tiers`. Changing it replaces the resource. See [`transform_quantity`](#transform_quantity) below.
 * `unit_amount` - (Optional) A positive integer in cents (or local equivalent) (or 0 for a free price) representing how much to charge. One of `unit_amount`, `unit_amount_decimal`, or `custom_unit_amount` is required, unless `billing_scheme=tiered`. Changing it replaces the resource. Removing it from the configuration leaves the current value.
-* `unit_amount_decimal` - (Optional) Same as `unit_amount`, but accepts a decimal value in cents (or local equivalent) with at most 12 decimal places. Only one of `unit_amount` and `unit_amount_decimal` can be set. Changing it replaces the resource. Removing it from the configuration leaves the current value.
+* `unit_amount_decimal` - (Optional) Same as `unit_amount`, but accepts a decimal value in cents (or local equivalent) with at most 12 decimal places. Only one of `unit_amount` and `unit_amount_decimal` can be set. Changing it replaces the resource. Default (Stripe): the `unit_amount` sent, as a decimal string (`1500` on a US account). Removing it from the configuration leaves the current value.
 
 <a id="currency_options"></a>
 ### `currency_options`
@@ -61,10 +61,10 @@ The following arguments are optional:
 The `currency_options` attribute is a map. Each value supports:
 
 * `custom_unit_amount` - (Optional) When set, provides configuration for the amount to be adjusted by the customer during Checkout Sessions and Payment Links. See [`currency_options.custom_unit_amount`](#currency_options.custom_unit_amount) below.
-* `tax_behavior` - (Optional) Only required if a [default tax behavior](https://docs.stripe.com/tax/products-prices-tax-categories-tax-behavior#setting-a-default-tax-behavior-(recommended)) was not provided in the Stripe Tax settings. Specifies whether the price is considered inclusive of taxes or exclusive of taxes. One of `inclusive`, `exclusive`, or `unspecified`. Once specified as either `inclusive` or `exclusive`, it cannot be changed. Possible values: `exclusive`, `inclusive`, `unspecified`. Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
+* `tax_behavior` - (Optional) Only required if a [default tax behavior](https://docs.stripe.com/tax/products-prices-tax-categories-tax-behavior#setting-a-default-tax-behavior-(recommended)) was not provided in the Stripe Tax settings. Specifies whether the price is considered inclusive of taxes or exclusive of taxes. One of `inclusive`, `exclusive`, or `unspecified`. Once specified as either `inclusive` or `exclusive`, it cannot be changed. Possible values: `exclusive`, `inclusive`, `unspecified`. Default (Stripe): `unspecified`, under the `currency` sent (`{"usd":"unspecified"}` on a US account). Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
 * `tiers` - (Optional) Each element represents a pricing tier. This parameter requires `billing_scheme` to be set to `tiered`. See also the documentation for `billing_scheme`. See [`currency_options.tiers`](#currency_options.tiers) below.
-* `unit_amount` - (Optional) The unit amount in cents (or local equivalent) to be charged, represented as a whole integer if possible. Only set if `billing_scheme=per_unit`. Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
-* `unit_amount_decimal` - (Optional) The unit amount in cents (or local equivalent) to be charged, represented as a decimal string with at most 12 decimal places. Only set if `billing_scheme=per_unit`. Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
+* `unit_amount` - (Optional) The unit amount in cents (or local equivalent) to be charged, represented as a whole integer if possible. Only set if `billing_scheme=per_unit`. Default (Stripe): the `unit_amount` sent, under the `currency` sent. Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
+* `unit_amount_decimal` - (Optional) The unit amount in cents (or local equivalent) to be charged, represented as a decimal string with at most 12 decimal places. Only set if `billing_scheme=per_unit`. Default (Stripe): the `unit_amount` sent, as a decimal string, under the `currency` sent (`{"usd":"1500"}` on a US account). Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
 
 <a id="currency_options.custom_unit_amount"></a>
 ### `currency_options.custom_unit_amount`
@@ -93,9 +93,9 @@ The `currency_options.tiers` attribute is a list. Each element supports:
 The `custom_unit_amount` attribute supports:
 
 * `enabled` - (Required)
-* `maximum` - (Optional) The maximum unit amount the customer can specify for this item.
-* `minimum` - (Optional) The minimum unit amount the customer can specify for this item. Must be at least the minimum charge amount.
-* `preset` - (Optional) The starting unit amount which can be updated by the customer.
+* `maximum` - (Optional) The maximum unit amount the customer can specify for this item. Default: none.
+* `minimum` - (Optional) The minimum unit amount the customer can specify for this item. Must be at least the minimum charge amount. Default: none.
+* `preset` - (Optional) The starting unit amount which can be updated by the customer. Default: none.
 
 <a id="product_data"></a>
 ### `product_data`
@@ -126,7 +126,7 @@ The `recurring` attribute supports:
 
 * `interval` - (Required) The frequency at which a subscription is billed. One of `day`, `week`, `month` or `year`. Possible values: `day`, `month`, `week`, `year`.
 * `interval_count` - (Optional) The number of intervals (specified in the `interval` attribute) between subscription billings. For example, `interval=month` and `interval_count=3` bills every 3 months. Removing it from the configuration leaves the current value.
-* `meter` - (Optional) The meter tracking the usage of a metered price
+* `meter` - (Optional) The meter tracking the usage of a metered price. Default: none.
 * `usage_type` - (Optional) Configures how the quantity per period should be determined. Can be either `metered` or `licensed`. `licensed` automatically bills the `quantity` set when adding it to a subscription. `metered` aggregates the total usage based on usage records. Defaults to `licensed`. Possible values: `licensed`, `metered`. Removing it from the configuration leaves the current value.
 
 <a id="tiers"></a>

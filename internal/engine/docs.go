@@ -14,6 +14,10 @@ type AttributeDoc struct {
 	// Refused is, on an argument Stripe has only ever refused, the sentence with its recorded
 	// refusal, which precedes the default statement.
 	Refused string
+	// Answer is, on an argument Stripe takes in some requests and refuses in others, the
+	// declaration's wording of where it takes it and the recorded refusals, which precede the
+	// default statement.
+	Answer string
 	// Copy is, on an embedded copy of another Stripe object, the data source type that reads it.
 	Copy string
 }
@@ -65,7 +69,7 @@ func (m *model) attributeDocs(arguments bool) map[string]AttributeDoc {
 				doc.Removal = removal(n)
 			}
 			if arguments {
-				doc.Refused = n.Refused
+				doc.Refused, doc.Answer = n.Refused, n.Answer
 			}
 			doc.Copy = n.Copy
 			if doc != (AttributeDoc{}) {

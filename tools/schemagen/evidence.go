@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"io/fs"
 	"maps"
+	"net/http"
 	"os"
 	"path/filepath"
 	"reflect"
@@ -209,8 +210,31 @@ type RuleObservation struct {
 		AccountCountry string `json:"account_country"`
 		// Variant is the minimal create's variant, "" for the create with nothing else set.
 		Variant string `json:"variant"`
+		// Probe, on an answer (an observation of an answer rule), is the probe that sent Params,
+		// to an object created with CreatedWith where the rule is an update's.
+		Probe       string          `json:"probe,omitempty"`
+		Params      json.RawMessage `json:"params,omitempty"`
+		CreatedWith json.RawMessage `json:"created_with,omitempty"`
 	} `json:"condition"`
-	Value Matcher `json:"value"`
+	Value RuleValue `json:"value"`
+}
+
+// RuleValue is what a rule's observation held: a matcher of the response path on a default, or,
+// on an answer, Stripe's status with what it read back (`read`) or its refusal.
+type RuleValue struct {
+	Matcher
+	Status  int      `json:"status,omitempty"`
+	Read    *Matcher `json:"read,omitempty"`
+	Type    string   `json:"type,omitempty"`
+	Code    string   `json:"code,omitempty"`
+	Param   string   `json:"param,omitempty"`
+	Message string   `json:"message,omitempty"`
+}
+
+// answer reports a rule whose observations are Stripe's answers to the requests its probes sent,
+// which says when Stripe takes an argument rather than what it defaults to.
+func (r EvidenceRule) answer() bool {
+	return len(r.Observations) > 0 && r.Observations[0].Condition.Probe != ""
 }
 
 // Matcher is what a response path held, in every form the format defines. Each kind carries the
@@ -335,8 +359,6 @@ type Pinned struct {
 	classes map[Key]string
 	refused map[Key]bool
 	leaves  map[Key]*EvidenceLeaf
-	// parentDefaults holds the leaves of the tables' ParentDefaults, gathered by facts.
-	parentDefaults map[Key]bool
 }
 
 const evidenceFormat = 1
@@ -593,6 +615,9 @@ func (e *Evidence) check() error {
 		if d.Kind == "rule" && (d.RuleRef == nil || *d.RuleRef < 0 || *d.RuleRef >= len(e.Rules)) {
 			return fmt.Errorf("%s has a rule default with no rule", k)
 		}
+		if d.Kind == "rule" && e.Rules[*d.RuleRef].answer() {
+			return fmt.Errorf("%s has for its default rule %d, which answers probes and words no default", k, *d.RuleRef)
+		}
 		for _, v := range d.Variants {
 			if err := checkDefault(k, &v.Default); err != nil {
 				return err
@@ -623,8 +648,8 @@ func (e *Evidence) check() error {
 	}
 	for _, r := range e.Rules {
 		for _, o := range r.Observations {
-			if err := unknown(r.Object+" "+r.Path+": observation", o.Value.Kind, matcherKinds); err != nil {
-				return err
+			if err := r.checkObservation(o); err != nil {
+				return fmt.Errorf("%s %s %s: observation: %w", r.Object, r.Operation, r.Path, err)
 			}
 		}
 	}
@@ -639,6 +664,46 @@ func (e *Evidence) check() error {
 		if err := unknown(d.Object+" "+d.Operation+": discounts form", d.Form, discountForms); err != nil {
 			return err
 		}
+	}
+	return nil
+}
+
+// checkObservation refuses an observation of a form the generator cannot weigh: answers beside a
+// default's observations in one rule, either holding the other's members, an answer with no
+// params or with another status than a success or a refusal, a refusal with no message, an
+// acceptance that also refuses, and a matcher kind outside the format's.
+func (r EvidenceRule) checkObservation(o RuleObservation) error {
+	c, v := o.Condition, o.Value
+	if (c.Probe != "") != r.answer() {
+		return errors.New("a rule mixes answers to probes with a default's observations")
+	}
+	if c.Probe == "" {
+		if c.Params != nil || c.CreatedWith != nil || v.Status != 0 || v.Read != nil || v.Message != "" || v.Type != "" || v.Code != "" || v.Param != "" {
+			return errors.New("a default's observation holds an answer's members")
+		}
+		if !slices.Contains(matcherKinds, v.Kind) {
+			return fmt.Errorf("kind %q is not one the generator knows (%s)", v.Kind, strings.Join(matcherKinds, ", "))
+		}
+		return nil
+	}
+	switch {
+	case c.Variant != "" || v.Kind != "":
+		return fmt.Errorf("answer %s holds a default's members", c.Probe)
+	case c.Params == nil:
+		return fmt.Errorf("answer %s holds no params", c.Probe)
+	case v.Status == http.StatusOK:
+		if v.Message != "" || v.Type != "" || v.Code != "" || v.Param != "" {
+			return fmt.Errorf("answer %s accepts and refuses", c.Probe)
+		}
+		if v.Read != nil && !slices.Contains(matcherKinds, v.Read.Kind) {
+			return fmt.Errorf("answer %s reads back kind %q, not one the generator knows (%s)", c.Probe, v.Read.Kind, strings.Join(matcherKinds, ", "))
+		}
+	case v.Status >= 400 && v.Status < 500:
+		if v.Message == "" || v.Read != nil {
+			return fmt.Errorf("answer %s refuses with no message", c.Probe)
+		}
+	default:
+		return fmt.Errorf("answer %s has status %d", c.Probe, v.Status)
 	}
 	return nil
 }

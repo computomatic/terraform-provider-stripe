@@ -72,7 +72,7 @@ The `usage_threshold` attribute supports:
 
 The `usage_threshold.filters` attribute is a list. Each element supports:
 
-* `customer` - (Optional) Limit the scope of the alert to this customer ID
+* `customer` - (Optional) Limit the scope of the alert to this customer ID. Default: none.
 * `type` - (Required) Possible values: `customer`.
 
 ## Attribute Reference

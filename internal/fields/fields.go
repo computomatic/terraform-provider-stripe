@@ -88,6 +88,10 @@ type Field struct {
 	// Refused is, on an argument Stripe refused on every request the conformance suite sent it,
 	// the sentence that says so, with the recorded refusal and its condition.
 	Refused string
+	// Answer is, on an argument Stripe took in some requests the conformance suite sent and
+	// refused in others, the sentence with the refusals it recorded. The declaration words where
+	// Stripe takes it (engine.Declaration.Answers).
+	Answer string
 	// Copy is, on an embedded copy of another Stripe object, the data source type that reads
 	// that object (D3).
 	Copy string

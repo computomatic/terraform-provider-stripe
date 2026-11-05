@@ -123,7 +123,8 @@ func TestAccCustomerPaymentMethod_update(t *testing.T) {
 		Steps: acctest.Forget(t, []resource.TestStep{
 			{Config: attachmentConfig(acct, pm, "  metadata = { keep = \"me\", drop = \"me\" }\n")},
 			{
-				// Only a change of the billing address moves the address checks.
+				// Only a change of the billing address moves the address checks, each with the
+				// member it checks.
 				Config: attachmentConfig(acct, pm, "  metadata = { keep = \"me\", drop = \"too\" }\n"),
 				ConfigPlanChecks: resource.ConfigPlanChecks{PreApply: []plancheck.PlanCheck{
 					plancheck.ExpectKnownValue(address, addressCheck("address_line1_check"), knownvalue.Null()),
@@ -157,6 +158,28 @@ func TestAccCustomerPaymentMethod_update(t *testing.T) {
 					resource.TestCheckResourceAttr(address, "metadata.%", "2"),
 					resource.TestCheckResourceAttr(address, "metadata.new", "v"),
 				),
+			},
+			{
+				// A new postal code moves only its own check, with the value of the record's
+				// `isolated/checks_postal_code` probe (suite 6b9aeaa).
+				Config: attachmentConfig(acct, pm, `  metadata = { keep = "me", new = "v" }
+  billing_details = {
+    name  = "Ada Lovelace"
+    email = "ada@example.com"
+    address = {
+      line1       = "1 Main St"
+      city        = "Springfield"
+      country     = "US"
+      postal_code = "94080"
+    }
+  }
+`),
+				ConfigPlanChecks: resource.ConfigPlanChecks{PreApply: []plancheck.PlanCheck{
+					plancheck.ExpectResourceAction(address, plancheck.ResourceActionUpdate),
+					plancheck.ExpectKnownValue(address, addressCheck("address_line1_check"), knownvalue.NotNull()),
+					plancheck.ExpectUnknownValue(address, addressCheck("address_postal_code_check")),
+				}},
+				Check: resource.TestCheckResourceAttr(address, "billing_details.address.postal_code", "94080"),
 			},
 		}, nil, "stripe_customer_payment_method"),
 	})

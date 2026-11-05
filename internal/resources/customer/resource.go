@@ -24,7 +24,13 @@ var Declaration = engine.Declaration{
 	},
 	// Stripe fills these in on every customer although the response schema is nullable.
 	ServerDefaulted: []string{"balance", "invoice_prefix", "invoice_settings", "next_invoice_sequence", "tax_exempt"},
-	Delete:          engine.Delete,
+	// Stripe keeps the members of `invoice_settings` an update leaves out and clears those of
+	// `address` (family `v1-billing`, `hashes`), so an update sends only the invoice settings that
+	// changed and the address whole. The record does not list `rendering_options`, which goes
+	// whole.
+	SendChangedMembers: []string{"invoice_settings"},
+	SendWholeMembers:   []string{"invoice_settings.rendering_options"},
+	Delete:             engine.Delete,
 }
 
 // NewResource returns the resource constructor the provider registers.

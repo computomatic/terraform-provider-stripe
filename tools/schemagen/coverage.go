@@ -301,8 +301,8 @@ func dropped(leaves []Leaf, records []Record, operation string) map[string]bool 
 // ever refused, which it fails on where the record holds none. The create's default comes before
 // an update's `not sent`.
 func annotate(table []fields.Field, leaves []Leaf, records []Record, create string, ev *Pinned) error {
-	refused := map[string][]refusedOn{}
-	var paths []string
+	refused, answered := map[string][]refusedOn{}, map[string][]refusedOn{}
+	var paths, answeredPaths []string
 	for i, l := range leaves {
 		r := records[i]
 		if l.Side != SideRequest || r.State != StateExposed {
@@ -328,6 +328,20 @@ func annotate(table []fields.Field, leaves []Leaf, records []Record, create stri
 				refused[l.At] = append(refused[l.At], refusedOn{on: on, country: x.AccountCountry, message: x.Message})
 			}
 		}
+		if obs := ev.answers(l.Key); len(obs) > 0 {
+			on := "update"
+			if l.Operation == create {
+				on = "create"
+			}
+			if _, seen := answered[l.At]; !seen {
+				answeredPaths = append(answeredPaths, l.At)
+			}
+			for _, o := range obs {
+				if o.Value.Status != http.StatusOK {
+					answered[l.At] = append(answered[l.At], refusedOn{on: on, country: o.Condition.AccountCountry, message: o.Value.Message})
+				}
+			}
+		}
 		if f.Required {
 			continue
 		}
@@ -336,11 +350,21 @@ func annotate(table []fields.Field, leaves []Leaf, records []Record, create stri
 		}
 	}
 	for _, at := range paths {
-		s, err := refusedSentence(refused[at])
+		s, err := refusedSentence("Stripe refused it", refused[at])
 		if err != nil {
 			return fmt.Errorf("%s: %w", at, err)
 		}
 		fieldAt(table, at).Refused = s
+	}
+	for _, at := range answeredPaths {
+		if len(answered[at]) == 0 {
+			return fmt.Errorf("%s: the record's answers to it hold no refusal", at)
+		}
+		s, err := refusedSentence("Elsewhere Stripe refused it", answered[at])
+		if err != nil {
+			return fmt.Errorf("%s: %w", at, err)
+		}
+		fieldAt(table, at).Answer = s
 	}
 	return nil
 }
@@ -350,8 +374,8 @@ func annotate(table []fields.Field, leaves []Leaf, records []Record, create stri
 type refusedOn struct{ on, country, message string }
 
 // refusedSentence words an argument's recorded refusals for its docs line, one sentence per
-// message, in the order the record gives them.
-func refusedSentence(all []refusedOn) (string, error) {
+// message, in the order the record gives them, each led by lead.
+func refusedSentence(lead string, all []refusedOn) (string, error) {
 	type condition struct{ on, countries []string }
 	conditions := map[string]*condition{}
 	var messages []string
@@ -380,7 +404,7 @@ func refusedSentence(all []refusedOn) (string, error) {
 		for j, country := range c.countries {
 			accounts[j] = articleFor(country) + " " + country
 		}
-		sentences[i] = fmt.Sprintf("Stripe refused it on %s account on %s: %q.", strings.Join(accounts, " and "), strings.Join(c.on, " and "), m)
+		sentences[i] = fmt.Sprintf("%s on %s account on %s: %q.", lead, strings.Join(accounts, " and "), strings.Join(c.on, " and "), m)
 	}
 	return strings.Join(sentences, " "), nil
 }
@@ -698,6 +722,21 @@ func (p *Pinned) class(k Key) string {
 }
 
 // refusedOnly reports a leaf `attributes.json` marks as one Stripe has only ever refused.
+// answers is what Stripe answered each probe of a rule the record keeps for the request leaf,
+// which takes it in some requests and refuses it in others.
+func (p *Pinned) answers(k Key) []RuleObservation {
+	if p == nil {
+		return nil
+	}
+	var out []RuleObservation
+	for _, r := range p.Evidence.Rules {
+		if r.answer() && r.Object == k.Object && r.Operation == k.Operation && r.Path == k.Path {
+			out = append(out, r.Observations...)
+		}
+	}
+	return out
+}
+
 func (p *Pinned) refusedOnly(k Key) bool {
 	if p.refused == nil {
 		p.refused = map[Key]bool{}
@@ -751,14 +790,6 @@ func (p *Pinned) facts(res Resource, object, create, update string, leaves []Lea
 			filled[f.Path] = true
 		}
 	}
-	if p.parentDefaults == nil {
-		p.parentDefaults = map[Key]bool{}
-	}
-	for _, l := range leaves {
-		if l.Operation == create && slices.Contains(res.ParentDefaults, l.At) {
-			p.parentDefaults[l.Key] = true
-		}
-	}
 	g.clears, g.stable = map[string]bool{}, map[string]bool{}
 	all := func(m map[string]bool, at string, ok bool) {
 		if prev, seen := m[at]; seen {
@@ -783,10 +814,11 @@ func (p *Pinned) facts(res Resource, object, create, update string, leaves []Lea
 }
 
 // leafDefault is an optional create leaf's default from the evidence (D4): what Stripe set on
-// a minimal create. A default the variants of the minimal create give differently, or that the
-// table's ParentDefaults names, is DefaultVaries, which a declaration words. So is one a variant
-// that leaves the leaf out contradicts with a value Stripe generates or copies, such as a charge's
-// `transfer_group` on a destination charge, which the leaf's own `default.variants` does not hold.
+// a minimal create. A default the variants of the minimal create give differently is
+// DefaultVaries, which a declaration words, and so is a rule whose text runs over several lines.
+// So is one a variant that leaves the leaf out contradicts with a value Stripe generates or copies,
+// such as a charge's `transfer_group` on a destination charge, which the leaf's own
+// `default.variants` does not hold.
 func (p *Pinned) leafDefault(k Key) *fields.Default {
 	e := p.leaf(k)
 	if e == nil || e.Status != "proven" {
@@ -795,9 +827,6 @@ func (p *Pinned) leafDefault(k Key) *fields.Default {
 	d := e.Default
 	if d == nil {
 		return nil
-	}
-	if p.parentDefaults[k] {
-		return &fields.Default{Kind: fields.DefaultVaries}
 	}
 	for _, v := range d.Variants {
 		if !d.same(&v.Default) {
@@ -814,6 +843,11 @@ func (p *Pinned) leafDefault(k Key) *fields.Default {
 		return &fields.Default{Kind: fields.DefaultNone}
 	case "rule":
 		r := p.Evidence.Rules[*d.RuleRef]
+		if strings.Contains(r.Rule, "\n") {
+			// A rule that quotes the values it derived, as JSON over several lines, cannot be a
+			// docs line, so a declaration words it.
+			return &fields.Default{Kind: fields.DefaultVaries}
+		}
 		return &fields.Default{Kind: fields.DefaultRule, Rule: r.Rule, Observed: p.observed(r)}
 	}
 	return nil
@@ -844,8 +878,8 @@ func (p *Pinned) contradicted(k Key, e *EvidenceLeaf) bool {
 // checkCreateProbes returns a line for each default statement the suite's create probes do not
 // bear out. A probe that leaves a leaf out and holds something else contradicts a none or a literal
 // from the record, which holds only for the minimal create, so a declaration has to word it. A
-// worded default names each literal the probes show, unless the table's ParentDefaults says it is
-// what the suite's parent object held, and words a none only where a probe contradicts it. A rule
+// worded default names each literal the probes show, and words a none only where a probe
+// contradicts it. A rule
 // from the record is prose about another argument, so nothing here can weigh it.
 func (tc *tableCoverage) checkCreateProbes(res Resource, worded map[string]string, ev *Pinned) []string {
 	if ev == nil || res.CreatePath == "" {
@@ -862,7 +896,7 @@ func (tc *tableCoverage) checkCreateProbes(res Resource, worded map[string]strin
 		rule, isWorded := worded[l.At]
 		var found []string
 		switch {
-		case isWorded && !slices.Contains(res.ParentDefaults, l.At):
+		case isWorded:
 			for _, v := range held {
 				for _, s := range literalsOf(v) {
 					if !strings.Contains(rule, fields.Code(s)) {
@@ -895,8 +929,9 @@ func (tc *tableCoverage) checkCreateProbes(res Resource, worded map[string]strin
 	return out
 }
 
-// noneLike reports a value the docs call none: null, an empty string or collection, or a list of
-// nothing but those, which is how a probe holds a member several elements leave unset.
+// noneLike reports a value the docs call none: null, an empty string or collection, or a list or a
+// map of nothing but those, which is how a probe holds a member several elements, or the entries
+// of a map keyed by currency, leave unset.
 func noneLike(v evidencecheck.ProbedValue) bool {
 	if v.Kind != "value" {
 		return false
@@ -906,6 +941,15 @@ func noneLike(v evidencecheck.ProbedValue) bool {
 		return !slices.ContainsFunc(items, func(item json.RawMessage) bool {
 			return !noneLike(evidencecheck.ProbedValue{Kind: "value", Value: item})
 		})
+	}
+	var byKey map[string]json.RawMessage
+	if json.Unmarshal(v.Value, &byKey) == nil {
+		for _, item := range byKey {
+			if !noneLike(evidencecheck.ProbedValue{Kind: "value", Value: item}) {
+				return false
+			}
+		}
+		return true
 	}
 	switch strings.TrimSpace(string(v.Value)) {
 	case "null", `""`, "{}":

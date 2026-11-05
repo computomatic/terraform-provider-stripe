@@ -195,13 +195,12 @@ func freshCard(t *testing.T, acct acctest.Config) string {
 	return id
 }
 
-// Stripe refuses `statement_descriptor` on a card payment it picks the methods for ("not supported
-// for the payment_method_type `card`", on the dev sandbox, and the suite's "create with
-// statement_descriptor is refused for card"), though the fake takes that create. The only requests
-// the record shows accepted are those of its `every_field/1` and `update/1` probes
-// (observations/payment_intent.json, suite 127d409): a manually confirmed intent with a customer
-// and a fresh card payment method, which this test sends, with their values. The record's four
-// creates are one body, so it does not say which of these lets the descriptor through.
+// Stripe takes `statement_descriptor` only beside a `statement_descriptor_suffix` ("not supported
+// for the payment_method_type `card`" otherwise): the record's answers to the suite's
+// `isolated/descriptor_*` probes (suite 6b9aeaa) took it on a create beside a suffix and on an
+// update beside a suffix the update sent. This test sends both, in the context of the record's
+// `every_field/1` and `update/1` probes: a manually confirmed intent with a customer and a fresh
+// card payment method, with their values.
 func TestAccPaymentIntent_descriptorChangesInPlace(t *testing.T) {
 	acct := acctest.NewAccount(t)
 	beside := "\nresource \"stripe_customer\" \"test\" {}\n"

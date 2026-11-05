@@ -14,7 +14,7 @@ var Table = []fields.Field{
 	{Name: "title", Shape: fields.String, Required: true, Create: true, Response: true, Description: "The title of the alert."},
 	{Name: "usage_threshold", Shape: fields.Object, Create: true, Response: true, Description: "The configuration of the usage threshold.", Fields: []fields.Field{
 		{Name: "filters", Shape: fields.ObjectList, Create: true, Response: true, Description: "The filters allow limiting the scope of this usage alert. You can only specify up to one filter at this time.", Fields: []fields.Field{
-			{Name: "customer", Shape: fields.String, Create: true, Response: true, Description: "Limit the scope of the alert to this customer ID"},
+			{Name: "customer", Shape: fields.String, Create: true, Response: true, Description: "Limit the scope of the alert to this customer ID", Default: &fields.Default{Kind: fields.DefaultNone}},
 			{Name: "type", Shape: fields.String, Required: true, Create: true, Response: true, Enum: []string{"customer"}},
 		}},
 		{Name: "gte", Shape: fields.Int, Required: true, Create: true, Response: true, Description: "The value at which this alert will trigger."},

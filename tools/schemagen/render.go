@@ -131,6 +131,9 @@ func writeLiteral(b *strings.Builder, f fields.Field) {
 	if f.Refused != "" {
 		fmt.Fprintf(b, ", Refused: %s", strconv.Quote(f.Refused))
 	}
+	if f.Answer != "" {
+		fmt.Fprintf(b, ", Answer: %s", strconv.Quote(f.Answer))
+	}
 	if f.Copy != "" {
 		fmt.Fprintf(b, ", Copy: %s", strconv.Quote(f.Copy))
 	}

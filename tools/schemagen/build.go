@@ -66,11 +66,6 @@ type Resource struct {
 	// CreateHash. No member of the hash is then required, because a create sends one form or
 	// the other: the engine's CreateWrap checks them at plan.
 	TokenForm string
-	// ParentDefaults lists request fields whose recorded default is what the suite's parent
-	// object happened to hold, such as a refund's amount, which is what remains of the fee,
-	// rather than a value Stripe applies. They have no statement until the declaration words
-	// the rule in Defaults, as a default the variants give differently has none.
-	ParentDefaults []string
 	// NoResponse lists dotted field paths whose response has another shape than the request's,
 	// such as an account's `capabilities` (a hash of `requested` flags on the way in, of status
 	// strings on the way out). The table counts them as request-only: the state keeps what the

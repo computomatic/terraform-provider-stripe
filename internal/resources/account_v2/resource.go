@@ -18,21 +18,29 @@ import (
 // The record's update leaves prove less than a change for some members, so those stay refused,
 // because a change is what a plan would send. `dashboard` and the collectors: Stripe answers
 // anything but the value they hold with `You cannot change ... via API once it has been set`, in
-// the leaves' own refusals. `identity.country`, `defaults.currency` and the recipient
-// configuration's `applied`: the suite re-sent the value they held, and the fake answers a
-// change with `fake_unproven`. `configuration.customer` and `configuration.merchant`: nothing
-// proves an update of either. What a change does prove stays in place: the identity's entity
-// type, the defaults' locales and profile, the recipient's `stripe_transfers` request and the
-// contact phone. An update sends only the members that changed, because Stripe keeps those a
-// request leaves out (family `v2`, `siblings_kept`). Stripe does not return the capabilities a
-// configuration requested, only their status, so the `requested` flags stay in state from the
-// configuration, and Stripe drops the recipient's `stripe_transfers` from its answer once it is
-// no longer requested (the record's `side_effects`, probe `update/2`), so that flag is kept even
-// then. Stripe answers an account with no configuration with a `configuration` of three nulls
-// (the record's probe `update/1`), so `configuration` is server-filled. Stripe shows the country
-// in upper case, so the configured one stays in state. Stripe refuses a null `identity.country`
-// and ignores a null `dashboard` (the record's `unset`), so removing either keeps its value, as
-// removing another member of the identity does. The record proves null unsets `contact_phone`,
+// the leaves' own refusals, and takes them on an account that has none, beside the recipient's
+// `stripe_transfers` request, which it refuses without them (the record's answers to probes
+// `isolated/change_adds_recipient` and `isolated/change_adds_recipient_with_collectors`), so a
+// plan sets them while the state holds none and fails on any other change (SetOnce).
+// `configuration.customer` and `configuration.merchant`: nothing proves an update of either.
+// What a change does prove stays in place: the identity's country and entity type, the defaults'
+// currency, locales and profile, the recipient configuration's `applied` and `stripe_transfers`
+// request, and the contact phone. The country and the currency moved in place with the record of
+// fake `v0.31.0`, whose probes change each on an account that held another (`isolated/change_*`):
+// Stripe takes a country on an account with none and fills the currency from it, and it refused
+// `GB` on a recipient that requests `stripe_transfers` (probe
+// `isolated/change_country_on_recipient`). Stripe changes `applied_configurations` with the
+// recipient's `applied` and its request (the record's `side_effects`). An update sends only the
+// members that changed, because Stripe keeps those a request leaves out (family `v2`,
+// `siblings_kept`). Stripe does not return the capabilities a configuration requested, only
+// their status, so the `requested` flags stay in state from the configuration, and Stripe drops
+// the recipient's `stripe_transfers` from its answer once it is no longer requested (the record's
+// `side_effects`, probe `update/2`), so that flag is kept even then. Stripe answers an account
+// with no configuration with a `configuration` of three nulls (the record's probe `update/1`), so
+// `configuration` is server-filled. Stripe shows the country in upper case, so the configured one
+// stays in state. Stripe refuses a null `identity.country` and ignores a null `dashboard` (the
+// record's `unset`), so removing either keeps its value, as removing another member of the
+// identity does. The record proves null unsets `contact_phone`,
 // `identity.entity_type` and the members of `defaults.profile`.
 //
 // Stripe refuses `dashboard` on an account that is only a customer (suite: "dashboard on a
@@ -56,9 +64,9 @@ import (
 var Declaration = engine.Declaration{
 	TypeName:              "stripe_account_v2",
 	IDPrefix:              "acct_",
-	Description:           "A connected account created through Stripe's `/v2` Accounts API, whose configurations say how the platform uses it: as a customer, a merchant or a recipient. Each configuration requests one capability: `automatic_indirect_tax` for a customer, `card_payments` for a merchant and `stripe_balance.stripe_transfers` for a recipient; state holds every configuration the account has applied, with the status of each capability. Stripe refuses `dashboard` on an account that is only a customer. The account is also a v1 connected account with the same ID, which the `stripe_account` data source reads. Set `closed` to `true` to close the account, which cannot be undone; Stripe returns most fields of a closed account as null, so state keeps the values they had before the close. Stripe refuses any change to a closed account, so once it is closed a plan that changes it fails. `identity.entity_type`, `identity.business_details.registered_name`, `defaults.locales`, `defaults.profile` and the recipient configuration's `capabilities.stripe_balance.stripe_transfers.requested` change in place; changing that `requested` flag can move the status of the recipient's capabilities. Stripe refuses a change of `dashboard` or of the collectors in `defaults.responsibilities` once they are set, so a plan that changes one on an existing account fails, as does one that changes `identity.country`, `defaults.currency`, `configuration.customer`, `configuration.merchant` or the recipient configuration's `applied`, because changing them is not supported yet: revert the configuration, ignore the change, or remove the account from the state and apply again to create a new one. Stripe returns `identity.country` in upper case, so state keeps the country as you configured it. Stripe has no proven way to clear `display_name` or `contact_email`, so an apply that removes one from the configuration fails; removing `dashboard`, `identity.country` or the registered name leaves it on the account, and removing `contact_phone`, `identity.entity_type` or a member of `defaults.profile` clears it.",
+	Description:           "A connected account created through Stripe's `/v2` Accounts API, whose configurations say how the platform uses it: as a customer, a merchant or a recipient. Each configuration requests one capability: `automatic_indirect_tax` for a customer, `card_payments` for a merchant and `stripe_balance.stripe_transfers` for a recipient; state holds every configuration the account has applied, with the status of each capability. Stripe refuses `dashboard` on an account that is only a customer. The account is also a v1 connected account with the same ID, which the `stripe_account` data source reads. Set `closed` to `true` to close the account, which cannot be undone; Stripe returns most fields of a closed account as null, so state keeps the values they had before the close. Stripe refuses any change to a closed account, so once it is closed a plan that changes it fails. `identity.country`, `identity.entity_type`, `identity.business_details.registered_name`, `defaults.currency`, `defaults.locales`, `defaults.profile` and the recipient configuration's `applied` and `capabilities.stripe_balance.stripe_transfers.requested` change in place; changing the country can fill `defaults.currency`, and changing the recipient configuration can move `applied_configurations` and the status of the recipient's capabilities. An account without a dashboard takes `dashboard` and the collectors in `defaults.responsibilities` on update, as adding the recipient configuration to it needs, but Stripe refuses a change of them once they are set, so a plan that changes one the account holds fails, as does one that changes `configuration.customer` or `configuration.merchant`, because changing them is not supported yet: revert the configuration, ignore the change, or remove the account from the state and apply again to create a new one. Stripe returns `identity.country` in upper case, so state keeps the country as you configured it. Stripe has no proven way to clear `display_name` or `contact_email`, so an apply that removes one from the configuration fails; removing `dashboard`, `identity.country` or the registered name leaves it on the account, and removing `contact_phone`, `identity.entity_type` or a member of `defaults.profile` clears it.",
 	DataSourceDescription: "A connected account created through Stripe's `/v2` Accounts API, whose configurations say how the platform uses it: as a customer, a merchant or a recipient.",
-	ImportNote:            "Stripe does not return the capabilities a configuration requested, so an imported account has no `requested` flags in `configuration`, and its `identity.country` is in upper case. Add `lifecycle { ignore_changes = [configuration] }` to a configuration that sets it, because a plan that changes `configuration.customer` or `configuration.merchant` fails, and add `identity.country` to the list if the configuration writes the country in lower case, because a plan that changes it fails too. An imported closed account has no values for the fields Stripe returns as null, and a plan that changes a closed account fails, so its configuration needs `lifecycle { ignore_changes = all }`.",
+	ImportNote:            "Stripe does not return the capabilities a configuration requested, so an imported account has no `requested` flags in `configuration`, and its `identity.country` is in upper case. Add `lifecycle { ignore_changes = [configuration] }` to a configuration that sets it, because a plan that changes `configuration.customer` or `configuration.merchant` fails, and add `identity.country` to the list if the configuration writes the country in lower case, because a plan would otherwise send the country again. An imported closed account has no values for the fields Stripe returns as null, and a plan that changes a closed account fails, so its configuration needs `lifecycle { ignore_changes = all }`.",
 	ImportNoteLevel:       engine.NoteWarning,
 	Paths: engine.Paths{
 		Create:   "/v2/core/accounts",
@@ -73,9 +81,22 @@ var Declaration = engine.Declaration{
 		"configuration.customer", "configuration.merchant", "configuration.recipient",
 		"defaults", "future_requirements", "identity", "requirements",
 	},
-	RefuseChange: []string{
-		"configuration.customer", "configuration.merchant", "configuration.recipient.applied",
-		"dashboard", "defaults.currency", "defaults.responsibilities", "identity.country",
+	RefuseChange: []string{"configuration.customer", "configuration.merchant", "dashboard", "defaults.responsibilities"},
+	SetOnce:      []string{"dashboard", "defaults.responsibilities"},
+	FilledFrom: map[string][]string{
+		"identity.country":                {"defaults.currency"},
+		"configuration.recipient.applied": {"applied_configurations"},
+		"configuration.recipient.capabilities.stripe_balance.stripe_transfers.requested": {"applied_configurations"},
+	},
+	Answers: map[string]string{
+		// suite: TestV2CoreAccountAttributes, probes `isolated/change_adds_recipient` and
+		// `isolated/change_adds_recipient_with_collectors`
+		"configuration.recipient.capabilities.stripe_balance.stripe_transfers.requested": "Stripe takes the request on an update of an account without a dashboard only beside `dashboard` and both collectors of `defaults.responsibilities`.",
+		// suite: TestV2CoreAccountAttributes, probes `isolated/url_*`
+		"defaults.profile.business_url": "Stripe judges the URL by its value: an update took `https://accessible.stripe.com`, `https://www.iana.org` and `https://no-such-host.invalid` and refused `https://stripe.com`, `https://docs.stripe.com`, `https://example.com` and `https://example.com/acme`, and a create took `https://stripe.com` and `https://example.com/acme` on an account without the recipient configuration and refused `https://stripe.com` on one with it.",
+		// suite: TestV2CoreAccountAttributes, probes `isolated/change_country`,
+		// `isolated/change_country_from_none` and `isolated/change_country_on_recipient`
+		"identity.country": "Stripe took `GB` on an update of an account in `US`, and `US` on an account that had no country, and refused `GB` on an account whose recipient configuration requests `stripe_transfers`.",
 	},
 	SendChangedMembers: []string{"configuration", "defaults", "identity"},
 	// Neither the record's `families` nor the fake's suite-proven declaration states these, and

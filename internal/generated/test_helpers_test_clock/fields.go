@@ -12,7 +12,7 @@ var Table = []fields.Field{
 	{Name: "frozen_time", Shape: fields.Int, Required: true, Create: true, Response: true, Description: "The initial frozen time for this test clock."},
 	{Name: "id", Shape: fields.String, Response: true, Description: "Unique identifier for the object."},
 	{Name: "livemode", Shape: fields.Bool, Response: true, Description: "If the object exists in live mode, the value is `true`. If the object exists in test mode, the value is `false`."},
-	{Name: "name", Shape: fields.String, Create: true, Response: true, Description: "The name for this test clock."},
+	{Name: "name", Shape: fields.String, Create: true, Response: true, Description: "The name for this test clock.", Default: &fields.Default{Kind: fields.DefaultNone}},
 	{Name: "status", Shape: fields.String, Response: true, Enum: []string{"advancing", "internal_failure", "ready"}, Description: "The status of the Test Clock."},
 	{Name: "status_details", Shape: fields.Object, Response: true, Fields: []fields.Field{
 		{Name: "advancing", Shape: fields.Object, Response: true, Fields: []fields.Field{

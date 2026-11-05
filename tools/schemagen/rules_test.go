@@ -108,13 +108,59 @@ func TestEvidenceReaderReadsRuleObservationsStrictly(t *testing.T) {
 		}
 	}
 	for _, tc := range []struct{ name, observation, want string }{
-		{"an unknown matcher kind", `{"condition": {"variant": ""}, "value": {"kind": "derived"}}`, `observation "derived"`},
+		{"an unknown matcher kind", `{"condition": {"variant": ""}, "value": {"kind": "derived"}}`, `observation: kind "derived"`},
 		{"an unknown matcher member", `{"condition": {"variant": ""}, "value": {"kind": "value", "value": 1, "unit": "cents"}}`, `rules[0].observations[0].value.unit is a member the format does not define`},
 		{"an unknown condition", `{"condition": {"variant": "", "customer.currency": "eur"}, "value": {"kind": "absent"}}`, `rules[0].observations[0].condition.customer.currency is a member the format does not define`},
 	} {
 		if _, err := decodeEvidence(withObservation(tc.observation)); err == nil || !strings.Contains(err.Error(), tc.want) {
 			t.Errorf("%s: %v, want %q", tc.name, err, tc.want)
 		}
+	}
+}
+
+// A rule whose observations are Stripe's answers to probes, each the request it sent and, on an
+// update, what the object was created with, reads with its status and its read-back or refusal; the
+// reader refuses an answer it cannot weigh, and a default that names such a rule.
+func TestEvidenceReaderReadsAnswers(t *testing.T) {
+	data, err := os.ReadFile(filepath.Join("testdata", "evidence", "run-40926522642.json"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	const (
+		took    = `{"condition": {"account_country": "US", "probe": "isolated/beside", "params": {"name": "A", "suffix": "B"}, "created_with": {}}, "value": {"status": 200, "read": {"kind": "sent", "path": "name"}}}`
+		refused = `{"condition": {"account_country": "US", "probe": "isolated/alone", "params": {"name": "A"}}, "value": {"status": 400, "type": "invalid_request_error", "code": "c", "param": "name", "message": "No."}}`
+	)
+	withObservations := func(observations ...string) []byte {
+		rule := `"rules": [{"object": "coupon", "operation": "PostCoupons", "path": "name", "rule": "Stripe's answer turns on the request", "observations": [` + strings.Join(observations, ", ") + `], "tests": ["a"]}],`
+		return bytes.Replace(data, []byte(`"rules": [],`), []byte(rule), 1)
+	}
+	e, err := decodeEvidence(withObservations(took, refused))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if r := e.Rules[0]; !r.answer() || r.Observations[0].Value.Read == nil || r.Observations[1].Value.Message != "No." || r.Observations[1].Condition.Probe != "isolated/alone" {
+		t.Errorf("the answers: %+v", r)
+	}
+	for _, tc := range []struct{ name, observation, want string }{
+		{"no status", `{"condition": {"probe": "p", "params": {}}, "value": {"message": "No."}}`, "has status 0"},
+		{"a refusal with no message", `{"condition": {"probe": "p", "params": {}}, "value": {"status": 400}}`, "refuses with no message"},
+		{"an acceptance with a message", `{"condition": {"probe": "p", "params": {}}, "value": {"status": 200, "message": "No."}}`, "accepts and refuses"},
+		{"no params", `{"condition": {"probe": "p"}, "value": {"status": 200}}`, "holds no params"},
+		{"an unknown read-back", `{"condition": {"probe": "p", "params": {}}, "value": {"status": 200, "read": {"kind": "derived"}}}`, `reads back kind "derived"`},
+		{"a default's matcher", `{"condition": {"probe": "p", "params": {}}, "value": {"status": 200, "kind": "value", "value": 1}}`, "holds a default's members"},
+		{"a mix", `{"condition": {"variant": ""}, "value": {"kind": "absent"}}`, "mixes answers"},
+		{"an unknown member", `{"condition": {"probe": "p", "params": {}}, "value": {"status": 200, "headers": {}}}`, "value.headers is a member the format does not define"},
+	} {
+		if _, err := decodeEvidence(withObservations(took, tc.observation)); err == nil || !strings.Contains(err.Error(), tc.want) {
+			t.Errorf("%s: %v, want %q", tc.name, err, tc.want)
+		}
+	}
+	if _, err := decodeEvidence(withObservations(`{"condition": {"variant": ""}, "value": {"kind": "absent", "status": 200}}`)); err == nil || !strings.Contains(err.Error(), "a default's observation holds an answer's members") {
+		t.Errorf("a default's observation with a status: %v", err)
+	}
+	pointed := bytes.Replace(withObservations(took, refused), []byte(`"leaves": [`), []byte(`"leaves": [{"object": "coupon", "side": "request", "operation": "PostCoupons", "path": "name", "status": "proven", "tests": ["a"], "default": {"kind": "rule", "rule_ref": 0}},`), 1)
+	if _, err := decodeEvidence(pointed); err == nil || !strings.Contains(err.Error(), "answers probes and words no default") {
+		t.Errorf("a default naming an answer rule: %v", err)
 	}
 }
 

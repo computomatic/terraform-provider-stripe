@@ -350,6 +350,13 @@ type Declaration struct {
 	// sent in part (the suite's `nested_minimal` probes). The generator refuses that wording unless
 	// a probe contradicts the none (checkCreateProbes).
 	Defaults map[string]string
+	// Answers words, by dotted path, where Stripe takes an argument that the pinned evidence
+	// records it taking in some requests and refusing in others (a rule whose observations are
+	// Stripe's answers to the suite's probes), such as a payment intent's `statement_descriptor`
+	// beside a suffix. Its page then gives the wording and the recorded refusals. A field with
+	// such answers needs an entry, and an entry needs such a field. Each entry cites the probes in
+	// a comment.
+	Answers map[string]string
 	// NotServerDefaulted prunes fields the generator marked as server-defaulted.
 	NotServerDefaulted []string
 	// Sensitive marks attributes Sensitive and masks them in logs.
@@ -467,6 +474,11 @@ type Declaration struct {
 	// with a replace source below the top level, which is not checked, unless it refuses
 	// destroy, which fails every replacement first. Nor is a value not fully known at plan time. `-replace` cannot be told from an update at plan time.
 	RefuseChange []string
+	// SetOnce lists RefuseChange fields that Stripe takes on update while the object holds none
+	// and refuses to change once set, such as a v2 account's `dashboard`. A plan that sets one the
+	// state holds none of (null, or an object whose configurable members are all null) is not
+	// refused, and the update sends it; any other change is refused as RefuseChange says.
+	SetOnce []string
 	// SendChangedMembers lists objects, by dotted path, whose update sends only the members that
 	// changed, where the evidence shows Stripe keeps the members a request leaves out: the
 	// record's `families[].hashes` lists the hash as `siblings_kept`, or it is a departure the

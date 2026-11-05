@@ -64,6 +64,14 @@ var Declaration = engine.Declaration{
 	GoneOnForbidden: "account_invalid",
 	Sensitive:       []string{"account_number"},
 	ServerDefaulted: []string{"account_holder_name", "account_holder_type", "country", "currency", "default_for_currency", "routing_number"},
+	// The bank details of a token are the bank account's (suite: TestAccountExternalAccountAttributes,
+	// variant `token`, which sends `btok_us_verified`); the hash form sends them itself.
+	Defaults: map[string]string{
+		"account_holder_name": "none, or the holder of the token in `external_account`: `Jenny Rosen` for the test token `btok_us_verified`",
+		"account_holder_type": "none, or the holder type of the token in `external_account`: `individual` for the test token `btok_us_verified`",
+		"currency":            "the currency of the token in `external_account`: `usd` for the test token `btok_us_verified`",
+		"routing_number":      "the routing number of the token in `external_account`: `110000000` for the test token `btok_us_verified`",
+	},
 }
 
 // NewResource returns the resource constructor the provider registers.

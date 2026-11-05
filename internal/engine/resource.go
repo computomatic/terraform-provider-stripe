@@ -456,7 +456,8 @@ func (r *Resource) attrName(field string) string {
 	return n.AttrName()
 }
 
-// refuseChanges fails the plan when it changes a field the declaration lists in RefuseChange.
+// refuseChanges fails the plan when it changes a field the declaration lists in RefuseChange,
+// but for setting a SetOnce field the state holds none of.
 // A configured value not fully known at plan time is left for apply. Computed members the
 // configuration leaves unset are unknown on every change of the field, so a planned value
 // that is unknown only there is compared by what the configuration sets. A plan that also
@@ -489,7 +490,7 @@ func (r *Resource) refuseChanges(ctx context.Context, req resource.ModifyPlanReq
 			where = where.AtName(names[len(names)-1])
 		}
 		pv, sv := attrAt(ctx, plan, names), attrAt(ctx, state, names)
-		if pv == nil || pv.Equal(sv) {
+		if pv == nil || pv.Equal(sv) || slices.Contains(r.m.decl.SetOnce, name) && holdsNone(n, sv) {
 			continue
 		}
 		if v, err := pv.ToTerraformValue(ctx); err != nil || !v.IsFullyKnown() {
@@ -508,6 +509,24 @@ func (r *Resource) refuseChanges(ctx context.Context, req resource.ModifyPlanReq
 			"Changing the "+attrName+" of an existing "+r.m.decl.TypeName+" is not supported yet. Revert the configuration, add `lifecycle { ignore_changes = ["+attrName+"] }` to leave it as it is, or "+recreate)
 	}
 	return resp.Diagnostics.HasError()
+}
+
+// holdsNone reports a value of n that is null, or an object whose configurable members all hold
+// none, whatever Stripe computes beside them, such as a v2 account's `requirements_collector`.
+func holdsNone(n *node, v attr.Value) bool {
+	if v == nil || v.IsNull() {
+		return true
+	}
+	o, ok := v.(basetypes.ObjectValue)
+	if !ok || o.IsUnknown() {
+		return false
+	}
+	for _, k := range n.Kids {
+		if (k.Optional || k.Required) && !holdsNone(k, o.Attributes()[k.AttrName()]) {
+			return false
+		}
+	}
+	return true
 }
 
 // refuseDroppingMetadataKeys fails the plan that drops a `metadata` key the object holds, for a
