@@ -61,8 +61,16 @@ var Declaration = engine.Declaration{
 	// Stripe answers `trial_end = "now"` with the time the trial ended (probe `update/24`), and
 	// `cancel_at`'s strings with the time it picks (creates `enums/11`, `enums/29` and
 	// `every_field/14`, updates `enums/128`, `enums/145` and `update/12`), so the configured value
-	// stays in state, as a tax registration's `active_from` does.
-	PreserveConfig: []string{"cancel_at", "trial_end"},
+	// stays in state, as a tax registration's `active_from` does. Stripe sorts the lists of a
+	// US bank account's Financial Connections (the record's `normalised` form `sorted`: a create's
+	// `permissions`, probe `every_field/40`, and an update's `account_subcategories` and
+	// `prefetch`, probe `update/37`), so they stay as configured too, as an invoice's do.
+	PreserveConfig: []string{
+		"cancel_at", "trial_end",
+		"payment_settings.payment_method_options.us_bank_account.financial_connections.filters.account_subcategories",
+		"payment_settings.payment_method_options.us_bank_account.financial_connections.permissions",
+		"payment_settings.payment_method_options.us_bank_account.financial_connections.prefetch",
+	},
 	// Items are matched by price: an item whose price stays keeps its ID and changes in
 	// place, a new price adds an item and a dropped one deletes it (suite: "swap item price"
 	// names an item by ID).

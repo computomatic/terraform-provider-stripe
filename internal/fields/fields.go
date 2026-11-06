@@ -80,6 +80,9 @@ type Field struct {
 	// MembersTogether lists, for a MembersAlone hash, each set of its members, by sorted dotted
 	// paths below the hash, that a cited probe sent together in one update.
 	MembersTogether [][]string
+	// Together lists, on a hash, each set of its members that Stripe takes only all at once (the
+	// record's `together`): a configuration sets all of a set's members or none.
+	Together []Together
 	// Sensitive is true for a value Stripe never returns and reports only as set, through a
 	// `<name>_provided` flag beside it in the response.
 	Sensitive bool
@@ -114,6 +117,15 @@ type Field struct {
 	// MapUpdate is, on a map an update takes, how the pinned evidence shows Stripe updating it
 	// (the record's `map`), or nil where it shows nothing.
 	MapUpdate *MapUpdate
+}
+
+// Together is a set of a hash's members that Stripe takes only all at once.
+type Together struct {
+	// Members are the set's members, by sorted dotted paths below the hash that holds the set.
+	Members []string
+	// Refused is the sentence with Stripe's recorded refusals of the set sent whole, or "" where
+	// it took it.
+	Refused string
 }
 
 // MapUpdate is how Stripe updates a map. A merged map keeps the keys an update leaves out, and

@@ -707,3 +707,117 @@ func TestBesideReturnsAndKeptDiscountsFollowTheRecord(t *testing.T) {
 		t.Error("a discount returned as a hash is kept")
 	}
 }
+
+// A form may be listed at more than one response path, as a quote's own coupon is listed on each
+// line too with its share: the form is kept where one entry shows it where the engine reads it.
+func TestKeptDiscountsTakeAFormListedTwice(t *testing.T) {
+	top := Key{Object: "quote", Side: SideRequest, Operation: "PostQuotes", Path: "discounts.coupon"}
+	p := &Pinned{Evidence: &Evidence{Discounts: []Discount{
+		{Object: "quote", Operation: "PostQuotes", Path: "discounts", Form: "coupon", ResponsePath: "discounts", Returned: DiscountID},
+		{Object: "quote", Operation: "PostQuotes", Path: "discounts", Form: "coupon", ResponsePath: "line_items.data.discounts.discount", Returned: DiscountObject},
+	}}}
+	kept := []Record{{State: StateExposed, Class: ClassAcceptedOnly}}
+	if err := checkKeptDiscounts(Resource{Package: "quote"}, []Leaf{{Key: top}}, kept, p); err != nil {
+		t.Errorf("a form listed at the quote and its lines: %v", err)
+	}
+	p.Evidence.Discounts = p.Evidence.Discounts[1:]
+	if err := checkKeptDiscounts(Resource{Package: "quote"}, []Leaf{{Key: top}}, kept, p); err == nil {
+		t.Error("a form listed only at the lines is kept")
+	}
+}
+
+// The eleventh pin's record adds where a filled_from relation does not hold (`except`) and the
+// sets of leaves Stripe takes only all at once (`together`); the reader takes both and refuses
+// what it cannot weigh.
+func TestEvidenceReaderTakesTheFormsOfTheEleventhPin(t *testing.T) {
+	const (
+		filled   = `{"object": "charge", "path": "amount_captured", "from": "amount", "except": [{"probe": "minimal/uncaptured", "params": {"capture": false}, "read": {"kind": "value", "value": 0}}], "tests": []}`
+		together = `{"object": "setup_intent", "operation": "PostSetupIntentsIntent", "members": ["a.cryptogram", "a.version"], "tests": [], "answers": [
+			{"condition": {"account_country": "US", "probe": "isolated/proof", "params": {}, "created_with": {}}, "status": 400, "type": "invalid_request_error", "message": "unless confirm"},
+			{"condition": {"account_country": "US", "probe": "isolated/took", "params": {}}, "status": 200, "read": {"a.version": {"kind": "sent", "path": "a.version"}}}]}`
+	)
+	record := func(filled, together string) []byte {
+		return []byte(`{"format_version": 1, "leaves": [], "discounts": [], "filled_from": [` + filled + `], "together": [` + together + `]}`)
+	}
+	e, err := decodeEvidence(record(filled, together))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if x := e.FilledFrom[0].Except; len(x) != 1 || x[0].Probe != "minimal/uncaptured" || x[0].Read.Kind != "value" {
+		t.Errorf("the exception: %+v", x)
+	}
+	if s := e.Together[0]; len(s.Members) != 2 || len(s.Answers) != 2 || s.Answers[1].Read["a.version"].Kind != "sent" {
+		t.Errorf("the set: %+v", s)
+	}
+	replace := func(s, old, new string) string {
+		t.Helper()
+		if !strings.Contains(s, old) {
+			t.Fatalf("no %s in %s", old, s)
+		}
+		return strings.Replace(s, old, new, 1)
+	}
+	for _, tc := range []struct{ name, filled, together, want string }{
+		{"an exception that reads a matcher", replace(filled, `"kind": "value", "value": 0`, `"kind": "sent", "path": "amount"`), together, `reads kind "sent"`},
+		{"an exception with no probe", replace(filled, `"probe": "minimal/uncaptured", `, ``), together, "names no probe or params"},
+		{"an exception with an unknown member", replace(filled, `"probe": "minimal/uncaptured"`, `"probe": "minimal/uncaptured", "why": "x"`), together, "member the format does not define"},
+		{"one member", filled, replace(together, `["a.cryptogram", "a.version"]`, `["a.version"]`), "fewer than two members"},
+		{"members out of order", filled, replace(together, `["a.cryptogram", "a.version"]`, `["a.version", "a.cryptogram"]`), "out of order or twice"},
+		{"no answer", filled, `{"object": "setup_intent", "operation": "PostSetupIntentsIntent", "members": ["a", "b"], "answers": [], "tests": []}`, "holds no answer"},
+		{"a refusal with no message", filled, replace(together, `, "message": "unless confirm"`, ``), "refuses with no message"},
+		{"an acceptance that refuses", filled, replace(together, `"status": 200,`, `"status": 200, "code": "x",`), "accepts and refuses"},
+		{"a read of no member", filled, replace(together, `"read": {"a.version"`, `"read": {"b"`), `reads back "b"`},
+		{"an answer with no probe", filled, replace(together, `"probe": "isolated/took", `, ``), "names no account, probe or params"},
+		{"a redirect", filled, replace(together, `"status": 200,`, `"status": 302,`), "has status 302"},
+	} {
+		if _, err := decodeEvidence(record(tc.filled, tc.together)); err == nil || !strings.Contains(err.Error(), tc.want) {
+			t.Errorf("%s: %v, want %q", tc.name, err, tc.want)
+		}
+	}
+}
+
+// A set of leaves Stripe takes only all at once is marked on the hash that holds it where the
+// table exposes every member through the gate, with Stripe's refusals of the set, and refused
+// where it exposes some and not the others, or a member the gate does not let through.
+func TestTogetherSetsFollowTheRecord(t *testing.T) {
+	key := func(path string) Key {
+		return Key{Object: "setup_intent", Side: SideRequest, Operation: "PostSetupIntentsIntent", Path: path}
+	}
+	leaves := []Leaf{{Key: key("pmo.secure.cryptogram"), At: "pmo.secure.cryptogram"}, {Key: key("pmo.secure.version"), At: "pmo.secure.version"}}
+	p := &Pinned{Evidence: &Evidence{Together: []Together{{
+		Object: "setup_intent", Operation: "PostSetupIntentsIntent", Members: []string{"pmo.secure.cryptogram", "pmo.secure.version"},
+		Answers: []TogetherAnswer{{Status: 400, Message: "unless `confirm` is true"}},
+	}}}}
+	p.Evidence.Together[0].Answers[0].Condition.AccountCountry = "US"
+	table := func() []fields.Field {
+		return []fields.Field{{Name: "pmo", Shape: fields.Object, Update: true, Fields: []fields.Field{
+			{Name: "secure", Shape: fields.Object, Update: true, Fields: []fields.Field{
+				{Name: "cryptogram", Shape: fields.String, Update: true}, {Name: "version", Shape: fields.String, Update: true},
+			}},
+		}}}
+	}
+	res := Resource{Package: "setup_intent"}
+	exposed := Record{State: StateExposed, Class: ClassVerified}
+	got := table()
+	if err := markTogether(res, "setup_intent", "PostSetupIntents", "PostSetupIntentsIntent", got, leaves, []Record{exposed, exposed}, p); err != nil {
+		t.Fatal(err)
+	}
+	want := []fields.Together{{Members: []string{"cryptogram", "version"}, Refused: "Sent together, Stripe refused them on a US account on update: \"unless `confirm` is true\"."}}
+	if s := fieldAt(got, "pmo.secure").Together; !reflect.DeepEqual(s, want) {
+		t.Errorf("the marked set: %+v, want %+v", s, want)
+	}
+	if err := markTogether(res, "setup_intent", "PostSetupIntents", "PostSetupIntentsIntent", table(), leaves, []Record{{State: StateAwaiting}, {State: StateAwaiting}}, p); err != nil {
+		t.Errorf("a set the table does not expose: %v", err)
+	}
+	for name, tc := range map[string]struct {
+		records []Record
+		want    string
+	}{
+		"some exposed":      {[]Record{exposed, {State: StateAwaiting, Class: ClassUnproven}}, "exposes some members"},
+		"exposed unproven":  {[]Record{exposed, {State: StateExposed, Class: ClassUnproven}}, "the gate does not let it through"},
+		"exposed by the X6": {[]Record{exposed, {State: StateExposed, Class: ClassAcceptedOnly, Rule: RuleAcceptedOnly}}, "the gate does not let it through"},
+	} {
+		if err := markTogether(res, "setup_intent", "PostSetupIntents", "PostSetupIntentsIntent", table(), leaves, tc.records, p); err == nil || !strings.Contains(err.Error(), tc.want) {
+			t.Errorf("%s: %v, want %q", name, err, tc.want)
+		}
+	}
+}

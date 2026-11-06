@@ -266,6 +266,7 @@ func (m *model) resourceAttribute(n *node) rschema.Attribute {
 		if !m.v2 && n.Writable() && !n.computedOnly() {
 			a.Validators = append(a.Validators, emptyObjectValidator(n.Kids, false))
 		}
+		a.Validators = append(a.Validators, togetherValidators(n)...)
 		return a
 	case fields.ObjectList:
 		return rschema.ListNestedAttribute{Required: n.Required, Optional: n.Optional, Computed: n.Computed, Sensitive: n.Sensitive, MarkdownDescription: desc,
@@ -320,12 +321,13 @@ func changedFromFixed(config, state basetypes.StringValue, from string) bool {
 const replaceFixedDescription = "Changing a value Stripe has fixed replaces the resource."
 
 // elementValidators refuses, on /v1, a list element whose configuration would encode to
-// nothing.
+// nothing, and any element that sets some members of a set Stripe takes only all at once and not
+// the others.
 func (m *model) elementValidators(n *node) []validator.Object {
 	if m.v2 || !n.Writable() || n.computedOnly() {
-		return nil
+		return togetherValidators(n)
 	}
-	return []validator.Object{emptyObjectValidator(n.Kids, false)}
+	return append([]validator.Object{emptyObjectValidator(n.Kids, false)}, togetherValidators(n)...)
 }
 
 func (m *model) resourceAttributes(kids []*node) map[string]rschema.Attribute {

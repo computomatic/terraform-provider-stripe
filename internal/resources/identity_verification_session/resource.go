@@ -41,8 +41,10 @@ var Declaration = engine.Declaration{
 	PreserveConfig: []string{"provided_details"},
 	ReplaceOn:      []string{"options", "provided_details"},
 	// Stripe returns `options` as an empty object when none is set (suite: "create minimal"),
-	// and fills in the checks of a document option the configuration leaves out.
-	ServerDefaulted: []string{"options", "options.document.allowed_types", "options.document.require_id_number", "options.document.require_live_capture", "options.document.require_matching_selfie"},
+	// and fills in the checks of a document option the configuration leaves out. It fills
+	// `related_customer` with a customer of the `related_customer_account` the create sends
+	// (suite: TestIdentityVerificationSessionAttributes, probe `every_field/2`).
+	ServerDefaulted: []string{"related_customer", "options", "options.document.allowed_types", "options.document.require_id_number", "options.document.require_live_capture", "options.document.require_matching_selfie"},
 }
 
 // NewResource returns the resource constructor the provider registers.

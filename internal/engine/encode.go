@@ -587,6 +587,11 @@ func (m *model) encodeKeyedList(n *node, pv, sv attr.Value, config tftypes.Value
 			obj = slices.DeleteFunc(obj, func(f wire.Field) bool { return f.Name == data })
 		}
 		if e.state != nil {
+			// A merged map of an element Stripe changes in place keeps the keys the update leaves
+			// out, so the keys it lost go as the unset.
+			if obj, err = removedKeys(n.Kids, obj, e.plan, *e.state); err != nil {
+				return nil, false, err
+			}
 			if _, sent := obj.Get("id"); !sent {
 				if id, ok := attrKey(*e.state, "id"); ok {
 					obj = append(obj, wire.Field{Name: "id", Value: wire.String(id)})
@@ -636,7 +641,7 @@ func (m *model) carryOnUpdate(n *node, state attr.Value, v wire.Value) wire.Valu
 			if !isStr || !known(s) {
 				continue
 			}
-			if c.WhenPast {
+			if c.WhenPast && !(c.First && i == 0) {
 				at, err := strconv.ParseInt(s.ValueString(), 10, 64)
 				if err != nil || at > now {
 					continue
@@ -855,6 +860,12 @@ func withRemovedKeys(n *node, sent wire.Value, plan, state attr.Value) (wire.Val
 	if !ok || n.Shape != fields.Object {
 		return sent, nil
 	}
+	return removedKeys(n.Kids, obj, plan, state)
+}
+
+// removedKeys is withRemovedKeys for the members kids of an object sent whole, such as an element
+// of a MatchBy list that continues a state element.
+func removedKeys(kids []*node, obj wire.Object, plan, state attr.Value) (wire.Object, error) {
 	planned, held := objectAttrs(plan), objectAttrs(state)
 	put := func(name string, v wire.Value) {
 		for i := range obj {
@@ -865,7 +876,7 @@ func withRemovedKeys(n *node, sent wire.Value, plan, state attr.Value) (wire.Val
 		}
 		obj = append(obj, wire.Field{Name: name, Value: v})
 	}
-	for _, k := range n.Kids {
+	for _, k := range kids {
 		pv, sv := planned[k.AttrName()], held[k.AttrName()]
 		if !k.Update || pv != nil && pv.IsUnknown() {
 			continue

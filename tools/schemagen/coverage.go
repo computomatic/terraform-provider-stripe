@@ -254,6 +254,9 @@ func coverTable(spec *Spec, res Resource, ev *Pinned) (*tableCoverage, error) {
 	if err := markMembersAlone(res, object, update, tc.table, leaves, records, ev); err != nil {
 		return nil, err
 	}
+	if err := markTogether(res, object, create, update, tc.table, leaves, records, ev); err != nil {
+		return nil, err
+	}
 	for i, l := range leaves {
 		r := &records[i]
 		if d := defaultOf(l, *r, create, leaves, records, ev); d != nil {
@@ -1156,6 +1159,99 @@ func markMembersAlone(res Resource, object, update string, table []fields.Field,
 	return nil
 }
 
+// markTogether marks on the table each set of request leaves that the record shows Stripe taking
+// only all at once (its `together`) and that the table exposes, on the hash that holds the set,
+// with Stripe's refusals of the set sent whole, so that the engine refuses a configuration that
+// sets some of its members and not all. The set's answer is no member's own and proves nothing of
+// a member alone, so generation fails on a table that exposes some members of a set and not the
+// others, or a member the gate does not let through.
+func markTogether(res Resource, object, create, update string, table []fields.Field, leaves []Leaf, records []Record, ev *Pinned) error {
+	if ev == nil {
+		return nil
+	}
+	at := map[Key]int{}
+	for i, l := range leaves {
+		at[l.Key] = i
+	}
+	type marked struct {
+		hash    string
+		members []string
+		refused []refusedOn
+	}
+	var sets []*marked
+	for _, t := range ev.Evidence.Together {
+		if t.Object != object || t.Operation != create && t.Operation != update {
+			continue
+		}
+		var paths []string
+		exposedN := 0
+		for _, m := range t.Members {
+			path, branch, _ := strings.Cut(m, "@")
+			i, ok := at[Key{Object: object, Side: SideRequest, Operation: t.Operation, Path: path, Branch: branch}]
+			if !ok {
+				return fmt.Errorf("%s: the record's set %v of %s names `%s`, which the walk does not have", res.Package, t.Members, t.Operation, m)
+			}
+			if r := records[i]; r.State == StateExposed {
+				if r.Class != ClassVerified && (r.Class != ClassAcceptedOnly || r.Rule != "") {
+					return fmt.Errorf("%s: %s is exposed, but the gate does not let it through (class %q), and Stripe takes it only with %v", res.Package, leaves[i].Key, r.Class, t.Members)
+				}
+				exposedN++
+			}
+			paths = append(paths, leaves[i].At)
+		}
+		if exposedN == 0 {
+			continue
+		}
+		if exposedN < len(t.Members) {
+			return fmt.Errorf("%s: %s exposes some members of %v and not the others, which Stripe takes only all at once", res.Package, t.Operation, t.Members)
+		}
+		hash := parentPath(paths[0])
+		for _, p := range paths[1:] {
+			for hash != "" && !strings.HasPrefix(p, hash+".") {
+				hash = parentPath(hash)
+			}
+		}
+		if hash == "" {
+			return fmt.Errorf("%s: %s takes %v only all at once, a set of top-level arguments, which the engine cannot hold yet", res.Package, t.Operation, t.Members)
+		}
+		members := make([]string, len(paths))
+		for i, p := range paths {
+			members[i] = strings.TrimPrefix(p, hash+".")
+		}
+		slices.Sort(members)
+		on := "update"
+		if t.Operation == create {
+			on = "create"
+		}
+		i := slices.IndexFunc(sets, func(s *marked) bool { return s.hash == hash && slices.Equal(s.members, members) })
+		if i < 0 {
+			sets = append(sets, &marked{hash: hash, members: members})
+			i = len(sets) - 1
+		}
+		for _, a := range t.Answers {
+			if a.Status != http.StatusOK {
+				sets[i].refused = append(sets[i].refused, refusedOn{on: on, country: a.Condition.AccountCountry, message: a.Message})
+			}
+		}
+	}
+	for _, s := range sets {
+		f := fieldAt(table, s.hash)
+		if f == nil || f.Shape != fields.Object && f.Shape != fields.ObjectList {
+			return fmt.Errorf("%s: `%s`, which holds a set Stripe takes only all at once, is not a hash of the table", res.Package, s.hash)
+		}
+		set := fields.Together{Members: s.members}
+		if len(s.refused) > 0 {
+			sentence, err := refusedSentence("Sent together, Stripe refused them", s.refused)
+			if err != nil {
+				return fmt.Errorf("%s: %s: %w", res.Package, s.hash, err)
+			}
+			set.Refused = sentence
+		}
+		f.Together = append(f.Together, set)
+	}
+	return nil
+}
+
 // checkKeptDiscounts refuses an accepted-only form of a list of discounts that a table keeps
 // (Resource.AcceptedOnly) where the engine could not read it back as the record shows Stripe
 // returning it: the top-level `discounts` as discount IDs at `discounts`, and a list element's,
@@ -1179,13 +1275,13 @@ func checkKeptDiscounts(res Resource, leaves []Leaf, records []Record, ev *Pinne
 		if list != "discounts" {
 			want, returned = strings.TrimSuffix(list, "discounts")+"data.discounts.discount", DiscountObject
 		}
-		var found *Discount
-		for j, d := range ev.Evidence.Discounts {
-			if d.Object == l.Object && d.Operation == l.Operation && d.Path == list && d.Form == form {
-				found = &ev.Evidence.Discounts[j]
-			}
-		}
-		if found == nil || found.HeldBy != "" || found.Returned != returned || found.ResponsePath != want {
+		// A form may be listed at more than one response path, as a quote's own coupon is listed
+		// on each line too with the share it takes off that line; the engine reads it back where
+		// the table's own list returns it.
+		found := slices.ContainsFunc(ev.Evidence.Discounts, func(d Discount) bool {
+			return d.Object == l.Object && d.Operation == l.Operation && d.Path == list && d.Form == form && d.HeldBy == "" && d.Returned == returned && d.ResponsePath == want
+		})
+		if !found {
 			return fmt.Errorf("%s: kept accepted-only %s is read back as the record shows Stripe returning it only as %s at %s in the object itself, which the record's discounts do not show", res.Package, l.Key, returned, want)
 		}
 	}

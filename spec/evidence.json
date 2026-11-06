@@ -230,6 +230,19 @@
     },
     {
       "expanded": "discount",
+      "form": "coupon",
+      "object": "quote",
+      "operation": "PostQuotes",
+      "path": "discounts",
+      "relation": "coupon",
+      "response_path": "line_items.data.discounts.discount",
+      "returned": "discount_object",
+      "tests": [
+        "TestQuoteAttributes/state/quote_discount_on_line/leaves/request/PostQuotes/discounts.coupon"
+      ]
+    },
+    {
+      "expanded": "discount",
       "form": "promotion_code",
       "object": "quote",
       "operation": "PostQuotes",
@@ -1244,6 +1257,23 @@
       ]
     },
     {
+      "except": [
+        {
+          "params": {
+            "amount": 500,
+            "capture": false,
+            "currency": {
+              "$gen": "account_currency"
+            },
+            "source": "tok_visa"
+          },
+          "probe": "minimal/uncaptured",
+          "read": {
+            "kind": "value",
+            "value": 0
+          }
+        }
+      ],
       "from": "amount",
       "object": "charge",
       "path": "amount_captured",
@@ -1252,6 +1282,164 @@
       ]
     },
     {
+      "except": [
+        {
+          "params": {
+            "amount": 500,
+            "email_type": "none",
+            "invoice": {
+              "$gen": "fresh",
+              "arg": "invoice"
+            },
+            "reason": "fraudulent"
+          },
+          "probe": "enums/1",
+          "read": {
+            "kind": "value",
+            "value": 0
+          }
+        },
+        {
+          "params": {
+            "amount": 500,
+            "invoice": {
+              "$gen": "fresh",
+              "arg": "invoice"
+            },
+            "reason": "order_change"
+          },
+          "probe": "enums/2",
+          "read": {
+            "kind": "value",
+            "value": 0
+          }
+        },
+        {
+          "params": {
+            "amount": 500,
+            "invoice": {
+              "$gen": "fresh",
+              "arg": "invoice"
+            },
+            "reason": "product_unsatisfactory"
+          },
+          "probe": "enums/3",
+          "read": {
+            "kind": "value",
+            "value": 0
+          }
+        },
+        {
+          "params": {
+            "amount": 500,
+            "effective_at": {
+              "$gen": "now",
+              "offset": -86400
+            },
+            "email_type": "credit_note",
+            "invoice": {
+              "$gen": "fresh",
+              "arg": "invoice"
+            },
+            "memo": {
+              "$gen": "unique",
+              "arg": "5000"
+            },
+            "metadata": {
+              "attrs_a": {
+                "$gen": "unique"
+              },
+              "attrs_b": {
+                "$gen": "unique"
+              }
+            },
+            "reason": "duplicate"
+          },
+          "probe": "every_field/1",
+          "read": {
+            "kind": "value",
+            "value": 0
+          }
+        },
+        {
+          "params": {
+            "amount": 500,
+            "invoice": {
+              "$gen": "fresh",
+              "arg": "invoice"
+            }
+          },
+          "probe": "minimal",
+          "read": {
+            "kind": "value",
+            "value": 0
+          }
+        },
+        {
+          "params": {
+            "amount": 500,
+            "effective_at": {
+              "$gen": "now",
+              "offset": -86400
+            },
+            "email_type": "credit_note",
+            "invoice": {
+              "$gen": "fresh",
+              "arg": "invoice"
+            },
+            "memo": {
+              "$gen": "unique",
+              "arg": "5000"
+            },
+            "metadata": {
+              "attrs_a": {
+                "$gen": "unique"
+              },
+              "attrs_b": {
+                "$gen": "unique"
+              }
+            },
+            "reason": "duplicate"
+          },
+          "probe": "unset/1",
+          "read": {
+            "kind": "value",
+            "value": 0
+          }
+        },
+        {
+          "params": {
+            "amount": 500,
+            "effective_at": {
+              "$gen": "now",
+              "offset": -86400
+            },
+            "email_type": "credit_note",
+            "invoice": {
+              "$gen": "fresh",
+              "arg": "invoice"
+            },
+            "memo": {
+              "$gen": "unique",
+              "arg": "5000"
+            },
+            "metadata": {
+              "attrs_a": {
+                "$gen": "unique"
+              },
+              "attrs_b": {
+                "$gen": "unique"
+              }
+            },
+            "reason": "duplicate"
+          },
+          "probe": "update/1",
+          "read": {
+            "kind": "value",
+            "value": 0
+          }
+        }
+      ],
       "from": "amount",
       "object": "credit_note",
       "path": "post_payment_amount",
@@ -1260,6 +1448,79 @@
       ]
     },
     {
+      "except": [
+        {
+          "params": {
+            "amount": 500,
+            "credit_amount": 500,
+            "invoice": {
+              "$gen": "fresh",
+              "arg": "invoice_payment"
+            }
+          },
+          "probe": "minimal/credit",
+          "read": {
+            "kind": "value",
+            "value": 0
+          }
+        },
+        {
+          "params": {
+            "amount": 500,
+            "invoice": {
+              "$gen": "fresh",
+              "arg": "invoice_payment"
+            },
+            "out_of_band_amount": 500
+          },
+          "probe": "minimal/out_of_band",
+          "read": {
+            "kind": "value",
+            "value": 0
+          }
+        },
+        {
+          "params": {
+            "amount": 500,
+            "invoice": {
+              "$gen": "fresh",
+              "arg": "charge"
+            },
+            "refund_amount": 500
+          },
+          "probe": "minimal/refund",
+          "read": {
+            "kind": "value",
+            "value": 0
+          }
+        },
+        {
+          "params": {
+            "amount": 500,
+            "invoice": {
+              "$gen": "shared",
+              "arg": "refund",
+              "offset": 1
+            },
+            "refunds": [
+              {
+                "amount_refunded": 500,
+                "refund": {
+                  "$gen": "shared",
+                  "arg": "refund",
+                  "offset": 2
+                },
+                "type": "refund"
+              }
+            ]
+          },
+          "probe": "minimal/refunds",
+          "read": {
+            "kind": "value",
+            "value": 0
+          }
+        }
+      ],
       "from": "amount",
       "object": "credit_note",
       "path": "pre_payment_amount",
@@ -1308,6 +1569,341 @@
       ]
     },
     {
+      "except": [
+        {
+          "params": {
+            "amount": 1500,
+            "currency": {
+              "$gen": "account_currency"
+            },
+            "customer": {
+              "$gen": "ref",
+              "arg": "customer"
+            },
+            "tax_behavior": "inclusive"
+          },
+          "probe": "enums/1",
+          "read": {
+            "kind": "absent"
+          }
+        },
+        {
+          "params": {
+            "amount": 1500,
+            "currency": {
+              "$gen": "account_currency"
+            },
+            "customer": {
+              "$gen": "ref",
+              "arg": "customer"
+            },
+            "tax_behavior": "unspecified"
+          },
+          "probe": "enums/3",
+          "read": {
+            "kind": "absent"
+          }
+        },
+        {
+          "params": {
+            "amount": 1500,
+            "currency": {
+              "$gen": "account_currency"
+            },
+            "customer": {
+              "$gen": "ref",
+              "arg": "customer"
+            }
+          },
+          "probe": "enums/5",
+          "read": {
+            "kind": "absent"
+          }
+        },
+        {
+          "params": {
+            "amount": 1500,
+            "currency": {
+              "$gen": "account_currency"
+            },
+            "customer": {
+              "$gen": "ref",
+              "arg": "customer"
+            }
+          },
+          "probe": "enums/7",
+          "read": {
+            "kind": "absent"
+          }
+        },
+        {
+          "params": {
+            "amount": 1500,
+            "currency": {
+              "$gen": "account_currency"
+            },
+            "customer": {
+              "$gen": "ref",
+              "arg": "customer"
+            },
+            "discounts": [
+              {
+                "coupon": {
+                  "$gen": "ref",
+                  "arg": "coupon"
+                }
+              }
+            ]
+          },
+          "probe": "every_field/2",
+          "read": {
+            "kind": "absent"
+          }
+        },
+        {
+          "params": {
+            "amount": 1500,
+            "currency": {
+              "$gen": "account_currency"
+            },
+            "customer": {
+              "$gen": "ref",
+              "arg": "customer"
+            },
+            "discounts": [
+              {
+                "promotion_code": {
+                  "$gen": "ref",
+                  "arg": "promotion_code"
+                }
+              }
+            ]
+          },
+          "probe": "every_field/4",
+          "read": {
+            "kind": "absent"
+          }
+        },
+        {
+          "params": {
+            "amount": 1500,
+            "currency": {
+              "$gen": "account_currency"
+            },
+            "customer": {
+              "$gen": "ref",
+              "arg": "customer"
+            }
+          },
+          "probe": "minimal",
+          "read": {
+            "kind": "absent"
+          }
+        },
+        {
+          "params": {
+            "amount": 1500,
+            "currency": {
+              "$gen": "account_currency"
+            },
+            "customer": {
+              "$gen": "ref",
+              "arg": "customer"
+            },
+            "invoice": {
+              "$gen": "fresh",
+              "arg": "invoice"
+            }
+          },
+          "probe": "minimal/invoice",
+          "read": {
+            "kind": "absent"
+          }
+        },
+        {
+          "params": {
+            "amount": 1500,
+            "currency": {
+              "$gen": "account_currency"
+            },
+            "customer": {
+              "$gen": "ref",
+              "arg": "customer"
+            },
+            "subscription": {
+              "$gen": "ref",
+              "arg": "subscription"
+            }
+          },
+          "probe": "minimal/subscription",
+          "read": {
+            "kind": "absent"
+          }
+        },
+        {
+          "params": {
+            "amount": 1500,
+            "currency": {
+              "$gen": "account_currency"
+            },
+            "customer": {
+              "$gen": "ref",
+              "arg": "customer"
+            },
+            "period": {
+              "end": {
+                "$gen": "now",
+                "offset": -86400
+              },
+              "start": {
+                "$gen": "now",
+                "offset": -172800
+              }
+            }
+          },
+          "probe": "nested_minimal/1",
+          "read": {
+            "kind": "absent"
+          }
+        },
+        {
+          "params": {
+            "amount": 1500,
+            "currency": {
+              "$gen": "account_currency"
+            },
+            "customer": {
+              "$gen": "ref",
+              "arg": "customer"
+            },
+            "discounts": [
+              {
+                "coupon": {
+                  "$gen": "ref",
+                  "arg": "coupon"
+                }
+              }
+            ]
+          },
+          "probe": "unset/2",
+          "read": {
+            "kind": "absent"
+          }
+        },
+        {
+          "params": {
+            "amount": 1500,
+            "currency": {
+              "$gen": "account_currency"
+            },
+            "customer": {
+              "$gen": "ref",
+              "arg": "customer"
+            },
+            "discounts": [
+              {
+                "promotion_code": {
+                  "$gen": "ref",
+                  "arg": "promotion_code"
+                }
+              }
+            ]
+          },
+          "probe": "unset/3",
+          "read": {
+            "kind": "absent"
+          }
+        },
+        {
+          "params": {
+            "amount": 7,
+            "description": {
+              "$gen": "unique",
+              "arg": "5000"
+            },
+            "discountable": true,
+            "invoicing_rules": "",
+            "metadata": {
+              "attrs_a": {
+                "$gen": "unique"
+              }
+            },
+            "period": {
+              "end": {
+                "$gen": "now",
+                "offset": -43200
+              },
+              "start": {
+                "$gen": "now",
+                "offset": -129600
+              }
+            },
+            "tax_code": "txcd_20030000",
+            "tax_rates": [
+              {
+                "$gen": "fresh",
+                "arg": "tax_rate"
+              },
+              {
+                "$gen": "ref",
+                "arg": "tax_rate"
+              }
+            ]
+          },
+          "probe": "update/1",
+          "read": {
+            "kind": "absent"
+          }
+        },
+        {
+          "params": {
+            "amount": 1500,
+            "currency": {
+              "$gen": "account_currency"
+            },
+            "customer": {
+              "$gen": "ref",
+              "arg": "customer"
+            },
+            "discounts": [
+              {
+                "coupon": {
+                  "$gen": "ref",
+                  "arg": "coupon"
+                }
+              }
+            ]
+          },
+          "probe": "update/2",
+          "read": {
+            "kind": "absent"
+          }
+        },
+        {
+          "params": {
+            "amount": 1500,
+            "currency": {
+              "$gen": "account_currency"
+            },
+            "customer": {
+              "$gen": "ref",
+              "arg": "customer"
+            },
+            "discounts": [
+              {
+                "promotion_code": {
+                  "$gen": "ref",
+                  "arg": "promotion_code"
+                }
+              }
+            ]
+          },
+          "probe": "update/3",
+          "read": {
+            "kind": "absent"
+          }
+        }
+      ],
       "from": "amount",
       "object": "invoiceitem",
       "path": "net_amount",
@@ -1324,6 +1920,2286 @@
       ]
     },
     {
+      "except": [
+        {
+          "params": {
+            "amount": 500,
+            "capture_method": "automatic_async",
+            "confirmation_method": "automatic",
+            "currency": {
+              "$gen": "account_currency"
+            },
+            "setup_future_usage": "on_session"
+          },
+          "probe": "enums/1",
+          "read": {
+            "kind": "value",
+            "value": 0
+          }
+        },
+        {
+          "params": {
+            "amount": 500,
+            "currency": {
+              "$gen": "account_currency"
+            },
+            "payment_method_options": {
+              "card": {
+                "request_extended_authorization": "never"
+              }
+            }
+          },
+          "probe": "enums/16",
+          "read": {
+            "kind": "value",
+            "value": 0
+          }
+        },
+        {
+          "params": {
+            "amount": 500,
+            "currency": {
+              "$gen": "account_currency"
+            },
+            "payment_method_options": {
+              "card": {
+                "request_incremental_authorization": "never"
+              }
+            }
+          },
+          "probe": "enums/17",
+          "read": {
+            "kind": "value",
+            "value": 0
+          }
+        },
+        {
+          "params": {
+            "amount": 500,
+            "currency": {
+              "$gen": "account_currency"
+            },
+            "payment_method_options": {
+              "card": {
+                "request_multicapture": "never"
+              }
+            }
+          },
+          "probe": "enums/18",
+          "read": {
+            "kind": "value",
+            "value": 0
+          }
+        },
+        {
+          "params": {
+            "amount": 500,
+            "currency": {
+              "$gen": "account_currency"
+            },
+            "payment_method_options": {
+              "card": {
+                "request_overcapture": "never"
+              }
+            }
+          },
+          "probe": "enums/19",
+          "read": {
+            "kind": "value",
+            "value": 0
+          }
+        },
+        {
+          "params": {
+            "amount": 500,
+            "automatic_payment_methods": {
+              "allow_redirects": "always",
+              "enabled": true
+            },
+            "currency": {
+              "$gen": "account_currency"
+            }
+          },
+          "probe": "enums/2",
+          "read": {
+            "kind": "value",
+            "value": 0
+          }
+        },
+        {
+          "params": {
+            "amount": 500,
+            "currency": {
+              "$gen": "account_currency"
+            },
+            "payment_method_options": {
+              "card": {
+                "request_three_d_secure": "automatic"
+              }
+            }
+          },
+          "probe": "enums/20",
+          "read": {
+            "kind": "value",
+            "value": 0
+          }
+        },
+        {
+          "params": {
+            "amount": 500,
+            "currency": {
+              "$gen": "account_currency"
+            },
+            "payment_method_options": {
+              "card": {
+                "setup_future_usage": "off_session"
+              }
+            }
+          },
+          "probe": "enums/21",
+          "read": {
+            "kind": "value",
+            "value": 0
+          }
+        },
+        {
+          "params": {
+            "amount": 500,
+            "capture_method": "manual",
+            "currency": {
+              "$gen": "account_currency"
+            }
+          },
+          "probe": "enums/22",
+          "read": {
+            "kind": "value",
+            "value": 0
+          }
+        },
+        {
+          "params": {
+            "amount": 500,
+            "currency": "eur",
+            "payment_method_configuration": {
+              "$gen": "ref",
+              "arg": "payment_method_configuration"
+            },
+            "payment_method_data": {
+              "allow_redisplay": "unspecified",
+              "billing_details": {
+                "name": "Jenny Rosen"
+              },
+              "type": "bancontact"
+            }
+          },
+          "probe": "enums/23",
+          "read": {
+            "kind": "value",
+            "value": 0
+          }
+        },
+        {
+          "params": {
+            "amount": 500,
+            "currency": {
+              "$gen": "account_currency"
+            },
+            "payment_method_options": {
+              "card": {
+                "mandate_options": {
+                  "amount": 7,
+                  "amount_type": "fixed",
+                  "interval": "sporadic",
+                  "reference": {
+                    "$gen": "unique",
+                    "arg": "80"
+                  },
+                  "start_date": {
+                    "$gen": "now",
+                    "offset": 2592000
+                  },
+                  "supported_types": [
+                    "india"
+                  ]
+                },
+                "request_three_d_secure": "challenge",
+                "setup_future_usage": "on_session"
+              }
+            }
+          },
+          "probe": "enums/27",
+          "read": {
+            "kind": "value",
+            "value": 0
+          }
+        },
+        {
+          "params": {
+            "amount": 500,
+            "currency": {
+              "$gen": "account_currency"
+            }
+          },
+          "probe": "enums/47",
+          "read": {
+            "kind": "value",
+            "value": 0
+          }
+        },
+        {
+          "params": {
+            "amount": 500,
+            "currency": "eur",
+            "payment_method_configuration": {
+              "$gen": "ref",
+              "arg": "payment_method_configuration"
+            },
+            "payment_method_data": {
+              "billing_details": {
+                "name": "Jenny Rosen"
+              },
+              "type": "bancontact"
+            }
+          },
+          "probe": "enums/48",
+          "read": {
+            "kind": "value",
+            "value": 0
+          }
+        },
+        {
+          "params": {
+            "amount": 500,
+            "currency": {
+              "$gen": "account_currency"
+            }
+          },
+          "probe": "enums/49",
+          "read": {
+            "kind": "value",
+            "value": 0
+          }
+        },
+        {
+          "params": {
+            "amount": 500,
+            "currency": "eur",
+            "payment_method_configuration": {
+              "$gen": "ref",
+              "arg": "payment_method_configuration"
+            },
+            "payment_method_data": {
+              "allow_redisplay": "limited",
+              "billing_details": {
+                "name": "Jenny Rosen"
+              },
+              "type": "bancontact"
+            }
+          },
+          "probe": "enums/5",
+          "read": {
+            "kind": "value",
+            "value": 0
+          }
+        },
+        {
+          "params": {
+            "amount": 500,
+            "currency": {
+              "$gen": "account_currency"
+            }
+          },
+          "probe": "enums/50",
+          "read": {
+            "kind": "value",
+            "value": 0
+          }
+        },
+        {
+          "params": {
+            "amount": 500,
+            "currency": "eur",
+            "payment_method_configuration": {
+              "$gen": "ref",
+              "arg": "payment_method_configuration"
+            },
+            "payment_method_data": {
+              "billing_details": {
+                "name": "Jenny Rosen"
+              },
+              "type": "bancontact"
+            }
+          },
+          "probe": "enums/51",
+          "read": {
+            "kind": "value",
+            "value": 0
+          }
+        },
+        {
+          "params": {
+            "amount": 500,
+            "currency": {
+              "$gen": "account_currency"
+            }
+          },
+          "probe": "enums/52",
+          "read": {
+            "kind": "value",
+            "value": 0
+          }
+        },
+        {
+          "params": {
+            "amount": 500,
+            "currency": {
+              "$gen": "account_currency"
+            }
+          },
+          "probe": "enums/53",
+          "read": {
+            "kind": "value",
+            "value": 0
+          }
+        },
+        {
+          "params": {
+            "amount": 500,
+            "currency": {
+              "$gen": "account_currency"
+            }
+          },
+          "probe": "enums/54",
+          "read": {
+            "kind": "value",
+            "value": 0
+          }
+        },
+        {
+          "params": {
+            "amount": 500,
+            "currency": {
+              "$gen": "account_currency"
+            }
+          },
+          "probe": "enums/55",
+          "read": {
+            "kind": "value",
+            "value": 0
+          }
+        },
+        {
+          "params": {
+            "amount": 500,
+            "currency": {
+              "$gen": "account_currency"
+            }
+          },
+          "probe": "enums/56",
+          "read": {
+            "kind": "value",
+            "value": 0
+          }
+        },
+        {
+          "params": {
+            "amount": 500,
+            "currency": {
+              "$gen": "account_currency"
+            }
+          },
+          "probe": "enums/57",
+          "read": {
+            "kind": "value",
+            "value": 0
+          }
+        },
+        {
+          "params": {
+            "amount": 500,
+            "currency": {
+              "$gen": "account_currency"
+            }
+          },
+          "probe": "enums/58",
+          "read": {
+            "kind": "value",
+            "value": 0
+          }
+        },
+        {
+          "params": {
+            "amount": 500,
+            "currency": {
+              "$gen": "account_currency"
+            }
+          },
+          "probe": "enums/59",
+          "read": {
+            "kind": "value",
+            "value": 0
+          }
+        },
+        {
+          "params": {
+            "amount": 500,
+            "currency": {
+              "$gen": "account_currency"
+            }
+          },
+          "probe": "enums/60",
+          "read": {
+            "kind": "value",
+            "value": 0
+          }
+        },
+        {
+          "params": {
+            "amount": 500,
+            "currency": {
+              "$gen": "account_currency"
+            }
+          },
+          "probe": "enums/61",
+          "read": {
+            "kind": "value",
+            "value": 0
+          }
+        },
+        {
+          "params": {
+            "amount": 500,
+            "currency": {
+              "$gen": "account_currency"
+            }
+          },
+          "probe": "enums/62",
+          "read": {
+            "kind": "value",
+            "value": 0
+          }
+        },
+        {
+          "params": {
+            "amount": 500,
+            "capture_method": "automatic",
+            "confirmation_method": "manual",
+            "currency": {
+              "$gen": "account_currency"
+            },
+            "customer": {
+              "$gen": "ref",
+              "arg": "customer"
+            },
+            "description": {
+              "$gen": "unique",
+              "arg": "1000"
+            },
+            "excluded_payment_method_types": [
+              "affirm",
+              "cashapp"
+            ],
+            "metadata": {
+              "attrs_a": {
+                "$gen": "unique"
+              },
+              "attrs_b": {
+                "$gen": "unique"
+              }
+            },
+            "payment_method": {
+              "$gen": "fresh",
+              "arg": "payment_method"
+            },
+            "receipt_email": {
+              "$gen": "email"
+            },
+            "setup_future_usage": "off_session",
+            "shipping": {
+              "address": {
+                "city": "South San Francisco",
+                "country": {
+                  "$gen": "account_country"
+                },
+                "line1": "354 Oyster Point Blvd",
+                "line2": {
+                  "$gen": "unique",
+                  "arg": "5000"
+                },
+                "postal_code": "94080",
+                "state": "CA"
+              },
+              "carrier": {
+                "$gen": "unique",
+                "arg": "5000"
+              },
+              "name": "Jenny Rosen",
+              "phone": "+15555550100",
+              "tracking_number": {
+                "$gen": "unique",
+                "arg": "5000"
+              }
+            },
+            "statement_descriptor": "ATTRS PROBE",
+            "statement_descriptor_suffix": "ATTRS",
+            "transfer_group": {
+              "$gen": "unique"
+            }
+          },
+          "probe": "every_field/1",
+          "read": {
+            "kind": "value",
+            "value": 0
+          }
+        },
+        {
+          "params": {
+            "amount": 500,
+            "application_fee_amount": 100,
+            "currency": {
+              "$gen": "account_currency"
+            },
+            "on_behalf_of": {
+              "$gen": "ref",
+              "arg": "account"
+            },
+            "transfer_data": {
+              "description": {
+                "$gen": "unique",
+                "arg": "5000"
+              },
+              "destination": {
+                "$gen": "ref",
+                "arg": "account"
+              },
+              "metadata": {
+                "attrs_a": {
+                  "$gen": "unique"
+                },
+                "attrs_b": {
+                  "$gen": "unique"
+                }
+              },
+              "payment_data": {
+                "description": {
+                  "$gen": "unique",
+                  "arg": "5000"
+                },
+                "metadata": {
+                  "attrs_a": {
+                    "$gen": "unique"
+                  },
+                  "attrs_b": {
+                    "$gen": "unique"
+                  }
+                }
+              }
+            }
+          },
+          "probe": "every_field/16",
+          "read": {
+            "kind": "value",
+            "value": 0
+          }
+        },
+        {
+          "params": {
+            "amount": 500,
+            "currency": {
+              "$gen": "account_currency"
+            },
+            "payment_details": {
+              "customer_reference": {
+                "$gen": "unique",
+                "arg": "5000"
+              },
+              "order_reference": {
+                "$gen": "unique",
+                "arg": "5000"
+              }
+            }
+          },
+          "probe": "every_field/18",
+          "read": {
+            "kind": "value",
+            "value": 0
+          }
+        },
+        {
+          "params": {
+            "allowed_payment_method_types": [
+              "card",
+              "link"
+            ],
+            "amount": 500,
+            "currency": {
+              "$gen": "account_currency"
+            }
+          },
+          "probe": "every_field/2",
+          "read": {
+            "kind": "value",
+            "value": 0
+          }
+        },
+        {
+          "params": {
+            "amount": 500,
+            "currency": "eur",
+            "payment_method_configuration": {
+              "$gen": "ref",
+              "arg": "payment_method_configuration"
+            },
+            "payment_method_data": {
+              "allow_redisplay": "always",
+              "billing_details": {
+                "name": "Jenny Rosen"
+              },
+              "type": "bancontact"
+            }
+          },
+          "probe": "every_field/20",
+          "read": {
+            "kind": "value",
+            "value": 0
+          }
+        },
+        {
+          "params": {
+            "amount": 500,
+            "currency": "eur",
+            "payment_method_configuration": {
+              "$gen": "ref",
+              "arg": "payment_method_configuration"
+            },
+            "payment_method_data": {
+              "billing_details": {
+                "address": {
+                  "city": "South San Francisco"
+                },
+                "name": "Jenny Rosen"
+              },
+              "type": "bancontact"
+            }
+          },
+          "probe": "every_field/21",
+          "read": {
+            "kind": "value",
+            "value": 0
+          }
+        },
+        {
+          "params": {
+            "amount": 500,
+            "currency": "eur",
+            "payment_method_configuration": {
+              "$gen": "ref",
+              "arg": "payment_method_configuration"
+            },
+            "payment_method_data": {
+              "billing_details": {
+                "address": {
+                  "country": {
+                    "$gen": "account_country"
+                  }
+                },
+                "name": "Jenny Rosen"
+              },
+              "type": "bancontact"
+            }
+          },
+          "probe": "every_field/22",
+          "read": {
+            "kind": "value",
+            "value": 0
+          }
+        },
+        {
+          "params": {
+            "amount": 500,
+            "currency": "eur",
+            "payment_method_configuration": {
+              "$gen": "ref",
+              "arg": "payment_method_configuration"
+            },
+            "payment_method_data": {
+              "billing_details": {
+                "address": {
+                  "line1": "354 Oyster Point Blvd"
+                },
+                "name": "Jenny Rosen"
+              },
+              "type": "bancontact"
+            }
+          },
+          "probe": "every_field/23",
+          "read": {
+            "kind": "value",
+            "value": 0
+          }
+        },
+        {
+          "params": {
+            "amount": 500,
+            "currency": "eur",
+            "payment_method_configuration": {
+              "$gen": "ref",
+              "arg": "payment_method_configuration"
+            },
+            "payment_method_data": {
+              "billing_details": {
+                "address": {
+                  "line2": {
+                    "$gen": "unique",
+                    "arg": "5000"
+                  }
+                },
+                "name": "Jenny Rosen"
+              },
+              "type": "bancontact"
+            }
+          },
+          "probe": "every_field/24",
+          "read": {
+            "kind": "value",
+            "value": 0
+          }
+        },
+        {
+          "params": {
+            "amount": 500,
+            "currency": "eur",
+            "payment_method_configuration": {
+              "$gen": "ref",
+              "arg": "payment_method_configuration"
+            },
+            "payment_method_data": {
+              "billing_details": {
+                "address": {
+                  "postal_code": "94080"
+                },
+                "name": "Jenny Rosen"
+              },
+              "type": "bancontact"
+            }
+          },
+          "probe": "every_field/25",
+          "read": {
+            "kind": "value",
+            "value": 0
+          }
+        },
+        {
+          "params": {
+            "amount": 500,
+            "currency": "eur",
+            "payment_method_configuration": {
+              "$gen": "ref",
+              "arg": "payment_method_configuration"
+            },
+            "payment_method_data": {
+              "billing_details": {
+                "address": {
+                  "state": "CA"
+                },
+                "name": "Jenny Rosen"
+              },
+              "type": "bancontact"
+            }
+          },
+          "probe": "every_field/26",
+          "read": {
+            "kind": "value",
+            "value": 0
+          }
+        },
+        {
+          "params": {
+            "amount": 500,
+            "currency": "eur",
+            "payment_method_configuration": {
+              "$gen": "ref",
+              "arg": "payment_method_configuration"
+            },
+            "payment_method_data": {
+              "billing_details": {
+                "email": {
+                  "$gen": "email"
+                },
+                "name": "Jenny Rosen"
+              },
+              "type": "bancontact"
+            }
+          },
+          "probe": "every_field/27",
+          "read": {
+            "kind": "value",
+            "value": 0
+          }
+        },
+        {
+          "params": {
+            "amount": 500,
+            "currency": "eur",
+            "payment_method_configuration": {
+              "$gen": "ref",
+              "arg": "payment_method_configuration"
+            },
+            "payment_method_data": {
+              "billing_details": {
+                "name": "Jenny Rosen",
+                "phone": "+15555550100"
+              },
+              "type": "bancontact"
+            }
+          },
+          "probe": "every_field/28",
+          "read": {
+            "kind": "value",
+            "value": 0
+          }
+        },
+        {
+          "params": {
+            "amount": 500,
+            "amount_details": {
+              "discount_amount": 7,
+              "enforce_arithmetic_validation": false,
+              "shipping": {
+                "amount": 7,
+                "from_postal_code": "94080",
+                "to_postal_code": "94610"
+              },
+              "tax": {
+                "total_tax_amount": 7
+              }
+            },
+            "currency": {
+              "$gen": "account_currency"
+            }
+          },
+          "probe": "every_field/3",
+          "read": {
+            "kind": "value",
+            "value": 0
+          }
+        },
+        {
+          "params": {
+            "amount": 500,
+            "currency": "eur",
+            "payment_method_configuration": {
+              "$gen": "ref",
+              "arg": "payment_method_configuration"
+            },
+            "payment_method_data": {
+              "billing_details": {
+                "name": "Jenny Rosen"
+              },
+              "metadata": {
+                "attrs_a": {
+                  "$gen": "unique"
+                },
+                "attrs_b": {
+                  "$gen": "unique"
+                }
+              },
+              "type": "bancontact"
+            }
+          },
+          "probe": "every_field/30",
+          "read": {
+            "kind": "value",
+            "value": 0
+          }
+        },
+        {
+          "params": {
+            "amount": 500,
+            "automatic_payment_methods": {
+              "allow_redirects": "never",
+              "enabled": true
+            },
+            "currency": {
+              "$gen": "account_currency"
+            }
+          },
+          "probe": "every_field/4",
+          "read": {
+            "kind": "value",
+            "value": 0
+          }
+        },
+        {
+          "params": {
+            "amount": 500,
+            "currency": {
+              "$gen": "account_currency"
+            },
+            "payment_method_options": {
+              "card": {
+                "capture_method": "manual",
+                "installments": {
+                  "enabled": true
+                },
+                "mandate_options": {
+                  "amount": 7,
+                  "amount_type": "fixed",
+                  "description": {
+                    "$gen": "unique",
+                    "arg": "200"
+                  },
+                  "end_date": {
+                    "$gen": "now",
+                    "offset": 2592000
+                  },
+                  "interval": "day",
+                  "interval_count": 7,
+                  "reference": {
+                    "$gen": "unique",
+                    "arg": "80"
+                  },
+                  "start_date": {
+                    "$gen": "now",
+                    "offset": 2592000
+                  },
+                  "supported_types": [
+                    "india"
+                  ]
+                },
+                "request_extended_authorization": "if_available",
+                "request_incremental_authorization": "if_available",
+                "request_multicapture": "if_available",
+                "request_overcapture": "if_available",
+                "request_three_d_secure": "any",
+                "require_cvc_recollection": true,
+                "setup_future_usage": "none",
+                "statement_descriptor_suffix_kana": "テスト",
+                "statement_descriptor_suffix_kanji": {
+                  "$gen": "unique",
+                  "arg": "17"
+                }
+              }
+            }
+          },
+          "probe": "every_field/40",
+          "read": {
+            "kind": "value",
+            "value": 0
+          }
+        },
+        {
+          "params": {
+            "amount": 500,
+            "currency": {
+              "$gen": "account_currency"
+            },
+            "transfer_data": {
+              "amount": 100,
+              "destination": {
+                "$gen": "ref",
+                "arg": "account"
+              }
+            }
+          },
+          "probe": "every_field/41",
+          "read": {
+            "kind": "value",
+            "value": 0
+          }
+        },
+        {
+          "params": {
+            "amount": 500,
+            "currency": {
+              "$gen": "account_currency"
+            }
+          },
+          "probe": "minimal",
+          "read": {
+            "kind": "value",
+            "value": 0
+          }
+        },
+        {
+          "params": {
+            "amount": 500,
+            "automatic_payment_methods": {
+              "enabled": true
+            },
+            "currency": {
+              "$gen": "account_currency"
+            }
+          },
+          "probe": "minimal/automatic",
+          "read": {
+            "kind": "value",
+            "value": 0
+          }
+        },
+        {
+          "params": {
+            "amount": 500,
+            "currency": "eur",
+            "payment_method_configuration": {
+              "$gen": "ref",
+              "arg": "payment_method_configuration"
+            },
+            "payment_method_data": {
+              "billing_details": {
+                "name": "Jenny Rosen"
+              },
+              "type": "bancontact"
+            }
+          },
+          "probe": "minimal/bancontact",
+          "read": {
+            "kind": "value",
+            "value": 0
+          }
+        },
+        {
+          "params": {
+            "amount": 500,
+            "application_fee_amount": 100,
+            "currency": {
+              "$gen": "account_currency"
+            },
+            "transfer_data": {
+              "destination": {
+                "$gen": "ref",
+                "arg": "account"
+              }
+            }
+          },
+          "probe": "minimal/destination",
+          "read": {
+            "kind": "value",
+            "value": 0
+          }
+        },
+        {
+          "params": {
+            "amount": 500,
+            "currency": {
+              "$gen": "account_currency"
+            },
+            "transfer_data": {
+              "amount": 100,
+              "destination": {
+                "$gen": "ref",
+                "arg": "account"
+              }
+            }
+          },
+          "probe": "minimal/transfer_amount",
+          "read": {
+            "kind": "value",
+            "value": 0
+          }
+        },
+        {
+          "params": {
+            "amount": 500,
+            "amount_details": {
+              "tax": {
+                "total_tax_amount": 7
+              }
+            },
+            "currency": {
+              "$gen": "account_currency"
+            }
+          },
+          "probe": "nested_minimal/2",
+          "read": {
+            "kind": "value",
+            "value": 0
+          }
+        },
+        {
+          "params": {
+            "amount": 500,
+            "capture_method": "automatic",
+            "confirmation_method": "manual",
+            "currency": {
+              "$gen": "account_currency"
+            },
+            "customer": {
+              "$gen": "ref",
+              "arg": "customer"
+            },
+            "description": {
+              "$gen": "unique",
+              "arg": "1000"
+            },
+            "excluded_payment_method_types": [
+              "affirm",
+              "cashapp"
+            ],
+            "metadata": {
+              "attrs_a": {
+                "$gen": "unique"
+              },
+              "attrs_b": {
+                "$gen": "unique"
+              }
+            },
+            "payment_method": {
+              "$gen": "fresh",
+              "arg": "payment_method"
+            },
+            "receipt_email": {
+              "$gen": "email"
+            },
+            "setup_future_usage": "off_session",
+            "shipping": {
+              "address": {
+                "city": "South San Francisco",
+                "country": {
+                  "$gen": "account_country"
+                },
+                "line1": "354 Oyster Point Blvd",
+                "line2": {
+                  "$gen": "unique",
+                  "arg": "5000"
+                },
+                "postal_code": "94080",
+                "state": "CA"
+              },
+              "carrier": {
+                "$gen": "unique",
+                "arg": "5000"
+              },
+              "name": "Jenny Rosen",
+              "phone": "+15555550100",
+              "tracking_number": {
+                "$gen": "unique",
+                "arg": "5000"
+              }
+            },
+            "statement_descriptor": "ATTRS PROBE",
+            "statement_descriptor_suffix": "ATTRS",
+            "transfer_group": {
+              "$gen": "unique"
+            }
+          },
+          "probe": "siblings",
+          "read": {
+            "kind": "value",
+            "value": 0
+          }
+        },
+        {
+          "params": {
+            "amount": 500,
+            "currency": {
+              "$gen": "account_currency"
+            },
+            "payment_details": {
+              "customer_reference": {
+                "$gen": "unique",
+                "arg": "5000"
+              },
+              "order_reference": {
+                "$gen": "unique",
+                "arg": "5000"
+              }
+            }
+          },
+          "probe": "siblings/10",
+          "read": {
+            "kind": "value",
+            "value": 0
+          }
+        },
+        {
+          "params": {
+            "amount": 500,
+            "capture_method": "automatic",
+            "confirmation_method": "manual",
+            "currency": {
+              "$gen": "account_currency"
+            },
+            "customer": {
+              "$gen": "ref",
+              "arg": "customer"
+            },
+            "description": {
+              "$gen": "unique",
+              "arg": "1000"
+            },
+            "excluded_payment_method_types": [
+              "affirm",
+              "cashapp"
+            ],
+            "metadata": {
+              "attrs_a": {
+                "$gen": "unique"
+              },
+              "attrs_b": {
+                "$gen": "unique"
+              }
+            },
+            "payment_method": {
+              "$gen": "fresh",
+              "arg": "payment_method"
+            },
+            "receipt_email": {
+              "$gen": "email"
+            },
+            "setup_future_usage": "off_session",
+            "shipping": {
+              "address": {
+                "city": "South San Francisco",
+                "country": {
+                  "$gen": "account_country"
+                },
+                "line1": "354 Oyster Point Blvd",
+                "line2": {
+                  "$gen": "unique",
+                  "arg": "5000"
+                },
+                "postal_code": "94080",
+                "state": "CA"
+              },
+              "carrier": {
+                "$gen": "unique",
+                "arg": "5000"
+              },
+              "name": "Jenny Rosen",
+              "phone": "+15555550100",
+              "tracking_number": {
+                "$gen": "unique",
+                "arg": "5000"
+              }
+            },
+            "statement_descriptor": "ATTRS PROBE",
+            "statement_descriptor_suffix": "ATTRS",
+            "transfer_group": {
+              "$gen": "unique"
+            }
+          },
+          "probe": "unset/1",
+          "read": {
+            "kind": "value",
+            "value": 0
+          }
+        },
+        {
+          "params": {
+            "amount": 500,
+            "currency": {
+              "$gen": "account_currency"
+            },
+            "payment_details": {
+              "customer_reference": {
+                "$gen": "unique",
+                "arg": "5000"
+              },
+              "order_reference": {
+                "$gen": "unique",
+                "arg": "5000"
+              }
+            }
+          },
+          "probe": "unset/10",
+          "read": {
+            "kind": "value",
+            "value": 0
+          }
+        },
+        {
+          "params": {
+            "amount": 500,
+            "currency": "eur",
+            "payment_method_configuration": {
+              "$gen": "ref",
+              "arg": "payment_method_configuration"
+            },
+            "payment_method_data": {
+              "allow_redisplay": "always",
+              "billing_details": {
+                "name": "Jenny Rosen"
+              },
+              "type": "bancontact"
+            }
+          },
+          "probe": "unset/11",
+          "read": {
+            "kind": "value",
+            "value": 0
+          }
+        },
+        {
+          "params": {
+            "amount": 500,
+            "currency": "eur",
+            "payment_method_configuration": {
+              "$gen": "ref",
+              "arg": "payment_method_configuration"
+            },
+            "payment_method_data": {
+              "billing_details": {
+                "address": {
+                  "city": "South San Francisco"
+                },
+                "name": "Jenny Rosen"
+              },
+              "type": "bancontact"
+            }
+          },
+          "probe": "unset/12",
+          "read": {
+            "kind": "value",
+            "value": 0
+          }
+        },
+        {
+          "params": {
+            "amount": 500,
+            "currency": "eur",
+            "payment_method_configuration": {
+              "$gen": "ref",
+              "arg": "payment_method_configuration"
+            },
+            "payment_method_data": {
+              "billing_details": {
+                "address": {
+                  "country": {
+                    "$gen": "account_country"
+                  }
+                },
+                "name": "Jenny Rosen"
+              },
+              "type": "bancontact"
+            }
+          },
+          "probe": "unset/13",
+          "read": {
+            "kind": "value",
+            "value": 0
+          }
+        },
+        {
+          "params": {
+            "amount": 500,
+            "currency": "eur",
+            "payment_method_configuration": {
+              "$gen": "ref",
+              "arg": "payment_method_configuration"
+            },
+            "payment_method_data": {
+              "billing_details": {
+                "address": {
+                  "line1": "354 Oyster Point Blvd"
+                },
+                "name": "Jenny Rosen"
+              },
+              "type": "bancontact"
+            }
+          },
+          "probe": "unset/14",
+          "read": {
+            "kind": "value",
+            "value": 0
+          }
+        },
+        {
+          "params": {
+            "amount": 500,
+            "currency": "eur",
+            "payment_method_configuration": {
+              "$gen": "ref",
+              "arg": "payment_method_configuration"
+            },
+            "payment_method_data": {
+              "billing_details": {
+                "address": {
+                  "line2": {
+                    "$gen": "unique",
+                    "arg": "5000"
+                  }
+                },
+                "name": "Jenny Rosen"
+              },
+              "type": "bancontact"
+            }
+          },
+          "probe": "unset/15",
+          "read": {
+            "kind": "value",
+            "value": 0
+          }
+        },
+        {
+          "params": {
+            "amount": 500,
+            "currency": "eur",
+            "payment_method_configuration": {
+              "$gen": "ref",
+              "arg": "payment_method_configuration"
+            },
+            "payment_method_data": {
+              "billing_details": {
+                "address": {
+                  "postal_code": "94080"
+                },
+                "name": "Jenny Rosen"
+              },
+              "type": "bancontact"
+            }
+          },
+          "probe": "unset/16",
+          "read": {
+            "kind": "value",
+            "value": 0
+          }
+        },
+        {
+          "params": {
+            "amount": 500,
+            "currency": "eur",
+            "payment_method_configuration": {
+              "$gen": "ref",
+              "arg": "payment_method_configuration"
+            },
+            "payment_method_data": {
+              "billing_details": {
+                "address": {
+                  "state": "CA"
+                },
+                "name": "Jenny Rosen"
+              },
+              "type": "bancontact"
+            }
+          },
+          "probe": "unset/17",
+          "read": {
+            "kind": "value",
+            "value": 0
+          }
+        },
+        {
+          "params": {
+            "amount": 500,
+            "currency": "eur",
+            "payment_method_configuration": {
+              "$gen": "ref",
+              "arg": "payment_method_configuration"
+            },
+            "payment_method_data": {
+              "billing_details": {
+                "email": {
+                  "$gen": "email"
+                },
+                "name": "Jenny Rosen"
+              },
+              "type": "bancontact"
+            }
+          },
+          "probe": "unset/18",
+          "read": {
+            "kind": "value",
+            "value": 0
+          }
+        },
+        {
+          "params": {
+            "amount": 500,
+            "currency": "eur",
+            "payment_method_configuration": {
+              "$gen": "ref",
+              "arg": "payment_method_configuration"
+            },
+            "payment_method_data": {
+              "billing_details": {
+                "name": "Jenny Rosen",
+                "phone": "+15555550100"
+              },
+              "type": "bancontact"
+            }
+          },
+          "probe": "unset/19",
+          "read": {
+            "kind": "value",
+            "value": 0
+          }
+        },
+        {
+          "params": {
+            "allowed_payment_method_types": [
+              "card",
+              "link"
+            ],
+            "amount": 500,
+            "currency": {
+              "$gen": "account_currency"
+            }
+          },
+          "probe": "unset/2",
+          "read": {
+            "kind": "value",
+            "value": 0
+          }
+        },
+        {
+          "params": {
+            "amount": 500,
+            "currency": "eur",
+            "payment_method_configuration": {
+              "$gen": "ref",
+              "arg": "payment_method_configuration"
+            },
+            "payment_method_data": {
+              "billing_details": {
+                "name": "Jenny Rosen"
+              },
+              "metadata": {
+                "attrs_a": {
+                  "$gen": "unique"
+                },
+                "attrs_b": {
+                  "$gen": "unique"
+                }
+              },
+              "type": "bancontact"
+            }
+          },
+          "probe": "unset/20",
+          "read": {
+            "kind": "value",
+            "value": 0
+          }
+        },
+        {
+          "params": {
+            "amount": 500,
+            "currency": {
+              "$gen": "account_currency"
+            },
+            "payment_method_options": {
+              "card": {
+                "capture_method": "manual",
+                "installments": {
+                  "enabled": true
+                },
+                "mandate_options": {
+                  "amount": 7,
+                  "amount_type": "fixed",
+                  "description": {
+                    "$gen": "unique",
+                    "arg": "200"
+                  },
+                  "end_date": {
+                    "$gen": "now",
+                    "offset": 2592000
+                  },
+                  "interval": "day",
+                  "interval_count": 7,
+                  "reference": {
+                    "$gen": "unique",
+                    "arg": "80"
+                  },
+                  "start_date": {
+                    "$gen": "now",
+                    "offset": 2592000
+                  },
+                  "supported_types": [
+                    "india"
+                  ]
+                },
+                "request_extended_authorization": "if_available",
+                "request_incremental_authorization": "if_available",
+                "request_multicapture": "if_available",
+                "request_overcapture": "if_available",
+                "request_three_d_secure": "any",
+                "require_cvc_recollection": true,
+                "setup_future_usage": "none",
+                "statement_descriptor_suffix_kana": "テスト",
+                "statement_descriptor_suffix_kanji": {
+                  "$gen": "unique",
+                  "arg": "17"
+                }
+              }
+            }
+          },
+          "probe": "unset/22",
+          "read": {
+            "kind": "value",
+            "value": 0
+          }
+        },
+        {
+          "params": {
+            "amount": 500,
+            "currency": {
+              "$gen": "account_currency"
+            },
+            "transfer_data": {
+              "amount": 100,
+              "destination": {
+                "$gen": "ref",
+                "arg": "account"
+              }
+            }
+          },
+          "probe": "unset/23",
+          "read": {
+            "kind": "value",
+            "value": 0
+          }
+        },
+        {
+          "params": {
+            "amount": 500,
+            "amount_details": {
+              "discount_amount": 7,
+              "enforce_arithmetic_validation": false,
+              "shipping": {
+                "amount": 7,
+                "from_postal_code": "94080",
+                "to_postal_code": "94610"
+              },
+              "tax": {
+                "total_tax_amount": 7
+              }
+            },
+            "currency": {
+              "$gen": "account_currency"
+            }
+          },
+          "probe": "unset/3",
+          "read": {
+            "kind": "value",
+            "value": 0
+          }
+        },
+        {
+          "params": {
+            "amount": 500,
+            "application_fee_amount": 100,
+            "currency": {
+              "$gen": "account_currency"
+            },
+            "on_behalf_of": {
+              "$gen": "ref",
+              "arg": "account"
+            },
+            "transfer_data": {
+              "description": {
+                "$gen": "unique",
+                "arg": "5000"
+              },
+              "destination": {
+                "$gen": "ref",
+                "arg": "account"
+              },
+              "metadata": {
+                "attrs_a": {
+                  "$gen": "unique"
+                },
+                "attrs_b": {
+                  "$gen": "unique"
+                }
+              },
+              "payment_data": {
+                "description": {
+                  "$gen": "unique",
+                  "arg": "5000"
+                },
+                "metadata": {
+                  "attrs_a": {
+                    "$gen": "unique"
+                  },
+                  "attrs_b": {
+                    "$gen": "unique"
+                  }
+                }
+              }
+            }
+          },
+          "probe": "unset/9",
+          "read": {
+            "kind": "value",
+            "value": 0
+          }
+        },
+        {
+          "params": {
+            "amount": 500,
+            "capture_method": "automatic",
+            "confirmation_method": "manual",
+            "currency": {
+              "$gen": "account_currency"
+            },
+            "customer": {
+              "$gen": "ref",
+              "arg": "customer"
+            },
+            "description": {
+              "$gen": "unique",
+              "arg": "1000"
+            },
+            "excluded_payment_method_types": [
+              "affirm",
+              "cashapp"
+            ],
+            "metadata": {
+              "attrs_a": {
+                "$gen": "unique"
+              },
+              "attrs_b": {
+                "$gen": "unique"
+              }
+            },
+            "payment_method": {
+              "$gen": "fresh",
+              "arg": "payment_method"
+            },
+            "receipt_email": {
+              "$gen": "email"
+            },
+            "setup_future_usage": "off_session",
+            "shipping": {
+              "address": {
+                "city": "South San Francisco",
+                "country": {
+                  "$gen": "account_country"
+                },
+                "line1": "354 Oyster Point Blvd",
+                "line2": {
+                  "$gen": "unique",
+                  "arg": "5000"
+                },
+                "postal_code": "94080",
+                "state": "CA"
+              },
+              "carrier": {
+                "$gen": "unique",
+                "arg": "5000"
+              },
+              "name": "Jenny Rosen",
+              "phone": "+15555550100",
+              "tracking_number": {
+                "$gen": "unique",
+                "arg": "5000"
+              }
+            },
+            "statement_descriptor": "ATTRS PROBE",
+            "statement_descriptor_suffix": "ATTRS",
+            "transfer_group": {
+              "$gen": "unique"
+            }
+          },
+          "probe": "update/1",
+          "read": {
+            "kind": "value",
+            "value": 0
+          }
+        },
+        {
+          "params": {
+            "amount": 600,
+            "capture_method": "automatic_async",
+            "currency": "eur",
+            "description": {
+              "$gen": "unique",
+              "arg": "1000"
+            },
+            "excluded_payment_method_types": [
+              "cashapp",
+              "affirm"
+            ],
+            "metadata": {
+              "attrs_a": {
+                "$gen": "unique"
+              }
+            },
+            "payment_method": {
+              "$gen": "fresh",
+              "arg": "payment_method"
+            },
+            "receipt_email": {
+              "$gen": "email"
+            },
+            "setup_future_usage": "on_session",
+            "shipping": {
+              "address": {
+                "city": "Seattle",
+                "country": {
+                  "$gen": "account_country"
+                },
+                "line1": "400 Pine St",
+                "line2": {
+                  "$gen": "unique",
+                  "arg": "5000"
+                },
+                "postal_code": "98101",
+                "state": "WA"
+              },
+              "carrier": {
+                "$gen": "unique",
+                "arg": "5000"
+              },
+              "name": {
+                "$gen": "unique",
+                "arg": "5000"
+              },
+              "phone": "+15555550100",
+              "tracking_number": {
+                "$gen": "unique",
+                "arg": "5000"
+              }
+            },
+            "statement_descriptor": "ATTRS UPDATED",
+            "statement_descriptor_suffix": "ATTRS TWO"
+          },
+          "probe": "update/1",
+          "read": {
+            "kind": "value",
+            "value": 0
+          }
+        },
+        {
+          "params": {
+            "amount": 500,
+            "currency": {
+              "$gen": "account_currency"
+            },
+            "payment_details": {
+              "customer_reference": {
+                "$gen": "unique",
+                "arg": "5000"
+              },
+              "order_reference": {
+                "$gen": "unique",
+                "arg": "5000"
+              }
+            }
+          },
+          "probe": "update/10",
+          "read": {
+            "kind": "value",
+            "value": 0
+          }
+        },
+        {
+          "params": {
+            "amount": 500,
+            "currency": "eur",
+            "payment_method_configuration": {
+              "$gen": "ref",
+              "arg": "payment_method_configuration"
+            },
+            "payment_method_data": {
+              "allow_redisplay": "always",
+              "billing_details": {
+                "name": "Jenny Rosen"
+              },
+              "type": "bancontact"
+            }
+          },
+          "probe": "update/11",
+          "read": {
+            "kind": "value",
+            "value": 0
+          }
+        },
+        {
+          "params": {
+            "amount": 500,
+            "currency": "eur",
+            "payment_method_configuration": {
+              "$gen": "ref",
+              "arg": "payment_method_configuration"
+            },
+            "payment_method_data": {
+              "billing_details": {
+                "address": {
+                  "city": "South San Francisco"
+                },
+                "name": "Jenny Rosen"
+              },
+              "type": "bancontact"
+            }
+          },
+          "probe": "update/12",
+          "read": {
+            "kind": "value",
+            "value": 0
+          }
+        },
+        {
+          "params": {
+            "amount": 500,
+            "currency": "eur",
+            "payment_method_configuration": {
+              "$gen": "ref",
+              "arg": "payment_method_configuration"
+            },
+            "payment_method_data": {
+              "billing_details": {
+                "address": {
+                  "country": {
+                    "$gen": "account_country"
+                  }
+                },
+                "name": "Jenny Rosen"
+              },
+              "type": "bancontact"
+            }
+          },
+          "probe": "update/13",
+          "read": {
+            "kind": "value",
+            "value": 0
+          }
+        },
+        {
+          "params": {
+            "amount": 500,
+            "currency": "eur",
+            "payment_method_configuration": {
+              "$gen": "ref",
+              "arg": "payment_method_configuration"
+            },
+            "payment_method_data": {
+              "billing_details": {
+                "address": {
+                  "line1": "354 Oyster Point Blvd"
+                },
+                "name": "Jenny Rosen"
+              },
+              "type": "bancontact"
+            }
+          },
+          "probe": "update/14",
+          "read": {
+            "kind": "value",
+            "value": 0
+          }
+        },
+        {
+          "params": {
+            "amount": 500,
+            "currency": "eur",
+            "payment_method_configuration": {
+              "$gen": "ref",
+              "arg": "payment_method_configuration"
+            },
+            "payment_method_data": {
+              "billing_details": {
+                "address": {
+                  "line2": {
+                    "$gen": "unique",
+                    "arg": "5000"
+                  }
+                },
+                "name": "Jenny Rosen"
+              },
+              "type": "bancontact"
+            }
+          },
+          "probe": "update/15",
+          "read": {
+            "kind": "value",
+            "value": 0
+          }
+        },
+        {
+          "params": {
+            "amount": 500,
+            "currency": "eur",
+            "payment_method_configuration": {
+              "$gen": "ref",
+              "arg": "payment_method_configuration"
+            },
+            "payment_method_data": {
+              "billing_details": {
+                "address": {
+                  "postal_code": "94080"
+                },
+                "name": "Jenny Rosen"
+              },
+              "type": "bancontact"
+            }
+          },
+          "probe": "update/16",
+          "read": {
+            "kind": "value",
+            "value": 0
+          }
+        },
+        {
+          "params": {
+            "amount": 500,
+            "currency": "eur",
+            "payment_method_configuration": {
+              "$gen": "ref",
+              "arg": "payment_method_configuration"
+            },
+            "payment_method_data": {
+              "billing_details": {
+                "address": {
+                  "state": "CA"
+                },
+                "name": "Jenny Rosen"
+              },
+              "type": "bancontact"
+            }
+          },
+          "probe": "update/17",
+          "read": {
+            "kind": "value",
+            "value": 0
+          }
+        },
+        {
+          "params": {
+            "amount": 500,
+            "currency": "eur",
+            "payment_method_configuration": {
+              "$gen": "ref",
+              "arg": "payment_method_configuration"
+            },
+            "payment_method_data": {
+              "billing_details": {
+                "email": {
+                  "$gen": "email"
+                },
+                "name": "Jenny Rosen"
+              },
+              "type": "bancontact"
+            }
+          },
+          "probe": "update/18",
+          "read": {
+            "kind": "value",
+            "value": 0
+          }
+        },
+        {
+          "params": {
+            "amount": 500,
+            "currency": "eur",
+            "payment_method_configuration": {
+              "$gen": "ref",
+              "arg": "payment_method_configuration"
+            },
+            "payment_method_data": {
+              "billing_details": {
+                "name": "Jenny Rosen",
+                "phone": "+15555550100"
+              },
+              "type": "bancontact"
+            }
+          },
+          "probe": "update/19",
+          "read": {
+            "kind": "value",
+            "value": 0
+          }
+        },
+        {
+          "params": {
+            "allowed_payment_method_types": [
+              "card",
+              "link"
+            ],
+            "amount": 500,
+            "currency": {
+              "$gen": "account_currency"
+            }
+          },
+          "probe": "update/2",
+          "read": {
+            "kind": "value",
+            "value": 0
+          }
+        },
+        {
+          "params": {
+            "amount": 500,
+            "currency": "eur",
+            "payment_method_configuration": {
+              "$gen": "ref",
+              "arg": "payment_method_configuration"
+            },
+            "payment_method_data": {
+              "billing_details": {
+                "name": "Jenny Rosen"
+              },
+              "metadata": {
+                "attrs_a": {
+                  "$gen": "unique"
+                },
+                "attrs_b": {
+                  "$gen": "unique"
+                }
+              },
+              "type": "bancontact"
+            }
+          },
+          "probe": "update/20",
+          "read": {
+            "kind": "value",
+            "value": 0
+          }
+        },
+        {
+          "params": {
+            "amount": 500,
+            "currency": {
+              "$gen": "account_currency"
+            },
+            "payment_method_options": {
+              "card": {
+                "capture_method": "manual",
+                "installments": {
+                  "enabled": true
+                },
+                "mandate_options": {
+                  "amount": 7,
+                  "amount_type": "fixed",
+                  "description": {
+                    "$gen": "unique",
+                    "arg": "200"
+                  },
+                  "end_date": {
+                    "$gen": "now",
+                    "offset": 2592000
+                  },
+                  "interval": "day",
+                  "interval_count": 7,
+                  "reference": {
+                    "$gen": "unique",
+                    "arg": "80"
+                  },
+                  "start_date": {
+                    "$gen": "now",
+                    "offset": 2592000
+                  },
+                  "supported_types": [
+                    "india"
+                  ]
+                },
+                "request_extended_authorization": "if_available",
+                "request_incremental_authorization": "if_available",
+                "request_multicapture": "if_available",
+                "request_overcapture": "if_available",
+                "request_three_d_secure": "any",
+                "require_cvc_recollection": true,
+                "setup_future_usage": "none",
+                "statement_descriptor_suffix_kana": "テスト",
+                "statement_descriptor_suffix_kanji": {
+                  "$gen": "unique",
+                  "arg": "17"
+                }
+              }
+            }
+          },
+          "probe": "update/22",
+          "read": {
+            "kind": "value",
+            "value": 0
+          }
+        },
+        {
+          "params": {
+            "amount": 500,
+            "currency": {
+              "$gen": "account_currency"
+            },
+            "transfer_data": {
+              "amount": 100,
+              "destination": {
+                "$gen": "ref",
+                "arg": "account"
+              }
+            }
+          },
+          "probe": "update/23",
+          "read": {
+            "kind": "value",
+            "value": 0
+          }
+        },
+        {
+          "params": {
+            "amount": 500,
+            "amount_details": {
+              "discount_amount": 7,
+              "enforce_arithmetic_validation": false,
+              "shipping": {
+                "amount": 7,
+                "from_postal_code": "94080",
+                "to_postal_code": "94610"
+              },
+              "tax": {
+                "total_tax_amount": 7
+              }
+            },
+            "currency": {
+              "$gen": "account_currency"
+            }
+          },
+          "probe": "update/3",
+          "read": {
+            "kind": "value",
+            "value": 0
+          }
+        },
+        {
+          "params": {
+            "amount": 500,
+            "application_fee_amount": 100,
+            "currency": {
+              "$gen": "account_currency"
+            },
+            "on_behalf_of": {
+              "$gen": "ref",
+              "arg": "account"
+            },
+            "transfer_data": {
+              "description": {
+                "$gen": "unique",
+                "arg": "5000"
+              },
+              "destination": {
+                "$gen": "ref",
+                "arg": "account"
+              },
+              "metadata": {
+                "attrs_a": {
+                  "$gen": "unique"
+                },
+                "attrs_b": {
+                  "$gen": "unique"
+                }
+              },
+              "payment_data": {
+                "description": {
+                  "$gen": "unique",
+                  "arg": "5000"
+                },
+                "metadata": {
+                  "attrs_a": {
+                    "$gen": "unique"
+                  },
+                  "attrs_b": {
+                    "$gen": "unique"
+                  }
+                }
+              }
+            }
+          },
+          "probe": "update/9",
+          "read": {
+            "kind": "value",
+            "value": 0
+          }
+        }
+      ],
       "from": "amount",
       "object": "payment_intent",
       "path": "amount_received",
@@ -1348,6 +4224,41 @@
       ]
     },
     {
+      "except": [
+        {
+          "params": {
+            "configuration": {
+              "recipient": {
+                "capabilities": {
+                  "stripe_balance": {
+                    "stripe_transfers": {
+                      "requested": true
+                    }
+                  }
+                }
+              }
+            },
+            "contact_email": {
+              "$gen": "email"
+            },
+            "dashboard": "express",
+            "defaults": {
+              "responsibilities": {
+                "fees_collector": "application",
+                "losses_collector": "application"
+              }
+            },
+            "identity": {
+              "country": "US"
+            }
+          },
+          "probe": "minimal/recipient_express",
+          "read": {
+            "kind": "value",
+            "value": "stripe"
+          }
+        }
+      ],
       "from": "defaults.responsibilities.losses_collector",
       "object": "v2.core.account",
       "path": "defaults.responsibilities.requirements_collector",
@@ -281637,7 +284548,7 @@
       "object": "payment_intent",
       "operation": "PostPaymentIntentsIntent",
       "path": "payment_method_options.card.three_d_secure.cryptogram",
-      "reason": "no answer of its own: Stripe refused every request that sent it, and each refusal names something else or nothing",
+      "reason": "no answer of its own: only a request that sent its whole set answered it, and together gives that answer as the set's",
       "side": "request",
       "status": "unproven",
       "tests": [
@@ -281645,25 +284556,77 @@
       ]
     },
     {
+      "accepted_in": [],
       "branch": "",
+      "enum_values": [
+        {
+          "accepted": false,
+          "value": "05"
+        }
+      ],
       "object": "payment_intent",
+      "on": [
+        "update"
+      ],
       "operation": "PostPaymentIntentsIntent",
       "path": "payment_method_options.card.three_d_secure.electronic_commerce_indicator",
-      "reason": "no answer of its own: Stripe refused every request that sent it, and each refusal names something else or nothing",
+      "refusals": [
+        {
+          "account_country": "US",
+          "code": "",
+          "message": "The parameter `payment_method_options[card][three_d_secure]` cannot be used when creating a PaymentIntent unless `confirm` is set to true.",
+          "param": "",
+          "status": 400,
+          "tests": [
+            "TestPaymentIntentAttributes/leaves/request/PostPaymentIntentsIntent/payment_method_options.card.three_d_secure.electronic_commerce_indicator"
+          ],
+          "type": "invalid_request_error"
+        }
+      ],
       "side": "request",
-      "status": "unproven",
+      "status": "proven",
+      "targets": [
+        "fake",
+        "stripe"
+      ],
       "tests": [
         "TestPaymentIntentAttributes/leaves/request/PostPaymentIntentsIntent/payment_method_options.card.three_d_secure.electronic_commerce_indicator"
       ]
     },
     {
+      "accepted_in": [],
       "branch": "",
+      "enum_values": [
+        {
+          "accepted": false,
+          "value": "low_risk"
+        }
+      ],
       "object": "payment_intent",
+      "on": [
+        "update"
+      ],
       "operation": "PostPaymentIntentsIntent",
       "path": "payment_method_options.card.three_d_secure.exemption_indicator",
-      "reason": "no answer of its own: Stripe refused every request that sent it, and each refusal names something else or nothing",
+      "refusals": [
+        {
+          "account_country": "US",
+          "code": "",
+          "message": "The parameter `payment_method_options[card][three_d_secure]` cannot be used when creating a PaymentIntent unless `confirm` is set to true.",
+          "param": "",
+          "status": 400,
+          "tests": [
+            "TestPaymentIntentAttributes/leaves/request/PostPaymentIntentsIntent/payment_method_options.card.three_d_secure.exemption_indicator"
+          ],
+          "type": "invalid_request_error"
+        }
+      ],
       "side": "request",
-      "status": "unproven",
+      "status": "proven",
+      "targets": [
+        "fake",
+        "stripe"
+      ],
       "tests": [
         "TestPaymentIntentAttributes/leaves/request/PostPaymentIntentsIntent/payment_method_options.card.three_d_secure.exemption_indicator"
       ]
@@ -281707,37 +284670,97 @@
       ]
     },
     {
+      "accepted_in": [],
       "branch": "",
       "object": "payment_intent",
+      "on": [
+        "update"
+      ],
       "operation": "PostPaymentIntentsIntent",
       "path": "payment_method_options.card.three_d_secure.network_options.cartes_bancaires.cb_exemption",
-      "reason": "no answer of its own: Stripe refused every request that sent it, and each refusal names something else or nothing",
+      "refusals": [
+        {
+          "account_country": "US",
+          "code": "",
+          "message": "The parameter `payment_method_options[card][three_d_secure]` cannot be used when creating a PaymentIntent unless `confirm` is set to true.",
+          "param": "",
+          "status": 400,
+          "tests": [
+            "TestPaymentIntentAttributes/leaves/request/PostPaymentIntentsIntent/payment_method_options.card.three_d_secure.network_options.cartes_bancaires.cb_exemption"
+          ],
+          "type": "invalid_request_error"
+        }
+      ],
       "side": "request",
-      "status": "unproven",
+      "status": "proven",
+      "targets": [
+        "fake",
+        "stripe"
+      ],
       "tests": [
         "TestPaymentIntentAttributes/leaves/request/PostPaymentIntentsIntent/payment_method_options.card.three_d_secure.network_options.cartes_bancaires.cb_exemption"
       ]
     },
     {
+      "accepted_in": [],
       "branch": "",
       "object": "payment_intent",
+      "on": [
+        "update"
+      ],
       "operation": "PostPaymentIntentsIntent",
       "path": "payment_method_options.card.three_d_secure.network_options.cartes_bancaires.cb_score",
-      "reason": "no answer of its own: Stripe refused every request that sent it, and each refusal names something else or nothing",
+      "refusals": [
+        {
+          "account_country": "US",
+          "code": "",
+          "message": "The parameter `payment_method_options[card][three_d_secure]` cannot be used when creating a PaymentIntent unless `confirm` is set to true.",
+          "param": "",
+          "status": 400,
+          "tests": [
+            "TestPaymentIntentAttributes/leaves/request/PostPaymentIntentsIntent/payment_method_options.card.three_d_secure.network_options.cartes_bancaires.cb_score"
+          ],
+          "type": "invalid_request_error"
+        }
+      ],
       "side": "request",
-      "status": "unproven",
+      "status": "proven",
+      "targets": [
+        "fake",
+        "stripe"
+      ],
       "tests": [
         "TestPaymentIntentAttributes/leaves/request/PostPaymentIntentsIntent/payment_method_options.card.three_d_secure.network_options.cartes_bancaires.cb_score"
       ]
     },
     {
+      "accepted_in": [],
       "branch": "",
       "object": "payment_intent",
+      "on": [
+        "update"
+      ],
       "operation": "PostPaymentIntentsIntent",
       "path": "payment_method_options.card.three_d_secure.requestor_challenge_indicator",
-      "reason": "no answer of its own: Stripe refused every request that sent it, and each refusal names something else or nothing",
+      "refusals": [
+        {
+          "account_country": "US",
+          "code": "",
+          "message": "The parameter `payment_method_options[card][three_d_secure]` cannot be used when creating a PaymentIntent unless `confirm` is set to true.",
+          "param": "",
+          "status": 400,
+          "tests": [
+            "TestPaymentIntentAttributes/leaves/request/PostPaymentIntentsIntent/payment_method_options.card.three_d_secure.requestor_challenge_indicator"
+          ],
+          "type": "invalid_request_error"
+        }
+      ],
       "side": "request",
-      "status": "unproven",
+      "status": "proven",
+      "targets": [
+        "fake",
+        "stripe"
+      ],
       "tests": [
         "TestPaymentIntentAttributes/leaves/request/PostPaymentIntentsIntent/payment_method_options.card.three_d_secure.requestor_challenge_indicator"
       ]
@@ -281747,7 +284770,7 @@
       "object": "payment_intent",
       "operation": "PostPaymentIntentsIntent",
       "path": "payment_method_options.card.three_d_secure.transaction_id",
-      "reason": "no answer of its own: Stripe refused every request that sent it, and each refusal names something else or nothing",
+      "reason": "no answer of its own: only a request that sent its whole set answered it, and together gives that answer as the set's",
       "side": "request",
       "status": "unproven",
       "tests": [
@@ -300748,103 +303771,103 @@
       "branch": "",
       "default": {
         "kind": "rule",
-        "rule_ref": 53,
+        "rule_ref": 59,
         "variants": [
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 53
+              "rule_ref": 59
             },
             "variant": "custom_dropdown"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 53
+              "rule_ref": 59
             },
             "variant": "custom_numeric"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 53
+              "rule_ref": 59
             },
             "variant": "custom_text"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 53
+              "rule_ref": 59
             },
             "variant": "decimal_price"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 53
+              "rule_ref": 59
             },
             "variant": "destination"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 53
+              "rule_ref": 59
             },
             "variant": "inline_product"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 53
+              "rule_ref": 59
             },
             "variant": "managed"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 53
+              "rule_ref": 59
             },
             "variant": "optional_item"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 53
+              "rule_ref": 59
             },
             "variant": "price_eur"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 53
+              "rule_ref": 59
             },
             "variant": "redirect"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 53
+              "rule_ref": 59
             },
             "variant": "subscription"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 53
+              "rule_ref": 59
             },
             "variant": "subscription_fee"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 53
+              "rule_ref": 59
             },
             "variant": "tax_coded"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 53
+              "rule_ref": 59
             },
             "variant": "transfer_amount"
           }
@@ -337764,7 +340787,7 @@
       "branch": "",
       "default": {
         "kind": "rule",
-        "rule_ref": 56
+        "rule_ref": 62
       },
       "object": "payout",
       "on": [
@@ -343047,7 +346070,7 @@
       "branch": "",
       "default": {
         "kind": "rule",
-        "rule_ref": 57,
+        "rule_ref": 63,
         "variants": [
           {
             "default": {
@@ -343098,33 +346121,33 @@
       "branch": "",
       "default": {
         "kind": "rule",
-        "rule_ref": 58,
+        "rule_ref": 64,
         "variants": [
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 58
+              "rule_ref": 64
             },
             "variant": "amount_other"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 58
+              "rule_ref": 64
             },
             "variant": "metered"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 58
+              "rule_ref": 64
             },
             "variant": "tiered"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 58
+              "rule_ref": 64
             },
             "variant": "tiered_decimal"
           }
@@ -343249,40 +346272,40 @@
       "branch": "",
       "default": {
         "kind": "rule",
-        "rule_ref": 59,
+        "rule_ref": 65,
         "variants": [
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 59
+              "rule_ref": 65
             },
             "variant": "amount_other"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 59
+              "rule_ref": 65
             },
             "variant": "decimal"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 59
+              "rule_ref": 65
             },
             "variant": "metered"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 59
+              "rule_ref": 65
             },
             "variant": "tiered"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 59
+              "rule_ref": 65
             },
             "variant": "tiered_decimal"
           }
@@ -346924,89 +349947,89 @@
       "branch": "",
       "default": {
         "kind": "rule",
-        "rule_ref": 60,
+        "rule_ref": 66,
         "variants": [
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 60
+              "rule_ref": 66
             },
             "variant": "currency_eur"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 60
+              "rule_ref": 66
             },
             "variant": "custom_amount"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 60
+              "rule_ref": 66
             },
             "variant": "decimal"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 60
+              "rule_ref": 66
             },
             "variant": "inline_product"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 60
+              "rule_ref": 66
             },
             "variant": "metered"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 60
+              "rule_ref": 66
             },
             "variant": "monthly"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 60
+              "rule_ref": 66
             },
             "variant": "options"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 60
+              "rule_ref": 66
             },
             "variant": "options_custom"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 60
+              "rule_ref": 66
             },
             "variant": "options_tiered"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 60
+              "rule_ref": 66
             },
             "variant": "options_tiered_decimal"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 60
+              "rule_ref": 66
             },
             "variant": "tiered"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 60
+              "rule_ref": 66
             },
             "variant": "tiered_decimal"
           }
@@ -347826,33 +350849,33 @@
       "branch": "",
       "default": {
         "kind": "rule",
-        "rule_ref": 61,
+        "rule_ref": 67,
         "variants": [
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 61
+              "rule_ref": 67
             },
             "variant": "currency_eur"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 61
+              "rule_ref": 67
             },
             "variant": "inline_product"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 61
+              "rule_ref": 67
             },
             "variant": "metered"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 61
+              "rule_ref": 67
             },
             "variant": "monthly"
           }
@@ -347898,89 +350921,89 @@
       "branch": "",
       "default": {
         "kind": "rule",
-        "rule_ref": 62,
+        "rule_ref": 68,
         "variants": [
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 62
+              "rule_ref": 68
             },
             "variant": "currency_eur"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 62
+              "rule_ref": 68
             },
             "variant": "custom_amount"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 62
+              "rule_ref": 68
             },
             "variant": "decimal"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 62
+              "rule_ref": 68
             },
             "variant": "inline_product"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 62
+              "rule_ref": 68
             },
             "variant": "metered"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 62
+              "rule_ref": 68
             },
             "variant": "monthly"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 62
+              "rule_ref": 68
             },
             "variant": "options"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 62
+              "rule_ref": 68
             },
             "variant": "options_custom"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 62
+              "rule_ref": 68
             },
             "variant": "options_tiered"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 62
+              "rule_ref": 68
             },
             "variant": "options_tiered_decimal"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 62
+              "rule_ref": 68
             },
             "variant": "tiered"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 62
+              "rule_ref": 68
             },
             "variant": "tiered_decimal"
           }
@@ -350421,7 +353444,7 @@
       "branch": "",
       "default": {
         "kind": "rule",
-        "rule_ref": 63,
+        "rule_ref": 69,
         "variants": [
           {
             "default": {
@@ -350496,82 +353519,82 @@
       "branch": "",
       "default": {
         "kind": "rule",
-        "rule_ref": 64,
+        "rule_ref": 70,
         "variants": [
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 64
+              "rule_ref": 70
             },
             "variant": "currency_eur"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 64
+              "rule_ref": 70
             },
             "variant": "custom_amount"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 64
+              "rule_ref": 70
             },
             "variant": "inline_product"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 64
+              "rule_ref": 70
             },
             "variant": "metered"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 64
+              "rule_ref": 70
             },
             "variant": "monthly"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 64
+              "rule_ref": 70
             },
             "variant": "options"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 64
+              "rule_ref": 70
             },
             "variant": "options_custom"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 64
+              "rule_ref": 70
             },
             "variant": "options_tiered"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 64
+              "rule_ref": 70
             },
             "variant": "options_tiered_decimal"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 64
+              "rule_ref": 70
             },
             "variant": "tiered"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 64
+              "rule_ref": 70
             },
             "variant": "tiered_decimal"
           }
@@ -356680,40 +359703,40 @@
       "branch": "",
       "default": {
         "kind": "rule",
-        "rule_ref": 65,
+        "rule_ref": 71,
         "variants": [
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 65
+              "rule_ref": 71
             },
             "variant": "price"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 65
+              "rule_ref": 71
             },
             "variant": "price_custom"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 65
+              "rule_ref": 71
             },
             "variant": "price_decimal"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 65
+              "rule_ref": 71
             },
             "variant": "price_monthly"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 65
+              "rule_ref": 71
             },
             "variant": "price_options"
           }
@@ -360207,7 +363230,7 @@
       "branch": "",
       "default": {
         "kind": "rule",
-        "rule_ref": 66
+        "rule_ref": 72
       },
       "object": "promotion_code",
       "on": [
@@ -362365,7 +365388,8 @@
           "status": 400,
           "tests": [
             "TestQuoteAttributes/leaves/request/PostQuotes/discounts.coupon",
-            "TestQuoteAttributes/state/discount_coupon/leaves/request/PostQuotes/discounts.coupon"
+            "TestQuoteAttributes/state/discount_coupon/leaves/request/PostQuotes/discounts.coupon",
+            "TestQuoteAttributes/state/quote_discount_on_line/leaves/request/PostQuotes/discounts.coupon"
           ],
           "type": "invalid_request_error"
         }
@@ -362382,7 +365406,8 @@
       ],
       "tests": [
         "TestQuoteAttributes/leaves/request/PostQuotes/discounts.coupon",
-        "TestQuoteAttributes/state/discount_coupon/leaves/request/PostQuotes/discounts.coupon"
+        "TestQuoteAttributes/state/discount_coupon/leaves/request/PostQuotes/discounts.coupon",
+        "TestQuoteAttributes/state/quote_discount_on_line/leaves/request/PostQuotes/discounts.coupon"
       ]
     },
     {
@@ -362464,103 +365489,103 @@
       "branch": "",
       "default": {
         "kind": "rule",
-        "rule_ref": 70,
+        "rule_ref": 77,
         "variants": [
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 70
+              "rule_ref": 77
             },
             "variant": "charge_automatically"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 70
+              "rule_ref": 77
             },
             "variant": "classic"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 70
+              "rule_ref": 77
             },
             "variant": "customer"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 70
+              "rule_ref": 77
             },
             "variant": "destination"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 70
+              "rule_ref": 77
             },
             "variant": "destination_recurring"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 70
+              "rule_ref": 77
             },
             "variant": "from_quote"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 70
+              "rule_ref": 77
             },
             "variant": "line_items"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 70
+              "rule_ref": 77
             },
             "variant": "price_data"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 70
+              "rule_ref": 77
             },
             "variant": "price_data_decimal"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 70
+              "rule_ref": 77
             },
             "variant": "price_eur"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 70
+              "rule_ref": 77
             },
             "variant": "recurring"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 70
+              "rule_ref": 77
             },
             "variant": "send_invoice"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 70
+              "rule_ref": 77
             },
             "variant": "tax_account"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 70
+              "rule_ref": 77
             },
             "variant": "test_clock"
           }
@@ -378298,12 +381323,12 @@
       "branch": "",
       "default": {
         "kind": "rule",
-        "rule_ref": 76,
+        "rule_ref": 83,
         "variants": [
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 76
+              "rule_ref": 83
             },
             "variant": "charge"
           }
@@ -378624,6 +381649,13 @@
         "US"
       ],
       "branch": "",
+      "map": {
+        "empty_value": {
+          "by": "empty_string",
+          "result": "removed"
+        },
+        "update": "merged"
+      },
       "object": "refund",
       "on": [
         "update"
@@ -378643,7 +381675,15 @@
       ],
       "tests": [
         "TestRefundAttributes/leaves/request/PostRefundsRefund/metadata"
-      ]
+      ],
+      "unset": {
+        "by": "empty_string",
+        "matcher": {
+          "kind": "sent",
+          "path": "metadata"
+        },
+        "result": "as_sent"
+      }
     },
     {
       "branch": "",
@@ -385787,25 +388827,65 @@
       ]
     },
     {
+      "accepted_in": [],
       "branch": "",
       "object": "setup_intent",
+      "on": [
+        "update"
+      ],
       "operation": "PostSetupIntentsIntent",
       "path": "payment_method_options.card.three_d_secure.network_options.cartes_bancaires.cb_exemption",
-      "reason": "no answer of its own: Stripe refused every request that sent it, and each refusal names something else or nothing",
+      "refusals": [
+        {
+          "account_country": "US",
+          "code": "",
+          "message": "The parameter `payment_method_options[card][three_d_secure]` cannot be used when creating a SetupIntent unless `confirm` is set to true.",
+          "param": "",
+          "status": 400,
+          "tests": [
+            "TestSetupIntentAttributes/leaves/request/PostSetupIntentsIntent/payment_method_options.card.three_d_secure.network_options.cartes_bancaires.cb_exemption"
+          ],
+          "type": "invalid_request_error"
+        }
+      ],
       "side": "request",
-      "status": "unproven",
+      "status": "proven",
+      "targets": [
+        "fake",
+        "stripe"
+      ],
       "tests": [
         "TestSetupIntentAttributes/leaves/request/PostSetupIntentsIntent/payment_method_options.card.three_d_secure.network_options.cartes_bancaires.cb_exemption"
       ]
     },
     {
+      "accepted_in": [],
       "branch": "",
       "object": "setup_intent",
+      "on": [
+        "update"
+      ],
       "operation": "PostSetupIntentsIntent",
       "path": "payment_method_options.card.three_d_secure.network_options.cartes_bancaires.cb_score",
-      "reason": "no answer of its own: Stripe refused every request that sent it, and each refusal names something else or nothing",
+      "refusals": [
+        {
+          "account_country": "US",
+          "code": "",
+          "message": "The parameter `payment_method_options[card][three_d_secure]` cannot be used when creating a SetupIntent unless `confirm` is set to true.",
+          "param": "",
+          "status": 400,
+          "tests": [
+            "TestSetupIntentAttributes/leaves/request/PostSetupIntentsIntent/payment_method_options.card.three_d_secure.network_options.cartes_bancaires.cb_score"
+          ],
+          "type": "invalid_request_error"
+        }
+      ],
       "side": "request",
-      "status": "unproven",
+      "status": "proven",
+      "targets": [
+        "fake",
+        "stripe"
+      ],
       "tests": [
         "TestSetupIntentAttributes/leaves/request/PostSetupIntentsIntent/payment_method_options.card.three_d_secure.network_options.cartes_bancaires.cb_score"
       ]
@@ -389578,12 +392658,12 @@
       "branch": "",
       "default": {
         "kind": "rule",
-        "rule_ref": 77,
+        "rule_ref": 86,
         "variants": [
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 77
+              "rule_ref": 86
             },
             "variant": "currency_eur"
           }
@@ -392048,180 +395128,180 @@
       "branch": "",
       "default": {
         "kind": "rule",
-        "rule_ref": 80,
+        "rule_ref": 89,
         "variants": [
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 80
+              "rule_ref": 89
             },
             "variant": "anchor_yearly"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 80
+              "rule_ref": 89
             },
             "variant": "canceling"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 80
+              "rule_ref": 89
             },
             "variant": "canceling_option"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 80
+              "rule_ref": 89
             },
             "variant": "customer_account"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 80
+              "rule_ref": 89
             },
             "variant": "decimal_price"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 80
+              "rule_ref": 89
             },
             "variant": "fee"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 80
+              "rule_ref": 89
             },
             "variant": "flexible"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 80
+              "rule_ref": 89
             },
             "variant": "inline_price"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 80
+              "rule_ref": 89
             },
             "variant": "invoice_decimal"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 80
+              "rule_ref": 89
             },
             "variant": "invoice_item"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 80
+              "rule_ref": 89
             },
             "variant": "metered"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 80
+              "rule_ref": 89
             },
             "variant": "method_aud"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 80
+              "rule_ref": 89
             },
             "variant": "method_brl"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 80
+              "rule_ref": 89
             },
             "variant": "method_eur"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 80
+              "rule_ref": 89
             },
             "variant": "method_inr"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 80
+              "rule_ref": 89
             },
             "variant": "method_pln"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 80
+              "rule_ref": 89
             },
             "variant": "prebilled"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 80
+              "rule_ref": 89
             },
             "variant": "prebilled_timestamp"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 80
+              "rule_ref": 89
             },
             "variant": "price_eur"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 80
+              "rule_ref": 89
             },
             "variant": "send_invoice"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 80
+              "rule_ref": 89
             },
             "variant": "setup_pending"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 80
+              "rule_ref": 89
             },
             "variant": "tax_coded"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 80
+              "rule_ref": 89
             },
             "variant": "test_clock"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 80
+              "rule_ref": 89
             },
             "variant": "trial"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 80
+              "rule_ref": 89
             },
             "variant": "trial_offer"
           }
@@ -396001,180 +399081,180 @@
       "branch": "",
       "default": {
         "kind": "rule",
-        "rule_ref": 81,
+        "rule_ref": 90,
         "variants": [
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 81
+              "rule_ref": 90
             },
             "variant": "anchor_yearly"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 81
+              "rule_ref": 90
             },
             "variant": "canceling"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 81
+              "rule_ref": 90
             },
             "variant": "canceling_option"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 81
+              "rule_ref": 90
             },
             "variant": "customer_account"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 81
+              "rule_ref": 90
             },
             "variant": "decimal_price"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 81
+              "rule_ref": 90
             },
             "variant": "fee"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 81
+              "rule_ref": 90
             },
             "variant": "flexible"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 81
+              "rule_ref": 90
             },
             "variant": "inline_price"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 81
+              "rule_ref": 90
             },
             "variant": "invoice_decimal"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 81
+              "rule_ref": 90
             },
             "variant": "invoice_item"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 81
+              "rule_ref": 90
             },
             "variant": "metered"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 81
+              "rule_ref": 90
             },
             "variant": "method_aud"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 81
+              "rule_ref": 90
             },
             "variant": "method_brl"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 81
+              "rule_ref": 90
             },
             "variant": "method_eur"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 81
+              "rule_ref": 90
             },
             "variant": "method_inr"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 81
+              "rule_ref": 90
             },
             "variant": "method_pln"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 81
+              "rule_ref": 90
             },
             "variant": "prebilled"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 81
+              "rule_ref": 90
             },
             "variant": "prebilled_timestamp"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 81
+              "rule_ref": 90
             },
             "variant": "price_eur"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 81
+              "rule_ref": 90
             },
             "variant": "send_invoice"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 81
+              "rule_ref": 90
             },
             "variant": "setup_pending"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 81
+              "rule_ref": 90
             },
             "variant": "tax_coded"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 81
+              "rule_ref": 90
             },
             "variant": "test_clock"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 81
+              "rule_ref": 90
             },
             "variant": "trial"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 81
+              "rule_ref": 90
             },
             "variant": "trial_offer"
           }
@@ -406079,6 +409159,7 @@
       "refusals": [],
       "returned": {
         "form": "normalised",
+        "name": "sorted",
         "pairs": [
           {
             "returned": [
@@ -411111,6 +414192,13 @@
         "US"
       ],
       "branch": "",
+      "map": {
+        "empty_value": {
+          "by": "empty_string",
+          "result": "removed"
+        },
+        "update": "merged"
+      },
       "object": "subscription",
       "on": [
         "update"
@@ -413185,16 +416273,61 @@
       }
     },
     {
+      "accepted_in": [
+        "US"
+      ],
       "branch": "",
+      "enum_values": [
+        {
+          "accepted": true,
+          "value": "checking"
+        },
+        {
+          "accepted": true,
+          "value": "savings"
+        }
+      ],
       "object": "subscription",
+      "on": [
+        "update"
+      ],
       "operation": "PostSubscriptionsSubscriptionExposedId",
       "path": "payment_settings.payment_method_options.us_bank_account.financial_connections.filters.account_subcategories",
-      "reason": "accepted but ignored: Stripe answered a non-null value with a success, and every read of it back was null, absent or the value held before",
+      "refusals": [],
+      "returned": {
+        "form": "normalised",
+        "name": "sorted",
+        "pairs": [
+          {
+            "returned": [
+              "checking",
+              "savings"
+            ],
+            "sent": [
+              "savings",
+              "checking"
+            ]
+          }
+        ],
+        "response_path": "payment_settings.payment_method_options.us_bank_account.financial_connections.filters.account_subcategories"
+      },
       "side": "request",
-      "status": "unproven",
+      "status": "proven",
+      "targets": [
+        "fake",
+        "stripe"
+      ],
       "tests": [
         "TestSubscriptionAttributes/leaves/request/PostSubscriptionsSubscriptionExposedId/payment_settings.payment_method_options.us_bank_account.financial_connections.filters.account_subcategories"
-      ]
+      ],
+      "unset": {
+        "by": "shorter_array",
+        "matcher": {
+          "kind": "sent",
+          "path": "payment_settings.payment_method_options.us_bank_account.financial_connections.filters.account_subcategories"
+        },
+        "result": "as_sent"
+      }
     },
     {
       "accepted_in": [
@@ -413241,16 +416374,61 @@
       }
     },
     {
+      "accepted_in": [
+        "US"
+      ],
       "branch": "",
+      "enum_values": [
+        {
+          "accepted": true,
+          "value": "balances"
+        },
+        {
+          "accepted": true,
+          "value": "ownership"
+        }
+      ],
       "object": "subscription",
+      "on": [
+        "update"
+      ],
       "operation": "PostSubscriptionsSubscriptionExposedId",
       "path": "payment_settings.payment_method_options.us_bank_account.financial_connections.prefetch",
-      "reason": "accepted but ignored: Stripe answered a non-null value with a success, and every read of it back was null, absent or the value held before",
+      "refusals": [],
+      "returned": {
+        "form": "normalised",
+        "name": "sorted",
+        "pairs": [
+          {
+            "returned": [
+              "balances",
+              "ownership"
+            ],
+            "sent": [
+              "ownership",
+              "balances"
+            ]
+          }
+        ],
+        "response_path": "payment_settings.payment_method_options.us_bank_account.financial_connections.prefetch"
+      },
       "side": "request",
-      "status": "unproven",
+      "status": "proven",
+      "targets": [
+        "fake",
+        "stripe"
+      ],
       "tests": [
         "TestSubscriptionAttributes/leaves/request/PostSubscriptionsSubscriptionExposedId/payment_settings.payment_method_options.us_bank_account.financial_connections.prefetch"
-      ]
+      ],
+      "unset": {
+        "by": "shorter_array",
+        "matcher": {
+          "kind": "sent",
+          "path": "payment_settings.payment_method_options.us_bank_account.financial_connections.prefetch"
+        },
+        "result": "as_sent"
+      }
     },
     {
       "accepted_in": [
@@ -455479,124 +458657,124 @@
       "branch": "",
       "default": {
         "kind": "rule",
-        "rule_ref": 92,
+        "rule_ref": 101,
         "variants": [
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 92
+              "rule_ref": 101
             },
             "variant": "customer_account"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 92
+              "rule_ref": 101
             },
             "variant": "end_dated"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 92
+              "rule_ref": 101
             },
             "variant": "fee_defaults"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 92
+              "rule_ref": 101
             },
             "variant": "fee_phase"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 92
+              "rule_ref": 101
             },
             "variant": "flexible"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 92
+              "rule_ref": 101
             },
             "variant": "from_subscription"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 92
+              "rule_ref": 101
             },
             "variant": "inline_decimal"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 92
+              "rule_ref": 101
             },
             "variant": "inline_price"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 92
+              "rule_ref": 101
             },
             "variant": "invoice_decimal"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 92
+              "rule_ref": 101
             },
             "variant": "invoice_item"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 92
+              "rule_ref": 101
             },
             "variant": "metered"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 92
+              "rule_ref": 101
             },
             "variant": "pause_duration"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 92
+              "rule_ref": 101
             },
             "variant": "pause_timestamp"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 92
+              "rule_ref": 101
             },
             "variant": "price_eur"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 92
+              "rule_ref": 101
             },
             "variant": "started"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 92
+              "rule_ref": 101
             },
             "variant": "tax_coded"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 92
+              "rule_ref": 101
             },
             "variant": "test_clock"
           }
@@ -456499,117 +459677,117 @@
       "branch": "",
       "default": {
         "kind": "rule",
-        "rule_ref": 93,
+        "rule_ref": 102,
         "variants": [
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 93
+              "rule_ref": 102
             },
             "variant": "customer_account"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 93
+              "rule_ref": 102
             },
             "variant": "fee_defaults"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 93
+              "rule_ref": 102
             },
             "variant": "fee_phase"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 93
+              "rule_ref": 102
             },
             "variant": "flexible"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 93
+              "rule_ref": 102
             },
             "variant": "from_subscription"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 93
+              "rule_ref": 102
             },
             "variant": "inline_decimal"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 93
+              "rule_ref": 102
             },
             "variant": "inline_price"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 93
+              "rule_ref": 102
             },
             "variant": "invoice_decimal"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 93
+              "rule_ref": 102
             },
             "variant": "invoice_item"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 93
+              "rule_ref": 102
             },
             "variant": "metered"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 93
+              "rule_ref": 102
             },
             "variant": "pause_duration"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 93
+              "rule_ref": 102
             },
             "variant": "pause_timestamp"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 93
+              "rule_ref": 102
             },
             "variant": "price_eur"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 93
+              "rule_ref": 102
             },
             "variant": "started"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 93
+              "rule_ref": 102
             },
             "variant": "tax_coded"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 93
+              "rule_ref": 102
             },
             "variant": "test_clock"
           }
@@ -461690,6 +464868,13 @@
         "US"
       ],
       "branch": "",
+      "map": {
+        "empty_value": {
+          "by": "empty_string",
+          "result": "stored"
+        },
+        "update": "replaced"
+      },
       "object": "subscription_schedule",
       "on": [
         "update"
@@ -487587,7 +490772,7 @@
       "branch": "",
       "default": {
         "kind": "rule",
-        "rule_ref": 94,
+        "rule_ref": 103,
         "variants": [
           {
             "default": {
@@ -515055,12 +518240,12 @@
       "branch": "",
       "default": {
         "kind": "rule",
-        "rule_ref": 96,
+        "rule_ref": 105,
         "variants": [
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 96
+              "rule_ref": 105
             },
             "variant": "s700"
           }
@@ -518060,7 +521245,7 @@
       "returned": {
         "form": "as_sent",
         "response_path": "frozen_time",
-        "rule_ref": 97
+        "rule_ref": 106
       },
       "side": "request",
       "status": "proven",
@@ -521932,12 +525117,12 @@
       "branch": "",
       "default": {
         "kind": "rule",
-        "rule_ref": 98,
+        "rule_ref": 107,
         "variants": [
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 98
+              "rule_ref": 107
             },
             "variant": "partly_reversed"
           }
@@ -543375,7 +546560,7 @@
       "branch": "",
       "default": {
         "kind": "rule",
-        "rule_ref": 104,
+        "rule_ref": 113,
         "variants": [
           {
             "default": {
@@ -692555,6 +695740,255 @@
             "account_country": "US",
             "created_with": {
               "amount": 500,
+              "currency": {
+                "$gen": "account_currency"
+              }
+            },
+            "params": {
+              "payment_method_options": {
+                "card": {
+                  "three_d_secure": {
+                    "cryptogram": "YXR0cnMtcHJvYmUtY3J5cHRvZ3I=",
+                    "electronic_commerce_indicator": "05",
+                    "transaction_id": "00000000-0000-4000-8000-000000000001",
+                    "version": "2.2.0"
+                  }
+                }
+              }
+            },
+            "probe": "isolated/update_three_d_secure_electronic_commerce_indicator"
+          },
+          "value": {
+            "message": "The parameter `payment_method_options[card][three_d_secure]` cannot be used when creating a PaymentIntent unless `confirm` is set to true.",
+            "status": 400,
+            "type": "invalid_request_error"
+          }
+        }
+      ],
+      "operation": "PostPaymentIntentsIntent",
+      "path": "payment_method_options.card.three_d_secure.electronic_commerce_indicator",
+      "rule": "Stripe's answer turns on the request: accepted in []; refused in [isolated/update_three_d_secure_electronic_commerce_indicator]",
+      "tests": [
+        "TestPaymentIntentAttributes/leaves/request/PostPaymentIntentsIntent/payment_method_options.card.three_d_secure.electronic_commerce_indicator"
+      ]
+    },
+    {
+      "object": "payment_intent",
+      "observations": [
+        {
+          "condition": {
+            "account_country": "US",
+            "created_with": {
+              "amount": 500,
+              "currency": {
+                "$gen": "account_currency"
+              }
+            },
+            "params": {
+              "payment_method_options": {
+                "card": {
+                  "three_d_secure": {
+                    "cryptogram": "YXR0cnMtcHJvYmUtY3J5cHRvZ3I=",
+                    "exemption_indicator": "low_risk",
+                    "transaction_id": "00000000-0000-4000-8000-000000000001",
+                    "version": "2.2.0"
+                  }
+                }
+              }
+            },
+            "probe": "isolated/update_three_d_secure_exemption_indicator"
+          },
+          "value": {
+            "message": "The parameter `payment_method_options[card][three_d_secure]` cannot be used when creating a PaymentIntent unless `confirm` is set to true.",
+            "status": 400,
+            "type": "invalid_request_error"
+          }
+        }
+      ],
+      "operation": "PostPaymentIntentsIntent",
+      "path": "payment_method_options.card.three_d_secure.exemption_indicator",
+      "rule": "Stripe's answer turns on the request: accepted in []; refused in [isolated/update_three_d_secure_exemption_indicator]",
+      "tests": [
+        "TestPaymentIntentAttributes/leaves/request/PostPaymentIntentsIntent/payment_method_options.card.three_d_secure.exemption_indicator"
+      ]
+    },
+    {
+      "object": "payment_intent",
+      "observations": [
+        {
+          "condition": {
+            "account_country": "US",
+            "created_with": {
+              "amount": 500,
+              "currency": {
+                "$gen": "account_currency"
+              }
+            },
+            "params": {
+              "payment_method_options": {
+                "card": {
+                  "three_d_secure": {
+                    "cryptogram": "YXR0cnMtcHJvYmUtY3J5cHRvZ3I=",
+                    "network_options": {
+                      "cartes_bancaires": {
+                        "cb_avalgo": "2",
+                        "cb_exemption": "0001"
+                      }
+                    },
+                    "transaction_id": "00000000-0000-4000-8000-000000000001",
+                    "version": "2.2.0"
+                  }
+                }
+              }
+            },
+            "probe": "isolated/update_cartes_bancaires_cb_exemption"
+          },
+          "value": {
+            "message": "The parameter `payment_method_options[card][three_d_secure]` cannot be used when creating a PaymentIntent unless `confirm` is set to true.",
+            "status": 400,
+            "type": "invalid_request_error"
+          }
+        }
+      ],
+      "operation": "PostPaymentIntentsIntent",
+      "path": "payment_method_options.card.three_d_secure.network_options.cartes_bancaires.cb_exemption",
+      "rule": "Stripe's answer turns on the request: accepted in []; refused in [isolated/update_cartes_bancaires_cb_exemption]",
+      "tests": [
+        "TestPaymentIntentAttributes/leaves/request/PostPaymentIntentsIntent/payment_method_options.card.three_d_secure.network_options.cartes_bancaires.cb_exemption"
+      ]
+    },
+    {
+      "object": "payment_intent",
+      "observations": [
+        {
+          "condition": {
+            "account_country": "US",
+            "created_with": {
+              "amount": 500,
+              "currency": {
+                "$gen": "account_currency"
+              }
+            },
+            "params": {
+              "payment_method_options": {
+                "card": {
+                  "three_d_secure": {
+                    "cryptogram": "YXR0cnMtcHJvYmUtY3J5cHRvZ3I=",
+                    "network_options": {
+                      "cartes_bancaires": {
+                        "cb_avalgo": "2",
+                        "cb_score": 20
+                      }
+                    },
+                    "transaction_id": "00000000-0000-4000-8000-000000000001",
+                    "version": "2.2.0"
+                  }
+                }
+              }
+            },
+            "probe": "isolated/update_cartes_bancaires_cb_score"
+          },
+          "value": {
+            "message": "The parameter `payment_method_options[card][three_d_secure]` cannot be used when creating a PaymentIntent unless `confirm` is set to true.",
+            "status": 400,
+            "type": "invalid_request_error"
+          }
+        }
+      ],
+      "operation": "PostPaymentIntentsIntent",
+      "path": "payment_method_options.card.three_d_secure.network_options.cartes_bancaires.cb_score",
+      "rule": "Stripe's answer turns on the request: accepted in []; refused in [isolated/update_cartes_bancaires_cb_score]",
+      "tests": [
+        "TestPaymentIntentAttributes/leaves/request/PostPaymentIntentsIntent/payment_method_options.card.three_d_secure.network_options.cartes_bancaires.cb_score"
+      ]
+    },
+    {
+      "object": "payment_intent",
+      "observations": [
+        {
+          "condition": {
+            "account_country": "US",
+            "created_with": {
+              "amount": 500,
+              "currency": {
+                "$gen": "account_currency"
+              }
+            },
+            "params": {
+              "payment_method_options": {
+                "card": {
+                  "three_d_secure": {
+                    "cryptogram": "YXR0cnMtcHJvYmUtY3J5cHRvZ3I=",
+                    "requestor_challenge_indicator": "02",
+                    "transaction_id": "00000000-0000-4000-8000-000000000001",
+                    "version": "2.2.0"
+                  }
+                }
+              }
+            },
+            "probe": "isolated/update_three_d_secure_requestor_challenge_indicator"
+          },
+          "value": {
+            "message": "The parameter `payment_method_options[card][three_d_secure]` cannot be used when creating a PaymentIntent unless `confirm` is set to true.",
+            "status": 400,
+            "type": "invalid_request_error"
+          }
+        }
+      ],
+      "operation": "PostPaymentIntentsIntent",
+      "path": "payment_method_options.card.three_d_secure.requestor_challenge_indicator",
+      "rule": "Stripe's answer turns on the request: accepted in []; refused in [isolated/update_three_d_secure_requestor_challenge_indicator]",
+      "tests": [
+        "TestPaymentIntentAttributes/leaves/request/PostPaymentIntentsIntent/payment_method_options.card.three_d_secure.requestor_challenge_indicator"
+      ]
+    },
+    {
+      "object": "payment_intent",
+      "observations": [
+        {
+          "condition": {
+            "account_country": "US",
+            "created_with": {
+              "amount": 500,
+              "currency": {
+                "$gen": "account_currency"
+              }
+            },
+            "params": {
+              "payment_method_options": {
+                "card": {
+                  "three_d_secure": {
+                    "version": "2.2.0"
+                  }
+                }
+              }
+            },
+            "probe": "isolated/update_three_d_secure_version_alone"
+          },
+          "value": {
+            "code": "parameter_missing",
+            "message": "Missing required param: payment_method_options[card][three_d_secure][cryptogram].",
+            "param": "payment_method_options[card][three_d_secure][cryptogram]",
+            "status": 400,
+            "type": "invalid_request_error"
+          }
+        }
+      ],
+      "operation": "PostPaymentIntentsIntent",
+      "path": "payment_method_options.card.three_d_secure.version",
+      "rule": "Stripe's answer turns on the request: accepted in []; refused in [isolated/update_three_d_secure_version_alone]",
+      "tests": [
+        "TestPaymentIntentAttributes/leaves/request/PostPaymentIntentsIntent/payment_method_options.card.three_d_secure.version"
+      ]
+    },
+    {
+      "object": "payment_intent",
+      "observations": [
+        {
+          "condition": {
+            "account_country": "US",
+            "created_with": {
+              "amount": 500,
               "capture_method": "automatic",
               "currency": {
                 "$gen": "account_currency"
@@ -694392,7 +697826,49 @@
       "rule": "Stripe's answer turns on the request: accepted in []; refused in [isolated/coupon_expired]",
       "tests": [
         "TestQuoteAttributes/leaves/request/PostQuotes/discounts.coupon",
-        "TestQuoteAttributes/state/discount_coupon/leaves/request/PostQuotes/discounts.coupon"
+        "TestQuoteAttributes/state/discount_coupon/leaves/request/PostQuotes/discounts.coupon",
+        "TestQuoteAttributes/state/quote_discount_on_line/leaves/request/PostQuotes/discounts.coupon"
+      ]
+    },
+    {
+      "object": "quote",
+      "observations": [
+        {
+          "condition": {
+            "account_country": "US",
+            "probe": "claim/coupon_applied",
+            "when": "A discount was created from a coupon sent in the request."
+          },
+          "value": {
+            "kind": "value",
+            "value": [
+              {
+                "discounts": [
+                  {
+                    "amount": 100,
+                    "discount": "quote"
+                  }
+                ],
+                "line": "price_1000"
+              },
+              {
+                "discounts": [
+                  {
+                    "amount": 400,
+                    "discount": "quote"
+                  }
+                ],
+                "line": "price_2000"
+              }
+            ]
+          }
+        }
+      ],
+      "operation": "PostQuotes",
+      "path": "discounts.coupon",
+      "rule": "what each line of the quote, none holding a discount of its own, lists in its expanded `discounts`: each line by its price, `price_2000` (two of a price of 2000) or `price_1000` (one of a price of 1000), and each discount it lists by whose it is, `quote` for the one the quote holds, with the amount it takes off that line",
+      "tests": [
+        "TestQuoteAttributes/state/quote_discount_on_line/leaves/request/PostQuotes/discounts.coupon"
       ]
     },
     {
@@ -694976,6 +698452,80 @@
       "rule": "the whole remaining amount of the payment",
       "tests": [
         "TestRefundAttributes/leaves/response/refund/amount"
+      ]
+    },
+    {
+      "object": "setup_intent",
+      "observations": [
+        {
+          "condition": {
+            "account_country": "US",
+            "created_with": {},
+            "params": {
+              "payment_method_options": {
+                "card": {
+                  "three_d_secure": {
+                    "network_options": {
+                      "cartes_bancaires": {
+                        "cb_avalgo": "2",
+                        "cb_exemption": "0001"
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "probe": "isolated/update_cartes_bancaires_cb_exemption"
+          },
+          "value": {
+            "message": "The parameter `payment_method_options[card][three_d_secure]` cannot be used when creating a SetupIntent unless `confirm` is set to true.",
+            "status": 400,
+            "type": "invalid_request_error"
+          }
+        }
+      ],
+      "operation": "PostSetupIntentsIntent",
+      "path": "payment_method_options.card.three_d_secure.network_options.cartes_bancaires.cb_exemption",
+      "rule": "Stripe's answer turns on the request: accepted in []; refused in [isolated/update_cartes_bancaires_cb_exemption]",
+      "tests": [
+        "TestSetupIntentAttributes/leaves/request/PostSetupIntentsIntent/payment_method_options.card.three_d_secure.network_options.cartes_bancaires.cb_exemption"
+      ]
+    },
+    {
+      "object": "setup_intent",
+      "observations": [
+        {
+          "condition": {
+            "account_country": "US",
+            "created_with": {},
+            "params": {
+              "payment_method_options": {
+                "card": {
+                  "three_d_secure": {
+                    "network_options": {
+                      "cartes_bancaires": {
+                        "cb_avalgo": "2",
+                        "cb_score": 20
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "probe": "isolated/update_cartes_bancaires_cb_score"
+          },
+          "value": {
+            "message": "The parameter `payment_method_options[card][three_d_secure]` cannot be used when creating a SetupIntent unless `confirm` is set to true.",
+            "status": 400,
+            "type": "invalid_request_error"
+          }
+        }
+      ],
+      "operation": "PostSetupIntentsIntent",
+      "path": "payment_method_options.card.three_d_secure.network_options.cartes_bancaires.cb_score",
+      "rule": "Stripe's answer turns on the request: accepted in []; refused in [isolated/update_cartes_bancaires_cb_score]",
+      "tests": [
+        "TestSetupIntentAttributes/leaves/request/PostSetupIntentsIntent/payment_method_options.card.three_d_secure.network_options.cartes_bancaires.cb_score"
       ]
     },
     {
@@ -696170,7 +699720,7 @@
           "condition": {
             "account_country": "US",
             "probe": "claim/prorated_licensed",
-            "when": "An update changed a subscription item from one licensed monthly price of nothing to another and sent no proration_behavior, so Stripe prorated as it does by default."
+            "when": "An update changed a subscription item, of a subscription whose period began an hour before, from one licensed monthly price of nothing to another and sent no proration_behavior, so Stripe prorated as it does by default."
           },
           "value": {
             "kind": "value",
@@ -696187,11 +699737,17 @@
           "condition": {
             "account_country": "US",
             "probe": "claim/prorated_metered",
-            "when": "An update changed a subscription item from one metered monthly price with no usage reported to another and sent no proration_behavior, so Stripe prorated as it does by default."
+            "when": "An update changed a subscription item, of a subscription whose period began an hour before, from one metered monthly price with no usage reported to another and sent no proration_behavior, so Stripe prorated as it does by default."
           },
           "value": {
             "kind": "value",
-            "value": []
+            "value": [
+              {
+                "amount": 0,
+                "price": "from",
+                "proration": true
+              }
+            ]
           }
         }
       ],
@@ -700569,11 +704125,194 @@
   "spec_sha256": "9119e72c7ff8ad142e94f7efa9cf49d8e6eec69df3592e17e8fba15099726ed7",
   "stripe_run": {
     "event": "push",
-    "id": 42120604672,
+    "id": 42176556537,
     "passed": true,
     "platform_country": "US",
     "sandbox": "ci",
-    "time": "2026-11-06T01:04:05Z"
+    "time": "2026-11-06T08:30:13Z"
   },
-  "suite_commit": "287c68eed4c297cdccbb61a8ba52be3036411c97"
+  "suite_commit": "e1f3b754386294f3f5df00a313bf5740a159db19",
+  "together": [
+    {
+      "answers": [
+        {
+          "code": "payment_intent_invalid_parameter",
+          "condition": {
+            "account_country": "US",
+            "params": {
+              "amount": 500,
+              "confirm": true,
+              "currency": {
+                "$gen": "account_currency"
+              },
+              "payment_method": {
+                "$gen": "fresh",
+                "arg": "payment_method"
+              },
+              "payment_method_options": {
+                "card": {
+                  "installments": {
+                    "enabled": true,
+                    "plan": {
+                      "count": 3,
+                      "interval": "month",
+                      "type": "fixed_count"
+                    }
+                  }
+                }
+              },
+              "return_url": {
+                "$gen": "url"
+              }
+            },
+            "probe": "isolated/installments_fixed_count"
+          },
+          "message": "The selected installment plan is not supported for this payment method. You can retrieve valid installment plans on the PaymentIntent in `payment_method_options[card][installments][plans]`.",
+          "status": 400,
+          "type": "invalid_request_error"
+        }
+      ],
+      "members": [
+        "payment_method_options.card.installments.plan.count",
+        "payment_method_options.card.installments.plan.interval",
+        "payment_method_options.card.installments.plan.type"
+      ],
+      "object": "payment_intent",
+      "operation": "PostPaymentIntents",
+      "tests": [
+        "TestPaymentIntentAttributes/leaves/request/PostPaymentIntents/payment_method_options.card.installments.plan.count",
+        "TestPaymentIntentAttributes/leaves/request/PostPaymentIntents/payment_method_options.card.installments.plan.interval"
+      ]
+    },
+    {
+      "answers": [
+        {
+          "condition": {
+            "account_country": "US",
+            "created_with": {
+              "amount": 500,
+              "currency": {
+                "$gen": "account_currency"
+              },
+              "payment_method_options": {
+                "card": {
+                  "installments": {
+                    "enabled": true
+                  }
+                }
+              }
+            },
+            "params": {
+              "payment_method_options": {
+                "card": {
+                  "installments": {
+                    "plan": {
+                      "count": 3,
+                      "interval": "month",
+                      "type": "fixed_count"
+                    }
+                  }
+                }
+              }
+            },
+            "probe": "isolated/update_installments_fixed_count"
+          },
+          "message": "The parameter `payment_method_options[card][installments][plan]` cannot be used when creating a PaymentIntent unless `confirm` is set to true.",
+          "status": 400,
+          "type": "invalid_request_error"
+        }
+      ],
+      "members": [
+        "payment_method_options.card.installments.plan.count",
+        "payment_method_options.card.installments.plan.interval",
+        "payment_method_options.card.installments.plan.type"
+      ],
+      "object": "payment_intent",
+      "operation": "PostPaymentIntentsIntent",
+      "tests": [
+        "TestPaymentIntentAttributes/leaves/request/PostPaymentIntentsIntent/payment_method_options.card.installments.plan.count",
+        "TestPaymentIntentAttributes/leaves/request/PostPaymentIntentsIntent/payment_method_options.card.installments.plan.interval",
+        "TestPaymentIntentAttributes/leaves/request/PostPaymentIntentsIntent/payment_method_options.card.installments.plan.type"
+      ]
+    },
+    {
+      "answers": [
+        {
+          "condition": {
+            "account_country": "US",
+            "created_with": {
+              "amount": 500,
+              "currency": {
+                "$gen": "account_currency"
+              }
+            },
+            "params": {
+              "payment_method_options": {
+                "card": {
+                  "three_d_secure": {
+                    "cryptogram": "YXR0cnMtcHJvYmUtY3J5cHRvZ3I=",
+                    "transaction_id": "00000000-0000-4000-8000-000000000001",
+                    "version": "2.2.0"
+                  }
+                }
+              }
+            },
+            "probe": "isolated/update_three_d_secure_proof"
+          },
+          "message": "The parameter `payment_method_options[card][three_d_secure]` cannot be used when creating a PaymentIntent unless `confirm` is set to true.",
+          "status": 400,
+          "type": "invalid_request_error"
+        }
+      ],
+      "members": [
+        "payment_method_options.card.three_d_secure.cryptogram",
+        "payment_method_options.card.three_d_secure.transaction_id",
+        "payment_method_options.card.three_d_secure.version"
+      ],
+      "object": "payment_intent",
+      "operation": "PostPaymentIntentsIntent",
+      "tests": [
+        "TestPaymentIntentAttributes/leaves/request/PostPaymentIntentsIntent/payment_method_options.card.three_d_secure.cryptogram",
+        "TestPaymentIntentAttributes/leaves/request/PostPaymentIntentsIntent/payment_method_options.card.three_d_secure.transaction_id",
+        "TestPaymentIntentAttributes/leaves/request/PostPaymentIntentsIntent/payment_method_options.card.three_d_secure.version"
+      ]
+    },
+    {
+      "answers": [
+        {
+          "condition": {
+            "account_country": "US",
+            "created_with": {},
+            "params": {
+              "payment_method_options": {
+                "card": {
+                  "three_d_secure": {
+                    "cryptogram": "YXR0cnMtcHJvYmUtY3J5cHRvZ3I=",
+                    "transaction_id": "00000000-0000-4000-8000-000000000001",
+                    "version": "2.2.0"
+                  }
+                }
+              }
+            },
+            "probe": "isolated/update_three_d_secure_proof"
+          },
+          "message": "The parameter `payment_method_options[card][three_d_secure]` cannot be used when creating a SetupIntent unless `confirm` is set to true.",
+          "status": 400,
+          "type": "invalid_request_error"
+        }
+      ],
+      "members": [
+        "payment_method_options.card.three_d_secure.cryptogram",
+        "payment_method_options.card.three_d_secure.transaction_id",
+        "payment_method_options.card.three_d_secure.version"
+      ],
+      "object": "setup_intent",
+      "operation": "PostSetupIntentsIntent",
+      "tests": [
+        "TestSetupIntentAttributes/leaves/request/PostSetupIntentsIntent/payment_method_options.card.three_d_secure.cryptogram",
+        "TestSetupIntentAttributes/leaves/request/PostSetupIntentsIntent/payment_method_options.card.three_d_secure.transaction_id",
+        "TestSetupIntentAttributes/leaves/request/PostSetupIntentsIntent/payment_method_options.card.three_d_secure.version"
+      ]
+    }
+  ]
 }

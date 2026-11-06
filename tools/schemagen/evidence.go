@@ -115,6 +115,7 @@ type Evidence struct {
 	PagedLists     json.RawMessage `json:"paged_lists,omitempty"`
 	Discounts      []Discount      `json:"discounts"`
 	HashUnsets     []HashUnset     `json:"hash_unsets,omitempty"`
+	Together       []Together      `json:"together,omitempty"`
 	Countries      json.RawMessage `json:"countries,omitempty"`
 }
 
@@ -367,10 +368,93 @@ type HashUnset struct {
 
 // FilledFrom is a field Stripe fills from another (P5).
 type FilledFrom struct {
-	Object string   `json:"object"`
-	Path   string   `json:"path"`
-	From   string   `json:"from"`
-	Tests  []string `json:"tests"`
+	Object string `json:"object"`
+	Path   string `json:"path"`
+	From   string `json:"from"`
+	// Except are the responses the relation does not hold for, each under the probe and the
+	// whole request of the write whose result it read.
+	Except []FilledException `json:"except,omitempty"`
+	Tests  []string          `json:"tests"`
+}
+
+// FilledException is one response a FilledFrom relation does not hold for: what Path read as a
+// literal after the probe's write sent Params.
+type FilledException struct {
+	Probe  string          `json:"probe"`
+	Params json.RawMessage `json:"params"`
+	Read   Matcher         `json:"read"`
+}
+
+// filledExceptionReads are the matcher kinds an exception reads, all literals.
+var filledExceptionReads = []string{"value", "null", "absent"}
+
+// Together is a set of request leaves of one operation that Stripe takes only all at once, with
+// its answer to each request that sent the set and nothing else of its own. The answer is the
+// set's, held by no member, so a member taken only with its set is unproven.
+type Together struct {
+	Object    string           `json:"object"`
+	Operation string           `json:"operation"`
+	Members   []string         `json:"members"`
+	Answers   []TogetherAnswer `json:"answers"`
+	Tests     []string         `json:"tests"`
+}
+
+// TogetherAnswer is Stripe's answer to one request that sent a Together set: the status, with
+// what each member read back where Stripe took the set, or its refusal.
+type TogetherAnswer struct {
+	Condition struct {
+		AccountCountry string          `json:"account_country"`
+		Probe          string          `json:"probe"`
+		Params         json.RawMessage `json:"params"`
+		CreatedWith    json.RawMessage `json:"created_with,omitempty"`
+	} `json:"condition"`
+	Status  int                `json:"status"`
+	Type    string             `json:"type,omitempty"`
+	Code    string             `json:"code,omitempty"`
+	Param   string             `json:"param,omitempty"`
+	Message string             `json:"message,omitempty"`
+	Read    map[string]Matcher `json:"read,omitempty"`
+}
+
+// check refuses a set the generator cannot read: one with no object or operation, fewer than two
+// members, members listed twice or out of order, no answer, or an answer it cannot weigh.
+func (t Together) check() error {
+	switch {
+	case t.Object == "" || t.Operation == "":
+		return errors.New("names no object or operation")
+	case len(t.Members) < 2:
+		return errors.New("has fewer than two members")
+	case !slices.IsSorted(t.Members) || len(slices.Compact(slices.Clone(t.Members))) != len(t.Members):
+		return errors.New("lists its members out of order or twice")
+	case len(t.Answers) == 0:
+		return errors.New("holds no answer")
+	}
+	for _, a := range t.Answers {
+		c := a.Condition
+		switch {
+		case c.AccountCountry == "" || c.Probe == "" || c.Params == nil:
+			return errors.New("an answer names no account, probe or params")
+		case a.Status == http.StatusOK:
+			if a.Message != "" || a.Type != "" || a.Code != "" || a.Param != "" {
+				return fmt.Errorf("answer %s accepts and refuses", c.Probe)
+			}
+			for _, m := range slices.Sorted(maps.Keys(a.Read)) {
+				if !slices.Contains(t.Members, m) {
+					return fmt.Errorf("answer %s reads back %q, which is not a member", c.Probe, m)
+				}
+				if k := a.Read[m].Kind; !slices.Contains(matcherKinds, k) {
+					return fmt.Errorf("answer %s reads back %s as kind %q, not one the generator knows (%s)", c.Probe, m, k, strings.Join(matcherKinds, ", "))
+				}
+			}
+		case a.Status >= 400 && a.Status < 500:
+			if a.Message == "" || a.Read != nil {
+				return fmt.Errorf("answer %s refuses with no message, or reads back", c.Probe)
+			}
+		default:
+			return fmt.Errorf("answer %s has status %d", c.Probe, a.Status)
+		}
+	}
+	return nil
 }
 
 // Family is what a partial update of the family's objects does (P4). Hashes, where given, says
@@ -828,6 +912,21 @@ func (e *Evidence) check() error {
 				return fmt.Errorf("family %s gives hash %s of %s twice", f.Family, h.Hash, h.Object)
 			}
 			seen[[2]string{h.Object, h.Hash}] = true
+		}
+	}
+	for _, f := range e.FilledFrom {
+		for _, x := range f.Except {
+			switch {
+			case x.Probe == "" || x.Params == nil:
+				return fmt.Errorf("filled_from %s %s: an exception names no probe or params", f.Object, f.Path)
+			case !slices.Contains(filledExceptionReads, x.Read.Kind):
+				return fmt.Errorf("filled_from %s %s: exception %s reads kind %q, not one the generator knows (%s)", f.Object, f.Path, x.Probe, x.Read.Kind, strings.Join(filledExceptionReads, ", "))
+			}
+		}
+	}
+	for _, t := range e.Together {
+		if err := t.check(); err != nil {
+			return fmt.Errorf("together %s %s %v: %w", t.Object, t.Operation, t.Members, err)
 		}
 	}
 	for _, d := range e.Discounts {

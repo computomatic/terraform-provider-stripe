@@ -16,7 +16,7 @@ import (
 var Declaration = engine.Declaration{
 	TypeName:              "stripe_setup_intent",
 	IDPrefix:              "seti_",
-	Description:           "Collects a customer's payment method for later use. Set `status` to `canceled` to cancel the intent; one that already succeeded cannot be canceled. Confirming an intent is not a resource: confirm it with its `client_secret` from your front end, or from your server with Stripe's API, and `status` reports what happened. The resource has no `confirm`, `mandate_data`, `payment_method_data` or `payment_method_options` argument. Setting `payment_method` moves the intent to `requires_confirmation`. `usage` and `on_behalf_of` cannot change after creation, and neither can the other arguments that only a create takes, so changing one fails the plan. The `client_secret` is sensitive and stays in the state.",
+	Description:           "Collects a customer's payment method for later use. Set `status` to `canceled` to cancel the intent; one that already succeeded cannot be canceled. Confirming an intent is not a resource: confirm it with its `client_secret` from your front end, or from your server with Stripe's API, and `status` reports what happened. The resource has no `confirm`, `mandate_data` or `payment_method_data` argument, and Stripe refuses `payment_method_options.card.three_d_secure` on an intent that is not being confirmed. Setting `payment_method` moves the intent to `requires_confirmation`. `usage` and `on_behalf_of` cannot change after creation, and neither can the other arguments that only a create takes, so changing one fails the plan. The `client_secret` is sensitive and stays in the state.",
 	DataSourceDescription: "Collects a customer's payment method for later use.",
 	Paths: engine.Paths{
 		Create:   "/v1/setup_intents",
@@ -37,6 +37,14 @@ var Declaration = engine.Declaration{
 	Defaults: map[string]string{
 		// suite: variant `bancontact`, which the resource keeps null
 		"payment_method": "none, or the method Stripe makes from `payment_method_data`, which this attribute does not hold",
+	},
+	Answers: map[string]string{
+		// suite: TestSetupIntentAttributes, probe `isolated/update_cartes_bancaires_cb_exemption`,
+		// refused unless `confirm` is true
+		"payment_method_options.card.three_d_secure.network_options.cartes_bancaires.cb_exemption": "Stripe refuses it unless `confirm` is true, which this resource never sends, and the suite has not seen Stripe take it.",
+		// suite: TestSetupIntentAttributes, probe `isolated/update_cartes_bancaires_cb_score`,
+		// refused unless `confirm` is true
+		"payment_method_options.card.three_d_secure.network_options.cartes_bancaires.cb_score": "Stripe refuses it unless `confirm` is true, which this resource never sends, and the suite has not seen Stripe take it.",
 	},
 	// Stripe refuses a change of `attach_to_self` once it is set (suite:
 	// TestSetupIntentAttributes/leaves/request/PostSetupIntentsIntent/attach_to_self), refuses

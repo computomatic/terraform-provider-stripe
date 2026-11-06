@@ -64,6 +64,9 @@ type node struct {
 	// InList marks a field of a list element, whose prior value the plan cannot keep: after an
 	// insert or a reorder the state's element at the same index may be another.
 	InList bool
+	// TogetherDoc is, on a member of a set Stripe takes only all at once (the table's Together on
+	// its hash), the sentence that names the rest of the set, with Stripe's refusals of the set.
+	TogetherDoc string
 	// Fixed is a field of an element of a FixedKeys list that Stripe cannot change in place.
 	// The plan check replaces the resource when it changes, element by element, so a
 	// reorder does not.
@@ -188,6 +191,9 @@ func compile(decl Declaration, table []fields.Field) (*model, error) {
 	}
 	if err := c.unused(); err != nil {
 		return nil, fmt.Errorf("%s: %w", decl.TypeName, err)
+	}
+	if err := checkTogether(decl, nodes); err != nil {
+		return nil, err
 	}
 
 	m := &model{decl: decl, nodes: nodes, v2: v2, discounts: discountsNode(nodes), lineDiscounts: lineDiscountsNodes(nodes)}
@@ -916,12 +922,18 @@ func (m *model) checkReplaceOnRemoval() error {
 // map (the table's MapUpdate): MetadataKeysStay where the record shows a key of `metadata` sent
 // empty removed, or its absence where the record shows the key kept in a merged map. Any other
 // merged map an update takes in which Stripe keeps a key sent empty fails too: no update could
-// remove a key of it, and nothing in a declaration says so yet.
+// remove a key of it, and nothing in a declaration says so yet. So does a merged map in a list
+// element that the engine does not pair with the state's element it continues, a MatchBy list's
+// that is not FixedKeys: it could not tell which keys the element lost.
 func (m *model) checkMapUpdates() error {
-	var walk func(nodes []*node) error
-	walk = func(nodes []*node) error {
+	var walk func(nodes []*node, lists []string) error
+	walk = func(nodes []*node, lists []string) error {
 		for _, n := range nodes {
-			if err := walk(n.Kids); err != nil {
+			inner := lists
+			if n.Shape == fields.ObjectList || n.Shape == fields.ObjectMap {
+				inner = append(slices.Clone(lists), n.Path)
+			}
+			if err := walk(n.Kids, inner); err != nil {
 				return err
 			}
 			u := n.MapUpdate
@@ -929,16 +941,22 @@ func (m *model) checkMapUpdates() error {
 				continue
 			}
 			keeps := !u.Replaced && u.EmptyKept
+			paired := len(lists) == 1 && !slices.Contains(m.decl.FixedKeys, lists[0])
+			if paired {
+				_, paired = m.decl.MatchBy[lists[0]]
+			}
 			switch {
 			case n.Path == "metadata" && keeps != m.decl.MetadataKeysStay:
 				return fmt.Errorf("%s: metadata-keys-stay is %t, but the record shows Stripe %s a `metadata` key sent empty", m.decl.TypeName, m.decl.MetadataKeysStay, map[bool]string{true: "keeping", false: "removing"}[keeps])
 			case n.Path != "metadata" && keeps:
 				return fmt.Errorf("%s: the record shows Stripe merging `%s` and keeping a key sent empty, so no update could remove a key of it", m.decl.TypeName, n.Path)
+			case !u.Replaced && len(lists) > 0 && !paired:
+				return fmt.Errorf("%s: the record shows Stripe merging `%s`, in an element of a list the engine does not pair with the state's element by MatchBy, so an update could not send the keys it lost", m.decl.TypeName, n.Path)
 			}
 		}
 		return nil
 	}
-	return walk(m.nodes)
+	return walk(m.nodes, nil)
 }
 
 // membersAlone is the dotted path of each hash of the table an update sends only the changed
