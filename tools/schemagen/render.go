@@ -101,10 +101,28 @@ func writeLiteral(b *strings.Builder, f fields.Field) {
 		{"ServerDefaulted", f.ServerDefaulted},
 		{"Sensitive", f.Sensitive},
 		{"Stable", f.Stable},
+		{"MembersAlone", f.MembersAlone},
 	} {
 		if flag.on {
 			fmt.Fprintf(b, ", %s: true", flag.name)
 		}
+	}
+	if len(f.MembersTogether) > 0 {
+		b.WriteString(", MembersTogether: [][]string{")
+		for i, set := range f.MembersTogether {
+			if i > 0 {
+				b.WriteString(", ")
+			}
+			b.WriteString("{")
+			for j, m := range set {
+				if j > 0 {
+					b.WriteString(", ")
+				}
+				b.WriteString(strconv.Quote(m))
+			}
+			b.WriteString("}")
+		}
+		b.WriteString("}")
 	}
 	if len(f.Enum) > 0 {
 		b.WriteString(", Enum: []string{")

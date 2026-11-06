@@ -3,12 +3,12 @@
 page_title: "stripe_subscription Resource - Stripe"
 subcategory: ""
 description: |-
-  A customer's recurring purchase of one or more prices. terraform destroy cancels the subscription immediately, because Stripe cannot delete one: billing stops and the cancelled subscription stays in the account. items are matched by price: an item whose price stays keeps its ID and changes in place, a new price adds an item, a dropped price deletes it, and a reorder changes nothing. A price may appear once. An item added from outside, such as one that stripe_subscription_item created, is not part of items and is never changed or deleted by this resource. An update that changes items also takes proration_behavior and payment_behavior. An item that sets price_data has no price of its own to match by, so it is matched by its price_data: changing its quantity, metadata or other settings updates the item in place, and changing its price_data replaces the item, which gets a new item ID. Two items may not carry identical price_data. With collection_method = "send_invoice" the customer needs an email address, or Stripe refuses the create.
+  A customer's recurring purchase of one or more prices. terraform destroy cancels the subscription immediately, because Stripe cannot delete one: billing stops and the cancelled subscription stays in the account. items are matched by price: an item whose price stays keeps its ID and changes in place, a new price adds an item, a dropped price deletes it, and a reorder changes nothing. A price may appear once. An item added from outside, such as one that stripe_subscription_item created, is not part of items and is never changed or deleted by this resource. An update that changes items also takes proration_behavior and payment_behavior. An item that sets price_data has no price of its own to match by, so it is matched by its price_data: changing its quantity, metadata or other settings updates the item in place, and changing its price_data replaces the item, which gets a new item ID. Two items may not carry identical price_data. Stripe never returns add_invoice_items, so the resource keeps it as configured and sends the whole list on any change to it, and Stripe adds each of its items to the next invoice again. With collection_method = "send_invoice" the customer needs an email address, or Stripe refuses the create.
 ---
 
 # Resource: stripe_subscription
 
-A customer's recurring purchase of one or more prices. `terraform destroy` cancels the subscription immediately, because Stripe cannot delete one: billing stops and the cancelled subscription stays in the account. `items` are matched by `price`: an item whose price stays keeps its ID and changes in place, a new price adds an item, a dropped price deletes it, and a reorder changes nothing. A price may appear once. An item added from outside, such as one that `stripe_subscription_item` created, is not part of `items` and is never changed or deleted by this resource. An update that changes `items` also takes `proration_behavior` and `payment_behavior`. An item that sets `price_data` has no price of its own to match by, so it is matched by its `price_data`: changing its quantity, metadata or other settings updates the item in place, and changing its `price_data` replaces the item, which gets a new item ID. Two items may not carry identical `price_data`. With `collection_method = "send_invoice"` the customer needs an email address, or Stripe refuses the create.
+A customer's recurring purchase of one or more prices. `terraform destroy` cancels the subscription immediately, because Stripe cannot delete one: billing stops and the cancelled subscription stays in the account. `items` are matched by `price`: an item whose price stays keeps its ID and changes in place, a new price adds an item, a dropped price deletes it, and a reorder changes nothing. A price may appear once. An item added from outside, such as one that `stripe_subscription_item` created, is not part of `items` and is never changed or deleted by this resource. An update that changes `items` also takes `proration_behavior` and `payment_behavior`. An item that sets `price_data` has no price of its own to match by, so it is matched by its `price_data`: changing its quantity, metadata or other settings updates the item in place, and changing its `price_data` replaces the item, which gets a new item ID. Two items may not carry identical `price_data`. Stripe never returns `add_invoice_items`, so the resource keeps it as configured and sends the whole list on any change to it, and Stripe adds each of its items to the next invoice again. With `collection_method = "send_invoice"` the customer needs an email address, or Stripe refuses the create.
 
 ## Example Usage
 
@@ -49,31 +49,32 @@ resource "stripe_subscription" "team" {
 The following arguments are optional:
 
 * `add_invoice_items` - (Optional) A list of prices and quantities that will generate invoice items appended to the next invoice for this subscription. You may pass up to 20 items. See [`add_invoice_items`](#add_invoice_items) below.
-* `application_fee_percent` - (Optional) A non-negative decimal between 0 and 100, with at most two decimal places. This represents the percentage of the subscription invoice total that will be transferred to the application owner's Stripe account. The request must be made by a platform account on a connected account in order to set an application fee percentage. For more information, see the application fees [documentation](https://stripe.com/docs/connect/subscriptions#collecting-fees-on-subscriptions).
+* `application_fee_percent` - (Optional) A non-negative decimal between 0 and 100, with at most two decimal places. This represents the percentage of the subscription invoice total that will be transferred to the application owner's Stripe account. The request must be made by a platform account on a connected account in order to set an application fee percentage. For more information, see the application fees [documentation](https://stripe.com/docs/connect/subscriptions#collecting-fees-on-subscriptions). Default: none.
 * `automatic_tax` - (Optional) Automatic tax settings for this subscription. Removing it from the configuration leaves the current value. See [`automatic_tax`](#automatic_tax) below.
 * `backdate_start_date` - (Optional) A past timestamp to backdate the subscription's start date to. If set, the first invoice will contain line items for the timespan between the start date and the current time. Can be combined with trials and the billing cycle anchor. Changing it replaces the resource.
-* `billing_cycle_anchor` - (Optional) A future timestamp in UTC format to anchor the subscription's [billing cycle](https://docs.stripe.com/subscriptions/billing-cycle). The anchor is the reference point that aligns future billing cycle dates. It sets the day of week for `week` intervals, the day of month for `month` and `year` intervals, and the month of year for `year` intervals. Changing it replaces the resource. Removing it from the configuration leaves the current value.
+* `billing_cycle_anchor` - (Optional) A future timestamp in UTC format to anchor the subscription's [billing cycle](https://docs.stripe.com/subscriptions/billing-cycle). The anchor is the reference point that aligns future billing cycle dates. It sets the day of week for `week` intervals, the day of month for `month` and `year` intervals, and the month of year for `year` intervals. Changing it replaces the resource. Default (Stripe): the time of the create. Removing it from the configuration leaves the current value.
 * `billing_cycle_anchor_config` - (Optional) Mutually exclusive with billing_cycle_anchor and only valid with monthly and yearly price intervals. When provided, the billing_cycle_anchor is set to the next occurrence of the day_of_month at the hour, minute, and second UTC. Changing it replaces the resource. See [`billing_cycle_anchor_config`](#billing_cycle_anchor_config) below.
 * `billing_mode` - (Optional) Controls how prorations and invoices for subscriptions are calculated and orchestrated. Changing it replaces the resource. Removing it from the configuration leaves the current value. See [`billing_mode`](#billing_mode) below.
 * `billing_schedules` - (Optional) An array of billing schedules, which allow you to bill customers in advance for multiple service periods. Requires flexible billing mode and API version 2026-05-27.dahlia or later. Learn more about [prebilling](https://docs.stripe.com/billing/subscriptions/prebilling). Removing it from the configuration leaves the current value. See [`billing_schedules`](#billing_schedules) below.
 * `billing_thresholds` - (Optional) Define thresholds at which an invoice will be sent, and the subscription advanced to a new billing period. When updating, pass an empty string to remove previously-defined thresholds. See [`billing_thresholds`](#billing_thresholds) below.
-* `cancel_at` - (Optional) A timestamp at which the subscription should cancel. If set to a date before the current period ends, this will cause a proration if prorations have been enabled using `proration_behavior`. If set during a future period, this will always cause a proration for that period. Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
-* `cancel_at_period_end` - (Optional) Indicate whether this subscription should cancel at the end of the current period (`current_period_end`). Defaults to `false`. Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
+* `cancel_at` - (Optional) A timestamp at which the subscription should cancel. If set to a date before the current period ends, this will cause a proration if prorations have been enabled using `proration_behavior`. If set during a future period, this will always cause a proration for that period. Removing it from the configuration leaves the current value.
+* `cancel_at_period_end` - (Optional) Indicate whether this subscription should cancel at the end of the current period (`current_period_end`). Defaults to `false`. Default (Stripe): `false`. Removing it from the configuration leaves the current value.
 * `cancellation_details` - (Optional) Details about why this subscription was cancelled. Removing it from the configuration leaves the current value. See [`cancellation_details`](#cancellation_details) below.
-* `collection_method` - (Optional) Either `charge_automatically`, or `send_invoice`. When charging automatically, Stripe will attempt to pay this subscription at the end of the cycle using the default source attached to the customer. When sending an invoice, Stripe will email your customer an invoice with payment instructions and mark the subscription as `active`. Defaults to `charge_automatically`. Possible values: `charge_automatically`, `send_invoice`. Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
-* `currency` - (Optional) Three-letter [ISO currency code](https://www.iso.org/iso-4217-currency-codes.html), in lowercase. Must be a [supported currency](https://stripe.com/docs/currencies). Changing it replaces the resource. Removing it from the configuration leaves the current value.
+* `collection_method` - (Optional) Either `charge_automatically`, or `send_invoice`. When charging automatically, Stripe will attempt to pay this subscription at the end of the cycle using the default source attached to the customer. When sending an invoice, Stripe will email your customer an invoice with payment instructions and mark the subscription as `active`. Defaults to `charge_automatically`. Possible values: `charge_automatically`, `send_invoice`. Default (Stripe): `charge_automatically`. Removing it from the configuration leaves the current value.
+* `currency` - (Optional) Three-letter [ISO currency code](https://www.iso.org/iso-4217-currency-codes.html), in lowercase. Must be a [supported currency](https://stripe.com/docs/currencies). Changing it replaces the resource. Default (Stripe): the currency of the subscription's items (`usd` on a US account). Removing it from the configuration leaves the current value.
 * `customer` - (Optional) The identifier of the customer to subscribe. Changing it replaces the resource. Removing it from the configuration leaves the current value.
-* `customer_account` - (Optional) The identifier of the account representing the customer to subscribe. Changing it replaces the resource.
-* `days_until_due` - (Optional) Number of days a customer has to pay invoices generated by this subscription. Valid only for subscriptions where `collection_method` is set to `send_invoice`.
-* `default_payment_method` - (Optional) ID of the default payment method for the subscription. It must belong to the customer associated with the subscription. This takes precedence over `default_source`. If neither are set, invoices will use the customer's [invoice_settings.default_payment_method](https://docs.stripe.com/api/customers/object#customer_object-invoice_settings-default_payment_method) or [default_source](https://docs.stripe.com/api/customers/object#customer_object-default_source).
-* `default_source` - (Optional) ID of the default payment source for the subscription. It must belong to the customer associated with the subscription and be in a chargeable state. If `default_payment_method` is also set, `default_payment_method` will take precedence. If neither are set, invoices will use the customer's [invoice_settings.default_payment_method](https://docs.stripe.com/api/customers/object#customer_object-invoice_settings-default_payment_method) or [default_source](https://docs.stripe.com/api/customers/object#customer_object-default_source).
+* `customer_account` - (Optional) The identifier of the account representing the customer to subscribe. Changing it replaces the resource. Default: none.
+* `days_until_due` - (Optional) Number of days a customer has to pay invoices generated by this subscription. Valid only for subscriptions where `collection_method` is set to `send_invoice`. Default: none.
+* `default_payment_method` - (Optional) ID of the default payment method for the subscription. It must belong to the customer associated with the subscription. This takes precedence over `default_source`. If neither are set, invoices will use the customer's [invoice_settings.default_payment_method](https://docs.stripe.com/api/customers/object#customer_object-invoice_settings-default_payment_method) or [default_source](https://docs.stripe.com/api/customers/object#customer_object-default_source). Default: none.
+* `default_source` - (Optional) ID of the default payment source for the subscription. It must belong to the customer associated with the subscription and be in a chargeable state. If `default_payment_method` is also set, `default_payment_method` will take precedence. If neither are set, invoices will use the customer's [invoice_settings.default_payment_method](https://docs.stripe.com/api/customers/object#customer_object-invoice_settings-default_payment_method) or [default_source](https://docs.stripe.com/api/customers/object#customer_object-default_source). Default: none.
 * `default_tax_rates` - (Optional) The tax rates that will apply to any subscription item that does not have `tax_rates` set. Invoices created will have their `default_tax_rates` populated from the subscription.
-* `description` - (Optional) The subscription's description, meant to be displayable to the customer. Use this field to optionally store an explanation of the subscription for rendering in Stripe surfaces and certain local payment methods UIs.
+* `description` - (Optional) The subscription's description, meant to be displayable to the customer. Use this field to optionally store an explanation of the subscription for rendering in Stripe surfaces and certain local payment methods UIs. Default: none.
+* `discounts` - (Optional) The coupons to redeem into discounts for the subscription. If not specified or empty, inherits the discount from the subscription's customer. Changing it replaces the resource. See [`discounts`](#discounts) below.
 * `invoice_settings` - (Optional) All invoices will be billed using the specified settings. Removing it from the configuration leaves the current value. See [`invoice_settings`](#invoice_settings) below.
 * `items` - (Optional) A list of up to 20 subscription items, each with an attached price. Holds the first page of the list Stripe returns with the object; `has_more` is true when there are more. Read every element with the `stripe_subscription_item` data source. Removing it from the configuration leaves the current value. See [`items`](#items) below.
-* `metadata` - (Optional) Set of [key-value pairs](https://docs.stripe.com/api/metadata) that you can attach to an object. This can be useful for storing additional information about the object in a structured format. Individual keys can be unset by posting an empty value to them. All keys can be unset by posting an empty value to `metadata`.
+* `metadata` - (Optional) Set of [key-value pairs](https://docs.stripe.com/api/metadata) that you can attach to an object. This can be useful for storing additional information about the object in a structured format. Individual keys can be unset by posting an empty value to them. All keys can be unset by posting an empty value to `metadata`. Default (Stripe): `{}`.
 * `off_session` - (Optional) Indicates if a customer is on or off-session while an invoice payment is attempted. Defaults to `false` (on-session).
-* `on_behalf_of` - (Optional) The account on behalf of which to charge, for each of the subscription's invoices.
+* `on_behalf_of` - (Optional) The account on behalf of which to charge, for each of the subscription's invoices. Default: none.
 * `pause_collection` - (Optional) If specified, payment collection for this subscription will be paused. Note that the subscription status will be unchanged and will not be updated to `paused`. Learn more about [pausing collection](https://docs.stripe.com/billing/subscriptions/pause-payment). Removing it from the configuration leaves the current value. See [`pause_collection`](#pause_collection) below.
 * `payment_behavior` - (Optional) Controls how Stripe handles the first invoice when payment is required and `collection_method=charge_automatically`. Subscriptions with `collection_method=send_invoice` are automatically activated regardless of the first Invoice status. Possible values: `allow_incomplete`, `default_incomplete`, `error_if_incomplete`, `pending_if_incomplete`.
 * `payment_settings` - (Optional) Payment settings to pass to invoices created by the subscription. Removing it from the configuration leaves the current value. See [`payment_settings`](#payment_settings) below.
@@ -81,7 +82,7 @@ The following arguments are optional:
 * `proration_behavior` - (Optional) Determines how to handle [prorations](https://docs.stripe.com/billing/subscriptions/prorations) resulting from the `billing_cycle_anchor`. If no value is passed, the default is `create_prorations`. Possible values: `always_invoice`, `create_prorations`, `none`.
 * `proration_date` - (Optional) If set, prorations will be calculated as though the subscription was updated at the given time. This can be used to apply exactly the same prorations that were previewed with the [create preview](https://stripe.com/docs/api/invoices/create_preview) endpoint. `proration_date` can also be used to implement custom proration logic, such as prorating by day instead of by second, by providing the time that you wish to use for proration calculations. Default: not sent.
 * `transfer_data` - (Optional) If specified, the funds from the subscription's invoices will be transferred to the destination and the ID of the resulting transfers will be found on the resulting charges. See [`transfer_data`](#transfer_data) below.
-* `trial_end` - (Optional) Unix timestamp representing the end of the trial period the customer will get before being charged for the first time. If set, trial_end will override the default trial period of the plan the customer is being subscribed to. The special value `now` can be provided to end the customer's trial immediately. Can be at most two years from `billing_cycle_anchor`. See [Using trial periods on subscriptions](https://docs.stripe.com/billing/subscriptions/trials/free-trials) to learn more.
+* `trial_end` - (Optional) Unix timestamp representing the end of the trial period the customer will get before being charged for the first time. If set, trial_end will override the default trial period of the plan the customer is being subscribed to. The special value `now` can be provided to end the customer's trial immediately. Can be at most two years from `billing_cycle_anchor`. See [Using trial periods on subscriptions](https://docs.stripe.com/billing/subscriptions/trials/free-trials) to learn more. Removing it from the configuration leaves the current value.
 * `trial_from_plan` - (Optional) Indicates if a plan's `trial_period_days` should be applied to the subscription. Setting `trial_end` per subscription is preferred, and this defaults to `false`. Setting this flag to `true` together with `trial_end` is not allowed. See [Using trial periods on subscriptions](https://docs.stripe.com/billing/subscriptions/trials/free-trials) to learn more.
 * `trial_period_days` - (Optional) Integer representing the number of trial period days before the customer is charged for the first time. This will always overwrite any trials that might apply via a subscribed plan. See [Using trial periods on subscriptions](https://docs.stripe.com/billing/subscriptions/trials/free-trials) to learn more. Changing it replaces the resource.
 * `trial_settings` - (Optional) Settings related to subscription trials. Removing it from the configuration leaves the current value. See [`trial_settings`](#trial_settings) below.
@@ -106,7 +107,7 @@ The `add_invoice_items` attribute is a list. Each element supports:
 The `add_invoice_items.discounts` attribute is a list. Each element supports:
 
 * `coupon` - (Optional) Stripe takes a coupon that has not expired. Elsewhere Stripe refused it on a US account on create: "Coupon attrs_expired is expired and cannot be applied.".
-* `discount` - (Optional) Stripe takes a discount the subscription or its customer already holds. Elsewhere Stripe refused it on a US account on update: "Discount di_... does not exist on the subscription, or the subscription's customer (cus_...). Discounts can only be applied to a subscription when they already exist on the subscription, or the subscription's customer.".
+* `discount` - (Optional) Stripe refused it on a US account on create and update: "No such discount: 'di_...'". Stripe takes a discount the subscription or its customer already holds. Elsewhere Stripe refused it on a US account on update: "Discount di_... does not exist on the subscription, or the subscription's customer (cus_...). Discounts can only be applied to a subscription when they already exist on the subscription, or the subscription's customer.".
 * `promotion_code` - (Optional) Stripe takes an active promotion code. Elsewhere Stripe refused it on a US account on create: "This promotion code is inactive.".
 
 <a id="add_invoice_items.period"></a>
@@ -158,7 +159,7 @@ The `automatic_tax` attribute supports:
 
 The `automatic_tax.liability` attribute supports:
 
-* `account` - (Optional) The connected account being referenced when `type` is `account`.
+* `account` - (Optional) The connected account being referenced when `type` is `account`. Default: none.
 * `type` - (Required) Type of the account referenced. Possible values: `account`, `self`.
 
 <a id="billing_cycle_anchor_config"></a>
@@ -167,17 +168,17 @@ The `automatic_tax.liability` attribute supports:
 The `billing_cycle_anchor_config` attribute supports:
 
 * `day_of_month` - (Required) The day of the month of the billing_cycle_anchor.
-* `hour` - (Optional) The hour of the day of the billing_cycle_anchor.
-* `minute` - (Optional) The minute of the hour of the billing_cycle_anchor.
-* `month` - (Optional) The month to start full cycle billing periods.
-* `second` - (Optional) The second of the minute of the billing_cycle_anchor.
+* `hour` - (Optional) The hour of the day of the billing_cycle_anchor. Default: none.
+* `minute` - (Optional) The minute of the hour of the billing_cycle_anchor. Default: none.
+* `month` - (Optional) The month to start full cycle billing periods. Default: none.
+* `second` - (Optional) The second of the minute of the billing_cycle_anchor. Default: none.
 
 <a id="billing_mode"></a>
 ### `billing_mode`
 
 The `billing_mode` attribute supports:
 
-* `flexible` - (Optional) Configure behavior for flexible billing mode See [`billing_mode.flexible`](#billing_mode.flexible) below.
+* `flexible` - (Optional) Configure behavior for flexible billing mode. Removing it from the configuration leaves the current value. See [`billing_mode.flexible`](#billing_mode.flexible) below.
 * `type` - (Required) Controls how prorations and invoices for subscriptions are calculated and orchestrated. Possible values: `classic`, `flexible`.
 * `updated_at` - (Read-Only) Details on when the current billing_mode was adopted.
 
@@ -186,7 +187,7 @@ The `billing_mode` attribute supports:
 
 The `billing_mode.flexible` attribute supports:
 
-* `proration_discounts` - (Optional) Controls how invoices and invoice items display proration amounts and discount amounts. Possible values: `included`, `itemized`.
+* `proration_discounts` - (Optional) Controls how invoices and invoice items display proration amounts and discount amounts. Possible values: `included`, `itemized`. Default (Stripe): `included`. Removing it from the configuration leaves the current value.
 
 <a id="billing_schedules"></a>
 ### `billing_schedules`
@@ -202,7 +203,7 @@ The `billing_schedules` attribute is a list. Each element supports:
 
 The `billing_schedules.applies_to` attribute is a list. Each element supports:
 
-* `price` - (Optional) The billing schedule will apply to the subscription item with the given price ID.
+* `price` - (Optional) The billing schedule will apply to the subscription item with the given price ID. Default: none.
 * `type` - (Required) Controls which subscription items the billing schedule applies to. Possible values: `price`.
 
 <a id="billing_schedules.bill_until"></a>
@@ -221,35 +222,42 @@ The `billing_schedules.bill_until` attribute supports:
 The `billing_schedules.bill_until.duration` attribute supports:
 
 * `interval` - (Required) Specifies billing duration. Either `day`, `week`, `month` or `year`. Possible values: `day`, `month`, `week`, `year`.
-* `interval_count` - (Optional) The multiplier applied to the interval.
+* `interval_count` - (Optional) The multiplier applied to the interval. Removing it from the configuration lets Stripe set it when the list is next sent.
 
 <a id="billing_thresholds"></a>
 ### `billing_thresholds`
 
 The `billing_thresholds` attribute supports:
 
-* `amount_gte` - (Optional) Monetary threshold that triggers the subscription to create an invoice
-* `reset_billing_cycle_anchor` - (Optional) Indicates if the `billing_cycle_anchor` should be reset when a threshold is reached. If true, `billing_cycle_anchor` will be updated to the date/time the threshold was last reached; otherwise, the value will remain unchanged. This value may not be `true` if the subscription contains items with plans that have `aggregate_usage=last_ever`.
+* `amount_gte` - (Optional) Monetary threshold that triggers the subscription to create an invoice. Default: none.
+* `reset_billing_cycle_anchor` - (Optional) Indicates if the `billing_cycle_anchor` should be reset when a threshold is reached. If true, `billing_cycle_anchor` will be updated to the date/time the threshold was last reached; otherwise, the value will remain unchanged. This value may not be `true` if the subscription contains items with plans that have `aggregate_usage=last_ever`. Default: none.
 
 <a id="cancellation_details"></a>
 ### `cancellation_details`
 
 The `cancellation_details` attribute supports:
 
-* `comment` - (Optional) Additional comments about why the user canceled the subscription, if the subscription was canceled explicitly by the user. Default: not sent. Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
-* `feedback` - (Optional) The customer submitted reason for why they canceled, if the subscription was canceled explicitly by the user. Possible values: `customer_service`, `low_quality`, `missing_features`, `other`, `switched_service`, `too_complex`, `too_expensive`, `unused`. Default: not sent. Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
-* `feedback_option` - (Optional) Customized feedback options that provide deeper insight into why the subscription was canceled, if the subscription was canceled explicitly by the user. Default: not sent. Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
+* `comment` - (Optional) Additional comments about why the user canceled the subscription, if the subscription was canceled explicitly by the user. Default: not sent. Removing it from the configuration leaves the current value.
+* `feedback` - (Optional) The customer submitted reason for why they canceled, if the subscription was canceled explicitly by the user. Possible values: `customer_service`, `low_quality`, `missing_features`, `other`, `switched_service`, `too_complex`, `too_expensive`, `unused`. Default: not sent. Removing it from the configuration leaves the current value.
+* `feedback_option` - (Optional) Customized feedback options that provide deeper insight into why the subscription was canceled, if the subscription was canceled explicitly by the user. Default: not sent. Removing it from the configuration leaves the current value.
 * `reason` - (Read-Only) Why this subscription was canceled. Possible values: `canceled_by_retention_policy`, `cancellation_requested`, `payment_disputed`, `payment_failed`.
+
+<a id="discounts"></a>
+### `discounts`
+
+The `discounts` attribute is a list. Each element supports:
+
+* `discount` - (Optional) Stripe refused it on a US account on create: "No such discount: 'di_...'".
 
 <a id="invoice_settings"></a>
 ### `invoice_settings`
 
 The `invoice_settings` attribute supports:
 
-* `account_tax_ids` - (Optional) The account tax IDs associated with the subscription. Will be set on invoices generated by the subscription.
+* `account_tax_ids` - (Optional) The account tax IDs associated with the subscription. Will be set on invoices generated by the subscription. Default: none.
 * `custom_fields` - (Optional) A list of up to 4 custom fields to be displayed on the invoice. See [`invoice_settings.custom_fields`](#invoice_settings.custom_fields) below.
-* `description` - (Optional) An arbitrary string attached to the object. Often useful for displaying to users.
-* `footer` - (Optional) Footer to be displayed on the invoice.
+* `description` - (Optional) An arbitrary string attached to the object. Often useful for displaying to users. Default: none.
+* `footer` - (Optional) Footer to be displayed on the invoice. Default: none.
 * `issuer` - (Optional) Removing it from the configuration leaves the current value. See [`invoice_settings.issuer`](#invoice_settings.issuer) below.
 
 <a id="invoice_settings.custom_fields"></a>
@@ -265,7 +273,7 @@ The `invoice_settings.custom_fields` attribute is a list. Each element supports:
 
 The `invoice_settings.issuer` attribute supports:
 
-* `account` - (Optional) The connected account being referenced when `type` is `account`.
+* `account` - (Optional) The connected account being referenced when `type` is `account`. Default (Stripe): none, or the `on_behalf_of` account where that is set. Removing it from the configuration leaves the current value.
 * `type` - (Required) Type of the account referenced. Possible values: `account`, `self`.
 
 <a id="items"></a>
@@ -281,6 +289,7 @@ The `items` attribute is a list. Each element supports:
 * `current_period_start` - (Read-Only) The start time of this subscription item's current billing period.
 * `current_trial` - (Optional) The current trial that is applied to this subscription item. See [`items.current_trial`](#items.current_trial) below.
 * `deleted` - (Optional) Default: not sent.
+* `discounts` - (Optional) Removing it from the configuration lets Stripe set it when the list is next sent. See [`items.discounts`](#items.discounts) below.
 * `id` - (Optional) Unique identifier for the object. Default: not sent. Removing it from the configuration lets Stripe set it when the list is next sent.
 * `metadata` - (Optional) Set of [key-value pairs](https://docs.stripe.com/api/metadata) that you can attach to an object. This can be useful for storing additional information about the object in a structured format. Removing it from the configuration lets Stripe set it when the list is next sent.
 * `object` - (Read-Only) String representing the object's type. Objects of the same type share the same value. Possible values: `subscription_item`.
@@ -305,6 +314,13 @@ The `items.current_trial` attribute supports:
 * `end_date` - (Read-Only)
 * `start_date` - (Read-Only)
 * `trial_offer` - (Required)
+
+<a id="items.discounts"></a>
+### `items.discounts`
+
+The `items.discounts` attribute is a list. Each element supports:
+
+* `discount` - (Optional) Changing it replaces the resource. Stripe refused it on a US account on create: "No such discount: 'di_...'".
 
 <a id="items.price_data"></a>
 ### `items.price_data`
@@ -331,8 +347,8 @@ The `items.price_data.recurring` attribute supports:
 
 The `pause_collection` attribute supports:
 
-* `behavior` - (Optional) The payment collection behavior for this subscription while paused. Possible values: `keep_as_draft`, `mark_uncollectible`, `void`. Default: not sent. Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
-* `resumes_at` - (Optional) The time after which the subscription will resume collecting payments. Default: not sent. Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
+* `behavior` - (Optional) The payment collection behavior for this subscription while paused. Possible values: `keep_as_draft`, `mark_uncollectible`, `void`. Default: not sent. Removing it from the configuration leaves the current value.
+* `resumes_at` - (Optional) The time after which the subscription will resume collecting payments. Default: not sent. Removing it from the configuration leaves the current value.
 
 <a id="payment_settings"></a>
 ### `payment_settings`
@@ -340,8 +356,8 @@ The `pause_collection` attribute supports:
 The `payment_settings` attribute supports:
 
 * `payment_method_options` - (Optional) Payment-method-specific configuration to provide to invoices created by the subscription. See [`payment_settings.payment_method_options`](#payment_settings.payment_method_options) below.
-* `payment_method_types` - (Optional) The list of payment method types to provide to every invoice created by the subscription. If not set, Stripe attempts to automatically determine the types to use by looking at the invoice’s default payment method, the subscription’s default payment method, the customer’s default payment method, and your [invoice template settings](https://dashboard.stripe.com/settings/billing/invoice).
-* `save_default_payment_method` - (Optional) Configure whether Stripe updates `subscription.default_payment_method` when payment succeeds. Defaults to `off`. Possible values: `off`, `on_subscription`.
+* `payment_method_types` - (Optional) The list of payment method types to provide to every invoice created by the subscription. If not set, Stripe attempts to automatically determine the types to use by looking at the invoice’s default payment method, the subscription’s default payment method, the customer’s default payment method, and your [invoice template settings](https://dashboard.stripe.com/settings/billing/invoice). Default: none.
+* `save_default_payment_method` - (Optional) Configure whether Stripe updates `subscription.default_payment_method` when payment succeeds. Defaults to `off`. Possible values: `off`, `on_subscription`. Default (Stripe): `off`. Removing it from the configuration leaves the current value.
 
 <a id="payment_settings.payment_method_options"></a>
 ### `payment_settings.payment_method_options`
@@ -365,21 +381,21 @@ The `payment_settings.payment_method_options` attribute supports:
 The `payment_settings.payment_method_options.acss_debit` attribute supports:
 
 * `mandate_options` - (Optional) See [`payment_settings.payment_method_options.acss_debit.mandate_options`](#payment_settings.payment_method_options.acss_debit.mandate_options) below.
-* `verification_method` - (Optional) Bank account verification method. The default value is `automatic`. Possible values: `automatic`, `instant`, `microdeposits`.
+* `verification_method` - (Optional) Bank account verification method. The default value is `automatic`. Possible values: `automatic`, `instant`, `microdeposits`. Default: none.
 
 <a id="payment_settings.payment_method_options.acss_debit.mandate_options"></a>
 ### `payment_settings.payment_method_options.acss_debit.mandate_options`
 
 The `payment_settings.payment_method_options.acss_debit.mandate_options` attribute supports:
 
-* `transaction_type` - (Optional) Transaction type of the mandate. Possible values: `business`, `personal`.
+* `transaction_type` - (Optional) Transaction type of the mandate. Possible values: `business`, `personal`. Default: none.
 
 <a id="payment_settings.payment_method_options.bancontact"></a>
 ### `payment_settings.payment_method_options.bancontact`
 
 The `payment_settings.payment_method_options.bancontact` attribute supports:
 
-* `preferred_language` - (Optional) Preferred language of the Bancontact authorization page that the customer is redirected to. Possible values: `de`, `en`, `fr`, `nl`. Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
+* `preferred_language` - (Optional) Preferred language of the Bancontact authorization page that the customer is redirected to. Possible values: `de`, `en`, `fr`, `nl`. Default: none. Removing it from the configuration leaves the current value.
 
 <a id="payment_settings.payment_method_options.billie"></a>
 ### `payment_settings.payment_method_options.billie`
@@ -394,22 +410,22 @@ The `payment_settings.payment_method_options.billie` attribute supports:
 The `payment_settings.payment_method_options.billie.company_details` attribute supports:
 
 * `registered_address` - (Optional) See [`payment_settings.payment_method_options.billie.company_details.registered_address`](#payment_settings.payment_method_options.billie.company_details.registered_address) below.
-* `registered_name` - (Optional) Company or entity name.
-* `registration_number` - (Optional) The official registration number for the given registration type.
-* `registration_type` - (Optional) Type of registration the company or entity holds in their registered country. Possible values: `ch_ein`, `de_hrb`, `dk_cvr`, `es_cif`, `fi_tunnus`, `fr_siren`, `fr_siret`, `it_rea`, `nl_kvk`, `no_org_number`, `no_pno`, `se_org_number`, `se_pno`, `uk_crn`.
-* `vat` - (Optional) VAT ID number.
+* `registered_name` - (Optional) Company or entity name. Default: none.
+* `registration_number` - (Optional) The official registration number for the given registration type. Default: none.
+* `registration_type` - (Optional) Type of registration the company or entity holds in their registered country. Possible values: `ch_ein`, `de_hrb`, `dk_cvr`, `es_cif`, `fi_tunnus`, `fr_siren`, `fr_siret`, `it_rea`, `nl_kvk`, `no_org_number`, `no_pno`, `se_org_number`, `se_pno`, `uk_crn`. Default: none.
+* `vat` - (Optional) VAT ID number. Default: none.
 
 <a id="payment_settings.payment_method_options.billie.company_details.registered_address"></a>
 ### `payment_settings.payment_method_options.billie.company_details.registered_address`
 
 The `payment_settings.payment_method_options.billie.company_details.registered_address` attribute supports:
 
-* `city` - (Optional) City, district, suburb, town, or village.
-* `country` - (Optional) Two-letter country code.
-* `line1` - (Optional) Address line 1 (for example, street, PO Box, or company name).
-* `line2` - (Optional) Address line 2 (for example, apartment, suite, unit, or building).
-* `postal_code` - (Optional) ZIP or postal code.
-* `state` - (Optional) State, county, province, or region.
+* `city` - (Optional) City, district, suburb, town, or village. Default: none.
+* `country` - (Optional) Two-letter country code. Default: none.
+* `line1` - (Optional) Address line 1 (for example, street, PO Box, or company name). Default: none.
+* `line2` - (Optional) Address line 2 (for example, apartment, suite, unit, or building). Default: none.
+* `postal_code` - (Optional) ZIP or postal code. Default: none.
+* `state` - (Optional) State, county, province, or region. Default: none.
 
 <a id="payment_settings.payment_method_options.blik"></a>
 ### `payment_settings.payment_method_options.blik`
@@ -423,7 +439,7 @@ The `payment_settings.payment_method_options.blik` attribute supports:
 
 The `payment_settings.payment_method_options.blik.mandate_options` attribute supports:
 
-* `expires_at` - (Optional) Date when the mandate expires and no further payments will be charged. If not provided, the mandate will be set to be indefinite.
+* `expires_at` - (Optional) Date when the mandate expires and no further payments will be charged. If not provided, the mandate will be set to be indefinite. Default: none.
 
 <a id="payment_settings.payment_method_options.card"></a>
 ### `payment_settings.payment_method_options.card`
@@ -431,17 +447,17 @@ The `payment_settings.payment_method_options.blik.mandate_options` attribute sup
 The `payment_settings.payment_method_options.card` attribute supports:
 
 * `mandate_options` - (Optional) See [`payment_settings.payment_method_options.card.mandate_options`](#payment_settings.payment_method_options.card.mandate_options) below.
-* `network` - (Optional) Selected network to process this Subscription on. Depends on the available networks of the card attached to the Subscription. Can be only set confirm-time. Possible values: `amex`, `cartes_bancaires`, `diners`, `discover`, `eftpos_au`, `girocard`, `interac`, `jcb`, `link`, `mastercard`, `unionpay`, `unknown`, `visa`.
-* `request_three_d_secure` - (Optional) We strongly recommend that you rely on our SCA Engine to automatically prompt your customers for authentication based on risk level and [other requirements](https://docs.stripe.com/strong-customer-authentication). However, if you wish to request 3D Secure based on logic from your own fraud engine, provide this option. Read our guide on [manually requesting 3D Secure](https://docs.stripe.com/payments/3d-secure/authentication-flow#manual-three-ds) for more information on how this configuration interacts with Radar and our SCA Engine. Possible values: `any`, `automatic`, `challenge`.
+* `network` - (Optional) Selected network to process this Subscription on. Depends on the available networks of the card attached to the Subscription. Can be only set confirm-time. Possible values: `amex`, `cartes_bancaires`, `diners`, `discover`, `eftpos_au`, `girocard`, `interac`, `jcb`, `link`, `mastercard`, `unionpay`, `unknown`, `visa`. Default: none.
+* `request_three_d_secure` - (Optional) We strongly recommend that you rely on our SCA Engine to automatically prompt your customers for authentication based on risk level and [other requirements](https://docs.stripe.com/strong-customer-authentication). However, if you wish to request 3D Secure based on logic from your own fraud engine, provide this option. Read our guide on [manually requesting 3D Secure](https://docs.stripe.com/payments/3d-secure/authentication-flow#manual-three-ds) for more information on how this configuration interacts with Radar and our SCA Engine. Possible values: `any`, `automatic`, `challenge`. Default: none.
 
 <a id="payment_settings.payment_method_options.card.mandate_options"></a>
 ### `payment_settings.payment_method_options.card.mandate_options`
 
 The `payment_settings.payment_method_options.card.mandate_options` attribute supports:
 
-* `amount` - (Optional) Amount to be charged for future payments, specified in the presentment currency.
-* `amount_type` - (Optional) One of `fixed` or `maximum`. If `fixed`, the `amount` param refers to the exact amount to be charged in future payments. If `maximum`, the amount charged can be up to the value passed for the `amount` param. Possible values: `fixed`, `maximum`.
-* `description` - (Optional) A description of the mandate or subscription that is meant to be displayed to the customer.
+* `amount` - (Optional) Amount to be charged for future payments, specified in the presentment currency. Default: none.
+* `amount_type` - (Optional) One of `fixed` or `maximum`. If `fixed`, the `amount` param refers to the exact amount to be charged in future payments. If `maximum`, the amount charged can be up to the value passed for the `amount` param. Possible values: `fixed`, `maximum`. Default: none.
+* `description` - (Optional) A description of the mandate or subscription that is meant to be displayed to the customer. Default: none.
 
 <a id="payment_settings.payment_method_options.customer_balance"></a>
 ### `payment_settings.payment_method_options.customer_balance`
@@ -449,7 +465,7 @@ The `payment_settings.payment_method_options.card.mandate_options` attribute sup
 The `payment_settings.payment_method_options.customer_balance` attribute supports:
 
 * `bank_transfer` - (Optional) See [`payment_settings.payment_method_options.customer_balance.bank_transfer`](#payment_settings.payment_method_options.customer_balance.bank_transfer) below.
-* `funding_type` - (Optional) The funding method type to be used when there are not enough funds in the customer balance. Permitted values include: `bank_transfer`. Possible values: `bank_transfer`.
+* `funding_type` - (Optional) The funding method type to be used when there are not enough funds in the customer balance. Permitted values include: `bank_transfer`. Possible values: `bank_transfer`. Default: none.
 
 <a id="payment_settings.payment_method_options.customer_balance.bank_transfer"></a>
 ### `payment_settings.payment_method_options.customer_balance.bank_transfer`
@@ -457,7 +473,7 @@ The `payment_settings.payment_method_options.customer_balance` attribute support
 The `payment_settings.payment_method_options.customer_balance.bank_transfer` attribute supports:
 
 * `eu_bank_transfer` - (Optional) See [`payment_settings.payment_method_options.customer_balance.bank_transfer.eu_bank_transfer`](#payment_settings.payment_method_options.customer_balance.bank_transfer.eu_bank_transfer) below.
-* `type` - (Optional) The bank transfer type that can be used for funding. Permitted values include: `eu_bank_transfer`, `gb_bank_transfer`, `jp_bank_transfer`, `mx_bank_transfer`, or `us_bank_transfer`.
+* `type` - (Optional) The bank transfer type that can be used for funding. Permitted values include: `eu_bank_transfer`, `gb_bank_transfer`, `jp_bank_transfer`, `mx_bank_transfer`, or `us_bank_transfer`. Default: none.
 
 <a id="payment_settings.payment_method_options.customer_balance.bank_transfer.eu_bank_transfer"></a>
 ### `payment_settings.payment_method_options.customer_balance.bank_transfer.eu_bank_transfer`
@@ -478,16 +494,16 @@ The `payment_settings.payment_method_options.payto` attribute supports:
 
 The `payment_settings.payment_method_options.payto.mandate_options` attribute supports:
 
-* `amount` - (Optional) The maximum amount that can be collected in a single invoice. If you don't specify a maximum, then there is no limit.
+* `amount` - (Optional) The maximum amount that can be collected in a single invoice. If you don't specify a maximum, then there is no limit. Default: none.
 * `amount_type` - (Read-Only) Only `maximum` is supported. Possible values: `fixed`, `maximum`.
-* `purpose` - (Optional) The purpose for which payments are made. Has a default value based on your merchant category code. Possible values: `dependant_support`, `government`, `loan`, `mortgage`, `other`, `pension`, `personal`, `retail`, `salary`, `tax`, `utility`.
+* `purpose` - (Optional) The purpose for which payments are made. Has a default value based on your merchant category code. Possible values: `dependant_support`, `government`, `loan`, `mortgage`, `other`, `pension`, `personal`, `retail`, `salary`, `tax`, `utility`. Default: none.
 
 <a id="payment_settings.payment_method_options.pix"></a>
 ### `payment_settings.payment_method_options.pix`
 
 The `payment_settings.payment_method_options.pix` attribute supports:
 
-* `expires_after_seconds` - (Optional) The number of seconds (between 10 and 1209600) after which Pix payment will expire. Defaults to 86400 seconds.
+* `expires_after_seconds` - (Optional) The number of seconds (between 10 and 1209600) after which Pix payment will expire. Defaults to 86400 seconds. Default: none.
 * `mandate_options` - (Optional) See [`payment_settings.payment_method_options.pix.mandate_options`](#payment_settings.payment_method_options.pix.mandate_options) below.
 
 <a id="payment_settings.payment_method_options.pix.mandate_options"></a>
@@ -495,10 +511,10 @@ The `payment_settings.payment_method_options.pix` attribute supports:
 
 The `payment_settings.payment_method_options.pix.mandate_options` attribute supports:
 
-* `amount` - (Optional) Amount to be charged for future payments.
-* `amount_includes_iof` - (Optional) Determines if the amount includes the IOF tax. Possible values: `always`, `never`.
-* `end_date` - (Optional) Date when the mandate expires and no further payments will be charged, in `YYYY-MM-DD`.
-* `payment_schedule` - (Optional) Schedule at which the future payments will be charged. Possible values: `halfyearly`, `monthly`, `quarterly`, `weekly`, `yearly`.
+* `amount` - (Optional) Amount to be charged for future payments. Default: none.
+* `amount_includes_iof` - (Optional) Determines if the amount includes the IOF tax. Possible values: `always`, `never`. Default: none.
+* `end_date` - (Optional) Date when the mandate expires and no further payments will be charged, in `YYYY-MM-DD`. Default: none.
+* `payment_schedule` - (Optional) Schedule at which the future payments will be charged. Possible values: `halfyearly`, `monthly`, `quarterly`, `weekly`, `yearly`. Default: none.
 
 <a id="payment_settings.payment_method_options.upi"></a>
 ### `payment_settings.payment_method_options.upi`
@@ -512,10 +528,10 @@ The `payment_settings.payment_method_options.upi` attribute supports:
 
 The `payment_settings.payment_method_options.upi.mandate_options` attribute supports:
 
-* `amount` - (Optional) Amount to be charged for future payments.
-* `amount_type` - (Optional) One of `fixed` or `maximum`. If `fixed`, the `amount` param refers to the exact amount to be charged in future payments. If `maximum`, the amount charged can be up to the value passed for the `amount` param. Possible values: `fixed`, `maximum`.
-* `description` - (Optional) A description of the mandate or subscription that is meant to be displayed to the customer.
-* `end_date` - (Optional) End date of the mandate or subscription.
+* `amount` - (Optional) Amount to be charged for future payments. Default: none.
+* `amount_type` - (Optional) One of `fixed` or `maximum`. If `fixed`, the `amount` param refers to the exact amount to be charged in future payments. If `maximum`, the amount charged can be up to the value passed for the `amount` param. Possible values: `fixed`, `maximum`. Default: none.
+* `description` - (Optional) A description of the mandate or subscription that is meant to be displayed to the customer. Default: none.
+* `end_date` - (Optional) End date of the mandate or subscription. Default: none.
 
 <a id="payment_settings.payment_method_options.us_bank_account"></a>
 ### `payment_settings.payment_method_options.us_bank_account`
@@ -523,7 +539,7 @@ The `payment_settings.payment_method_options.upi.mandate_options` attribute supp
 The `payment_settings.payment_method_options.us_bank_account` attribute supports:
 
 * `financial_connections` - (Optional) See [`payment_settings.payment_method_options.us_bank_account.financial_connections`](#payment_settings.payment_method_options.us_bank_account.financial_connections) below.
-* `verification_method` - (Optional) Bank account verification method. The default value is `automatic`. Possible values: `automatic`, `instant`, `microdeposits`.
+* `verification_method` - (Optional) Bank account verification method. The default value is `automatic`. Possible values: `automatic`, `instant`, `microdeposits`. Default: none.
 
 <a id="payment_settings.payment_method_options.us_bank_account.financial_connections"></a>
 ### `payment_settings.payment_method_options.us_bank_account.financial_connections`
@@ -531,15 +547,15 @@ The `payment_settings.payment_method_options.us_bank_account` attribute supports
 The `payment_settings.payment_method_options.us_bank_account.financial_connections` attribute supports:
 
 * `filters` - (Optional) See [`payment_settings.payment_method_options.us_bank_account.financial_connections.filters`](#payment_settings.payment_method_options.us_bank_account.financial_connections.filters) below.
-* `permissions` - (Optional) The list of permissions to request. The `payment_method` permission must be included.
-* `prefetch` - (Optional) Data features requested to be retrieved upon account creation.
+* `permissions` - (Optional) The list of permissions to request. The `payment_method` permission must be included. Default: none.
+* `prefetch` - (Optional) Data features requested to be retrieved upon account creation. Default: none.
 
 <a id="payment_settings.payment_method_options.us_bank_account.financial_connections.filters"></a>
 ### `payment_settings.payment_method_options.us_bank_account.financial_connections.filters`
 
 The `payment_settings.payment_method_options.us_bank_account.financial_connections.filters` attribute supports:
 
-* `account_subcategories` - (Optional) The account subcategories to use to filter for possible accounts to link. Valid subcategories are `checking` and `savings`.
+* `account_subcategories` - (Optional) The account subcategories to use to filter for possible accounts to link. Valid subcategories are `checking` and `savings`. Default: none.
 
 <a id="pending_invoice_item_interval"></a>
 ### `pending_invoice_item_interval`
@@ -547,14 +563,14 @@ The `payment_settings.payment_method_options.us_bank_account.financial_connectio
 The `pending_invoice_item_interval` attribute supports:
 
 * `interval` - (Required) Specifies invoicing frequency. Either `day`, `week`, `month` or `year`. Possible values: `day`, `month`, `week`, `year`.
-* `interval_count` - (Optional) The number of intervals between invoices. For example, `interval=month` and `interval_count=3` bills every 3 months. Maximum of one year interval allowed (1 year, 12 months, or 52 weeks). Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
+* `interval_count` - (Optional) The number of intervals between invoices. For example, `interval=month` and `interval_count=3` bills every 3 months. Maximum of one year interval allowed (1 year, 12 months, or 52 weeks). Default (Stripe): `1` once `pending_invoice_item_interval` is set. Removing it from the configuration leaves the current value.
 
 <a id="transfer_data"></a>
 ### `transfer_data`
 
 The `transfer_data` attribute supports:
 
-* `amount_percent` - (Optional) A non-negative decimal between 0 and 100, with at most two decimal places. This represents the percentage of the subscription invoice total that will be transferred to the destination account. By default, the entire amount is transferred to the destination.
+* `amount_percent` - (Optional) A non-negative decimal between 0 and 100, with at most two decimal places. This represents the percentage of the subscription invoice total that will be transferred to the destination account. By default, the entire amount is transferred to the destination. Default: none.
 * `destination` - (Required) The account where funds from the payment will be transferred to upon payment success.
 
 <a id="trial_settings"></a>
@@ -569,8 +585,8 @@ The `trial_settings` attribute supports:
 
 The `trial_settings.end_behavior` attribute supports:
 
-* `billing_cycle_anchor` - (Optional) Indicates how the subscription's billing cycle anchor is reset when a trial ends. If not set, the default is `now`. Possible values: `now`, `unchanged`.
-* `missing_payment_method` - (Optional) Indicates how the subscription should change when the trial ends if the user did not provide a payment method. Possible values: `cancel`, `create_invoice`, `pause`. Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
+* `billing_cycle_anchor` - (Optional) Indicates how the subscription's billing cycle anchor is reset when a trial ends. If not set, the default is `now`. Possible values: `now`, `unchanged`. Default (Stripe): `now`. Removing it from the configuration leaves the current value.
+* `missing_payment_method` - (Optional) Indicates how the subscription should change when the trial ends if the user did not provide a payment method. Possible values: `cancel`, `create_invoice`, `pause`. Default (Stripe): `create_invoice`. Removing it from the configuration leaves the current value.
 
 ## Attribute Reference
 
@@ -880,4 +896,4 @@ Using `terraform import`, import a subscription using its ID. For example:
 % terraform import stripe_subscription.team sub_123
 ```
 
-~> Importing a subscription adopts every item it has, so a configuration that lists fewer items deletes the rest on the next apply. Stripe does not return `add_invoice_items`, `items.clear_usage`, `items.deleted`, `items.price_data`, `off_session`, `payment_behavior`, `proration_behavior`, `proration_date`, `trial_from_plan`, `backdate_start_date` or `trial_period_days`, so an imported subscription has them null: a configuration that sets `add_invoice_items`, `items.clear_usage`, `items.deleted`, `items.price_data`, `off_session`, `payment_behavior`, `proration_behavior`, `proration_date` or `trial_from_plan` plans an update after the import, and one that sets `backdate_start_date` or `trial_period_days` plans a replacement.
+~> Importing a subscription adopts every item it has, so a configuration that lists fewer items deletes the rest on the next apply. An imported subscription holds `trial_end` and `cancel_at` as the times Stripe returns, so a configuration that sets `trial_end` to `now`, or `cancel_at` to one of its strings, plans an update. Stripe does not return `add_invoice_items`, `items.clear_usage`, `items.deleted`, `items.discounts`, `items.price_data`, `off_session`, `payment_behavior`, `proration_behavior`, `proration_date`, `trial_from_plan`, `backdate_start_date`, `discounts` or `trial_period_days`, so an imported subscription has them null: a configuration that sets `add_invoice_items`, `items.clear_usage`, `items.deleted`, `items.discounts`, `items.price_data`, `off_session`, `payment_behavior`, `proration_behavior`, `proration_date` or `trial_from_plan` plans an update after the import, and one that sets `backdate_start_date`, `discounts` or `trial_period_days` plans a replacement.

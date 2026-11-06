@@ -3,12 +3,12 @@
 page_title: "stripe_subscription_schedule Resource - Stripe"
 subcategory: ""
 description: |-
-  Changes a subscription over time, in phases. Set status to canceled to cancel the schedule and the subscription it started, or to released to end the schedule and keep the subscription billing on its own. Stripe replaces the phases as a whole on update and needs the current phase to keep its start_date, which an update sends back from the state. With collection_method = "send_invoice" the customer needs an email address, or Stripe refuses the create.
+  Changes a subscription over time, in phases. Set status to canceled to cancel the schedule and the subscription it started, or to released to end the schedule and keep the subscription billing on its own. Stripe replaces the phases as a whole on update and needs the current phase to keep its start_date, which an update sends back from the state. Phases, and the items and added invoice items of each, are matched by position, so a reorder updates them in place. pause_schedules is read only: the provider cannot send a pause schedule yet. With collection_method = "send_invoice" the customer needs an email address, or Stripe refuses the create.
 ---
 
 # Resource: stripe_subscription_schedule
 
-Changes a subscription over time, in phases. Set `status` to `canceled` to cancel the schedule and the subscription it started, or to `released` to end the schedule and keep the subscription billing on its own. Stripe replaces the phases as a whole on update and needs the current phase to keep its `start_date`, which an update sends back from the state. With `collection_method = "send_invoice"` the customer needs an email address, or Stripe refuses the create.
+Changes a subscription over time, in phases. Set `status` to `canceled` to cancel the schedule and the subscription it started, or to `released` to end the schedule and keep the subscription billing on its own. Stripe replaces the phases as a whole on update and needs the current phase to keep its `start_date`, which an update sends back from the state. Phases, and the items and added invoice items of each, are matched by position, so a reorder updates them in place. `pause_schedules` is read only: the provider cannot send a pause schedule yet. With `collection_method = "send_invoice"` the customer needs an email address, or Stripe refuses the create.
 
 ~> Stripe cannot delete a subscription schedule; set `status` to `canceled` to cancel one and the subscription it started, or to `released` to release the subscription from it. `terraform destroy`, and a change that would replace the subscription schedule, fail at plan time. To stop managing a subscription schedule, remove it from the state as [Removing from State](#removing-from-state) shows; it stays in the Stripe account.
 
@@ -77,10 +77,10 @@ The following arguments are optional:
 
 * `billing_mode` - (Optional) Controls how prorations and invoices for subscriptions are calculated and orchestrated. Changing it fails the plan, because this resource cannot be replaced. Removing it from the configuration leaves the current value. See [`billing_mode`](#billing_mode) below.
 * `customer` - (Optional) The identifier of the customer to create the subscription schedule for. Changing it fails the plan, because this resource cannot be replaced. Removing it from the configuration leaves the current value.
-* `customer_account` - (Optional) The identifier of the account to create the subscription schedule for. Changing it fails the plan, because this resource cannot be replaced.
+* `customer_account` - (Optional) The identifier of the account to create the subscription schedule for. Changing it fails the plan, because this resource cannot be replaced. Default: none.
 * `default_settings` - (Optional) Object representing the subscription schedule's default settings. Removing it from the configuration leaves the current value. See [`default_settings`](#default_settings) below.
-* `end_behavior` - (Optional) Behavior of the subscription schedule and underlying subscription when it ends. Possible values are `release` or `cancel` with the default being `release`. `release` will end the subscription schedule and keep the underlying subscription running. `cancel` will end the subscription schedule and cancel the underlying subscription. Possible values: `cancel`, `none`, `release`, `renew`. Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
-* `metadata` - (Optional) Set of [key-value pairs](https://docs.stripe.com/api/metadata) that you can attach to an object. This can be useful for storing additional information about the object in a structured format. Individual keys can be unset by posting an empty value to them. All keys can be unset by posting an empty value to `metadata`.
+* `end_behavior` - (Optional) Behavior of the subscription schedule and underlying subscription when it ends. Possible values are `release` or `cancel` with the default being `release`. `release` will end the subscription schedule and keep the underlying subscription running. `cancel` will end the subscription schedule and cancel the underlying subscription. Possible values: `cancel`, `none`, `release`, `renew`. Default (Stripe): `release`. Removing it from the configuration leaves the current value.
+* `metadata` - (Optional) Set of [key-value pairs](https://docs.stripe.com/api/metadata) that you can attach to an object. This can be useful for storing additional information about the object in a structured format. Individual keys can be unset by posting an empty value to them. All keys can be unset by posting an empty value to `metadata`. Default (Stripe): `{}`.
 * `phases` - (Optional) List representing phases of the subscription schedule. Each phase can be customized to have different durations, plans, and coupons. If there are multiple phases, the `end_date` of one phase will always equal the `start_date` of the next phase. Removing it from the configuration leaves the current value. See [`phases`](#phases) below.
 * `proration_behavior` - (Optional) If the update changes the billing configuration (item price, quantity, etc.) of the current phase, indicates how prorations from this change should be handled. The default value is `create_prorations`. Possible values: `always_invoice`, `create_prorations`, `none`. Default: not sent.
 * `start_date` - (Optional) When the subscription schedule starts. We recommend using `now` so that it starts the subscription immediately, and to avoid unexpected behavior due to request delays or clock skew resulting in a slightly backdated or postdated start. You can also use a Unix timestamp to backdate the subscription so that it starts on a past date, or set a future date for the subscription to start on. Changing it fails the plan, because this resource cannot be replaced.
@@ -91,7 +91,7 @@ The following arguments are optional:
 
 The `billing_mode` attribute supports:
 
-* `flexible` - (Optional) Configure behavior for flexible billing mode See [`billing_mode.flexible`](#billing_mode.flexible) below.
+* `flexible` - (Optional) Configure behavior for flexible billing mode. Removing it from the configuration leaves the current value. See [`billing_mode.flexible`](#billing_mode.flexible) below.
 * `type` - (Required) Controls how prorations and invoices for subscriptions are calculated and orchestrated. Possible values: `classic`, `flexible`.
 * `updated_at` - (Read-Only) Details on when the current billing_mode was adopted.
 
@@ -100,22 +100,22 @@ The `billing_mode` attribute supports:
 
 The `billing_mode.flexible` attribute supports:
 
-* `proration_discounts` - (Optional) Controls how invoices and invoice items display proration amounts and discount amounts. Possible values: `included`, `itemized`.
+* `proration_discounts` - (Optional) Controls how invoices and invoice items display proration amounts and discount amounts. Possible values: `included`, `itemized`. Default (Stripe): `included`. Removing it from the configuration leaves the current value.
 
 <a id="default_settings"></a>
 ### `default_settings`
 
 The `default_settings` attribute supports:
 
-* `application_fee_percent` - (Optional) A non-negative decimal between 0 and 100, with at most two decimal places. This represents the percentage of the subscription invoice total that will be transferred to the application owner's Stripe account during this phase of the schedule.
+* `application_fee_percent` - (Optional) A non-negative decimal between 0 and 100, with at most two decimal places. This represents the percentage of the subscription invoice total that will be transferred to the application owner's Stripe account during this phase of the schedule. Default: none.
 * `automatic_tax` - (Optional) Removing it from the configuration leaves the current value. See [`default_settings.automatic_tax`](#default_settings.automatic_tax) below.
-* `billing_cycle_anchor` - (Optional) Possible values are `phase_start` or `automatic`. If `phase_start` then billing cycle anchor of the subscription is set to the start of the phase when entering the phase. If `automatic` then the billing cycle anchor is automatically modified as needed when entering the phase. For more information, see the billing cycle [documentation](https://docs.stripe.com/billing/subscriptions/billing-cycle). Possible values: `automatic`, `phase_start`. Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
+* `billing_cycle_anchor` - (Optional) Possible values are `phase_start` or `automatic`. If `phase_start` then billing cycle anchor of the subscription is set to the start of the phase when entering the phase. If `automatic` then the billing cycle anchor is automatically modified as needed when entering the phase. For more information, see the billing cycle [documentation](https://docs.stripe.com/billing/subscriptions/billing-cycle). Possible values: `automatic`, `phase_start`. Default (Stripe): `automatic`. Removing it from the configuration leaves the current value.
 * `billing_thresholds` - (Optional) Define thresholds at which an invoice will be sent, and the subscription advanced to a new billing period See [`default_settings.billing_thresholds`](#default_settings.billing_thresholds) below.
-* `collection_method` - (Optional) Either `charge_automatically`, or `send_invoice`. When charging automatically, Stripe will attempt to pay the underlying subscription at the end of each billing cycle using the default source attached to the customer. When sending an invoice, Stripe will email your customer an invoice with payment instructions and mark the subscription as `active`. Possible values: `charge_automatically`, `send_invoice`.
-* `default_payment_method` - (Optional) ID of the default payment method for the subscription schedule. If not set, invoices will use the default payment method in the customer's invoice settings.
-* `description` - (Optional) Subscription description, meant to be displayable to the customer. Use this field to optionally store an explanation of the subscription for rendering in Stripe surfaces and certain local payment methods UIs.
+* `collection_method` - (Optional) Either `charge_automatically`, or `send_invoice`. When charging automatically, Stripe will attempt to pay the underlying subscription at the end of each billing cycle using the default source attached to the customer. When sending an invoice, Stripe will email your customer an invoice with payment instructions and mark the subscription as `active`. Possible values: `charge_automatically`, `send_invoice`. Default (Stripe): `charge_automatically`. Removing it from the configuration leaves the current value.
+* `default_payment_method` - (Optional) ID of the default payment method for the subscription schedule. If not set, invoices will use the default payment method in the customer's invoice settings. Default: none.
+* `description` - (Optional) Subscription description, meant to be displayable to the customer. Use this field to optionally store an explanation of the subscription for rendering in Stripe surfaces and certain local payment methods UIs. Default: none.
 * `invoice_settings` - (Optional) Removing it from the configuration leaves the current value. See [`default_settings.invoice_settings`](#default_settings.invoice_settings) below.
-* `on_behalf_of` - (Optional) The account (if any) the charge was made on behalf of for charges associated with the schedule's subscription. See the Connect documentation for details.
+* `on_behalf_of` - (Optional) The account (if any) the charge was made on behalf of for charges associated with the schedule's subscription. See the Connect documentation for details. Default: none.
 * `transfer_data` - (Optional) The account (if any) the associated subscription's payments will be attributed to for tax reporting, and where funds from each payment will be transferred to for each of the subscription's invoices. See [`default_settings.transfer_data`](#default_settings.transfer_data) below.
 
 <a id="default_settings.automatic_tax"></a>
@@ -132,7 +132,7 @@ The `default_settings.automatic_tax` attribute supports:
 
 The `default_settings.automatic_tax.liability` attribute supports:
 
-* `account` - (Optional) The connected account being referenced when `type` is `account`.
+* `account` - (Optional) The connected account being referenced when `type` is `account`. Default: none.
 * `type` - (Required) Type of the account referenced. Possible values: `account`, `self`.
 
 <a id="default_settings.billing_thresholds"></a>
@@ -140,19 +140,19 @@ The `default_settings.automatic_tax.liability` attribute supports:
 
 The `default_settings.billing_thresholds` attribute supports:
 
-* `amount_gte` - (Optional) Monetary threshold that triggers the subscription to create an invoice
-* `reset_billing_cycle_anchor` - (Optional) Indicates if the `billing_cycle_anchor` should be reset when a threshold is reached. If true, `billing_cycle_anchor` will be updated to the date/time the threshold was last reached; otherwise, the value will remain unchanged. This value may not be `true` if the subscription contains items with plans that have `aggregate_usage=last_ever`.
+* `amount_gte` - (Optional) Monetary threshold that triggers the subscription to create an invoice. Default: none.
+* `reset_billing_cycle_anchor` - (Optional) Indicates if the `billing_cycle_anchor` should be reset when a threshold is reached. If true, `billing_cycle_anchor` will be updated to the date/time the threshold was last reached; otherwise, the value will remain unchanged. This value may not be `true` if the subscription contains items with plans that have `aggregate_usage=last_ever`. Default: none.
 
 <a id="default_settings.invoice_settings"></a>
 ### `default_settings.invoice_settings`
 
 The `default_settings.invoice_settings` attribute supports:
 
-* `account_tax_ids` - (Optional) The account tax IDs associated with the subscription schedule. Will be set on invoices generated by the subscription schedule.
+* `account_tax_ids` - (Optional) The account tax IDs associated with the subscription schedule. Will be set on invoices generated by the subscription schedule. Default: none.
 * `custom_fields` - (Optional) A list of up to 4 custom fields to be displayed on the invoice. See [`default_settings.invoice_settings.custom_fields`](#default_settings.invoice_settings.custom_fields) below.
-* `days_until_due` - (Optional) Number of days within which a customer must pay invoices generated by this subscription schedule. This value will be `null` for subscription schedules where `billing=charge_automatically`.
-* `description` - (Optional) An arbitrary string attached to the object. Often useful for displaying to users.
-* `footer` - (Optional) Footer to be displayed on the invoice.
+* `days_until_due` - (Optional) Number of days within which a customer must pay invoices generated by this subscription schedule. This value will be `null` for subscription schedules where `billing=charge_automatically`. Default: none.
+* `description` - (Optional) An arbitrary string attached to the object. Often useful for displaying to users. Default: none.
+* `footer` - (Optional) Footer to be displayed on the invoice. Default: none.
 * `issuer` - (Optional) Removing it from the configuration leaves the current value. See [`default_settings.invoice_settings.issuer`](#default_settings.invoice_settings.issuer) below.
 
 <a id="default_settings.invoice_settings.custom_fields"></a>
@@ -168,7 +168,7 @@ The `default_settings.invoice_settings.custom_fields` attribute is a list. Each 
 
 The `default_settings.invoice_settings.issuer` attribute supports:
 
-* `account` - (Optional) The connected account being referenced when `type` is `account`.
+* `account` - (Optional) The connected account being referenced when `type` is `account`. Default (Stripe): none, or the `default_settings.on_behalf_of` account where that is set. Removing it from the configuration leaves the current value.
 * `type` - (Required) Type of the account referenced. Possible values: `account`, `self`.
 
 <a id="default_settings.transfer_data"></a>
@@ -176,7 +176,7 @@ The `default_settings.invoice_settings.issuer` attribute supports:
 
 The `default_settings.transfer_data` attribute supports:
 
-* `amount_percent` - (Optional) A non-negative decimal between 0 and 100, with at most two decimal places. This represents the percentage of the subscription invoice total that will be transferred to the destination account. By default, the entire amount is transferred to the destination.
+* `amount_percent` - (Optional) A non-negative decimal between 0 and 100, with at most two decimal places. This represents the percentage of the subscription invoice total that will be transferred to the destination account. By default, the entire amount is transferred to the destination. Default: none.
 * `destination` - (Required) The account where funds from the payment will be transferred to upon payment success.
 
 <a id="phases"></a>
@@ -185,40 +185,40 @@ The `default_settings.transfer_data` attribute supports:
 The `phases` attribute is a list. Each element supports:
 
 * `add_invoice_items` - (Optional) A list of prices and quantities that will generate invoice items appended to the next invoice for this phase. Removing it from the configuration lets Stripe set it when the list is next sent. See [`phases.add_invoice_items`](#phases.add_invoice_items) below.
-* `application_fee_percent` - (Optional) A non-negative decimal between 0 and 100, with at most two decimal places. This represents the percentage of the subscription invoice total that will be transferred to the application owner's Stripe account during this phase of the schedule.
+* `application_fee_percent` - (Optional) A non-negative decimal between 0 and 100, with at most two decimal places. This represents the percentage of the subscription invoice total that will be transferred to the application owner's Stripe account during this phase of the schedule. Stripe refused it on a US account on update: "You can only apply an `application_fee_percent` when the request is made on behalf of another account (using an OAuth key or the Stripe-Account header).". Default: none.
 * `automatic_tax` - (Optional) Removing it from the configuration lets Stripe set it when the list is next sent. See [`phases.automatic_tax`](#phases.automatic_tax) below.
-* `billing_cycle_anchor` - (Optional) Possible values are `phase_start` or `automatic`. If `phase_start` then billing cycle anchor of the subscription is set to the start of the phase when entering the phase. If `automatic` then the billing cycle anchor is automatically modified as needed when entering the phase. For more information, see the billing cycle [documentation](https://docs.stripe.com/billing/subscriptions/billing-cycle). Possible values: `automatic`, `phase_start`.
+* `billing_cycle_anchor` - (Optional) Possible values are `phase_start` or `automatic`. If `phase_start` then billing cycle anchor of the subscription is set to the start of the phase when entering the phase. If `automatic` then the billing cycle anchor is automatically modified as needed when entering the phase. For more information, see the billing cycle [documentation](https://docs.stripe.com/billing/subscriptions/billing-cycle). Possible values: `automatic`, `phase_start`. Default: none.
 * `billing_thresholds` - (Optional) Define thresholds at which an invoice will be sent, and the subscription advanced to a new billing period See [`phases.billing_thresholds`](#phases.billing_thresholds) below.
-* `collection_method` - (Optional) Either `charge_automatically`, or `send_invoice`. When charging automatically, Stripe will attempt to pay the underlying subscription at the end of each billing cycle using the default source attached to the customer. When sending an invoice, Stripe will email your customer an invoice with payment instructions and mark the subscription as `active`. Possible values: `charge_automatically`, `send_invoice`.
-* `currency` - (Optional) Three-letter [ISO currency code](https://www.iso.org/iso-4217-currency-codes.html), in lowercase. Must be a [supported currency](https://stripe.com/docs/currencies). Removing it from the configuration lets Stripe set it when the list is next sent.
-* `default_payment_method` - (Optional) ID of the default payment method for the subscription schedule. It must belong to the customer associated with the subscription schedule. If not set, invoices will use the default payment method in the customer's invoice settings.
+* `collection_method` - (Optional) Either `charge_automatically`, or `send_invoice`. When charging automatically, Stripe will attempt to pay the underlying subscription at the end of each billing cycle using the default source attached to the customer. When sending an invoice, Stripe will email your customer an invoice with payment instructions and mark the subscription as `active`. Possible values: `charge_automatically`, `send_invoice`. Default: none.
+* `currency` - (Optional) Three-letter [ISO currency code](https://www.iso.org/iso-4217-currency-codes.html), in lowercase. Must be a [supported currency](https://stripe.com/docs/currencies). Default (Stripe): the currency of the phase's items (`["usd"]` on a US account). Removing it from the configuration lets Stripe set it when the list is next sent.
+* `default_payment_method` - (Optional) ID of the default payment method for the subscription schedule. It must belong to the customer associated with the subscription schedule. If not set, invoices will use the default payment method in the customer's invoice settings. Default: none.
 * `default_tax_rates` - (Optional) The default tax rates to apply to the subscription during this phase of the subscription schedule.
-* `description` - (Optional) Subscription description, meant to be displayable to the customer. Use this field to optionally store an explanation of the subscription for rendering in Stripe surfaces and certain local payment methods UIs.
+* `description` - (Optional) Subscription description, meant to be displayable to the customer. Use this field to optionally store an explanation of the subscription for rendering in Stripe surfaces and certain local payment methods UIs. Default: none.
 * `discounts` - (Optional) The stackable discounts that will be applied to the subscription on this phase. Subscription item discounts are applied before subscription discounts. Removing it from the configuration lets Stripe set it when the list is next sent. See [`phases.discounts`](#phases.discounts) below.
 * `duration` - (Optional) See [`phases.duration`](#phases.duration) below.
-* `end_date` - (Optional) The end of this phase of the subscription schedule. Removing it from the configuration lets Stripe set it when the list is next sent.
-* `invoice_settings` - (Optional) The invoice settings applicable during this phase. See [`phases.invoice_settings`](#phases.invoice_settings) below.
+* `end_date` - (Optional) The end of this phase of the subscription schedule. Default (Stripe): the phase's start and its duration. Removing it from the configuration lets Stripe set it when the list is next sent.
+* `invoice_settings` - (Optional) The invoice settings applicable during this phase. Removing it from the configuration lets Stripe set it when the list is next sent. See [`phases.invoice_settings`](#phases.invoice_settings) below.
 * `items` - (Required) Subscription items to configure the subscription to during this phase of the subscription schedule. See [`phases.items`](#phases.items) below.
-* `metadata` - (Optional) Set of [key-value pairs](https://docs.stripe.com/api/metadata) that you can attach to a phase. Metadata on a schedule's phase will update the underlying subscription's `metadata` when the phase is entered. Updating the underlying subscription's `metadata` directly will not affect the current phase's `metadata`.
-* `on_behalf_of` - (Optional) The account (if any) the charge was made on behalf of for charges associated with the schedule's subscription. See the Connect documentation for details.
-* `proration_behavior` - (Optional) When transitioning phases, controls how prorations are handled (if any). Possible values are `create_prorations`, `none`, and `always_invoice`. Possible values: `always_invoice`, `create_prorations`, `none`. Removing it from the configuration lets Stripe set it when the list is next sent.
+* `metadata` - (Optional) Set of [key-value pairs](https://docs.stripe.com/api/metadata) that you can attach to a phase. Metadata on a schedule's phase will update the underlying subscription's `metadata` when the phase is entered. Updating the underlying subscription's `metadata` directly will not affect the current phase's `metadata`. Default (Stripe): `{}`.
+* `on_behalf_of` - (Optional) The account (if any) the charge was made on behalf of for charges associated with the schedule's subscription. See the Connect documentation for details. Default: none.
+* `proration_behavior` - (Optional) When transitioning phases, controls how prorations are handled (if any). Possible values are `create_prorations`, `none`, and `always_invoice`. Possible values: `always_invoice`, `create_prorations`, `none`. Default (Stripe): `create_prorations`. Removing it from the configuration lets Stripe set it when the list is next sent.
 * `start_date` - (Optional) The start of this phase of the subscription schedule. Default: not sent. Removing it from the configuration lets Stripe set it when the list is next sent.
 * `transfer_data` - (Optional) The account (if any) the associated subscription's payments will be attributed to for tax reporting, and where funds from each payment will be transferred to for each of the subscription's invoices. See [`phases.transfer_data`](#phases.transfer_data) below.
-* `trial` - (Optional) If set to true the entire phase is counted as a trial and the customer will not be charged for any fees. Removing it from the configuration lets Stripe set it when the list is next sent.
-* `trial_end` - (Optional) When the trial ends within the phase.
+* `trial` - (Optional) If set to true the entire phase is counted as a trial and the customer will not be charged for any fees. Default: none. Removing it from the configuration lets Stripe set it when the list is next sent.
+* `trial_end` - (Optional) When the trial ends within the phase. Default (Stripe): none, or a time Stripe sets where `trial` is true. Removing it from the configuration lets Stripe set it when the list is next sent.
 
 <a id="phases.add_invoice_items"></a>
 ### `phases.add_invoice_items`
 
 The `phases.add_invoice_items` attribute is a list. Each element supports:
 
-* `discountable` - (Optional) Controls whether discounts apply to this invoice item. Defaults to true if no value is provided.
+* `discountable` - (Optional) Controls whether discounts apply to this invoice item. Defaults to true if no value is provided. Removing it from the configuration lets Stripe set it when the list is next sent.
 * `discounts` - (Optional) The stackable discounts that will be applied to the item. Removing it from the configuration lets Stripe set it when the list is next sent. See [`phases.add_invoice_items.discounts`](#phases.add_invoice_items.discounts) below.
 * `metadata` - (Optional) Set of [key-value pairs](https://docs.stripe.com/api/metadata) that you can attach to an object. This can be useful for storing additional information about the object in a structured format.
 * `period` - (Optional) Removing it from the configuration lets Stripe set it when the list is next sent. See [`phases.add_invoice_items.period`](#phases.add_invoice_items.period) below.
 * `price` - (Optional) ID of the price used to generate the invoice item. Removing it from the configuration lets Stripe set it when the list is next sent.
 * `price_data` - (Optional) See [`phases.add_invoice_items.price_data`](#phases.add_invoice_items.price_data) below.
-* `quantity` - (Optional) The quantity of the invoice item.
+* `quantity` - (Optional) The quantity of the invoice item. Removing it from the configuration lets Stripe set it when the list is next sent.
 * `tax_rates` - (Optional) The tax rates which apply to the item. When set, the `default_tax_rates` do not apply to this item.
 
 <a id="phases.add_invoice_items.discounts"></a>
@@ -226,9 +226,9 @@ The `phases.add_invoice_items` attribute is a list. Each element supports:
 
 The `phases.add_invoice_items.discounts` attribute is a list. Each element supports:
 
-* `coupon` - (Optional) ID of the coupon to create a new discount for.
-* `discount` - (Optional) ID of an existing discount on the object (or one of its ancestors) to reuse.
-* `promotion_code` - (Optional) ID of the promotion code to create a new discount for.
+* `coupon` - (Optional) ID of the coupon to create a new discount for. Default: none.
+* `discount` - (Optional) ID of an existing discount on the object (or one of its ancestors) to reuse. Stripe refused it on a US account on create and update: "No such discount: 'di_...'". Default: none.
+* `promotion_code` - (Optional) ID of the promotion code to create a new discount for. Default: none.
 
 <a id="phases.add_invoice_items.period"></a>
 ### `phases.add_invoice_items.period`
@@ -243,7 +243,7 @@ The `phases.add_invoice_items.period` attribute supports:
 
 The `phases.add_invoice_items.period.end` attribute supports:
 
-* `timestamp` - (Optional) A precise Unix timestamp for the end of the invoice item period. Must be greater than or equal to `period.start`.
+* `timestamp` - (Optional) A precise Unix timestamp for the end of the invoice item period. Must be greater than or equal to `period.start`. Default: none.
 * `type` - (Required) Select how to calculate the end of the invoice item period. Possible values: `min_item_period_end`, `phase_end`, `timestamp`.
 
 <a id="phases.add_invoice_items.period.start"></a>
@@ -251,7 +251,7 @@ The `phases.add_invoice_items.period.end` attribute supports:
 
 The `phases.add_invoice_items.period.start` attribute supports:
 
-* `timestamp` - (Optional) A precise Unix timestamp for the start of the invoice item period. Must be less than or equal to `period.end`.
+* `timestamp` - (Optional) A precise Unix timestamp for the start of the invoice item period. Must be less than or equal to `period.end`. Default: none.
 * `type` - (Required) Select how to calculate the start of the invoice item period. Possible values: `max_item_period_start`, `phase_start`, `timestamp`.
 
 <a id="phases.add_invoice_items.price_data"></a>
@@ -279,7 +279,7 @@ The `phases.automatic_tax` attribute supports:
 
 The `phases.automatic_tax.liability` attribute supports:
 
-* `account` - (Optional) The connected account being referenced when `type` is `account`.
+* `account` - (Optional) The connected account being referenced when `type` is `account`. Default: none.
 * `type` - (Required) Type of the account referenced. Possible values: `account`, `self`.
 
 <a id="phases.billing_thresholds"></a>
@@ -287,17 +287,17 @@ The `phases.automatic_tax.liability` attribute supports:
 
 The `phases.billing_thresholds` attribute supports:
 
-* `amount_gte` - (Optional) Monetary threshold that triggers the subscription to create an invoice
-* `reset_billing_cycle_anchor` - (Optional) Indicates if the `billing_cycle_anchor` should be reset when a threshold is reached. If true, `billing_cycle_anchor` will be updated to the date/time the threshold was last reached; otherwise, the value will remain unchanged. This value may not be `true` if the subscription contains items with plans that have `aggregate_usage=last_ever`.
+* `amount_gte` - (Optional) Monetary threshold that triggers the subscription to create an invoice. Default: none.
+* `reset_billing_cycle_anchor` - (Optional) Indicates if the `billing_cycle_anchor` should be reset when a threshold is reached. If true, `billing_cycle_anchor` will be updated to the date/time the threshold was last reached; otherwise, the value will remain unchanged. This value may not be `true` if the subscription contains items with plans that have `aggregate_usage=last_ever`. Default: none.
 
 <a id="phases.discounts"></a>
 ### `phases.discounts`
 
 The `phases.discounts` attribute is a list. Each element supports:
 
-* `coupon` - (Optional) ID of the coupon to create a new discount for.
-* `discount` - (Optional) ID of an existing discount on the object (or one of its ancestors) to reuse.
-* `promotion_code` - (Optional) ID of the promotion code to create a new discount for.
+* `coupon` - (Optional) ID of the coupon to create a new discount for. Default: none.
+* `discount` - (Optional) ID of an existing discount on the object (or one of its ancestors) to reuse. Stripe refused it on a US account on create and update: "No such discount: 'di_...'". Default: none.
+* `promotion_code` - (Optional) ID of the promotion code to create a new discount for. Default: none.
 
 <a id="phases.duration"></a>
 ### `phases.duration`
@@ -312,12 +312,12 @@ The `phases.duration` attribute supports:
 
 The `phases.invoice_settings` attribute supports:
 
-* `account_tax_ids` - (Optional) The account tax IDs associated with this phase of the subscription schedule. Will be set on invoices generated by this phase of the subscription schedule.
+* `account_tax_ids` - (Optional) The account tax IDs associated with this phase of the subscription schedule. Will be set on invoices generated by this phase of the subscription schedule. Default: none.
 * `custom_fields` - (Optional) A list of up to 4 custom fields to be displayed on the invoice. See [`phases.invoice_settings.custom_fields`](#phases.invoice_settings.custom_fields) below.
-* `days_until_due` - (Optional) Number of days within which a customer must pay invoices generated by this subscription schedule. This value will be `null` for subscription schedules where `billing=charge_automatically`.
-* `description` - (Optional) An arbitrary string attached to the object. Often useful for displaying to users.
-* `footer` - (Optional) Footer to be displayed on the invoice.
-* `issuer` - (Optional) The connected account that issues the invoice. The invoice is presented with the branding and support information of the specified account. See [`phases.invoice_settings.issuer`](#phases.invoice_settings.issuer) below.
+* `days_until_due` - (Optional) Number of days within which a customer must pay invoices generated by this subscription schedule. This value will be `null` for subscription schedules where `billing=charge_automatically`. Default: none.
+* `description` - (Optional) An arbitrary string attached to the object. Often useful for displaying to users. Default: none.
+* `footer` - (Optional) Footer to be displayed on the invoice. Default: none.
+* `issuer` - (Optional) The connected account that issues the invoice. The invoice is presented with the branding and support information of the specified account. Removing it from the configuration lets Stripe set it when the list is next sent. See [`phases.invoice_settings.issuer`](#phases.invoice_settings.issuer) below.
 
 <a id="phases.invoice_settings.custom_fields"></a>
 ### `phases.invoice_settings.custom_fields`
@@ -332,7 +332,7 @@ The `phases.invoice_settings.custom_fields` attribute is a list. Each element su
 
 The `phases.invoice_settings.issuer` attribute supports:
 
-* `account` - (Optional) The connected account being referenced when `type` is `account`.
+* `account` - (Optional) The connected account being referenced when `type` is `account`. Default (Stripe): none, or the phase's `on_behalf_of` account where that is set. Removing it from the configuration lets Stripe set it when the list is next sent.
 * `type` - (Required) Type of the account referenced. Possible values: `account`, `self`.
 
 <a id="phases.items"></a>
@@ -342,7 +342,7 @@ The `phases.items` attribute is a list. Each element supports:
 
 * `billing_thresholds` - (Optional) Define thresholds at which an invoice will be sent, and the related subscription advanced to a new billing period See [`phases.items.billing_thresholds`](#phases.items.billing_thresholds) below.
 * `discounts` - (Optional) The discounts applied to the subscription item. Subscription item discounts are applied before subscription discounts. Use `expand[]=discounts` to expand each discount. Removing it from the configuration lets Stripe set it when the list is next sent. See [`phases.items.discounts`](#phases.items.discounts) below.
-* `metadata` - (Optional) Set of [key-value pairs](https://docs.stripe.com/api/metadata) that you can attach to an item. Metadata on this item will update the underlying subscription item's `metadata` when the phase is entered.
+* `metadata` - (Optional) Set of [key-value pairs](https://docs.stripe.com/api/metadata) that you can attach to an item. Metadata on this item will update the underlying subscription item's `metadata` when the phase is entered. Default (Stripe): `{}`.
 * `price` - (Optional) ID of the price to which the customer should be subscribed. Removing it from the configuration lets Stripe set it when the list is next sent.
 * `price_data` - (Optional) See [`phases.items.price_data`](#phases.items.price_data) below.
 * `quantity` - (Optional) Quantity of the plan to which the customer should be subscribed. Removing it from the configuration lets Stripe set it when the list is next sent.
@@ -360,9 +360,9 @@ The `phases.items.billing_thresholds` attribute supports:
 
 The `phases.items.discounts` attribute is a list. Each element supports:
 
-* `coupon` - (Optional) ID of the coupon to create a new discount for.
-* `discount` - (Optional) ID of an existing discount on the object (or one of its ancestors) to reuse.
-* `promotion_code` - (Optional) ID of the promotion code to create a new discount for.
+* `coupon` - (Optional) ID of the coupon to create a new discount for. Default: none.
+* `discount` - (Optional) ID of an existing discount on the object (or one of its ancestors) to reuse. Stripe refused it on a US account on create and update: "No such discount: 'di_...'". Default: none.
+* `promotion_code` - (Optional) ID of the promotion code to create a new discount for. Default: none.
 
 <a id="phases.items.price_data"></a>
 ### `phases.items.price_data`
@@ -403,6 +403,7 @@ This resource exports the following attributes in addition to the arguments abov
 * `created` - Time at which the object was created. Measured in seconds since the Unix epoch.
 * `current_phase` - Object representing the start and end dates for the current phase of the subscription schedule, if it is `active`. See [`current_phase`](#current_phase) below.
 * `livemode` - If the object exists in live mode, the value is `true`. If the object exists in test mode, the value is `false`.
+* `pause_schedules` - The pause schedules for this subscription schedule. See [`pause_schedules`](#pause_schedules) below.
 * `released_at` - Time at which the subscription schedule was released. Measured in seconds since the Unix epoch.
 * `released_subscription` - ID of the subscription once managed by the subscription schedule (if it is released).
 * `subscription` - ID of the subscription managed by the subscription schedule.
@@ -415,6 +416,105 @@ The `current_phase` attribute supports:
 
 * `end_date` - The end of this phase of the subscription schedule.
 * `start_date` - The start of this phase of the subscription schedule.
+
+<a id="pause_schedules"></a>
+### `pause_schedules`
+
+The `pause_schedules` attribute is a list. Each element supports:
+
+* `key` - A unique identifier for this pause schedule.
+* `pause` - See [`pause_schedules.pause`](#pause_schedules.pause) below.
+* `resume` - Details about when and how the subscription resumes. See [`pause_schedules.resume`](#pause_schedules.resume) below.
+
+<a id="pause_schedules.pause"></a>
+### `pause_schedules.pause`
+
+The `pause_schedules.pause` attribute supports:
+
+* `pause_at` - Time at which the subscription pauses.
+* `settings` - Settings controlling billing behavior during the pause. See [`pause_schedules.pause.settings`](#pause_schedules.pause.settings) below.
+* `status` - See [`pause_schedules.pause.status`](#pause_schedules.pause.status) below.
+
+<a id="pause_schedules.pause.settings"></a>
+### `pause_schedules.pause.settings`
+
+The `pause_schedules.pause.settings` attribute supports:
+
+* `bill_for` - See [`pause_schedules.pause.settings.bill_for`](#pause_schedules.pause.settings.bill_for) below.
+* `invoicing_behavior` - Determines how to handle debits and credits when pausing. Possible values: `invoice`, `pending_invoice_item`.
+* `type` - The type of pause settings. Possible values: `subscription`.
+
+<a id="pause_schedules.pause.settings.bill_for"></a>
+### `pause_schedules.pause.settings.bill_for`
+
+The `pause_schedules.pause.settings.bill_for` attribute supports:
+
+* `outstanding_usage_through` - See [`pause_schedules.pause.settings.bill_for.outstanding_usage_through`](#pause_schedules.pause.settings.bill_for.outstanding_usage_through) below.
+* `unused_time_from` - See [`pause_schedules.pause.settings.bill_for.unused_time_from`](#pause_schedules.pause.settings.bill_for.unused_time_from) below.
+
+<a id="pause_schedules.pause.settings.bill_for.outstanding_usage_through"></a>
+### `pause_schedules.pause.settings.bill_for.outstanding_usage_through`
+
+The `pause_schedules.pause.settings.bill_for.outstanding_usage_through` attribute supports:
+
+* `type` - The type of outstanding usage billing behavior. Possible values: `none`, `pause_at`.
+
+<a id="pause_schedules.pause.settings.bill_for.unused_time_from"></a>
+### `pause_schedules.pause.settings.bill_for.unused_time_from`
+
+The `pause_schedules.pause.settings.bill_for.unused_time_from` attribute supports:
+
+* `type` - The type of unused time credit behavior. Possible values: `item_current_period_start`, `none`, `pause_at`.
+
+<a id="pause_schedules.pause.status"></a>
+### `pause_schedules.pause.status`
+
+The `pause_schedules.pause.status` attribute supports:
+
+* `error` - See [`pause_schedules.pause.status.error`](#pause_schedules.pause.status.error) below.
+* `type` - The lifecycle state of the pause operation. Possible values: `error`, `scheduled`, `succeeded`.
+
+<a id="pause_schedules.pause.status.error"></a>
+### `pause_schedules.pause.status.error`
+
+The `pause_schedules.pause.status.error` attribute supports:
+
+* `code` - A machine-readable error code.
+* `message` - A description of the error.
+
+<a id="pause_schedules.resume"></a>
+### `pause_schedules.resume`
+
+The `pause_schedules.resume` attribute supports:
+
+* `resume_at` - Time at which the subscription resumes.
+* `settings` - See [`pause_schedules.resume.settings`](#pause_schedules.resume.settings) below.
+* `status` - See [`pause_schedules.resume.status`](#pause_schedules.resume.status) below.
+
+<a id="pause_schedules.resume.settings"></a>
+### `pause_schedules.resume.settings`
+
+The `pause_schedules.resume.settings` attribute supports:
+
+* `billing_cycle_anchor` - The billing cycle anchor that applies when the subscription is resumed. Possible values: `resume_at`, `unchanged`.
+* `payment_behavior` - Controls whether Stripe attempts payment on the resumption invoice and how that affects the subscription's status. Possible values: `resume_on_payment_attempt`, `resume_on_payment_success`.
+* `proration_behavior` - Determines how to handle prorations resulting from the billing_cycle_anchor change on resume. Possible values: `always_invoice`, `create_prorations`, `none`.
+
+<a id="pause_schedules.resume.status"></a>
+### `pause_schedules.resume.status`
+
+The `pause_schedules.resume.status` attribute supports:
+
+* `error` - See [`pause_schedules.resume.status.error`](#pause_schedules.resume.status.error) below.
+* `type` - The lifecycle state of the resume operation. Possible values: `error`, `pending`, `requires_action`, `scheduled`, `succeeded`.
+
+<a id="pause_schedules.resume.status.error"></a>
+### `pause_schedules.resume.status.error`
+
+The `pause_schedules.resume.status.error` attribute supports:
+
+* `code` - A machine-readable error code.
+* `message` - A description of the error.
 
 ## Timeouts
 

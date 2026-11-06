@@ -114,6 +114,7 @@ type Evidence struct {
 	EmbeddedCopies json.RawMessage `json:"embedded_copies,omitempty"`
 	PagedLists     json.RawMessage `json:"paged_lists,omitempty"`
 	Discounts      []Discount      `json:"discounts"`
+	HashUnsets     []HashUnset     `json:"hash_unsets,omitempty"`
 	Countries      json.RawMessage `json:"countries,omitempty"`
 }
 
@@ -254,6 +255,9 @@ type RuleObservation struct {
 		Probe       string          `json:"probe,omitempty"`
 		Params      json.RawMessage `json:"params,omitempty"`
 		CreatedWith json.RawMessage `json:"created_with,omitempty"`
+		// When, on a claim (an observation of a claim rule), describes the state the probe
+		// brought the object to, whose response held the value.
+		When string `json:"when,omitempty"`
 	} `json:"condition"`
 	Value RuleValue `json:"value"`
 }
@@ -274,7 +278,14 @@ type RuleValue struct {
 // which says when Stripe takes an argument rather than what it defaults to. A Beside rule's
 // observations name their probes too, but hold what the response path held.
 func (r EvidenceRule) answer() bool {
-	return r.Beside == "" && len(r.Observations) > 0 && r.Observations[0].Condition.Probe != ""
+	return r.Beside == "" && !r.claim() && len(r.Observations) > 0 && r.Observations[0].Condition.Probe != ""
+}
+
+// claim reports a rule whose observations are what the response path held in the states its
+// probes brought the object to, each described in `when`, such as the pending invoice items a
+// subscription item's change of price makes. It records behaviour and words no default.
+func (r EvidenceRule) claim() bool {
+	return r.Beside == "" && len(r.Observations) > 0 && r.Observations[0].Condition.When != ""
 }
 
 // Matcher is what a response path held, in every form the format defines. Each kind carries the
@@ -305,6 +316,10 @@ type SideEffect struct {
 	Probe     string `json:"probe"`
 	// Triggers are the request leaves the update sent, which the effect is known to follow.
 	Triggers []string `json:"triggers"`
+	// Sent gives each trigger the value the update sent there: the effect is known to follow
+	// the triggers at these values only, so a declaration that relies on it says where it
+	// applies.
+	Sent map[string]json.RawMessage `json:"sent"`
 	// Carried are the leaves the update sent beside the triggers, with the values sent: the
 	// effect is known to follow the triggers only with these beside them.
 	Carried map[string]json.RawMessage `json:"carried,omitempty"`
@@ -317,6 +332,37 @@ type ChangedPath struct {
 	Path   string          `json:"path"`
 	Before json.RawMessage `json:"before"`
 	After  json.RawMessage `json:"after"`
+}
+
+// checkSent refuses a side effect that does not give each of its triggers, and nothing else, the
+// value the update sent, without which a reader could apply the effect to another value.
+func (s SideEffect) checkSent() error {
+	for i, t := range s.Triggers {
+		if slices.Contains(s.Triggers[:i], t) {
+			return fmt.Errorf("trigger %q is listed twice", t)
+		}
+		if v, ok := s.Sent[t]; !ok || len(v) == 0 {
+			return fmt.Errorf("sent gives no value for trigger %q", t)
+		}
+	}
+	for _, k := range slices.Sorted(maps.Keys(s.Sent)) {
+		if !slices.Contains(s.Triggers, k) {
+			return fmt.Errorf("sent gives a value for %q, which is not a trigger", k)
+		}
+	}
+	return nil
+}
+
+// HashUnset is what an update that sent a hash empty, whole, left at the hash's path: the way
+// the provider removes such a block.
+type HashUnset struct {
+	Object    string `json:"object"`
+	Operation string `json:"operation"`
+	// Hash is the request path of the hash.
+	Hash   string   `json:"hash"`
+	By     string   `json:"by"`
+	Result string   `json:"result"`
+	Tests  []string `json:"tests"`
 }
 
 // FilledFrom is a field Stripe fills from another (P5).
@@ -395,11 +441,15 @@ var (
 	discountReturns = []string{DiscountID, "discount_hash", DiscountObject}
 	// discountRelations gives, by form, what the discount Stripe returns was made from.
 	discountRelations = map[string]string{"coupon": "coupon", "discount": "existing_discount", "promotion_code": "promotion_code"}
-	mapUpdates        = []string{MapMerged, MapReplaced}
-	mapEmptyBy        = []string{"empty_string", "null"}
-	mapEmptyResults   = []string{MapRemoved, "stored"}
-	matcherKinds      = []string{"sent", "normalised", "value", "null", "absent", "id", "created", "ref", "account_id", "account", "from", "timestamp", "url", "secret", "list", "unchanged", "fingerprint", "day_within", "time_within"}
-	hashUpdates       = []string{HashSiblingsKept, HashSiblingsCleared, HashRefused}
+	// hashUnsetBy and hashUnsetResults are how an update sent a hash empty and what the
+	// response then held at its path.
+	hashUnsetBy      = []string{"empty_string", "null"}
+	hashUnsetResults = []string{"absent", "null"}
+	mapUpdates       = []string{MapMerged, MapReplaced}
+	mapEmptyBy       = []string{"empty_string", "null"}
+	mapEmptyResults  = []string{MapRemoved, "stored"}
+	matcherKinds     = []string{"sent", "normalised", "value", "null", "absent", "id", "created", "ref", "account_id", "account", "from", "timestamp", "url", "secret", "list", "unchanged", "fingerprint", "day_within", "time_within"}
+	hashUpdates      = []string{HashSiblingsKept, HashSiblingsCleared, HashRefused}
 )
 
 // minimalCreate is one variant of a minimal create in the record: what it sent and what each
@@ -685,8 +735,8 @@ func (e *Evidence) check() error {
 		if d.Kind == "rule" && (d.RuleRef == nil || *d.RuleRef < 0 || *d.RuleRef >= len(e.Rules)) {
 			return fmt.Errorf("%s has a rule default with no rule", k)
 		}
-		if d.Kind == "rule" && e.Rules[*d.RuleRef].answer() {
-			return fmt.Errorf("%s has for its default rule %d, which answers probes and words no default", k, *d.RuleRef)
+		if d.Kind == "rule" && (e.Rules[*d.RuleRef].answer() || e.Rules[*d.RuleRef].claim()) {
+			return fmt.Errorf("%s has for its default rule %d, which answers probes or claims a state's value and words no default", k, *d.RuleRef)
 		}
 		for _, v := range d.Variants {
 			if err := checkDefault(k, &v.Default); err != nil {
@@ -729,11 +779,29 @@ func (e *Evidence) check() error {
 		}
 	}
 	for _, s := range e.SideEffects {
+		if err := s.checkSent(); err != nil {
+			return fmt.Errorf("side effect %s %s %s: %w", s.Object, s.Operation, s.Probe, err)
+		}
 		for leaf, v := range s.Carried {
 			if leaf == "" || len(v) == 0 || slices.Contains(s.Triggers, leaf) {
 				return fmt.Errorf("side effect %s %s %s: carried %q is empty or one of its triggers", s.Object, s.Operation, s.Probe, leaf)
 			}
 		}
+	}
+	unsets := map[[3]string]bool{}
+	for _, u := range e.HashUnsets {
+		at := u.Object + " " + u.Operation + " " + u.Hash
+		if err := errors.Join(unknown(at+": hash unset by", u.By, hashUnsetBy), unknown(at+": hash unset result", u.Result, hashUnsetResults)); err != nil {
+			return err
+		}
+		k := [3]string{u.Object, u.Operation, u.Hash}
+		switch {
+		case u.Object == "" || u.Operation == "" || u.Hash == "":
+			return fmt.Errorf("hash unset %q: no object, operation or hash", at)
+		case unsets[k]:
+			return fmt.Errorf("hash unset %s given twice", at)
+		}
+		unsets[k] = true
 	}
 	for _, r := range e.Rules {
 		if err := r.checkBeside(); err != nil {
@@ -870,16 +938,32 @@ func (l EvidenceLeaf) checkUnreachable() error {
 }
 
 // checkObservation refuses an observation of a form the generator cannot weigh: answers beside a
-// default's observations in one rule, either holding the other's members, an answer with no
-// params or with another status than a success or a refusal, a refusal with no message, an
-// acceptance that also refuses, and a matcher kind outside the format's.
+// default's observations in one rule, or claims beside either, one holding another's members,
+// an answer with no params or with another status than a success or a refusal, a refusal with
+// no message, an acceptance that also refuses, a claim with no probe, and a matcher kind outside
+// the format's.
 func (r EvidenceRule) checkObservation(o RuleObservation) error {
 	c, v := o.Condition, o.Value
+	answerMembers := c.Variant != "" || c.CreatedWith != nil || v.Status != 0 || v.Read != nil || v.Message != "" || v.Type != "" || v.Code != "" || v.Param != ""
+	if (c.When != "") != r.claim() {
+		return errors.New("a rule mixes claims with other observations")
+	}
+	if r.claim() {
+		switch {
+		case c.Probe == "":
+			return errors.New("a claim names no probe")
+		case c.Params != nil || answerMembers:
+			return fmt.Errorf("claim %s holds an answer's or a default's members", c.Probe)
+		case !slices.Contains(matcherKinds, v.Kind):
+			return fmt.Errorf("kind %q is not one the generator knows (%s)", v.Kind, strings.Join(matcherKinds, ", "))
+		}
+		return nil
+	}
 	if r.Beside != "" {
 		switch {
 		case c.Probe == "" || c.Params == nil:
 			return errors.New("a beside rule's observation names no probe or params")
-		case c.Variant != "" || c.CreatedWith != nil || v.Status != 0 || v.Read != nil || v.Message != "" || v.Type != "" || v.Code != "" || v.Param != "":
+		case answerMembers:
 			return fmt.Errorf("beside rule observation %s holds an answer's members", c.Probe)
 		case !slices.Contains(matcherKinds, v.Kind):
 			return fmt.Errorf("kind %q is not one the generator knows (%s)", v.Kind, strings.Join(matcherKinds, ", "))

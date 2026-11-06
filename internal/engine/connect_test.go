@@ -868,6 +868,132 @@ func TestSendChangedMembers(t *testing.T) {
 	}
 }
 
+// A hash the table marks MembersAlone, which suite probes prove Stripe takes each member of
+// alone, sends only its changed members, as an entry of SendChangedMembers does, and leaves out
+// a nested hash that differs only by computed members the plan leaves unknown, as a v2
+// recipient's `stripe_transfers` does beside a change of `applied`; a declaration that names it
+// as well is refused.
+func TestMembersAloneSendsTheChangedMember(t *testing.T) {
+	member := func(name string, shape fields.Shape) fields.Field {
+		return fields.Field{Name: name, Shape: shape, Create: true, Update: true, Response: true}
+	}
+	person := member("person", fields.Object)
+	person.MembersAlone = true
+	limit := member("limit", fields.Object)
+	limit.Fields = []fields.Field{{Name: "max", Shape: fields.Int, Required: true, Create: true, Update: true}, {Name: "status", Shape: fields.String, Response: true}}
+	person.Fields = []fields.Field{member("first", fields.String), member("last", fields.String), limit}
+	decl := fixtureDeclaration()
+	r := configured(t, decl, append(refuseTable(), person), noCalls(t))
+	personType := r.objType.AttrTypes["person"].(basetypes.ObjectType).AttrTypes
+	limitType := personType["limit"].(basetypes.ObjectType).AttrTypes
+	build := func(first string, status types.String) attr.Value {
+		return types.ObjectValueMust(personType, map[string]attr.Value{
+			"first": types.StringValue(first), "last": types.StringValue("Rosen"),
+			"limit": types.ObjectValueMust(limitType, map[string]attr.Value{"max": types.Int64Value(5), "status": status}),
+		})
+	}
+	state := r.fill(map[string]attr.Value{"id": types.StringValue("wid_1"), "name": types.StringValue("w"), "person": build("Jenny", types.StringValue("active"))})
+	plan := r.fill(with(state, map[string]attr.Value{"person": build("Jane", types.StringUnknown())}))
+	params, err := r.m.encodeUpdate(plan, state, configOf(t, plan))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got, want := wireOf(t, params), `{"person":{"first":"Jane"}}`; got != want {
+		t.Errorf("update body %s, want %s", got, want)
+	}
+	for _, named := range []func(*Declaration){
+		func(d *Declaration) { d.SendChangedMembers = []string{"person"} },
+		func(d *Declaration) { d.SendWholeMembers = []string{"person"} },
+	} {
+		d := fixtureDeclaration()
+		named(&d)
+		if _, err := compile(d, append(refuseTable(), person)); err == nil || !strings.Contains(err.Error(), "sends its members alone by the table") {
+			t.Errorf("a declaration naming the hash: %v", err)
+		}
+	}
+}
+
+// An update of a MembersAlone hash that changes more than one member, other than a set
+// MembersTogether names, is refused at plan, so that each apply sends what a probe sent: two
+// members of a held hash, or of one the update adds. A member not known at plan that the
+// configuration sets counts as changing, as the apply sends it. Adding the hash with no member
+// configured, which would send nothing of it, is refused too; one Stripe fills in, unknown in the
+// plan and unset in the configuration, is no member set.
+func TestMembersAloneRefusesWhatNoProbeSent(t *testing.T) {
+	member := func(name string, shape fields.Shape) fields.Field {
+		return fields.Field{Name: name, Shape: shape, Create: true, Update: true, Response: true}
+	}
+	limit := member("limit", fields.Object)
+	limit.Fields = []fields.Field{{Name: "max", Shape: fields.Int, Required: true, Create: true, Update: true}, {Name: "status", Shape: fields.String, Response: true}}
+	table := func(together ...[]string) []fields.Field {
+		person := member("person", fields.Object)
+		person.MembersAlone, person.MembersTogether = true, together
+		person.Fields = []fields.Field{member("first", fields.String), member("last", fields.String), limit}
+		return append(refuseTable(), person)
+	}
+	r := configured(t, fixtureDeclaration(), table(), noCalls(t))
+	personType := r.objType.AttrTypes["person"].(basetypes.ObjectType).AttrTypes
+	limitType := personType["limit"].(basetypes.ObjectType).AttrTypes
+	person := func(first, last string, max int64) attr.Value {
+		str := func(s string) types.String {
+			if s == "" {
+				return types.StringNull()
+			}
+			return types.StringValue(s)
+		}
+		lim := types.ObjectNull(limitType)
+		if max > 0 {
+			lim = types.ObjectValueMust(limitType, map[string]attr.Value{"max": types.Int64Value(max), "status": types.StringNull()})
+		}
+		return types.ObjectValueMust(personType, map[string]attr.Value{"first": str(first), "last": str(last), "limit": lim})
+	}
+	unknownFirst := func(last attr.Value) attr.Value {
+		return types.ObjectValueMust(personType, map[string]attr.Value{"first": types.StringUnknown(), "last": last, "limit": types.ObjectNull(limitType)})
+	}
+	base := map[string]attr.Value{"id": types.StringValue("wid_1"), "name": types.StringValue("w")}
+	held := r.fill(with(r.fill(base), map[string]attr.Value{"person": person("Jenny", "Rosen", 5)}))
+	none := r.fill(base)
+	for name, tc := range map[string]struct {
+		state    basetypes.ObjectValue
+		plan     attr.Value
+		together [][]string
+		want     string
+		// config is the configuration's value of the hash where it is not the plan's.
+		config attr.Value
+	}{
+		"one member":                 {held, person("Jane", "Rosen", 5), nil, "", nil},
+		"two members":                {held, person("Jane", "Rosen", 6), nil, "changes `first`, `limit.max` of `person`", nil},
+		"a removed and a changed":    {held, person("Jane", "", 5), nil, "changes `first`, `last` of `person`", nil},
+		"two members a probe sent":   {held, person("Jane", "Rosen", 6), [][]string{{"first", "limit.max"}}, "", nil},
+		"another set than the probe": {held, person("Jane", "Doe", 5), [][]string{{"first", "limit.max"}}, "changes `first`, `last` of `person`", nil},
+		"one member added":           {none, person("", "", 5), nil, "", nil},
+		"two members added":          {none, person("Jane", "", 5), nil, "changes `first`, `limit.max` of `person`", nil},
+		"added with none":            {none, person("", "", 0), nil, "Cannot add `person` with no member set", nil},
+		"an unknown member added":    {none, unknownFirst(types.StringNull()), nil, "", nil},
+		"two unknown members added":  {none, unknownFirst(types.StringUnknown()), nil, "changes `first`, `last` of `person`", nil},
+		"a known and an unknown":     {none, unknownFirst(types.StringValue("Rosen")), nil, "changes `first`, `last` of `person`", nil},
+		"one Stripe fills, added":    {none, unknownFirst(types.StringNull()), nil, "Cannot add `person` with no member set", person("", "", 0)},
+	} {
+		rt := configured(t, fixtureDeclaration(), table(tc.together...), noCalls(t))
+		plan := rt.fill(with(tc.state, map[string]attr.Value{"person": tc.plan}))
+		config := plan
+		if tc.config != nil {
+			config = rt.fill(with(tc.state, map[string]attr.Value{"person": tc.config}))
+		}
+		resp := rt.modifyPlan(t, plan, tc.state, config)
+		var got []string
+		for _, d := range resp.Diagnostics.Errors() {
+			got = append(got, d.Summary()+": "+d.Detail())
+		}
+		switch {
+		case tc.want == "" && len(got) > 0:
+			t.Errorf("%s: %v", name, got)
+		case tc.want != "" && (len(got) != 1 || !strings.Contains(got[0], tc.want)):
+			t.Errorf("%s: %v, want %q", name, got, tc.want)
+		}
+	}
+}
+
 // A hash an update sends whole still sends the keys a merged map in it lost, as null, since
 // Stripe keeps the keys such an update leaves out; a replaced map goes as planned.
 func TestWholeSendsRemoveMergedKeys(t *testing.T) {

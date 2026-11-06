@@ -108,10 +108,13 @@ var Declaration = engine.Declaration{
 		"identity.country": "Stripe took `GB` on an update of an account in `US`, and `US` on an account that had no country, and refused `GB` on an account whose recipient configuration requests `stripe_transfers`.",
 	},
 	SendChangedMembers: []string{"configuration", "defaults", "defaults.profile", "identity"},
-	SendWholeMembers:   []string{"configuration.recipient", "identity.business_details"},
-	ClearsWithNull:     []string{"contact_phone"},
-	PreserveConfig:     []string{"identity.country", "configuration.recipient.capabilities.stripe_balance.stripe_transfers.requested"},
-	KeepWhenClosed:     "closed",
+	// The table sends `configuration.recipient` by its members alone (MembersAlone), which the
+	// record's probes `isolated/change_applied_to_false` and `isolated/transfers_requested_false`
+	// prove; nothing proves a member of `identity.business_details` alone.
+	SendWholeMembers: []string{"identity.business_details"},
+	ClearsWithNull:   []string{"contact_phone"},
+	PreserveConfig:   []string{"identity.country", "configuration.recipient.capabilities.stripe_balance.stripe_transfers.requested"},
+	KeepWhenClosed:   "closed",
 	ServerDefaulted: []string{
 		"configuration", "dashboard", "defaults", "defaults.currency",
 		"identity", "identity.business_details", "identity.business_details.registered_name", "identity.country",

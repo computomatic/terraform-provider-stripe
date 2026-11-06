@@ -4,7 +4,9 @@ import (
 	"fmt"
 	"os"
 	"regexp"
+	"strconv"
 	"testing"
+	"time"
 
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/hashicorp/terraform-plugin-testing/plancheck"
@@ -319,6 +321,80 @@ func TestAccSubscriptionSchedule_drift(t *testing.T) {
 				}},
 				Check: resource.TestCheckResourceAttr(address, "metadata.team", "a"),
 			},
+		}, nil, "stripe_subscription_schedule"),
+	})
+}
+
+// Stripe fills arguments of a phase a create leaves out, which the plan then leaves to it and the
+// next plan keeps: the end of a trial phase (suite: TestSubscriptionScheduleAttributes, probe
+// `every_field/6`) and an added invoice item's `discountable` and `quantity` (`every_field/21`,
+// with the suite's coupon of 10% once on its one-time free price). Each schedule sends what its
+// probe sent, starting a day ahead; neither has a pause schedule, which reads back empty.
+func TestAccSubscriptionSchedule_serverFilled(t *testing.T) {
+	acct := acctest.NewAccount(t)
+	start := strconv.FormatInt(time.Now().Add(24*time.Hour).Unix(), 10)
+	config := acct.ProviderBlock() + fmt.Sprintf(`
+resource "stripe_customer" "test" {
+  email = "schedule-filled@example.com"
+}
+
+resource "stripe_product" "test" {
+  name = %[1]q
+}
+
+resource "stripe_price" "free" {
+  product     = stripe_product.test.id
+  currency    = "usd"
+  unit_amount = 0
+  recurring = {
+    interval = "month"
+  }
+}
+
+resource "stripe_price" "one_time" {
+  product     = stripe_product.test.id
+  currency    = "usd"
+  unit_amount = 0
+}
+
+resource "stripe_coupon" "test" {
+  percent_off = 10
+  duration    = "once"
+}
+
+resource "stripe_subscription_schedule" "trial" {
+  customer   = stripe_customer.test.id
+  start_date = %[2]q
+  phases = [{
+    items    = [{ price = stripe_price.free.id }]
+    duration = { interval = "month" }
+    trial    = true
+  }]
+}
+
+resource "stripe_subscription_schedule" "invoice_item" {
+  customer   = stripe_customer.test.id
+  start_date = %[2]q
+  phases = [{
+    items             = [{ price = stripe_price.free.id }]
+    duration          = { interval = "month" }
+    add_invoice_items = [{ price = stripe_price.one_time.id, discounts = [{ coupon = stripe_coupon.test.id }] }]
+  }]
+}
+`, acct.Name("Plan"), start)
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: tfacc.ProviderFactories,
+		Steps: acctest.Forget(t, []resource.TestStep{
+			{
+				Config: config,
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttrSet("stripe_subscription_schedule.trial", "phases.0.trial_end"),
+					resource.TestCheckResourceAttr("stripe_subscription_schedule.trial", "pause_schedules.#", "0"),
+					resource.TestCheckResourceAttr("stripe_subscription_schedule.invoice_item", "phases.0.add_invoice_items.0.discountable", "true"),
+					resource.TestCheckResourceAttr("stripe_subscription_schedule.invoice_item", "phases.0.add_invoice_items.0.quantity", "1"),
+				),
+			},
+			{Config: config, PlanOnly: true},
 		}, nil, "stripe_subscription_schedule"),
 	})
 }

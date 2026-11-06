@@ -55,15 +55,15 @@ The following arguments are optional:
 
 * `billing_thresholds` - (Optional) Define thresholds at which an invoice will be sent, and the subscription advanced to a new billing period. Pass an empty string to remove previously-defined thresholds. See [`billing_thresholds`](#billing_thresholds) below.
 * `current_trial` - (Optional) The trial offer to apply to this subscription item. See [`current_trial`](#current_trial) below.
-* `discounts` - (Optional) The coupons to redeem into discounts for the subscription item. Changing it replaces the resource. See [`discounts`](#discounts) below.
-* `metadata` - (Optional) Set of [key-value pairs](https://docs.stripe.com/api/metadata) that you can attach to an object. This can be useful for storing additional information about the object in a structured format. Individual keys can be unset by posting an empty value to them. All keys can be unset by posting an empty value to `metadata`.
+* `discounts` - (Optional) The coupons to redeem into discounts for the subscription item. Removing it from the configuration leaves the current value. See [`discounts`](#discounts) below.
+* `metadata` - (Optional) Set of [key-value pairs](https://docs.stripe.com/api/metadata) that you can attach to an object. This can be useful for storing additional information about the object in a structured format. Individual keys can be unset by posting an empty value to them. All keys can be unset by posting an empty value to `metadata`. Default (Stripe): `{}`.
 * `off_session` - (Optional) Indicates if a customer is on or off-session while an invoice payment is attempted. Defaults to `false` (on-session). Default: not sent.
 * `payment_behavior` - (Optional) Controls how Stripe handles payment when a subscription update requires payment and `collection_method=charge_automatically`. Possible values: `allow_incomplete`, `default_incomplete`, `error_if_incomplete`, `pending_if_incomplete`.
 * `price` - (Optional) The ID of the price object. Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
 * `price_data` - (Optional) Data used to generate a new [Price](https://docs.stripe.com/api/prices) object inline. See [`price_data`](#price_data) below.
 * `proration_behavior` - (Optional) Determines how to handle [prorations](https://docs.stripe.com/billing/subscriptions/prorations) when the billing cycle changes (e.g., when switching plans, resetting `billing_cycle_anchor=now`, or starting a trial), or if an item's `quantity` changes. The default value is `create_prorations`. Possible values: `always_invoice`, `create_prorations`, `none`.
 * `proration_date` - (Optional) If set, the proration will be calculated as though the subscription was updated at the given time. This can be used to apply the same proration that was previewed with the [upcoming invoice](https://docs.stripe.com/api/invoices/create_preview) endpoint.
-* `quantity` - (Optional) The quantity you'd like to apply to the subscription item you're creating. Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
+* `quantity` - (Optional) The quantity you'd like to apply to the subscription item you're creating. Removing it from the configuration leaves the current value.
 * `tax_rates` - (Optional) A list of [Tax Rate](https://docs.stripe.com/api/tax_rates) ids. These Tax Rates will override the [`default_tax_rates`](https://docs.stripe.com/api/subscriptions/create#create_subscription-default_tax_rates) on the Subscription. When updating, pass an empty string to remove previously-defined tax rates.
 
 <a id="billing_thresholds"></a>
@@ -87,7 +87,9 @@ The `current_trial` attribute supports:
 
 The `discounts` attribute is a list. Each element supports:
 
-* `discount` - (Optional) Stripe refused it on a US account on create: "No such discount: 'di_...'".
+* `coupon` - (Optional) Stripe takes a coupon that has not expired, and on an update not in the same element as a `discount`. Elsewhere Stripe refused it on a US account on create: "Coupon attrs_expired is expired and cannot be applied.". Elsewhere Stripe refused it on a US account on update: "You may only specify one of these parameters: coupon, discount.".
+* `discount` - (Optional) Stripe refused it on a US account on create: "Discount di_... does not exist on the subscription item. Discounts can only be applied to a subscription item when they already exist on the subscription item.". Stripe refused it on a US account on create: "No such discount: 'di_...'". Stripe takes a discount the item already holds, so only on an update. Elsewhere Stripe refused it on a US account on create: "Discount di_... does not exist on the subscription item. Discounts can only be applied to a subscription item when they already exist on the subscription item.".
+* `promotion_code` - (Optional) Stripe takes an active promotion code. Elsewhere Stripe refused it on a US account on create: "This promotion code is inactive.".
 
 <a id="price_data"></a>
 ### `price_data`
@@ -161,4 +163,4 @@ Using `terraform import`, import a subscription item using its ID. For example:
 % terraform import stripe_subscription_item.addon si_123
 ```
 
-~> Stripe does not return `off_session`, `payment_behavior`, `price_data`, `proration_behavior`, `proration_date` or `discounts`, so an imported subscription item has them null: a configuration that sets `off_session`, `payment_behavior`, `price_data`, `proration_behavior` or `proration_date` plans an update after the import, and one that sets `discounts` plans a replacement.
+-> Stripe does not return `off_session`, `payment_behavior`, `price_data`, `proration_behavior` or `proration_date`, so an imported subscription item has them null: a configuration that sets one plans an update after the import.

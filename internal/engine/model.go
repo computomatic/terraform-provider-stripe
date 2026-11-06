@@ -161,6 +161,14 @@ func compile(decl Declaration, table []fields.Field) (*model, error) {
 		}
 	}
 
+	alone := membersAlone(table, "")
+	for _, path := range alone {
+		if slices.Contains(decl.SendChangedMembers, path) || slices.Contains(decl.SendWholeMembers, path) {
+			return nil, fmt.Errorf("%s: the hash `%s` sends its members alone by the table; the declaration may not name it in SendChangedMembers or SendWholeMembers", decl.TypeName, path)
+		}
+	}
+	decl.SendChangedMembers = append(slices.Clone(decl.SendChangedMembers), alone...)
+
 	c := compiler{
 		decl:         decl,
 		once:         newPathSet(decl.OnceReturned),
@@ -931,6 +939,20 @@ func (m *model) checkMapUpdates() error {
 		return nil
 	}
 	return walk(m.nodes)
+}
+
+// membersAlone is the dotted path of each hash of the table an update sends only the changed
+// members of by the table's MembersAlone, which suite probes prove (the generator's
+// Resource.MembersAlone).
+func membersAlone(table []fields.Field, prefix string) []string {
+	var out []string
+	for _, f := range table {
+		if f.MembersAlone {
+			out = append(out, prefix+f.Name)
+		}
+		out = append(out, membersAlone(f.Fields, prefix+f.Name+".")...)
+	}
+	return out
 }
 
 // checkSentMembers refuses a declaration that leaves open how an update sends a hash. Each entry of

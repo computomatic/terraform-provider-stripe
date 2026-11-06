@@ -199,7 +199,7 @@ func TestEvidenceReaderReadsAnswers(t *testing.T) {
 		t.Errorf("a default's observation with a status: %v", err)
 	}
 	pointed := bytes.Replace(withObservations(took, refused), []byte(`"leaves": [`), []byte(`"leaves": [{"object": "coupon", "side": "request", "operation": "PostCoupons", "path": "name", "status": "proven", "tests": ["a"], "default": {"kind": "rule", "rule_ref": 0}},`), 1)
-	if _, err := decodeEvidence(pointed); err == nil || !strings.Contains(err.Error(), "answers probes and words no default") {
+	if _, err := decodeEvidence(pointed); err == nil || !strings.Contains(err.Error(), "answers probes or claims a state's value and words no default") {
 		t.Errorf("a default naming an answer rule: %v", err)
 	}
 }
@@ -499,7 +499,7 @@ func TestEvidenceReaderTakesTheFormsOfTheNinthPin(t *testing.T) {
 		beside   = `{"object": "test_helpers.test_clock", "operation": "PostTestHelpersTestClocks", "path": "frozen_time", "beside": "customer", "rule": "the clock's ` + "`created`" + `, on a create with a ` + "`customer`" + `", "tests": [], "observations": [
 			{"condition": {"account_country": "US", "probe": "minimal/customer", "params": {"customer": {"$gen": "fresh"}, "frozen_time": 1}}, "value": {"kind": "from", "path": "created"}},
 			{"condition": {"account_country": "US", "probe": "minimal", "params": {"frozen_time": 1}}, "value": {"kind": "sent", "path": "frozen_time"}}]}`
-		effect = `{"object": "quote", "operation": "PostQuotesQuote", "probe": "update/1", "triggers": ["line_items.quantity"], "carried": {"line_items.id": ["li_1"]}, "changed": [{"path": "amount_total", "before": {"kind": "value", "value": 1}, "after": {"kind": "value", "value": 2}}], "tests": []}`
+		effect = `{"object": "quote", "operation": "PostQuotesQuote", "probe": "update/1", "triggers": ["line_items.quantity"], "sent": {"line_items.quantity": [3]}, "carried": {"line_items.id": ["li_1"]}, "changed": [{"path": "amount_total", "before": {"kind": "value", "value": 1}, "after": {"kind": "value", "value": 2}}], "tests": []}`
 	)
 	record := func(leaves, discounts, rules, effects string) []byte {
 		return []byte(`{"format_version": 1, "leaves": [` + leaves + `], "discounts": [` + discounts + `], "rules": [` + rules + `], "side_effects": [` + effects + `]}`)
@@ -542,6 +542,59 @@ func TestEvidenceReaderTakesTheFormsOfTheNinthPin(t *testing.T) {
 		{"a carried trigger", mapLeaf, discount, beside, replace(effect, `"line_items.id"`, `"line_items.quantity"`), "one of its triggers"},
 	} {
 		if _, err := decodeEvidence(record(tc.leaves, tc.discounts, tc.rules, tc.effects)); err == nil || !strings.Contains(err.Error(), tc.want) {
+			t.Errorf("%s: %v, want %q", tc.name, err, tc.want)
+		}
+	}
+}
+
+// The tenth pin's forms: the value a side effect's update sent at each trigger, a hash an update
+// cleared whole (`hash_unsets`), and a claim rule, whose observations name the state each probe
+// brought the object to. The reader refuses what the generator cannot use of each.
+func TestEvidenceReaderTakesTheFormsOfTheTenthPin(t *testing.T) {
+	const (
+		effect = `{"object": "subscription", "operation": "PostSubscriptionsSubscriptionExposedId", "probe": "update/24", "triggers": ["trial_end@string"], "sent": {"trial_end@string": "now"}, "changed": [{"path": "status", "before": {"kind": "value", "value": "trialing"}, "after": {"kind": "value", "value": "active"}}], "tests": []}`
+		unset  = `{"object": "terminal.configuration", "operation": "PostTerminalConfigurationsConfiguration", "hash": "tipping", "by": "empty_string", "result": "absent", "tests": []}`
+		claim  = `{"object": "subscription_item", "operation": "PostSubscriptionItemsItem", "path": "price", "rule": "the pending invoice items a change of price makes", "tests": [], "observations": [
+			{"condition": {"account_country": "US", "probe": "claim/prorated_licensed", "when": "An update changed the price."}, "value": {"kind": "value", "value": [{"proration": true}]}},
+			{"condition": {"account_country": "US", "probe": "claim/prorated_metered", "when": "An update changed a metered price."}, "value": {"kind": "value", "value": []}}]}`
+	)
+	record := func(effects, unsets, rules string) []byte {
+		return []byte(`{"format_version": 1, "leaves": [], "discounts": [], "side_effects": [` + effects + `], "hash_unsets": [` + unsets + `], "rules": [` + rules + `]}`)
+	}
+	e, err := decodeEvidence(record(effect, unset, claim))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if s := e.SideEffects[0].Sent; string(s["trial_end@string"]) != `"now"` {
+		t.Errorf("the sent values: %v", s)
+	}
+	if u := e.HashUnsets[0]; u.Hash != "tipping" || u.By != "empty_string" || u.Result != "absent" {
+		t.Errorf("the hash unset: %+v", u)
+	}
+	if r := e.Rules[0]; !r.claim() || r.answer() {
+		t.Errorf("the claim rule is a claim %v, an answer %v", r.claim(), r.answer())
+	}
+	replace := func(s, old, new string) string {
+		t.Helper()
+		if !strings.Contains(s, old) {
+			t.Fatalf("no %s in %s", old, s)
+		}
+		return strings.Replace(s, old, new, 1)
+	}
+	for _, tc := range []struct{ name, effects, unsets, rules, want string }{
+		{"no sent values", replace(effect, `"sent": {"trial_end@string": "now"}, `, ``), unset, claim, `no value for trigger "trial_end@string"`},
+		{"a trigger listed twice", replace(effect, `["trial_end@string"]`, `["trial_end@string", "trial_end@string"]`), unset, claim, `trigger "trial_end@string" is listed twice`},
+		{"a value for no trigger", replace(effect, `{"trial_end@string": "now"}`, `{"trial_end@string": "now", "status": "active"}`), unset, claim, `a value for "status", which is not a trigger`},
+		{"a value for another leaf", replace(effect, `{"trial_end@string": "now"}`, `{"trial_end@integer": 1}`), unset, claim, `no value for trigger "trial_end@string"`},
+		{"an unknown unset", effect, replace(unset, `"empty_string"`, `"zero"`), claim, `hash unset by "zero"`},
+		{"an unknown unset result", effect, replace(unset, `"absent"`, `"kept"`), claim, `hash unset result "kept"`},
+		{"a hash unset twice", effect, unset + ", " + unset, claim, "given twice"},
+		{"a hash unset with no hash", effect, replace(unset, `"tipping"`, `""`), claim, "no object, operation or hash"},
+		{"a claim beside a default", effect, unset, replace(claim, `"when": "An update changed a metered price."`, `"variant": ""`), "mixes claims"},
+		{"a claim with params", effect, unset, replace(claim, `"when": "An update changed the price."`, `"when": "An update changed the price.", "params": {}`), "holds an answer's or a default's members"},
+		{"a claim with no probe", effect, unset, replace(claim, `"probe": "claim/prorated_metered", `, ``), "a claim names no probe"},
+	} {
+		if _, err := decodeEvidence(record(tc.effects, tc.unsets, tc.rules)); err == nil || !strings.Contains(err.Error(), tc.want) {
 			t.Errorf("%s: %v, want %q", tc.name, err, tc.want)
 		}
 	}
@@ -592,11 +645,11 @@ func TestBesideDefaultsNameTheirArgument(t *testing.T) {
 		Leaves: []EvidenceLeaf{{Key: key, Status: "proven", Default: &EvidenceDefault{Kind: "rule", RuleRef: &rule}}},
 		Rules:  []EvidenceRule{{Path: "color", Beside: "owner.email", Rule: "the owner's colour"}},
 	}}
-	if d := p.leafDefault(key); d == nil || d.Kind != fields.DefaultVaries {
+	if d := p.leafDefault(key, 0); d == nil || d.Kind != fields.DefaultVaries {
 		t.Errorf("a beside rule that does not name its argument: %+v", d)
 	}
 	p.Evidence.Rules[0].Rule, p.leaves = "the colour of `owner.email`'s account", nil
-	if d := p.leafDefault(key); d == nil || d.Kind != fields.DefaultRule {
+	if d := p.leafDefault(key, 0); d == nil || d.Kind != fields.DefaultRule {
 		t.Errorf("a beside rule that names its argument: %+v", d)
 	}
 	tc := &tableCoverage{

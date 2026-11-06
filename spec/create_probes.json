@@ -1,6 +1,18 @@
 {
- "suite_ref": "2f881eed914732f30d2277f76e79380ba7cdf159",
+ "suite_ref": "287c68eed4c297cdccbb61a8ba52be3036411c97",
  "leaves": [
+  {
+   "object": "account",
+   "operation": "PostAccounts",
+   "path": "business_profile.name",
+   "held": [
+    {
+     "kind": "value",
+     "value": "Conformance Rides",
+     "probe": "isolated/name_follows_company"
+    }
+   ]
+  },
   {
    "object": "account",
    "operation": "PostAccounts",
@@ -198,6 +210,40 @@
      "kind": "value",
      "value": {},
      "probe": "enums/1"
+    }
+   ]
+  },
+  {
+   "object": "account",
+   "operation": "PostAccounts",
+   "path": "settings.card_payments.statement_descriptor_prefix",
+   "held": [
+    {
+     "kind": "value",
+     "value": "CONFORMANC",
+     "probe": "isolated/name_follows_company"
+    },
+    {
+     "kind": "value",
+     "value": "JENNY ROSE",
+     "probe": "isolated/name_follows_individual"
+    }
+   ]
+  },
+  {
+   "object": "account",
+   "operation": "PostAccounts",
+   "path": "settings.payments.statement_descriptor",
+   "held": [
+    {
+     "kind": "value",
+     "value": "CONFORMANCE RIDES",
+     "probe": "isolated/name_follows_company"
+    },
+    {
+     "kind": "value",
+     "value": "JENNY ROSEN",
+     "probe": "isolated/name_follows_individual"
     }
    ]
   },

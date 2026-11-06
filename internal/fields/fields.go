@@ -71,6 +71,15 @@ type Field struct {
 	// evidence shows no update changes unless it names the field (E5): left unset, it keeps its
 	// state value.
 	Stable bool
+	// MembersAlone is true for a hash an update sends only the changed members of, though the
+	// record lists no update form for it, because suite probes prove Stripe takes each member
+	// alone (the generator's Resource.MembersAlone): the engine treats it as an entry of the
+	// declaration's SendChangedMembers. An update that changes more than one of its members is
+	// refused at plan, unless MembersTogether holds exactly those members.
+	MembersAlone bool
+	// MembersTogether lists, for a MembersAlone hash, each set of its members, by sorted dotted
+	// paths below the hash, that a cited probe sent together in one update.
+	MembersTogether [][]string
 	// Sensitive is true for a value Stripe never returns and reports only as set, through a
 	// `<name>_provided` flag beside it in the response.
 	Sensitive bool

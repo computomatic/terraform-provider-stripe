@@ -4,7 +4,9 @@ import (
 	"fmt"
 	"os"
 	"regexp"
+	"strconv"
 	"testing"
+	"time"
 
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/hashicorp/terraform-plugin-testing/plancheck"
@@ -548,6 +550,198 @@ func TestAccSubscription_drift(t *testing.T) {
 				}},
 				Check: resource.TestCheckResourceAttr(address, "description", "Team"),
 			},
+		},
+	})
+}
+
+// freeConfig is a customer and the suite's subscription price, a free monthly one in `usd`,
+// with the subscriptions in body, each created as a probe of TestSubscriptionAttributes
+// created its own.
+func freeConfig(c acctest.Config, body string) string {
+	return c.ProviderBlock() + fmt.Sprintf(`
+resource "stripe_customer" "test" {
+  email = "subscription-free@example.com"
+}
+
+resource "stripe_product" "test" {
+  name = %q
+}
+
+resource "stripe_price" "free" {
+  product     = stripe_product.test.id
+  currency    = "usd"
+  unit_amount = 0
+  recurring = {
+    interval = "month"
+  }
+}
+%s`, c.Name("Plan"), body)
+}
+
+// Stripe fills arguments a create leaves out, which the plan then leaves to it and the next
+// plan keeps: the end of a trial `trial_period_days` asks for (suite: TestSubscriptionAttributes,
+// probe `minimal/trial`), `save_default_payment_method` beside `payment_method_types`
+// (`enums/100`), and the flexible billing mode's `proration_discounts` and a billing schedule's
+// duration count (`enums/127`). Each subscription sends what its probe sent.
+func TestAccSubscription_serverFilled(t *testing.T) {
+	acct := acctest.NewAccount(t)
+	config := freeConfig(acct, `
+resource "stripe_subscription" "trial" {
+  customer          = stripe_customer.test.id
+  items             = [{ price = stripe_price.free.id }]
+  trial_period_days = 7
+}
+
+resource "stripe_subscription" "link" {
+  customer         = stripe_customer.test.id
+  items            = [{ price = stripe_price.free.id }]
+  payment_settings = { payment_method_types = ["link"] }
+}
+
+resource "stripe_subscription" "flexible" {
+  customer          = stripe_customer.test.id
+  items             = [{ price = stripe_price.free.id }]
+  billing_mode      = { type = "flexible" }
+  billing_schedules = [{ bill_until = { type = "duration", duration = { interval = "month" } } }]
+}
+`)
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: tfacc.ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: config,
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttrSet("stripe_subscription.trial", "trial_end"),
+					resource.TestCheckResourceAttr("stripe_subscription.link", "payment_settings.save_default_payment_method", "off"),
+					resource.TestCheckResourceAttr("stripe_subscription.flexible", "billing_mode.flexible.proration_discounts", "included"),
+					resource.TestCheckResourceAttr("stripe_subscription.flexible", "billing_schedules.0.bill_until.duration.interval_count", "1"),
+				),
+			},
+			{Config: config, PlanOnly: true},
+		},
+	})
+}
+
+// Stripe refuses a discount the subscription does not hold, the one the suite could send on
+// create, at the top level and on an item (suite: TestSubscriptionAttributes, probes
+// `every_field/17` and `every_field/23`, `discounts.discount` with `di_attrs00000000`), and the
+// apply says so with Stripe's message.
+func TestAccSubscription_discountRefused(t *testing.T) {
+	acct := acctest.NewAccount(t)
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: tfacc.ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: freeConfig(acct, `
+resource "stripe_subscription" "test" {
+  customer  = stripe_customer.test.id
+  items     = [{ price = stripe_price.free.id }]
+  discounts = [{ discount = "di_attrs00000000" }]
+}
+`),
+				ExpectError: regexp.MustCompile(`No such discount`),
+			},
+			{
+				Config: freeConfig(acct, `
+resource "stripe_subscription" "test" {
+  customer = stripe_customer.test.id
+  items    = [{ price = stripe_price.free.id, discounts = [{ discount = "di_attrs00000000" }] }]
+}
+`),
+				ExpectError: regexp.MustCompile(`No such discount`),
+			},
+		},
+	})
+}
+
+// Ending a trial with `trial_end = "now"` keeps the configured value in state, though Stripe
+// answers with the time the trial ended (suite: TestSubscriptionAttributes, probe `update/24`: a
+// subscription of the free price created with its trial ending a week ahead, then updated with
+// `"now"`; the record proves the string on no create).
+func TestAccSubscription_endTrialNow(t *testing.T) {
+	acct := acctest.NewAccount(t)
+	weekAhead := strconv.FormatInt(time.Now().Add(7*24*time.Hour).Unix(), 10)
+	config := func(trialEnd string) string {
+		return freeConfig(acct, fmt.Sprintf(`
+resource "stripe_subscription" "test" {
+  customer  = stripe_customer.test.id
+  items     = [{ price = stripe_price.free.id }]
+  trial_end = %q
+}
+`, trialEnd))
+	}
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: tfacc.ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: config(weekAhead),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr(address, "trial_end", weekAhead),
+					resource.TestCheckResourceAttr(address, "status", "trialing"),
+				),
+			},
+			{
+				Config: config("now"),
+				ConfigPlanChecks: resource.ConfigPlanChecks{PreApply: []plancheck.PlanCheck{
+					plancheck.ExpectResourceAction(address, plancheck.ResourceActionUpdate),
+				}},
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr(address, "trial_end", "now"),
+					resource.TestCheckResourceAttr(address, "status", "active"),
+				),
+			},
+			{Config: config("now"), PlanOnly: true},
+		},
+	})
+}
+
+// `cancel_at` takes the strings `max_period_end`, `min_period_end` and `max_billed_until`, which
+// Stripe answers with the time it picks; the configured string stays in state (suite:
+// TestSubscriptionAttributes, on subscriptions of the free price: the creates `enums/11`,
+// `enums/29` and `every_field/14`; the updates `enums/128` and `enums/145` of subscriptions
+// created without `cancel_at`, and `update/12` of one created to cancel in 20 days).
+func TestAccSubscription_cancelAtStrings(t *testing.T) {
+	acct := acctest.NewAccount(t)
+	inTwentyDays := strconv.FormatInt(time.Now().Add(20*24*time.Hour).Unix(), 10)
+	sub := func(name, cancelAt string) string {
+		line := ""
+		if cancelAt != "" {
+			line = fmt.Sprintf("  cancel_at = %q\n", cancelAt)
+		}
+		return fmt.Sprintf(`
+resource "stripe_subscription" %q {
+  customer = stripe_customer.test.id
+  items    = [{ price = stripe_price.free.id }]
+%s}
+`, name, line)
+	}
+	created := sub("max_period_end", "max_period_end") + sub("min_period_end", "min_period_end") + sub("max_billed_until", "max_billed_until")
+	config := func(a, b, c string) string {
+		return freeConfig(acct, created+sub("a", a)+sub("b", b)+sub("c", c))
+	}
+	updated := config("max_period_end", "min_period_end", "max_billed_until")
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: tfacc.ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: config("", "", inTwentyDays),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr("stripe_subscription.max_period_end", "cancel_at", "max_period_end"),
+					resource.TestCheckResourceAttr("stripe_subscription.min_period_end", "cancel_at", "min_period_end"),
+					resource.TestCheckResourceAttr("stripe_subscription.max_billed_until", "cancel_at", "max_billed_until"),
+					resource.TestCheckNoResourceAttr("stripe_subscription.a", "cancel_at"),
+					resource.TestCheckResourceAttr("stripe_subscription.c", "cancel_at", inTwentyDays),
+				),
+			},
+			{
+				Config: updated,
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr("stripe_subscription.a", "cancel_at", "max_period_end"),
+					resource.TestCheckResourceAttr("stripe_subscription.b", "cancel_at", "min_period_end"),
+					resource.TestCheckResourceAttr("stripe_subscription.c", "cancel_at", "max_billed_until"),
+				),
+			},
+			{Config: updated, PlanOnly: true},
 		},
 	})
 }

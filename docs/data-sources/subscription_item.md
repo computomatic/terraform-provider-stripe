@@ -34,7 +34,7 @@ This data source exports the following attributes in addition to the arguments a
 * `current_period_end` - The end time of this subscription item's current billing period.
 * `current_period_start` - The start time of this subscription item's current billing period.
 * `current_trial` - The trial offer to apply to this subscription item. See [`current_trial`](#current_trial) below.
-* `discounts` - The coupons to redeem into discounts for the subscription item. See [`discounts`](#discounts) below.
+* `discounts` - The discounts applied to the subscription item. Subscription item discounts are applied before subscription discounts. Use `expand[]=discounts` to expand each discount.
 * `metadata` - Set of [key-value pairs](https://docs.stripe.com/api/metadata) that you can attach to an object. This can be useful for storing additional information about the object in a structured format. Individual keys can be unset by posting an empty value to them. All keys can be unset by posting an empty value to `metadata`.
 * `off_session` - Indicates if a customer is on or off-session while an invoice payment is attempted. Defaults to `false` (on-session).
 * `payment_behavior` - Controls how Stripe handles payment when a subscription update requires payment and `collection_method=charge_automatically`. Possible values: `allow_incomplete`, `default_incomplete`, `error_if_incomplete`, `pending_if_incomplete`.
@@ -61,13 +61,6 @@ The `current_trial` attribute supports:
 * `end_date` -
 * `start_date` -
 * `trial_offer` -
-
-<a id="discounts"></a>
-### `discounts`
-
-The `discounts` attribute is a list. Each element supports:
-
-* `discount` -
 
 <a id="price_data"></a>
 ### `price_data`
