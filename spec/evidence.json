@@ -686,6 +686,16 @@
           "hash": "invoice_settings",
           "object": "subscription",
           "update": "siblings_kept"
+        },
+        {
+          "hash": "payment_settings",
+          "object": "subscription",
+          "update": "siblings_kept"
+        },
+        {
+          "hash": "trial_settings.end_behavior",
+          "object": "subscription",
+          "update": "siblings_kept"
         }
       ],
       "map_key_removal": "empty_string",
@@ -733,8 +743,12 @@
         "TestQuoteAttributes/leaves/request/PostQuotesQuote/invoice_settings.footer",
         "TestQuoteAttributes/leaves/response/quote/invoice_settings.description",
         "TestSubscriptionAttributes/leaves/request/PostSubscriptionsSubscriptionExposedId/invoice_settings.footer",
+        "TestSubscriptionAttributes/leaves/request/PostSubscriptionsSubscriptionExposedId/payment_settings.save_default_payment_method",
+        "TestSubscriptionAttributes/leaves/request/PostSubscriptionsSubscriptionExposedId/trial_settings.end_behavior.missing_payment_method",
         "TestSubscriptionAttributes/leaves/response/subscription/invoice_settings.account_tax_ids",
-        "TestSubscriptionAttributes/leaves/response/subscription/invoice_settings.description"
+        "TestSubscriptionAttributes/leaves/response/subscription/invoice_settings.description",
+        "TestSubscriptionAttributes/leaves/response/subscription/payment_settings.payment_method_types",
+        "TestSubscriptionAttributes/leaves/response/subscription/trial_settings.end_behavior.billing_cycle_anchor"
       ]
     },
     {
@@ -1127,6 +1141,11 @@
           "update": "siblings_kept"
         },
         {
+          "hash": "configuration.recipient",
+          "object": "v2.core.account",
+          "update": "siblings_kept"
+        },
+        {
           "hash": "defaults",
           "object": "v2.core.account",
           "update": "siblings_kept"
@@ -1171,6 +1190,7 @@
         "TestV2CoreAccountAttributes/leaves/request/PostV2CoreAccountsId/defaults.responsibilities.fees_collector",
         "TestV2CoreAccountAttributes/leaves/request/PostV2CoreAccountsId/identity.entity_type",
         "TestV2CoreAccountAttributes/leaves/response/v2.core.account/configuration.merchant.applied",
+        "TestV2CoreAccountAttributes/leaves/response/v2.core.account/configuration.recipient.applied",
         "TestV2CoreAccountAttributes/leaves/response/v2.core.account/defaults.locales",
         "TestV2CoreAccountAttributes/leaves/response/v2.core.account/defaults.profile.business_url",
         "TestV2CoreAccountAttributes/leaves/response/v2.core.account/defaults.profile.product_description",
@@ -394146,7 +394166,9 @@
         "stripe"
       ],
       "tests": [
-        "TestSubscriptionAttributes/leaves/request/PostSubscriptions/add_invoice_items.price"
+        "TestSubscriptionAttributes/leaves/request/PostSubscriptions/add_invoice_items.price",
+        "TestSubscriptionAttributes/state/invoice_item_discount_coupon/leaves/request/PostSubscriptions/add_invoice_items.price",
+        "TestSubscriptionAttributes/state/invoice_item_discount_promotion_code/leaves/request/PostSubscriptions/add_invoice_items.price"
       ]
     },
     {
@@ -395128,180 +395150,180 @@
       "branch": "",
       "default": {
         "kind": "rule",
-        "rule_ref": 89,
+        "rule_ref": 90,
         "variants": [
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 89
+              "rule_ref": 90
             },
             "variant": "anchor_yearly"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 89
+              "rule_ref": 90
             },
             "variant": "canceling"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 89
+              "rule_ref": 90
             },
             "variant": "canceling_option"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 89
+              "rule_ref": 90
             },
             "variant": "customer_account"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 89
+              "rule_ref": 90
             },
             "variant": "decimal_price"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 89
+              "rule_ref": 90
             },
             "variant": "fee"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 89
+              "rule_ref": 90
             },
             "variant": "flexible"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 89
+              "rule_ref": 90
             },
             "variant": "inline_price"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 89
+              "rule_ref": 90
             },
             "variant": "invoice_decimal"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 89
+              "rule_ref": 90
             },
             "variant": "invoice_item"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 89
+              "rule_ref": 90
             },
             "variant": "metered"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 89
+              "rule_ref": 90
             },
             "variant": "method_aud"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 89
+              "rule_ref": 90
             },
             "variant": "method_brl"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 89
+              "rule_ref": 90
             },
             "variant": "method_eur"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 89
+              "rule_ref": 90
             },
             "variant": "method_inr"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 89
+              "rule_ref": 90
             },
             "variant": "method_pln"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 89
+              "rule_ref": 90
             },
             "variant": "prebilled"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 89
+              "rule_ref": 90
             },
             "variant": "prebilled_timestamp"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 89
+              "rule_ref": 90
             },
             "variant": "price_eur"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 89
+              "rule_ref": 90
             },
             "variant": "send_invoice"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 89
+              "rule_ref": 90
             },
             "variant": "setup_pending"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 89
+              "rule_ref": 90
             },
             "variant": "tax_coded"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 89
+              "rule_ref": 90
             },
             "variant": "test_clock"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 89
+              "rule_ref": 90
             },
             "variant": "trial"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 89
+              "rule_ref": 90
             },
             "variant": "trial_offer"
           }
@@ -399081,180 +399103,180 @@
       "branch": "",
       "default": {
         "kind": "rule",
-        "rule_ref": 90,
+        "rule_ref": 91,
         "variants": [
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 90
+              "rule_ref": 91
             },
             "variant": "anchor_yearly"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 90
+              "rule_ref": 91
             },
             "variant": "canceling"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 90
+              "rule_ref": 91
             },
             "variant": "canceling_option"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 90
+              "rule_ref": 91
             },
             "variant": "customer_account"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 90
+              "rule_ref": 91
             },
             "variant": "decimal_price"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 90
+              "rule_ref": 91
             },
             "variant": "fee"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 90
+              "rule_ref": 91
             },
             "variant": "flexible"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 90
+              "rule_ref": 91
             },
             "variant": "inline_price"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 90
+              "rule_ref": 91
             },
             "variant": "invoice_decimal"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 90
+              "rule_ref": 91
             },
             "variant": "invoice_item"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 90
+              "rule_ref": 91
             },
             "variant": "metered"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 90
+              "rule_ref": 91
             },
             "variant": "method_aud"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 90
+              "rule_ref": 91
             },
             "variant": "method_brl"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 90
+              "rule_ref": 91
             },
             "variant": "method_eur"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 90
+              "rule_ref": 91
             },
             "variant": "method_inr"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 90
+              "rule_ref": 91
             },
             "variant": "method_pln"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 90
+              "rule_ref": 91
             },
             "variant": "prebilled"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 90
+              "rule_ref": 91
             },
             "variant": "prebilled_timestamp"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 90
+              "rule_ref": 91
             },
             "variant": "price_eur"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 90
+              "rule_ref": 91
             },
             "variant": "send_invoice"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 90
+              "rule_ref": 91
             },
             "variant": "setup_pending"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 90
+              "rule_ref": 91
             },
             "variant": "tax_coded"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 90
+              "rule_ref": 91
             },
             "variant": "test_clock"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 90
+              "rule_ref": 91
             },
             "variant": "trial"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 90
+              "rule_ref": 91
             },
             "variant": "trial_offer"
           }
@@ -414821,7 +414843,8 @@
         "stripe"
       ],
       "tests": [
-        "TestSubscriptionAttributes/leaves/request/PostSubscriptionsSubscriptionExposedId/payment_behavior"
+        "TestSubscriptionAttributes/leaves/request/PostSubscriptionsSubscriptionExposedId/payment_behavior",
+        "TestSubscriptionAttributes/state/pending_update/leaves/request/PostSubscriptionsSubscriptionExposedId/payment_behavior"
       ]
     },
     {
@@ -444456,7 +444479,9 @@
         "stripe"
       ],
       "tests": [
-        "TestSubscriptionItemAttributes/leaves/request/PostSubscriptionItems/price"
+        "TestSubscriptionItemAttributes/leaves/request/PostSubscriptionItems/price",
+        "TestSubscriptionItemAttributes/state/prorated_added_free/leaves/request/PostSubscriptionItems/price",
+        "TestSubscriptionItemAttributes/state/prorated_added_paid/leaves/request/PostSubscriptionItems/price"
       ]
     },
     {
@@ -445596,7 +445621,9 @@
         "stripe"
       ],
       "tests": [
-        "TestSubscriptionItemAttributes/leaves/request/PostSubscriptionItemsItem/quantity"
+        "TestSubscriptionItemAttributes/leaves/request/PostSubscriptionItemsItem/quantity",
+        "TestSubscriptionItemAttributes/state/prorated_quantity_free/leaves/request/PostSubscriptionItemsItem/quantity",
+        "TestSubscriptionItemAttributes/state/prorated_quantity_paid/leaves/request/PostSubscriptionItemsItem/quantity"
       ],
       "unset": {
         "by": "empty_string",
@@ -458657,124 +458684,124 @@
       "branch": "",
       "default": {
         "kind": "rule",
-        "rule_ref": 101,
+        "rule_ref": 105,
         "variants": [
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 101
+              "rule_ref": 105
             },
             "variant": "customer_account"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 101
+              "rule_ref": 105
             },
             "variant": "end_dated"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 101
+              "rule_ref": 105
             },
             "variant": "fee_defaults"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 101
+              "rule_ref": 105
             },
             "variant": "fee_phase"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 101
+              "rule_ref": 105
             },
             "variant": "flexible"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 101
+              "rule_ref": 105
             },
             "variant": "from_subscription"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 101
+              "rule_ref": 105
             },
             "variant": "inline_decimal"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 101
+              "rule_ref": 105
             },
             "variant": "inline_price"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 101
+              "rule_ref": 105
             },
             "variant": "invoice_decimal"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 101
+              "rule_ref": 105
             },
             "variant": "invoice_item"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 101
+              "rule_ref": 105
             },
             "variant": "metered"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 101
+              "rule_ref": 105
             },
             "variant": "pause_duration"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 101
+              "rule_ref": 105
             },
             "variant": "pause_timestamp"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 101
+              "rule_ref": 105
             },
             "variant": "price_eur"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 101
+              "rule_ref": 105
             },
             "variant": "started"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 101
+              "rule_ref": 105
             },
             "variant": "tax_coded"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 101
+              "rule_ref": 105
             },
             "variant": "test_clock"
           }
@@ -459677,117 +459704,117 @@
       "branch": "",
       "default": {
         "kind": "rule",
-        "rule_ref": 102,
+        "rule_ref": 106,
         "variants": [
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 102
+              "rule_ref": 106
             },
             "variant": "customer_account"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 102
+              "rule_ref": 106
             },
             "variant": "fee_defaults"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 102
+              "rule_ref": 106
             },
             "variant": "fee_phase"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 102
+              "rule_ref": 106
             },
             "variant": "flexible"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 102
+              "rule_ref": 106
             },
             "variant": "from_subscription"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 102
+              "rule_ref": 106
             },
             "variant": "inline_decimal"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 102
+              "rule_ref": 106
             },
             "variant": "inline_price"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 102
+              "rule_ref": 106
             },
             "variant": "invoice_decimal"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 102
+              "rule_ref": 106
             },
             "variant": "invoice_item"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 102
+              "rule_ref": 106
             },
             "variant": "metered"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 102
+              "rule_ref": 106
             },
             "variant": "pause_duration"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 102
+              "rule_ref": 106
             },
             "variant": "pause_timestamp"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 102
+              "rule_ref": 106
             },
             "variant": "price_eur"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 102
+              "rule_ref": 106
             },
             "variant": "started"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 102
+              "rule_ref": 106
             },
             "variant": "tax_coded"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 102
+              "rule_ref": 106
             },
             "variant": "test_clock"
           }
@@ -490772,7 +490799,7 @@
       "branch": "",
       "default": {
         "kind": "rule",
-        "rule_ref": 103,
+        "rule_ref": 107,
         "variants": [
           {
             "default": {
@@ -518240,12 +518267,12 @@
       "branch": "",
       "default": {
         "kind": "rule",
-        "rule_ref": 105,
+        "rule_ref": 109,
         "variants": [
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 105
+              "rule_ref": 109
             },
             "variant": "s700"
           }
@@ -521245,7 +521272,7 @@
       "returned": {
         "form": "as_sent",
         "response_path": "frozen_time",
-        "rule_ref": 106
+        "rule_ref": 110
       },
       "side": "request",
       "status": "proven",
@@ -525117,12 +525144,12 @@
       "branch": "",
       "default": {
         "kind": "rule",
-        "rule_ref": 107,
+        "rule_ref": 111,
         "variants": [
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 107
+              "rule_ref": 111
             },
             "variant": "partly_reversed"
           }
@@ -546560,7 +546587,7 @@
       "branch": "",
       "default": {
         "kind": "rule",
-        "rule_ref": 113,
+        "rule_ref": 117,
         "variants": [
           {
             "default": {
@@ -698680,6 +698707,126 @@
         {
           "condition": {
             "account_country": "US",
+            "probe": "claim/coupon_applied",
+            "when": "A discount was created from a coupon sent in the request."
+          },
+          "value": {
+            "kind": "value",
+            "value": {
+              "amounts": {
+                "amount_due": 1800,
+                "amount_paid": 1800,
+                "amount_remaining": 0,
+                "discounts": [
+                  {
+                    "amount": 200,
+                    "discount": "item"
+                  }
+                ],
+                "subtotal": 1800,
+                "total": 1800
+              },
+              "attempted": true,
+              "billing_reason": "subscription_create",
+              "lines": [
+                {
+                  "amount": 2000,
+                  "discounts": [
+                    {
+                      "amount": 200,
+                      "discount": "item"
+                    }
+                  ],
+                  "line": "added",
+                  "proration": false
+                },
+                {
+                  "amount": 0,
+                  "discounts": [],
+                  "line": "item",
+                  "proration": false
+                }
+              ],
+              "payments": [
+                {
+                  "amount_paid": 1800,
+                  "intent": "succeeded",
+                  "status": "paid"
+                }
+              ],
+              "status": "paid"
+            }
+          }
+        },
+        {
+          "condition": {
+            "account_country": "US",
+            "probe": "claim/promotion_code_applied",
+            "when": "A discount was created from a promotion code sent in the request."
+          },
+          "value": {
+            "kind": "value",
+            "value": {
+              "amounts": {
+                "amount_due": 1800,
+                "amount_paid": 1800,
+                "amount_remaining": 0,
+                "discounts": [
+                  {
+                    "amount": 200,
+                    "discount": "item"
+                  }
+                ],
+                "subtotal": 1800,
+                "total": 1800
+              },
+              "attempted": true,
+              "billing_reason": "subscription_create",
+              "lines": [
+                {
+                  "amount": 2000,
+                  "discounts": [
+                    {
+                      "amount": 200,
+                      "discount": "item"
+                    }
+                  ],
+                  "line": "added",
+                  "proration": false
+                },
+                {
+                  "amount": 0,
+                  "discounts": [],
+                  "line": "item",
+                  "proration": false
+                }
+              ],
+              "payments": [
+                {
+                  "amount_paid": 1800,
+                  "intent": "succeeded",
+                  "status": "paid"
+                }
+              ],
+              "status": "paid"
+            }
+          }
+        }
+      ],
+      "operation": "PostSubscriptions",
+      "path": "add_invoice_items.price",
+      "rule": "the first invoice a create makes, charged to the customer's default card (`tok_visa`), of an item of a monthly price of nothing and an added invoice item of a one-time price of 2000 holding a discount of its own of 10% off once: why it was made, its status, its subtotal, what each discount takes off it, by whose it is (`item` for the added item's own), its total and what is due, paid and left, each line by the price it bills (`added` or `item`) with its amount before discounts and what each discount it lists takes off it, and each payment it lists with its status, the amount it paid and what its payment intent reads",
+      "tests": [
+        "TestSubscriptionAttributes/state/invoice_item_discount_coupon/leaves/request/PostSubscriptions/add_invoice_items.price",
+        "TestSubscriptionAttributes/state/invoice_item_discount_promotion_code/leaves/request/PostSubscriptions/add_invoice_items.price"
+      ]
+    },
+    {
+      "object": "subscription",
+      "observations": [
+        {
+          "condition": {
+            "account_country": "US",
             "variant": ""
           },
           "value": {
@@ -699530,6 +699677,62 @@
       ]
     },
     {
+      "object": "subscription",
+      "observations": [
+        {
+          "condition": {
+            "account_country": "US",
+            "probe": "claim/pending_update_declined",
+            "when": "An update sent payment_behavior pending_if_incomplete and proration_behavior always_invoice, changing a subscription's item to a price of more, and the card the subscription charges declined the invoice the update made."
+          },
+          "value": {
+            "kind": "value",
+            "value": {
+              "invoice": {
+                "attempted": true,
+                "billing_reason": "subscription_update",
+                "lines": [
+                  {
+                    "discounts": [],
+                    "line": "from",
+                    "proration": true
+                  },
+                  {
+                    "discounts": [],
+                    "line": "to",
+                    "proration": true
+                  }
+                ],
+                "payments": [
+                  {
+                    "amount_paid": 0,
+                    "code": "card_declined",
+                    "decline_code": "generic_decline",
+                    "intent": "requires_payment_method",
+                    "status": "open"
+                  }
+                ],
+                "status": "open"
+              },
+              "items": [
+                "from"
+              ],
+              "pending_items": [
+                "to"
+              ],
+              "status": "active"
+            }
+          }
+        }
+      ],
+      "operation": "PostSubscriptionsSubscriptionExposedId",
+      "path": "payment_behavior",
+      "rule": "what an update that sends `pending_if_incomplete` and `always_invoice`, changing a subscription's one item from a monthly price of 1000 to one of 5000, leaves when the invoice it makes is charged to a card that declines (`pm_card_chargeCustomerFail`): the subscription's status, the price each item holds and each item of its pending update, by role (`from` the price held, `to` the one sent), and the invoice it made, why, its status, whether it was attempted, each line by the price it bills with whether it prorates, and each payment it lists with its status, the amount it paid and what its payment intent reads; no amount of the clock",
+      "tests": [
+        "TestSubscriptionAttributes/state/pending_update/leaves/request/PostSubscriptionsSubscriptionExposedId/payment_behavior"
+      ]
+    },
+    {
       "object": "subscription_item",
       "observations": [
         {
@@ -699663,6 +699866,52 @@
         {
           "condition": {
             "account_country": "US",
+            "probe": "claim/prorated_added_free",
+            "when": "A create added an item of a licensed monthly price of nothing to a subscription of one item of another such price, whose period began an hour before, and sent no proration_behavior, so Stripe prorated as it does by default."
+          },
+          "value": {
+            "kind": "value",
+            "value": [
+              {
+                "amount": 0,
+                "price": "added",
+                "proration": true
+              }
+            ]
+          }
+        },
+        {
+          "condition": {
+            "account_country": "US",
+            "probe": "claim/prorated_added_paid",
+            "when": "A create added an item of a licensed monthly price of 100 to a subscription of one item of another such price, whose period began an hour before and whose first invoice a card paid, and sent no proration_behavior, so Stripe prorated as it does by default."
+          },
+          "value": {
+            "kind": "value",
+            "value": [
+              {
+                "amount": 100,
+                "price": "added",
+                "proration": true
+              }
+            ]
+          }
+        }
+      ],
+      "operation": "PostSubscriptionItems",
+      "path": "price",
+      "rule": "the pending invoice items a create of an item makes when it sends no proration_behavior: each by the price it prorates, `held` the one the subscription's other item holds or `added` the one sent, with its amount and whether it is a proration",
+      "tests": [
+        "TestSubscriptionItemAttributes/state/prorated_added_free/leaves/request/PostSubscriptionItems/price",
+        "TestSubscriptionItemAttributes/state/prorated_added_paid/leaves/request/PostSubscriptionItems/price"
+      ]
+    },
+    {
+      "object": "subscription_item",
+      "observations": [
+        {
+          "condition": {
+            "account_country": "US",
             "created_with": {
               "discounts": [
                 {
@@ -699757,6 +700006,57 @@
       "tests": [
         "TestSubscriptionItemAttributes/state/prorated_licensed/leaves/request/PostSubscriptionItemsItem/price",
         "TestSubscriptionItemAttributes/state/prorated_metered/leaves/request/PostSubscriptionItemsItem/price"
+      ]
+    },
+    {
+      "object": "subscription_item",
+      "observations": [
+        {
+          "condition": {
+            "account_country": "US",
+            "probe": "claim/prorated_quantity_free",
+            "when": "An update changed the quantity of a subscription item of a licensed monthly price of nothing from one to two, of a subscription whose period began an hour before, and sent no proration_behavior, so Stripe prorated as it does by default."
+          },
+          "value": {
+            "kind": "value",
+            "value": [
+              {
+                "amount": 0,
+                "price": "held",
+                "proration": true
+              }
+            ]
+          }
+        },
+        {
+          "condition": {
+            "account_country": "US",
+            "probe": "claim/prorated_quantity_paid",
+            "when": "An update changed the quantity of a subscription item of a licensed monthly price of 100 from one to two, of a subscription whose period began an hour before and whose first invoice a card paid, and sent no proration_behavior, so Stripe prorated as it does by default."
+          },
+          "value": {
+            "kind": "value",
+            "value": [
+              {
+                "amount": -100,
+                "price": "held",
+                "proration": true
+              },
+              {
+                "amount": 200,
+                "price": "held",
+                "proration": true
+              }
+            ]
+          }
+        }
+      ],
+      "operation": "PostSubscriptionItemsItem",
+      "path": "quantity",
+      "rule": "the pending invoice items an update of an item's quantity makes when it sends no proration_behavior: each by the price it prorates, `held` the one the item holds, with its amount and whether it is a proration",
+      "tests": [
+        "TestSubscriptionItemAttributes/state/prorated_quantity_free/leaves/request/PostSubscriptionItemsItem/quantity",
+        "TestSubscriptionItemAttributes/state/prorated_quantity_paid/leaves/request/PostSubscriptionItemsItem/quantity"
       ]
     },
     {
@@ -700801,6 +701101,54 @@
                 }
               }
             },
+            "probe": "isolated/hash_recipient"
+          },
+          "value": {
+            "status": 200
+          }
+        },
+        {
+          "condition": {
+            "account_country": "US",
+            "created_with": {
+              "configuration": {
+                "recipient": {
+                  "capabilities": {
+                    "stripe_balance": {
+                      "stripe_transfers": {
+                        "requested": true
+                      }
+                    }
+                  }
+                }
+              },
+              "contact_email": {
+                "$gen": "email"
+              },
+              "dashboard": "none",
+              "defaults": {
+                "responsibilities": {
+                  "fees_collector": "application",
+                  "losses_collector": "application"
+                }
+              },
+              "identity": {
+                "country": "US"
+              }
+            },
+            "params": {
+              "configuration": {
+                "recipient": {
+                  "capabilities": {
+                    "stripe_balance": {
+                      "stripe_transfers": {
+                        "requested": false
+                      }
+                    }
+                  }
+                }
+              }
+            },
             "probe": "isolated/transfers_requested_false"
           },
           "value": {
@@ -700880,7 +701228,7 @@
       ],
       "operation": "PostV2CoreAccountsId",
       "path": "configuration.recipient.capabilities.stripe_balance.stripe_transfers.requested",
-      "rule": "Stripe's answer turns on the request: accepted in [isolated/change_adds_recipient_with_collectors, isolated/hash_configuration, isolated/transfers_requested_false]; refused in [isolated/change_adds_recipient]",
+      "rule": "Stripe's answer turns on the request: accepted in [isolated/change_adds_recipient_with_collectors, isolated/hash_configuration, isolated/hash_recipient, isolated/transfers_requested_false]; refused in [isolated/change_adds_recipient]",
       "tests": [
         "TestV2CoreAccountAttributes/leaves/request/PostV2CoreAccountsId/configuration.recipient.capabilities.stripe_balance.stripe_transfers.requested"
       ]
@@ -703667,6 +704015,170 @@
       ]
     },
     {
+      "carried": {
+        "dashboard": "none",
+        "defaults.responsibilities.fees_collector": "application",
+        "defaults.responsibilities.losses_collector": "application"
+      },
+      "changed": [
+        {
+          "after": {
+            "kind": "value",
+            "value": [
+              "recipient"
+            ]
+          },
+          "before": {
+            "kind": "value",
+            "value": []
+          },
+          "path": "applied_configurations"
+        },
+        {
+          "after": {
+            "kind": "value",
+            "value": "restricted"
+          },
+          "before": {
+            "kind": "absent"
+          },
+          "path": "configuration.recipient.capabilities.stripe_balance.payouts.status"
+        },
+        {
+          "after": {
+            "kind": "value",
+            "value": "restricted"
+          },
+          "before": {
+            "kind": "absent"
+          },
+          "path": "configuration.recipient.capabilities.stripe_balance.stripe_transfers.status"
+        }
+      ],
+      "object": "v2.core.account",
+      "operation": "PostV2CoreAccountsId",
+      "probe": "isolated/recipient_pair_added",
+      "sent": {
+        "configuration.recipient.applied": true,
+        "configuration.recipient.capabilities.stripe_balance.stripe_transfers.requested": true
+      },
+      "tests": [
+        "TestV2CoreAccountAttributes/leaves/response/v2.core.account/applied_configurations",
+        "TestV2CoreAccountAttributes/leaves/response/v2.core.account/configuration.recipient.capabilities.stripe_balance.payouts.status",
+        "TestV2CoreAccountAttributes/leaves/response/v2.core.account/configuration.recipient.capabilities.stripe_balance.stripe_transfers.status"
+      ],
+      "triggers": [
+        "configuration.recipient.applied",
+        "configuration.recipient.capabilities.stripe_balance.stripe_transfers.requested"
+      ]
+    },
+    {
+      "changed": [
+        {
+          "after": {
+            "kind": "value",
+            "value": []
+          },
+          "before": {
+            "kind": "value",
+            "value": [
+              "recipient"
+            ]
+          },
+          "path": "applied_configurations"
+        },
+        {
+          "after": {
+            "kind": "absent"
+          },
+          "before": {
+            "kind": "value",
+            "value": "restricted"
+          },
+          "path": "configuration.recipient.capabilities.stripe_balance.payouts.status"
+        },
+        {
+          "after": {
+            "kind": "absent"
+          },
+          "before": {
+            "kind": "value",
+            "value": "restricted"
+          },
+          "path": "configuration.recipient.capabilities.stripe_balance.stripe_transfers.status"
+        }
+      ],
+      "object": "v2.core.account",
+      "operation": "PostV2CoreAccountsId",
+      "probe": "isolated/recipient_pair_changed",
+      "sent": {
+        "configuration.recipient.applied": false,
+        "configuration.recipient.capabilities.stripe_balance.stripe_transfers.requested": false
+      },
+      "tests": [
+        "TestV2CoreAccountAttributes/leaves/response/v2.core.account/applied_configurations",
+        "TestV2CoreAccountAttributes/leaves/response/v2.core.account/configuration.recipient.capabilities.stripe_balance.payouts.status",
+        "TestV2CoreAccountAttributes/leaves/response/v2.core.account/configuration.recipient.capabilities.stripe_balance.stripe_transfers.status"
+      ],
+      "triggers": [
+        "configuration.recipient.applied",
+        "configuration.recipient.capabilities.stripe_balance.stripe_transfers.requested"
+      ]
+    },
+    {
+      "changed": [
+        {
+          "after": {
+            "kind": "value",
+            "value": []
+          },
+          "before": {
+            "kind": "value",
+            "value": [
+              "recipient"
+            ]
+          },
+          "path": "applied_configurations"
+        },
+        {
+          "after": {
+            "kind": "absent"
+          },
+          "before": {
+            "kind": "value",
+            "value": "restricted"
+          },
+          "path": "configuration.recipient.capabilities.stripe_balance.payouts.status"
+        },
+        {
+          "after": {
+            "kind": "absent"
+          },
+          "before": {
+            "kind": "value",
+            "value": "restricted"
+          },
+          "path": "configuration.recipient.capabilities.stripe_balance.stripe_transfers.status"
+        }
+      ],
+      "object": "v2.core.account",
+      "operation": "PostV2CoreAccountsId",
+      "probe": "isolated/recipient_unapplied_whole",
+      "sent": {
+        "configuration.recipient.applied": false,
+        "configuration.recipient.capabilities.stripe_balance.stripe_transfers.requested": true
+      },
+      "tests": [
+        "TestV2CoreAccountAttributes/leaves/response/v2.core.account/applied_configurations",
+        "TestV2CoreAccountAttributes/leaves/response/v2.core.account/configuration.recipient.capabilities.stripe_balance.payouts.status",
+        "TestV2CoreAccountAttributes/leaves/response/v2.core.account/configuration.recipient.capabilities.stripe_balance.stripe_transfers.status"
+      ],
+      "triggers": [
+        "configuration.recipient.applied",
+        "configuration.recipient.capabilities.stripe_balance.stripe_transfers.requested"
+      ]
+    },
+    {
       "changed": [
         {
           "after": {
@@ -704125,13 +704637,13 @@
   "spec_sha256": "9119e72c7ff8ad142e94f7efa9cf49d8e6eec69df3592e17e8fba15099726ed7",
   "stripe_run": {
     "event": "push",
-    "id": 42176556537,
+    "id": 42223269772,
     "passed": true,
     "platform_country": "US",
     "sandbox": "ci",
-    "time": "2026-11-06T08:30:13Z"
+    "time": "2026-11-06T16:29:31Z"
   },
-  "suite_commit": "e1f3b754386294f3f5df00a313bf5740a159db19",
+  "suite_commit": "ea5e6b0fce82f7867281d266183619b73c947ad3",
   "together": [
     {
       "answers": [
@@ -704312,6 +704824,168 @@
         "TestSetupIntentAttributes/leaves/request/PostSetupIntentsIntent/payment_method_options.card.three_d_secure.cryptogram",
         "TestSetupIntentAttributes/leaves/request/PostSetupIntentsIntent/payment_method_options.card.three_d_secure.transaction_id",
         "TestSetupIntentAttributes/leaves/request/PostSetupIntentsIntent/payment_method_options.card.three_d_secure.version"
+      ]
+    },
+    {
+      "answers": [
+        {
+          "condition": {
+            "account_country": "US",
+            "created_with": {
+              "contact_email": {
+                "$gen": "email"
+              },
+              "identity": {
+                "country": "US"
+              }
+            },
+            "params": {
+              "configuration": {
+                "recipient": {
+                  "applied": true,
+                  "capabilities": {
+                    "stripe_balance": {
+                      "stripe_transfers": {
+                        "requested": true
+                      }
+                    }
+                  }
+                }
+              },
+              "dashboard": "none",
+              "defaults": {
+                "responsibilities": {
+                  "fees_collector": "application",
+                  "losses_collector": "application"
+                }
+              }
+            },
+            "probe": "isolated/recipient_pair_added"
+          },
+          "read": {
+            "configuration.recipient.applied": {
+              "kind": "sent",
+              "path": "configuration.recipient.applied"
+            }
+          },
+          "status": 200
+        },
+        {
+          "condition": {
+            "account_country": "US",
+            "created_with": {
+              "configuration": {
+                "recipient": {
+                  "capabilities": {
+                    "stripe_balance": {
+                      "stripe_transfers": {
+                        "requested": true
+                      }
+                    }
+                  }
+                }
+              },
+              "contact_email": {
+                "$gen": "email"
+              },
+              "dashboard": "none",
+              "defaults": {
+                "responsibilities": {
+                  "fees_collector": "application",
+                  "losses_collector": "application"
+                }
+              },
+              "identity": {
+                "country": "US"
+              }
+            },
+            "params": {
+              "configuration": {
+                "recipient": {
+                  "applied": false,
+                  "capabilities": {
+                    "stripe_balance": {
+                      "stripe_transfers": {
+                        "requested": false
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "probe": "isolated/recipient_pair_changed"
+          },
+          "read": {
+            "configuration.recipient.applied": {
+              "kind": "sent",
+              "path": "configuration.recipient.applied"
+            }
+          },
+          "status": 200
+        },
+        {
+          "condition": {
+            "account_country": "US",
+            "created_with": {
+              "configuration": {
+                "recipient": {
+                  "capabilities": {
+                    "stripe_balance": {
+                      "stripe_transfers": {
+                        "requested": true
+                      }
+                    }
+                  }
+                }
+              },
+              "contact_email": {
+                "$gen": "email"
+              },
+              "dashboard": "none",
+              "defaults": {
+                "responsibilities": {
+                  "fees_collector": "application",
+                  "losses_collector": "application"
+                }
+              },
+              "identity": {
+                "country": "US"
+              }
+            },
+            "params": {
+              "configuration": {
+                "recipient": {
+                  "applied": false,
+                  "capabilities": {
+                    "stripe_balance": {
+                      "stripe_transfers": {
+                        "requested": true
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "probe": "isolated/recipient_unapplied_whole"
+          },
+          "read": {
+            "configuration.recipient.applied": {
+              "kind": "sent",
+              "path": "configuration.recipient.applied"
+            }
+          },
+          "status": 200
+        }
+      ],
+      "members": [
+        "configuration.recipient.applied",
+        "configuration.recipient.capabilities.stripe_balance.stripe_transfers.requested"
+      ],
+      "object": "v2.core.account",
+      "operation": "PostV2CoreAccountsId",
+      "tests": [
+        "TestV2CoreAccountAttributes/leaves/request/PostV2CoreAccountsId/configuration.recipient.applied",
+        "TestV2CoreAccountAttributes/leaves/request/PostV2CoreAccountsId/configuration.recipient.capabilities.stripe_balance.stripe_transfers.requested"
       ]
     }
   ]

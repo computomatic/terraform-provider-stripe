@@ -199,7 +199,7 @@ func (r *Resource) planChange(ctx context.Context, req resource.ModifyPlanReques
 	}
 	// The refusal comes after every replace check of the engine: a plan any of them has made a
 	// replace creates the object anew, with the new value.
-	if r.refuseChanges(ctx, req, resp) || r.refuseDroppingMetadataKeys(ctx, req, resp) || r.refuseMembersTogether(ctx, req, resp) {
+	if r.refuseChanges(ctx, req, resp) || r.refuseDroppingMetadataKeys(ctx, req, resp) || r.refuseAddingNothing(ctx, req, resp) {
 		return
 	}
 	if r.forgetFilled(req, resp) {
@@ -427,11 +427,14 @@ func (r *Resource) refuseGoingBack(ctx context.Context, req resource.ModifyPlanR
 	return true
 }
 
-// replaces reports whether the plan changes a field that forces replacement, the parent or
-// the attached object.
+// replaces reports whether the plan changes a field that forces replacement, a configured value
+// of one that replaces only when the configuration changes it, the parent or the attached object.
 func (r *Resource) replaces(plan, state, config basetypes.ObjectValue) bool {
 	for _, n := range r.m.nodes {
 		if n.Replace && differs(plan.Attributes()[n.AttrName()], state.Attributes()[n.AttrName()], config.Attributes()[n.AttrName()]) {
+			return true
+		}
+		if n.ReplaceIfSet && changedByConfig(config.Attributes()[n.AttrName()], state.Attributes()[n.AttrName()]) {
 			return true
 		}
 		if n.FixedOnceSet == "" {

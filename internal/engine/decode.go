@@ -125,6 +125,9 @@ func (d *decoder) node(n *node, w wire.Value, prior attr.Value) attr.Value {
 		return nullOf(attrType(n))
 	}
 	if !d.dataSource && n == d.discounts {
+		if n.Preserve && known(prior) {
+			return prior
+		}
 		return d.mapDiscounts(n, w, prior, "")
 	}
 	if !d.dataSource && slices.Contains(d.lineDiscounts, n) {

@@ -694,12 +694,24 @@ func TestBesideReturnsAndKeptDiscountsFollowTheRecord(t *testing.T) {
 		{Object: "quote", Operation: "PostQuotes", Path: "discounts", Form: "coupon", ResponsePath: "discounts", Returned: DiscountID},
 		{Object: "quote", Operation: "PostQuotes", Path: "line_items.discounts", Form: "coupon", ResponsePath: "line_items.data.discounts.discount", Returned: DiscountObject},
 	}
-	if err := checkKeptDiscounts(Resource{Package: "quote"}, []Leaf{{Key: line}, {Key: top}}, kept, p); err != nil {
+	lines := Leaf{Key: Key{Object: "quote", Side: SideResponse, Path: "line_items"}}
+	withLines := []Leaf{{Key: line}, {Key: top}, lines}
+	keptWithLines := append(slices.Clone(kept), Record{State: StateExposed, Class: ClassVerified})
+	if err := checkKeptDiscounts(Resource{Package: "quote"}, withLines, keptWithLines, p); err != nil {
 		t.Errorf("forms read back as the record shows: %v", err)
 	}
 	p.Evidence.Discounts[1].HeldBy = "invoiceitem"
-	if err := checkKeptDiscounts(Resource{Package: "quote"}, []Leaf{{Key: line}, {Key: top}}, kept, p); err == nil || !strings.Contains(err.Error(), "line_items.discounts.coupon") {
+	if err := checkKeptDiscounts(Resource{Package: "quote"}, withLines, keptWithLines, p); err == nil || !strings.Contains(err.Error(), "line_items.discounts.coupon") {
 		t.Errorf("a line's discount another object holds: %v", err)
+	}
+	// A list the object never returns is kept from configuration: another object's holding is
+	// enough, and none is not.
+	if err := checkKeptDiscounts(Resource{Package: "quote"}, []Leaf{{Key: line}, {Key: top}}, kept, p); err != nil {
+		t.Errorf("a list never returned whose discount another object holds: %v", err)
+	}
+	p.Evidence.Discounts[1].HeldBy = ""
+	if err := checkKeptDiscounts(Resource{Package: "quote"}, []Leaf{{Key: line}, {Key: top}}, kept, p); err == nil || !strings.Contains(err.Error(), "never returns") {
+		t.Errorf("a list never returned whose discount no other object holds: %v", err)
 	}
 	p.Evidence.Discounts = p.Evidence.Discounts[:1]
 	p.Evidence.Discounts[0].Returned = "discount_hash"
@@ -819,5 +831,58 @@ func TestTogetherSetsFollowTheRecord(t *testing.T) {
 		if err := markTogether(res, "setup_intent", "PostSetupIntents", "PostSetupIntentsIntent", table(), leaves, tc.records, p); err == nil || !strings.Contains(err.Error(), tc.want) {
 			t.Errorf("%s: %v, want %q", name, err, tc.want)
 		}
+	}
+}
+
+// A set whose every member a side effect shows Stripe taking apart from the others, as a v2
+// recipient's `applied` and transfers request, is no set Stripe takes only all at once: nothing is
+// marked, and a refusal of such a set fails generation. A member the side effects show only beside
+// another member of the set, sent or carried, is not taken apart.
+func TestTogetherSetsTakenApart(t *testing.T) {
+	key := func(path string) Key {
+		return Key{Object: "gadget", Side: SideRequest, Operation: "PostGadget", Path: path}
+	}
+	leaves := []Leaf{{Key: key("r.applied"), At: "r.applied"}, {Key: key("r.wanted"), At: "r.wanted"}}
+	table := func() []fields.Field {
+		return []fields.Field{{Name: "r", Shape: fields.Object, Update: true, Fields: []fields.Field{
+			{Name: "applied", Shape: fields.Bool, Update: true}, {Name: "wanted", Shape: fields.Bool, Update: true},
+		}}}
+	}
+	effect := func(probe string, sent, carried map[string]json.RawMessage) SideEffect {
+		return SideEffect{Object: "gadget", Operation: "PostGadget", Probe: probe, Sent: sent, Carried: carried}
+	}
+	alone := []SideEffect{
+		effect("applied_alone", map[string]json.RawMessage{"r.applied": json.RawMessage("false")}, nil),
+		effect("wanted_alone", map[string]json.RawMessage{"r.wanted": json.RawMessage("false")}, map[string]json.RawMessage{"other": json.RawMessage("1")}),
+	}
+	pinned := func(status int, effects []SideEffect) *Pinned {
+		answer := TogetherAnswer{Status: status}
+		if status != 200 {
+			answer.Message = "no"
+		}
+		answer.Condition.AccountCountry, answer.Condition.Probe = "US", "pair"
+		return &Pinned{Evidence: &Evidence{SideEffects: effects, Together: []Together{{
+			Object: "gadget", Operation: "PostGadget", Members: []string{"r.applied", "r.wanted"}, Answers: []TogetherAnswer{answer},
+		}}}}
+	}
+	res := Resource{Package: "gadget"}
+	exposed := Record{State: StateExposed, Class: ClassVerified}
+	got := table()
+	if err := markTogether(res, "gadget", "", "PostGadget", got, leaves, []Record{exposed, exposed}, pinned(200, alone)); err != nil {
+		t.Fatal(err)
+	}
+	if s := fieldAt(got, "r").Together; s != nil {
+		t.Errorf("a set taken apart is marked: %+v", s)
+	}
+	if err := markTogether(res, "gadget", "", "PostGadget", table(), leaves, []Record{exposed, exposed}, pinned(400, alone)); err == nil || !strings.Contains(err.Error(), "refused the set") {
+		t.Errorf("a refused set taken apart: %v", err)
+	}
+	beside := []SideEffect{alone[0], effect("wanted_beside", map[string]json.RawMessage{"r.wanted": json.RawMessage("false")}, map[string]json.RawMessage{"r.applied": json.RawMessage("true")})}
+	got = table()
+	if err := markTogether(res, "gadget", "", "PostGadget", got, leaves, []Record{exposed, exposed}, pinned(200, beside)); err != nil {
+		t.Fatal(err)
+	}
+	if s := fieldAt(got, "r").Together; len(s) != 1 {
+		t.Errorf("a set one member of which is taken only beside the other is not marked: %+v", s)
 	}
 }

@@ -773,6 +773,61 @@ func TestAccSubscription_itemMetadataKeyRemoved(t *testing.T) {
 	})
 }
 
+// Stripe keeps the members of `payment_settings` an update leaves out (the record's `hashes`, probe
+// `siblings/1`: a subscription created with `payment_method_types` `card` and `us_bank_account`
+// and `save_default_payment_method` `on_subscription`, then updated with `off` alone), so an update
+// sends only the member that changed, and the payment method types stay.
+func TestAccSubscription_paymentSettingsSendsTheChangedMember(t *testing.T) {
+	acct := acctest.NewAccount(t)
+	var id string
+	config := func(save string) string {
+		return freeConfig(acct, fmt.Sprintf(`
+resource "stripe_subscription" "test" {
+  customer = stripe_customer.test.id
+  items    = [{ price = stripe_price.free.id }]
+  payment_settings = {
+    payment_method_types        = ["card", "us_bank_account"]
+    save_default_payment_method = %q
+  }
+}
+`, save))
+	}
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: tfacc.ProviderFactories,
+		Steps: []resource.TestStep{
+			{Config: config("on_subscription"), Check: idOf(&id)},
+			{
+				Config: config("off"),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply:             []plancheck.PlanCheck{plancheck.ExpectResourceAction(address, plancheck.ResourceActionUpdate)},
+					PostApplyPostRefresh: []plancheck.PlanCheck{plancheck.ExpectEmptyPlan()},
+				},
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr(address, "payment_settings.save_default_payment_method", "off"),
+					resource.TestCheckResourceAttr(address, "payment_settings.payment_method_types.#", "2"),
+					func(*terraform.State) error {
+						if acct.Smoke {
+							return nil // the request log is the fake's
+						}
+						for _, r := range acctest.RequestLog(t, acct) {
+							params, ok := r.Params.(wire.Object)
+							if !ok || r.Method != "POST" || r.Path != "/v1/subscriptions/"+id {
+								continue
+							}
+							sent, _ := params.Get("payment_settings")
+							if got, err := wire.EncodeJSON(sent); err != nil || string(got) != `{"save_default_payment_method":"off"}` {
+								return fmt.Errorf("the update must send only the changed member of payment_settings: %s", got)
+							}
+							return nil
+						}
+						return fmt.Errorf("no update of %s in the request log", id)
+					},
+				),
+			},
+		},
+	})
+}
+
 // Stripe returns a create's `permissions` and an update's `account_subcategories` and `prefetch` of
 // a US bank account's Financial Connections sorted (the record's `normalised` form `sorted`), so
 // the configured order stays in state. The values are the suite's (probe `update/37`, its create

@@ -107,14 +107,18 @@ var Declaration = engine.Declaration{
 		// `isolated/change_country_from_none` and `isolated/change_country_on_recipient`
 		"identity.country": "Stripe took `GB` on an update of an account in `US`, and `US` on an account that had no country, and refused `GB` on an account whose recipient configuration requests `stripe_transfers`.",
 	},
-	SendChangedMembers: []string{"configuration", "defaults", "defaults.profile", "identity"},
-	// The table sends `configuration.recipient` by its members alone (MembersAlone), which the
-	// record's probes `isolated/change_applied_to_false` and `isolated/transfers_requested_false`
-	// prove; nothing proves a member of `identity.business_details` alone.
-	SendWholeMembers: []string{"identity.business_details"},
-	ClearsWithNull:   []string{"contact_phone"},
-	PreserveConfig:   []string{"identity.country", "configuration.recipient.capabilities.stripe_balance.stripe_transfers.requested"},
-	KeepWhenClosed:   "closed",
+	// Stripe keeps the members of `configuration.recipient` an update leaves out (probe
+	// `isolated/hash_recipient`), and takes `applied` and the transfers request each alone
+	// (`isolated/change_applied_to_false`, `isolated/transfers_requested_false`) and together
+	// (`isolated/recipient_unapplied_whole`, `isolated/recipient_pair_changed`,
+	// `isolated/recipient_pair_added`), so an update sends the members that changed. The
+	// recipient's capabilities go whole, as every probe sent them; nothing proves a member of
+	// `identity.business_details` alone.
+	SendChangedMembers: []string{"configuration", "configuration.recipient", "defaults", "defaults.profile", "identity"},
+	SendWholeMembers:   []string{"configuration.recipient.capabilities", "identity.business_details"},
+	ClearsWithNull:     []string{"contact_phone"},
+	PreserveConfig:     []string{"identity.country", "configuration.recipient.capabilities.stripe_balance.stripe_transfers.requested"},
+	KeepWhenClosed:     "closed",
 	ServerDefaulted: []string{
 		"configuration", "dashboard", "defaults", "defaults.currency",
 		"identity", "identity.business_details", "identity.business_details.registered_name", "identity.country",

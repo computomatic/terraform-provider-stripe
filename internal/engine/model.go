@@ -164,14 +164,6 @@ func compile(decl Declaration, table []fields.Field) (*model, error) {
 		}
 	}
 
-	alone := membersAlone(table, "")
-	for _, path := range alone {
-		if slices.Contains(decl.SendChangedMembers, path) || slices.Contains(decl.SendWholeMembers, path) {
-			return nil, fmt.Errorf("%s: the hash `%s` sends its members alone by the table; the declaration may not name it in SendChangedMembers or SendWholeMembers", decl.TypeName, path)
-		}
-	}
-	decl.SendChangedMembers = append(slices.Clone(decl.SendChangedMembers), alone...)
-
 	c := compiler{
 		decl:         decl,
 		once:         newPathSet(decl.OnceReturned),
@@ -197,6 +189,13 @@ func compile(decl Declaration, table []fields.Field) (*model, error) {
 	}
 
 	m := &model{decl: decl, nodes: nodes, v2: v2, discounts: discountsNode(nodes), lineDiscounts: lineDiscountsNodes(nodes)}
+	// Stripe drops a discount that ends, a `once` or `repeating` one, and a discount can be added
+	// outside Terraform, so a read of a create-only `discounts` (a subscription's) would replace a
+	// live object on the next plan. Once state holds the list, it keeps it as PreserveConfig keeps
+	// a value, and only a configuration that changes it replaces the object.
+	if d := m.discounts; d != nil && d.Replace {
+		d.Preserve, d.Replace, d.ReplaceIfSet = true, false, true
+	}
 	if decl.Attach != "" && (decl.Parent == "" || !strings.Contains(decl.Paths.Create, "{"+decl.Attach+"}")) {
 		return nil, fmt.Errorf("%s: an attachment needs a parent and a create path that names `{%s}`", decl.TypeName, decl.Attach)
 	}
@@ -957,20 +956,6 @@ func (m *model) checkMapUpdates() error {
 		return nil
 	}
 	return walk(m.nodes, nil)
-}
-
-// membersAlone is the dotted path of each hash of the table an update sends only the changed
-// members of by the table's MembersAlone, which suite probes prove (the generator's
-// Resource.MembersAlone).
-func membersAlone(table []fields.Field, prefix string) []string {
-	var out []string
-	for _, f := range table {
-		if f.MembersAlone {
-			out = append(out, prefix+f.Name)
-		}
-		out = append(out, membersAlone(f.Fields, prefix+f.Name+".")...)
-	}
-	return out
 }
 
 // checkSentMembers refuses a declaration that leaves open how an update sends a hash. Each entry of
