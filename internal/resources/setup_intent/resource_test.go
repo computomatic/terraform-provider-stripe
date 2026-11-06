@@ -350,3 +350,27 @@ resource "stripe_setup_intent" "test" {
 		}, nil, "stripe_setup_intent"),
 	})
 }
+
+// Stripe takes a 3D Secure proof's `cryptogram`, `transaction_id` and `version` only all at once
+// (the record's `together`), so a configuration that sets some and not all fails the plan, and
+// nothing reaches Stripe. The values are those of the suite's probe
+// `isolated/update_three_d_secure_proof`.
+func TestAccSetupIntent_threeDSecureProofGoesTogether(t *testing.T) {
+	acct := acctest.NewAccount(t)
+	partial := intentConfig(acct, `  payment_method_options = {
+    card = {
+      three_d_secure = {
+        cryptogram     = "YXR0cnMtcHJvYmUtY3J5cHRvZ3I="
+        transaction_id = "00000000-0000-4000-8000-000000000001"
+      }
+    }
+  }
+`)
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: tfacc.ProviderFactories,
+		Steps: acctest.Forget(t, []resource.TestStep{
+			{Config: intentConfig(acct, "")},
+			{Config: partial, PlanOnly: true, ExpectError: regexp.MustCompile("Incomplete set of arguments")},
+		}, nil, "stripe_setup_intent"),
+	})
+}

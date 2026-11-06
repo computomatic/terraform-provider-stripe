@@ -26,8 +26,12 @@ var Declaration = engine.Declaration{
 		Update:   "/v1/billing_portal/configurations/{id}",
 		List:     "/v1/billing_portal/configurations",
 	},
-	Delete:  engine.Archive,
-	Archive: &engine.ArchiveAction{Field: "active", Value: wire.Bool(false)},
+	// Stripe sets `features.subscription_update.billing_cycle_anchor` to `unchanged` when the
+	// request leaves it out (suite: TestBillingPortalConfigurationAttributes, the minimal create's
+	// default and probe `enums/1`).
+	ServerDefaulted: []string{"features.subscription_update.billing_cycle_anchor"},
+	Delete:          engine.Archive,
+	Archive:         &engine.ArchiveAction{Field: "active", Value: wire.Bool(false)},
 	RefuseWhen: &engine.RefuseWhen{
 		Field:  "is_default",
 		Value:  wire.Bool(true),

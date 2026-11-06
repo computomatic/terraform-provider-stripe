@@ -182,6 +182,9 @@ type Carry struct {
 	// WhenPast carries the value only when it is a Unix time that has passed, so that only the
 	// element that has begun keeps it and later ones are derived by Stripe.
 	WhenPast bool
+	// First carries the first element's value whatever WhenPast says, for a list Stripe needs
+	// anchored, such as a schedule whose first phase has not begun.
+	First bool
 }
 
 // CreateWrap says Stripe's create takes the object's fields as a hash under one key, such as

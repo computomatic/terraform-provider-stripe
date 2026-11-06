@@ -262,3 +262,5 @@ The `payment_method_options.card.three_d_secure.network_options` attribute suppo
 The `payment_method_options.card.three_d_secure.network_options.cartes_bancaires` attribute supports:
 
 * `cb_avalgo` - Possible values: `0`, `1`, `2`, `3`, `4`, `A`.
+* `cb_exemption` -
+* `cb_score` -

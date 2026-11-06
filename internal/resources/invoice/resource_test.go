@@ -539,3 +539,37 @@ data "stripe_invoice" "by_id" {
 		},
 	})
 }
+
+// Stripe returns a draft's updated `account_subcategories` and `prefetch` of a US bank account's
+// Financial Connections sorted (the record's `normalised` form `sorted`), so the configured order
+// stays in state. The values are the suite's (`update/11`).
+func TestAccInvoice_bankAccountListsKeepTheirOrder(t *testing.T) {
+	acct := acctest.NewAccount(t)
+	bank := `  payment_settings = {
+    payment_method_options = {
+      us_bank_account = {
+        financial_connections = {
+          filters     = { account_subcategories = ["savings", "checking"] }
+          permissions = ["balances", "payment_method"]
+          prefetch    = ["ownership", "balances"]
+        }
+        verification_method = "instant"
+      }
+    }
+  }
+`
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: tfacc.ProviderFactories,
+		Steps: []resource.TestStep{
+			{Config: invoiceConfig(acct, "")},
+			{
+				Config: invoiceConfig(acct, bank),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr(resAddress, "payment_settings.payment_method_options.us_bank_account.financial_connections.prefetch.0", "ownership"),
+					resource.TestCheckResourceAttr(resAddress, "payment_settings.payment_method_options.us_bank_account.financial_connections.filters.account_subcategories.0", "savings"),
+				),
+			},
+			{Config: invoiceConfig(acct, bank), PlanOnly: true},
+		},
+	})
+}

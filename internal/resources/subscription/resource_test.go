@@ -745,3 +745,69 @@ resource "stripe_subscription" %q {
 		},
 	})
 }
+
+// Stripe merges an item's `metadata` key by key (the record's `map` of the update's
+// `items.metadata`), so an update that drops a key sends it as `""`, which removes it; sent
+// whole, the key would stay and fail the apply. The keys are the suite's (`update/1`, `unset/1`).
+func TestAccSubscription_itemMetadataKeyRemoved(t *testing.T) {
+	acct := acctest.NewAccount(t)
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: tfacc.ProviderFactories,
+		ErrorCheck:               tfacc.SkipWhenFakeLacks(t, "items"),
+		Steps: []resource.TestStep{
+			{
+				Config: subscriptionConfig(acct, `[{ price = stripe_price.one.id, metadata = { attrs_a = "one", attrs_b = "two" } }]`, ""),
+				Check:  resource.TestCheckResourceAttr(address, "items.0.metadata.%", "2"),
+			},
+			{
+				Config: subscriptionConfig(acct, `[{ price = stripe_price.one.id, metadata = { attrs_b = "two" } }]`, ""),
+				ConfigPlanChecks: resource.ConfigPlanChecks{PreApply: []plancheck.PlanCheck{
+					plancheck.ExpectResourceAction(address, plancheck.ResourceActionUpdate),
+				}},
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr(address, "items.0.metadata.%", "1"),
+					resource.TestCheckResourceAttr(address, "items.0.metadata.attrs_b", "two"),
+				),
+			},
+		},
+	})
+}
+
+// Stripe returns a create's `permissions` and an update's `account_subcategories` and `prefetch` of
+// a US bank account's Financial Connections sorted (the record's `normalised` form `sorted`), so
+// the configured order stays in state. The values are the suite's (probe `update/37`, its create
+// and its update).
+func TestAccSubscription_bankAccountListsKeepTheirOrder(t *testing.T) {
+	acct := acctest.NewAccount(t)
+	bank := func(subcategories, permissions, prefetch, verification string) string {
+		return fmt.Sprintf(`  payment_settings = {
+    payment_method_options = {
+      us_bank_account = {
+        financial_connections = {
+          filters     = { account_subcategories = %s }
+          permissions = %s
+          prefetch    = %s
+        }
+        verification_method = %q
+      }
+    }
+  }
+`, subcategories, permissions, prefetch, verification)
+	}
+	updated := subscriptionConfig(acct, oneItem, bank(`["savings", "checking"]`, `["balances", "payment_method"]`, `["ownership", "balances"]`, "instant"))
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: tfacc.ProviderFactories,
+		ErrorCheck:               tfacc.SkipWhenFakeLacks(t, "payment_settings"),
+		Steps: []resource.TestStep{
+			{Config: subscriptionConfig(acct, oneItem, bank(`["checking", "savings"]`, `["payment_method", "balances"]`, `["balances", "ownership"]`, "automatic"))},
+			{
+				Config: updated,
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr(address, "payment_settings.payment_method_options.us_bank_account.financial_connections.prefetch.0", "ownership"),
+					resource.TestCheckResourceAttr(address, "payment_settings.payment_method_options.us_bank_account.financial_connections.filters.account_subcategories.0", "savings"),
+				),
+			},
+			{Config: updated, PlanOnly: true},
+		},
+	})
+}

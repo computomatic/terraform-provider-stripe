@@ -77,6 +77,17 @@ func TestUnreachableValuePrecedesTheDefaultStatement(t *testing.T) {
 	}
 }
 
+// An argument Stripe takes only with others names them after its answer and before the default
+// statement.
+func TestTogetherPrecedesTheDefaultStatement(t *testing.T) {
+	p := &page{resource: true}
+	together := "Stripe takes it only together with `version`, so a configuration sets all of them or none."
+	got := p.line(&attr{Name: "x", Description: "A thing", Optional: true, Default: "Default: not sent.", Answer: "Stripe takes it on Tuesdays.", Together: together}, "x", true)
+	if want := "A thing. Stripe takes it on Tuesdays. " + together + " Default: not sent."; !strings.HasSuffix(got, want) {
+		t.Errorf("%s, want it to end %s", got, want)
+	}
+}
+
 // Inside a list element the engine keeps no prior value (an insert or a reorder would pair it
 // with another element), so a subscription item's Optional and Computed `price` and `quantity`
 // say that Stripe sets them when the list is next sent, not that the value stays.

@@ -494,6 +494,30 @@ func TestCarryOnlyTheCurrentPhasesStart(t *testing.T) {
 	}
 }
 
+// With First, the first phase keeps its start before it begins too, which Stripe needs to anchor
+// the end dates to; a later phase that has not begun is still left for Stripe to derive.
+func TestCarryTheFirstPhasesStartBeforeItBegins(t *testing.T) {
+	decl := listDeclaration()
+	decl.Carry = []Carry{{List: "phases", Field: "start_date", WhenPast: true, First: true}}
+	r := configured(t, decl, phaseTable(), newStub())
+	future, later := "4102444800", "4105036800"
+	state := r.fill(map[string]attr.Value{"phases": phases(r,
+		map[string]attr.Value{"start_date": sv(future), "name": sv("a")},
+		map[string]attr.Value{"start_date": sv(later), "name": sv("b")},
+	)})
+	plan := r.fill(map[string]attr.Value{"phases": phases(r,
+		map[string]attr.Value{"start_date": types.StringUnknown(), "name": sv("a2")},
+		map[string]attr.Value{"start_date": types.StringUnknown(), "name": sv("b2")},
+	)})
+	params, err := r.m.encodeUpdate(plan, state, tftypes.Value{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got, want := wireOf(t, params), `{"phases":[{"name":"a2","start_date":"4102444800"},{"name":"b2"}]}`; got != want {
+		t.Errorf("update body:\n got %s\nwant %s", got, want)
+	}
+}
+
 // A phase that began a moment ago, by a clock a little behind Stripe's, is still current.
 func TestCarryTreatsAStartWithinAMinuteAsCurrent(t *testing.T) {
 	decl := listDeclaration()

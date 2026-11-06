@@ -1,19 +1,19 @@
 {
-  "fake_version": "v0.35.0",
-  "suite_ref": "287c68eed4c297cdccbb61a8ba52be3036411c97",
-  "run_id": 42120604672,
+  "fake_version": "v0.36.0",
+  "suite_ref": "e1f3b754386294f3f5df00a313bf5740a159db19",
+  "run_id": 42176556537,
   "api_version": "2026-09-30.endive",
   "spec_sha256": "9119e72c7ff8ad142e94f7efa9cf49d8e6eec69df3592e17e8fba15099726ed7",
   "counts": {
     "gap_placeholder_null": 48,
-    "gap_proven_not_served": 1236,
+    "gap_proven_not_served": 1234,
     "gap_stripe_only": 33,
     "proven_by_test": 5651,
-    "unproven": 7305,
-    "verified": 4120,
+    "unproven": 7296,
+    "verified": 4131,
     "verified_accepted_only": 426
   },
-  "refused_only": 164,
+  "refused_only": 171,
   "objects": [
     {
       "object": "account",
@@ -642,8 +642,8 @@
         "gap_placeholder_null": 2,
         "gap_proven_not_served": 3,
         "proven_by_test": 1334,
-        "unproven": 925,
-        "verified": 194,
+        "unproven": 920,
+        "verified": 199,
         "verified_accepted_only": 50
       }
     },
@@ -831,8 +831,8 @@
       "object": "setup_intent",
       "counts": {
         "proven_by_test": 336,
-        "unproven": 339,
-        "verified": 79,
+        "unproven": 337,
+        "verified": 81,
         "verified_accepted_only": 40
       }
     },
@@ -872,16 +872,15 @@
       "counts": {
         "gap_placeholder_null": 2,
         "gap_proven_not_served": 14,
-        "unproven": 253,
-        "verified": 333,
+        "unproven": 251,
+        "verified": 335,
         "verified_accepted_only": 55
       }
     },
     {
       "object": "subscription_item",
       "counts": {
-        "gap_proven_not_served": 2,
-        "verified": 100,
+        "verified": 102,
         "verified_accepted_only": 12
       }
     },
@@ -94408,13 +94407,13 @@
       "path": "payment_method_options.card.three_d_secure.electronic_commerce_indicator",
       "branch": "",
       "shape": "enum",
-      "state": "unserved",
-      "reason": "not_proven",
-      "status": "unproven",
+      "state": "served",
+      "reason": "refused_only",
+      "status": "proven",
       "tests": [
         "TestPaymentIntentAttributes/leaves/request/PostPaymentIntentsIntent/payment_method_options.card.three_d_secure.electronic_commerce_indicator"
       ],
-      "class": "unproven"
+      "class": "verified"
     },
     {
       "object": "payment_intent",
@@ -94423,13 +94422,13 @@
       "path": "payment_method_options.card.three_d_secure.exemption_indicator",
       "branch": "",
       "shape": "enum",
-      "state": "unserved",
-      "reason": "not_proven",
-      "status": "unproven",
+      "state": "served",
+      "reason": "refused_only",
+      "status": "proven",
       "tests": [
         "TestPaymentIntentAttributes/leaves/request/PostPaymentIntentsIntent/payment_method_options.card.three_d_secure.exemption_indicator"
       ],
-      "class": "unproven"
+      "class": "verified"
     },
     {
       "object": "payment_intent",
@@ -94453,13 +94452,13 @@
       "path": "payment_method_options.card.three_d_secure.network_options.cartes_bancaires.cb_exemption",
       "branch": "",
       "shape": "string",
-      "state": "unserved",
-      "reason": "not_proven",
-      "status": "unproven",
+      "state": "served",
+      "reason": "refused_only",
+      "status": "proven",
       "tests": [
         "TestPaymentIntentAttributes/leaves/request/PostPaymentIntentsIntent/payment_method_options.card.three_d_secure.network_options.cartes_bancaires.cb_exemption"
       ],
-      "class": "unproven"
+      "class": "verified"
     },
     {
       "object": "payment_intent",
@@ -94468,13 +94467,13 @@
       "path": "payment_method_options.card.three_d_secure.network_options.cartes_bancaires.cb_score",
       "branch": "",
       "shape": "integer",
-      "state": "unserved",
-      "reason": "not_proven",
-      "status": "unproven",
+      "state": "served",
+      "reason": "refused_only",
+      "status": "proven",
       "tests": [
         "TestPaymentIntentAttributes/leaves/request/PostPaymentIntentsIntent/payment_method_options.card.three_d_secure.network_options.cartes_bancaires.cb_score"
       ],
-      "class": "unproven"
+      "class": "verified"
     },
     {
       "object": "payment_intent",
@@ -94483,13 +94482,13 @@
       "path": "payment_method_options.card.three_d_secure.requestor_challenge_indicator",
       "branch": "",
       "shape": "string",
-      "state": "unserved",
-      "reason": "not_proven",
-      "status": "unproven",
+      "state": "served",
+      "reason": "refused_only",
+      "status": "proven",
       "tests": [
         "TestPaymentIntentAttributes/leaves/request/PostPaymentIntentsIntent/payment_method_options.card.three_d_secure.requestor_challenge_indicator"
       ],
-      "class": "unproven"
+      "class": "verified"
     },
     {
       "object": "payment_intent",
@@ -144119,7 +144118,8 @@
       "status": "proven",
       "tests": [
         "TestQuoteAttributes/leaves/request/PostQuotes/discounts.coupon",
-        "TestQuoteAttributes/state/discount_coupon/leaves/request/PostQuotes/discounts.coupon"
+        "TestQuoteAttributes/state/discount_coupon/leaves/request/PostQuotes/discounts.coupon",
+        "TestQuoteAttributes/state/quote_discount_on_line/leaves/request/PostQuotes/discounts.coupon"
       ],
       "class": "verified_accepted_only"
     },
@@ -155455,13 +155455,13 @@
       "path": "payment_method_options.card.three_d_secure.network_options.cartes_bancaires.cb_exemption",
       "branch": "",
       "shape": "string",
-      "state": "unserved",
-      "reason": "not_proven",
-      "status": "unproven",
+      "state": "served",
+      "reason": "refused_only",
+      "status": "proven",
       "tests": [
         "TestSetupIntentAttributes/leaves/request/PostSetupIntentsIntent/payment_method_options.card.three_d_secure.network_options.cartes_bancaires.cb_exemption"
       ],
-      "class": "unproven"
+      "class": "verified"
     },
     {
       "object": "setup_intent",
@@ -155470,13 +155470,13 @@
       "path": "payment_method_options.card.three_d_secure.network_options.cartes_bancaires.cb_score",
       "branch": "",
       "shape": "integer",
-      "state": "unserved",
-      "reason": "not_proven",
-      "status": "unproven",
+      "state": "served",
+      "reason": "refused_only",
+      "status": "proven",
       "tests": [
         "TestSetupIntentAttributes/leaves/request/PostSetupIntentsIntent/payment_method_options.card.three_d_secure.network_options.cartes_bancaires.cb_score"
       ],
-      "class": "unproven"
+      "class": "verified"
     },
     {
       "object": "setup_intent",
@@ -172744,12 +172744,11 @@
       "branch": "",
       "shape": "list",
       "state": "served",
-      "reason": "accepted_ignored",
-      "status": "unproven",
+      "status": "proven",
       "tests": [
         "TestSubscriptionAttributes/leaves/request/PostSubscriptionsSubscriptionExposedId/payment_settings.payment_method_options.us_bank_account.financial_connections.filters.account_subcategories"
       ],
-      "class": "unproven"
+      "class": "verified"
     },
     {
       "object": "subscription",
@@ -172773,12 +172772,11 @@
       "branch": "",
       "shape": "list",
       "state": "served",
-      "reason": "accepted_ignored",
-      "status": "unproven",
+      "status": "proven",
       "tests": [
         "TestSubscriptionAttributes/leaves/request/PostSubscriptionsSubscriptionExposedId/payment_settings.payment_method_options.us_bank_account.financial_connections.prefetch"
       ],
-      "class": "unproven"
+      "class": "verified"
     },
     {
       "object": "subscription",
@@ -175586,15 +175584,14 @@
       "path": "price",
       "branch": "",
       "shape": "string",
-      "state": "unserved",
-      "reason": "needs_declaration",
+      "state": "served",
       "status": "proven",
       "tests": [
         "TestSubscriptionItemAttributes/leaves/request/PostSubscriptionItemsItem/price",
         "TestSubscriptionItemAttributes/state/prorated_licensed/leaves/request/PostSubscriptionItemsItem/price",
         "TestSubscriptionItemAttributes/state/prorated_metered/leaves/request/PostSubscriptionItemsItem/price"
       ],
-      "class": "gap_proven_not_served"
+      "class": "verified"
     },
     {
       "object": "subscription_item",
@@ -176319,13 +176316,12 @@
       "path": "price.recurring.usage_type",
       "branch": "",
       "shape": "enum",
-      "state": "unserved",
-      "reason": "needs_declaration",
+      "state": "served",
       "status": "proven",
       "tests": [
         "TestSubscriptionItemAttributes/leaves/response/subscription_item/price.recurring.usage_type"
       ],
-      "class": "gap_proven_not_served"
+      "class": "verified"
     },
     {
       "object": "subscription_item",

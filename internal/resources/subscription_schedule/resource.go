@@ -16,7 +16,7 @@ import (
 var Declaration = engine.Declaration{
 	TypeName:              "stripe_subscription_schedule",
 	IDPrefix:              "sub_sched_",
-	Description:           "Changes a subscription over time, in phases. Set `status` to `canceled` to cancel the schedule and the subscription it started, or to `released` to end the schedule and keep the subscription billing on its own. Stripe replaces the phases as a whole on update and needs the current phase to keep its `start_date`, which an update sends back from the state. Phases, and the items and added invoice items of each, are matched by position, so a reorder updates them in place. `pause_schedules` is read only: the provider cannot send a pause schedule yet. With `collection_method = \"send_invoice\"` the customer needs an email address, or Stripe refuses the create.",
+	Description:           "Changes a subscription over time, in phases. Set `status` to `canceled` to cancel the schedule and the subscription it started, or to `released` to end the schedule and keep the subscription billing on its own. Stripe replaces the phases as a whole on update and needs the first phase, and the current one, to keep its `start_date`, which an update sends back from the state where the configuration leaves it unset. Phases, and the items and added invoice items of each, are matched by position, so a reorder updates them in place. `pause_schedules` is read only: the provider cannot send a pause schedule yet. With `collection_method = \"send_invoice\"` the customer needs an email address, or Stripe refuses the create.",
 	DataSourceDescription: "Changes a subscription over time, in phases.",
 	Paths: engine.Paths{
 		Create:   "/v1/subscription_schedules",
@@ -38,8 +38,12 @@ var Declaration = engine.Declaration{
 		"phases.invoice_settings.issuer.account", "phases.trial_end",
 	},
 	// The phase that has begun keeps its start (suite: "replace phases"); later phases get
-	// theirs from Stripe.
-	Carry: []engine.Carry{{List: "phases", Field: "start_date", WhenPast: true}},
+	// theirs from Stripe. Stripe needs a phase with a start to anchor the end dates to, so the
+	// first phase keeps its start even before it begins: every update probe of the suite sends
+	// `phases[0].start_date` as Stripe holds it, on a schedule that starts a day later
+	// (TestSubscriptionScheduleAttributes, probes `update/3` and `isolated/phase_duration`), and
+	// none leaves it out.
+	Carry: []engine.Carry{{List: "phases", Field: "start_date", WhenPast: true, First: true}},
 	// How to prorate a change goes with a change to the phases.
 	SendWithUpdate:   []string{"proration_behavior"},
 	SendWithUpdateOn: []string{"phases"},

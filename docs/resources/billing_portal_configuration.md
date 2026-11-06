@@ -121,7 +121,7 @@ The `features.subscription_cancel.cancellation_reason` attribute supports:
 
 The `features.subscription_update` attribute supports:
 
-* `billing_cycle_anchor` - (Optional) Determines the value to use for the billing cycle anchor on subscription updates. Valid values are `now` or `unchanged`, and the default value is `unchanged`. Setting the value to `now` resets the subscription's billing cycle anchor to the current time (in UTC). For more information, see the billing cycle [documentation](https://docs.stripe.com/billing/subscriptions/billing-cycle). Possible values: `now`, `unchanged`. Default (Stripe): `unchanged`.
+* `billing_cycle_anchor` - (Optional) Determines the value to use for the billing cycle anchor on subscription updates. Valid values are `now` or `unchanged`, and the default value is `unchanged`. Setting the value to `now` resets the subscription's billing cycle anchor to the current time (in UTC). For more information, see the billing cycle [documentation](https://docs.stripe.com/billing/subscriptions/billing-cycle). Possible values: `now`, `unchanged`. Default (Stripe): `unchanged`. Removing it from the configuration leaves the current value.
 * `default_allowed_updates` - (Optional) The types of subscription updates that are supported for items listed in the `products` attribute. When empty, subscriptions are not updateable. Default (Stripe): `[]`. Removing it from the configuration leaves the current value.
 * `enabled` - (Required) Whether the feature is enabled.
 * `products` - (Optional) The list of up to 10 products that support subscription updates. See [`features.subscription_update.products`](#features.subscription_update.products) below.

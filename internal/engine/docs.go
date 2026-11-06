@@ -18,6 +18,9 @@ type AttributeDoc struct {
 	// declaration's wording of where it takes it and the recorded refusals, which precede the
 	// default statement.
 	Answer string
+	// Together is, on a member of a set Stripe takes only all at once, the sentence that names the
+	// rest of the set, with Stripe's refusals of the set, which precedes the default statement.
+	Together string
 	// Unreachable is, on an argument with a value Stripe fails on every attempt, the sentence that
 	// names the value and why, which precedes the default statement.
 	Unreachable string
@@ -72,7 +75,7 @@ func (m *model) attributeDocs(arguments bool) map[string]AttributeDoc {
 				doc.Removal = removal(n)
 			}
 			if arguments {
-				doc.Refused, doc.Answer, doc.Unreachable = n.Refused, n.Answer, n.Unreachable
+				doc.Refused, doc.Answer, doc.Together, doc.Unreachable = n.Refused, n.Answer, n.TogetherDoc, n.Unreachable
 			}
 			doc.Copy = n.Copy
 			if doc != (AttributeDoc{}) {

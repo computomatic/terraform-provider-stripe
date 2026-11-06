@@ -124,6 +124,27 @@ func writeLiteral(b *strings.Builder, f fields.Field) {
 		}
 		b.WriteString("}")
 	}
+	if len(f.Together) > 0 {
+		b.WriteString(", Together: []fields.Together{")
+		for i, set := range f.Together {
+			if i > 0 {
+				b.WriteString(", ")
+			}
+			b.WriteString("{Members: []string{")
+			for j, m := range set.Members {
+				if j > 0 {
+					b.WriteString(", ")
+				}
+				b.WriteString(strconv.Quote(m))
+			}
+			b.WriteString("}")
+			if set.Refused != "" {
+				fmt.Fprintf(b, ", Refused: %s", strconv.Quote(set.Refused))
+			}
+			b.WriteString("}")
+		}
+		b.WriteString("}")
+	}
 	if len(f.Enum) > 0 {
 		b.WriteString(", Enum: []string{")
 		for i, e := range f.Enum {

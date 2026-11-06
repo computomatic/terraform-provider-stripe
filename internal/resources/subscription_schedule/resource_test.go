@@ -10,6 +10,7 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/hashicorp/terraform-plugin-testing/plancheck"
+	"github.com/hashicorp/terraform-plugin-testing/terraform"
 
 	"github.com/computomatic/terraform-provider-stripe/internal/acctest"
 	"github.com/computomatic/terraform-provider-stripe/internal/acctest/tfacc"
@@ -397,4 +398,103 @@ resource "stripe_subscription_schedule" "invoice_item" {
 			{Config: config, PlanOnly: true},
 		}, nil, "stripe_subscription_schedule"),
 	})
+}
+
+// Stripe replaces a phase's invoice item's `metadata` whole (the record's `map` of the update's
+// `phases.add_invoice_items.metadata`), so an update that drops a key sends the map without it.
+// As in the suite's `update/3`, whose keys and values these are, the schedule starts a day later
+// and the update sends the first phase's `start_date` back as Stripe holds it, which Stripe needs
+// to anchor the end dates to although the phase has not begun.
+func TestAccSubscriptionSchedule_invoiceItemMetadataReplaced(t *testing.T) {
+	acct := acctest.NewAccount(t)
+	start := strconv.FormatInt(time.Now().Add(24*time.Hour).Unix(), 10)
+	var path string
+	config := func(metadata string) string {
+		return acct.ProviderBlock() + fmt.Sprintf(`
+resource "stripe_customer" "test" {
+  email = "schedule-metadata@example.com"
+}
+
+resource "stripe_product" "test" {
+  name = %[1]q
+}
+
+resource "stripe_price" "free" {
+  product     = stripe_product.test.id
+  currency    = "usd"
+  unit_amount = 0
+  recurring = {
+    interval = "month"
+  }
+}
+
+resource "stripe_price" "one_time" {
+  product     = stripe_product.test.id
+  currency    = "usd"
+  unit_amount = 0
+}
+
+resource "stripe_subscription_schedule" "test" {
+  customer   = stripe_customer.test.id
+  start_date = %[2]q
+  phases = [{
+    items             = [{ price = stripe_price.free.id }]
+    duration          = { interval = "month" }
+    add_invoice_items = [{ price = stripe_price.one_time.id, metadata = %[3]s }]
+  }]
+}
+`, acct.Name("Plan"), start, metadata)
+	}
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: tfacc.ProviderFactories,
+		Steps: acctest.Forget(t, []resource.TestStep{
+			{
+				Config: config(`{ attrs_a = "three", attrs_b = "four" }`),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					pathOf(&path),
+					resource.TestCheckResourceAttr(address, "phases.0.add_invoice_items.0.metadata.%", "2"),
+				),
+			},
+			{
+				Config: config(`{ attrs_b = "four" }`),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr(address, "phases.0.add_invoice_items.0.metadata.%", "1"),
+					resource.TestCheckResourceAttr(address, "phases.0.add_invoice_items.0.metadata.attrs_b", "four"),
+					func(*terraform.State) error {
+						if acct.Smoke {
+							return nil // the request log is the fake's
+						}
+						for _, r := range acctest.RequestLog(t, acct) {
+							if r.Method != "POST" || r.Path != path {
+								continue
+							}
+							if got := firstPhaseStart(r.Params); got != start {
+								return fmt.Errorf("the update sent the first phase's start as %q, want %s: %v", got, start, r.Params)
+							}
+							return nil
+						}
+						return fmt.Errorf("no update of %s in the request log", path)
+					},
+				),
+			},
+		}, nil, "stripe_subscription_schedule"),
+	})
+}
+
+// firstPhaseStart is the `phases[0][start_date]` a logged request sent, or "".
+func firstPhaseStart(params wire.Value) string {
+	body, _ := params.(wire.Object)
+	list, _ := body.Get("phases")
+	phases, _ := list.(wire.Array)
+	if len(phases) == 0 {
+		return ""
+	}
+	first, _ := phases[0].(wire.Object)
+	switch v, _ := first.Get("start_date"); v := v.(type) {
+	case wire.String:
+		return string(v)
+	case wire.Int:
+		return strconv.FormatInt(int64(v), 10)
+	}
+	return ""
 }

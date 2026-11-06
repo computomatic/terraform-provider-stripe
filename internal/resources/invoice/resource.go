@@ -83,6 +83,15 @@ var Declaration = engine.Declaration{
 		"status":         {"rendering", "number", "effective_at", "due_date"},
 		"days_until_due": {"due_date"},
 	},
+	// Stripe sorts the lists of a US bank account's Financial Connections (the record's
+	// `normalised` form `sorted`: a create's `permissions` and an update's
+	// `account_subcategories` and `prefetch`, TestInvoiceAttributes, probe `update/11`), so the
+	// configured order stays in state, as a subscription's does.
+	PreserveConfig: []string{
+		"payment_settings.payment_method_options.us_bank_account.financial_connections.filters.account_subcategories",
+		"payment_settings.payment_method_options.us_bank_account.financial_connections.permissions",
+		"payment_settings.payment_method_options.us_bank_account.financial_connections.prefetch",
+	},
 	// Stripe answers an empty string for these with `cannot be unset`, or the record shows no
 	// unset of them and the fake refuses one as unproven (TestInvoiceAttributes, probes `unset/*`),
 	// so a removal replaces a draft and fails the plan of any other invoice.
