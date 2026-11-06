@@ -413,9 +413,9 @@ func TestAccAccountV2_changeCurrency(t *testing.T) {
 // unless the same update sets the dashboard and both collectors, and then takes it (the record's
 // probes `isolated/change_adds_recipient` and `isolated/change_adds_recipient_with_collectors`,
 // with their values). The plan sets the dashboard and the collectors while the account has none
-// (SetOnce), and refuses to change them once set. An update sends the recipient's members alone,
-// as the probes did, so adding it with both `applied` and the request, which no probe sent
-// together, or with neither, which would send nothing of it, is refused at plan.
+// (SetOnce), and refuses to change them once set. The update sends the recipient's one member the
+// configuration sets, as the probe did, so adding the recipient with no member set, which would
+// send nothing of it, is refused at plan.
 func TestAccAccountV2_addRecipient(t *testing.T) {
 	acct := acctest.NewAccount(t)
 	var path string
@@ -435,11 +435,6 @@ func TestAccAccountV2_addRecipient(t *testing.T) {
 				ExpectError: regexp.MustCompile("You must set dashboard"),
 			},
 			{
-				Config:      bareConfig(acct, us, strings.Replace(recipient, "recipient = {\n", "recipient = {\n      applied = true\n", 1)+managedRecipient),
-				PlanOnly:    true,
-				ExpectError: regexp.MustCompile("(?s)Cannot change these members of\\s+`configuration.recipient`"),
-			},
-			{
 				Config:      bareConfig(acct, us, "  configuration = {\n    recipient = {}\n  }\n"+managedRecipient),
 				PlanOnly:    true,
 				ExpectError: regexp.MustCompile("(?s)Cannot add `configuration.recipient` with no\\s+member set"),
@@ -456,6 +451,7 @@ func TestAccAccountV2_addRecipient(t *testing.T) {
 					resource.TestCheckResourceAttr(address, "configuration.recipient.applied", "true"),
 					resource.TestCheckTypeSetElemAttr(address, "applied_configurations.*", "recipient"),
 					sentOnUpdate(t, acct, &path, "dashboard", `"none"`),
+					sentOnUpdate(t, acct, &path, "configuration", `{"recipient":{"capabilities":{"stripe_balance":{"stripe_transfers":{"requested":true}}}}}`),
 				),
 			},
 			{
@@ -467,11 +463,46 @@ func TestAccAccountV2_addRecipient(t *testing.T) {
 	})
 }
 
+// Stripe takes `applied` and the `stripe_transfers` request together, both true, on an account
+// with neither, beside the dashboard and both collectors (the record's `together` answer to probe
+// `isolated/recipient_pair_added`, on an account created with a contact email and a US identity),
+// and applies the recipient, whose capabilities read `restricted` (its side effects). The update
+// sends both members, as the probe did.
+func TestAccAccountV2_addRecipientApplied(t *testing.T) {
+	acct := acctest.NewAccount(t)
+	var path string
+	us := fmt.Sprintf("  contact_email = \"e2e+%s@example.com\"\n  identity = { country = \"US\" }\n", acct.Name("recipient"))
+	applied := "  configuration = {\n    recipient = {\n      applied      = true\n" + requested + "\n    }\n  }\n"
+	managedRecipient := "  dashboard = \"none\"\n  defaults = {\n    responsibilities = { fees_collector = \"application\", losses_collector = \"application\" }\n  }\n"
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: tfacc.ProviderFactories,
+		Steps: acctest.Forget(t, []resource.TestStep{
+			{
+				Config: bareConfig(acct, us, ""),
+				Check:  pathOf(&path),
+			},
+			{
+				Config: bareConfig(acct, us, applied+managedRecipient),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply:             []plancheck.PlanCheck{plancheck.ExpectResourceAction(address, plancheck.ResourceActionUpdate)},
+					PostApplyPostRefresh: []plancheck.PlanCheck{plancheck.ExpectEmptyPlan()},
+				},
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr(address, "configuration.recipient.applied", "true"),
+					resource.TestCheckResourceAttr(address, "configuration.recipient.capabilities.stripe_balance.stripe_transfers.status", "restricted"),
+					resource.TestCheckResourceAttr(address, "configuration.recipient.capabilities.stripe_balance.payouts.status", "restricted"),
+					resource.TestCheckTypeSetElemAttr(address, "applied_configurations.*", "recipient"),
+					sentOnUpdate(t, acct, &path, "configuration", `{"recipient":{"applied":true,"capabilities":{"stripe_balance":{"stripe_transfers":{"requested":true}}}}}`),
+				),
+			},
+		}, nil, "stripe_account_v2"),
+	})
+}
+
 // Stripe takes `applied = false` on a recipient (the record's probe
 // `isolated/change_applied_to_false`, on the suite's recipient account), so it changes in place,
 // and the account's applied configurations follow it. The update sends `applied` alone, as that
-// probe did: nothing proves Stripe's answer to it beside a change of the transfers request,
-// which the plan refuses.
+// probe did, because Stripe keeps the recipient's members an update leaves out.
 func TestAccAccountV2_unapplyRecipient(t *testing.T) {
 	acct := acctest.NewAccount(t)
 	var path string
@@ -484,11 +515,6 @@ func TestAccAccountV2_unapplyRecipient(t *testing.T) {
 				Check:  pathOf(&path),
 			},
 			{
-				Config:      recipientConfig(acct, "    country = \"US\"\n", "      applied      = false\n"+strings.Replace(requested, "true", "false", 1), managedRecipient),
-				PlanOnly:    true,
-				ExpectError: regexp.MustCompile("(?s)changes `applied`,\\s+`capabilities.stripe_balance.stripe_transfers.requested`"),
-			},
-			{
 				Config: recipientConfig(acct, "    country = \"US\"\n", "      applied      = false\n"+requested, managedRecipient),
 				ConfigPlanChecks: resource.ConfigPlanChecks{
 					PreApply:             []plancheck.PlanCheck{plancheck.ExpectResourceAction(address, plancheck.ResourceActionUpdate)},
@@ -497,6 +523,39 @@ func TestAccAccountV2_unapplyRecipient(t *testing.T) {
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr(address, "configuration.recipient.applied", "false"),
 					sentOnUpdate(t, acct, &path, "configuration", `{"recipient":{"applied":false}}`),
+				),
+			},
+		}, nil, "stripe_account_v2"),
+	})
+}
+
+// Stripe takes `applied = false` and the `stripe_transfers` request at false together on a
+// recipient that holds both (the record's `together` answer to probe
+// `isolated/recipient_pair_changed`), removing the configuration and its capabilities (its side
+// effects). The update sends both members, as the probe did.
+func TestAccAccountV2_withdrawRecipient(t *testing.T) {
+	acct := acctest.NewAccount(t)
+	var path string
+	managedRecipient := "  dashboard = \"none\"\n  defaults = {\n    responsibilities = { fees_collector = \"application\", losses_collector = \"application\" }\n  }\n"
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: tfacc.ProviderFactories,
+		Steps: acctest.Forget(t, []resource.TestStep{
+			{
+				Config: recipientConfig(acct, "    country = \"US\"\n", requested, managedRecipient),
+				Check:  pathOf(&path),
+			},
+			{
+				Config: recipientConfig(acct, "    country = \"US\"\n", "      applied      = false\n"+strings.Replace(requested, "true", "false", 1), managedRecipient),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply:             []plancheck.PlanCheck{plancheck.ExpectResourceAction(address, plancheck.ResourceActionUpdate)},
+					PostApplyPostRefresh: []plancheck.PlanCheck{plancheck.ExpectEmptyPlan()},
+				},
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr(address, "configuration.recipient.applied", "false"),
+					resource.TestCheckResourceAttr(address, "configuration.recipient.capabilities.stripe_balance.stripe_transfers.requested", "false"),
+					resource.TestCheckNoResourceAttr(address, "configuration.recipient.capabilities.stripe_balance.stripe_transfers.status"),
+					resource.TestCheckResourceAttr(address, "applied_configurations.#", "0"),
+					sentOnUpdate(t, acct, &path, "configuration", `{"recipient":{"applied":false,"capabilities":{"stripe_balance":{"stripe_transfers":{"requested":false}}}}}`),
 				),
 			},
 		}, nil, "stripe_account_v2"),

@@ -82,12 +82,6 @@ type Resource struct {
 	// which names its evidence (a suite test, a Stripe doc URL or a framework limit). The
 	// product owner approves each new entry in review.
 	Exclude map[string]string
-	// MembersAlone maps a hash an update takes, by dotted path, to the probes of the record's
-	// `side_effects` that prove Stripe takes each member alone, where the record lists no update
-	// form for the hash in `families[].hashes`: an update then sends only its changed members.
-	// Generation fails unless every exposed member of the update is a cited probe's only member
-	// of the hash, and once the record lists the hash, which retires the entry.
-	MembersAlone map[string][]string
 	// AcceptedOnly is the register of the leaves of class `verified_accepted_only` the table
 	// keeps in spite of rule X6: a dotted path to the reason, which says where the argument's
 	// effect shows or that the provider keeps it from configuration (PreserveConfig). A path

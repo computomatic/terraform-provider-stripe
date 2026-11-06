@@ -82,10 +82,14 @@ var Declaration = engine.Declaration{
 	// update the suite proves them with.
 	SendWithUpdate:   []string{"payment_behavior", "proration_behavior"},
 	SendWithUpdateOn: []string{"items"},
-	// Stripe keeps the members of `invoice_settings` an update leaves out (family `v1-billing`,
-	// `hashes`), so an update sends only those that changed; `issuer` requires its `type` and
-	// goes whole.
-	SendChangedMembers: []string{"invoice_settings"},
+	// Stripe keeps the members of `invoice_settings` and `payment_settings` an update leaves out
+	// (family `v1-billing`, `hashes`; `payment_settings` by probe `siblings/1`), so an update
+	// sends only those that changed; `issuer` requires its `type` and goes whole, and so do
+	// `payment_settings.payment_method_options`, which the record does not list, as the update
+	// probes sent it. `trial_settings.end_behavior` keeps its siblings too (probe `siblings/27`),
+	// but `trial_settings` requires it, so it goes whole.
+	SendChangedMembers: []string{"invoice_settings", "payment_settings"},
+	SendWholeMembers:   []string{"payment_settings.payment_method_options"},
 	Answers: map[string]string{
 		// suite: TestSubscriptionAttributes, probe `isolated/invoice_item_coupon_expired`
 		"add_invoice_items.discounts.coupon": "Stripe takes a coupon that has not expired.",

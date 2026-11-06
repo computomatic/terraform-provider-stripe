@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"maps"
 	"net/http"
 	"regexp"
 	"slices"
@@ -249,9 +248,6 @@ func coverTable(spec *Spec, res Resource, ev *Pinned) (*tableCoverage, error) {
 		return nil, err
 	}
 	if err := checkHashUnsets(res, object, update, tc.table, ev); err != nil {
-		return nil, err
-	}
-	if err := markMembersAlone(res, object, update, tc.table, leaves, records, ev); err != nil {
 		return nil, err
 	}
 	if err := markTogether(res, object, create, update, tc.table, leaves, records, ev); err != nil {
@@ -1076,95 +1072,15 @@ func checkHashUnsets(res Resource, object, update string, table []fields.Field, 
 	return nil
 }
 
-// markMembersAlone marks each hash of Resource.MembersAlone on the table, once the record bears it
-// out: the record lists no update form for the hash, and every member of it the update exposes is
-// the only member of the hash, sent or carried, of a side effect of a cited probe. A cited probe
-// that sent several members of the hash together records that set (MembersTogether), which the
-// engine lets an update change in one request.
-func markMembersAlone(res Resource, object, update string, table []fields.Field, leaves []Leaf, records []Record, ev *Pinned) error {
-	if len(res.MembersAlone) == 0 {
-		return nil
-	}
-	if ev == nil || update == "" {
-		return fmt.Errorf("%s: a members-alone entry needs the pinned record and an update", res.Package)
-	}
-	// The record names leaves by request path, and the table, MembersTogether and the engine by
-	// where the table holds them, which differs below a token-or-hash parameter's `<name>_data`.
-	tableAt := map[string]string{}
-	for _, l := range leaves {
-		if l.Side == SideRequest && l.Operation == update {
-			tableAt[l.Path] = l.At
-		}
-	}
-	for _, hash := range slices.Sorted(maps.Keys(res.MembersAlone)) {
-		f := fieldAt(table, hash)
-		if f == nil || f.Shape != fields.Object || !f.Update {
-			return fmt.Errorf("%s: members-alone entry `%s` is not a hash the update takes", res.Package, hash)
-		}
-		for _, fam := range ev.Evidence.Families {
-			for _, h := range fam.Hashes {
-				if h.Object != object || h.Hash != hash {
-					continue
-				}
-				if h.Update == HashSiblingsKept {
-					return fmt.Errorf("%s: the record now lists `%s` as keeping its siblings: name it in the declaration's SendChangedMembers and retire its members-alone entry", res.Package, hash)
-				}
-				return fmt.Errorf("%s: the record lists `%s` as %s, which contradicts its members-alone entry", res.Package, hash, h.Update)
-			}
-		}
-		alone := map[string]bool{}
-		for _, probe := range res.MembersAlone[hash] {
-			found := false
-			for _, s := range ev.Evidence.SideEffects {
-				if s.Object != object || s.Operation != update || s.Probe != probe {
-					continue
-				}
-				var within []string
-				for _, leaf := range append(slices.Clone(s.Triggers), slices.Collect(maps.Keys(s.Carried))...) {
-					path, _, _ := strings.Cut(leaf, "@")
-					if at, ok := tableAt[path]; ok {
-						path = at
-					}
-					if strings.HasPrefix(path, hash+".") && !slices.Contains(within, path) {
-						within = append(within, path)
-					}
-				}
-				switch len(within) {
-				case 0:
-				case 1:
-					alone[within[0]], found = true, true
-				default:
-					for i, w := range within {
-						within[i] = strings.TrimPrefix(w, hash+".")
-					}
-					slices.Sort(within)
-					if !slices.ContainsFunc(f.MembersTogether, func(set []string) bool { return slices.Equal(set, within) }) {
-						f.MembersTogether = append(f.MembersTogether, within)
-					}
-					found = true
-				}
-			}
-			if !found {
-				return fmt.Errorf("%s: probe %s of members-alone entry `%s` updates no member of it", res.Package, probe, hash)
-			}
-		}
-		for i, l := range leaves {
-			if l.Side == SideRequest && l.Operation == update && records[i].State == StateExposed && strings.HasPrefix(l.At, hash+".") && !alone[l.At] {
-				return fmt.Errorf("%s: no probe of members-alone entry `%s` sends `%s` alone", res.Package, hash, l.At)
-			}
-		}
-		slices.SortFunc(f.MembersTogether, func(a, b []string) int { return strings.Compare(strings.Join(a, " "), strings.Join(b, " ")) })
-		f.MembersAlone = true
-	}
-	return nil
-}
-
 // markTogether marks on the table each set of request leaves that the record shows Stripe taking
 // only all at once (its `together`) and that the table exposes, on the hash that holds the set,
 // with Stripe's refusals of the set sent whole, so that the engine refuses a configuration that
 // sets some of its members and not all. The set's answer is no member's own and proves nothing of
 // a member alone, so generation fails on a table that exposes some members of a set and not the
-// others, or a member the gate does not let through.
+// others, or a member the gate does not let through. A set whose every member the record shows
+// Stripe taking apart from the others (takenApart) is no such set: its answers prove only that
+// Stripe takes the members at once too, so it marks nothing, and generation fails where Stripe
+// refused such a set, which the engine has no way to refuse.
 func markTogether(res Resource, object, create, update string, table []fields.Field, leaves []Leaf, records []Record, ev *Pinned) error {
 	if ev == nil {
 		return nil
@@ -1204,6 +1120,14 @@ func markTogether(res Resource, object, create, update string, table []fields.Fi
 		}
 		if exposedN < len(t.Members) {
 			return fmt.Errorf("%s: %s exposes some members of %v and not the others, which Stripe takes only all at once", res.Package, t.Operation, t.Members)
+		}
+		if takenApart(t, ev.Evidence.SideEffects) {
+			for _, a := range t.Answers {
+				if a.Status != http.StatusOK {
+					return fmt.Errorf("%s: %s takes each member of %v apart from the others and refused the set (probe %s), which the engine cannot hold yet", res.Package, t.Operation, t.Members, a.Condition.Probe)
+				}
+			}
+			continue
 		}
 		hash := parentPath(paths[0])
 		for _, p := range paths[1:] {
@@ -1252,11 +1176,45 @@ func markTogether(res Resource, object, create, update string, table []fields.Fi
 	return nil
 }
 
+// takenApart reports whether, for every member of a set, a side effect of the set's operation
+// shows Stripe taking a request that sent or carried that member and no other member of the set,
+// as the v2 recipient's `applied` (`isolated/change_applied_to_false`) and transfers request
+// (`isolated/transfers_requested_false`) were each taken apart from the pair.
+func takenApart(t Together, effects []SideEffect) bool {
+	for _, m := range t.Members {
+		apart := slices.ContainsFunc(effects, func(s SideEffect) bool {
+			if s.Object != t.Object || s.Operation != t.Operation {
+				return false
+			}
+			_, sent := s.Sent[m]
+			_, carried := s.Carried[m]
+			if !sent && !carried {
+				return false
+			}
+			for _, other := range t.Members {
+				_, otherSent := s.Sent[other]
+				_, otherCarried := s.Carried[other]
+				if other != m && (otherSent || otherCarried) {
+					return false
+				}
+			}
+			return true
+		})
+		if !apart {
+			return false
+		}
+	}
+	return true
+}
+
 // checkKeptDiscounts refuses an accepted-only form of a list of discounts that a table keeps
 // (Resource.AcceptedOnly) where the engine could not read it back as the record shows Stripe
 // returning it: the top-level `discounts` as discount IDs at `discounts`, and a list element's,
 // such as a quote line's, as each discount whole at `<list>.data.discounts.discount`, in the
-// table's own object. The engine maps either back by what each form names (D3).
+// table's own object. The engine maps either back by what each form names (D3). A list the object
+// never returns, such as a subscription's `add_invoice_items`, the provider keeps from
+// configuration and reads nothing back of, so its form need only be one the record shows Stripe
+// holding on another object (`held_by`), as the invoice item the subscription adds.
 func checkKeptDiscounts(res Resource, leaves []Leaf, records []Record, ev *Pinned) error {
 	if ev == nil {
 		return nil
@@ -1269,6 +1227,14 @@ func checkKeptDiscounts(res Resource, leaves []Leaf, records []Record, ev *Pinne
 			list, form, ok = strings.Cut(l.Path, ".")
 		}
 		if !ok || l.Side != SideRequest || records[i].State != StateExposed || records[i].Class != ClassAcceptedOnly || discountRelations[form] == "" || !strings.HasSuffix(list, "discounts") {
+			continue
+		}
+		if element := strings.TrimSuffix(list, ".discounts"); list != "discounts" && !returnedAt(leaves, element) {
+			if !slices.ContainsFunc(ev.Evidence.Discounts, func(d Discount) bool {
+				return d.Object == l.Object && d.Operation == l.Operation && d.Path == list && d.Form == form && d.HeldBy != ""
+			}) {
+				return fmt.Errorf("%s: kept accepted-only %s sits in `%s`, which the object never returns, and the record's discounts do not show Stripe holding it on another object", res.Package, l.Key, element)
+			}
 			continue
 		}
 		want, returned := "discounts", DiscountID
@@ -1286,6 +1252,13 @@ func checkKeptDiscounts(res Resource, leaves []Leaf, records []Record, ev *Pinne
 		}
 	}
 	return nil
+}
+
+// returnedAt reports whether the object's response holds a leaf at path or below it.
+func returnedAt(leaves []Leaf, path string) bool {
+	return slices.ContainsFunc(leaves, func(l Leaf) bool {
+		return l.Side == SideResponse && (l.Path == path || strings.HasPrefix(l.Path, path+"."))
+	})
 }
 
 // contradicted reports a minimal create that leaves the leaf out and that Stripe answers at the

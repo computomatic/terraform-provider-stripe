@@ -52,7 +52,7 @@ This data source exports the following attributes in addition to the arguments a
 * `default_source` - ID of the default payment source for the subscription. It must belong to the customer associated with the subscription and be in a chargeable state. If `default_payment_method` is also set, `default_payment_method` will take precedence. If neither are set, invoices will use the customer's [invoice_settings.default_payment_method](https://docs.stripe.com/api/customers/object#customer_object-invoice_settings-default_payment_method) or [default_source](https://docs.stripe.com/api/customers/object#customer_object-default_source).
 * `default_tax_rates` - The tax rates that will apply to any subscription item that does not have `tax_rates` set. Invoices created will have their `default_tax_rates` populated from the subscription.
 * `description` - The subscription's description, meant to be displayable to the customer. Use this field to optionally store an explanation of the subscription for rendering in Stripe surfaces and certain local payment methods UIs.
-* `discounts` - The coupons to redeem into discounts for the subscription. If not specified or empty, inherits the discount from the subscription's customer. See [`discounts`](#discounts) below.
+* `discounts` - The discounts applied to the subscription. Subscription item discounts are applied before subscription discounts. Use `expand[]=discounts` to expand each discount.
 * `ended_at` - If the subscription has ended, the date the subscription ended.
 * `invoice_settings` - All invoices will be billed using the specified settings. See [`invoice_settings`](#invoice_settings) below.
 * `items` - A list of up to 20 subscription items, each with an attached price. Holds the first page of the list Stripe returns with the object; `has_more` is true when there are more. Read every element with the `stripe_subscription_item` data source. See [`items`](#items) below.
@@ -238,13 +238,6 @@ The `cancellation_details` attribute supports:
 * `feedback` - The customer submitted reason for why they canceled, if the subscription was canceled explicitly by the user. Possible values: `customer_service`, `low_quality`, `missing_features`, `other`, `switched_service`, `too_complex`, `too_expensive`, `unused`.
 * `feedback_option` - Customized feedback options that provide deeper insight into why the subscription was canceled, if the subscription was canceled explicitly by the user.
 * `reason` - Why this subscription was canceled. Possible values: `canceled_by_retention_policy`, `cancellation_requested`, `payment_disputed`, `payment_failed`.
-
-<a id="discounts"></a>
-### `discounts`
-
-The `discounts` attribute is a list. Each element supports:
-
-* `discount` -
 
 <a id="invoice_settings"></a>
 ### `invoice_settings`

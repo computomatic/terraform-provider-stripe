@@ -63,7 +63,7 @@ func (m *model) describeResource(n *node) string {
 		desc, values = specValues.ReplaceAllString(desc, ""), set
 	}
 	d := describeValues(desc, values) + pagedNote(n) + m.lowerCaseNote(n)
-	if n.Replace {
+	if n.Replace || n.ReplaceIfSet && n == m.discounts {
 		d += m.changingIt()
 	}
 	if n.FixedOnceSet != "" {
@@ -270,8 +270,12 @@ func (m *model) resourceAttribute(n *node) rschema.Attribute {
 		return a
 	case fields.ObjectList:
 		return rschema.ListNestedAttribute{Required: n.Required, Optional: n.Optional, Computed: n.Computed, Sensitive: n.Sensitive, MarkdownDescription: desc,
-			NestedObject:  rschema.NestedAttributeObject{Attributes: m.resourceAttributes(n.Kids), Validators: m.elementValidators(n)},
-			PlanModifiers: planMods(n, m.refuseList, listplanmodifier.UseStateForUnknown, listplanmodifier.RequiresReplace)}
+			NestedObject: rschema.NestedAttributeObject{Attributes: m.resourceAttributes(n.Kids), Validators: m.elementValidators(n)},
+			PlanModifiers: planMods(n, m.refuseList, listplanmodifier.UseStateForUnknown, listplanmodifier.RequiresReplace, func() planmodifier.List {
+				return listplanmodifier.RequiresReplaceIf(func(_ context.Context, req planmodifier.ListRequest, resp *listplanmodifier.RequiresReplaceIfFuncResponse) {
+					resp.RequiresReplace = changedByConfig(req.ConfigValue, req.StateValue)
+				}, replaceIfSetDescription, replaceIfSetDescription)
+			})}
 	case fields.ObjectMap:
 		return rschema.MapNestedAttribute{Required: n.Required, Optional: n.Optional, Computed: n.Computed, Sensitive: n.Sensitive, MarkdownDescription: desc,
 			NestedObject:  rschema.NestedAttributeObject{Attributes: m.resourceAttributes(n.Kids)},
