@@ -124,6 +124,93 @@ func TestAccSubscriptionItem_discountRefused(t *testing.T) {
 	})
 }
 
+// An item takes a coupon, or a promotion code, as a discount, which the resource reads back by
+// the form configured from the discounts Stripe expands, and the data source reads as their IDs
+// (suite: TestSubscriptionItemAttributes, probes `every_field/4` and `every_field/6`: an item of
+// the free monthly price on a subscription of another, with the suite's coupon of 10% once and a
+// promotion code for it).
+func TestAccSubscriptionItem_discounts(t *testing.T) {
+	for form, value := range map[string]string{"coupon": "stripe_coupon.test.id", "promotion_code": "stripe_promotion_code.test.id"} {
+		t.Run(form, func(t *testing.T) {
+			acct := acctest.NewAccount(t)
+			config := acct.ProviderBlock() + fmt.Sprintf(`
+resource "stripe_customer" "test" {
+  email = "subscription-item-discounts@example.com"
+}
+
+resource "stripe_product" "test" {
+  name = %q
+}
+
+resource "stripe_price" "base" {
+  product     = stripe_product.test.id
+  currency    = "usd"
+  unit_amount = 0
+  recurring = {
+    interval = "month"
+  }
+}
+
+resource "stripe_price" "free" {
+  product     = stripe_product.test.id
+  currency    = "usd"
+  unit_amount = 0
+  recurring = {
+    interval = "month"
+  }
+}
+
+resource "stripe_coupon" "test" {
+  percent_off = 10
+  duration    = "once"
+}
+
+resource "stripe_promotion_code" "test" {
+  promotion = {
+    type   = "coupon"
+    coupon = stripe_coupon.test.id
+  }
+}
+
+resource "stripe_subscription" "test" {
+  customer = stripe_customer.test.id
+  items    = [{ price = stripe_price.base.id }]
+
+  lifecycle {
+    ignore_changes = [items]
+  }
+}
+
+resource "stripe_subscription_item" "test" {
+  subscription = stripe_subscription.test.id
+  price        = stripe_price.free.id
+  discounts    = [{ %s = %s }]
+}
+
+data "stripe_subscription_item" "by_id" {
+  id = stripe_subscription_item.test.id
+}
+`, acct.Name("Plan"), form, value)
+			resource.ParallelTest(t, resource.TestCase{
+				ProtoV6ProviderFactories: tfacc.ProviderFactories,
+				Steps: []resource.TestStep{
+					{
+						Config: config,
+						Check: resource.ComposeAggregateTestCheckFunc(
+							resource.TestCheckResourceAttr(address, "discounts.#", "1"),
+							resource.TestCheckResourceAttrPair(address, "discounts.0."+form, strings.TrimSuffix(value, ".id"), "id"),
+							resource.TestCheckNoResourceAttr(address, "discounts.0.discount"),
+							resource.TestCheckResourceAttr("data.stripe_subscription_item.by_id", "discounts.#", "1"),
+							resource.TestMatchResourceAttr("data.stripe_subscription_item.by_id", "discounts.0", regexp.MustCompile(`^di_`)),
+						),
+					},
+					{Config: config, PlanOnly: true},
+				},
+			})
+		})
+	}
+}
+
 func TestAccSubscriptionItem_defaultQuantity(t *testing.T) {
 	acct := acctest.NewAccount(t)
 	resource.ParallelTest(t, resource.TestCase{

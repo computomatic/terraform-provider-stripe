@@ -30,7 +30,16 @@ var Declaration = engine.Declaration{
 	// How to prorate and pay for a change goes with a change to what the item bills.
 	SendWithUpdate:   []string{"payment_behavior", "proration_behavior"},
 	SendWithUpdateOn: []string{"price", "price_data", "quantity", "tax_rates"},
-	Delete:           engine.Delete,
+	Answers: map[string]string{
+		// suite: TestSubscriptionItemAttributes, probes `isolated/coupon_expired` and
+		// `isolated/coupon_beside_held`
+		"discounts.coupon": "Stripe takes a coupon that has not expired, and on an update not in the same element as a `discount`.",
+		// suite: TestSubscriptionItemAttributes, probe `isolated/discount_of_subscription`
+		"discounts.discount": "Stripe takes a discount the item already holds, so only on an update.",
+		// suite: TestSubscriptionItemAttributes, probe `isolated/promotion_code_inactive`
+		"discounts.promotion_code": "Stripe takes an active promotion code.",
+	},
+	Delete: engine.Delete,
 }
 
 // NewResource returns the resource constructor the provider registers.

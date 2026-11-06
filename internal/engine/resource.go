@@ -199,7 +199,7 @@ func (r *Resource) planChange(ctx context.Context, req resource.ModifyPlanReques
 	}
 	// The refusal comes after every replace check of the engine: a plan any of them has made a
 	// replace creates the object anew, with the new value.
-	if r.refuseChanges(ctx, req, resp) || r.refuseDroppingMetadataKeys(ctx, req, resp) {
+	if r.refuseChanges(ctx, req, resp) || r.refuseDroppingMetadataKeys(ctx, req, resp) || r.refuseMembersTogether(ctx, req, resp) {
 		return
 	}
 	if r.forgetFilled(req, resp) {

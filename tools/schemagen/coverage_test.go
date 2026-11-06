@@ -255,6 +255,18 @@ func TestAcceptedOnlyLeavesTheTable(t *testing.T) {
 	if err := checkAcceptedOnly([]Resource{res}, nil); err == nil || !strings.Contains(err.Error(), `"source.number"`) {
 		t.Errorf("a stale entry: %v", err)
 	}
+	// An entry that names its operation keeps that operation's leaf alone.
+	for entry, kept := range map[string]bool{"PostGadgets source.number": true, "PostGadgetsId source.number": false} {
+		res.AcceptedOnly = map[string]string{entry: "Fixture: kept."}
+		tc = cover(t, res, ops)
+		if r := byKey(tc)[key]; (r.State == StateExposed) != kept {
+			t.Errorf("%s: %+v", entry, r)
+		}
+		if err := checkAcceptedOnly([]Resource{res}, tc.records); (err == nil) != kept {
+			t.Errorf("%s: %v", entry, err)
+		}
+	}
+	res.AcceptedOnly = map[string]string{"source.number": "Fixture: kept."}
 	res.Exclude = map[string]string{"source.number": "Fixture: excluded."}
 	tc = cover(t, res, ops)
 	if r := byKey(tc)[key]; r.Rule != RuleRegister {
@@ -262,6 +274,17 @@ func TestAcceptedOnlyLeavesTheTable(t *testing.T) {
 	}
 	if err := checkAcceptedOnly([]Resource{res}, tc.records); err == nil || !strings.Contains(err.Error(), `"source.number"`) {
 		t.Errorf("an entry whose leaf the register leaves out is stale: %v", err)
+	}
+	// A register entry that names its operation leaves out that operation's leaves alone.
+	res.Exclude = map[string]string{"PostGadgets source.number": "Fixture: excluded."}
+	got := byKey(cover(t, res, ops))
+	if r := got[key]; r.Rule != RuleRegister {
+		t.Errorf("the create's entry must leave it out: %+v", r)
+	}
+	for k, r := range got {
+		if r.Side == SideResponse && r.Path == "source.number" && r.Rule == RuleRegister {
+			t.Errorf("the create's entry must keep the response's %s: %+v", k, r)
+		}
 	}
 }
 
@@ -1038,8 +1061,31 @@ func TestMinimalCreatesContradictADefault(t *testing.T) {
 			Evidence: &Evidence{Leaves: []EvidenceLeaf{{Key: key, Status: "proven", Default: &def}}},
 			creates:  map[string][]minimalCreate{"gadget PostGadgets": tc.creates},
 		}
-		if got := p.leafDefault(key); got == nil || got.Kind != tc.want {
+		if got := p.leafDefault(key, 0); got == nil || got.Kind != tc.want {
 			t.Errorf("%s: %+v, want kind %v", name, got, tc.want)
+		}
+	}
+}
+
+// A list member's default is given per element, nested once for each list of hashes that holds
+// it, such as a schedule phase item's `[[{}]]`: the default is what every element holds.
+func TestListMemberDefaultsAreTheElementsValue(t *testing.T) {
+	key := Key{Object: "gadget", Side: SideRequest, Operation: "PostGadgets", Path: "parts.items.note"}
+	for name, tc := range map[string]struct {
+		value string
+		lists int
+		want  fields.Default
+	}{
+		"one element":          {`["create_prorations"]`, 1, fields.Default{Kind: fields.DefaultValue, Value: "create_prorations"}},
+		"every element null":   {`[null, null]`, 1, fields.Default{Kind: fields.DefaultNone}},
+		"two lists deep":       {`[[{}]]`, 2, fields.Default{Kind: fields.DefaultValue, Value: "{}"}},
+		"elements that differ": {`[1, 2]`, 1, fields.Default{Kind: fields.DefaultVaries}},
+		"no elements":          {`[]`, 1, fields.Default{Kind: fields.DefaultVaries}},
+		"a list leaf":          {`[]`, 0, fields.Default{Kind: fields.DefaultValue, Value: "[]"}},
+	} {
+		p := &Pinned{Evidence: &Evidence{Leaves: []EvidenceLeaf{{Key: key, Status: "proven", Default: &EvidenceDefault{Kind: "value", Value: json.RawMessage(tc.value)}}}}}
+		if got := p.leafDefault(key, tc.lists); got == nil || *got != tc.want {
+			t.Errorf("%s: %+v, want %+v", name, got, tc.want)
 		}
 	}
 }
@@ -1126,5 +1172,89 @@ func TestGenerateRefusesACreateProbeDigestThatDoesNotBelong(t *testing.T) {
 	}
 	if _, err := Generate(root, []Resource{trimmed()}); err == nil || !strings.Contains(err.Error(), "create_probes.json") {
 		t.Errorf("a pin with no digest: %v", err)
+	}
+}
+
+// A hash the record clears whole must be cleared the way the engine removes a top-level block on
+// the table's API; a nested or Computed hash keeps the engine's rule.
+func TestHashUnsetsFollowTheEngine(t *testing.T) {
+	v1 := Resource{Package: "gadget", CreatePath: "/v1/gadgets", UpdatePath: "/v1/gadgets/{id}"}
+	v2 := Resource{Package: "gadget", CreatePath: "/v2/gadgets", UpdatePath: "/v2/gadgets/{id}"}
+	table := []fields.Field{
+		{Name: "tipping", Shape: fields.Object, Create: true, Update: true, Response: true},
+		{Name: "kept", Shape: fields.Object, Create: true, Update: true, Response: true, ServerDefaulted: true},
+	}
+	pinned := func(hash, by string) *Pinned {
+		return &Pinned{Evidence: &Evidence{HashUnsets: []HashUnset{{Object: "gadget", Operation: "PostGadgetsId", Hash: hash, By: by, Result: "absent"}}}}
+	}
+	for name, tc := range map[string]struct {
+		res      Resource
+		hash, by string
+		want     string
+	}{
+		"an empty string on /v1": {v1, "tipping", "empty_string", ""},
+		"null on /v1":            {v1, "tipping", "null", "by null, but the engine removes the block on this API by empty_string"},
+		"an empty string on /v2": {v2, "tipping", "empty_string", "by empty_string"},
+		"a Computed hash":        {v1, "kept", "null", ""},
+		"a nested hash":          {v1, "tipping.usd", "null", ""},
+		"a hash the table lacks": {v1, "other", "null", ""},
+	} {
+		err := checkHashUnsets(tc.res, "gadget", "PostGadgetsId", table, pinned(tc.hash, tc.by))
+		if tc.want == "" && err != nil || tc.want != "" && (err == nil || !strings.Contains(err.Error(), tc.want)) {
+			t.Errorf("%s: %v, want %q", name, err, tc.want)
+		}
+	}
+}
+
+// A members-alone hash is marked on the table only where a cited probe sends each member the
+// update exposes alone and the record lists no update form for the hash, which, once it does,
+// retires the entry or contradicts it. A cited probe that sent two members records them as a set
+// an update may change together.
+func TestMembersAloneFollowsTheRecord(t *testing.T) {
+	const update = "PostGadgetsId"
+	table := func() []fields.Field {
+		return []fields.Field{{Name: "recipient", Shape: fields.Object, Update: true, Fields: []fields.Field{
+			{Name: "applied", Shape: fields.Bool, Update: true},
+			{Name: "requested", Shape: fields.Bool, Update: true},
+		}}}
+	}
+	leaves := []Leaf{
+		{Key: Key{Object: "gadget", Side: SideRequest, Operation: update, Path: "recipient.applied"}, At: "recipient.applied"},
+		{Key: Key{Object: "gadget", Side: SideRequest, Operation: update, Path: "recipient.requested"}, At: "recipient.requested"},
+	}
+	records := []Record{{State: StateExposed}, {State: StateExposed}}
+	effect := func(probe string, triggers ...string) SideEffect {
+		return SideEffect{Object: "gadget", Operation: update, Probe: probe, Triggers: triggers}
+	}
+	effects := []SideEffect{effect("alone/applied", "recipient.applied"), effect("alone/requested", "recipient.requested@bool"), effect("both", "recipient.applied", "recipient.requested")}
+	for name, tc := range map[string]struct {
+		hash, update string
+		probes       []string
+		want         string
+	}{
+		"every member alone":       {"recipient", "", []string{"alone/applied", "alone/requested"}, ""},
+		"a member no probe sends":  {"recipient", "", []string{"alone/applied"}, "sends `recipient.requested` alone"},
+		"a probe sending two":      {"recipient", "", []string{"alone/applied", "alone/requested", "both"}, ""},
+		"two together, not alone":  {"recipient", "", []string{"alone/applied", "both"}, "sends `recipient.requested` alone"},
+		"a probe of no update":     {"recipient", "", []string{"alone/applied", "alone/requested", "missing"}, "probe missing"},
+		"a record that keeps it":   {"recipient", HashSiblingsKept, []string{"alone/applied", "alone/requested"}, "retire"},
+		"a record that refuses it": {"recipient", HashRefused, []string{"alone/applied", "alone/requested"}, "contradicts"},
+		"an entry that is no hash": {"recipient.applied", "", []string{"alone/applied"}, "not a hash"},
+	} {
+		ev := &Pinned{Evidence: &Evidence{SideEffects: effects}}
+		if tc.update != "" {
+			ev.Evidence.Families = []Family{{Objects: []string{"gadget"}, Hashes: []HashUpdate{{Object: "gadget", Hash: tc.hash, Update: tc.update}}}}
+		}
+		res := Resource{Package: "gadget", MembersAlone: map[string][]string{tc.hash: tc.probes}}
+		tb := table()
+		err := markMembersAlone(res, "gadget", update, tb, leaves, records, ev)
+		switch {
+		case tc.want == "" && (err != nil || !tb[0].MembersAlone):
+			t.Errorf("%s: %v, marked %v", name, err, tb[0].MembersAlone)
+		case tc.want == "" && slices.Contains(tc.probes, "both") != (len(tb[0].MembersTogether) == 1 && slices.Equal(tb[0].MembersTogether[0], []string{"applied", "requested"})):
+			t.Errorf("%s: members together %v", name, tb[0].MembersTogether)
+		case tc.want != "" && (err == nil || !strings.Contains(err.Error(), tc.want)):
+			t.Errorf("%s: %v, want %q", name, err, tc.want)
+		}
 	}
 }

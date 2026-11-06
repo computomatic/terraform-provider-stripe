@@ -413,7 +413,9 @@ func TestAccAccountV2_changeCurrency(t *testing.T) {
 // unless the same update sets the dashboard and both collectors, and then takes it (the record's
 // probes `isolated/change_adds_recipient` and `isolated/change_adds_recipient_with_collectors`,
 // with their values). The plan sets the dashboard and the collectors while the account has none
-// (SetOnce), and refuses to change them once set.
+// (SetOnce), and refuses to change them once set. An update sends the recipient's members alone,
+// as the probes did, so adding it with both `applied` and the request, which no probe sent
+// together, or with neither, which would send nothing of it, is refused at plan.
 func TestAccAccountV2_addRecipient(t *testing.T) {
 	acct := acctest.NewAccount(t)
 	var path string
@@ -431,6 +433,16 @@ func TestAccAccountV2_addRecipient(t *testing.T) {
 			{
 				Config:      bareConfig(acct, us, recipient),
 				ExpectError: regexp.MustCompile("You must set dashboard"),
+			},
+			{
+				Config:      bareConfig(acct, us, strings.Replace(recipient, "recipient = {\n", "recipient = {\n      applied = true\n", 1)+managedRecipient),
+				PlanOnly:    true,
+				ExpectError: regexp.MustCompile("(?s)Cannot change these members of\\s+`configuration.recipient`"),
+			},
+			{
+				Config:      bareConfig(acct, us, "  configuration = {\n    recipient = {}\n  }\n"+managedRecipient),
+				PlanOnly:    true,
+				ExpectError: regexp.MustCompile("(?s)Cannot add `configuration.recipient` with no\\s+member set"),
 			},
 			{
 				Config: bareConfig(acct, us, recipient+managedRecipient),
@@ -457,8 +469,9 @@ func TestAccAccountV2_addRecipient(t *testing.T) {
 
 // Stripe takes `applied = false` on a recipient (the record's probe
 // `isolated/change_applied_to_false`, on the suite's recipient account), so it changes in place,
-// and the account's applied configurations follow it. The recipient goes whole, because the
-// record does not list that hash.
+// and the account's applied configurations follow it. The update sends `applied` alone, as that
+// probe did: nothing proves Stripe's answer to it beside a change of the transfers request,
+// which the plan refuses.
 func TestAccAccountV2_unapplyRecipient(t *testing.T) {
 	acct := acctest.NewAccount(t)
 	var path string
@@ -471,6 +484,11 @@ func TestAccAccountV2_unapplyRecipient(t *testing.T) {
 				Check:  pathOf(&path),
 			},
 			{
+				Config:      recipientConfig(acct, "    country = \"US\"\n", "      applied      = false\n"+strings.Replace(requested, "true", "false", 1), managedRecipient),
+				PlanOnly:    true,
+				ExpectError: regexp.MustCompile("(?s)changes `applied`,\\s+`capabilities.stripe_balance.stripe_transfers.requested`"),
+			},
+			{
 				Config: recipientConfig(acct, "    country = \"US\"\n", "      applied      = false\n"+requested, managedRecipient),
 				ConfigPlanChecks: resource.ConfigPlanChecks{
 					PreApply:             []plancheck.PlanCheck{plancheck.ExpectResourceAction(address, plancheck.ResourceActionUpdate)},
@@ -478,7 +496,7 @@ func TestAccAccountV2_unapplyRecipient(t *testing.T) {
 				},
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr(address, "configuration.recipient.applied", "false"),
-					sentOnUpdate(t, acct, &path, "configuration", `{"recipient":{"applied":false,"capabilities":{"stripe_balance":{"stripe_transfers":{"requested":true}}}}}`),
+					sentOnUpdate(t, acct, &path, "configuration", `{"recipient":{"applied":false}}`),
 				),
 			},
 		}, nil, "stripe_account_v2"),
@@ -696,8 +714,9 @@ func TestAccAccountV2_updateIdentity(t *testing.T) {
 }
 
 // The record proves a change of a recipient's `stripe_transfers` request, whose capability
-// Stripe then drops from its answer (probe `update/2`). Stripe never returns `requested`, so
-// state keeps the configured value.
+// Stripe then drops from its answer (probe `update/2`), sent alone (probe
+// `isolated/transfers_requested_false`), as the update sends it. Stripe never returns
+// `requested`, so state keeps the configured value.
 func TestAccAccountV2_updateRecipient(t *testing.T) {
 	acct := acctest.NewAccount(t)
 	var path string
@@ -722,8 +741,8 @@ func TestAccAccountV2_updateRecipient(t *testing.T) {
 						if acct.Smoke {
 							return nil
 						}
-						if configuration, _ := lastUpdate(t, acct, path).Get("configuration"); !jsonIs(configuration, `{"recipient":{"applied":true,"capabilities":{"stripe_balance":{"stripe_transfers":{"requested":false}}}}}`) {
-							return fmt.Errorf("the update must send only the recipient, whole: %+v", configuration)
+						if configuration, _ := lastUpdate(t, acct, path).Get("configuration"); !jsonIs(configuration, `{"recipient":{"capabilities":{"stripe_balance":{"stripe_transfers":{"requested":false}}}}}`) {
+							return fmt.Errorf("the update must send only the transfers request: %+v", configuration)
 						}
 						return nil
 					},

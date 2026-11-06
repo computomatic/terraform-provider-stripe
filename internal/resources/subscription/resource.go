@@ -16,9 +16,9 @@ import (
 var Declaration = engine.Declaration{
 	TypeName:              "stripe_subscription",
 	IDPrefix:              "sub_",
-	Description:           "A customer's recurring purchase of one or more prices. `terraform destroy` cancels the subscription immediately, because Stripe cannot delete one: billing stops and the cancelled subscription stays in the account. `items` are matched by `price`: an item whose price stays keeps its ID and changes in place, a new price adds an item, a dropped price deletes it, and a reorder changes nothing. A price may appear once. An item added from outside, such as one that `stripe_subscription_item` created, is not part of `items` and is never changed or deleted by this resource. An update that changes `items` also takes `proration_behavior` and `payment_behavior`. An item that sets `price_data` has no price of its own to match by, so it is matched by its `price_data`: changing its quantity, metadata or other settings updates the item in place, and changing its `price_data` replaces the item, which gets a new item ID. Two items may not carry identical `price_data`. With `collection_method = \"send_invoice\"` the customer needs an email address, or Stripe refuses the create.",
+	Description:           "A customer's recurring purchase of one or more prices. `terraform destroy` cancels the subscription immediately, because Stripe cannot delete one: billing stops and the cancelled subscription stays in the account. `items` are matched by `price`: an item whose price stays keeps its ID and changes in place, a new price adds an item, a dropped price deletes it, and a reorder changes nothing. A price may appear once. An item added from outside, such as one that `stripe_subscription_item` created, is not part of `items` and is never changed or deleted by this resource. An update that changes `items` also takes `proration_behavior` and `payment_behavior`. An item that sets `price_data` has no price of its own to match by, so it is matched by its `price_data`: changing its quantity, metadata or other settings updates the item in place, and changing its `price_data` replaces the item, which gets a new item ID. Two items may not carry identical `price_data`. Stripe never returns `add_invoice_items`, so the resource keeps it as configured and sends the whole list on any change to it, and Stripe adds each of its items to the next invoice again. With `collection_method = \"send_invoice\"` the customer needs an email address, or Stripe refuses the create.",
 	DataSourceDescription: "A customer's recurring purchase of one or more prices.",
-	ImportNote:            "Importing a subscription adopts every item it has, so a configuration that lists fewer items deletes the rest on the next apply.",
+	ImportNote:            "Importing a subscription adopts every item it has, so a configuration that lists fewer items deletes the rest on the next apply. An imported subscription holds `trial_end` and `cancel_at` as the times Stripe returns, so a configuration that sets `trial_end` to `now`, or `cancel_at` to one of its strings, plans an update.",
 	ImportNoteLevel:       engine.NoteWarning,
 	Paths: engine.Paths{
 		Create:   "/v1/subscriptions",
@@ -30,12 +30,39 @@ var Declaration = engine.Declaration{
 	// Stripe starts an item at quantity 1 and gives it empty metadata, and sets `cancel_at` to
 	// the end of the period when `cancel_at_period_end` is true. It fills in `payment_settings`
 	// and `trial_settings` when the request leaves them out, even with no trial (suite:
-	// "create/invoiced subscription").
-	ServerDefaulted: []string{"cancel_at", "items.quantity", "items.metadata", "payment_settings", "trial_settings"},
+	// "create/invoiced subscription"). Where a create leaves them out, Stripe also fills
+	// `billing_mode.flexible` (suite: TestSubscriptionAttributes, probes `enums/1` and
+	// `enums/127`, which sends `billing_mode.type` alone), a billing schedule's duration count
+	// (`enums/127`), the invoice issuer's account from `on_behalf_of` (`every_field/19`),
+	// `save_default_payment_method` (`enums/100`), the end of a trial `trial_period_days` asks for
+	// (`minimal/trial`) and the anchor a trial ends on (`enums/1`).
+	ServerDefaulted: []string{
+		"cancel_at", "items.quantity", "items.metadata", "payment_settings", "trial_settings",
+		"billing_mode.flexible", "billing_mode.flexible.proration_discounts",
+		"billing_schedules.bill_until.duration.interval_count", "invoice_settings.issuer.account",
+		"payment_settings.save_default_payment_method", "trial_end", "trial_settings.end_behavior.billing_cycle_anchor",
+	},
 	// Stripe sets `cancellation_details.reason` to `cancellation_requested` when
 	// `cancel_at_period_end` turns true, and clears it when it turns false (suite: update
-	// "cancel_at_period_end").
-	FilledFrom: map[string][]string{"cancel_at_period_end": {"cancellation_details"}},
+	// "cancel_at_period_end"). It sets `cancel_at` to the end of the period then (suite:
+	// TestSubscriptionAttributes, probe `update/38`), a time the record's `side_effects`, which
+	// holds literals, does not list, so E5 alone would keep the prior value.
+	FilledFrom: map[string][]string{
+		"cancel_at_period_end": {"cancel_at", "cancellation_details"},
+		// Setting `cancel_at` on an update records the cancellation as requested (suite:
+		// TestSubscriptionAttributes, probes `enums/128` and `enums/145`, where the record's
+		// `side_effects` lists nothing).
+		"cancel_at": {"cancellation_details"},
+		// Ending a trial moves the billing cycle anchor to the time it ends (suite:
+		// TestSubscriptionAttributes, probe `update/24`, `trial_end = "now"`), a time the
+		// record's `side_effects` does not list.
+		"trial_end": {"billing_cycle_anchor"},
+	},
+	// Stripe answers `trial_end = "now"` with the time the trial ended (probe `update/24`), and
+	// `cancel_at`'s strings with the time it picks (creates `enums/11`, `enums/29` and
+	// `every_field/14`, updates `enums/128`, `enums/145` and `update/12`), so the configured value
+	// stays in state, as a tax registration's `active_from` does.
+	PreserveConfig: []string{"cancel_at", "trial_end"},
 	// Items are matched by price: an item whose price stays keeps its ID and changes in
 	// place, a new price adds an item and a dropped one deletes it (suite: "swap item price"
 	// names an item by ID).
@@ -58,6 +85,13 @@ var Declaration = engine.Declaration{
 		"add_invoice_items.discounts.discount": "Stripe takes a discount the subscription or its customer already holds.",
 		// suite: TestSubscriptionAttributes, probe `isolated/invoice_item_promotion_code_inactive`
 		"add_invoice_items.discounts.promotion_code": "Stripe takes an active promotion code.",
+	},
+	Defaults: map[string]string{
+		// suite: TestSubscriptionAttributes, probe `every_field/19`, which sends `on_behalf_of`
+		// beside `transfer_data`; `every_field/44` sends `transfer_data` alone and holds none
+		"invoice_settings.issuer.account": "none, or the `on_behalf_of` account where that is set",
+		// suite: TestSubscriptionAttributes, probe `enums/1`, which sends `interval` alone
+		"pending_invoice_item_interval.interval_count": "`1` once `pending_invoice_item_interval` is set",
 	},
 	Delete: engine.Delete,
 }

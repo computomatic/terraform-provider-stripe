@@ -52,6 +52,7 @@ This data source exports the following attributes in addition to the arguments a
 * `default_source` - ID of the default payment source for the subscription. It must belong to the customer associated with the subscription and be in a chargeable state. If `default_payment_method` is also set, `default_payment_method` will take precedence. If neither are set, invoices will use the customer's [invoice_settings.default_payment_method](https://docs.stripe.com/api/customers/object#customer_object-invoice_settings-default_payment_method) or [default_source](https://docs.stripe.com/api/customers/object#customer_object-default_source).
 * `default_tax_rates` - The tax rates that will apply to any subscription item that does not have `tax_rates` set. Invoices created will have their `default_tax_rates` populated from the subscription.
 * `description` - The subscription's description, meant to be displayable to the customer. Use this field to optionally store an explanation of the subscription for rendering in Stripe surfaces and certain local payment methods UIs.
+* `discounts` - The coupons to redeem into discounts for the subscription. If not specified or empty, inherits the discount from the subscription's customer. See [`discounts`](#discounts) below.
 * `ended_at` - If the subscription has ended, the date the subscription ended.
 * `invoice_settings` - All invoices will be billed using the specified settings. See [`invoice_settings`](#invoice_settings) below.
 * `items` - A list of up to 20 subscription items, each with an attached price. Holds the first page of the list Stripe returns with the object; `has_more` is true when there are more. Read every element with the `stripe_subscription_item` data source. See [`items`](#items) below.
@@ -238,6 +239,13 @@ The `cancellation_details` attribute supports:
 * `feedback_option` - Customized feedback options that provide deeper insight into why the subscription was canceled, if the subscription was canceled explicitly by the user.
 * `reason` - Why this subscription was canceled. Possible values: `canceled_by_retention_policy`, `cancellation_requested`, `payment_disputed`, `payment_failed`.
 
+<a id="discounts"></a>
+### `discounts`
+
+The `discounts` attribute is a list. Each element supports:
+
+* `discount` -
+
 <a id="invoice_settings"></a>
 ### `invoice_settings`
 
@@ -278,6 +286,7 @@ The `items` attribute is a list. Each element supports:
 * `current_period_start` - The start time of this subscription item's current billing period.
 * `current_trial` - The current trial that is applied to this subscription item. See [`items.current_trial`](#items.current_trial) below.
 * `deleted` -
+* `discounts` - The discounts applied to the subscription item. Subscription item discounts are applied before subscription discounts. Use `expand[]=discounts` to expand each discount.
 * `id` - Unique identifier for the object.
 * `metadata` - Set of [key-value pairs](https://docs.stripe.com/api/metadata) that you can attach to an object. This can be useful for storing additional information about the object in a structured format.
 * `object` - String representing the object's type. Objects of the same type share the same value. Possible values: `subscription_item`.

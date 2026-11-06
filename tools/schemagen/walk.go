@@ -70,6 +70,9 @@ type Leaf struct {
 	Type string
 	// Array and Map mark a leaf that is a list or a map of what Kind describes.
 	Array, Map bool
+	// Lists is how many lists of hashes hold the leaf, each of which the path crosses without a
+	// segment: the record gives a value of such a leaf as one per element, nested as deep.
+	Lists int
 	// Required is whether the hash holding the leaf requires it. For a list envelope it says
 	// that Stripe returns the list on every read (rule X3).
 	Required bool
@@ -248,6 +251,8 @@ func objectName(name string, sc *Schema) string {
 type carried struct {
 	array, mapped bool
 	required      bool
+	// lists is how many lists of hashes hold the property.
+	lists int
 }
 
 type walker struct {
@@ -268,7 +273,7 @@ type union struct{ name, at string }
 func (w *walker) leaf(l Leaf, path string, br union, c carried) error {
 	l.Key = w.key
 	l.Path, l.Branch, l.BranchAt = path, br.name, br.at
-	l.Array, l.Map, l.Required = c.array, c.mapped, c.required
+	l.Array, l.Map, l.Required, l.Lists = c.array, c.mapped, c.required, c.lists
 	if prev, ok := w.out[l.Key]; ok {
 		if prev.Kind != l.Kind || prev.Type != l.Type || prev.Target != l.Target || prev.Array != l.Array || prev.Map != l.Map {
 			return fmt.Errorf("%s has two shapes, %s and %s", l.Key, prev.Shape(), l.Shape())
@@ -357,7 +362,10 @@ func (w *walker) walk(sc *Schema, path string, br union, c carried) error {
 				if path == "" && w.key.Side == SideResponse && name == "object" {
 					continue
 				}
-				pc := carried{required: slices.Contains(sc.Required, name)}
+				pc := carried{required: slices.Contains(sc.Required, name), lists: c.lists}
+				if c.array {
+					pc.lists++
+				}
 				if err := w.walk(sc.Properties[name], join(path, name), br, pc); err != nil {
 					return err
 				}

@@ -40,6 +40,7 @@ This data source exports the following attributes in addition to the arguments a
 * `end_behavior` - Behavior of the subscription schedule and underlying subscription when it ends. Possible values are `release` or `cancel` with the default being `release`. `release` will end the subscription schedule and keep the underlying subscription running. `cancel` will end the subscription schedule and cancel the underlying subscription. Possible values: `cancel`, `none`, `release`, `renew`.
 * `livemode` - If the object exists in live mode, the value is `true`. If the object exists in test mode, the value is `false`.
 * `metadata` - Set of [key-value pairs](https://docs.stripe.com/api/metadata) that you can attach to an object. This can be useful for storing additional information about the object in a structured format. Individual keys can be unset by posting an empty value to them. All keys can be unset by posting an empty value to `metadata`.
+* `pause_schedules` - The pause schedules for this subscription schedule. See [`pause_schedules`](#pause_schedules) below.
 * `phases` - List representing phases of the subscription schedule. Each phase can be customized to have different durations, plans, and coupons. If there are multiple phases, the `end_date` of one phase will always equal the `start_date` of the next phase. See [`phases`](#phases) below.
 * `proration_behavior` - If the update changes the billing configuration (item price, quantity, etc.) of the current phase, indicates how prorations from this change should be handled. The default value is `create_prorations`. Possible values: `always_invoice`, `create_prorations`, `none`.
 * `released_at` - Time at which the subscription schedule was released. Measured in seconds since the Unix epoch.
@@ -149,6 +150,105 @@ The `default_settings.transfer_data` attribute supports:
 
 * `amount_percent` - A non-negative decimal between 0 and 100, with at most two decimal places. This represents the percentage of the subscription invoice total that will be transferred to the destination account. By default, the entire amount is transferred to the destination.
 * `destination` - The account where funds from the payment will be transferred to upon payment success.
+
+<a id="pause_schedules"></a>
+### `pause_schedules`
+
+The `pause_schedules` attribute is a list. Each element supports:
+
+* `key` - A unique identifier for this pause schedule.
+* `pause` - See [`pause_schedules.pause`](#pause_schedules.pause) below.
+* `resume` - Details about when and how the subscription resumes. See [`pause_schedules.resume`](#pause_schedules.resume) below.
+
+<a id="pause_schedules.pause"></a>
+### `pause_schedules.pause`
+
+The `pause_schedules.pause` attribute supports:
+
+* `pause_at` - Time at which the subscription pauses.
+* `settings` - Settings controlling billing behavior during the pause. See [`pause_schedules.pause.settings`](#pause_schedules.pause.settings) below.
+* `status` - See [`pause_schedules.pause.status`](#pause_schedules.pause.status) below.
+
+<a id="pause_schedules.pause.settings"></a>
+### `pause_schedules.pause.settings`
+
+The `pause_schedules.pause.settings` attribute supports:
+
+* `bill_for` - See [`pause_schedules.pause.settings.bill_for`](#pause_schedules.pause.settings.bill_for) below.
+* `invoicing_behavior` - Determines how to handle debits and credits when pausing. Possible values: `invoice`, `pending_invoice_item`.
+* `type` - The type of pause settings. Possible values: `subscription`.
+
+<a id="pause_schedules.pause.settings.bill_for"></a>
+### `pause_schedules.pause.settings.bill_for`
+
+The `pause_schedules.pause.settings.bill_for` attribute supports:
+
+* `outstanding_usage_through` - See [`pause_schedules.pause.settings.bill_for.outstanding_usage_through`](#pause_schedules.pause.settings.bill_for.outstanding_usage_through) below.
+* `unused_time_from` - See [`pause_schedules.pause.settings.bill_for.unused_time_from`](#pause_schedules.pause.settings.bill_for.unused_time_from) below.
+
+<a id="pause_schedules.pause.settings.bill_for.outstanding_usage_through"></a>
+### `pause_schedules.pause.settings.bill_for.outstanding_usage_through`
+
+The `pause_schedules.pause.settings.bill_for.outstanding_usage_through` attribute supports:
+
+* `type` - The type of outstanding usage billing behavior. Possible values: `none`, `pause_at`.
+
+<a id="pause_schedules.pause.settings.bill_for.unused_time_from"></a>
+### `pause_schedules.pause.settings.bill_for.unused_time_from`
+
+The `pause_schedules.pause.settings.bill_for.unused_time_from` attribute supports:
+
+* `type` - The type of unused time credit behavior. Possible values: `item_current_period_start`, `none`, `pause_at`.
+
+<a id="pause_schedules.pause.status"></a>
+### `pause_schedules.pause.status`
+
+The `pause_schedules.pause.status` attribute supports:
+
+* `error` - See [`pause_schedules.pause.status.error`](#pause_schedules.pause.status.error) below.
+* `type` - The lifecycle state of the pause operation. Possible values: `error`, `scheduled`, `succeeded`.
+
+<a id="pause_schedules.pause.status.error"></a>
+### `pause_schedules.pause.status.error`
+
+The `pause_schedules.pause.status.error` attribute supports:
+
+* `code` - A machine-readable error code.
+* `message` - A description of the error.
+
+<a id="pause_schedules.resume"></a>
+### `pause_schedules.resume`
+
+The `pause_schedules.resume` attribute supports:
+
+* `resume_at` - Time at which the subscription resumes.
+* `settings` - See [`pause_schedules.resume.settings`](#pause_schedules.resume.settings) below.
+* `status` - See [`pause_schedules.resume.status`](#pause_schedules.resume.status) below.
+
+<a id="pause_schedules.resume.settings"></a>
+### `pause_schedules.resume.settings`
+
+The `pause_schedules.resume.settings` attribute supports:
+
+* `billing_cycle_anchor` - The billing cycle anchor that applies when the subscription is resumed. Possible values: `resume_at`, `unchanged`.
+* `payment_behavior` - Controls whether Stripe attempts payment on the resumption invoice and how that affects the subscription's status. Possible values: `resume_on_payment_attempt`, `resume_on_payment_success`.
+* `proration_behavior` - Determines how to handle prorations resulting from the billing_cycle_anchor change on resume. Possible values: `always_invoice`, `create_prorations`, `none`.
+
+<a id="pause_schedules.resume.status"></a>
+### `pause_schedules.resume.status`
+
+The `pause_schedules.resume.status` attribute supports:
+
+* `error` - See [`pause_schedules.resume.status.error`](#pause_schedules.resume.status.error) below.
+* `type` - The lifecycle state of the resume operation. Possible values: `error`, `pending`, `requires_action`, `scheduled`, `succeeded`.
+
+<a id="pause_schedules.resume.status.error"></a>
+### `pause_schedules.resume.status.error`
+
+The `pause_schedules.resume.status.error` attribute supports:
+
+* `code` - A machine-readable error code.
+* `message` - A description of the error.
 
 <a id="phases"></a>
 ### `phases`

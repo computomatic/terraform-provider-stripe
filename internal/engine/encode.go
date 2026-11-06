@@ -655,8 +655,9 @@ func (m *model) carryOnUpdate(n *node, state attr.Value, v wire.Value) wire.Valu
 // key as null, as Stripe merges it (the suite's probes `update/1` and `unset/1` of an account's
 // `individual.metadata`), unless the record shows Stripe replacing it, when it goes whole
 // without the keys it lost (keyByKey). A member the plan leaves unknown is Stripe's to fill
-// in, so it is not sent, and a hash in SendWholeMembers that differs only by such members is
-// not sent either, which would send Stripe its own values back. at is the path of n in config,
+// in, so it is not sent, and a hash that differs only by such members is not sent either, which
+// would send Stripe its own values back, such as a v2 recipient's `stripe_transfers`, whose
+// `status` a change of `applied` leaves unknown. at is the path of n in config,
 // the configuration; the zero value turns that check off.
 func (m *model) changedMembers(n *node, plan, state attr.Value, allow func(*node) bool, at *tftypes.AttributePath, config tftypes.Value) (wire.Object, error) {
 	planned, held := objectAttrs(plan), objectAttrs(state)
@@ -673,10 +674,9 @@ func (m *model) changedMembers(n *node, plan, state attr.Value, allow func(*node
 				continue
 			}
 			v = wire.Null{}
+		case k.Shape == fields.Object && sameBesidesComputed(at.WithAttributeName(k.AttrName()), pv, sv, config):
+			continue
 		case slices.Contains(m.decl.SendWholeMembers, k.Path):
-			if sameBesidesComputed(at.WithAttributeName(k.AttrName()), pv, sv, config) {
-				continue
-			}
 			members, err := wholeMembers(k, pv, sv)
 			if err != nil {
 				return nil, err

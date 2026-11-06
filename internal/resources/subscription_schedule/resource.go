@@ -16,7 +16,7 @@ import (
 var Declaration = engine.Declaration{
 	TypeName:              "stripe_subscription_schedule",
 	IDPrefix:              "sub_sched_",
-	Description:           "Changes a subscription over time, in phases. Set `status` to `canceled` to cancel the schedule and the subscription it started, or to `released` to end the schedule and keep the subscription billing on its own. Stripe replaces the phases as a whole on update and needs the current phase to keep its `start_date`, which an update sends back from the state. With `collection_method = \"send_invoice\"` the customer needs an email address, or Stripe refuses the create.",
+	Description:           "Changes a subscription over time, in phases. Set `status` to `canceled` to cancel the schedule and the subscription it started, or to `released` to end the schedule and keep the subscription billing on its own. Stripe replaces the phases as a whole on update and needs the current phase to keep its `start_date`, which an update sends back from the state. Phases, and the items and added invoice items of each, are matched by position, so a reorder updates them in place. `pause_schedules` is read only: the provider cannot send a pause schedule yet. With `collection_method = \"send_invoice\"` the customer needs an email address, or Stripe refuses the create.",
 	DataSourceDescription: "Changes a subscription over time, in phases.",
 	Paths: engine.Paths{
 		Create:   "/v1/subscription_schedules",
@@ -24,16 +24,39 @@ var Declaration = engine.Declaration{
 		Update:   "/v1/subscription_schedules/{id}",
 		List:     "/v1/subscription_schedules",
 	},
-	// Stripe fills in tax, trial and quantity settings the request leaves out.
-	ServerDefaulted: []string{"default_settings.automatic_tax", "phases.automatic_tax", "phases.currency", "phases.items.quantity", "phases.trial"},
+	// Stripe fills in tax, trial and quantity settings the request leaves out. It also fills
+	// `billing_mode.flexible` (suite: TestSubscriptionScheduleAttributes, probe `enums/1`), the
+	// default collection method (`enums/12`), the invoice issuer's account from `on_behalf_of`,
+	// in the defaults and in a phase (`every_field/11` and `every_field/14`), an added invoice
+	// item's `discountable` and `quantity` (`every_field/21`) and the end of a trial phase
+	// (`every_field/6`).
+	ServerDefaulted: []string{
+		"default_settings.automatic_tax", "phases.automatic_tax", "phases.currency", "phases.items.quantity", "phases.trial",
+		"billing_mode.flexible", "billing_mode.flexible.proration_discounts", "default_settings.collection_method",
+		"default_settings.invoice_settings.issuer.account", "phases.add_invoice_items.discountable",
+		"phases.add_invoice_items.quantity", "phases.invoice_settings", "phases.invoice_settings.issuer",
+		"phases.invoice_settings.issuer.account", "phases.trial_end",
+	},
 	// The phase that has begun keeps its start (suite: "replace phases"); later phases get
 	// theirs from Stripe.
 	Carry: []engine.Carry{{List: "phases", Field: "start_date", WhenPast: true}},
 	// How to prorate a change goes with a change to the phases.
 	SendWithUpdate:   []string{"proration_behavior"},
 	SendWithUpdateOn: []string{"phases"},
-	Delete:           engine.Refuse,
-	RefuseReason:     "Stripe cannot delete a subscription schedule; set `status` to `canceled` to cancel one and the subscription it started, or to `released` to release the subscription from it.",
+	Defaults: map[string]string{
+		// suite: TestSubscriptionScheduleAttributes, probe `every_field/11`, which sends
+		// `default_settings.on_behalf_of` beside `default_settings.transfer_data`;
+		// `every_field/26` sends the transfer data alone and holds none
+		"default_settings.invoice_settings.issuer.account": "none, or the `default_settings.on_behalf_of` account where that is set",
+		// suite: TestSubscriptionScheduleAttributes, probe `every_field/14`, which sends the
+		// phase's `on_behalf_of` beside its `transfer_data`; `every_field/27` sends the transfer
+		// data alone and holds none
+		"phases.invoice_settings.issuer.account": "none, or the phase's `on_behalf_of` account where that is set",
+		// suite: TestSubscriptionScheduleAttributes, probe `every_field/6`, which sends `trial`
+		"phases.trial_end": "none, or a time Stripe sets where `trial` is true",
+	},
+	Delete:       engine.Refuse,
+	RefuseReason: "Stripe cannot delete a subscription schedule; set `status` to `canceled` to cancel one and the subscription it started, or to `released` to release the subscription from it.",
 	// A released, canceled or completed schedule cannot be released or canceled (suite: "Release
 	// and cancel of a schedule not in `not_started` or `active` are 400").
 	Transitions: []engine.Transition{

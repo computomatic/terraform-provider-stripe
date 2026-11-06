@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"maps"
 	"net/http"
 	"regexp"
 	"slices"
@@ -159,9 +160,11 @@ func coverTable(spec *Spec, res Resource, ev *Pinned) (*tableCoverage, error) {
 		r := Record{Table: res.Package, Key: l.Key, Shape: l.Shape(), Target: l.Target, Required: l.Required && l.Side == SideRequest}
 		r.Rule = rule(spec, res, l, written)
 		for p := l.Path; p != "" && r.Rule == ""; p = parentPath(p) {
-			if _, ok := register[p]; ok {
-				register[p] = true
-				r.Rule, r.Reason = RuleRegister, res.Exclude[p]
+			for _, entry := range []string{p, l.Operation + " " + p} {
+				if _, ok := register[entry]; ok && r.Rule == "" {
+					register[entry] = true
+					r.Rule, r.Reason = RuleRegister, res.Exclude[entry]
+				}
 			}
 		}
 		if ev != nil {
@@ -176,6 +179,8 @@ func coverTable(spec *Spec, res Resource, ev *Pinned) (*tableCoverage, error) {
 		}
 		if r.Class == ClassAcceptedOnly && r.Rule == "" {
 			if reason, ok := res.AcceptedOnly[l.Path]; ok {
+				r.Reason = reason
+			} else if reason, ok := res.AcceptedOnly[l.Operation+" "+l.Path]; ok {
 				r.Reason = reason
 			} else {
 				r.Rule = RuleAcceptedOnly
@@ -241,6 +246,12 @@ func coverTable(spec *Spec, res Resource, ev *Pinned) (*tableCoverage, error) {
 		return nil, err
 	}
 	if err := checkKeptDiscounts(res, leaves, records, ev); err != nil {
+		return nil, err
+	}
+	if err := checkHashUnsets(res, object, update, tc.table, ev); err != nil {
+		return nil, err
+	}
+	if err := markMembersAlone(res, object, update, tc.table, leaves, records, ev); err != nil {
 		return nil, err
 	}
 	for i, l := range leaves {
@@ -488,7 +499,34 @@ func defaultOf(l Leaf, r Record, create string, leaves []Leaf, records []Record,
 	if r.Required || !exposable(r.Class) {
 		return nil
 	}
-	return ev.leafDefault(l.Key)
+	return ev.leafDefault(l.Key, l.Lists)
+}
+
+// elementValue is the value every element of a value given per element of lists nested lists
+// holds, or false where the elements differ or there are none.
+func elementValue(v json.RawMessage, lists int) (json.RawMessage, bool) {
+	for range lists {
+		var items []json.RawMessage
+		if json.Unmarshal(v, &items) != nil || len(items) == 0 {
+			return nil, false
+		}
+		for _, item := range items[1:] {
+			if !bytes.Equal(compact(item), compact(items[0])) {
+				return nil, false
+			}
+		}
+		v = items[0]
+	}
+	return v, true
+}
+
+// compact is v without insignificant space, or v where it is not JSON.
+func compact(v json.RawMessage) []byte {
+	var b bytes.Buffer
+	if json.Compact(&b, v) != nil {
+		return v
+	}
+	return b.Bytes()
 }
 
 // annotateCopies records on each embedded copy the table holds in full the data source type
@@ -904,8 +942,10 @@ func mapUpdate(k Key, e *EvidenceLeaf, unsetBy string) (*fields.MapUpdate, error
 // DefaultVaries, which a declaration words, and so is a rule whose text runs over several lines.
 // So is one a variant that leaves the leaf out contradicts with a value Stripe generates or copies,
 // such as a charge's `transfer_group` on a destination charge, which the leaf's own
-// `default.variants` does not hold.
-func (p *Pinned) leafDefault(k Key) *fields.Default {
+// `default.variants` does not hold. The value of a leaf lists of hashes hold (lists) is one per
+// element, nested as deep, such as a schedule phase's `["create_prorations"]` for its one phase:
+// the default is the value every element holds, and varies where they differ.
+func (p *Pinned) leafDefault(k Key, lists int) *fields.Default {
 	e := p.leaf(k)
 	if e == nil || e.Status != "proven" {
 		return nil
@@ -924,7 +964,14 @@ func (p *Pinned) leafDefault(k Key) *fields.Default {
 	}
 	switch d.Kind {
 	case "value":
-		return &fields.Default{Kind: fields.DefaultValue, Value: literal(d.Value)}
+		v, ok := elementValue(d.Value, lists)
+		switch {
+		case !ok:
+			return &fields.Default{Kind: fields.DefaultVaries}
+		case string(v) == "null":
+			return &fields.Default{Kind: fields.DefaultNone}
+		}
+		return &fields.Default{Kind: fields.DefaultValue, Value: literal(v)}
 	case "null", "absent":
 		return &fields.Default{Kind: fields.DefaultNone}
 	case "rule":
@@ -998,6 +1045,113 @@ func checkBesideReturns(table string, leaves []Leaf, records []Record, ev *Pinne
 		if exposedAt[beside] {
 			return fmt.Errorf("%s: %s reads back as sent only without `%s`, which the table exposes too (the record's rule: %s)", table, l.Key, r.Beside, r.Rule)
 		}
+	}
+	return nil
+}
+
+// checkHashUnsets refuses a hash the record shows an update clearing whole (`hash_unsets`) where
+// the engine would remove the block otherwise: the engine sends a top-level hash removed from the
+// configuration as the unset of the table's API, `""` on `/v1` and null on `/v2`, so the record's
+// way must be that one. A nested hash, or one the table holds Computed, which its removal keeps,
+// keeps the engine's rule.
+func checkHashUnsets(res Resource, object, update string, table []fields.Field, ev *Pinned) error {
+	if ev == nil || update == "" {
+		return nil
+	}
+	for _, u := range ev.Evidence.HashUnsets {
+		if u.Object != object || u.Operation != update || strings.Contains(u.Hash, ".") {
+			continue
+		}
+		f := fieldAt(table, u.Hash)
+		if f == nil || f.Shape != fields.Object || !f.Update || f.ServerDefaulted {
+			continue
+		}
+		if by := unsetFor(res); u.By != by {
+			return fmt.Errorf("%s: the record clears `%s` whole by %s, but the engine removes the block on this API by %s", res.Package, u.Hash, u.By, by)
+		}
+	}
+	return nil
+}
+
+// markMembersAlone marks each hash of Resource.MembersAlone on the table, once the record bears it
+// out: the record lists no update form for the hash, and every member of it the update exposes is
+// the only member of the hash, sent or carried, of a side effect of a cited probe. A cited probe
+// that sent several members of the hash together records that set (MembersTogether), which the
+// engine lets an update change in one request.
+func markMembersAlone(res Resource, object, update string, table []fields.Field, leaves []Leaf, records []Record, ev *Pinned) error {
+	if len(res.MembersAlone) == 0 {
+		return nil
+	}
+	if ev == nil || update == "" {
+		return fmt.Errorf("%s: a members-alone entry needs the pinned record and an update", res.Package)
+	}
+	// The record names leaves by request path, and the table, MembersTogether and the engine by
+	// where the table holds them, which differs below a token-or-hash parameter's `<name>_data`.
+	tableAt := map[string]string{}
+	for _, l := range leaves {
+		if l.Side == SideRequest && l.Operation == update {
+			tableAt[l.Path] = l.At
+		}
+	}
+	for _, hash := range slices.Sorted(maps.Keys(res.MembersAlone)) {
+		f := fieldAt(table, hash)
+		if f == nil || f.Shape != fields.Object || !f.Update {
+			return fmt.Errorf("%s: members-alone entry `%s` is not a hash the update takes", res.Package, hash)
+		}
+		for _, fam := range ev.Evidence.Families {
+			for _, h := range fam.Hashes {
+				if h.Object != object || h.Hash != hash {
+					continue
+				}
+				if h.Update == HashSiblingsKept {
+					return fmt.Errorf("%s: the record now lists `%s` as keeping its siblings: name it in the declaration's SendChangedMembers and retire its members-alone entry", res.Package, hash)
+				}
+				return fmt.Errorf("%s: the record lists `%s` as %s, which contradicts its members-alone entry", res.Package, hash, h.Update)
+			}
+		}
+		alone := map[string]bool{}
+		for _, probe := range res.MembersAlone[hash] {
+			found := false
+			for _, s := range ev.Evidence.SideEffects {
+				if s.Object != object || s.Operation != update || s.Probe != probe {
+					continue
+				}
+				var within []string
+				for _, leaf := range append(slices.Clone(s.Triggers), slices.Collect(maps.Keys(s.Carried))...) {
+					path, _, _ := strings.Cut(leaf, "@")
+					if at, ok := tableAt[path]; ok {
+						path = at
+					}
+					if strings.HasPrefix(path, hash+".") && !slices.Contains(within, path) {
+						within = append(within, path)
+					}
+				}
+				switch len(within) {
+				case 0:
+				case 1:
+					alone[within[0]], found = true, true
+				default:
+					for i, w := range within {
+						within[i] = strings.TrimPrefix(w, hash+".")
+					}
+					slices.Sort(within)
+					if !slices.ContainsFunc(f.MembersTogether, func(set []string) bool { return slices.Equal(set, within) }) {
+						f.MembersTogether = append(f.MembersTogether, within)
+					}
+					found = true
+				}
+			}
+			if !found {
+				return fmt.Errorf("%s: probe %s of members-alone entry `%s` updates no member of it", res.Package, probe, hash)
+			}
+		}
+		for i, l := range leaves {
+			if l.Side == SideRequest && l.Operation == update && records[i].State == StateExposed && strings.HasPrefix(l.At, hash+".") && !alone[l.At] {
+				return fmt.Errorf("%s: no probe of members-alone entry `%s` sends `%s` alone", res.Package, hash, l.At)
+			}
+		}
+		slices.SortFunc(f.MembersTogether, func(a, b []string) int { return strings.Compare(strings.Join(a, " "), strings.Join(b, " ")) })
+		f.MembersAlone = true
 	}
 	return nil
 }
@@ -1101,7 +1255,11 @@ func (tc *tableCoverage) checkCreateProbes(res Resource, worded map[string]strin
 			}
 		case f.Default.Kind == fields.DefaultValue:
 			for _, v := range held {
-				if !slices.Contains(append(literalsOf(v), literal(v.Value)), f.Default.Value) {
+				matches := append(literalsOf(v), literal(v.Value))
+				if e, ok := elementValue(v.Value, l.Lists); ok && v.Kind == "value" {
+					matches = append(matches, literal(e))
+				}
+				if !slices.Contains(matches, f.Default.Value) {
 					found = append(found, fmt.Sprintf("probe %s holds %s", v.Probe, heldWords(v)))
 				}
 			}
@@ -1322,6 +1480,7 @@ func checkAcceptedOnly(resources []Resource, records []Record) error {
 	for _, r := range records {
 		if r.Class == ClassAcceptedOnly && r.Rule == "" {
 			met[r.Table+" "+r.Path] = true
+			met[r.Table+" "+r.Operation+" "+r.Path] = true
 		}
 	}
 	for _, res := range resources {

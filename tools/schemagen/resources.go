@@ -17,6 +17,18 @@ const cardOnly = "A card's update parameter: Stripe refuses it on a bank account
 // rule X6 leaves out, so that no configuration could send it.
 const mandateData = "`customer_acceptance.type`, which the hash requires, is accepted only, so that no configuration could send it (suite: TestSetupIntentAttributes/leaves/request/PostSetupIntents/mandate_data.customer_acceptance.type)."
 
+// recipientTransfersAlone are the probes that update a v2 account's transfers request alone.
+var recipientTransfersAlone = []string{"isolated/transfers_requested_false", "isolated/change_adds_recipient_with_collectors"}
+
+// recipientAlone are the probes that update each member of a v2 account's recipient
+// configuration alone.
+var recipientAlone = append([]string{"isolated/change_applied_to_false", "isolated/change_applied_with_no_config"}, recipientTransfersAlone...)
+
+// pauseSchedules is the register's reason for a schedule's request `pause_schedules`, whose
+// `pause` requires `pause_at` and whose `resume` requires `resume_at`, both accepted only, so
+// that no configuration could send a pause schedule; the response's stays readable.
+const pauseSchedules = "`pause.pause_at` and `resume.resume_at`, which the hashes require, are accepted only, so that no configuration could send a pause schedule (suite: TestSubscriptionScheduleAttributes/leaves/request/PostSubscriptionSchedules/pause_schedules.pause.pause_at.type)."
+
 // acceptedKept is the Resource.AcceptedOnly reason of an argument whose only record is what the
 // configuration says (the product owner's decision of 2026-10-31).
 const acceptedKept = "Stripe never returns it, and the provider keeps it from configuration (PreserveConfig)."
@@ -97,14 +109,16 @@ func lineDiscountsKept(list string) map[string]string {
 const requestBehaviour = "It says how Stripe handles the request it comes with, as a customer's `tax.validate_location` does, so a kept value cannot drift, and the provider keeps it from configuration (the product owner's decision of 2026-11-05)."
 
 // invoiceKept is the invoice's register of accepted-only leaves: the forms of its `discounts`,
-// and the arguments whose effect shows elsewhere on the invoice.
+// and the arguments whose effect shows elsewhere on the invoice. Its create's `discount` form,
+// which names a subscription's discount, is not kept: the record's `discounts` does not show it
+// returned (the brief of the tenth pin, 2026-11-06).
 var invoiceKept = map[string]string{
-	"discounts.coupon":               discountsKept["discounts.coupon"],
-	"discounts.discount":             discountsKept["discounts.discount"],
-	"discounts.promotion_code":       discountsKept["discounts.promotion_code"],
-	"days_until_due":                 "Its effect shows in `due_date` (the product owner's decision of 2026-11-05).",
-	"pending_invoice_items_behavior": "Its effect shows in `lines` and the amounts, and it lets one apply make a draft with its items (the product owner's decision of 2026-11-05).",
-	"subscription":                   "Its effect shows in `parent.subscription_details.subscription` (the product owner's decision of 2026-11-05).",
+	"discounts.coupon":                       discountsKept["discounts.coupon"],
+	"PostInvoicesInvoice discounts.discount": discountsKept["discounts.discount"],
+	"discounts.promotion_code":               discountsKept["discounts.promotion_code"],
+	"days_until_due":                         "Its effect shows in `due_date` (the product owner's decision of 2026-11-05).",
+	"pending_invoice_items_behavior":         "Its effect shows in `lines` and the amounts, and it lets one apply make a draft with its items (the product owner's decision of 2026-11-05).",
+	"subscription":                           "Its effect shows in `parent.subscription_details.subscription` (the product owner's decision of 2026-11-05).",
 }
 
 // quoteKept is the quote's register of accepted-only leaves: the forms of its `discounts` and of
@@ -116,6 +130,64 @@ func quoteKept() map[string]string {
 	maps.Copy(kept, discountsKept)
 	maps.Copy(kept, lineDiscountsKept("line_items"))
 	return kept
+}
+
+// subscriptionItemKept is the subscription item's register of accepted-only leaves: the arguments
+// that say how Stripe handles the request, and the forms of its `discounts`, which it reads back
+// as an invoice does (the brief of the tenth pin, 2026-11-06).
+func subscriptionItemKept() map[string]string {
+	kept := keptFor(requestBehaviour, []string{"off_session", "payment_behavior", "proration_behavior", "proration_date"})
+	maps.Copy(kept, discountsKept)
+	return kept
+}
+
+// tenthPinDecision cites the product owner's decision on the accepted-only leaves the tables
+// exposed before the gate, which the tenth pin's record first classes accepted only.
+const tenthPinDecision = " (the product owner's decision of 2026-11-06)"
+
+// subscriptionRequestBehaviour is the reason of a subscription's or a schedule's argument that
+// says how Stripe handles the request it comes with, as a subscription item's do.
+const subscriptionRequestBehaviour = "It says how Stripe handles the request it comes with, as a subscription item's `proration_behavior` does, so a kept value cannot drift, and the provider keeps it from configuration" + tenthPinDecision + "."
+
+// neededKept is the reason of an argument a configuration cannot work without, with what shows
+// its effect.
+func neededKept(without, effect string) string {
+	return "A configuration cannot " + without + " without it; " + effect + tenthPinDecision + "."
+}
+
+// returnedTimestamp is the reason of the string branch of a time Stripe returns as a timestamp.
+const returnedTimestamp = "Its effect shows in the timestamp Stripe returns" + tenthPinDecision + "."
+
+// subscriptionKept is the subscription's register of accepted-only leaves, each exposed before
+// the gate.
+func subscriptionKept() map[string]string {
+	kept := keptFor(neededKept("add invoice items to the next invoice", "its effect shows on the invoice items Stripe adds to the subscription's next invoice (`stripe_invoiceitem`), and the provider keeps it from configuration"), []string{
+		"add_invoice_items.discountable", "add_invoice_items.metadata", "add_invoice_items.period.end.timestamp",
+		"add_invoice_items.period.end.type", "add_invoice_items.period.start.timestamp", "add_invoice_items.period.start.type",
+		"add_invoice_items.price", "add_invoice_items.price_data.currency", "add_invoice_items.price_data.product",
+		"add_invoice_items.price_data.tax_behavior", "add_invoice_items.price_data.unit_amount",
+		"add_invoice_items.price_data.unit_amount_decimal", "add_invoice_items.quantity", "add_invoice_items.tax_rates",
+	})
+	maps.Copy(kept, keptFor(subscriptionRequestBehaviour, []string{
+		"backdate_start_date", "items.clear_usage", "items.deleted", "off_session", "payment_behavior",
+		"proration_behavior", "proration_date", "trial_from_plan", "trial_period_days",
+	}))
+	maps.Copy(kept, map[string]string{
+		"cancel_at": returnedTimestamp,
+		"PostSubscriptionsSubscriptionExposedId trial_end": returnedTimestamp,
+	})
+	return kept
+}
+
+// scheduleKept is the subscription schedule's register of accepted-only leaves, each exposed
+// before the gate.
+var scheduleKept = map[string]string{
+	"phases.duration.interval":                            neededKept("give a phase without an `end_date` its length", "its effect shows in the phase's `end_date`"),
+	"phases.duration.interval_count":                      neededKept("give a phase without an `end_date` its length", "its effect shows in the phase's `end_date`"),
+	"phases.items.price":                                  neededKept("send a phase's item of a price in an update of the phases", "its effect shows in the phase item's `price`"),
+	"PostSubscriptionSchedulesSchedule phases.start_date": returnedTimestamp,
+	"proration_behavior":                                  subscriptionRequestBehaviour,
+	"start_date":                                          neededKept("start a schedule on its own", "its effect shows in the first phase's `start_date`"),
 }
 
 // Resources lists the objects the generator writes tables for. A resource joins the list
@@ -186,10 +258,13 @@ var Resources = []Resource{
 	// A quote reads its discounts back as an invoice does, and its lines' from the discounts
 	// each line holds whole.
 	{Package: "quote", AcceptedOnly: quoteKept(), CreatePath: "/v1/quotes", UpdatePath: "/v1/quotes/{quote}", Omit: []string{"discounts"}},
-	{Package: "subscription", CreatePath: "/v1/subscriptions", UpdatePath: "/v1/subscriptions/{subscription_exposed_id}", PagedLists: map[string]string{"items": "stripe_subscription_item"}, Omit: []string{"discounts", "payment_settings.payment_method_options.konbini", "payment_settings.payment_method_options.sepa_debit", "items.discounts"}, CreateOnly: []string{"billing_cycle_anchor"}},
-	{Package: "subscription_item", AcceptedOnly: keptFor(requestBehaviour, []string{"off_session", "payment_behavior", "proration_behavior", "proration_date"}),
+	{Package: "subscription", AcceptedOnly: subscriptionKept(), CreatePath: "/v1/subscriptions", UpdatePath: "/v1/subscriptions/{subscription_exposed_id}", PagedLists: map[string]string{"items": "stripe_subscription_item"}, Omit: []string{"discounts", "payment_settings.payment_method_options.konbini", "payment_settings.payment_method_options.sepa_debit", "items.discounts"}, CreateOnly: []string{"billing_cycle_anchor"}},
+	{Package: "subscription_item", AcceptedOnly: subscriptionItemKept(),
 		CreatePath: "/v1/subscription_items", UpdatePath: "/v1/subscription_items/{item}", Omit: []string{"discounts"}},
-	{Package: "subscription_schedule", CreatePath: "/v1/subscription_schedules", UpdatePath: "/v1/subscription_schedules/{schedule}", Omit: []string{"from_subscription", "pause_schedules"}},
+	{Package: "subscription_schedule", AcceptedOnly: scheduleKept, Exclude: map[string]string{
+		"PostSubscriptionSchedules pause_schedules":         pauseSchedules,
+		"PostSubscriptionSchedulesSchedule pause_schedules": pauseSchedules,
+	}, CreatePath: "/v1/subscription_schedules", UpdatePath: "/v1/subscription_schedules/{schedule}", Omit: []string{"from_subscription", "pause_schedules"}},
 	// Wave 6. The setup intent leaves out what only confirming it uses, and its payment
 	// method options, until the gate exposes them. The customer payment method is an
 	// attachment, so the engine adds its `customer` as the parent and `customer_account` is
@@ -297,7 +372,18 @@ var Resources = []Resource{
 		Keep: []string{"address", "created", "dob", "email", "first_name", "future_requirements", "id", "id_number", "id_number_provided", "last_name", "metadata", "phone",
 			"relationship", "requirements", "ssn_last_4", "ssn_last_4_provided", "verification"},
 		ReadOnly: []string{"relationship.authorizer", "relationship.legal_guardian", "verification"}},
-	{Package: "account_v2", AcceptedOnly: map[string]string{"configuration.recipient.capabilities.stripe_balance.stripe_transfers.requested": acceptedKept}, CreatePath: "/v2/core/accounts", UpdatePath: "/v2/core/accounts/{id}",
+	// The record lists no update form for a v2 account's recipient configuration, and its
+	// probes send each member alone: `applied` (`isolated/change_applied_to_false`,
+	// `isolated/change_applied_with_no_config`) and the transfers request
+	// (`isolated/transfers_requested_false`, `isolated/change_adds_recipient_with_collectors`), so
+	// an update sends only the member that changed (the product owner's decision of 2026-11-06,
+	// until the suite proves the hash's update form).
+	{Package: "account_v2", AcceptedOnly: map[string]string{"configuration.recipient.capabilities.stripe_balance.stripe_transfers.requested": acceptedKept},
+		MembersAlone: map[string][]string{
+			"configuration.recipient":                             recipientAlone,
+			"configuration.recipient.capabilities":                recipientTransfersAlone,
+			"configuration.recipient.capabilities.stripe_balance": recipientTransfersAlone,
+		}, CreatePath: "/v2/core/accounts", UpdatePath: "/v2/core/accounts/{id}",
 		Keep: []string{"applied_configurations", "closed",
 			"configuration.customer.applied", "configuration.customer.capabilities.automatic_indirect_tax",
 			"configuration.merchant.applied", "configuration.merchant.capabilities.card_payments", "configuration.merchant.capabilities.stripe_balance.payouts",

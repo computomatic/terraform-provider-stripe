@@ -45,10 +45,10 @@ var Table = []fields.Field{
 				}},
 			}},
 		}},
-		{Name: "recipient", Shape: fields.Object, Create: true, Update: true, Response: true, Description: "The Recipient Configuration allows the Account to receive funds. Utilize this configuration if the Account will not be the Merchant of Record, like with Separate Charges & Transfers, or Destination Charges without on_behalf_of set.", Fields: []fields.Field{
+		{Name: "recipient", Shape: fields.Object, Create: true, Update: true, Response: true, MembersAlone: true, Description: "The Recipient Configuration allows the Account to receive funds. Utilize this configuration if the Account will not be the Merchant of Record, like with Separate Charges & Transfers, or Destination Charges without on_behalf_of set.", Fields: []fields.Field{
 			{Name: "applied", Shape: fields.Bool, Update: true, Response: true, ServerDefaulted: true, Description: "Represents the state of the configuration, and can be updated to deactivate or re-apply a configuration.", Default: &fields.Default{Kind: fields.DefaultNotSent}},
-			{Name: "capabilities", Shape: fields.Object, Create: true, Update: true, Response: true, Description: "Capabilities to be requested on the Recipient Configuration.", Fields: []fields.Field{
-				{Name: "stripe_balance", Shape: fields.Object, Create: true, Update: true, Response: true, Description: "Capabilities that enable the recipient to manage their Stripe Balance (/v1/balance).", Fields: []fields.Field{
+			{Name: "capabilities", Shape: fields.Object, Create: true, Update: true, Response: true, MembersAlone: true, Description: "Capabilities to be requested on the Recipient Configuration.", Fields: []fields.Field{
+				{Name: "stripe_balance", Shape: fields.Object, Create: true, Update: true, Response: true, MembersAlone: true, Description: "Capabilities that enable the recipient to manage their Stripe Balance (/v1/balance).", Fields: []fields.Field{
 					{Name: "payouts", Shape: fields.Object, Response: true, Description: "Enables this Account to complete payouts from their Stripe Balance (/v1/balance).", Fields: []fields.Field{
 						{Name: "status", Shape: fields.String, Response: true, Enum: []string{"active", "pending", "rejected", "restricted", "unsupported"}, Description: "The status of the Capability."},
 						{Name: "status_details", Shape: fields.ObjectList, Response: true, Description: "Additional details about the capability's status. This value is empty when `status` is `active`.", Fields: []fields.Field{
