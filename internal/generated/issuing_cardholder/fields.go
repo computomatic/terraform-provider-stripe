@@ -8,7 +8,7 @@ import "github.com/computomatic/terraform-provider-stripe/internal/fields"
 // Table lists every request and response field of the object.
 var Table = []fields.Field{
 	{Name: "billing", Shape: fields.Object, Required: true, Create: true, Update: true, Response: true, Description: "The cardholder's billing address.", Fields: []fields.Field{
-		{Name: "address", Shape: fields.Object, Required: true, Create: true, Update: true, Response: true, Fields: []fields.Field{
+		{Name: "address", Shape: fields.Object, Required: true, Create: true, Update: true, Response: true, SiblingsCleared: true, Fields: []fields.Field{
 			{Name: "city", Shape: fields.String, Required: true, Create: true, Update: true, Response: true, Description: "City, district, suburb, town, or village."},
 			{Name: "country", Shape: fields.String, Required: true, Create: true, Update: true, Response: true, Description: "Two-letter country code ([ISO 3166-1 alpha-2](https://en.wikipedia.org/wiki/ISO_3166-1_alpha-2))."},
 			{Name: "line1", Shape: fields.String, Required: true, Create: true, Update: true, Response: true, Description: "Address line 1, such as the street, PO Box, or company name."},
@@ -26,7 +26,7 @@ var Table = []fields.Field{
 	{Name: "id", Shape: fields.String, Response: true, Description: "Unique identifier for the object."},
 	{Name: "individual", Shape: fields.Object, Create: true, Update: true, Response: true, Description: "Additional information about an `individual` cardholder.", Fields: []fields.Field{
 		{Name: "card_issuing", Shape: fields.Object, Create: true, Update: true, Response: true, Description: "Information related to the card_issuing program for this cardholder.", Fields: []fields.Field{
-			{Name: "user_terms_acceptance", Shape: fields.Object, Create: true, Update: true, Response: true, Description: "Information about cardholder acceptance of Celtic [Authorized User Terms](https://docs.stripe.com/issuing/compliance-us#issuing-terms). Required for cards backed by a Celtic program.", Fields: []fields.Field{
+			{Name: "user_terms_acceptance", Shape: fields.Object, Create: true, Update: true, Response: true, Description: "Information about cardholder acceptance of Celtic [Authorized User Terms](https://docs.stripe.com/issuing/compliance-us#issuing-terms). Required for cards backed by a Celtic program.", SiblingsCleared: true, Fields: []fields.Field{
 				{Name: "date", Shape: fields.Int, Create: true, Update: true, Response: true, Description: "The Unix timestamp marking when the cardholder accepted the Authorized User Terms."},
 				{Name: "ip", Shape: fields.String, Create: true, Update: true, Response: true, Description: "The IP address from which the cardholder accepted the Authorized User Terms."},
 				{Name: "user_agent", Shape: fields.String, Create: true, Update: true, Response: true, Description: "The user agent of the browser from which the cardholder accepted the Authorized User Terms."},

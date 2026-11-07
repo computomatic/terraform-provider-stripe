@@ -183,7 +183,7 @@ var Table = []fields.Field{
 			}},
 			{Name: "billie", Shape: fields.Object, Create: true, Update: true, Response: true, Description: "This sub-hash contains details about the Billie payment method options to pass to invoices created by the subscription.", Fields: []fields.Field{
 				{Name: "company_details", Shape: fields.Object, Create: true, Update: true, Response: true, Fields: []fields.Field{
-					{Name: "registered_address", Shape: fields.Object, Create: true, Update: true, Response: true, Fields: []fields.Field{
+					{Name: "registered_address", Shape: fields.Object, Create: true, Update: true, Response: true, SiblingsCleared: true, Fields: []fields.Field{
 						{Name: "city", Shape: fields.String, Create: true, Update: true, Response: true, Stable: true, Description: "City, district, suburb, town, or village.", Default: &fields.Default{Kind: fields.DefaultNone}},
 						{Name: "country", Shape: fields.String, Create: true, Update: true, Response: true, Stable: true, Description: "Two-letter country code.", Default: &fields.Default{Kind: fields.DefaultNone}},
 						{Name: "line1", Shape: fields.String, Create: true, Update: true, Response: true, Stable: true, Description: "Address line 1 (for example, street, PO Box, or company name).", Default: &fields.Default{Kind: fields.DefaultNone}},
@@ -203,7 +203,7 @@ var Table = []fields.Field{
 				}},
 			}},
 			{Name: "card", Shape: fields.Object, Create: true, Update: true, Response: true, Description: "This sub-hash contains details about the Card payment method options to pass to invoices created by the subscription.", Fields: []fields.Field{
-				{Name: "mandate_options", Shape: fields.Object, Create: true, Update: true, Response: true, Fields: []fields.Field{
+				{Name: "mandate_options", Shape: fields.Object, Create: true, Update: true, Response: true, SiblingsCleared: true, Fields: []fields.Field{
 					{Name: "amount", Shape: fields.Int, Create: true, Update: true, Response: true, Stable: true, Description: "Amount to be charged for future payments, specified in the presentment currency.", Default: &fields.Default{Kind: fields.DefaultNone}},
 					{Name: "amount_type", Shape: fields.String, Create: true, Update: true, Response: true, Stable: true, Enum: []string{"fixed", "maximum"}, Description: "One of `fixed` or `maximum`. If `fixed`, the `amount` param refers to the exact amount to be charged in future payments. If `maximum`, the amount charged can be up to the value passed for the `amount` param.", Default: &fields.Default{Kind: fields.DefaultNone}},
 					{Name: "description", Shape: fields.String, Create: true, Update: true, Response: true, Stable: true, Description: "A description of the mandate or subscription that is meant to be displayed to the customer.", Default: &fields.Default{Kind: fields.DefaultNone}},
@@ -229,7 +229,7 @@ var Table = []fields.Field{
 			}},
 			{Name: "pix", Shape: fields.Object, Create: true, Update: true, Response: true, Description: "This sub-hash contains details about the Pix payment method options to pass to invoices created by the subscription.", Fields: []fields.Field{
 				{Name: "expires_after_seconds", Shape: fields.Int, Create: true, Update: true, Response: true, Stable: true, Description: "The number of seconds (between 10 and 1209600) after which Pix payment will expire. Defaults to 86400 seconds.", Default: &fields.Default{Kind: fields.DefaultNone}},
-				{Name: "mandate_options", Shape: fields.Object, Create: true, Update: true, Response: true, Fields: []fields.Field{
+				{Name: "mandate_options", Shape: fields.Object, Create: true, Update: true, Response: true, SiblingsCleared: true, Fields: []fields.Field{
 					{Name: "amount", Shape: fields.Int, Create: true, Update: true, Response: true, Stable: true, Description: "Amount to be charged for future payments.", Default: &fields.Default{Kind: fields.DefaultNone}},
 					{Name: "amount_includes_iof", Shape: fields.String, Create: true, Update: true, Response: true, Stable: true, Enum: []string{"always", "never"}, Description: "Determines if the amount includes the IOF tax.", Default: &fields.Default{Kind: fields.DefaultNone}},
 					{Name: "end_date", Shape: fields.String, Create: true, Update: true, Response: true, Stable: true, Description: "Date when the mandate expires and no further payments will be charged, in `YYYY-MM-DD`.", Default: &fields.Default{Kind: fields.DefaultNone}},
@@ -237,7 +237,7 @@ var Table = []fields.Field{
 				}},
 			}},
 			{Name: "upi", Shape: fields.Object, Create: true, Update: true, Response: true, Description: "This sub-hash contains details about the UPI payment method options to pass to invoices created by the subscription.", Fields: []fields.Field{
-				{Name: "mandate_options", Shape: fields.Object, Create: true, Update: true, Response: true, Fields: []fields.Field{
+				{Name: "mandate_options", Shape: fields.Object, Create: true, Update: true, Response: true, SiblingsCleared: true, Fields: []fields.Field{
 					{Name: "amount", Shape: fields.Int, Create: true, Update: true, Response: true, Stable: true, Description: "Amount to be charged for future payments.", Default: &fields.Default{Kind: fields.DefaultNone}},
 					{Name: "amount_type", Shape: fields.String, Create: true, Update: true, Response: true, Stable: true, Enum: []string{"fixed", "maximum"}, Description: "One of `fixed` or `maximum`. If `fixed`, the `amount` param refers to the exact amount to be charged in future payments. If `maximum`, the amount charged can be up to the value passed for the `amount` param.", Default: &fields.Default{Kind: fields.DefaultNone}},
 					{Name: "description", Shape: fields.String, Create: true, Update: true, Response: true, Stable: true, Description: "A description of the mandate or subscription that is meant to be displayed to the customer.", Default: &fields.Default{Kind: fields.DefaultNone}},

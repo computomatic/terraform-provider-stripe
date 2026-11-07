@@ -17,6 +17,10 @@ const cardOnly = "A card's update parameter: Stripe refuses it on a bank account
 // rule X6 leaves out, so that no configuration could send it.
 const mandateData = "`customer_acceptance.type`, which the hash requires, is accepted only, so that no configuration could send it (suite: TestSetupIntentAttributes/leaves/request/PostSetupIntents/mandate_data.customer_acceptance.type)."
 
+// creditNoteTaxAmounts is the AcceptedOnly reason of a credit note line's `tax_amounts`, which
+// Stripe takes and never returns.
+const creditNoteTaxAmounts = "A credit note cannot be updated in this, so a kept value cannot drift, and the provider keeps it from configuration (the product owner's decision of 2026-11-07)."
+
 // pauseSchedules is the register's reason for a schedule's request `pause_schedules`, whose
 // `pause` requires `pause_at` and whose `resume` requires `resume_at`, both accepted only, so
 // that no configuration could send a pause schedule; the response's stays readable.
@@ -236,9 +240,11 @@ var Resources = []Resource{
 	// invoice item's (discountsKept).
 	{Package: "billing_credit_grant", CreatePath: "/v1/billing/credit_grants", UpdatePath: "/v1/billing/credit_grants/{id}"},
 	{Package: "credit_note", AcceptedOnly: map[string]string{
-		"credit_amount":   "Its effect shows in `amount` (the product owner's decision of 2026-11-05).",
-		"lines.tax_rates": "Its effect shows in the tax rates Stripe returns for each line, and the argument keeps its shape, so a state that holds tax rate IDs stays readable (the product owner's decision of 2026-11-05).",
-		"refund_amount":   "Its effect shows in `amount` and `refunds` (the product owner's decision of 2026-11-05).",
+		"credit_amount":                    "Its effect shows in `amount` (the product owner's decision of 2026-11-05).",
+		"lines.tax_amounts.amount":         creditNoteTaxAmounts,
+		"lines.tax_amounts.tax_rate":       creditNoteTaxAmounts,
+		"lines.tax_amounts.taxable_amount": creditNoteTaxAmounts,
+		"refund_amount":                    "Its effect shows in `amount` and `refunds` (the product owner's decision of 2026-11-05).",
 	}, CreatePath: "/v1/credit_notes", UpdatePath: "/v1/credit_notes/{id}", PagedLists: map[string]string{"lines": "stripe_credit_note_line"}},
 	// An invoice's payment error is a nested payment intent that repeats without end, and
 	// three payment method options are empty objects in the response.

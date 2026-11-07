@@ -245,7 +245,7 @@ The `invoice_creation` attribute supports:
 
 The `invoice_creation.invoice_data` attribute supports:
 
-* `account_tax_ids` - (Optional) The account tax IDs associated with the invoice. Default: none.
+* `account_tax_ids` - (Optional) The account tax IDs associated with the invoice. Stripe takes the IDs of tax IDs the account holds, and refuses one it cannot find. Elsewhere Stripe refused it on a US account on create: "No such account_tax_ids: 'txi_...'". Default: none.
 * `custom_fields` - (Optional) A list of up to 4 custom fields to be displayed on the invoice. See [`invoice_creation.invoice_data.custom_fields`](#invoice_creation.invoice_data.custom_fields) below.
 * `description` - (Optional) An arbitrary string attached to the object. Often useful for displaying to users. Default: none.
 * `footer` - (Optional) Footer to be displayed on the invoice. Default: none.
@@ -599,7 +599,7 @@ The `tax_id_collection` attribute supports:
 The `transfer_data` attribute supports:
 
 * `amount` - (Optional) The amount in cents (or local equivalent) that will be transferred to the destination account. By default, the entire amount is transferred to the destination. Default: none.
-* `destination` - (Required) The connected account receiving the transfer.
+* `destination` - (Required) The connected account receiving the transfer. Stripe takes the ID of a connected account it can find, and refuses one it cannot find. Elsewhere Stripe refused it on a US account on create: "No such destination: 'acct_...'".
 
 ## Attribute Reference
 

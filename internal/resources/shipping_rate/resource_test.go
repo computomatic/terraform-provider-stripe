@@ -221,3 +221,44 @@ func TestAccShippingRate_drift(t *testing.T) {
 		},
 	})
 }
+
+// Stripe returns the rate's own currency among the currency options, which the configuration
+// does not hold, so a read leaves it out (the record's normalised forms `with_own_currency` and
+// `with_own_tax_behavior`). The values are the suite's create (TestShippingRateAttributes,
+// `fixed_amount.currency_options.amount`: `{"eur": {"amount": 7, "tax_behavior": "exclusive"}}`
+// beside an amount of 500 in the account's currency and a `tax_behavior` of `exclusive`).
+func TestAccShippingRate_currencyOptionsLeaveTheOwnCurrencyOut(t *testing.T) {
+	acct := acctest.NewAccount(t)
+	config := acct.ProviderBlock() + fmt.Sprintf(`
+resource "stripe_shipping_rate" "test" {
+  display_name = %q
+  type         = "fixed_amount"
+  tax_behavior = "exclusive"
+  fixed_amount = {
+    amount   = 500
+    currency = "usd"
+    currency_options = {
+      eur = { amount = 7, tax_behavior = "exclusive" }
+    }
+  }
+}
+
+data "stripe_shipping_rate" "test" {
+  id = stripe_shipping_rate.test.id
+}
+`, acct.Name("Options"))
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: tfacc.ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: config,
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr(address, "fixed_amount.currency_options.%", "1"),
+					resource.TestCheckResourceAttr(address, "fixed_amount.currency_options.eur.amount", "7"),
+					resource.TestCheckResourceAttr("data.stripe_shipping_rate.test", "fixed_amount.currency_options.%", "1"),
+				),
+			},
+			{Config: config, PlanOnly: true},
+		},
+	})
+}

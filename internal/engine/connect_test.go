@@ -626,6 +626,19 @@ func TestSendWholeMembers(t *testing.T) {
 			t.Errorf("%s: update body %s, want %s", tc.name, got, tc.want)
 		}
 	}
+
+	// Where Stripe clears the members a write of the hash leaves out, as a subscription's mandate
+	// options, a removed member is left out, unless nothing else of the hash would go.
+	home.SiblingsCleared = true
+	person.Fields = []fields.Field{member("first", fields.String), home}
+	r = configured(t, decl, append(refuseTable(), person), noCalls(t))
+	params, err := r.m.encodeUpdate(r.fill(with(state, map[string]attr.Value{"person": build(jenny, b, types.StringNull(), one)})), state, tftypes.Value{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got, want := wireOf(t, params), `{"person":{"home":{"city":"B","line1":"1 Main","code":"c","geo":{"lat":"1","long":"2"}}}}`; got != want {
+		t.Errorf("a removal from a hash whose siblings Stripe clears: update body %s, want %s", got, want)
+	}
 }
 
 // A nested hash in SendWholeMembers whose plan differs from the state only by a computed member

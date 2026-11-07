@@ -189,7 +189,7 @@ var Table = []fields.Field{
 				{Name: "promotion_code", Shape: fields.String, Create: true, Update: true, Response: true, Stable: true, Description: "ID of the promotion code to create a new discount for.", Default: &fields.Default{Kind: fields.DefaultNone}},
 			}},
 			{Name: "metadata", Shape: fields.StringMap, Create: true, Update: true, Response: true, Stable: true, Description: "Set of [key-value pairs](https://docs.stripe.com/api/metadata) that you can attach to an item. Metadata on this item will update the underlying subscription item's `metadata` when the phase is entered.", Default: &fields.Default{Kind: fields.DefaultValue, Value: "{}"}},
-			{Name: "price", Shape: fields.String, Create: true, Update: true, Response: true, ServerDefaulted: true, Stable: true, Description: "ID of the price to which the customer should be subscribed."},
+			{Name: "price", Shape: fields.String, Create: true, Update: true, Response: true, ServerDefaulted: true, Stable: true, Description: "ID of the price to which the customer should be subscribed.", Answer: "Elsewhere Stripe refused it on a US account on update: \"The subscription schedule update is missing at least one phase with a `start_date` to anchor end dates to.\"."},
 			{Name: "price_data", Shape: fields.Object, Create: true, Update: true, Fields: []fields.Field{
 				{Name: "currency", Shape: fields.String, Required: true, Create: true, Update: true},
 				{Name: "product", Shape: fields.String, Required: true, Create: true, Update: true},

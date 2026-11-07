@@ -1,17 +1,17 @@
 {
-  "fake_version": "v0.37.0",
-  "suite_ref": "ea5e6b0fce82f7867281d266183619b73c947ad3",
-  "run_id": 42223269772,
+  "fake_version": "v0.38.0",
+  "suite_ref": "f4c2cba87067951cb51bcf5d500545d68c036fd5",
+  "run_id": 42317623394,
   "api_version": "2026-09-30.endive",
   "spec_sha256": "9119e72c7ff8ad142e94f7efa9cf49d8e6eec69df3592e17e8fba15099726ed7",
   "counts": {
     "gap_placeholder_null": 48,
     "gap_proven_not_served": 1220,
     "gap_stripe_only": 33,
-    "proven_by_test": 5651,
-    "unproven": 7296,
-    "verified": 4141,
-    "verified_accepted_only": 430
+    "proven_by_test": 5675,
+    "unproven": 7265,
+    "verified": 4146,
+    "verified_accepted_only": 432
   },
   "refused_only": 171,
   "objects": [
@@ -239,9 +239,8 @@
       "object": "credit_note",
       "counts": {
         "gap_proven_not_served": 13,
-        "unproven": 5,
-        "verified": 62,
-        "verified_accepted_only": 4
+        "verified": 65,
+        "verified_accepted_only": 6
       }
     },
     {
@@ -517,8 +516,8 @@
       "object": "invoice",
       "counts": {
         "gap_placeholder_null": 3,
-        "proven_by_test": 3,
-        "unproven": 269,
+        "proven_by_test": 4,
+        "unproven": 268,
         "verified": 372,
         "verified_accepted_only": 22
       }
@@ -614,8 +613,8 @@
     {
       "object": "line_item",
       "counts": {
-        "proven_by_test": 48,
-        "unproven": 34
+        "proven_by_test": 60,
+        "unproven": 22
       }
     },
     {
@@ -690,8 +689,8 @@
     {
       "object": "payment_record",
       "counts": {
-        "proven_by_test": 358,
-        "unproven": 71
+        "proven_by_test": 369,
+        "unproven": 60
       }
     },
     {
@@ -722,8 +721,8 @@
     {
       "object": "price",
       "counts": {
-        "unproven": 4,
-        "verified": 101,
+        "unproven": 2,
+        "verified": 103,
         "verified_accepted_only": 5
       }
     },
@@ -32364,7 +32363,10 @@
       "tests": [
         "TestCheckoutSessionAttributes/leaves/request/PostCheckoutSessions/discounts.coupon",
         "TestCheckoutSessionAttributes/leaves/response/checkout.session/discounts.coupon",
-        "TestCheckoutSessionAttributes/state/discount_coupon/leaves/request/PostCheckoutSessions/discounts.coupon"
+        "TestCheckoutSessionAttributes/state/coupon_amount_off/leaves/request/PostCheckoutSessions/discounts.coupon",
+        "TestCheckoutSessionAttributes/state/coupon_beside_tax_rate/leaves/request/PostCheckoutSessions/discounts.coupon",
+        "TestCheckoutSessionAttributes/state/discount_coupon/leaves/request/PostCheckoutSessions/discounts.coupon",
+        "TestCheckoutSessionAttributes/state/shipping_beside_coupon/leaves/request/PostCheckoutSessions/discounts.coupon"
       ],
       "class": "verified"
     },
@@ -32900,7 +32902,11 @@
       "reason": "accepted_only",
       "status": "proven",
       "tests": [
-        "TestCheckoutSessionAttributes/leaves/request/PostCheckoutSessions/line_items.tax_rates"
+        "TestCheckoutSessionAttributes/leaves/request/PostCheckoutSessions/line_items.tax_rates",
+        "TestCheckoutSessionAttributes/state/coupon_beside_tax_rate/leaves/request/PostCheckoutSessions/line_items.tax_rates",
+        "TestCheckoutSessionAttributes/state/shipping_beside_tax_rate/leaves/request/PostCheckoutSessions/line_items.tax_rates",
+        "TestCheckoutSessionAttributes/state/tax_inclusive/leaves/request/PostCheckoutSessions/line_items.tax_rates",
+        "TestCheckoutSessionAttributes/state/tax_rates_several/leaves/request/PostCheckoutSessions/line_items.tax_rates"
       ],
       "class": "verified_accepted_only"
     },
@@ -35694,7 +35700,9 @@
       "status": "proven",
       "tests": [
         "TestCheckoutSessionAttributes/leaves/request/PostCheckoutSessions/shipping_options.shipping_rate",
-        "TestCheckoutSessionAttributes/leaves/response/checkout.session/shipping_options.shipping_rate"
+        "TestCheckoutSessionAttributes/leaves/response/checkout.session/shipping_options.shipping_rate",
+        "TestCheckoutSessionAttributes/state/shipping_beside_coupon/leaves/request/PostCheckoutSessions/shipping_options.shipping_rate",
+        "TestCheckoutSessionAttributes/state/shipping_beside_tax_rate/leaves/request/PostCheckoutSessions/shipping_options.shipping_rate"
       ],
       "class": "verified"
     },
@@ -46472,13 +46480,13 @@
       "path": "lines.tax_amounts.amount",
       "branch": "",
       "shape": "integer",
-      "state": "unserved",
-      "reason": "not_proven",
-      "status": "unreachable",
+      "state": "served",
+      "reason": "accepted_only",
+      "status": "proven",
       "tests": [
         "TestCreditNoteAttributes/leaves/request/PostCreditNotes/lines.tax_amounts.amount"
       ],
-      "class": "unproven"
+      "class": "verified_accepted_only"
     },
     {
       "object": "credit_note",
@@ -46487,13 +46495,13 @@
       "path": "lines.tax_amounts.tax_rate",
       "branch": "",
       "shape": "string",
-      "state": "unserved",
-      "reason": "not_proven",
-      "status": "unreachable",
+      "state": "served",
+      "reason": "accepted_only",
+      "status": "proven",
       "tests": [
         "TestCreditNoteAttributes/leaves/request/PostCreditNotes/lines.tax_amounts.tax_rate"
       ],
-      "class": "unproven"
+      "class": "verified_accepted_only"
     },
     {
       "object": "credit_note",
@@ -46502,13 +46510,13 @@
       "path": "lines.tax_amounts.taxable_amount",
       "branch": "",
       "shape": "integer",
-      "state": "unserved",
-      "reason": "not_proven",
-      "status": "unreachable",
+      "state": "served",
+      "reason": "accepted_only",
+      "status": "proven",
       "tests": [
         "TestCreditNoteAttributes/leaves/request/PostCreditNotes/lines.tax_amounts.taxable_amount"
       ],
-      "class": "unproven"
+      "class": "verified_accepted_only"
     },
     {
       "object": "credit_note",
@@ -46518,12 +46526,11 @@
       "branch": "",
       "shape": "list",
       "state": "served",
-      "reason": "accepted_only",
       "status": "proven",
       "tests": [
         "TestCreditNoteAttributes/leaves/request/PostCreditNotes/lines.tax_rates"
       ],
-      "class": "verified_accepted_only"
+      "class": "verified"
     },
     {
       "object": "credit_note",
@@ -46664,13 +46671,13 @@
       "path": "refunds.payment_record_refund.payment_record",
       "branch": "",
       "shape": "string",
-      "state": "unserved",
-      "reason": "not_proven",
-      "status": "unreachable",
+      "state": "served",
+      "status": "proven",
       "tests": [
-        "TestCreditNoteAttributes/leaves/request/PostCreditNotes/refunds.payment_record_refund.payment_record"
+        "TestCreditNoteAttributes/leaves/request/PostCreditNotes/refunds.payment_record_refund.payment_record",
+        "TestCreditNoteAttributes/leaves/response/credit_note/refunds.payment_record_refund.payment_record"
       ],
-      "class": "unproven"
+      "class": "verified"
     },
     {
       "object": "credit_note",
@@ -46679,13 +46686,13 @@
       "path": "refunds.payment_record_refund.refund_group",
       "branch": "",
       "shape": "string",
-      "state": "unserved",
-      "reason": "not_proven",
-      "status": "unreachable",
+      "state": "served",
+      "status": "proven",
       "tests": [
-        "TestCreditNoteAttributes/leaves/request/PostCreditNotes/refunds.payment_record_refund.refund_group"
+        "TestCreditNoteAttributes/leaves/request/PostCreditNotes/refunds.payment_record_refund.refund_group",
+        "TestCreditNoteAttributes/leaves/response/credit_note/refunds.payment_record_refund.refund_group"
       ],
-      "class": "unproven"
+      "class": "verified"
     },
     {
       "object": "credit_note",
@@ -65094,7 +65101,7 @@
       "branch": "",
       "shape": "string",
       "state": "unserved",
-      "reason": "operation_not_registered",
+      "reason": "not_proven",
       "class": "unproven"
     },
     {
@@ -65104,9 +65111,8 @@
       "path": "payment_record",
       "branch": "",
       "shape": "string",
-      "state": "unserved",
-      "reason": "operation_not_registered",
-      "class": "unproven"
+      "state": "proven_by_test",
+      "class": "proven_by_test"
     },
     {
       "object": "invoice",
@@ -82165,9 +82171,8 @@
       "path": "tax_amounts.amount",
       "branch": "",
       "shape": "integer",
-      "state": "unserved",
-      "reason": "not_proven",
-      "class": "unproven"
+      "state": "proven_by_test",
+      "class": "proven_by_test"
     },
     {
       "object": "line_item",
@@ -82176,9 +82181,8 @@
       "path": "tax_amounts.tax_rate_data.country",
       "branch": "",
       "shape": "string",
-      "state": "unserved",
-      "reason": "not_proven",
-      "class": "unproven"
+      "state": "proven_by_test",
+      "class": "proven_by_test"
     },
     {
       "object": "line_item",
@@ -82187,9 +82191,8 @@
       "path": "tax_amounts.tax_rate_data.description",
       "branch": "",
       "shape": "string",
-      "state": "unserved",
-      "reason": "not_proven",
-      "class": "unproven"
+      "state": "proven_by_test",
+      "class": "proven_by_test"
     },
     {
       "object": "line_item",
@@ -82198,9 +82201,8 @@
       "path": "tax_amounts.tax_rate_data.display_name",
       "branch": "",
       "shape": "string",
-      "state": "unserved",
-      "reason": "not_proven",
-      "class": "unproven"
+      "state": "proven_by_test",
+      "class": "proven_by_test"
     },
     {
       "object": "line_item",
@@ -82209,9 +82211,8 @@
       "path": "tax_amounts.tax_rate_data.inclusive",
       "branch": "",
       "shape": "boolean",
-      "state": "unserved",
-      "reason": "not_proven",
-      "class": "unproven"
+      "state": "proven_by_test",
+      "class": "proven_by_test"
     },
     {
       "object": "line_item",
@@ -82220,9 +82221,8 @@
       "path": "tax_amounts.tax_rate_data.jurisdiction",
       "branch": "",
       "shape": "string",
-      "state": "unserved",
-      "reason": "not_proven",
-      "class": "unproven"
+      "state": "proven_by_test",
+      "class": "proven_by_test"
     },
     {
       "object": "line_item",
@@ -82231,9 +82231,8 @@
       "path": "tax_amounts.tax_rate_data.jurisdiction_level",
       "branch": "",
       "shape": "enum",
-      "state": "unserved",
-      "reason": "not_proven",
-      "class": "unproven"
+      "state": "proven_by_test",
+      "class": "proven_by_test"
     },
     {
       "object": "line_item",
@@ -82242,9 +82241,8 @@
       "path": "tax_amounts.tax_rate_data.percentage",
       "branch": "",
       "shape": "number",
-      "state": "unserved",
-      "reason": "not_proven",
-      "class": "unproven"
+      "state": "proven_by_test",
+      "class": "proven_by_test"
     },
     {
       "object": "line_item",
@@ -82253,9 +82251,8 @@
       "path": "tax_amounts.tax_rate_data.state",
       "branch": "",
       "shape": "string",
-      "state": "unserved",
-      "reason": "not_proven",
-      "class": "unproven"
+      "state": "proven_by_test",
+      "class": "proven_by_test"
     },
     {
       "object": "line_item",
@@ -82264,9 +82261,8 @@
       "path": "tax_amounts.tax_rate_data.tax_type",
       "branch": "",
       "shape": "enum",
-      "state": "unserved",
-      "reason": "not_proven",
-      "class": "unproven"
+      "state": "proven_by_test",
+      "class": "proven_by_test"
     },
     {
       "object": "line_item",
@@ -82275,9 +82271,8 @@
       "path": "tax_amounts.taxability_reason",
       "branch": "",
       "shape": "enum",
-      "state": "unserved",
-      "reason": "not_proven",
-      "class": "unproven"
+      "state": "proven_by_test",
+      "class": "proven_by_test"
     },
     {
       "object": "line_item",
@@ -82286,9 +82281,8 @@
       "path": "tax_amounts.taxable_amount",
       "branch": "",
       "shape": "integer",
-      "state": "unserved",
-      "reason": "not_proven",
-      "class": "unproven"
+      "state": "proven_by_test",
+      "class": "proven_by_test"
     },
     {
       "object": "line_item",
@@ -130206,9 +130200,8 @@
       "path": "amount.currency",
       "branch": "",
       "shape": "string",
-      "state": "unserved",
-      "reason": "operation_not_registered",
-      "class": "unproven"
+      "state": "proven_by_test",
+      "class": "proven_by_test"
     },
     {
       "object": "payment_record",
@@ -130217,9 +130210,8 @@
       "path": "amount.value",
       "branch": "",
       "shape": "integer",
-      "state": "unserved",
-      "reason": "operation_not_registered",
-      "class": "unproven"
+      "state": "proven_by_test",
+      "class": "proven_by_test"
     },
     {
       "object": "payment_record",
@@ -130228,9 +130220,8 @@
       "path": "initiated_at",
       "branch": "",
       "shape": "integer",
-      "state": "unserved",
-      "reason": "operation_not_registered",
-      "class": "unproven"
+      "state": "proven_by_test",
+      "class": "proven_by_test"
     },
     {
       "object": "payment_record",
@@ -130240,7 +130231,7 @@
       "branch": "",
       "shape": "map",
       "state": "unserved",
-      "reason": "operation_not_registered",
+      "reason": "not_proven",
       "class": "unproven"
     },
     {
@@ -130250,9 +130241,8 @@
       "path": "outcome",
       "branch": "",
       "shape": "enum",
-      "state": "unserved",
-      "reason": "operation_not_registered",
-      "class": "unproven"
+      "state": "proven_by_test",
+      "class": "proven_by_test"
     },
     {
       "object": "payment_record",
@@ -130261,9 +130251,8 @@
       "path": "processor_details.custom.refund_reference",
       "branch": "",
       "shape": "string",
-      "state": "unserved",
-      "reason": "operation_not_registered",
-      "class": "unproven"
+      "state": "proven_by_test",
+      "class": "proven_by_test"
     },
     {
       "object": "payment_record",
@@ -130272,9 +130261,8 @@
       "path": "processor_details.type",
       "branch": "",
       "shape": "enum",
-      "state": "unserved",
-      "reason": "operation_not_registered",
-      "class": "unproven"
+      "state": "proven_by_test",
+      "class": "proven_by_test"
     },
     {
       "object": "payment_record",
@@ -130283,9 +130271,8 @@
       "path": "refunded.refunded_at",
       "branch": "",
       "shape": "integer",
-      "state": "unserved",
-      "reason": "operation_not_registered",
-      "class": "unproven"
+      "state": "proven_by_test",
+      "class": "proven_by_test"
     },
     {
       "object": "payment_record",
@@ -130325,9 +130312,8 @@
       "path": "customer_details.customer",
       "branch": "",
       "shape": "string",
-      "state": "unserved",
-      "reason": "not_proven",
-      "class": "unproven"
+      "state": "proven_by_test",
+      "class": "proven_by_test"
     },
     {
       "object": "payment_record",
@@ -130336,9 +130322,8 @@
       "path": "customer_details.email",
       "branch": "",
       "shape": "string",
-      "state": "unserved",
-      "reason": "not_proven",
-      "class": "unproven"
+      "state": "proven_by_test",
+      "class": "proven_by_test"
     },
     {
       "object": "payment_record",
@@ -130347,9 +130332,8 @@
       "path": "customer_details.name",
       "branch": "",
       "shape": "string",
-      "state": "unserved",
-      "reason": "not_proven",
-      "class": "unproven"
+      "state": "proven_by_test",
+      "class": "proven_by_test"
     },
     {
       "object": "payment_record",
@@ -130358,9 +130342,8 @@
       "path": "customer_details.phone",
       "branch": "",
       "shape": "string",
-      "state": "unserved",
-      "reason": "not_proven",
-      "class": "unproven"
+      "state": "proven_by_test",
+      "class": "proven_by_test"
     },
     {
       "object": "payment_record",
@@ -141178,13 +141161,12 @@
       "path": "currency_options.tiers.flat_amount_decimal",
       "branch": "",
       "shape": "string",
-      "state": "unserved",
-      "reason": "not_proven",
-      "status": "unproven",
+      "state": "served",
+      "status": "proven",
       "tests": [
         "TestPriceAttributes/leaves/request/PostPricesPrice/currency_options.tiers.flat_amount_decimal"
       ],
-      "class": "unproven"
+      "class": "verified"
     },
     {
       "object": "price",
@@ -141207,13 +141189,12 @@
       "path": "currency_options.tiers.unit_amount_decimal",
       "branch": "",
       "shape": "string",
-      "state": "unserved",
-      "reason": "not_proven",
-      "status": "unproven",
+      "state": "served",
+      "status": "proven",
       "tests": [
         "TestPriceAttributes/leaves/request/PostPricesPrice/currency_options.tiers.unit_amount_decimal"
       ],
-      "class": "unproven"
+      "class": "verified"
     },
     {
       "object": "price",

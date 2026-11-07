@@ -726,10 +726,15 @@ func (m *model) changedMembers(n *node, plan, state attr.Value, allow func(*node
 // change, goes with the value it holds. An empty collection that stays empty is left out: sending
 // it would ask Stripe to unset what it does not hold. A list or map of hashes not fully known
 // goes with the state's value too, which would drop a change of it, so checkSentMembers refuses
-// one whose elements have a computed member, the only source of an unknown at apply.
+// one whose elements have a computed member, the only source of an unknown at apply. A hash the
+// record shows Stripe clearing the members a write leaves out of (SiblingsCleared) leaves a
+// removed member out rather than sending it as null, which Stripe refuses for a subscription's
+// mandate options (TestSubscriptionAttributes, probes `unset/32`, `unset/35` and `unset/36`),
+// while a write without it clears it (probes `siblings/32`, `siblings/35` and `siblings/36`),
+// unless the write would then send nothing of the hash.
 func wholeMembers(n *node, plan, state attr.Value) (wire.Object, error) {
 	planned, held := objectAttrs(plan), objectAttrs(state)
-	var out wire.Object
+	var out, removed wire.Object
 	for _, k := range n.Kids {
 		if !k.Update {
 			continue
@@ -744,6 +749,10 @@ func wholeMembers(n *node, plan, state attr.Value) (wire.Object, error) {
 			continue
 		case pv.IsNull():
 			if sv == nil || sv.IsNull() || emptyCollection(sv) {
+				continue
+			}
+			if n.SiblingsCleared {
+				removed = append(removed, wire.Field{Name: k.Name, Value: wire.Null{}})
 				continue
 			}
 			v = wire.Null{}
@@ -774,6 +783,9 @@ func wholeMembers(n *node, plan, state attr.Value) (wire.Object, error) {
 			}
 		}
 		out = append(out, wire.Field{Name: k.Name, Value: v})
+	}
+	if len(out) == 0 {
+		return removed, nil
 	}
 	return out, nil
 }

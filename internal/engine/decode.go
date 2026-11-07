@@ -57,6 +57,7 @@ func (m *model) decodeState(body wire.Object, prior basetypes.ObjectValue, objTy
 	if len(m.lineDiscounts) > 0 {
 		d.ownDiscounts = heldDiscountIDs(body)
 	}
+	body = m.withoutOwnCurrencies(body)
 	priorAttrs := prior.Attributes()
 	byAttr := make(map[string]*node, len(m.nodes))
 	for _, n := range m.nodes {

@@ -83,7 +83,7 @@ var Table = []fields.Field{
 	{Name: "invoice_creation", Shape: fields.Object, Create: true, Update: true, Response: true, Description: "Generate a post-purchase Invoice for one-time payments.", Fields: []fields.Field{
 		{Name: "enabled", Shape: fields.Bool, Required: true, Create: true, Update: true, Response: true, Description: "Enable creating an invoice on successful payment."},
 		{Name: "invoice_data", Shape: fields.Object, Create: true, Update: true, Response: true, Description: "Configuration for the invoice. Default invoice values will be used if unspecified.", Fields: []fields.Field{
-			{Name: "account_tax_ids", Shape: fields.ScalarList, Elem: fields.String, Create: true, Update: true, Response: true, Stable: true, Description: "The account tax IDs associated with the invoice.", Default: &fields.Default{Kind: fields.DefaultNone}},
+			{Name: "account_tax_ids", Shape: fields.ScalarList, Elem: fields.String, Create: true, Update: true, Response: true, Stable: true, Description: "The account tax IDs associated with the invoice.", Default: &fields.Default{Kind: fields.DefaultNone}, Answer: "Elsewhere Stripe refused it on a US account on create: \"No such account_tax_ids: 'txi_...'\"."},
 			{Name: "custom_fields", Shape: fields.ObjectList, Create: true, Update: true, Response: true, Description: "A list of up to 4 custom fields to be displayed on the invoice.", Fields: []fields.Field{
 				{Name: "name", Shape: fields.String, Required: true, Create: true, Update: true, Response: true, Description: "The name of the custom field."},
 				{Name: "value", Shape: fields.String, Required: true, Create: true, Update: true, Response: true, Description: "The value of the custom field."},
@@ -195,7 +195,7 @@ var Table = []fields.Field{
 		{Name: "enabled", Shape: fields.Bool, Create: true, Response: true, ServerDefaulted: true, Description: "Set to `true` to enable [Managed Payments](https://docs.stripe.com/payments/managed-payments), Stripe's merchant of record solution, for this session.", Default: &fields.Default{Kind: fields.DefaultValue, Value: "false"}},
 	}},
 	{Name: "metadata", Shape: fields.StringMap, Create: true, Update: true, Response: true, ServerDefaulted: true, Stable: true, Description: "Set of [key-value pairs](https://docs.stripe.com/api/metadata) that you can attach to an object. This can be useful for storing additional information about the object in a structured format. Individual keys can be unset by posting an empty value to them. All keys can be unset by posting an empty value to `metadata`. Metadata associated with this Payment Link will automatically be copied to [checkout sessions](https://docs.stripe.com/api/checkout/sessions) created by this payment link.", Default: &fields.Default{Kind: fields.DefaultValue, Value: "{}"}, MapUpdate: &fields.MapUpdate{Replaced: false, EmptyKept: false}},
-	{Name: "name_collection", Shape: fields.Object, Create: true, Update: true, Response: true, Description: "Controls settings applied for collecting the customer's name.", Fields: []fields.Field{
+	{Name: "name_collection", Shape: fields.Object, Create: true, Update: true, Response: true, Description: "Controls settings applied for collecting the customer's name.", SiblingsCleared: true, Fields: []fields.Field{
 		{Name: "business", Shape: fields.Object, Create: true, Update: true, Response: true, Fields: []fields.Field{
 			{Name: "enabled", Shape: fields.Bool, Required: true, Create: true, Update: true, Response: true, Description: "Indicates whether business name collection is enabled for the payment link."},
 			{Name: "optional", Shape: fields.Bool, Create: true, Update: true, Response: true, ServerDefaulted: true, Description: "Whether the customer is required to complete the field before checking out. Defaults to `false`.", Default: &fields.Default{Kind: fields.DefaultNone}},
@@ -266,13 +266,13 @@ var Table = []fields.Field{
 			}},
 		}},
 	}},
-	{Name: "tax_id_collection", Shape: fields.Object, Create: true, Update: true, Response: true, ServerDefaulted: true, Description: "Controls tax ID collection during checkout.", Fields: []fields.Field{
+	{Name: "tax_id_collection", Shape: fields.Object, Create: true, Update: true, Response: true, ServerDefaulted: true, Description: "Controls tax ID collection during checkout.", SiblingsCleared: true, Fields: []fields.Field{
 		{Name: "enabled", Shape: fields.Bool, Required: true, Create: true, Update: true, Response: true, Description: "Indicates whether tax ID collection is enabled for the session."},
 		{Name: "required", Shape: fields.String, Create: true, Update: true, Response: true, ServerDefaulted: true, Stable: true, Enum: []string{"if_supported", "never"}, Default: &fields.Default{Kind: fields.DefaultValue, Value: "never"}},
 	}},
-	{Name: "transfer_data", Shape: fields.Object, Create: true, Update: true, Response: true, Description: "The account (if any) the payments will be attributed to for tax reporting, and where funds from each payment will be transferred to.", Fields: []fields.Field{
+	{Name: "transfer_data", Shape: fields.Object, Create: true, Update: true, Response: true, Description: "The account (if any) the payments will be attributed to for tax reporting, and where funds from each payment will be transferred to.", SiblingsCleared: true, Fields: []fields.Field{
 		{Name: "amount", Shape: fields.Int, Create: true, Update: true, Response: true, Stable: true, Description: "The amount in cents (or local equivalent) that will be transferred to the destination account. By default, the entire amount is transferred to the destination.", Default: &fields.Default{Kind: fields.DefaultNone}},
-		{Name: "destination", Shape: fields.String, Required: true, Create: true, Update: true, Response: true, Description: "The connected account receiving the transfer."},
+		{Name: "destination", Shape: fields.String, Required: true, Create: true, Update: true, Response: true, Description: "The connected account receiving the transfer.", Answer: "Elsewhere Stripe refused it on a US account on create: \"No such destination: 'acct_...'\"."},
 	}},
 	{Name: "url", Shape: fields.String, Response: true, Description: "The public URL that can be shared with customers."},
 }

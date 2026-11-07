@@ -49,6 +49,10 @@ var Declaration = engine.Declaration{
 		"after_completion.redirect.url": "Stripe takes it on an update only beside `after_completion.type`, which an update sends with it.",
 		// suite: TestPaymentLinkAttributes, probes `isolated/collection_*`
 		"payment_method_collection": "Stripe takes it only on a link whose line items hold a recurring price.",
+		// suite: TestPaymentLinkAttributes, probe `isolated/unknown_account_tax_ids`
+		"invoice_creation.invoice_data.account_tax_ids": "Stripe takes the IDs of tax IDs the account holds, and refuses one it cannot find.",
+		// suite: TestPaymentLinkAttributes, probe `isolated/unknown_transfer_destination`
+		"transfer_data.destination": "Stripe takes the ID of a connected account it can find, and refuses one it cannot find.",
 	},
 	Defaults: map[string]string{
 		"consent_collection.promotions":              "`none` once `consent_collection` is set",

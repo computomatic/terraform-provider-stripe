@@ -86,8 +86,13 @@ var Declaration = engine.Declaration{
 	// (family `v1-billing`, `hashes`; `payment_settings` by probe `siblings/1`), so an update
 	// sends only those that changed; `issuer` requires its `type` and goes whole, and so do
 	// `payment_settings.payment_method_options`, which the record does not list, as the update
-	// probes sent it. `trial_settings.end_behavior` keeps its siblings too (probe `siblings/27`),
-	// but `trial_settings` requires it, so it goes whole.
+	// probes sent it. A write of a card's, Pix's or UPI's `mandate_options`, or of Billie's
+	// `registered_address`, clears what it leaves out (`siblings_cleared`; probe `siblings/32`
+	// clears the card's `network` too), so the whole send keeps those whole, and leaves out a
+	// member the configuration removes, which Stripe refuses as `""` (probes `unset/32`,
+	// `unset/35` and `unset/36`). PayTo's `mandate_options` keeps what a write leaves out (probe
+	// `siblings/34`), which the whole send also holds. `trial_settings.end_behavior` keeps its
+	// siblings too (probe `siblings/27`), but `trial_settings` requires it, so it goes whole.
 	SendChangedMembers: []string{"invoice_settings", "payment_settings"},
 	SendWholeMembers:   []string{"payment_settings.payment_method_options"},
 	Answers: map[string]string{

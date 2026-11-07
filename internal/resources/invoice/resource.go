@@ -57,6 +57,10 @@ var Declaration = engine.Declaration{
 		"payment_settings.payment_method_options.card.installments.enabled",
 		"payment_settings.payment_method_options.card.request_three_d_secure",
 		"shipping_cost.shipping_rate",
+		// Stripe fills the issuer's account from `on_behalf_of` (TestInvoiceAttributes, probe
+		// `enums/36`, and minimal create `tax_account`) and the PDF's page size with `auto`
+		// (probe `enums/10`, and every minimal create but `revision`).
+		"issuer.account", "rendering.pdf.page_size",
 	},
 	Answers: map[string]string{
 		// suite: TestInvoiceAttributes, probes `isolated/coupon_expired` and `isolated/coupon_beside_held`
@@ -65,6 +69,12 @@ var Declaration = engine.Declaration{
 		"discounts.promotion_code": "Stripe takes an active promotion code.",
 	},
 	Defaults: map[string]string{
+		// suite: TestInvoiceAttributes, probe `enums/36` and minimal create `tax_account`, which
+		// send `on_behalf_of`; the other minimal creates hold none
+		"issuer.account": "none, or the `on_behalf_of` account where that is set",
+		// suite: TestInvoiceAttributes, probe `enums/10` and the minimal creates; the `revision`
+		// variant, which sends `from_invoice`, holds none
+		"rendering.pdf.page_size": "`auto`, or none on a revision (`from_invoice`)",
 		// suite: TestInvoiceAttributes, minimal create `revision`
 		"metadata": "none, or on a revision the metadata of the invoice `from_invoice` revises, such as `{\"conformance\":\"invoice\"}` in the suite",
 		// suite: TestInvoiceAttributes, probe `enums/12`

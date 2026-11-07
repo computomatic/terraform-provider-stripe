@@ -53,7 +53,10 @@ type Record struct {
 	Shape    string `json:"shape"`
 	Target   string `json:"target,omitempty"`
 	Required bool   `json:"required,omitempty"`
-	State    State  `json:"state"`
+	// RequiredHashes are, on a request leaf, the hashes holding it that the hash holding each of
+	// them requires (Leaf.RequiredHashes).
+	RequiredHashes []string `json:"-"`
+	State          State    `json:"state"`
 	// Rule is the exclusion rule or `register`. An exposed leaf with a rule is one exposed
 	// today that the rule removes before v0.1.0 (D6, Step 6).
 	Rule string `json:"rule,omitempty"`
@@ -157,6 +160,9 @@ func coverTable(spec *Spec, res Resource, ev *Pinned) (*tableCoverage, error) {
 	g := &gate{}
 	for i, l := range leaves {
 		r := Record{Table: res.Package, Key: l.Key, Shape: l.Shape(), Target: l.Target, Required: l.Required && l.Side == SideRequest}
+		if l.Side == SideRequest {
+			r.RequiredHashes = l.RequiredHashes
+		}
 		r.Rule = rule(spec, res, l, written)
 		for p := l.Path; p != "" && r.Rule == ""; p = parentPath(p) {
 			for _, entry := range []string{p, l.Operation + " " + p} {
@@ -252,6 +258,9 @@ func coverTable(spec *Spec, res Resource, ev *Pinned) (*tableCoverage, error) {
 	}
 	if err := markTogether(res, object, create, update, tc.table, leaves, records, ev); err != nil {
 		return nil, err
+	}
+	if update != "" {
+		markSiblingsCleared(object, tc.table, ev)
 	}
 	for i, l := range leaves {
 		r := &records[i]
@@ -1072,6 +1081,24 @@ func checkHashUnsets(res Resource, object, update string, table []fields.Field, 
 	return nil
 }
 
+// markSiblingsCleared marks each hash of the table that the record's `families[].hashes` lists
+// for the object as `siblings_cleared`, where the table holds it as a hash an update takes.
+func markSiblingsCleared(object string, table []fields.Field, ev *Pinned) {
+	if ev == nil {
+		return
+	}
+	for _, f := range ev.Evidence.Families {
+		for _, h := range f.Hashes {
+			if h.Object != object || h.Update != HashSiblingsCleared {
+				continue
+			}
+			if field := fieldAt(table, h.Hash); field != nil && field.Shape == fields.Object && field.Update {
+				field.SiblingsCleared = true
+			}
+		}
+	}
+}
+
 // markTogether marks on the table each set of request leaves that the record shows Stripe taking
 // only all at once (its `together`) and that the table exposes, on the hash that holds the set,
 // with Stripe's refusals of the set sent whole, so that the engine refuses a configuration that
@@ -1265,11 +1292,8 @@ func returnedAt(leaves []Leaf, path string) bool {
 // leaf's response path with anything but the leaf's default.
 func (p *Pinned) contradicted(k Key, e *EvidenceLeaf) bool {
 	at := k.Path
-	var returned struct {
-		ResponsePath string `json:"response_path"`
-	}
-	if e.Returned != nil && json.Unmarshal(e.Returned, &returned) == nil && returned.ResponsePath != "" {
-		at = returned.ResponsePath
+	if e.Returned != nil && e.Returned.ResponsePath != "" {
+		at = e.Returned.ResponsePath
 	}
 	for _, c := range p.creates[k.Object+" "+k.Operation] {
 		held, ok := c.Response[at]
@@ -1563,24 +1587,37 @@ func checkAcceptedOnly(resources []Resource, records []Record) error {
 }
 
 // checkRequiredMembers fails on a hash a table exposes without a member its request requires, in
-// the same union branch: no configuration could send the hash. The register leaves such a hash
-// out.
+// the same union branch: no configuration could send the hash. The member is a leaf, or a hash
+// the table holds nothing of because every leaf of its own is left out, as a schedule's
+// `pause_schedules.pause.pause_at`, whose leaves rule X6 leaves out. The register leaves such a
+// hash out.
 func checkRequiredMembers(records []Record) error {
 	hash := func(r Record, p string) string {
 		return r.Table + " " + r.Operation + " " + r.Branch + " " + p
 	}
-	exposedHash := map[string]bool{}
+	exposedHash, exposedAt := map[string]bool{}, map[string]bool{}
 	for _, r := range records {
 		if r.Side == SideRequest && r.State == StateExposed {
+			exposedAt[hash(r, r.Path)] = true
 			for p := parentPath(r.Path); p != ""; p = parentPath(p) {
 				exposedHash[hash(r, p)] = true
+				exposedAt[hash(r, p)] = true
 			}
 		}
 	}
 	var found []string
 	for _, r := range records {
-		if r.Side == SideRequest && r.Required && r.State != StateExposed && r.Rule != RuleRegister && exposedHash[hash(r, parentPath(r.Path))] {
+		if r.Side != SideRequest || r.State == StateExposed || r.Rule == RuleRegister {
+			continue
+		}
+		if r.Required && exposedHash[hash(r, parentPath(r.Path))] {
 			found = append(found, r.Table+" "+r.Key.String())
+		}
+		for _, h := range r.RequiredHashes {
+			missing := r.Table + " " + r.Operation + " " + h
+			if !exposedAt[hash(r, h)] && exposedHash[hash(r, parentPath(h))] && !slices.Contains(found, missing) {
+				found = append(found, missing)
+			}
 		}
 	}
 	if len(found) > 0 {

@@ -30,8 +30,16 @@ var Declaration = engine.Declaration{
 	// specified"). A shipping rate is archived on destroy, so a change replaces it, as a change
 	// to its amount does.
 	FixedOnceSet: map[string]string{"tax_behavior": "unspecified"},
-	Delete:       engine.Archive,
-	Archive:      &engine.ArchiveAction{Field: "active", Value: wire.Bool(false)},
+	// Stripe returns the currency options only when asked for, as the suite's requests ask
+	// (TestShippingRateAttributes).
+	Expand: []string{"fixed_amount.currency_options"},
+	// Stripe returns the rate's own currency among the currency options, with its amount and tax
+	// behavior (the record's normalised forms `with_own_currency` and `with_own_tax_behavior`:
+	// TestShippingRateAttributes, `fixed_amount.currency_options.amount` and `.tax_behavior`), so a
+	// read leaves it out.
+	OwnCurrency: map[string]string{"fixed_amount.currency_options": "fixed_amount.currency"},
+	Delete:      engine.Archive,
+	Archive:     &engine.ArchiveAction{Field: "active", Value: wire.Bool(false)},
 }
 
 // NewResource returns the resource constructor the provider registers.

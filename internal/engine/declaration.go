@@ -299,9 +299,10 @@ type Declaration struct {
 	// OnceReturned lists outputs Stripe returns only at creation. They are Computed and
 	// Sensitive, and read and update responses that omit them keep the prior value.
 	OnceReturned []string
-	// Expand lists top-level response fields Stripe returns only when asked for with
-	// `expand[]`, such as a price's `tiers`. The engine asks for them on every request that
-	// returns the object, so they are read back and drift in them is detected.
+	// Expand lists response fields, by dotted path, that Stripe returns only when asked for with
+	// `expand[]`, such as a price's `tiers` or a shipping rate's `fixed_amount.currency_options`.
+	// The engine asks for them on every request that returns the object, so they are read back
+	// and drift in them is detected.
 	Expand []string
 	// ExpandOnRetrieve lists top-level response fields Stripe expands only on a retrieve and
 	// refuses to expand on any other request, such as an Issuing card's `number` and `cvc`.
@@ -332,6 +333,13 @@ type Declaration struct {
 	// removing a key replaces the object and adding one is an update that sends only the new
 	// keys.
 	CurrencyOptions string
+	// OwnCurrency maps a nested currency map, by dotted path, such as a shipping rate's
+	// `fixed_amount.currency_options`, to the dotted path of the field that holds the object's
+	// own currency, such as `fixed_amount.currency`. Stripe returns the map with the own currency
+	// added (the record's normalised form `with_own_currency`), from the object's own amount and
+	// tax behavior, so a read leaves that key out, as it does from CurrencyOptions, and validation
+	// refuses a configuration that names it.
+	OwnCurrency map[string]string
 	// NullAs maps a field path to the string Stripe's null stands for, such as `inf` for
 	// the unbounded last tier's `up_to`. A null or missing value decodes to the string.
 	NullAs map[string]string
@@ -501,8 +509,9 @@ type Declaration struct {
 	// changes: inside a SendChangedMembers object, where nothing proves Stripe keeps the members a
 	// request leaves out, every hash is in one list or the other (checkSentMembers), and at the top
 	// level, a hash Stripe keeps left-out members of and whose maps it replaces whole. Every member
-	// an update takes is sent, one removed from the configuration as null, and one the plan leaves
-	// unknown with the state's value.
+	// an update takes is sent, one removed from the configuration as null, except in a hash whose
+	// left-out members the record shows Stripe clearing (SiblingsCleared), which leaves it out,
+	// and one the plan leaves unknown with the state's value.
 	SendWholeMembers []string
 	// Sets lists scalar arrays that are sets of values.
 	Sets []string

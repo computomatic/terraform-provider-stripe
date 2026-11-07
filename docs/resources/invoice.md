@@ -128,7 +128,7 @@ The `from_invoice` attribute supports:
 
 The `issuer` attribute supports:
 
-* `account` - (Optional) The connected account being referenced when `type` is `account`.
+* `account` - (Optional) The connected account being referenced when `type` is `account`. Default (Stripe): none, or the `on_behalf_of` account where that is set. Removing it from the configuration leaves the current value.
 * `type` - (Required) Type of the account referenced. Possible values: `account`, `self`.
 
 <a id="payment_settings"></a>
@@ -326,7 +326,7 @@ The `rendering` attribute supports:
 
 The `rendering.pdf` attribute supports:
 
-* `page_size` - (Optional) Page size of invoice pdf. Options include a4, letter, and auto. If set to auto, page size will be switched to a4 or letter based on customer locale. Possible values: `a4`, `auto`, `letter`.
+* `page_size` - (Optional) Page size of invoice pdf. Options include a4, letter, and auto. If set to auto, page size will be switched to a4 or letter based on customer locale. Possible values: `a4`, `auto`, `letter`. Default (Stripe): `auto`, or none on a revision (`from_invoice`). Removing it from the configuration leaves the current value.
 
 <a id="shipping_cost"></a>
 ### `shipping_cost`
