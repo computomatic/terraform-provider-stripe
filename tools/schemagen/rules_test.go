@@ -608,6 +608,51 @@ func TestEvidenceReaderTakesTheFormsOfTheTenthPin(t *testing.T) {
 	}
 }
 
+// The fourteenth pin's arrays: a response hash read whole under a named condition (`hash_reads`),
+// given once per proving test, and a probe the run skipped (`skipped_probes`), which states no
+// fact. The reader refuses what it cannot tell apart of each.
+func TestEvidenceReaderTakesTheArraysOfTheFourteenthPin(t *testing.T) {
+	const (
+		read    = `{"object": "v2.core.account", "hash": "configuration", "condition": "no_configuration", "result": "null", "tests": ["TestV2CoreAccount/create_with_no_configuration/leaves/response/v2.core.account/configuration"]}`
+		skipped = `{"object": "payment_link", "probe": "name_collection_update_both_off", "test": "TestPaymentLinkAttributes/isolated/name_collection_update_both_off", "reason": "create", "leaves": ["request/PostPaymentLinksPaymentLink/name_collection.individual.enabled"], "enum_values": [{"leaf": "request/PostPaymentLinks/line_items.price", "values": ["price_attrs"]}]}`
+	)
+	record := func(reads, skips string) []byte {
+		return []byte(`{"format_version": 1, "leaves": [], "discounts": [], "hash_reads": [` + reads + `], "skipped_probes": [` + skips + `]}`)
+	}
+	e, err := decodeEvidence(record(read+", "+strings.Replace(read, "create_with_no_configuration/leaves", "create_with_no_configuration/retrieve_with_every_include/leaves", 1), skipped))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if r := e.HashReads[0]; r.Hash != "configuration" || r.Condition != "no_configuration" || r.Result != "null" {
+		t.Errorf("the hash read: %+v", r)
+	}
+	if p := e.SkippedProbes[0]; p.Reason != "create" || len(p.Leaves) != 1 || p.EnumValues[0].Leaf != "request/PostPaymentLinks/line_items.price" {
+		t.Errorf("the skipped probe: %+v", p)
+	}
+	replace := func(s, old, new string) string {
+		t.Helper()
+		if !strings.Contains(s, old) {
+			t.Fatalf("no %s in %s", old, s)
+		}
+		return strings.Replace(s, old, new, 1)
+	}
+	for _, tc := range []struct{ name, reads, skips, want string }{
+		{"an unknown hash read result", replace(read, `"null"`, `"empty"`), skipped, `hash read result "empty"`},
+		{"a hash read both null and absent", read + ", " + replace(read, `"null"`, `"absent"`), skipped, "given as both absent and null"},
+		{"a hash read with no condition", replace(read, `"no_configuration"`, `""`), skipped, "no object, hash, condition or proving test"},
+		{"a hash read with no test", replace(read, `"tests": ["TestV2CoreAccount/create_with_no_configuration/leaves/response/v2.core.account/configuration"]`, `"tests": []`), skipped, "no object, hash, condition or proving test"},
+		{"a hash read with an unknown member", replace(read, `"tests"`, `"when": "", "tests"`), skipped, "member the format does not define"},
+		{"a skipped probe with no reason", read, replace(skipped, `"reason": "create"`, `"reason": ""`), "no object, probe, reason or isolated test"},
+		{"a skipped probe that is not isolated", read, replace(skipped, `/isolated/`, `/update/`), "no object, probe, reason or isolated test"},
+		{"a skipped probe's enum values with no value", read, replace(skipped, `["price_attrs"]`, `[]`), "an enum value set with no leaf or no value"},
+		{"a skipped probe with an unknown member", read, replace(skipped, `"reason"`, `"why": "", "reason"`), "member the format does not define"},
+	} {
+		if _, err := decodeEvidence(record(tc.reads, tc.skips)); err == nil || !strings.Contains(err.Error(), tc.want) {
+			t.Errorf("%s: %v, want %q", tc.name, err, tc.want)
+		}
+	}
+}
+
 // A map's update becomes the table's MapUpdate: merged or replaced, and whether a key sent empty
 // stays, which a merged map whose record does not say is taken to do. A record that sends the
 // empty key otherwise than the engine sends an unset on the table's API fails.

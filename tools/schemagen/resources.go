@@ -288,9 +288,10 @@ var Resources = []Resource{
 		"PostQuotesQuote line_items.discounts.discount":  leftDiscountHeld,
 	}, AcceptedOnly: quoteKept(), CreatePath: "/v1/quotes", UpdatePath: "/v1/quotes/{quote}", Omit: []string{"discounts"}},
 	{Package: "subscription", LeftToStripe: map[string]string{
-		"PostSubscriptions add_invoice_items.discounts.coupon":                        leftExpired,
-		"PostSubscriptions add_invoice_items.discounts.promotion_code":                leftExpired,
-		"PostSubscriptionsSubscriptionExposedId add_invoice_items.discounts.discount": leftDiscountHeld,
+		"PostSubscriptions add_invoice_items.discounts.coupon":                                                               leftExpired,
+		"PostSubscriptions add_invoice_items.discounts.promotion_code":                                                       leftExpired,
+		"PostSubscriptionsSubscriptionExposedId add_invoice_items.discounts.discount":                                        leftDiscountHeld,
+		"PostSubscriptionsSubscriptionExposedId payment_settings.payment_method_options.customer_balance.bank_transfer.type": "Stripe refused an EU bank transfer sent without `eu_bank_transfer` on a subscription created with a euro price (`price:eur`) and an EU transfer held, and the price's currency is another object's state, which the plan cannot know (probe `isolated/hash_customer_balance_bank_transfer`).",
 	}, AcceptedOnly: subscriptionKept(), CreatePath: "/v1/subscriptions", UpdatePath: "/v1/subscriptions/{subscription_exposed_id}", PagedLists: map[string]string{"items": "stripe_subscription_item"}, Omit: []string{"discounts", "payment_settings.payment_method_options.konbini", "payment_settings.payment_method_options.sepa_debit", "items.discounts"}, CreateOnly: []string{"billing_cycle_anchor"}},
 	{Package: "subscription_item", LeftToStripe: map[string]string{
 		"PostSubscriptionItems discounts.coupon":         leftExpired,

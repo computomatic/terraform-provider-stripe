@@ -115,8 +115,10 @@ type Evidence struct {
 	PagedLists     json.RawMessage `json:"paged_lists,omitempty"`
 	Discounts      []Discount      `json:"discounts"`
 	HashUnsets     []HashUnset     `json:"hash_unsets,omitempty"`
+	HashReads      []HashRead      `json:"hash_reads,omitempty"`
 	Together       []Together      `json:"together,omitempty"`
 	Countries      json.RawMessage `json:"countries,omitempty"`
+	SkippedProbes  []SkippedProbe  `json:"skipped_probes,omitempty"`
 }
 
 // StripeRun is the suite's run against Stripe that produced the record.
@@ -468,6 +470,36 @@ type HashUnset struct {
 	Tests  []string `json:"tests"`
 }
 
+// HashRead is what a read held at a response hash, whole, under one of the suite's named
+// conditions, such as a v2 account created with no configuration reading `configuration` null:
+// no leaf under the hash can say whether the hash is null or missing.
+type HashRead struct {
+	Object string `json:"object"`
+	// Hash is the response path of the hash.
+	Hash      string   `json:"hash"`
+	Condition string   `json:"condition"`
+	Result    string   `json:"result"`
+	Tests     []string `json:"tests"`
+}
+
+// SkippedProbe is an isolated probe the run skipped, with the leaves it would have borne on and
+// the enum values it would have sent. It states no fact: a leaf only it bore on is not proven,
+// and a value only it sends is in no leaf's `enum_values`, so the generator only checks it.
+type SkippedProbe struct {
+	Object     string           `json:"object"`
+	Probe      string           `json:"probe"`
+	Test       string           `json:"test"`
+	Reason     string           `json:"reason"`
+	Leaves     []string         `json:"leaves"`
+	EnumValues []SkippedEnumSet `json:"enum_values"`
+}
+
+// SkippedEnumSet is the enum values a skipped probe would have sent at one request leaf.
+type SkippedEnumSet struct {
+	Leaf   string   `json:"leaf"`
+	Values []string `json:"values"`
+}
+
 // FilledFrom is a field Stripe fills from another (P5).
 type FilledFrom struct {
 	Object string `json:"object"`
@@ -631,11 +663,13 @@ var (
 	// response then held at its path.
 	hashUnsetBy      = []string{"empty_string", "null"}
 	hashUnsetResults = []string{"absent", "null"}
-	mapUpdates       = []string{MapMerged, MapReplaced}
-	mapEmptyBy       = []string{"empty_string", "null"}
-	mapEmptyResults  = []string{MapRemoved, "stored"}
-	matcherKinds     = []string{"sent", "normalised", "value", "null", "absent", "id", "created", "ref", "account_id", "account", "from", "timestamp", "url", "secret", "list", "unchanged", "fingerprint", "day_within", "time_within"}
-	hashUpdates      = []string{HashSiblingsKept, HashSiblingsCleared, HashRefused}
+	// hashReadResults are what a read held at a response hash, whole.
+	hashReadResults = []string{"absent", "null"}
+	mapUpdates      = []string{MapMerged, MapReplaced}
+	mapEmptyBy      = []string{"empty_string", "null"}
+	mapEmptyResults = []string{MapRemoved, "stored"}
+	matcherKinds    = []string{"sent", "normalised", "value", "null", "absent", "id", "created", "ref", "account_id", "account", "from", "timestamp", "url", "secret", "list", "unchanged", "fingerprint", "day_within", "time_within"}
+	hashUpdates     = []string{HashSiblingsKept, HashSiblingsCleared, HashRefused}
 )
 
 // minimalCreate is one variant of a minimal create in the record: what it sent and what each
@@ -983,6 +1017,30 @@ func (e *Evidence) check() error {
 			return fmt.Errorf("hash unset %s given twice", at)
 		}
 		unsets[k] = true
+	}
+	reads := map[[3]string]string{}
+	for _, r := range e.HashReads {
+		at := r.Object + " " + r.Hash + " " + r.Condition
+		if err := unknown(at+": hash read result", r.Result, hashReadResults); err != nil {
+			return err
+		}
+		k := [3]string{r.Object, r.Hash, r.Condition}
+		switch {
+		case r.Object == "" || r.Hash == "" || r.Condition == "" || len(r.Tests) == 0:
+			return fmt.Errorf("hash read %q: no object, hash, condition or proving test", at)
+		case reads[k] != "" && reads[k] != r.Result:
+			return fmt.Errorf("hash read %s given as both absent and null", at)
+		}
+		reads[k] = r.Result
+	}
+	for _, p := range e.SkippedProbes {
+		at := p.Object + " " + p.Probe
+		switch {
+		case p.Object == "" || p.Probe == "" || p.Reason == "" || !strings.Contains(p.Test, "/isolated/"):
+			return fmt.Errorf("skipped probe %q: no object, probe, reason or isolated test", at)
+		case slices.ContainsFunc(p.EnumValues, func(v SkippedEnumSet) bool { return v.Leaf == "" || len(v.Values) == 0 }):
+			return fmt.Errorf("skipped probe %s: an enum value set with no leaf or no value", at)
+		}
 	}
 	for _, r := range e.Rules {
 		if err := r.checkBeside(); err != nil {

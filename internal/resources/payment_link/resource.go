@@ -51,6 +51,10 @@ var Declaration = engine.Declaration{
 		"payment_method_collection": "Stripe takes it only on a link whose line items hold a recurring price.",
 		// suite: TestPaymentLinkAttributes, probe `isolated/unknown_account_tax_ids`
 		"invoice_creation.invoice_data.account_tax_ids": "Stripe takes the IDs of tax IDs the account holds, and refuses one it cannot find.",
+		// suite: TestPaymentLinkAttributes, probes `isolated/name_collection_create_both_off` and
+		// `isolated/name_collection_update_both_off`, and `isolated/hash_name_collection`, whose link
+		// is created with both names on
+		"name_collection.individual.enabled": "Stripe takes it beside `name_collection.business.enabled` set to `true`, and refuses both names' `enabled` set to `false`.",
 		// suite: TestPaymentLinkAttributes, probe `isolated/unknown_transfer_destination`
 		"transfer_data.destination": "Stripe takes the ID of a connected account it can find, and refuses one it cannot find.",
 	},
@@ -75,24 +79,29 @@ var Declaration = engine.Declaration{
 	// an update sends `optional_items` whole, so a list with bounds is not proven either.
 	ReplaceOn: []string{"line_items.adjustable_quantity", "optional_items"},
 	// Stripe answers an empty string for these with `cannot be unset`, or the record shows no
-	// unset of them, so a removal replaces the link as it always has.
+	// unset of them, so a removal replaces the link as it always has. Each name of
+	// `name_collection` joined them when Stripe began keeping the name an update leaves out: an
+	// update could then neither leave a removed name out nor send it empty.
 	ReplaceOnRemoval: []string{
 		"consent_collection", "consent_collection.payment_method_reuse_agreement", "custom_text.after_submit", "custom_text.shipping_address",
 		"custom_text.submit", "invoice_creation.invoice_data", "invoice_creation.invoice_data.account_tax_ids",
 		"invoice_creation.invoice_data.custom_fields", "invoice_creation.invoice_data.rendering_options", "name_collection",
-		"payment_method_options", "payment_method_types", "restrictions", "shipping_address_collection", "transfer_data",
+		"name_collection.business", "name_collection.individual", "payment_method_options", "payment_method_types", "restrictions",
+		"shipping_address_collection", "transfer_data",
 	},
 	// Stripe keeps the members an update of these leaves out (family `v1-payments`, `hashes`), so
-	// an update sends only the members that changed. `subscription_data.invoice_settings`, which
-	// the record does not list, goes whole. The record shows Stripe replacing the `metadata` of
-	// both whole (their `map`), which the engine then sends whole.
-	SendChangedMembers: []string{"consent_collection", "payment_intent_data", "subscription_data"},
-	// Stripe keeps the members of `invoice_creation` and its `invoice_data` an update leaves out
-	// too, but `invoice_creation` requires `enabled`, so it goes whole, with a removed member as
-	// null. Stripe clears what an update leaves out of `transfer_data`, `name_collection` and
-	// `tax_id_collection`, and refuses `after_completion` without its `type`, which it requires,
-	// so those go whole as configured.
-	SendWholeMembers: []string{"invoice_creation", "subscription_data.invoice_settings"},
+	// an update sends only the members that changed: of `name_collection`, each name that changed,
+	// whole, since each requires its `enabled`. `subscription_data.invoice_settings`, which the
+	// record does not list, goes whole. The record shows Stripe replacing the `metadata` of both
+	// whole (their `map`), which the engine then sends whole.
+	SendChangedMembers: []string{"consent_collection", "name_collection", "payment_intent_data", "subscription_data"},
+	// Stripe keeps the members of `invoice_creation`, its `invoice_data`, `transfer_data` and
+	// `tax_id_collection` an update leaves out too, but each requires a member, so it goes whole,
+	// with a removed member as null, which reaches Stripe as the empty value: the record shows
+	// `transfer_data[amount]=""` reading `amount` null (its `unset`). `tax_id_collection.required`,
+	// which Stripe will not unset, keeps its value when removed. Stripe refuses `after_completion`
+	// without its `type`, which it requires, so it goes whole as configured.
+	SendWholeMembers: []string{"invoice_creation", "subscription_data.invoice_settings", "transfer_data"},
 	Delete:           engine.Archive,
 	Archive: &engine.ArchiveAction{
 		Field: "active",

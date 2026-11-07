@@ -317,3 +317,42 @@ func TestUpdateSkipsUnchangedServerFilledObjects(t *testing.T) {
 		t.Fatalf("update body %s, want %s", got, want)
 	}
 }
+
+// A member the record shows no update changing unless it names it (Stable) keeps its value in
+// an update plan that leaves it out, but only where the state holds its hash: an update that
+// adds the hash leaves it unknown for Stripe to fill, as a payment link's
+// `name_collection.business.optional` reads `false` once an update adds `business`.
+func TestStableMemberKeepsOnlyAHeldValue(t *testing.T) {
+	table := append(planTable(), fields.Field{Name: "naming", Shape: fields.Object, Create: true, Update: true, Response: true, Fields: []fields.Field{
+		{Name: "enabled", Shape: fields.Bool, Required: true, Create: true, Update: true, Response: true},
+		{Name: "optional", Shape: fields.Bool, Create: true, Update: true, Response: true, ServerDefaulted: true, Stable: true},
+	}})
+	p := newPlanner(t, planDecl(), table)
+	naming := func(enabled, optional tftypes.Value) tftypes.Value {
+		return obj(p.attrTypes("naming"), map[string]tftypes.Value{"enabled": enabled, "optional": optional})
+	}
+	optionalAt := tftypes.NewAttributePath().WithAttributeName("naming").WithAttributeName("optional")
+	null := tftypes.NewValue(tftypes.Bool, nil)
+	for name, tc := range map[string]struct {
+		held tftypes.Value
+		want func(tftypes.Value) bool
+	}{
+		"added":    {tftypes.NewValue(p.typ.(tftypes.Object).AttributeTypes["naming"], nil), func(v tftypes.Value) bool { return !v.IsKnown() }},
+		"held":     {naming(tftypes.NewValue(tftypes.Bool, true), tftypes.NewValue(tftypes.Bool, true)), func(v tftypes.Value) bool { return v.Equal(tftypes.NewValue(tftypes.Bool, true)) }},
+		"held off": {naming(tftypes.NewValue(tftypes.Bool, false), null), func(v tftypes.Value) bool { return v.IsNull() }},
+	} {
+		t.Run(name, func(t *testing.T) {
+			state := clone(p.base(), map[string]tftypes.Value{"naming": tc.held})
+			after := naming(tftypes.NewValue(tftypes.Bool, false), null)
+			config := clone(state, map[string]tftypes.Value{"id": tftypes.NewValue(tftypes.String, nil), "updated": tftypes.NewValue(tftypes.String, nil), "naming": after})
+			planned, _ := p.plan(p.value(state), p.value(clone(state, map[string]tftypes.Value{"naming": after})), p.value(config))
+			got, _, err := tftypes.WalkAttributePath(planned, optionalAt)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if v := got.(tftypes.Value); !tc.want(v) {
+				t.Fatalf("naming.optional planned %v", v)
+			}
+		})
+	}
+}

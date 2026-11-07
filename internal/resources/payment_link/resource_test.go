@@ -24,6 +24,15 @@ const address = "stripe_payment_link.test"
 // linkConfig is a product with a 2000 cent and a 1000 cent price and a payment link. items
 // and extra land inside the link.
 func linkConfig(c acctest.Config, items string, extra string) string {
+	return pricesConfig(c) + fmt.Sprintf(`
+resource "stripe_payment_link" "test" {
+  line_items = %s
+%s}
+`, items, extra)
+}
+
+// pricesConfig is linkConfig's product and prices, without the link.
+func pricesConfig(c acctest.Config) string {
 	return c.ProviderBlock() + fmt.Sprintf(`
 resource "stripe_product" "test" {
   name = %q
@@ -40,11 +49,7 @@ resource "stripe_price" "b" {
   currency    = "usd"
   unit_amount = 1000
 }
-
-resource "stripe_payment_link" "test" {
-  line_items = %s
-%s}
-`, c.Name("Course"), items, extra)
+`, c.Name("Course"))
 }
 
 const oneItem = `[{ price = stripe_price.a.id, quantity = 2 }]`
@@ -552,6 +557,27 @@ func TestAccPaymentLink_hashesStripeFills(t *testing.T) {
 			})
 		})
 	}
+}
+
+// Stripe refuses a create whose `name_collection` sends both names' `enabled` false (the record's
+// rule on `name_collection.individual.enabled`, probe `isolated/name_collection_create_both_off`,
+// with its values: one item of quantity 2), so the plan refuses it, with Stripe's message, and
+// nothing reaches Stripe. The prices exist first, so that the plan knows the item. The update's
+// refusal (`isolated/name_collection_update_both_off`) matches no plan: an update sends each
+// changed name whole, with the `optional` the state holds, and the probe sent none.
+func TestAccPaymentLink_nameCollectionBothOff(t *testing.T) {
+	acct := acctest.NewAccount(t)
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: tfacc.ProviderFactories,
+		Steps: []resource.TestStep{
+			{Config: pricesConfig(acct)},
+			{
+				Config:      linkConfig(acct, oneItem, "  name_collection = { business = { enabled = false }, individual = { enabled = false } }\n"),
+				PlanOnly:    true,
+				ExpectError: regexp.MustCompile(`(?s)Stripe refuses this create.*name_collection.*Stripe\s+account\s+in\s+US.*If\s+specifying\s+name_collection.*isolated/name_collection_create_both_off`),
+			},
+		},
+	})
 }
 
 // Shipping options name a rate of the account's (suite: `shipping_options.shipping_rate`, sent on

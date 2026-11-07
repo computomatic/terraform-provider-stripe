@@ -693,7 +693,22 @@
           "update": "siblings_kept"
         },
         {
+          "hash": "payment_settings.payment_method_options.acss_debit",
+          "object": "subscription",
+          "update": "siblings_kept"
+        },
+        {
+          "hash": "payment_settings.payment_method_options.billie.company_details",
+          "object": "subscription",
+          "update": "siblings_cleared"
+        },
+        {
           "hash": "payment_settings.payment_method_options.billie.company_details.registered_address",
+          "object": "subscription",
+          "update": "siblings_cleared"
+        },
+        {
+          "hash": "payment_settings.payment_method_options.card",
           "object": "subscription",
           "update": "siblings_cleared"
         },
@@ -703,9 +718,24 @@
           "update": "siblings_cleared"
         },
         {
+          "hash": "payment_settings.payment_method_options.customer_balance",
+          "object": "subscription",
+          "update": "refused"
+        },
+        {
+          "hash": "payment_settings.payment_method_options.customer_balance.bank_transfer",
+          "object": "subscription",
+          "update": "refused"
+        },
+        {
           "hash": "payment_settings.payment_method_options.payto.mandate_options",
           "object": "subscription",
           "update": "siblings_kept"
+        },
+        {
+          "hash": "payment_settings.payment_method_options.pix",
+          "object": "subscription",
+          "update": "siblings_cleared"
         },
         {
           "hash": "payment_settings.payment_method_options.pix.mandate_options",
@@ -714,6 +744,16 @@
         },
         {
           "hash": "payment_settings.payment_method_options.upi.mandate_options",
+          "object": "subscription",
+          "update": "siblings_cleared"
+        },
+        {
+          "hash": "payment_settings.payment_method_options.us_bank_account",
+          "object": "subscription",
+          "update": "siblings_cleared"
+        },
+        {
+          "hash": "payment_settings.payment_method_options.us_bank_account.financial_connections",
           "object": "subscription",
           "update": "siblings_cleared"
         },
@@ -768,29 +808,47 @@
         "TestQuoteAttributes/leaves/request/PostQuotesQuote/invoice_settings.footer",
         "TestQuoteAttributes/leaves/response/quote/invoice_settings.description",
         "TestSubscriptionAttributes/leaves/request/PostSubscriptionsSubscriptionExposedId/invoice_settings.footer",
+        "TestSubscriptionAttributes/leaves/request/PostSubscriptionsSubscriptionExposedId/payment_settings.payment_method_options.acss_debit.verification_method",
         "TestSubscriptionAttributes/leaves/request/PostSubscriptionsSubscriptionExposedId/payment_settings.payment_method_options.billie.company_details.registered_address.line2",
+        "TestSubscriptionAttributes/leaves/request/PostSubscriptionsSubscriptionExposedId/payment_settings.payment_method_options.billie.company_details.registered_name",
         "TestSubscriptionAttributes/leaves/request/PostSubscriptionsSubscriptionExposedId/payment_settings.payment_method_options.card.mandate_options.description",
+        "TestSubscriptionAttributes/leaves/request/PostSubscriptionsSubscriptionExposedId/payment_settings.payment_method_options.card.request_three_d_secure",
+        "TestSubscriptionAttributes/leaves/request/PostSubscriptionsSubscriptionExposedId/payment_settings.payment_method_options.customer_balance.bank_transfer.type",
+        "TestSubscriptionAttributes/leaves/request/PostSubscriptionsSubscriptionExposedId/payment_settings.payment_method_options.customer_balance.funding_type",
         "TestSubscriptionAttributes/leaves/request/PostSubscriptionsSubscriptionExposedId/payment_settings.payment_method_options.payto.mandate_options.purpose",
+        "TestSubscriptionAttributes/leaves/request/PostSubscriptionsSubscriptionExposedId/payment_settings.payment_method_options.pix.expires_after_seconds",
         "TestSubscriptionAttributes/leaves/request/PostSubscriptionsSubscriptionExposedId/payment_settings.payment_method_options.pix.mandate_options.end_date",
         "TestSubscriptionAttributes/leaves/request/PostSubscriptionsSubscriptionExposedId/payment_settings.payment_method_options.upi.mandate_options.description",
+        "TestSubscriptionAttributes/leaves/request/PostSubscriptionsSubscriptionExposedId/payment_settings.payment_method_options.us_bank_account.financial_connections.permissions",
+        "TestSubscriptionAttributes/leaves/request/PostSubscriptionsSubscriptionExposedId/payment_settings.payment_method_options.us_bank_account.verification_method",
         "TestSubscriptionAttributes/leaves/request/PostSubscriptionsSubscriptionExposedId/payment_settings.save_default_payment_method",
         "TestSubscriptionAttributes/leaves/request/PostSubscriptionsSubscriptionExposedId/trial_settings.end_behavior.missing_payment_method",
         "TestSubscriptionAttributes/leaves/response/subscription/invoice_settings.account_tax_ids",
         "TestSubscriptionAttributes/leaves/response/subscription/invoice_settings.description",
+        "TestSubscriptionAttributes/leaves/response/subscription/payment_settings.payment_method_options.acss_debit.mandate_options.transaction_type",
         "TestSubscriptionAttributes/leaves/response/subscription/payment_settings.payment_method_options.billie.company_details.registered_address.city",
         "TestSubscriptionAttributes/leaves/response/subscription/payment_settings.payment_method_options.billie.company_details.registered_address.country",
         "TestSubscriptionAttributes/leaves/response/subscription/payment_settings.payment_method_options.billie.company_details.registered_address.line1",
+        "TestSubscriptionAttributes/leaves/response/subscription/payment_settings.payment_method_options.billie.company_details.registered_address.line2",
         "TestSubscriptionAttributes/leaves/response/subscription/payment_settings.payment_method_options.billie.company_details.registered_address.postal_code",
         "TestSubscriptionAttributes/leaves/response/subscription/payment_settings.payment_method_options.billie.company_details.registered_address.state",
+        "TestSubscriptionAttributes/leaves/response/subscription/payment_settings.payment_method_options.billie.company_details.registration_number",
+        "TestSubscriptionAttributes/leaves/response/subscription/payment_settings.payment_method_options.billie.company_details.vat",
         "TestSubscriptionAttributes/leaves/response/subscription/payment_settings.payment_method_options.card.mandate_options.amount",
         "TestSubscriptionAttributes/leaves/response/subscription/payment_settings.payment_method_options.card.mandate_options.amount_type",
+        "TestSubscriptionAttributes/leaves/response/subscription/payment_settings.payment_method_options.card.mandate_options.description",
+        "TestSubscriptionAttributes/leaves/response/subscription/payment_settings.payment_method_options.card.network",
         "TestSubscriptionAttributes/leaves/response/subscription/payment_settings.payment_method_options.payto.mandate_options.amount",
         "TestSubscriptionAttributes/leaves/response/subscription/payment_settings.payment_method_options.pix.mandate_options.amount",
         "TestSubscriptionAttributes/leaves/response/subscription/payment_settings.payment_method_options.pix.mandate_options.amount_includes_iof",
+        "TestSubscriptionAttributes/leaves/response/subscription/payment_settings.payment_method_options.pix.mandate_options.end_date",
         "TestSubscriptionAttributes/leaves/response/subscription/payment_settings.payment_method_options.pix.mandate_options.payment_schedule",
         "TestSubscriptionAttributes/leaves/response/subscription/payment_settings.payment_method_options.upi.mandate_options.amount",
         "TestSubscriptionAttributes/leaves/response/subscription/payment_settings.payment_method_options.upi.mandate_options.amount_type",
         "TestSubscriptionAttributes/leaves/response/subscription/payment_settings.payment_method_options.upi.mandate_options.end_date",
+        "TestSubscriptionAttributes/leaves/response/subscription/payment_settings.payment_method_options.us_bank_account.financial_connections.filters.account_subcategories",
+        "TestSubscriptionAttributes/leaves/response/subscription/payment_settings.payment_method_options.us_bank_account.financial_connections.permissions",
+        "TestSubscriptionAttributes/leaves/response/subscription/payment_settings.payment_method_options.us_bank_account.financial_connections.prefetch",
         "TestSubscriptionAttributes/leaves/response/subscription/payment_settings.payment_method_types",
         "TestSubscriptionAttributes/leaves/response/subscription/trial_settings.end_behavior.billing_cycle_anchor"
       ]
@@ -1083,7 +1141,7 @@
         {
           "hash": "name_collection",
           "object": "payment_link",
-          "update": "siblings_cleared"
+          "update": "siblings_kept"
         },
         {
           "hash": "payment_intent_data",
@@ -1098,12 +1156,12 @@
         {
           "hash": "tax_id_collection",
           "object": "payment_link",
-          "update": "siblings_cleared"
+          "update": "siblings_kept"
         },
         {
           "hash": "transfer_data",
           "object": "payment_link",
-          "update": "siblings_cleared"
+          "update": "siblings_kept"
         }
       ],
       "map_key_removal": "empty_string",
@@ -4368,6 +4426,26 @@
     }
   ],
   "format_version": 1,
+  "hash_reads": [
+    {
+      "condition": "no_configuration",
+      "hash": "configuration",
+      "object": "v2.core.account",
+      "result": "null",
+      "tests": [
+        "TestV2CoreAccount/create_with_no_configuration/leaves/response/v2.core.account/configuration"
+      ]
+    },
+    {
+      "condition": "no_configuration",
+      "hash": "configuration",
+      "object": "v2.core.account",
+      "result": "null",
+      "tests": [
+        "TestV2CoreAccount/create_with_no_configuration/retrieve_with_every_include/leaves/response/v2.core.account/configuration"
+      ]
+    }
+  ],
   "hash_unsets": [
     {
       "by": "empty_string",
@@ -310008,7 +310086,19 @@
       ],
       "operation": "PostPaymentLinks",
       "path": "name_collection.individual.enabled",
-      "refusals": [],
+      "refusals": [
+        {
+          "account_country": "US",
+          "code": "",
+          "message": "If specifying name_collection, you must have either `name_collection[individual][enabled] = true` or `name_collection[business][enabled] = true`.",
+          "param": "",
+          "status": 400,
+          "tests": [
+            "TestPaymentLinkAttributes/leaves/request/PostPaymentLinks/name_collection.individual.enabled"
+          ],
+          "type": "invalid_request_error"
+        }
+      ],
       "returned": {
         "form": "as_sent",
         "response_path": "name_collection.individual.enabled"
@@ -315778,6 +315868,17 @@
       "operation": "PostPaymentLinksPaymentLink",
       "path": "name_collection.individual.enabled",
       "refusals": [
+        {
+          "account_country": "US",
+          "code": "",
+          "message": "If specifying name_collection, you must have either `name_collection[individual][enabled] = true` or `name_collection[business][enabled] = true`.",
+          "param": "",
+          "status": 400,
+          "tests": [
+            "TestPaymentLinkAttributes/leaves/request/PostPaymentLinksPaymentLink/name_collection.individual.enabled"
+          ],
+          "type": "invalid_request_error"
+        },
         {
           "account_country": "US",
           "code": "",
@@ -343393,7 +343494,7 @@
       "branch": "",
       "default": {
         "kind": "rule",
-        "rule_ref": 71
+        "rule_ref": 73
       },
       "object": "payout",
       "on": [
@@ -348763,7 +348864,7 @@
       "branch": "",
       "default": {
         "kind": "rule",
-        "rule_ref": 72,
+        "rule_ref": 74,
         "variants": [
           {
             "default": {
@@ -348814,33 +348915,33 @@
       "branch": "",
       "default": {
         "kind": "rule",
-        "rule_ref": 73,
+        "rule_ref": 75,
         "variants": [
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 73
+              "rule_ref": 75
             },
             "variant": "amount_other"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 73
+              "rule_ref": 75
             },
             "variant": "metered"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 73
+              "rule_ref": 75
             },
             "variant": "tiered"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 73
+              "rule_ref": 75
             },
             "variant": "tiered_decimal"
           }
@@ -348965,40 +349066,40 @@
       "branch": "",
       "default": {
         "kind": "rule",
-        "rule_ref": 74,
+        "rule_ref": 76,
         "variants": [
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 74
+              "rule_ref": 76
             },
             "variant": "amount_other"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 74
+              "rule_ref": 76
             },
             "variant": "decimal"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 74
+              "rule_ref": 76
             },
             "variant": "metered"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 74
+              "rule_ref": 76
             },
             "variant": "tiered"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 74
+              "rule_ref": 76
             },
             "variant": "tiered_decimal"
           }
@@ -352757,89 +352858,89 @@
       "branch": "",
       "default": {
         "kind": "rule",
-        "rule_ref": 75,
+        "rule_ref": 77,
         "variants": [
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 75
+              "rule_ref": 77
             },
             "variant": "currency_eur"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 75
+              "rule_ref": 77
             },
             "variant": "custom_amount"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 75
+              "rule_ref": 77
             },
             "variant": "decimal"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 75
+              "rule_ref": 77
             },
             "variant": "inline_product"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 75
+              "rule_ref": 77
             },
             "variant": "metered"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 75
+              "rule_ref": 77
             },
             "variant": "monthly"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 75
+              "rule_ref": 77
             },
             "variant": "options"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 75
+              "rule_ref": 77
             },
             "variant": "options_custom"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 75
+              "rule_ref": 77
             },
             "variant": "options_tiered"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 75
+              "rule_ref": 77
             },
             "variant": "options_tiered_decimal"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 75
+              "rule_ref": 77
             },
             "variant": "tiered"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 75
+              "rule_ref": 77
             },
             "variant": "tiered_decimal"
           }
@@ -353910,33 +354011,33 @@
       "branch": "",
       "default": {
         "kind": "rule",
-        "rule_ref": 76,
+        "rule_ref": 78,
         "variants": [
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 76
+              "rule_ref": 78
             },
             "variant": "currency_eur"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 76
+              "rule_ref": 78
             },
             "variant": "inline_product"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 76
+              "rule_ref": 78
             },
             "variant": "metered"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 76
+              "rule_ref": 78
             },
             "variant": "monthly"
           }
@@ -353998,89 +354099,89 @@
       "branch": "",
       "default": {
         "kind": "rule",
-        "rule_ref": 77,
+        "rule_ref": 79,
         "variants": [
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 77
+              "rule_ref": 79
             },
             "variant": "currency_eur"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 77
+              "rule_ref": 79
             },
             "variant": "custom_amount"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 77
+              "rule_ref": 79
             },
             "variant": "decimal"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 77
+              "rule_ref": 79
             },
             "variant": "inline_product"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 77
+              "rule_ref": 79
             },
             "variant": "metered"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 77
+              "rule_ref": 79
             },
             "variant": "monthly"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 77
+              "rule_ref": 79
             },
             "variant": "options"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 77
+              "rule_ref": 79
             },
             "variant": "options_custom"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 77
+              "rule_ref": 79
             },
             "variant": "options_tiered"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 77
+              "rule_ref": 79
             },
             "variant": "options_tiered_decimal"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 77
+              "rule_ref": 79
             },
             "variant": "tiered"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 77
+              "rule_ref": 79
             },
             "variant": "tiered_decimal"
           }
@@ -356589,7 +356690,7 @@
       "branch": "",
       "default": {
         "kind": "rule",
-        "rule_ref": 78,
+        "rule_ref": 80,
         "variants": [
           {
             "default": {
@@ -356664,82 +356765,82 @@
       "branch": "",
       "default": {
         "kind": "rule",
-        "rule_ref": 79,
+        "rule_ref": 81,
         "variants": [
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 79
+              "rule_ref": 81
             },
             "variant": "currency_eur"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 79
+              "rule_ref": 81
             },
             "variant": "custom_amount"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 79
+              "rule_ref": 81
             },
             "variant": "inline_product"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 79
+              "rule_ref": 81
             },
             "variant": "metered"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 79
+              "rule_ref": 81
             },
             "variant": "monthly"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 79
+              "rule_ref": 81
             },
             "variant": "options"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 79
+              "rule_ref": 81
             },
             "variant": "options_custom"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 79
+              "rule_ref": 81
             },
             "variant": "options_tiered"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 79
+              "rule_ref": 81
             },
             "variant": "options_tiered_decimal"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 79
+              "rule_ref": 81
             },
             "variant": "tiered"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 79
+              "rule_ref": 81
             },
             "variant": "tiered_decimal"
           }
@@ -363607,40 +363708,40 @@
       "branch": "",
       "default": {
         "kind": "rule",
-        "rule_ref": 80,
+        "rule_ref": 82,
         "variants": [
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 80
+              "rule_ref": 82
             },
             "variant": "price"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 80
+              "rule_ref": 82
             },
             "variant": "price_custom"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 80
+              "rule_ref": 82
             },
             "variant": "price_decimal"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 80
+              "rule_ref": 82
             },
             "variant": "price_monthly"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 80
+              "rule_ref": 82
             },
             "variant": "price_options"
           }
@@ -367134,7 +367235,7 @@
       "branch": "",
       "default": {
         "kind": "rule",
-        "rule_ref": 81
+        "rule_ref": 83
       },
       "object": "promotion_code",
       "on": [
@@ -369491,103 +369592,103 @@
       "branch": "",
       "default": {
         "kind": "rule",
-        "rule_ref": 86,
+        "rule_ref": 88,
         "variants": [
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 86
+              "rule_ref": 88
             },
             "variant": "charge_automatically"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 86
+              "rule_ref": 88
             },
             "variant": "classic"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 86
+              "rule_ref": 88
             },
             "variant": "customer"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 86
+              "rule_ref": 88
             },
             "variant": "destination"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 86
+              "rule_ref": 88
             },
             "variant": "destination_recurring"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 86
+              "rule_ref": 88
             },
             "variant": "from_quote"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 86
+              "rule_ref": 88
             },
             "variant": "line_items"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 86
+              "rule_ref": 88
             },
             "variant": "price_data"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 86
+              "rule_ref": 88
             },
             "variant": "price_data_decimal"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 86
+              "rule_ref": 88
             },
             "variant": "price_eur"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 86
+              "rule_ref": 88
             },
             "variant": "recurring"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 86
+              "rule_ref": 88
             },
             "variant": "send_invoice"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 86
+              "rule_ref": 88
             },
             "variant": "tax_account"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 86
+              "rule_ref": 88
             },
             "variant": "test_clock"
           }
@@ -385325,12 +385426,12 @@
       "branch": "",
       "default": {
         "kind": "rule",
-        "rule_ref": 92,
+        "rule_ref": 94,
         "variants": [
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 92
+              "rule_ref": 94
             },
             "variant": "charge"
           }
@@ -396660,12 +396761,12 @@
       "branch": "",
       "default": {
         "kind": "rule",
-        "rule_ref": 95,
+        "rule_ref": 97,
         "variants": [
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 95
+              "rule_ref": 97
             },
             "variant": "currency_eur"
           }
@@ -399501,180 +399602,180 @@
       "branch": "",
       "default": {
         "kind": "rule",
-        "rule_ref": 99,
+        "rule_ref": 101,
         "variants": [
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 99
+              "rule_ref": 101
             },
             "variant": "anchor_yearly"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 99
+              "rule_ref": 101
             },
             "variant": "canceling"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 99
+              "rule_ref": 101
             },
             "variant": "canceling_option"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 99
+              "rule_ref": 101
             },
             "variant": "customer_account"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 99
+              "rule_ref": 101
             },
             "variant": "decimal_price"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 99
+              "rule_ref": 101
             },
             "variant": "fee"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 99
+              "rule_ref": 101
             },
             "variant": "flexible"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 99
+              "rule_ref": 101
             },
             "variant": "inline_price"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 99
+              "rule_ref": 101
             },
             "variant": "invoice_decimal"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 99
+              "rule_ref": 101
             },
             "variant": "invoice_item"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 99
+              "rule_ref": 101
             },
             "variant": "metered"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 99
+              "rule_ref": 101
             },
             "variant": "method_aud"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 99
+              "rule_ref": 101
             },
             "variant": "method_brl"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 99
+              "rule_ref": 101
             },
             "variant": "method_eur"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 99
+              "rule_ref": 101
             },
             "variant": "method_inr"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 99
+              "rule_ref": 101
             },
             "variant": "method_pln"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 99
+              "rule_ref": 101
             },
             "variant": "prebilled"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 99
+              "rule_ref": 101
             },
             "variant": "prebilled_timestamp"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 99
+              "rule_ref": 101
             },
             "variant": "price_eur"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 99
+              "rule_ref": 101
             },
             "variant": "send_invoice"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 99
+              "rule_ref": 101
             },
             "variant": "setup_pending"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 99
+              "rule_ref": 101
             },
             "variant": "tax_coded"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 99
+              "rule_ref": 101
             },
             "variant": "test_clock"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 99
+              "rule_ref": 101
             },
             "variant": "trial"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 99
+              "rule_ref": 101
             },
             "variant": "trial_offer"
           }
@@ -403454,180 +403555,180 @@
       "branch": "",
       "default": {
         "kind": "rule",
-        "rule_ref": 100,
+        "rule_ref": 102,
         "variants": [
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 100
+              "rule_ref": 102
             },
             "variant": "anchor_yearly"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 100
+              "rule_ref": 102
             },
             "variant": "canceling"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 100
+              "rule_ref": 102
             },
             "variant": "canceling_option"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 100
+              "rule_ref": 102
             },
             "variant": "customer_account"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 100
+              "rule_ref": 102
             },
             "variant": "decimal_price"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 100
+              "rule_ref": 102
             },
             "variant": "fee"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 100
+              "rule_ref": 102
             },
             "variant": "flexible"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 100
+              "rule_ref": 102
             },
             "variant": "inline_price"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 100
+              "rule_ref": 102
             },
             "variant": "invoice_decimal"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 100
+              "rule_ref": 102
             },
             "variant": "invoice_item"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 100
+              "rule_ref": 102
             },
             "variant": "metered"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 100
+              "rule_ref": 102
             },
             "variant": "method_aud"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 100
+              "rule_ref": 102
             },
             "variant": "method_brl"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 100
+              "rule_ref": 102
             },
             "variant": "method_eur"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 100
+              "rule_ref": 102
             },
             "variant": "method_inr"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 100
+              "rule_ref": 102
             },
             "variant": "method_pln"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 100
+              "rule_ref": 102
             },
             "variant": "prebilled"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 100
+              "rule_ref": 102
             },
             "variant": "prebilled_timestamp"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 100
+              "rule_ref": 102
             },
             "variant": "price_eur"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 100
+              "rule_ref": 102
             },
             "variant": "send_invoice"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 100
+              "rule_ref": 102
             },
             "variant": "setup_pending"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 100
+              "rule_ref": 102
             },
             "variant": "tax_coded"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 100
+              "rule_ref": 102
             },
             "variant": "test_clock"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 100
+              "rule_ref": 102
             },
             "variant": "trial"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 100
+              "rule_ref": 102
             },
             "variant": "trial_offer"
           }
@@ -420138,7 +420239,19 @@
       ],
       "operation": "PostSubscriptionsSubscriptionExposedId",
       "path": "payment_settings.payment_method_options.customer_balance.funding_type",
-      "refusals": [],
+      "refusals": [
+        {
+          "account_country": "US",
+          "code": "",
+          "message": "When using `payment_method_options[customer_balance][funding_type]=bank_transfer`, the `payment_method_options[customer_balance][bank_transfer]` parameter is required.",
+          "param": "",
+          "status": 400,
+          "tests": [
+            "TestSubscriptionAttributes/leaves/request/PostSubscriptionsSubscriptionExposedId/payment_settings.payment_method_options.customer_balance.funding_type"
+          ],
+          "type": "invalid_request_error"
+        }
+      ],
       "returned": {
         "form": "as_sent",
         "response_path": "payment_settings.payment_method_options.customer_balance.funding_type"
@@ -463206,124 +463319,124 @@
       "branch": "",
       "default": {
         "kind": "rule",
-        "rule_ref": 114,
+        "rule_ref": 118,
         "variants": [
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 114
+              "rule_ref": 118
             },
             "variant": "customer_account"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 114
+              "rule_ref": 118
             },
             "variant": "end_dated"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 114
+              "rule_ref": 118
             },
             "variant": "fee_defaults"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 114
+              "rule_ref": 118
             },
             "variant": "fee_phase"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 114
+              "rule_ref": 118
             },
             "variant": "flexible"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 114
+              "rule_ref": 118
             },
             "variant": "from_subscription"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 114
+              "rule_ref": 118
             },
             "variant": "inline_decimal"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 114
+              "rule_ref": 118
             },
             "variant": "inline_price"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 114
+              "rule_ref": 118
             },
             "variant": "invoice_decimal"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 114
+              "rule_ref": 118
             },
             "variant": "invoice_item"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 114
+              "rule_ref": 118
             },
             "variant": "metered"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 114
+              "rule_ref": 118
             },
             "variant": "pause_duration"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 114
+              "rule_ref": 118
             },
             "variant": "pause_timestamp"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 114
+              "rule_ref": 118
             },
             "variant": "price_eur"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 114
+              "rule_ref": 118
             },
             "variant": "started"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 114
+              "rule_ref": 118
             },
             "variant": "tax_coded"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 114
+              "rule_ref": 118
             },
             "variant": "test_clock"
           }
@@ -464226,117 +464339,117 @@
       "branch": "",
       "default": {
         "kind": "rule",
-        "rule_ref": 115,
+        "rule_ref": 119,
         "variants": [
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 115
+              "rule_ref": 119
             },
             "variant": "customer_account"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 115
+              "rule_ref": 119
             },
             "variant": "fee_defaults"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 115
+              "rule_ref": 119
             },
             "variant": "fee_phase"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 115
+              "rule_ref": 119
             },
             "variant": "flexible"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 115
+              "rule_ref": 119
             },
             "variant": "from_subscription"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 115
+              "rule_ref": 119
             },
             "variant": "inline_decimal"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 115
+              "rule_ref": 119
             },
             "variant": "inline_price"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 115
+              "rule_ref": 119
             },
             "variant": "invoice_decimal"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 115
+              "rule_ref": 119
             },
             "variant": "invoice_item"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 115
+              "rule_ref": 119
             },
             "variant": "metered"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 115
+              "rule_ref": 119
             },
             "variant": "pause_duration"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 115
+              "rule_ref": 119
             },
             "variant": "pause_timestamp"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 115
+              "rule_ref": 119
             },
             "variant": "price_eur"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 115
+              "rule_ref": 119
             },
             "variant": "started"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 115
+              "rule_ref": 119
             },
             "variant": "tax_coded"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 115
+              "rule_ref": 119
             },
             "variant": "test_clock"
           }
@@ -495341,7 +495454,7 @@
       "branch": "",
       "default": {
         "kind": "rule",
-        "rule_ref": 117,
+        "rule_ref": 121,
         "variants": [
           {
             "default": {
@@ -522825,12 +522938,12 @@
       "branch": "",
       "default": {
         "kind": "rule",
-        "rule_ref": 119,
+        "rule_ref": 123,
         "variants": [
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 119
+              "rule_ref": 123
             },
             "variant": "s700"
           }
@@ -525830,7 +525943,7 @@
       "returned": {
         "form": "as_sent",
         "response_path": "frozen_time",
-        "rule_ref": 120
+        "rule_ref": 124
       },
       "side": "request",
       "status": "proven",
@@ -529702,12 +529815,12 @@
       "branch": "",
       "default": {
         "kind": "rule",
-        "rule_ref": 121,
+        "rule_ref": 125,
         "variants": [
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 121
+              "rule_ref": 125
             },
             "variant": "partly_reversed"
           }
@@ -551145,7 +551258,7 @@
       "branch": "",
       "default": {
         "kind": "rule",
-        "rule_ref": 127,
+        "rule_ref": 131,
         "variants": [
           {
             "default": {
@@ -702456,6 +702569,48 @@
                   "quantity": 2
                 }
               ],
+              "name_collection": {
+                "business": {
+                  "enabled": false
+                },
+                "individual": {
+                  "enabled": false
+                }
+              }
+            },
+            "probe": "isolated/name_collection_create_both_off"
+          },
+          "value": {
+            "message": "If specifying name_collection, you must have either `name_collection[individual][enabled] = true` or `name_collection[business][enabled] = true`.",
+            "status": 400,
+            "type": "invalid_request_error"
+          }
+        }
+      ],
+      "operation": "PostPaymentLinks",
+      "path": "name_collection.individual.enabled",
+      "rule": "Stripe's answer turns on the request: accepted in []; refused in [isolated/name_collection_create_both_off]",
+      "tests": [
+        "TestPaymentLinkAttributes/leaves/request/PostPaymentLinks/name_collection.individual.enabled",
+        "TestPaymentLinkAttributes/leaves/response/payment_link/name_collection.individual.enabled"
+      ]
+    },
+    {
+      "object": "payment_link",
+      "observations": [
+        {
+          "condition": {
+            "account_country": "US",
+            "params": {
+              "line_items": [
+                {
+                  "price": {
+                    "$gen": "ref",
+                    "arg": "price"
+                  },
+                  "quantity": 2
+                }
+              ],
               "payment_method_collection": "always"
             },
             "probe": "isolated/collection_one_time_always"
@@ -702621,6 +702776,57 @@
       "rule": "Stripe's answer turns on the request: accepted in []; refused in [isolated/hash_after_completion]",
       "tests": [
         "TestPaymentLinkAttributes/leaves/request/PostPaymentLinksPaymentLink/after_completion.redirect.url"
+      ]
+    },
+    {
+      "object": "payment_link",
+      "observations": [
+        {
+          "condition": {
+            "account_country": "US",
+            "created_with": {
+              "line_items": [
+                {
+                  "price": {
+                    "$gen": "ref",
+                    "arg": "price"
+                  },
+                  "quantity": 2
+                }
+              ],
+              "name_collection": {
+                "business": {
+                  "enabled": true
+                },
+                "individual": {
+                  "enabled": true
+                }
+              }
+            },
+            "params": {
+              "name_collection": {
+                "business": {
+                  "enabled": false
+                },
+                "individual": {
+                  "enabled": false
+                }
+              }
+            },
+            "probe": "isolated/name_collection_update_both_off"
+          },
+          "value": {
+            "message": "If specifying name_collection, you must have either `name_collection[individual][enabled] = true` or `name_collection[business][enabled] = true`.",
+            "status": 400,
+            "type": "invalid_request_error"
+          }
+        }
+      ],
+      "operation": "PostPaymentLinksPaymentLink",
+      "path": "name_collection.individual.enabled",
+      "rule": "Stripe's answer turns on the request: accepted in []; refused in [isolated/name_collection_update_both_off]",
+      "tests": [
+        "TestPaymentLinkAttributes/leaves/request/PostPaymentLinksPaymentLink/name_collection.individual.enabled"
       ]
     },
     {
@@ -705811,6 +706017,128 @@
       ]
     },
     {
+      "object": "subscription",
+      "observations": [
+        {
+          "condition": {
+            "account_country": "US",
+            "created_with": {
+              "collection_method": "send_invoice",
+              "customer": {
+                "$gen": "fresh",
+                "arg": "customer"
+              },
+              "days_until_due": 30,
+              "items": [
+                {
+                  "price": {
+                    "$gen": "ref",
+                    "arg": "price:eur"
+                  }
+                }
+              ],
+              "payment_settings": {
+                "payment_method_options": {
+                  "customer_balance": {
+                    "bank_transfer": {
+                      "eu_bank_transfer": {
+                        "country": "DE"
+                      },
+                      "type": "eu_bank_transfer"
+                    },
+                    "funding_type": "bank_transfer"
+                  }
+                }
+              }
+            },
+            "params": {
+              "payment_settings": {
+                "payment_method_options": {
+                  "customer_balance": {
+                    "bank_transfer": {
+                      "type": "eu_bank_transfer"
+                    },
+                    "funding_type": "bank_transfer"
+                  }
+                }
+              }
+            },
+            "probe": "isolated/hash_customer_balance_bank_transfer"
+          },
+          "value": {
+            "code": "parameter_missing",
+            "message": "Missing required param: payment_settings[payment_method_options][customer_balance][bank_transfer][eu_bank_transfer].",
+            "param": "payment_settings[payment_method_options][customer_balance][bank_transfer][eu_bank_transfer]",
+            "status": 400,
+            "type": "invalid_request_error"
+          }
+        }
+      ],
+      "operation": "PostSubscriptionsSubscriptionExposedId",
+      "path": "payment_settings.payment_method_options.customer_balance.bank_transfer.type",
+      "rule": "Stripe's answer turns on the request: accepted in []; refused in [isolated/hash_customer_balance_bank_transfer]",
+      "tests": [
+        "TestSubscriptionAttributes/leaves/request/PostSubscriptionsSubscriptionExposedId/payment_settings.payment_method_options.customer_balance.bank_transfer.type"
+      ]
+    },
+    {
+      "object": "subscription",
+      "observations": [
+        {
+          "condition": {
+            "account_country": "US",
+            "created_with": {
+              "collection_method": "send_invoice",
+              "customer": {
+                "$gen": "ref",
+                "arg": "customer"
+              },
+              "days_until_due": 30,
+              "items": [
+                {
+                  "price": {
+                    "$gen": "ref",
+                    "arg": "price"
+                  }
+                }
+              ],
+              "payment_settings": {
+                "payment_method_options": {
+                  "customer_balance": {
+                    "bank_transfer": {
+                      "type": "us_bank_transfer"
+                    },
+                    "funding_type": "bank_transfer"
+                  }
+                }
+              }
+            },
+            "params": {
+              "payment_settings": {
+                "payment_method_options": {
+                  "customer_balance": {
+                    "funding_type": "bank_transfer"
+                  }
+                }
+              }
+            },
+            "probe": "isolated/hash_customer_balance"
+          },
+          "value": {
+            "message": "When using `payment_method_options[customer_balance][funding_type]=bank_transfer`, the `payment_method_options[customer_balance][bank_transfer]` parameter is required.",
+            "status": 400,
+            "type": "invalid_request_error"
+          }
+        }
+      ],
+      "operation": "PostSubscriptionsSubscriptionExposedId",
+      "path": "payment_settings.payment_method_options.customer_balance.funding_type",
+      "rule": "Stripe's answer turns on the request: accepted in []; refused in [isolated/hash_customer_balance]",
+      "tests": [
+        "TestSubscriptionAttributes/leaves/request/PostSubscriptionsSubscriptionExposedId/payment_settings.payment_method_options.customer_balance.funding_type"
+      ]
+    },
+    {
       "object": "subscription_item",
       "observations": [
         {
@@ -708756,84 +709084,6 @@
       "changed": [
         {
           "after": {
-            "kind": "absent"
-          },
-          "before": {
-            "kind": "value",
-            "value": false
-          },
-          "path": "name_collection.business.optional"
-        }
-      ],
-      "object": "payment_link",
-      "operation": "PostPaymentLinksPaymentLink",
-      "probe": "update/1",
-      "sent": {
-        "name_collection.individual.enabled": false
-      },
-      "tests": [
-        "TestPaymentLinkAttributes/leaves/response/payment_link/name_collection.business.optional"
-      ],
-      "triggers": [
-        "name_collection.individual.enabled"
-      ]
-    },
-    {
-      "changed": [
-        {
-          "after": {
-            "kind": "value",
-            "value": false
-          },
-          "before": {
-            "kind": "absent"
-          },
-          "path": "name_collection.business.optional"
-        }
-      ],
-      "object": "payment_link",
-      "operation": "PostPaymentLinksPaymentLink",
-      "probe": "update/1",
-      "sent": {
-        "name_collection.business.enabled": false
-      },
-      "tests": [
-        "TestPaymentLinkAttributes/leaves/response/payment_link/name_collection.business.optional"
-      ],
-      "triggers": [
-        "name_collection.business.enabled"
-      ]
-    },
-    {
-      "changed": [
-        {
-          "after": {
-            "kind": "absent"
-          },
-          "before": {
-            "kind": "value",
-            "value": false
-          },
-          "path": "name_collection.business.optional"
-        }
-      ],
-      "object": "payment_link",
-      "operation": "PostPaymentLinksPaymentLink",
-      "probe": "update/1",
-      "sent": {
-        "name_collection.individual.enabled": false
-      },
-      "tests": [
-        "TestPaymentLinkAttributes/leaves/response/payment_link/name_collection.business.optional"
-      ],
-      "triggers": [
-        "name_collection.individual.enabled"
-      ]
-    },
-    {
-      "changed": [
-        {
-          "after": {
             "kind": "value",
             "value": "pass"
           },
@@ -710996,16 +711246,17 @@
       ]
     }
   ],
+  "skipped_probes": [],
   "spec_sha256": "9119e72c7ff8ad142e94f7efa9cf49d8e6eec69df3592e17e8fba15099726ed7",
   "stripe_run": {
     "event": "push",
-    "id": 42317623394,
+    "id": 42360743355,
     "passed": true,
     "platform_country": "US",
     "sandbox": "ci",
-    "time": "2026-11-07T02:05:41Z"
+    "time": "2026-11-07T15:08:34Z"
   },
-  "suite_commit": "f4c2cba87067951cb51bcf5d500545d68c036fd5",
+  "suite_commit": "b31443e2c7a90a6b802ccd097a34fbab2a6177cc",
   "together": [
     {
       "answers": [

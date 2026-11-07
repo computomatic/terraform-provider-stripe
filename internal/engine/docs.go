@@ -33,7 +33,7 @@ type AttributeDoc struct {
 }
 
 // The removal sentences (ADR 2026-10-29-full-attribute-coverage, D4, E2 and E5). An argument the
-// plan keeps (UseStateForUnknown) leaves the current value; one in a list element, which the
+// plan keeps (keepHeld) leaves the current value; one in a list element, which the
 // plan cannot keep, Stripe sets when the list is sent again; any other the provider stops sending,
 // and the state takes Stripe's value at the next apply.
 const (
