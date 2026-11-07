@@ -7,7 +7,7 @@ import "github.com/computomatic/terraform-provider-stripe/internal/fields"
 
 // Table lists every request and response field of the object.
 var Table = []fields.Field{
-	{Name: "address", Shape: fields.Object, Create: true, Update: true, Response: true, Description: "The customer's address. Learn about [country-specific requirements for calculating tax](https://docs.stripe.com/invoicing/taxes?dashboard-or-api=dashboard#set-up-customer).", Fields: []fields.Field{
+	{Name: "address", Shape: fields.Object, Create: true, Update: true, Response: true, Description: "The customer's address. Learn about [country-specific requirements for calculating tax](https://docs.stripe.com/invoicing/taxes?dashboard-or-api=dashboard#set-up-customer).", SiblingsCleared: true, Fields: []fields.Field{
 		{Name: "city", Shape: fields.String, Create: true, Update: true, Response: true, Stable: true, Description: "City, district, suburb, town, or village.", Default: &fields.Default{Kind: fields.DefaultNone}},
 		{Name: "country", Shape: fields.String, Create: true, Update: true, Response: true, Stable: true, Description: "Two-letter country code ([ISO 3166-1 alpha-2](https://en.wikipedia.org/wiki/ISO_3166-1_alpha-2)).", Default: &fields.Default{Kind: fields.DefaultNone}},
 		{Name: "line1", Shape: fields.String, Create: true, Update: true, Response: true, Stable: true, Description: "Address line 1, such as the street, PO Box, or company name.", Default: &fields.Default{Kind: fields.DefaultNone}},

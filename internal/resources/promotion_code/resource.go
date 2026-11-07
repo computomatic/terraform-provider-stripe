@@ -28,6 +28,14 @@ var Declaration = engine.Declaration{
 	Delete:  engine.Archive,
 	Archive: &engine.ArchiveAction{Field: "active", Value: wire.Bool(false)},
 	Lookups: []engine.Lookup{{Field: "code"}},
+	// Stripe returns the restriction's currency options only when asked for, as the suite's
+	// requests ask (TestPromotionCodeAttributes).
+	Expand: []string{"restrictions.currency_options"},
+	// Stripe returns the currency of the code's minimum amount among the restriction's currency
+	// options, with that amount (the record's normalised form `with_own_currency`:
+	// TestPromotionCodeAttributes, `restrictions.currency_options.minimum_amount`), so a read
+	// leaves it out.
+	OwnCurrency: map[string]string{"restrictions.currency_options": "restrictions.minimum_amount_currency"},
 }
 
 // NewResource returns the resource constructor the provider registers.

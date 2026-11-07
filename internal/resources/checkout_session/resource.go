@@ -58,6 +58,10 @@ var Declaration = engine.Declaration{
 		// suite: TestCheckoutSessionAttributes, probes `isolated/configuration_bancontact` and
 		// `isolated/configuration_no_methods`
 		"payment_method_configuration": "Stripe takes a configuration that turns on a payment method the session's currency and mode can use.",
+		// suite: TestCheckoutSessionAttributes, probes `isolated/unknown_icon_file` and
+		// `isolated/unknown_logo_file`
+		"branding_settings.icon.file": "Stripe takes the ID of a file upload the account holds, and refuses one it cannot find.",
+		"branding_settings.logo.file": "Stripe takes the ID of a file upload the account holds, and refuses one it cannot find.",
 	},
 	Defaults: map[string]string{
 		"after_expiration.recovery.allow_promotion_codes":            "`false` once `recovery` is set",

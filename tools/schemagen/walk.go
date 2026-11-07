@@ -76,6 +76,9 @@ type Leaf struct {
 	// Required is whether the hash holding the leaf requires it. For a list envelope it says
 	// that Stripe returns the list on every read (rule X3).
 	Required bool
+	// RequiredHashes are the paths of the hashes holding the leaf that the hash holding each of
+	// them requires, such as a schedule's `pause_schedules.pause.pause_at`, which `pause` requires.
+	RequiredHashes []string
 	// Target names the copied object of an embedded copy, the element object of a paged
 	// list, or the schema a recursion meets.
 	Target string
@@ -251,6 +254,8 @@ func objectName(name string, sc *Schema) string {
 type carried struct {
 	array, mapped bool
 	required      bool
+	// requiredHashes are the paths on the way that their parents require.
+	requiredHashes []string
 	// lists is how many lists of hashes hold the property.
 	lists int
 }
@@ -274,11 +279,21 @@ func (w *walker) leaf(l Leaf, path string, br union, c carried) error {
 	l.Key = w.key
 	l.Path, l.Branch, l.BranchAt = path, br.name, br.at
 	l.Array, l.Map, l.Required, l.Lists = c.array, c.mapped, c.required, c.lists
+	for _, h := range c.requiredHashes {
+		if h != path {
+			l.RequiredHashes = append(l.RequiredHashes, h)
+		}
+	}
 	if prev, ok := w.out[l.Key]; ok {
 		if prev.Kind != l.Kind || prev.Type != l.Type || prev.Target != l.Target || prev.Array != l.Array || prev.Map != l.Map {
 			return fmt.Errorf("%s has two shapes, %s and %s", l.Key, prev.Shape(), l.Shape())
 		}
 		prev.Required = prev.Required || l.Required
+		for _, h := range l.RequiredHashes {
+			if !slices.Contains(prev.RequiredHashes, h) {
+				prev.RequiredHashes = append(prev.RequiredHashes, h)
+			}
+		}
 		return nil
 	}
 	w.out[l.Key] = &l
@@ -362,7 +377,10 @@ func (w *walker) walk(sc *Schema, path string, br union, c carried) error {
 				if path == "" && w.key.Side == SideResponse && name == "object" {
 					continue
 				}
-				pc := carried{required: slices.Contains(sc.Required, name), lists: c.lists}
+				pc := carried{required: slices.Contains(sc.Required, name), lists: c.lists, requiredHashes: c.requiredHashes}
+				if pc.required {
+					pc.requiredHashes = append(slices.Clip(c.requiredHashes), join(path, name))
+				}
 				if c.array {
 					pc.lists++
 				}

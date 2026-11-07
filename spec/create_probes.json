@@ -1,5 +1,5 @@
 {
- "suite_ref": "ea5e6b0fce82f7867281d266183619b73c947ad3",
+ "suite_ref": "f4c2cba87067951cb51bcf5d500545d68c036fd5",
  "leaves": [
   {
    "object": "account",
@@ -1690,6 +1690,13 @@
     {
      "kind": "list",
      "probe": "minimal/refund"
+    },
+    {
+     "kind": "value",
+     "value": [
+      ""
+     ],
+     "probe": "minimal/payment_record_refund"
     }
    ]
   },

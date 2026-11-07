@@ -47,6 +47,12 @@ var Declaration = engine.Declaration{
 	// How to prorate a change goes with a change to the phases.
 	SendWithUpdate:   []string{"proration_behavior"},
 	SendWithUpdateOn: []string{"phases"},
+	Answers: map[string]string{
+		// suite: TestSubscriptionScheduleAttributes, probes `isolated/phases_without_start_date`
+		// and `isolated/phases_without_start_date_started`, which send one phase with only its
+		// items, on a schedule that has not started and on one that has
+		"phases.items.price": "Stripe takes an update of `phases` only where a phase holds a `start_date` to anchor the end dates to, which the update sends for the first phase from the state where the configuration sets none, on a schedule that has started and on one that has not.",
+	},
 	Defaults: map[string]string{
 		// suite: TestSubscriptionScheduleAttributes, probe `every_field/11`, which sends
 		// `default_settings.on_behalf_of` beside `default_settings.transfer_data`;

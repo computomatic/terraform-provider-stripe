@@ -201,3 +201,27 @@ func TestCurrencyOptionsUpdateWithNoNewCurrencySendsNone(t *testing.T) {
 		t.Fatalf("an update that adds no currency must not send currency_options, sent %s", got)
 	}
 }
+
+// A nested currency map in OwnCurrency loses the object's own currency on a read, as Stripe
+// returns a shipping rate's `fixed_amount.currency_options` with the rate's own currency added
+// (the record's normalised form `with_own_currency`); the rest of the body is left as it is.
+func TestOwnCurrencyLeavesTheOwnCurrencyOutOfANestedMap(t *testing.T) {
+	m := &model{decl: Declaration{OwnCurrency: map[string]string{"fixed_amount.currency_options": "fixed_amount.currency"}}}
+	option := func(amount int64) wire.Object { return wire.Object{{Name: "amount", Value: wire.Int(amount)}} }
+	body := wire.Object{
+		{Name: "id", Value: wire.String("shr_1")},
+		{Name: "fixed_amount", Value: wire.Object{
+			{Name: "amount", Value: wire.Int(500)},
+			{Name: "currency", Value: wire.String("usd")},
+			{Name: "currency_options", Value: wire.Object{{Name: "eur", Value: option(7)}, {Name: "usd", Value: option(500)}}},
+		}},
+	}
+	got := m.withoutOwnCurrencies(body)
+	want := `{"id":"shr_1","fixed_amount":{"amount":500,"currency":"usd","currency_options":{"eur":{"amount":7}}}}`
+	if s := wireOf(t, got); s != want {
+		t.Errorf("read body %s, want %s", s, want)
+	}
+	if s := wireOf(t, body); !strings.Contains(s, `"usd":{"amount":500}`) {
+		t.Errorf("the response itself must not change: %s", s)
+	}
+}

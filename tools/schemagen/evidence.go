@@ -143,7 +143,7 @@ type EvidenceLeaf struct {
 	// Map is, on an update leaf of a map, how the update treats the keys it leaves out and a key
 	// it sends empty.
 	Map        *EvidenceMap    `json:"map,omitempty"`
-	Returned   json.RawMessage `json:"returned,omitempty"`
+	Returned   *Returned       `json:"returned,omitempty"`
 	EnumValues json.RawMessage `json:"enum_values,omitempty"`
 	WriteOnly  json.RawMessage `json:"write_only,omitempty"`
 	AcceptedIn json.RawMessage `json:"accepted_in,omitempty"`
@@ -154,6 +154,108 @@ type EvidenceLeaf struct {
 	Initial     json.RawMessage    `json:"initial,omitempty"`
 	Nullable    json.RawMessage    `json:"nullable,omitempty"`
 	Failure     json.RawMessage    `json:"failure,omitempty"`
+}
+
+// Returned is, on a request leaf, where and in what form the response holds what the request
+// sent: as sent, not at all, as an object made inline from a hash of the request, or in a form
+// Stripe normalises, whose `pairs` give what the suite sent and what Stripe returned, each with
+// the whole write (`request`) and, on an update, the writes before it (`before`). A normalised
+// form may carry a name the format defines, such as `sorted`, which says what Stripe does to the
+// value; a declaration that keeps a configured value from such a form names it.
+type Returned struct {
+	Form         string         `json:"form"`
+	ResponsePath string         `json:"response_path"`
+	Object       string         `json:"object,omitempty"`
+	RequestHash  string         `json:"request_hash,omitempty"`
+	Name         string         `json:"name,omitempty"`
+	Pairs        []ReturnedPair `json:"pairs,omitempty"`
+	// RuleRef names the Beside rule the form holds only without.
+	RuleRef *int `json:"rule_ref,omitempty"`
+}
+
+// ReturnedPair is one value the suite sent of a normalised leaf and what Stripe returned for it.
+type ReturnedPair struct {
+	Sent     json.RawMessage `json:"sent"`
+	Returned json.RawMessage `json:"returned"`
+	// Request is the whole write that sent the value.
+	Request json.RawMessage `json:"request"`
+	// Before are, on an update, the writes the suite accepted before it, in order.
+	Before []PriorWrite `json:"before,omitempty"`
+}
+
+// PriorWrite is one write a normalised pair's update followed.
+type PriorWrite struct {
+	Operation string          `json:"operation"`
+	Body      json.RawMessage `json:"body"`
+}
+
+// The forms of Returned, and the names of a normalised form: a list Stripe sorts, a tier list
+// whose members Stripe returns per tier (`tiers`), and a currency map to which Stripe adds the
+// object's own currency (`with_own_currency`) or its own tax behavior (`with_own_tax_behavior`).
+const (
+	ReturnedAsSent       = "as_sent"
+	ReturnedNotReturned  = "not_returned"
+	ReturnedInlineObject = "inline_object"
+	ReturnedNormalised   = "normalised"
+)
+
+var (
+	returnedForms = []string{ReturnedAsSent, ReturnedNotReturned, ReturnedInlineObject, ReturnedNormalised}
+	// NormalisedSorted is the name of a list Stripe returns sorted.
+	NormalisedSorted = "sorted"
+	normalisedNames  = []string{NormalisedSorted, "tiers", "with_own_currency", "with_own_tax_behavior"}
+)
+
+// check refuses a returned form the generator cannot read: a form or a name outside the format's
+// closed sets, a name or pairs on a form other than normalised, a normalised form with no pairs,
+// a pair with no value sent, no value returned or no request, and a prior write with no
+// operation or body, a JSON null counting as none.
+func (r *Returned) check(at string) error {
+	if r == nil {
+		return nil
+	}
+	if err := unknown(at+": returned form", r.Form, returnedForms); err != nil {
+		return err
+	}
+	switch {
+	case r.Form != ReturnedNormalised && (r.Name != "" || len(r.Pairs) > 0):
+		return fmt.Errorf("%s: returned form %q gives a name or pairs, which only a normalised form has", at, r.Form)
+	case r.Form == ReturnedNormalised && len(r.Pairs) == 0:
+		return fmt.Errorf("%s: a normalised form gives no pairs", at)
+	case r.Form == ReturnedInlineObject && (r.Object == "" || r.RequestHash == ""):
+		return fmt.Errorf("%s: an inline object names no object or no request hash", at)
+	case r.Form != ReturnedInlineObject && (r.Object != "" || r.RequestHash != ""):
+		return fmt.Errorf("%s: returned form %q names an object or a request hash, which only an inline object has", at, r.Form)
+	}
+	if r.Name != "" {
+		if err := unknown(at+": normalised name", r.Name, normalisedNames); err != nil {
+			return err
+		}
+	}
+	for i, p := range r.Pairs {
+		if absent(p.Sent) || absent(p.Returned) || absent(p.Request) {
+			return fmt.Errorf("%s: normalised pair %d gives no value sent, no value returned or no request", at, i)
+		}
+		for j, b := range p.Before {
+			if b.Operation == "" || absent(b.Body) {
+				return fmt.Errorf("%s: normalised pair %d: prior write %d names no operation or no body", at, i, j)
+			}
+		}
+	}
+	return nil
+}
+
+// absent reports a member the record leaves out or gives as JSON null.
+func absent(v json.RawMessage) bool {
+	return len(bytes.TrimSpace(v)) == 0 || bytes.Equal(bytes.TrimSpace(v), []byte("null"))
+}
+
+// unknown refuses a value outside the closed set the generator reads.
+func unknown(what, value string, known []string) error {
+	if slices.Contains(known, value) {
+		return nil
+	}
+	return fmt.Errorf("%s %q is not one the generator knows (%s)", what, value, strings.Join(known, ", "))
 }
 
 // UnreachableValue is a value of a request leaf that Stripe fails on every attempt, with the
@@ -805,12 +907,6 @@ func jsonMembers(t reflect.Type) map[string]reflect.Type {
 // check refuses a value outside a closed set the generator reads, and a rule default with no
 // rule.
 func (e *Evidence) check() error {
-	unknown := func(what, value string, known []string) error {
-		if slices.Contains(known, value) {
-			return nil
-		}
-		return fmt.Errorf("%s %q is not one the generator knows (%s)", what, value, strings.Join(known, ", "))
-	}
 	var checkDefault func(k Key, d *EvidenceDefault) error
 	checkDefault = func(k Key, d *EvidenceDefault) error {
 		if err := unknown(k.String()+": default kind", d.Kind, defaultKinds); err != nil {
@@ -857,7 +953,7 @@ func (e *Evidence) check() error {
 				errs = append(errs, unknown(l.Key.String()+": map empty value by", v.By, mapEmptyBy), unknown(l.Key.String()+": map empty value result", v.Result, mapEmptyResults))
 			}
 		}
-		errs = append(errs, l.checkUnreachable(), e.checkReturnedRule(l))
+		errs = append(errs, l.checkUnreachable(), l.Returned.check(l.Key.String()), e.checkReturnedRule(l))
 		if err := errors.Join(errs...); err != nil {
 			return err
 		}
@@ -963,13 +1059,10 @@ func (e *Evidence) checkReturnedRule(l EvidenceLeaf) error {
 
 // returnedRule is the index of the Beside rule a leaf's `returned` names, or nil.
 func (l EvidenceLeaf) returnedRule() *int {
-	var returned struct {
-		RuleRef *int `json:"rule_ref"`
-	}
-	if l.Returned == nil || json.Unmarshal(l.Returned, &returned) != nil {
+	if l.Returned == nil {
 		return nil
 	}
-	return returned.RuleRef
+	return l.Returned.RuleRef
 }
 
 // checkBeside refuses a Beside rule none of whose observations sends its beside leaf, or all of

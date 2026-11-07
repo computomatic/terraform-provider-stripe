@@ -160,7 +160,7 @@ The `branding_settings` attribute supports:
 
 The `branding_settings.icon` attribute supports:
 
-* `file` - (Optional) The ID of a [File upload](https://stripe.com/docs/api/files) representing the icon. Purpose must be `business_icon`. Required if `type` is `file` and disallowed otherwise. Default: none.
+* `file` - (Optional) The ID of a [File upload](https://stripe.com/docs/api/files) representing the icon. Purpose must be `business_icon`. Required if `type` is `file` and disallowed otherwise. Stripe takes the ID of a file upload the account holds, and refuses one it cannot find. Elsewhere Stripe refused it on a US account on create: "No such file_upload: 'file_...'". Default: none.
 * `type` - (Required) The type of image for the icon. Must be one of `file` or `url`. Possible values: `file`, `url`.
 * `url` - (Optional) The URL of the image. Present when `type` is `url`. Default: none.
 
@@ -169,7 +169,7 @@ The `branding_settings.icon` attribute supports:
 
 The `branding_settings.logo` attribute supports:
 
-* `file` - (Optional) The ID of a [File upload](https://stripe.com/docs/api/files) representing the logo. Purpose must be `business_logo`. Required if `type` is `file` and disallowed otherwise. Default: none.
+* `file` - (Optional) The ID of a [File upload](https://stripe.com/docs/api/files) representing the logo. Purpose must be `business_logo`. Required if `type` is `file` and disallowed otherwise. Stripe takes the ID of a file upload the account holds, and refuses one it cannot find. Elsewhere Stripe refused it on a US account on create: "No such file_upload: 'file_...'". Default: none.
 * `type` - (Required) The type of image for the logo. Must be one of `file` or `url`. Possible values: `file`, `url`.
 * `url` - (Optional) The URL of the image. Present when `type` is `url`. Default: none.
 

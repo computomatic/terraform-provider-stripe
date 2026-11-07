@@ -3,6 +3,7 @@ package engine
 import (
 	"errors"
 	"fmt"
+	"maps"
 	"net/http"
 	"slices"
 	"sort"
@@ -243,8 +244,8 @@ func compile(decl Declaration, table []fields.Field) (*model, error) {
 		}
 	}
 	for _, e := range decl.Expand {
-		if n, ok := m.top(e); !ok || !n.Response {
-			return nil, fmt.Errorf("%s: expand entry `%s` is not a top-level field the response returns", decl.TypeName, e)
+		if n, _, ok := m.at(e); !ok || !n.Response {
+			return nil, fmt.Errorf("%s: expand entry `%s` is not a field the response returns", decl.TypeName, e)
 		}
 	}
 	for _, e := range decl.ExpandOnRetrieve {
@@ -298,6 +299,14 @@ func compile(decl Declaration, table []fields.Field) (*model, error) {
 		}
 		if c, ok := m.top("currency"); !ok || c.Shape != fields.String || !c.Response {
 			return nil, fmt.Errorf("%s: currency options need a top-level string field `currency` the response returns", decl.TypeName)
+		}
+	}
+	for _, at := range slices.Sorted(maps.Keys(decl.OwnCurrency)) {
+		if n, _, ok := m.at(at); !ok || n.Shape != fields.ObjectMap || !n.Response || !strings.Contains(at, ".") {
+			return nil, fmt.Errorf("%s: own currency entry `%s` is not a nested map the response returns", decl.TypeName, at)
+		}
+		if c, _, ok := m.at(decl.OwnCurrency[at]); !ok || c.Shape != fields.String || !c.Response {
+			return nil, fmt.Errorf("%s: own currency entry `%s` names `%s`, which is not a string field the response returns", decl.TypeName, at, decl.OwnCurrency[at])
 		}
 	}
 	if w := decl.CreateWrap; w != nil {

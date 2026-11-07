@@ -52,6 +52,14 @@ func TestEvidenceReaderTakesTheSuiteFixtureAndRefusesTheUnknown(t *testing.T) {
 		{"an unknown default kind", `"kind": "null"`, `"kind": "empty"`, `default kind "empty"`},
 		{"an unknown status", `"status": "unreachable"`, `"status": "skipped"`, `status "skipped"`},
 		{"another format", `"format_version": 1`, `"format_version": 2`, "format version 2"},
+		{"an unknown member of a normalised pair", `"before": [`, `"after": [], "before": [`, `.returned.pairs[0].after is a member the format does not define`},
+		{"an unknown member of a prior write", `"body": {`, `"attempt": 1, "body": {`, `.returned.pairs[0].before[0].attempt is a member the format does not define`},
+		{"an unknown normalised name", `"form": "normalised",`, `"form": "normalised", "name": "rounded",`, `normalised name "rounded"`},
+		{"an unknown returned form", `"form": "normalised",`, `"form": "reshaped",`, `returned form "reshaped"`},
+		{"a null value sent in a normalised pair", "\"sent\": {\n              \"gbp\": 8\n            }", `"sent": null`, `normalised pair 0 gives no value sent, no value returned or no request`},
+		{"a null value returned in a normalised pair", "\"returned\": {\n              \"eur\": 7,\n              \"gbp\": 8\n            }", `"returned": null`, `normalised pair 0 gives no value sent, no value returned or no request`},
+		{"a null request in a normalised pair", "\"request\": {\n              \"currency_options\": {\n                \"gbp\": {\n                  \"amount_off\": 8\n                }\n              }\n            }", `"request": null`, `normalised pair 0 gives no value sent, no value returned or no request`},
+		{"a null prior write body", "\"body\": {\n                  \"amount_off\": 500,\n                  \"currency\": {\n                    \"$gen\": \"account_currency\"\n                  },\n                  \"currency_options\": {\n                    \"eur\": {\n                      \"amount_off\": 7\n                    }\n                  }\n                }", `"body": null`, `prior write 0 names no operation or no body`},
 	} {
 		changed := bytes.Replace(data, []byte(tc.old), []byte(tc.new), 1)
 		if bytes.Equal(changed, data) {
@@ -669,7 +677,8 @@ func TestBesideDefaultsNameTheirArgument(t *testing.T) {
 // leaf; nor keep an accepted-only discount form the record does not show returned where the
 // engine reads it back.
 func TestBesideReturnsAndKeptDiscountsFollowTheRecord(t *testing.T) {
-	rule := json.RawMessage(`{"form": "as_sent", "response_path": "frozen_time", "rule_ref": 0}`)
+	ref := 0
+	rule := &Returned{Form: ReturnedAsSent, ResponsePath: "frozen_time", RuleRef: &ref}
 	frozen := Key{Object: "test_helpers.test_clock", Side: SideRequest, Operation: "PostTestHelpersTestClocks", Path: "frozen_time"}
 	customer := frozen
 	customer.Path = "customer"

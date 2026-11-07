@@ -3,6 +3,7 @@ package engine
 import (
 	"context"
 	"fmt"
+	"maps"
 	"regexp"
 	"slices"
 	"strings"
@@ -14,6 +15,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/tfsdk"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
+	"github.com/hashicorp/terraform-plugin-go/tftypes"
 
 	"github.com/computomatic/terraform-provider-stripe/internal/wire"
 )
@@ -33,6 +35,52 @@ func withoutOwnCurrency(options wire.Value, body wire.Object) wire.Value {
 		}
 	}
 	return kept
+}
+
+// withoutOwnCurrencies drops, from each nested currency map of OwnCurrency, the key of the
+// object's own currency, which Stripe adds to the map (the record's normalised form
+// `with_own_currency`) although the configuration does not hold it.
+func (m *model) withoutOwnCurrencies(body wire.Object) wire.Object {
+	for _, at := range slices.Sorted(maps.Keys(m.decl.OwnCurrency)) {
+		own, ok := stringAt(body, strings.Split(m.decl.OwnCurrency[at], "."))
+		if !ok {
+			continue
+		}
+		body = replacedAt(body, strings.Split(at, "."), func(v wire.Value) wire.Value {
+			return withoutOwnCurrency(v, wire.Object{{Name: "currency", Value: wire.String(own)}})
+		})
+	}
+	return body
+}
+
+// stringAt is the string at the names below obj.
+func stringAt(obj wire.Object, names []string) (string, bool) {
+	if len(names) == 1 {
+		return obj.GetString(names[0])
+	}
+	v, _ := obj.Get(names[0])
+	inner, ok := v.(wire.Object)
+	if !ok {
+		return "", false
+	}
+	return stringAt(inner, names[1:])
+}
+
+// replacedAt is obj with the value at the names below it replaced by what replace makes of it,
+// where every object on the way is present.
+func replacedAt(obj wire.Object, names []string, replace func(wire.Value) wire.Value) wire.Object {
+	out := slices.Clone(obj)
+	for i, f := range out {
+		if f.Name != names[0] {
+			continue
+		}
+		if len(names) == 1 {
+			out[i].Value = replace(f.Value)
+		} else if inner, ok := f.Value.(wire.Object); ok {
+			out[i].Value = replacedAt(inner, names[1:], replace)
+		}
+	}
+	return out
 }
 
 // addedKeys returns the entries of the planned options map that the state does not have, or
@@ -144,6 +192,7 @@ func (r *Resource) ValidateConfig(ctx context.Context, req resource.ValidateConf
 	r.validateCreateWrap(ctx, req, resp)
 	r.validateTransitions(ctx, req, resp)
 	r.m.validateLowerCase(ctx, req.Config, &resp.Diagnostics)
+	r.validateOwnCurrency(ctx, req, resp)
 	name := r.m.currencyOptionsAttr()
 	if name == "" {
 		return
@@ -166,6 +215,56 @@ func (r *Resource) ValidateConfig(ctx context.Context, req resource.ValidateConf
 				fmt.Sprintf("`%s` is the currency of this object. Remove the `%s` entry: Stripe adds the object's own currency by itself and refuses a request that names it.", key, key))
 		}
 	}
+}
+
+// validateOwnCurrency rejects, in each nested currency map of OwnCurrency, a key for the
+// currency the declaration names as the object's own: a read leaves that key out, as Stripe
+// adds it to the map (the record's normalised form `with_own_currency`), so the apply would end
+// with another map than planned. A value not known at plan is left for apply.
+func (r *Resource) validateOwnCurrency(ctx context.Context, req resource.ValidateConfigRequest, resp *resource.ValidateConfigResponse) {
+	if len(r.m.decl.OwnCurrency) == 0 {
+		return
+	}
+	var config basetypes.ObjectValue
+	if diags := req.Config.Get(ctx, &config); diags.HasError() {
+		resp.Diagnostics.Append(diags...)
+		return
+	}
+	for _, at := range slices.Sorted(maps.Keys(r.m.decl.OwnCurrency)) {
+		mapNames, mapPath, ok := r.m.attrNames(at)
+		own, _, ownOK := r.m.attrNames(r.m.decl.OwnCurrency[at])
+		if !ok || !ownOK {
+			continue
+		}
+		currency, isStr := attrAt(ctx, config, own).(basetypes.StringValue)
+		options, isMap := attrAt(ctx, config, mapNames).(basetypes.MapValue)
+		if !isStr || !isMap || !known(currency) || options.IsNull() || options.IsUnknown() {
+			continue
+		}
+		for key := range options.Elements() {
+			if strings.EqualFold(key, currency.ValueString()) {
+				resp.Diagnostics.AddAttributeError(mapPath.AtMapKey(key), "Own currency in currency options",
+					fmt.Sprintf("`%s` is the currency `%s` holds. Remove the `%s` entry: Stripe adds that currency to `%s` by itself, so the provider does not read it back.", key, strings.Join(own, "."), key, strings.Join(mapNames, ".")))
+			}
+		}
+	}
+}
+
+// attrNames is the attribute names, and the attribute path, of the field at the dotted Stripe
+// path.
+func (m *model) attrNames(dotted string) ([]string, path.Path, bool) {
+	_, at, ok := m.at(dotted)
+	if !ok {
+		return nil, path.Empty(), false
+	}
+	var names []string
+	where := path.Empty()
+	for _, step := range at.Steps() {
+		name := string(step.(tftypes.AttributeName))
+		names = append(names, name)
+		where = where.AtName(name)
+	}
+	return names, where, true
 }
 
 // requiresReplaceForCurrencyOptions flags a change to, or removal of, an existing currency

@@ -108,6 +108,10 @@ type Field struct {
 	// MapUpdate is, on a map an update takes, how the pinned evidence shows Stripe updating it
 	// (the record's `map`), or nil where it shows nothing.
 	MapUpdate *MapUpdate
+	// SiblingsCleared is, on a hash an update takes, that the pinned evidence shows Stripe
+	// clearing the members a write of the hash leaves out (the record's `families[].hashes`), so
+	// that leaving a member out of a write removes it.
+	SiblingsCleared bool
 }
 
 // Together is a set of a hash's members that Stripe takes only all at once.

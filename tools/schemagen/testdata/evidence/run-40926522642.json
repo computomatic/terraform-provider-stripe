@@ -322,6 +322,17 @@
         "form": "normalised",
         "pairs": [
           {
+            "request": {
+              "amount_off": 500,
+              "currency": {
+                "$gen": "account_currency"
+              },
+              "currency_options": {
+                "eur": {
+                  "amount_off": 7
+                }
+              }
+            },
             "returned": {
               "eur": 7,
               "usd": 500
@@ -658,6 +669,29 @@
         "form": "normalised",
         "pairs": [
           {
+            "before": [
+              {
+                "body": {
+                  "amount_off": 500,
+                  "currency": {
+                    "$gen": "account_currency"
+                  },
+                  "currency_options": {
+                    "eur": {
+                      "amount_off": 7
+                    }
+                  }
+                },
+                "operation": "PostCoupons"
+              }
+            ],
+            "request": {
+              "currency_options": {
+                "gbp": {
+                  "amount_off": 8
+                }
+              }
+            },
             "returned": {
               "eur": 7,
               "gbp": 8,

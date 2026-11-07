@@ -376,6 +376,25 @@ func TestCheckRequiredMembers(t *testing.T) {
 	if err := checkRequiredMembers([]Record{member, required}); err != nil {
 		t.Error(err)
 	}
+
+	// A required hash whose own leaves are all left out, as a schedule's
+	// `pause_schedules.pause.pause_at`, fails too, naming the hash, though no leaf of the exposed
+	// hash is itself required; the walk gives it as a hash its parent requires.
+	settings := Record{Table: "schedule", Key: Key{Side: SideRequest, Operation: "PostSchedules", Path: "pause.settings.type"}, State: StateExposed}
+	at := Record{Table: "schedule", Key: Key{Side: SideRequest, Operation: "PostSchedules", Path: "pause.pause_at.timestamp"}, State: StateExcluded, Rule: "X6", RequiredHashes: []string{"pause.pause_at"}}
+	if err := checkRequiredMembers([]Record{settings, at}); err == nil || !strings.Contains(err.Error(), "PostSchedules pause.pause_at") {
+		t.Errorf("a required hash left out: %v", err)
+	}
+	exposed := at
+	exposed.Key.Path, exposed.State, exposed.Rule = "pause.pause_at.type", StateExposed, ""
+	if err := checkRequiredMembers([]Record{settings, at, exposed}); err != nil {
+		t.Errorf("a required hash the table holds a leaf of: %v", err)
+	}
+	settings.State, settings.Rule = StateExcluded, RuleRegister
+	at.Rule = RuleRegister
+	if err := checkRequiredMembers([]Record{settings, at}); err != nil {
+		t.Errorf("the register leaves the hash out: %v", err)
+	}
 }
 
 func TestDroppedPaths(t *testing.T) {

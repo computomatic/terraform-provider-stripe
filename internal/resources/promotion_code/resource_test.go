@@ -210,3 +210,35 @@ func TestAccPromotionCode_drift(t *testing.T) {
 		},
 	})
 }
+
+// Stripe returns the currency of the minimum amount among the restriction's currency options,
+// which the configuration does not hold, so a read leaves it out (the record's normalised form
+// `with_own_currency`). The values are the suite's create (TestPromotionCodeAttributes,
+// `restrictions.currency_options.minimum_amount`: `{"eur": {"minimum_amount": 1800}}` beside a
+// minimum amount of 2000 in the account's currency and `first_time_transaction = true`).
+func TestAccPromotionCode_currencyOptionsLeaveTheOwnCurrencyOut(t *testing.T) {
+	acct := acctest.NewAccount(t)
+	config := codeConfig(acct, acct.Unique("OPTIONS"), `
+  restrictions = {
+    first_time_transaction  = true
+    minimum_amount          = 2000
+    minimum_amount_currency = "usd"
+    currency_options = {
+      eur = { minimum_amount = 1800 }
+    }
+  }
+`)
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: tfacc.ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: config,
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr(address, "restrictions.currency_options.%", "1"),
+					resource.TestCheckResourceAttr(address, "restrictions.currency_options.eur.minimum_amount", "1800"),
+				),
+			},
+			{Config: config, PlanOnly: true},
+		},
+	})
+}
