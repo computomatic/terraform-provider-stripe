@@ -18,6 +18,9 @@ type ProviderData struct {
 	Client Client
 	// Live decides whether a resource that moves money may change an object.
 	Live *LiveCheck
+	// Country is the country of the account the provider configuration calls, which a recorded
+	// refusal holds only in (recorded.go).
+	Country *AccountCountry
 	// Strict turns the warnings of an apply that Stripe answered otherwise than planned (E4)
 	// and of a field in an unexpected shape (E6) into errors. The acceptance harness sets it,
 	// so that a test fails where Stripe or the fake answers otherwise than the conformance
@@ -34,18 +37,12 @@ type LiveCheck struct {
 	client Client
 	// account is the connected account the client sends as `Stripe-Account`, or "".
 	account string
-
-	mu      sync.Mutex
-	checked bool
-	live    bool
-	err     error
-	// reading is closed when the read in flight ends, and nil when none is.
-	reading chan struct{}
+	mode    onceRead[bool]
 }
 
 // NewLiveCheck returns the check of one provider configuration.
 func NewLiveCheck(client Client, allow bool, account string) *LiveCheck {
-	return &LiveCheck{allow: allow, client: client, account: account}
+	return &LiveCheck{allow: allow, client: client, account: account, mode: onceRead[bool]{read: func(ctx context.Context) (bool, error) { return readLiveMode(ctx, client) }}}
 }
 
 const (
@@ -61,7 +58,7 @@ func (c *LiveCheck) refusal(ctx context.Context, typeName string) diag.Diagnosti
 	if c.allow {
 		return nil
 	}
-	live, err := c.mode(ctx)
+	live, err := c.mode.get(ctx)
 	thing := WithArticle(Noun(typeName))
 	if err != nil {
 		return diag.NewErrorDiagnostic(cannotTellSummary, fmt.Sprintf(
@@ -80,15 +77,28 @@ func (c *LiveCheck) refusal(ctx context.Context, typeName string) diag.Diagnosti
 		account, thing))
 }
 
-// mode is the account's mode. One call at a time reads it; the others wait, each until the read
-// ends or its own context does.
-func (c *LiveCheck) mode(ctx context.Context) (bool, error) {
+// onceRead is a value one provider configuration reads from Stripe once. The first get reads
+// it; later and concurrent calls wait for that read and reuse its answer, a failure from Stripe
+// included. A read that ends with its caller's context is not kept, so the next call reads
+// again, and each waiting call waits only until its own context ends.
+type onceRead[T any] struct {
+	read func(context.Context) (T, error)
+
+	mu      sync.Mutex
+	checked bool
+	value   T
+	err     error
+	// reading is closed when the read in flight ends, and nil when none is.
+	reading chan struct{}
+}
+
+func (c *onceRead[T]) get(ctx context.Context) (T, error) {
 	for {
 		c.mu.Lock()
 		if c.checked {
-			live, err := c.live, c.err
+			value, err := c.value, c.err
 			c.mu.Unlock()
-			return live, err
+			return value, err
 		}
 		if wait := c.reading; wait != nil {
 			c.mu.Unlock()
@@ -96,22 +106,23 @@ func (c *LiveCheck) mode(ctx context.Context) (bool, error) {
 			case <-wait:
 				continue
 			case <-ctx.Done():
-				return false, ctx.Err()
+				var zero T
+				return zero, ctx.Err()
 			}
 		}
 		done := make(chan struct{})
 		c.reading = done
 		c.mu.Unlock()
 
-		live, err := readLiveMode(ctx, c.client)
+		value, err := c.read(ctx)
 		c.mu.Lock()
 		if ctx.Err() == nil && !errors.Is(err, context.Canceled) && !errors.Is(err, context.DeadlineExceeded) {
-			c.live, c.err, c.checked = live, err, true
+			c.value, c.err, c.checked = value, err, true
 		}
 		c.reading = nil
 		close(done)
 		c.mu.Unlock()
-		return live, err
+		return value, err
 	}
 }
 

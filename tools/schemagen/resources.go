@@ -5,6 +5,16 @@ import (
 	"maps"
 )
 
+// The reasons of LeftToStripe entries the record's rules share: what Stripe's refusal turns on,
+// which the plan cannot know.
+const (
+	leftExpired          = "Stripe's refusal turns on the state of the coupon or promotion code it names, expired or inactive, which the plan cannot know (probes `isolated/*coupon_expired` and `isolated/*promotion_code_inactive`)."
+	leftDiscountHeld     = "Stripe's refusal turns on which object holds the discount the request names, which the plan cannot know: it took a quote line's and a subscription item's own discount and refused one of the quote or subscription (probes `isolated/line_discount_held` and `isolated/item_discount_held` against `isolated/*discount_of_*`)."
+	leftCouponBesideHeld = "Stripe refuses a coupon beside a discount in one element (`You may only specify one of these parameters: coupon, discount.`), but the record sends the discount as the one read from the object, so the plan cannot tell the refused request from one naming a discount on its own, on which Stripe's answer turns (probes `isolated/*coupon_beside_held`)."
+	leftMissing          = "Stripe's refusal turns on whether the object the request names exists, which the plan cannot know (code `resource_missing`)."
+	leftBusinessURL      = "Stripe's refusal turns on its own check of the URL, not on the request alone: it took `https://example.com/acme` on a create and refused it on an update, and took `https://stripe.com` on a create of an account with no recipient configuration (probes `isolated/url_*`)."
+)
+
 // parentHolds is the register's reason for a table's own copy of the parent ID that the
 // engine adds as the declaration's Parent attribute.
 const parentHolds = "the parent attribute holds it"
@@ -248,8 +258,17 @@ var Resources = []Resource{
 	}, CreatePath: "/v1/credit_notes", UpdatePath: "/v1/credit_notes/{id}", PagedLists: map[string]string{"lines": "stripe_credit_note_line"}},
 	// An invoice's payment error is a nested payment intent that repeats without end, and
 	// three payment method options are empty objects in the response.
-	{Package: "invoice", AcceptedOnly: invoiceKept, CreatePath: "/v1/invoices", UpdatePath: "/v1/invoices/{invoice}", PagedLists: map[string]string{"lines": "stripe_invoice_line"}, Omit: []string{"discounts", "last_finalization_error", "payment_settings.payment_method_options.blik", "payment_settings.payment_method_options.konbini", "payment_settings.payment_method_options.sepa_debit"}},
-	{Package: "invoiceitem", AcceptedOnly: map[string]string{
+	{Package: "invoice", LeftToStripe: map[string]string{
+		"PostInvoices discounts.coupon":         leftExpired,
+		"PostInvoices discounts.promotion_code": leftExpired,
+		"PostInvoicesInvoice discounts.coupon":  leftCouponBesideHeld,
+	}, AcceptedOnly: invoiceKept, CreatePath: "/v1/invoices", UpdatePath: "/v1/invoices/{invoice}", PagedLists: map[string]string{"lines": "stripe_invoice_line"}, Omit: []string{"discounts", "last_finalization_error", "payment_settings.payment_method_options.blik", "payment_settings.payment_method_options.konbini", "payment_settings.payment_method_options.sepa_debit"}},
+	{Package: "invoiceitem", LeftToStripe: map[string]string{
+		"PostInvoiceitems discounts.coupon":            leftExpired,
+		"PostInvoiceitems discounts.discount":          leftDiscountHeld,
+		"PostInvoiceitems discounts.promotion_code":    leftExpired,
+		"PostInvoiceitemsInvoiceitem discounts.coupon": leftCouponBesideHeld,
+	}, AcceptedOnly: map[string]string{
 		"pricing.price":            "Its effect shows in `pricing.price_details.price` (the product owner's decision of 2026-11-04).",
 		"subscription":             "Its effect shows in `parent.subscription_details.subscription` (the product owner's decision of 2026-11-04).",
 		"unit_amount_decimal":      "Its effect shows in `pricing.unit_amount_decimal` (the product owner's decision of 2026-11-04).",
@@ -259,9 +278,26 @@ var Resources = []Resource{
 	}, CreatePath: "/v1/invoiceitems", UpdatePath: "/v1/invoiceitems/{invoiceitem}", Omit: []string{"discounts"}},
 	// A quote reads its discounts back as an invoice does, and its lines' from the discounts
 	// each line holds whole.
-	{Package: "quote", AcceptedOnly: quoteKept(), CreatePath: "/v1/quotes", UpdatePath: "/v1/quotes/{quote}", Omit: []string{"discounts"}},
-	{Package: "subscription", AcceptedOnly: subscriptionKept(), CreatePath: "/v1/subscriptions", UpdatePath: "/v1/subscriptions/{subscription_exposed_id}", PagedLists: map[string]string{"items": "stripe_subscription_item"}, Omit: []string{"discounts", "payment_settings.payment_method_options.konbini", "payment_settings.payment_method_options.sepa_debit", "items.discounts"}, CreateOnly: []string{"billing_cycle_anchor"}},
-	{Package: "subscription_item", AcceptedOnly: subscriptionItemKept(),
+	{Package: "quote", LeftToStripe: map[string]string{
+		"PostQuotes discounts.coupon":                    leftExpired,
+		"PostQuotes discounts.promotion_code":            leftExpired,
+		"PostQuotes line_items.discounts.coupon":         leftExpired,
+		"PostQuotes line_items.discounts.promotion_code": leftExpired,
+		"PostQuotesQuote discounts.coupon":               leftCouponBesideHeld,
+		"PostQuotesQuote line_items.discounts.coupon":    leftCouponBesideHeld,
+		"PostQuotesQuote line_items.discounts.discount":  leftDiscountHeld,
+	}, AcceptedOnly: quoteKept(), CreatePath: "/v1/quotes", UpdatePath: "/v1/quotes/{quote}", Omit: []string{"discounts"}},
+	{Package: "subscription", LeftToStripe: map[string]string{
+		"PostSubscriptions add_invoice_items.discounts.coupon":                        leftExpired,
+		"PostSubscriptions add_invoice_items.discounts.promotion_code":                leftExpired,
+		"PostSubscriptionsSubscriptionExposedId add_invoice_items.discounts.discount": leftDiscountHeld,
+	}, AcceptedOnly: subscriptionKept(), CreatePath: "/v1/subscriptions", UpdatePath: "/v1/subscriptions/{subscription_exposed_id}", PagedLists: map[string]string{"items": "stripe_subscription_item"}, Omit: []string{"discounts", "payment_settings.payment_method_options.konbini", "payment_settings.payment_method_options.sepa_debit", "items.discounts"}, CreateOnly: []string{"billing_cycle_anchor"}},
+	{Package: "subscription_item", LeftToStripe: map[string]string{
+		"PostSubscriptionItems discounts.coupon":         leftExpired,
+		"PostSubscriptionItems discounts.discount":       leftDiscountHeld,
+		"PostSubscriptionItems discounts.promotion_code": leftExpired,
+		"PostSubscriptionItemsItem discounts.coupon":     leftCouponBesideHeld,
+	}, AcceptedOnly: subscriptionItemKept(),
 		CreatePath: "/v1/subscription_items", UpdatePath: "/v1/subscription_items/{item}", Omit: []string{"discounts"}},
 	{Package: "subscription_schedule", AcceptedOnly: scheduleKept, Exclude: map[string]string{
 		"PostSubscriptionSchedules pause_schedules":         pauseSchedules,
@@ -274,13 +310,20 @@ var Resources = []Resource{
 	// and recursions the tables cannot hold. The ReadOnly entries are the payment method updates
 	// the suite does not prove, on an object that cannot be replaced.
 	// The Omit entry is the one `price_data` leaf the suite has not proven against Stripe.
-	{Package: "payment_link", CreatePath: "/v1/payment_links", UpdatePath: "/v1/payment_links/{payment_link}", Omit: []string{"line_items.price_data.product_data.tax_details"}},
+	{Package: "payment_link", LeftToStripe: map[string]string{
+		"PostPaymentLinks invoice_creation.invoice_data.account_tax_ids": leftMissing,
+		"PostPaymentLinks payment_method_collection":                     "Stripe's refusal turns on whether the line items' prices recur, which a `price` names on another object: it refused `always` and `if_required` beside a one-time `price` and took `if_required` beside a recurring `price_data` (probes `isolated/collection_*`).",
+		"PostPaymentLinks transfer_data.destination":                     leftMissing,
+	}, CreatePath: "/v1/payment_links", UpdatePath: "/v1/payment_links/{payment_link}", Omit: []string{"line_items.price_data.product_data.tax_details"}},
 	{Package: "setup_intent", AcceptedOnly: map[string]string{"payment_method_configuration": acceptedKept},
 		Exclude: map[string]string{"mandate_data": mandateData}, CreatePath: "/v1/setup_intents", UpdatePath: "/v1/setup_intents/{intent}", Omit: []string{"last_setup_error.payment_intent", "last_setup_error.setup_intent", "last_setup_error.source", "confirm", "mandate_data", "payment_method_data", "return_url", "use_stripe_sdk", "single_use", "payment_method_options", "confirmation_token"}},
 	{Package: "customer_payment_method", Exclude: map[string]string{"customer": parentHolds}, CreatePath: "/v1/payment_methods/{payment_method}/attach", UpdatePath: "/v1/payment_methods/{payment_method}", Omit: []string{"customer", "customer_account"}, ReadOnly: []string{"allow_redisplay", "card.exp_month", "card.networks", "us_bank_account"}},
 	// Confirming is the resource's `status`, so `confirm` is excluded by rule X5, and the Omit
 	// entries leave out the confirm-time parameters until the gate exposes them.
-	{Package: "payment_intent", StatusConfirms: true, AcceptedOnly: map[string]string{"payment_method_configuration": acceptedKept},
+	{Package: "payment_intent", LeftToStripe: map[string]string{
+		"PostPaymentIntents statement_descriptor":       "Stripe's refusal turns on a `statement_descriptor_suffix` absent from the request, which a pattern of what a request sends cannot state: it took the refused requests once they sent a suffix too (probes `isolated/descriptor_*`), as the declaration's `Answers` words.",
+		"PostPaymentIntentsIntent statement_descriptor": "Stripe's refusal turns on a `statement_descriptor_suffix` absent from the request and the intent, which a pattern of what a request sends cannot state: it took the refused update once it sent a suffix too or the intent held one (probes `isolated/descriptor_update_*`), as the declaration's `Answers` words.",
+	}, StatusConfirms: true, AcceptedOnly: map[string]string{"payment_method_configuration": acceptedKept},
 		Exclude: map[string]string{
 			"mandate_data": mandateData,
 			"payment_method_options.card.three_d_secure":    "Stripe never returns the hash, which its create takes only beside `confirm`, and its update refuses it unless `confirm` is true, with `cryptogram` and `transaction_id`, which it requires, unproven there, so that no configuration could send it (suite: TestPaymentIntentAttributes/leaves/request/PostPaymentIntentsIntent/payment_method_options.card.three_d_secure.version).",
@@ -301,7 +344,11 @@ var Resources = []Resource{
 	}, CreatePath: "/v1/charges", UpdatePath: "/v1/charges/{charge}", Omit: []string{"card", "destination"}, ReadOnly: []string{"application_fee", "fraud_details", "radar_options"}, Require: []string{"amount", "currency"}},
 	{Package: "refund", CreatePath: "/v1/refunds", UpdatePath: "/v1/refunds/{refund}"},
 	{Package: "dispute", ReadPath: "/v1/disputes/{dispute}"},
-	{Package: "checkout_session", AcceptedOnly: keptFor(sessionKept, sessionKeptLeaves), CreatePath: "/v1/checkout/sessions", UpdatePath: "/v1/checkout/sessions/{session}", Omit: []string{"payment_method_options.pay_by_bank"}},
+	{Package: "checkout_session", LeftToStripe: map[string]string{
+		"PostCheckoutSessions branding_settings.icon.file":  leftMissing,
+		"PostCheckoutSessions branding_settings.logo.file":  leftMissing,
+		"PostCheckoutSessions payment_method_configuration": "Stripe's refusal turns on the payment methods the configuration it names turns on, which the plan cannot know (probes `isolated/configuration_bancontact` and `isolated/configuration_no_methods`).",
+	}, AcceptedOnly: keptFor(sessionKept, sessionKeptLeaves), CreatePath: "/v1/checkout/sessions", UpdatePath: "/v1/checkout/sessions/{session}", Omit: []string{"payment_method_options.pay_by_bank"}},
 	{Package: "mandate", ReadPath: "/v1/mandates/{mandate}"},
 	// Wave 7 batch a. The Climate catalogue is read-only. The identity session leaves out
 	// verification flows and related persons, which the suite does not prove, so it takes a
@@ -374,7 +421,11 @@ var Resources = []Resource{
 		Keep: []string{"address", "created", "dob", "email", "first_name", "future_requirements", "id", "id_number", "id_number_provided", "last_name", "metadata", "phone",
 			"relationship", "requirements", "ssn_last_4", "ssn_last_4_provided", "verification"},
 		ReadOnly: []string{"relationship.authorizer", "relationship.legal_guardian", "verification"}},
-	{Package: "account_v2", AcceptedOnly: map[string]string{"configuration.recipient.capabilities.stripe_balance.stripe_transfers.requested": acceptedKept},
+	{Package: "account_v2", LeftToStripe: map[string]string{
+		"PostV2CoreAccounts defaults.profile.business_url":                                                    leftBusinessURL,
+		"PostV2CoreAccountsId configuration.recipient.capabilities.stripe_balance.stripe_transfers.requested": "Stripe's refusal turns on `dashboard` and the collectors of `defaults.responsibilities` being absent from the request, which a pattern of what a request sends cannot state: it took the same request beside them (probes `isolated/change_adds_recipient` and `isolated/change_adds_recipient_with_collectors`), as the declaration's `Answers` words.",
+		"PostV2CoreAccountsId defaults.profile.business_url":                                                  leftBusinessURL,
+	}, AcceptedOnly: map[string]string{"configuration.recipient.capabilities.stripe_balance.stripe_transfers.requested": acceptedKept},
 		CreatePath: "/v2/core/accounts", UpdatePath: "/v2/core/accounts/{id}",
 		Keep: []string{"applied_configurations", "closed",
 			"configuration.customer.applied", "configuration.customer.capabilities.automatic_indirect_tax",

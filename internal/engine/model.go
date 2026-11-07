@@ -92,6 +92,9 @@ type model struct {
 	// lineDiscounts are the `discounts` of the elements of a top-level list, such as a quote's
 	// line items, which the resource expands and maps by key too (discounts.go).
 	lineDiscounts []*node
+	// refusals are the requests the conformance suite recorded Stripe refusing, which the plan
+	// refuses too (recorded.go).
+	refusals []recordedRefusal
 }
 
 // reservedNames are the root attribute names Terraform does not allow.
@@ -189,7 +192,12 @@ func compile(decl Declaration, table []fields.Field) (*model, error) {
 		return nil, err
 	}
 
-	m := &model{decl: decl, nodes: nodes, v2: v2, discounts: discountsNode(nodes), lineDiscounts: lineDiscountsNodes(nodes)}
+	refusals, err := recordedRefusals(nodes)
+	if err != nil {
+		return nil, fmt.Errorf("%s: %w", decl.TypeName, err)
+	}
+
+	m := &model{decl: decl, nodes: nodes, v2: v2, discounts: discountsNode(nodes), lineDiscounts: lineDiscountsNodes(nodes), refusals: refusals}
 	// Stripe drops a discount that ends, a `once` or `repeating` one, and a discount can be added
 	// outside Terraform, so a read of a create-only `discounts` (a subscription's) would replace a
 	// live object on the next plan. Once state holds the list, it keeps it as PreserveConfig keeps

@@ -105,7 +105,7 @@ The `after_completion.hosted_confirmation` attribute supports:
 
 The `after_completion.redirect` attribute supports:
 
-* `url` - (Required) The URL the customer will be redirected to after the purchase is complete. Stripe takes it on an update only beside `after_completion.type`, which an update sends with it. Elsewhere Stripe refused it on a US account on update: "Missing required param: after_completion[type].".
+* `url` - (Required) The URL the customer will be redirected to after the purchase is complete. Stripe takes it on an update only beside `after_completion.type`, which an update sends with it. Elsewhere Stripe refused it on a US account on update: "Missing required param: after_completion[type].". Where the provider's Stripe account is in `US`, the plan refuses an update that sends `after_completion.redirect.url` set to a payment link that holds `after_completion.redirect.url` set, `after_completion.type = "redirect"`, `line_items[].price` set and `line_items[].quantity = 2`, which Stripe refused there with "Missing required param: after_completion[type]." (conformance suite probe `isolated/hash_after_completion`). The provider reads the account's country only for a plan that sends such a request, and leaves the request to Stripe where the account is elsewhere or the key cannot read it.
 
 <a id="automatic_tax"></a>
 ### `automatic_tax`

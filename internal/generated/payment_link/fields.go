@@ -13,7 +13,7 @@ var Table = []fields.Field{
 			{Name: "custom_message", Shape: fields.String, Create: true, Update: true, Response: true, Stable: true, Description: "The custom message that is displayed to the customer after the purchase is complete.", Default: &fields.Default{Kind: fields.DefaultNone}},
 		}},
 		{Name: "redirect", Shape: fields.Object, Create: true, Update: true, Response: true, Fields: []fields.Field{
-			{Name: "url", Shape: fields.String, Required: true, Create: true, Update: true, Response: true, Description: "The URL the customer will be redirected to after the purchase is complete.", Answer: "Elsewhere Stripe refused it on a US account on update: \"Missing required param: after_completion[type].\"."},
+			{Name: "url", Shape: fields.String, Required: true, Create: true, Update: true, Response: true, Description: "The URL the customer will be redirected to after the purchase is complete.", Answer: "Elsewhere Stripe refused it on a US account on update: \"Missing required param: after_completion[type].\".", PlanRefusals: []fields.PlanRefusal{{Update: true, Sends: "{\"after_completion\":{\"redirect\":{\"url\":{\"$any\":true}}}}", Holds: "{\"after_completion\":{\"redirect\":{\"url\":{\"$any\":true}},\"type\":\"redirect\"},\"line_items\":[{\"price\":{\"$any\":true},\"quantity\":2}]}", Probe: "isolated/hash_after_completion", AccountCountry: "US", Message: "Missing required param: after_completion[type]."}}},
 		}},
 		{Name: "type", Shape: fields.String, Required: true, Create: true, Update: true, Response: true, Enum: []string{"hosted_confirmation", "redirect"}, Description: "The specified behavior after the purchase is complete."},
 	}},

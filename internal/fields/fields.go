@@ -95,6 +95,10 @@ type Field struct {
 	// refused in others, the sentence with the refusals it recorded. The declaration words where
 	// Stripe takes it (engine.Declaration.Answers).
 	Answer string
+	// PlanRefusals are, on an argument the record's rules show Stripe taking in some requests and
+	// refusing in others, the refused requests the plan refuses too (ADR
+	// 2026-10-29-full-attribute-coverage, the record's `rules`).
+	PlanRefusals []PlanRefusal
 	// Unreachable is, on an argument with a value Stripe fails on every attempt, which the
 	// conformance suite therefore never sends, the sentence that names the value and the suite's
 	// reason.
@@ -121,6 +125,28 @@ type Together struct {
 	// Refused is the sentence with Stripe's recorded refusals of the set sent whole, or "" where
 	// it took it.
 	Refused string
+}
+
+// PlanRefusal is one request the conformance suite sent that Stripe refused, as the plan
+// matches it. Sends and Holds are JSON objects in Stripe's request shape, in which the object
+// `{"$any":true}` stands for any value the request or the object holds, where the suite sent a
+// value it generated, such as an ID or an email address.
+type PlanRefusal struct {
+	// Update is true for a refusal of the update request, false for the create's.
+	Update bool
+	// Sends is the whole request the probe sent. A request
+	// matches where each of its members equals the member of the same name the request sends,
+	// whole: a hash holds the same members and a list the same elements, in any order.
+	Sends string
+	// Holds is, on an update, the whole request that created the probe's object. The
+	// object matches where its arguments hold at least these values.
+	Holds string
+	// Probe is the conformance suite's probe that sent the request.
+	Probe string
+	// AccountCountry is the country of the account the probe ran on.
+	AccountCountry string
+	// Message is Stripe's refusal.
+	Message string
 }
 
 // MapUpdate is how Stripe updates a map. A merged map keeps the keys an update leaves out, and

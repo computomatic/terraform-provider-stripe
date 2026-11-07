@@ -644,8 +644,9 @@ var (
 type minimalCreate struct {
 	Object    string             `json:"object"`
 	Operation string             `json:"operation"`
+	Variant   string             `json:"variant"`
 	Status    int                `json:"status"`
-	Params    any                `json:"params"`
+	Params    recordObject       `json:"params"`
 	Response  map[string]Matcher `json:"response"`
 }
 
@@ -1073,13 +1074,12 @@ func (r EvidenceRule) checkBeside() error {
 	}
 	with := 0
 	for _, o := range r.Observations {
-		var params any
-		if err := json.Unmarshal(o.Condition.Params, &params); err != nil {
+		params, err := decodeObject(o.Condition.Params)
+		if err != nil {
 			return fmt.Errorf("beside rule observation %s: params: %w", o.Condition.Probe, err)
 		}
 		leaf, _, _ := strings.Cut(r.Beside, "@")
-		flat, _ := params.(map[string]any)
-		if _, named := flat[leaf]; named || sends(params, strings.Split(leaf, ".")) {
+		if _, named := params.Get(leaf); named || sends(params, strings.Split(leaf, ".")) {
 			with++
 		}
 	}
