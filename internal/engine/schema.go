@@ -193,6 +193,17 @@ func (m *model) refuseSet(mod planmodifier.Set) planmodifier.Set {
 	return refuseSet{refuser{m}, mod}
 }
 
+// The keepHeld constructors of planMods, one per framework modifier type.
+
+func keepHeldBool() planmodifier.Bool       { return keepHeld{} }
+func keepHeldInt64() planmodifier.Int64     { return keepHeld{} }
+func keepHeldFloat64() planmodifier.Float64 { return keepHeld{} }
+func keepHeldString() planmodifier.String   { return keepHeld{} }
+func keepHeldObject() planmodifier.Object   { return keepHeld{} }
+func keepHeldList() planmodifier.List       { return keepHeld{} }
+func keepHeldMap() planmodifier.Map         { return keepHeld{} }
+func keepHeldSet() planmodifier.Set         { return keepHeld{} }
+
 // changedByConfig reports whether the configuration sets a value that differs from the
 // state's. An unknown plan value, or a value the configuration leaves unset, is not one.
 func changedByConfig(config, state attr.Value) bool {
@@ -237,21 +248,21 @@ func (m *model) resourceAttribute(n *node) rschema.Attribute {
 	switch n.Shape {
 	case fields.Bool:
 		return rschema.BoolAttribute{Required: n.Required, Optional: n.Optional, Computed: n.Computed, Sensitive: n.Sensitive, MarkdownDescription: desc,
-			PlanModifiers: planMods(n, m.refuseBool, boolplanmodifier.UseStateForUnknown, boolplanmodifier.RequiresReplace, func() planmodifier.Bool {
+			PlanModifiers: planMods(n, m.refuseBool, keepHeldBool, boolplanmodifier.RequiresReplace, func() planmodifier.Bool {
 				return boolplanmodifier.RequiresReplaceIf(func(_ context.Context, req planmodifier.BoolRequest, resp *boolplanmodifier.RequiresReplaceIfFuncResponse) {
 					resp.RequiresReplace = changedByConfig(req.ConfigValue, req.StateValue)
 				}, replaceIfSetDescription, replaceIfSetDescription)
 			})}
 	case fields.Int:
 		return rschema.Int64Attribute{Required: n.Required, Optional: n.Optional, Computed: n.Computed, Sensitive: n.Sensitive, MarkdownDescription: desc,
-			PlanModifiers: planMods(n, m.refuseInt64, int64planmodifier.UseStateForUnknown, int64planmodifier.RequiresReplace, func() planmodifier.Int64 {
+			PlanModifiers: planMods(n, m.refuseInt64, keepHeldInt64, int64planmodifier.RequiresReplace, func() planmodifier.Int64 {
 				return int64planmodifier.RequiresReplaceIf(func(_ context.Context, req planmodifier.Int64Request, resp *int64planmodifier.RequiresReplaceIfFuncResponse) {
 					resp.RequiresReplace = changedByConfig(req.ConfigValue, req.StateValue)
 				}, replaceIfSetDescription, replaceIfSetDescription)
 			})}
 	case fields.Float:
 		return rschema.Float64Attribute{Required: n.Required, Optional: n.Optional, Computed: n.Computed, Sensitive: n.Sensitive, MarkdownDescription: desc,
-			PlanModifiers: planMods(n, m.refuseFloat64, float64planmodifier.UseStateForUnknown, float64planmodifier.RequiresReplace, func() planmodifier.Float64 {
+			PlanModifiers: planMods(n, m.refuseFloat64, keepHeldFloat64, float64planmodifier.RequiresReplace, func() planmodifier.Float64 {
 				return float64planmodifier.RequiresReplaceIf(func(_ context.Context, req planmodifier.Float64Request, resp *float64planmodifier.RequiresReplaceIfFuncResponse) {
 					resp.RequiresReplace = changedByConfig(req.ConfigValue, req.StateValue)
 				}, replaceIfSetDescription, replaceIfSetDescription)
@@ -259,7 +270,7 @@ func (m *model) resourceAttribute(n *node) rschema.Attribute {
 	case fields.Object:
 		a := rschema.SingleNestedAttribute{Required: n.Required, Optional: n.Optional, Computed: n.Computed, Sensitive: n.Sensitive, MarkdownDescription: desc,
 			Attributes:    m.resourceAttributes(n.Kids),
-			PlanModifiers: planMods(n, m.refuseObject, objectplanmodifier.UseStateForUnknown, objectplanmodifier.RequiresReplace)}
+			PlanModifiers: planMods(n, m.refuseObject, keepHeldObject, objectplanmodifier.RequiresReplace)}
 		if n.TokenForm != "" {
 			a.Validators = append(a.Validators, oneForm{token: n.TokenForm, hash: n.AttrName()})
 		}
@@ -271,7 +282,7 @@ func (m *model) resourceAttribute(n *node) rschema.Attribute {
 	case fields.ObjectList:
 		return rschema.ListNestedAttribute{Required: n.Required, Optional: n.Optional, Computed: n.Computed, Sensitive: n.Sensitive, MarkdownDescription: desc,
 			NestedObject: rschema.NestedAttributeObject{Attributes: m.resourceAttributes(n.Kids), Validators: m.elementValidators(n)},
-			PlanModifiers: planMods(n, m.refuseList, listplanmodifier.UseStateForUnknown, listplanmodifier.RequiresReplace, func() planmodifier.List {
+			PlanModifiers: planMods(n, m.refuseList, keepHeldList, listplanmodifier.RequiresReplace, func() planmodifier.List {
 				return listplanmodifier.RequiresReplaceIf(func(_ context.Context, req planmodifier.ListRequest, resp *listplanmodifier.RequiresReplaceIfFuncResponse) {
 					resp.RequiresReplace = changedByConfig(req.ConfigValue, req.StateValue)
 				}, replaceIfSetDescription, replaceIfSetDescription)
@@ -279,21 +290,21 @@ func (m *model) resourceAttribute(n *node) rschema.Attribute {
 	case fields.ObjectMap:
 		return rschema.MapNestedAttribute{Required: n.Required, Optional: n.Optional, Computed: n.Computed, Sensitive: n.Sensitive, MarkdownDescription: desc,
 			NestedObject:  rschema.NestedAttributeObject{Attributes: m.resourceAttributes(n.Kids)},
-			PlanModifiers: planMods(n, m.refuseMap, mapplanmodifier.UseStateForUnknown, mapplanmodifier.RequiresReplace)}
+			PlanModifiers: planMods(n, m.refuseMap, keepHeldMap, mapplanmodifier.RequiresReplace)}
 	case fields.StringMap:
 		return rschema.MapAttribute{ElementType: scalarType(fields.String), Required: n.Required, Optional: n.Optional, Computed: n.Computed, Sensitive: n.Sensitive, MarkdownDescription: desc,
-			PlanModifiers: planMods(n, m.refuseMap, mapplanmodifier.UseStateForUnknown, mapplanmodifier.RequiresReplace)}
+			PlanModifiers: planMods(n, m.refuseMap, keepHeldMap, mapplanmodifier.RequiresReplace)}
 	case fields.IntMap:
 		return rschema.MapAttribute{ElementType: scalarType(fields.Int), Required: n.Required, Optional: n.Optional, Computed: n.Computed, Sensitive: n.Sensitive, MarkdownDescription: desc,
-			PlanModifiers: planMods(n, m.refuseMap, mapplanmodifier.UseStateForUnknown, mapplanmodifier.RequiresReplace)}
+			PlanModifiers: planMods(n, m.refuseMap, keepHeldMap, mapplanmodifier.RequiresReplace)}
 	case fields.ScalarList:
 		return rschema.ListAttribute{ElementType: scalarType(n.Elem), Required: n.Required, Optional: n.Optional, Computed: n.Computed, Sensitive: n.Sensitive, MarkdownDescription: desc,
-			PlanModifiers: planMods(n, m.refuseList, listplanmodifier.UseStateForUnknown, listplanmodifier.RequiresReplace)}
+			PlanModifiers: planMods(n, m.refuseList, keepHeldList, listplanmodifier.RequiresReplace)}
 	case fields.ScalarSet:
 		return rschema.SetAttribute{ElementType: scalarType(n.Elem), Required: n.Required, Optional: n.Optional, Computed: n.Computed, Sensitive: n.Sensitive, MarkdownDescription: desc,
-			PlanModifiers: planMods(n, m.refuseSet, setplanmodifier.UseStateForUnknown, setplanmodifier.RequiresReplace)}
+			PlanModifiers: planMods(n, m.refuseSet, keepHeldSet, setplanmodifier.RequiresReplace)}
 	default:
-		useState := stringplanmodifier.UseStateForUnknown
+		useState := keepHeldString
 		if n.DataForm != "" {
 			useState = func() planmodifier.String { return keepToken{hash: n.DataForm} }
 		}

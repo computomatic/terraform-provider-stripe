@@ -86,12 +86,17 @@ var Declaration = engine.Declaration{
 	// (family `v1-billing`, `hashes`; `payment_settings` by probe `siblings/1`), so an update
 	// sends only those that changed; `issuer` requires its `type` and goes whole, and so do
 	// `payment_settings.payment_method_options`, which the record does not list, as the update
-	// probes sent it. A write of a card's, Pix's or UPI's `mandate_options`, or of Billie's
-	// `registered_address`, clears what it leaves out (`siblings_cleared`; probe `siblings/32`
-	// clears the card's `network` too), so the whole send keeps those whole, and leaves out a
-	// member the configuration removes, which Stripe refuses as `""` (probes `unset/32`,
-	// `unset/35` and `unset/36`). PayTo's `mandate_options` keeps what a write leaves out (probe
-	// `siblings/34`), which the whole send also holds. `trial_settings.end_behavior` keeps its
+	// probes sent it. A write of Billie's `company_details` and its `registered_address`, of the
+	// card's, Pix's and the US bank account's options, of Financial Connections, or of a card's,
+	// Pix's or UPI's `mandate_options`, clears what it leaves out (`siblings_cleared`; probes
+	// `isolated/hash_*` and `siblings/32`, which clears the card's `network` too), so the whole
+	// send keeps those whole, and leaves out a member the configuration removes, which Stripe
+	// refuses as `""` (probes `unset/32`, `unset/35` and `unset/36`). ACSS debit's options and
+	// PayTo's `mandate_options` keep what a write leaves out (probes `isolated/hash_acss_debit`
+	// and `siblings/34`), which the whole send also holds. Stripe refuses a customer balance's
+	// options, and their `bank_transfer`, written in part (probes `isolated/hash_customer_balance`
+	// and `isolated/hash_customer_balance_bank_transfer`), which the whole send never does,
+	// though it sends what the configuration holds of them. `trial_settings.end_behavior` keeps its
 	// siblings too (probe `siblings/27`), but `trial_settings` requires it, so it goes whole.
 	SendChangedMembers: []string{"invoice_settings", "payment_settings"},
 	SendWholeMembers:   []string{"payment_settings.payment_method_options"},
@@ -102,6 +107,12 @@ var Declaration = engine.Declaration{
 		"add_invoice_items.discounts.discount": "Stripe takes a discount the subscription or its customer already holds.",
 		// suite: TestSubscriptionAttributes, probe `isolated/invoice_item_promotion_code_inactive`
 		"add_invoice_items.discounts.promotion_code": "Stripe takes an active promotion code.",
+		// suite: TestSubscriptionAttributes, probe `isolated/hash_customer_balance_bank_transfer`,
+		// whose subscription is created with an EU bank transfer and its `country`
+		"payment_settings.payment_method_options.customer_balance.bank_transfer.type": "Stripe takes `eu_bank_transfer` beside `eu_bank_transfer.country`, and refused it on an update that sent no `eu_bank_transfer`.",
+		// suite: TestSubscriptionAttributes, probe `isolated/hash_customer_balance`, whose
+		// subscription is created with a US bank transfer beside its `funding_type`
+		"payment_settings.payment_method_options.customer_balance.funding_type": "Stripe takes `bank_transfer` beside `bank_transfer.type`, and refused it on an update that sent no `bank_transfer`.",
 	},
 	Defaults: map[string]string{
 		// suite: TestSubscriptionAttributes, probe `every_field/19`, which sends `on_behalf_of`

@@ -182,7 +182,7 @@ var Table = []fields.Field{
 				{Name: "preferred_language", Shape: fields.String, Create: true, Update: true, Response: true, ServerDefaulted: true, Stable: true, Enum: []string{"de", "en", "fr", "nl"}, Description: "Preferred language of the Bancontact authorization page that the customer is redirected to.", Default: &fields.Default{Kind: fields.DefaultNone}},
 			}},
 			{Name: "billie", Shape: fields.Object, Create: true, Update: true, Response: true, Description: "This sub-hash contains details about the Billie payment method options to pass to invoices created by the subscription.", Fields: []fields.Field{
-				{Name: "company_details", Shape: fields.Object, Create: true, Update: true, Response: true, Fields: []fields.Field{
+				{Name: "company_details", Shape: fields.Object, Create: true, Update: true, Response: true, SiblingsCleared: true, Fields: []fields.Field{
 					{Name: "registered_address", Shape: fields.Object, Create: true, Update: true, Response: true, SiblingsCleared: true, Fields: []fields.Field{
 						{Name: "city", Shape: fields.String, Create: true, Update: true, Response: true, Stable: true, Description: "City, district, suburb, town, or village.", Default: &fields.Default{Kind: fields.DefaultNone}},
 						{Name: "country", Shape: fields.String, Create: true, Update: true, Response: true, Stable: true, Description: "Two-letter country code.", Default: &fields.Default{Kind: fields.DefaultNone}},
@@ -202,7 +202,7 @@ var Table = []fields.Field{
 					{Name: "expires_at", Shape: fields.Int, Create: true, Update: true, Response: true, Stable: true, Description: "Date when the mandate expires and no further payments will be charged. If not provided, the mandate will be set to be indefinite.", Default: &fields.Default{Kind: fields.DefaultNone}},
 				}},
 			}},
-			{Name: "card", Shape: fields.Object, Create: true, Update: true, Response: true, Description: "This sub-hash contains details about the Card payment method options to pass to invoices created by the subscription.", Fields: []fields.Field{
+			{Name: "card", Shape: fields.Object, Create: true, Update: true, Response: true, Description: "This sub-hash contains details about the Card payment method options to pass to invoices created by the subscription.", SiblingsCleared: true, Fields: []fields.Field{
 				{Name: "mandate_options", Shape: fields.Object, Create: true, Update: true, Response: true, SiblingsCleared: true, Fields: []fields.Field{
 					{Name: "amount", Shape: fields.Int, Create: true, Update: true, Response: true, Stable: true, Description: "Amount to be charged for future payments, specified in the presentment currency.", Default: &fields.Default{Kind: fields.DefaultNone}},
 					{Name: "amount_type", Shape: fields.String, Create: true, Update: true, Response: true, Stable: true, Enum: []string{"fixed", "maximum"}, Description: "One of `fixed` or `maximum`. If `fixed`, the `amount` param refers to the exact amount to be charged in future payments. If `maximum`, the amount charged can be up to the value passed for the `amount` param.", Default: &fields.Default{Kind: fields.DefaultNone}},
@@ -216,9 +216,9 @@ var Table = []fields.Field{
 					{Name: "eu_bank_transfer", Shape: fields.Object, Create: true, Update: true, Response: true, Fields: []fields.Field{
 						{Name: "country", Shape: fields.String, Required: true, Create: true, Update: true, Response: true, Enum: []string{"BE", "DE", "ES", "FR", "IE", "NL"}, Description: "The desired country code of the bank account information. Permitted values include: `DE`, `FR`, `IE`, or `NL`."},
 					}},
-					{Name: "type", Shape: fields.String, Create: true, Update: true, Response: true, Stable: true, Description: "The bank transfer type that can be used for funding. Permitted values include: `eu_bank_transfer`, `gb_bank_transfer`, `jp_bank_transfer`, `mx_bank_transfer`, or `us_bank_transfer`.", Default: &fields.Default{Kind: fields.DefaultNone}},
+					{Name: "type", Shape: fields.String, Create: true, Update: true, Response: true, Stable: true, Description: "The bank transfer type that can be used for funding. Permitted values include: `eu_bank_transfer`, `gb_bank_transfer`, `jp_bank_transfer`, `mx_bank_transfer`, or `us_bank_transfer`.", Default: &fields.Default{Kind: fields.DefaultNone}, Answer: "Elsewhere Stripe refused it on a US account on update: \"Missing required param: payment_settings[payment_method_options][customer_balance][bank_transfer][eu_bank_transfer].\"."},
 				}},
-				{Name: "funding_type", Shape: fields.String, Create: true, Update: true, Response: true, Stable: true, Enum: []string{"bank_transfer"}, Description: "The funding method type to be used when there are not enough funds in the customer balance. Permitted values include: `bank_transfer`.", Default: &fields.Default{Kind: fields.DefaultNone}},
+				{Name: "funding_type", Shape: fields.String, Create: true, Update: true, Response: true, Stable: true, Enum: []string{"bank_transfer"}, Description: "The funding method type to be used when there are not enough funds in the customer balance. Permitted values include: `bank_transfer`.", Default: &fields.Default{Kind: fields.DefaultNone}, Answer: "Elsewhere Stripe refused it on a US account on update: \"When using `payment_method_options[customer_balance][funding_type]=bank_transfer`, the `payment_method_options[customer_balance][bank_transfer]` parameter is required.\".", PlanRefusals: []fields.PlanRefusal{{Update: true, Sends: "{\"payment_settings\":{\"payment_method_options\":{\"customer_balance\":{\"funding_type\":\"bank_transfer\"}}}}", Holds: "{\"collection_method\":\"send_invoice\",\"customer\":{\"$any\":true},\"days_until_due\":30,\"items\":[{\"price\":{\"$any\":true}}],\"payment_settings\":{\"payment_method_options\":{\"customer_balance\":{\"bank_transfer\":{\"type\":\"us_bank_transfer\"},\"funding_type\":\"bank_transfer\"}}}}", Probe: "isolated/hash_customer_balance", AccountCountry: "US", Message: "When using `payment_method_options[customer_balance][funding_type]=bank_transfer`, the `payment_method_options[customer_balance][bank_transfer]` parameter is required."}}},
 			}},
 			{Name: "payto", Shape: fields.Object, Create: true, Update: true, Response: true, Description: "This sub-hash contains details about the PayTo payment method options to pass to invoices created by the subscription.", Fields: []fields.Field{
 				{Name: "mandate_options", Shape: fields.Object, Create: true, Update: true, Response: true, Fields: []fields.Field{
@@ -227,7 +227,7 @@ var Table = []fields.Field{
 					{Name: "purpose", Shape: fields.String, Create: true, Update: true, Response: true, Stable: true, Enum: []string{"dependant_support", "government", "loan", "mortgage", "other", "pension", "personal", "retail", "salary", "tax", "utility"}, Description: "The purpose for which payments are made. Has a default value based on your merchant category code.", Default: &fields.Default{Kind: fields.DefaultNone}},
 				}},
 			}},
-			{Name: "pix", Shape: fields.Object, Create: true, Update: true, Response: true, Description: "This sub-hash contains details about the Pix payment method options to pass to invoices created by the subscription.", Fields: []fields.Field{
+			{Name: "pix", Shape: fields.Object, Create: true, Update: true, Response: true, Description: "This sub-hash contains details about the Pix payment method options to pass to invoices created by the subscription.", SiblingsCleared: true, Fields: []fields.Field{
 				{Name: "expires_after_seconds", Shape: fields.Int, Create: true, Update: true, Response: true, Stable: true, Description: "The number of seconds (between 10 and 1209600) after which Pix payment will expire. Defaults to 86400 seconds.", Default: &fields.Default{Kind: fields.DefaultNone}},
 				{Name: "mandate_options", Shape: fields.Object, Create: true, Update: true, Response: true, SiblingsCleared: true, Fields: []fields.Field{
 					{Name: "amount", Shape: fields.Int, Create: true, Update: true, Response: true, Stable: true, Description: "Amount to be charged for future payments.", Default: &fields.Default{Kind: fields.DefaultNone}},
@@ -244,8 +244,8 @@ var Table = []fields.Field{
 					{Name: "end_date", Shape: fields.Int, Create: true, Update: true, Response: true, Stable: true, Description: "End date of the mandate or subscription.", Default: &fields.Default{Kind: fields.DefaultNone}},
 				}},
 			}},
-			{Name: "us_bank_account", Shape: fields.Object, Create: true, Update: true, Response: true, Description: "This sub-hash contains details about the ACH direct debit payment method options to pass to invoices created by the subscription.", Fields: []fields.Field{
-				{Name: "financial_connections", Shape: fields.Object, Create: true, Update: true, Response: true, Fields: []fields.Field{
+			{Name: "us_bank_account", Shape: fields.Object, Create: true, Update: true, Response: true, Description: "This sub-hash contains details about the ACH direct debit payment method options to pass to invoices created by the subscription.", SiblingsCleared: true, Fields: []fields.Field{
+				{Name: "financial_connections", Shape: fields.Object, Create: true, Update: true, Response: true, SiblingsCleared: true, Fields: []fields.Field{
 					{Name: "filters", Shape: fields.Object, Create: true, Update: true, Response: true, Fields: []fields.Field{
 						{Name: "account_subcategories", Shape: fields.ScalarList, Elem: fields.String, Create: true, Update: true, Response: true, Stable: true, Description: "The account subcategories to use to filter for possible accounts to link. Valid subcategories are `checking` and `savings`.", Default: &fields.Default{Kind: fields.DefaultNone}},
 					}},

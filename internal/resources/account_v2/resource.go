@@ -43,9 +43,10 @@ import (
 // collectors it requires. Stripe does not return the capabilities a configuration requested, only
 // their status, so the `requested` flags stay in state from the configuration, and Stripe drops
 // the recipient's `stripe_transfers` from its answer once it is no longer requested (the record's
-// `side_effects`, probe `update/2`), so that flag is kept even then. Stripe answers an account
-// with no configuration with a `configuration` of three nulls (the record's probe `update/1`), so
-// `configuration` is server-filled. Stripe shows the country in upper case, so the configured one
+// `side_effects`, probe `update/2`), so that flag is kept even then. `configuration` is
+// server-filled, and Stripe reads an account created with no configuration as `configuration`
+// null under every include, which the engine asks for (the record's `hash_reads`, condition
+// `no_configuration`), so state holds it null and later plans keep it so. Stripe shows the country in upper case, so the configured one
 // stays in state. Stripe refuses a null `identity.country` and ignores a null `dashboard` (the
 // record's `unset`), so removing either keeps its value, as removing another member of the
 // identity does. The record proves null unsets `contact_phone`,

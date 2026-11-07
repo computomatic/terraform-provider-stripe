@@ -35,7 +35,8 @@ type node struct {
 	Sensitive bool
 	// Replace attaches RequiresReplace: Stripe rejects the field on update.
 	Replace bool
-	// UseState attaches UseStateForUnknown: Stripe never changes the value by itself.
+	// UseState attaches keepHeld, UseStateForUnknown where the state holds the parent hash:
+	// Stripe never changes the value by itself.
 	UseState bool
 	// Once is a once-returned output: a response that omits it keeps the prior value.
 	Once bool

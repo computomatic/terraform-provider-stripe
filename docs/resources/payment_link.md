@@ -446,14 +446,14 @@ The `name_collection` attribute supports:
 The `name_collection.business` attribute supports:
 
 * `enabled` - (Required) Indicates whether business name collection is enabled for the payment link.
-* `optional` - (Optional) Whether the customer is required to complete the field before checking out. Defaults to `false`. Default (Stripe): `false` once `name_collection.business` is set. Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
+* `optional` - (Optional) Whether the customer is required to complete the field before checking out. Defaults to `false`. Default (Stripe): `false` once `name_collection.business` is set. Removing it from the configuration leaves the current value.
 
 <a id="name_collection.individual"></a>
 ### `name_collection.individual`
 
 The `name_collection.individual` attribute supports:
 
-* `enabled` - (Required) Indicates whether individual name collection is enabled for the payment link.
+* `enabled` - (Required) Indicates whether individual name collection is enabled for the payment link. Stripe takes it beside `name_collection.business.enabled` set to `true`, and refuses both names' `enabled` set to `false`. Elsewhere Stripe refused it on a US account on create and update: "If specifying name_collection, you must have either `name_collection[individual][enabled] = true` or `name_collection[business][enabled] = true`.". Where the provider's Stripe account is in `US`, the plan refuses a create that sends `line_items[].price` set, `line_items[].quantity = 2`, `name_collection.business.enabled = false` and `name_collection.individual.enabled = false`, which Stripe refused there with "If specifying name_collection, you must have either `name_collection[individual][enabled] = true` or `name_collection[business][enabled] = true`." (conformance suite probe `isolated/name_collection_create_both_off`). Where the provider's Stripe account is in `US`, the plan refuses an update that sends `name_collection.business.enabled = false` and `name_collection.individual.enabled = false` to a payment link that holds `line_items[].price` set, `line_items[].quantity = 2`, `name_collection.business.enabled = true` and `name_collection.individual.enabled = true`, which Stripe refused there with "If specifying name_collection, you must have either `name_collection[individual][enabled] = true` or `name_collection[business][enabled] = true`." (conformance suite probe `isolated/name_collection_update_both_off`). The provider reads the account's country only for a plan that sends such a request, and leaves the request to Stripe where the account is elsewhere or the key cannot read it.
 * `optional` - (Optional) Whether the customer is required to complete the field before checking out. Defaults to `false`. Default (Stripe): `false` once `name_collection.individual` is set. Removing it from the configuration leaves the current value.
 
 <a id="optional_items"></a>

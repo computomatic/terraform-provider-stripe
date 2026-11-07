@@ -9,8 +9,11 @@ import (
 
 	"github.com/hashicorp/go-version"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
+	"github.com/hashicorp/terraform-plugin-testing/knownvalue"
 	"github.com/hashicorp/terraform-plugin-testing/plancheck"
+	"github.com/hashicorp/terraform-plugin-testing/statecheck"
 	"github.com/hashicorp/terraform-plugin-testing/terraform"
+	"github.com/hashicorp/terraform-plugin-testing/tfjsonpath"
 	"github.com/hashicorp/terraform-plugin-testing/tfversion"
 
 	"github.com/computomatic/terraform-provider-stripe/internal/acctest"
@@ -615,6 +618,11 @@ resource "stripe_account_v2" "test" {
 `, c.Name("Profile"), body)
 }
 
+// noConfiguration checks that an account with no configuration holds `configuration` null, as
+// Stripe reads it under every include, which the engine asks for (the record's `hash_reads`,
+// condition `no_configuration`), and not a hash of three nulls.
+var noConfiguration = statecheck.ExpectKnownValue(address, tfjsonpath.New("configuration"), knownvalue.Null())
+
 const (
 	usCompany = "    country     = \"US\"\n    entity_type = \"company\"\n"
 	requested = "      capabilities = { stripe_balance = { stripe_transfers = { requested = true } } }"
@@ -659,6 +667,7 @@ func TestAccAccountV2_updateDefaults(t *testing.T) {
 				ConfigPlanChecks: resource.ConfigPlanChecks{PostApplyPostRefresh: []plancheck.PlanCheck{
 					plancheck.ExpectEmptyPlan(),
 				}},
+				ConfigStateChecks: []statecheck.StateCheck{noConfiguration},
 				Check: resource.ComposeAggregateTestCheckFunc(
 					pathOf(&path),
 					resource.TestCheckResourceAttr(address, "contact_phone", "+18008675309"),
@@ -673,6 +682,7 @@ func TestAccAccountV2_updateDefaults(t *testing.T) {
 					PreApply:             []plancheck.PlanCheck{plancheck.ExpectResourceAction(address, plancheck.ResourceActionUpdate)},
 					PostApplyPostRefresh: []plancheck.PlanCheck{plancheck.ExpectEmptyPlan()},
 				},
+				ConfigStateChecks: []statecheck.StateCheck{noConfiguration},
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr(address, "contact_phone", "+18008675310"),
 					resource.TestCheckResourceAttr(address, "defaults.locales.0", "bg"),
