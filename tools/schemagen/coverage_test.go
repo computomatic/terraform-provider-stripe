@@ -19,6 +19,7 @@ import (
 	"github.com/computomatic/terraform-provider-stripe/internal/fields"
 	"github.com/computomatic/terraform-provider-stripe/internal/resources/payment_intent"
 	"github.com/computomatic/terraform-provider-stripe/internal/resources/setup_intent"
+	"github.com/computomatic/terraform-provider-stripe/internal/wire"
 	"github.com/computomatic/terraform-provider-stripe/tools/internal/evidencecheck"
 )
 
@@ -519,14 +520,14 @@ func TestAnswersQuoteTheirRefusals(t *testing.T) {
 			ev.Evidence.Leaves = append(ev.Evidence.Leaves, EvidenceLeaf{Key: l.Key, Status: "proven", Tests: []string{"TestGadgetAttributes/leaves/" + l.Key.String()}})
 		}
 	}
-	answer := func(probe string, status int, message string) (o RuleObservation) {
-		o.Condition.AccountCountry, o.Condition.Probe, o.Condition.Params = "US", probe, json.RawMessage(`{}`)
+	answer := func(probe string, status int, message, color string) (o RuleObservation) {
+		o.Condition.AccountCountry, o.Condition.Probe, o.Condition.Params = "US", probe, json.RawMessage(`{"color":"`+color+`"}`)
 		o.Value = RuleValue{Status: status, Message: message}
 		return o
 	}
 	for _, k := range keys {
 		ev.Evidence.Rules = append(ev.Evidence.Rules, EvidenceRule{Object: k.Object, Operation: k.Operation, Path: k.Path, Rule: "Stripe's answer turns on the request",
-			Observations: []RuleObservation{answer("isolated/beside", 200, ""), answer("isolated/alone", 400, "Not alone.")}})
+			Observations: []RuleObservation{answer("isolated/beside", 200, "", "blue"), answer("isolated/alone", 400, "Not alone.", "red")}})
 	}
 	if f := fieldAt(cover(t, res, ev).table, "color"); f == nil || f.Answer != `Elsewhere Stripe refused it on a US account on create and update: "Not alone.".` {
 		t.Errorf("color: %+v", f)
@@ -1054,26 +1055,26 @@ func TestTokenFormLeavesTheHashOptional(t *testing.T) {
 // states nothing until a declaration words it. A create that sends the leaf says nothing of it.
 func TestMinimalCreatesContradictADefault(t *testing.T) {
 	key := Key{Object: "gadget", Side: SideRequest, Operation: "PostGadgets", Path: "group"}
-	create := func(params any, held Matcher) minimalCreate {
+	create := func(params recordObject, held Matcher) minimalCreate {
 		return minimalCreate{Object: "gadget", Operation: "PostGadgets", Status: 200, Params: params, Response: map[string]Matcher{"group": held}}
 	}
-	sent := map[string]any{"group": "g"}
+	sent := recordObject{{Name: "group", Value: wire.String("g")}}
 	for name, tc := range map[string]struct {
 		def     EvidenceDefault
 		creates []minimalCreate
 		want    fields.DefaultKind
 	}{
-		"nothing against it": {EvidenceDefault{Kind: "null"}, []minimalCreate{create(map[string]any{}, Matcher{Kind: "null"})}, fields.DefaultNone},
-		"absent is none":     {EvidenceDefault{Kind: "null"}, []minimalCreate{create(map[string]any{}, Matcher{Kind: "absent"})}, fields.DefaultNone},
-		"a generated value":  {EvidenceDefault{Kind: "null"}, []minimalCreate{create(map[string]any{}, Matcher{Kind: "created"})}, fields.DefaultVaries},
-		"a copied value":     {EvidenceDefault{Kind: "null"}, []minimalCreate{create(map[string]any{}, Matcher{Kind: "sent", Path: "name"})}, fields.DefaultVaries},
+		"nothing against it": {EvidenceDefault{Kind: "null"}, []minimalCreate{create(recordObject{}, Matcher{Kind: "null"})}, fields.DefaultNone},
+		"absent is none":     {EvidenceDefault{Kind: "null"}, []minimalCreate{create(recordObject{}, Matcher{Kind: "absent"})}, fields.DefaultNone},
+		"a generated value":  {EvidenceDefault{Kind: "null"}, []minimalCreate{create(recordObject{}, Matcher{Kind: "created"})}, fields.DefaultVaries},
+		"a copied value":     {EvidenceDefault{Kind: "null"}, []minimalCreate{create(recordObject{}, Matcher{Kind: "sent", Path: "name"})}, fields.DefaultVaries},
 		"sends the leaf":     {EvidenceDefault{Kind: "null"}, []minimalCreate{create(sent, Matcher{Kind: "sent", Path: "group"})}, fields.DefaultNone},
 		"a refused create": {EvidenceDefault{Kind: "null"}, []minimalCreate{{Object: "gadget", Operation: "PostGadgets", Status: 400,
 			Response: map[string]Matcher{"group": {Kind: "created"}}}}, fields.DefaultNone},
 		"another literal": {EvidenceDefault{Kind: "value", Value: json.RawMessage(`"a"`)},
-			[]minimalCreate{create(map[string]any{}, Matcher{Kind: "value", Value: json.RawMessage(`"b"`)})}, fields.DefaultVaries},
+			[]minimalCreate{create(recordObject{}, Matcher{Kind: "value", Value: json.RawMessage(`"b"`)})}, fields.DefaultVaries},
 		"the same literal": {EvidenceDefault{Kind: "value", Value: json.RawMessage(`"a"`)},
-			[]minimalCreate{create(map[string]any{}, Matcher{Kind: "value", Value: json.RawMessage(`"a"`)})}, fields.DefaultValue},
+			[]minimalCreate{create(recordObject{}, Matcher{Kind: "value", Value: json.RawMessage(`"a"`)})}, fields.DefaultValue},
 	} {
 		def := tc.def
 		p := &Pinned{
@@ -1111,7 +1112,10 @@ func TestListMemberDefaultsAreTheElementsValue(t *testing.T) {
 
 // A parameter is sent through the hashes and lists on its way.
 func TestSends(t *testing.T) {
-	params := map[string]any{"data": map[string]any{"note": "a"}, "items": []any{map[string]any{"price": "p"}}}
+	params := wire.Object{
+		{Name: "data", Value: wire.Object{{Name: "note", Value: wire.String("a")}}},
+		{Name: "items", Value: wire.Array{wire.Object{{Name: "price", Value: wire.String("p")}}}},
+	}
 	for path, want := range map[string]bool{"data": true, "data.note": true, "data.other": false, "items.price": true, "items.quantity": false, "gone": false} {
 		if got := sends(params, strings.Split(path, ".")); got != want {
 			t.Errorf("%s: %v, want %v", path, got, want)

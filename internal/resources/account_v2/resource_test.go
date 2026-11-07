@@ -381,6 +381,29 @@ func TestAccAccountV2_changeCountry(t *testing.T) {
 	})
 }
 
+// Stripe refused `GB` on the suite's recipient account in `US`, which requests `stripe_transfers`
+// (the record's rule on the update's `identity.country`, probe
+// `isolated/change_country_on_recipient`, with its values), so the plan refuses the update that
+// would send it, with Stripe's message, and nothing reaches Stripe.
+func TestAccAccountV2_changeCountryOnRecipient(t *testing.T) {
+	acct := acctest.NewAccount(t)
+	managedRecipient := "  dashboard = \"none\"\n  defaults = {\n    responsibilities = { fees_collector = \"application\", losses_collector = \"application\" }\n  }\n"
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: tfacc.ProviderFactories,
+		Steps: acctest.Forget(t, []resource.TestStep{
+			{
+				Config: recipientConfig(acct, "    country = \"US\"\n", requested, managedRecipient),
+				Check:  resource.TestCheckResourceAttr(address, "identity.country", "US"),
+			},
+			{
+				Config:      recipientConfig(acct, "    country = \"GB\"\n", requested, managedRecipient),
+				PlanOnly:    true,
+				ExpectError: regexp.MustCompile(`(?s)Stripe refuses this update.*identity\.country\s+=\s+"GB".*Stripe\s+account\s+in\s+US.*When\s+requesting\s+the\s+` + "`transfers`" + `\s+capability.*isolated/change_country_on_recipient`),
+			},
+		}, nil, "stripe_account_v2"),
+	})
+}
+
 // Stripe takes a new default currency on a US account (the record's probe
 // `isolated/change_currency`, with its values), so it changes in place.
 func TestAccAccountV2_changeCurrency(t *testing.T) {

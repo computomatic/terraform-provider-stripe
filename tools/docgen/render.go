@@ -127,7 +127,8 @@ func markers(a *attr, labelled bool) string {
 
 // line is one bullet. Its link to a nested attribute's subsection uses the dotted path. An
 // argument Stripe has only ever refused says so after its description, one it takes in some
-// requests and refuses in others says where it takes it, one Stripe takes only with others names
+// requests and refuses in others says where it takes it and which of the refused requests the
+// plan refuses, one Stripe takes only with others names
 // them, and one with a value Stripe fails on every attempt names the value. An optional argument's
 // line ends with its default statement and, on a resource page where it is also Computed, the
 // engine's sentence on removing it (D4).
@@ -143,6 +144,9 @@ func (p *page) line(a *attr, path string, labelled bool) string {
 	}
 	if labelled && a.Answer != "" {
 		after = append(after, a.Answer)
+	}
+	if labelled && a.PlanRefusal != "" {
+		after = append(after, a.PlanRefusal)
 	}
 	if labelled && a.Together != "" {
 		after = append(after, a.Together)

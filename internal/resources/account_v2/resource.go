@@ -29,7 +29,8 @@ import (
 // fake `v0.31.0`, whose probes change each on an account that held another (`isolated/change_*`):
 // Stripe takes a country on an account with none and fills the currency from it, and it refused
 // `GB` on a recipient that requests `stripe_transfers` (probe
-// `isolated/change_country_on_recipient`). Stripe changes `applied_configurations` with the
+// `isolated/change_country_on_recipient`), which the plan refuses from the record's rule
+// (fields.PlanRefusal). Stripe changes `applied_configurations` with the
 // recipient's `applied` and its request (the record's `side_effects`); the record shows the
 // request's effect only with `dashboard` `none` and both collectors `application` carried beside
 // it (`carried` of probe `isolated/change_adds_recipient_with_collectors`), which is all
@@ -105,7 +106,7 @@ var Declaration = engine.Declaration{
 		"defaults.profile.business_url": "Stripe judges the URL by its value: an update took `https://accessible.stripe.com`, `https://www.iana.org` and `https://no-such-host.invalid` and refused `https://stripe.com`, `https://docs.stripe.com`, `https://example.com` and `https://example.com/acme`, and a create took `https://stripe.com` and `https://example.com/acme` on an account without the recipient configuration and refused `https://stripe.com` on one with it.",
 		// suite: TestV2CoreAccountAttributes, probes `isolated/change_country`,
 		// `isolated/change_country_from_none` and `isolated/change_country_on_recipient`
-		"identity.country": "Stripe took `GB` on an update of an account in `US`, and `US` on an account that had no country, and refused `GB` on an account whose recipient configuration requests `stripe_transfers`.",
+		"identity.country": "Stripe took `GB` on an update of an account in `US`, and `US` on an account that had no country, and refused `GB` on an account in `US` whose recipient configuration requests `stripe_transfers`.",
 	},
 	// Stripe keeps the members of `configuration.recipient` an update leaves out (probe
 	// `isolated/hash_recipient`), and takes `applied` and the transfers request each alone

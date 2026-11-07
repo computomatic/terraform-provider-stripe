@@ -11,6 +11,7 @@ import (
 	"strings"
 
 	"github.com/computomatic/terraform-provider-stripe/internal/fields"
+	"github.com/computomatic/terraform-provider-stripe/internal/wire"
 	"github.com/computomatic/terraform-provider-stripe/tools/internal/evidencecheck"
 )
 
@@ -273,6 +274,9 @@ func coverTable(spec *Spec, res Resource, ev *Pinned) (*tableCoverage, error) {
 	}
 	if err := annotate(tc.table, leaves, records, create, unsetFor(res), ev); err != nil {
 		return nil, fmt.Errorf("%s: %w", res.Package, err)
+	}
+	if err := markPlanRefusals(res, object, create, update, tc.table, leaves, records, ev); err != nil {
+		return nil, err
 	}
 	if err := newRequired(create, leaves, records, before); err != nil {
 		return nil, fmt.Errorf("%s: %w", res.Package, err)
@@ -1297,7 +1301,7 @@ func (p *Pinned) contradicted(k Key, e *EvidenceLeaf) bool {
 	}
 	for _, c := range p.creates[k.Object+" "+k.Operation] {
 		held, ok := c.Response[at]
-		if !ok || c.Status != http.StatusOK || sends(c.Params, strings.Split(k.Path, ".")) {
+		if !ok || c.Status != http.StatusOK || sends(wire.Object(c.Params), strings.Split(k.Path, ".")) {
 			continue
 		}
 		if !e.Default.same(&EvidenceDefault{Kind: held.Kind, Value: held.Value}) {
@@ -1421,16 +1425,16 @@ func heldWords(v evidencecheck.ProbedValue) string {
 }
 
 // sends reports whether params name path, through the hashes and lists on the way.
-func sends(params any, path []string) bool {
+func sends(params wire.Value, path []string) bool {
 	if len(path) == 0 {
 		return true
 	}
 	switch v := params.(type) {
-	case map[string]any:
-		next, ok := v[path[0]]
+	case wire.Object:
+		next, ok := v.Get(path[0])
 		return ok && sends(next, path[1:])
-	case []any:
-		return slices.ContainsFunc(v, func(item any) bool { return sends(item, path) })
+	case wire.Array:
+		return slices.ContainsFunc(v, func(item wire.Value) bool { return sends(item, path) })
 	}
 	return false
 }

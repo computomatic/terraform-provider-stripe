@@ -88,6 +88,13 @@ type Resource struct {
 	// after an operation ID and a space keeps that operation's leaf alone. The product owner
 	// approves each entry.
 	AcceptedOnly map[string]string
+	// LeftToStripe lists the record's rules whose refused requests the plan does not refuse,
+	// by the rule's operation ID, a space and its dotted path, to the reason: the refusal turns
+	// on what the plan cannot know, such as another object's state, or the request the probe
+	// sent does not tell it apart from one Stripe took. Generation fails on a rule of an exposed
+	// argument that it cannot put to the plan and that is not listed here, and on an entry that
+	// names no such rule. The product owner approves each entry.
+	LeftToStripe map[string]string
 	// StatusConfirms says that the declaration's `status` transition confirms the object, so
 	// the request's `confirm` is left out by rule X5.
 	StatusConfirms bool

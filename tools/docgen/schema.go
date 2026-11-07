@@ -50,6 +50,9 @@ type attr struct {
 	// Answer is the declaration's wording of where Stripe takes an argument it refuses in other
 	// requests, with the recorded refusals.
 	Answer string
+	// PlanRefusal is the engine's sentences on the requests the plan refuses because the
+	// conformance suite recorded Stripe refusing them.
+	PlanRefusal string
 	// Together is the sentence that names the rest of a set of arguments Stripe takes only all at
 	// once, with its refusals of the set.
 	Together string

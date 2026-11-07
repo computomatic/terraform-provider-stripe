@@ -54,6 +54,9 @@ type Resource struct {
 	api     api
 	// live is the provider configuration's live-mode check, nil until the provider is configured.
 	live *LiveCheck
+	// country is the provider configuration's account country, nil until the provider is
+	// configured.
+	country *AccountCountry
 	// pollInterval is how often expire checks the status.
 	pollInterval time.Duration
 }
@@ -100,6 +103,7 @@ func (r *Resource) Configure(ctx context.Context, req resource.ConfigureRequest,
 		return
 	}
 	r.live = data.Live
+	r.country = data.Country
 	r.api = api{m: r.m, client: data.Client, strict: data.Strict, typeAt: func(p path.Path) (attr.Type, bool) {
 		a, diags := r.schema.AttributeAtPath(ctx, p)
 		if diags.HasError() {
@@ -122,9 +126,10 @@ func (r *Resource) Configure(ctx context.Context, req resource.ConfigureRequest,
 // and a resource dropped from the configuration stop at plan time. So does any other plan
 // that changes an object the state shows closed, by the same comparison.
 //
-// A create, or a plan that still differs from the state, of a resource that moves money is
-// then checked against the account's mode, last, so a plan that changes nothing or that
-// another check refused asks Stripe nothing.
+// A create, or a plan that still differs from the state, fails where the request the apply
+// would send is one the conformance suite recorded Stripe refusing (refuseRecorded). Such a
+// plan of a resource that moves money is then checked against the account's mode, last, so a
+// plan that changes nothing or that another check refused asks Stripe nothing.
 func (r *Resource) ModifyPlan(ctx context.Context, req resource.ModifyPlanRequest, resp *resource.ModifyPlanResponse) {
 	r.planChange(ctx, req, resp)
 	if resp.Diagnostics.HasError() || req.Plan.Raw.IsNull() {
@@ -146,6 +151,9 @@ func (r *Resource) ModifyPlan(ctx context.Context, req resource.ModifyPlanReques
 		}
 	}
 	if req.State.Raw.IsNull() || !resp.Plan.Raw.Equal(req.State.Raw) {
+		if r.refuseRecorded(ctx, req, resp) {
+			return
+		}
 		r.refuseLiveMoney(ctx, &resp.Diagnostics)
 	}
 }

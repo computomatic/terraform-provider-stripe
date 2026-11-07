@@ -276,9 +276,10 @@ func (p *stripeProvider) Configure(ctx context.Context, req provider.ConfigureRe
 
 	client := stripeapi.New(cfg, stripeapi.Options{Version: p.version})
 	data := &engine.ProviderData{
-		Client: client,
-		Live:   engine.NewLiveCheck(client, config.AllowLiveMoneyMovement.ValueBool(), cfg.StripeAccount),
-		Strict: p.strict,
+		Client:  client,
+		Live:    engine.NewLiveCheck(client, config.AllowLiveMoneyMovement.ValueBool(), cfg.StripeAccount),
+		Country: engine.NewAccountCountry(client),
+		Strict:  p.strict,
 	}
 	resp.DataSourceData = data
 	resp.ResourceData = data

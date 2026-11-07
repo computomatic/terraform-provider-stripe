@@ -155,6 +155,20 @@ func writeLiteral(b *strings.Builder, f fields.Field) {
 	if f.Answer != "" {
 		fmt.Fprintf(b, ", Answer: %s", strconv.Quote(f.Answer))
 	}
+	if len(f.PlanRefusals) > 0 {
+		b.WriteString(", PlanRefusals: []fields.PlanRefusal{")
+		for i, r := range f.PlanRefusals {
+			if i > 0 {
+				b.WriteString(", ")
+			}
+			fmt.Fprintf(b, "{Update: %t, Sends: %s", r.Update, strconv.Quote(r.Sends))
+			if r.Holds != "" {
+				fmt.Fprintf(b, ", Holds: %s", strconv.Quote(r.Holds))
+			}
+			fmt.Fprintf(b, ", Probe: %s, AccountCountry: %s, Message: %s}", strconv.Quote(r.Probe), strconv.Quote(r.AccountCountry), strconv.Quote(r.Message))
+		}
+		b.WriteString("}")
+	}
 	if f.Unreachable != "" {
 		fmt.Fprintf(b, ", Unreachable: %s", strconv.Quote(f.Unreachable))
 	}

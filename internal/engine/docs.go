@@ -18,6 +18,10 @@ type AttributeDoc struct {
 	// declaration's wording of where it takes it and the recorded refusals, which precede the
 	// default statement.
 	Answer string
+	// PlanRefusal is, on an argument with requests the conformance suite recorded Stripe
+	// refusing, the sentences that say which the plan refuses and on an account in which
+	// country, with Stripe's message, which follow Answer.
+	PlanRefusal string
 	// Together is, on a member of a set Stripe takes only all at once, the sentence that names the
 	// rest of the set, with Stripe's refusals of the set, which precedes the default statement.
 	Together string
@@ -76,6 +80,7 @@ func (m *model) attributeDocs(arguments bool) map[string]AttributeDoc {
 			}
 			if arguments {
 				doc.Refused, doc.Answer, doc.Together, doc.Unreachable = n.Refused, n.Answer, n.TogetherDoc, n.Unreachable
+				doc.PlanRefusal = m.planRefusalDoc(n)
 			}
 			doc.Copy = n.Copy
 			if doc != (AttributeDoc{}) {
