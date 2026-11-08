@@ -398,7 +398,7 @@ var Table = []fields.Field{
 	}},
 	{Name: "on_behalf_of", Shape: fields.String, Create: true, Response: true, Description: "The Stripe account ID created for this SetupIntent.", Default: &fields.Default{Kind: fields.DefaultNone}},
 	{Name: "payment_method", Shape: fields.String, Create: true, Update: true, Response: true, Stable: true, Description: "ID of the payment method (a PaymentMethod, Card, or saved Source object) to attach to this SetupIntent.", Default: &fields.Default{Kind: fields.DefaultVaries}},
-	{Name: "payment_method_configuration", Shape: fields.String, Create: true, Update: true, Description: "The ID of the [payment method configuration](https://docs.stripe.com/api/payment_method_configurations) to use with this SetupIntent."},
+	{Name: "payment_method_configuration", Shape: fields.String, Create: true, Update: true, ServerDefaulted: true, NotReturned: true, Description: "The ID of the [payment method configuration](https://docs.stripe.com/api/payment_method_configurations) to use with this SetupIntent."},
 	{Name: "payment_method_configuration_details", Shape: fields.Object, Response: true, Description: "Information about the [payment method configuration](https://docs.stripe.com/api/payment_method_configurations) used for this Setup Intent.", Fields: []fields.Field{
 		{Name: "id", Shape: fields.String, Response: true, Description: "ID of the payment method configuration used."},
 		{Name: "parent", Shape: fields.String, Response: true, Description: "ID of the parent payment method configuration used."},
@@ -425,8 +425,22 @@ var Table = []fields.Field{
 		}},
 		{Name: "type", Shape: fields.String, Required: true, Create: true, Update: true, Enum: []string{"acss_debit", "affirm", "afterpay_clearpay", "alipay", "alma", "amazon_pay", "au_becs_debit", "bacs_debit", "bancontact", "billie", "bizum", "blik", "boleto", "cashapp", "crypto", "customer_balance", "eps", "fpx", "giropay", "grabpay", "ideal", "kakao_pay", "klarna", "konbini", "kr_card", "link", "mb_way", "mobilepay", "multibanco", "naver_pay", "nz_bank_account", "oxxo", "p24", "pay_by_bank", "payco", "paynow", "paypal", "paypay", "payto", "pix", "promptpay", "revolut_pay", "samsung_pay", "satispay", "scalapay", "sepa_debit", "sequra", "sofort", "sunbit", "swish", "twint", "upi", "us_bank_account", "wechat_pay", "zip"}},
 	}},
-	{Name: "payment_method_options", Shape: fields.Object, Update: true, Description: "Payment method-specific configuration for this SetupIntent.", Fields: []fields.Field{
-		{Name: "card", Shape: fields.Object, Update: true, Fields: []fields.Field{
+	{Name: "payment_method_options", Shape: fields.Object, Create: true, Update: true, Description: "Payment method-specific configuration for this SetupIntent.", Fields: []fields.Field{
+		{Name: "card", Shape: fields.Object, Create: true, Update: true, Fields: []fields.Field{
+			{Name: "mandate_options", Shape: fields.Object, Create: true, Update: true, NotReturned: true, Fields: []fields.Field{
+				{Name: "amount", Shape: fields.Int, Required: true, Create: true, Update: true, NotReturned: true},
+				{Name: "amount_type", Shape: fields.String, Required: true, Create: true, Update: true, NotReturned: true, Enum: []string{"fixed", "maximum"}},
+				{Name: "currency", Shape: fields.String, Required: true, Create: true, Update: true, NotReturned: true},
+				{Name: "description", Shape: fields.String, Create: true, Update: true, NotReturned: true},
+				{Name: "end_date", Shape: fields.Int, Create: true, Update: true, NotReturned: true},
+				{Name: "interval", Shape: fields.String, Required: true, Create: true, Update: true, NotReturned: true, Enum: []string{"day", "month", "sporadic", "week", "year"}},
+				{Name: "interval_count", Shape: fields.Int, Create: true, Update: true, NotReturned: true},
+				{Name: "reference", Shape: fields.String, Required: true, Create: true, Update: true, NotReturned: true},
+				{Name: "start_date", Shape: fields.Int, Required: true, Create: true, Update: true, NotReturned: true},
+				{Name: "supported_types", Shape: fields.ScalarList, Elem: fields.String, Create: true, Update: true, NotReturned: true},
+			}},
+			{Name: "network", Shape: fields.String, Update: true, NotReturned: true, Enum: []string{"amex", "cartes_bancaires", "diners", "discover", "eftpos_au", "girocard", "interac", "jcb", "link", "mastercard", "unionpay", "unknown", "visa"}, Default: &fields.Default{Kind: fields.DefaultNotSent}},
+			{Name: "request_three_d_secure", Shape: fields.String, Create: true, Update: true, NotReturned: true, Enum: []string{"any", "automatic", "challenge"}},
 			{Name: "three_d_secure", Shape: fields.Object, Update: true, Together: []fields.Together{{Members: []string{"cryptogram", "transaction_id", "version"}, Refused: "Sent together, Stripe refused them on a US account on update: \"The parameter `payment_method_options[card][three_d_secure]` cannot be used when creating a SetupIntent unless `confirm` is set to true.\"."}}, Fields: []fields.Field{
 				{Name: "ares_trans_status", Shape: fields.String, Update: true, Enum: []string{"A", "C", "I", "N", "R", "U", "Y"}, Default: &fields.Default{Kind: fields.DefaultNotSent}, Refused: "Stripe refused it on a US account on update: \"The parameter `payment_method_options[card][three_d_secure]` cannot be used when creating a SetupIntent unless `confirm` is set to true.\"."},
 				{Name: "cryptogram", Shape: fields.String, Update: true, Default: &fields.Default{Kind: fields.DefaultNotSent}, Refused: "Stripe refused it on a US account on update: \"You may only specify all or none of these parameters: version, cryptogram, transaction_id.\"."},
@@ -445,6 +459,10 @@ var Table = []fields.Field{
 		}},
 	}},
 	{Name: "payment_method_types", Shape: fields.ScalarList, Elem: fields.String, Response: true, Description: "The list of payment method types (e.g. card) that this SetupIntent is allowed to set up. A list of valid payment method types can be found [here](https://docs.stripe.com/api/payment_methods/object#payment_method_object-type)."},
+	{Name: "single_use", Shape: fields.Object, Create: true, NotReturned: true, Description: "If you populate this hash, this SetupIntent generates a `single_use` mandate after successful completion. Single-use mandates are only valid for the following payment methods: `acss_debit`, `alipay`, `au_becs_debit`, `bacs_debit`, `bancontact`, `boleto`, `ideal`, `link`, `sepa_debit`, and `us_bank_account`.", Fields: []fields.Field{
+		{Name: "amount", Shape: fields.Int, Required: true, Create: true, NotReturned: true},
+		{Name: "currency", Shape: fields.String, Required: true, Create: true, NotReturned: true},
+	}},
 	{Name: "single_use_mandate", Shape: fields.String, Response: true, Description: "ID of the single_use Mandate generated by the SetupIntent."},
 	{Name: "status", Shape: fields.String, Response: true, Enum: []string{"canceled", "processing", "requires_action", "requires_confirmation", "requires_payment_method", "succeeded"}, Description: "[Status](https://docs.stripe.com/payments/intents#intent-statuses) of this SetupIntent, one of `requires_payment_method`, `requires_confirmation`, `requires_action`, `processing`, `canceled`, or `succeeded`."},
 	{Name: "usage", Shape: fields.String, Create: true, Response: true, ServerDefaulted: true, Enum: []string{"off_session", "on_session"}, Description: "Indicates how the payment method is intended to be used in the future. If not provided, this value defaults to `off_session`.", Default: &fields.Default{Kind: fields.DefaultValue, Value: "off_session"}},

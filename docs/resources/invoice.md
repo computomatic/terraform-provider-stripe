@@ -48,6 +48,7 @@ resource "stripe_invoice" "setup" {
 The following arguments are optional:
 
 * `account_tax_ids` - (Optional) The account tax IDs associated with the invoice. Only editable when the invoice is a draft. Default: none.
+* `application_fee_amount` - (Optional) A fee in cents (or local equivalent) that will be applied to the invoice and transferred to the application owner's Stripe account. The request must be made with an OAuth key or the Stripe-Account header in order to take an application fee. For more information, see the application fees [documentation](https://docs.stripe.com/billing/invoices/connect#collecting-fees). Stripe does not return this value; the provider keeps it from configuration. Removing it from the configuration leaves the current value.
 * `auto_advance` - (Optional) Controls whether Stripe performs [automatic collection](https://docs.stripe.com/invoicing/integration/automatic-advancement-collection) of the invoice. If `false`, the invoice's state doesn't automatically advance without an explicit action. Defaults to false. Default (Stripe): `false`. Removing it from the configuration leaves the current value.
 * `automatic_tax` - (Optional) Settings for automatic tax lookup for this invoice. Removing it from the configuration leaves the current value. See [`automatic_tax`](#automatic_tax) below.
 * `automatically_finalizes_at` - (Optional) The time when this invoice should be scheduled to finalize (up to 5 years in the future). The invoice is finalized at this time if it's still in draft state. Stripe refused it on a US account on update: "You must enable `auto_advance` in order to set `automatically_finalizes_at`.". Default: none. Removing it from the configuration leaves the current value.
@@ -78,6 +79,7 @@ The following arguments are optional:
 * `statement_descriptor` - (Optional) Extra information about a charge for the customer's credit card statement. It must contain at least one letter. If not specified and this invoice is part of a subscription, the default `statement_descriptor` will be set to the first subscription item's product's `statement_descriptor`. Default: none.
 * `status` - (Optional) The status of the invoice, one of `draft`, `open`, `paid`, `uncollectible`, or `void`. [Learn more](https://docs.stripe.com/billing/invoices/workflow#workflow-overview) Possible values: `open`, `paid`, `void`, `uncollectible`. Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
 * `subscription` - (Optional) The ID of the subscription to invoice, if any. If set, the created invoice will only include pending invoice items for that subscription. The subscription's billing cycle and regular subscription events won't be affected. Changing it replaces the resource.
+* `transfer_data` - (Optional) If specified, the funds from the invoice will be transferred to the destination and the ID of the resulting transfer will be found on the invoice's charge. Stripe does not return this value; the provider keeps it from configuration. Removing it from the configuration leaves the current value. See [`transfer_data`](#transfer_data) below.
 
 <a id="automatic_tax"></a>
 ### `automatic_tax`
@@ -222,6 +224,16 @@ The `payment_settings.payment_method_options.card` attribute supports:
 The `payment_settings.payment_method_options.card.installments` attribute supports:
 
 * `enabled` - (Optional) Whether Installments are enabled for this Invoice. Default (Stripe): none, or `false` where `installments` is sent without it. Removing it from the configuration leaves the current value.
+* `plan` - (Optional) Stripe does not return this value; the provider keeps it from configuration. See [`payment_settings.payment_method_options.card.installments.plan`](#payment_settings.payment_method_options.card.installments.plan) below.
+
+<a id="payment_settings.payment_method_options.card.installments.plan"></a>
+### `payment_settings.payment_method_options.card.installments.plan`
+
+The `payment_settings.payment_method_options.card.installments.plan` attribute supports:
+
+* `count` - (Optional) Stripe does not return this value; the provider keeps it from configuration.
+* `interval` - (Optional) Possible values: `month`. Stripe does not return this value; the provider keeps it from configuration.
+* `type` - (Required) Possible values: `bonus`, `fixed_count`, `revolving`. Stripe does not return this value; the provider keeps it from configuration.
 
 <a id="payment_settings.payment_method_options.customer_balance"></a>
 ### `payment_settings.payment_method_options.customer_balance`
@@ -431,6 +443,14 @@ The `shipping_details.address` attribute supports:
 * `line2` - (Optional) Address line 2, such as the apartment, suite, unit, or building. Default: none.
 * `postal_code` - (Optional) ZIP or postal code. Default: none.
 * `state` - (Optional) State, county, province, or region ([ISO 3166-2](https://en.wikipedia.org/wiki/ISO_3166-2)). Default: none.
+
+<a id="transfer_data"></a>
+### `transfer_data`
+
+The `transfer_data` attribute supports:
+
+* `amount` - (Optional) Stripe does not return this value; the provider keeps it from configuration.
+* `destination` - (Required) Stripe does not return this value; the provider keeps it from configuration.
 
 ## Attribute Reference
 
@@ -908,4 +928,4 @@ Using `terraform import`, import an invoice using its ID. For example:
 % terraform import stripe_invoice.setup in_123
 ```
 
--> Stripe does not return `days_until_due`, `pending_invoice_items_behavior` or `subscription`, so an imported invoice has them null. Leave them out of its configuration: setting one is a change, which Stripe refuses once the invoice is finalized. An imported invoice names each of its discounts by its ID in `discount`, so a configuration that names one by `coupon` or `promotion_code` plans an update that applies it again, which Stripe refuses once the invoice is finalized. Name each discount of an imported invoice by `discount`. Stripe does not return `shipping_cost.shipping_rate_data`, so an imported invoice has it null: a configuration that sets it plans an update after the import.
+-> Stripe does not return `days_until_due`, `pending_invoice_items_behavior` or `subscription`, so an imported invoice has them null. Leave them out of its configuration: setting one is a change, which Stripe refuses once the invoice is finalized. An imported invoice names each of its discounts by its ID in `discount`, so a configuration that names one by `coupon` or `promotion_code` plans an update that applies it again, which Stripe refuses once the invoice is finalized. Name each discount of an imported invoice by `discount`. Stripe does not return `application_fee_amount`, `payment_settings.payment_method_options.card.installments.plan`, `shipping_cost.shipping_rate_data` or `transfer_data`, so an imported invoice has them null: a configuration that sets one plans an update after the import.

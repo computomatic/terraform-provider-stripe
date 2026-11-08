@@ -29,9 +29,14 @@ The following arguments are optional:
 
 * `address` - (Optional) The customer's address. Learn about [country-specific requirements for calculating tax](https://docs.stripe.com/invoicing/taxes?dashboard-or-api=dashboard#set-up-customer). See [`address`](#address) below.
 * `balance` - (Optional) An integer amount in cents (or local equivalent) that represents the customer's current balance, which affect the customer's future invoices. A negative amount represents a credit that decreases the amount due on an invoice; a positive amount increases the amount due on an invoice. Default (Stripe): `0`. Removing it from the configuration leaves the current value.
+* `bank_account` - (Optional) Either a token, like the ones returned by [Stripe.js](https://stripe.com/docs/js), or a dictionary containing a user's bank account details. Stripe does not return this value; the provider keeps it from configuration. Default: not sent. Removing it from the configuration leaves the current value.
 * `bank_account_data` - (Optional) See [`bank_account_data`](#bank_account_data) below.
 * `business_name` - (Optional) The customer's business name. This may be up to *150 characters*. Default: none.
+* `card` - (Optional) A token, like the ones returned by [Stripe.js](https://stripe.com/docs/js). Stripe does not return this value; the provider keeps it from configuration. Default: not sent. Removing it from the configuration leaves the current value.
 * `cash_balance` - (Optional) Balance information and default balance settings for this customer. See [`cash_balance`](#cash_balance) below.
+* `default_alipay_account` - (Optional) ID of Alipay account to make the customer's new default for invoice payments. Stripe does not return this value; the provider keeps it from configuration. Default: not sent. Removing it from the configuration leaves the current value.
+* `default_bank_account` - (Optional) ID of bank account to make the customer's new default for invoice payments. Stripe does not return this value; the provider keeps it from configuration. Default: not sent. Removing it from the configuration leaves the current value.
+* `default_card` - (Optional) ID of card to make the customer's new default for invoice payments. Stripe does not return this value; the provider keeps it from configuration. Default: not sent. Removing it from the configuration leaves the current value.
 * `default_source` - (Optional) If you are using payment methods created via the PaymentMethods API, see the [invoice_settings.default_payment_method](https://docs.stripe.com/api/customers/update#update_customer-invoice_settings-default_payment_method) parameter. Provide the ID of a payment source already attached to this customer to make it this customer's default payment source. If you want to add a new payment source and make it the default, see the [source](https://docs.stripe.com/api/customers/update#update_customer-source) property. Default: not sent. Removing it from the configuration leaves the current value.
 * `description` - (Optional) An arbitrary string that you can attach to a customer object. It is displayed alongside the customer in the dashboard. Default: none.
 * `email` - (Optional) Customer's email address. It's displayed alongside the customer in your dashboard and can be useful for searching and tracking. This may be up to *512 characters*. Default: none.
@@ -41,6 +46,7 @@ The following arguments are optional:
 * `metadata` - (Optional) Set of [key-value pairs](https://docs.stripe.com/api/metadata) that you can attach to an object. This can be useful for storing additional information about the object in a structured format. Individual keys can be unset by posting an empty value to them. All keys can be unset by posting an empty value to `metadata`. Default (Stripe): `{}`.
 * `name` - (Optional) The customer's full name or business name. Default: none.
 * `next_invoice_sequence` - (Optional) The sequence to be used on the customer's next invoice. Defaults to 1. Default (Stripe): `1`. Removing it from the configuration leaves the current value.
+* `payment_method` - (Optional) Changing it replaces the resource. Stripe does not return this value; the provider keeps it from configuration.
 * `phone` - (Optional) The customer's phone number. Default: none.
 * `preferred_locales` - (Optional) Customer's preferred languages, ordered by preference. Default (Stripe): `[]`.
 * `shipping` - (Optional) The customer's shipping information. Appears on invoices emailed to this customer. See [`shipping`](#shipping) below.
@@ -302,4 +308,4 @@ Using `terraform import`, import a customer using its ID. For example:
 % terraform import stripe_customer.acme cus_123
 ```
 
-~> Stripe does not return `bank_account_data`, `source`, `tax.validate_location` or `tax_id_data`, so an imported customer has them null: a configuration that sets `bank_account_data`, `source` or `tax.validate_location` plans an update after the import, and one that sets `tax_id_data` plans a replacement.
+~> Stripe does not return `bank_account`, `bank_account_data`, `card`, `default_alipay_account`, `default_bank_account`, `default_card`, `source`, `tax.validate_location`, `payment_method` or `tax_id_data`, so an imported customer has them null: a configuration that sets `bank_account`, `bank_account_data`, `card`, `default_alipay_account`, `default_bank_account`, `default_card`, `source` or `tax.validate_location` plans an update after the import, and one that sets `payment_method` or `tax_id_data` plans a replacement.

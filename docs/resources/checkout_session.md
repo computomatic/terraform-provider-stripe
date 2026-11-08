@@ -66,7 +66,7 @@ The following arguments are optional:
 * `customer_account` - (Optional) ID of an existing Account, if one exists. Has the same behavior as `customer`. Changing it fails the plan, because this resource cannot be replaced. Stripe refused it on a US account on create: "The supplied ID is not a valid Customer. V2 Accounts must be configured as Customers before they can be used in the Customers API.". Default: none.
 * `customer_creation` - (Optional) Configure whether a Checkout Session creates a [Customer](https://docs.stripe.com/api/customers) during Session confirmation. When a Customer is not created, you can still retrieve email, address, and other customer data entered in Checkout with [customer_details](https://docs.stripe.com/api/checkout/sessions/object#checkout_session_object-customer_details). Sessions that don't create Customers instead are grouped by [guest customers](https://docs.stripe.com/payments/checkout/guest-customers) in the Dashboard. Promotion codes limited to first time customers will return invalid for these Sessions. Can only be set in `payment` and `setup` mode. Possible values: `always`, `if_required`. Changing it fails the plan, because this resource cannot be replaced. Removing it from the configuration leaves the current value.
 * `customer_email` - (Optional) If provided, this value will be used when the Customer object is created. If not provided, customers will be asked to enter their email address. Use this parameter to prefill customer data if you already have an email on file. To access information about the customer once a session is complete, use the `customer` field. Changing it fails the plan, because this resource cannot be replaced. Default: none.
-* `customer_update` - (Optional) Controls what fields on Customer can be updated by the Checkout Session. Can only be provided when `customer` is provided. Changing it fails the plan, because this resource cannot be replaced. See [`customer_update`](#customer_update) below.
+* `customer_update` - (Optional) Controls what fields on Customer can be updated by the Checkout Session. Can only be provided when `customer` is provided. Changing it fails the plan, because this resource cannot be replaced. Stripe does not return this value; the provider keeps it from configuration. See [`customer_update`](#customer_update) below.
 * `discounts` - (Optional) The coupon or promotion code to apply to this Session. Currently, only up to one may be specified. Changing it fails the plan, because this resource cannot be replaced. See [`discounts`](#discounts) below.
 * `excluded_payment_method_types` - (Optional) A list of the types of payment methods (e.g., `card`) that should be excluded from this Checkout Session. This should only be used when payment methods for this Checkout Session are managed through the [Stripe Dashboard](https://dashboard.stripe.com/settings/payment_methods). Changing it fails the plan, because this resource cannot be replaced. Default: none.
 * `expires_at` - (Optional) The Epoch time in seconds at which the Checkout Session will expire. It can be anywhere from 30 minutes to 24 hours after Checkout Session creation. By default, this value is 24 hours from creation. Changing it fails the plan, because this resource cannot be replaced. Default (Stripe): 24 hours after the session was created. Removing it from the configuration leaves the current value.
@@ -82,19 +82,20 @@ The following arguments are optional:
 * `origin_context` - (Optional) Where the user is coming from. This informs the optimizations that are applied to the session. You can't set this parameter if `ui_mode` is `elements`. Possible values: `mobile_app`, `web`. Changing it fails the plan, because this resource cannot be replaced. Default: none.
 * `payment_intent_data` - (Optional) A subset of parameters to be passed to PaymentIntent creation for Checkout Sessions in `payment` mode. Changing it fails the plan, because this resource cannot be replaced. See [`payment_intent_data`](#payment_intent_data) below.
 * `payment_method_collection` - (Optional) Specify whether Checkout should collect a payment method. When set to `if_required`, Checkout will not collect a payment method when the total due for the session is 0. This may occur if the Checkout Session includes a free trial or a discount. Can only be set in `subscription` mode. Defaults to `always`. If you'd like information on how to collect a payment method outside of Checkout, read the guide on configuring [subscriptions with a free trial](https://docs.stripe.com/payments/checkout/free-trials). Possible values: `always`, `if_required`. Changing it fails the plan, because this resource cannot be replaced. Removing it from the configuration leaves the current value.
-* `payment_method_configuration` - (Optional) The ID of the payment method configuration to use with this Checkout session. Changing it fails the plan, because this resource cannot be replaced. Stripe takes a configuration that turns on a payment method the session's currency and mode can use. Elsewhere Stripe refused it on a US account on create: "No valid payment method types for this Checkout Session. Please ensure that you have activated payment methods compatible with your chosen currency in your dashboard (https://dashboard.stripe.com/settings/payment_methods) or specify `payment_method_types`.".
+* `payment_method_configuration` - (Optional) The ID of the payment method configuration to use with this Checkout session. Changing it fails the plan, because this resource cannot be replaced. Stripe does not return this value; the provider keeps it from configuration. Stripe takes a configuration that turns on a payment method the session's currency and mode can use. Elsewhere Stripe refused it on a US account on create: "No valid payment method types for this Checkout Session. Please ensure that you have activated payment methods compatible with your chosen currency in your dashboard (https://dashboard.stripe.com/settings/payment_methods) or specify `payment_method_types`.".
+* `payment_method_data` - (Optional) This parameter allows you to set some attributes on the payment method created during a Checkout session. Changing it fails the plan, because this resource cannot be replaced. Stripe does not return this value; the provider keeps it from configuration. See [`payment_method_data`](#payment_method_data) below.
 * `payment_method_options` - (Optional) Payment-method-specific configuration. Changing it fails the plan, because this resource cannot be replaced. Removing it from the configuration leaves the current value. See [`payment_method_options`](#payment_method_options) below.
 * `permissions` - (Optional) This property is used to set up permissions for various actions (for example, update) on the CheckoutSession object. Can only be set when creating `embedded_page` or `elements` sessions. For specific permissions, please refer to their dedicated subsections, such as `permissions.update_shipping_details`. Changing it fails the plan, because this resource cannot be replaced. See [`permissions`](#permissions) below.
 * `phone_number_collection` - (Optional) Controls phone number collection settings for the session. We recommend that you review your privacy policy and check with your legal contacts before using this feature. Learn more about [collecting phone numbers with Checkout](https://docs.stripe.com/payments/checkout/phone-numbers). Changing it fails the plan, because this resource cannot be replaced. Removing it from the configuration leaves the current value. See [`phone_number_collection`](#phone_number_collection) below.
 * `redirect_on_completion` - (Optional) This parameter applies to `ui_mode: embedded_page`. Learn more about the [redirect behavior](https://docs.stripe.com/payments/checkout/custom-success-page?payment-ui=embedded-form) of embedded sessions. Defaults to `always`. Possible values: `always`, `if_required`, `never`. Changing it fails the plan, because this resource cannot be replaced. Removing it from the configuration leaves the current value.
 * `return_url` - (Optional) The URL to redirect your customer back to after they authenticate or cancel their payment on the payment method's app or site. This parameter is required if `ui_mode` is `embedded_page` or `elements` and redirect-based payment methods are enabled on the session. Changing it fails the plan, because this resource cannot be replaced. Default: none.
 * `saved_payment_method_options` - (Optional) Controls saved payment method settings for the session. Only available in `payment` and `subscription` mode. Changing it fails the plan, because this resource cannot be replaced. Removing it from the configuration leaves the current value. See [`saved_payment_method_options`](#saved_payment_method_options) below.
-* `setup_intent_data` - (Optional) A subset of parameters to be passed to SetupIntent creation for Checkout Sessions in `setup` mode. Changing it fails the plan, because this resource cannot be replaced. See [`setup_intent_data`](#setup_intent_data) below.
+* `setup_intent_data` - (Optional) A subset of parameters to be passed to SetupIntent creation for Checkout Sessions in `setup` mode. Changing it fails the plan, because this resource cannot be replaced. Stripe does not return this value; the provider keeps it from configuration. See [`setup_intent_data`](#setup_intent_data) below.
 * `shipping_address_collection` - (Optional) When set, provides configuration for Checkout to collect a shipping address from a customer. Changing it fails the plan, because this resource cannot be replaced. See [`shipping_address_collection`](#shipping_address_collection) below.
 * `shipping_options` - (Optional) The shipping rate options to apply to this Session. Up to a maximum of 5. Removing it from the configuration leaves the current value. See [`shipping_options`](#shipping_options) below.
 * `status` - (Optional) The status of the Checkout Session, one of `open`, `complete`, or `expired`. Possible values: `expired`. Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
 * `submit_type` - (Optional) Describes the type of transaction being performed by Checkout in order to customize relevant text on the page, such as the submit button. `submit_type` can only be specified on Checkout Sessions in `payment` or `subscription` mode. If blank or `auto`, `pay` is used. You can't set this parameter if `ui_mode` is `elements`. Possible values: `auto`, `book`, `donate`, `pay`, `subscribe`. Changing it fails the plan, because this resource cannot be replaced. Default: none.
-* `subscription_data` - (Optional) A subset of parameters to be passed to subscription creation for Checkout Sessions in `subscription` mode. Changing it fails the plan, because this resource cannot be replaced. See [`subscription_data`](#subscription_data) below.
+* `subscription_data` - (Optional) A subset of parameters to be passed to subscription creation for Checkout Sessions in `subscription` mode. Changing it fails the plan, because this resource cannot be replaced. Stripe does not return this value; the provider keeps it from configuration. See [`subscription_data`](#subscription_data) below.
 * `success_url` - (Optional) The URL to which Stripe should send customers when payment or setup is complete. This parameter is not allowed if ui_mode is `embedded_page` or `elements`. If you'd like to use information from the successful Checkout Session on your page, read the guide on [customizing your success page](https://docs.stripe.com/payments/checkout/custom-success-page). Changing it fails the plan, because this resource cannot be replaced.
 * `tax_id_collection` - (Optional) Controls tax ID collection during checkout. Changing it fails the plan, because this resource cannot be replaced. Removing it from the configuration leaves the current value. See [`tax_id_collection`](#tax_id_collection) below.
 * `ui_mode` - (Optional) The UI mode of the Session. Defaults to `hosted_page`. Possible values: `elements`, `embedded_page`, `form`, `hosted_page`. Changing it fails the plan, because this resource cannot be replaced. Default (Stripe): `hosted_page`. Removing it from the configuration leaves the current value.
@@ -319,9 +320,9 @@ The `custom_text.terms_of_service_acceptance` attribute supports:
 
 The `customer_update` attribute supports:
 
-* `address` - (Optional) Possible values: `auto`, `never`.
-* `name` - (Optional) Possible values: `auto`, `never`.
-* `shipping` - (Optional) Possible values: `auto`, `never`.
+* `address` - (Optional) Possible values: `auto`, `never`. Stripe does not return this value; the provider keeps it from configuration.
+* `name` - (Optional) Possible values: `auto`, `never`. Stripe does not return this value; the provider keeps it from configuration.
+* `shipping` - (Optional) Possible values: `auto`, `never`. Stripe does not return this value; the provider keeps it from configuration.
 
 <a id="discounts"></a>
 ### `discounts`
@@ -395,7 +396,7 @@ The `line_items` attribute is a list. Each element supports:
 * `price` - (Optional) The price used to generate the line item. Stripe refused it on a US account on update: "You cannot update `line_items` unless `permissions.update_line_items` is set to `server_only`.". Removing it from the configuration leaves the current value.
 * `price_data` - (Optional) See [`line_items.price_data`](#line_items.price_data) below.
 * `quantity` - (Optional) The quantity of products being purchased. Stripe refused it on a US account on update: "You cannot update `line_items` unless `permissions.update_line_items` is set to `server_only`.".
-* `tax_rates` - (Optional) Stripe refused it on a US account on update: "You cannot update `line_items` unless `permissions.update_line_items` is set to `server_only`.".
+* `tax_rates` - (Optional) Stripe does not return this value; the provider keeps it from configuration. Stripe refused it on a US account on update: "You cannot update `line_items` unless `permissions.update_line_items` is set to `server_only`.".
 * `taxes` - (Read-Only) The taxes applied to the line item. See [`line_items.taxes`](#line_items.taxes) below.
 
 <a id="line_items.adjustable_quantity"></a>
@@ -581,101 +582,111 @@ The `optional_items.adjustable_quantity` attribute supports:
 The `payment_intent_data` attribute supports:
 
 * `application_fee_amount` - (Optional)
-* `capture_method` - (Optional) Possible values: `automatic`, `automatic_async`, `manual`.
-* `description` - (Optional)
-* `metadata` - (Optional)
-* `on_behalf_of` - (Optional)
-* `receipt_email` - (Optional)
-* `setup_future_usage` - (Optional) Possible values: `off_session`, `on_session`.
-* `shipping` - (Optional) See [`payment_intent_data.shipping`](#payment_intent_data.shipping) below.
-* `statement_descriptor` - (Optional)
-* `statement_descriptor_suffix` - (Optional)
-* `transfer_data` - (Optional) See [`payment_intent_data.transfer_data`](#payment_intent_data.transfer_data) below.
-* `transfer_group` - (Optional)
+* `capture_method` - (Optional) Possible values: `automatic`, `automatic_async`, `manual`. Stripe does not return this value; the provider keeps it from configuration.
+* `description` - (Optional) Stripe does not return this value; the provider keeps it from configuration.
+* `metadata` - (Optional) Stripe does not return this value; the provider keeps it from configuration.
+* `on_behalf_of` - (Optional) Stripe does not return this value; the provider keeps it from configuration.
+* `receipt_email` - (Optional) Stripe does not return this value; the provider keeps it from configuration.
+* `setup_future_usage` - (Optional) Possible values: `off_session`, `on_session`. Stripe does not return this value; the provider keeps it from configuration.
+* `shipping` - (Optional) Stripe does not return this value; the provider keeps it from configuration. See [`payment_intent_data.shipping`](#payment_intent_data.shipping) below.
+* `statement_descriptor` - (Optional) Stripe does not return this value; the provider keeps it from configuration.
+* `statement_descriptor_suffix` - (Optional) Stripe does not return this value; the provider keeps it from configuration.
+* `transfer_data` - (Optional) Stripe does not return this value; the provider keeps it from configuration. See [`payment_intent_data.transfer_data`](#payment_intent_data.transfer_data) below.
+* `transfer_group` - (Optional) Stripe does not return this value; the provider keeps it from configuration.
 
 <a id="payment_intent_data.shipping"></a>
 ### `payment_intent_data.shipping`
 
 The `payment_intent_data.shipping` attribute supports:
 
-* `address` - (Required) See [`payment_intent_data.shipping.address`](#payment_intent_data.shipping.address) below.
-* `carrier` - (Optional)
-* `name` - (Required)
-* `phone` - (Optional)
-* `tracking_number` - (Optional)
+* `address` - (Required) Stripe does not return this value; the provider keeps it from configuration. See [`payment_intent_data.shipping.address`](#payment_intent_data.shipping.address) below.
+* `carrier` - (Optional) Stripe does not return this value; the provider keeps it from configuration.
+* `name` - (Required) Stripe does not return this value; the provider keeps it from configuration.
+* `phone` - (Optional) Stripe does not return this value; the provider keeps it from configuration.
+* `tracking_number` - (Optional) Stripe does not return this value; the provider keeps it from configuration.
 
 <a id="payment_intent_data.shipping.address"></a>
 ### `payment_intent_data.shipping.address`
 
 The `payment_intent_data.shipping.address` attribute supports:
 
-* `city` - (Optional)
-* `country` - (Optional)
-* `line1` - (Required)
-* `line2` - (Optional)
-* `postal_code` - (Optional)
-* `state` - (Optional)
+* `city` - (Optional) Stripe does not return this value; the provider keeps it from configuration.
+* `country` - (Optional) Stripe does not return this value; the provider keeps it from configuration.
+* `line1` - (Required) Stripe does not return this value; the provider keeps it from configuration.
+* `line2` - (Optional) Stripe does not return this value; the provider keeps it from configuration.
+* `postal_code` - (Optional) Stripe does not return this value; the provider keeps it from configuration.
+* `state` - (Optional) Stripe does not return this value; the provider keeps it from configuration.
 
 <a id="payment_intent_data.transfer_data"></a>
 ### `payment_intent_data.transfer_data`
 
 The `payment_intent_data.transfer_data` attribute supports:
 
-* `amount` - (Optional)
-* `destination` - (Required)
+* `amount` - (Optional) Stripe does not return this value; the provider keeps it from configuration.
+* `destination` - (Required) Stripe does not return this value; the provider keeps it from configuration.
+
+<a id="payment_method_data"></a>
+### `payment_method_data`
+
+The `payment_method_data` attribute supports:
+
+* `allow_redisplay` - (Optional) Possible values: `always`, `limited`, `unspecified`. Stripe does not return this value; the provider keeps it from configuration.
 
 <a id="payment_method_options"></a>
 ### `payment_method_options`
 
 The `payment_method_options` attribute supports:
 
-* `acss_debit` - (Optional) See [`payment_method_options.acss_debit`](#payment_method_options.acss_debit) below.
-* `affirm` - (Optional) See [`payment_method_options.affirm`](#payment_method_options.affirm) below.
-* `afterpay_clearpay` - (Optional) See [`payment_method_options.afterpay_clearpay`](#payment_method_options.afterpay_clearpay) below.
-* `alipay` - (Optional) See [`payment_method_options.alipay`](#payment_method_options.alipay) below.
-* `alma` - (Optional) See [`payment_method_options.alma`](#payment_method_options.alma) below.
-* `amazon_pay` - (Optional) See [`payment_method_options.amazon_pay`](#payment_method_options.amazon_pay) below.
-* `au_becs_debit` - (Optional) See [`payment_method_options.au_becs_debit`](#payment_method_options.au_becs_debit) below.
-* `bacs_debit` - (Optional) See [`payment_method_options.bacs_debit`](#payment_method_options.bacs_debit) below.
-* `bancontact` - (Optional) See [`payment_method_options.bancontact`](#payment_method_options.bancontact) below.
-* `billie` - (Optional) See [`payment_method_options.billie`](#payment_method_options.billie) below.
-* `boleto` - (Optional) See [`payment_method_options.boleto`](#payment_method_options.boleto) below.
+* `acss_debit` - (Optional) Removing it from the configuration leaves the current value. See [`payment_method_options.acss_debit`](#payment_method_options.acss_debit) below.
+* `affirm` - (Optional) Removing it from the configuration leaves the current value. See [`payment_method_options.affirm`](#payment_method_options.affirm) below.
+* `afterpay_clearpay` - (Optional) Removing it from the configuration leaves the current value. See [`payment_method_options.afterpay_clearpay`](#payment_method_options.afterpay_clearpay) below.
+* `alipay` - (Optional) Removing it from the configuration leaves the current value. See [`payment_method_options.alipay`](#payment_method_options.alipay) below.
+* `alma` - (Optional) Removing it from the configuration leaves the current value. See [`payment_method_options.alma`](#payment_method_options.alma) below.
+* `amazon_pay` - (Optional) Removing it from the configuration leaves the current value. See [`payment_method_options.amazon_pay`](#payment_method_options.amazon_pay) below.
+* `au_becs_debit` - (Optional) Removing it from the configuration leaves the current value. See [`payment_method_options.au_becs_debit`](#payment_method_options.au_becs_debit) below.
+* `bacs_debit` - (Optional) Removing it from the configuration leaves the current value. See [`payment_method_options.bacs_debit`](#payment_method_options.bacs_debit) below.
+* `bancontact` - (Optional) Removing it from the configuration leaves the current value. See [`payment_method_options.bancontact`](#payment_method_options.bancontact) below.
+* `billie` - (Optional) Removing it from the configuration leaves the current value. See [`payment_method_options.billie`](#payment_method_options.billie) below.
+* `blik` - (Optional) Stripe does not return this value; the provider keeps it from configuration. See [`payment_method_options.blik`](#payment_method_options.blik) below.
+* `boleto` - (Optional) Removing it from the configuration leaves the current value. See [`payment_method_options.boleto`](#payment_method_options.boleto) below.
 * `card` - (Optional) Removing it from the configuration leaves the current value. See [`payment_method_options.card`](#payment_method_options.card) below.
-* `cashapp` - (Optional) See [`payment_method_options.cashapp`](#payment_method_options.cashapp) below.
-* `customer_balance` - (Optional) See [`payment_method_options.customer_balance`](#payment_method_options.customer_balance) below.
-* `eps` - (Optional) See [`payment_method_options.eps`](#payment_method_options.eps) below.
-* `fpx` - (Optional) See [`payment_method_options.fpx`](#payment_method_options.fpx) below.
-* `giropay` - (Optional) See [`payment_method_options.giropay`](#payment_method_options.giropay) below.
-* `grabpay` - (Optional) See [`payment_method_options.grabpay`](#payment_method_options.grabpay) below.
-* `ideal` - (Optional) See [`payment_method_options.ideal`](#payment_method_options.ideal) below.
-* `kakao_pay` - (Optional) See [`payment_method_options.kakao_pay`](#payment_method_options.kakao_pay) below.
-* `klarna` - (Optional) See [`payment_method_options.klarna`](#payment_method_options.klarna) below.
-* `konbini` - (Optional) See [`payment_method_options.konbini`](#payment_method_options.konbini) below.
-* `kr_card` - (Optional) See [`payment_method_options.kr_card`](#payment_method_options.kr_card) below.
-* `link` - (Optional) See [`payment_method_options.link`](#payment_method_options.link) below.
-* `mobilepay` - (Optional) See [`payment_method_options.mobilepay`](#payment_method_options.mobilepay) below.
-* `multibanco` - (Optional) See [`payment_method_options.multibanco`](#payment_method_options.multibanco) below.
-* `naver_pay` - (Optional) See [`payment_method_options.naver_pay`](#payment_method_options.naver_pay) below.
-* `oxxo` - (Optional) See [`payment_method_options.oxxo`](#payment_method_options.oxxo) below.
-* `p24` - (Optional) See [`payment_method_options.p24`](#payment_method_options.p24) below.
-* `payco` - (Optional) See [`payment_method_options.payco`](#payment_method_options.payco) below.
-* `paynow` - (Optional) See [`payment_method_options.paynow`](#payment_method_options.paynow) below.
-* `paypal` - (Optional) See [`payment_method_options.paypal`](#payment_method_options.paypal) below.
-* `payto` - (Optional) See [`payment_method_options.payto`](#payment_method_options.payto) below.
-* `pix` - (Optional) See [`payment_method_options.pix`](#payment_method_options.pix) below.
-* `revolut_pay` - (Optional) See [`payment_method_options.revolut_pay`](#payment_method_options.revolut_pay) below.
-* `samsung_pay` - (Optional) See [`payment_method_options.samsung_pay`](#payment_method_options.samsung_pay) below.
-* `satispay` - (Optional) See [`payment_method_options.satispay`](#payment_method_options.satispay) below.
-* `scalapay` - (Optional) See [`payment_method_options.scalapay`](#payment_method_options.scalapay) below.
-* `sepa_debit` - (Optional) See [`payment_method_options.sepa_debit`](#payment_method_options.sepa_debit) below.
-* `sequra` - (Optional) See [`payment_method_options.sequra`](#payment_method_options.sequra) below.
-* `sofort` - (Optional) See [`payment_method_options.sofort`](#payment_method_options.sofort) below.
-* `sunbit` - (Optional) See [`payment_method_options.sunbit`](#payment_method_options.sunbit) below.
-* `swish` - (Optional) See [`payment_method_options.swish`](#payment_method_options.swish) below.
-* `twint` - (Optional) See [`payment_method_options.twint`](#payment_method_options.twint) below.
-* `upi` - (Optional) See [`payment_method_options.upi`](#payment_method_options.upi) below.
-* `us_bank_account` - (Optional) See [`payment_method_options.us_bank_account`](#payment_method_options.us_bank_account) below.
-* `wechat_pay` - (Optional) See [`payment_method_options.wechat_pay`](#payment_method_options.wechat_pay) below.
+* `cashapp` - (Optional) Removing it from the configuration leaves the current value. See [`payment_method_options.cashapp`](#payment_method_options.cashapp) below.
+* `crypto` - (Optional) Stripe does not return this value; the provider keeps it from configuration. See [`payment_method_options.crypto`](#payment_method_options.crypto) below.
+* `customer_balance` - (Optional) Removing it from the configuration leaves the current value. See [`payment_method_options.customer_balance`](#payment_method_options.customer_balance) below.
+* `demo_pay` - (Optional) Stripe does not return this value; the provider keeps it from configuration. See [`payment_method_options.demo_pay`](#payment_method_options.demo_pay) below.
+* `eps` - (Optional) Removing it from the configuration leaves the current value. See [`payment_method_options.eps`](#payment_method_options.eps) below.
+* `fpx` - (Optional) Removing it from the configuration leaves the current value. See [`payment_method_options.fpx`](#payment_method_options.fpx) below.
+* `giropay` - (Optional) Removing it from the configuration leaves the current value. See [`payment_method_options.giropay`](#payment_method_options.giropay) below.
+* `grabpay` - (Optional) Removing it from the configuration leaves the current value. See [`payment_method_options.grabpay`](#payment_method_options.grabpay) below.
+* `ideal` - (Optional) Removing it from the configuration leaves the current value. See [`payment_method_options.ideal`](#payment_method_options.ideal) below.
+* `kakao_pay` - (Optional) Removing it from the configuration leaves the current value. See [`payment_method_options.kakao_pay`](#payment_method_options.kakao_pay) below.
+* `klarna` - (Optional) Removing it from the configuration leaves the current value. See [`payment_method_options.klarna`](#payment_method_options.klarna) below.
+* `konbini` - (Optional) Removing it from the configuration leaves the current value. See [`payment_method_options.konbini`](#payment_method_options.konbini) below.
+* `kr_card` - (Optional) Removing it from the configuration leaves the current value. See [`payment_method_options.kr_card`](#payment_method_options.kr_card) below.
+* `link` - (Optional) Removing it from the configuration leaves the current value. See [`payment_method_options.link`](#payment_method_options.link) below.
+* `mobilepay` - (Optional) Removing it from the configuration leaves the current value. See [`payment_method_options.mobilepay`](#payment_method_options.mobilepay) below.
+* `multibanco` - (Optional) Removing it from the configuration leaves the current value. See [`payment_method_options.multibanco`](#payment_method_options.multibanco) below.
+* `naver_pay` - (Optional) Removing it from the configuration leaves the current value. See [`payment_method_options.naver_pay`](#payment_method_options.naver_pay) below.
+* `oxxo` - (Optional) Removing it from the configuration leaves the current value. See [`payment_method_options.oxxo`](#payment_method_options.oxxo) below.
+* `p24` - (Optional) Removing it from the configuration leaves the current value. See [`payment_method_options.p24`](#payment_method_options.p24) below.
+* `payco` - (Optional) Removing it from the configuration leaves the current value. See [`payment_method_options.payco`](#payment_method_options.payco) below.
+* `paynow` - (Optional) Removing it from the configuration leaves the current value. See [`payment_method_options.paynow`](#payment_method_options.paynow) below.
+* `paypal` - (Optional) Removing it from the configuration leaves the current value. See [`payment_method_options.paypal`](#payment_method_options.paypal) below.
+* `payto` - (Optional) Removing it from the configuration leaves the current value. See [`payment_method_options.payto`](#payment_method_options.payto) below.
+* `pix` - (Optional) Removing it from the configuration leaves the current value. See [`payment_method_options.pix`](#payment_method_options.pix) below.
+* `revolut_pay` - (Optional) Removing it from the configuration leaves the current value. See [`payment_method_options.revolut_pay`](#payment_method_options.revolut_pay) below.
+* `samsung_pay` - (Optional) Removing it from the configuration leaves the current value. See [`payment_method_options.samsung_pay`](#payment_method_options.samsung_pay) below.
+* `satispay` - (Optional) Removing it from the configuration leaves the current value. See [`payment_method_options.satispay`](#payment_method_options.satispay) below.
+* `scalapay` - (Optional) Removing it from the configuration leaves the current value. See [`payment_method_options.scalapay`](#payment_method_options.scalapay) below.
+* `sepa_debit` - (Optional) Removing it from the configuration leaves the current value. See [`payment_method_options.sepa_debit`](#payment_method_options.sepa_debit) below.
+* `sequra` - (Optional) Removing it from the configuration leaves the current value. See [`payment_method_options.sequra`](#payment_method_options.sequra) below.
+* `sofort` - (Optional) Removing it from the configuration leaves the current value. See [`payment_method_options.sofort`](#payment_method_options.sofort) below.
+* `sunbit` - (Optional) Removing it from the configuration leaves the current value. See [`payment_method_options.sunbit`](#payment_method_options.sunbit) below.
+* `swish` - (Optional) Removing it from the configuration leaves the current value. See [`payment_method_options.swish`](#payment_method_options.swish) below.
+* `twint` - (Optional) Removing it from the configuration leaves the current value. See [`payment_method_options.twint`](#payment_method_options.twint) below.
+* `upi` - (Optional) Removing it from the configuration leaves the current value. See [`payment_method_options.upi`](#payment_method_options.upi) below.
+* `us_bank_account` - (Optional) Removing it from the configuration leaves the current value. See [`payment_method_options.us_bank_account`](#payment_method_options.us_bank_account) below.
+* `wechat_pay` - (Optional) Removing it from the configuration leaves the current value. See [`payment_method_options.wechat_pay`](#payment_method_options.wechat_pay) below.
 
 <a id="payment_method_options.acss_debit"></a>
 ### `payment_method_options.acss_debit`
@@ -775,6 +786,21 @@ The `payment_method_options.billie` attribute supports:
 
 * `capture_method` - (Optional) Controls when the funds will be captured from the customer's account. Possible values: `manual`. Default: none.
 
+<a id="payment_method_options.blik"></a>
+### `payment_method_options.blik`
+
+The `payment_method_options.blik` attribute supports:
+
+* `mandate_options` - (Optional) Stripe does not return this value; the provider keeps it from configuration. See [`payment_method_options.blik.mandate_options`](#payment_method_options.blik.mandate_options) below.
+* `setup_future_usage` - (Optional) Possible values: `none`, `off_session`. Stripe does not return this value; the provider keeps it from configuration.
+
+<a id="payment_method_options.blik.mandate_options"></a>
+### `payment_method_options.blik.mandate_options`
+
+The `payment_method_options.blik.mandate_options` attribute supports:
+
+* `expires_at` - (Optional) Stripe does not return this value; the provider keeps it from configuration.
+
 <a id="payment_method_options.boleto"></a>
 ### `payment_method_options.boleto`
 
@@ -823,6 +849,13 @@ The `payment_method_options.cashapp` attribute supports:
 * `capture_method` - (Optional) Controls when the funds will be captured from the customer's account. Possible values: `manual`. Default: none.
 * `setup_future_usage` - (Optional) Indicates that you intend to make future payments with this PaymentIntent's payment method. If you provide a Customer with the PaymentIntent, you can use this parameter to [attach the payment method](https://docs.stripe.com/payments/save-during-payment) to the Customer after the PaymentIntent is confirmed and the customer completes any required actions. If you don't provide a Customer, you can still [attach](https://docs.stripe.com/api/payment_methods/attach) the payment method to a Customer after the transaction completes. If the payment method is `card_present` and isn't a digital wallet, Stripe creates and attaches a [generated_card](https://docs.stripe.com/api/charges/object#charge_object-payment_method_details-card_present-generated_card) payment method representing the card to the Customer instead. When processing card payments, Stripe uses `setup_future_usage` to help you comply with regional legislation and network rules, such as [SCA](https://docs.stripe.com/strong-customer-authentication). Possible values: `none`, `off_session`, `on_session`. Default: none.
 
+<a id="payment_method_options.crypto"></a>
+### `payment_method_options.crypto`
+
+The `payment_method_options.crypto` attribute supports:
+
+* `setup_future_usage` - (Optional) Possible values: `none`. Stripe does not return this value; the provider keeps it from configuration.
+
 <a id="payment_method_options.customer_balance"></a>
 ### `payment_method_options.customer_balance`
 
@@ -847,6 +880,13 @@ The `payment_method_options.customer_balance.bank_transfer` attribute supports:
 The `payment_method_options.customer_balance.bank_transfer.eu_bank_transfer` attribute supports:
 
 * `country` - (Required) The desired country code of the bank account information. Permitted values include: `DE`, `FR`, `IE`, or `NL`. Possible values: `BE`, `DE`, `ES`, `FR`, `IE`, `NL`.
+
+<a id="payment_method_options.demo_pay"></a>
+### `payment_method_options.demo_pay`
+
+The `payment_method_options.demo_pay` attribute supports:
+
+* `setup_future_usage` - (Optional) Possible values: `none`, `off_session`. Stripe does not return this value; the provider keeps it from configuration.
 
 <a id="payment_method_options.eps"></a>
 ### `payment_method_options.eps`
@@ -898,6 +938,26 @@ The `payment_method_options.klarna` attribute supports:
 
 * `capture_method` - (Optional) Controls when the funds will be captured from the customer's account. Possible values: `manual`. Default: none.
 * `setup_future_usage` - (Optional) Indicates that you intend to make future payments with this PaymentIntent's payment method. If you provide a Customer with the PaymentIntent, you can use this parameter to [attach the payment method](https://docs.stripe.com/payments/save-during-payment) to the Customer after the PaymentIntent is confirmed and the customer completes any required actions. If you don't provide a Customer, you can still [attach](https://docs.stripe.com/api/payment_methods/attach) the payment method to a Customer after the transaction completes. If the payment method is `card_present` and isn't a digital wallet, Stripe creates and attaches a [generated_card](https://docs.stripe.com/api/charges/object#charge_object-payment_method_details-card_present-generated_card) payment method representing the card to the Customer instead. When processing card payments, Stripe uses `setup_future_usage` to help you comply with regional legislation and network rules, such as [SCA](https://docs.stripe.com/strong-customer-authentication). Possible values: `none`. Default: none.
+* `subscriptions` - (Optional) Stripe does not return this value; the provider keeps it from configuration. See [`payment_method_options.klarna.subscriptions`](#payment_method_options.klarna.subscriptions) below.
+
+<a id="payment_method_options.klarna.subscriptions"></a>
+### `payment_method_options.klarna.subscriptions`
+
+The `payment_method_options.klarna.subscriptions` attribute is a list. Each element supports:
+
+* `interval` - (Required) Possible values: `day`, `month`, `week`, `year`. Stripe does not return this value; the provider keeps it from configuration.
+* `interval_count` - (Optional) Stripe does not return this value; the provider keeps it from configuration.
+* `name` - (Optional) Stripe does not return this value; the provider keeps it from configuration.
+* `next_billing` - (Required) Stripe does not return this value; the provider keeps it from configuration. See [`payment_method_options.klarna.subscriptions.next_billing`](#payment_method_options.klarna.subscriptions.next_billing) below.
+* `reference` - (Required) Stripe does not return this value; the provider keeps it from configuration.
+
+<a id="payment_method_options.klarna.subscriptions.next_billing"></a>
+### `payment_method_options.klarna.subscriptions.next_billing`
+
+The `payment_method_options.klarna.subscriptions.next_billing` attribute supports:
+
+* `amount` - (Required) Stripe does not return this value; the provider keeps it from configuration.
+* `date` - (Required) Stripe does not return this value; the provider keeps it from configuration.
 
 <a id="payment_method_options.konbini"></a>
 ### `payment_method_options.konbini`
@@ -960,6 +1020,7 @@ The `payment_method_options.oxxo` attribute supports:
 The `payment_method_options.p24` attribute supports:
 
 * `setup_future_usage` - (Optional) Indicates that you intend to make future payments with this PaymentIntent's payment method. If you provide a Customer with the PaymentIntent, you can use this parameter to [attach the payment method](https://docs.stripe.com/payments/save-during-payment) to the Customer after the PaymentIntent is confirmed and the customer completes any required actions. If you don't provide a Customer, you can still [attach](https://docs.stripe.com/api/payment_methods/attach) the payment method to a Customer after the transaction completes. If the payment method is `card_present` and isn't a digital wallet, Stripe creates and attaches a [generated_card](https://docs.stripe.com/api/charges/object#charge_object-payment_method_details-card_present-generated_card) payment method representing the card to the Customer instead. When processing card payments, Stripe uses `setup_future_usage` to help you comply with regional legislation and network rules, such as [SCA](https://docs.stripe.com/strong-customer-authentication). Possible values: `none`. Default: none.
+* `tos_shown_and_accepted` - (Optional) Stripe does not return this value; the provider keeps it from configuration.
 
 <a id="payment_method_options.payco"></a>
 ### `payment_method_options.payco`
@@ -984,6 +1045,7 @@ The `payment_method_options.paypal` attribute supports:
 * `capture_method` - (Optional) Controls when the funds will be captured from the customer's account. Possible values: `manual`. Default: none.
 * `preferred_locale` - (Optional) Preferred locale of the PayPal checkout page that the customer is redirected to. Possible values: `cs-CZ`, `da-DK`, `de-AT`, `de-DE`, `de-LU`, `el-GR`, `en-GB`, `en-US`, `es-ES`, `fi-FI`, `fr-BE`, `fr-FR`, `fr-LU`, `hu-HU`, `it-IT`, `nl-BE`, `nl-NL`, `pl-PL`, `pt-PT`, `sk-SK`, `sv-SE`. Default: none.
 * `reference` - (Optional) A reference of the PayPal transaction visible to customer which is mapped to PayPal's invoice ID. This must be a globally unique ID if you have configured in your PayPal settings to block multiple payments per invoice ID. Default: none.
+* `risk_correlation_id` - (Optional) Stripe does not return this value; the provider keeps it from configuration.
 * `setup_future_usage` - (Optional) Indicates that you intend to make future payments with this PaymentIntent's payment method. If you provide a Customer with the PaymentIntent, you can use this parameter to [attach the payment method](https://docs.stripe.com/payments/save-during-payment) to the Customer after the PaymentIntent is confirmed and the customer completes any required actions. If you don't provide a Customer, you can still [attach](https://docs.stripe.com/api/payment_methods/attach) the payment method to a Customer after the transaction completes. If the payment method is `card_present` and isn't a digital wallet, Stripe creates and attaches a [generated_card](https://docs.stripe.com/api/charges/object#charge_object-payment_method_details-card_present-generated_card) payment method representing the card to the Customer instead. When processing card payments, Stripe uses `setup_future_usage` to help you comply with regional legislation and network rules, such as [SCA](https://docs.stripe.com/strong-customer-authentication). Possible values: `none`, `off_session`. Default: none.
 
 <a id="payment_method_options.payto"></a>
@@ -1195,9 +1257,9 @@ The `saved_payment_method_options` attribute supports:
 
 The `setup_intent_data` attribute supports:
 
-* `description` - (Optional)
-* `metadata` - (Optional)
-* `on_behalf_of` - (Optional)
+* `description` - (Optional) Stripe does not return this value; the provider keeps it from configuration.
+* `metadata` - (Optional) Stripe does not return this value; the provider keeps it from configuration.
+* `on_behalf_of` - (Optional) Stripe does not return this value; the provider keeps it from configuration.
 
 <a id="shipping_address_collection"></a>
 ### `shipping_address_collection`
@@ -1274,92 +1336,92 @@ The `shipping_options.shipping_rate_data.fixed_amount.currency_options` attribut
 
 The `subscription_data` attribute supports:
 
-* `application_fee_percent` - (Optional)
-* `billing_cycle_anchor` - (Optional)
-* `billing_cycle_anchor_config` - (Optional) See [`subscription_data.billing_cycle_anchor_config`](#subscription_data.billing_cycle_anchor_config) below.
-* `billing_mode` - (Optional) See [`subscription_data.billing_mode`](#subscription_data.billing_mode) below.
-* `default_tax_rates` - (Optional)
-* `description` - (Optional)
-* `invoice_settings` - (Optional) See [`subscription_data.invoice_settings`](#subscription_data.invoice_settings) below.
-* `metadata` - (Optional)
-* `on_behalf_of` - (Optional)
-* `pending_invoice_item_interval` - (Optional) See [`subscription_data.pending_invoice_item_interval`](#subscription_data.pending_invoice_item_interval) below.
-* `proration_behavior` - (Optional) Possible values: `create_prorations`, `none`.
-* `transfer_data` - (Optional) See [`subscription_data.transfer_data`](#subscription_data.transfer_data) below.
-* `trial_end` - (Optional)
-* `trial_period_days` - (Optional)
-* `trial_settings` - (Optional) See [`subscription_data.trial_settings`](#subscription_data.trial_settings) below.
+* `application_fee_percent` - (Optional) Stripe does not return this value; the provider keeps it from configuration.
+* `billing_cycle_anchor` - (Optional) Stripe does not return this value; the provider keeps it from configuration.
+* `billing_cycle_anchor_config` - (Optional) Stripe does not return this value; the provider keeps it from configuration. See [`subscription_data.billing_cycle_anchor_config`](#subscription_data.billing_cycle_anchor_config) below.
+* `billing_mode` - (Optional) Stripe does not return this value; the provider keeps it from configuration. See [`subscription_data.billing_mode`](#subscription_data.billing_mode) below.
+* `default_tax_rates` - (Optional) Stripe does not return this value; the provider keeps it from configuration.
+* `description` - (Optional) Stripe does not return this value; the provider keeps it from configuration.
+* `invoice_settings` - (Optional) Stripe does not return this value; the provider keeps it from configuration. See [`subscription_data.invoice_settings`](#subscription_data.invoice_settings) below.
+* `metadata` - (Optional) Stripe does not return this value; the provider keeps it from configuration.
+* `on_behalf_of` - (Optional) Stripe does not return this value; the provider keeps it from configuration.
+* `pending_invoice_item_interval` - (Optional) Stripe does not return this value; the provider keeps it from configuration. See [`subscription_data.pending_invoice_item_interval`](#subscription_data.pending_invoice_item_interval) below.
+* `proration_behavior` - (Optional) Possible values: `create_prorations`, `none`. Stripe does not return this value; the provider keeps it from configuration.
+* `transfer_data` - (Optional) Stripe does not return this value; the provider keeps it from configuration. See [`subscription_data.transfer_data`](#subscription_data.transfer_data) below.
+* `trial_end` - (Optional) Stripe does not return this value; the provider keeps it from configuration.
+* `trial_period_days` - (Optional) Stripe does not return this value; the provider keeps it from configuration.
+* `trial_settings` - (Optional) Stripe does not return this value; the provider keeps it from configuration. See [`subscription_data.trial_settings`](#subscription_data.trial_settings) below.
 
 <a id="subscription_data.billing_cycle_anchor_config"></a>
 ### `subscription_data.billing_cycle_anchor_config`
 
 The `subscription_data.billing_cycle_anchor_config` attribute supports:
 
-* `day_of_month` - (Required)
-* `hour` - (Optional)
-* `minute` - (Optional)
-* `month` - (Optional)
-* `second` - (Optional)
+* `day_of_month` - (Required) Stripe does not return this value; the provider keeps it from configuration.
+* `hour` - (Optional) Stripe does not return this value; the provider keeps it from configuration.
+* `minute` - (Optional) Stripe does not return this value; the provider keeps it from configuration.
+* `month` - (Optional) Stripe does not return this value; the provider keeps it from configuration.
+* `second` - (Optional) Stripe does not return this value; the provider keeps it from configuration.
 
 <a id="subscription_data.billing_mode"></a>
 ### `subscription_data.billing_mode`
 
 The `subscription_data.billing_mode` attribute supports:
 
-* `flexible` - (Optional) See [`subscription_data.billing_mode.flexible`](#subscription_data.billing_mode.flexible) below.
-* `type` - (Required) Possible values: `classic`, `flexible`.
+* `flexible` - (Optional) Stripe does not return this value; the provider keeps it from configuration. See [`subscription_data.billing_mode.flexible`](#subscription_data.billing_mode.flexible) below.
+* `type` - (Required) Possible values: `classic`, `flexible`. Stripe does not return this value; the provider keeps it from configuration.
 
 <a id="subscription_data.billing_mode.flexible"></a>
 ### `subscription_data.billing_mode.flexible`
 
 The `subscription_data.billing_mode.flexible` attribute supports:
 
-* `proration_discounts` - (Optional) Possible values: `included`, `itemized`.
+* `proration_discounts` - (Optional) Possible values: `included`, `itemized`. Stripe does not return this value; the provider keeps it from configuration.
 
 <a id="subscription_data.invoice_settings"></a>
 ### `subscription_data.invoice_settings`
 
 The `subscription_data.invoice_settings` attribute supports:
 
-* `issuer` - (Optional) See [`subscription_data.invoice_settings.issuer`](#subscription_data.invoice_settings.issuer) below.
+* `issuer` - (Optional) Stripe does not return this value; the provider keeps it from configuration. See [`subscription_data.invoice_settings.issuer`](#subscription_data.invoice_settings.issuer) below.
 
 <a id="subscription_data.invoice_settings.issuer"></a>
 ### `subscription_data.invoice_settings.issuer`
 
 The `subscription_data.invoice_settings.issuer` attribute supports:
 
-* `account` - (Optional)
-* `type` - (Required) Possible values: `account`, `self`.
+* `account` - (Optional) Stripe does not return this value; the provider keeps it from configuration.
+* `type` - (Required) Possible values: `account`, `self`. Stripe does not return this value; the provider keeps it from configuration.
 
 <a id="subscription_data.pending_invoice_item_interval"></a>
 ### `subscription_data.pending_invoice_item_interval`
 
 The `subscription_data.pending_invoice_item_interval` attribute supports:
 
-* `interval` - (Required) Possible values: `day`, `month`, `week`, `year`.
-* `interval_count` - (Optional)
+* `interval` - (Required) Possible values: `day`, `month`, `week`, `year`. Stripe does not return this value; the provider keeps it from configuration.
+* `interval_count` - (Optional) Stripe does not return this value; the provider keeps it from configuration.
 
 <a id="subscription_data.transfer_data"></a>
 ### `subscription_data.transfer_data`
 
 The `subscription_data.transfer_data` attribute supports:
 
-* `amount_percent` - (Optional)
-* `destination` - (Required)
+* `amount_percent` - (Optional) Stripe does not return this value; the provider keeps it from configuration.
+* `destination` - (Required) Stripe does not return this value; the provider keeps it from configuration.
 
 <a id="subscription_data.trial_settings"></a>
 ### `subscription_data.trial_settings`
 
 The `subscription_data.trial_settings` attribute supports:
 
-* `end_behavior` - (Required) See [`subscription_data.trial_settings.end_behavior`](#subscription_data.trial_settings.end_behavior) below.
+* `end_behavior` - (Required) Stripe does not return this value; the provider keeps it from configuration. See [`subscription_data.trial_settings.end_behavior`](#subscription_data.trial_settings.end_behavior) below.
 
 <a id="subscription_data.trial_settings.end_behavior"></a>
 ### `subscription_data.trial_settings.end_behavior`
 
 The `subscription_data.trial_settings.end_behavior` attribute supports:
 
-* `missing_payment_method` - (Required) Possible values: `cancel`, `create_invoice`, `pause`.
+* `missing_payment_method` - (Required) Possible values: `cancel`, `create_invoice`, `pause`. Stripe does not return this value; the provider keeps it from configuration.
 
 <a id="tax_id_collection"></a>
 ### `tax_id_collection`
@@ -1636,4 +1698,4 @@ Using `terraform import`, import a checkout session using its ID. For example:
 % terraform import stripe_checkout_session.order cs_test_123
 ```
 
-~> Stripe does not return `shipping_options.shipping_rate_data`, `customer_update`, `line_items.price_data`, `line_items.tax_rates`, `payment_intent_data`, `payment_method_configuration`, `setup_intent_data` or `subscription_data`, so an imported checkout session has them null: a configuration that sets `shipping_options.shipping_rate_data` plans an update after the import, and one that sets `customer_update`, `line_items.price_data`, `line_items.tax_rates`, `payment_intent_data`, `payment_method_configuration`, `setup_intent_data` or `subscription_data` plans a replacement.
+~> Stripe does not return `shipping_options.shipping_rate_data`, `customer_update`, `line_items.price_data`, `line_items.tax_rates`, `payment_intent_data`, `payment_method_configuration`, `payment_method_data`, `payment_method_options.blik`, `payment_method_options.crypto`, `payment_method_options.demo_pay`, `payment_method_options.klarna.subscriptions`, `payment_method_options.p24.tos_shown_and_accepted`, `payment_method_options.paypal.risk_correlation_id`, `setup_intent_data` or `subscription_data`, so an imported checkout session has them null: a configuration that sets `shipping_options.shipping_rate_data` plans an update after the import, and one that sets `customer_update`, `line_items.price_data`, `line_items.tax_rates`, `payment_intent_data`, `payment_method_configuration`, `payment_method_data`, `payment_method_options.blik`, `payment_method_options.crypto`, `payment_method_options.demo_pay`, `payment_method_options.klarna.subscriptions`, `payment_method_options.p24.tos_shown_and_accepted`, `payment_method_options.paypal.risk_correlation_id`, `setup_intent_data` or `subscription_data` plans a replacement.

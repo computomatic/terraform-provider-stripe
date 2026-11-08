@@ -866,3 +866,244 @@ func TestAccSubscription_bankAccountListsKeepTheirOrder(t *testing.T) {
 		},
 	})
 }
+
+// An item's `discounts`, which Stripe takes on the subscription's create alone here and returns
+// as IDs, are kept from configuration, and changing them replaces the subscription, as changing
+// its own `discounts` does: an update could neither send nor read them. The coupons are the
+// record's fixture, 10% off once, on the suite's free price (suite: TestSubscriptionAttributes,
+// `items.discounts.coupon`).
+func TestAccSubscription_itemDiscountsReplace(t *testing.T) {
+	acct := acctest.NewAccount(t)
+	coupons := `
+resource "stripe_coupon" "a" {
+  percent_off = 10
+  duration    = "once"
+}
+
+resource "stripe_coupon" "b" {
+  percent_off = 10
+  duration    = "once"
+}
+`
+	config := func(coupon string) string {
+		return freeConfig(acct, fmt.Sprintf(`
+resource "stripe_subscription" "test" {
+  customer = stripe_customer.test.id
+  items = [{
+    price     = stripe_price.free.id
+    discounts = [{ coupon = stripe_coupon.%s.id }]
+  }]
+}
+`, coupon)) + coupons
+	}
+	var first string
+	createPath := "/v1/subscriptions"
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: tfacc.ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config:           config("a"),
+				ConfigPlanChecks: resource.ConfigPlanChecks{PostApplyPostRefresh: []plancheck.PlanCheck{plancheck.ExpectEmptyPlan()}},
+				Check: resource.ComposeAggregateTestCheckFunc(
+					idOf(&first),
+					resource.TestCheckResourceAttrPair(address, "items.0.discounts.0.coupon", "stripe_coupon.a", "id"),
+					resource.TestCheckResourceAttrWith("stripe_coupon.a", "id", func(id string) error {
+						return tfacc.Sent(t, acct, "POST", &createPath, map[string]string{"items.0.discounts.0.coupon": id})(nil)
+					}),
+				),
+			},
+			{
+				Config: config("b"),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply:             []plancheck.PlanCheck{plancheck.ExpectResourceAction(address, plancheck.ResourceActionReplace)},
+					PostApplyPostRefresh: []plancheck.PlanCheck{plancheck.ExpectEmptyPlan()},
+				},
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttrPair(address, "items.0.discounts.0.coupon", "stripe_coupon.b", "id"),
+					resource.TestCheckResourceAttrWith(address, "id", func(v string) error {
+						if v == first {
+							return fmt.Errorf("changing an item's discounts kept the subscription %s", v)
+						}
+						return nil
+					}),
+				),
+			},
+		},
+	})
+}
+
+// An import reads an item's discounts as the IDs Stripe returns (the record's `discounts`:
+// `items.discounts` forms returned as `discount_id` at `items.data.discounts`), whose forms the
+// provider cannot read, so the state holds them null; a configuration that sets them adopts the
+// subscription as it is: the apply after the import takes the configured value with an update in
+// place that sends nothing, never a replacement. The coupon is the record's fixture, 10% off once,
+// on the suite's free price (suite: TestSubscriptionAttributes, `items.discounts.coupon`).
+func TestAccSubscription_importAdoptsItemDiscounts(t *testing.T) {
+	acct := acctest.NewAccount(t)
+	cfg := freeConfig(acct, `
+resource "stripe_coupon" "a" {
+  percent_off = 10
+  duration    = "once"
+}
+
+resource "stripe_subscription" "test" {
+  customer = stripe_customer.test.id
+  items = [{
+    price     = stripe_price.free.id
+    discounts = [{ coupon = stripe_coupon.a.id }]
+  }]
+}
+`)
+	var path string
+	var mark int
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: tfacc.ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: cfg,
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttrWith(address, "id", func(v string) error {
+						path = "/v1/subscriptions/" + v
+						return nil
+					}),
+					tfacc.LogMark(t, acct, &mark),
+				),
+			},
+			{
+				ResourceName: address, ImportState: true, ImportStateKind: resource.ImportBlockWithID, Config: cfg,
+				ExpectNonEmptyPlan: true,
+				ImportPlanChecks: resource.ImportPlanChecks{PreApply: []plancheck.PlanCheck{
+					plancheck.ExpectResourceAction(address, plancheck.ResourceActionUpdate),
+				}},
+			},
+			{
+				// Against the fake, nothing after the create changed the subscription.
+				PreConfig: func() {
+					if acct.Smoke {
+						return
+					}
+					log := acctest.RequestLog(t, acct)
+					for _, r := range log[:max(len(log)-mark, 0)] {
+						if r.Method == "POST" && r.Path == path {
+							t.Errorf("the apply after the import sent POST %s", r.Path)
+						}
+					}
+				},
+				Config:   cfg,
+				PlanOnly: true,
+			},
+		},
+	})
+}
+
+// An import reads an item Stripe lists no discounts for as having none, so a configuration that
+// sets the item's `discounts` replaces the subscription, as on any subscription whose item gains
+// discounts: an update cannot send them. The coupon is the record's fixture, as above.
+func TestAccSubscription_importThenItemDiscountsReplace(t *testing.T) {
+	acct := acctest.NewAccount(t)
+	subscription := func(discounts string) string {
+		return freeConfig(acct, fmt.Sprintf(`
+resource "stripe_coupon" "a" {
+  percent_off = 10
+  duration    = "once"
+}
+
+resource "stripe_subscription" "test" {
+  customer = stripe_customer.test.id
+  items = [{
+    price = stripe_price.free.id
+%s  }]
+}
+`, discounts))
+	}
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: tfacc.ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config:           subscription(""),
+				ConfigPlanChecks: resource.ConfigPlanChecks{PostApplyPostRefresh: []plancheck.PlanCheck{plancheck.ExpectEmptyPlan()}},
+				Check:            resource.TestCheckResourceAttr(address, "items.0.discounts.#", "0"),
+			},
+			{
+				ResourceName: address, ImportState: true, ImportStateKind: resource.ImportBlockWithID,
+				Config:             subscription("    discounts = [{ coupon = stripe_coupon.a.id }]\n"),
+				ExpectNonEmptyPlan: true,
+				ImportPlanChecks: resource.ImportPlanChecks{PreApply: []plancheck.PlanCheck{
+					plancheck.ExpectResourceAction(address, plancheck.ResourceActionReplace),
+				}},
+			},
+		},
+	})
+}
+
+// An item created without `discounts` holds `[]`. A discount added to it outside Terraform does
+// not turn that into null on an in-place update, which plans the unset `discounts` unknown, so a
+// configuration that then sets the item's discounts replaces the subscription rather than
+// adopting them with nothing sent. The coupon is the record's fixture, 10% off once, on the
+// suite's free price, and the update outside Terraform sends it as the record's
+// `items.discounts.coupon` probe of the update does (suite: TestSubscriptionAttributes); the
+// quantities are the suite's generated 1 and 2.
+func TestAccSubscription_updateKeepsEmptyItemDiscounts(t *testing.T) {
+	acct := acctest.NewAccount(t)
+	config := func(quantity int, discounts string) string {
+		return freeConfig(acct, fmt.Sprintf(`
+resource "stripe_coupon" "a" {
+  percent_off = 10
+  duration    = "once"
+}
+
+resource "stripe_subscription" "test" {
+  customer = stripe_customer.test.id
+  items = [{
+    price    = stripe_price.free.id
+    quantity = %d
+%s  }]
+}
+`, quantity, discounts))
+	}
+	var subscription, item, coupon string
+	capture := func(address, name string, dst *string) resource.TestCheckFunc {
+		return resource.TestCheckResourceAttrWith(address, name, func(v string) error {
+			*dst = v
+			return nil
+		})
+	}
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: tfacc.ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: config(1, ""),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr(address, "items.0.discounts.#", "0"),
+					capture(address, "id", &subscription), capture(address, "items.0.id", &item), capture("stripe_coupon.a", "id", &coupon),
+				),
+			},
+			{
+				PreConfig: func() {
+					tfacc.Post(t, acct, "/v1/subscriptions/"+subscription, wire.Object{{Name: "items", Value: wire.Array{wire.Object{
+						{Name: "id", Value: wire.String(item)},
+						{Name: "discounts", Value: wire.Array{wire.Object{{Name: "coupon", Value: wire.String(coupon)}}}},
+					}}}})
+				},
+				Config: config(2, ""),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply:             []plancheck.PlanCheck{plancheck.ExpectResourceAction(address, plancheck.ResourceActionUpdate)},
+					PostApplyPostRefresh: []plancheck.PlanCheck{plancheck.ExpectEmptyPlan()},
+				},
+				Check: resource.TestCheckResourceAttr(address, "items.0.discounts.#", "0"),
+			},
+			{
+				Config: config(2, "    discounts = [{ coupon = stripe_coupon.a.id }]\n"),
+				ConfigPlanChecks: resource.ConfigPlanChecks{PreApply: []plancheck.PlanCheck{
+					plancheck.ExpectResourceAction(address, plancheck.ResourceActionReplace),
+				}},
+				Check: resource.TestCheckResourceAttrWith(address, "id", func(v string) error {
+					if v == subscription {
+						return fmt.Errorf("setting the item's discounts kept the subscription %s", v)
+					}
+					return nil
+				}),
+			},
+		},
+	})
+}

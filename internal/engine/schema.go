@@ -63,7 +63,7 @@ func (m *model) describeResource(n *node) string {
 		desc, values = specValues.ReplaceAllString(desc, ""), set
 	}
 	d := describeValues(desc, values) + pagedNote(n) + m.lowerCaseNote(n)
-	if n.Replace || n.ReplaceIfSet && n == m.discounts {
+	if n.Replace || n.ReplaceIfSet && n == m.discounts || m.keptInKeyed(n) {
 		d += m.changingIt()
 	}
 	if n.FixedOnceSet != "" {

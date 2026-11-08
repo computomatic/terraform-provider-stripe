@@ -23,50 +23,17 @@ const parentHolds = "the parent attribute holds it"
 // every external account, on a table that is only ever a bank account.
 const cardOnly = "A card's update parameter: Stripe refuses it on a bank account with `parameter_unknown` in every country (suite: TestAccountExternalAccountAttributes/leaves/request/PostAccountsAccountExternalAccountsId/%s), so as an argument of this table it could only ever fail the apply."
 
-// mandateData is the register's reason for a confirm-time hash whose `type`, which Stripe requires,
-// rule X6 leaves out, so that no configuration could send it.
-const mandateData = "`customer_acceptance.type`, which the hash requires, is accepted only, so that no configuration could send it (suite: TestSetupIntentAttributes/leaves/request/PostSetupIntents/mandate_data.customer_acceptance.type)."
+// mandateData is the register's reason for a confirm-time hash: the customer's acceptance of a
+// mandate at the confirmation, which the intent's resource never sends.
+const mandateData = "A confirm-time instruction: Stripe took the hash only in creates that also sent `confirm` true, which this resource never sends, and it describes the customer's acceptance at that confirmation (suite: TestSetupIntentAttributes/leaves/request/PostSetupIntents/mandate_data.customer_acceptance.type, every probe of the create that sent it)."
 
-// creditNoteTaxAmounts is the AcceptedOnly reason of a credit note line's `tax_amounts`, which
-// Stripe takes and never returns.
-const creditNoteTaxAmounts = "A credit note cannot be updated in this, so a kept value cannot drift, and the provider keeps it from configuration (the product owner's decision of 2026-11-07)."
-
-// pauseSchedules is the register's reason for a schedule's request `pause_schedules`, whose
-// `pause` requires `pause_at` and whose `resume` requires `resume_at`, both accepted only, so
-// that no configuration could send a pause schedule; the response's stays readable.
-const pauseSchedules = "`pause.pause_at` and `resume.resume_at`, which the hashes require, are accepted only, so that no configuration could send a pause schedule (suite: TestSubscriptionScheduleAttributes/leaves/request/PostSubscriptionSchedules/pause_schedules.pause.pause_at.type)."
-
-// acceptedKept is the Resource.AcceptedOnly reason of an argument whose only record is what the
-// configuration says (the product owner's decision of 2026-10-31).
-const acceptedKept = "Stripe never returns it, and the provider keeps it from configuration (PreserveConfig)."
-
-// sessionKept is the Resource.AcceptedOnly reason of what a checkout session takes on its create
-// alone (the product owner's decision of 2026-10-31).
-const sessionKept = "A checkout session cannot be updated in this, so a kept value cannot drift, and the provider keeps it from configuration (PreserveConfig); nothing else sets it."
-
-// sessionKeptLeaves are the leaves of sessionKept.
-var sessionKeptLeaves = []string{
-	"customer_update.address", "customer_update.name", "customer_update.shipping", "line_items.tax_rates",
-	"payment_intent_data.capture_method", "payment_intent_data.description", "payment_intent_data.metadata",
-	"payment_intent_data.on_behalf_of", "payment_intent_data.receipt_email", "payment_intent_data.setup_future_usage",
-	"payment_intent_data.shipping.address.city", "payment_intent_data.shipping.address.country",
-	"payment_intent_data.shipping.address.line1", "payment_intent_data.shipping.address.line2",
-	"payment_intent_data.shipping.address.postal_code", "payment_intent_data.shipping.address.state",
-	"payment_intent_data.shipping.carrier", "payment_intent_data.shipping.name", "payment_intent_data.shipping.phone",
-	"payment_intent_data.shipping.tracking_number", "payment_intent_data.statement_descriptor",
-	"payment_intent_data.statement_descriptor_suffix", "payment_intent_data.transfer_data.amount",
-	"payment_intent_data.transfer_data.destination", "payment_intent_data.transfer_group", "payment_method_configuration",
-	"setup_intent_data.description", "setup_intent_data.metadata", "setup_intent_data.on_behalf_of",
-	"subscription_data.application_fee_percent", "subscription_data.billing_cycle_anchor",
-	"subscription_data.billing_cycle_anchor_config.day_of_month", "subscription_data.billing_cycle_anchor_config.hour",
-	"subscription_data.billing_cycle_anchor_config.minute", "subscription_data.billing_cycle_anchor_config.month",
-	"subscription_data.billing_cycle_anchor_config.second", "subscription_data.billing_mode.flexible.proration_discounts",
-	"subscription_data.billing_mode.type", "subscription_data.default_tax_rates", "subscription_data.description",
-	"subscription_data.invoice_settings.issuer.account", "subscription_data.invoice_settings.issuer.type",
-	"subscription_data.metadata", "subscription_data.on_behalf_of", "subscription_data.pending_invoice_item_interval.interval",
-	"subscription_data.pending_invoice_item_interval.interval_count", "subscription_data.proration_behavior",
-	"subscription_data.transfer_data.amount_percent", "subscription_data.transfer_data.destination", "subscription_data.trial_end",
-	"subscription_data.trial_period_days", "subscription_data.trial_settings.end_behavior.missing_payment_method",
+// confirmTime is the register's reason for an argument of an intent's create that Stripe took only
+// beside `confirm`, which the resource never sends: an instruction for the confirmation, such as
+// where to send the customer back to or how to authenticate, not a setting of the intent (the
+// product owner's decision of 2026-11-07 leaves one-shot instructions out). test names the suite's
+// leaf test.
+func confirmTime(test string) string {
+	return "A confirm-time instruction: Stripe took it only in creates that also sent `confirm` true, which this resource never sends, so it would apply to no request the provider makes (suite: " + test + ", every probe of the create that sent it)."
 }
 
 // priceKept is a price's Resource.AcceptedOnly register (the product owner's decision of
@@ -114,6 +81,9 @@ func lineDiscountsKept(list string) map[string]string {
 // drift, and the provider keeps it from configuration (the product owner's decision of
 // 2026-11-05, as for a customer's `tax.validate_location`).
 const requestBehaviour = "It says how Stripe handles the request it comes with, as a customer's `tax.validate_location` does, so a kept value cannot drift, and the provider keeps it from configuration (the product owner's decision of 2026-11-05)."
+
+// invoiceCreateDiscount is the register's reason for an invoice create's `discount` form.
+const invoiceCreateDiscount = "It names a discount another object holds, such as a subscription's, and the record's `discounts` does not show Stripe returning it on the invoice, so the engine could not read it back as it reads the other forms (suite: TestInvoiceAttributes/leaves/request/PostInvoices/discounts.discount; the brief of the tenth pin, 2026-11-06)."
 
 // invoiceKept is the invoice's register of accepted-only leaves: the forms of its `discounts`,
 // and the arguments whose effect shows elsewhere on the invoice. Its create's `discount` form,
@@ -164,6 +134,10 @@ func neededKept(without, effect string) string {
 
 // returnedTimestamp is the reason of the string branch of a time Stripe returns as a timestamp.
 const returnedTimestamp = "Its effect shows in the timestamp Stripe returns" + tenthPinDecision + "."
+
+// subscriptionUpdateDiscounts is the register's reason for the forms of a subscription update's
+// `discounts` and its items', which would make the create-only lists updatable.
+const subscriptionUpdateDiscounts = "Exposing the update's forms would make the list updatable, which the provider keeps create-only (D3): Stripe drops a discount that ends, and an update sending the list again, as every change of `items` sends each item's, would redeem the coupon or promotion code anew, an effect a user would not expect of a kept argument (the product owner's decision of 2026-11-07 leaves such leaves out; suite: TestSubscriptionAttributes/leaves/request/PostSubscriptionsSubscriptionExposedId/discounts.coupon)."
 
 // subscriptionKept is the subscription's register of accepted-only leaves, each exposed before
 // the gate.
@@ -250,11 +224,8 @@ var Resources = []Resource{
 	// invoice item's (discountsKept).
 	{Package: "billing_credit_grant", CreatePath: "/v1/billing/credit_grants", UpdatePath: "/v1/billing/credit_grants/{id}"},
 	{Package: "credit_note", AcceptedOnly: map[string]string{
-		"credit_amount":                    "Its effect shows in `amount` (the product owner's decision of 2026-11-05).",
-		"lines.tax_amounts.amount":         creditNoteTaxAmounts,
-		"lines.tax_amounts.tax_rate":       creditNoteTaxAmounts,
-		"lines.tax_amounts.taxable_amount": creditNoteTaxAmounts,
-		"refund_amount":                    "Its effect shows in `amount` and `refunds` (the product owner's decision of 2026-11-05).",
+		"credit_amount": "Its effect shows in `amount` (the product owner's decision of 2026-11-05).",
+		"refund_amount": "Its effect shows in `amount` and `refunds` (the product owner's decision of 2026-11-05).",
 	}, CreatePath: "/v1/credit_notes", UpdatePath: "/v1/credit_notes/{id}", PagedLists: map[string]string{"lines": "stripe_credit_note_line"}},
 	// An invoice's payment error is a nested payment intent that repeats without end, and
 	// three payment method options are empty objects in the response.
@@ -262,12 +233,16 @@ var Resources = []Resource{
 		"PostInvoices discounts.coupon":         leftExpired,
 		"PostInvoices discounts.promotion_code": leftExpired,
 		"PostInvoicesInvoice discounts.coupon":  leftCouponBesideHeld,
-	}, AcceptedOnly: invoiceKept, CreatePath: "/v1/invoices", UpdatePath: "/v1/invoices/{invoice}", PagedLists: map[string]string{"lines": "stripe_invoice_line"}, Omit: []string{"discounts", "last_finalization_error", "payment_settings.payment_method_options.blik", "payment_settings.payment_method_options.konbini", "payment_settings.payment_method_options.sepa_debit"}},
+	}, AcceptedOnly: invoiceKept, Exclude: map[string]string{
+		"PostInvoices discounts.discount": invoiceCreateDiscount,
+	}, CreatePath: "/v1/invoices", UpdatePath: "/v1/invoices/{invoice}", PagedLists: map[string]string{"lines": "stripe_invoice_line"}, Omit: []string{"discounts", "last_finalization_error", "payment_settings.payment_method_options.blik", "payment_settings.payment_method_options.konbini", "payment_settings.payment_method_options.sepa_debit"}},
 	{Package: "invoiceitem", LeftToStripe: map[string]string{
 		"PostInvoiceitems discounts.coupon":            leftExpired,
 		"PostInvoiceitems discounts.discount":          leftDiscountHeld,
 		"PostInvoiceitems discounts.promotion_code":    leftExpired,
 		"PostInvoiceitemsInvoiceitem discounts.coupon": leftCouponBesideHeld,
+	}, Exclude: map[string]string{
+		"PostInvoiceitemsInvoiceitem invoicing_rules": "Its one value, `\"\"`, removes the item's invoicing rules, which Stripe does not let a request set (the spec's description, pin `v2585`): an instruction for one update, not a setting a configuration could keep (suite: TestInvoiceItemAttributes/leaves/request/PostInvoiceitemsInvoiceitem/invoicing_rules).",
 	}, AcceptedOnly: map[string]string{
 		"pricing.price":            "Its effect shows in `pricing.price_details.price` (the product owner's decision of 2026-11-04).",
 		"subscription":             "Its effect shows in `parent.subscription_details.subscription` (the product owner's decision of 2026-11-04).",
@@ -290,9 +265,15 @@ var Resources = []Resource{
 	{Package: "subscription", LeftToStripe: map[string]string{
 		"PostSubscriptions add_invoice_items.discounts.coupon":                                                               leftExpired,
 		"PostSubscriptions add_invoice_items.discounts.promotion_code":                                                       leftExpired,
+		"PostSubscriptions items.discounts.coupon":                                                                           leftExpired,
+		"PostSubscriptions items.discounts.promotion_code":                                                                   leftExpired,
 		"PostSubscriptionsSubscriptionExposedId add_invoice_items.discounts.discount":                                        leftDiscountHeld,
 		"PostSubscriptionsSubscriptionExposedId payment_settings.payment_method_options.customer_balance.bank_transfer.type": "Stripe refused an EU bank transfer sent without `eu_bank_transfer` on a subscription created with a euro price (`price:eur`) and an EU transfer held, and the price's currency is another object's state, which the plan cannot know (probe `isolated/hash_customer_balance_bank_transfer`).",
-	}, AcceptedOnly: subscriptionKept(), CreatePath: "/v1/subscriptions", UpdatePath: "/v1/subscriptions/{subscription_exposed_id}", PagedLists: map[string]string{"items": "stripe_subscription_item"}, Omit: []string{"discounts", "payment_settings.payment_method_options.konbini", "payment_settings.payment_method_options.sepa_debit", "items.discounts"}, CreateOnly: []string{"billing_cycle_anchor"}},
+	}, AcceptedOnly: subscriptionKept(), Exclude: map[string]string{
+		"PostSubscriptionsSubscriptionExposedId discounts":            subscriptionUpdateDiscounts,
+		"PostSubscriptionsSubscriptionExposedId items.discounts":      subscriptionUpdateDiscounts,
+		"PostSubscriptionsSubscriptionExposedId billing_cycle_anchor": "The update's `now` resets the billing cycle anchor at the update that sends it, and `unchanged` keeps it: an instruction for that moment, not a setting, which kept in state would say nothing about the subscription; the create's timestamp, which the table holds, is the setting (suite: TestSubscriptionAttributes/leaves/request/PostSubscriptionsSubscriptionExposedId/billing_cycle_anchor.type).",
+	}, CreatePath: "/v1/subscriptions", UpdatePath: "/v1/subscriptions/{subscription_exposed_id}", PagedLists: map[string]string{"items": "stripe_subscription_item"}, Omit: []string{"discounts", "payment_settings.payment_method_options.konbini", "payment_settings.payment_method_options.sepa_debit", "items.discounts"}, CreateOnly: []string{"billing_cycle_anchor"}},
 	{Package: "subscription_item", LeftToStripe: map[string]string{
 		"PostSubscriptionItems discounts.coupon":         leftExpired,
 		"PostSubscriptionItems discounts.discount":       leftDiscountHeld,
@@ -300,10 +281,7 @@ var Resources = []Resource{
 		"PostSubscriptionItemsItem discounts.coupon":     leftCouponBesideHeld,
 	}, AcceptedOnly: subscriptionItemKept(),
 		CreatePath: "/v1/subscription_items", UpdatePath: "/v1/subscription_items/{item}", Omit: []string{"discounts"}},
-	{Package: "subscription_schedule", AcceptedOnly: scheduleKept, Exclude: map[string]string{
-		"PostSubscriptionSchedules pause_schedules":         pauseSchedules,
-		"PostSubscriptionSchedulesSchedule pause_schedules": pauseSchedules,
-	}, CreatePath: "/v1/subscription_schedules", UpdatePath: "/v1/subscription_schedules/{schedule}", Omit: []string{"from_subscription", "pause_schedules"}},
+	{Package: "subscription_schedule", AcceptedOnly: scheduleKept, CreatePath: "/v1/subscription_schedules", UpdatePath: "/v1/subscription_schedules/{schedule}", Omit: []string{"from_subscription", "pause_schedules"}},
 	// Wave 6. The setup intent leaves out what only confirming it uses, and its payment
 	// method options, until the gate exposes them. The customer payment method is an
 	// attachment, so the engine adds its `customer` as the parent and `customer_account` is
@@ -316,19 +294,29 @@ var Resources = []Resource{
 		"PostPaymentLinks payment_method_collection":                     "Stripe's refusal turns on whether the line items' prices recur, which a `price` names on another object: it refused `always` and `if_required` beside a one-time `price` and took `if_required` beside a recurring `price_data` (probes `isolated/collection_*`).",
 		"PostPaymentLinks transfer_data.destination":                     leftMissing,
 	}, CreatePath: "/v1/payment_links", UpdatePath: "/v1/payment_links/{payment_link}", Omit: []string{"line_items.price_data.product_data.tax_details"}},
-	{Package: "setup_intent", AcceptedOnly: map[string]string{"payment_method_configuration": acceptedKept},
-		Exclude: map[string]string{"mandate_data": mandateData}, CreatePath: "/v1/setup_intents", UpdatePath: "/v1/setup_intents/{intent}", Omit: []string{"last_setup_error.payment_intent", "last_setup_error.setup_intent", "last_setup_error.source", "confirm", "mandate_data", "payment_method_data", "return_url", "use_stripe_sdk", "single_use", "payment_method_options", "confirmation_token"}},
+	{Package: "setup_intent", Exclude: map[string]string{
+		"mandate_data": mandateData,
+		"PostSetupIntents payment_method_options.card.network":        confirmTime("TestSetupIntentAttributes/leaves/request/PostSetupIntents/payment_method_options.card.network"),
+		"PostSetupIntents payment_method_options.card.three_d_secure": confirmTime("TestSetupIntentAttributes/leaves/request/PostSetupIntents/payment_method_options.card.three_d_secure.version"),
+		"PostSetupIntents return_url":                                 confirmTime("TestSetupIntentAttributes/leaves/request/PostSetupIntents/return_url"),
+		"PostSetupIntents use_stripe_sdk":                             confirmTime("TestSetupIntentAttributes/leaves/request/PostSetupIntents/use_stripe_sdk"),
+	}, CreatePath: "/v1/setup_intents", UpdatePath: "/v1/setup_intents/{intent}", Omit: []string{"last_setup_error.payment_intent", "last_setup_error.setup_intent", "last_setup_error.source", "confirm", "mandate_data", "payment_method_data", "return_url", "use_stripe_sdk", "single_use", "payment_method_options", "confirmation_token"}},
 	{Package: "customer_payment_method", Exclude: map[string]string{"customer": parentHolds}, CreatePath: "/v1/payment_methods/{payment_method}/attach", UpdatePath: "/v1/payment_methods/{payment_method}", Omit: []string{"customer", "customer_account"}, ReadOnly: []string{"allow_redisplay", "card.exp_month", "card.networks", "us_bank_account"}},
 	// Confirming is the resource's `status`, so `confirm` is excluded by rule X5, and the Omit
 	// entries leave out the confirm-time parameters until the gate exposes them.
 	{Package: "payment_intent", LeftToStripe: map[string]string{
 		"PostPaymentIntents statement_descriptor":       "Stripe's refusal turns on a `statement_descriptor_suffix` absent from the request, which a pattern of what a request sends cannot state: it took the refused requests once they sent a suffix too (probes `isolated/descriptor_*`), as the declaration's `Answers` words.",
 		"PostPaymentIntentsIntent statement_descriptor": "Stripe's refusal turns on a `statement_descriptor_suffix` absent from the request and the intent, which a pattern of what a request sends cannot state: it took the refused update once it sent a suffix too or the intent held one (probes `isolated/descriptor_update_*`), as the declaration's `Answers` words.",
-	}, StatusConfirms: true, AcceptedOnly: map[string]string{"payment_method_configuration": acceptedKept},
+	}, StatusConfirms: true,
 		Exclude: map[string]string{
-			"mandate_data": mandateData,
-			"payment_method_options.card.three_d_secure":    "Stripe never returns the hash, which its create takes only beside `confirm`, and its update refuses it unless `confirm` is true, with `cryptogram` and `transaction_id`, which it requires, unproven there, so that no configuration could send it (suite: TestPaymentIntentAttributes/leaves/request/PostPaymentIntentsIntent/payment_method_options.card.three_d_secure.version).",
-			"payment_method_options.card.installments.plan": "`type`, which a plan requires, is unproven on the create and verified on the update only by Stripe's refusal, so that no configuration could send the plan (suite: TestPaymentIntentAttributes/leaves/request/PostPaymentIntents/payment_method_options.card.installments.plan.count, refused without `fixed_count`, and PostPaymentIntentsIntent/payment_method_options.card.installments.plan.type, refused unless `confirm` is true).",
+			"mandate_data":                   mandateData,
+			"PostPaymentIntents off_session": confirmTime("TestPaymentIntentAttributes/leaves/request/PostPaymentIntents/off_session"),
+			"PostPaymentIntents payment_method_options.card.network": confirmTime("TestPaymentIntentAttributes/leaves/request/PostPaymentIntents/payment_method_options.card.network"),
+			"PostPaymentIntents radar_options.referrer":              confirmTime("TestPaymentIntentAttributes/leaves/request/PostPaymentIntents/radar_options.referrer"),
+			"PostPaymentIntents return_url":                          confirmTime("TestPaymentIntentAttributes/leaves/request/PostPaymentIntents/return_url"),
+			"PostPaymentIntents use_stripe_sdk":                      confirmTime("TestPaymentIntentAttributes/leaves/request/PostPaymentIntents/use_stripe_sdk"),
+			"payment_method_options.card.three_d_secure":             "Stripe never returns the hash, which its create takes only beside `confirm`, and its update refuses it unless `confirm` is true, with `cryptogram` and `transaction_id`, which it requires, unproven there, so that no configuration could send it (suite: TestPaymentIntentAttributes/leaves/request/PostPaymentIntentsIntent/payment_method_options.card.three_d_secure.version).",
+			"payment_method_options.card.installments.plan":          "`type`, which a plan requires, is unproven on the create and verified on the update only by Stripe's refusal, so that no configuration could send the plan (suite: TestPaymentIntentAttributes/leaves/request/PostPaymentIntents/payment_method_options.card.installments.plan.count, refused without `fixed_count`, and PostPaymentIntentsIntent/payment_method_options.card.installments.plan.type, refused unless `confirm` is true).",
 		}, CreatePath: "/v1/payment_intents", UpdatePath: "/v1/payment_intents/{intent}", Omit: []string{
 			"payment_method_options", "amount_details", "last_payment_error.payment_intent", "last_payment_error.setup_intent", "last_payment_error.source",
 			"confirm", "confirmation_token", "error_on_requires_action", "mandate", "mandate_data", "off_session", "payment_method_data", "return_url",
@@ -349,7 +337,7 @@ var Resources = []Resource{
 		"PostCheckoutSessions branding_settings.icon.file":  leftMissing,
 		"PostCheckoutSessions branding_settings.logo.file":  leftMissing,
 		"PostCheckoutSessions payment_method_configuration": "Stripe's refusal turns on the payment methods the configuration it names turns on, which the plan cannot know (probes `isolated/configuration_bancontact` and `isolated/configuration_no_methods`).",
-	}, AcceptedOnly: keptFor(sessionKept, sessionKeptLeaves), CreatePath: "/v1/checkout/sessions", UpdatePath: "/v1/checkout/sessions/{session}", Omit: []string{"payment_method_options.pay_by_bank"}},
+	}, CreatePath: "/v1/checkout/sessions", UpdatePath: "/v1/checkout/sessions/{session}", Omit: []string{"payment_method_options.pay_by_bank"}},
 	{Package: "mandate", ReadPath: "/v1/mandates/{mandate}"},
 	// Wave 7 batch a. The Climate catalogue is read-only. The identity session leaves out
 	// verification flows and related persons, which the suite does not prove, so it takes a
@@ -426,7 +414,7 @@ var Resources = []Resource{
 		"PostV2CoreAccounts defaults.profile.business_url":                                                    leftBusinessURL,
 		"PostV2CoreAccountsId configuration.recipient.capabilities.stripe_balance.stripe_transfers.requested": "Stripe's refusal turns on `dashboard` and the collectors of `defaults.responsibilities` being absent from the request, which a pattern of what a request sends cannot state: it took the same request beside them (probes `isolated/change_adds_recipient` and `isolated/change_adds_recipient_with_collectors`), as the declaration's `Answers` words.",
 		"PostV2CoreAccountsId defaults.profile.business_url":                                                  leftBusinessURL,
-	}, AcceptedOnly: map[string]string{"configuration.recipient.capabilities.stripe_balance.stripe_transfers.requested": acceptedKept},
+	},
 		CreatePath: "/v2/core/accounts", UpdatePath: "/v2/core/accounts/{id}",
 		Keep: []string{"applied_configurations", "closed",
 			"configuration.customer.applied", "configuration.customer.capabilities.automatic_indirect_tax",
@@ -454,7 +442,9 @@ var Resources = []Resource{
 	// as create-only and the declaration moves it. Early fraud warnings and reviews are
 	// read-only: the suite cannot create them on its account. An invoice payment is retrieved by
 	// its own ID.
-	{Package: "test_helpers_test_clock", CreatePath: "/v1/test_helpers/test_clocks", Omit: []string{"customer"}},
+	{Package: "test_helpers_test_clock", Exclude: map[string]string{
+		"customer": "With a `customer`, Stripe freezes the clock at its `created`, not at the configured `frozen_time`, which the table requires (the record's rule on `frozen_time`), so the argument would change what another argument does on every create, a surprise for a kept value (the product owner's decision of 2026-11-07 leaves such leaves out; suite: TestTestClockAttributes/leaves/request/PostTestHelpersTestClocks/customer).",
+	}, CreatePath: "/v1/test_helpers/test_clocks", Omit: []string{"customer"}},
 	{Package: "payout", CreatePath: "/v1/payouts", UpdatePath: "/v1/payouts/{payout}"},
 	// The create's `source` is the ID of a legacy source, which the suite has not proven; the
 	// response's is the source object, which stays readable.
@@ -534,7 +524,7 @@ var Resources = []Resource{
 	// response's copy is left out.
 	// Stripe requires a transfer's `amount`, which the spec leaves optional (suite: "missing amount").
 	{Package: "transfer", CreatePath: "/v1/transfers", UpdatePath: "/v1/transfers/{transfer}", PagedLists: map[string]string{"reversals": "stripe_transfer_reversal"}, Require: []string{"amount"}},
-	{Package: "transfer_reversal", AcceptedOnly: map[string]string{"description": acceptedKept, "refund_application_fee": acceptedKept}, Exclude: map[string]string{"transfer": parentHolds}, CreatePath: "/v1/transfers/{id}/reversals", UpdatePath: "/v1/transfers/{transfer}/reversals/{id}", Omit: []string{"transfer"}},
+	{Package: "transfer_reversal", Exclude: map[string]string{"transfer": parentHolds}, CreatePath: "/v1/transfers/{id}/reversals", UpdatePath: "/v1/transfers/{transfer}/reversals/{id}", Omit: []string{"transfer"}},
 	{Package: "application_fee", ReadPath: "/v1/application_fees/{id}", PagedLists: map[string]string{"refunds": "stripe_application_fee_refund"}},
 	{Package: "application_fee_refund", Exclude: map[string]string{"fee": parentHolds}, CreatePath: "/v1/application_fees/{id}/refunds", UpdatePath: "/v1/application_fees/{fee}/refunds/{id}", Omit: []string{"fee"}},
 	{Package: "customer_card", Exclude: map[string]string{"customer": parentHolds}, ReadPath: "/v1/customers/{customer}/cards/{id}", Omit: []string{"customer"}},

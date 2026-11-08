@@ -52,9 +52,10 @@ The following arguments are optional:
 * `metadata` - (Optional) Set of [key-value pairs](https://docs.stripe.com/api/metadata) that you can attach to an object. This can be useful for storing additional information about the object in a structured format. Individual keys can be unset by posting an empty value to them. All keys can be unset by posting an empty value to `metadata`. Default (Stripe): `{}`.
 * `on_behalf_of` - (Optional) The Stripe account ID created for this SetupIntent. Changing it fails the plan, because this resource cannot be replaced. Default: none.
 * `payment_method` - (Optional) ID of the payment method (a PaymentMethod, Card, or saved Source object) to attach to this SetupIntent. Default (Stripe): none, or the method Stripe makes from `payment_method_data`, which this attribute does not hold.
-* `payment_method_configuration` - (Optional) The ID of the [payment method configuration](https://docs.stripe.com/api/payment_method_configurations) to use with this SetupIntent.
+* `payment_method_configuration` - (Optional) The ID of the [payment method configuration](https://docs.stripe.com/api/payment_method_configurations) to use with this SetupIntent. Stripe does not return this value; the provider keeps it from configuration. Removing it from the configuration leaves the current value.
 * `payment_method_data` - (Optional) When included, this hash creates a PaymentMethod that is set as the [`payment_method`](https://docs.stripe.com/api/setup_intents/object#setup_intent_object-payment_method) value in the SetupIntent. See [`payment_method_data`](#payment_method_data) below.
 * `payment_method_options` - (Optional) Payment method-specific configuration for this SetupIntent. See [`payment_method_options`](#payment_method_options) below.
+* `single_use` - (Optional) If you populate this hash, this SetupIntent generates a `single_use` mandate after successful completion. Single-use mandates are only valid for the following payment methods: `acss_debit`, `alipay`, `au_becs_debit`, `bacs_debit`, `bancontact`, `boleto`, `ideal`, `link`, `sepa_debit`, and `us_bank_account`. Changing it fails the plan, because this resource cannot be replaced. Stripe does not return this value; the provider keeps it from configuration. See [`single_use`](#single_use) below.
 * `status` - (Optional) [Status](https://docs.stripe.com/payments/intents#intent-statuses) of this SetupIntent, one of `requires_payment_method`, `requires_confirmation`, `requires_action`, `processing`, `canceled`, or `succeeded`. Possible values: `canceled`. Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
 * `usage` - (Optional) Indicates how the payment method is intended to be used in the future. If not provided, this value defaults to `off_session`. Possible values: `off_session`, `on_session`. Changing it fails the plan, because this resource cannot be replaced. Default (Stripe): `off_session`. Removing it from the configuration leaves the current value.
 
@@ -119,7 +120,26 @@ The `payment_method_options` attribute supports:
 
 The `payment_method_options.card` attribute supports:
 
+* `mandate_options` - (Optional) Stripe does not return this value; the provider keeps it from configuration. See [`payment_method_options.card.mandate_options`](#payment_method_options.card.mandate_options) below.
+* `network` - (Optional) Possible values: `amex`, `cartes_bancaires`, `diners`, `discover`, `eftpos_au`, `girocard`, `interac`, `jcb`, `link`, `mastercard`, `unionpay`, `unknown`, `visa`. Stripe does not return this value; the provider keeps it from configuration. Default: not sent.
+* `request_three_d_secure` - (Optional) Possible values: `any`, `automatic`, `challenge`. Stripe does not return this value; the provider keeps it from configuration.
 * `three_d_secure` - (Optional) See [`payment_method_options.card.three_d_secure`](#payment_method_options.card.three_d_secure) below.
+
+<a id="payment_method_options.card.mandate_options"></a>
+### `payment_method_options.card.mandate_options`
+
+The `payment_method_options.card.mandate_options` attribute supports:
+
+* `amount` - (Required) Stripe does not return this value; the provider keeps it from configuration.
+* `amount_type` - (Required) Possible values: `fixed`, `maximum`. Stripe does not return this value; the provider keeps it from configuration.
+* `currency` - (Required) Stripe does not return this value; the provider keeps it from configuration.
+* `description` - (Optional) Stripe does not return this value; the provider keeps it from configuration.
+* `end_date` - (Optional) Stripe does not return this value; the provider keeps it from configuration.
+* `interval` - (Required) Possible values: `day`, `month`, `sporadic`, `week`, `year`. Stripe does not return this value; the provider keeps it from configuration.
+* `interval_count` - (Optional) Stripe does not return this value; the provider keeps it from configuration.
+* `reference` - (Required) Stripe does not return this value; the provider keeps it from configuration.
+* `start_date` - (Required) Stripe does not return this value; the provider keeps it from configuration.
+* `supported_types` - (Optional) Stripe does not return this value; the provider keeps it from configuration.
 
 <a id="payment_method_options.card.three_d_secure"></a>
 ### `payment_method_options.card.three_d_secure`
@@ -149,6 +169,14 @@ The `payment_method_options.card.three_d_secure.network_options.cartes_bancaires
 * `cb_avalgo` - (Optional) Possible values: `0`, `1`, `2`, `3`, `4`, `A`. Stripe refused it on a US account on update: "The parameter `payment_method_options[card][three_d_secure]` cannot be used when creating a SetupIntent unless `confirm` is set to true.". Default: not sent.
 * `cb_exemption` - (Optional) Stripe refused it on a US account on update: "The parameter `payment_method_options[card][three_d_secure]` cannot be used when creating a SetupIntent unless `confirm` is set to true.". Stripe refuses it unless `confirm` is true, which this resource never sends, and the suite has not seen Stripe take it. Elsewhere Stripe refused it on a US account on update: "The parameter `payment_method_options[card][three_d_secure]` cannot be used when creating a SetupIntent unless `confirm` is set to true.". Where the provider's Stripe account is in `US`, the plan refuses an update that sends `payment_method_options.card.three_d_secure.network_options.cartes_bancaires.cb_avalgo = "2"` and `payment_method_options.card.three_d_secure.network_options.cartes_bancaires.cb_exemption = "0001"`, which Stripe refused there with "The parameter `payment_method_options[card][three_d_secure]` cannot be used when creating a SetupIntent unless `confirm` is set to true." (conformance suite probe `isolated/update_cartes_bancaires_cb_exemption`). The provider reads the account's country only for a plan that sends such a request, and leaves the request to Stripe where the account is elsewhere or the key cannot read it. Default: not sent.
 * `cb_score` - (Optional) Stripe refused it on a US account on update: "The parameter `payment_method_options[card][three_d_secure]` cannot be used when creating a SetupIntent unless `confirm` is set to true.". Stripe refuses it unless `confirm` is true, which this resource never sends, and the suite has not seen Stripe take it. Elsewhere Stripe refused it on a US account on update: "The parameter `payment_method_options[card][three_d_secure]` cannot be used when creating a SetupIntent unless `confirm` is set to true.". Where the provider's Stripe account is in `US`, the plan refuses an update that sends `payment_method_options.card.three_d_secure.network_options.cartes_bancaires.cb_avalgo = "2"` and `payment_method_options.card.three_d_secure.network_options.cartes_bancaires.cb_score = 20`, which Stripe refused there with "The parameter `payment_method_options[card][three_d_secure]` cannot be used when creating a SetupIntent unless `confirm` is set to true." (conformance suite probe `isolated/update_cartes_bancaires_cb_score`). The provider reads the account's country only for a plan that sends such a request, and leaves the request to Stripe where the account is elsewhere or the key cannot read it. Default: not sent.
+
+<a id="single_use"></a>
+### `single_use`
+
+The `single_use` attribute supports:
+
+* `amount` - (Required) Stripe does not return this value; the provider keeps it from configuration.
+* `currency` - (Required) Stripe does not return this value; the provider keeps it from configuration.
 
 ## Attribute Reference
 
@@ -347,4 +375,4 @@ Using `terraform import`, import a setup intent using its ID. For example:
 % terraform import stripe_setup_intent.card seti_123
 ```
 
-~> Stripe does not return `payment_method_configuration`, `payment_method_data`, `payment_method_options` or `confirmation_token`, so an imported setup intent has them null: a configuration that sets `payment_method_configuration`, `payment_method_data` or `payment_method_options` plans an update after the import, and one that sets `confirmation_token` plans a replacement.
+~> Stripe does not return `payment_method_configuration`, `payment_method_data`, `payment_method_options`, `confirmation_token` or `single_use`, so an imported setup intent has them null: a configuration that sets `payment_method_configuration`, `payment_method_data` or `payment_method_options` plans an update after the import, and one that sets `confirmation_token` or `single_use` plans a replacement.

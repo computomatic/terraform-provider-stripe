@@ -3,6 +3,7 @@ package engine
 import (
 	"context"
 	"fmt"
+	"maps"
 	"slices"
 	"sort"
 	"strconv"
@@ -574,8 +575,11 @@ func configSets(config tftypes.Value, list string, i int, field string) bool {
 func (m *model) encodeKeyedList(n *node, pv, sv attr.Value, config tftypes.Value) (wire.Value, bool, error) {
 	paired, removed := m.matchKeyed(n, listElements(pv), listElements(sv), config)
 	var out wire.Array
+	kept := keptInElements(n, m.decl.MatchData[n.Name])
 	for i, e := range paired {
-		if e.state != nil && sameBesidesComputed(tftypes.NewAttributePath().WithAttributeName(n.AttrName()).WithElementKeyInt(i), e.plan, *e.state, config) {
+		// A difference in a member the update cannot send, such as the configured `discounts` an
+		// import adopts, is no change to send.
+		if e.state != nil && sameBesidesComputed(tftypes.NewAttributePath().WithAttributeName(n.AttrName()).WithElementKeyInt(i), withStateKept(e.plan, *e.state, kept), *e.state, config) {
 			continue
 		}
 		obj, err := encodeObject(n.Kids, e.plan.Attributes(), func(k *node) bool { return k.Update })
@@ -606,6 +610,24 @@ func (m *model) encodeKeyedList(n *node, pv, sv attr.Value, config tftypes.Value
 		}
 	}
 	return out, len(out) > 0, nil
+}
+
+// withStateKept returns the plan's element with the state's value of each kept member.
+func withStateKept(plan, state basetypes.ObjectValue, kept []*node) basetypes.ObjectValue {
+	if len(kept) == 0 {
+		return plan
+	}
+	attrs := maps.Clone(plan.Attributes())
+	for _, k := range kept {
+		if v, ok := state.Attributes()[k.AttrName()]; ok {
+			attrs[k.AttrName()] = v
+		}
+	}
+	out, diags := basetypes.NewObjectValue(plan.AttributeTypes(context.Background()), attrs)
+	if diags.HasError() {
+		return plan
+	}
+	return out
 }
 
 // carryOnUpdate sends the state's value of each Carry field of an updated list whose plan

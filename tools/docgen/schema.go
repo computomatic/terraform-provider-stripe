@@ -61,6 +61,9 @@ type attr struct {
 	Unreachable string
 	// Copy is, on an embedded copy of another Stripe object, the data source type that reads it.
 	Copy string
+	// NotReturned is the engine's sentence on an argument Stripe takes and never returns, which
+	// the provider keeps from configuration.
+	NotReturned string
 }
 
 // at returns the attribute at a dotted path below attrs, or nil.

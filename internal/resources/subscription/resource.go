@@ -107,6 +107,10 @@ var Declaration = engine.Declaration{
 		"add_invoice_items.discounts.discount": "Stripe takes a discount the subscription or its customer already holds.",
 		// suite: TestSubscriptionAttributes, probe `isolated/invoice_item_promotion_code_inactive`
 		"add_invoice_items.discounts.promotion_code": "Stripe takes an active promotion code.",
+		// suite: TestSubscriptionAttributes, probe `isolated/item_coupon_expired`
+		"items.discounts.coupon": "Stripe takes a coupon that has not expired.",
+		// suite: TestSubscriptionAttributes, probe `isolated/item_promotion_code_inactive`
+		"items.discounts.promotion_code": "Stripe takes an active promotion code.",
 		// suite: TestSubscriptionAttributes, probe `isolated/hash_customer_balance_bank_transfer`,
 		// whose subscription is created with an EU bank transfer and its `country`
 		"payment_settings.payment_method_options.customer_balance.bank_transfer.type": "Stripe takes `eu_bank_transfer` beside `eu_bank_transfer.country`, and refused it on an update that sent no `eu_bank_transfer`.",

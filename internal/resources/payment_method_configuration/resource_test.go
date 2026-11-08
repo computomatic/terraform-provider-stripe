@@ -158,17 +158,71 @@ resource "terraform_data" "trigger" {
 	})
 }
 
-// Stripe takes the preference of a method other than `bancontact`, `card` and `link` and never
-// returns it (suite: TestPaymentMethodConfigurationAttributes), so it is not an argument.
-func TestAccPaymentMethodConfiguration_acceptedOnlyPreferenceIsReadOnly(t *testing.T) {
+// methodPreference is a payment method's preference on the create and on the update.
+type methodPreference struct{ method, created, updated string }
+
+// The preferences of methods other than `bancontact`, `card` and `link` are arguments. The
+// provider reads the US bank account's back from Stripe, because the record proves its response,
+// and keeps the others from configuration: the record proves no response of ACSS debit's, Apple
+// Pay's or Google Pay's, and Apple Pay Later's is not in the response. A configuration that sets
+// them plans cleanly after the apply, and an update that changes them sends the new values in
+// place. Each value is one the record shows Stripe taking on a US account (suite:
+// TestPaymentMethodConfigurationAttributes, the create's and the update's
+// `<method>.display_preference.preference` probes, `on` and `off`), with the card on: Stripe
+// refuses Apple Pay or Google Pay without it ("Apple Pay and Google Pay require Card to be
+// enabled.", dev sandbox, `req_pIjLo1oFF4GxdH`), which the record does not show, because its
+// probes set every method's preference at once.
+func TestAccPaymentMethodConfiguration_morePreferences(t *testing.T) {
 	acct := acctest.NewAccount(t)
+	methods := []methodPreference{
+		{"us_bank_account", "off", "on"}, {"apple_pay_later", "on", "off"},
+		{"acss_debit", "on", "off"}, {"apple_pay", "off", "on"}, {"google_pay", "on", "off"},
+	}
+	step := func(updated bool) (string, resource.TestCheckFunc, map[string]string) {
+		cfg := preference("card", "on")
+		var checks []resource.TestCheckFunc
+		sent := map[string]string{}
+		for _, m := range methods {
+			v := m.created
+			if updated {
+				v = m.updated
+			}
+			cfg += preference(m.method, v)
+			checks = append(checks, resource.TestCheckResourceAttr(address, m.method+".display_preference.preference", v))
+			sent[m.method+".display_preference.preference"] = v
+		}
+		return configurationConfig(acct, "Checkout", cfg), resource.ComposeAggregateTestCheckFunc(checks...), sent
+	}
+	createCfg, created, createSent := step(false)
+	updateCfg, updatedCheck, updateSent := step(true)
+	createPath := "/v1/payment_method_configurations"
+	var updatePath string
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: tfacc.ProviderFactories,
-		Steps: []resource.TestStep{{
-			Config:      configurationConfig(acct, "Checkout", preference("acss_debit", "on")),
-			PlanOnly:    true,
-			ExpectError: regexp.MustCompile(`(?i)read-only`),
-		}},
+		Steps: []resource.TestStep{
+			{
+				Config: createCfg,
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PostApplyPostRefresh: []plancheck.PlanCheck{plancheck.ExpectEmptyPlan()},
+				},
+				Check: resource.ComposeAggregateTestCheckFunc(
+					created,
+					tfacc.Sent(t, acct, "POST", &createPath, createSent),
+					resource.TestCheckResourceAttrWith(address, "id", func(v string) error {
+						updatePath = createPath + "/" + v
+						return nil
+					}),
+				),
+			},
+			{
+				Config: updateCfg,
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply:             []plancheck.PlanCheck{plancheck.ExpectResourceAction(address, plancheck.ResourceActionUpdate)},
+					PostApplyPostRefresh: []plancheck.PlanCheck{plancheck.ExpectEmptyPlan()},
+				},
+				Check: resource.ComposeAggregateTestCheckFunc(updatedCheck, tfacc.Sent(t, acct, "POST", &updatePath, updateSent)),
+			},
+		},
 	})
 }
 

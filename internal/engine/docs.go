@@ -30,7 +30,18 @@ type AttributeDoc struct {
 	Unreachable string
 	// Copy is, on an embedded copy of another Stripe object, the data source type that reads it.
 	Copy string
+	// NotReturned is, on an argument Stripe takes and never returns, the sentence that says the
+	// provider keeps it from configuration, which follows the description.
+	NotReturned string
 }
+
+// NotReturnedDoc is the docs sentence of an argument Stripe takes and never returns, which the
+// provider keeps from configuration (fields.Field.NotReturned).
+const NotReturnedDoc = "Stripe does not return this value; the provider keeps it from configuration."
+
+// NotProvenDoc is the docs sentence of a kept argument the response holds, whose returned value
+// the conformance suite has not proven: the provider keeps it from configuration until it does.
+const NotProvenDoc = "The provider keeps this value from configuration, because the conformance suite has not yet proven what Stripe returns for it."
 
 // The removal sentences (ADR 2026-10-29-full-attribute-coverage, D4, E2 and E5). An argument the
 // plan keeps (keepHeld) leaves the current value; one in a list element, which the
@@ -77,10 +88,21 @@ func (m *model) attributeDocs(arguments bool) map[string]AttributeDoc {
 				}
 				doc.NeedsDefault = n.Update && !n.Create
 				doc.Removal = removal(n)
+				// An update never sends a kept create-only member of a keyed list's elements,
+				// so removing it leaves what Stripe holds.
+				if doc.Removal != "" && m.keptInKeyed(n) {
+					doc.Removal = RemovalKeeps
+				}
 			}
 			if arguments {
 				doc.Refused, doc.Answer, doc.Together, doc.Unreachable = n.Refused, n.Answer, n.TogetherDoc, n.Unreachable
 				doc.PlanRefusal = m.planRefusalDoc(n)
+				switch {
+				case n.NotReturned && n.Response:
+					doc.NotReturned = NotProvenDoc
+				case n.NotReturned:
+					doc.NotReturned = NotReturnedDoc
+				}
 			}
 			doc.Copy = n.Copy
 			if doc != (AttributeDoc{}) {

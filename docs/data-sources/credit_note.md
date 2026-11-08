@@ -39,6 +39,7 @@ This data source exports the following attributes in addition to the arguments a
 * `discount_amount` - The integer amount in cents (or local equivalent) representing the total amount of discount that was credited.
 * `discount_amounts` - The aggregate amounts calculated per discount for all line items. See [`discount_amounts`](#discount_amounts) below.
 * `effective_at` - The date when this credit note is in effect. Same as `created` unless overwritten. When defined, this value replaces the system-generated 'Date of issue' printed on the credit note PDF.
+* `email_type` - Type of email to send to the customer, one of `credit_note` or `none` and the default is `credit_note`. Possible values: `credit_note`, `none`.
 * `invoice` - ID of the invoice.
 * `lines` - Line items that make up the credit note. One of `amount`, `lines`, or `shipping_cost` must be provided. Holds the first page of the list Stripe returns with the object; `has_more` is true when there are more. Read every element with the `stripe_credit_note_line` data source. See [`lines`](#lines) below.
 * `livemode` - If the object exists in live mode, the value is `true`. If the object exists in test mode, the value is `false`.

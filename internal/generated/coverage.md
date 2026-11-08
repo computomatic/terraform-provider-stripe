@@ -6,7 +6,7 @@ Every leaf of each table's create and update requests and of its object is expos
 
 |Side|Exposed|Excluded|Awaiting proof|Total|
 |-|-|-|-|-|
-|Request|3377|431|1775|5583|
+|Request|3610|198|1775|5583|
 |Response|5412|124|1958|7494|
 
 ## Per table
@@ -36,8 +36,8 @@ Defaults not yet recorded counts the optional arguments a table exposes whose do
 |`billing_meter`|`billing.meter`|8|2|0|13|0|0|0|
 |`billing_meter_event_summary`|`billing.meter_event_summary`|0|0|0|5|1|0|0|
 |`billing_portal_configuration`|`billing_portal.configuration`|59|2|0|37|0|0|2|
-|`charge`|`charge`|43|4|19|386|11|0|6|
-|`checkout_session`|`checkout.session`|348|15|1|293|0|0|79|
+|`charge`|`charge`|45|2|19|386|11|0|8|
+|`checkout_session`|`checkout.session`|361|2|1|293|0|0|88|
 |`checkout_session_line_item`|`item`|0|0|0|19|0|0|0|
 |`climate_order`|`climate.order`|8|2|0|29|0|0|4|
 |`climate_product`|`climate.product`|0|0|0|10|0|0|0|
@@ -45,14 +45,14 @@ Defaults not yet recorded counts the optional arguments a table exposes whose do
 |`commerce_product_catalog_import_v2`|`v2.commerce.product_catalog_import`|0|0|0|25|0|0|0|
 |`country_spec`|`country_spec`|0|0|0|9|0|1|0|
 |`coupon`|`coupon`|15|2|0|16|0|0|0|
-|`credit_note`|`credit_note`|29|3|0|53|0|0|15|
+|`credit_note`|`credit_note`|30|2|0|53|0|0|16|
 |`credit_note_line`|`credit_note_line_item`|0|0|0|24|0|0|0|
-|`customer`|`customer`|83|8|16|58|2|0|3|
+|`customer`|`customer`|89|2|16|58|2|0|4|
 |`customer_balance_transaction`|`customer_balance_transaction`|6|2|0|13|1|0|0|
 |`customer_bank_account`|`bank_account`|0|0|0|27|1|0|0|
 |`customer_card`|`card`|0|0|0|29|1|0|0|
 |`customer_cash_balance_transaction`|`customer_cash_balance_transaction`|0|0|0|27|1|0|0|
-|`customer_payment_method`|`payment_method`|14|5|2|199|38|0|0|
+|`customer_payment_method`|`payment_method`|16|3|2|199|38|0|0|
 |`dispute`|`dispute`|0|0|0|86|0|0|0|
 |`entitlements_active_entitlement`|`entitlements.active_entitlement`|0|0|0|4|0|0|0|
 |`entitlements_feature`|`entitlements.feature`|6|2|0|6|0|0|0|
@@ -67,11 +67,11 @@ Defaults not yet recorded counts the optional arguments a table exposes whose do
 |`financial_connections_transaction`|`financial_connections.transaction`|0|0|0|12|0|0|0|
 |`identity_verification_report`|`identity.verification_report`|0|0|0|61|1|0|0|
 |`identity_verification_session`|`identity.verification_session`|20|2|3|43|1|3|12|
-|`invoice`|`invoice`|176|15|6|189|0|3|17|
+|`invoice`|`invoice`|188|3|6|189|0|3|21|
 |`invoice_line`|`line_item`|0|0|0|42|1|0|0|
 |`invoice_payment`|`invoice_payment`|0|0|0|15|0|0|0|
 |`invoice_rendering_template`|`invoice_rendering_template`|0|0|0|7|0|0|0|
-|`invoiceitem`|`invoiceitem`|43|7|0|35|0|0|15|
+|`invoiceitem`|`invoiceitem`|47|3|0|35|0|0|17|
 |`issuing_authorization`|`issuing.authorization`|0|0|0|87|0|0|0|
 |`issuing_card`|`issuing.card`|32|2|33|37|0|28|15|
 |`issuing_cardholder`|`issuing.cardholder`|66|2|0|39|0|0|24|
@@ -81,11 +81,11 @@ Defaults not yet recorded counts the optional arguments a table exposes whose do
 |`issuing_token`|`issuing.token`|0|0|0|36|0|0|0|
 |`issuing_transaction`|`issuing.transaction`|0|0|0|67|0|0|0|
 |`mandate`|`mandate`|0|0|0|51|11|0|0|
-|`payment_intent`|`payment_intent`|126|74|516|272|8|1097|26|
+|`payment_intent`|`payment_intent`|160|40|516|272|8|1097|38|
 |`payment_intent_amount_details_line_item`|`payment_intent_amount_details_line_item`|0|0|0|17|0|0|0|
 |`payment_link`|`payment_link`|185|2|1|90|0|0|19|
 |`payment_link_line_item`|`item`|0|0|0|19|0|0|0|
-|`payment_method_configuration`|`payment_method_configuration`|28|102|0|247|0|0|1|
+|`payment_method_configuration`|`payment_method_configuration`|128|2|0|247|0|0|60|
 |`payment_method_domain`|`payment_method_domain`|3|2|0|17|0|0|1|
 |`payment_record`|`payment_record`|0|0|0|326|9|0|0|
 |`payout`|`payout`|10|2|0|27|0|0|0|
@@ -105,11 +105,11 @@ Defaults not yet recorded counts the optional arguments a table exposes whose do
 |`reporting_report_run`|`reporting.report_run`|0|0|0|16|0|0|0|
 |`reporting_report_type`|`reporting.report_type`|0|0|0|8|0|0|0|
 |`review`|`review`|0|0|0|20|0|0|0|
-|`setup_intent`|`setup_intent`|61|44|266|60|2|180|16|
+|`setup_intent`|`setup_intent`|86|19|266|60|2|180|21|
 |`shipping_rate`|`shipping_rate`|18|2|0|17|0|0|2|
-|`subscription`|`subscription`|248|13|4|127|0|2|36|
+|`subscription`|`subscription`|252|9|4|127|0|2|40|
 |`subscription_item`|`subscription_item`|40|2|0|15|0|0|13|
-|`subscription_schedule`|`subscription_schedule`|186|31|0|111|0|0|20|
+|`subscription_schedule`|`subscription_schedule`|215|2|0|111|0|0|32|
 |`tax_code`|`tax_code`|0|0|0|4|0|0|0|
 |`tax_id`|`tax_id`|4|1|2|16|0|0|1|
 |`tax_location`|`tax.location`|0|0|0|10|0|0|0|
@@ -122,7 +122,7 @@ Defaults not yet recorded counts the optional arguments a table exposes whose do
 |`terminal_location`|`terminal.location`|52|2|0|28|0|0|25|
 |`terminal_reader`|`terminal.reader`|6|2|0|86|0|5|3|
 |`test_helpers_test_clock`|`test_helpers.test_clock`|2|2|0|8|0|0|0|
-|`topup`|`topup`|10|3|0|18|0|0|1|
+|`topup`|`topup`|11|2|0|18|0|0|2|
 |`transfer`|`transfer`|10|2|0|16|0|0|1|
 |`transfer_reversal`|`transfer_reversal`|5|2|0|8|1|0|2|
 |`treasury_credit_reversal`|`treasury.credit_reversal`|2|1|0|13|0|0|1|
@@ -149,22 +149,22 @@ Per table, the optional arguments it exposes whose docs line has no default stat
 |`account_v2`|`defaults.currency`|1|
 |`billing_credit_grant`|`applicability_config.scope.price_type`, `customer`, `effective_at`|0|
 |`billing_portal_configuration`|`features.subscription_update.products.adjustable_quantity.maximum`, `features.subscription_update.products.adjustable_quantity.minimum`|0|
-|`charge`|`amount`, `application_fee`, `capture`, `currency`, `radar_options.session`, `source`|0|
-|`checkout_session`|`adaptive_pricing.enabled`, `customer_creation`, `customer_update.address`, `customer_update.name`, `customer_update.shipping`, `invoice_creation.invoice_data.metadata`, `invoice_creation.invoice_data.rendering_options.template`, `line_items.adjustable_quantity.maximum`, `line_items.adjustable_quantity.minimum`, `line_items.metadata`, `line_items.price`, `line_items.price_data.product`, `line_items.price_data.product_data.description`, `line_items.price_data.product_data.images`, `line_items.price_data.product_data.metadata`, `line_items.price_data.product_data.tax_code`, `line_items.price_data.product_data.tax_details.performance_location`, `line_items.price_data.product_data.tax_details.tax_code`, `line_items.price_data.product_data.unit_label`, `line_items.price_data.recurring.interval_count`, `line_items.price_data.tax_behavior`, `line_items.price_data.unit_amount`, `line_items.price_data.unit_amount_decimal`, `line_items.quantity`, `line_items.tax_rates`, `mode`, `payment_intent_data.capture_method`, `payment_intent_data.description`, `payment_intent_data.metadata`, `payment_intent_data.on_behalf_of`, `payment_intent_data.receipt_email`, `payment_intent_data.setup_future_usage`, `payment_intent_data.shipping.address.city`, `payment_intent_data.shipping.address.country`, `payment_intent_data.shipping.address.line2`, `payment_intent_data.shipping.address.postal_code`, `payment_intent_data.shipping.address.state`, `payment_intent_data.shipping.carrier`, `payment_intent_data.shipping.phone`, `payment_intent_data.shipping.tracking_number`, `payment_intent_data.statement_descriptor`, `payment_intent_data.statement_descriptor_suffix`, `payment_intent_data.transfer_data.amount`, `payment_intent_data.transfer_group`, `payment_method_collection`, `payment_method_configuration`, `redirect_on_completion`, `saved_payment_method_options.allow_redisplay_filters`, `saved_payment_method_options.payment_method_remove`, `setup_intent_data.description`, `setup_intent_data.metadata`, `setup_intent_data.on_behalf_of`, `shipping_options.shipping_rate_data.fixed_amount.currency_options.tax_behavior`, `shipping_options.shipping_rate_data.metadata`, `shipping_options.shipping_rate_data.tax_behavior`, `shipping_options.shipping_rate_data.tax_code`, `shipping_options.shipping_rate_data.type`, `subscription_data.application_fee_percent`, `subscription_data.billing_cycle_anchor`, `subscription_data.billing_cycle_anchor_config.hour`, `subscription_data.billing_cycle_anchor_config.minute`, `subscription_data.billing_cycle_anchor_config.month`, `subscription_data.billing_cycle_anchor_config.second`, `subscription_data.billing_mode.flexible.proration_discounts`, `subscription_data.default_tax_rates`, `subscription_data.description`, `subscription_data.invoice_settings.issuer.account`, `subscription_data.metadata`, `subscription_data.on_behalf_of`, `subscription_data.pending_invoice_item_interval.interval_count`, `subscription_data.proration_behavior`, `subscription_data.transfer_data.amount_percent`, `subscription_data.trial_end`, `subscription_data.trial_period_days`, `success_url`|4|
+|`charge`|`amount`, `application_fee`, `capture`, `card`, `currency`, `radar_options.session`, `source`, `transfer_data.description`|0|
+|`checkout_session`|`adaptive_pricing.enabled`, `customer_creation`, `customer_update.address`, `customer_update.name`, `customer_update.shipping`, `invoice_creation.invoice_data.metadata`, `invoice_creation.invoice_data.rendering_options.template`, `line_items.adjustable_quantity.maximum`, `line_items.adjustable_quantity.minimum`, `line_items.metadata`, `line_items.price`, `line_items.price_data.product`, `line_items.price_data.product_data.description`, `line_items.price_data.product_data.images`, `line_items.price_data.product_data.metadata`, `line_items.price_data.product_data.tax_code`, `line_items.price_data.product_data.tax_details.performance_location`, `line_items.price_data.product_data.tax_details.tax_code`, `line_items.price_data.product_data.unit_label`, `line_items.price_data.recurring.interval_count`, `line_items.price_data.tax_behavior`, `line_items.price_data.unit_amount`, `line_items.price_data.unit_amount_decimal`, `line_items.quantity`, `line_items.tax_rates`, `mode`, `payment_intent_data.capture_method`, `payment_intent_data.description`, `payment_intent_data.metadata`, `payment_intent_data.on_behalf_of`, `payment_intent_data.receipt_email`, `payment_intent_data.setup_future_usage`, `payment_intent_data.shipping.address.city`, `payment_intent_data.shipping.address.country`, `payment_intent_data.shipping.address.line2`, `payment_intent_data.shipping.address.postal_code`, `payment_intent_data.shipping.address.state`, `payment_intent_data.shipping.carrier`, `payment_intent_data.shipping.phone`, `payment_intent_data.shipping.tracking_number`, `payment_intent_data.statement_descriptor`, `payment_intent_data.statement_descriptor_suffix`, `payment_intent_data.transfer_data.amount`, `payment_intent_data.transfer_group`, `payment_method_collection`, `payment_method_configuration`, `payment_method_data.allow_redisplay`, `payment_method_options.blik.mandate_options.expires_at`, `payment_method_options.blik.setup_future_usage`, `payment_method_options.crypto.setup_future_usage`, `payment_method_options.demo_pay.setup_future_usage`, `payment_method_options.klarna.subscriptions.interval_count`, `payment_method_options.klarna.subscriptions.name`, `payment_method_options.p24.tos_shown_and_accepted`, `payment_method_options.paypal.risk_correlation_id`, `redirect_on_completion`, `saved_payment_method_options.allow_redisplay_filters`, `saved_payment_method_options.payment_method_remove`, `setup_intent_data.description`, `setup_intent_data.metadata`, `setup_intent_data.on_behalf_of`, `shipping_options.shipping_rate_data.fixed_amount.currency_options.tax_behavior`, `shipping_options.shipping_rate_data.metadata`, `shipping_options.shipping_rate_data.tax_behavior`, `shipping_options.shipping_rate_data.tax_code`, `shipping_options.shipping_rate_data.type`, `subscription_data.application_fee_percent`, `subscription_data.billing_cycle_anchor`, `subscription_data.billing_cycle_anchor_config.hour`, `subscription_data.billing_cycle_anchor_config.minute`, `subscription_data.billing_cycle_anchor_config.month`, `subscription_data.billing_cycle_anchor_config.second`, `subscription_data.billing_mode.flexible.proration_discounts`, `subscription_data.default_tax_rates`, `subscription_data.description`, `subscription_data.invoice_settings.issuer.account`, `subscription_data.metadata`, `subscription_data.on_behalf_of`, `subscription_data.pending_invoice_item_interval.interval_count`, `subscription_data.proration_behavior`, `subscription_data.transfer_data.amount_percent`, `subscription_data.trial_end`, `subscription_data.trial_period_days`, `success_url`|4|
 |`climate_order`||4|
-|`credit_note`|`amount`, `credit_amount`, `effective_at`, `lines.amount`, `lines.description`, `lines.invoice_line_item`, `lines.metadata`, `lines.quantity`, `lines.tax_rates`, `lines.unit_amount`, `lines.unit_amount_decimal`, `refund_amount`, `refunds.amount_refunded`, `refunds.refund`, `refunds.type`|0|
-|`customer`|`invoice_settings.rendering_options.template`, `source`, `tax.validate_location`|0|
+|`credit_note`|`amount`, `credit_amount`, `effective_at`, `email_type`, `lines.amount`, `lines.description`, `lines.invoice_line_item`, `lines.metadata`, `lines.quantity`, `lines.tax_rates`, `lines.unit_amount`, `lines.unit_amount_decimal`, `refund_amount`, `refunds.amount_refunded`, `refunds.refund`, `refunds.type`|0|
+|`customer`|`invoice_settings.rendering_options.template`, `payment_method`, `source`, `tax.validate_location`|0|
 |`file_link`||2|
 |`identity_verification_session`||12|
-|`invoice`|`collection_method`, `currency`, `customer`, `days_until_due`, `default_tax_rates`, `discounts.coupon`, `discounts.promotion_code`, `due_date`, `effective_at`, `pending_invoice_items_behavior`, `shipping_cost.shipping_rate_data.fixed_amount.currency_options.tax_behavior`, `shipping_cost.shipping_rate_data.metadata`, `shipping_cost.shipping_rate_data.tax_behavior`, `shipping_cost.shipping_rate_data.tax_code`, `shipping_cost.shipping_rate_data.type`, `subscription`|1|
-|`invoiceitem`|`amount`, `currency`, `customer`, `discounts.coupon`, `discounts.discount`, `discounts.promotion_code`, `price_data.tax_behavior`, `price_data.unit_amount`, `price_data.unit_amount_decimal`, `pricing.price`, `quantity`, `quantity_decimal`, `subscription`, `tax_rates`, `unit_amount_decimal`|0|
+|`invoice`|`application_fee_amount`, `collection_method`, `currency`, `customer`, `days_until_due`, `default_tax_rates`, `discounts.coupon`, `discounts.promotion_code`, `due_date`, `effective_at`, `payment_settings.payment_method_options.card.installments.plan.count`, `payment_settings.payment_method_options.card.installments.plan.interval`, `pending_invoice_items_behavior`, `shipping_cost.shipping_rate_data.fixed_amount.currency_options.tax_behavior`, `shipping_cost.shipping_rate_data.metadata`, `shipping_cost.shipping_rate_data.tax_behavior`, `shipping_cost.shipping_rate_data.tax_code`, `shipping_cost.shipping_rate_data.type`, `subscription`, `transfer_data.amount`|1|
+|`invoiceitem`|`amount`, `currency`, `customer`, `discounts.coupon`, `discounts.discount`, `discounts.promotion_code`, `price_data.tax_behavior`, `price_data.unit_amount`, `price_data.unit_amount_decimal`, `pricing.price`, `quantity`, `quantity_decimal`, `subscription`, `tax_behavior`, `tax_code`, `tax_rates`, `unit_amount_decimal`|0|
 |`issuing_card`||15|
 |`issuing_cardholder`||24|
 |`issuing_dispute`||44|
 |`issuing_personalization_design`||8|
-|`payment_intent`|`amount_details.discount_amount`, `amount_details.shipping.amount`, `amount_details.shipping.from_postal_code`, `amount_details.shipping.to_postal_code`, `confirmation_token`, `mandate`, `payment_method_configuration`, `payment_method_data.allow_redisplay`, `payment_method_data.billing_details.address.city`, `payment_method_data.billing_details.address.country`, `payment_method_data.billing_details.address.line1`, `payment_method_data.billing_details.address.line2`, `payment_method_data.billing_details.address.postal_code`, `payment_method_data.billing_details.address.state`, `payment_method_data.billing_details.email`, `payment_method_data.billing_details.name`, `payment_method_data.billing_details.phone`, `payment_method_data.billing_details.tax_id`, `payment_method_data.metadata`, `payment_method_data.radar_options.session`, `payment_method_options.card.capture_method`, `payment_method_options.card.cvc_token`, `payment_method_options.card.request_three_d_secure`, `payment_method_options.card.require_cvc_recollection`, `payment_method_options.card.setup_future_usage`, `radar_options.session`|0|
+|`payment_intent`|`amount_details.discount_amount`, `amount_details.enforce_arithmetic_validation`, `amount_details.shipping.amount`, `amount_details.shipping.from_postal_code`, `amount_details.shipping.to_postal_code`, `confirmation_token`, `mandate`, `payment_method_configuration`, `payment_method_data.allow_redisplay`, `payment_method_data.billing_details.address.city`, `payment_method_data.billing_details.address.country`, `payment_method_data.billing_details.address.line1`, `payment_method_data.billing_details.address.line2`, `payment_method_data.billing_details.address.postal_code`, `payment_method_data.billing_details.address.state`, `payment_method_data.billing_details.email`, `payment_method_data.billing_details.name`, `payment_method_data.billing_details.phone`, `payment_method_data.billing_details.tax_id`, `payment_method_data.metadata`, `payment_method_data.radar_options.session`, `payment_method_options.card.capture_method`, `payment_method_options.card.cvc_token`, `payment_method_options.card.installments.enabled`, `payment_method_options.card.mandate_options.description`, `payment_method_options.card.mandate_options.end_date`, `payment_method_options.card.mandate_options.interval_count`, `payment_method_options.card.mandate_options.supported_types`, `payment_method_options.card.request_extended_authorization`, `payment_method_options.card.request_incremental_authorization`, `payment_method_options.card.request_multicapture`, `payment_method_options.card.request_overcapture`, `payment_method_options.card.request_three_d_secure`, `payment_method_options.card.require_cvc_recollection`, `payment_method_options.card.setup_future_usage`, `payment_method_options.card.statement_descriptor_suffix_kana`, `payment_method_options.card.statement_descriptor_suffix_kanji`, `radar_options.session`|0|
 |`payment_link`|`invoice_creation.invoice_data.metadata`, `invoice_creation.invoice_data.rendering_options.template`, `line_items.adjustable_quantity.maximum`, `line_items.adjustable_quantity.minimum`, `line_items.price`, `line_items.price_data.product`, `line_items.price_data.product_data.description`, `line_items.price_data.product_data.images`, `line_items.price_data.product_data.metadata`, `line_items.price_data.product_data.tax_code`, `line_items.price_data.product_data.tax_details.tax_code`, `line_items.price_data.product_data.unit_label`, `line_items.price_data.recurring.interval_count`, `line_items.price_data.tax_behavior`, `line_items.price_data.unit_amount`, `line_items.price_data.unit_amount_decimal`, `payment_intent_data.metadata`, `payment_method_collection`, `subscription_data.metadata`|0|
-|`payment_method_configuration`|`name`|0|
+|`payment_method_configuration`|`acss_debit.display_preference.preference`, `affirm.display_preference.preference`, `afterpay_clearpay.display_preference.preference`, `alipay.display_preference.preference`, `alma.display_preference.preference`, `amazon_pay.display_preference.preference`, `apple_pay.display_preference.preference`, `apple_pay_later.display_preference.preference`, `au_becs_debit.display_preference.preference`, `bacs_debit.display_preference.preference`, `billie.display_preference.preference`, `bizum.display_preference.preference`, `blik.display_preference.preference`, `boleto.display_preference.preference`, `cartes_bancaires.display_preference.preference`, `cashapp.display_preference.preference`, `crypto.display_preference.preference`, `customer_balance.display_preference.preference`, `eps.display_preference.preference`, `fpx.display_preference.preference`, `fr_meal_voucher_conecs.display_preference.preference`, `giropay.display_preference.preference`, `google_pay.display_preference.preference`, `grabpay.display_preference.preference`, `ideal.display_preference.preference`, `jcb.display_preference.preference`, `kakao_pay.display_preference.preference`, `klarna.display_preference.preference`, `konbini.display_preference.preference`, `kr_card.display_preference.preference`, `mb_way.display_preference.preference`, `mobilepay.display_preference.preference`, `multibanco.display_preference.preference`, `name`, `naver_pay.display_preference.preference`, `nz_bank_account.display_preference.preference`, `oxxo.display_preference.preference`, `p24.display_preference.preference`, `pay_by_bank.display_preference.preference`, `payco.display_preference.preference`, `paynow.display_preference.preference`, `paypal.display_preference.preference`, `paypay.display_preference.preference`, `payto.display_preference.preference`, `pix.display_preference.preference`, `promptpay.display_preference.preference`, `revolut_pay.display_preference.preference`, `samsung_pay.display_preference.preference`, `satispay.display_preference.preference`, `scalapay.display_preference.preference`, `sepa_debit.display_preference.preference`, `sequra.display_preference.preference`, `sofort.display_preference.preference`, `sunbit.display_preference.preference`, `swish.display_preference.preference`, `twint.display_preference.preference`, `upi.display_preference.preference`, `us_bank_account.display_preference.preference`, `wechat_pay.display_preference.preference`, `zip.display_preference.preference`|0|
 |`payment_method_domain`||1|
 |`plan`|`amount`, `product`, `product.active`, `product.id`, `product.metadata`, `product.statement_descriptor`, `product.tax_code`, `product.tax_details.performance_location`, `product.tax_details.tax_code`, `product.unit_label`, `tiers.flat_amount`, `tiers.flat_amount_decimal`, `tiers.unit_amount`, `tiers.unit_amount_decimal`|0|
 |`price`|`currency_options.custom_unit_amount.maximum`, `currency_options.custom_unit_amount.minimum`, `currency_options.custom_unit_amount.preset`, `currency_options.tiers.flat_amount`, `currency_options.tiers.flat_amount_decimal`, `currency_options.tiers.unit_amount`, `currency_options.tiers.unit_amount_decimal`, `product`, `product_data.active`, `product_data.id`, `product_data.metadata`, `product_data.statement_descriptor`, `product_data.tax_code`, `product_data.tax_details.performance_location`, `product_data.tax_details.tax_code`, `product_data.unit_label`, `recurring.interval_count`, `recurring.usage_type`, `tiers.flat_amount`, `tiers.flat_amount_decimal`, `tiers.unit_amount`, `tiers.unit_amount_decimal`, `transfer_lookup_key`, `unit_amount`|0|
@@ -172,17 +172,17 @@ Per table, the optional arguments it exposes whose docs line has no default stat
 |`promotion_code`|`promotion.coupon`|0|
 |`quote`|`collection_method`, `customer`, `discounts.coupon`, `discounts.discount`, `discounts.promotion_code`, `from_quote.is_revision`, `invoice_settings.days_until_due`, `invoice_settings.issuer.account`, `line_items.discounts.coupon`, `line_items.discounts.discount`, `line_items.discounts.promotion_code`, `line_items.price`, `line_items.price_data.recurring.interval_count`, `line_items.price_data.tax_behavior`, `line_items.price_data.unit_amount`, `line_items.price_data.unit_amount_decimal`, `line_items.quantity`, `line_items.tax_rates`, `subscription_data.billing_mode.flexible.proration_discounts`|0|
 |`refund`|`charge`, `payment_intent`, `refund_application_fee`, `reverse_transfer`|3|
-|`setup_intent`|`confirmation_token`, `payment_method_configuration`, `payment_method_data.allow_redisplay`, `payment_method_data.billing_details.address.city`, `payment_method_data.billing_details.address.country`, `payment_method_data.billing_details.address.line1`, `payment_method_data.billing_details.address.line2`, `payment_method_data.billing_details.address.postal_code`, `payment_method_data.billing_details.address.state`, `payment_method_data.billing_details.email`, `payment_method_data.billing_details.name`, `payment_method_data.billing_details.phone`, `payment_method_data.billing_details.tax_id`, `payment_method_data.metadata`, `payment_method_data.radar_options.session`|1|
+|`setup_intent`|`confirmation_token`, `payment_method_configuration`, `payment_method_data.allow_redisplay`, `payment_method_data.billing_details.address.city`, `payment_method_data.billing_details.address.country`, `payment_method_data.billing_details.address.line1`, `payment_method_data.billing_details.address.line2`, `payment_method_data.billing_details.address.postal_code`, `payment_method_data.billing_details.address.state`, `payment_method_data.billing_details.email`, `payment_method_data.billing_details.name`, `payment_method_data.billing_details.phone`, `payment_method_data.billing_details.tax_id`, `payment_method_data.metadata`, `payment_method_data.radar_options.session`, `payment_method_options.card.mandate_options.description`, `payment_method_options.card.mandate_options.end_date`, `payment_method_options.card.mandate_options.interval_count`, `payment_method_options.card.mandate_options.supported_types`, `payment_method_options.card.request_three_d_secure`|1|
 |`shipping_rate`|`fixed_amount.currency_options.tax_behavior`, `type`|0|
-|`subscription`|`add_invoice_items.discountable`, `add_invoice_items.discounts.coupon`, `add_invoice_items.discounts.discount`, `add_invoice_items.discounts.promotion_code`, `add_invoice_items.metadata`, `add_invoice_items.period.end.timestamp`, `add_invoice_items.period.start.timestamp`, `add_invoice_items.price`, `add_invoice_items.price_data.tax_behavior`, `add_invoice_items.price_data.unit_amount`, `add_invoice_items.price_data.unit_amount_decimal`, `add_invoice_items.quantity`, `add_invoice_items.tax_rates`, `backdate_start_date`, `billing_schedules.bill_until.duration.interval_count`, `billing_schedules.bill_until.timestamp`, `billing_schedules.key`, `cancel_at`, `customer`, `default_tax_rates`, `discounts.discount`, `items.discounts.discount`, `items.metadata`, `items.price`, `items.price_data.recurring.interval_count`, `items.price_data.tax_behavior`, `items.price_data.unit_amount`, `items.price_data.unit_amount_decimal`, `items.quantity`, `items.tax_rates`, `off_session`, `payment_behavior`, `proration_behavior`, `trial_end`, `trial_from_plan`, `trial_period_days`|0|
+|`subscription`|`add_invoice_items.discountable`, `add_invoice_items.discounts.coupon`, `add_invoice_items.discounts.discount`, `add_invoice_items.discounts.promotion_code`, `add_invoice_items.metadata`, `add_invoice_items.period.end.timestamp`, `add_invoice_items.period.start.timestamp`, `add_invoice_items.price`, `add_invoice_items.price_data.tax_behavior`, `add_invoice_items.price_data.unit_amount`, `add_invoice_items.price_data.unit_amount_decimal`, `add_invoice_items.quantity`, `add_invoice_items.tax_rates`, `backdate_start_date`, `billing_schedules.bill_until.duration.interval_count`, `billing_schedules.bill_until.timestamp`, `billing_schedules.key`, `cancel_at`, `customer`, `default_tax_rates`, `discounts.coupon`, `discounts.discount`, `discounts.promotion_code`, `items.discounts.coupon`, `items.discounts.discount`, `items.discounts.promotion_code`, `items.metadata`, `items.price`, `items.price_data.recurring.interval_count`, `items.price_data.tax_behavior`, `items.price_data.unit_amount`, `items.price_data.unit_amount_decimal`, `items.quantity`, `items.tax_rates`, `off_session`, `payment_behavior`, `proration_behavior`, `trial_end`, `trial_from_plan`, `trial_period_days`|0|
 |`subscription_item`|`discounts.coupon`, `discounts.discount`, `discounts.promotion_code`, `payment_behavior`, `price`, `price_data.recurring.interval_count`, `price_data.tax_behavior`, `price_data.unit_amount`, `price_data.unit_amount_decimal`, `proration_behavior`, `proration_date`, `quantity`, `tax_rates`|0|
-|`subscription_schedule`|`customer`, `phases.add_invoice_items.discountable`, `phases.add_invoice_items.metadata`, `phases.add_invoice_items.price`, `phases.add_invoice_items.price_data.tax_behavior`, `phases.add_invoice_items.price_data.unit_amount`, `phases.add_invoice_items.price_data.unit_amount_decimal`, `phases.add_invoice_items.quantity`, `phases.add_invoice_items.tax_rates`, `phases.default_tax_rates`, `phases.duration.interval_count`, `phases.items.price`, `phases.items.price_data.recurring.interval_count`, `phases.items.price_data.tax_behavior`, `phases.items.price_data.unit_amount`, `phases.items.price_data.unit_amount_decimal`, `phases.items.quantity`, `phases.items.tax_rates`, `phases.transfer_data.amount_percent`, `start_date`|0|
+|`subscription_schedule`|`customer`, `from_subscription`, `pause_schedules.key`, `pause_schedules.pause.pause_at.timestamp`, `pause_schedules.pause.settings.bill_for.outstanding_usage_through.type`, `pause_schedules.pause.settings.bill_for.unused_time_from.type`, `pause_schedules.pause.settings.invoicing_behavior`, `pause_schedules.pause.settings.type`, `pause_schedules.resume.resume_at.duration.interval_count`, `pause_schedules.resume.resume_at.timestamp`, `pause_schedules.resume.settings.billing_cycle_anchor`, `pause_schedules.resume.settings.payment_behavior`, `pause_schedules.resume.settings.proration_behavior`, `phases.add_invoice_items.discountable`, `phases.add_invoice_items.metadata`, `phases.add_invoice_items.price`, `phases.add_invoice_items.price_data.tax_behavior`, `phases.add_invoice_items.price_data.unit_amount`, `phases.add_invoice_items.price_data.unit_amount_decimal`, `phases.add_invoice_items.quantity`, `phases.add_invoice_items.tax_rates`, `phases.default_tax_rates`, `phases.duration.interval_count`, `phases.items.price`, `phases.items.price_data.recurring.interval_count`, `phases.items.price_data.tax_behavior`, `phases.items.price_data.unit_amount`, `phases.items.price_data.unit_amount_decimal`, `phases.items.quantity`, `phases.items.tax_rates`, `phases.transfer_data.amount_percent`, `start_date`|0|
 |`tax_id`||1|
 |`tax_registration`||32|
 |`terminal_configuration`||76|
 |`terminal_location`||25|
 |`terminal_reader`||3|
-|`topup`|`payment_method`|0|
+|`topup`|`payment_method`, `source`|0|
 |`transfer`|`amount`|0|
 |`transfer_reversal`|`description`, `refund_application_fee`|0|
 |`treasury_credit_reversal`||1|
@@ -225,97 +225,271 @@ Exposed today and excluded by a rule; removed before `v0.1.0` (D6, Step 6).
 
 ## Accepted only and kept
 
-Stripe takes these leaves and never returns them; `Resource.AcceptedOnly` keeps each in spite of rule X6, for the reason given.
+Stripe takes these leaves and never returns them. The gate exposes each, and the provider keeps it from configuration unless `Resource.AcceptedOnly` gives a reason of its own, such as another attribute that shows its effect (D1).
 
 - `account_external_account` PostAccountsAccountExternalAccounts `bank_account.account_number@object` (string): Its effect shows in `last4`, and the hash form needs it.
 - `account_external_account` PostAccountsAccountExternalAccounts `external_account` (string): Its effect shows in the bank details Stripe reads from the token.
-- `account_v2` PostV2CoreAccounts `configuration.recipient.capabilities.stripe_balance.stripe_transfers.requested` (boolean): Stripe never returns it, and the provider keeps it from configuration (PreserveConfig).
-- `account_v2` PostV2CoreAccountsId `configuration.recipient.capabilities.stripe_balance.stripe_transfers.requested` (boolean): Stripe never returns it, and the provider keeps it from configuration (PreserveConfig).
+- `account_v2` PostV2CoreAccounts `configuration.recipient.capabilities.stripe_balance.stripe_transfers.requested` (boolean): Stripe never returns it, and the provider keeps it from configuration.
+- `account_v2` PostV2CoreAccountsId `configuration.recipient.capabilities.stripe_balance.stripe_transfers.requested` (boolean): Stripe never returns it, and the provider keeps it from configuration.
 - `charge` PostCharges `capture` (boolean): Its effect shows in `captured`.
+- `charge` PostCharges `card@string` (string): Stripe never returns it, and the provider keeps it from configuration.
 - `charge` PostCharges `source` (string): The token becomes the charge's card, read back at `source` and `payment_method`; without it a charge needs a customer with a default source.
-- `checkout_session` PostCheckoutSessions `customer_update.address` (string): A checkout session cannot be updated in this, so a kept value cannot drift, and the provider keeps it from configuration (PreserveConfig); nothing else sets it.
-- `checkout_session` PostCheckoutSessions `customer_update.name` (string): A checkout session cannot be updated in this, so a kept value cannot drift, and the provider keeps it from configuration (PreserveConfig); nothing else sets it.
-- `checkout_session` PostCheckoutSessions `customer_update.shipping` (string): A checkout session cannot be updated in this, so a kept value cannot drift, and the provider keeps it from configuration (PreserveConfig); nothing else sets it.
-- `checkout_session` PostCheckoutSessions `line_items.tax_rates` (list of string): A checkout session cannot be updated in this, so a kept value cannot drift, and the provider keeps it from configuration (PreserveConfig); nothing else sets it.
-- `checkout_session` PostCheckoutSessions `payment_intent_data.capture_method` (string): A checkout session cannot be updated in this, so a kept value cannot drift, and the provider keeps it from configuration (PreserveConfig); nothing else sets it.
-- `checkout_session` PostCheckoutSessions `payment_intent_data.description` (string): A checkout session cannot be updated in this, so a kept value cannot drift, and the provider keeps it from configuration (PreserveConfig); nothing else sets it.
-- `checkout_session` PostCheckoutSessions `payment_intent_data.metadata` (map of string): A checkout session cannot be updated in this, so a kept value cannot drift, and the provider keeps it from configuration (PreserveConfig); nothing else sets it.
-- `checkout_session` PostCheckoutSessions `payment_intent_data.on_behalf_of` (string): A checkout session cannot be updated in this, so a kept value cannot drift, and the provider keeps it from configuration (PreserveConfig); nothing else sets it.
-- `checkout_session` PostCheckoutSessions `payment_intent_data.receipt_email` (string): A checkout session cannot be updated in this, so a kept value cannot drift, and the provider keeps it from configuration (PreserveConfig); nothing else sets it.
-- `checkout_session` PostCheckoutSessions `payment_intent_data.setup_future_usage` (string): A checkout session cannot be updated in this, so a kept value cannot drift, and the provider keeps it from configuration (PreserveConfig); nothing else sets it.
-- `checkout_session` PostCheckoutSessions `payment_intent_data.shipping.address.city` (string): A checkout session cannot be updated in this, so a kept value cannot drift, and the provider keeps it from configuration (PreserveConfig); nothing else sets it.
-- `checkout_session` PostCheckoutSessions `payment_intent_data.shipping.address.country` (string): A checkout session cannot be updated in this, so a kept value cannot drift, and the provider keeps it from configuration (PreserveConfig); nothing else sets it.
-- `checkout_session` PostCheckoutSessions `payment_intent_data.shipping.address.line1` (string): A checkout session cannot be updated in this, so a kept value cannot drift, and the provider keeps it from configuration (PreserveConfig); nothing else sets it.
-- `checkout_session` PostCheckoutSessions `payment_intent_data.shipping.address.line2` (string): A checkout session cannot be updated in this, so a kept value cannot drift, and the provider keeps it from configuration (PreserveConfig); nothing else sets it.
-- `checkout_session` PostCheckoutSessions `payment_intent_data.shipping.address.postal_code` (string): A checkout session cannot be updated in this, so a kept value cannot drift, and the provider keeps it from configuration (PreserveConfig); nothing else sets it.
-- `checkout_session` PostCheckoutSessions `payment_intent_data.shipping.address.state` (string): A checkout session cannot be updated in this, so a kept value cannot drift, and the provider keeps it from configuration (PreserveConfig); nothing else sets it.
-- `checkout_session` PostCheckoutSessions `payment_intent_data.shipping.carrier` (string): A checkout session cannot be updated in this, so a kept value cannot drift, and the provider keeps it from configuration (PreserveConfig); nothing else sets it.
-- `checkout_session` PostCheckoutSessions `payment_intent_data.shipping.name` (string): A checkout session cannot be updated in this, so a kept value cannot drift, and the provider keeps it from configuration (PreserveConfig); nothing else sets it.
-- `checkout_session` PostCheckoutSessions `payment_intent_data.shipping.phone` (string): A checkout session cannot be updated in this, so a kept value cannot drift, and the provider keeps it from configuration (PreserveConfig); nothing else sets it.
-- `checkout_session` PostCheckoutSessions `payment_intent_data.shipping.tracking_number` (string): A checkout session cannot be updated in this, so a kept value cannot drift, and the provider keeps it from configuration (PreserveConfig); nothing else sets it.
-- `checkout_session` PostCheckoutSessions `payment_intent_data.statement_descriptor` (string): A checkout session cannot be updated in this, so a kept value cannot drift, and the provider keeps it from configuration (PreserveConfig); nothing else sets it.
-- `checkout_session` PostCheckoutSessions `payment_intent_data.statement_descriptor_suffix` (string): A checkout session cannot be updated in this, so a kept value cannot drift, and the provider keeps it from configuration (PreserveConfig); nothing else sets it.
-- `checkout_session` PostCheckoutSessions `payment_intent_data.transfer_data.amount` (integer): A checkout session cannot be updated in this, so a kept value cannot drift, and the provider keeps it from configuration (PreserveConfig); nothing else sets it.
-- `checkout_session` PostCheckoutSessions `payment_intent_data.transfer_data.destination` (string): A checkout session cannot be updated in this, so a kept value cannot drift, and the provider keeps it from configuration (PreserveConfig); nothing else sets it.
-- `checkout_session` PostCheckoutSessions `payment_intent_data.transfer_group` (string): A checkout session cannot be updated in this, so a kept value cannot drift, and the provider keeps it from configuration (PreserveConfig); nothing else sets it.
-- `checkout_session` PostCheckoutSessions `payment_method_configuration` (string): A checkout session cannot be updated in this, so a kept value cannot drift, and the provider keeps it from configuration (PreserveConfig); nothing else sets it.
-- `checkout_session` PostCheckoutSessions `setup_intent_data.description` (string): A checkout session cannot be updated in this, so a kept value cannot drift, and the provider keeps it from configuration (PreserveConfig); nothing else sets it.
-- `checkout_session` PostCheckoutSessions `setup_intent_data.metadata` (map of string): A checkout session cannot be updated in this, so a kept value cannot drift, and the provider keeps it from configuration (PreserveConfig); nothing else sets it.
-- `checkout_session` PostCheckoutSessions `setup_intent_data.on_behalf_of` (string): A checkout session cannot be updated in this, so a kept value cannot drift, and the provider keeps it from configuration (PreserveConfig); nothing else sets it.
-- `checkout_session` PostCheckoutSessions `subscription_data.application_fee_percent` (number): A checkout session cannot be updated in this, so a kept value cannot drift, and the provider keeps it from configuration (PreserveConfig); nothing else sets it.
-- `checkout_session` PostCheckoutSessions `subscription_data.billing_cycle_anchor` (integer): A checkout session cannot be updated in this, so a kept value cannot drift, and the provider keeps it from configuration (PreserveConfig); nothing else sets it.
-- `checkout_session` PostCheckoutSessions `subscription_data.billing_cycle_anchor_config.day_of_month` (integer): A checkout session cannot be updated in this, so a kept value cannot drift, and the provider keeps it from configuration (PreserveConfig); nothing else sets it.
-- `checkout_session` PostCheckoutSessions `subscription_data.billing_cycle_anchor_config.hour` (integer): A checkout session cannot be updated in this, so a kept value cannot drift, and the provider keeps it from configuration (PreserveConfig); nothing else sets it.
-- `checkout_session` PostCheckoutSessions `subscription_data.billing_cycle_anchor_config.minute` (integer): A checkout session cannot be updated in this, so a kept value cannot drift, and the provider keeps it from configuration (PreserveConfig); nothing else sets it.
-- `checkout_session` PostCheckoutSessions `subscription_data.billing_cycle_anchor_config.month` (integer): A checkout session cannot be updated in this, so a kept value cannot drift, and the provider keeps it from configuration (PreserveConfig); nothing else sets it.
-- `checkout_session` PostCheckoutSessions `subscription_data.billing_cycle_anchor_config.second` (integer): A checkout session cannot be updated in this, so a kept value cannot drift, and the provider keeps it from configuration (PreserveConfig); nothing else sets it.
-- `checkout_session` PostCheckoutSessions `subscription_data.billing_mode.flexible.proration_discounts` (string): A checkout session cannot be updated in this, so a kept value cannot drift, and the provider keeps it from configuration (PreserveConfig); nothing else sets it.
-- `checkout_session` PostCheckoutSessions `subscription_data.billing_mode.type` (string): A checkout session cannot be updated in this, so a kept value cannot drift, and the provider keeps it from configuration (PreserveConfig); nothing else sets it.
-- `checkout_session` PostCheckoutSessions `subscription_data.default_tax_rates` (list of string): A checkout session cannot be updated in this, so a kept value cannot drift, and the provider keeps it from configuration (PreserveConfig); nothing else sets it.
-- `checkout_session` PostCheckoutSessions `subscription_data.description` (string): A checkout session cannot be updated in this, so a kept value cannot drift, and the provider keeps it from configuration (PreserveConfig); nothing else sets it.
-- `checkout_session` PostCheckoutSessions `subscription_data.invoice_settings.issuer.account` (string): A checkout session cannot be updated in this, so a kept value cannot drift, and the provider keeps it from configuration (PreserveConfig); nothing else sets it.
-- `checkout_session` PostCheckoutSessions `subscription_data.invoice_settings.issuer.type` (string): A checkout session cannot be updated in this, so a kept value cannot drift, and the provider keeps it from configuration (PreserveConfig); nothing else sets it.
-- `checkout_session` PostCheckoutSessions `subscription_data.metadata` (map of string): A checkout session cannot be updated in this, so a kept value cannot drift, and the provider keeps it from configuration (PreserveConfig); nothing else sets it.
-- `checkout_session` PostCheckoutSessions `subscription_data.on_behalf_of` (string): A checkout session cannot be updated in this, so a kept value cannot drift, and the provider keeps it from configuration (PreserveConfig); nothing else sets it.
-- `checkout_session` PostCheckoutSessions `subscription_data.pending_invoice_item_interval.interval` (string): A checkout session cannot be updated in this, so a kept value cannot drift, and the provider keeps it from configuration (PreserveConfig); nothing else sets it.
-- `checkout_session` PostCheckoutSessions `subscription_data.pending_invoice_item_interval.interval_count` (integer): A checkout session cannot be updated in this, so a kept value cannot drift, and the provider keeps it from configuration (PreserveConfig); nothing else sets it.
-- `checkout_session` PostCheckoutSessions `subscription_data.proration_behavior` (string): A checkout session cannot be updated in this, so a kept value cannot drift, and the provider keeps it from configuration (PreserveConfig); nothing else sets it.
-- `checkout_session` PostCheckoutSessions `subscription_data.transfer_data.amount_percent` (number): A checkout session cannot be updated in this, so a kept value cannot drift, and the provider keeps it from configuration (PreserveConfig); nothing else sets it.
-- `checkout_session` PostCheckoutSessions `subscription_data.transfer_data.destination` (string): A checkout session cannot be updated in this, so a kept value cannot drift, and the provider keeps it from configuration (PreserveConfig); nothing else sets it.
-- `checkout_session` PostCheckoutSessions `subscription_data.trial_end` (integer): A checkout session cannot be updated in this, so a kept value cannot drift, and the provider keeps it from configuration (PreserveConfig); nothing else sets it.
-- `checkout_session` PostCheckoutSessions `subscription_data.trial_period_days` (integer): A checkout session cannot be updated in this, so a kept value cannot drift, and the provider keeps it from configuration (PreserveConfig); nothing else sets it.
-- `checkout_session` PostCheckoutSessions `subscription_data.trial_settings.end_behavior.missing_payment_method` (string): A checkout session cannot be updated in this, so a kept value cannot drift, and the provider keeps it from configuration (PreserveConfig); nothing else sets it.
+- `charge` PostCharges `transfer_data.description` (string): Stripe never returns it, and the provider keeps it from configuration.
+- `checkout_session` PostCheckoutSessions `customer_update.address` (string): Stripe never returns it, and the provider keeps it from configuration.
+- `checkout_session` PostCheckoutSessions `customer_update.name` (string): Stripe never returns it, and the provider keeps it from configuration.
+- `checkout_session` PostCheckoutSessions `customer_update.shipping` (string): Stripe never returns it, and the provider keeps it from configuration.
+- `checkout_session` PostCheckoutSessions `line_items.tax_rates` (list of string): Stripe never returns it, and the provider keeps it from configuration.
+- `checkout_session` PostCheckoutSessions `payment_intent_data.capture_method` (string): Stripe never returns it, and the provider keeps it from configuration.
+- `checkout_session` PostCheckoutSessions `payment_intent_data.description` (string): Stripe never returns it, and the provider keeps it from configuration.
+- `checkout_session` PostCheckoutSessions `payment_intent_data.metadata` (map of string): Stripe never returns it, and the provider keeps it from configuration.
+- `checkout_session` PostCheckoutSessions `payment_intent_data.on_behalf_of` (string): Stripe never returns it, and the provider keeps it from configuration.
+- `checkout_session` PostCheckoutSessions `payment_intent_data.receipt_email` (string): Stripe never returns it, and the provider keeps it from configuration.
+- `checkout_session` PostCheckoutSessions `payment_intent_data.setup_future_usage` (string): Stripe never returns it, and the provider keeps it from configuration.
+- `checkout_session` PostCheckoutSessions `payment_intent_data.shipping.address.city` (string): Stripe never returns it, and the provider keeps it from configuration.
+- `checkout_session` PostCheckoutSessions `payment_intent_data.shipping.address.country` (string): Stripe never returns it, and the provider keeps it from configuration.
+- `checkout_session` PostCheckoutSessions `payment_intent_data.shipping.address.line1` (string): Stripe never returns it, and the provider keeps it from configuration.
+- `checkout_session` PostCheckoutSessions `payment_intent_data.shipping.address.line2` (string): Stripe never returns it, and the provider keeps it from configuration.
+- `checkout_session` PostCheckoutSessions `payment_intent_data.shipping.address.postal_code` (string): Stripe never returns it, and the provider keeps it from configuration.
+- `checkout_session` PostCheckoutSessions `payment_intent_data.shipping.address.state` (string): Stripe never returns it, and the provider keeps it from configuration.
+- `checkout_session` PostCheckoutSessions `payment_intent_data.shipping.carrier` (string): Stripe never returns it, and the provider keeps it from configuration.
+- `checkout_session` PostCheckoutSessions `payment_intent_data.shipping.name` (string): Stripe never returns it, and the provider keeps it from configuration.
+- `checkout_session` PostCheckoutSessions `payment_intent_data.shipping.phone` (string): Stripe never returns it, and the provider keeps it from configuration.
+- `checkout_session` PostCheckoutSessions `payment_intent_data.shipping.tracking_number` (string): Stripe never returns it, and the provider keeps it from configuration.
+- `checkout_session` PostCheckoutSessions `payment_intent_data.statement_descriptor` (string): Stripe never returns it, and the provider keeps it from configuration.
+- `checkout_session` PostCheckoutSessions `payment_intent_data.statement_descriptor_suffix` (string): Stripe never returns it, and the provider keeps it from configuration.
+- `checkout_session` PostCheckoutSessions `payment_intent_data.transfer_data.amount` (integer): Stripe never returns it, and the provider keeps it from configuration.
+- `checkout_session` PostCheckoutSessions `payment_intent_data.transfer_data.destination` (string): Stripe never returns it, and the provider keeps it from configuration.
+- `checkout_session` PostCheckoutSessions `payment_intent_data.transfer_group` (string): Stripe never returns it, and the provider keeps it from configuration.
+- `checkout_session` PostCheckoutSessions `payment_method_configuration` (string): Stripe never returns it, and the provider keeps it from configuration.
+- `checkout_session` PostCheckoutSessions `payment_method_data.allow_redisplay` (string): Stripe never returns it, and the provider keeps it from configuration.
+- `checkout_session` PostCheckoutSessions `payment_method_options.blik.mandate_options.expires_at` (integer): Stripe never returns it, and the provider keeps it from configuration.
+- `checkout_session` PostCheckoutSessions `payment_method_options.blik.setup_future_usage` (string): Stripe never returns it, and the provider keeps it from configuration.
+- `checkout_session` PostCheckoutSessions `payment_method_options.crypto.setup_future_usage` (string): Stripe never returns it, and the provider keeps it from configuration.
+- `checkout_session` PostCheckoutSessions `payment_method_options.demo_pay.setup_future_usage` (string): Stripe never returns it, and the provider keeps it from configuration.
+- `checkout_session` PostCheckoutSessions `payment_method_options.klarna.subscriptions.interval` (string): Stripe never returns it, and the provider keeps it from configuration.
+- `checkout_session` PostCheckoutSessions `payment_method_options.klarna.subscriptions.interval_count` (integer): Stripe never returns it, and the provider keeps it from configuration.
+- `checkout_session` PostCheckoutSessions `payment_method_options.klarna.subscriptions.name` (string): Stripe never returns it, and the provider keeps it from configuration.
+- `checkout_session` PostCheckoutSessions `payment_method_options.klarna.subscriptions.next_billing.amount` (integer): Stripe never returns it, and the provider keeps it from configuration.
+- `checkout_session` PostCheckoutSessions `payment_method_options.klarna.subscriptions.next_billing.date` (string): Stripe never returns it, and the provider keeps it from configuration.
+- `checkout_session` PostCheckoutSessions `payment_method_options.klarna.subscriptions.reference` (string): Stripe never returns it, and the provider keeps it from configuration.
+- `checkout_session` PostCheckoutSessions `payment_method_options.p24.tos_shown_and_accepted` (boolean): Stripe never returns it, and the provider keeps it from configuration.
+- `checkout_session` PostCheckoutSessions `payment_method_options.paypal.risk_correlation_id` (string): Stripe never returns it, and the provider keeps it from configuration.
+- `checkout_session` PostCheckoutSessions `setup_intent_data.description` (string): Stripe never returns it, and the provider keeps it from configuration.
+- `checkout_session` PostCheckoutSessions `setup_intent_data.metadata` (map of string): Stripe never returns it, and the provider keeps it from configuration.
+- `checkout_session` PostCheckoutSessions `setup_intent_data.on_behalf_of` (string): Stripe never returns it, and the provider keeps it from configuration.
+- `checkout_session` PostCheckoutSessions `subscription_data.application_fee_percent` (number): Stripe never returns it, and the provider keeps it from configuration.
+- `checkout_session` PostCheckoutSessions `subscription_data.billing_cycle_anchor` (integer): Stripe never returns it, and the provider keeps it from configuration.
+- `checkout_session` PostCheckoutSessions `subscription_data.billing_cycle_anchor_config.day_of_month` (integer): Stripe never returns it, and the provider keeps it from configuration.
+- `checkout_session` PostCheckoutSessions `subscription_data.billing_cycle_anchor_config.hour` (integer): Stripe never returns it, and the provider keeps it from configuration.
+- `checkout_session` PostCheckoutSessions `subscription_data.billing_cycle_anchor_config.minute` (integer): Stripe never returns it, and the provider keeps it from configuration.
+- `checkout_session` PostCheckoutSessions `subscription_data.billing_cycle_anchor_config.month` (integer): Stripe never returns it, and the provider keeps it from configuration.
+- `checkout_session` PostCheckoutSessions `subscription_data.billing_cycle_anchor_config.second` (integer): Stripe never returns it, and the provider keeps it from configuration.
+- `checkout_session` PostCheckoutSessions `subscription_data.billing_mode.flexible.proration_discounts` (string): Stripe never returns it, and the provider keeps it from configuration.
+- `checkout_session` PostCheckoutSessions `subscription_data.billing_mode.type` (string): Stripe never returns it, and the provider keeps it from configuration.
+- `checkout_session` PostCheckoutSessions `subscription_data.default_tax_rates` (list of string): Stripe never returns it, and the provider keeps it from configuration.
+- `checkout_session` PostCheckoutSessions `subscription_data.description` (string): Stripe never returns it, and the provider keeps it from configuration.
+- `checkout_session` PostCheckoutSessions `subscription_data.invoice_settings.issuer.account` (string): Stripe never returns it, and the provider keeps it from configuration.
+- `checkout_session` PostCheckoutSessions `subscription_data.invoice_settings.issuer.type` (string): Stripe never returns it, and the provider keeps it from configuration.
+- `checkout_session` PostCheckoutSessions `subscription_data.metadata` (map of string): Stripe never returns it, and the provider keeps it from configuration.
+- `checkout_session` PostCheckoutSessions `subscription_data.on_behalf_of` (string): Stripe never returns it, and the provider keeps it from configuration.
+- `checkout_session` PostCheckoutSessions `subscription_data.pending_invoice_item_interval.interval` (string): Stripe never returns it, and the provider keeps it from configuration.
+- `checkout_session` PostCheckoutSessions `subscription_data.pending_invoice_item_interval.interval_count` (integer): Stripe never returns it, and the provider keeps it from configuration.
+- `checkout_session` PostCheckoutSessions `subscription_data.proration_behavior` (string): Stripe never returns it, and the provider keeps it from configuration.
+- `checkout_session` PostCheckoutSessions `subscription_data.transfer_data.amount_percent` (number): Stripe never returns it, and the provider keeps it from configuration.
+- `checkout_session` PostCheckoutSessions `subscription_data.transfer_data.destination` (string): Stripe never returns it, and the provider keeps it from configuration.
+- `checkout_session` PostCheckoutSessions `subscription_data.trial_end` (integer): Stripe never returns it, and the provider keeps it from configuration.
+- `checkout_session` PostCheckoutSessions `subscription_data.trial_period_days` (integer): Stripe never returns it, and the provider keeps it from configuration.
+- `checkout_session` PostCheckoutSessions `subscription_data.trial_settings.end_behavior.missing_payment_method` (string): Stripe never returns it, and the provider keeps it from configuration.
 - `credit_note` PostCreditNotes `credit_amount` (integer): Its effect shows in `amount` (the product owner's decision of 2026-11-05).
-- `credit_note` PostCreditNotes `lines.tax_amounts.amount` (integer): A credit note cannot be updated in this, so a kept value cannot drift, and the provider keeps it from configuration (the product owner's decision of 2026-11-07).
-- `credit_note` PostCreditNotes `lines.tax_amounts.tax_rate` (string): A credit note cannot be updated in this, so a kept value cannot drift, and the provider keeps it from configuration (the product owner's decision of 2026-11-07).
-- `credit_note` PostCreditNotes `lines.tax_amounts.taxable_amount` (integer): A credit note cannot be updated in this, so a kept value cannot drift, and the provider keeps it from configuration (the product owner's decision of 2026-11-07).
+- `credit_note` PostCreditNotes `email_type` (string): Stripe never returns it, and the provider keeps it from configuration.
+- `credit_note` PostCreditNotes `lines.tax_amounts.amount` (integer): Stripe never returns it, and the provider keeps it from configuration.
+- `credit_note` PostCreditNotes `lines.tax_amounts.tax_rate` (string): Stripe never returns it, and the provider keeps it from configuration.
+- `credit_note` PostCreditNotes `lines.tax_amounts.taxable_amount` (integer): Stripe never returns it, and the provider keeps it from configuration.
 - `credit_note` PostCreditNotes `refund_amount` (integer): Its effect shows in `amount` and `refunds` (the product owner's decision of 2026-11-05).
+- `customer` PostCustomers `payment_method` (string): Stripe never returns it, and the provider keeps it from configuration.
 - `customer` PostCustomers `source` (string): The token becomes the customer's default source, read back at `default_source` (the product owner's decision of 2026-11-04).
 - `customer` PostCustomers `tax.validate_location` (string): It says how Stripe checks the location of the request it comes with, so a kept value cannot drift, and the provider keeps it from configuration (the product owner's decision of 2026-11-04).
+- `customer` PostCustomersCustomer `bank_account@string` (string): Stripe never returns it, and the provider keeps it from configuration.
+- `customer` PostCustomersCustomer `card@string` (string): Stripe never returns it, and the provider keeps it from configuration.
+- `customer` PostCustomersCustomer `default_alipay_account` (string): Stripe never returns it, and the provider keeps it from configuration.
+- `customer` PostCustomersCustomer `default_bank_account` (string): Stripe never returns it, and the provider keeps it from configuration.
+- `customer` PostCustomersCustomer `default_card` (string): Stripe never returns it, and the provider keeps it from configuration.
 - `customer` PostCustomersCustomer `source` (string): The token becomes the customer's default source, read back at `default_source` (the product owner's decision of 2026-11-04).
 - `customer` PostCustomersCustomer `tax.validate_location` (string): It says how Stripe checks the location of the request it comes with, so a kept value cannot drift, and the provider keeps it from configuration (the product owner's decision of 2026-11-04).
+- `customer_payment_method` PostPaymentMethodsPaymentMethod `card.exp_month` (integer): Stripe never returns it, and the provider keeps it from configuration.
+- `customer_payment_method` PostPaymentMethodsPaymentMethod `card.exp_year` (integer): Stripe never returns it, and the provider keeps it from configuration.
 - `event_destination_v2` PostV2CoreEventDestinations `amazon_eventbridge.aws_region` (string): Its effect shows in `amazon_eventbridge.aws_event_source_arn`, which names the region.
+- `invoice` PostInvoices `application_fee_amount` (integer): Stripe never returns it, and the provider keeps it from configuration.
 - `invoice` PostInvoices `days_until_due` (integer): Its effect shows in `due_date` (the product owner's decision of 2026-11-05).
 - `invoice` PostInvoices `discounts.coupon` (string): Read back from the expanded discount's `source.coupon`, on a discount with no promotion code (record: `discounts`, relation `coupon`; the brief of the eighth pin, 2026-11-05).
 - `invoice` PostInvoices `discounts.promotion_code` (string): Read back from the expanded discount's `promotion_code` (record: `discounts`, relation `promotion_code`; the brief of the eighth pin, 2026-11-05).
+- `invoice` PostInvoices `payment_settings.payment_method_options.card.installments.plan.count` (integer): Stripe never returns it, and the provider keeps it from configuration.
+- `invoice` PostInvoices `payment_settings.payment_method_options.card.installments.plan.interval` (string): Stripe never returns it, and the provider keeps it from configuration.
+- `invoice` PostInvoices `payment_settings.payment_method_options.card.installments.plan.type` (string): Stripe never returns it, and the provider keeps it from configuration.
 - `invoice` PostInvoices `pending_invoice_items_behavior` (string): Its effect shows in `lines` and the amounts, and it lets one apply make a draft with its items (the product owner's decision of 2026-11-05).
 - `invoice` PostInvoices `subscription` (string): Its effect shows in `parent.subscription_details.subscription` (the product owner's decision of 2026-11-05).
+- `invoice` PostInvoices `transfer_data.amount` (integer): Stripe never returns it, and the provider keeps it from configuration.
+- `invoice` PostInvoices `transfer_data.destination` (string): Stripe never returns it, and the provider keeps it from configuration.
+- `invoice` PostInvoicesInvoice `application_fee_amount` (integer): Stripe never returns it, and the provider keeps it from configuration.
 - `invoice` PostInvoicesInvoice `days_until_due` (integer): Its effect shows in `due_date` (the product owner's decision of 2026-11-05).
 - `invoice` PostInvoicesInvoice `discounts.coupon` (string): Read back from the expanded discount's `source.coupon`, on a discount with no promotion code (record: `discounts`, relation `coupon`; the brief of the eighth pin, 2026-11-05).
 - `invoice` PostInvoicesInvoice `discounts.discount` (string): Read back as the expanded discount's `id` (record: `discounts`, relation `existing_discount`; the brief of the eighth pin, 2026-11-05).
 - `invoice` PostInvoicesInvoice `discounts.promotion_code` (string): Read back from the expanded discount's `promotion_code` (record: `discounts`, relation `promotion_code`; the brief of the eighth pin, 2026-11-05).
+- `invoice` PostInvoicesInvoice `payment_settings.payment_method_options.card.installments.plan.count` (integer): Stripe never returns it, and the provider keeps it from configuration.
+- `invoice` PostInvoicesInvoice `payment_settings.payment_method_options.card.installments.plan.interval` (string): Stripe never returns it, and the provider keeps it from configuration.
+- `invoice` PostInvoicesInvoice `payment_settings.payment_method_options.card.installments.plan.type` (string): Stripe never returns it, and the provider keeps it from configuration.
+- `invoice` PostInvoicesInvoice `transfer_data.amount` (integer): Stripe never returns it, and the provider keeps it from configuration.
+- `invoice` PostInvoicesInvoice `transfer_data.destination` (string): Stripe never returns it, and the provider keeps it from configuration.
 - `invoiceitem` PostInvoiceitems `discounts.coupon` (string): Read back from the expanded discount's `source.coupon`, on a discount with no promotion code (record: `discounts`, relation `coupon`; the brief of the eighth pin, 2026-11-05).
 - `invoiceitem` PostInvoiceitems `discounts.promotion_code` (string): Read back from the expanded discount's `promotion_code` (record: `discounts`, relation `promotion_code`; the brief of the eighth pin, 2026-11-05).
 - `invoiceitem` PostInvoiceitems `pricing.price` (string): Its effect shows in `pricing.price_details.price` (the product owner's decision of 2026-11-04).
 - `invoiceitem` PostInvoiceitems `subscription` (string): Its effect shows in `parent.subscription_details.subscription` (the product owner's decision of 2026-11-04).
+- `invoiceitem` PostInvoiceitems `tax_behavior` (string): Stripe never returns it, and the provider keeps it from configuration.
+- `invoiceitem` PostInvoiceitems `tax_code` (string): Stripe never returns it, and the provider keeps it from configuration.
 - `invoiceitem` PostInvoiceitems `unit_amount_decimal` (string): Its effect shows in `pricing.unit_amount_decimal` (the product owner's decision of 2026-11-04).
 - `invoiceitem` PostInvoiceitemsInvoiceitem `discounts.coupon` (string): Read back from the expanded discount's `source.coupon`, on a discount with no promotion code (record: `discounts`, relation `coupon`; the brief of the eighth pin, 2026-11-05).
 - `invoiceitem` PostInvoiceitemsInvoiceitem `discounts.discount` (string): Read back as the expanded discount's `id` (record: `discounts`, relation `existing_discount`; the brief of the eighth pin, 2026-11-05).
 - `invoiceitem` PostInvoiceitemsInvoiceitem `discounts.promotion_code` (string): Read back from the expanded discount's `promotion_code` (record: `discounts`, relation `promotion_code`; the brief of the eighth pin, 2026-11-05).
 - `invoiceitem` PostInvoiceitemsInvoiceitem `pricing.price` (string): Its effect shows in `pricing.price_details.price` (the product owner's decision of 2026-11-04).
+- `invoiceitem` PostInvoiceitemsInvoiceitem `tax_behavior` (string): Stripe never returns it, and the provider keeps it from configuration.
+- `invoiceitem` PostInvoiceitemsInvoiceitem `tax_code` (string): Stripe never returns it, and the provider keeps it from configuration.
 - `invoiceitem` PostInvoiceitemsInvoiceitem `unit_amount_decimal` (string): Its effect shows in `pricing.unit_amount_decimal` (the product owner's decision of 2026-11-04).
-- `payment_intent` PostPaymentIntents `payment_method_configuration` (string): Stripe never returns it, and the provider keeps it from configuration (PreserveConfig).
-- `payment_intent` PostPaymentIntentsIntent `payment_method_configuration` (string): Stripe never returns it, and the provider keeps it from configuration (PreserveConfig).
+- `payment_intent` PostPaymentIntents `amount_details.enforce_arithmetic_validation` (boolean): Stripe never returns it, and the provider keeps it from configuration.
+- `payment_intent` PostPaymentIntents `payment_method_configuration` (string): Stripe never returns it, and the provider keeps it from configuration.
+- `payment_intent` PostPaymentIntents `payment_method_options.card.installments.enabled` (boolean): Stripe never returns it, and the provider keeps it from configuration.
+- `payment_intent` PostPaymentIntents `payment_method_options.card.mandate_options.amount` (integer): Stripe never returns it, and the provider keeps it from configuration.
+- `payment_intent` PostPaymentIntents `payment_method_options.card.mandate_options.amount_type` (string): Stripe never returns it, and the provider keeps it from configuration.
+- `payment_intent` PostPaymentIntents `payment_method_options.card.mandate_options.description` (string): Stripe never returns it, and the provider keeps it from configuration.
+- `payment_intent` PostPaymentIntents `payment_method_options.card.mandate_options.end_date` (integer): Stripe never returns it, and the provider keeps it from configuration.
+- `payment_intent` PostPaymentIntents `payment_method_options.card.mandate_options.interval` (string): Stripe never returns it, and the provider keeps it from configuration.
+- `payment_intent` PostPaymentIntents `payment_method_options.card.mandate_options.interval_count` (integer): Stripe never returns it, and the provider keeps it from configuration.
+- `payment_intent` PostPaymentIntents `payment_method_options.card.mandate_options.reference` (string): Stripe never returns it, and the provider keeps it from configuration.
+- `payment_intent` PostPaymentIntents `payment_method_options.card.mandate_options.start_date` (integer): Stripe never returns it, and the provider keeps it from configuration.
+- `payment_intent` PostPaymentIntents `payment_method_options.card.mandate_options.supported_types` (list of string): Stripe never returns it, and the provider keeps it from configuration.
+- `payment_intent` PostPaymentIntents `payment_method_options.card.request_extended_authorization` (string): Stripe never returns it, and the provider keeps it from configuration.
+- `payment_intent` PostPaymentIntents `payment_method_options.card.request_incremental_authorization` (string): Stripe never returns it, and the provider keeps it from configuration.
+- `payment_intent` PostPaymentIntents `payment_method_options.card.request_multicapture` (string): Stripe never returns it, and the provider keeps it from configuration.
+- `payment_intent` PostPaymentIntents `payment_method_options.card.request_overcapture` (string): Stripe never returns it, and the provider keeps it from configuration.
+- `payment_intent` PostPaymentIntents `payment_method_options.card.statement_descriptor_suffix_kana` (string): Stripe never returns it, and the provider keeps it from configuration.
+- `payment_intent` PostPaymentIntents `payment_method_options.card.statement_descriptor_suffix_kanji` (string): Stripe never returns it, and the provider keeps it from configuration.
+- `payment_intent` PostPaymentIntentsIntent `amount_details.enforce_arithmetic_validation` (boolean): Stripe never returns it, and the provider keeps it from configuration.
+- `payment_intent` PostPaymentIntentsIntent `payment_method_configuration` (string): Stripe never returns it, and the provider keeps it from configuration.
+- `payment_intent` PostPaymentIntentsIntent `payment_method_options.card.installments.enabled` (boolean): Stripe never returns it, and the provider keeps it from configuration.
+- `payment_intent` PostPaymentIntentsIntent `payment_method_options.card.mandate_options.amount` (integer): Stripe never returns it, and the provider keeps it from configuration.
+- `payment_intent` PostPaymentIntentsIntent `payment_method_options.card.mandate_options.amount_type` (string): Stripe never returns it, and the provider keeps it from configuration.
+- `payment_intent` PostPaymentIntentsIntent `payment_method_options.card.mandate_options.description` (string): Stripe never returns it, and the provider keeps it from configuration.
+- `payment_intent` PostPaymentIntentsIntent `payment_method_options.card.mandate_options.end_date` (integer): Stripe never returns it, and the provider keeps it from configuration.
+- `payment_intent` PostPaymentIntentsIntent `payment_method_options.card.mandate_options.interval` (string): Stripe never returns it, and the provider keeps it from configuration.
+- `payment_intent` PostPaymentIntentsIntent `payment_method_options.card.mandate_options.interval_count` (integer): Stripe never returns it, and the provider keeps it from configuration.
+- `payment_intent` PostPaymentIntentsIntent `payment_method_options.card.mandate_options.reference` (string): Stripe never returns it, and the provider keeps it from configuration.
+- `payment_intent` PostPaymentIntentsIntent `payment_method_options.card.mandate_options.start_date` (integer): Stripe never returns it, and the provider keeps it from configuration.
+- `payment_intent` PostPaymentIntentsIntent `payment_method_options.card.mandate_options.supported_types` (list of string): Stripe never returns it, and the provider keeps it from configuration.
+- `payment_intent` PostPaymentIntentsIntent `payment_method_options.card.request_extended_authorization` (string): Stripe never returns it, and the provider keeps it from configuration.
+- `payment_intent` PostPaymentIntentsIntent `payment_method_options.card.request_incremental_authorization` (string): Stripe never returns it, and the provider keeps it from configuration.
+- `payment_intent` PostPaymentIntentsIntent `payment_method_options.card.request_multicapture` (string): Stripe never returns it, and the provider keeps it from configuration.
+- `payment_intent` PostPaymentIntentsIntent `payment_method_options.card.request_overcapture` (string): Stripe never returns it, and the provider keeps it from configuration.
+- `payment_intent` PostPaymentIntentsIntent `payment_method_options.card.statement_descriptor_suffix_kana` (string): Stripe never returns it, and the provider keeps it from configuration.
+- `payment_intent` PostPaymentIntentsIntent `payment_method_options.card.statement_descriptor_suffix_kanji` (string): Stripe never returns it, and the provider keeps it from configuration.
+- `payment_method_configuration` PostPaymentMethodConfigurations `acss_debit.display_preference.preference` (string): Stripe never returns it, and the provider keeps it from configuration.
+- `payment_method_configuration` PostPaymentMethodConfigurations `affirm.display_preference.preference` (string): Stripe never returns it, and the provider keeps it from configuration.
+- `payment_method_configuration` PostPaymentMethodConfigurations `afterpay_clearpay.display_preference.preference` (string): Stripe never returns it, and the provider keeps it from configuration.
+- `payment_method_configuration` PostPaymentMethodConfigurations `alipay.display_preference.preference` (string): Stripe never returns it, and the provider keeps it from configuration.
+- `payment_method_configuration` PostPaymentMethodConfigurations `alma.display_preference.preference` (string): Stripe never returns it, and the provider keeps it from configuration.
+- `payment_method_configuration` PostPaymentMethodConfigurations `amazon_pay.display_preference.preference` (string): Stripe never returns it, and the provider keeps it from configuration.
+- `payment_method_configuration` PostPaymentMethodConfigurations `apple_pay.display_preference.preference` (string): Stripe never returns it, and the provider keeps it from configuration.
+- `payment_method_configuration` PostPaymentMethodConfigurations `apple_pay_later.display_preference.preference` (string): Stripe never returns it, and the provider keeps it from configuration.
+- `payment_method_configuration` PostPaymentMethodConfigurations `au_becs_debit.display_preference.preference` (string): Stripe never returns it, and the provider keeps it from configuration.
+- `payment_method_configuration` PostPaymentMethodConfigurations `bacs_debit.display_preference.preference` (string): Stripe never returns it, and the provider keeps it from configuration.
+- `payment_method_configuration` PostPaymentMethodConfigurations `billie.display_preference.preference` (string): Stripe never returns it, and the provider keeps it from configuration.
+- `payment_method_configuration` PostPaymentMethodConfigurations `bizum.display_preference.preference` (string): Stripe never returns it, and the provider keeps it from configuration.
+- `payment_method_configuration` PostPaymentMethodConfigurations `blik.display_preference.preference` (string): Stripe never returns it, and the provider keeps it from configuration.
+- `payment_method_configuration` PostPaymentMethodConfigurations `boleto.display_preference.preference` (string): Stripe never returns it, and the provider keeps it from configuration.
+- `payment_method_configuration` PostPaymentMethodConfigurations `cartes_bancaires.display_preference.preference` (string): Stripe never returns it, and the provider keeps it from configuration.
+- `payment_method_configuration` PostPaymentMethodConfigurations `cashapp.display_preference.preference` (string): Stripe never returns it, and the provider keeps it from configuration.
+- `payment_method_configuration` PostPaymentMethodConfigurations `crypto.display_preference.preference` (string): Stripe never returns it, and the provider keeps it from configuration.
+- `payment_method_configuration` PostPaymentMethodConfigurations `customer_balance.display_preference.preference` (string): Stripe never returns it, and the provider keeps it from configuration.
+- `payment_method_configuration` PostPaymentMethodConfigurations `eps.display_preference.preference` (string): Stripe never returns it, and the provider keeps it from configuration.
+- `payment_method_configuration` PostPaymentMethodConfigurations `fpx.display_preference.preference` (string): Stripe never returns it, and the provider keeps it from configuration.
+- `payment_method_configuration` PostPaymentMethodConfigurations `fr_meal_voucher_conecs.display_preference.preference` (string): Stripe never returns it, and the provider keeps it from configuration.
+- `payment_method_configuration` PostPaymentMethodConfigurations `giropay.display_preference.preference` (string): Stripe never returns it, and the provider keeps it from configuration.
+- `payment_method_configuration` PostPaymentMethodConfigurations `google_pay.display_preference.preference` (string): Stripe never returns it, and the provider keeps it from configuration.
+- `payment_method_configuration` PostPaymentMethodConfigurations `grabpay.display_preference.preference` (string): Stripe never returns it, and the provider keeps it from configuration.
+- `payment_method_configuration` PostPaymentMethodConfigurations `ideal.display_preference.preference` (string): Stripe never returns it, and the provider keeps it from configuration.
+- `payment_method_configuration` PostPaymentMethodConfigurations `jcb.display_preference.preference` (string): Stripe never returns it, and the provider keeps it from configuration.
+- `payment_method_configuration` PostPaymentMethodConfigurations `kakao_pay.display_preference.preference` (string): Stripe never returns it, and the provider keeps it from configuration.
+- `payment_method_configuration` PostPaymentMethodConfigurations `klarna.display_preference.preference` (string): Stripe never returns it, and the provider keeps it from configuration.
+- `payment_method_configuration` PostPaymentMethodConfigurations `konbini.display_preference.preference` (string): Stripe never returns it, and the provider keeps it from configuration.
+- `payment_method_configuration` PostPaymentMethodConfigurations `kr_card.display_preference.preference` (string): Stripe never returns it, and the provider keeps it from configuration.
+- `payment_method_configuration` PostPaymentMethodConfigurations `mb_way.display_preference.preference` (string): Stripe never returns it, and the provider keeps it from configuration.
+- `payment_method_configuration` PostPaymentMethodConfigurations `mobilepay.display_preference.preference` (string): Stripe never returns it, and the provider keeps it from configuration.
+- `payment_method_configuration` PostPaymentMethodConfigurations `multibanco.display_preference.preference` (string): Stripe never returns it, and the provider keeps it from configuration.
+- `payment_method_configuration` PostPaymentMethodConfigurations `naver_pay.display_preference.preference` (string): Stripe never returns it, and the provider keeps it from configuration.
+- `payment_method_configuration` PostPaymentMethodConfigurations `nz_bank_account.display_preference.preference` (string): Stripe never returns it, and the provider keeps it from configuration.
+- `payment_method_configuration` PostPaymentMethodConfigurations `oxxo.display_preference.preference` (string): Stripe never returns it, and the provider keeps it from configuration.
+- `payment_method_configuration` PostPaymentMethodConfigurations `p24.display_preference.preference` (string): Stripe never returns it, and the provider keeps it from configuration.
+- `payment_method_configuration` PostPaymentMethodConfigurations `pay_by_bank.display_preference.preference` (string): Stripe never returns it, and the provider keeps it from configuration.
+- `payment_method_configuration` PostPaymentMethodConfigurations `payco.display_preference.preference` (string): Stripe never returns it, and the provider keeps it from configuration.
+- `payment_method_configuration` PostPaymentMethodConfigurations `paynow.display_preference.preference` (string): Stripe never returns it, and the provider keeps it from configuration.
+- `payment_method_configuration` PostPaymentMethodConfigurations `paypal.display_preference.preference` (string): Stripe never returns it, and the provider keeps it from configuration.
+- `payment_method_configuration` PostPaymentMethodConfigurations `paypay.display_preference.preference` (string): Stripe never returns it, and the provider keeps it from configuration.
+- `payment_method_configuration` PostPaymentMethodConfigurations `payto.display_preference.preference` (string): Stripe never returns it, and the provider keeps it from configuration.
+- `payment_method_configuration` PostPaymentMethodConfigurations `pix.display_preference.preference` (string): Stripe never returns it, and the provider keeps it from configuration.
+- `payment_method_configuration` PostPaymentMethodConfigurations `promptpay.display_preference.preference` (string): Stripe never returns it, and the provider keeps it from configuration.
+- `payment_method_configuration` PostPaymentMethodConfigurations `revolut_pay.display_preference.preference` (string): Stripe never returns it, and the provider keeps it from configuration.
+- `payment_method_configuration` PostPaymentMethodConfigurations `samsung_pay.display_preference.preference` (string): Stripe never returns it, and the provider keeps it from configuration.
+- `payment_method_configuration` PostPaymentMethodConfigurations `satispay.display_preference.preference` (string): Stripe never returns it, and the provider keeps it from configuration.
+- `payment_method_configuration` PostPaymentMethodConfigurations `scalapay.display_preference.preference` (string): Stripe never returns it, and the provider keeps it from configuration.
+- `payment_method_configuration` PostPaymentMethodConfigurations `sepa_debit.display_preference.preference` (string): Stripe never returns it, and the provider keeps it from configuration.
+- `payment_method_configuration` PostPaymentMethodConfigurations `sequra.display_preference.preference` (string): Stripe never returns it, and the provider keeps it from configuration.
+- `payment_method_configuration` PostPaymentMethodConfigurations `sofort.display_preference.preference` (string): Stripe never returns it, and the provider keeps it from configuration.
+- `payment_method_configuration` PostPaymentMethodConfigurations `sunbit.display_preference.preference` (string): Stripe never returns it, and the provider keeps it from configuration.
+- `payment_method_configuration` PostPaymentMethodConfigurations `swish.display_preference.preference` (string): Stripe never returns it, and the provider keeps it from configuration.
+- `payment_method_configuration` PostPaymentMethodConfigurations `twint.display_preference.preference` (string): Stripe never returns it, and the provider keeps it from configuration.
+- `payment_method_configuration` PostPaymentMethodConfigurations `upi.display_preference.preference` (string): Stripe never returns it, and the provider keeps it from configuration.
+- `payment_method_configuration` PostPaymentMethodConfigurations `us_bank_account.display_preference.preference` (string): Stripe never returns it, and the provider keeps it from configuration.
+- `payment_method_configuration` PostPaymentMethodConfigurations `wechat_pay.display_preference.preference` (string): Stripe never returns it, and the provider keeps it from configuration.
+- `payment_method_configuration` PostPaymentMethodConfigurations `zip.display_preference.preference` (string): Stripe never returns it, and the provider keeps it from configuration.
+- `payment_method_configuration` PostPaymentMethodConfigurationsConfiguration `acss_debit.display_preference.preference` (string): Stripe never returns it, and the provider keeps it from configuration.
+- `payment_method_configuration` PostPaymentMethodConfigurationsConfiguration `affirm.display_preference.preference` (string): Stripe never returns it, and the provider keeps it from configuration.
+- `payment_method_configuration` PostPaymentMethodConfigurationsConfiguration `afterpay_clearpay.display_preference.preference` (string): Stripe never returns it, and the provider keeps it from configuration.
+- `payment_method_configuration` PostPaymentMethodConfigurationsConfiguration `alipay.display_preference.preference` (string): Stripe never returns it, and the provider keeps it from configuration.
+- `payment_method_configuration` PostPaymentMethodConfigurationsConfiguration `amazon_pay.display_preference.preference` (string): Stripe never returns it, and the provider keeps it from configuration.
+- `payment_method_configuration` PostPaymentMethodConfigurationsConfiguration `apple_pay.display_preference.preference` (string): Stripe never returns it, and the provider keeps it from configuration.
+- `payment_method_configuration` PostPaymentMethodConfigurationsConfiguration `apple_pay_later.display_preference.preference` (string): Stripe never returns it, and the provider keeps it from configuration.
+- `payment_method_configuration` PostPaymentMethodConfigurationsConfiguration `bacs_debit.display_preference.preference` (string): Stripe never returns it, and the provider keeps it from configuration.
+- `payment_method_configuration` PostPaymentMethodConfigurationsConfiguration `bizum.display_preference.preference` (string): Stripe never returns it, and the provider keeps it from configuration.
+- `payment_method_configuration` PostPaymentMethodConfigurationsConfiguration `blik.display_preference.preference` (string): Stripe never returns it, and the provider keeps it from configuration.
+- `payment_method_configuration` PostPaymentMethodConfigurationsConfiguration `cartes_bancaires.display_preference.preference` (string): Stripe never returns it, and the provider keeps it from configuration.
+- `payment_method_configuration` PostPaymentMethodConfigurationsConfiguration `cashapp.display_preference.preference` (string): Stripe never returns it, and the provider keeps it from configuration.
+- `payment_method_configuration` PostPaymentMethodConfigurationsConfiguration `crypto.display_preference.preference` (string): Stripe never returns it, and the provider keeps it from configuration.
+- `payment_method_configuration` PostPaymentMethodConfigurationsConfiguration `customer_balance.display_preference.preference` (string): Stripe never returns it, and the provider keeps it from configuration.
+- `payment_method_configuration` PostPaymentMethodConfigurationsConfiguration `eps.display_preference.preference` (string): Stripe never returns it, and the provider keeps it from configuration.
+- `payment_method_configuration` PostPaymentMethodConfigurationsConfiguration `giropay.display_preference.preference` (string): Stripe never returns it, and the provider keeps it from configuration.
+- `payment_method_configuration` PostPaymentMethodConfigurationsConfiguration `google_pay.display_preference.preference` (string): Stripe never returns it, and the provider keeps it from configuration.
+- `payment_method_configuration` PostPaymentMethodConfigurationsConfiguration `ideal.display_preference.preference` (string): Stripe never returns it, and the provider keeps it from configuration.
+- `payment_method_configuration` PostPaymentMethodConfigurationsConfiguration `kakao_pay.display_preference.preference` (string): Stripe never returns it, and the provider keeps it from configuration.
+- `payment_method_configuration` PostPaymentMethodConfigurationsConfiguration `klarna.display_preference.preference` (string): Stripe never returns it, and the provider keeps it from configuration.
+- `payment_method_configuration` PostPaymentMethodConfigurationsConfiguration `kr_card.display_preference.preference` (string): Stripe never returns it, and the provider keeps it from configuration.
+- `payment_method_configuration` PostPaymentMethodConfigurationsConfiguration `mb_way.display_preference.preference` (string): Stripe never returns it, and the provider keeps it from configuration.
+- `payment_method_configuration` PostPaymentMethodConfigurationsConfiguration `multibanco.display_preference.preference` (string): Stripe never returns it, and the provider keeps it from configuration.
+- `payment_method_configuration` PostPaymentMethodConfigurationsConfiguration `naver_pay.display_preference.preference` (string): Stripe never returns it, and the provider keeps it from configuration.
+- `payment_method_configuration` PostPaymentMethodConfigurationsConfiguration `oxxo.display_preference.preference` (string): Stripe never returns it, and the provider keeps it from configuration.
+- `payment_method_configuration` PostPaymentMethodConfigurationsConfiguration `p24.display_preference.preference` (string): Stripe never returns it, and the provider keeps it from configuration.
+- `payment_method_configuration` PostPaymentMethodConfigurationsConfiguration `pay_by_bank.display_preference.preference` (string): Stripe never returns it, and the provider keeps it from configuration.
+- `payment_method_configuration` PostPaymentMethodConfigurationsConfiguration `payco.display_preference.preference` (string): Stripe never returns it, and the provider keeps it from configuration.
+- `payment_method_configuration` PostPaymentMethodConfigurationsConfiguration `paypay.display_preference.preference` (string): Stripe never returns it, and the provider keeps it from configuration.
+- `payment_method_configuration` PostPaymentMethodConfigurationsConfiguration `pix.display_preference.preference` (string): Stripe never returns it, and the provider keeps it from configuration.
+- `payment_method_configuration` PostPaymentMethodConfigurationsConfiguration `promptpay.display_preference.preference` (string): Stripe never returns it, and the provider keeps it from configuration.
+- `payment_method_configuration` PostPaymentMethodConfigurationsConfiguration `samsung_pay.display_preference.preference` (string): Stripe never returns it, and the provider keeps it from configuration.
+- `payment_method_configuration` PostPaymentMethodConfigurationsConfiguration `satispay.display_preference.preference` (string): Stripe never returns it, and the provider keeps it from configuration.
+- `payment_method_configuration` PostPaymentMethodConfigurationsConfiguration `scalapay.display_preference.preference` (string): Stripe never returns it, and the provider keeps it from configuration.
+- `payment_method_configuration` PostPaymentMethodConfigurationsConfiguration `sepa_debit.display_preference.preference` (string): Stripe never returns it, and the provider keeps it from configuration.
+- `payment_method_configuration` PostPaymentMethodConfigurationsConfiguration `sofort.display_preference.preference` (string): Stripe never returns it, and the provider keeps it from configuration.
+- `payment_method_configuration` PostPaymentMethodConfigurationsConfiguration `sunbit.display_preference.preference` (string): Stripe never returns it, and the provider keeps it from configuration.
+- `payment_method_configuration` PostPaymentMethodConfigurationsConfiguration `upi.display_preference.preference` (string): Stripe never returns it, and the provider keeps it from configuration.
+- `payment_method_configuration` PostPaymentMethodConfigurationsConfiguration `us_bank_account.display_preference.preference` (string): Stripe never returns it, and the provider keeps it from configuration.
+- `payment_method_configuration` PostPaymentMethodConfigurationsConfiguration `wechat_pay.display_preference.preference` (string): Stripe never returns it, and the provider keeps it from configuration.
+- `payment_method_configuration` PostPaymentMethodConfigurationsConfiguration `zip.display_preference.preference` (string): Stripe never returns it, and the provider keeps it from configuration.
 - `price` PostPrices `currency_options.custom_unit_amount.enabled` (boolean): Its effect shows in the `custom_unit_amount` Stripe returns, which holds the bounds only where it is true, and the provider keeps it from configuration.
 - `price` PostPrices `custom_unit_amount.enabled` (boolean): Its effect shows in the `custom_unit_amount` Stripe returns, which holds the bounds only where it is true, and the provider keeps it from configuration.
 - `price` PostPrices `transfer_lookup_key` (boolean): Its effect shows in `lookup_key`, which the price takes from the price that held it, as a replacement price does, and the provider keeps it from configuration.
@@ -332,8 +506,33 @@ Stripe takes these leaves and never returns them; `Resource.AcceptedOnly` keeps 
 - `quote` PostQuotesQuote `line_items.discounts.coupon` (string): Read back from the `source.coupon` of the discount Stripe returns whole on the line, on a discount with no promotion code (record: `discounts`, relation `coupon`; the brief of the ninth pin, 2026-11-05).
 - `quote` PostQuotesQuote `line_items.discounts.promotion_code` (string): Read back from the `promotion_code` of the discount Stripe returns whole on the line (record: `discounts`, relation `promotion_code`; the brief of the ninth pin, 2026-11-05).
 - `quote` PostQuotesQuote `line_items.tax_rates` (list of string): Its effect shows on the quote's line items (`stripe_quote_line_item`) (the product owner's decision of 2026-11-05).
-- `setup_intent` PostSetupIntents `payment_method_configuration` (string): Stripe never returns it, and the provider keeps it from configuration (PreserveConfig).
-- `setup_intent` PostSetupIntentsIntent `payment_method_configuration` (string): Stripe never returns it, and the provider keeps it from configuration (PreserveConfig).
+- `setup_intent` PostSetupIntents `payment_method_configuration` (string): Stripe never returns it, and the provider keeps it from configuration.
+- `setup_intent` PostSetupIntents `payment_method_options.card.mandate_options.amount` (integer): Stripe never returns it, and the provider keeps it from configuration.
+- `setup_intent` PostSetupIntents `payment_method_options.card.mandate_options.amount_type` (string): Stripe never returns it, and the provider keeps it from configuration.
+- `setup_intent` PostSetupIntents `payment_method_options.card.mandate_options.currency` (string): Stripe never returns it, and the provider keeps it from configuration.
+- `setup_intent` PostSetupIntents `payment_method_options.card.mandate_options.description` (string): Stripe never returns it, and the provider keeps it from configuration.
+- `setup_intent` PostSetupIntents `payment_method_options.card.mandate_options.end_date` (integer): Stripe never returns it, and the provider keeps it from configuration.
+- `setup_intent` PostSetupIntents `payment_method_options.card.mandate_options.interval` (string): Stripe never returns it, and the provider keeps it from configuration.
+- `setup_intent` PostSetupIntents `payment_method_options.card.mandate_options.interval_count` (integer): Stripe never returns it, and the provider keeps it from configuration.
+- `setup_intent` PostSetupIntents `payment_method_options.card.mandate_options.reference` (string): Stripe never returns it, and the provider keeps it from configuration.
+- `setup_intent` PostSetupIntents `payment_method_options.card.mandate_options.start_date` (integer): Stripe never returns it, and the provider keeps it from configuration.
+- `setup_intent` PostSetupIntents `payment_method_options.card.mandate_options.supported_types` (list of string): Stripe never returns it, and the provider keeps it from configuration.
+- `setup_intent` PostSetupIntents `payment_method_options.card.request_three_d_secure` (string): Stripe never returns it, and the provider keeps it from configuration.
+- `setup_intent` PostSetupIntents `single_use.amount` (integer): Stripe never returns it, and the provider keeps it from configuration.
+- `setup_intent` PostSetupIntents `single_use.currency` (string): Stripe never returns it, and the provider keeps it from configuration.
+- `setup_intent` PostSetupIntentsIntent `payment_method_configuration` (string): Stripe never returns it, and the provider keeps it from configuration.
+- `setup_intent` PostSetupIntentsIntent `payment_method_options.card.mandate_options.amount` (integer): Stripe never returns it, and the provider keeps it from configuration.
+- `setup_intent` PostSetupIntentsIntent `payment_method_options.card.mandate_options.amount_type` (string): Stripe never returns it, and the provider keeps it from configuration.
+- `setup_intent` PostSetupIntentsIntent `payment_method_options.card.mandate_options.currency` (string): Stripe never returns it, and the provider keeps it from configuration.
+- `setup_intent` PostSetupIntentsIntent `payment_method_options.card.mandate_options.description` (string): Stripe never returns it, and the provider keeps it from configuration.
+- `setup_intent` PostSetupIntentsIntent `payment_method_options.card.mandate_options.end_date` (integer): Stripe never returns it, and the provider keeps it from configuration.
+- `setup_intent` PostSetupIntentsIntent `payment_method_options.card.mandate_options.interval` (string): Stripe never returns it, and the provider keeps it from configuration.
+- `setup_intent` PostSetupIntentsIntent `payment_method_options.card.mandate_options.interval_count` (integer): Stripe never returns it, and the provider keeps it from configuration.
+- `setup_intent` PostSetupIntentsIntent `payment_method_options.card.mandate_options.reference` (string): Stripe never returns it, and the provider keeps it from configuration.
+- `setup_intent` PostSetupIntentsIntent `payment_method_options.card.mandate_options.start_date` (integer): Stripe never returns it, and the provider keeps it from configuration.
+- `setup_intent` PostSetupIntentsIntent `payment_method_options.card.mandate_options.supported_types` (list of string): Stripe never returns it, and the provider keeps it from configuration.
+- `setup_intent` PostSetupIntentsIntent `payment_method_options.card.network` (string): Stripe never returns it, and the provider keeps it from configuration.
+- `setup_intent` PostSetupIntentsIntent `payment_method_options.card.request_three_d_secure` (string): Stripe never returns it, and the provider keeps it from configuration.
 - `subscription` PostSubscriptions `add_invoice_items.discountable` (boolean): A configuration cannot add invoice items to the next invoice without it; its effect shows on the invoice items Stripe adds to the subscription's next invoice (`stripe_invoiceitem`), and the provider keeps it from configuration (the product owner's decision of 2026-11-06).
 - `subscription` PostSubscriptions `add_invoice_items.discounts.coupon` (string): A configuration cannot discount an invoice item it adds to the next invoice without it; its effect shows on that invoice's line of the added item (suite: TestSubscriptionAttributes, claims `claim/coupon_applied` and `claim/promotion_code_applied`), and the provider keeps it from configuration (the product owner's decision of 2026-11-06).
 - `subscription` PostSubscriptions `add_invoice_items.discounts.promotion_code` (string): A configuration cannot discount an invoice item it adds to the next invoice without it; its effect shows on that invoice's line of the added item (suite: TestSubscriptionAttributes, claims `claim/coupon_applied` and `claim/promotion_code_applied`), and the provider keeps it from configuration (the product owner's decision of 2026-11-06).
@@ -352,6 +551,10 @@ Stripe takes these leaves and never returns them; `Resource.AcceptedOnly` keeps 
 - `subscription` PostSubscriptions `add_invoice_items.tax_rates` (list of string): A configuration cannot add invoice items to the next invoice without it; its effect shows on the invoice items Stripe adds to the subscription's next invoice (`stripe_invoiceitem`), and the provider keeps it from configuration (the product owner's decision of 2026-11-06).
 - `subscription` PostSubscriptions `backdate_start_date` (integer): It says how Stripe handles the request it comes with, as a subscription item's `proration_behavior` does, so a kept value cannot drift, and the provider keeps it from configuration (the product owner's decision of 2026-11-06).
 - `subscription` PostSubscriptions `cancel_at@string` (string): Its effect shows in the timestamp Stripe returns (the product owner's decision of 2026-11-06).
+- `subscription` PostSubscriptions `discounts.coupon` (string): Stripe never returns it, and the provider keeps it from configuration.
+- `subscription` PostSubscriptions `discounts.promotion_code` (string): Stripe never returns it, and the provider keeps it from configuration.
+- `subscription` PostSubscriptions `items.discounts.coupon` (string): Stripe never returns it, and the provider keeps it from configuration.
+- `subscription` PostSubscriptions `items.discounts.promotion_code` (string): Stripe never returns it, and the provider keeps it from configuration.
 - `subscription` PostSubscriptions `off_session` (boolean): It says how Stripe handles the request it comes with, as a subscription item's `proration_behavior` does, so a kept value cannot drift, and the provider keeps it from configuration (the product owner's decision of 2026-11-06).
 - `subscription` PostSubscriptions `payment_behavior` (string): It says how Stripe handles the request it comes with, as a subscription item's `proration_behavior` does, so a kept value cannot drift, and the provider keeps it from configuration (the product owner's decision of 2026-11-06).
 - `subscription` PostSubscriptions `proration_behavior` (string): It says how Stripe handles the request it comes with, as a subscription item's `proration_behavior` does, so a kept value cannot drift, and the provider keeps it from configuration (the product owner's decision of 2026-11-06).
@@ -394,17 +597,31 @@ Stripe takes these leaves and never returns them; `Resource.AcceptedOnly` keeps 
 - `subscription_item` PostSubscriptionItemsItem `payment_behavior` (string): It says how Stripe handles the request it comes with, as a customer's `tax.validate_location` does, so a kept value cannot drift, and the provider keeps it from configuration (the product owner's decision of 2026-11-05).
 - `subscription_item` PostSubscriptionItemsItem `proration_behavior` (string): It says how Stripe handles the request it comes with, as a customer's `tax.validate_location` does, so a kept value cannot drift, and the provider keeps it from configuration (the product owner's decision of 2026-11-05).
 - `subscription_item` PostSubscriptionItemsItem `proration_date` (integer): It says how Stripe handles the request it comes with, as a customer's `tax.validate_location` does, so a kept value cannot drift, and the provider keeps it from configuration (the product owner's decision of 2026-11-05).
+- `subscription_schedule` PostSubscriptionSchedules `from_subscription` (string): Stripe never returns it, and the provider keeps it from configuration.
+- `subscription_schedule` PostSubscriptionSchedules `pause_schedules.pause.pause_at.timestamp` (integer): Stripe never returns it, and the provider keeps it from configuration.
+- `subscription_schedule` PostSubscriptionSchedules `pause_schedules.pause.pause_at.type` (string): Stripe never returns it, and the provider keeps it from configuration.
+- `subscription_schedule` PostSubscriptionSchedules `pause_schedules.resume.resume_at.duration.interval` (string): Stripe never returns it, and the provider keeps it from configuration.
+- `subscription_schedule` PostSubscriptionSchedules `pause_schedules.resume.resume_at.duration.interval_count` (integer): Stripe never returns it, and the provider keeps it from configuration.
+- `subscription_schedule` PostSubscriptionSchedules `pause_schedules.resume.resume_at.timestamp` (integer): Stripe never returns it, and the provider keeps it from configuration.
+- `subscription_schedule` PostSubscriptionSchedules `pause_schedules.resume.resume_at.type` (string): Stripe never returns it, and the provider keeps it from configuration.
 - `subscription_schedule` PostSubscriptionSchedules `phases.duration.interval` (string): A configuration cannot give a phase without an `end_date` its length without it; its effect shows in the phase's `end_date` (the product owner's decision of 2026-11-06).
 - `subscription_schedule` PostSubscriptionSchedules `phases.duration.interval_count` (integer): A configuration cannot give a phase without an `end_date` its length without it; its effect shows in the phase's `end_date` (the product owner's decision of 2026-11-06).
 - `subscription_schedule` PostSubscriptionSchedules `start_date@integer` (integer): A configuration cannot start a schedule on its own without it; its effect shows in the first phase's `start_date` (the product owner's decision of 2026-11-06).
 - `subscription_schedule` PostSubscriptionSchedules `start_date@string` (string): A configuration cannot start a schedule on its own without it; its effect shows in the first phase's `start_date` (the product owner's decision of 2026-11-06).
+- `subscription_schedule` PostSubscriptionSchedulesSchedule `pause_schedules.pause.pause_at.timestamp` (integer): Stripe never returns it, and the provider keeps it from configuration.
+- `subscription_schedule` PostSubscriptionSchedulesSchedule `pause_schedules.pause.pause_at.type` (string): Stripe never returns it, and the provider keeps it from configuration.
+- `subscription_schedule` PostSubscriptionSchedulesSchedule `pause_schedules.resume.resume_at.duration.interval` (string): Stripe never returns it, and the provider keeps it from configuration.
+- `subscription_schedule` PostSubscriptionSchedulesSchedule `pause_schedules.resume.resume_at.duration.interval_count` (integer): Stripe never returns it, and the provider keeps it from configuration.
+- `subscription_schedule` PostSubscriptionSchedulesSchedule `pause_schedules.resume.resume_at.timestamp` (integer): Stripe never returns it, and the provider keeps it from configuration.
+- `subscription_schedule` PostSubscriptionSchedulesSchedule `pause_schedules.resume.resume_at.type` (string): Stripe never returns it, and the provider keeps it from configuration.
 - `subscription_schedule` PostSubscriptionSchedulesSchedule `phases.duration.interval` (string): A configuration cannot give a phase without an `end_date` its length without it; its effect shows in the phase's `end_date` (the product owner's decision of 2026-11-06).
 - `subscription_schedule` PostSubscriptionSchedulesSchedule `phases.duration.interval_count` (integer): A configuration cannot give a phase without an `end_date` its length without it; its effect shows in the phase's `end_date` (the product owner's decision of 2026-11-06).
 - `subscription_schedule` PostSubscriptionSchedulesSchedule `phases.items.price` (string): A configuration cannot send a phase's item of a price in an update of the phases without it; its effect shows in the phase item's `price` (the product owner's decision of 2026-11-06).
 - `subscription_schedule` PostSubscriptionSchedulesSchedule `phases.start_date@integer` (integer): Its effect shows in the timestamp Stripe returns (the product owner's decision of 2026-11-06).
 - `subscription_schedule` PostSubscriptionSchedulesSchedule `proration_behavior` (string): It says how Stripe handles the request it comes with, as a subscription item's `proration_behavior` does, so a kept value cannot drift, and the provider keeps it from configuration (the product owner's decision of 2026-11-06).
-- `transfer_reversal` PostTransfersIdReversals `description` (string): Stripe never returns it, and the provider keeps it from configuration (PreserveConfig).
-- `transfer_reversal` PostTransfersIdReversals `refund_application_fee` (boolean): Stripe never returns it, and the provider keeps it from configuration (PreserveConfig).
+- `topup` PostTopups `source` (string): Stripe never returns it, and the provider keeps it from configuration.
+- `transfer_reversal` PostTransfersIdReversals `description` (string): Stripe never returns it, and the provider keeps it from configuration.
+- `transfer_reversal` PostTransfersIdReversals `refund_application_fee` (boolean): Stripe never returns it, and the provider keeps it from configuration.
 
 ## Excluded
 
@@ -652,242 +869,6 @@ None.
 
 - `payment_intent` PostPaymentIntents `confirm` (boolean)
 
-### X6, accepted only: Stripe takes it and never returns it, so a user could neither read it back nor see drift
-
-- `charge` PostCharges `card@string` (string)
-- `charge` PostCharges `transfer_data.description` (string)
-- `checkout_session` PostCheckoutSessions `payment_method_data.allow_redisplay` (string)
-- `checkout_session` PostCheckoutSessions `payment_method_options.blik.mandate_options.expires_at` (integer)
-- `checkout_session` PostCheckoutSessions `payment_method_options.blik.setup_future_usage` (string)
-- `checkout_session` PostCheckoutSessions `payment_method_options.crypto.setup_future_usage` (string)
-- `checkout_session` PostCheckoutSessions `payment_method_options.demo_pay.setup_future_usage` (string)
-- `checkout_session` PostCheckoutSessions `payment_method_options.klarna.subscriptions.interval` (string)
-- `checkout_session` PostCheckoutSessions `payment_method_options.klarna.subscriptions.interval_count` (integer)
-- `checkout_session` PostCheckoutSessions `payment_method_options.klarna.subscriptions.name` (string)
-- `checkout_session` PostCheckoutSessions `payment_method_options.klarna.subscriptions.next_billing.amount` (integer)
-- `checkout_session` PostCheckoutSessions `payment_method_options.klarna.subscriptions.next_billing.date` (string)
-- `checkout_session` PostCheckoutSessions `payment_method_options.klarna.subscriptions.reference` (string)
-- `checkout_session` PostCheckoutSessions `payment_method_options.p24.tos_shown_and_accepted` (boolean)
-- `checkout_session` PostCheckoutSessions `payment_method_options.paypal.risk_correlation_id` (string)
-- `credit_note` PostCreditNotes `email_type` (string)
-- `customer` PostCustomers `payment_method` (string)
-- `customer` PostCustomersCustomer `bank_account@string` (string)
-- `customer` PostCustomersCustomer `card@string` (string)
-- `customer` PostCustomersCustomer `default_alipay_account` (string)
-- `customer` PostCustomersCustomer `default_bank_account` (string)
-- `customer` PostCustomersCustomer `default_card` (string)
-- `customer_payment_method` PostPaymentMethodsPaymentMethod `card.exp_month` (integer)
-- `customer_payment_method` PostPaymentMethodsPaymentMethod `card.exp_year` (integer)
-- `invoice` PostInvoices `application_fee_amount` (integer)
-- `invoice` PostInvoices `discounts.discount` (string)
-- `invoice` PostInvoices `payment_settings.payment_method_options.card.installments.plan.count` (integer)
-- `invoice` PostInvoices `payment_settings.payment_method_options.card.installments.plan.interval` (string)
-- `invoice` PostInvoices `payment_settings.payment_method_options.card.installments.plan.type` (string)
-- `invoice` PostInvoices `transfer_data.amount` (integer)
-- `invoice` PostInvoices `transfer_data.destination` (string)
-- `invoice` PostInvoicesInvoice `application_fee_amount` (integer)
-- `invoice` PostInvoicesInvoice `payment_settings.payment_method_options.card.installments.plan.count` (integer)
-- `invoice` PostInvoicesInvoice `payment_settings.payment_method_options.card.installments.plan.interval` (string)
-- `invoice` PostInvoicesInvoice `payment_settings.payment_method_options.card.installments.plan.type` (string)
-- `invoice` PostInvoicesInvoice `transfer_data.amount` (integer)
-- `invoice` PostInvoicesInvoice `transfer_data.destination` (string)
-- `invoiceitem` PostInvoiceitems `tax_behavior` (string)
-- `invoiceitem` PostInvoiceitems `tax_code` (string)
-- `invoiceitem` PostInvoiceitemsInvoiceitem `invoicing_rules` (string)
-- `invoiceitem` PostInvoiceitemsInvoiceitem `tax_behavior` (string)
-- `invoiceitem` PostInvoiceitemsInvoiceitem `tax_code` (string)
-- `payment_intent` PostPaymentIntents `amount_details.enforce_arithmetic_validation` (boolean)
-- `payment_intent` PostPaymentIntents `off_session@boolean` (boolean)
-- `payment_intent` PostPaymentIntents `off_session@string` (string)
-- `payment_intent` PostPaymentIntents `payment_method_options.card.installments.enabled` (boolean)
-- `payment_intent` PostPaymentIntents `payment_method_options.card.mandate_options.amount` (integer)
-- `payment_intent` PostPaymentIntents `payment_method_options.card.mandate_options.amount_type` (string)
-- `payment_intent` PostPaymentIntents `payment_method_options.card.mandate_options.description` (string)
-- `payment_intent` PostPaymentIntents `payment_method_options.card.mandate_options.end_date` (integer)
-- `payment_intent` PostPaymentIntents `payment_method_options.card.mandate_options.interval` (string)
-- `payment_intent` PostPaymentIntents `payment_method_options.card.mandate_options.interval_count` (integer)
-- `payment_intent` PostPaymentIntents `payment_method_options.card.mandate_options.reference` (string)
-- `payment_intent` PostPaymentIntents `payment_method_options.card.mandate_options.start_date` (integer)
-- `payment_intent` PostPaymentIntents `payment_method_options.card.mandate_options.supported_types` (list of string)
-- `payment_intent` PostPaymentIntents `payment_method_options.card.network` (string)
-- `payment_intent` PostPaymentIntents `payment_method_options.card.request_extended_authorization` (string)
-- `payment_intent` PostPaymentIntents `payment_method_options.card.request_incremental_authorization` (string)
-- `payment_intent` PostPaymentIntents `payment_method_options.card.request_multicapture` (string)
-- `payment_intent` PostPaymentIntents `payment_method_options.card.request_overcapture` (string)
-- `payment_intent` PostPaymentIntents `payment_method_options.card.statement_descriptor_suffix_kana` (string)
-- `payment_intent` PostPaymentIntents `payment_method_options.card.statement_descriptor_suffix_kanji` (string)
-- `payment_intent` PostPaymentIntents `radar_options.referrer` (string)
-- `payment_intent` PostPaymentIntents `return_url` (string)
-- `payment_intent` PostPaymentIntents `use_stripe_sdk` (boolean)
-- `payment_intent` PostPaymentIntentsIntent `amount_details.enforce_arithmetic_validation` (boolean)
-- `payment_intent` PostPaymentIntentsIntent `payment_method_options.card.installments.enabled` (boolean)
-- `payment_intent` PostPaymentIntentsIntent `payment_method_options.card.mandate_options.amount` (integer)
-- `payment_intent` PostPaymentIntentsIntent `payment_method_options.card.mandate_options.amount_type` (string)
-- `payment_intent` PostPaymentIntentsIntent `payment_method_options.card.mandate_options.description` (string)
-- `payment_intent` PostPaymentIntentsIntent `payment_method_options.card.mandate_options.end_date` (integer)
-- `payment_intent` PostPaymentIntentsIntent `payment_method_options.card.mandate_options.interval` (string)
-- `payment_intent` PostPaymentIntentsIntent `payment_method_options.card.mandate_options.interval_count` (integer)
-- `payment_intent` PostPaymentIntentsIntent `payment_method_options.card.mandate_options.reference` (string)
-- `payment_intent` PostPaymentIntentsIntent `payment_method_options.card.mandate_options.start_date` (integer)
-- `payment_intent` PostPaymentIntentsIntent `payment_method_options.card.mandate_options.supported_types` (list of string)
-- `payment_intent` PostPaymentIntentsIntent `payment_method_options.card.request_extended_authorization` (string)
-- `payment_intent` PostPaymentIntentsIntent `payment_method_options.card.request_incremental_authorization` (string)
-- `payment_intent` PostPaymentIntentsIntent `payment_method_options.card.request_multicapture` (string)
-- `payment_intent` PostPaymentIntentsIntent `payment_method_options.card.request_overcapture` (string)
-- `payment_intent` PostPaymentIntentsIntent `payment_method_options.card.statement_descriptor_suffix_kana` (string)
-- `payment_intent` PostPaymentIntentsIntent `payment_method_options.card.statement_descriptor_suffix_kanji` (string)
-- `payment_method_configuration` PostPaymentMethodConfigurations `acss_debit.display_preference.preference` (string)
-- `payment_method_configuration` PostPaymentMethodConfigurations `affirm.display_preference.preference` (string)
-- `payment_method_configuration` PostPaymentMethodConfigurations `afterpay_clearpay.display_preference.preference` (string)
-- `payment_method_configuration` PostPaymentMethodConfigurations `alipay.display_preference.preference` (string)
-- `payment_method_configuration` PostPaymentMethodConfigurations `alma.display_preference.preference` (string)
-- `payment_method_configuration` PostPaymentMethodConfigurations `amazon_pay.display_preference.preference` (string)
-- `payment_method_configuration` PostPaymentMethodConfigurations `apple_pay.display_preference.preference` (string)
-- `payment_method_configuration` PostPaymentMethodConfigurations `apple_pay_later.display_preference.preference` (string)
-- `payment_method_configuration` PostPaymentMethodConfigurations `au_becs_debit.display_preference.preference` (string)
-- `payment_method_configuration` PostPaymentMethodConfigurations `bacs_debit.display_preference.preference` (string)
-- `payment_method_configuration` PostPaymentMethodConfigurations `billie.display_preference.preference` (string)
-- `payment_method_configuration` PostPaymentMethodConfigurations `bizum.display_preference.preference` (string)
-- `payment_method_configuration` PostPaymentMethodConfigurations `blik.display_preference.preference` (string)
-- `payment_method_configuration` PostPaymentMethodConfigurations `boleto.display_preference.preference` (string)
-- `payment_method_configuration` PostPaymentMethodConfigurations `cartes_bancaires.display_preference.preference` (string)
-- `payment_method_configuration` PostPaymentMethodConfigurations `cashapp.display_preference.preference` (string)
-- `payment_method_configuration` PostPaymentMethodConfigurations `crypto.display_preference.preference` (string)
-- `payment_method_configuration` PostPaymentMethodConfigurations `customer_balance.display_preference.preference` (string)
-- `payment_method_configuration` PostPaymentMethodConfigurations `eps.display_preference.preference` (string)
-- `payment_method_configuration` PostPaymentMethodConfigurations `fpx.display_preference.preference` (string)
-- `payment_method_configuration` PostPaymentMethodConfigurations `fr_meal_voucher_conecs.display_preference.preference` (string)
-- `payment_method_configuration` PostPaymentMethodConfigurations `giropay.display_preference.preference` (string)
-- `payment_method_configuration` PostPaymentMethodConfigurations `google_pay.display_preference.preference` (string)
-- `payment_method_configuration` PostPaymentMethodConfigurations `grabpay.display_preference.preference` (string)
-- `payment_method_configuration` PostPaymentMethodConfigurations `ideal.display_preference.preference` (string)
-- `payment_method_configuration` PostPaymentMethodConfigurations `jcb.display_preference.preference` (string)
-- `payment_method_configuration` PostPaymentMethodConfigurations `kakao_pay.display_preference.preference` (string)
-- `payment_method_configuration` PostPaymentMethodConfigurations `klarna.display_preference.preference` (string)
-- `payment_method_configuration` PostPaymentMethodConfigurations `konbini.display_preference.preference` (string)
-- `payment_method_configuration` PostPaymentMethodConfigurations `kr_card.display_preference.preference` (string)
-- `payment_method_configuration` PostPaymentMethodConfigurations `mb_way.display_preference.preference` (string)
-- `payment_method_configuration` PostPaymentMethodConfigurations `mobilepay.display_preference.preference` (string)
-- `payment_method_configuration` PostPaymentMethodConfigurations `multibanco.display_preference.preference` (string)
-- `payment_method_configuration` PostPaymentMethodConfigurations `naver_pay.display_preference.preference` (string)
-- `payment_method_configuration` PostPaymentMethodConfigurations `nz_bank_account.display_preference.preference` (string)
-- `payment_method_configuration` PostPaymentMethodConfigurations `oxxo.display_preference.preference` (string)
-- `payment_method_configuration` PostPaymentMethodConfigurations `p24.display_preference.preference` (string)
-- `payment_method_configuration` PostPaymentMethodConfigurations `pay_by_bank.display_preference.preference` (string)
-- `payment_method_configuration` PostPaymentMethodConfigurations `payco.display_preference.preference` (string)
-- `payment_method_configuration` PostPaymentMethodConfigurations `paynow.display_preference.preference` (string)
-- `payment_method_configuration` PostPaymentMethodConfigurations `paypal.display_preference.preference` (string)
-- `payment_method_configuration` PostPaymentMethodConfigurations `paypay.display_preference.preference` (string)
-- `payment_method_configuration` PostPaymentMethodConfigurations `payto.display_preference.preference` (string)
-- `payment_method_configuration` PostPaymentMethodConfigurations `pix.display_preference.preference` (string)
-- `payment_method_configuration` PostPaymentMethodConfigurations `promptpay.display_preference.preference` (string)
-- `payment_method_configuration` PostPaymentMethodConfigurations `revolut_pay.display_preference.preference` (string)
-- `payment_method_configuration` PostPaymentMethodConfigurations `samsung_pay.display_preference.preference` (string)
-- `payment_method_configuration` PostPaymentMethodConfigurations `satispay.display_preference.preference` (string)
-- `payment_method_configuration` PostPaymentMethodConfigurations `scalapay.display_preference.preference` (string)
-- `payment_method_configuration` PostPaymentMethodConfigurations `sepa_debit.display_preference.preference` (string)
-- `payment_method_configuration` PostPaymentMethodConfigurations `sequra.display_preference.preference` (string)
-- `payment_method_configuration` PostPaymentMethodConfigurations `sofort.display_preference.preference` (string)
-- `payment_method_configuration` PostPaymentMethodConfigurations `sunbit.display_preference.preference` (string)
-- `payment_method_configuration` PostPaymentMethodConfigurations `swish.display_preference.preference` (string)
-- `payment_method_configuration` PostPaymentMethodConfigurations `twint.display_preference.preference` (string)
-- `payment_method_configuration` PostPaymentMethodConfigurations `upi.display_preference.preference` (string)
-- `payment_method_configuration` PostPaymentMethodConfigurations `us_bank_account.display_preference.preference` (string)
-- `payment_method_configuration` PostPaymentMethodConfigurations `wechat_pay.display_preference.preference` (string)
-- `payment_method_configuration` PostPaymentMethodConfigurations `zip.display_preference.preference` (string)
-- `payment_method_configuration` PostPaymentMethodConfigurationsConfiguration `acss_debit.display_preference.preference` (string)
-- `payment_method_configuration` PostPaymentMethodConfigurationsConfiguration `affirm.display_preference.preference` (string)
-- `payment_method_configuration` PostPaymentMethodConfigurationsConfiguration `afterpay_clearpay.display_preference.preference` (string)
-- `payment_method_configuration` PostPaymentMethodConfigurationsConfiguration `alipay.display_preference.preference` (string)
-- `payment_method_configuration` PostPaymentMethodConfigurationsConfiguration `amazon_pay.display_preference.preference` (string)
-- `payment_method_configuration` PostPaymentMethodConfigurationsConfiguration `apple_pay.display_preference.preference` (string)
-- `payment_method_configuration` PostPaymentMethodConfigurationsConfiguration `apple_pay_later.display_preference.preference` (string)
-- `payment_method_configuration` PostPaymentMethodConfigurationsConfiguration `bacs_debit.display_preference.preference` (string)
-- `payment_method_configuration` PostPaymentMethodConfigurationsConfiguration `bizum.display_preference.preference` (string)
-- `payment_method_configuration` PostPaymentMethodConfigurationsConfiguration `blik.display_preference.preference` (string)
-- `payment_method_configuration` PostPaymentMethodConfigurationsConfiguration `cartes_bancaires.display_preference.preference` (string)
-- `payment_method_configuration` PostPaymentMethodConfigurationsConfiguration `cashapp.display_preference.preference` (string)
-- `payment_method_configuration` PostPaymentMethodConfigurationsConfiguration `crypto.display_preference.preference` (string)
-- `payment_method_configuration` PostPaymentMethodConfigurationsConfiguration `customer_balance.display_preference.preference` (string)
-- `payment_method_configuration` PostPaymentMethodConfigurationsConfiguration `eps.display_preference.preference` (string)
-- `payment_method_configuration` PostPaymentMethodConfigurationsConfiguration `giropay.display_preference.preference` (string)
-- `payment_method_configuration` PostPaymentMethodConfigurationsConfiguration `google_pay.display_preference.preference` (string)
-- `payment_method_configuration` PostPaymentMethodConfigurationsConfiguration `ideal.display_preference.preference` (string)
-- `payment_method_configuration` PostPaymentMethodConfigurationsConfiguration `kakao_pay.display_preference.preference` (string)
-- `payment_method_configuration` PostPaymentMethodConfigurationsConfiguration `klarna.display_preference.preference` (string)
-- `payment_method_configuration` PostPaymentMethodConfigurationsConfiguration `kr_card.display_preference.preference` (string)
-- `payment_method_configuration` PostPaymentMethodConfigurationsConfiguration `mb_way.display_preference.preference` (string)
-- `payment_method_configuration` PostPaymentMethodConfigurationsConfiguration `multibanco.display_preference.preference` (string)
-- `payment_method_configuration` PostPaymentMethodConfigurationsConfiguration `naver_pay.display_preference.preference` (string)
-- `payment_method_configuration` PostPaymentMethodConfigurationsConfiguration `oxxo.display_preference.preference` (string)
-- `payment_method_configuration` PostPaymentMethodConfigurationsConfiguration `p24.display_preference.preference` (string)
-- `payment_method_configuration` PostPaymentMethodConfigurationsConfiguration `pay_by_bank.display_preference.preference` (string)
-- `payment_method_configuration` PostPaymentMethodConfigurationsConfiguration `payco.display_preference.preference` (string)
-- `payment_method_configuration` PostPaymentMethodConfigurationsConfiguration `paypay.display_preference.preference` (string)
-- `payment_method_configuration` PostPaymentMethodConfigurationsConfiguration `pix.display_preference.preference` (string)
-- `payment_method_configuration` PostPaymentMethodConfigurationsConfiguration `promptpay.display_preference.preference` (string)
-- `payment_method_configuration` PostPaymentMethodConfigurationsConfiguration `samsung_pay.display_preference.preference` (string)
-- `payment_method_configuration` PostPaymentMethodConfigurationsConfiguration `satispay.display_preference.preference` (string)
-- `payment_method_configuration` PostPaymentMethodConfigurationsConfiguration `scalapay.display_preference.preference` (string)
-- `payment_method_configuration` PostPaymentMethodConfigurationsConfiguration `sepa_debit.display_preference.preference` (string)
-- `payment_method_configuration` PostPaymentMethodConfigurationsConfiguration `sofort.display_preference.preference` (string)
-- `payment_method_configuration` PostPaymentMethodConfigurationsConfiguration `sunbit.display_preference.preference` (string)
-- `payment_method_configuration` PostPaymentMethodConfigurationsConfiguration `upi.display_preference.preference` (string)
-- `payment_method_configuration` PostPaymentMethodConfigurationsConfiguration `us_bank_account.display_preference.preference` (string)
-- `payment_method_configuration` PostPaymentMethodConfigurationsConfiguration `wechat_pay.display_preference.preference` (string)
-- `payment_method_configuration` PostPaymentMethodConfigurationsConfiguration `zip.display_preference.preference` (string)
-- `setup_intent` PostSetupIntents `payment_method_options.card.mandate_options.amount` (integer)
-- `setup_intent` PostSetupIntents `payment_method_options.card.mandate_options.amount_type` (string)
-- `setup_intent` PostSetupIntents `payment_method_options.card.mandate_options.currency` (string)
-- `setup_intent` PostSetupIntents `payment_method_options.card.mandate_options.description` (string)
-- `setup_intent` PostSetupIntents `payment_method_options.card.mandate_options.end_date` (integer)
-- `setup_intent` PostSetupIntents `payment_method_options.card.mandate_options.interval` (string)
-- `setup_intent` PostSetupIntents `payment_method_options.card.mandate_options.interval_count` (integer)
-- `setup_intent` PostSetupIntents `payment_method_options.card.mandate_options.reference` (string)
-- `setup_intent` PostSetupIntents `payment_method_options.card.mandate_options.start_date` (integer)
-- `setup_intent` PostSetupIntents `payment_method_options.card.mandate_options.supported_types` (list of string)
-- `setup_intent` PostSetupIntents `payment_method_options.card.network` (string)
-- `setup_intent` PostSetupIntents `payment_method_options.card.request_three_d_secure` (string)
-- `setup_intent` PostSetupIntents `payment_method_options.card.three_d_secure.ares_trans_status` (string)
-- `setup_intent` PostSetupIntents `payment_method_options.card.three_d_secure.cryptogram` (string)
-- `setup_intent` PostSetupIntents `payment_method_options.card.three_d_secure.electronic_commerce_indicator` (string)
-- `setup_intent` PostSetupIntents `payment_method_options.card.three_d_secure.network_options.cartes_bancaires.cb_avalgo` (string)
-- `setup_intent` PostSetupIntents `payment_method_options.card.three_d_secure.network_options.cartes_bancaires.cb_exemption` (string)
-- `setup_intent` PostSetupIntents `payment_method_options.card.three_d_secure.network_options.cartes_bancaires.cb_score` (integer)
-- `setup_intent` PostSetupIntents `payment_method_options.card.three_d_secure.requestor_challenge_indicator` (string)
-- `setup_intent` PostSetupIntents `payment_method_options.card.three_d_secure.transaction_id` (string)
-- `setup_intent` PostSetupIntents `payment_method_options.card.three_d_secure.version` (string)
-- `setup_intent` PostSetupIntents `return_url` (string)
-- `setup_intent` PostSetupIntents `single_use.amount` (integer)
-- `setup_intent` PostSetupIntents `single_use.currency` (string)
-- `setup_intent` PostSetupIntents `use_stripe_sdk` (boolean)
-- `setup_intent` PostSetupIntentsIntent `payment_method_options.card.mandate_options.amount` (integer)
-- `setup_intent` PostSetupIntentsIntent `payment_method_options.card.mandate_options.amount_type` (string)
-- `setup_intent` PostSetupIntentsIntent `payment_method_options.card.mandate_options.currency` (string)
-- `setup_intent` PostSetupIntentsIntent `payment_method_options.card.mandate_options.description` (string)
-- `setup_intent` PostSetupIntentsIntent `payment_method_options.card.mandate_options.end_date` (integer)
-- `setup_intent` PostSetupIntentsIntent `payment_method_options.card.mandate_options.interval` (string)
-- `setup_intent` PostSetupIntentsIntent `payment_method_options.card.mandate_options.interval_count` (integer)
-- `setup_intent` PostSetupIntentsIntent `payment_method_options.card.mandate_options.reference` (string)
-- `setup_intent` PostSetupIntentsIntent `payment_method_options.card.mandate_options.start_date` (integer)
-- `setup_intent` PostSetupIntentsIntent `payment_method_options.card.mandate_options.supported_types` (list of string)
-- `setup_intent` PostSetupIntentsIntent `payment_method_options.card.network` (string)
-- `setup_intent` PostSetupIntentsIntent `payment_method_options.card.request_three_d_secure` (string)
-- `subscription` PostSubscriptions `discounts.coupon` (string)
-- `subscription` PostSubscriptions `discounts.promotion_code` (string)
-- `subscription` PostSubscriptions `items.discounts.coupon` (string)
-- `subscription` PostSubscriptions `items.discounts.promotion_code` (string)
-- `subscription` PostSubscriptionsSubscriptionExposedId `billing_cycle_anchor.type` (string)
-- `subscription` PostSubscriptionsSubscriptionExposedId `discounts.coupon` (string)
-- `subscription` PostSubscriptionsSubscriptionExposedId `discounts.discount` (string)
-- `subscription` PostSubscriptionsSubscriptionExposedId `discounts.promotion_code` (string)
-- `subscription` PostSubscriptionsSubscriptionExposedId `items.discounts.coupon` (string)
-- `subscription` PostSubscriptionsSubscriptionExposedId `items.discounts.discount` (string)
-- `subscription` PostSubscriptionsSubscriptionExposedId `items.discounts.promotion_code` (string)
-- `subscription_schedule` PostSubscriptionSchedules `from_subscription` (string)
-- `test_helpers_test_clock` PostTestHelpersTestClocks `customer` (string)
-- `topup` PostTopups `source` (string)
-
 ### The register (`Resource.Exclude`)
 
 - `account_capability` response `account` (reference): the parent attribute holds it
@@ -912,15 +893,20 @@ None.
 - `customer_payment_method` PostPaymentMethodsPaymentMethodAttach `customer` (string): the parent attribute holds it
 - `customer_payment_method` response `customer` (reference): the parent attribute holds it
 - `file` PostFiles `file` (string): Sent by the declaration as the upload of the local file `source` names: Terraform cannot send file content from HCL (framework limit; internal/resources/file).
+- `invoice` PostInvoices `discounts.discount` (string): It names a discount another object holds, such as a subscription's, and the record's `discounts` does not show Stripe returning it on the invoice, so the engine could not read it back as it reads the other forms (suite: TestInvoiceAttributes/leaves/request/PostInvoices/discounts.discount; the brief of the tenth pin, 2026-11-06).
 - `invoice_line` response `invoice` (string): the parent attribute holds it
-- `payment_intent` PostPaymentIntents `mandate_data.customer_acceptance.accepted_at` (integer): `customer_acceptance.type`, which the hash requires, is accepted only, so that no configuration could send it (suite: TestSetupIntentAttributes/leaves/request/PostSetupIntents/mandate_data.customer_acceptance.type).
-- `payment_intent` PostPaymentIntents `mandate_data.customer_acceptance.offline` (empty_hash): `customer_acceptance.type`, which the hash requires, is accepted only, so that no configuration could send it (suite: TestSetupIntentAttributes/leaves/request/PostSetupIntents/mandate_data.customer_acceptance.type).
-- `payment_intent` PostPaymentIntents `mandate_data.customer_acceptance.online.ip_address` (string): `customer_acceptance.type`, which the hash requires, is accepted only, so that no configuration could send it (suite: TestSetupIntentAttributes/leaves/request/PostSetupIntents/mandate_data.customer_acceptance.type).
-- `payment_intent` PostPaymentIntents `mandate_data.customer_acceptance.online.user_agent` (string): `customer_acceptance.type`, which the hash requires, is accepted only, so that no configuration could send it (suite: TestSetupIntentAttributes/leaves/request/PostSetupIntents/mandate_data.customer_acceptance.type).
-- `payment_intent` PostPaymentIntents `mandate_data.customer_acceptance.type` (string): `customer_acceptance.type`, which the hash requires, is accepted only, so that no configuration could send it (suite: TestSetupIntentAttributes/leaves/request/PostSetupIntents/mandate_data.customer_acceptance.type).
+- `invoiceitem` PostInvoiceitemsInvoiceitem `invoicing_rules` (string): Its one value, `""`, removes the item's invoicing rules, which Stripe does not let a request set (the spec's description, pin `v2585`): an instruction for one update, not a setting a configuration could keep (suite: TestInvoiceItemAttributes/leaves/request/PostInvoiceitemsInvoiceitem/invoicing_rules).
+- `payment_intent` PostPaymentIntents `mandate_data.customer_acceptance.accepted_at` (integer): A confirm-time instruction: Stripe took the hash only in creates that also sent `confirm` true, which this resource never sends, and it describes the customer's acceptance at that confirmation (suite: TestSetupIntentAttributes/leaves/request/PostSetupIntents/mandate_data.customer_acceptance.type, every probe of the create that sent it).
+- `payment_intent` PostPaymentIntents `mandate_data.customer_acceptance.offline` (empty_hash): A confirm-time instruction: Stripe took the hash only in creates that also sent `confirm` true, which this resource never sends, and it describes the customer's acceptance at that confirmation (suite: TestSetupIntentAttributes/leaves/request/PostSetupIntents/mandate_data.customer_acceptance.type, every probe of the create that sent it).
+- `payment_intent` PostPaymentIntents `mandate_data.customer_acceptance.online.ip_address` (string): A confirm-time instruction: Stripe took the hash only in creates that also sent `confirm` true, which this resource never sends, and it describes the customer's acceptance at that confirmation (suite: TestSetupIntentAttributes/leaves/request/PostSetupIntents/mandate_data.customer_acceptance.type, every probe of the create that sent it).
+- `payment_intent` PostPaymentIntents `mandate_data.customer_acceptance.online.user_agent` (string): A confirm-time instruction: Stripe took the hash only in creates that also sent `confirm` true, which this resource never sends, and it describes the customer's acceptance at that confirmation (suite: TestSetupIntentAttributes/leaves/request/PostSetupIntents/mandate_data.customer_acceptance.type, every probe of the create that sent it).
+- `payment_intent` PostPaymentIntents `mandate_data.customer_acceptance.type` (string): A confirm-time instruction: Stripe took the hash only in creates that also sent `confirm` true, which this resource never sends, and it describes the customer's acceptance at that confirmation (suite: TestSetupIntentAttributes/leaves/request/PostSetupIntents/mandate_data.customer_acceptance.type, every probe of the create that sent it).
+- `payment_intent` PostPaymentIntents `off_session@boolean` (boolean): A confirm-time instruction: Stripe took it only in creates that also sent `confirm` true, which this resource never sends, so it would apply to no request the provider makes (suite: TestPaymentIntentAttributes/leaves/request/PostPaymentIntents/off_session, every probe of the create that sent it).
+- `payment_intent` PostPaymentIntents `off_session@string` (string): A confirm-time instruction: Stripe took it only in creates that also sent `confirm` true, which this resource never sends, so it would apply to no request the provider makes (suite: TestPaymentIntentAttributes/leaves/request/PostPaymentIntents/off_session, every probe of the create that sent it).
 - `payment_intent` PostPaymentIntents `payment_method_options.card.installments.plan.count` (integer): `type`, which a plan requires, is unproven on the create and verified on the update only by Stripe's refusal, so that no configuration could send the plan (suite: TestPaymentIntentAttributes/leaves/request/PostPaymentIntents/payment_method_options.card.installments.plan.count, refused without `fixed_count`, and PostPaymentIntentsIntent/payment_method_options.card.installments.plan.type, refused unless `confirm` is true).
 - `payment_intent` PostPaymentIntents `payment_method_options.card.installments.plan.interval` (string): `type`, which a plan requires, is unproven on the create and verified on the update only by Stripe's refusal, so that no configuration could send the plan (suite: TestPaymentIntentAttributes/leaves/request/PostPaymentIntents/payment_method_options.card.installments.plan.count, refused without `fixed_count`, and PostPaymentIntentsIntent/payment_method_options.card.installments.plan.type, refused unless `confirm` is true).
 - `payment_intent` PostPaymentIntents `payment_method_options.card.installments.plan.type` (string): `type`, which a plan requires, is unproven on the create and verified on the update only by Stripe's refusal, so that no configuration could send the plan (suite: TestPaymentIntentAttributes/leaves/request/PostPaymentIntents/payment_method_options.card.installments.plan.count, refused without `fixed_count`, and PostPaymentIntentsIntent/payment_method_options.card.installments.plan.type, refused unless `confirm` is true).
+- `payment_intent` PostPaymentIntents `payment_method_options.card.network` (string): A confirm-time instruction: Stripe took it only in creates that also sent `confirm` true, which this resource never sends, so it would apply to no request the provider makes (suite: TestPaymentIntentAttributes/leaves/request/PostPaymentIntents/payment_method_options.card.network, every probe of the create that sent it).
 - `payment_intent` PostPaymentIntents `payment_method_options.card.three_d_secure.ares_trans_status` (string): Stripe never returns the hash, which its create takes only beside `confirm`, and its update refuses it unless `confirm` is true, with `cryptogram` and `transaction_id`, which it requires, unproven there, so that no configuration could send it (suite: TestPaymentIntentAttributes/leaves/request/PostPaymentIntentsIntent/payment_method_options.card.three_d_secure.version).
 - `payment_intent` PostPaymentIntents `payment_method_options.card.three_d_secure.cryptogram` (string): Stripe never returns the hash, which its create takes only beside `confirm`, and its update refuses it unless `confirm` is true, with `cryptogram` and `transaction_id`, which it requires, unproven there, so that no configuration could send it (suite: TestPaymentIntentAttributes/leaves/request/PostPaymentIntentsIntent/payment_method_options.card.three_d_secure.version).
 - `payment_intent` PostPaymentIntents `payment_method_options.card.three_d_secure.electronic_commerce_indicator` (string): Stripe never returns the hash, which its create takes only beside `confirm`, and its update refuses it unless `confirm` is true, with `cryptogram` and `transaction_id`, which it requires, unproven there, so that no configuration could send it (suite: TestPaymentIntentAttributes/leaves/request/PostPaymentIntentsIntent/payment_method_options.card.three_d_secure.version).
@@ -931,6 +917,9 @@ None.
 - `payment_intent` PostPaymentIntents `payment_method_options.card.three_d_secure.requestor_challenge_indicator` (string): Stripe never returns the hash, which its create takes only beside `confirm`, and its update refuses it unless `confirm` is true, with `cryptogram` and `transaction_id`, which it requires, unproven there, so that no configuration could send it (suite: TestPaymentIntentAttributes/leaves/request/PostPaymentIntentsIntent/payment_method_options.card.three_d_secure.version).
 - `payment_intent` PostPaymentIntents `payment_method_options.card.three_d_secure.transaction_id` (string): Stripe never returns the hash, which its create takes only beside `confirm`, and its update refuses it unless `confirm` is true, with `cryptogram` and `transaction_id`, which it requires, unproven there, so that no configuration could send it (suite: TestPaymentIntentAttributes/leaves/request/PostPaymentIntentsIntent/payment_method_options.card.three_d_secure.version).
 - `payment_intent` PostPaymentIntents `payment_method_options.card.three_d_secure.version` (string): Stripe never returns the hash, which its create takes only beside `confirm`, and its update refuses it unless `confirm` is true, with `cryptogram` and `transaction_id`, which it requires, unproven there, so that no configuration could send it (suite: TestPaymentIntentAttributes/leaves/request/PostPaymentIntentsIntent/payment_method_options.card.three_d_secure.version).
+- `payment_intent` PostPaymentIntents `radar_options.referrer` (string): A confirm-time instruction: Stripe took it only in creates that also sent `confirm` true, which this resource never sends, so it would apply to no request the provider makes (suite: TestPaymentIntentAttributes/leaves/request/PostPaymentIntents/radar_options.referrer, every probe of the create that sent it).
+- `payment_intent` PostPaymentIntents `return_url` (string): A confirm-time instruction: Stripe took it only in creates that also sent `confirm` true, which this resource never sends, so it would apply to no request the provider makes (suite: TestPaymentIntentAttributes/leaves/request/PostPaymentIntents/return_url, every probe of the create that sent it).
+- `payment_intent` PostPaymentIntents `use_stripe_sdk` (boolean): A confirm-time instruction: Stripe took it only in creates that also sent `confirm` true, which this resource never sends, so it would apply to no request the provider makes (suite: TestPaymentIntentAttributes/leaves/request/PostPaymentIntents/use_stripe_sdk, every probe of the create that sent it).
 - `payment_intent` PostPaymentIntentsIntent `payment_method_options.card.installments.plan.count` (integer): `type`, which a plan requires, is unproven on the create and verified on the update only by Stripe's refusal, so that no configuration could send the plan (suite: TestPaymentIntentAttributes/leaves/request/PostPaymentIntents/payment_method_options.card.installments.plan.count, refused without `fixed_count`, and PostPaymentIntentsIntent/payment_method_options.card.installments.plan.type, refused unless `confirm` is true).
 - `payment_intent` PostPaymentIntentsIntent `payment_method_options.card.installments.plan.interval` (string): `type`, which a plan requires, is unproven on the create and verified on the update only by Stripe's refusal, so that no configuration could send the plan (suite: TestPaymentIntentAttributes/leaves/request/PostPaymentIntents/payment_method_options.card.installments.plan.count, refused without `fixed_count`, and PostPaymentIntentsIntent/payment_method_options.card.installments.plan.type, refused unless `confirm` is true).
 - `payment_intent` PostPaymentIntentsIntent `payment_method_options.card.installments.plan.type` (string): `type`, which a plan requires, is unproven on the create and verified on the update only by Stripe's refusal, so that no configuration could send the plan (suite: TestPaymentIntentAttributes/leaves/request/PostPaymentIntents/payment_method_options.card.installments.plan.count, refused without `fixed_count`, and PostPaymentIntentsIntent/payment_method_options.card.installments.plan.type, refused unless `confirm` is true).
@@ -950,39 +939,31 @@ None.
 - `payment_intent` response `payment_method_options.card.installments.plan.interval@payment_intent_type_specific_payment_method_options_client` (string): `type`, which a plan requires, is unproven on the create and verified on the update only by Stripe's refusal, so that no configuration could send the plan (suite: TestPaymentIntentAttributes/leaves/request/PostPaymentIntents/payment_method_options.card.installments.plan.count, refused without `fixed_count`, and PostPaymentIntentsIntent/payment_method_options.card.installments.plan.type, refused unless `confirm` is true).
 - `payment_intent` response `payment_method_options.card.installments.plan.type@payment_intent_payment_method_options_card` (string): `type`, which a plan requires, is unproven on the create and verified on the update only by Stripe's refusal, so that no configuration could send the plan (suite: TestPaymentIntentAttributes/leaves/request/PostPaymentIntents/payment_method_options.card.installments.plan.count, refused without `fixed_count`, and PostPaymentIntentsIntent/payment_method_options.card.installments.plan.type, refused unless `confirm` is true).
 - `payment_intent` response `payment_method_options.card.installments.plan.type@payment_intent_type_specific_payment_method_options_client` (string): `type`, which a plan requires, is unproven on the create and verified on the update only by Stripe's refusal, so that no configuration could send the plan (suite: TestPaymentIntentAttributes/leaves/request/PostPaymentIntents/payment_method_options.card.installments.plan.count, refused without `fixed_count`, and PostPaymentIntentsIntent/payment_method_options.card.installments.plan.type, refused unless `confirm` is true).
-- `setup_intent` PostSetupIntents `mandate_data.customer_acceptance.accepted_at` (integer): `customer_acceptance.type`, which the hash requires, is accepted only, so that no configuration could send it (suite: TestSetupIntentAttributes/leaves/request/PostSetupIntents/mandate_data.customer_acceptance.type).
-- `setup_intent` PostSetupIntents `mandate_data.customer_acceptance.offline` (empty_hash): `customer_acceptance.type`, which the hash requires, is accepted only, so that no configuration could send it (suite: TestSetupIntentAttributes/leaves/request/PostSetupIntents/mandate_data.customer_acceptance.type).
-- `setup_intent` PostSetupIntents `mandate_data.customer_acceptance.online.ip_address` (string): `customer_acceptance.type`, which the hash requires, is accepted only, so that no configuration could send it (suite: TestSetupIntentAttributes/leaves/request/PostSetupIntents/mandate_data.customer_acceptance.type).
-- `setup_intent` PostSetupIntents `mandate_data.customer_acceptance.online.user_agent` (string): `customer_acceptance.type`, which the hash requires, is accepted only, so that no configuration could send it (suite: TestSetupIntentAttributes/leaves/request/PostSetupIntents/mandate_data.customer_acceptance.type).
-- `setup_intent` PostSetupIntents `mandate_data.customer_acceptance.type` (string): `customer_acceptance.type`, which the hash requires, is accepted only, so that no configuration could send it (suite: TestSetupIntentAttributes/leaves/request/PostSetupIntents/mandate_data.customer_acceptance.type).
-- `subscription_schedule` PostSubscriptionSchedules `pause_schedules.key` (string): `pause.pause_at` and `resume.resume_at`, which the hashes require, are accepted only, so that no configuration could send a pause schedule (suite: TestSubscriptionScheduleAttributes/leaves/request/PostSubscriptionSchedules/pause_schedules.pause.pause_at.type).
-- `subscription_schedule` PostSubscriptionSchedules `pause_schedules.pause.pause_at.timestamp` (integer): `pause.pause_at` and `resume.resume_at`, which the hashes require, are accepted only, so that no configuration could send a pause schedule (suite: TestSubscriptionScheduleAttributes/leaves/request/PostSubscriptionSchedules/pause_schedules.pause.pause_at.type).
-- `subscription_schedule` PostSubscriptionSchedules `pause_schedules.pause.pause_at.type` (string): `pause.pause_at` and `resume.resume_at`, which the hashes require, are accepted only, so that no configuration could send a pause schedule (suite: TestSubscriptionScheduleAttributes/leaves/request/PostSubscriptionSchedules/pause_schedules.pause.pause_at.type).
-- `subscription_schedule` PostSubscriptionSchedules `pause_schedules.pause.settings.bill_for.outstanding_usage_through.type` (string): `pause.pause_at` and `resume.resume_at`, which the hashes require, are accepted only, so that no configuration could send a pause schedule (suite: TestSubscriptionScheduleAttributes/leaves/request/PostSubscriptionSchedules/pause_schedules.pause.pause_at.type).
-- `subscription_schedule` PostSubscriptionSchedules `pause_schedules.pause.settings.bill_for.unused_time_from.type` (string): `pause.pause_at` and `resume.resume_at`, which the hashes require, are accepted only, so that no configuration could send a pause schedule (suite: TestSubscriptionScheduleAttributes/leaves/request/PostSubscriptionSchedules/pause_schedules.pause.pause_at.type).
-- `subscription_schedule` PostSubscriptionSchedules `pause_schedules.pause.settings.invoicing_behavior` (string): `pause.pause_at` and `resume.resume_at`, which the hashes require, are accepted only, so that no configuration could send a pause schedule (suite: TestSubscriptionScheduleAttributes/leaves/request/PostSubscriptionSchedules/pause_schedules.pause.pause_at.type).
-- `subscription_schedule` PostSubscriptionSchedules `pause_schedules.pause.settings.type` (string): `pause.pause_at` and `resume.resume_at`, which the hashes require, are accepted only, so that no configuration could send a pause schedule (suite: TestSubscriptionScheduleAttributes/leaves/request/PostSubscriptionSchedules/pause_schedules.pause.pause_at.type).
-- `subscription_schedule` PostSubscriptionSchedules `pause_schedules.resume.resume_at.duration.interval` (string): `pause.pause_at` and `resume.resume_at`, which the hashes require, are accepted only, so that no configuration could send a pause schedule (suite: TestSubscriptionScheduleAttributes/leaves/request/PostSubscriptionSchedules/pause_schedules.pause.pause_at.type).
-- `subscription_schedule` PostSubscriptionSchedules `pause_schedules.resume.resume_at.duration.interval_count` (integer): `pause.pause_at` and `resume.resume_at`, which the hashes require, are accepted only, so that no configuration could send a pause schedule (suite: TestSubscriptionScheduleAttributes/leaves/request/PostSubscriptionSchedules/pause_schedules.pause.pause_at.type).
-- `subscription_schedule` PostSubscriptionSchedules `pause_schedules.resume.resume_at.timestamp` (integer): `pause.pause_at` and `resume.resume_at`, which the hashes require, are accepted only, so that no configuration could send a pause schedule (suite: TestSubscriptionScheduleAttributes/leaves/request/PostSubscriptionSchedules/pause_schedules.pause.pause_at.type).
-- `subscription_schedule` PostSubscriptionSchedules `pause_schedules.resume.resume_at.type` (string): `pause.pause_at` and `resume.resume_at`, which the hashes require, are accepted only, so that no configuration could send a pause schedule (suite: TestSubscriptionScheduleAttributes/leaves/request/PostSubscriptionSchedules/pause_schedules.pause.pause_at.type).
-- `subscription_schedule` PostSubscriptionSchedules `pause_schedules.resume.settings.billing_cycle_anchor` (string): `pause.pause_at` and `resume.resume_at`, which the hashes require, are accepted only, so that no configuration could send a pause schedule (suite: TestSubscriptionScheduleAttributes/leaves/request/PostSubscriptionSchedules/pause_schedules.pause.pause_at.type).
-- `subscription_schedule` PostSubscriptionSchedules `pause_schedules.resume.settings.payment_behavior` (string): `pause.pause_at` and `resume.resume_at`, which the hashes require, are accepted only, so that no configuration could send a pause schedule (suite: TestSubscriptionScheduleAttributes/leaves/request/PostSubscriptionSchedules/pause_schedules.pause.pause_at.type).
-- `subscription_schedule` PostSubscriptionSchedules `pause_schedules.resume.settings.proration_behavior` (string): `pause.pause_at` and `resume.resume_at`, which the hashes require, are accepted only, so that no configuration could send a pause schedule (suite: TestSubscriptionScheduleAttributes/leaves/request/PostSubscriptionSchedules/pause_schedules.pause.pause_at.type).
-- `subscription_schedule` PostSubscriptionSchedulesSchedule `pause_schedules.key` (string): `pause.pause_at` and `resume.resume_at`, which the hashes require, are accepted only, so that no configuration could send a pause schedule (suite: TestSubscriptionScheduleAttributes/leaves/request/PostSubscriptionSchedules/pause_schedules.pause.pause_at.type).
-- `subscription_schedule` PostSubscriptionSchedulesSchedule `pause_schedules.pause.pause_at.timestamp` (integer): `pause.pause_at` and `resume.resume_at`, which the hashes require, are accepted only, so that no configuration could send a pause schedule (suite: TestSubscriptionScheduleAttributes/leaves/request/PostSubscriptionSchedules/pause_schedules.pause.pause_at.type).
-- `subscription_schedule` PostSubscriptionSchedulesSchedule `pause_schedules.pause.pause_at.type` (string): `pause.pause_at` and `resume.resume_at`, which the hashes require, are accepted only, so that no configuration could send a pause schedule (suite: TestSubscriptionScheduleAttributes/leaves/request/PostSubscriptionSchedules/pause_schedules.pause.pause_at.type).
-- `subscription_schedule` PostSubscriptionSchedulesSchedule `pause_schedules.pause.settings.bill_for.outstanding_usage_through.type` (string): `pause.pause_at` and `resume.resume_at`, which the hashes require, are accepted only, so that no configuration could send a pause schedule (suite: TestSubscriptionScheduleAttributes/leaves/request/PostSubscriptionSchedules/pause_schedules.pause.pause_at.type).
-- `subscription_schedule` PostSubscriptionSchedulesSchedule `pause_schedules.pause.settings.bill_for.unused_time_from.type` (string): `pause.pause_at` and `resume.resume_at`, which the hashes require, are accepted only, so that no configuration could send a pause schedule (suite: TestSubscriptionScheduleAttributes/leaves/request/PostSubscriptionSchedules/pause_schedules.pause.pause_at.type).
-- `subscription_schedule` PostSubscriptionSchedulesSchedule `pause_schedules.pause.settings.invoicing_behavior` (string): `pause.pause_at` and `resume.resume_at`, which the hashes require, are accepted only, so that no configuration could send a pause schedule (suite: TestSubscriptionScheduleAttributes/leaves/request/PostSubscriptionSchedules/pause_schedules.pause.pause_at.type).
-- `subscription_schedule` PostSubscriptionSchedulesSchedule `pause_schedules.pause.settings.type` (string): `pause.pause_at` and `resume.resume_at`, which the hashes require, are accepted only, so that no configuration could send a pause schedule (suite: TestSubscriptionScheduleAttributes/leaves/request/PostSubscriptionSchedules/pause_schedules.pause.pause_at.type).
-- `subscription_schedule` PostSubscriptionSchedulesSchedule `pause_schedules.resume.resume_at.duration.interval` (string): `pause.pause_at` and `resume.resume_at`, which the hashes require, are accepted only, so that no configuration could send a pause schedule (suite: TestSubscriptionScheduleAttributes/leaves/request/PostSubscriptionSchedules/pause_schedules.pause.pause_at.type).
-- `subscription_schedule` PostSubscriptionSchedulesSchedule `pause_schedules.resume.resume_at.duration.interval_count` (integer): `pause.pause_at` and `resume.resume_at`, which the hashes require, are accepted only, so that no configuration could send a pause schedule (suite: TestSubscriptionScheduleAttributes/leaves/request/PostSubscriptionSchedules/pause_schedules.pause.pause_at.type).
-- `subscription_schedule` PostSubscriptionSchedulesSchedule `pause_schedules.resume.resume_at.timestamp` (integer): `pause.pause_at` and `resume.resume_at`, which the hashes require, are accepted only, so that no configuration could send a pause schedule (suite: TestSubscriptionScheduleAttributes/leaves/request/PostSubscriptionSchedules/pause_schedules.pause.pause_at.type).
-- `subscription_schedule` PostSubscriptionSchedulesSchedule `pause_schedules.resume.resume_at.type` (string): `pause.pause_at` and `resume.resume_at`, which the hashes require, are accepted only, so that no configuration could send a pause schedule (suite: TestSubscriptionScheduleAttributes/leaves/request/PostSubscriptionSchedules/pause_schedules.pause.pause_at.type).
-- `subscription_schedule` PostSubscriptionSchedulesSchedule `pause_schedules.resume.settings.billing_cycle_anchor` (string): `pause.pause_at` and `resume.resume_at`, which the hashes require, are accepted only, so that no configuration could send a pause schedule (suite: TestSubscriptionScheduleAttributes/leaves/request/PostSubscriptionSchedules/pause_schedules.pause.pause_at.type).
-- `subscription_schedule` PostSubscriptionSchedulesSchedule `pause_schedules.resume.settings.payment_behavior` (string): `pause.pause_at` and `resume.resume_at`, which the hashes require, are accepted only, so that no configuration could send a pause schedule (suite: TestSubscriptionScheduleAttributes/leaves/request/PostSubscriptionSchedules/pause_schedules.pause.pause_at.type).
-- `subscription_schedule` PostSubscriptionSchedulesSchedule `pause_schedules.resume.settings.proration_behavior` (string): `pause.pause_at` and `resume.resume_at`, which the hashes require, are accepted only, so that no configuration could send a pause schedule (suite: TestSubscriptionScheduleAttributes/leaves/request/PostSubscriptionSchedules/pause_schedules.pause.pause_at.type).
+- `setup_intent` PostSetupIntents `mandate_data.customer_acceptance.accepted_at` (integer): A confirm-time instruction: Stripe took the hash only in creates that also sent `confirm` true, which this resource never sends, and it describes the customer's acceptance at that confirmation (suite: TestSetupIntentAttributes/leaves/request/PostSetupIntents/mandate_data.customer_acceptance.type, every probe of the create that sent it).
+- `setup_intent` PostSetupIntents `mandate_data.customer_acceptance.offline` (empty_hash): A confirm-time instruction: Stripe took the hash only in creates that also sent `confirm` true, which this resource never sends, and it describes the customer's acceptance at that confirmation (suite: TestSetupIntentAttributes/leaves/request/PostSetupIntents/mandate_data.customer_acceptance.type, every probe of the create that sent it).
+- `setup_intent` PostSetupIntents `mandate_data.customer_acceptance.online.ip_address` (string): A confirm-time instruction: Stripe took the hash only in creates that also sent `confirm` true, which this resource never sends, and it describes the customer's acceptance at that confirmation (suite: TestSetupIntentAttributes/leaves/request/PostSetupIntents/mandate_data.customer_acceptance.type, every probe of the create that sent it).
+- `setup_intent` PostSetupIntents `mandate_data.customer_acceptance.online.user_agent` (string): A confirm-time instruction: Stripe took the hash only in creates that also sent `confirm` true, which this resource never sends, and it describes the customer's acceptance at that confirmation (suite: TestSetupIntentAttributes/leaves/request/PostSetupIntents/mandate_data.customer_acceptance.type, every probe of the create that sent it).
+- `setup_intent` PostSetupIntents `mandate_data.customer_acceptance.type` (string): A confirm-time instruction: Stripe took the hash only in creates that also sent `confirm` true, which this resource never sends, and it describes the customer's acceptance at that confirmation (suite: TestSetupIntentAttributes/leaves/request/PostSetupIntents/mandate_data.customer_acceptance.type, every probe of the create that sent it).
+- `setup_intent` PostSetupIntents `payment_method_options.card.network` (string): A confirm-time instruction: Stripe took it only in creates that also sent `confirm` true, which this resource never sends, so it would apply to no request the provider makes (suite: TestSetupIntentAttributes/leaves/request/PostSetupIntents/payment_method_options.card.network, every probe of the create that sent it).
+- `setup_intent` PostSetupIntents `payment_method_options.card.three_d_secure.ares_trans_status` (string): A confirm-time instruction: Stripe took it only in creates that also sent `confirm` true, which this resource never sends, so it would apply to no request the provider makes (suite: TestSetupIntentAttributes/leaves/request/PostSetupIntents/payment_method_options.card.three_d_secure.version, every probe of the create that sent it).
+- `setup_intent` PostSetupIntents `payment_method_options.card.three_d_secure.cryptogram` (string): A confirm-time instruction: Stripe took it only in creates that also sent `confirm` true, which this resource never sends, so it would apply to no request the provider makes (suite: TestSetupIntentAttributes/leaves/request/PostSetupIntents/payment_method_options.card.three_d_secure.version, every probe of the create that sent it).
+- `setup_intent` PostSetupIntents `payment_method_options.card.three_d_secure.electronic_commerce_indicator` (string): A confirm-time instruction: Stripe took it only in creates that also sent `confirm` true, which this resource never sends, so it would apply to no request the provider makes (suite: TestSetupIntentAttributes/leaves/request/PostSetupIntents/payment_method_options.card.three_d_secure.version, every probe of the create that sent it).
+- `setup_intent` PostSetupIntents `payment_method_options.card.three_d_secure.network_options.cartes_bancaires.cb_avalgo` (string): A confirm-time instruction: Stripe took it only in creates that also sent `confirm` true, which this resource never sends, so it would apply to no request the provider makes (suite: TestSetupIntentAttributes/leaves/request/PostSetupIntents/payment_method_options.card.three_d_secure.version, every probe of the create that sent it).
+- `setup_intent` PostSetupIntents `payment_method_options.card.three_d_secure.network_options.cartes_bancaires.cb_exemption` (string): A confirm-time instruction: Stripe took it only in creates that also sent `confirm` true, which this resource never sends, so it would apply to no request the provider makes (suite: TestSetupIntentAttributes/leaves/request/PostSetupIntents/payment_method_options.card.three_d_secure.version, every probe of the create that sent it).
+- `setup_intent` PostSetupIntents `payment_method_options.card.three_d_secure.network_options.cartes_bancaires.cb_score` (integer): A confirm-time instruction: Stripe took it only in creates that also sent `confirm` true, which this resource never sends, so it would apply to no request the provider makes (suite: TestSetupIntentAttributes/leaves/request/PostSetupIntents/payment_method_options.card.three_d_secure.version, every probe of the create that sent it).
+- `setup_intent` PostSetupIntents `payment_method_options.card.three_d_secure.requestor_challenge_indicator` (string): A confirm-time instruction: Stripe took it only in creates that also sent `confirm` true, which this resource never sends, so it would apply to no request the provider makes (suite: TestSetupIntentAttributes/leaves/request/PostSetupIntents/payment_method_options.card.three_d_secure.version, every probe of the create that sent it).
+- `setup_intent` PostSetupIntents `payment_method_options.card.three_d_secure.transaction_id` (string): A confirm-time instruction: Stripe took it only in creates that also sent `confirm` true, which this resource never sends, so it would apply to no request the provider makes (suite: TestSetupIntentAttributes/leaves/request/PostSetupIntents/payment_method_options.card.three_d_secure.version, every probe of the create that sent it).
+- `setup_intent` PostSetupIntents `payment_method_options.card.three_d_secure.version` (string): A confirm-time instruction: Stripe took it only in creates that also sent `confirm` true, which this resource never sends, so it would apply to no request the provider makes (suite: TestSetupIntentAttributes/leaves/request/PostSetupIntents/payment_method_options.card.three_d_secure.version, every probe of the create that sent it).
+- `setup_intent` PostSetupIntents `return_url` (string): A confirm-time instruction: Stripe took it only in creates that also sent `confirm` true, which this resource never sends, so it would apply to no request the provider makes (suite: TestSetupIntentAttributes/leaves/request/PostSetupIntents/return_url, every probe of the create that sent it).
+- `setup_intent` PostSetupIntents `use_stripe_sdk` (boolean): A confirm-time instruction: Stripe took it only in creates that also sent `confirm` true, which this resource never sends, so it would apply to no request the provider makes (suite: TestSetupIntentAttributes/leaves/request/PostSetupIntents/use_stripe_sdk, every probe of the create that sent it).
+- `subscription` PostSubscriptionsSubscriptionExposedId `billing_cycle_anchor.type` (string): The update's `now` resets the billing cycle anchor at the update that sends it, and `unchanged` keeps it: an instruction for that moment, not a setting, which kept in state would say nothing about the subscription; the create's timestamp, which the table holds, is the setting (suite: TestSubscriptionAttributes/leaves/request/PostSubscriptionsSubscriptionExposedId/billing_cycle_anchor.type).
+- `subscription` PostSubscriptionsSubscriptionExposedId `discounts.coupon` (string): Exposing the update's forms would make the list updatable, which the provider keeps create-only (D3): Stripe drops a discount that ends, and an update sending the list again, as every change of `items` sends each item's, would redeem the coupon or promotion code anew, an effect a user would not expect of a kept argument (the product owner's decision of 2026-11-07 leaves such leaves out; suite: TestSubscriptionAttributes/leaves/request/PostSubscriptionsSubscriptionExposedId/discounts.coupon).
+- `subscription` PostSubscriptionsSubscriptionExposedId `discounts.discount` (string): Exposing the update's forms would make the list updatable, which the provider keeps create-only (D3): Stripe drops a discount that ends, and an update sending the list again, as every change of `items` sends each item's, would redeem the coupon or promotion code anew, an effect a user would not expect of a kept argument (the product owner's decision of 2026-11-07 leaves such leaves out; suite: TestSubscriptionAttributes/leaves/request/PostSubscriptionsSubscriptionExposedId/discounts.coupon).
+- `subscription` PostSubscriptionsSubscriptionExposedId `discounts.promotion_code` (string): Exposing the update's forms would make the list updatable, which the provider keeps create-only (D3): Stripe drops a discount that ends, and an update sending the list again, as every change of `items` sends each item's, would redeem the coupon or promotion code anew, an effect a user would not expect of a kept argument (the product owner's decision of 2026-11-07 leaves such leaves out; suite: TestSubscriptionAttributes/leaves/request/PostSubscriptionsSubscriptionExposedId/discounts.coupon).
+- `subscription` PostSubscriptionsSubscriptionExposedId `items.discounts.coupon` (string): Exposing the update's forms would make the list updatable, which the provider keeps create-only (D3): Stripe drops a discount that ends, and an update sending the list again, as every change of `items` sends each item's, would redeem the coupon or promotion code anew, an effect a user would not expect of a kept argument (the product owner's decision of 2026-11-07 leaves such leaves out; suite: TestSubscriptionAttributes/leaves/request/PostSubscriptionsSubscriptionExposedId/discounts.coupon).
+- `subscription` PostSubscriptionsSubscriptionExposedId `items.discounts.discount` (string): Exposing the update's forms would make the list updatable, which the provider keeps create-only (D3): Stripe drops a discount that ends, and an update sending the list again, as every change of `items` sends each item's, would redeem the coupon or promotion code anew, an effect a user would not expect of a kept argument (the product owner's decision of 2026-11-07 leaves such leaves out; suite: TestSubscriptionAttributes/leaves/request/PostSubscriptionsSubscriptionExposedId/discounts.coupon).
+- `subscription` PostSubscriptionsSubscriptionExposedId `items.discounts.promotion_code` (string): Exposing the update's forms would make the list updatable, which the provider keeps create-only (D3): Stripe drops a discount that ends, and an update sending the list again, as every change of `items` sends each item's, would redeem the coupon or promotion code anew, an effect a user would not expect of a kept argument (the product owner's decision of 2026-11-07 leaves such leaves out; suite: TestSubscriptionAttributes/leaves/request/PostSubscriptionsSubscriptionExposedId/discounts.coupon).
+- `test_helpers_test_clock` PostTestHelpersTestClocks `customer` (string): With a `customer`, Stripe freezes the clock at its `created`, not at the configured `frozen_time`, which the table requires (the record's rule on `frozen_time`), so the argument would change what another argument does on every create, a surprise for a kept value (the product owner's decision of 2026-11-07 leaves such leaves out; suite: TestTestClockAttributes/leaves/request/PostTestHelpersTestClocks/customer).
 - `transfer_reversal` response `transfer` (reference): the parent attribute holds it
 
 ## Awaiting proof

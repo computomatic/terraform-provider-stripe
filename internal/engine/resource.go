@@ -198,7 +198,7 @@ func (r *Resource) planChange(ctx context.Context, req resource.ModifyPlanReques
 	if r.refuseLeavingFinal(req, resp) {
 		return
 	}
-	if r.requiresReplaceForCurrencyOptions(ctx, req, resp) || r.requiresReplaceForFixedKeys(ctx, req, resp) {
+	if r.requiresReplaceForCurrencyOptions(ctx, req, resp) || r.requiresReplaceForFixedKeys(ctx, req, resp) || r.requiresReplaceForKeptInKeyed(ctx, req, resp) {
 		return
 	}
 	r.requiresReplaceOnRemoval(req, resp)
@@ -896,7 +896,7 @@ func (r *Resource) Update(ctx context.Context, req resource.UpdateRequest, resp 
 			}
 		}
 	}
-	next, diags := r.m.decodeState(body, plan, r.objType, false, keep)
+	next, diags := r.m.decodeState(body, r.m.withKeptFromState(plan, state, req.Config.Raw), r.objType, false, keep)
 	resp.Diagnostics.Append(r.api.strictly(diags)...)
 	if resp.Diagnostics.HasError() {
 		return

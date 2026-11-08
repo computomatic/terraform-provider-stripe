@@ -45,8 +45,8 @@ type PinnedFile struct {
 // which adds `served_broken` and `proven_by_test`). Only ClassVerified exposes a leaf.
 const (
 	ClassVerified = "verified"
-	// ClassAcceptedOnly is a leaf Stripe takes and never returns, so that a user could neither
-	// read it back nor see drift: rule X6 leaves it out unless Resource.AcceptedOnly allows it.
+	// ClassAcceptedOnly is a leaf Stripe takes and never returns. The gate exposes it, and the
+	// provider keeps it from configuration unless Resource.AcceptedOnly gives a reason of its own.
 	ClassAcceptedOnly       = "verified_accepted_only"
 	ClassServedFailing      = "served_failing"
 	ClassServedBroken       = "served_broken"

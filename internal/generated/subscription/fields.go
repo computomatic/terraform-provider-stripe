@@ -102,7 +102,9 @@ var Table = []fields.Field{
 	{Name: "default_tax_rates", Shape: fields.ScalarList, Elem: fields.String, Create: true, Update: true, Response: true, Description: "The tax rates that will apply to any subscription item that does not have `tax_rates` set. Invoices created will have their `default_tax_rates` populated from the subscription."},
 	{Name: "description", Shape: fields.String, Create: true, Update: true, Response: true, Stable: true, Description: "The subscription's description, meant to be displayable to the customer. Use this field to optionally store an explanation of the subscription for rendering in Stripe surfaces and certain local payment methods UIs.", Default: &fields.Default{Kind: fields.DefaultNone}},
 	{Name: "discounts", Shape: fields.ObjectList, Create: true, ServerDefaulted: true, Description: "The coupons to redeem into discounts for the subscription. If not specified or empty, inherits the discount from the subscription's customer.", Fields: []fields.Field{
+		{Name: "coupon", Shape: fields.String, Create: true},
 		{Name: "discount", Shape: fields.String, Create: true, Refused: "Stripe refused it on a US account on create: \"No such discount: 'di_...'\"."},
+		{Name: "promotion_code", Shape: fields.String, Create: true},
 	}, DataSource: &fields.Field{Name: "discounts", Shape: fields.ScalarList, Elem: fields.String, Response: true, Description: "The discounts applied to the subscription. Subscription item discounts are applied before subscription discounts. Use `expand[]=discounts` to expand each discount."}},
 	{Name: "ended_at", Shape: fields.Int, Response: true, Description: "If the subscription has ended, the date the subscription ended."},
 	{Name: "id", Shape: fields.String, Response: true, Description: "Unique identifier for the object."},
@@ -135,7 +137,9 @@ var Table = []fields.Field{
 		}},
 		{Name: "deleted", Shape: fields.Bool, Update: true, Default: &fields.Default{Kind: fields.DefaultNotSent}},
 		{Name: "discounts", Shape: fields.ObjectList, Create: true, ServerDefaulted: true, Fields: []fields.Field{
+			{Name: "coupon", Shape: fields.String, Create: true, NotReturned: true, Answer: "Elsewhere Stripe refused it on a US account on create: \"Coupon attrs_expired is expired and cannot be applied.\"."},
 			{Name: "discount", Shape: fields.String, Create: true, Refused: "Stripe refused it on a US account on create: \"No such discount: 'di_...'\"."},
+			{Name: "promotion_code", Shape: fields.String, Create: true, NotReturned: true, Answer: "Elsewhere Stripe refused it on a US account on create: \"This promotion code is inactive.\"."},
 		}, DataSource: &fields.Field{Name: "discounts", Shape: fields.ScalarList, Elem: fields.String, Response: true, Description: "The discounts applied to the subscription item. Subscription item discounts are applied before subscription discounts. Use `expand[]=discounts` to expand each discount."}},
 		{Name: "id", Shape: fields.String, Update: true, Response: true, Description: "Unique identifier for the object.", Default: &fields.Default{Kind: fields.DefaultNotSent}},
 		{Name: "metadata", Shape: fields.StringMap, Create: true, Update: true, Response: true, ServerDefaulted: true, Description: "Set of [key-value pairs](https://docs.stripe.com/api/metadata) that you can attach to an object. This can be useful for storing additional information about the object in a structured format.", MapUpdate: &fields.MapUpdate{Replaced: false, EmptyKept: false}},

@@ -24,7 +24,7 @@ import (
 var Declaration = engine.Declaration{
 	TypeName:              "stripe_customer_payment_method",
 	IDPrefix:              "pm_",
-	Description:           "A payment method attached to a customer. The resource is the attachment. The payment method itself is not created here, because creating one takes raw card data: create it with Stripe.js or a SetupIntent, or use a Stripe test payment method such as `pm_card_visa`, and give its ID as `payment_method`. Attaching a test payment method returns a new payment method, so the `id` can differ from `payment_method`. Only `allow_redisplay`, `billing_details`, `card.networks.preferred` and `metadata` change in place; Stripe's other updatable payment method fields are read-only here.",
+	Description:           "A payment method attached to a customer. The resource is the attachment. The payment method itself is not created here, because creating one takes raw card data: create it with Stripe.js or a SetupIntent, or use a Stripe test payment method such as `pm_card_visa`, and give its ID as `payment_method`. Attaching a test payment method returns a new payment method, so the `id` can differ from `payment_method`. Only `allow_redisplay`, `billing_details`, `card.exp_month`, `card.exp_year`, `card.networks.preferred` and `metadata` change in place; Stripe's other updatable payment method fields are read-only here.",
 	DataSourceDescription: "A payment method attached to a customer.",
 	Parent:                "customer",
 	Attach:                "payment_method",

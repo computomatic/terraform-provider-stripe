@@ -3,12 +3,12 @@
 page_title: "stripe_subscription_schedule Resource - Stripe"
 subcategory: ""
 description: |-
-  Changes a subscription over time, in phases. Set status to canceled to cancel the schedule and the subscription it started, or to released to end the schedule and keep the subscription billing on its own. Stripe replaces the phases as a whole on update and needs the first phase, and the current one, to keep its start_date, which an update sends back from the state where the configuration leaves it unset. Phases, and the items and added invoice items of each, are matched by position, so a reorder updates them in place. pause_schedules is read only: the provider cannot send a pause schedule yet. With collection_method = "send_invoice" the customer needs an email address, or Stripe refuses the create.
+  Changes a subscription over time, in phases. Set status to canceled to cancel the schedule and the subscription it started, or to released to end the schedule and keep the subscription billing on its own. Stripe replaces the phases as a whole on update and needs the first phase, and the current one, to keep its start_date, which an update sends back from the state where the configuration leaves it unset. Phases, and the items and added invoice items of each, are matched by position, so a reorder updates them in place. A pause schedule keeps its configured pause_at and resume_at, which Stripe returns as times; the data source reads those. With collection_method = "send_invoice" the customer needs an email address, or Stripe refuses the create.
 ---
 
 # Resource: stripe_subscription_schedule
 
-Changes a subscription over time, in phases. Set `status` to `canceled` to cancel the schedule and the subscription it started, or to `released` to end the schedule and keep the subscription billing on its own. Stripe replaces the phases as a whole on update and needs the first phase, and the current one, to keep its `start_date`, which an update sends back from the state where the configuration leaves it unset. Phases, and the items and added invoice items of each, are matched by position, so a reorder updates them in place. `pause_schedules` is read only: the provider cannot send a pause schedule yet. With `collection_method = "send_invoice"` the customer needs an email address, or Stripe refuses the create.
+Changes a subscription over time, in phases. Set `status` to `canceled` to cancel the schedule and the subscription it started, or to `released` to end the schedule and keep the subscription billing on its own. Stripe replaces the phases as a whole on update and needs the first phase, and the current one, to keep its `start_date`, which an update sends back from the state where the configuration leaves it unset. Phases, and the items and added invoice items of each, are matched by position, so a reorder updates them in place. A pause schedule keeps its configured `pause_at` and `resume_at`, which Stripe returns as times; the data source reads those. With `collection_method = "send_invoice"` the customer needs an email address, or Stripe refuses the create.
 
 ~> Stripe cannot delete a subscription schedule; set `status` to `canceled` to cancel one and the subscription it started, or to `released` to release the subscription from it. `terraform destroy`, and a change that would replace the subscription schedule, fail at plan time. To stop managing a subscription schedule, remove it from the state as [Removing from State](#removing-from-state) shows; it stays in the Stripe account.
 
@@ -80,7 +80,9 @@ The following arguments are optional:
 * `customer_account` - (Optional) The identifier of the account to create the subscription schedule for. Changing it fails the plan, because this resource cannot be replaced. Default: none.
 * `default_settings` - (Optional) Object representing the subscription schedule's default settings. Removing it from the configuration leaves the current value. See [`default_settings`](#default_settings) below.
 * `end_behavior` - (Optional) Behavior of the subscription schedule and underlying subscription when it ends. Possible values are `release` or `cancel` with the default being `release`. `release` will end the subscription schedule and keep the underlying subscription running. `cancel` will end the subscription schedule and cancel the underlying subscription. Possible values: `cancel`, `none`, `release`, `renew`. Default (Stripe): `release`. Removing it from the configuration leaves the current value.
+* `from_subscription` - (Optional) Migrate an existing subscription to be managed by a subscription schedule. If this parameter is set, a subscription schedule will be created using the subscription's item(s), set to auto-renew using the subscription's interval. When using this parameter, other parameters (such as phase values) cannot be set. To create a subscription schedule with other modifications, we recommend making two separate API calls. Changing it fails the plan, because this resource cannot be replaced. Stripe does not return this value; the provider keeps it from configuration.
 * `metadata` - (Optional) Set of [key-value pairs](https://docs.stripe.com/api/metadata) that you can attach to an object. This can be useful for storing additional information about the object in a structured format. Individual keys can be unset by posting an empty value to them. All keys can be unset by posting an empty value to `metadata`. Default (Stripe): `{}`.
+* `pause_schedules` - (Optional) Configures the subscription's pause behavior and, optionally, its resume behavior. Only one entry is supported. Removing it from the configuration leaves the current value. See [`pause_schedules`](#pause_schedules) below.
 * `phases` - (Optional) List representing phases of the subscription schedule. Each phase can be customized to have different durations, plans, and coupons. If there are multiple phases, the `end_date` of one phase will always equal the `start_date` of the next phase. Removing it from the configuration leaves the current value. See [`phases`](#phases) below.
 * `proration_behavior` - (Optional) If the update changes the billing configuration (item price, quantity, etc.) of the current phase, indicates how prorations from this change should be handled. The default value is `create_prorations`. Possible values: `always_invoice`, `create_prorations`, `none`. Default: not sent.
 * `start_date` - (Optional) When the subscription schedule starts. We recommend using `now` so that it starts the subscription immediately, and to avoid unexpected behavior due to request delays or clock skew resulting in a slightly backdated or postdated start. You can also use a Unix timestamp to backdate the subscription so that it starts on a past date, or set a future date for the subscription to start on. Changing it fails the plan, because this resource cannot be replaced.
@@ -178,6 +180,130 @@ The `default_settings.transfer_data` attribute supports:
 
 * `amount_percent` - (Optional) A non-negative decimal between 0 and 100, with at most two decimal places. This represents the percentage of the subscription invoice total that will be transferred to the destination account. By default, the entire amount is transferred to the destination. Default: none.
 * `destination` - (Required) The account where funds from the payment will be transferred to upon payment success.
+
+<a id="pause_schedules"></a>
+### `pause_schedules`
+
+The `pause_schedules` attribute is a list. Each element supports:
+
+* `key` - (Optional) A unique identifier for this pause schedule. Removing it from the configuration lets Stripe set it when the list is next sent.
+* `pause` - (Optional) Removing it from the configuration lets Stripe set it when the list is next sent. See [`pause_schedules.pause`](#pause_schedules.pause) below.
+* `resume` - (Optional) Details about when and how the subscription resumes. Removing it from the configuration lets Stripe set it when the list is next sent. See [`pause_schedules.resume`](#pause_schedules.resume) below.
+
+<a id="pause_schedules.pause"></a>
+### `pause_schedules.pause`
+
+The `pause_schedules.pause` attribute supports:
+
+* `pause_at` - (Required) Stripe does not return this value; the provider keeps it from configuration. See [`pause_schedules.pause.pause_at`](#pause_schedules.pause.pause_at) below.
+* `settings` - (Optional) Settings controlling billing behavior during the pause. Removing it from the configuration lets Stripe set it when the list is next sent. See [`pause_schedules.pause.settings`](#pause_schedules.pause.settings) below.
+* `status` - (Read-Only) See [`pause_schedules.pause.status`](#pause_schedules.pause.status) below.
+
+<a id="pause_schedules.pause.pause_at"></a>
+### `pause_schedules.pause.pause_at`
+
+The `pause_schedules.pause.pause_at` attribute supports:
+
+* `timestamp` - (Optional) Stripe does not return this value; the provider keeps it from configuration.
+* `type` - (Required) Possible values: `now`, `timestamp`. Stripe does not return this value; the provider keeps it from configuration.
+
+<a id="pause_schedules.pause.settings"></a>
+### `pause_schedules.pause.settings`
+
+The `pause_schedules.pause.settings` attribute supports:
+
+* `bill_for` - (Optional) Removing it from the configuration lets Stripe set it when the list is next sent. See [`pause_schedules.pause.settings.bill_for`](#pause_schedules.pause.settings.bill_for) below.
+* `invoicing_behavior` - (Optional) Determines how to handle debits and credits when pausing. Possible values: `invoice`, `pending_invoice_item`. Removing it from the configuration lets Stripe set it when the list is next sent.
+* `type` - (Optional) The type of pause settings. Possible values: `subscription`. Removing it from the configuration lets Stripe set it when the list is next sent.
+
+<a id="pause_schedules.pause.settings.bill_for"></a>
+### `pause_schedules.pause.settings.bill_for`
+
+The `pause_schedules.pause.settings.bill_for` attribute supports:
+
+* `outstanding_usage_through` - (Optional) Removing it from the configuration lets Stripe set it when the list is next sent. See [`pause_schedules.pause.settings.bill_for.outstanding_usage_through`](#pause_schedules.pause.settings.bill_for.outstanding_usage_through) below.
+* `unused_time_from` - (Optional) Removing it from the configuration lets Stripe set it when the list is next sent. See [`pause_schedules.pause.settings.bill_for.unused_time_from`](#pause_schedules.pause.settings.bill_for.unused_time_from) below.
+
+<a id="pause_schedules.pause.settings.bill_for.outstanding_usage_through"></a>
+### `pause_schedules.pause.settings.bill_for.outstanding_usage_through`
+
+The `pause_schedules.pause.settings.bill_for.outstanding_usage_through` attribute supports:
+
+* `type` - (Optional) The type of outstanding usage billing behavior. Possible values: `none`, `pause_at`. Removing it from the configuration lets Stripe set it when the list is next sent.
+
+<a id="pause_schedules.pause.settings.bill_for.unused_time_from"></a>
+### `pause_schedules.pause.settings.bill_for.unused_time_from`
+
+The `pause_schedules.pause.settings.bill_for.unused_time_from` attribute supports:
+
+* `type` - (Optional) The type of unused time credit behavior. Possible values: `item_current_period_start`, `none`, `pause_at`. Removing it from the configuration lets Stripe set it when the list is next sent.
+
+<a id="pause_schedules.pause.status"></a>
+### `pause_schedules.pause.status`
+
+The `pause_schedules.pause.status` attribute supports:
+
+* `error` - See [`pause_schedules.pause.status.error`](#pause_schedules.pause.status.error) below.
+* `type` - The lifecycle state of the pause operation. Possible values: `error`, `scheduled`, `succeeded`.
+
+<a id="pause_schedules.pause.status.error"></a>
+### `pause_schedules.pause.status.error`
+
+The `pause_schedules.pause.status.error` attribute supports:
+
+* `code` - A machine-readable error code.
+* `message` - A description of the error.
+
+<a id="pause_schedules.resume"></a>
+### `pause_schedules.resume`
+
+The `pause_schedules.resume` attribute supports:
+
+* `resume_at` - (Required) Stripe does not return this value; the provider keeps it from configuration. See [`pause_schedules.resume.resume_at`](#pause_schedules.resume.resume_at) below.
+* `settings` - (Optional) Removing it from the configuration lets Stripe set it when the list is next sent. See [`pause_schedules.resume.settings`](#pause_schedules.resume.settings) below.
+* `status` - (Read-Only) See [`pause_schedules.resume.status`](#pause_schedules.resume.status) below.
+
+<a id="pause_schedules.resume.resume_at"></a>
+### `pause_schedules.resume.resume_at`
+
+The `pause_schedules.resume.resume_at` attribute supports:
+
+* `duration` - (Optional) Stripe does not return this value; the provider keeps it from configuration. See [`pause_schedules.resume.resume_at.duration`](#pause_schedules.resume.resume_at.duration) below.
+* `timestamp` - (Optional) Stripe does not return this value; the provider keeps it from configuration.
+* `type` - (Required) Possible values: `duration`, `now`, `timestamp`. Stripe does not return this value; the provider keeps it from configuration.
+
+<a id="pause_schedules.resume.resume_at.duration"></a>
+### `pause_schedules.resume.resume_at.duration`
+
+The `pause_schedules.resume.resume_at.duration` attribute supports:
+
+* `interval` - (Required) Possible values: `day`, `month`, `week`, `year`. Stripe does not return this value; the provider keeps it from configuration.
+* `interval_count` - (Optional) Stripe does not return this value; the provider keeps it from configuration.
+
+<a id="pause_schedules.resume.settings"></a>
+### `pause_schedules.resume.settings`
+
+The `pause_schedules.resume.settings` attribute supports:
+
+* `billing_cycle_anchor` - (Optional) The billing cycle anchor that applies when the subscription is resumed. Possible values: `resume_at`, `unchanged`. Removing it from the configuration lets Stripe set it when the list is next sent.
+* `payment_behavior` - (Optional) Controls whether Stripe attempts payment on the resumption invoice and how that affects the subscription's status. Possible values: `resume_on_payment_attempt`, `resume_on_payment_success`. Removing it from the configuration lets Stripe set it when the list is next sent.
+* `proration_behavior` - (Optional) Determines how to handle prorations resulting from the billing_cycle_anchor change on resume. Possible values: `always_invoice`, `create_prorations`, `none`. Removing it from the configuration lets Stripe set it when the list is next sent.
+
+<a id="pause_schedules.resume.status"></a>
+### `pause_schedules.resume.status`
+
+The `pause_schedules.resume.status` attribute supports:
+
+* `error` - See [`pause_schedules.resume.status.error`](#pause_schedules.resume.status.error) below.
+* `type` - The lifecycle state of the resume operation. Possible values: `error`, `pending`, `requires_action`, `scheduled`, `succeeded`.
+
+<a id="pause_schedules.resume.status.error"></a>
+### `pause_schedules.resume.status.error`
+
+The `pause_schedules.resume.status.error` attribute supports:
+
+* `code` - A machine-readable error code.
+* `message` - A description of the error.
 
 <a id="phases"></a>
 ### `phases`
@@ -403,7 +529,6 @@ This resource exports the following attributes in addition to the arguments abov
 * `created` - Time at which the object was created. Measured in seconds since the Unix epoch.
 * `current_phase` - Object representing the start and end dates for the current phase of the subscription schedule, if it is `active`. See [`current_phase`](#current_phase) below.
 * `livemode` - If the object exists in live mode, the value is `true`. If the object exists in test mode, the value is `false`.
-* `pause_schedules` - The pause schedules for this subscription schedule. See [`pause_schedules`](#pause_schedules) below.
 * `released_at` - Time at which the subscription schedule was released. Measured in seconds since the Unix epoch.
 * `released_subscription` - ID of the subscription once managed by the subscription schedule (if it is released).
 * `subscription` - ID of the subscription managed by the subscription schedule.
@@ -416,105 +541,6 @@ The `current_phase` attribute supports:
 
 * `end_date` - The end of this phase of the subscription schedule.
 * `start_date` - The start of this phase of the subscription schedule.
-
-<a id="pause_schedules"></a>
-### `pause_schedules`
-
-The `pause_schedules` attribute is a list. Each element supports:
-
-* `key` - A unique identifier for this pause schedule.
-* `pause` - See [`pause_schedules.pause`](#pause_schedules.pause) below.
-* `resume` - Details about when and how the subscription resumes. See [`pause_schedules.resume`](#pause_schedules.resume) below.
-
-<a id="pause_schedules.pause"></a>
-### `pause_schedules.pause`
-
-The `pause_schedules.pause` attribute supports:
-
-* `pause_at` - Time at which the subscription pauses.
-* `settings` - Settings controlling billing behavior during the pause. See [`pause_schedules.pause.settings`](#pause_schedules.pause.settings) below.
-* `status` - See [`pause_schedules.pause.status`](#pause_schedules.pause.status) below.
-
-<a id="pause_schedules.pause.settings"></a>
-### `pause_schedules.pause.settings`
-
-The `pause_schedules.pause.settings` attribute supports:
-
-* `bill_for` - See [`pause_schedules.pause.settings.bill_for`](#pause_schedules.pause.settings.bill_for) below.
-* `invoicing_behavior` - Determines how to handle debits and credits when pausing. Possible values: `invoice`, `pending_invoice_item`.
-* `type` - The type of pause settings. Possible values: `subscription`.
-
-<a id="pause_schedules.pause.settings.bill_for"></a>
-### `pause_schedules.pause.settings.bill_for`
-
-The `pause_schedules.pause.settings.bill_for` attribute supports:
-
-* `outstanding_usage_through` - See [`pause_schedules.pause.settings.bill_for.outstanding_usage_through`](#pause_schedules.pause.settings.bill_for.outstanding_usage_through) below.
-* `unused_time_from` - See [`pause_schedules.pause.settings.bill_for.unused_time_from`](#pause_schedules.pause.settings.bill_for.unused_time_from) below.
-
-<a id="pause_schedules.pause.settings.bill_for.outstanding_usage_through"></a>
-### `pause_schedules.pause.settings.bill_for.outstanding_usage_through`
-
-The `pause_schedules.pause.settings.bill_for.outstanding_usage_through` attribute supports:
-
-* `type` - The type of outstanding usage billing behavior. Possible values: `none`, `pause_at`.
-
-<a id="pause_schedules.pause.settings.bill_for.unused_time_from"></a>
-### `pause_schedules.pause.settings.bill_for.unused_time_from`
-
-The `pause_schedules.pause.settings.bill_for.unused_time_from` attribute supports:
-
-* `type` - The type of unused time credit behavior. Possible values: `item_current_period_start`, `none`, `pause_at`.
-
-<a id="pause_schedules.pause.status"></a>
-### `pause_schedules.pause.status`
-
-The `pause_schedules.pause.status` attribute supports:
-
-* `error` - See [`pause_schedules.pause.status.error`](#pause_schedules.pause.status.error) below.
-* `type` - The lifecycle state of the pause operation. Possible values: `error`, `scheduled`, `succeeded`.
-
-<a id="pause_schedules.pause.status.error"></a>
-### `pause_schedules.pause.status.error`
-
-The `pause_schedules.pause.status.error` attribute supports:
-
-* `code` - A machine-readable error code.
-* `message` - A description of the error.
-
-<a id="pause_schedules.resume"></a>
-### `pause_schedules.resume`
-
-The `pause_schedules.resume` attribute supports:
-
-* `resume_at` - Time at which the subscription resumes.
-* `settings` - See [`pause_schedules.resume.settings`](#pause_schedules.resume.settings) below.
-* `status` - See [`pause_schedules.resume.status`](#pause_schedules.resume.status) below.
-
-<a id="pause_schedules.resume.settings"></a>
-### `pause_schedules.resume.settings`
-
-The `pause_schedules.resume.settings` attribute supports:
-
-* `billing_cycle_anchor` - The billing cycle anchor that applies when the subscription is resumed. Possible values: `resume_at`, `unchanged`.
-* `payment_behavior` - Controls whether Stripe attempts payment on the resumption invoice and how that affects the subscription's status. Possible values: `resume_on_payment_attempt`, `resume_on_payment_success`.
-* `proration_behavior` - Determines how to handle prorations resulting from the billing_cycle_anchor change on resume. Possible values: `always_invoice`, `create_prorations`, `none`.
-
-<a id="pause_schedules.resume.status"></a>
-### `pause_schedules.resume.status`
-
-The `pause_schedules.resume.status` attribute supports:
-
-* `error` - See [`pause_schedules.resume.status.error`](#pause_schedules.resume.status.error) below.
-* `type` - The lifecycle state of the resume operation. Possible values: `error`, `pending`, `requires_action`, `scheduled`, `succeeded`.
-
-<a id="pause_schedules.resume.status.error"></a>
-### `pause_schedules.resume.status.error`
-
-The `pause_schedules.resume.status.error` attribute supports:
-
-* `code` - A machine-readable error code.
-* `message` - A description of the error.
 
 ## Timeouts
 
@@ -580,4 +606,4 @@ Using `terraform import`, import a subscription schedule using its ID. For examp
 % terraform import stripe_subscription_schedule.team sub_sched_123
 ```
 
-~> Stripe does not return `phases.add_invoice_items.price_data`, `phases.duration`, `phases.items.price_data`, `proration_behavior` or `start_date`, so an imported subscription schedule has them null: a configuration that sets `phases.add_invoice_items.price_data`, `phases.duration`, `phases.items.price_data` or `proration_behavior` plans an update after the import, and one that sets `start_date` plans a replacement.
+~> Stripe does not return `pause_schedules.pause.pause_at`, `pause_schedules.resume.resume_at`, `phases.add_invoice_items.price_data`, `phases.duration`, `phases.items.price_data`, `proration_behavior`, `from_subscription` or `start_date`, so an imported subscription schedule has them null: a configuration that sets `pause_schedules.pause.pause_at`, `pause_schedules.resume.resume_at`, `phases.add_invoice_items.price_data`, `phases.duration`, `phases.items.price_data` or `proration_behavior` plans an update after the import, and one that sets `from_subscription` or `start_date` plans a replacement.

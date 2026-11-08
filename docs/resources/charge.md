@@ -40,6 +40,7 @@ The following arguments are optional:
 * `application_fee_amount` - (Optional) A fee in cents (or local equivalent) that will be applied to the charge and transferred to the application owner's Stripe account. The request must be made with an OAuth key or the `Stripe-Account` header in order to take an application fee. For more information, see the application fees [documentation](https://docs.stripe.com/connect/direct-charges#collect-fees). Changing it fails the plan, because this resource cannot be replaced. Default: none.
 * `capture` - (Optional) Whether to immediately capture the charge. Defaults to `true`. When `false`, the charge issues an authorization (or pre-authorization), and will need to be [captured](https://docs.stripe.com/api#capture_charge) later. Uncaptured charges expire after a set number of days (7 by default). For more information, see the [authorizing charges and settling later](https://docs.stripe.com/charges/placing-a-hold) documentation. Changing it fails the plan, because this resource cannot be replaced.
 * `captured` - (Optional) If the charge was created without capturing, this Boolean represents whether it is still uncaptured or has since been captured. Possible values: `true`. Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
+* `card` - (Optional) A token, like the ones returned by [Stripe.js](https://stripe.com/docs/js). Changing it fails the plan, because this resource cannot be replaced. Stripe does not return this value; the provider keeps it from configuration.
 * `customer` - (Optional) The ID of an existing customer that will be charged in this request. Changing it fails the plan, because this resource cannot be replaced. Stripe refused it on a US account on update: "This charge is already associated with a customer". Default: none.
 * `description` - (Optional) An arbitrary string which you can attach to a `Charge` object. It is displayed when in the web interface alongside the charge. Note that if you use Stripe to send automatic email receipts to your customers, your receipt emails will include the `description` of the charge(s) that they are describing. Default: none.
 * `fraud_details` - (Optional) A set of key-value pairs you can attach to a charge giving information about its riskiness. If you believe a charge is fraudulent, include a `user_report` key with a value of `fraudulent`. If you believe a charge is safe, include a `user_report` key with a value of `safe`. Stripe will use the information you send to improve our fraud detection algorithms. Removing it from the configuration leaves the current value. See [`fraud_details`](#fraud_details) below.
@@ -98,6 +99,7 @@ The `shipping.address` attribute supports:
 The `transfer_data` attribute supports:
 
 * `amount` - (Optional) The amount transferred to the destination account, if specified. By default, the entire charge amount is transferred to the destination account. Default: none.
+* `description` - (Optional) Stripe does not return this value; the provider keeps it from configuration.
 * `destination` - (Required) ID of an existing, connected Stripe account to transfer funds to if `transfer_data` was specified in the charge request.
 
 ## Attribute Reference
@@ -1381,4 +1383,4 @@ Using `terraform import`, import a charge using its ID. For example:
 % terraform import stripe_charge.deposit ch_123
 ```
 
--> Stripe does not return `source` as it was sent, or `capture`, so an imported charge has them null. Leave them out of its configuration: changing either needs a new charge.
+~> Stripe does not return `source` as it was sent, or `capture`, so an imported charge has them null. Leave them out of its configuration: changing either needs a new charge. Stripe does not return `card` or `transfer_data.description`, so an imported charge has them null: a configuration that sets one plans a replacement after the import.

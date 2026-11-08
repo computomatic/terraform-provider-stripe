@@ -63,24 +63,28 @@ var Table = []fields.Field{
 		}},
 	}},
 	{Name: "end_behavior", Shape: fields.String, Create: true, Update: true, Response: true, ServerDefaulted: true, Stable: true, Enum: []string{"cancel", "none", "release", "renew"}, Description: "Behavior of the subscription schedule and underlying subscription when it ends. Possible values are `release` or `cancel` with the default being `release`. `release` will end the subscription schedule and keep the underlying subscription running. `cancel` will end the subscription schedule and cancel the underlying subscription.", Default: &fields.Default{Kind: fields.DefaultValue, Value: "release"}},
+	{Name: "from_subscription", Shape: fields.String, Create: true, NotReturned: true, Description: "Migrate an existing subscription to be managed by a subscription schedule. If this parameter is set, a subscription schedule will be created using the subscription's item(s), set to auto-renew using the subscription's interval. When using this parameter, other parameters (such as phase values) cannot be set. To create a subscription schedule with other modifications, we recommend making two separate API calls."},
 	{Name: "id", Shape: fields.String, Response: true, Description: "Unique identifier for the object."},
 	{Name: "livemode", Shape: fields.Bool, Response: true, Description: "If the object exists in live mode, the value is `true`. If the object exists in test mode, the value is `false`."},
 	{Name: "metadata", Shape: fields.StringMap, Create: true, Update: true, Response: true, Stable: true, Description: "Set of [key-value pairs](https://docs.stripe.com/api/metadata) that you can attach to an object. This can be useful for storing additional information about the object in a structured format. Individual keys can be unset by posting an empty value to them. All keys can be unset by posting an empty value to `metadata`.", Default: &fields.Default{Kind: fields.DefaultValue, Value: "{}"}, MapUpdate: &fields.MapUpdate{Replaced: false, EmptyKept: false}},
-	{Name: "pause_schedules", Shape: fields.ObjectList, Response: true, Description: "The pause schedules for this subscription schedule.", Fields: []fields.Field{
-		{Name: "key", Shape: fields.String, Response: true, Description: "A unique identifier for this pause schedule."},
-		{Name: "pause", Shape: fields.Object, Response: true, Fields: []fields.Field{
-			{Name: "pause_at", Shape: fields.Int, Response: true, Description: "Time at which the subscription pauses."},
-			{Name: "settings", Shape: fields.Object, Response: true, Description: "Settings controlling billing behavior during the pause.", Fields: []fields.Field{
-				{Name: "bill_for", Shape: fields.Object, Response: true, Fields: []fields.Field{
-					{Name: "outstanding_usage_through", Shape: fields.Object, Response: true, Fields: []fields.Field{
-						{Name: "type", Shape: fields.String, Response: true, Enum: []string{"none", "pause_at"}, Description: "The type of outstanding usage billing behavior."},
+	{Name: "pause_schedules", Shape: fields.ObjectList, Create: true, Update: true, Response: true, ServerDefaulted: true, Description: "Configures the subscription's pause behavior and, optionally, its resume behavior. Only one entry is supported.", Fields: []fields.Field{
+		{Name: "key", Shape: fields.String, Create: true, Update: true, Response: true, ServerDefaulted: true, Stable: true, Description: "A unique identifier for this pause schedule.", Default: &fields.Default{Kind: fields.DefaultVaries}},
+		{Name: "pause", Shape: fields.Object, Create: true, Update: true, Response: true, ServerDefaulted: true, Fields: []fields.Field{
+			{Name: "pause_at", Shape: fields.Object, Required: true, Create: true, Update: true, NotReturned: true, Fields: []fields.Field{
+				{Name: "timestamp", Shape: fields.Int, Create: true, Update: true, NotReturned: true},
+				{Name: "type", Shape: fields.String, Required: true, Create: true, Update: true, NotReturned: true, Enum: []string{"now", "timestamp"}},
+			}, DataSource: &fields.Field{Name: "pause_at", Shape: fields.Int, Response: true, Description: "Time at which the subscription pauses."}},
+			{Name: "settings", Shape: fields.Object, Create: true, Update: true, Response: true, ServerDefaulted: true, Description: "Settings controlling billing behavior during the pause.", Fields: []fields.Field{
+				{Name: "bill_for", Shape: fields.Object, Create: true, Update: true, Response: true, ServerDefaulted: true, Fields: []fields.Field{
+					{Name: "outstanding_usage_through", Shape: fields.Object, Create: true, Update: true, Response: true, ServerDefaulted: true, Fields: []fields.Field{
+						{Name: "type", Shape: fields.String, Create: true, Update: true, Response: true, ServerDefaulted: true, Stable: true, Enum: []string{"none", "pause_at"}, Description: "The type of outstanding usage billing behavior.", Default: &fields.Default{Kind: fields.DefaultVaries}},
 					}},
-					{Name: "unused_time_from", Shape: fields.Object, Response: true, Fields: []fields.Field{
-						{Name: "type", Shape: fields.String, Response: true, Enum: []string{"item_current_period_start", "none", "pause_at"}, Description: "The type of unused time credit behavior."},
+					{Name: "unused_time_from", Shape: fields.Object, Create: true, Update: true, Response: true, ServerDefaulted: true, Fields: []fields.Field{
+						{Name: "type", Shape: fields.String, Create: true, Update: true, Response: true, ServerDefaulted: true, Stable: true, Enum: []string{"item_current_period_start", "none", "pause_at"}, Description: "The type of unused time credit behavior.", Default: &fields.Default{Kind: fields.DefaultVaries}},
 					}},
 				}},
-				{Name: "invoicing_behavior", Shape: fields.String, Response: true, Enum: []string{"invoice", "pending_invoice_item"}, Description: "Determines how to handle debits and credits when pausing."},
-				{Name: "type", Shape: fields.String, Response: true, Enum: []string{"subscription"}, Description: "The type of pause settings."},
+				{Name: "invoicing_behavior", Shape: fields.String, Create: true, Update: true, Response: true, ServerDefaulted: true, Stable: true, Enum: []string{"invoice", "pending_invoice_item"}, Description: "Determines how to handle debits and credits when pausing.", Default: &fields.Default{Kind: fields.DefaultVaries}},
+				{Name: "type", Shape: fields.String, Create: true, Update: true, Response: true, ServerDefaulted: true, Stable: true, Enum: []string{"subscription"}, Description: "The type of pause settings.", Default: &fields.Default{Kind: fields.DefaultVaries}},
 			}},
 			{Name: "status", Shape: fields.Object, Response: true, Fields: []fields.Field{
 				{Name: "error", Shape: fields.Object, Response: true, Fields: []fields.Field{
@@ -90,12 +94,19 @@ var Table = []fields.Field{
 				{Name: "type", Shape: fields.String, Response: true, Enum: []string{"error", "scheduled", "succeeded"}, Description: "The lifecycle state of the pause operation."},
 			}},
 		}},
-		{Name: "resume", Shape: fields.Object, Response: true, Description: "Details about when and how the subscription resumes.", Fields: []fields.Field{
-			{Name: "resume_at", Shape: fields.Int, Response: true, Description: "Time at which the subscription resumes."},
-			{Name: "settings", Shape: fields.Object, Response: true, Fields: []fields.Field{
-				{Name: "billing_cycle_anchor", Shape: fields.String, Response: true, Enum: []string{"resume_at", "unchanged"}, Description: "The billing cycle anchor that applies when the subscription is resumed."},
-				{Name: "payment_behavior", Shape: fields.String, Response: true, Enum: []string{"resume_on_payment_attempt", "resume_on_payment_success"}, Description: "Controls whether Stripe attempts payment on the resumption invoice and how that affects the subscription's status."},
-				{Name: "proration_behavior", Shape: fields.String, Response: true, Enum: []string{"always_invoice", "create_prorations", "none"}, Description: "Determines how to handle prorations resulting from the billing_cycle_anchor change on resume."},
+		{Name: "resume", Shape: fields.Object, Create: true, Update: true, Response: true, ServerDefaulted: true, Description: "Details about when and how the subscription resumes.", Fields: []fields.Field{
+			{Name: "resume_at", Shape: fields.Object, Required: true, Create: true, Update: true, NotReturned: true, Fields: []fields.Field{
+				{Name: "duration", Shape: fields.Object, Create: true, Update: true, NotReturned: true, Fields: []fields.Field{
+					{Name: "interval", Shape: fields.String, Required: true, Create: true, Update: true, NotReturned: true, Enum: []string{"day", "month", "week", "year"}},
+					{Name: "interval_count", Shape: fields.Int, Create: true, Update: true, NotReturned: true},
+				}},
+				{Name: "timestamp", Shape: fields.Int, Create: true, Update: true, NotReturned: true},
+				{Name: "type", Shape: fields.String, Required: true, Create: true, Update: true, NotReturned: true, Enum: []string{"duration", "now", "timestamp"}},
+			}, DataSource: &fields.Field{Name: "resume_at", Shape: fields.Int, Response: true, Description: "Time at which the subscription resumes."}},
+			{Name: "settings", Shape: fields.Object, Create: true, Update: true, Response: true, ServerDefaulted: true, Fields: []fields.Field{
+				{Name: "billing_cycle_anchor", Shape: fields.String, Create: true, Update: true, Response: true, ServerDefaulted: true, Stable: true, Enum: []string{"resume_at", "unchanged"}, Description: "The billing cycle anchor that applies when the subscription is resumed.", Default: &fields.Default{Kind: fields.DefaultVaries}},
+				{Name: "payment_behavior", Shape: fields.String, Create: true, Update: true, Response: true, ServerDefaulted: true, Stable: true, Enum: []string{"resume_on_payment_attempt", "resume_on_payment_success"}, Description: "Controls whether Stripe attempts payment on the resumption invoice and how that affects the subscription's status.", Default: &fields.Default{Kind: fields.DefaultVaries}},
+				{Name: "proration_behavior", Shape: fields.String, Create: true, Update: true, Response: true, ServerDefaulted: true, Stable: true, Enum: []string{"always_invoice", "create_prorations", "none"}, Description: "Determines how to handle prorations resulting from the billing_cycle_anchor change on resume.", Default: &fields.Default{Kind: fields.DefaultVaries}},
 			}},
 			{Name: "status", Shape: fields.Object, Response: true, Fields: []fields.Field{
 				{Name: "error", Shape: fields.Object, Response: true, Fields: []fields.Field{

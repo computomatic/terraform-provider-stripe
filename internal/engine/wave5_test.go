@@ -2,6 +2,8 @@ package engine
 
 import (
 	"context"
+	"fmt"
+	"slices"
 	"strconv"
 	"strings"
 	"testing"
@@ -794,5 +796,206 @@ func TestPriceDataFallbackWaitsForEveryDataMatch(t *testing.T) {
 	got := decodeItems(t, r, wire.Array{wireItemTax("si_Y", "price_y", "y", "exclusive")}, prior, keep)
 	if len(got) != 1 || fieldOf(got[0], "price") != attr.Value(sv("price_y")) || fieldOf(got[0], "note") != attr.Value(sv("second")) {
 		t.Errorf("the item described by the second element's data belongs to it: %v", got)
+	}
+}
+
+// A member of a keyed list's elements that only a create takes and the response never returns,
+// as a subscription item's `discounts`, replaces the object where the configuration sets it on a
+// new element or changes it on one the state holds, pairing elements by key: an update could
+// neither send it nor read it back. Leaving it unset, or keeping it, changes nothing. A null in
+// state replaces too where a read cannot tell what Stripe holds. Computed or not, the member
+// forces no replacement by position of its own.
+func TestPlanReplacesForAKeptMemberOfAKeyedElement(t *testing.T) {
+	for _, computed := range []bool{true, false} {
+		table := listTable()
+		for i := range table {
+			if table[i].Name == "items" {
+				table[i].Fields = append(table[i].Fields, fields.Field{Name: "coupon", Shape: fields.String, Create: true, ServerDefaulted: computed})
+			}
+		}
+		p := newPlanner(t, keyedDeclaration(), table)
+		itemType := p.attrTypes("items")
+		listType := p.typ.(tftypes.Object).AttributeTypes["items"]
+		item := func(id, price, coupon string) tftypes.Value {
+			set := map[string]tftypes.Value{"price": tfString(price)}
+			if id != "" {
+				set["id"] = tfString(id)
+			}
+			if coupon != "" {
+				set["coupon"] = tfString(coupon)
+			}
+			return obj(itemType, set)
+		}
+		of := func(items ...tftypes.Value) tftypes.Value {
+			return p.value(map[string]tftypes.Value{"id": tfString("lst_1"), "name": tfString("n"), "items": tftypes.NewValue(listType, items)})
+		}
+		configOf := func(items ...tftypes.Value) tftypes.Value {
+			return p.value(map[string]tftypes.Value{"name": tfString("n"), "items": tftypes.NewValue(listType, items)})
+		}
+		at := func(i int) string {
+			return tftypes.NewAttributePath().WithAttributeName("items").WithElementKeyInt(i).WithAttributeName("coupon").String()
+		}
+		for name, tc := range map[string]struct {
+			state, config tftypes.Value
+			want          []string
+		}{
+			"kept":                           {of(item("si_1", "pa", "c1")), configOf(item("", "pa", "c1")), nil},
+			"left unset":                     {of(item("si_1", "pa", "c1")), configOf(item("", "pa", "")), nil},
+			"changed":                        {of(item("si_1", "pa", "c1")), configOf(item("", "pa", "c2")), []string{at(0)}},
+			"set on a new element first":     {of(item("si_1", "pa", "c1")), configOf(item("", "pb", "c1"), item("", "pa", "c1")), []string{at(0)}},
+			"set where the state holds none": {of(item("si_2", "pb", "")), configOf(item("", "pb", "c1")), []string{at(0)}},
+			"reordered":                      {of(item("si_1", "pa", "c1"), item("si_2", "pb", "c2")), configOf(item("", "pb", "c2"), item("", "pa", "c1")), nil},
+		} {
+			t.Run(fmt.Sprintf("%s, computed %t", name, computed), func(t *testing.T) {
+				_, replace := p.plan(tc.state, tc.config, tc.config)
+				var got []string
+				for _, rp := range replace {
+					if strings.HasSuffix(rp.String(), `.AttributeName("coupon")`) {
+						got = append(got, rp.String())
+					}
+				}
+				if !slices.Equal(got, tc.want) {
+					t.Errorf("replace paths %v, want %v", got, tc.want)
+				}
+			})
+		}
+	}
+}
+
+// A kept list the response lists in its own form, as a subscription item's `discounts`, which
+// Stripe returns as IDs, reads as empty where Stripe lists none, and null where it lists some
+// whose form the provider cannot read. Setting it over the empty value replaces the object;
+// setting it over null adopts the configured value, unless that value is not known at plan time.
+func TestPlanAdoptsAListedKeptMemberOnlyWhereStripeHoldsOne(t *testing.T) {
+	table := listTable()
+	for i := range table {
+		if table[i].Name == "items" {
+			table[i].Fields = append(table[i].Fields, fields.Field{Name: "discounts", Shape: fields.ObjectList, Create: true, ServerDefaulted: true,
+				Fields:     []fields.Field{{Name: "coupon", Shape: fields.String, Create: true, NotReturned: true}},
+				DataSource: &fields.Field{Name: "discounts", Shape: fields.ScalarList, Elem: fields.String, Response: true}})
+		}
+	}
+	decl := keyedDeclaration()
+	r := configured(t, decl, table, newStub())
+	discountsNode := func() *node {
+		items, _ := r.m.top("items")
+		return kidNamed(items, "discounts")
+	}()
+	if got := keptFromListed(discountsNode, wire.Array{}); got.IsNull() || len(got.(basetypes.ListValue).Elements()) != 0 {
+		t.Errorf("Stripe listing none reads %v, want an empty list", got)
+	}
+	if got := keptFromListed(discountsNode, wire.Array{wire.String("di_1")}); !got.IsNull() {
+		t.Errorf("Stripe listing some reads %v, want null", got)
+	}
+
+	p := newPlanner(t, decl, table)
+	itemType := p.attrTypes("items")
+	listType := p.typ.(tftypes.Object).AttributeTypes["items"]
+	discountsType := itemType["discounts"]
+	discountType := discountsType.(tftypes.List).ElementType
+	coupon := func(c tftypes.Value) tftypes.Value {
+		return tftypes.NewValue(discountsType, []tftypes.Value{tftypes.NewValue(discountType, map[string]tftypes.Value{"coupon": c})})
+	}
+	item := func(id string, discounts tftypes.Value) tftypes.Value {
+		set := map[string]tftypes.Value{"price": tfString("pa"), "discounts": discounts}
+		if id != "" {
+			set["id"] = tfString(id)
+		}
+		return obj(itemType, set)
+	}
+	of := func(it tftypes.Value) tftypes.Value {
+		return p.value(map[string]tftypes.Value{"id": tfString("lst_1"), "name": tfString("n"), "items": tftypes.NewValue(listType, []tftypes.Value{it})})
+	}
+	configOf := func(it tftypes.Value) tftypes.Value {
+		return p.value(map[string]tftypes.Value{"name": tfString("n"), "items": tftypes.NewValue(listType, []tftypes.Value{it})})
+	}
+	at := tftypes.NewAttributePath().WithAttributeName("items").WithElementKeyInt(0).WithAttributeName("discounts").String()
+	for name, tc := range map[string]struct {
+		state, config tftypes.Value
+		want          []string
+	}{
+		"over none listed":       {of(item("si_1", tftypes.NewValue(discountsType, []tftypes.Value{}))), configOf(item("", coupon(tfString("c1")))), []string{at}},
+		"over some listed":       {of(item("si_1", tftypes.NewValue(discountsType, nil))), configOf(item("", coupon(tfString("c1")))), nil},
+		"unknown over some":      {of(item("si_1", tftypes.NewValue(discountsType, nil))), configOf(item("", coupon(tfUnknown()))), []string{at}},
+		"kept after an adoption": {of(item("si_1", coupon(tfString("c1")))), configOf(item("", coupon(tfString("c1")))), nil},
+	} {
+		t.Run(name, func(t *testing.T) {
+			_, replace := p.plan(tc.state, tc.config, tc.config)
+			var got []string
+			for _, rp := range replace {
+				if strings.HasSuffix(rp.String(), `.AttributeName("discounts")`) {
+					got = append(got, rp.String())
+				}
+			}
+			if !slices.Equal(got, tc.want) {
+				t.Errorf("replace paths %v, want %v", got, tc.want)
+			}
+		})
+	}
+}
+
+// listedKeptTable is listTable with a subscription item's kind of `discounts`: kept from
+// configuration, and listed by the response as discount IDs (listedKept).
+func listedKeptTable() []fields.Field {
+	table := listTable()
+	for i := range table {
+		if table[i].Name == "items" {
+			table[i].Fields = append(table[i].Fields, fields.Field{Name: "discounts", Shape: fields.ObjectList, Create: true, ServerDefaulted: true,
+				Fields:     []fields.Field{{Name: "coupon", Shape: fields.String, Create: true, NotReturned: true}},
+				DataSource: &fields.Field{Name: "discounts", Shape: fields.ScalarList, Elem: fields.String, Response: true}})
+		}
+	}
+	return table
+}
+
+// An in-place update plans an unset listed kept member unknown; the apply keeps the state's known
+// value for an element the state holds, paired by key, rather than reading Stripe's answer again,
+// so a `[]` never turns null on its way to a silent adoption. A new element, or one the state holds
+// null for, stays for the read.
+func TestUpdateKeepsTheStatesListedKeptValue(t *testing.T) {
+	r := configured(t, keyedDeclaration(), listedKeptTable(), newStub())
+	itemType := r.objType.AttrTypes["items"].(basetypes.ListType).ElemType
+	discountsType := itemType.(basetypes.ObjectType).AttrTypes["discounts"]
+	discountType := discountsType.(basetypes.ListType).ElemType
+	empty := types.ListValueMust(discountType, nil)
+	held := types.ListValueMust(discountType, []attr.Value{object(discountType, map[string]attr.Value{"coupon": sv("c1")})})
+	row := func(id, price string, discounts attr.Value) map[string]attr.Value {
+		set := map[string]attr.Value{"price": sv(price), "discounts": discounts}
+		if id != "" {
+			set["id"] = sv(id)
+		}
+		return set
+	}
+	unknown := types.ListUnknown(discountType)
+	plan := object(r.objType, map[string]attr.Value{"name": sv("n"), "items": elements(r,
+		row("si_1", "pa", unknown), row("si_2", "pb", unknown), row("", "pc", unknown), row("si_4", "pd", unknown))})
+	state := object(r.objType, map[string]attr.Value{"name": sv("n"), "items": elements(r,
+		row("si_2", "pb", held), row("si_1", "pa", empty), row("si_4", "pd", types.ListNull(discountType)))})
+	got := r.m.withKeptFromState(plan, state, tftypes.Value{}).Attributes()["items"].(basetypes.ListValue).Elements()
+	for i, want := range []attr.Value{empty, held, unknown, unknown} {
+		if d := fieldOf(got[i], "discounts"); !d.Equal(want) {
+			t.Errorf("element %d: discounts %v, want %v", i, d, want)
+		}
+	}
+}
+
+// A kept member of a keyed list's elements that a read cannot see replaces the object when an
+// imported state holds it null, so the import note lists it among the replacements and warns; a
+// listed one has its own sentence.
+func TestImportNoteOfKeptMembers(t *testing.T) {
+	table := listTable()
+	for i := range table {
+		if table[i].Name == "items" {
+			table[i].Fields = append(table[i].Fields, fields.Field{Name: "coupon", Shape: fields.String, Create: true, ServerDefaulted: true, NotReturned: true})
+		}
+	}
+	r := configured(t, keyedDeclaration(), table, newStub())
+	note, level := r.m.importNote()
+	if _, after, ok := strings.Cut(note, "plans a replacement"); !ok || level != NoteWarning || strings.Contains(after, "`items.coupon`") || !strings.Contains(note, "one that sets `items.coupon` plans a replacement") {
+		t.Errorf("an unlisted kept member: %q (%v)", note, level)
+	}
+	listed := configured(t, keyedDeclaration(), listedKeptTable(), newStub())
+	if note, _ := listed.m.importNote(); !strings.Contains(note, "The import reads whether each element has any `items.discounts`") {
+		t.Errorf("a listed kept member: %q", note)
 	}
 }

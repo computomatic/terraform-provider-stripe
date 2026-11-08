@@ -498,3 +498,125 @@ func firstPhaseStart(params wire.Value) string {
 	}
 	return ""
 }
+
+// pausedSchedule is a schedule of one monthly phase that starts at start, in flexible billing
+// mode, with the pause schedule pause, as the record's `update/8` probe makes one (suite:
+// TestSubscriptionScheduleAttributes).
+func pausedSchedule(c acctest.Config, start int64, pause string) string {
+	return c.ProviderBlock() + fmt.Sprintf(`
+resource "stripe_customer" "a" {
+  email = "schedule-a@example.com"
+}
+
+resource "stripe_product" "test" {
+  name = %q
+}
+
+resource "stripe_price" "one" {
+  product     = stripe_product.test.id
+  currency    = "usd"
+  unit_amount = 1000
+  recurring = {
+    interval = "month"
+  }
+}
+
+resource "stripe_subscription_schedule" "test" {
+  customer     = stripe_customer.a.id
+  start_date   = "%d"
+  billing_mode = { type = "flexible" }
+  phases = [{
+    items    = [{ price = stripe_price.one.id }]
+    duration = { interval = "month" }
+  }]
+  pause_schedules = [%s]
+}
+`, c.Name("Plan"), start, pause)
+}
+
+// pause is a pause schedule element with the values of the record's `update/8` probe: its create
+// and its update.
+func pause(pauseAt int64, outstanding, unused, invoicing string, days int, anchor, payment, proration string) string {
+	return fmt.Sprintf(`{
+    key = "attrs_pause"
+    pause = {
+      pause_at = { type = "timestamp", timestamp = %d }
+      settings = {
+        type               = "subscription"
+        invoicing_behavior = %q
+        bill_for = {
+          outstanding_usage_through = { type = %q }
+          unused_time_from          = { type = %q }
+        }
+      }
+    }
+    resume = {
+      resume_at = {
+        type     = "duration"
+        duration = { interval = "day", interval_count = %d }
+      }
+      settings = {
+        billing_cycle_anchor = %q
+        payment_behavior     = %q
+        proration_behavior   = %q
+      }
+    }
+  }`, pauseAt, invoicing, outstanding, unused, days, anchor, payment, proration)
+}
+
+// A schedule takes a pause schedule on create and changes it in place, with the values of the
+// record's `update/8` probe (suite: TestSubscriptionScheduleAttributes): a schedule that starts a
+// day out, a pause 10 days out and then 11, the enum values it sent, and a resume 7 and then 8
+// days after the pause. Stripe returns the pause and resume times as timestamps, which the data
+// source reads; the resource keeps the `pause_at` and `resume_at` it was configured with, which
+// Stripe never returns as sent, and reads the rest back.
+func TestAccSubscriptionSchedule_pauseSchedules(t *testing.T) {
+	acct := acctest.NewAccount(t)
+	now := time.Now()
+	start, at := now.Add(24*time.Hour).Unix(), now.Add(10*24*time.Hour).Unix()
+	later := at + 24*60*60
+	var path string
+	ps := "pause_schedules.0."
+	empty := []plancheck.PlanCheck{plancheck.ExpectEmptyPlan()}
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: tfacc.ProviderFactories,
+		Steps: acctest.Forget(t, []resource.TestStep{
+			{
+				Config:           pausedSchedule(acct, start, pause(at, "none", "item_current_period_start", "invoice", 7, "resume_at", "resume_on_payment_attempt", "always_invoice")),
+				ConfigPlanChecks: resource.ConfigPlanChecks{PostApplyPostRefresh: empty},
+				Check: resource.ComposeAggregateTestCheckFunc(
+					pathOf(&path),
+					resource.TestCheckResourceAttr(address, ps+"key", "attrs_pause"),
+					resource.TestCheckResourceAttr(address, ps+"pause.pause_at.timestamp", strconv.FormatInt(at, 10)),
+					resource.TestCheckResourceAttr(address, ps+"pause.settings.invoicing_behavior", "invoice"),
+					resource.TestCheckResourceAttr(address, ps+"resume.resume_at.duration.interval_count", "7"),
+					resource.TestCheckResourceAttr(address, ps+"resume.settings.proration_behavior", "always_invoice"),
+				),
+			},
+			{
+				Config: pausedSchedule(acct, start, pause(later, "pause_at", "none", "pending_invoice_item", 8, "unchanged", "resume_on_payment_success", "create_prorations")),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply:             []plancheck.PlanCheck{plancheck.ExpectResourceAction(address, plancheck.ResourceActionUpdate)},
+					PostApplyPostRefresh: empty,
+				},
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr(address, ps+"pause.pause_at.timestamp", strconv.FormatInt(later, 10)),
+					resource.TestCheckResourceAttr(address, ps+"pause.settings.bill_for.outstanding_usage_through.type", "pause_at"),
+					resource.TestCheckResourceAttr(address, ps+"resume.settings.payment_behavior", "resume_on_payment_success"),
+					tfacc.Sent(t, acct, "POST", &path, map[string]string{
+						"pause_schedules.0.key":                                                    "attrs_pause",
+						"pause_schedules.0.pause.pause_at.type":                                    "timestamp",
+						"pause_schedules.0.pause.pause_at.timestamp":                               strconv.FormatInt(later, 10),
+						"pause_schedules.0.pause.settings.bill_for.outstanding_usage_through.type": "pause_at",
+						"pause_schedules.0.pause.settings.bill_for.unused_time_from.type":          "none",
+						"pause_schedules.0.pause.settings.invoicing_behavior":                      "pending_invoice_item",
+						"pause_schedules.0.resume.resume_at.type":                                  "duration",
+						"pause_schedules.0.resume.resume_at.duration.interval_count":               "8",
+						"pause_schedules.0.resume.settings.billing_cycle_anchor":                   "unchanged",
+						"pause_schedules.0.resume.settings.proration_behavior":                     "create_prorations",
+					}),
+				),
+			},
+		}, nil, "stripe_subscription_schedule"),
+	})
+}

@@ -62,7 +62,7 @@ The following arguments are optional:
 * `on_behalf_of` - (Optional) The Stripe account ID that these funds are intended for. Learn more about the [use case for connected accounts](https://docs.stripe.com/payments/connected-accounts). Changing it fails the plan, because this resource cannot be replaced. Default: none.
 * `payment_details` - (Optional) Provides industry-specific information about the charge. See [`payment_details`](#payment_details) below.
 * `payment_method` - (Optional) ID of the payment method (a PaymentMethod, Card, or [compatible Source](https://docs.stripe.com/payments/payment-methods/transitioning#compatibility) object) to attach to this PaymentIntent. If you omit this parameter with `confirm=true`, `customer.default_source` attaches as this PaymentIntent's payment instrument to improve migration for users of the Charges API. We recommend that you explicitly provide the `payment_method` moving forward. If the payment method is attached to a Customer, you must also provide the ID of that Customer as the [customer](https://docs.stripe.com/api#create_payment_intent-customer) parameter of this PaymentIntent. Default (Stripe): none, or the method Stripe makes from `payment_method_data`, which this attribute does not hold.
-* `payment_method_configuration` - (Optional) The ID of the [payment method configuration](https://docs.stripe.com/api/payment_method_configurations) to use with this PaymentIntent.
+* `payment_method_configuration` - (Optional) The ID of the [payment method configuration](https://docs.stripe.com/api/payment_method_configurations) to use with this PaymentIntent. Stripe does not return this value; the provider keeps it from configuration. Removing it from the configuration leaves the current value.
 * `payment_method_data` - (Optional) If provided, this hash will be used to create a PaymentMethod. The new PaymentMethod will appear in the [payment_method](https://docs.stripe.com/api/payment_intents/object#payment_intent_object-payment_method) property on the PaymentIntent. See [`payment_method_data`](#payment_method_data) below.
 * `payment_method_options` - (Optional) Payment method-specific configuration for this PaymentIntent. Removing it from the configuration leaves the current value. See [`payment_method_options`](#payment_method_options) below.
 * `radar_options` - (Optional) Options to configure Radar. Learn more about [Radar Sessions](https://docs.stripe.com/radar/radar-session). Changing it fails the plan, because this resource cannot be replaced. See [`radar_options`](#radar_options) below.
@@ -81,6 +81,7 @@ The following arguments are optional:
 The `amount_details` attribute supports:
 
 * `discount_amount` - (Optional) The total discount applied on the transaction represented in the [smallest currency unit](https://docs.stripe.com/currencies#zero-decimal). An integer greater than 0. This field is mutually exclusive with the `amount_details[line_items][#][discount_amount]` field. Removing it from the configuration leaves the current value.
+* `enforce_arithmetic_validation` - (Optional) Stripe does not return this value; the provider keeps it from configuration.
 * `shipping` - (Optional) Removing it from the configuration leaves the current value. See [`amount_details.shipping`](#amount_details.shipping) below.
 * `tax` - (Optional) Removing it from the configuration leaves the current value. See [`amount_details.tax`](#amount_details.tax) below.
 * `tip` - (Read-Only) See [`amount_details.tip`](#amount_details.tip) below.
@@ -200,10 +201,40 @@ The `payment_method_options.card` attribute supports:
 
 * `capture_method` - (Optional) Controls when the funds will be captured from the customer's account. Possible values: `manual`. Removing it from the configuration leaves the current value.
 * `cvc_token` - (Optional) Stripe refused it on a US account on create: "No such cvc_update: 'cvctok_...'". Stripe refused it on a US account on update: "The parameter `payment_method_options[card][cvc_token]` cannot be used when creating a PaymentIntent unless `confirm` is set to true.".
+* `installments` - (Optional) Stripe does not return this value; the provider keeps it from configuration. See [`payment_method_options.card.installments`](#payment_method_options.card.installments) below.
+* `mandate_options` - (Optional) Stripe does not return this value; the provider keeps it from configuration. See [`payment_method_options.card.mandate_options`](#payment_method_options.card.mandate_options) below.
 * `network` - (Optional) Possible values: `amex`, `cartes_bancaires`, `diners`, `discover`, `eftpos_au`, `girocard`, `interac`, `jcb`, `link`, `mastercard`, `unionpay`, `unknown`, `visa`. Stripe refused it on a US account on update: "The parameter `payment_method_options[card][network]` cannot be used when creating a PaymentIntent unless `confirm` is set to true.". Default: not sent.
+* `request_extended_authorization` - (Optional) Possible values: `if_available`, `never`. Stripe does not return this value; the provider keeps it from configuration.
+* `request_incremental_authorization` - (Optional) Possible values: `if_available`, `never`. Stripe does not return this value; the provider keeps it from configuration.
+* `request_multicapture` - (Optional) Possible values: `if_available`, `never`. Stripe does not return this value; the provider keeps it from configuration.
+* `request_overcapture` - (Optional) Possible values: `if_available`, `never`. Stripe does not return this value; the provider keeps it from configuration.
 * `request_three_d_secure` - (Optional) We strongly recommend that you rely on our SCA Engine to automatically prompt your customers for authentication based on risk level and [other requirements](https://docs.stripe.com/strong-customer-authentication). However, if you wish to request 3D Secure based on logic from your own fraud engine, provide this option. If not provided, this value defaults to `automatic`. Read our guide on [manually requesting 3D Secure](https://docs.stripe.com/payments/3d-secure/authentication-flow#manual-three-ds) for more information on how this configuration interacts with Radar and our SCA Engine. Possible values: `any`, `automatic`, `challenge`. Removing it from the configuration leaves the current value.
 * `require_cvc_recollection` - (Optional) When enabled, using a card that is attached to a customer will require the CVC to be provided again (i.e. using the cvc_token parameter). Removing it from the configuration leaves the current value.
 * `setup_future_usage` - (Optional) Indicates that you intend to make future payments with this PaymentIntent's payment method. If you provide a Customer with the PaymentIntent, you can use this parameter to [attach the payment method](https://docs.stripe.com/payments/save-during-payment) to the Customer after the PaymentIntent is confirmed and the customer completes any required actions. If you don't provide a Customer, you can still [attach](https://docs.stripe.com/api/payment_methods/attach) the payment method to a Customer after the transaction completes. If the payment method is `card_present` and isn't a digital wallet, Stripe creates and attaches a [generated_card](https://docs.stripe.com/api/charges/object#charge_object-payment_method_details-card_present-generated_card) payment method representing the card to the Customer instead. When processing card payments, Stripe uses `setup_future_usage` to help you comply with regional legislation and network rules, such as [SCA](https://docs.stripe.com/strong-customer-authentication). Possible values: `none`, `off_session`, `on_session`. Removing it from the configuration leaves the current value.
+* `statement_descriptor_suffix_kana` - (Optional) Stripe does not return this value; the provider keeps it from configuration.
+* `statement_descriptor_suffix_kanji` - (Optional) Stripe does not return this value; the provider keeps it from configuration.
+
+<a id="payment_method_options.card.installments"></a>
+### `payment_method_options.card.installments`
+
+The `payment_method_options.card.installments` attribute supports:
+
+* `enabled` - (Optional) Stripe does not return this value; the provider keeps it from configuration.
+
+<a id="payment_method_options.card.mandate_options"></a>
+### `payment_method_options.card.mandate_options`
+
+The `payment_method_options.card.mandate_options` attribute supports:
+
+* `amount` - (Required) Stripe does not return this value; the provider keeps it from configuration.
+* `amount_type` - (Required) Possible values: `fixed`, `maximum`. Stripe does not return this value; the provider keeps it from configuration.
+* `description` - (Optional) Stripe does not return this value; the provider keeps it from configuration.
+* `end_date` - (Optional) Stripe does not return this value; the provider keeps it from configuration.
+* `interval` - (Required) Possible values: `day`, `month`, `sporadic`, `week`, `year`. Stripe does not return this value; the provider keeps it from configuration.
+* `interval_count` - (Optional) Stripe does not return this value; the provider keeps it from configuration.
+* `reference` - (Required) Stripe does not return this value; the provider keeps it from configuration.
+* `start_date` - (Required) Stripe does not return this value; the provider keeps it from configuration.
+* `supported_types` - (Optional) Stripe does not return this value; the provider keeps it from configuration.
 
 <a id="radar_options"></a>
 ### `radar_options`
@@ -924,4 +955,4 @@ Using `terraform import`, import a payment intent using its ID. For example:
 % terraform import stripe_payment_intent.order pi_123
 ```
 
-~> Stripe does not return `payment_method_configuration`, `payment_method_data`, `payment_method_options.card.cvc_token`, `payment_method_options.card.network`, `confirmation_token`, `mandate` or `radar_options`, so an imported payment intent has them null: a configuration that sets `payment_method_configuration`, `payment_method_data`, `payment_method_options.card.cvc_token` or `payment_method_options.card.network` plans an update after the import, and one that sets `confirmation_token`, `mandate` or `radar_options` plans a replacement.
+~> Stripe does not return `amount_details.enforce_arithmetic_validation`, `payment_method_configuration`, `payment_method_data`, `payment_method_options.card.cvc_token`, `payment_method_options.card.installments`, `payment_method_options.card.mandate_options`, `payment_method_options.card.network`, `payment_method_options.card.request_extended_authorization`, `payment_method_options.card.request_incremental_authorization`, `payment_method_options.card.request_multicapture`, `payment_method_options.card.request_overcapture`, `payment_method_options.card.statement_descriptor_suffix_kana`, `payment_method_options.card.statement_descriptor_suffix_kanji`, `confirmation_token`, `mandate` or `radar_options`, so an imported payment intent has them null: a configuration that sets `amount_details.enforce_arithmetic_validation`, `payment_method_configuration`, `payment_method_data`, `payment_method_options.card.cvc_token`, `payment_method_options.card.installments`, `payment_method_options.card.mandate_options`, `payment_method_options.card.network`, `payment_method_options.card.request_extended_authorization`, `payment_method_options.card.request_incremental_authorization`, `payment_method_options.card.request_multicapture`, `payment_method_options.card.request_overcapture`, `payment_method_options.card.statement_descriptor_suffix_kana` or `payment_method_options.card.statement_descriptor_suffix_kanji` plans an update after the import, and one that sets `confirmation_token`, `mandate` or `radar_options` plans a replacement.

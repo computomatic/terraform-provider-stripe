@@ -214,35 +214,63 @@ func TestGateExposesAVerifiedLeaf(t *testing.T) {
 	}
 }
 
-// A leaf in any class other than `verified` is not exposed.
+// A leaf in any class other than `verified` and `verified_accepted_only` is not exposed.
 func TestGateExposesNoOtherClass(t *testing.T) {
 	res := trimmed()
 	for _, class := range classes {
-		if class == ClassVerified {
+		if exposable(class) {
 			continue
 		}
 		tc := cover(t, res, pinned(t, res, map[string]string{"request/PostGadgets/color": class}))
 		if _, ok := index(tc.table).request["color"]; ok {
 			t.Errorf("%s: color is in the table", class)
 		}
-		want := StateAwaiting
-		if class == ClassAcceptedOnly {
-			want = StateExcluded
-		}
-		if r := byKey(tc)["request/PostGadgets/color"]; r.State != want || r.Class != class {
-			t.Errorf("%s: %s with class %s, want %s", class, r.State, r.Class, want)
+		if r := byKey(tc)["request/PostGadgets/color"]; r.State != StateAwaiting || r.Class != class {
+			t.Errorf("%s: %s with class %s, want %s", class, r.State, r.Class, StateAwaiting)
 		}
 	}
 }
 
-// Rule X6 takes a leaf Stripe never returns out of the table, even one exposed today, with the
-// hash that holds nothing else, unless the register keeps it.
-func TestAcceptedOnlyLeavesTheTable(t *testing.T) {
+// The gate exposes a leaf Stripe never returns, and the provider keeps it from configuration
+// (NotReturned), unless Resource.AcceptedOnly gives a reason of its own. The register leaves one
+// out.
+func TestAcceptedOnlyIsKeptFromConfiguration(t *testing.T) {
+	res := trimmed()
+	key := "request/PostGadgets/color"
+	ops := pinned(t, res, map[string]string{key: ClassAcceptedOnly})
+	tc := cover(t, res, ops)
+	if r := byKey(tc)[key]; r.State != StateExposed || r.Rule != "" || r.Reason != "" {
+		t.Errorf("color: %+v", r)
+	}
+	if f := fieldAt(tc.table, "color"); f == nil || !f.Create || !f.NotReturned {
+		t.Errorf("color is not a kept argument: %+v", f)
+	}
+	res.AcceptedOnly = map[string]string{"color": "Fixture: its effect shows elsewhere."}
+	tc = cover(t, res, ops)
+	if r := byKey(tc)[key]; r.State != StateExposed || r.Reason != "Fixture: its effect shows elsewhere." {
+		t.Errorf("color with a reason of its own: %+v", r)
+	}
+	if f := fieldAt(tc.table, "color"); f == nil || f.NotReturned {
+		t.Errorf("color with a reason of its own is marked: %+v", f)
+	}
+	res.AcceptedOnly = nil
+	res.Exclude = map[string]string{"PostGadgets color": "Fixture: a one-shot instruction."}
+	tc = cover(t, res, ops)
+	if r := byKey(tc)[key]; r.State != StateExcluded || r.Rule != RuleRegister {
+		t.Errorf("the register must leave color out: %+v", r)
+	}
+	if f := fieldAt(tc.table, "color"); f != nil && f.Create {
+		t.Errorf("the register leaves color in the create: %+v", f)
+	}
+}
+
+// Resource.AcceptedOnly gives a leaf a reason of its own, and an entry that keeps no leaf fails.
+func TestAcceptedOnlyEntries(t *testing.T) {
 	res := gadget()
 	key := "request/PostGadgets/source.number@object"
 	ops := pinned(t, res, map[string]string{key: ClassAcceptedOnly})
 	tc := cover(t, res, ops)
-	if r := byKey(tc)[key]; r.State != StateExcluded || r.Rule != RuleAcceptedOnly {
+	if r := byKey(tc)[key]; r.State != StateExposed || r.Rule != "" || r.Reason != "" {
 		t.Errorf("source.number: %+v", r)
 	}
 	res.AcceptedOnly = map[string]string{"source.number": "Fixture: kept."}
@@ -256,11 +284,11 @@ func TestAcceptedOnlyLeavesTheTable(t *testing.T) {
 	if err := checkAcceptedOnly([]Resource{res}, nil); err == nil || !strings.Contains(err.Error(), `"source.number"`) {
 		t.Errorf("a stale entry: %v", err)
 	}
-	// An entry that names its operation keeps that operation's leaf alone.
+	// An entry that names its operation gives that operation's leaf alone its reason.
 	for entry, kept := range map[string]bool{"PostGadgets source.number": true, "PostGadgetsId source.number": false} {
 		res.AcceptedOnly = map[string]string{entry: "Fixture: kept."}
 		tc = cover(t, res, ops)
-		if r := byKey(tc)[key]; (r.State == StateExposed) != kept {
+		if r := byKey(tc)[key]; (r.Reason != "") != kept {
 			t.Errorf("%s: %+v", entry, r)
 		}
 		if err := checkAcceptedOnly([]Resource{res}, tc.records); (err == nil) != kept {
@@ -382,7 +410,7 @@ func TestCheckRequiredMembers(t *testing.T) {
 	// `pause_schedules.pause.pause_at`, fails too, naming the hash, though no leaf of the exposed
 	// hash is itself required; the walk gives it as a hash its parent requires.
 	settings := Record{Table: "schedule", Key: Key{Side: SideRequest, Operation: "PostSchedules", Path: "pause.settings.type"}, State: StateExposed}
-	at := Record{Table: "schedule", Key: Key{Side: SideRequest, Operation: "PostSchedules", Path: "pause.pause_at.timestamp"}, State: StateExcluded, Rule: "X6", RequiredHashes: []string{"pause.pause_at"}}
+	at := Record{Table: "schedule", Key: Key{Side: SideRequest, Operation: "PostSchedules", Path: "pause.pause_at.timestamp"}, State: StateAwaiting, RequiredHashes: []string{"pause.pause_at"}}
 	if err := checkRequiredMembers([]Record{settings, at}); err == nil || !strings.Contains(err.Error(), "PostSchedules pause.pause_at") {
 		t.Errorf("a required hash left out: %v", err)
 	}
@@ -395,27 +423,6 @@ func TestCheckRequiredMembers(t *testing.T) {
 	at.Rule = RuleRegister
 	if err := checkRequiredMembers([]Record{settings, at}); err != nil {
 		t.Errorf("the register leaves the hash out: %v", err)
-	}
-}
-
-func TestDroppedPaths(t *testing.T) {
-	leaves := []Leaf{
-		{Key: Key{Side: SideRequest, Operation: "op", Path: "a.b.c"}, At: "a.b.c"},
-		{Key: Key{Side: SideRequest, Operation: "op", Path: "a.b.d"}, At: "a.b.d"},
-		{Key: Key{Side: SideRequest, Operation: "op", Path: "a.e.f"}, At: "a.e.f"},
-		{Key: Key{Side: SideRequest, Operation: "other", Path: "a.e.f"}, At: "a.e.f"},
-	}
-	records := []Record{{Rule: RuleAcceptedOnly}, {}, {Rule: RuleAcceptedOnly}, {}}
-	got := dropped(leaves, records, "op")
-	for _, p := range []string{"a.b.c", "a.e.f", "a.e"} {
-		if !got[p] {
-			t.Errorf("%s is not dropped: %v", p, got)
-		}
-	}
-	for _, p := range []string{"a", "a.b", "a.b.d"} {
-		if got[p] {
-			t.Errorf("%s is dropped: %v", p, got)
-		}
 	}
 }
 

@@ -206,6 +206,23 @@ func compile(decl Declaration, table []fields.Field) (*model, error) {
 	if d := m.discounts; d != nil && d.Replace {
 		d.Preserve, d.Replace, d.ReplaceIfSet = true, false, true
 	}
+	// A kept create-only member of a keyed list's elements replaces the object when it changes
+	// (requiresReplaceForKeptInKeyed), which pairs the elements by key and adopts a configured
+	// value where a read shows Stripe holds one it cannot read, so neither the member, Computed or
+	// not, nor anything below it forces replacement of its own by position.
+	for list := range decl.MatchBy {
+		if n, ok := m.top(list); ok {
+			noReplaceBelow(keptInElements(n, decl.MatchData[list]))
+		}
+	}
+	// Such a member needs a replacement, which a resource whose destroy is refused cannot do.
+	if m.refuses() {
+		for list := range decl.MatchBy {
+			if n, ok := m.top(list); ok && len(keptInElements(n, decl.MatchData[list])) > 0 {
+				return nil, fmt.Errorf("%s: a resource that refuses destroy cannot have a member of `%s` that only a create takes and the response never returns", decl.TypeName, list)
+			}
+		}
+	}
 	if decl.Attach != "" && (decl.Parent == "" || !strings.Contains(decl.Paths.Create, "{"+decl.Attach+"}")) {
 		return nil, fmt.Errorf("%s: an attachment needs a parent and a create path that names `{%s}`", decl.TypeName, decl.Attach)
 	}
@@ -655,6 +672,14 @@ func (m *model) gone(err error, diags *diag.Diagnostics) bool {
 	return true
 }
 
+// noReplaceBelow clears the replacement of every node at or below nodes.
+func noReplaceBelow(nodes []*node) {
+	for _, n := range nodes {
+		n.Replace, n.ReplaceIfSet = false, false
+		noReplaceBelow(n.Kids)
+	}
+}
+
 // nestedReplaceSource returns the dotted path, below its parent, of the first node in kids
 // that forces replacement, or "".
 func nestedReplaceSource(kids []*node) string {
@@ -816,7 +841,9 @@ func (c *compiler) build(table []fields.Field, prefix string, top, parentOutput,
 
 		once := c.mark("once_returned", c.once, path)
 		n.Sensitive = c.mark("sensitive", c.sensitive, path) || once || f.Sensitive
-		n.Preserve = c.mark("preserve_config", c.preserve, path)
+		// A preserve_config entry on a field the generator marks NotReturned is redundant, so
+		// mark runs first and the entry still counts as used.
+		n.Preserve = c.mark("preserve_config", c.preserve, path) || f.NotReturned
 		if top {
 			n.MadeBy = c.decl.MadeBy[path]
 		}
@@ -874,10 +901,11 @@ func (c *compiler) build(table []fields.Field, prefix string, top, parentOutput,
 		}
 		// An argument the evidence shows no update changes unless it names it keeps its value
 		// when the configuration leaves it unset (E5), outside a list element, where the
-		// state's element at the same index may be another after an insert or a reorder.
+		// state's element at the same index may be another after an insert or a reorder. So
+		// does one Stripe never returns, which only the configuration ever changes.
 		n.UseState = n.Computed && !n.Required && !serverFilledInList &&
 			((top && (f.Name == "id" || f.Name == "created" || f.Name == "livemode")) || f.CreateOnly() || replaceOn || n.Once || parentReplace ||
-				n.Optional && !inList && (nestedShape(f.Shape) || f.Stable))
+				n.Optional && !inList && (nestedShape(f.Shape) || f.Stable || f.NotReturned))
 
 		switch f.Shape {
 		case fields.Object, fields.ObjectList, fields.ObjectMap:
