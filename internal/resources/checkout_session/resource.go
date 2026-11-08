@@ -2,6 +2,8 @@
 package checkout_session
 
 import (
+	"slices"
+
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 
@@ -40,16 +42,20 @@ var Declaration = engine.Declaration{
 	// (suite: "create minimal"), makes the price of an item that sets `price_data` (variant
 	// `inline_product`), answers a subscription with `saved_payment_method_options` (variant
 	// `subscription`), and fills the rest of a hash the request sends in part (`nested_minimal/2`,
-	// `nested_minimal/14`, `nested_minimal/20` and `enums/47`).
-	ServerDefaulted: []string{
+	// `nested_minimal/14`, `nested_minimal/20` and `enums/47`). It fills the options hash of a
+	// payment method the request leaves out: the record shows it for `card` on every create, and
+	// the dev sandbox's run of 2026-11-07 for `affirm` (all members null) beside the crypto, demo,
+	// Klarna and PayPal options of the record's `every_field/35`, which the record does not show
+	// (a suite gap), so every method's hash the response returns is Stripe's to fill.
+	ServerDefaulted: slices.Concat([]string{
 		"adaptive_pricing", "branding_settings", "consent_collection.promotions", "consent_collection.terms_of_service", "currency",
 		"customer_creation", "invoice_creation", "line_items.price", "managed_payments", "optional_items.adjustable_quantity.maximum",
 		"optional_items.adjustable_quantity.minimum", "payment_method_collection", "payment_method_options",
-		"payment_method_options.acss_debit.verification_method", "payment_method_options.card",
+		"payment_method_options.acss_debit.verification_method",
 		"payment_method_options.us_bank_account.verification_method", "phone_number_collection", "redirect_on_completion",
 		"saved_payment_method_options", "saved_payment_method_options.allow_redisplay_filters",
 		"saved_payment_method_options.payment_method_remove", "tax_id_collection", "ui_mode",
-	},
+	}, prefixed("payment_method_options.", returnedMethods)),
 	// Stripe fills these members of a hash the request sends in part (suite:
 	// TestCheckoutSessionAttributes, probes `nested_minimal/2` and `enums/35`, `enums/47` and
 	// `enums/51`), and makes a rate from an option's data (`enums/23`); the record's none is of a
@@ -85,6 +91,24 @@ var Declaration = engine.Declaration{
 	Transitions: []engine.Transition{
 		{Field: "status", Value: "expired", Path: "/v1/checkout/sessions/{id}/expire", From: []string{"open"}, Final: []string{"complete"}},
 	},
+}
+
+// returnedMethods are the payment methods whose options hash a session's response holds.
+var returnedMethods = []string{
+	"acss_debit", "affirm", "afterpay_clearpay", "alipay", "alma", "amazon_pay", "au_becs_debit", "bacs_debit", "bancontact",
+	"billie", "boleto", "card", "cashapp", "customer_balance", "eps", "fpx", "giropay", "grabpay", "ideal", "kakao_pay", "klarna",
+	"konbini", "kr_card", "link", "mobilepay", "multibanco", "naver_pay", "oxxo", "p24", "payco", "paynow", "paypal", "payto",
+	"pix", "revolut_pay", "samsung_pay", "satispay", "scalapay", "sepa_debit", "sequra", "sofort", "sunbit", "swish", "twint",
+	"upi", "us_bank_account", "wechat_pay",
+}
+
+// prefixed puts prefix before each name.
+func prefixed(prefix string, names []string) []string {
+	out := make([]string, len(names))
+	for i, n := range names {
+		out[i] = prefix + n
+	}
+	return out
 }
 
 // NewResource returns the resource constructor the provider registers.

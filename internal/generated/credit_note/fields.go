@@ -21,6 +21,7 @@ var Table = []fields.Field{
 		{Name: "discount", Shape: fields.String, Response: true, Description: "The discount that was applied to get this discount amount."},
 	}},
 	{Name: "effective_at", Shape: fields.Int, Create: true, Response: true, Description: "The date when this credit note is in effect. Same as `created` unless overwritten. When defined, this value replaces the system-generated 'Date of issue' printed on the credit note PDF."},
+	{Name: "email_type", Shape: fields.String, Create: true, NotReturned: true, Enum: []string{"credit_note", "none"}, Description: "Type of email to send to the customer, one of `credit_note` or `none` and the default is `credit_note`."},
 	{Name: "id", Shape: fields.String, Response: true, Description: "Unique identifier for the object."},
 	{Name: "invoice", Shape: fields.String, Required: true, Create: true, Response: true, Description: "ID of the invoice."},
 	{Name: "lines", Shape: fields.ObjectList, Create: true, Response: true, ServerDefaulted: true, Description: "Line items that make up the credit note. One of `amount`, `lines`, or `shipping_cost` must be provided.", PagedBy: "stripe_credit_note_line", Fields: []fields.Field{
@@ -43,10 +44,10 @@ var Table = []fields.Field{
 			{Name: "type", Shape: fields.String, Response: true, Enum: []string{"credit_balance_transaction", "discount"}, Description: "Type of the pretax credit amount referenced."},
 		}},
 		{Name: "quantity", Shape: fields.Int, Create: true, Response: true, Description: "The number of units of product being credited."},
-		{Name: "tax_amounts", Shape: fields.ObjectList, Create: true, Fields: []fields.Field{
-			{Name: "amount", Shape: fields.Int, Required: true, Create: true},
-			{Name: "tax_rate", Shape: fields.String, Required: true, Create: true},
-			{Name: "taxable_amount", Shape: fields.Int, Required: true, Create: true},
+		{Name: "tax_amounts", Shape: fields.ObjectList, Create: true, NotReturned: true, Fields: []fields.Field{
+			{Name: "amount", Shape: fields.Int, Required: true, Create: true, NotReturned: true},
+			{Name: "tax_rate", Shape: fields.String, Required: true, Create: true, NotReturned: true},
+			{Name: "taxable_amount", Shape: fields.Int, Required: true, Create: true, NotReturned: true},
 		}},
 		{Name: "tax_rates", Shape: fields.ScalarList, Elem: fields.String, Create: true, Response: true, ServerDefaulted: true, Description: "The tax rates which apply to the line item."},
 		{Name: "taxes", Shape: fields.ObjectList, Response: true, Description: "The tax information of the line item.", Fields: []fields.Field{

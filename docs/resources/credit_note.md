@@ -64,6 +64,7 @@ The following arguments are optional:
 * `amount` - (Optional) The integer amount in cents (or local equivalent) representing the total amount of the credit note. One of `amount`, `lines`, or `shipping_cost` must be provided. Changing it fails the plan, because this resource cannot be replaced. Removing it from the configuration leaves the current value.
 * `credit_amount` - (Optional) The integer amount in cents (or local equivalent) representing the amount to credit the customer's balance, which will be automatically applied to their next invoice. Changing it fails the plan, because this resource cannot be replaced.
 * `effective_at` - (Optional) The date when this credit note is in effect. Same as `created` unless overwritten. When defined, this value replaces the system-generated 'Date of issue' printed on the credit note PDF. Changing it fails the plan, because this resource cannot be replaced. Removing it from the configuration leaves the current value.
+* `email_type` - (Optional) Type of email to send to the customer, one of `credit_note` or `none` and the default is `credit_note`. Possible values: `credit_note`, `none`. Changing it fails the plan, because this resource cannot be replaced. Stripe does not return this value; the provider keeps it from configuration.
 * `lines` - (Optional) Line items that make up the credit note. One of `amount`, `lines`, or `shipping_cost` must be provided. Holds the first page of the list Stripe returns with the object; `has_more` is true when there are more. Read every element with the `stripe_credit_note_line` data source. Changing it fails the plan, because this resource cannot be replaced. Removing it from the configuration leaves the current value. See [`lines`](#lines) below.
 * `memo` - (Optional) The credit note's memo appears on the credit note PDF. Default: none.
 * `metadata` - (Optional) Set of [key-value pairs](https://docs.stripe.com/api/metadata) that you can attach to an object. This can be useful for storing additional information about the object in a structured format. Individual keys can be unset by posting an empty value to them. All keys can be unset by posting an empty value to `metadata`. Default (Stripe): `{}`.
@@ -90,7 +91,7 @@ The `lines` attribute is a list. Each element supports:
 * `object` - (Read-Only) String representing the object's type. Objects of the same type share the same value. Possible values: `credit_note_line_item`.
 * `pretax_credit_amounts` - (Read-Only) The pretax credit amounts (ex: discount, credit grants, etc) for this line item. See [`lines.pretax_credit_amounts`](#lines.pretax_credit_amounts) below.
 * `quantity` - (Optional) The number of units of product being credited.
-* `tax_amounts` - (Optional) See [`lines.tax_amounts`](#lines.tax_amounts) below.
+* `tax_amounts` - (Optional) Stripe does not return this value; the provider keeps it from configuration. See [`lines.tax_amounts`](#lines.tax_amounts) below.
 * `tax_rates` - (Optional) The tax rates which apply to the line item. Removing it from the configuration leaves the current value.
 * `taxes` - (Read-Only) The tax information of the line item. See [`lines.taxes`](#lines.taxes) below.
 * `type` - (Required) The type of the credit note line item, one of `invoice_line_item` or `custom_line_item`. When the type is `invoice_line_item` there is an additional `invoice_line_item` property on the resource the value of which is the id of the credited line item on the invoice. Possible values: `custom_line_item`, `invoice_line_item`.
@@ -120,9 +121,9 @@ The `lines.pretax_credit_amounts` attribute is a list. Each element supports:
 
 The `lines.tax_amounts` attribute is a list. Each element supports:
 
-* `amount` - (Required)
-* `tax_rate` - (Required)
-* `taxable_amount` - (Required)
+* `amount` - (Required) Stripe does not return this value; the provider keeps it from configuration.
+* `tax_rate` - (Required) Stripe does not return this value; the provider keeps it from configuration.
+* `taxable_amount` - (Required) Stripe does not return this value; the provider keeps it from configuration.
 
 <a id="lines.taxes"></a>
 ### `lines.taxes`
@@ -315,4 +316,4 @@ Using `terraform import`, import a credit note using its ID. For example:
 % terraform import stripe_credit_note.goodwill cn_123
 ```
 
-~> Stripe does not return `credit_amount`, `lines.tax_amounts` or `refund_amount`, so an imported credit note has them null: a configuration that sets one plans a replacement after the import.
+~> Stripe does not return `credit_amount`, `email_type`, `lines.tax_amounts` or `refund_amount`, so an imported credit note has them null: a configuration that sets one plans a replacement after the import.

@@ -43,6 +43,7 @@ This data source exports the following attributes in addition to the arguments a
 * `calculated_statement_descriptor` - The full statement descriptor that is passed to card networks, and that is displayed on your customers' credit card and bank statements. Allows you to see what the statement descriptor looks like after the static and dynamic portions are combined. This value only exists for card payments.
 * `capture` - Whether to immediately capture the charge. Defaults to `true`. When `false`, the charge issues an authorization (or pre-authorization), and will need to be [captured](https://docs.stripe.com/api#capture_charge) later. Uncaptured charges expire after a set number of days (7 by default). For more information, see the [authorizing charges and settling later](https://docs.stripe.com/charges/placing-a-hold) documentation.
 * `captured` - If the charge was created without capturing, this Boolean represents whether it is still uncaptured or has since been captured.
+* `card` - A token, like the ones returned by [Stripe.js](https://stripe.com/docs/js).
 * `created` - Time at which the object was created. Measured in seconds since the Unix epoch.
 * `currency` - Three-letter [ISO currency code](https://www.iso.org/iso-4217-currency-codes.html), in lowercase. Must be a [supported currency](https://stripe.com/docs/currencies).
 * `customer` - The ID of an existing customer that will be charged in this request.
@@ -1307,4 +1308,5 @@ The `shipping.address` attribute supports:
 The `transfer_data` attribute supports:
 
 * `amount` - The amount transferred to the destination account, if specified. By default, the entire charge amount is transferred to the destination account.
+* `description` -
 * `destination` - ID of an existing, connected Stripe account to transfer funds to if `transfer_data` was specified in the charge request.

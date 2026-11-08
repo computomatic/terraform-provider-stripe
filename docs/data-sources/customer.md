@@ -30,11 +30,16 @@ This data source exports the following attributes in addition to the arguments a
 
 * `address` - The customer's address. Learn about [country-specific requirements for calculating tax](https://docs.stripe.com/invoicing/taxes?dashboard-or-api=dashboard#set-up-customer). See [`address`](#address) below.
 * `balance` - An integer amount in cents (or local equivalent) that represents the customer's current balance, which affect the customer's future invoices. A negative amount represents a credit that decreases the amount due on an invoice; a positive amount increases the amount due on an invoice.
+* `bank_account` - Either a token, like the ones returned by [Stripe.js](https://stripe.com/docs/js), or a dictionary containing a user's bank account details.
 * `business_name` - The customer's business name. This may be up to *150 characters*.
+* `card` - A token, like the ones returned by [Stripe.js](https://stripe.com/docs/js).
 * `cash_balance` - Balance information and default balance settings for this customer. See [`cash_balance`](#cash_balance) below.
 * `created` - Time at which the object was created. Measured in seconds since the Unix epoch.
 * `currency` - Three-letter [ISO code for the currency](https://stripe.com/docs/currencies) the customer can be charged in for recurring billing purposes.
 * `customer_account` - The ID of an Account representing a customer. You can use this ID with any v1 API that accepts a customer_account parameter.
+* `default_alipay_account` - ID of Alipay account to make the customer's new default for invoice payments.
+* `default_bank_account` - ID of bank account to make the customer's new default for invoice payments.
+* `default_card` - ID of card to make the customer's new default for invoice payments.
 * `default_source` - If you are using payment methods created via the PaymentMethods API, see the [invoice_settings.default_payment_method](https://docs.stripe.com/api/customers/update#update_customer-invoice_settings-default_payment_method) parameter. Provide the ID of a payment source already attached to this customer to make it this customer's default payment source. If you want to add a new payment source and make it the default, see the [source](https://docs.stripe.com/api/customers/update#update_customer-source) property.
 * `delinquent` - Tracks the most recent state change on any invoice belonging to the customer. Paying an invoice or marking it uncollectible via the API will set this field to false. An automatic payment failure or passing the `invoice.due_date` will set this field to `true`. If an invoice becomes uncollectible by [dunning](https://docs.stripe.com/billing/automatic-collection), `delinquent` doesn't reset to `false`. If you care whether the customer has paid their most recent subscription invoice, use `subscription.status` instead. Paying or marking uncollectible any customer invoice regardless of whether it is the latest invoice for a subscription will always set this field to `false`.
 * `description` - An arbitrary string that you can attach to a customer object. It is displayed alongside the customer in the dashboard.
@@ -48,6 +53,7 @@ This data source exports the following attributes in addition to the arguments a
 * `metadata` - Set of [key-value pairs](https://docs.stripe.com/api/metadata) that you can attach to an object. This can be useful for storing additional information about the object in a structured format. Individual keys can be unset by posting an empty value to them. All keys can be unset by posting an empty value to `metadata`.
 * `name` - The customer's full name or business name.
 * `next_invoice_sequence` - The sequence to be used on the customer's next invoice. Defaults to 1.
+* `payment_method` -
 * `phone` - The customer's phone number.
 * `preferred_locales` - Customer's preferred languages, ordered by preference.
 * `shipping` - The customer's shipping information. Appears on invoices emailed to this customer. See [`shipping`](#shipping) below.

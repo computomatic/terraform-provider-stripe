@@ -153,10 +153,10 @@ var Table = []fields.Field{
 		}},
 	}},
 	{Name: "customer_email", Shape: fields.String, Create: true, Response: true, Description: "If provided, this value will be used when the Customer object is created.\nIf not provided, customers will be asked to enter their email address.\nUse this parameter to prefill customer data if you already have an email\non file. To access information about the customer once a session is\ncomplete, use the `customer` field.", Default: &fields.Default{Kind: fields.DefaultNone}},
-	{Name: "customer_update", Shape: fields.Object, Create: true, Description: "Controls what fields on Customer can be updated by the Checkout Session. Can only be provided when `customer` is provided.", Fields: []fields.Field{
-		{Name: "address", Shape: fields.String, Create: true, Enum: []string{"auto", "never"}},
-		{Name: "name", Shape: fields.String, Create: true, Enum: []string{"auto", "never"}},
-		{Name: "shipping", Shape: fields.String, Create: true, Enum: []string{"auto", "never"}},
+	{Name: "customer_update", Shape: fields.Object, Create: true, NotReturned: true, Description: "Controls what fields on Customer can be updated by the Checkout Session. Can only be provided when `customer` is provided.", Fields: []fields.Field{
+		{Name: "address", Shape: fields.String, Create: true, NotReturned: true, Enum: []string{"auto", "never"}},
+		{Name: "name", Shape: fields.String, Create: true, NotReturned: true, Enum: []string{"auto", "never"}},
+		{Name: "shipping", Shape: fields.String, Create: true, NotReturned: true, Enum: []string{"auto", "never"}},
 	}},
 	{Name: "discounts", Shape: fields.ObjectList, Create: true, Response: true, Description: "The coupon or promotion code to apply to this Session. Currently, only up to one may be specified.", Fields: []fields.Field{
 		{Name: "coupon", Shape: fields.String, Create: true, Response: true, Description: "Coupon attached to the Checkout Session.", Default: &fields.Default{Kind: fields.DefaultNone}},
@@ -249,7 +249,7 @@ var Table = []fields.Field{
 			{Name: "unit_amount_decimal", Shape: fields.String, Create: true, Update: true, Refused: "Stripe refused it on a US account on update: \"You cannot update `line_items` unless `permissions.update_line_items` is set to `server_only`.\"."},
 		}},
 		{Name: "quantity", Shape: fields.Int, Create: true, Update: true, Response: true, Description: "The quantity of products being purchased.", Refused: "Stripe refused it on a US account on update: \"You cannot update `line_items` unless `permissions.update_line_items` is set to `server_only`.\"."},
-		{Name: "tax_rates", Shape: fields.ScalarList, Elem: fields.String, Create: true, Update: true, Refused: "Stripe refused it on a US account on update: \"You cannot update `line_items` unless `permissions.update_line_items` is set to `server_only`.\"."},
+		{Name: "tax_rates", Shape: fields.ScalarList, Elem: fields.String, Create: true, Update: true, NotReturned: true, Refused: "Stripe refused it on a US account on update: \"You cannot update `line_items` unless `permissions.update_line_items` is set to `server_only`.\"."},
 		{Name: "taxes", Shape: fields.ObjectList, Response: true, Description: "The taxes applied to the line item.", Fields: []fields.Field{
 			{Name: "amount", Shape: fields.Int, Response: true, Description: "Amount of tax applied for this rate."},
 			{Name: "rate", Shape: fields.Object, Response: true, Description: "Tax rates can be applied to [invoices](https://docs.stripe.com/invoicing/taxes/tax-rates), [subscriptions](https://docs.stripe.com/billing/taxes/tax-rates) and [Checkout Sessions](https://docs.stripe.com/payments/checkout/use-manual-tax-rates) to collect tax. Related guide: [Tax rates](https://docs.stripe.com/billing/taxes/tax-rates)", Fields: []fields.Field{
@@ -309,40 +309,43 @@ var Table = []fields.Field{
 	{Name: "payment_intent", Shape: fields.String, Response: true, Description: "The ID of the PaymentIntent for Checkout Sessions in `payment` mode. You can't confirm or cancel the PaymentIntent for a Checkout Session. To cancel, [expire the Checkout Session](https://docs.stripe.com/api/checkout/sessions/expire) instead."},
 	{Name: "payment_intent_data", Shape: fields.Object, Create: true, Description: "A subset of parameters to be passed to PaymentIntent creation for Checkout Sessions in `payment` mode.", Fields: []fields.Field{
 		{Name: "application_fee_amount", Shape: fields.Int, Create: true},
-		{Name: "capture_method", Shape: fields.String, Create: true, Enum: []string{"automatic", "automatic_async", "manual"}},
-		{Name: "description", Shape: fields.String, Create: true},
-		{Name: "metadata", Shape: fields.StringMap, Create: true},
-		{Name: "on_behalf_of", Shape: fields.String, Create: true},
-		{Name: "receipt_email", Shape: fields.String, Create: true},
-		{Name: "setup_future_usage", Shape: fields.String, Create: true, Enum: []string{"off_session", "on_session"}},
-		{Name: "shipping", Shape: fields.Object, Create: true, Fields: []fields.Field{
-			{Name: "address", Shape: fields.Object, Required: true, Create: true, Fields: []fields.Field{
-				{Name: "city", Shape: fields.String, Create: true},
-				{Name: "country", Shape: fields.String, Create: true},
-				{Name: "line1", Shape: fields.String, Required: true, Create: true},
-				{Name: "line2", Shape: fields.String, Create: true},
-				{Name: "postal_code", Shape: fields.String, Create: true},
-				{Name: "state", Shape: fields.String, Create: true},
+		{Name: "capture_method", Shape: fields.String, Create: true, NotReturned: true, Enum: []string{"automatic", "automatic_async", "manual"}},
+		{Name: "description", Shape: fields.String, Create: true, NotReturned: true},
+		{Name: "metadata", Shape: fields.StringMap, Create: true, NotReturned: true},
+		{Name: "on_behalf_of", Shape: fields.String, Create: true, NotReturned: true},
+		{Name: "receipt_email", Shape: fields.String, Create: true, NotReturned: true},
+		{Name: "setup_future_usage", Shape: fields.String, Create: true, NotReturned: true, Enum: []string{"off_session", "on_session"}},
+		{Name: "shipping", Shape: fields.Object, Create: true, NotReturned: true, Fields: []fields.Field{
+			{Name: "address", Shape: fields.Object, Required: true, Create: true, NotReturned: true, Fields: []fields.Field{
+				{Name: "city", Shape: fields.String, Create: true, NotReturned: true},
+				{Name: "country", Shape: fields.String, Create: true, NotReturned: true},
+				{Name: "line1", Shape: fields.String, Required: true, Create: true, NotReturned: true},
+				{Name: "line2", Shape: fields.String, Create: true, NotReturned: true},
+				{Name: "postal_code", Shape: fields.String, Create: true, NotReturned: true},
+				{Name: "state", Shape: fields.String, Create: true, NotReturned: true},
 			}},
-			{Name: "carrier", Shape: fields.String, Create: true},
-			{Name: "name", Shape: fields.String, Required: true, Create: true},
-			{Name: "phone", Shape: fields.String, Create: true},
-			{Name: "tracking_number", Shape: fields.String, Create: true},
+			{Name: "carrier", Shape: fields.String, Create: true, NotReturned: true},
+			{Name: "name", Shape: fields.String, Required: true, Create: true, NotReturned: true},
+			{Name: "phone", Shape: fields.String, Create: true, NotReturned: true},
+			{Name: "tracking_number", Shape: fields.String, Create: true, NotReturned: true},
 		}},
-		{Name: "statement_descriptor", Shape: fields.String, Create: true},
-		{Name: "statement_descriptor_suffix", Shape: fields.String, Create: true},
-		{Name: "transfer_data", Shape: fields.Object, Create: true, Fields: []fields.Field{
-			{Name: "amount", Shape: fields.Int, Create: true},
-			{Name: "destination", Shape: fields.String, Required: true, Create: true},
+		{Name: "statement_descriptor", Shape: fields.String, Create: true, NotReturned: true},
+		{Name: "statement_descriptor_suffix", Shape: fields.String, Create: true, NotReturned: true},
+		{Name: "transfer_data", Shape: fields.Object, Create: true, NotReturned: true, Fields: []fields.Field{
+			{Name: "amount", Shape: fields.Int, Create: true, NotReturned: true},
+			{Name: "destination", Shape: fields.String, Required: true, Create: true, NotReturned: true},
 		}},
-		{Name: "transfer_group", Shape: fields.String, Create: true},
+		{Name: "transfer_group", Shape: fields.String, Create: true, NotReturned: true},
 	}},
 	{Name: "payment_link", Shape: fields.String, Response: true, Description: "The ID of the Payment Link that created this Session."},
 	{Name: "payment_method_collection", Shape: fields.String, Create: true, Response: true, Enum: []string{"always", "if_required"}, Description: "Specify whether Checkout should collect a payment method. When set to `if_required`, Checkout will not collect a payment method when the total due for the session is 0.\nThis may occur if the Checkout Session includes a free trial or a discount. Can only be set in `subscription` mode. Defaults to `always`. If you'd like information on how to collect a payment method outside of Checkout, read the guide on configuring [subscriptions with a free trial](https://docs.stripe.com/payments/checkout/free-trials).", Default: &fields.Default{Kind: fields.DefaultVaries}},
-	{Name: "payment_method_configuration", Shape: fields.String, Create: true, Description: "The ID of the payment method configuration to use with this Checkout session.", Answer: "Elsewhere Stripe refused it on a US account on create: \"No valid payment method types for this Checkout Session. Please ensure that you have activated payment methods compatible with your chosen currency in your dashboard (https://dashboard.stripe.com/settings/payment_methods) or specify `payment_method_types`.\"."},
+	{Name: "payment_method_configuration", Shape: fields.String, Create: true, NotReturned: true, Description: "The ID of the payment method configuration to use with this Checkout session.", Answer: "Elsewhere Stripe refused it on a US account on create: \"No valid payment method types for this Checkout Session. Please ensure that you have activated payment methods compatible with your chosen currency in your dashboard (https://dashboard.stripe.com/settings/payment_methods) or specify `payment_method_types`.\"."},
 	{Name: "payment_method_configuration_details", Shape: fields.Object, Response: true, Description: "Information about the payment method configuration used for this Checkout session if using dynamic payment methods.", Fields: []fields.Field{
 		{Name: "id", Shape: fields.String, Response: true, Description: "ID of the payment method configuration used."},
 		{Name: "parent", Shape: fields.String, Response: true, Description: "ID of the parent payment method configuration used."},
+	}},
+	{Name: "payment_method_data", Shape: fields.Object, Create: true, NotReturned: true, Description: "This parameter allows you to set some attributes on the payment method created during a Checkout session.", Fields: []fields.Field{
+		{Name: "allow_redisplay", Shape: fields.String, Create: true, NotReturned: true, Enum: []string{"always", "limited", "unspecified"}},
 	}},
 	{Name: "payment_method_options", Shape: fields.Object, Create: true, Response: true, Description: "Payment-method-specific configuration.", Fields: []fields.Field{
 		{Name: "acss_debit", Shape: fields.Object, Create: true, Response: true, Fields: []fields.Field{
@@ -393,6 +396,12 @@ var Table = []fields.Field{
 		{Name: "billie", Shape: fields.Object, Create: true, Response: true, Fields: []fields.Field{
 			{Name: "capture_method", Shape: fields.String, Create: true, Response: true, Enum: []string{"manual"}, Description: "Controls when the funds will be captured from the customer's account.", Default: &fields.Default{Kind: fields.DefaultNone}},
 		}},
+		{Name: "blik", Shape: fields.Object, Create: true, NotReturned: true, Fields: []fields.Field{
+			{Name: "mandate_options", Shape: fields.Object, Create: true, NotReturned: true, Fields: []fields.Field{
+				{Name: "expires_at", Shape: fields.Int, Create: true, NotReturned: true},
+			}},
+			{Name: "setup_future_usage", Shape: fields.String, Create: true, NotReturned: true, Enum: []string{"none", "off_session"}},
+		}},
 		{Name: "boleto", Shape: fields.Object, Create: true, Response: true, Fields: []fields.Field{
 			{Name: "expires_after_days", Shape: fields.Int, Create: true, Response: true, ServerDefaulted: true, Description: "The number of calendar days before a Boleto voucher expires. For example, if you create a Boleto voucher on Monday and you set expires_after_days to 2, the Boleto voucher will expire on Wednesday at 23:59 America/Sao_Paulo time.", Default: &fields.Default{Kind: fields.DefaultNone}},
 			{Name: "setup_future_usage", Shape: fields.String, Create: true, Response: true, Enum: []string{"none", "off_session", "on_session"}, Description: "Indicates that you intend to make future payments with this PaymentIntent's payment method. If you provide a Customer with the PaymentIntent, you can use this parameter to [attach the payment method](https://docs.stripe.com/payments/save-during-payment) to the Customer after the PaymentIntent is confirmed and the customer completes any required actions. If you don't provide a Customer, you can still [attach](https://docs.stripe.com/api/payment_methods/attach) the payment method to a Customer after the transaction completes. If the payment method is `card_present` and isn't a digital wallet, Stripe creates and attaches a [generated_card](https://docs.stripe.com/api/charges/object#charge_object-payment_method_details-card_present-generated_card) payment method representing the card to the Customer instead. When processing card payments, Stripe uses `setup_future_usage` to help you comply with regional legislation and network rules, such as [SCA](https://docs.stripe.com/strong-customer-authentication).", Default: &fields.Default{Kind: fields.DefaultNone}},
@@ -419,6 +428,9 @@ var Table = []fields.Field{
 			{Name: "capture_method", Shape: fields.String, Create: true, Response: true, Enum: []string{"manual"}, Description: "Controls when the funds will be captured from the customer's account.", Default: &fields.Default{Kind: fields.DefaultNone}},
 			{Name: "setup_future_usage", Shape: fields.String, Create: true, Response: true, Enum: []string{"none", "off_session", "on_session"}, Description: "Indicates that you intend to make future payments with this PaymentIntent's payment method. If you provide a Customer with the PaymentIntent, you can use this parameter to [attach the payment method](https://docs.stripe.com/payments/save-during-payment) to the Customer after the PaymentIntent is confirmed and the customer completes any required actions. If you don't provide a Customer, you can still [attach](https://docs.stripe.com/api/payment_methods/attach) the payment method to a Customer after the transaction completes. If the payment method is `card_present` and isn't a digital wallet, Stripe creates and attaches a [generated_card](https://docs.stripe.com/api/charges/object#charge_object-payment_method_details-card_present-generated_card) payment method representing the card to the Customer instead. When processing card payments, Stripe uses `setup_future_usage` to help you comply with regional legislation and network rules, such as [SCA](https://docs.stripe.com/strong-customer-authentication).", Default: &fields.Default{Kind: fields.DefaultNone}},
 		}},
+		{Name: "crypto", Shape: fields.Object, Create: true, NotReturned: true, Fields: []fields.Field{
+			{Name: "setup_future_usage", Shape: fields.String, Create: true, NotReturned: true, Enum: []string{"none"}},
+		}},
 		{Name: "customer_balance", Shape: fields.Object, Create: true, Response: true, Fields: []fields.Field{
 			{Name: "bank_transfer", Shape: fields.Object, Create: true, Response: true, Fields: []fields.Field{
 				{Name: "eu_bank_transfer", Shape: fields.Object, Create: true, Response: true, Fields: []fields.Field{
@@ -429,6 +441,9 @@ var Table = []fields.Field{
 			}},
 			{Name: "funding_type", Shape: fields.String, Create: true, Response: true, Enum: []string{"bank_transfer"}, Description: "The funding method type to be used when there are not enough funds in the customer balance. Permitted values include: `bank_transfer`.", Default: &fields.Default{Kind: fields.DefaultNone}},
 			{Name: "setup_future_usage", Shape: fields.String, Create: true, Response: true, Enum: []string{"none"}, Description: "Indicates that you intend to make future payments with this PaymentIntent's payment method. If you provide a Customer with the PaymentIntent, you can use this parameter to [attach the payment method](https://docs.stripe.com/payments/save-during-payment) to the Customer after the PaymentIntent is confirmed and the customer completes any required actions. If you don't provide a Customer, you can still [attach](https://docs.stripe.com/api/payment_methods/attach) the payment method to a Customer after the transaction completes. If the payment method is `card_present` and isn't a digital wallet, Stripe creates and attaches a [generated_card](https://docs.stripe.com/api/charges/object#charge_object-payment_method_details-card_present-generated_card) payment method representing the card to the Customer instead. When processing card payments, Stripe uses `setup_future_usage` to help you comply with regional legislation and network rules, such as [SCA](https://docs.stripe.com/strong-customer-authentication).", Default: &fields.Default{Kind: fields.DefaultNone}},
+		}},
+		{Name: "demo_pay", Shape: fields.Object, Create: true, NotReturned: true, Fields: []fields.Field{
+			{Name: "setup_future_usage", Shape: fields.String, Create: true, NotReturned: true, Enum: []string{"none", "off_session"}},
 		}},
 		{Name: "eps", Shape: fields.Object, Create: true, Response: true, Fields: []fields.Field{
 			{Name: "setup_future_usage", Shape: fields.String, Create: true, Response: true, Enum: []string{"none"}, Description: "Indicates that you intend to make future payments with this PaymentIntent's payment method. If you provide a Customer with the PaymentIntent, you can use this parameter to [attach the payment method](https://docs.stripe.com/payments/save-during-payment) to the Customer after the PaymentIntent is confirmed and the customer completes any required actions. If you don't provide a Customer, you can still [attach](https://docs.stripe.com/api/payment_methods/attach) the payment method to a Customer after the transaction completes. If the payment method is `card_present` and isn't a digital wallet, Stripe creates and attaches a [generated_card](https://docs.stripe.com/api/charges/object#charge_object-payment_method_details-card_present-generated_card) payment method representing the card to the Customer instead. When processing card payments, Stripe uses `setup_future_usage` to help you comply with regional legislation and network rules, such as [SCA](https://docs.stripe.com/strong-customer-authentication).", Default: &fields.Default{Kind: fields.DefaultNone}},
@@ -452,6 +467,16 @@ var Table = []fields.Field{
 		{Name: "klarna", Shape: fields.Object, Create: true, Response: true, Fields: []fields.Field{
 			{Name: "capture_method", Shape: fields.String, Create: true, Response: true, Enum: []string{"manual"}, Description: "Controls when the funds will be captured from the customer's account.", Default: &fields.Default{Kind: fields.DefaultNone}},
 			{Name: "setup_future_usage", Shape: fields.String, Create: true, Response: true, Enum: []string{"none"}, Description: "Indicates that you intend to make future payments with this PaymentIntent's payment method. If you provide a Customer with the PaymentIntent, you can use this parameter to [attach the payment method](https://docs.stripe.com/payments/save-during-payment) to the Customer after the PaymentIntent is confirmed and the customer completes any required actions. If you don't provide a Customer, you can still [attach](https://docs.stripe.com/api/payment_methods/attach) the payment method to a Customer after the transaction completes. If the payment method is `card_present` and isn't a digital wallet, Stripe creates and attaches a [generated_card](https://docs.stripe.com/api/charges/object#charge_object-payment_method_details-card_present-generated_card) payment method representing the card to the Customer instead. When processing card payments, Stripe uses `setup_future_usage` to help you comply with regional legislation and network rules, such as [SCA](https://docs.stripe.com/strong-customer-authentication).", Default: &fields.Default{Kind: fields.DefaultNone}},
+			{Name: "subscriptions", Shape: fields.ObjectList, Create: true, NotReturned: true, Fields: []fields.Field{
+				{Name: "interval", Shape: fields.String, Required: true, Create: true, NotReturned: true, Enum: []string{"day", "month", "week", "year"}},
+				{Name: "interval_count", Shape: fields.Int, Create: true, NotReturned: true},
+				{Name: "name", Shape: fields.String, Create: true, NotReturned: true},
+				{Name: "next_billing", Shape: fields.Object, Required: true, Create: true, NotReturned: true, Fields: []fields.Field{
+					{Name: "amount", Shape: fields.Int, Required: true, Create: true, NotReturned: true},
+					{Name: "date", Shape: fields.String, Required: true, Create: true, NotReturned: true},
+				}},
+				{Name: "reference", Shape: fields.String, Required: true, Create: true, NotReturned: true},
+			}},
 		}},
 		{Name: "konbini", Shape: fields.Object, Create: true, Response: true, Fields: []fields.Field{
 			{Name: "expires_after_days", Shape: fields.Int, Create: true, Response: true, Description: "The number of calendar days (between 1 and 60) after which Konbini payment instructions will expire. For example, if a PaymentIntent is confirmed with Konbini and `expires_after_days` set to 2 on Monday JST, the instructions will expire on Wednesday 23:59:59 JST.", Default: &fields.Default{Kind: fields.DefaultNone}},
@@ -482,6 +507,7 @@ var Table = []fields.Field{
 		}},
 		{Name: "p24", Shape: fields.Object, Create: true, Response: true, Fields: []fields.Field{
 			{Name: "setup_future_usage", Shape: fields.String, Create: true, Response: true, Enum: []string{"none"}, Description: "Indicates that you intend to make future payments with this PaymentIntent's payment method. If you provide a Customer with the PaymentIntent, you can use this parameter to [attach the payment method](https://docs.stripe.com/payments/save-during-payment) to the Customer after the PaymentIntent is confirmed and the customer completes any required actions. If you don't provide a Customer, you can still [attach](https://docs.stripe.com/api/payment_methods/attach) the payment method to a Customer after the transaction completes. If the payment method is `card_present` and isn't a digital wallet, Stripe creates and attaches a [generated_card](https://docs.stripe.com/api/charges/object#charge_object-payment_method_details-card_present-generated_card) payment method representing the card to the Customer instead. When processing card payments, Stripe uses `setup_future_usage` to help you comply with regional legislation and network rules, such as [SCA](https://docs.stripe.com/strong-customer-authentication).", Default: &fields.Default{Kind: fields.DefaultNone}},
+			{Name: "tos_shown_and_accepted", Shape: fields.Bool, Create: true, NotReturned: true},
 		}},
 		{Name: "payco", Shape: fields.Object, Create: true, Response: true, Fields: []fields.Field{
 			{Name: "capture_method", Shape: fields.String, Create: true, Response: true, Enum: []string{"manual"}, Description: "Controls when the funds will be captured from the customer's account.", Default: &fields.Default{Kind: fields.DefaultNone}},
@@ -494,6 +520,7 @@ var Table = []fields.Field{
 			{Name: "capture_method", Shape: fields.String, Create: true, Response: true, Enum: []string{"manual"}, Description: "Controls when the funds will be captured from the customer's account.", Default: &fields.Default{Kind: fields.DefaultNone}},
 			{Name: "preferred_locale", Shape: fields.String, Create: true, Response: true, Enum: []string{"cs-CZ", "da-DK", "de-AT", "de-DE", "de-LU", "el-GR", "en-GB", "en-US", "es-ES", "fi-FI", "fr-BE", "fr-FR", "fr-LU", "hu-HU", "it-IT", "nl-BE", "nl-NL", "pl-PL", "pt-PT", "sk-SK", "sv-SE"}, Description: "Preferred locale of the PayPal checkout page that the customer is redirected to.", Default: &fields.Default{Kind: fields.DefaultNone}},
 			{Name: "reference", Shape: fields.String, Create: true, Response: true, Description: "A reference of the PayPal transaction visible to customer which is mapped to PayPal's invoice ID. This must be a globally unique ID if you have configured in your PayPal settings to block multiple payments per invoice ID.", Default: &fields.Default{Kind: fields.DefaultNone}},
+			{Name: "risk_correlation_id", Shape: fields.String, Create: true, NotReturned: true},
 			{Name: "setup_future_usage", Shape: fields.String, Create: true, Response: true, Enum: []string{"none", "off_session"}, Description: "Indicates that you intend to make future payments with this PaymentIntent's payment method. If you provide a Customer with the PaymentIntent, you can use this parameter to [attach the payment method](https://docs.stripe.com/payments/save-during-payment) to the Customer after the PaymentIntent is confirmed and the customer completes any required actions. If you don't provide a Customer, you can still [attach](https://docs.stripe.com/api/payment_methods/attach) the payment method to a Customer after the transaction completes. If the payment method is `card_present` and isn't a digital wallet, Stripe creates and attaches a [generated_card](https://docs.stripe.com/api/charges/object#charge_object-payment_method_details-card_present-generated_card) payment method representing the card to the Customer instead. When processing card payments, Stripe uses `setup_future_usage` to help you comply with regional legislation and network rules, such as [SCA](https://docs.stripe.com/strong-customer-authentication).", Default: &fields.Default{Kind: fields.DefaultNone}},
 		}},
 		{Name: "payto", Shape: fields.Object, Create: true, Response: true, Fields: []fields.Field{
@@ -609,10 +636,10 @@ var Table = []fields.Field{
 		{Name: "payment_method_save", Shape: fields.String, Create: true, Response: true, Enum: []string{"disabled", "enabled"}, Description: "Enable customers to choose if they wish to save their payment method for future use. Disabled by default.", Default: &fields.Default{Kind: fields.DefaultNone}},
 	}},
 	{Name: "setup_intent", Shape: fields.String, Response: true, Description: "The ID of the SetupIntent for Checkout Sessions in `setup` mode. You can't confirm or cancel the SetupIntent for a Checkout Session. To cancel, [expire the Checkout Session](https://docs.stripe.com/api/checkout/sessions/expire) instead."},
-	{Name: "setup_intent_data", Shape: fields.Object, Create: true, Description: "A subset of parameters to be passed to SetupIntent creation for Checkout Sessions in `setup` mode.", Fields: []fields.Field{
-		{Name: "description", Shape: fields.String, Create: true},
-		{Name: "metadata", Shape: fields.StringMap, Create: true},
-		{Name: "on_behalf_of", Shape: fields.String, Create: true},
+	{Name: "setup_intent_data", Shape: fields.Object, Create: true, NotReturned: true, Description: "A subset of parameters to be passed to SetupIntent creation for Checkout Sessions in `setup` mode.", Fields: []fields.Field{
+		{Name: "description", Shape: fields.String, Create: true, NotReturned: true},
+		{Name: "metadata", Shape: fields.StringMap, Create: true, NotReturned: true},
+		{Name: "on_behalf_of", Shape: fields.String, Create: true, NotReturned: true},
 	}},
 	{Name: "shipping_address_collection", Shape: fields.Object, Create: true, Response: true, Description: "When set, provides configuration for Checkout to collect a shipping address from a customer.", Fields: []fields.Field{
 		{Name: "allowed_countries", Shape: fields.ScalarList, Elem: fields.String, Required: true, Create: true, Response: true, Description: "An array of two-letter ISO country codes representing which countries Checkout should provide as options for\nshipping locations. Unsupported country codes: `AS, CX, CC, CU, HM, IR, KP, MH, FM, NF, MP, PW, SY, UM, VI`."},
@@ -683,46 +710,46 @@ var Table = []fields.Field{
 	{Name: "status", Shape: fields.String, Response: true, Enum: []string{"complete", "expired", "open"}, Description: "The status of the Checkout Session, one of `open`, `complete`, or `expired`."},
 	{Name: "submit_type", Shape: fields.String, Create: true, Response: true, Enum: []string{"auto", "book", "donate", "pay", "subscribe"}, Description: "Describes the type of transaction being performed by Checkout in order\nto customize relevant text on the page, such as the submit button.\n `submit_type` can only be specified on Checkout Sessions in\n`payment` or `subscription` mode. If blank or `auto`, `pay` is used.\nYou can't set this parameter if `ui_mode` is `elements`.", Default: &fields.Default{Kind: fields.DefaultNone}},
 	{Name: "subscription", Shape: fields.String, Response: true, Description: "The ID of the [Subscription](https://docs.stripe.com/api/subscriptions) for Checkout Sessions in `subscription` mode."},
-	{Name: "subscription_data", Shape: fields.Object, Create: true, Description: "A subset of parameters to be passed to subscription creation for Checkout Sessions in `subscription` mode.", Fields: []fields.Field{
-		{Name: "application_fee_percent", Shape: fields.Float, Create: true},
-		{Name: "billing_cycle_anchor", Shape: fields.Int, Create: true},
-		{Name: "billing_cycle_anchor_config", Shape: fields.Object, Create: true, Fields: []fields.Field{
-			{Name: "day_of_month", Shape: fields.Int, Required: true, Create: true},
-			{Name: "hour", Shape: fields.Int, Create: true},
-			{Name: "minute", Shape: fields.Int, Create: true},
-			{Name: "month", Shape: fields.Int, Create: true},
-			{Name: "second", Shape: fields.Int, Create: true},
+	{Name: "subscription_data", Shape: fields.Object, Create: true, NotReturned: true, Description: "A subset of parameters to be passed to subscription creation for Checkout Sessions in `subscription` mode.", Fields: []fields.Field{
+		{Name: "application_fee_percent", Shape: fields.Float, Create: true, NotReturned: true},
+		{Name: "billing_cycle_anchor", Shape: fields.Int, Create: true, NotReturned: true},
+		{Name: "billing_cycle_anchor_config", Shape: fields.Object, Create: true, NotReturned: true, Fields: []fields.Field{
+			{Name: "day_of_month", Shape: fields.Int, Required: true, Create: true, NotReturned: true},
+			{Name: "hour", Shape: fields.Int, Create: true, NotReturned: true},
+			{Name: "minute", Shape: fields.Int, Create: true, NotReturned: true},
+			{Name: "month", Shape: fields.Int, Create: true, NotReturned: true},
+			{Name: "second", Shape: fields.Int, Create: true, NotReturned: true},
 		}},
-		{Name: "billing_mode", Shape: fields.Object, Create: true, Fields: []fields.Field{
-			{Name: "flexible", Shape: fields.Object, Create: true, Fields: []fields.Field{
-				{Name: "proration_discounts", Shape: fields.String, Create: true, Enum: []string{"included", "itemized"}},
+		{Name: "billing_mode", Shape: fields.Object, Create: true, NotReturned: true, Fields: []fields.Field{
+			{Name: "flexible", Shape: fields.Object, Create: true, NotReturned: true, Fields: []fields.Field{
+				{Name: "proration_discounts", Shape: fields.String, Create: true, NotReturned: true, Enum: []string{"included", "itemized"}},
 			}},
-			{Name: "type", Shape: fields.String, Required: true, Create: true, Enum: []string{"classic", "flexible"}},
+			{Name: "type", Shape: fields.String, Required: true, Create: true, NotReturned: true, Enum: []string{"classic", "flexible"}},
 		}},
-		{Name: "default_tax_rates", Shape: fields.ScalarList, Elem: fields.String, Create: true},
-		{Name: "description", Shape: fields.String, Create: true},
-		{Name: "invoice_settings", Shape: fields.Object, Create: true, Fields: []fields.Field{
-			{Name: "issuer", Shape: fields.Object, Create: true, Fields: []fields.Field{
-				{Name: "account", Shape: fields.String, Create: true},
-				{Name: "type", Shape: fields.String, Required: true, Create: true, Enum: []string{"account", "self"}},
+		{Name: "default_tax_rates", Shape: fields.ScalarList, Elem: fields.String, Create: true, NotReturned: true},
+		{Name: "description", Shape: fields.String, Create: true, NotReturned: true},
+		{Name: "invoice_settings", Shape: fields.Object, Create: true, NotReturned: true, Fields: []fields.Field{
+			{Name: "issuer", Shape: fields.Object, Create: true, NotReturned: true, Fields: []fields.Field{
+				{Name: "account", Shape: fields.String, Create: true, NotReturned: true},
+				{Name: "type", Shape: fields.String, Required: true, Create: true, NotReturned: true, Enum: []string{"account", "self"}},
 			}},
 		}},
-		{Name: "metadata", Shape: fields.StringMap, Create: true},
-		{Name: "on_behalf_of", Shape: fields.String, Create: true},
-		{Name: "pending_invoice_item_interval", Shape: fields.Object, Create: true, Fields: []fields.Field{
-			{Name: "interval", Shape: fields.String, Required: true, Create: true, Enum: []string{"day", "month", "week", "year"}},
-			{Name: "interval_count", Shape: fields.Int, Create: true},
+		{Name: "metadata", Shape: fields.StringMap, Create: true, NotReturned: true},
+		{Name: "on_behalf_of", Shape: fields.String, Create: true, NotReturned: true},
+		{Name: "pending_invoice_item_interval", Shape: fields.Object, Create: true, NotReturned: true, Fields: []fields.Field{
+			{Name: "interval", Shape: fields.String, Required: true, Create: true, NotReturned: true, Enum: []string{"day", "month", "week", "year"}},
+			{Name: "interval_count", Shape: fields.Int, Create: true, NotReturned: true},
 		}},
-		{Name: "proration_behavior", Shape: fields.String, Create: true, Enum: []string{"create_prorations", "none"}},
-		{Name: "transfer_data", Shape: fields.Object, Create: true, Fields: []fields.Field{
-			{Name: "amount_percent", Shape: fields.Float, Create: true},
-			{Name: "destination", Shape: fields.String, Required: true, Create: true},
+		{Name: "proration_behavior", Shape: fields.String, Create: true, NotReturned: true, Enum: []string{"create_prorations", "none"}},
+		{Name: "transfer_data", Shape: fields.Object, Create: true, NotReturned: true, Fields: []fields.Field{
+			{Name: "amount_percent", Shape: fields.Float, Create: true, NotReturned: true},
+			{Name: "destination", Shape: fields.String, Required: true, Create: true, NotReturned: true},
 		}},
-		{Name: "trial_end", Shape: fields.Int, Create: true},
-		{Name: "trial_period_days", Shape: fields.Int, Create: true},
-		{Name: "trial_settings", Shape: fields.Object, Create: true, Fields: []fields.Field{
-			{Name: "end_behavior", Shape: fields.Object, Required: true, Create: true, Fields: []fields.Field{
-				{Name: "missing_payment_method", Shape: fields.String, Required: true, Create: true, Enum: []string{"cancel", "create_invoice", "pause"}},
+		{Name: "trial_end", Shape: fields.Int, Create: true, NotReturned: true},
+		{Name: "trial_period_days", Shape: fields.Int, Create: true, NotReturned: true},
+		{Name: "trial_settings", Shape: fields.Object, Create: true, NotReturned: true, Fields: []fields.Field{
+			{Name: "end_behavior", Shape: fields.Object, Required: true, Create: true, NotReturned: true, Fields: []fields.Field{
+				{Name: "missing_payment_method", Shape: fields.String, Required: true, Create: true, NotReturned: true, Enum: []string{"cancel", "create_invoice", "pause"}},
 			}},
 		}},
 	}},

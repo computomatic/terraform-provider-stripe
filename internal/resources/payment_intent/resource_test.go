@@ -5,6 +5,7 @@ import (
 	"regexp"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/hashicorp/terraform-plugin-testing/plancheck"
@@ -296,6 +297,115 @@ func TestAccPaymentIntent_cardOptionsChangeInPlace(t *testing.T) {
 			resource.TestCheckResourceAttr(address, "payment_method_options.card.request_three_d_secure", "challenge"),
 			resource.TestCheckResourceAttr(address, "payment_method_options.card.setup_future_usage", "on_session"),
 			resource.TestCheckResourceAttr(address, "payment_method_options.card.capture_method", "manual"),
+		))
+}
+
+// The card options Stripe takes and never returns are kept from configuration: they plan cleanly
+// after the apply, and an update that changes them sends the new values in place. The values are
+// those of the record's `update/22` probe (suite: TestPaymentIntentAttributes), its create and its
+// update: the enum values, the generated 7 and 8, a start and end date 30 days out, `india`, the
+// kana suffixes `テスト` and `カード`, and generated strings for the description, the reference and
+// the kanji suffix (17 characters at most), beside the options it sent with them.
+func TestAccPaymentIntent_keptCardOptions(t *testing.T) {
+	acct := acctest.NewAccount(t)
+	at := time.Now().Add(30 * 24 * time.Hour).Unix()
+	description, reference := acct.Name("mandate"), acct.Name("mandate-ref")
+	cfg := func(installments bool, amount int, amountType, interval string, every int, request, future, kana, kanji string) string {
+		return fmt.Sprintf(`
+  payment_method_options = {
+    card = {
+      capture_method           = "manual"
+      request_three_d_secure   = "any"
+      require_cvc_recollection = true
+      setup_future_usage       = %[8]q
+      installments             = { enabled = %[1]t }
+      mandate_options = {
+        amount          = %[2]d
+        amount_type     = %[3]q
+        description     = %[11]q
+        start_date      = %[13]d
+        end_date        = %[13]d
+        interval        = %[4]q
+        interval_count  = %[5]d
+        reference       = %[12]q
+        supported_types = ["india"]
+      }
+      request_extended_authorization    = %[6]q
+      request_incremental_authorization = %[6]q
+      request_multicapture              = %[6]q
+      request_overcapture               = %[7]q
+      statement_descriptor_suffix_kana  = %[9]q
+      statement_descriptor_suffix_kanji = %[10]q
+    }
+  }
+`, installments, amount, amountType, interval, every, request, request, future, kana, kanji, description, reference, at)
+	}
+	var path string
+	card := "payment_method_options.card."
+	inPlace(t, acct,
+		cfg(true, 7, "fixed", "day", 7, "if_available", "none", "テスト", "ATTRS1"),
+		cfg(false, 8, "maximum", "month", 8, "never", "off_session", "カード", "ATTRS2"),
+		resource.ComposeAggregateTestCheckFunc(
+			pathOf(&path),
+			resource.TestCheckResourceAttr(address, card+"installments.enabled", "true"),
+			resource.TestCheckResourceAttr(address, card+"mandate_options.amount_type", "fixed"),
+			resource.TestCheckResourceAttr(address, card+"request_overcapture", "if_available"),
+			resource.TestCheckResourceAttr(address, card+"statement_descriptor_suffix_kana", "テスト"),
+		),
+		resource.ComposeAggregateTestCheckFunc(
+			resource.TestCheckResourceAttr(address, card+"installments.enabled", "false"),
+			resource.TestCheckResourceAttr(address, card+"mandate_options.amount", "8"),
+			resource.TestCheckResourceAttr(address, card+"mandate_options.interval", "month"),
+			resource.TestCheckResourceAttr(address, card+"request_multicapture", "never"),
+			resource.TestCheckResourceAttr(address, card+"statement_descriptor_suffix_kanji", "ATTRS2"),
+			tfacc.Sent(t, acct, "POST", &path, map[string]string{
+				card + "installments.enabled":              "false",
+				card + "mandate_options.amount":            "8",
+				card + "mandate_options.amount_type":       "maximum",
+				card + "mandate_options.description":       description,
+				card + "mandate_options.interval":          "month",
+				card + "mandate_options.interval_count":    "8",
+				card + "mandate_options.reference":         reference,
+				card + "mandate_options.supported_types.0": "india",
+				card + "request_extended_authorization":    "never",
+				card + "request_incremental_authorization": "never",
+				card + "request_multicapture":              "never",
+				card + "request_overcapture":               "never",
+				card + "statement_descriptor_suffix_kana":  "カード",
+				card + "statement_descriptor_suffix_kanji": "ATTRS2",
+			}),
+		))
+}
+
+// `amount_details.enforce_arithmetic_validation`, which Stripe takes and never returns, is kept
+// from configuration and changes in place, beside the amount details of the record's `update/3`
+// probe (suite: TestPaymentIntentAttributes): `false` on the create and `true` on the update, as
+// that probe sent them.
+func TestAccPaymentIntent_keptArithmeticValidation(t *testing.T) {
+	acct := acctest.NewAccount(t)
+	cfg := func(n int, enforce bool) string {
+		return fmt.Sprintf(`
+  amount_details = {
+    discount_amount               = %d
+    enforce_arithmetic_validation = %t
+    shipping = {
+      amount           = %d
+      from_postal_code = "94080"
+      to_postal_code   = "94610"
+    }
+    tax = { total_tax_amount = %d }
+  }
+`, n, enforce, n, n)
+	}
+	var path string
+	inPlace(t, acct, cfg(7, false), cfg(8, true),
+		resource.ComposeAggregateTestCheckFunc(
+			pathOf(&path),
+			resource.TestCheckResourceAttr(address, "amount_details.enforce_arithmetic_validation", "false"),
+		),
+		resource.ComposeAggregateTestCheckFunc(
+			resource.TestCheckResourceAttr(address, "amount_details.enforce_arithmetic_validation", "true"),
+			tfacc.Sent(t, acct, "POST", &path, map[string]string{"amount_details.enforce_arithmetic_validation": "true"}),
 		))
 }
 

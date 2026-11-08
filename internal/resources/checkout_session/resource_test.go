@@ -6,6 +6,7 @@ import (
 	"slices"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/hashicorp/terraform-plugin-testing/plancheck"
@@ -431,27 +432,123 @@ resource "stripe_checkout_session" "test" {
 	})
 }
 
-// What the product owner dropped of a session leaves it, and a configuration that sets it fails
-// validation (rule X6).
-func TestAccCheckoutSession_acceptedOnlyArgumentsAreGone(t *testing.T) {
-	acct := acctest.NewAccount(t)
-	for name, argument := range map[string]string{
-		"payment_method_data":  "payment_method_data = { allow_redisplay = \"always\" }",
-		"blik":                 "payment_method_options = { blik = { setup_future_usage = \"none\" } }",
-		"crypto":               "payment_method_options = { crypto = { setup_future_usage = \"none\" } }",
-		"demo_pay":             "payment_method_options = { demo_pay = { setup_future_usage = \"none\" } }",
-		"klarna.subscriptions": "payment_method_options = { klarna = { subscriptions = [] } }",
-		"p24":                  "payment_method_options = { p24 = { tos_shown_and_accepted = true } }",
-		"paypal":               "payment_method_options = { paypal = { risk_correlation_id = \"attrs\" } }",
+// sessionIn is a payment session of one line item in a currency other than the account's, from
+// inline price data. extra lands inside the session.
+func sessionIn(c acctest.Config, currency, extra string) string {
+	return c.ProviderBlock() + fmt.Sprintf(`
+resource "stripe_product" "test" {
+  name = %q
+}
+
+resource "stripe_checkout_session" "test" {
+  mode        = "payment"
+  success_url = "https://example.com/thanks"
+
+  line_items = [{
+    quantity   = 2
+    price_data = { currency = %q, product = stripe_product.test.id, unit_amount = 5000 }
+  }]
+%s}
+`, c.Name("Checkout product"), currency, extra)
+}
+
+// klarnaPlan is the payment method options of the record's `every_field/35` probe, which Stripe
+// takes and never returns (suite: TestCheckoutSessionAttributes), with Klarna's subscription in
+// interval: the enum values, the generated 7, the date `2035-01-15` and generated strings.
+func klarnaPlan(c acctest.Config, interval string) string {
+	return fmt.Sprintf(`  payment_method_options = {
+    crypto   = { setup_future_usage = "none" }
+    demo_pay = { setup_future_usage = "none" }
+    klarna = {
+      subscriptions = [{
+        interval       = %q
+        interval_count = 7
+        name           = %q
+        reference      = %q
+        next_billing   = { amount = 7, date = "2035-01-15" }
+      }]
+    }
+    paypal = { risk_correlation_id = %q }
+  }
+`, interval, c.Name("plan"), c.Name("plan-ref"), "attrs-risk-0001")
+}
+
+// The arguments of a session Stripe takes and never returns are kept from configuration: each
+// reaches Stripe on the create and plans cleanly after the apply. Each case is the context of the
+// record probe that sent it (suite: TestCheckoutSessionAttributes): `every_field/35` for the
+// payment session's crypto, demo pay, Klarna and PayPal options, `every_field/51` for BLIK in
+// `pln`, with an expiry 30 days out, `every_field/36` for Przelewy24 in `eur`, and `enums/42` for
+// the subscription session's `payment_method_data`. A session cannot be updated in them or
+// replaced, so changing one fails the plan, as for every other kept argument.
+func TestAccCheckoutSession_acceptedOnlyArgumentsAreKept(t *testing.T) {
+	expires := time.Now().Add(30 * 24 * time.Hour).Unix()
+	monthly := `[{
+    quantity   = 2
+    price_data = { currency = "usd", product = stripe_product.test.id, unit_amount = 5000, recurring = { interval = "month" } }
+  }]`
+	for _, tc := range []struct {
+		name    string
+		config  func(acctest.Config) string
+		sent    func(acctest.Config) map[string]string
+		changed func(acctest.Config) string
+	}{
+		{"payment", func(c acctest.Config) string { return sessionConfig(c, klarnaPlan(c, "day")) }, func(c acctest.Config) map[string]string {
+			return map[string]string{
+				"payment_method_options.crypto.setup_future_usage":                  "none",
+				"payment_method_options.demo_pay.setup_future_usage":                "none",
+				"payment_method_options.klarna.subscriptions.0.interval":            "day",
+				"payment_method_options.klarna.subscriptions.0.interval_count":      "7",
+				"payment_method_options.klarna.subscriptions.0.name":                c.Name("plan"),
+				"payment_method_options.klarna.subscriptions.0.reference":           c.Name("plan-ref"),
+				"payment_method_options.klarna.subscriptions.0.next_billing.amount": "7",
+				"payment_method_options.klarna.subscriptions.0.next_billing.date":   "2035-01-15",
+				"payment_method_options.paypal.risk_correlation_id":                 "attrs-risk-0001",
+			}
+		}, func(c acctest.Config) string { return sessionConfig(c, klarnaPlan(c, "month")) }},
+		{"blik", func(c acctest.Config) string {
+			return sessionIn(c, "pln", fmt.Sprintf("  payment_method_options = {\n    blik = {\n      setup_future_usage = \"none\"\n      mandate_options    = { expires_at = %d }\n    }\n  }\n", expires))
+		}, func(acctest.Config) map[string]string {
+			return map[string]string{
+				"payment_method_options.blik.setup_future_usage":         "none",
+				"payment_method_options.blik.mandate_options.expires_at": fmt.Sprint(expires),
+			}
+		}, nil},
+		{"p24", func(c acctest.Config) string {
+			return sessionIn(c, "eur", "  payment_method_options = {\n    p24 = {\n      setup_future_usage     = \"none\"\n      tos_shown_and_accepted = true\n    }\n  }\n")
+		}, func(acctest.Config) map[string]string {
+			return map[string]string{"payment_method_options.p24.tos_shown_and_accepted": "true"}
+		}, nil},
+		{"payment_method_data", func(c acctest.Config) string {
+			return strings.Replace(strings.Replace(sessionConfig(c, "  payment_method_data = { allow_redisplay = \"unspecified\" }\n"),
+				`mode        = "payment"`, `mode        = "subscription"`, 1), `[{
+    price    = stripe_price.test.id
+    quantity = 2
+  }]`, monthly, 1)
+		}, func(acctest.Config) map[string]string {
+			return map[string]string{"payment_method_data.allow_redisplay": "unspecified"}
+		}, nil},
 	} {
-		t.Run(name, func(t *testing.T) {
+		t.Run(tc.name, func(t *testing.T) {
+			acct := acctest.NewAccount(t)
+			createPath := "/v1/checkout/sessions"
+			steps := []resource.TestStep{
+				{
+					Config:           tc.config(acct),
+					ConfigPlanChecks: resource.ConfigPlanChecks{PostApplyPostRefresh: []plancheck.PlanCheck{plancheck.ExpectEmptyPlan()}},
+					Check:            tfacc.Sent(t, acct, "POST", &createPath, tc.sent(acct)),
+				},
+				{Config: tc.config(acct), PlanOnly: true},
+			}
+			if tc.changed != nil {
+				steps = append(steps, resource.TestStep{
+					Config:      tc.changed(acct),
+					PlanOnly:    true,
+					ExpectError: regexp.MustCompile("(?i)cannot delete a checkout session"),
+				})
+			}
 			resource.ParallelTest(t, resource.TestCase{
 				ProtoV6ProviderFactories: tfacc.ProviderFactories,
-				Steps: []resource.TestStep{{
-					Config:      sessionConfig(acct, "  "+argument+"\n"),
-					PlanOnly:    true,
-					ExpectError: regexp.MustCompile(`(?i)unsupported|Object Attribute|Invalid|Empty object|Incorrect attribute`),
-				}},
+				Steps:                    acctest.Forget(t, steps, nil, "stripe_checkout_session"),
 			})
 		})
 	}

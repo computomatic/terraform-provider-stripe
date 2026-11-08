@@ -751,26 +751,82 @@ func TestBesideReturnsAndKeptDiscountsFollowTheRecord(t *testing.T) {
 	lines := Leaf{Key: Key{Object: "quote", Side: SideResponse, Path: "line_items"}}
 	withLines := []Leaf{{Key: line}, {Key: top}, lines}
 	keptWithLines := append(slices.Clone(kept), Record{State: StateExposed, Class: ClassVerified})
-	if err := checkKeptDiscounts(Resource{Package: "quote"}, withLines, keptWithLines, p); err != nil {
+	if err := checkKeptDiscounts(Resource{Package: "quote"}, nil, withLines, keptWithLines, p); err != nil {
 		t.Errorf("forms read back as the record shows: %v", err)
 	}
 	p.Evidence.Discounts[1].HeldBy = "invoiceitem"
-	if err := checkKeptDiscounts(Resource{Package: "quote"}, withLines, keptWithLines, p); err == nil || !strings.Contains(err.Error(), "line_items.discounts.coupon") {
+	if err := checkKeptDiscounts(Resource{Package: "quote"}, nil, withLines, keptWithLines, p); err == nil || !strings.Contains(err.Error(), "line_items.discounts.coupon") {
 		t.Errorf("a line's discount another object holds: %v", err)
 	}
 	// A list the object never returns is kept from configuration: another object's holding is
 	// enough, and none is not.
-	if err := checkKeptDiscounts(Resource{Package: "quote"}, []Leaf{{Key: line}, {Key: top}}, kept, p); err != nil {
+	if err := checkKeptDiscounts(Resource{Package: "quote"}, nil, []Leaf{{Key: line}, {Key: top}}, kept, p); err != nil {
 		t.Errorf("a list never returned whose discount another object holds: %v", err)
 	}
 	p.Evidence.Discounts[1].HeldBy = ""
-	if err := checkKeptDiscounts(Resource{Package: "quote"}, []Leaf{{Key: line}, {Key: top}}, kept, p); err == nil || !strings.Contains(err.Error(), "never returns") {
+	if err := checkKeptDiscounts(Resource{Package: "quote"}, nil, []Leaf{{Key: line}, {Key: top}}, kept, p); err == nil || !strings.Contains(err.Error(), "never returns") {
 		t.Errorf("a list never returned whose discount no other object holds: %v", err)
 	}
 	p.Evidence.Discounts = p.Evidence.Discounts[:1]
 	p.Evidence.Discounts[0].Returned = "discount_hash"
-	if err := checkKeptDiscounts(Resource{Package: "quote"}, []Leaf{{Key: top}}, kept[:1], p); err == nil {
+	if err := checkKeptDiscounts(Resource{Package: "quote"}, nil, []Leaf{{Key: top}}, kept[:1], p); err == nil {
 		t.Error("a discount returned as a hash is kept")
+	}
+}
+
+// A field holding a leaf the gate exposes with no reason of its own is marked NotReturned, and so
+// is a hash or list whose every member is; a field the response returns too is not once the
+// record proves the response's leaf (`preference`), and is until then (`display`); nor is a hash
+// with a member that reads back, nor a form of a discounts list the engine reads back (D3). A form in a list element's
+// `discounts` the table does not read back, such as a subscription item's, is kept from
+// configuration, so checkKeptDiscounts asks nothing of the record for it.
+func TestMarkNotReturned(t *testing.T) {
+	table := []fields.Field{
+		{Name: "pmo", Shape: fields.Object, Create: true, Response: true, Fields: []fields.Field{
+			{Name: "klarna", Shape: fields.Object, Create: true, Response: true, Fields: []fields.Field{
+				{Name: "capture_method", Shape: fields.String, Create: true, Response: true},
+				{Name: "subscriptions", Shape: fields.ObjectList, Create: true, Fields: []fields.Field{
+					{Name: "interval", Shape: fields.String, Create: true},
+				}},
+			}},
+		}},
+		{Name: "discounts", Shape: fields.ObjectList, Create: true, Fields: []fields.Field{{Name: "coupon", Shape: fields.String, Create: true}}},
+		{Name: "card", Shape: fields.String, Update: true},
+		{Name: "preference", Shape: fields.String, Create: true, Update: true, Response: true},
+		{Name: "display", Shape: fields.String, Create: true, Update: true, Response: true},
+		{Name: "items", Shape: fields.ObjectList, Create: true, Response: true, Fields: []fields.Field{
+			{Name: "price", Shape: fields.String, Create: true, Response: true},
+			{Name: "discounts", Shape: fields.ObjectList, Create: true, Fields: []fields.Field{{Name: "coupon", Shape: fields.String, Create: true}}},
+		}},
+	}
+	leaf := func(path string) Leaf {
+		return Leaf{Key: Key{Object: "session", Side: SideRequest, Operation: "PostSessions", Path: path}, At: path}
+	}
+	card := leaf("card")
+	card.Operation = "PostSessionsId"
+	returned := Leaf{Key: Key{Object: "session", Side: SideResponse, Path: "preference"}, At: "preference"}
+	leaves := []Leaf{leaf("pmo.klarna.capture_method"), leaf("pmo.klarna.subscriptions.interval"), leaf("discounts.coupon"), leaf("items.discounts.coupon"), card, leaf("preference"), returned, leaf("display")}
+	kept := Record{State: StateExposed, Class: ClassAcceptedOnly}
+	records := []Record{{State: StateExposed, Class: ClassVerified}, kept, kept, kept, kept, kept, {State: StateExposed, Class: ClassProvenByTest}, kept}
+	markNotReturned(table, leaves, records, "PostSessions", "empty_string", nil)
+	for path, want := range map[string]bool{
+		"pmo": false, "pmo.klarna": false, "pmo.klarna.capture_method": false,
+		"pmo.klarna.subscriptions": true, "pmo.klarna.subscriptions.interval": true,
+		"discounts": false, "discounts.coupon": false,
+		"items": false, "items.discounts": true, "items.discounts.coupon": true,
+		"card": true, "preference": false, "display": true,
+	} {
+		if got := fieldAt(table, path).NotReturned; got != want {
+			t.Errorf("%s: NotReturned %t, want %t", path, got, want)
+		}
+	}
+	// The update's `card`, whose unset the record does not prove, is Optional and Computed, so
+	// that removing it sends nothing; a member of a hash is left to the hash's send.
+	if !fieldAt(table, "card").ServerDefaulted || fieldAt(table, "pmo.klarna.subscriptions.interval").ServerDefaulted {
+		t.Errorf("only the top-level `card` an update takes is server-defaulted")
+	}
+	if err := checkKeptDiscounts(Resource{Package: "session"}, table, leaves, records, &Pinned{Evidence: &Evidence{}}); err == nil || !strings.Contains(err.Error(), "discounts.coupon") || strings.Contains(err.Error(), "items.discounts.coupon") {
+		t.Errorf("only the top-level form needs the record's read-back: %v", err)
 	}
 }
 
@@ -783,11 +839,11 @@ func TestKeptDiscountsTakeAFormListedTwice(t *testing.T) {
 		{Object: "quote", Operation: "PostQuotes", Path: "discounts", Form: "coupon", ResponsePath: "line_items.data.discounts.discount", Returned: DiscountObject},
 	}}}
 	kept := []Record{{State: StateExposed, Class: ClassAcceptedOnly}}
-	if err := checkKeptDiscounts(Resource{Package: "quote"}, []Leaf{{Key: top}}, kept, p); err != nil {
+	if err := checkKeptDiscounts(Resource{Package: "quote"}, nil, []Leaf{{Key: top}}, kept, p); err != nil {
 		t.Errorf("a form listed at the quote and its lines: %v", err)
 	}
 	p.Evidence.Discounts = p.Evidence.Discounts[1:]
-	if err := checkKeptDiscounts(Resource{Package: "quote"}, []Leaf{{Key: top}}, kept, p); err == nil {
+	if err := checkKeptDiscounts(Resource{Package: "quote"}, nil, []Leaf{{Key: top}}, kept, p); err == nil {
 		t.Error("a form listed only at the lines is kept")
 	}
 }
@@ -878,9 +934,9 @@ func TestTogetherSetsFollowTheRecord(t *testing.T) {
 		records []Record
 		want    string
 	}{
-		"some exposed":      {[]Record{exposed, {State: StateAwaiting, Class: ClassUnproven}}, "exposes some members"},
-		"exposed unproven":  {[]Record{exposed, {State: StateExposed, Class: ClassUnproven}}, "the gate does not let it through"},
-		"exposed by the X6": {[]Record{exposed, {State: StateExposed, Class: ClassAcceptedOnly, Rule: RuleAcceptedOnly}}, "the gate does not let it through"},
+		"some exposed":            {[]Record{exposed, {State: StateAwaiting, Class: ClassUnproven}}, "exposes some members"},
+		"exposed unproven":        {[]Record{exposed, {State: StateExposed, Class: ClassUnproven}}, "the gate does not let it through"},
+		"exposed in the register": {[]Record{exposed, {State: StateExposed, Class: ClassAcceptedOnly, Rule: RuleRegister}}, "the gate does not let it through"},
 	} {
 		if err := markTogether(res, "setup_intent", "PostSetupIntents", "PostSetupIntentsIntent", table(), leaves, tc.records, p); err == nil || !strings.Contains(err.Error(), tc.want) {
 			t.Errorf("%s: %v, want %q", name, err, tc.want)

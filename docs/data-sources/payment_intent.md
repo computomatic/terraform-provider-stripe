@@ -84,6 +84,7 @@ This data source exports the following attributes in addition to the arguments a
 The `amount_details` attribute supports:
 
 * `discount_amount` - The total discount applied on the transaction represented in the [smallest currency unit](https://docs.stripe.com/currencies#zero-decimal). An integer greater than 0. This field is mutually exclusive with the `amount_details[line_items][#][discount_amount]` field.
+* `enforce_arithmetic_validation` -
 * `shipping` - See [`amount_details.shipping`](#amount_details.shipping) below.
 * `tax` - See [`amount_details.tax`](#amount_details.tax) below.
 * `tip` - See [`amount_details.tip`](#amount_details.tip) below.
@@ -754,10 +755,40 @@ The `payment_method_options.card` attribute supports:
 
 * `capture_method` - Controls when the funds will be captured from the customer's account. Possible values: `manual`.
 * `cvc_token` -
+* `installments` - See [`payment_method_options.card.installments`](#payment_method_options.card.installments) below.
+* `mandate_options` - See [`payment_method_options.card.mandate_options`](#payment_method_options.card.mandate_options) below.
 * `network` - Possible values: `amex`, `cartes_bancaires`, `diners`, `discover`, `eftpos_au`, `girocard`, `interac`, `jcb`, `link`, `mastercard`, `unionpay`, `unknown`, `visa`.
+* `request_extended_authorization` - Possible values: `if_available`, `never`.
+* `request_incremental_authorization` - Possible values: `if_available`, `never`.
+* `request_multicapture` - Possible values: `if_available`, `never`.
+* `request_overcapture` - Possible values: `if_available`, `never`.
 * `request_three_d_secure` - We strongly recommend that you rely on our SCA Engine to automatically prompt your customers for authentication based on risk level and [other requirements](https://docs.stripe.com/strong-customer-authentication). However, if you wish to request 3D Secure based on logic from your own fraud engine, provide this option. If not provided, this value defaults to `automatic`. Read our guide on [manually requesting 3D Secure](https://docs.stripe.com/payments/3d-secure/authentication-flow#manual-three-ds) for more information on how this configuration interacts with Radar and our SCA Engine. Possible values: `any`, `automatic`, `challenge`.
 * `require_cvc_recollection` - When enabled, using a card that is attached to a customer will require the CVC to be provided again (i.e. using the cvc_token parameter).
 * `setup_future_usage` - Indicates that you intend to make future payments with this PaymentIntent's payment method. If you provide a Customer with the PaymentIntent, you can use this parameter to [attach the payment method](https://docs.stripe.com/payments/save-during-payment) to the Customer after the PaymentIntent is confirmed and the customer completes any required actions. If you don't provide a Customer, you can still [attach](https://docs.stripe.com/api/payment_methods/attach) the payment method to a Customer after the transaction completes. If the payment method is `card_present` and isn't a digital wallet, Stripe creates and attaches a [generated_card](https://docs.stripe.com/api/charges/object#charge_object-payment_method_details-card_present-generated_card) payment method representing the card to the Customer instead. When processing card payments, Stripe uses `setup_future_usage` to help you comply with regional legislation and network rules, such as [SCA](https://docs.stripe.com/strong-customer-authentication). Possible values: `none`, `off_session`, `on_session`.
+* `statement_descriptor_suffix_kana` -
+* `statement_descriptor_suffix_kanji` -
+
+<a id="payment_method_options.card.installments"></a>
+### `payment_method_options.card.installments`
+
+The `payment_method_options.card.installments` attribute supports:
+
+* `enabled` -
+
+<a id="payment_method_options.card.mandate_options"></a>
+### `payment_method_options.card.mandate_options`
+
+The `payment_method_options.card.mandate_options` attribute supports:
+
+* `amount` -
+* `amount_type` - Possible values: `fixed`, `maximum`.
+* `description` -
+* `end_date` -
+* `interval` - Possible values: `day`, `month`, `sporadic`, `week`, `year`.
+* `interval_count` -
+* `reference` -
+* `start_date` -
+* `supported_types` -
 
 <a id="presentment_details"></a>
 ### `presentment_details`

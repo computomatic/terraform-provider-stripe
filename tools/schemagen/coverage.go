@@ -33,18 +33,20 @@ const (
 	RulePagedList  = "X3"
 	RuleRecursion  = "X4"
 	RuleConfirm    = "X5"
-	// RuleAcceptedOnly leaves out a leaf Stripe accepts and never returns.
-	RuleAcceptedOnly = "X6"
-	RuleRegister     = "register"
+	RuleRegister   = "register"
 )
 
+// keptFromConfiguration is the coverage report's reason for a leaf Stripe takes and never
+// returns that the gate exposes with no Resource.AcceptedOnly entry: the provider keeps it from
+// configuration (fields.Field.NotReturned).
+const keptFromConfiguration = "Stripe never returns it, and the provider keeps it from configuration."
+
 var ruleText = map[string]string{
-	RuleControl:      "request controls: top-level `expand` and `include`",
-	RuleTypeMarker:   "type markers: a response hash with no keys that no request writes",
-	RulePagedList:    "paged lists returned only when expanded: a list envelope the object does not require and no request writes",
-	RuleRecursion:    "the recursion cut: a schema met again on its own path, where it has no `id` to hold",
-	RuleConfirm:      "`confirm` where the declaration's `status` transition confirms",
-	RuleAcceptedOnly: "accepted only: Stripe takes it and never returns it, so a user could neither read it back nor see drift",
+	RuleControl:    "request controls: top-level `expand` and `include`",
+	RuleTypeMarker: "type markers: a response hash with no keys that no request writes",
+	RulePagedList:  "paged lists returned only when expanded: a list envelope the object does not require and no request writes",
+	RuleRecursion:  "the recursion cut: a schema met again on its own path, where it has no `id` to hold",
+	RuleConfirm:    "`confirm` where the declaration's `status` transition confirms",
 }
 
 // Record is one spec leaf of one table in internal/generated/coverage.json.
@@ -61,8 +63,8 @@ type Record struct {
 	// Rule is the exclusion rule or `register`. An exposed leaf with a rule is one exposed
 	// today that the rule removes before v0.1.0 (D6, Step 6).
 	Rule string `json:"rule,omitempty"`
-	// Reason is the register entry's reason, or the AcceptedOnly entry's that keeps a leaf X6
-	// would leave out.
+	// Reason is the register entry's reason, or the AcceptedOnly entry's that gives an accepted-only
+	// leaf a reason of its own.
 	Reason string `json:"reason,omitempty"`
 	// Class is the leaf's class in the pinned spec/attributes.json.
 	Class string `json:"class,omitempty"`
@@ -188,8 +190,6 @@ func coverTable(spec *Spec, res Resource, ev *Pinned) (*tableCoverage, error) {
 				r.Reason = reason
 			} else if reason, ok := res.AcceptedOnly[l.Operation+" "+l.Path]; ok {
 				r.Reason = reason
-			} else {
-				r.Rule = RuleAcceptedOnly
 			}
 		}
 		if exposable(r.Class) && r.Rule == "" {
@@ -213,13 +213,12 @@ func coverTable(spec *Spec, res Resource, ev *Pinned) (*tableCoverage, error) {
 	if ev != nil {
 		ev.facts(res, object, create, update, leaves, g)
 	}
-	g.dropCreate, g.dropUpdate = dropped(leaves, records, create), dropped(leaves, records, update)
 	baseline, err := Build(spec, res)
 	if err != nil {
 		return nil, err
 	}
 	tc.table = baseline
-	if len(g.create)+len(g.update)+len(g.response)+len(g.dropCreate)+len(g.dropUpdate) > 0 {
+	if len(g.create)+len(g.update)+len(g.response) > 0 {
 		if tc.table, err = buildGated(spec, res, g); err != nil {
 			return nil, err
 		}
@@ -251,7 +250,7 @@ func coverTable(spec *Spec, res Resource, ev *Pinned) (*tableCoverage, error) {
 	if err := checkBesideReturns(res.Package, leaves, records, ev); err != nil {
 		return nil, err
 	}
-	if err := checkKeptDiscounts(res, leaves, records, ev); err != nil {
+	if err := checkKeptDiscounts(res, tc.table, leaves, records, ev); err != nil {
 		return nil, err
 	}
 	if err := checkHashUnsets(res, object, update, tc.table, ev); err != nil {
@@ -263,6 +262,7 @@ func coverTable(spec *Spec, res Resource, ev *Pinned) (*tableCoverage, error) {
 	if update != "" {
 		markSiblingsCleared(object, tc.table, ev)
 	}
+	markNotReturned(tc.table, leaves, records, create, unsetFor(res), ev)
 	for i, l := range leaves {
 		r := &records[i]
 		if d := defaultOf(l, *r, create, leaves, records, ev); d != nil {
@@ -300,32 +300,117 @@ func fieldAt(table []fields.Field, path string) *fields.Field {
 	return nil
 }
 
-// exposable reports a class the gate lets through: verified, or accepted only where the rule that
-// leaves those out has not, because Resource.AcceptedOnly allows the leaf.
+// exposable reports a class the gate lets through: verified, or accepted only, which the provider
+// keeps from configuration unless Resource.AcceptedOnly gives a reason of its own.
 func exposable(class string) bool {
 	return class == ClassVerified || class == ClassAcceptedOnly
 }
 
-// dropped is the table paths that rule X6 takes out of the request of one operation: those with
-// a leaf the rule leaves out and no other on or below them.
-func dropped(leaves []Leaf, records []Record, operation string) map[string]bool {
-	out, stays := map[string]bool{}, map[string]bool{}
+// markNotReturned marks each field that holds an exposed request leaf Stripe takes and never
+// returns, with no Resource.AcceptedOnly reason of its own, so that the engine keeps it from
+// configuration and its docs say so. A field the response returns too is marked only until the
+// record proves the response's leaf at its path: once that leaf is `verified` or
+// `proven_by_test`, such as a customer payment method's `card.exp_month`, the engine reads it
+// back, so that a change made outside Terraform shows as drift. Until then, as for most payment
+// methods' `display_preference.preference`, whose response the fake does not serve, it is kept
+// (the product owner's decision of 2026-11-07). A form of a list of discounts is marked
+// only where the table does not read the list back (keptList): elsewhere the engine reads it back
+// from the discounts Stripe returns (D3), which checkKeptDiscounts checks. A hash or list whose
+// every member is marked is marked too, so that a response that returns it null, as Stripe
+// returns a session's `payment_method_options.klarna` that sets only `subscriptions`, keeps it.
+//
+// A marked top-level field an update takes whose update leaf the record does not show Stripe
+// unsetting, as the engine sends the unset, to null or absent is Optional and Computed
+// (ServerDefaulted), as E2 makes an argument whose unset is not proven: removing it from the
+// configuration leaves the current value and sends nothing. So is a marked top-level hash whose
+// every member's unset is not proven. A member of a hash is not: an update sends the hash, whole
+// or by the members that change, and leaves a removed member out rather than unsetting it.
+func markNotReturned(table []fields.Field, leaves []Leaf, records []Record, create, unsetBy string, ev *Pinned) {
+	readBack := map[string]bool{}
 	for i, l := range leaves {
-		if l.Side != SideRequest || l.Operation != operation {
+		if l.Side == SideResponse && (records[i].Class == ClassVerified || records[i].Class == ClassProvenByTest) {
+			readBack[l.At] = true
+		}
+	}
+	unproven := map[string]bool{}
+	for i, l := range leaves {
+		r := records[i]
+		if l.Side != SideRequest || r.State != StateExposed || r.Class != ClassAcceptedOnly || r.Reason != "" {
 			continue
 		}
-		into := stays
-		if records[i].Rule == RuleAcceptedOnly {
-			into = out
+		if _, _, ok := discountForm(l.Path); ok && !keptList(table, l.At) {
+			continue
 		}
-		for p := l.At; p != ""; p = parentPath(p) {
-			into[p] = true
+		f := fieldAt(table, l.At)
+		if f == nil || f.Response && readBack[l.At] {
+			continue
+		}
+		f.NotReturned = true
+		if l.Operation != create && !unsetProven(ev, l.Key, unsetBy) {
+			unproven[l.At] = true
 		}
 	}
-	for p := range stays {
-		delete(out, p)
+	markKeptHashes(table, "", unproven)
+}
+
+// unsetProven reports whether the record shows Stripe unsetting an update leaf, sent as unsetBy,
+// to null or absent.
+func unsetProven(ev *Pinned, k Key, unsetBy string) bool {
+	if ev == nil {
+		return false
 	}
-	return out
+	e := ev.leaf(k)
+	return e != nil && e.Unset != nil && e.Unset.By == unsetBy && (e.Unset.Result == "null" || e.Unset.Result == "absent")
+}
+
+// markKeptHashes marks each writable hash or list of hashes whose members are all NotReturned,
+// and makes ServerDefaulted each marked top-level field an update takes whose unset is not
+// proven: a leaf in unproven, by table path, or a hash whose members all are.
+func markKeptHashes(table []fields.Field, prefix string, unproven map[string]bool) {
+	for i := range table {
+		f := &table[i]
+		at := prefix + f.AttrName()
+		if len(f.Fields) > 0 {
+			markKeptHashes(f.Fields, at+".", unproven)
+			if f.Writable() && !slices.ContainsFunc(f.Fields, func(k fields.Field) bool { return !k.NotReturned }) {
+				f.NotReturned = true
+				if f.Update && !slices.ContainsFunc(f.Fields, func(k fields.Field) bool { return k.Update && !unproven[at+"."+k.AttrName()] }) {
+					unproven[at] = true
+				}
+			}
+		}
+		if prefix == "" && f.NotReturned && f.Update && !f.Required && unproven[at] {
+			f.ServerDefaulted = true
+		}
+	}
+}
+
+// keptList reports whether the table path of a form of a list of discounts sits in a list
+// element's `discounts` that the response does not return in the request's shape, such as a
+// subscription item's, which Stripe returns as discount IDs: the engine reads nothing of it back
+// and keeps it from configuration. The top-level `discounts` the engine always maps back (D3).
+func keptList(table []fields.Field, at string) bool {
+	list := parentPath(at)
+	if !strings.Contains(list, ".") {
+		return false
+	}
+	f := fieldAt(table, list)
+	return f != nil && !f.Response
+}
+
+// discountForm splits a request path that names a form of a list of discounts, such as
+// `discounts.coupon` or `line_items.discounts.promotion_code`, into the list and the form.
+func discountForm(path string) (list, form string, ok bool) {
+	list, form, ok = strings.Cut(path, ".discounts.")
+	if ok {
+		list += ".discounts"
+	} else {
+		list, form, ok = strings.Cut(path, ".")
+	}
+	if !ok || discountRelations[form] == "" || !strings.HasSuffix(list, "discounts") {
+		return "", "", false
+	}
+	return list, form, true
 }
 
 // annotate records on the table's fields the default of each optional argument an exposed
@@ -491,7 +576,7 @@ var (
 // the update takes, which needs no evidence, or else what the pinned evidence records for a
 // verified one. A leaf only the update takes is an optional argument even where its hash in the
 // update requires it, because the create never sends it, and so is one whose create leaf is not
-// exposed: rule X6 leaves it out, or the gate exposes only the update's.
+// exposed: the register leaves it out, or the gate exposes only the update's.
 func defaultOf(l Leaf, r Record, create string, leaves []Leaf, records []Record, ev *Pinned) *fields.Default {
 	if l.Side != SideRequest || r.State != StateExposed {
 		return nil
@@ -1245,19 +1330,20 @@ func takenApart(t Together, effects []SideEffect) bool {
 // table's own object. The engine maps either back by what each form names (D3). A list the object
 // never returns, such as a subscription's `add_invoice_items`, the provider keeps from
 // configuration and reads nothing back of, so its form need only be one the record shows Stripe
-// holding on another object (`held_by`), as the invoice item the subscription adds.
-func checkKeptDiscounts(res Resource, leaves []Leaf, records []Record, ev *Pinned) error {
+// holding on another object (`held_by`), as the invoice item the subscription adds. A form the gate
+// exposes with no entry of its own in a list element's `discounts` that the table does not read
+// back, such as a subscription item's, whose response holds discount IDs where the request holds
+// hashes, the provider keeps from configuration too (keptList).
+func checkKeptDiscounts(res Resource, table []fields.Field, leaves []Leaf, records []Record, ev *Pinned) error {
 	if ev == nil {
 		return nil
 	}
 	for i, l := range leaves {
-		list, form, ok := strings.Cut(l.Path, ".discounts.")
-		if ok {
-			list += ".discounts"
-		} else {
-			list, form, ok = strings.Cut(l.Path, ".")
+		list, form, ok := discountForm(l.Path)
+		if !ok || l.Side != SideRequest || records[i].State != StateExposed || records[i].Class != ClassAcceptedOnly {
+			continue
 		}
-		if !ok || l.Side != SideRequest || records[i].State != StateExposed || records[i].Class != ClassAcceptedOnly || discountRelations[form] == "" || !strings.HasSuffix(list, "discounts") {
+		if records[i].Reason == "" && keptList(table, l.At) {
 			continue
 		}
 		if element := strings.TrimSuffix(list, ".discounts"); list != "discounts" && !returnedAt(leaves, element) {
@@ -1593,8 +1679,8 @@ func checkAcceptedOnly(resources []Resource, records []Record) error {
 // checkRequiredMembers fails on a hash a table exposes without a member its request requires, in
 // the same union branch: no configuration could send the hash. The member is a leaf, or a hash
 // the table holds nothing of because every leaf of its own is left out, as a schedule's
-// `pause_schedules.pause.pause_at`, whose leaves rule X6 leaves out. The register leaves such a
-// hash out.
+// `pause_schedules.pause.pause_at` would be if the register left out its leaves alone. The
+// register leaves such a hash out.
 func checkRequiredMembers(records []Record) error {
 	hash := func(r Record, p string) string {
 		return r.Table + " " + r.Operation + " " + r.Branch + " " + p
@@ -1889,11 +1975,15 @@ func RenderCoverageMarkdown(h coverageHeader, records []Record) []byte {
 		b.WriteString("None.\n")
 	}
 
-	b.WriteString("\n## Accepted only and kept\n\nStripe takes these leaves and never returns them; `Resource.AcceptedOnly` keeps each in spite of rule X6, for the reason given.\n\n")
+	b.WriteString("\n## Accepted only and kept\n\nStripe takes these leaves and never returns them. The gate exposes each, and the provider keeps it from configuration unless `Resource.AcceptedOnly` gives a reason of its own, such as another attribute that shows its effect (D1).\n\n")
 	n = 0
 	for _, r := range records {
 		if r.State == StateExposed && r.Class == ClassAcceptedOnly {
-			fmt.Fprintf(&b, "%s: %s\n", line(r), r.Reason)
+			reason := r.Reason
+			if reason == "" {
+				reason = keptFromConfiguration
+			}
+			fmt.Fprintf(&b, "%s: %s\n", line(r), reason)
 			n++
 		}
 	}
@@ -1902,7 +1992,7 @@ func RenderCoverageMarkdown(h coverageHeader, records []Record) []byte {
 	}
 
 	b.WriteString("\n## Excluded\n")
-	for _, rl := range []string{RuleControl, RuleTypeMarker, RulePagedList, RuleRecursion, RuleConfirm, RuleAcceptedOnly, RuleRegister} {
+	for _, rl := range []string{RuleControl, RuleTypeMarker, RulePagedList, RuleRecursion, RuleConfirm, RuleRegister} {
 		var lines []string
 		for _, r := range records {
 			if r.State == StateExcluded && r.Rule == rl {

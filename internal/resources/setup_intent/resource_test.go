@@ -5,6 +5,7 @@ import (
 	"os"
 	"regexp"
 	"testing"
+	"time"
 
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/hashicorp/terraform-plugin-testing/plancheck"
@@ -186,6 +187,116 @@ resource "stripe_setup_intent" "test" {
 					resource.TestCheckResourceAttr(address, "allowed_payment_method_types.1", "link"),
 				),
 			},
+		}, nil, "stripe_setup_intent"),
+	})
+}
+
+// The card options Stripe takes and never returns are kept from configuration: they plan cleanly
+// after the apply, and an update that changes them sends the new values in place. The values are
+// those of the record's `update/26` probe (suite: TestSetupIntentAttributes), its create and its
+// update, on an intent with nothing else: the enum values, the generated 7 and 8, the account's
+// currency, a start and end date 30 days out, `india`, and generated strings for the description
+// and the reference.
+func TestAccSetupIntent_keptCardOptions(t *testing.T) {
+	acct := acctest.NewAccount(t)
+	at := time.Now().Add(30 * 24 * time.Hour).Unix()
+	description, reference := acct.Name("mandate"), acct.Name("mandate-ref")
+	cfg := func(amount int, amountType, interval string, every int, secure string) string {
+		return acct.ProviderBlock() + fmt.Sprintf(`
+resource "stripe_setup_intent" "test" {
+  payment_method_options = {
+    card = {
+      request_three_d_secure = %q
+      mandate_options = {
+        amount          = %d
+        amount_type     = %q
+        currency        = "usd"
+        description     = %q
+        start_date      = %d
+        end_date        = %d
+        interval        = %q
+        interval_count  = %d
+        reference       = %q
+        supported_types = ["india"]
+      }
+    }
+  }
+}
+`, secure, amount, amountType, description, at, at, interval, every, reference)
+	}
+	var first, path string
+	card := "payment_method_options.card."
+	empty := []plancheck.PlanCheck{plancheck.ExpectEmptyPlan()}
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: tfacc.ProviderFactories,
+		Steps: acctest.Forget(t, []resource.TestStep{
+			{
+				Config:           cfg(7, "fixed", "day", 7, "any"),
+				ConfigPlanChecks: resource.ConfigPlanChecks{PostApplyPostRefresh: empty},
+				Check: resource.ComposeAggregateTestCheckFunc(
+					idOf(&first), pathOf(&path),
+					resource.TestCheckResourceAttr(address, card+"request_three_d_secure", "any"),
+					resource.TestCheckResourceAttr(address, card+"mandate_options.amount", "7"),
+					resource.TestCheckResourceAttr(address, card+"mandate_options.currency", "usd"),
+					resource.TestCheckResourceAttr(address, card+"mandate_options.supported_types.0", "india"),
+				),
+			},
+			{
+				Config: cfg(8, "maximum", "month", 8, "automatic"),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply:             []plancheck.PlanCheck{plancheck.ExpectResourceAction(address, plancheck.ResourceActionUpdate)},
+					PostApplyPostRefresh: empty,
+				},
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttrPtr(address, "id", &first),
+					resource.TestCheckResourceAttr(address, card+"request_three_d_secure", "automatic"),
+					resource.TestCheckResourceAttr(address, card+"mandate_options.amount_type", "maximum"),
+					resource.TestCheckResourceAttr(address, card+"mandate_options.interval_count", "8"),
+					tfacc.Sent(t, acct, "POST", &path, map[string]string{
+						card + "request_three_d_secure":            "automatic",
+						card + "mandate_options.amount":            "8",
+						card + "mandate_options.amount_type":       "maximum",
+						card + "mandate_options.currency":          "usd",
+						card + "mandate_options.description":       description,
+						card + "mandate_options.interval":          "month",
+						card + "mandate_options.interval_count":    "8",
+						card + "mandate_options.reference":         reference,
+						card + "mandate_options.supported_types.0": "india",
+					}),
+				),
+			},
+		}, nil, "stripe_setup_intent"),
+	})
+}
+
+// A single-use setup, which Stripe takes on the create alone and never returns, is kept from
+// configuration and plans cleanly after the apply, with the record's 500 in the account's
+// currency (suite: TestSetupIntentAttributes, probe `every_field/39`). Changing it would need a new
+// intent, which the resource refuses, so no update sends it.
+func TestAccSetupIntent_keptSingleUse(t *testing.T) {
+	acct := acctest.NewAccount(t)
+	cfg := acct.ProviderBlock() + `
+resource "stripe_setup_intent" "test" {
+  single_use = {
+    amount   = 500
+    currency = "usd"
+  }
+}
+`
+	createPath := "/v1/setup_intents"
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: tfacc.ProviderFactories,
+		Steps: acctest.Forget(t, []resource.TestStep{
+			{
+				Config:           cfg,
+				ConfigPlanChecks: resource.ConfigPlanChecks{PostApplyPostRefresh: []plancheck.PlanCheck{plancheck.ExpectEmptyPlan()}},
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr(address, "single_use.amount", "500"),
+					resource.TestCheckResourceAttr(address, "single_use.currency", "usd"),
+					tfacc.Sent(t, acct, "POST", &createPath, map[string]string{"single_use.amount": "500", "single_use.currency": "usd"}),
+				),
+			},
+			{Config: cfg, PlanOnly: true},
 		}, nil, "stripe_setup_intent"),
 	})
 }

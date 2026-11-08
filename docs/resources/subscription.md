@@ -247,7 +247,9 @@ The `cancellation_details` attribute supports:
 
 The `discounts` attribute is a list. Each element supports:
 
+* `coupon` - (Optional)
 * `discount` - (Optional) Stripe refused it on a US account on create: "No such discount: 'di_...'".
+* `promotion_code` - (Optional)
 
 <a id="invoice_settings"></a>
 ### `invoice_settings`
@@ -289,7 +291,7 @@ The `items` attribute is a list. Each element supports:
 * `current_period_start` - (Read-Only) The start time of this subscription item's current billing period.
 * `current_trial` - (Optional) The current trial that is applied to this subscription item. See [`items.current_trial`](#items.current_trial) below.
 * `deleted` - (Optional) Default: not sent.
-* `discounts` - (Optional) Removing it from the configuration lets Stripe set it when the list is next sent. See [`items.discounts`](#items.discounts) below.
+* `discounts` - (Optional) Changing it replaces the resource. Removing it from the configuration leaves the current value. See [`items.discounts`](#items.discounts) below.
 * `id` - (Optional) Unique identifier for the object. Default: not sent. Removing it from the configuration lets Stripe set it when the list is next sent.
 * `metadata` - (Optional) Set of [key-value pairs](https://docs.stripe.com/api/metadata) that you can attach to an object. This can be useful for storing additional information about the object in a structured format. Removing it from the configuration lets Stripe set it when the list is next sent.
 * `object` - (Read-Only) String representing the object's type. Objects of the same type share the same value. Possible values: `subscription_item`.
@@ -320,7 +322,9 @@ The `items.current_trial` attribute supports:
 
 The `items.discounts` attribute is a list. Each element supports:
 
-* `discount` - (Optional) Changing it replaces the resource. Stripe refused it on a US account on create: "No such discount: 'di_...'".
+* `coupon` - (Optional) Stripe does not return this value; the provider keeps it from configuration. Stripe takes a coupon that has not expired. Elsewhere Stripe refused it on a US account on create: "Coupon attrs_expired is expired and cannot be applied.".
+* `discount` - (Optional) Stripe refused it on a US account on create: "No such discount: 'di_...'".
+* `promotion_code` - (Optional) Stripe does not return this value; the provider keeps it from configuration. Stripe takes an active promotion code. Elsewhere Stripe refused it on a US account on create: "This promotion code is inactive.".
 
 <a id="items.price_data"></a>
 ### `items.price_data`
@@ -896,4 +900,4 @@ Using `terraform import`, import a subscription using its ID. For example:
 % terraform import stripe_subscription.team sub_123
 ```
 
-~> Importing a subscription adopts every item it has, so a configuration that lists fewer items deletes the rest on the next apply. An imported subscription holds `trial_end` and `cancel_at` as the times Stripe returns, so a configuration that sets `trial_end` to `now`, or `cancel_at` to one of its strings, plans an update. Stripe does not return `add_invoice_items`, `items.clear_usage`, `items.deleted`, `items.discounts`, `items.price_data`, `off_session`, `payment_behavior`, `proration_behavior`, `proration_date`, `trial_from_plan`, `backdate_start_date` or `trial_period_days`, so an imported subscription has them null: a configuration that sets `add_invoice_items`, `items.clear_usage`, `items.deleted`, `items.discounts`, `items.price_data`, `off_session`, `payment_behavior`, `proration_behavior`, `proration_date` or `trial_from_plan` plans an update after the import, and one that sets `backdate_start_date` or `trial_period_days` plans a replacement.
+~> Importing a subscription adopts every item it has, so a configuration that lists fewer items deletes the rest on the next apply. An imported subscription holds `trial_end` and `cancel_at` as the times Stripe returns, so a configuration that sets `trial_end` to `now`, or `cancel_at` to one of its strings, plans an update. Stripe does not return `add_invoice_items`, `items.clear_usage`, `items.deleted`, `items.price_data`, `off_session`, `payment_behavior`, `proration_behavior`, `proration_date`, `trial_from_plan`, `backdate_start_date`, `trial_period_days` or `items.discounts`, so an imported subscription has them null: a configuration that sets `add_invoice_items`, `items.clear_usage`, `items.deleted`, `items.price_data`, `off_session`, `payment_behavior`, `proration_behavior`, `proration_date` or `trial_from_plan` plans an update after the import, and one that sets `backdate_start_date` or `trial_period_days` plans a replacement. The import reads whether each element has any `items.discounts`: setting it on an element that has none replaces the subscription, and on one that has some, whose form the provider cannot read, takes the configured value with nothing sent; changing it later replaces the subscription, and so does a configured value not known until apply.

@@ -39,6 +39,7 @@ This data source exports the following attributes in addition to the arguments a
 * `amount_remaining` - The difference between amount_due and amount_paid, in cents (or local equivalent).
 * `amount_shipping` - This is the sum of all the shipping amounts.
 * `application` - ID of the Connect Application that created the invoice.
+* `application_fee_amount` - A fee in cents (or local equivalent) that will be applied to the invoice and transferred to the application owner's Stripe account. The request must be made with an OAuth key or the Stripe-Account header in order to take an application fee. For more information, see the application fees [documentation](https://docs.stripe.com/billing/invoices/connect#collecting-fees).
 * `attempt_count` - Number of payment attempts made for this invoice, from the perspective of the payment retry schedule. Any payment attempt counts as the first attempt, and subsequently only automatic retries increment the attempt count. In other words, manual payment attempts after the first attempt do not affect the retry schedule. If a failure is returned with a non-retryable return code, the invoice can no longer be retried unless a new payment method is obtained. Retries will continue to be scheduled, and attempt_count will continue to increment, but retries will only be executed if a new payment method is obtained.
 * `attempted` - Whether an attempt has been made to pay the invoice. An invoice is not attempted until 1 hour after the `invoice.created` webhook, for example, so you might not want to display that invoice as unpaid to your users.
 * `auto_advance` - Controls whether Stripe performs [automatic collection](https://docs.stripe.com/invoicing/integration/automatic-advancement-collection) of the invoice. If `false`, the invoice's state doesn't automatically advance without an explicit action. Defaults to false.
@@ -108,6 +109,7 @@ This data source exports the following attributes in addition to the arguments a
 * `total_excluding_tax` - The integer amount in cents (or local equivalent) representing the total amount of the invoice including all discounts but excluding all tax.
 * `total_pretax_credit_amounts` - Contains pretax credit amounts (ex: discount, credit grants, etc) that apply to this invoice. This is a combined list of total_pretax_credit_amounts across all invoice line items. See [`total_pretax_credit_amounts`](#total_pretax_credit_amounts) below.
 * `total_taxes` - The aggregate tax information of all line items. See [`total_taxes`](#total_taxes) below.
+* `transfer_data` - If specified, the funds from the invoice will be transferred to the destination and the ID of the resulting transfer will be found on the invoice's charge. See [`transfer_data`](#transfer_data) below.
 * `webhooks_delivered_at` - Invoices are automatically paid or sent 1 hour after webhooks are delivered, or until all webhook delivery attempts have [been exhausted](https://docs.stripe.com/billing/webhooks#understand). This field tracks the time when webhooks for this invoice were successfully delivered. If the invoice had no webhooks to deliver, this will be set while the invoice is being created.
 
 <a id="automatic_tax"></a>
@@ -478,6 +480,16 @@ The `payment_settings.payment_method_options.card` attribute supports:
 The `payment_settings.payment_method_options.card.installments` attribute supports:
 
 * `enabled` - Whether Installments are enabled for this Invoice.
+* `plan` - See [`payment_settings.payment_method_options.card.installments.plan`](#payment_settings.payment_method_options.card.installments.plan) below.
+
+<a id="payment_settings.payment_method_options.card.installments.plan"></a>
+### `payment_settings.payment_method_options.card.installments.plan`
+
+The `payment_settings.payment_method_options.card.installments.plan` attribute supports:
+
+* `count` -
+* `interval` - Possible values: `month`.
+* `type` - Possible values: `bonus`, `fixed_count`, `revolving`.
 
 <a id="payment_settings.payment_method_options.customer_balance"></a>
 ### `payment_settings.payment_method_options.customer_balance`
@@ -810,3 +822,11 @@ The `total_taxes` attribute is a list. Each element supports:
 The `total_taxes.tax_rate_details` attribute supports:
 
 * `tax_rate` - ID of the tax rate
+
+<a id="transfer_data"></a>
+### `transfer_data`
+
+The `transfer_data` attribute supports:
+
+* `amount` -
+* `destination` -

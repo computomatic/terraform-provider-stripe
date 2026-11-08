@@ -77,6 +77,12 @@ type Field struct {
 	// Sensitive is true for a value Stripe never returns and reports only as set, through a
 	// `<name>_provided` flag beside it in the response.
 	Sensitive bool
+	// NotReturned is true for an argument the evidence gate exposes although Stripe takes it and
+	// never returns it (class `verified_accepted_only`, with no register entry of its own), or
+	// where the record has not proven the response's value: the provider keeps it from
+	// configuration, as PreserveConfig keeps a value, and its docs say so (ADR
+	// 2026-10-29-full-attribute-coverage, D1).
+	NotReturned bool
 	// DataSource is the field as the data source reads it, where the response gives it another
 	// shape than the request does (an account's `capabilities`: `requested` flags in,
 	// statuses out). The resource keeps the request's shape and the configured value.

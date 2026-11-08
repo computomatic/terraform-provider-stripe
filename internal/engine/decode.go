@@ -40,7 +40,10 @@ type decoder struct {
 	// ownDiscounts are the IDs of the discounts the object itself holds, which Stripe lists on
 	// each line too and which no line's `discounts` holds.
 	ownDiscounts map[string]bool
-	diags        diag.Diagnostics
+	// listedKept are the kept members of keyed lists' elements whose response form the record
+	// proves (listedKept), read as empty where Stripe lists none.
+	listedKept []*node
+	diags      diag.Diagnostics
 }
 
 // decodeState maps the response onto the top-level attribute object. prior is the plan
@@ -50,7 +53,7 @@ type decoder struct {
 // keep limits each keyed list to the elements the resource manages (see managedKeys); nil
 // keeps all of them.
 func (m *model) decodeState(body wire.Object, prior basetypes.ObjectValue, objType basetypes.ObjectType, dataSource bool, keep map[string]*managedSet) (basetypes.ObjectValue, diag.Diagnostics) {
-	d := decoder{dataSource: dataSource, matchBy: m.keyedLists(), matchData: m.decl.MatchData, keep: keep, fixed: m.decl.FixedKeys, discounts: m.discounts, lineDiscounts: m.lineDiscounts}
+	d := decoder{dataSource: dataSource, matchBy: m.keyedLists(), matchData: m.decl.MatchData, keep: keep, fixed: m.decl.FixedKeys, discounts: m.discounts, lineDiscounts: m.lineDiscounts, listedKept: m.listedKept()}
 	if f := m.decl.KeepWhenClosed; f != "" {
 		d.closed, _ = body.GetBool(f)
 	}
@@ -138,6 +141,8 @@ func (d *decoder) node(n *node, w wire.Value, prior attr.Value) attr.Value {
 		switch {
 		case n.Preserve && known(prior):
 			return prior
+		case slices.Contains(d.listedKept, n) && !known(prior):
+			return keptFromListed(n, w)
 		case !n.Response && !n.Once:
 			if known(prior) {
 				return prior
@@ -168,6 +173,20 @@ func (d *decoder) node(n *node, w wire.Value, prior attr.Value) attr.Value {
 		return nullOf(attrType(n))
 	}
 	return v
+}
+
+// keptFromListed is a kept member the state holds no value of, such as an imported item's
+// `discounts`, read from what the response lists in its place: an empty list where Stripe lists
+// none, so that a configured value differs from it and replaces the object, and null where Stripe
+// lists some, whose forms the provider cannot read, so that a configured value is adopted.
+func keptFromListed(n *node, w wire.Value) attr.Value {
+	if arr, ok := w.(wire.Array); ok && len(arr) == 0 {
+		v, diags := types.ListValue(objectType(n.Kids), nil)
+		if !diags.HasError() {
+			return v
+		}
+	}
+	return nullOf(attrType(n))
 }
 
 func isAbsent(w wire.Value) bool {

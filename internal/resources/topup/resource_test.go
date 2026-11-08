@@ -175,3 +175,17 @@ func TestAccTopup_cancel(t *testing.T) {
 		}, nil, "stripe_topup"),
 	})
 }
+
+// A top-up from a bank account token, the record's `btok_us_verified` (suite: TestTopupAttributes,
+// probe `every_field/2`), keeps the token in state: Stripe never returns it as sent.
+func TestAccTopup_source(t *testing.T) {
+	acct := acctest.NewAccount(t)
+	cfg := topupConfig(acct, 100, "  source = \"btok_us_verified\"\n")
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: tfacc.ProviderFactories,
+		Steps: acctest.Forget(t, []resource.TestStep{
+			{Config: cfg, Check: resource.TestCheckResourceAttr(resAddress, "source", "btok_us_verified")},
+			{Config: cfg, PlanOnly: true},
+		}, nil, "stripe_topup"),
+	})
+}

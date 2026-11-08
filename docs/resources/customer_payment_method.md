@@ -3,12 +3,12 @@
 page_title: "stripe_customer_payment_method Resource - Stripe"
 subcategory: ""
 description: |-
-  A payment method attached to a customer. The resource is the attachment. The payment method itself is not created here, because creating one takes raw card data: create it with Stripe.js or a SetupIntent, or use a Stripe test payment method such as pm_card_visa, and give its ID as payment_method. Attaching a test payment method returns a new payment method, so the id can differ from payment_method. Only allow_redisplay, billing_details, card.networks.preferred and metadata change in place; Stripe's other updatable payment method fields are read-only here.
+  A payment method attached to a customer. The resource is the attachment. The payment method itself is not created here, because creating one takes raw card data: create it with Stripe.js or a SetupIntent, or use a Stripe test payment method such as pm_card_visa, and give its ID as payment_method. Attaching a test payment method returns a new payment method, so the id can differ from payment_method. Only allow_redisplay, billing_details, card.exp_month, card.exp_year, card.networks.preferred and metadata change in place; Stripe's other updatable payment method fields are read-only here.
 ---
 
 # Resource: stripe_customer_payment_method
 
-A payment method attached to a customer. The resource is the attachment. The payment method itself is not created here, because creating one takes raw card data: create it with Stripe.js or a SetupIntent, or use a Stripe test payment method such as `pm_card_visa`, and give its ID as `payment_method`. Attaching a test payment method returns a new payment method, so the `id` can differ from `payment_method`. Only `allow_redisplay`, `billing_details`, `card.networks.preferred` and `metadata` change in place; Stripe's other updatable payment method fields are read-only here.
+A payment method attached to a customer. The resource is the attachment. The payment method itself is not created here, because creating one takes raw card data: create it with Stripe.js or a SetupIntent, or use a Stripe test payment method such as `pm_card_visa`, and give its ID as `payment_method`. Attaching a test payment method returns a new payment method, so the `id` can differ from `payment_method`. Only `allow_redisplay`, `billing_details`, `card.exp_month`, `card.exp_year`, `card.networks.preferred` and `metadata` change in place; Stripe's other updatable payment method fields are read-only here.
 
 ~> Stripe has no delete for the attachment of a payment method to a customer, only a detach, which is final: a detached payment method cannot be attached again. `terraform destroy`, and a change that would replace the customer payment method, fail at plan time. To stop managing a customer payment method, remove it from the state as [Removing from State](#removing-from-state) shows; it stays in the Stripe account.
 
@@ -83,8 +83,8 @@ The `card` attribute supports:
 * `checks` - (Read-Only) Checks on Card address and CVC if provided. See [`card.checks`](#card.checks) below.
 * `country` - (Read-Only) Two-letter ISO code representing the country of the card. You could use this attribute to get a sense of the international breakdown of cards you've collected.
 * `display_brand` - (Read-Only) The brand to use when displaying the card, this accounts for customer's brand choice on dual-branded cards. Can be `american_express`, `cartes_bancaires`, `diners_club`, `discover`, `eftpos_australia`, `interac`, `jcb`, `mastercard`, `union_pay`, `visa`, or `other` and may contain more values in the future.
-* `exp_month` - (Read-Only) Two-digit number representing the card's expiration month.
-* `exp_year` - (Read-Only) Four-digit number representing the card's expiration year.
+* `exp_month` - (Optional) Two-digit number representing the card's expiration month. Default: not sent. Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
+* `exp_year` - (Optional) Four-digit number representing the card's expiration year. Default: not sent. Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
 * `fingerprint` - (Read-Only) Uniquely identifies this particular card number. You can use this attribute to check whether two customers who’ve signed up with you are using the same card number, for example. For payment methods that tokenize card information (Apple Pay, Google Pay), the tokenized number might be provided instead of the underlying card number. *As of May 1, 2021, card fingerprint in India for Connect changed to allow two fingerprints for the same card---one for India and one for the rest of the world.*
 * `funding` - (Read-Only) Card funding type. Can be `credit`, `debit`, `prepaid`, or `unknown`.
 * `generated_from` - (Read-Only) Details of the original PaymentMethod that created this object. See [`card.generated_from`](#card.generated_from) below.

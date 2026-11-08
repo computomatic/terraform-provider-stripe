@@ -31,7 +31,9 @@ func docsTable() []fields.Field {
 		}},
 		fields.Field{Name: "lines", Shape: fields.Object, Response: true, PagedBy: "stripe_widget_line", Description: "The lines.", Fields: []fields.Field{
 			{Name: "has_more", Shape: fields.Bool, Response: true},
-		}})
+		}},
+		fields.Field{Name: "referrer", Shape: fields.String, Create: true, NotReturned: true},
+		fields.Field{Name: "display", Shape: fields.String, Create: true, Response: true, NotReturned: true})
 }
 
 // The page of an optional argument states its default: the evidence's, or the declaration's
@@ -40,7 +42,8 @@ func docsTable() []fields.Field {
 // one in a list element, stable or not, Stripe sets when the list is sent again, and any other
 // the provider stops sending. An argument only the update takes is marked so that docgen
 // refuses it without a statement, and an embedded copy names the data source of the copied
-// object.
+// object. An argument Stripe never returns says the provider keeps it from configuration, which
+// it does as PreserveConfig keeps a value, and one the response holds says why it is kept.
 func TestAttributeDocs(t *testing.T) {
 	decl := fixtureDeclaration()
 	decl.Defaults = map[string]string{"quantity": "one per line of the parent"}
@@ -63,10 +66,16 @@ func TestAttributeDocs(t *testing.T) {
 		"lines":         {},
 		"address.line1": {},
 		"default_ref":   {NeedsDefault: true, Removal: RemovalNotSent},
+		"referrer":      {NotReturned: NotReturnedDoc},
+		"display":       {NotReturned: NotProvenDoc},
 	} {
 		if got[path] != want {
 			t.Errorf("%s: %+v, want %+v", path, got[path], want)
 		}
+	}
+
+	if n, ok := r.m.top("referrer"); !ok || !n.Preserve {
+		t.Errorf("referrer is not kept from configuration: %+v", n)
 	}
 
 	ds, err := NewDataSource(decl, docsTable())
