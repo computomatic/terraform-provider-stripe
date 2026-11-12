@@ -9,7 +9,7 @@ import "github.com/computomatic/terraform-provider-stripe/internal/fields"
 var Table = []fields.Field{
 	{Name: "brand", Shape: fields.String, Response: true, Description: "The brand of the card."},
 	{Name: "cancellation_reason", Shape: fields.String, Update: true, Response: true, Stable: true, Enum: []string{"lost", "stolen"}, Description: "Reason why the `status` of this card is `canceled`.", Default: &fields.Default{Kind: fields.DefaultNotSent}},
-	{Name: "cardholder", Shape: fields.String, Required: true, Create: true, Response: true, Description: "The [Cardholder](https://docs.stripe.com/api#issuing_cardholder_object) object with which the card will be associated."},
+	{Name: "cardholder", Shape: fields.String, Required: true, Create: true, Response: true, Description: "The [Cardholder](https://docs.stripe.com/api#issuing_cardholder_object) object with which the card will be associated.", ReadBy: "stripe_issuing_cardholder"},
 	{Name: "created", Shape: fields.Int, Response: true, Description: "Time at which the object was created. Measured in seconds since the Unix epoch."},
 	{Name: "currency", Shape: fields.String, Required: true, Create: true, Response: true, Description: "The currency for the card."},
 	{Name: "cvc", Shape: fields.String, Response: true, Description: "The card's CVC. For security reasons, this is only available for virtual cards, and will be omitted unless you explicitly request it with [the `expand` parameter](https://docs.stripe.com/api/expanding_objects). Additionally, it's only available via the [\"Retrieve a card\" endpoint](https://docs.stripe.com/api/issuing/cards/retrieve), not via \"List all cards\" or any other endpoint."},

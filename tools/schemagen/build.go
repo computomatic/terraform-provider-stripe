@@ -78,9 +78,11 @@ type Resource struct {
 	DocsFrom map[string]string
 	// Exclude is the exclusion register (ADR 2026-10-29-full-attribute-coverage, D1): a dotted
 	// path, whose leaves on either side and in any union branch are left out, or after an
-	// operation ID and a space those of that operation's request alone, to the reason,
-	// which names its evidence (a suite test, a Stripe doc URL or a framework limit). The
-	// product owner approves each new entry in review.
+	// operation ID and a space those of that operation's request alone, or followed by `.*`
+	// the leaves below the path but not the path itself (the members of a copy the table holds
+	// as its ID, rule X7, which no data source reads), to the reason, which names its evidence
+	// (a suite test, a Stripe doc URL or a framework limit). The product owner approves each
+	// new entry in review.
 	Exclude map[string]string
 	// AcceptedOnly gives a leaf of class `verified_accepted_only`, which the gate exposes and the
 	// provider otherwise keeps from configuration (fields.Field.NotReturned), a reason of its own:

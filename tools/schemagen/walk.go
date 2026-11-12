@@ -82,6 +82,13 @@ type Leaf struct {
 	// Target names the copied object of an embedded copy, the element object of a paged
 	// list, or the schema a recursion meets.
 	Target string
+	// Schema is the component schema of an embedded copy, which rule X7 walks into its members
+	// where the table holds the copy as its ID.
+	Schema string
+	// Reference is, on a member of a copy the table holds as its ID (rule X7), the key of the
+	// copy, whose union branch a union inside the copied object does not replace; the zero Key
+	// on any other leaf.
+	Reference Key
 	// BranchAt is the path of the union that names Branch.
 	BranchAt string
 	// At is where the table holds the leaf, and PointAt where it holds the union at
@@ -324,7 +331,7 @@ func (w *walker) walk(sc *Schema, path string, br union, c carried) error {
 			return w.leaf(Leaf{Kind: KindRecursion, Target: name}, path, br, c)
 		}
 		if object := objectName(name, target); object != "" && len(w.stack) > 0 && !w.hashes[path] {
-			return w.leaf(Leaf{Kind: KindEmbedded, Target: object}, path, br, c)
+			return w.leaf(Leaf{Kind: KindEmbedded, Target: object, Schema: name}, path, br, c)
 		}
 		w.stack = append(w.stack, name)
 		defer func() { w.stack = w.stack[:len(w.stack)-1] }()

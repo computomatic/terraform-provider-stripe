@@ -38,13 +38,13 @@ This data source exports the following attributes in addition to the arguments a
 * `metadata` - Set of [key-value pairs](https://docs.stripe.com/api/metadata) that you can attach to an object. This can be useful for storing additional information about the object in a structured format. Individual keys can be unset by posting an empty value to them. All keys can be unset by posting an empty value to `metadata`.
 * `off_session` - Indicates if a customer is on or off-session while an invoice payment is attempted. Defaults to `false` (on-session).
 * `payment_behavior` - Controls how Stripe handles payment when a subscription update requires payment and `collection_method=charge_automatically`. Possible values: `allow_incomplete`, `default_incomplete`, `error_if_incomplete`, `pending_if_incomplete`.
-* `price` - The ID of the price object.
+* `price` - The ID of the price object. Stripe returns the whole price here; the provider holds its ID. Read the price with the `stripe_price` data source.
 * `price_data` - Data used to generate a new [Price](https://docs.stripe.com/api/prices) object inline. See [`price_data`](#price_data) below.
 * `proration_behavior` - Determines how to handle [prorations](https://docs.stripe.com/billing/subscriptions/prorations) when the billing cycle changes (e.g., when switching plans, resetting `billing_cycle_anchor=now`, or starting a trial), or if an item's `quantity` changes. The default value is `create_prorations`. Possible values: `always_invoice`, `create_prorations`, `none`.
 * `proration_date` - If set, the proration will be calculated as though the subscription was updated at the given time. This can be used to apply the same proration that was previewed with the [upcoming invoice](https://docs.stripe.com/api/invoices/create_preview) endpoint.
 * `quantity` - The quantity you'd like to apply to the subscription item you're creating.
 * `subscription` - The identifier of the subscription to modify.
-* `tax_rates` - A list of [Tax Rate](https://docs.stripe.com/api/tax_rates) ids. These Tax Rates will override the [`default_tax_rates`](https://docs.stripe.com/api/subscriptions/create#create_subscription-default_tax_rates) on the Subscription. When updating, pass an empty string to remove previously-defined tax rates.
+* `tax_rates` - A list of [Tax Rate](https://docs.stripe.com/api/tax_rates) ids. These Tax Rates will override the [`default_tax_rates`](https://docs.stripe.com/api/subscriptions/create#create_subscription-default_tax_rates) on the Subscription. When updating, pass an empty string to remove previously-defined tax rates. Stripe returns each tax rate whole here; the provider holds their IDs. Read each with the `stripe_tax_rate` data source.
 
 <a id="billing_thresholds"></a>
 ### `billing_thresholds`

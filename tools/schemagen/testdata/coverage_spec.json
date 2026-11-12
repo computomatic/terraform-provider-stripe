@@ -41,6 +41,12 @@
         }}}},
         "responses": {"200": {"content": {"application/json": {"schema": {"$ref": "#/components/schemas/gadget"}}}}}
       }
+    },
+    "/v1/gadget_prices/{price}": {
+      "get": {
+        "operationId": "GetGadgetPricesPrice",
+        "responses": {"200": {"content": {"application/json": {"schema": {"$ref": "#/components/schemas/gadget_price"}}}}}
+      }
     }
   },
   "components": {

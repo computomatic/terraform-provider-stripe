@@ -63,7 +63,7 @@ This data source exports the following attributes in addition to the arguments a
 * `days_until_due` - The number of days from when the invoice is created until it is due. Valid only for invoices where `collection_method=send_invoice`.
 * `default_payment_method` - ID of the default payment method for the invoice. It must belong to the customer associated with the invoice. If not set, defaults to the subscription's default payment method, if any, or to the default payment method in the customer's invoice settings.
 * `default_source` - ID of the default payment source for the invoice. It must belong to the customer associated with the invoice and be in a chargeable state. If not set, defaults to the subscription's default source, if any, or to the customer's default source.
-* `default_tax_rates` - The tax rates that will apply to any line item that does not have `tax_rates` set.
+* `default_tax_rates` - The tax rates that will apply to any line item that does not have `tax_rates` set. Stripe returns each tax rate whole here; the provider holds their IDs. Read each with the `stripe_tax_rate` data source.
 * `description` - An arbitrary string attached to the object. Often useful for displaying to users. Referenced as 'memo' in the Dashboard.
 * `discounts` - The discounts applied to the invoice. Line item discounts are applied before invoice discounts. Use `expand[]=discounts` to expand each discount.
 * `due_date` - The date on which payment for this invoice is due. Valid only for invoices where `collection_method=send_invoice`.

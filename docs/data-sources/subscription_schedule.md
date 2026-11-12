@@ -264,7 +264,7 @@ The `phases` attribute is a list. Each element supports:
 * `collection_method` - Either `charge_automatically`, or `send_invoice`. When charging automatically, Stripe will attempt to pay the underlying subscription at the end of each billing cycle using the default source attached to the customer. When sending an invoice, Stripe will email your customer an invoice with payment instructions and mark the subscription as `active`. Possible values: `charge_automatically`, `send_invoice`.
 * `currency` - Three-letter [ISO currency code](https://www.iso.org/iso-4217-currency-codes.html), in lowercase. Must be a [supported currency](https://stripe.com/docs/currencies).
 * `default_payment_method` - ID of the default payment method for the subscription schedule. It must belong to the customer associated with the subscription schedule. If not set, invoices will use the default payment method in the customer's invoice settings.
-* `default_tax_rates` - The default tax rates to apply to the subscription during this phase of the subscription schedule.
+* `default_tax_rates` - The default tax rates to apply to the subscription during this phase of the subscription schedule. Stripe returns each tax rate whole here; the provider holds their IDs. Read each with the `stripe_tax_rate` data source.
 * `description` - Subscription description, meant to be displayable to the customer. Use this field to optionally store an explanation of the subscription for rendering in Stripe surfaces and certain local payment methods UIs.
 * `discounts` - The stackable discounts that will be applied to the subscription on this phase. Subscription item discounts are applied before subscription discounts. See [`phases.discounts`](#phases.discounts) below.
 * `duration` - See [`phases.duration`](#phases.duration) below.
@@ -291,7 +291,7 @@ The `phases.add_invoice_items` attribute is a list. Each element supports:
 * `price` - ID of the price used to generate the invoice item.
 * `price_data` - See [`phases.add_invoice_items.price_data`](#phases.add_invoice_items.price_data) below.
 * `quantity` - The quantity of the invoice item.
-* `tax_rates` - The tax rates which apply to the item. When set, the `default_tax_rates` do not apply to this item.
+* `tax_rates` - The tax rates which apply to the item. When set, the `default_tax_rates` do not apply to this item. Stripe returns each tax rate whole here; the provider holds their IDs. Read each with the `stripe_tax_rate` data source.
 
 <a id="phases.add_invoice_items.discounts"></a>
 ### `phases.add_invoice_items.discounts`
@@ -418,7 +418,7 @@ The `phases.items` attribute is a list. Each element supports:
 * `price` - ID of the price to which the customer should be subscribed.
 * `price_data` - See [`phases.items.price_data`](#phases.items.price_data) below.
 * `quantity` - Quantity of the plan to which the customer should be subscribed.
-* `tax_rates` - The tax rates which apply to this `phase_item`. When set, the `default_tax_rates` on the phase do not apply to this `phase_item`.
+* `tax_rates` - The tax rates which apply to this `phase_item`. When set, the `default_tax_rates` on the phase do not apply to this `phase_item`. Stripe returns each tax rate whole here; the provider holds their IDs. Read each with the `stripe_tax_rate` data source.
 
 <a id="phases.items.billing_thresholds"></a>
 ### `phases.items.billing_thresholds`

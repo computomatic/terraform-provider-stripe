@@ -7,7 +7,7 @@ import "github.com/computomatic/terraform-provider-stripe/internal/fields"
 
 // Table lists every request and response field of the object.
 var Table = []fields.Field{
-	{Name: "entitlement_feature", Shape: fields.String, Required: true, Create: true, Response: true, Description: "The ID of the [Feature](https://docs.stripe.com/api/entitlements/feature) object attached to this product."},
+	{Name: "entitlement_feature", Shape: fields.String, Required: true, Create: true, Response: true, Description: "The ID of the [Feature](https://docs.stripe.com/api/entitlements/feature) object attached to this product.", ReadBy: "stripe_entitlements_feature"},
 	{Name: "id", Shape: fields.String, Response: true, Description: "Unique identifier for the object."},
 	{Name: "livemode", Shape: fields.Bool, Response: true, Description: "If the object exists in live mode, the value is `true`. If the object exists in test mode, the value is `false`."},
 }

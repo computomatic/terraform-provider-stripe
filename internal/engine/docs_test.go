@@ -7,8 +7,8 @@ import (
 	"github.com/computomatic/terraform-provider-stripe/internal/fields"
 )
 
-// docsTable is the fixture table with the evidence's defaults, an embedded copy and a list
-// Stripe returns a page at a time.
+// docsTable is the fixture table with the evidence's defaults, an embedded copy, a list Stripe
+// returns a page at a time, and IDs of objects Stripe returns whole (rule X7).
 func docsTable() []fields.Field {
 	table := fixtureTable()
 	for i := range table {
@@ -32,6 +32,8 @@ func docsTable() []fields.Field {
 		fields.Field{Name: "lines", Shape: fields.Object, Response: true, PagedBy: "stripe_widget_line", Description: "The lines.", Fields: []fields.Field{
 			{Name: "has_more", Shape: fields.Bool, Response: true},
 		}},
+		fields.Field{Name: "price", Shape: fields.String, Response: true, ReadBy: "stripe_widget_price", Description: "The price."},
+		fields.Field{Name: "tax_rates", Shape: fields.ScalarList, Elem: fields.String, Response: true, ReadBy: "stripe_tax_rate", Description: "The tax rates."},
 		fields.Field{Name: "referrer", Shape: fields.String, Create: true, NotReturned: true},
 		fields.Field{Name: "display", Shape: fields.String, Create: true, Response: true, NotReturned: true})
 }
@@ -90,6 +92,19 @@ func TestAttributeDocs(t *testing.T) {
 	const paged = "The lines. Holds the first page of the list Stripe returns with the object; `has_more` is true when there are more. Read every element with the `stripe_widget_line` data source."
 	if d := r.m.describeResource(kidNamed(&node{Kids: r.m.nodes}, "lines")); d != paged {
 		t.Errorf("lines: %q", d)
+	}
+
+	for name, want := range map[string]string{
+		"price":     "The price. Stripe returns the whole widget price here; the provider holds its ID. Read the widget price with the `stripe_widget_price` data source.",
+		"tax_rates": "The tax rates. Stripe returns each tax rate whole here; the provider holds their IDs. Read each with the `stripe_tax_rate` data source.",
+	} {
+		n := kidNamed(&node{Kids: r.m.nodes}, name)
+		if d := r.m.describeResource(n); d != want {
+			t.Errorf("%s on the resource: %q", name, d)
+		}
+		if d := describe(n); d != want {
+			t.Errorf("%s on the data source: %q", name, d)
+		}
 	}
 }
 

@@ -30,5 +30,5 @@ This data source supports the following arguments:
 
 This data source exports the following attributes in addition to the arguments above:
 
-* `entitlement_feature` - The ID of the [Feature](https://docs.stripe.com/api/entitlements/feature) object attached to this product.
+* `entitlement_feature` - The ID of the [Feature](https://docs.stripe.com/api/entitlements/feature) object attached to this product. Stripe returns the whole entitlements feature here; the provider holds its ID. Read the entitlements feature with the `stripe_entitlements_feature` data source.
 * `livemode` - If the object exists in live mode, the value is `true`. If the object exists in test mode, the value is `false`.

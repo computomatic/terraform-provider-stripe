@@ -45,7 +45,7 @@ This data source exports the following attributes in addition to the arguments a
 
 * `brand` - The brand of the card.
 * `cancellation_reason` - Reason why the `status` of this card is `canceled`. Possible values: `lost`, `stolen`.
-* `cardholder` - The [Cardholder](https://docs.stripe.com/api#issuing_cardholder_object) object with which the card will be associated.
+* `cardholder` - The [Cardholder](https://docs.stripe.com/api#issuing_cardholder_object) object with which the card will be associated. Stripe returns the whole issuing cardholder here; the provider holds its ID. Read the issuing cardholder with the `stripe_issuing_cardholder` data source.
 * `created` - Time at which the object was created. Measured in seconds since the Unix epoch.
 * `currency` - The currency for the card.
 * `cvc` - (Sensitive) The card's CVC. For security reasons, this is only available for virtual cards, and will be omitted unless you explicitly request it with [the `expand` parameter](https://docs.stripe.com/api/expanding_objects). Additionally, it's only available via the ["Retrieve a card" endpoint](https://docs.stripe.com/api/issuing/cards/retrieve), not via "List all cards" or any other endpoint.

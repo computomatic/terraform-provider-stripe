@@ -452,7 +452,11 @@ var Resources = []Resource{
 	{Package: "payout", CreatePath: "/v1/payouts", UpdatePath: "/v1/payouts/{payout}"},
 	// The create's `source` is the ID of a legacy source, which the suite has not proven; the
 	// response's is the source object, which stays readable.
-	{Package: "topup", CreatePath: "/v1/topups", UpdatePath: "/v1/topups/{topup}", ReadOnly: []string{"source"}},
+	// Stripe returns a top-up's `source` as the whole Source, whose ID the table holds; no data
+	// source reads a Source, so rule X7 cannot leave its members to one (decided by the product
+	// owner, 2026-11-12).
+	{Package: "topup", CreatePath: "/v1/topups", UpdatePath: "/v1/topups/{topup}", ReadOnly: []string{"source"},
+		Exclude: map[string]string{"source.*": "The Source Stripe returns whole at `source`, whose ID the provider holds: Stripe has deprecated the Sources API (\"We've deprecated the Sources API and plan to remove support.\", https://docs.stripe.com/sources), and no data source reads a Source."}},
 	{Package: "radar_early_fraud_warning", ReadPath: "/v1/radar/early_fraud_warnings/{early_fraud_warning}"},
 	{Package: "review", ReadPath: "/v1/reviews/{review}"},
 	{Package: "invoice_payment", ReadPath: "/v1/invoice_payments/{invoice_payment}"},
