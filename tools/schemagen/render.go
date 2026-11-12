@@ -179,6 +179,9 @@ func writeLiteral(b *strings.Builder, f fields.Field) {
 	if f.PagedBy != "" {
 		fmt.Fprintf(b, ", PagedBy: %s", strconv.Quote(f.PagedBy))
 	}
+	if f.ReadBy != "" {
+		fmt.Fprintf(b, ", ReadBy: %s", strconv.Quote(f.ReadBy))
+	}
 	if m := f.MapUpdate; m != nil {
 		fmt.Fprintf(b, ", MapUpdate: &fields.MapUpdate{Replaced: %t, EmptyKept: %t}", m.Replaced, m.EmptyKept)
 	}

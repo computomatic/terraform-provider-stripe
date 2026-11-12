@@ -115,6 +115,9 @@ type Field struct {
 	// PagedBy is, on a list Stripe returns a page at a time on every read, the type that reads
 	// every element (D3).
 	PagedBy string
+	// ReadBy is, on an attribute that holds the ID, or the IDs, of an object Stripe returns whole
+	// at its path, the data source type that reads that object (rule X7).
+	ReadBy string
 	// MapUpdate is, on a map an update takes, how the pinned evidence shows Stripe updating it
 	// (the record's `map`), or nil where it shows nothing.
 	MapUpdate *MapUpdate

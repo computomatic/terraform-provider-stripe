@@ -63,9 +63,9 @@ func byKey(tc *tableCoverage) map[string]Record {
 }
 
 // The walk keys leaves as the suite and the fake do, and gives every leaf a state: the rules
-// X1 to X5 by name, a nested object the request writes as a hash walked into its leaves, one
-// written as an ID kept as one embedded-copy leaf, a list envelope as one leaf, unions by
-// branch and the response's own `object` left out.
+// X1 to X5 and X7 by name, a nested object the request writes as a hash walked into its leaves,
+// one written as an ID kept as one embedded-copy leaf whose members X7 leaves out, a list
+// envelope as one leaf, unions by branch and the response's own `object` left out.
 func TestCoverageWalkKeysRulesAndStates(t *testing.T) {
 	type want struct {
 		state    State
@@ -92,6 +92,8 @@ func TestCoverageWalkKeysRulesAndStates(t *testing.T) {
 		"response/gadget/id":                             {StateExposed, "", "string", false},
 		"response/gadget/owner.verified":                 {StateExposed, "", "boolean", false},
 		"response/gadget/price":                          {StateExposed, "", "embedded", false},
+		"response/gadget/price.id":                       {StateExcluded, RuleReferenceCopy, "string", false},
+		"response/gadget/price.unit_amount":              {StateExcluded, RuleReferenceCopy, "integer", false},
 		"response/gadget/customer":                       {StateExposed, "", "reference", false},
 		"response/gadget/parts":                          {StateExposed, "", "paged_list", false},
 		"response/gadget/extras":                         {StateExposed, RulePagedList, "paged_list", false},
@@ -111,13 +113,13 @@ func TestCoverageWalkKeysRulesAndStates(t *testing.T) {
 			t.Errorf("%s: %s %q %s required=%v, want %s %q %s required=%v", k, r.State, r.Rule, r.Shape, r.Required, w.state, w.rule, w.shape, w.required)
 		}
 	}
-	for _, k := range []string{"response/gadget/object", "response/gadget/price.unit_amount", "response/gadget/parts.has_more", "request/PostGadgets/source"} {
+	for _, k := range []string{"response/gadget/object", "response/gadget/parts.has_more", "request/PostGadgets/source"} {
 		if _, ok := got[k]; ok {
 			t.Errorf("%s: walked, want it left out or held by a leaf above it", k)
 		}
 	}
-	if len(got) != 41 {
-		t.Errorf("%d leaves, want 41", len(got))
+	if len(got) != 43 {
+		t.Errorf("%d leaves, want 43", len(got))
 	}
 }
 
@@ -811,7 +813,7 @@ func TestGenerateWritesTheCoverageReport(t *testing.T) {
 		{"no evidence pinned", fixtureRoot(t, nil, nil), false, "No evidence is pinned"},
 		{"evidence pinned", fixtureRoot(t, a, e), true, "Evidence: fake `v9.9.9`, suite commit `abc123`, run `42`."},
 	} {
-		files, err := Generate(tc.root, []Resource{trimmed()})
+		files, err := Generate(tc.root, []Resource{trimmed(), gadgetPrice()})
 		if err != nil {
 			t.Fatalf("%s: %v", tc.name, err)
 		}
@@ -837,6 +839,172 @@ func TestGenerateWritesTheCoverageReport(t *testing.T) {
 		if !strings.Contains(got["internal/generated/coverage.md"], tc.evidence) {
 			t.Errorf("%s: coverage.md does not say %q", tc.name, tc.evidence)
 		}
+	}
+}
+
+// gadgetPrice is the fixture table of the price a gadget holds as its ID.
+func gadgetPrice() Resource {
+	return Resource{Package: "gadget_price", ReadPath: "/v1/gadget_prices/{price}"}
+}
+
+// Rule X7 leaves out the members of a copy the table holds as its ID and names the data source
+// that reads the copied object, on the members and on the field, whose docs line says so.
+// Generation fails where no table, or more than one, reads the object, unless a register entry
+// below the path leaves the members out, which leaves the ID itself exposed, and where the
+// table holds the object at a path the request writes as an ID.
+func TestReferenceCopiesNameTheirDataSource(t *testing.T) {
+	report := func(files []File) (map[string]Record, string) {
+		t.Helper()
+		out, table := map[string]Record{}, ""
+		for _, f := range files {
+			switch f.Path {
+			case "internal/generated/coverage.json":
+				var r struct {
+					Leaves []Record `json:"leaves"`
+				}
+				if err := json.Unmarshal(f.Content, &r); err != nil {
+					t.Fatal(err)
+				}
+				for _, l := range r.Leaves {
+					out[l.Key.String()] = l
+				}
+			case filepath.Join("internal", "generated", "gadget", "fields.go"):
+				table = string(f.Content)
+			}
+		}
+		return out, table
+	}
+
+	files, err := Generate(fixtureRoot(t, nil, nil), []Resource{trimmed(), gadgetPrice()})
+	if err != nil {
+		t.Fatal(err)
+	}
+	got, table := report(files)
+	for _, k := range []string{"response/gadget/price.id", "response/gadget/price.unit_amount"} {
+		if r := got[k]; r.State != StateExcluded || r.Rule != RuleReferenceCopy || r.ReadBy != "stripe_gadget_price" {
+			t.Errorf("%s: %s %q read by %q, want excluded by X7, read by stripe_gadget_price", k, r.State, r.Rule, r.ReadBy)
+		}
+	}
+	if r := got["response/gadget/price"]; r.State != StateExposed || r.ReadBy != "" {
+		t.Errorf("the ID: %s, read by %q", r.State, r.ReadBy)
+	}
+	if !strings.Contains(table, `ReadBy: "stripe_gadget_price"`) {
+		t.Error("the table's price field does not name its data source")
+	}
+
+	if _, err := Generate(fixtureRoot(t, nil, nil), []Resource{trimmed()}); err == nil || !strings.Contains(err.Error(), `"price.*"`) {
+		t.Errorf("no table reads the price: %v", err)
+	}
+	twice := gadgetPrice()
+	twice.Package = "gadget_price_again"
+	if _, err := Generate(fixtureRoot(t, nil, nil), []Resource{trimmed(), gadgetPrice(), twice}); err == nil || !strings.Contains(err.Error(), "2 tables read that object (stripe_gadget_price, stripe_gadget_price_again)") {
+		t.Errorf("two tables read the price: %v", err)
+	}
+	held := trimmed()
+	held.ReadOnly = append(held.ReadOnly, "price")
+	if _, err := coverTable(coverageSpec(t), held, nil); err == nil || !strings.Contains(err.Error(), "the request sends response/gadget/price as an ID, but the table holds the object") {
+		t.Errorf("a table that holds the object at an ID path: %v", err)
+	}
+
+	excluded := trimmed()
+	excluded.Exclude = map[string]string{"price.*": "No data source reads a gadget price (fixture)."}
+	if files, err = Generate(fixtureRoot(t, nil, nil), []Resource{excluded}); err != nil {
+		t.Fatalf("the register leaves the members out: %v", err)
+	}
+	got, table = report(files)
+	if r := got["response/gadget/price.unit_amount"]; r.State != StateExcluded || r.Rule != RuleRegister || r.ReadBy != "" {
+		t.Errorf("a member the register leaves out: %s %q read by %q", r.State, r.Rule, r.ReadBy)
+	}
+	for _, k := range []string{"response/gadget/price", "request/PostGadgets/price"} {
+		if r := got[k]; r.State != StateExposed {
+			t.Errorf("%s: %s, want the ID still exposed", k, r.State)
+		}
+	}
+	if strings.Contains(table, "ReadBy") {
+		t.Error("a copy the register leaves out names a data source")
+	}
+}
+
+// A copy at an ID path is keyed by its union branch too, so that the members of each branch of a
+// union of two objects take the reader of their own branch's object, and a union inside the
+// copied object does not change which copy a member belongs to.
+func TestReferenceCopiesAreKeyedByBranch(t *testing.T) {
+	copyAt := func(branch, target string) Leaf {
+		return Leaf{Key: Key{Object: "gadget", Side: SideResponse, Path: "payee", Branch: branch}, Kind: KindEmbedded, Target: target, At: "payee"}
+	}
+	member := func(c Leaf, path, branch string) Leaf {
+		return Leaf{Key: Key{Object: "gadget", Side: SideResponse, Path: path, Branch: branch}, Kind: KindScalar, Reference: c.Key}
+	}
+	person, company := copyAt("person", "person"), copyAt("company", "company")
+	tc := &tableCoverage{object: "gadget", leaves: []Leaf{
+		person, member(person, "payee.name", "person"), member(person, "payee.address.line1", "street"),
+		company, member(company, "payee.name", "company"), member(company, "payee.address.line1", "street"),
+	}}
+	for _, l := range tc.leaves {
+		r := Record{Key: l.Key}
+		if l.Reference != (Key{}) {
+			r.Rule = RuleReferenceCopy
+		}
+		tc.records = append(tc.records, r)
+	}
+	if err := annotateReferences(tc, map[string][]string{"person": {"stripe_person"}, "company": {"stripe_company"}}); err != nil {
+		t.Fatal(err)
+	}
+	for i, want := range []string{"", "stripe_person", "stripe_person", "", "stripe_company", "stripe_company"} {
+		if got := tc.records[i].ReadBy; got != want {
+			t.Errorf("%s: read by %q, want %q", tc.leaves[i].Key, got, want)
+		}
+	}
+}
+
+// Every member rule X7 leaves out is read by the data source it names: the reader's table
+// exposes the same path below the copy, but for `object`, which no table holds (architecture ADR,
+// D7). Read from the checked-in report, which TestGeneratedFilesAreCurrent keeps current.
+func TestReferenceCopyReadersHoldTheirMembers(t *testing.T) {
+	data, err := os.ReadFile(filepath.Join(repoRoot, "internal", "generated", "coverage.json"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	var report struct {
+		Leaves []Record `json:"leaves"`
+	}
+	if err := json.Unmarshal(data, &report); err != nil {
+		t.Fatal(err)
+	}
+	type at struct{ table, path string }
+	responses := map[at]Record{}
+	copies := map[string][]string{}
+	for _, r := range report.Leaves {
+		if r.Side != SideResponse {
+			continue
+		}
+		responses[at{r.Table, r.Path}] = r
+		if r.Target != "" && r.Rule != RuleReferenceCopy {
+			copies[r.Table] = append(copies[r.Table], r.Path)
+		}
+	}
+	n := 0
+	for _, r := range report.Leaves {
+		if r.Rule != RuleReferenceCopy {
+			continue
+		}
+		n++
+		copied := ""
+		for _, c := range copies[r.Table] {
+			if strings.HasPrefix(r.Path, c+".") && len(c) > len(copied) {
+				copied = c
+			}
+		}
+		member := strings.TrimPrefix(r.Path, copied+".")
+		if copied == "" || member == "object" {
+			continue
+		}
+		if got := responses[at{strings.TrimPrefix(r.ReadBy, "stripe_"), member}]; got.State != StateExposed {
+			t.Errorf("%s %s: %s does not expose %s (%s)", r.Table, r.Path, r.ReadBy, member, got.State)
+		}
+	}
+	if n == 0 {
+		t.Error("the report has no member left out by X7")
 	}
 }
 

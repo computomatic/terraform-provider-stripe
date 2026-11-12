@@ -61,7 +61,7 @@ resource "stripe_issuing_card" "travel" {
 
 The following arguments are required:
 
-* `cardholder` - (Required) The [Cardholder](https://docs.stripe.com/api#issuing_cardholder_object) object with which the card will be associated. Changing it replaces the resource.
+* `cardholder` - (Required) The [Cardholder](https://docs.stripe.com/api#issuing_cardholder_object) object with which the card will be associated. Stripe returns the whole issuing cardholder here; the provider holds its ID. Read the issuing cardholder with the `stripe_issuing_cardholder` data source. Changing it replaces the resource.
 * `currency` - (Required) The currency for the card. Changing it replaces the resource.
 * `type` - (Required) The type of card to issue. Possible values are `physical` or `virtual`. Possible values: `physical`, `virtual`. Changing it replaces the resource.
 

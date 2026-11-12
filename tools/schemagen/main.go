@@ -113,6 +113,9 @@ func Generate(root string, resources []Resource) ([]File, error) {
 	for i, res := range resources {
 		tc := covered[i]
 		annotateCopies(tc, readers)
+		if err := annotateReferences(tc, readers); err != nil {
+			return nil, err
+		}
 		src, err := RenderTable(res.Package, tc.table)
 		if err != nil {
 			return nil, err

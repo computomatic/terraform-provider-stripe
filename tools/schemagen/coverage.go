@@ -33,7 +33,9 @@ const (
 	RulePagedList  = "X3"
 	RuleRecursion  = "X4"
 	RuleConfirm    = "X5"
-	RuleRegister   = "register"
+	// X6, which left out a leaf Stripe accepts and never returns, is withdrawn and not reused.
+	RuleReferenceCopy = "X7"
+	RuleRegister      = "register"
 )
 
 // keptFromConfiguration is the coverage report's reason for a leaf Stripe takes and never
@@ -47,6 +49,8 @@ var ruleText = map[string]string{
 	RulePagedList:  "paged lists returned only when expanded: a list envelope the object does not require and no request writes",
 	RuleRecursion:  "the recursion cut: a schema met again on its own path, where it has no `id` to hold",
 	RuleConfirm:    "`confirm` where the declaration's `status` transition confirms",
+	RuleReferenceCopy: "copies at a reference: the members of an object Stripe returns whole at a path to which the request sends its ID, " +
+		"which the table holds; the copied object's data source reads them",
 }
 
 // Record is one spec leaf of one table in internal/generated/coverage.json.
@@ -71,6 +75,9 @@ type Record struct {
 	// PagedBy is the type that reads every element of a list Stripe returns a page at a time
 	// (Resource.PagedLists).
 	PagedBy string `json:"paged_by,omitempty"`
+	// ReadBy is, on a member of a copy the table holds as its ID (rule X7), the data source type
+	// that reads the copied object.
+	ReadBy string `json:"read_by,omitempty"`
 	// Refused says that Stripe refused every request that sent the leaf, whose refusal the
 	// field's docs line states.
 	Refused bool `json:"refused,omitempty"`
@@ -159,6 +166,25 @@ func coverTable(spec *Spec, res Resource, ev *Pinned) (*tableCoverage, error) {
 		}
 	}
 
+	// registered applies the register entry that leaves a leaf out, if any: one at its path or a
+	// path above it, that operation's alone after its ID and a space, or every leaf below a path,
+	// named by the path and `.*`.
+	registered := func(l Leaf, r *Record) {
+		for p := l.Path; p != ""; p = parentPath(p) {
+			entries := []string{p, l.Operation + " " + p}
+			if p != l.Path {
+				entries = append(entries, p+".*")
+			}
+			for _, entry := range entries {
+				if _, ok := register[entry]; ok {
+					register[entry] = true
+					r.Rule, r.Reason = RuleRegister, res.Exclude[entry]
+					return
+				}
+			}
+		}
+	}
+
 	records := make([]Record, len(leaves))
 	g := &gate{}
 	for i, l := range leaves {
@@ -167,13 +193,8 @@ func coverTable(spec *Spec, res Resource, ev *Pinned) (*tableCoverage, error) {
 			r.RequiredHashes = l.RequiredHashes
 		}
 		r.Rule = rule(spec, res, l, written)
-		for p := l.Path; p != "" && r.Rule == ""; p = parentPath(p) {
-			for _, entry := range []string{p, l.Operation + " " + p} {
-				if _, ok := register[entry]; ok && r.Rule == "" {
-					register[entry] = true
-					r.Rule, r.Reason = RuleRegister, res.Exclude[entry]
-				}
-			}
+		if r.Rule == "" {
+			registered(l, &r)
 		}
 		if ev != nil {
 			r.Class = ev.class(l.Key)
@@ -203,6 +224,19 @@ func coverTable(spec *Spec, res Resource, ev *Pinned) (*tableCoverage, error) {
 			}
 		}
 		records[i] = r
+	}
+	members, err := referenceMembers(spec, leaves, written)
+	if err != nil {
+		return nil, fmt.Errorf("%s: %w", res.Package, err)
+	}
+	memberRecords := make([]Record, len(members))
+	for i, m := range members {
+		r := Record{Table: res.Package, Key: m.Key, Shape: m.Shape(), Target: m.Target, State: StateExcluded, Rule: RuleReferenceCopy}
+		registered(m, &r)
+		if ev != nil {
+			r.Class = ev.class(m.Key)
+		}
+		memberRecords[i] = r
 	}
 	for p, met := range register {
 		if !met {
@@ -281,8 +315,65 @@ func coverTable(spec *Spec, res Resource, ev *Pinned) (*tableCoverage, error) {
 	if err := newRequired(create, leaves, records, before); err != nil {
 		return nil, fmt.Errorf("%s: %w", res.Package, err)
 	}
-	tc.records = records
+	for _, l := range leaves {
+		if h, ok := after.response[l.At]; ok && l.Side == SideResponse && l.Kind == KindEmbedded && written[l.Path] && h.nested {
+			return nil, fmt.Errorf("%s: the request sends %s as an ID, but the table holds the object Stripe returns there", res.Package, l.Key)
+		}
+	}
+	tc.leaves = append(leaves, members...)
+	tc.records = append(records, memberRecords...)
 	return tc, nil
+}
+
+// referenceMembers walks each copy at a path to which the request sends the copied object's
+// ID, and which the table therefore holds as the ID (isStringOrObject, isIDListOrObjects), into
+// the copied object's members, keyed as the suite and the fake key them (rule X7).
+func referenceMembers(spec *Spec, leaves []Leaf, written map[string]bool) ([]Leaf, error) {
+	var out []Leaf
+	for _, l := range leaves {
+		if l.Side != SideResponse || l.Kind != KindEmbedded || !written[l.Path] {
+			continue
+		}
+		w := &walker{spec: spec, key: Key{Object: l.Object, Side: SideResponse}, stack: []string{l.Schema}, out: map[Key]*Leaf{}}
+		if err := w.walk(spec.Components.Schemas[l.Schema], l.Path, union{l.Branch, l.BranchAt}, carried{array: l.Array, mapped: l.Map, lists: l.Lists}); err != nil {
+			return nil, err
+		}
+		for _, m := range w.leaves() {
+			m.At, m.PointAt, m.Reference = m.Path, m.BranchAt, l.Key
+			out = append(out, m)
+		}
+	}
+	return out, nil
+}
+
+// annotateReferences names, on every member of a copy the table holds as its ID (rule X7), the
+// data source type that reads the copied object, and names it on the field too, whose docs line
+// then says so. Generation fails on such a copy unless exactly one table reads its object, or
+// the register leaves out its members.
+func annotateReferences(tc *tableCoverage, readers map[string][]string) error {
+	copies := map[Key]Leaf{}
+	for _, l := range tc.leaves {
+		if l.Side == SideResponse && l.Kind == KindEmbedded && l.Reference == (Key{}) {
+			copies[l.Key] = l
+		}
+	}
+	for i, l := range tc.leaves {
+		r := &tc.records[i]
+		if l.Reference == (Key{}) || r.Rule != RuleReferenceCopy {
+			continue
+		}
+		c := copies[l.Reference]
+		read := readers[c.Target]
+		if len(read) != 1 {
+			return fmt.Errorf("%s: Stripe returns the whole %s at %s, which the table holds as its ID, and %d tables read that object (%s): rule X7 needs exactly one, or the register leaves out its members with an entry %q",
+				r.Table, c.Target, c.Path, len(read), strings.Join(read, ", "), c.Path+".*")
+		}
+		r.ReadBy = read[0]
+		if f := fieldAt(tc.table, c.At); f != nil {
+			f.ReadBy = read[0]
+		}
+	}
+	return nil
 }
 
 // fieldAt returns the field of a table at a dotted path of attribute names, or nil.
@@ -1992,13 +2083,16 @@ func RenderCoverageMarkdown(h coverageHeader, records []Record) []byte {
 	}
 
 	b.WriteString("\n## Excluded\n")
-	for _, rl := range []string{RuleControl, RuleTypeMarker, RulePagedList, RuleRecursion, RuleConfirm, RuleRegister} {
+	for _, rl := range []string{RuleControl, RuleTypeMarker, RulePagedList, RuleRecursion, RuleConfirm, RuleReferenceCopy, RuleRegister} {
 		var lines []string
 		for _, r := range records {
 			if r.State == StateExcluded && r.Rule == rl {
 				l := line(r)
-				if rl == RuleRegister {
+				switch rl {
+				case RuleRegister:
 					l += ": " + r.Reason
+				case RuleReferenceCopy:
+					l += ", read by `" + r.ReadBy + "`"
 				}
 				lines = append(lines, l)
 			}

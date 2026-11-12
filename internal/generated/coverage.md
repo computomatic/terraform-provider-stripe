@@ -7,7 +7,7 @@ Every leaf of each table's create and update requests and of its object is expos
 |Side|Exposed|Excluded|Awaiting proof|Total|
 |-|-|-|-|-|
 |Request|3650|198|1735|5583|
-|Response|5488|124|1882|7494|
+|Response|5488|563|1882|7933|
 
 ## Per table
 
@@ -67,13 +67,13 @@ Defaults not yet recorded counts the optional arguments a table exposes whose do
 |`financial_connections_transaction`|`financial_connections.transaction`|0|0|0|12|0|0|0|
 |`identity_verification_report`|`identity.verification_report`|0|0|0|61|1|0|0|
 |`identity_verification_session`|`identity.verification_session`|20|2|3|45|1|1|2|
-|`invoice`|`invoice`|188|3|6|189|0|3|21|
+|`invoice`|`invoice`|188|3|6|189|19|3|21|
 |`invoice_line`|`line_item`|0|0|0|42|1|0|0|
 |`invoice_payment`|`invoice_payment`|0|0|0|15|0|0|0|
 |`invoice_rendering_template`|`invoice_rendering_template`|0|0|0|7|0|0|0|
-|`invoiceitem`|`invoiceitem`|47|3|0|35|0|0|17|
+|`invoiceitem`|`invoiceitem`|47|3|0|35|19|0|17|
 |`issuing_authorization`|`issuing.authorization`|0|0|0|87|0|0|0|
-|`issuing_card`|`issuing.card`|63|2|2|65|0|0|5|
+|`issuing_card`|`issuing.card`|63|2|2|65|40|0|5|
 |`issuing_cardholder`|`issuing.cardholder`|66|2|0|39|0|0|24|
 |`issuing_dispute`|`issuing.dispute`|88|2|0|53|0|0|2|
 |`issuing_personalization_design`|`issuing.personalization_design`|22|2|0|17|0|0|6|
@@ -93,7 +93,7 @@ Defaults not yet recorded counts the optional arguments a table exposes whose do
 |`price`|`price`|69|2|0|40|0|0|24|
 |`product`|`product`|60|2|0|22|0|0|18|
 |`product_catalog_trial_offer`|`product_catalog.trial_offer`|7|2|0|9|0|0|0|
-|`product_feature`|`product_feature`|1|1|0|3|0|0|0|
+|`product_feature`|`product_feature`|1|1|0|3|7|0|0|
 |`promotion_code`|`promotion_code`|16|2|0|17|0|0|1|
 |`quote`|`quote`|98|2|0|87|0|0|19|
 |`quote_computed_upfront_line_item`|`item`|0|0|0|19|0|0|0|
@@ -107,9 +107,9 @@ Defaults not yet recorded counts the optional arguments a table exposes whose do
 |`review`|`review`|0|0|0|20|0|0|0|
 |`setup_intent`|`setup_intent`|86|19|266|60|2|180|21|
 |`shipping_rate`|`shipping_rate`|18|2|0|17|0|0|2|
-|`subscription`|`subscription`|252|9|4|127|0|2|40|
-|`subscription_item`|`subscription_item`|40|2|0|15|0|0|13|
-|`subscription_schedule`|`subscription_schedule`|215|2|0|111|0|0|32|
+|`subscription`|`subscription`|252|9|4|127|19|2|40|
+|`subscription_item`|`subscription_item`|40|2|0|15|60|0|13|
+|`subscription_schedule`|`subscription_schedule`|215|2|0|111|57|0|32|
 |`tax_code`|`tax_code`|0|0|0|4|0|0|0|
 |`tax_id`|`tax_id`|6|1|0|16|0|0|0|
 |`tax_location`|`tax.location`|0|0|0|10|0|0|0|
@@ -122,7 +122,7 @@ Defaults not yet recorded counts the optional arguments a table exposes whose do
 |`terminal_location`|`terminal.location`|52|2|0|28|0|0|25|
 |`terminal_reader`|`terminal.reader`|6|2|0|86|0|5|1|
 |`test_helpers_test_clock`|`test_helpers.test_clock`|2|2|0|8|0|0|0|
-|`topup`|`topup`|11|2|0|18|0|0|2|
+|`topup`|`topup`|11|2|0|18|218|0|2|
 |`transfer`|`transfer`|10|2|0|16|0|0|1|
 |`transfer_reversal`|`transfer_reversal`|5|2|0|8|1|0|2|
 |`treasury_credit_reversal`|`treasury.credit_reversal`|2|1|0|13|0|0|1|
@@ -873,6 +873,230 @@ None.
 
 - `payment_intent` PostPaymentIntents `confirm` (boolean)
 
+### X7, copies at a reference: the members of an object Stripe returns whole at a path to which the request sends its ID, which the table holds; the copied object's data source reads them
+
+- `invoice` response `default_tax_rates.active` (boolean), read by `stripe_tax_rate`
+- `invoice` response `default_tax_rates.country` (string), read by `stripe_tax_rate`
+- `invoice` response `default_tax_rates.created` (integer), read by `stripe_tax_rate`
+- `invoice` response `default_tax_rates.description` (string), read by `stripe_tax_rate`
+- `invoice` response `default_tax_rates.display_name` (string), read by `stripe_tax_rate`
+- `invoice` response `default_tax_rates.effective_percentage` (number), read by `stripe_tax_rate`
+- `invoice` response `default_tax_rates.flat_amount.amount` (integer), read by `stripe_tax_rate`
+- `invoice` response `default_tax_rates.flat_amount.currency` (string), read by `stripe_tax_rate`
+- `invoice` response `default_tax_rates.id` (string), read by `stripe_tax_rate`
+- `invoice` response `default_tax_rates.inclusive` (boolean), read by `stripe_tax_rate`
+- `invoice` response `default_tax_rates.jurisdiction` (string), read by `stripe_tax_rate`
+- `invoice` response `default_tax_rates.jurisdiction_level` (string), read by `stripe_tax_rate`
+- `invoice` response `default_tax_rates.livemode` (boolean), read by `stripe_tax_rate`
+- `invoice` response `default_tax_rates.metadata` (map of string), read by `stripe_tax_rate`
+- `invoice` response `default_tax_rates.object` (string), read by `stripe_tax_rate`
+- `invoice` response `default_tax_rates.percentage` (number), read by `stripe_tax_rate`
+- `invoice` response `default_tax_rates.rate_type` (string), read by `stripe_tax_rate`
+- `invoice` response `default_tax_rates.state` (string), read by `stripe_tax_rate`
+- `invoice` response `default_tax_rates.tax_type` (string), read by `stripe_tax_rate`
+- `invoiceitem` response `tax_rates.active` (boolean), read by `stripe_tax_rate`
+- `invoiceitem` response `tax_rates.country` (string), read by `stripe_tax_rate`
+- `invoiceitem` response `tax_rates.created` (integer), read by `stripe_tax_rate`
+- `invoiceitem` response `tax_rates.description` (string), read by `stripe_tax_rate`
+- `invoiceitem` response `tax_rates.display_name` (string), read by `stripe_tax_rate`
+- `invoiceitem` response `tax_rates.effective_percentage` (number), read by `stripe_tax_rate`
+- `invoiceitem` response `tax_rates.flat_amount.amount` (integer), read by `stripe_tax_rate`
+- `invoiceitem` response `tax_rates.flat_amount.currency` (string), read by `stripe_tax_rate`
+- `invoiceitem` response `tax_rates.id` (string), read by `stripe_tax_rate`
+- `invoiceitem` response `tax_rates.inclusive` (boolean), read by `stripe_tax_rate`
+- `invoiceitem` response `tax_rates.jurisdiction` (string), read by `stripe_tax_rate`
+- `invoiceitem` response `tax_rates.jurisdiction_level` (string), read by `stripe_tax_rate`
+- `invoiceitem` response `tax_rates.livemode` (boolean), read by `stripe_tax_rate`
+- `invoiceitem` response `tax_rates.metadata` (map of string), read by `stripe_tax_rate`
+- `invoiceitem` response `tax_rates.object` (string), read by `stripe_tax_rate`
+- `invoiceitem` response `tax_rates.percentage` (number), read by `stripe_tax_rate`
+- `invoiceitem` response `tax_rates.rate_type` (string), read by `stripe_tax_rate`
+- `invoiceitem` response `tax_rates.state` (string), read by `stripe_tax_rate`
+- `invoiceitem` response `tax_rates.tax_type` (string), read by `stripe_tax_rate`
+- `issuing_card` response `cardholder.billing.address.city` (string), read by `stripe_issuing_cardholder`
+- `issuing_card` response `cardholder.billing.address.country` (string), read by `stripe_issuing_cardholder`
+- `issuing_card` response `cardholder.billing.address.line1` (string), read by `stripe_issuing_cardholder`
+- `issuing_card` response `cardholder.billing.address.line2` (string), read by `stripe_issuing_cardholder`
+- `issuing_card` response `cardholder.billing.address.postal_code` (string), read by `stripe_issuing_cardholder`
+- `issuing_card` response `cardholder.billing.address.state` (string), read by `stripe_issuing_cardholder`
+- `issuing_card` response `cardholder.company.tax_id_provided` (boolean), read by `stripe_issuing_cardholder`
+- `issuing_card` response `cardholder.created` (integer), read by `stripe_issuing_cardholder`
+- `issuing_card` response `cardholder.email` (string), read by `stripe_issuing_cardholder`
+- `issuing_card` response `cardholder.id` (string), read by `stripe_issuing_cardholder`
+- `issuing_card` response `cardholder.individual.card_issuing.user_terms_acceptance.date` (integer), read by `stripe_issuing_cardholder`
+- `issuing_card` response `cardholder.individual.card_issuing.user_terms_acceptance.ip` (string), read by `stripe_issuing_cardholder`
+- `issuing_card` response `cardholder.individual.card_issuing.user_terms_acceptance.user_agent` (string), read by `stripe_issuing_cardholder`
+- `issuing_card` response `cardholder.individual.dob.day` (integer), read by `stripe_issuing_cardholder`
+- `issuing_card` response `cardholder.individual.dob.month` (integer), read by `stripe_issuing_cardholder`
+- `issuing_card` response `cardholder.individual.dob.year` (integer), read by `stripe_issuing_cardholder`
+- `issuing_card` response `cardholder.individual.first_name` (string), read by `stripe_issuing_cardholder`
+- `issuing_card` response `cardholder.individual.last_name` (string), read by `stripe_issuing_cardholder`
+- `issuing_card` response `cardholder.individual.verification.document.back` (reference), read by `stripe_issuing_cardholder`
+- `issuing_card` response `cardholder.individual.verification.document.front` (reference), read by `stripe_issuing_cardholder`
+- `issuing_card` response `cardholder.livemode` (boolean), read by `stripe_issuing_cardholder`
+- `issuing_card` response `cardholder.metadata` (map of string), read by `stripe_issuing_cardholder`
+- `issuing_card` response `cardholder.name` (string), read by `stripe_issuing_cardholder`
+- `issuing_card` response `cardholder.object` (string), read by `stripe_issuing_cardholder`
+- `issuing_card` response `cardholder.phone_number` (string), read by `stripe_issuing_cardholder`
+- `issuing_card` response `cardholder.preferred_locales` (list of string), read by `stripe_issuing_cardholder`
+- `issuing_card` response `cardholder.requirements.disabled_reason` (string), read by `stripe_issuing_cardholder`
+- `issuing_card` response `cardholder.requirements.past_due` (list of string), read by `stripe_issuing_cardholder`
+- `issuing_card` response `cardholder.spending_controls.allowed_card_presences` (list of string), read by `stripe_issuing_cardholder`
+- `issuing_card` response `cardholder.spending_controls.allowed_categories` (list of string), read by `stripe_issuing_cardholder`
+- `issuing_card` response `cardholder.spending_controls.allowed_merchant_countries` (list of string), read by `stripe_issuing_cardholder`
+- `issuing_card` response `cardholder.spending_controls.blocked_card_presences` (list of string), read by `stripe_issuing_cardholder`
+- `issuing_card` response `cardholder.spending_controls.blocked_categories` (list of string), read by `stripe_issuing_cardholder`
+- `issuing_card` response `cardholder.spending_controls.blocked_merchant_countries` (list of string), read by `stripe_issuing_cardholder`
+- `issuing_card` response `cardholder.spending_controls.spending_limits.amount` (integer), read by `stripe_issuing_cardholder`
+- `issuing_card` response `cardholder.spending_controls.spending_limits.categories` (list of string), read by `stripe_issuing_cardholder`
+- `issuing_card` response `cardholder.spending_controls.spending_limits.interval` (string), read by `stripe_issuing_cardholder`
+- `issuing_card` response `cardholder.spending_controls.spending_limits_currency` (string), read by `stripe_issuing_cardholder`
+- `issuing_card` response `cardholder.status` (string), read by `stripe_issuing_cardholder`
+- `issuing_card` response `cardholder.type` (string), read by `stripe_issuing_cardholder`
+- `product_feature` response `entitlement_feature.active` (boolean), read by `stripe_entitlements_feature`
+- `product_feature` response `entitlement_feature.id` (string), read by `stripe_entitlements_feature`
+- `product_feature` response `entitlement_feature.livemode` (boolean), read by `stripe_entitlements_feature`
+- `product_feature` response `entitlement_feature.lookup_key` (string), read by `stripe_entitlements_feature`
+- `product_feature` response `entitlement_feature.metadata` (map of string), read by `stripe_entitlements_feature`
+- `product_feature` response `entitlement_feature.name` (string), read by `stripe_entitlements_feature`
+- `product_feature` response `entitlement_feature.object` (string), read by `stripe_entitlements_feature`
+- `subscription` response `default_tax_rates.active` (boolean), read by `stripe_tax_rate`
+- `subscription` response `default_tax_rates.country` (string), read by `stripe_tax_rate`
+- `subscription` response `default_tax_rates.created` (integer), read by `stripe_tax_rate`
+- `subscription` response `default_tax_rates.description` (string), read by `stripe_tax_rate`
+- `subscription` response `default_tax_rates.display_name` (string), read by `stripe_tax_rate`
+- `subscription` response `default_tax_rates.effective_percentage` (number), read by `stripe_tax_rate`
+- `subscription` response `default_tax_rates.flat_amount.amount` (integer), read by `stripe_tax_rate`
+- `subscription` response `default_tax_rates.flat_amount.currency` (string), read by `stripe_tax_rate`
+- `subscription` response `default_tax_rates.id` (string), read by `stripe_tax_rate`
+- `subscription` response `default_tax_rates.inclusive` (boolean), read by `stripe_tax_rate`
+- `subscription` response `default_tax_rates.jurisdiction` (string), read by `stripe_tax_rate`
+- `subscription` response `default_tax_rates.jurisdiction_level` (string), read by `stripe_tax_rate`
+- `subscription` response `default_tax_rates.livemode` (boolean), read by `stripe_tax_rate`
+- `subscription` response `default_tax_rates.metadata` (map of string), read by `stripe_tax_rate`
+- `subscription` response `default_tax_rates.object` (string), read by `stripe_tax_rate`
+- `subscription` response `default_tax_rates.percentage` (number), read by `stripe_tax_rate`
+- `subscription` response `default_tax_rates.rate_type` (string), read by `stripe_tax_rate`
+- `subscription` response `default_tax_rates.state` (string), read by `stripe_tax_rate`
+- `subscription` response `default_tax_rates.tax_type` (string), read by `stripe_tax_rate`
+- `subscription_item` response `price.active` (boolean), read by `stripe_price`
+- `subscription_item` response `price.billing_scheme` (string), read by `stripe_price`
+- `subscription_item` response `price.created` (integer), read by `stripe_price`
+- `subscription_item` response `price.currency` (string), read by `stripe_price`
+- `subscription_item` response `price.currency_options.custom_unit_amount.maximum` (integer), read by `stripe_price`
+- `subscription_item` response `price.currency_options.custom_unit_amount.minimum` (integer), read by `stripe_price`
+- `subscription_item` response `price.currency_options.custom_unit_amount.preset` (integer), read by `stripe_price`
+- `subscription_item` response `price.currency_options.tax_behavior` (string), read by `stripe_price`
+- `subscription_item` response `price.currency_options.tiers.flat_amount` (integer), read by `stripe_price`
+- `subscription_item` response `price.currency_options.tiers.flat_amount_decimal` (string), read by `stripe_price`
+- `subscription_item` response `price.currency_options.tiers.unit_amount` (integer), read by `stripe_price`
+- `subscription_item` response `price.currency_options.tiers.unit_amount_decimal` (string), read by `stripe_price`
+- `subscription_item` response `price.currency_options.tiers.up_to` (integer), read by `stripe_price`
+- `subscription_item` response `price.currency_options.unit_amount` (integer), read by `stripe_price`
+- `subscription_item` response `price.currency_options.unit_amount_decimal` (string), read by `stripe_price`
+- `subscription_item` response `price.custom_unit_amount.maximum` (integer), read by `stripe_price`
+- `subscription_item` response `price.custom_unit_amount.minimum` (integer), read by `stripe_price`
+- `subscription_item` response `price.custom_unit_amount.preset` (integer), read by `stripe_price`
+- `subscription_item` response `price.id` (string), read by `stripe_price`
+- `subscription_item` response `price.livemode` (boolean), read by `stripe_price`
+- `subscription_item` response `price.lookup_key` (string), read by `stripe_price`
+- `subscription_item` response `price.metadata` (map of string), read by `stripe_price`
+- `subscription_item` response `price.nickname` (string), read by `stripe_price`
+- `subscription_item` response `price.object` (string), read by `stripe_price`
+- `subscription_item` response `price.product` (reference), read by `stripe_price`
+- `subscription_item` response `price.recurring.interval` (string), read by `stripe_price`
+- `subscription_item` response `price.recurring.interval_count` (integer), read by `stripe_price`
+- `subscription_item` response `price.recurring.meter` (string), read by `stripe_price`
+- `subscription_item` response `price.recurring.usage_type` (string), read by `stripe_price`
+- `subscription_item` response `price.tax_behavior` (string), read by `stripe_price`
+- `subscription_item` response `price.tiers.flat_amount` (integer), read by `stripe_price`
+- `subscription_item` response `price.tiers.flat_amount_decimal` (string), read by `stripe_price`
+- `subscription_item` response `price.tiers.unit_amount` (integer), read by `stripe_price`
+- `subscription_item` response `price.tiers.unit_amount_decimal` (string), read by `stripe_price`
+- `subscription_item` response `price.tiers.up_to` (integer), read by `stripe_price`
+- `subscription_item` response `price.tiers_mode` (string), read by `stripe_price`
+- `subscription_item` response `price.transform_quantity.divide_by` (integer), read by `stripe_price`
+- `subscription_item` response `price.transform_quantity.round` (string), read by `stripe_price`
+- `subscription_item` response `price.type` (string), read by `stripe_price`
+- `subscription_item` response `price.unit_amount` (integer), read by `stripe_price`
+- `subscription_item` response `price.unit_amount_decimal` (string), read by `stripe_price`
+- `subscription_item` response `tax_rates.active` (boolean), read by `stripe_tax_rate`
+- `subscription_item` response `tax_rates.country` (string), read by `stripe_tax_rate`
+- `subscription_item` response `tax_rates.created` (integer), read by `stripe_tax_rate`
+- `subscription_item` response `tax_rates.description` (string), read by `stripe_tax_rate`
+- `subscription_item` response `tax_rates.display_name` (string), read by `stripe_tax_rate`
+- `subscription_item` response `tax_rates.effective_percentage` (number), read by `stripe_tax_rate`
+- `subscription_item` response `tax_rates.flat_amount.amount` (integer), read by `stripe_tax_rate`
+- `subscription_item` response `tax_rates.flat_amount.currency` (string), read by `stripe_tax_rate`
+- `subscription_item` response `tax_rates.id` (string), read by `stripe_tax_rate`
+- `subscription_item` response `tax_rates.inclusive` (boolean), read by `stripe_tax_rate`
+- `subscription_item` response `tax_rates.jurisdiction` (string), read by `stripe_tax_rate`
+- `subscription_item` response `tax_rates.jurisdiction_level` (string), read by `stripe_tax_rate`
+- `subscription_item` response `tax_rates.livemode` (boolean), read by `stripe_tax_rate`
+- `subscription_item` response `tax_rates.metadata` (map of string), read by `stripe_tax_rate`
+- `subscription_item` response `tax_rates.object` (string), read by `stripe_tax_rate`
+- `subscription_item` response `tax_rates.percentage` (number), read by `stripe_tax_rate`
+- `subscription_item` response `tax_rates.rate_type` (string), read by `stripe_tax_rate`
+- `subscription_item` response `tax_rates.state` (string), read by `stripe_tax_rate`
+- `subscription_item` response `tax_rates.tax_type` (string), read by `stripe_tax_rate`
+- `subscription_schedule` response `phases.add_invoice_items.tax_rates.active` (boolean), read by `stripe_tax_rate`
+- `subscription_schedule` response `phases.add_invoice_items.tax_rates.country` (string), read by `stripe_tax_rate`
+- `subscription_schedule` response `phases.add_invoice_items.tax_rates.created` (integer), read by `stripe_tax_rate`
+- `subscription_schedule` response `phases.add_invoice_items.tax_rates.description` (string), read by `stripe_tax_rate`
+- `subscription_schedule` response `phases.add_invoice_items.tax_rates.display_name` (string), read by `stripe_tax_rate`
+- `subscription_schedule` response `phases.add_invoice_items.tax_rates.effective_percentage` (number), read by `stripe_tax_rate`
+- `subscription_schedule` response `phases.add_invoice_items.tax_rates.flat_amount.amount` (integer), read by `stripe_tax_rate`
+- `subscription_schedule` response `phases.add_invoice_items.tax_rates.flat_amount.currency` (string), read by `stripe_tax_rate`
+- `subscription_schedule` response `phases.add_invoice_items.tax_rates.id` (string), read by `stripe_tax_rate`
+- `subscription_schedule` response `phases.add_invoice_items.tax_rates.inclusive` (boolean), read by `stripe_tax_rate`
+- `subscription_schedule` response `phases.add_invoice_items.tax_rates.jurisdiction` (string), read by `stripe_tax_rate`
+- `subscription_schedule` response `phases.add_invoice_items.tax_rates.jurisdiction_level` (string), read by `stripe_tax_rate`
+- `subscription_schedule` response `phases.add_invoice_items.tax_rates.livemode` (boolean), read by `stripe_tax_rate`
+- `subscription_schedule` response `phases.add_invoice_items.tax_rates.metadata` (map of string), read by `stripe_tax_rate`
+- `subscription_schedule` response `phases.add_invoice_items.tax_rates.object` (string), read by `stripe_tax_rate`
+- `subscription_schedule` response `phases.add_invoice_items.tax_rates.percentage` (number), read by `stripe_tax_rate`
+- `subscription_schedule` response `phases.add_invoice_items.tax_rates.rate_type` (string), read by `stripe_tax_rate`
+- `subscription_schedule` response `phases.add_invoice_items.tax_rates.state` (string), read by `stripe_tax_rate`
+- `subscription_schedule` response `phases.add_invoice_items.tax_rates.tax_type` (string), read by `stripe_tax_rate`
+- `subscription_schedule` response `phases.default_tax_rates.active` (boolean), read by `stripe_tax_rate`
+- `subscription_schedule` response `phases.default_tax_rates.country` (string), read by `stripe_tax_rate`
+- `subscription_schedule` response `phases.default_tax_rates.created` (integer), read by `stripe_tax_rate`
+- `subscription_schedule` response `phases.default_tax_rates.description` (string), read by `stripe_tax_rate`
+- `subscription_schedule` response `phases.default_tax_rates.display_name` (string), read by `stripe_tax_rate`
+- `subscription_schedule` response `phases.default_tax_rates.effective_percentage` (number), read by `stripe_tax_rate`
+- `subscription_schedule` response `phases.default_tax_rates.flat_amount.amount` (integer), read by `stripe_tax_rate`
+- `subscription_schedule` response `phases.default_tax_rates.flat_amount.currency` (string), read by `stripe_tax_rate`
+- `subscription_schedule` response `phases.default_tax_rates.id` (string), read by `stripe_tax_rate`
+- `subscription_schedule` response `phases.default_tax_rates.inclusive` (boolean), read by `stripe_tax_rate`
+- `subscription_schedule` response `phases.default_tax_rates.jurisdiction` (string), read by `stripe_tax_rate`
+- `subscription_schedule` response `phases.default_tax_rates.jurisdiction_level` (string), read by `stripe_tax_rate`
+- `subscription_schedule` response `phases.default_tax_rates.livemode` (boolean), read by `stripe_tax_rate`
+- `subscription_schedule` response `phases.default_tax_rates.metadata` (map of string), read by `stripe_tax_rate`
+- `subscription_schedule` response `phases.default_tax_rates.object` (string), read by `stripe_tax_rate`
+- `subscription_schedule` response `phases.default_tax_rates.percentage` (number), read by `stripe_tax_rate`
+- `subscription_schedule` response `phases.default_tax_rates.rate_type` (string), read by `stripe_tax_rate`
+- `subscription_schedule` response `phases.default_tax_rates.state` (string), read by `stripe_tax_rate`
+- `subscription_schedule` response `phases.default_tax_rates.tax_type` (string), read by `stripe_tax_rate`
+- `subscription_schedule` response `phases.items.tax_rates.active` (boolean), read by `stripe_tax_rate`
+- `subscription_schedule` response `phases.items.tax_rates.country` (string), read by `stripe_tax_rate`
+- `subscription_schedule` response `phases.items.tax_rates.created` (integer), read by `stripe_tax_rate`
+- `subscription_schedule` response `phases.items.tax_rates.description` (string), read by `stripe_tax_rate`
+- `subscription_schedule` response `phases.items.tax_rates.display_name` (string), read by `stripe_tax_rate`
+- `subscription_schedule` response `phases.items.tax_rates.effective_percentage` (number), read by `stripe_tax_rate`
+- `subscription_schedule` response `phases.items.tax_rates.flat_amount.amount` (integer), read by `stripe_tax_rate`
+- `subscription_schedule` response `phases.items.tax_rates.flat_amount.currency` (string), read by `stripe_tax_rate`
+- `subscription_schedule` response `phases.items.tax_rates.id` (string), read by `stripe_tax_rate`
+- `subscription_schedule` response `phases.items.tax_rates.inclusive` (boolean), read by `stripe_tax_rate`
+- `subscription_schedule` response `phases.items.tax_rates.jurisdiction` (string), read by `stripe_tax_rate`
+- `subscription_schedule` response `phases.items.tax_rates.jurisdiction_level` (string), read by `stripe_tax_rate`
+- `subscription_schedule` response `phases.items.tax_rates.livemode` (boolean), read by `stripe_tax_rate`
+- `subscription_schedule` response `phases.items.tax_rates.metadata` (map of string), read by `stripe_tax_rate`
+- `subscription_schedule` response `phases.items.tax_rates.object` (string), read by `stripe_tax_rate`
+- `subscription_schedule` response `phases.items.tax_rates.percentage` (number), read by `stripe_tax_rate`
+- `subscription_schedule` response `phases.items.tax_rates.rate_type` (string), read by `stripe_tax_rate`
+- `subscription_schedule` response `phases.items.tax_rates.state` (string), read by `stripe_tax_rate`
+- `subscription_schedule` response `phases.items.tax_rates.tax_type` (string), read by `stripe_tax_rate`
+
 ### The register (`Resource.Exclude`)
 
 - `account_capability` response `account` (reference): the parent attribute holds it
@@ -968,6 +1192,224 @@ None.
 - `subscription` PostSubscriptionsSubscriptionExposedId `items.discounts.discount` (string): Exposing the update's forms would make the list updatable, which the provider keeps create-only (D3): Stripe drops a discount that ends, and an update sending the list again, as every change of `items` sends each item's, would redeem the coupon or promotion code anew, an effect a user would not expect of a kept argument (the product owner's decision of 2026-11-07 leaves such leaves out; suite: TestSubscriptionAttributes/leaves/request/PostSubscriptionsSubscriptionExposedId/discounts.coupon).
 - `subscription` PostSubscriptionsSubscriptionExposedId `items.discounts.promotion_code` (string): Exposing the update's forms would make the list updatable, which the provider keeps create-only (D3): Stripe drops a discount that ends, and an update sending the list again, as every change of `items` sends each item's, would redeem the coupon or promotion code anew, an effect a user would not expect of a kept argument (the product owner's decision of 2026-11-07 leaves such leaves out; suite: TestSubscriptionAttributes/leaves/request/PostSubscriptionsSubscriptionExposedId/discounts.coupon).
 - `test_helpers_test_clock` PostTestHelpersTestClocks `customer` (string): With a `customer`, Stripe freezes the clock at its `created`, not at the configured `frozen_time`, which the table requires (the record's rule on `frozen_time`), so the argument would change what another argument does on every create, a surprise for a kept value (the product owner's decision of 2026-11-07 leaves such leaves out; suite: TestTestClockAttributes/leaves/request/PostTestHelpersTestClocks/customer).
+- `topup` response `source.ach_credit_transfer.account_number` (string): The Source Stripe returns whole at `source`, whose ID the provider holds: Stripe has deprecated the Sources API ("We've deprecated the Sources API and plan to remove support.", https://docs.stripe.com/sources), and no data source reads a Source.
+- `topup` response `source.ach_credit_transfer.bank_name` (string): The Source Stripe returns whole at `source`, whose ID the provider holds: Stripe has deprecated the Sources API ("We've deprecated the Sources API and plan to remove support.", https://docs.stripe.com/sources), and no data source reads a Source.
+- `topup` response `source.ach_credit_transfer.fingerprint` (string): The Source Stripe returns whole at `source`, whose ID the provider holds: Stripe has deprecated the Sources API ("We've deprecated the Sources API and plan to remove support.", https://docs.stripe.com/sources), and no data source reads a Source.
+- `topup` response `source.ach_credit_transfer.refund_account_holder_name` (string): The Source Stripe returns whole at `source`, whose ID the provider holds: Stripe has deprecated the Sources API ("We've deprecated the Sources API and plan to remove support.", https://docs.stripe.com/sources), and no data source reads a Source.
+- `topup` response `source.ach_credit_transfer.refund_account_holder_type` (string): The Source Stripe returns whole at `source`, whose ID the provider holds: Stripe has deprecated the Sources API ("We've deprecated the Sources API and plan to remove support.", https://docs.stripe.com/sources), and no data source reads a Source.
+- `topup` response `source.ach_credit_transfer.refund_routing_number` (string): The Source Stripe returns whole at `source`, whose ID the provider holds: Stripe has deprecated the Sources API ("We've deprecated the Sources API and plan to remove support.", https://docs.stripe.com/sources), and no data source reads a Source.
+- `topup` response `source.ach_credit_transfer.routing_number` (string): The Source Stripe returns whole at `source`, whose ID the provider holds: Stripe has deprecated the Sources API ("We've deprecated the Sources API and plan to remove support.", https://docs.stripe.com/sources), and no data source reads a Source.
+- `topup` response `source.ach_credit_transfer.swift_code` (string): The Source Stripe returns whole at `source`, whose ID the provider holds: Stripe has deprecated the Sources API ("We've deprecated the Sources API and plan to remove support.", https://docs.stripe.com/sources), and no data source reads a Source.
+- `topup` response `source.ach_debit.bank_name` (string): The Source Stripe returns whole at `source`, whose ID the provider holds: Stripe has deprecated the Sources API ("We've deprecated the Sources API and plan to remove support.", https://docs.stripe.com/sources), and no data source reads a Source.
+- `topup` response `source.ach_debit.country` (string): The Source Stripe returns whole at `source`, whose ID the provider holds: Stripe has deprecated the Sources API ("We've deprecated the Sources API and plan to remove support.", https://docs.stripe.com/sources), and no data source reads a Source.
+- `topup` response `source.ach_debit.fingerprint` (string): The Source Stripe returns whole at `source`, whose ID the provider holds: Stripe has deprecated the Sources API ("We've deprecated the Sources API and plan to remove support.", https://docs.stripe.com/sources), and no data source reads a Source.
+- `topup` response `source.ach_debit.last4` (string): The Source Stripe returns whole at `source`, whose ID the provider holds: Stripe has deprecated the Sources API ("We've deprecated the Sources API and plan to remove support.", https://docs.stripe.com/sources), and no data source reads a Source.
+- `topup` response `source.ach_debit.routing_number` (string): The Source Stripe returns whole at `source`, whose ID the provider holds: Stripe has deprecated the Sources API ("We've deprecated the Sources API and plan to remove support.", https://docs.stripe.com/sources), and no data source reads a Source.
+- `topup` response `source.ach_debit.type` (string): The Source Stripe returns whole at `source`, whose ID the provider holds: Stripe has deprecated the Sources API ("We've deprecated the Sources API and plan to remove support.", https://docs.stripe.com/sources), and no data source reads a Source.
+- `topup` response `source.acss_debit.bank_address_city` (string): The Source Stripe returns whole at `source`, whose ID the provider holds: Stripe has deprecated the Sources API ("We've deprecated the Sources API and plan to remove support.", https://docs.stripe.com/sources), and no data source reads a Source.
+- `topup` response `source.acss_debit.bank_address_line_1` (string): The Source Stripe returns whole at `source`, whose ID the provider holds: Stripe has deprecated the Sources API ("We've deprecated the Sources API and plan to remove support.", https://docs.stripe.com/sources), and no data source reads a Source.
+- `topup` response `source.acss_debit.bank_address_line_2` (string): The Source Stripe returns whole at `source`, whose ID the provider holds: Stripe has deprecated the Sources API ("We've deprecated the Sources API and plan to remove support.", https://docs.stripe.com/sources), and no data source reads a Source.
+- `topup` response `source.acss_debit.bank_address_postal_code` (string): The Source Stripe returns whole at `source`, whose ID the provider holds: Stripe has deprecated the Sources API ("We've deprecated the Sources API and plan to remove support.", https://docs.stripe.com/sources), and no data source reads a Source.
+- `topup` response `source.acss_debit.bank_name` (string): The Source Stripe returns whole at `source`, whose ID the provider holds: Stripe has deprecated the Sources API ("We've deprecated the Sources API and plan to remove support.", https://docs.stripe.com/sources), and no data source reads a Source.
+- `topup` response `source.acss_debit.category` (string): The Source Stripe returns whole at `source`, whose ID the provider holds: Stripe has deprecated the Sources API ("We've deprecated the Sources API and plan to remove support.", https://docs.stripe.com/sources), and no data source reads a Source.
+- `topup` response `source.acss_debit.country` (string): The Source Stripe returns whole at `source`, whose ID the provider holds: Stripe has deprecated the Sources API ("We've deprecated the Sources API and plan to remove support.", https://docs.stripe.com/sources), and no data source reads a Source.
+- `topup` response `source.acss_debit.fingerprint` (string): The Source Stripe returns whole at `source`, whose ID the provider holds: Stripe has deprecated the Sources API ("We've deprecated the Sources API and plan to remove support.", https://docs.stripe.com/sources), and no data source reads a Source.
+- `topup` response `source.acss_debit.last4` (string): The Source Stripe returns whole at `source`, whose ID the provider holds: Stripe has deprecated the Sources API ("We've deprecated the Sources API and plan to remove support.", https://docs.stripe.com/sources), and no data source reads a Source.
+- `topup` response `source.acss_debit.routing_number` (string): The Source Stripe returns whole at `source`, whose ID the provider holds: Stripe has deprecated the Sources API ("We've deprecated the Sources API and plan to remove support.", https://docs.stripe.com/sources), and no data source reads a Source.
+- `topup` response `source.alipay.data_string` (string): The Source Stripe returns whole at `source`, whose ID the provider holds: Stripe has deprecated the Sources API ("We've deprecated the Sources API and plan to remove support.", https://docs.stripe.com/sources), and no data source reads a Source.
+- `topup` response `source.alipay.native_url` (string): The Source Stripe returns whole at `source`, whose ID the provider holds: Stripe has deprecated the Sources API ("We've deprecated the Sources API and plan to remove support.", https://docs.stripe.com/sources), and no data source reads a Source.
+- `topup` response `source.alipay.statement_descriptor` (string): The Source Stripe returns whole at `source`, whose ID the provider holds: Stripe has deprecated the Sources API ("We've deprecated the Sources API and plan to remove support.", https://docs.stripe.com/sources), and no data source reads a Source.
+- `topup` response `source.allow_redisplay` (string): The Source Stripe returns whole at `source`, whose ID the provider holds: Stripe has deprecated the Sources API ("We've deprecated the Sources API and plan to remove support.", https://docs.stripe.com/sources), and no data source reads a Source.
+- `topup` response `source.amount` (integer): The Source Stripe returns whole at `source`, whose ID the provider holds: Stripe has deprecated the Sources API ("We've deprecated the Sources API and plan to remove support.", https://docs.stripe.com/sources), and no data source reads a Source.
+- `topup` response `source.au_becs_debit.bsb_number` (string): The Source Stripe returns whole at `source`, whose ID the provider holds: Stripe has deprecated the Sources API ("We've deprecated the Sources API and plan to remove support.", https://docs.stripe.com/sources), and no data source reads a Source.
+- `topup` response `source.au_becs_debit.fingerprint` (string): The Source Stripe returns whole at `source`, whose ID the provider holds: Stripe has deprecated the Sources API ("We've deprecated the Sources API and plan to remove support.", https://docs.stripe.com/sources), and no data source reads a Source.
+- `topup` response `source.au_becs_debit.last4` (string): The Source Stripe returns whole at `source`, whose ID the provider holds: Stripe has deprecated the Sources API ("We've deprecated the Sources API and plan to remove support.", https://docs.stripe.com/sources), and no data source reads a Source.
+- `topup` response `source.bancontact.bank_code` (string): The Source Stripe returns whole at `source`, whose ID the provider holds: Stripe has deprecated the Sources API ("We've deprecated the Sources API and plan to remove support.", https://docs.stripe.com/sources), and no data source reads a Source.
+- `topup` response `source.bancontact.bank_name` (string): The Source Stripe returns whole at `source`, whose ID the provider holds: Stripe has deprecated the Sources API ("We've deprecated the Sources API and plan to remove support.", https://docs.stripe.com/sources), and no data source reads a Source.
+- `topup` response `source.bancontact.bic` (string): The Source Stripe returns whole at `source`, whose ID the provider holds: Stripe has deprecated the Sources API ("We've deprecated the Sources API and plan to remove support.", https://docs.stripe.com/sources), and no data source reads a Source.
+- `topup` response `source.bancontact.iban_last4` (string): The Source Stripe returns whole at `source`, whose ID the provider holds: Stripe has deprecated the Sources API ("We've deprecated the Sources API and plan to remove support.", https://docs.stripe.com/sources), and no data source reads a Source.
+- `topup` response `source.bancontact.preferred_language` (string): The Source Stripe returns whole at `source`, whose ID the provider holds: Stripe has deprecated the Sources API ("We've deprecated the Sources API and plan to remove support.", https://docs.stripe.com/sources), and no data source reads a Source.
+- `topup` response `source.bancontact.statement_descriptor` (string): The Source Stripe returns whole at `source`, whose ID the provider holds: Stripe has deprecated the Sources API ("We've deprecated the Sources API and plan to remove support.", https://docs.stripe.com/sources), and no data source reads a Source.
+- `topup` response `source.card.address_line1_check` (string): The Source Stripe returns whole at `source`, whose ID the provider holds: Stripe has deprecated the Sources API ("We've deprecated the Sources API and plan to remove support.", https://docs.stripe.com/sources), and no data source reads a Source.
+- `topup` response `source.card.address_zip_check` (string): The Source Stripe returns whole at `source`, whose ID the provider holds: Stripe has deprecated the Sources API ("We've deprecated the Sources API and plan to remove support.", https://docs.stripe.com/sources), and no data source reads a Source.
+- `topup` response `source.card.brand` (string): The Source Stripe returns whole at `source`, whose ID the provider holds: Stripe has deprecated the Sources API ("We've deprecated the Sources API and plan to remove support.", https://docs.stripe.com/sources), and no data source reads a Source.
+- `topup` response `source.card.country` (string): The Source Stripe returns whole at `source`, whose ID the provider holds: Stripe has deprecated the Sources API ("We've deprecated the Sources API and plan to remove support.", https://docs.stripe.com/sources), and no data source reads a Source.
+- `topup` response `source.card.cvc_check` (string): The Source Stripe returns whole at `source`, whose ID the provider holds: Stripe has deprecated the Sources API ("We've deprecated the Sources API and plan to remove support.", https://docs.stripe.com/sources), and no data source reads a Source.
+- `topup` response `source.card.dynamic_last4` (string): The Source Stripe returns whole at `source`, whose ID the provider holds: Stripe has deprecated the Sources API ("We've deprecated the Sources API and plan to remove support.", https://docs.stripe.com/sources), and no data source reads a Source.
+- `topup` response `source.card.exp_month` (integer): The Source Stripe returns whole at `source`, whose ID the provider holds: Stripe has deprecated the Sources API ("We've deprecated the Sources API and plan to remove support.", https://docs.stripe.com/sources), and no data source reads a Source.
+- `topup` response `source.card.exp_year` (integer): The Source Stripe returns whole at `source`, whose ID the provider holds: Stripe has deprecated the Sources API ("We've deprecated the Sources API and plan to remove support.", https://docs.stripe.com/sources), and no data source reads a Source.
+- `topup` response `source.card.fingerprint` (string): The Source Stripe returns whole at `source`, whose ID the provider holds: Stripe has deprecated the Sources API ("We've deprecated the Sources API and plan to remove support.", https://docs.stripe.com/sources), and no data source reads a Source.
+- `topup` response `source.card.funding` (string): The Source Stripe returns whole at `source`, whose ID the provider holds: Stripe has deprecated the Sources API ("We've deprecated the Sources API and plan to remove support.", https://docs.stripe.com/sources), and no data source reads a Source.
+- `topup` response `source.card.last4` (string): The Source Stripe returns whole at `source`, whose ID the provider holds: Stripe has deprecated the Sources API ("We've deprecated the Sources API and plan to remove support.", https://docs.stripe.com/sources), and no data source reads a Source.
+- `topup` response `source.card.name` (string): The Source Stripe returns whole at `source`, whose ID the provider holds: Stripe has deprecated the Sources API ("We've deprecated the Sources API and plan to remove support.", https://docs.stripe.com/sources), and no data source reads a Source.
+- `topup` response `source.card.three_d_secure` (string): The Source Stripe returns whole at `source`, whose ID the provider holds: Stripe has deprecated the Sources API ("We've deprecated the Sources API and plan to remove support.", https://docs.stripe.com/sources), and no data source reads a Source.
+- `topup` response `source.card.tokenization_method` (string): The Source Stripe returns whole at `source`, whose ID the provider holds: Stripe has deprecated the Sources API ("We've deprecated the Sources API and plan to remove support.", https://docs.stripe.com/sources), and no data source reads a Source.
+- `topup` response `source.card_present.application_cryptogram` (string): The Source Stripe returns whole at `source`, whose ID the provider holds: Stripe has deprecated the Sources API ("We've deprecated the Sources API and plan to remove support.", https://docs.stripe.com/sources), and no data source reads a Source.
+- `topup` response `source.card_present.application_preferred_name` (string): The Source Stripe returns whole at `source`, whose ID the provider holds: Stripe has deprecated the Sources API ("We've deprecated the Sources API and plan to remove support.", https://docs.stripe.com/sources), and no data source reads a Source.
+- `topup` response `source.card_present.authorization_code` (string): The Source Stripe returns whole at `source`, whose ID the provider holds: Stripe has deprecated the Sources API ("We've deprecated the Sources API and plan to remove support.", https://docs.stripe.com/sources), and no data source reads a Source.
+- `topup` response `source.card_present.authorization_response_code` (string): The Source Stripe returns whole at `source`, whose ID the provider holds: Stripe has deprecated the Sources API ("We've deprecated the Sources API and plan to remove support.", https://docs.stripe.com/sources), and no data source reads a Source.
+- `topup` response `source.card_present.brand` (string): The Source Stripe returns whole at `source`, whose ID the provider holds: Stripe has deprecated the Sources API ("We've deprecated the Sources API and plan to remove support.", https://docs.stripe.com/sources), and no data source reads a Source.
+- `topup` response `source.card_present.country` (string): The Source Stripe returns whole at `source`, whose ID the provider holds: Stripe has deprecated the Sources API ("We've deprecated the Sources API and plan to remove support.", https://docs.stripe.com/sources), and no data source reads a Source.
+- `topup` response `source.card_present.cvm_type` (string): The Source Stripe returns whole at `source`, whose ID the provider holds: Stripe has deprecated the Sources API ("We've deprecated the Sources API and plan to remove support.", https://docs.stripe.com/sources), and no data source reads a Source.
+- `topup` response `source.card_present.data_type` (string): The Source Stripe returns whole at `source`, whose ID the provider holds: Stripe has deprecated the Sources API ("We've deprecated the Sources API and plan to remove support.", https://docs.stripe.com/sources), and no data source reads a Source.
+- `topup` response `source.card_present.dedicated_file_name` (string): The Source Stripe returns whole at `source`, whose ID the provider holds: Stripe has deprecated the Sources API ("We've deprecated the Sources API and plan to remove support.", https://docs.stripe.com/sources), and no data source reads a Source.
+- `topup` response `source.card_present.emv_auth_data` (string): The Source Stripe returns whole at `source`, whose ID the provider holds: Stripe has deprecated the Sources API ("We've deprecated the Sources API and plan to remove support.", https://docs.stripe.com/sources), and no data source reads a Source.
+- `topup` response `source.card_present.evidence_customer_signature` (string): The Source Stripe returns whole at `source`, whose ID the provider holds: Stripe has deprecated the Sources API ("We've deprecated the Sources API and plan to remove support.", https://docs.stripe.com/sources), and no data source reads a Source.
+- `topup` response `source.card_present.evidence_transaction_certificate` (string): The Source Stripe returns whole at `source`, whose ID the provider holds: Stripe has deprecated the Sources API ("We've deprecated the Sources API and plan to remove support.", https://docs.stripe.com/sources), and no data source reads a Source.
+- `topup` response `source.card_present.exp_month` (integer): The Source Stripe returns whole at `source`, whose ID the provider holds: Stripe has deprecated the Sources API ("We've deprecated the Sources API and plan to remove support.", https://docs.stripe.com/sources), and no data source reads a Source.
+- `topup` response `source.card_present.exp_year` (integer): The Source Stripe returns whole at `source`, whose ID the provider holds: Stripe has deprecated the Sources API ("We've deprecated the Sources API and plan to remove support.", https://docs.stripe.com/sources), and no data source reads a Source.
+- `topup` response `source.card_present.fingerprint` (string): The Source Stripe returns whole at `source`, whose ID the provider holds: Stripe has deprecated the Sources API ("We've deprecated the Sources API and plan to remove support.", https://docs.stripe.com/sources), and no data source reads a Source.
+- `topup` response `source.card_present.funding` (string): The Source Stripe returns whole at `source`, whose ID the provider holds: Stripe has deprecated the Sources API ("We've deprecated the Sources API and plan to remove support.", https://docs.stripe.com/sources), and no data source reads a Source.
+- `topup` response `source.card_present.last4` (string): The Source Stripe returns whole at `source`, whose ID the provider holds: Stripe has deprecated the Sources API ("We've deprecated the Sources API and plan to remove support.", https://docs.stripe.com/sources), and no data source reads a Source.
+- `topup` response `source.card_present.pos_device_id` (string): The Source Stripe returns whole at `source`, whose ID the provider holds: Stripe has deprecated the Sources API ("We've deprecated the Sources API and plan to remove support.", https://docs.stripe.com/sources), and no data source reads a Source.
+- `topup` response `source.card_present.pos_entry_mode` (string): The Source Stripe returns whole at `source`, whose ID the provider holds: Stripe has deprecated the Sources API ("We've deprecated the Sources API and plan to remove support.", https://docs.stripe.com/sources), and no data source reads a Source.
+- `topup` response `source.card_present.read_method` (string): The Source Stripe returns whole at `source`, whose ID the provider holds: Stripe has deprecated the Sources API ("We've deprecated the Sources API and plan to remove support.", https://docs.stripe.com/sources), and no data source reads a Source.
+- `topup` response `source.card_present.reader` (string): The Source Stripe returns whole at `source`, whose ID the provider holds: Stripe has deprecated the Sources API ("We've deprecated the Sources API and plan to remove support.", https://docs.stripe.com/sources), and no data source reads a Source.
+- `topup` response `source.card_present.terminal_verification_results` (string): The Source Stripe returns whole at `source`, whose ID the provider holds: Stripe has deprecated the Sources API ("We've deprecated the Sources API and plan to remove support.", https://docs.stripe.com/sources), and no data source reads a Source.
+- `topup` response `source.card_present.transaction_status_information` (string): The Source Stripe returns whole at `source`, whose ID the provider holds: Stripe has deprecated the Sources API ("We've deprecated the Sources API and plan to remove support.", https://docs.stripe.com/sources), and no data source reads a Source.
+- `topup` response `source.client_secret` (string): The Source Stripe returns whole at `source`, whose ID the provider holds: Stripe has deprecated the Sources API ("We've deprecated the Sources API and plan to remove support.", https://docs.stripe.com/sources), and no data source reads a Source.
+- `topup` response `source.code_verification.attempts_remaining` (integer): The Source Stripe returns whole at `source`, whose ID the provider holds: Stripe has deprecated the Sources API ("We've deprecated the Sources API and plan to remove support.", https://docs.stripe.com/sources), and no data source reads a Source.
+- `topup` response `source.code_verification.status` (string): The Source Stripe returns whole at `source`, whose ID the provider holds: Stripe has deprecated the Sources API ("We've deprecated the Sources API and plan to remove support.", https://docs.stripe.com/sources), and no data source reads a Source.
+- `topup` response `source.created` (integer): The Source Stripe returns whole at `source`, whose ID the provider holds: Stripe has deprecated the Sources API ("We've deprecated the Sources API and plan to remove support.", https://docs.stripe.com/sources), and no data source reads a Source.
+- `topup` response `source.currency` (string): The Source Stripe returns whole at `source`, whose ID the provider holds: Stripe has deprecated the Sources API ("We've deprecated the Sources API and plan to remove support.", https://docs.stripe.com/sources), and no data source reads a Source.
+- `topup` response `source.customer` (string): The Source Stripe returns whole at `source`, whose ID the provider holds: Stripe has deprecated the Sources API ("We've deprecated the Sources API and plan to remove support.", https://docs.stripe.com/sources), and no data source reads a Source.
+- `topup` response `source.eps.reference` (string): The Source Stripe returns whole at `source`, whose ID the provider holds: Stripe has deprecated the Sources API ("We've deprecated the Sources API and plan to remove support.", https://docs.stripe.com/sources), and no data source reads a Source.
+- `topup` response `source.eps.statement_descriptor` (string): The Source Stripe returns whole at `source`, whose ID the provider holds: Stripe has deprecated the Sources API ("We've deprecated the Sources API and plan to remove support.", https://docs.stripe.com/sources), and no data source reads a Source.
+- `topup` response `source.flow` (string): The Source Stripe returns whole at `source`, whose ID the provider holds: Stripe has deprecated the Sources API ("We've deprecated the Sources API and plan to remove support.", https://docs.stripe.com/sources), and no data source reads a Source.
+- `topup` response `source.giropay.bank_code` (string): The Source Stripe returns whole at `source`, whose ID the provider holds: Stripe has deprecated the Sources API ("We've deprecated the Sources API and plan to remove support.", https://docs.stripe.com/sources), and no data source reads a Source.
+- `topup` response `source.giropay.bank_name` (string): The Source Stripe returns whole at `source`, whose ID the provider holds: Stripe has deprecated the Sources API ("We've deprecated the Sources API and plan to remove support.", https://docs.stripe.com/sources), and no data source reads a Source.
+- `topup` response `source.giropay.bic` (string): The Source Stripe returns whole at `source`, whose ID the provider holds: Stripe has deprecated the Sources API ("We've deprecated the Sources API and plan to remove support.", https://docs.stripe.com/sources), and no data source reads a Source.
+- `topup` response `source.giropay.statement_descriptor` (string): The Source Stripe returns whole at `source`, whose ID the provider holds: Stripe has deprecated the Sources API ("We've deprecated the Sources API and plan to remove support.", https://docs.stripe.com/sources), and no data source reads a Source.
+- `topup` response `source.id` (string): The Source Stripe returns whole at `source`, whose ID the provider holds: Stripe has deprecated the Sources API ("We've deprecated the Sources API and plan to remove support.", https://docs.stripe.com/sources), and no data source reads a Source.
+- `topup` response `source.ideal.bank` (string): The Source Stripe returns whole at `source`, whose ID the provider holds: Stripe has deprecated the Sources API ("We've deprecated the Sources API and plan to remove support.", https://docs.stripe.com/sources), and no data source reads a Source.
+- `topup` response `source.ideal.bic` (string): The Source Stripe returns whole at `source`, whose ID the provider holds: Stripe has deprecated the Sources API ("We've deprecated the Sources API and plan to remove support.", https://docs.stripe.com/sources), and no data source reads a Source.
+- `topup` response `source.ideal.iban_last4` (string): The Source Stripe returns whole at `source`, whose ID the provider holds: Stripe has deprecated the Sources API ("We've deprecated the Sources API and plan to remove support.", https://docs.stripe.com/sources), and no data source reads a Source.
+- `topup` response `source.ideal.statement_descriptor` (string): The Source Stripe returns whole at `source`, whose ID the provider holds: Stripe has deprecated the Sources API ("We've deprecated the Sources API and plan to remove support.", https://docs.stripe.com/sources), and no data source reads a Source.
+- `topup` response `source.klarna.background_image_url` (string): The Source Stripe returns whole at `source`, whose ID the provider holds: Stripe has deprecated the Sources API ("We've deprecated the Sources API and plan to remove support.", https://docs.stripe.com/sources), and no data source reads a Source.
+- `topup` response `source.klarna.client_token` (string): The Source Stripe returns whole at `source`, whose ID the provider holds: Stripe has deprecated the Sources API ("We've deprecated the Sources API and plan to remove support.", https://docs.stripe.com/sources), and no data source reads a Source.
+- `topup` response `source.klarna.first_name` (string): The Source Stripe returns whole at `source`, whose ID the provider holds: Stripe has deprecated the Sources API ("We've deprecated the Sources API and plan to remove support.", https://docs.stripe.com/sources), and no data source reads a Source.
+- `topup` response `source.klarna.last_name` (string): The Source Stripe returns whole at `source`, whose ID the provider holds: Stripe has deprecated the Sources API ("We've deprecated the Sources API and plan to remove support.", https://docs.stripe.com/sources), and no data source reads a Source.
+- `topup` response `source.klarna.locale` (string): The Source Stripe returns whole at `source`, whose ID the provider holds: Stripe has deprecated the Sources API ("We've deprecated the Sources API and plan to remove support.", https://docs.stripe.com/sources), and no data source reads a Source.
+- `topup` response `source.klarna.logo_url` (string): The Source Stripe returns whole at `source`, whose ID the provider holds: Stripe has deprecated the Sources API ("We've deprecated the Sources API and plan to remove support.", https://docs.stripe.com/sources), and no data source reads a Source.
+- `topup` response `source.klarna.page_title` (string): The Source Stripe returns whole at `source`, whose ID the provider holds: Stripe has deprecated the Sources API ("We've deprecated the Sources API and plan to remove support.", https://docs.stripe.com/sources), and no data source reads a Source.
+- `topup` response `source.klarna.pay_later_asset_urls_descriptive` (string): The Source Stripe returns whole at `source`, whose ID the provider holds: Stripe has deprecated the Sources API ("We've deprecated the Sources API and plan to remove support.", https://docs.stripe.com/sources), and no data source reads a Source.
+- `topup` response `source.klarna.pay_later_asset_urls_standard` (string): The Source Stripe returns whole at `source`, whose ID the provider holds: Stripe has deprecated the Sources API ("We've deprecated the Sources API and plan to remove support.", https://docs.stripe.com/sources), and no data source reads a Source.
+- `topup` response `source.klarna.pay_later_name` (string): The Source Stripe returns whole at `source`, whose ID the provider holds: Stripe has deprecated the Sources API ("We've deprecated the Sources API and plan to remove support.", https://docs.stripe.com/sources), and no data source reads a Source.
+- `topup` response `source.klarna.pay_later_redirect_url` (string): The Source Stripe returns whole at `source`, whose ID the provider holds: Stripe has deprecated the Sources API ("We've deprecated the Sources API and plan to remove support.", https://docs.stripe.com/sources), and no data source reads a Source.
+- `topup` response `source.klarna.pay_now_asset_urls_descriptive` (string): The Source Stripe returns whole at `source`, whose ID the provider holds: Stripe has deprecated the Sources API ("We've deprecated the Sources API and plan to remove support.", https://docs.stripe.com/sources), and no data source reads a Source.
+- `topup` response `source.klarna.pay_now_asset_urls_standard` (string): The Source Stripe returns whole at `source`, whose ID the provider holds: Stripe has deprecated the Sources API ("We've deprecated the Sources API and plan to remove support.", https://docs.stripe.com/sources), and no data source reads a Source.
+- `topup` response `source.klarna.pay_now_name` (string): The Source Stripe returns whole at `source`, whose ID the provider holds: Stripe has deprecated the Sources API ("We've deprecated the Sources API and plan to remove support.", https://docs.stripe.com/sources), and no data source reads a Source.
+- `topup` response `source.klarna.pay_now_redirect_url` (string): The Source Stripe returns whole at `source`, whose ID the provider holds: Stripe has deprecated the Sources API ("We've deprecated the Sources API and plan to remove support.", https://docs.stripe.com/sources), and no data source reads a Source.
+- `topup` response `source.klarna.pay_over_time_asset_urls_descriptive` (string): The Source Stripe returns whole at `source`, whose ID the provider holds: Stripe has deprecated the Sources API ("We've deprecated the Sources API and plan to remove support.", https://docs.stripe.com/sources), and no data source reads a Source.
+- `topup` response `source.klarna.pay_over_time_asset_urls_standard` (string): The Source Stripe returns whole at `source`, whose ID the provider holds: Stripe has deprecated the Sources API ("We've deprecated the Sources API and plan to remove support.", https://docs.stripe.com/sources), and no data source reads a Source.
+- `topup` response `source.klarna.pay_over_time_name` (string): The Source Stripe returns whole at `source`, whose ID the provider holds: Stripe has deprecated the Sources API ("We've deprecated the Sources API and plan to remove support.", https://docs.stripe.com/sources), and no data source reads a Source.
+- `topup` response `source.klarna.pay_over_time_redirect_url` (string): The Source Stripe returns whole at `source`, whose ID the provider holds: Stripe has deprecated the Sources API ("We've deprecated the Sources API and plan to remove support.", https://docs.stripe.com/sources), and no data source reads a Source.
+- `topup` response `source.klarna.payment_method_categories` (string): The Source Stripe returns whole at `source`, whose ID the provider holds: Stripe has deprecated the Sources API ("We've deprecated the Sources API and plan to remove support.", https://docs.stripe.com/sources), and no data source reads a Source.
+- `topup` response `source.klarna.purchase_country` (string): The Source Stripe returns whole at `source`, whose ID the provider holds: Stripe has deprecated the Sources API ("We've deprecated the Sources API and plan to remove support.", https://docs.stripe.com/sources), and no data source reads a Source.
+- `topup` response `source.klarna.purchase_type` (string): The Source Stripe returns whole at `source`, whose ID the provider holds: Stripe has deprecated the Sources API ("We've deprecated the Sources API and plan to remove support.", https://docs.stripe.com/sources), and no data source reads a Source.
+- `topup` response `source.klarna.redirect_url` (string): The Source Stripe returns whole at `source`, whose ID the provider holds: Stripe has deprecated the Sources API ("We've deprecated the Sources API and plan to remove support.", https://docs.stripe.com/sources), and no data source reads a Source.
+- `topup` response `source.klarna.shipping_delay` (integer): The Source Stripe returns whole at `source`, whose ID the provider holds: Stripe has deprecated the Sources API ("We've deprecated the Sources API and plan to remove support.", https://docs.stripe.com/sources), and no data source reads a Source.
+- `topup` response `source.klarna.shipping_first_name` (string): The Source Stripe returns whole at `source`, whose ID the provider holds: Stripe has deprecated the Sources API ("We've deprecated the Sources API and plan to remove support.", https://docs.stripe.com/sources), and no data source reads a Source.
+- `topup` response `source.klarna.shipping_last_name` (string): The Source Stripe returns whole at `source`, whose ID the provider holds: Stripe has deprecated the Sources API ("We've deprecated the Sources API and plan to remove support.", https://docs.stripe.com/sources), and no data source reads a Source.
+- `topup` response `source.livemode` (boolean): The Source Stripe returns whole at `source`, whose ID the provider holds: Stripe has deprecated the Sources API ("We've deprecated the Sources API and plan to remove support.", https://docs.stripe.com/sources), and no data source reads a Source.
+- `topup` response `source.metadata` (map of string): The Source Stripe returns whole at `source`, whose ID the provider holds: Stripe has deprecated the Sources API ("We've deprecated the Sources API and plan to remove support.", https://docs.stripe.com/sources), and no data source reads a Source.
+- `topup` response `source.multibanco.entity` (string): The Source Stripe returns whole at `source`, whose ID the provider holds: Stripe has deprecated the Sources API ("We've deprecated the Sources API and plan to remove support.", https://docs.stripe.com/sources), and no data source reads a Source.
+- `topup` response `source.multibanco.reference` (string): The Source Stripe returns whole at `source`, whose ID the provider holds: Stripe has deprecated the Sources API ("We've deprecated the Sources API and plan to remove support.", https://docs.stripe.com/sources), and no data source reads a Source.
+- `topup` response `source.multibanco.refund_account_holder_address_city` (string): The Source Stripe returns whole at `source`, whose ID the provider holds: Stripe has deprecated the Sources API ("We've deprecated the Sources API and plan to remove support.", https://docs.stripe.com/sources), and no data source reads a Source.
+- `topup` response `source.multibanco.refund_account_holder_address_country` (string): The Source Stripe returns whole at `source`, whose ID the provider holds: Stripe has deprecated the Sources API ("We've deprecated the Sources API and plan to remove support.", https://docs.stripe.com/sources), and no data source reads a Source.
+- `topup` response `source.multibanco.refund_account_holder_address_line1` (string): The Source Stripe returns whole at `source`, whose ID the provider holds: Stripe has deprecated the Sources API ("We've deprecated the Sources API and plan to remove support.", https://docs.stripe.com/sources), and no data source reads a Source.
+- `topup` response `source.multibanco.refund_account_holder_address_line2` (string): The Source Stripe returns whole at `source`, whose ID the provider holds: Stripe has deprecated the Sources API ("We've deprecated the Sources API and plan to remove support.", https://docs.stripe.com/sources), and no data source reads a Source.
+- `topup` response `source.multibanco.refund_account_holder_address_postal_code` (string): The Source Stripe returns whole at `source`, whose ID the provider holds: Stripe has deprecated the Sources API ("We've deprecated the Sources API and plan to remove support.", https://docs.stripe.com/sources), and no data source reads a Source.
+- `topup` response `source.multibanco.refund_account_holder_address_state` (string): The Source Stripe returns whole at `source`, whose ID the provider holds: Stripe has deprecated the Sources API ("We've deprecated the Sources API and plan to remove support.", https://docs.stripe.com/sources), and no data source reads a Source.
+- `topup` response `source.multibanco.refund_account_holder_name` (string): The Source Stripe returns whole at `source`, whose ID the provider holds: Stripe has deprecated the Sources API ("We've deprecated the Sources API and plan to remove support.", https://docs.stripe.com/sources), and no data source reads a Source.
+- `topup` response `source.multibanco.refund_iban` (string): The Source Stripe returns whole at `source`, whose ID the provider holds: Stripe has deprecated the Sources API ("We've deprecated the Sources API and plan to remove support.", https://docs.stripe.com/sources), and no data source reads a Source.
+- `topup` response `source.object` (string): The Source Stripe returns whole at `source`, whose ID the provider holds: Stripe has deprecated the Sources API ("We've deprecated the Sources API and plan to remove support.", https://docs.stripe.com/sources), and no data source reads a Source.
+- `topup` response `source.owner.address.city` (string): The Source Stripe returns whole at `source`, whose ID the provider holds: Stripe has deprecated the Sources API ("We've deprecated the Sources API and plan to remove support.", https://docs.stripe.com/sources), and no data source reads a Source.
+- `topup` response `source.owner.address.country` (string): The Source Stripe returns whole at `source`, whose ID the provider holds: Stripe has deprecated the Sources API ("We've deprecated the Sources API and plan to remove support.", https://docs.stripe.com/sources), and no data source reads a Source.
+- `topup` response `source.owner.address.line1` (string): The Source Stripe returns whole at `source`, whose ID the provider holds: Stripe has deprecated the Sources API ("We've deprecated the Sources API and plan to remove support.", https://docs.stripe.com/sources), and no data source reads a Source.
+- `topup` response `source.owner.address.line2` (string): The Source Stripe returns whole at `source`, whose ID the provider holds: Stripe has deprecated the Sources API ("We've deprecated the Sources API and plan to remove support.", https://docs.stripe.com/sources), and no data source reads a Source.
+- `topup` response `source.owner.address.postal_code` (string): The Source Stripe returns whole at `source`, whose ID the provider holds: Stripe has deprecated the Sources API ("We've deprecated the Sources API and plan to remove support.", https://docs.stripe.com/sources), and no data source reads a Source.
+- `topup` response `source.owner.address.state` (string): The Source Stripe returns whole at `source`, whose ID the provider holds: Stripe has deprecated the Sources API ("We've deprecated the Sources API and plan to remove support.", https://docs.stripe.com/sources), and no data source reads a Source.
+- `topup` response `source.owner.email` (string): The Source Stripe returns whole at `source`, whose ID the provider holds: Stripe has deprecated the Sources API ("We've deprecated the Sources API and plan to remove support.", https://docs.stripe.com/sources), and no data source reads a Source.
+- `topup` response `source.owner.name` (string): The Source Stripe returns whole at `source`, whose ID the provider holds: Stripe has deprecated the Sources API ("We've deprecated the Sources API and plan to remove support.", https://docs.stripe.com/sources), and no data source reads a Source.
+- `topup` response `source.owner.phone` (string): The Source Stripe returns whole at `source`, whose ID the provider holds: Stripe has deprecated the Sources API ("We've deprecated the Sources API and plan to remove support.", https://docs.stripe.com/sources), and no data source reads a Source.
+- `topup` response `source.owner.verified_address.city` (string): The Source Stripe returns whole at `source`, whose ID the provider holds: Stripe has deprecated the Sources API ("We've deprecated the Sources API and plan to remove support.", https://docs.stripe.com/sources), and no data source reads a Source.
+- `topup` response `source.owner.verified_address.country` (string): The Source Stripe returns whole at `source`, whose ID the provider holds: Stripe has deprecated the Sources API ("We've deprecated the Sources API and plan to remove support.", https://docs.stripe.com/sources), and no data source reads a Source.
+- `topup` response `source.owner.verified_address.line1` (string): The Source Stripe returns whole at `source`, whose ID the provider holds: Stripe has deprecated the Sources API ("We've deprecated the Sources API and plan to remove support.", https://docs.stripe.com/sources), and no data source reads a Source.
+- `topup` response `source.owner.verified_address.line2` (string): The Source Stripe returns whole at `source`, whose ID the provider holds: Stripe has deprecated the Sources API ("We've deprecated the Sources API and plan to remove support.", https://docs.stripe.com/sources), and no data source reads a Source.
+- `topup` response `source.owner.verified_address.postal_code` (string): The Source Stripe returns whole at `source`, whose ID the provider holds: Stripe has deprecated the Sources API ("We've deprecated the Sources API and plan to remove support.", https://docs.stripe.com/sources), and no data source reads a Source.
+- `topup` response `source.owner.verified_address.state` (string): The Source Stripe returns whole at `source`, whose ID the provider holds: Stripe has deprecated the Sources API ("We've deprecated the Sources API and plan to remove support.", https://docs.stripe.com/sources), and no data source reads a Source.
+- `topup` response `source.owner.verified_email` (string): The Source Stripe returns whole at `source`, whose ID the provider holds: Stripe has deprecated the Sources API ("We've deprecated the Sources API and plan to remove support.", https://docs.stripe.com/sources), and no data source reads a Source.
+- `topup` response `source.owner.verified_name` (string): The Source Stripe returns whole at `source`, whose ID the provider holds: Stripe has deprecated the Sources API ("We've deprecated the Sources API and plan to remove support.", https://docs.stripe.com/sources), and no data source reads a Source.
+- `topup` response `source.owner.verified_phone` (string): The Source Stripe returns whole at `source`, whose ID the provider holds: Stripe has deprecated the Sources API ("We've deprecated the Sources API and plan to remove support.", https://docs.stripe.com/sources), and no data source reads a Source.
+- `topup` response `source.p24.reference` (string): The Source Stripe returns whole at `source`, whose ID the provider holds: Stripe has deprecated the Sources API ("We've deprecated the Sources API and plan to remove support.", https://docs.stripe.com/sources), and no data source reads a Source.
+- `topup` response `source.receiver.address` (string): The Source Stripe returns whole at `source`, whose ID the provider holds: Stripe has deprecated the Sources API ("We've deprecated the Sources API and plan to remove support.", https://docs.stripe.com/sources), and no data source reads a Source.
+- `topup` response `source.receiver.amount_charged` (integer): The Source Stripe returns whole at `source`, whose ID the provider holds: Stripe has deprecated the Sources API ("We've deprecated the Sources API and plan to remove support.", https://docs.stripe.com/sources), and no data source reads a Source.
+- `topup` response `source.receiver.amount_received` (integer): The Source Stripe returns whole at `source`, whose ID the provider holds: Stripe has deprecated the Sources API ("We've deprecated the Sources API and plan to remove support.", https://docs.stripe.com/sources), and no data source reads a Source.
+- `topup` response `source.receiver.amount_returned` (integer): The Source Stripe returns whole at `source`, whose ID the provider holds: Stripe has deprecated the Sources API ("We've deprecated the Sources API and plan to remove support.", https://docs.stripe.com/sources), and no data source reads a Source.
+- `topup` response `source.receiver.refund_attributes_method` (string): The Source Stripe returns whole at `source`, whose ID the provider holds: Stripe has deprecated the Sources API ("We've deprecated the Sources API and plan to remove support.", https://docs.stripe.com/sources), and no data source reads a Source.
+- `topup` response `source.receiver.refund_attributes_status` (string): The Source Stripe returns whole at `source`, whose ID the provider holds: Stripe has deprecated the Sources API ("We've deprecated the Sources API and plan to remove support.", https://docs.stripe.com/sources), and no data source reads a Source.
+- `topup` response `source.redirect.failure_reason` (string): The Source Stripe returns whole at `source`, whose ID the provider holds: Stripe has deprecated the Sources API ("We've deprecated the Sources API and plan to remove support.", https://docs.stripe.com/sources), and no data source reads a Source.
+- `topup` response `source.redirect.return_url` (string): The Source Stripe returns whole at `source`, whose ID the provider holds: Stripe has deprecated the Sources API ("We've deprecated the Sources API and plan to remove support.", https://docs.stripe.com/sources), and no data source reads a Source.
+- `topup` response `source.redirect.status` (string): The Source Stripe returns whole at `source`, whose ID the provider holds: Stripe has deprecated the Sources API ("We've deprecated the Sources API and plan to remove support.", https://docs.stripe.com/sources), and no data source reads a Source.
+- `topup` response `source.redirect.url` (string): The Source Stripe returns whole at `source`, whose ID the provider holds: Stripe has deprecated the Sources API ("We've deprecated the Sources API and plan to remove support.", https://docs.stripe.com/sources), and no data source reads a Source.
+- `topup` response `source.sepa_debit.bank_code` (string): The Source Stripe returns whole at `source`, whose ID the provider holds: Stripe has deprecated the Sources API ("We've deprecated the Sources API and plan to remove support.", https://docs.stripe.com/sources), and no data source reads a Source.
+- `topup` response `source.sepa_debit.branch_code` (string): The Source Stripe returns whole at `source`, whose ID the provider holds: Stripe has deprecated the Sources API ("We've deprecated the Sources API and plan to remove support.", https://docs.stripe.com/sources), and no data source reads a Source.
+- `topup` response `source.sepa_debit.country` (string): The Source Stripe returns whole at `source`, whose ID the provider holds: Stripe has deprecated the Sources API ("We've deprecated the Sources API and plan to remove support.", https://docs.stripe.com/sources), and no data source reads a Source.
+- `topup` response `source.sepa_debit.fingerprint` (string): The Source Stripe returns whole at `source`, whose ID the provider holds: Stripe has deprecated the Sources API ("We've deprecated the Sources API and plan to remove support.", https://docs.stripe.com/sources), and no data source reads a Source.
+- `topup` response `source.sepa_debit.last4` (string): The Source Stripe returns whole at `source`, whose ID the provider holds: Stripe has deprecated the Sources API ("We've deprecated the Sources API and plan to remove support.", https://docs.stripe.com/sources), and no data source reads a Source.
+- `topup` response `source.sepa_debit.mandate_reference` (string): The Source Stripe returns whole at `source`, whose ID the provider holds: Stripe has deprecated the Sources API ("We've deprecated the Sources API and plan to remove support.", https://docs.stripe.com/sources), and no data source reads a Source.
+- `topup` response `source.sepa_debit.mandate_url` (string): The Source Stripe returns whole at `source`, whose ID the provider holds: Stripe has deprecated the Sources API ("We've deprecated the Sources API and plan to remove support.", https://docs.stripe.com/sources), and no data source reads a Source.
+- `topup` response `source.sofort.bank_code` (string): The Source Stripe returns whole at `source`, whose ID the provider holds: Stripe has deprecated the Sources API ("We've deprecated the Sources API and plan to remove support.", https://docs.stripe.com/sources), and no data source reads a Source.
+- `topup` response `source.sofort.bank_name` (string): The Source Stripe returns whole at `source`, whose ID the provider holds: Stripe has deprecated the Sources API ("We've deprecated the Sources API and plan to remove support.", https://docs.stripe.com/sources), and no data source reads a Source.
+- `topup` response `source.sofort.bic` (string): The Source Stripe returns whole at `source`, whose ID the provider holds: Stripe has deprecated the Sources API ("We've deprecated the Sources API and plan to remove support.", https://docs.stripe.com/sources), and no data source reads a Source.
+- `topup` response `source.sofort.country` (string): The Source Stripe returns whole at `source`, whose ID the provider holds: Stripe has deprecated the Sources API ("We've deprecated the Sources API and plan to remove support.", https://docs.stripe.com/sources), and no data source reads a Source.
+- `topup` response `source.sofort.iban_last4` (string): The Source Stripe returns whole at `source`, whose ID the provider holds: Stripe has deprecated the Sources API ("We've deprecated the Sources API and plan to remove support.", https://docs.stripe.com/sources), and no data source reads a Source.
+- `topup` response `source.sofort.preferred_language` (string): The Source Stripe returns whole at `source`, whose ID the provider holds: Stripe has deprecated the Sources API ("We've deprecated the Sources API and plan to remove support.", https://docs.stripe.com/sources), and no data source reads a Source.
+- `topup` response `source.sofort.statement_descriptor` (string): The Source Stripe returns whole at `source`, whose ID the provider holds: Stripe has deprecated the Sources API ("We've deprecated the Sources API and plan to remove support.", https://docs.stripe.com/sources), and no data source reads a Source.
+- `topup` response `source.source_order.amount` (integer): The Source Stripe returns whole at `source`, whose ID the provider holds: Stripe has deprecated the Sources API ("We've deprecated the Sources API and plan to remove support.", https://docs.stripe.com/sources), and no data source reads a Source.
+- `topup` response `source.source_order.currency` (string): The Source Stripe returns whole at `source`, whose ID the provider holds: Stripe has deprecated the Sources API ("We've deprecated the Sources API and plan to remove support.", https://docs.stripe.com/sources), and no data source reads a Source.
+- `topup` response `source.source_order.email` (string): The Source Stripe returns whole at `source`, whose ID the provider holds: Stripe has deprecated the Sources API ("We've deprecated the Sources API and plan to remove support.", https://docs.stripe.com/sources), and no data source reads a Source.
+- `topup` response `source.source_order.items.amount` (integer): The Source Stripe returns whole at `source`, whose ID the provider holds: Stripe has deprecated the Sources API ("We've deprecated the Sources API and plan to remove support.", https://docs.stripe.com/sources), and no data source reads a Source.
+- `topup` response `source.source_order.items.currency` (string): The Source Stripe returns whole at `source`, whose ID the provider holds: Stripe has deprecated the Sources API ("We've deprecated the Sources API and plan to remove support.", https://docs.stripe.com/sources), and no data source reads a Source.
+- `topup` response `source.source_order.items.description` (string): The Source Stripe returns whole at `source`, whose ID the provider holds: Stripe has deprecated the Sources API ("We've deprecated the Sources API and plan to remove support.", https://docs.stripe.com/sources), and no data source reads a Source.
+- `topup` response `source.source_order.items.parent` (string): The Source Stripe returns whole at `source`, whose ID the provider holds: Stripe has deprecated the Sources API ("We've deprecated the Sources API and plan to remove support.", https://docs.stripe.com/sources), and no data source reads a Source.
+- `topup` response `source.source_order.items.quantity` (integer): The Source Stripe returns whole at `source`, whose ID the provider holds: Stripe has deprecated the Sources API ("We've deprecated the Sources API and plan to remove support.", https://docs.stripe.com/sources), and no data source reads a Source.
+- `topup` response `source.source_order.items.type` (string): The Source Stripe returns whole at `source`, whose ID the provider holds: Stripe has deprecated the Sources API ("We've deprecated the Sources API and plan to remove support.", https://docs.stripe.com/sources), and no data source reads a Source.
+- `topup` response `source.source_order.shipping.address.city` (string): The Source Stripe returns whole at `source`, whose ID the provider holds: Stripe has deprecated the Sources API ("We've deprecated the Sources API and plan to remove support.", https://docs.stripe.com/sources), and no data source reads a Source.
+- `topup` response `source.source_order.shipping.address.country` (string): The Source Stripe returns whole at `source`, whose ID the provider holds: Stripe has deprecated the Sources API ("We've deprecated the Sources API and plan to remove support.", https://docs.stripe.com/sources), and no data source reads a Source.
+- `topup` response `source.source_order.shipping.address.line1` (string): The Source Stripe returns whole at `source`, whose ID the provider holds: Stripe has deprecated the Sources API ("We've deprecated the Sources API and plan to remove support.", https://docs.stripe.com/sources), and no data source reads a Source.
+- `topup` response `source.source_order.shipping.address.line2` (string): The Source Stripe returns whole at `source`, whose ID the provider holds: Stripe has deprecated the Sources API ("We've deprecated the Sources API and plan to remove support.", https://docs.stripe.com/sources), and no data source reads a Source.
+- `topup` response `source.source_order.shipping.address.postal_code` (string): The Source Stripe returns whole at `source`, whose ID the provider holds: Stripe has deprecated the Sources API ("We've deprecated the Sources API and plan to remove support.", https://docs.stripe.com/sources), and no data source reads a Source.
+- `topup` response `source.source_order.shipping.address.state` (string): The Source Stripe returns whole at `source`, whose ID the provider holds: Stripe has deprecated the Sources API ("We've deprecated the Sources API and plan to remove support.", https://docs.stripe.com/sources), and no data source reads a Source.
+- `topup` response `source.source_order.shipping.carrier` (string): The Source Stripe returns whole at `source`, whose ID the provider holds: Stripe has deprecated the Sources API ("We've deprecated the Sources API and plan to remove support.", https://docs.stripe.com/sources), and no data source reads a Source.
+- `topup` response `source.source_order.shipping.name` (string): The Source Stripe returns whole at `source`, whose ID the provider holds: Stripe has deprecated the Sources API ("We've deprecated the Sources API and plan to remove support.", https://docs.stripe.com/sources), and no data source reads a Source.
+- `topup` response `source.source_order.shipping.phone` (string): The Source Stripe returns whole at `source`, whose ID the provider holds: Stripe has deprecated the Sources API ("We've deprecated the Sources API and plan to remove support.", https://docs.stripe.com/sources), and no data source reads a Source.
+- `topup` response `source.source_order.shipping.tracking_number` (string): The Source Stripe returns whole at `source`, whose ID the provider holds: Stripe has deprecated the Sources API ("We've deprecated the Sources API and plan to remove support.", https://docs.stripe.com/sources), and no data source reads a Source.
+- `topup` response `source.statement_descriptor` (string): The Source Stripe returns whole at `source`, whose ID the provider holds: Stripe has deprecated the Sources API ("We've deprecated the Sources API and plan to remove support.", https://docs.stripe.com/sources), and no data source reads a Source.
+- `topup` response `source.status` (string): The Source Stripe returns whole at `source`, whose ID the provider holds: Stripe has deprecated the Sources API ("We've deprecated the Sources API and plan to remove support.", https://docs.stripe.com/sources), and no data source reads a Source.
+- `topup` response `source.three_d_secure.address_line1_check` (string): The Source Stripe returns whole at `source`, whose ID the provider holds: Stripe has deprecated the Sources API ("We've deprecated the Sources API and plan to remove support.", https://docs.stripe.com/sources), and no data source reads a Source.
+- `topup` response `source.three_d_secure.address_zip_check` (string): The Source Stripe returns whole at `source`, whose ID the provider holds: Stripe has deprecated the Sources API ("We've deprecated the Sources API and plan to remove support.", https://docs.stripe.com/sources), and no data source reads a Source.
+- `topup` response `source.three_d_secure.authenticated` (boolean): The Source Stripe returns whole at `source`, whose ID the provider holds: Stripe has deprecated the Sources API ("We've deprecated the Sources API and plan to remove support.", https://docs.stripe.com/sources), and no data source reads a Source.
+- `topup` response `source.three_d_secure.brand` (string): The Source Stripe returns whole at `source`, whose ID the provider holds: Stripe has deprecated the Sources API ("We've deprecated the Sources API and plan to remove support.", https://docs.stripe.com/sources), and no data source reads a Source.
+- `topup` response `source.three_d_secure.card` (string): The Source Stripe returns whole at `source`, whose ID the provider holds: Stripe has deprecated the Sources API ("We've deprecated the Sources API and plan to remove support.", https://docs.stripe.com/sources), and no data source reads a Source.
+- `topup` response `source.three_d_secure.country` (string): The Source Stripe returns whole at `source`, whose ID the provider holds: Stripe has deprecated the Sources API ("We've deprecated the Sources API and plan to remove support.", https://docs.stripe.com/sources), and no data source reads a Source.
+- `topup` response `source.three_d_secure.customer` (string): The Source Stripe returns whole at `source`, whose ID the provider holds: Stripe has deprecated the Sources API ("We've deprecated the Sources API and plan to remove support.", https://docs.stripe.com/sources), and no data source reads a Source.
+- `topup` response `source.three_d_secure.cvc_check` (string): The Source Stripe returns whole at `source`, whose ID the provider holds: Stripe has deprecated the Sources API ("We've deprecated the Sources API and plan to remove support.", https://docs.stripe.com/sources), and no data source reads a Source.
+- `topup` response `source.three_d_secure.dynamic_last4` (string): The Source Stripe returns whole at `source`, whose ID the provider holds: Stripe has deprecated the Sources API ("We've deprecated the Sources API and plan to remove support.", https://docs.stripe.com/sources), and no data source reads a Source.
+- `topup` response `source.three_d_secure.exp_month` (integer): The Source Stripe returns whole at `source`, whose ID the provider holds: Stripe has deprecated the Sources API ("We've deprecated the Sources API and plan to remove support.", https://docs.stripe.com/sources), and no data source reads a Source.
+- `topup` response `source.three_d_secure.exp_year` (integer): The Source Stripe returns whole at `source`, whose ID the provider holds: Stripe has deprecated the Sources API ("We've deprecated the Sources API and plan to remove support.", https://docs.stripe.com/sources), and no data source reads a Source.
+- `topup` response `source.three_d_secure.fingerprint` (string): The Source Stripe returns whole at `source`, whose ID the provider holds: Stripe has deprecated the Sources API ("We've deprecated the Sources API and plan to remove support.", https://docs.stripe.com/sources), and no data source reads a Source.
+- `topup` response `source.three_d_secure.funding` (string): The Source Stripe returns whole at `source`, whose ID the provider holds: Stripe has deprecated the Sources API ("We've deprecated the Sources API and plan to remove support.", https://docs.stripe.com/sources), and no data source reads a Source.
+- `topup` response `source.three_d_secure.last4` (string): The Source Stripe returns whole at `source`, whose ID the provider holds: Stripe has deprecated the Sources API ("We've deprecated the Sources API and plan to remove support.", https://docs.stripe.com/sources), and no data source reads a Source.
+- `topup` response `source.three_d_secure.name` (string): The Source Stripe returns whole at `source`, whose ID the provider holds: Stripe has deprecated the Sources API ("We've deprecated the Sources API and plan to remove support.", https://docs.stripe.com/sources), and no data source reads a Source.
+- `topup` response `source.three_d_secure.three_d_secure` (string): The Source Stripe returns whole at `source`, whose ID the provider holds: Stripe has deprecated the Sources API ("We've deprecated the Sources API and plan to remove support.", https://docs.stripe.com/sources), and no data source reads a Source.
+- `topup` response `source.three_d_secure.tokenization_method` (string): The Source Stripe returns whole at `source`, whose ID the provider holds: Stripe has deprecated the Sources API ("We've deprecated the Sources API and plan to remove support.", https://docs.stripe.com/sources), and no data source reads a Source.
+- `topup` response `source.type` (string): The Source Stripe returns whole at `source`, whose ID the provider holds: Stripe has deprecated the Sources API ("We've deprecated the Sources API and plan to remove support.", https://docs.stripe.com/sources), and no data source reads a Source.
+- `topup` response `source.usage` (string): The Source Stripe returns whole at `source`, whose ID the provider holds: Stripe has deprecated the Sources API ("We've deprecated the Sources API and plan to remove support.", https://docs.stripe.com/sources), and no data source reads a Source.
+- `topup` response `source.wechat.prepay_id` (string): The Source Stripe returns whole at `source`, whose ID the provider holds: Stripe has deprecated the Sources API ("We've deprecated the Sources API and plan to remove support.", https://docs.stripe.com/sources), and no data source reads a Source.
+- `topup` response `source.wechat.qr_code_url` (string): The Source Stripe returns whole at `source`, whose ID the provider holds: Stripe has deprecated the Sources API ("We've deprecated the Sources API and plan to remove support.", https://docs.stripe.com/sources), and no data source reads a Source.
+- `topup` response `source.wechat.statement_descriptor` (string): The Source Stripe returns whole at `source`, whose ID the provider holds: Stripe has deprecated the Sources API ("We've deprecated the Sources API and plan to remove support.", https://docs.stripe.com/sources), and no data source reads a Source.
 - `transfer_reversal` response `transfer` (reference): the parent attribute holds it
 
 ## Awaiting proof

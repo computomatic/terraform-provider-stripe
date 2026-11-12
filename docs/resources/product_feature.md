@@ -32,7 +32,7 @@ resource "stripe_product_feature" "gold_search" {
 
 The following arguments are required:
 
-* `entitlement_feature` - (Required) The ID of the [Feature](https://docs.stripe.com/api/entitlements/feature) object attached to this product. Changing it replaces the resource.
+* `entitlement_feature` - (Required) The ID of the [Feature](https://docs.stripe.com/api/entitlements/feature) object attached to this product. Stripe returns the whole entitlements feature here; the provider holds its ID. Read the entitlements feature with the `stripe_entitlements_feature` data source. Changing it replaces the resource.
 * `product` - (Required) The ID of the parent object. Changing it replaces the resource.
 
 ## Attribute Reference
