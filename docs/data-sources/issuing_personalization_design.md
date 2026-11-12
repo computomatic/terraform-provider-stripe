@@ -53,9 +53,10 @@ This data source exports the following attributes in addition to the arguments a
 * `metadata` - Set of [key-value pairs](https://docs.stripe.com/api/metadata) that you can attach to an object. This can be useful for storing additional information about the object in a structured format. Individual keys can be unset by posting an empty value to them. All keys can be unset by posting an empty value to `metadata`.
 * `name` - Friendly display name.
 * `physical_bundle` - The physical bundle object belonging to this personalization design.
-* `preferences` - See [`preferences`](#preferences) below.
+* `preferences` - Information on whether this personalization design is used to create cards when one is not specified. See [`preferences`](#preferences) below.
 * `rejection_reasons` - See [`rejection_reasons`](#rejection_reasons) below.
 * `status` - Whether this personalization design can be used to create cards. Possible values: `active`, `inactive`, `rejected`, `review`.
+* `transfer_lookup_key` - If set to true, will atomically remove the lookup key from the existing personalization design, and assign it to this personalization design.
 
 <a id="carrier_text"></a>
 ### `carrier_text`

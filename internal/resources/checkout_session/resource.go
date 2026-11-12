@@ -68,6 +68,8 @@ var Declaration = engine.Declaration{
 		// `isolated/unknown_logo_file`
 		"branding_settings.icon.file": "Stripe takes the ID of a file upload the account holds, and refuses one it cannot find.",
 		"branding_settings.logo.file": "Stripe takes the ID of a file upload the account holds, and refuses one it cannot find.",
+		// suite: TestCheckoutSessionAttributes, probe `isolated/name_collection_both_off`
+		"name_collection.individual.enabled": "Stripe takes it beside `name_collection.business.enabled` set to `true`, and refuses both names' `enabled` set to `false`.",
 	},
 	Defaults: map[string]string{
 		"after_expiration.recovery.allow_promotion_codes":            "`false` once `recovery` is set",

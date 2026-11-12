@@ -17,7 +17,7 @@ func mustObject(t *testing.T, s string) Object {
 
 // A request sends a pattern where each member the pattern names is sent whole: a scalar equal,
 // a hash with the same members, a list with the same elements in any order, and `$any` any
-// value but null. Members the pattern does not name are free.
+// value but null and the empty string. Members the pattern does not name are free.
 func TestSendsAll(t *testing.T) {
 	for _, tc := range []struct {
 		name, pattern, body string
@@ -32,6 +32,8 @@ func TestSendsAll(t *testing.T) {
 		{"hash with fewer members", `{"identity":{"country":"GB","entity_type":"company"}}`, `{"identity":{"country":"GB"}}`, false},
 		{"any value", `{"url":{"$any":true}}`, `{"url":"https://example.com"}`, true},
 		{"any is not null", `{"url":{"$any":true}}`, `{"url":null}`, false},
+		{"any is not empty", `{"url":{"$any":true}}`, `{"url":""}`, false},
+		{"the unset", `{"phases":""}`, `{"phases":""}`, true},
 		{"any hash", `{"owner":{"$any":true}}`, `{"owner":{"email":"a@b"}}`, true},
 		{"list in order", `{"phases":[{"price":"a"},{"price":"b"}]}`, `{"phases":[{"price":"a"},{"price":"b"}]}`, true},
 		{"list reordered", `{"phases":[{"price":"a"},{"price":"b"}]}`, `{"phases":[{"price":"b"},{"price":"a"}]}`, true},
@@ -71,5 +73,27 @@ func TestHoldsAll(t *testing.T) {
 				t.Errorf("HoldsAll(%s, %s) = %t, want %t", tc.pattern, tc.object, got, tc.want)
 			}
 		})
+	}
+}
+
+// A form body sends a null, an empty list and an empty hash, at any depth, as the empty string,
+// and FormSent says so; anything else stays as it is.
+func TestFormSent(t *testing.T) {
+	body := Object{
+		{Name: "phases", Value: Array{}},
+		{Name: "description", Value: Null{}},
+		{Name: "metadata", Value: Object{}},
+		{Name: "items", Value: Array{Object{{Name: "price", Value: String("price_1")}, {Name: "tax_rates", Value: Array{}}}}},
+		{Name: "quantity", Value: Int(2)},
+	}
+	got, err := EncodeJSON(FormSent(body))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if want := `{"phases":"","description":"","metadata":"","items":[{"price":"price_1","tax_rates":""}],"quantity":2}`; string(got) != want {
+		t.Errorf("FormSent = %s, want %s", got, want)
+	}
+	if !SendsAll(mustObject(t, `{"phases":""}`), FormSent(body)) {
+		t.Error("a recorded unset does not match the body as sent")
 	}
 }

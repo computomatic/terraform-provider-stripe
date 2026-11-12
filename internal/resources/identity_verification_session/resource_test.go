@@ -74,6 +74,14 @@ data "stripe_identity_verification_session" "test" {
 				resource.TestCheckResourceAttrPair("data.stripe_identity_verification_session.test", "id", address, "id"),
 				resource.TestCheckResourceAttr("data.stripe_identity_verification_session.test", "status", "requires_input"),
 				resource.TestCheckResourceAttrPair("data.stripe_identity_verification_session.test", "client_secret", address, "client_secret"),
+				// Stripe relates a session to a person only through a verification flow, which the
+				// API cannot make, and refuses a person of a connected account the platform made,
+				// so `related_person` reads null (suite: TestIdentityVerificationSessionAttributes,
+				// its `MayStayNull` of `related_person`), as `related_customer` does with none sent.
+				resource.TestCheckNoResourceAttr(address, "related_person.account"),
+				resource.TestCheckNoResourceAttr(address, "related_person.person"),
+				resource.TestCheckNoResourceAttr("data.stripe_identity_verification_session.test", "related_person.account"),
+				resource.TestCheckNoResourceAttr(address, "related_customer"),
 			),
 		}}, nil, "stripe_identity_verification_session"),
 	})

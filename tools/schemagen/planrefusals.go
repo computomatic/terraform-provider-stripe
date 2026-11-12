@@ -17,6 +17,11 @@ import (
 // each of which stands for any value of its kind, but where a translation refuses it below.
 var genKinds = []string{"account_currency", "email", "fresh", "now", "read", "ref", "shared", "unique", "url"}
 
+// meaningfulGenKinds are the generated values that say more than "some value": the account's
+// own currency, and a time relative to when the probe sent it (with its `offset`), such as a
+// start a day after the create. A refused request holding one is not translated as any value.
+var meaningfulGenKinds = []string{"account_currency", "now"}
+
 // recordObject is a JSON object of the record decoded as wire values, which keep each number's
 // text, so that a large integer or an exponent reaches a pattern as recorded.
 type recordObject wire.Object
@@ -54,7 +59,8 @@ func decodeObject(data json.RawMessage) (wire.Object, error) {
 // (`resource_missing`), or sends a value read from the object (`read`), on which Stripe's answer
 // can turn, none of which the plan can know, or one that a request Stripe took also matches: one
 // of the same rule, or the object's minimal create. A refused request the table cannot send, or
-// to an object it cannot hold, is left out: no plan sends it.
+// to an object it cannot hold, is left out: no plan sends it. An entry that adds the probe to the
+// rule's key leaves that refused request alone to Stripe, and the plan refuses the rule's others.
 func markPlanRefusals(res Resource, object, create, update string, table []fields.Field, leaves []Leaf, records []Record, ev *Pinned) error {
 	used := map[string]bool{}
 	if ev != nil {
@@ -71,12 +77,20 @@ func markPlanRefusals(res Resource, object, create, update string, table []field
 				used[key] = true
 				continue
 			}
+			leftProbes := map[string]bool{}
+			for _, o := range r.Observations {
+				probeKey := key + " " + o.Condition.Probe
+				if _, left := res.LeftToStripe[probeKey]; left && o.Value.Status != http.StatusOK {
+					leftProbes[o.Condition.Probe], used[probeKey] = true, true
+				}
+			}
 			isUpdate := r.Operation == update
 			var base wire.Object
 			if !isUpdate {
 				base = ev.baseCreate(object, create)
 			}
-			refusals, err := translateRule(r, isUpdate, base, table)
+			form := !strings.HasPrefix(res.CreatePath, "/v2/") && !strings.HasPrefix(res.UpdatePath, "/v2/")
+			refusals, err := translateRule(r, isUpdate, base, table, leftProbes, form)
 			if err != nil {
 				return fmt.Errorf("%s: the record's rule on %s: %w; put it to the plan, or list it in LeftToStripe with the reason", res.Package, key, err)
 			}
@@ -86,7 +100,7 @@ func markPlanRefusals(res Resource, object, create, update string, table []field
 	}
 	for _, key := range slices.Sorted(maps.Keys(res.LeftToStripe)) {
 		if !used[key] {
-			return fmt.Errorf("%s: LeftToStripe names %s, which is no rule of an exposed argument with a refused request", res.Package, key)
+			return fmt.Errorf("%s: LeftToStripe names %s, which is no rule of an exposed argument with a refused request, nor a refused request of one", res.Package, key)
 		}
 	}
 	return nil
@@ -121,8 +135,12 @@ type taken struct {
 
 // translateRule turns each refused request of an answer rule into a PlanRefusal, and fails on
 // one it cannot translate or that a request Stripe took also matches: one of the rule's, or, on a
-// create, the minimal create base, which Stripe took.
-func translateRule(r EvidenceRule, update bool, base wire.Object, table []fields.Field) ([]fields.PlanRefusal, error) {
+// create, the minimal create base, which Stripe took. On a form API it also fails on a refused
+// request whose params or object hold an empty list, an empty hash or null: the suite's form
+// encoder sends no pair for the first two and refuses the last, so such a member says the probe
+// left the key out, which a pattern cannot state, while the engine compares a request as its form
+// sends it, where a removal is the empty value.
+func translateRule(r EvidenceRule, update bool, base wire.Object, table []fields.Field, left map[string]bool, form bool) ([]fields.PlanRefusal, error) {
 	var accepted []taken
 	if base != nil {
 		sent, err := pattern(base, false)
@@ -147,7 +165,7 @@ func translateRule(r EvidenceRule, update bool, base wire.Object, table []fields
 	}
 	var out []fields.PlanRefusal
 	for _, o := range r.Observations {
-		if o.Value.Status == http.StatusOK {
+		if o.Value.Status == http.StatusOK || left[o.Condition.Probe] {
 			continue
 		}
 		c := o.Condition
@@ -173,6 +191,13 @@ func translateRule(r EvidenceRule, update bool, base wire.Object, table []fields
 		if !takes(table, sends, update) || !takes(table, holds, false) {
 			continue
 		}
+		if form {
+			for _, p := range []wire.Object{sends, holds} {
+				if at := emptyMember(p, ""); at != "" {
+					return nil, fmt.Errorf("probe %s: `%s` is empty or null, which the suite's form sent as no value at all, and a plan cannot tell from the removal it sends as the empty value", c.Probe, at)
+				}
+			}
+		}
 		for _, a := range accepted {
 			if wire.SendsAll(sends, a.sent) && wire.HoldsAll(holds, a.holds) {
 				return nil, fmt.Errorf("Stripe took the request of %s, which sends what probe %s sent, to an object that holds what it held, so the plan cannot tell them apart", a.probe, c.Probe)
@@ -190,6 +215,38 @@ func translateRule(r EvidenceRule, update bool, base wire.Object, table []fields
 		out = append(out, refusal)
 	}
 	return out, nil
+}
+
+// emptyMember is the dotted path of the first member, at any depth, that is null, an empty
+// list or an empty hash, or "".
+func emptyMember(v wire.Value, at string) string {
+	switch t := v.(type) {
+	case wire.Null:
+		return at
+	case wire.Array:
+		if len(t) == 0 && at != "" {
+			return at
+		}
+		for _, e := range t {
+			if p := emptyMember(e, at); p != "" {
+				return p
+			}
+		}
+	case wire.Object:
+		if len(t) == 0 && at != "" {
+			return at
+		}
+		for _, f := range t {
+			name := f.Name
+			if at != "" {
+				name = at + "." + f.Name
+			}
+			if p := emptyMember(f.Value, name); p != "" {
+				return p
+			}
+		}
+	}
+	return ""
 }
 
 // patternOf is a recorded request or object, whole, as a pattern (pattern).
@@ -229,6 +286,8 @@ func patternValue(v wire.Value, strict bool) (wire.Value, error) {
 				return nil, fmt.Errorf("the refused request names %s `%s`, another object in a state of its own, which the plan cannot know", kind, arg)
 			case kind == "read":
 				return nil, fmt.Errorf("the refused request sends `%s` as read from the object, and Stripe's answer can turn on which value that is", arg)
+			case slices.Contains(meaningfulGenKinds, kind):
+				return nil, fmt.Errorf("the refused request holds `$gen` `%s`, a value that means something of its own (the account's currency, or a time relative to the request), which a pattern cannot state and any value would widen", kind)
 			}
 			return wire.Any, nil
 		}

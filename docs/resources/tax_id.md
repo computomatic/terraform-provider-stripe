@@ -3,12 +3,12 @@
 page_title: "stripe_tax_id Resource - Stripe"
 subcategory: ""
 description: |-
-  A tax ID of your own account or of a customer, set by owner. Stripe does not update tax IDs, so every argument forces replacement. terraform destroy deletes the tax ID.
+  A tax ID of your own account, of a connected account or of a customer, set by owner. Stripe does not update tax IDs, so every argument forces replacement. terraform destroy deletes the tax ID.
 ---
 
 # Resource: stripe_tax_id
 
-A tax ID of your own account or of a customer, set by `owner`. Stripe does not update tax IDs, so every argument forces replacement. `terraform destroy` deletes the tax ID.
+A tax ID of your own account, of a connected account or of a customer, set by `owner`. Stripe does not update tax IDs, so every argument forces replacement. `terraform destroy` deletes the tax ID.
 
 ## Example Usage
 
@@ -44,10 +44,10 @@ The following arguments are optional:
 
 The `owner` attribute supports:
 
-* `account` - (Read-Only) The account being referenced when `type` is `account`.
+* `account` - (Optional) The account being referenced when `type` is `account`. Default: none.
 * `application` - (Read-Only) The Connect Application being referenced when `type` is `application`.
-* `customer` - (Optional) The customer being referenced when `type` is `customer`.
-* `customer_account` - (Read-Only) The Account representing the customer being referenced when `type` is `customer`.
+* `customer` - (Optional) The customer being referenced when `type` is `customer`. Default: none.
+* `customer_account` - (Optional) The Account representing the customer being referenced when `type` is `customer`. Stripe refused it on a US account on create: "The supplied ID is not a valid Customer. V2 Accounts must be configured as Customers before they can be used in the Customers API.". Default: none.
 * `type` - (Required) Type of owner referenced. Possible values: `account`, `application`, `customer`, `self`.
 
 ## Attribute Reference

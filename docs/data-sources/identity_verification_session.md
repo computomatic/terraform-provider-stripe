@@ -44,6 +44,7 @@ This data source exports the following attributes in addition to the arguments a
 * `redaction` - Redaction status of this VerificationSession. If the VerificationSession is not redacted, this field will be null. See [`redaction`](#redaction) below.
 * `related_customer` - Customer ID
 * `related_customer_account` - The ID of the Account representing a customer.
+* `related_person` - See [`related_person`](#related_person) below.
 * `return_url` - The URL that the user will be redirected to upon completing the verification flow.
 * `status` - Status of this VerificationSession. [Learn more about the lifecycle of sessions](https://docs.stripe.com/identity/how-sessions-work). Possible values: `canceled`, `processing`, `requires_input`, `verified`.
 * `type` - The type of [verification check](https://docs.stripe.com/identity/verification-checks) to be performed. You must provide a `type` if not passing `verification_flow`. Possible values: `document`, `id_number`.
@@ -114,6 +115,14 @@ The `provided_details` attribute supports:
 The `redaction` attribute supports:
 
 * `status` - Indicates whether this object and its related objects have been redacted or not. Possible values: `processing`, `redacted`, `validated`.
+
+<a id="related_person"></a>
+### `related_person`
+
+The `related_person` attribute supports:
+
+* `account` - Token referencing the associated Account of the related Person resource.
+* `person` - Token referencing the related Person resource.
 
 <a id="verified_outputs"></a>
 ### `verified_outputs`

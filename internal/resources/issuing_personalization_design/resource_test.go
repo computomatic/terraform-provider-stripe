@@ -1,6 +1,7 @@
 package issuing_personalization_design_test
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"regexp"
@@ -13,6 +14,7 @@ import (
 
 	"github.com/computomatic/terraform-provider-stripe/internal/acctest"
 	"github.com/computomatic/terraform-provider-stripe/internal/acctest/tfacc"
+	"github.com/computomatic/terraform-provider-stripe/internal/stripeapi"
 	"github.com/computomatic/terraform-provider-stripe/internal/wire"
 )
 
@@ -236,6 +238,68 @@ resource "stripe_issuing_personalization_design" "rejected" {
 				ConfigPlanChecks: unchanged,
 				Check:            resource.TestCheckResourceAttr(address, "status", "inactive"),
 			},
+		}, nil, "stripe_issuing_personalization_design"),
+	})
+}
+
+// A design created as the account's default reads `preferences.is_default` back, and an update
+// gives the default up; `transfer_lookup_key`, which Stripe never returns, stays as configured
+// (suite: TestIssuingPersonalizationDesignAttributes, `every_field/1` and `update/1`, which create
+// a design in review with both true and a fresh lookup key, and update it, rejected, with both
+// false and another key). The test rejects the design before the update, as the suite's update
+// finds it. In smoke mode, where the connected account is shared, a cleanup gives the default up
+// should the test stop before its update.
+func TestAccIssuingPersonalizationDesign_preferences(t *testing.T) {
+	s := issuing(t)
+	var id string
+	config := func(isDefault bool, key string) string {
+		return designConfig(s, fmt.Sprintf("  lookup_key          = %q\n  transfer_lookup_key = %t\n  preferences         = { is_default = %t }\n", key, isDefault, isDefault)+carrierText)
+	}
+	firstKey, secondKey := s.acct.Unique("design_default_first"), s.acct.Unique("design_default_second")
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: tfacc.ProviderFactories,
+		Steps: acctest.Forget(t, []resource.TestStep{
+			{
+				Config: config(true, firstKey),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					idOf(&id),
+					resource.TestCheckResourceAttrWith(address, "id", func(v string) error {
+						if s.acct.Smoke {
+							t.Cleanup(func() {
+								if _, err := tfacc.Client(s.conn).Do(context.Background(), stripeapi.Request{Method: "POST", Path: "/v1/issuing/personalization_designs/" + v, Params: wire.Object{
+									{Name: "preferences", Value: wire.Object{{Name: "is_default", Value: wire.Bool(false)}}},
+								}}); err != nil {
+									t.Logf("design %s stays the default: %v", v, err)
+								}
+							})
+						}
+						return nil
+					}),
+					resource.TestCheckResourceAttr(address, "preferences.is_default", "true"),
+					resource.TestCheckResourceAttr(address, "preferences.is_platform_default", "false"),
+					resource.TestCheckResourceAttr(address, "transfer_lookup_key", "true"),
+					resource.TestCheckResourceAttr(address, "lookup_key", firstKey),
+				),
+			},
+			{
+				PreConfig: func() {
+					helper(t, s.conn, id, "reject", wire.Object{{Name: "rejection_reasons", Value: wire.Object{
+						{Name: "card_logo", Value: wire.Array{wire.String("other")}},
+						{Name: "carrier_text", Value: wire.Array{wire.String("other")}},
+					}}})
+				},
+				Config: config(false, secondKey),
+				ConfigPlanChecks: resource.ConfigPlanChecks{PreApply: []plancheck.PlanCheck{
+					plancheck.ExpectResourceAction(address, plancheck.ResourceActionUpdate),
+				}},
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr(address, "status", "rejected"),
+					resource.TestCheckResourceAttr(address, "preferences.is_default", "false"),
+					resource.TestCheckResourceAttr(address, "transfer_lookup_key", "false"),
+					resource.TestCheckResourceAttr(address, "lookup_key", secondKey),
+				),
+			},
+			{Config: config(false, secondKey), PlanOnly: true},
 		}, nil, "stripe_issuing_personalization_design"),
 	})
 }

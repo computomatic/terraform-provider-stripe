@@ -120,6 +120,18 @@ func TestRulesThePlanCannotTellFailUnlessLeftToStripe(t *testing.T) {
 		"the minimal create, which Stripe took": {[]RuleObservation{
 			probe("isolated/plain", `{"name":"Gadget"}`, "", 400, "Plain.", ""),
 		}, "Stripe took the request of the minimal create"},
+		"the account's currency": {[]RuleObservation{
+			probe("isolated/currency", `{"name":"Gadget","color":{"$gen":"account_currency"}}`, "", 400, "Currency.", ""),
+		}, "`$gen` `account_currency`"},
+		"a time relative to the request": {[]RuleObservation{
+			probe("isolated/later", `{"name":"Gadget","color":{"$gen":"now","offset":86400}}`, "", 400, "Later.", ""),
+		}, "`$gen` `now`"},
+		"an empty hash, which the suite's form left out": {[]RuleObservation{
+			probe("isolated/empty_owner", `{"name":"Gadget","color":"red","owner":{}}`, "", 400, "Empty owner.", ""),
+		}, "`owner` is empty or null"},
+		"a null at depth": {[]RuleObservation{
+			probe("isolated/null_phone", `{"name":"Gadget","color":"red","owner":{"phone":null}}`, "", 400, "Null phone.", ""),
+		}, "`owner.phone` is empty or null"},
 		"a generated value of an unknown kind": {[]RuleObservation{
 			probe("isolated/new", `{"name":"Gadget","color":{"$gen":"novel"}}`, "", 400, "New.", ""),
 		}, "not one the generator knows"},
@@ -140,5 +152,25 @@ func TestRulesThePlanCannotTellFailUnlessLeftToStripe(t *testing.T) {
 	res.LeftToStripe = map[string]string{"PostGadgetsId color": "No such rule."}
 	if _, err := coverTable(coverageSpec(t), res, gadgetRules(t, res)); err == nil || !strings.Contains(err.Error(), "names PostGadgetsId color, which is no rule") {
 		t.Errorf("a stale entry: %v", err)
+	}
+}
+
+// An entry that names a probe leaves that refused request alone to Stripe: the plan refuses the
+// rule's others, and an entry naming a probe the rule did not refuse fails generation.
+func TestLeftToStripeNamesOneRefusedRequest(t *testing.T) {
+	rule := EvidenceRule{Operation: "PostGadgets", Observations: []RuleObservation{
+		probe("isolated/red_later", `{"name":"Gadget","color":"red","owner":{"phone":{"$gen":"now","offset":86400}}}`, "", 400, "Not red later.", ""),
+		probe("isolated/red", `{"name":"Gadget","color":"red"}`, "", 400, "Not red.", ""),
+	}}
+	res := gadget()
+	res.LeftToStripe = map[string]string{"PostGadgets color isolated/red_later": "A time relative to the probe."}
+	f := fieldAt(cover(t, res, gadgetRules(t, res, rule)).table, "color")
+	if f == nil || len(f.PlanRefusals) != 1 || f.PlanRefusals[0].Probe != "isolated/red" {
+		t.Errorf("color: %+v", f)
+	}
+	res.LeftToStripe = map[string]string{"PostGadgets color isolated/blue": "No such probe."}
+	plain := EvidenceRule{Operation: "PostGadgets", Observations: rule.Observations[1:]}
+	if _, err := coverTable(coverageSpec(t), res, gadgetRules(t, res, plain)); err == nil || !strings.Contains(err.Error(), "names PostGadgets color isolated/blue, which is no rule") {
+		t.Errorf("a stale probe: %v", err)
 	}
 }

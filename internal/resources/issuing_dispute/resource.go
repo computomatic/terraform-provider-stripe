@@ -28,12 +28,17 @@ import (
 // dispute lifecycle also moves a dispute left unsubmitted for 110 days, or rejected, to
 // `expired` (docs.stripe.com/issuing/purchases/disputes, unproven by the suite), so `expired` is
 // final rather than reached: it may never have been submitted. A dispute cannot be deleted or
-// withdrawn, so destroy is refused.
+// withdrawn, so destroy is refused. A dispute names its `transaction` or, on a Treasury-backed
+// card, the received debit in `treasury` (suite: TestIssuingDisputeAttributes, variant
+// `received_debit`), and Stripe fills in the other. Submitting a dispute of a received debit
+// makes Stripe reverse the debit, which `treasury.debit_reversal` names (the record's
+// `submitted`, `won` and `lost` states).
 var Declaration = engine.Declaration{
 	TypeName: "stripe_issuing_dispute",
 	IDPrefix: "idp_",
 	Description: "A dispute of an Issuing transaction, with the evidence for it. " +
 		"Stripe issues cards only for a platform's connected accounts, so manage disputes through a provider configuration whose `stripe_account` is a connected account with the `card_issuing` capability active. " +
+		"Name the disputed `transaction`, or the Treasury received debit in `treasury.received_debit`; Stripe fills in the other. " +
 		"A new dispute is `unsubmitted`, for the whole transaction unless `amount` says less, and `amount`, `evidence` and `metadata` change in place until it is submitted. " +
 		"Set `status` to `submitted` to submit it to the card network, on create or later. After that Stripe refuses a change to `evidence` or `amount`, and decides the dispute: `status` then keeps reading its outcome, `won` or `lost`, which satisfies a configured `submitted`, so the plan shows no change. " +
 		"A dispute that Stripe expires, such as one left unsubmitted too long, reads `expired` and cannot be submitted: a configuration that sets `submitted` then fails the plan, so remove `status` from it.",
@@ -48,7 +53,11 @@ var Declaration = engine.Declaration{
 	RefuseReason:    "Stripe cannot delete or withdraw a dispute.",
 	Transitions:     []engine.Transition{{Field: "status", Value: "submitted", Path: "/v1/issuing/disputes/{id}/submit", Final: []string{"expired"}, Reached: []string{"won", "lost"}}},
 	ServerDefaulted: evidenceHashes,
-	FilledFrom:      map[string][]string{"evidence.reason": evidenceHashes},
+	ExactlyOneOf:    [][]string{{"transaction", "treasury"}},
+	FilledFrom: map[string][]string{
+		"evidence.reason": evidenceHashes,
+		"status":          {"treasury.debit_reversal"},
+	},
 }
 
 // evidenceHashes are the evidence hashes, one per dispute reason.

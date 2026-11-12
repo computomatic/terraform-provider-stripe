@@ -109,7 +109,8 @@ func patternObject(s string) (wire.Object, error) {
 // with the same members and a list the same elements in any order, so
 // that reordering a list neither makes nor clears a refusal; on an update, the object must also
 // hold at least what the refused probe's object was created with. A member the configuration
-// does not know yet leaves the refusal to the plan at apply, which knows it. A match is refused
+// does not know yet leaves the refusal to the plan at apply, which knows it. A /v1 request compares
+// as its form sends it, a null or empty collection as the `""` a probe sent. A match is refused
 // only on an account in the country the refusal was recorded in, which the provider reads then
 // (AccountCountry): a refusal recorded on one country's account says nothing of another's, and
 // an account the provider cannot read, as with a restricted key, is not refused.
@@ -145,6 +146,11 @@ func (r *Resource) refuseRecorded(ctx context.Context, req resource.ModifyPlanRe
 	// What the encoder refuses, the apply reports.
 	if err != nil {
 		return false
+	}
+	// A /v1 body goes as a form, which sends a null, `[]` and `{}` all as the unset `""` that a
+	// probe records, so the request compares as it is sent.
+	if !r.m.v2 {
+		body = wire.FormSent(body)
 	}
 	for _, x := range r.m.refusals {
 		if x.Update != update || !wire.SendsAll(x.sends, body) || !wire.HoldsAll(x.holds, held) || !r.m.configKnown(req.Config.Raw, x.sends) || !r.country.in(ctx, x.AccountCountry) {

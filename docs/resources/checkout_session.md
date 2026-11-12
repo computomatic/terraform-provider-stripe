@@ -555,7 +555,7 @@ The `name_collection.business` attribute supports:
 
 The `name_collection.individual` attribute supports:
 
-* `enabled` - (Required) Indicates whether individual name collection is enabled for the session
+* `enabled` - (Required) Indicates whether individual name collection is enabled for the session. Stripe takes it beside `name_collection.business.enabled` set to `true`, and refuses both names' `enabled` set to `false`. Elsewhere Stripe refused it on a US account on create: "If specifying name_collection, you must have either `name_collection[individual][enabled] = true` or `name_collection[business][enabled] = true`.". Where the provider's Stripe account is in `US`, the plan refuses a create that sends `line_items[].price` set, `line_items[].quantity = 2`, `mode = "payment"`, `name_collection.business.enabled = false`, `name_collection.individual.enabled = false` and `success_url` set, which Stripe refused there with "If specifying name_collection, you must have either `name_collection[individual][enabled] = true` or `name_collection[business][enabled] = true`." (conformance suite probe `isolated/name_collection_both_off`). The provider reads the account's country only for a plan that sends such a request, and leaves the request to Stripe where the account is elsewhere or the key cannot read it.
 * `optional` - (Optional) Whether the customer is required to complete the field before completing the Checkout Session. Defaults to `false`. Default (Stripe): `false` once `name_collection.individual` is set. Removing it from the configuration leaves the current value.
 
 <a id="optional_items"></a>

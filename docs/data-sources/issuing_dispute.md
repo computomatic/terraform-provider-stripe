@@ -53,7 +53,7 @@ This data source exports the following attributes in addition to the arguments a
 * `metadata` - Set of [key-value pairs](https://docs.stripe.com/api/metadata) that you can attach to an object. This can be useful for storing additional information about the object in a structured format. Individual keys can be unset by posting an empty value to them. All keys can be unset by posting an empty value to `metadata`.
 * `status` - Current status of the dispute. Possible values: `expired`, `lost`, `submitted`, `unsubmitted`, `won`.
 * `transaction` - The ID of the issuing transaction to create a dispute for. For transaction on Treasury FinancialAccounts, use `treasury.received_debit`.
-* `treasury` - [Treasury](https://docs.stripe.com/api/treasury) details related to this dispute if it was created on a [FinancialAccount](https://docs.stripe.com/api/treasury/financial_accounts) See [`treasury`](#treasury) below.
+* `treasury` - Params for disputes related to Treasury FinancialAccounts See [`treasury`](#treasury) below.
 
 <a id="balance_transactions"></a>
 ### `balance_transactions`
