@@ -1144,6 +1144,16 @@
           "update": "siblings_kept"
         },
         {
+          "hash": "name_collection.business",
+          "object": "payment_link",
+          "update": "siblings_kept"
+        },
+        {
+          "hash": "name_collection.individual",
+          "object": "payment_link",
+          "update": "siblings_kept"
+        },
+        {
           "hash": "payment_intent_data",
           "object": "payment_link",
           "update": "siblings_kept"
@@ -1172,6 +1182,7 @@
         "climate.order",
         "file",
         "file_link",
+        "identity.verification_report",
         "identity.verification_session",
         "payment_intent",
         "payment_link",
@@ -1209,6 +1220,7 @@
         "TestPaymentLinkAttributes/leaves/request/PostPaymentLinksPaymentLink/invoice_creation.enabled",
         "TestPaymentLinkAttributes/leaves/request/PostPaymentLinksPaymentLink/invoice_creation.invoice_data.description",
         "TestPaymentLinkAttributes/leaves/request/PostPaymentLinksPaymentLink/name_collection.business.enabled",
+        "TestPaymentLinkAttributes/leaves/request/PostPaymentLinksPaymentLink/name_collection.individual.enabled",
         "TestPaymentLinkAttributes/leaves/request/PostPaymentLinksPaymentLink/payment_intent_data.description",
         "TestPaymentLinkAttributes/leaves/request/PostPaymentLinksPaymentLink/subscription_data.trial_period_days",
         "TestPaymentLinkAttributes/leaves/request/PostPaymentLinksPaymentLink/tax_id_collection.enabled",
@@ -1219,6 +1231,7 @@
         "TestPaymentLinkAttributes/leaves/response/payment_link/invoice_creation.invoice_data.footer",
         "TestPaymentLinkAttributes/leaves/response/payment_link/invoice_creation.invoice_data.issuer.type",
         "TestPaymentLinkAttributes/leaves/response/payment_link/invoice_creation.invoice_data.metadata",
+        "TestPaymentLinkAttributes/leaves/response/payment_link/name_collection.business.optional",
         "TestPaymentLinkAttributes/leaves/response/payment_link/name_collection.individual.enabled",
         "TestPaymentLinkAttributes/leaves/response/payment_link/name_collection.individual.optional",
         "TestPaymentLinkAttributes/leaves/response/payment_link/payment_intent_data.capture_method",
@@ -60233,7 +60246,19 @@
       ],
       "operation": "PostCheckoutSessions",
       "path": "name_collection.individual.enabled",
-      "refusals": [],
+      "refusals": [
+        {
+          "account_country": "US",
+          "code": "",
+          "message": "If specifying name_collection, you must have either `name_collection[individual][enabled] = true` or `name_collection[business][enabled] = true`.",
+          "param": "",
+          "status": 400,
+          "tests": [
+            "TestCheckoutSessionAttributes/leaves/request/PostCheckoutSessions/name_collection.individual.enabled"
+          ],
+          "type": "invalid_request_error"
+        }
+      ],
       "returned": {
         "form": "as_sent",
         "response_path": "name_collection.individual.enabled"
@@ -96621,7 +96646,7 @@
       "branch": "",
       "default": {
         "kind": "rule",
-        "rule_ref": 17,
+        "rule_ref": 18,
         "variants": [
           {
             "default": {
@@ -163211,12 +163236,12 @@
       "branch": "",
       "default": {
         "kind": "rule",
-        "rule_ref": 18,
+        "rule_ref": 19,
         "variants": [
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 18
+              "rule_ref": 19
             },
             "variant": "amount"
           }
@@ -163251,12 +163276,12 @@
       "branch": "",
       "default": {
         "kind": "rule",
-        "rule_ref": 19,
+        "rule_ref": 20,
         "variants": [
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 19
+              "rule_ref": 20
             },
             "variant": "amount"
           }
@@ -163331,7 +163356,7 @@
       "branch": "",
       "default": {
         "kind": "rule",
-        "rule_ref": 20,
+        "rule_ref": 21,
         "variants": [
           {
             "default": {
@@ -164696,7 +164721,7 @@
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 21
+              "rule_ref": 22
             },
             "variant": "amount_off"
           }
@@ -164845,12 +164870,12 @@
       "branch": "",
       "default": {
         "kind": "rule",
-        "rule_ref": 22,
+        "rule_ref": 23,
         "variants": [
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 22
+              "rule_ref": 23
             },
             "variant": "amount_off"
           }
@@ -165001,7 +165026,7 @@
       "branch": "",
       "default": {
         "kind": "rule",
-        "rule_ref": 23,
+        "rule_ref": 24,
         "variants": [
           {
             "default": {
@@ -165797,7 +165822,7 @@
       "branch": "",
       "default": {
         "kind": "rule",
-        "rule_ref": 24,
+        "rule_ref": 25,
         "variants": [
           {
             "default": {
@@ -166758,7 +166783,7 @@
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 25
+              "rule_ref": 26
             },
             "variant": "refund"
           },
@@ -173260,40 +173285,40 @@
       "branch": "",
       "default": {
         "kind": "rule",
-        "rule_ref": 26,
+        "rule_ref": 27,
         "variants": [
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 26
+              "rule_ref": 27
             },
             "variant": "balance"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 26
+              "rule_ref": 27
             },
             "variant": "located_ca"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 26
+              "rule_ref": 27
             },
             "variant": "payment_method"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 26
+              "rule_ref": 27
             },
             "variant": "source"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 26
+              "rule_ref": 27
             },
             "variant": "test_clock"
           }
@@ -183737,12 +183762,12 @@
       "branch": "",
       "default": {
         "kind": "rule",
-        "rule_ref": 29,
+        "rule_ref": 30,
         "variants": [
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 29
+              "rule_ref": 30
             },
             "variant": "partly_refunded"
           }
@@ -185438,453 +185463,837 @@
     },
     {
       "branch": "",
+      "nullable": {
+        "non_null_observed": false,
+        "null_observed": true
+      },
       "object": "identity.verification_report",
       "operation": "",
       "path": "client_reference_id",
       "side": "response",
-      "status": "unproven",
-      "tests": []
+      "status": "proven",
+      "targets": [
+        "stripe"
+      ],
+      "tests": [
+        "TestIdentityVerificationReportAttributes/leaves/response/identity.verification_report/client_reference_id"
+      ]
     },
     {
       "branch": "",
+      "nullable": {
+        "non_null_observed": true,
+        "null_observed": false
+      },
       "object": "identity.verification_report",
       "operation": "",
       "path": "created",
       "side": "response",
-      "status": "unproven",
-      "tests": []
+      "status": "proven",
+      "targets": [
+        "stripe"
+      ],
+      "tests": [
+        "TestIdentityVerificationReportAttributes/leaves/response/identity.verification_report/created"
+      ]
     },
     {
       "branch": "",
+      "nullable": {
+        "non_null_observed": true,
+        "null_observed": false
+      },
       "object": "identity.verification_report",
       "operation": "",
       "path": "document.address.city",
       "side": "response",
-      "status": "unproven",
-      "tests": []
+      "status": "proven",
+      "targets": [
+        "stripe"
+      ],
+      "tests": [
+        "TestIdentityVerificationReportAttributes/leaves/response/identity.verification_report/document.address.city"
+      ]
     },
     {
       "branch": "",
+      "nullable": {
+        "non_null_observed": true,
+        "null_observed": false
+      },
       "object": "identity.verification_report",
       "operation": "",
       "path": "document.address.country",
       "side": "response",
-      "status": "unproven",
-      "tests": []
+      "status": "proven",
+      "targets": [
+        "stripe"
+      ],
+      "tests": [
+        "TestIdentityVerificationReportAttributes/leaves/response/identity.verification_report/document.address.country"
+      ]
     },
     {
       "branch": "",
+      "nullable": {
+        "non_null_observed": true,
+        "null_observed": false
+      },
       "object": "identity.verification_report",
       "operation": "",
       "path": "document.address.line1",
       "side": "response",
-      "status": "unproven",
-      "tests": []
+      "status": "proven",
+      "targets": [
+        "stripe"
+      ],
+      "tests": [
+        "TestIdentityVerificationReportAttributes/leaves/response/identity.verification_report/document.address.line1"
+      ]
     },
     {
       "branch": "",
+      "nullable": {
+        "non_null_observed": true,
+        "null_observed": false
+      },
       "object": "identity.verification_report",
       "operation": "",
       "path": "document.address.line2",
       "side": "response",
-      "status": "unproven",
-      "tests": []
+      "status": "proven",
+      "targets": [
+        "stripe"
+      ],
+      "tests": [
+        "TestIdentityVerificationReportAttributes/leaves/response/identity.verification_report/document.address.line2"
+      ]
     },
     {
       "branch": "",
+      "nullable": {
+        "non_null_observed": true,
+        "null_observed": false
+      },
       "object": "identity.verification_report",
       "operation": "",
       "path": "document.address.postal_code",
       "side": "response",
-      "status": "unproven",
-      "tests": []
+      "status": "proven",
+      "targets": [
+        "stripe"
+      ],
+      "tests": [
+        "TestIdentityVerificationReportAttributes/leaves/response/identity.verification_report/document.address.postal_code"
+      ]
     },
     {
       "branch": "",
+      "nullable": {
+        "non_null_observed": true,
+        "null_observed": false
+      },
       "object": "identity.verification_report",
       "operation": "",
       "path": "document.address.state",
       "side": "response",
-      "status": "unproven",
-      "tests": []
+      "status": "proven",
+      "targets": [
+        "stripe"
+      ],
+      "tests": [
+        "TestIdentityVerificationReportAttributes/leaves/response/identity.verification_report/document.address.state"
+      ]
     },
     {
       "branch": "",
       "object": "identity.verification_report",
       "operation": "",
       "path": "document.dob.day",
+      "reason": "Stripe expands it only for a restricted key made for the purpose (docs.stripe.com/identity/access-verification-results), and the suite's key is a secret key",
       "side": "response",
-      "status": "unproven",
-      "tests": []
+      "status": "unreachable",
+      "tests": [
+        "TestIdentityVerificationReportAttributes/leaves/response/identity.verification_report/document.dob.day"
+      ]
     },
     {
       "branch": "",
       "object": "identity.verification_report",
       "operation": "",
       "path": "document.dob.month",
+      "reason": "Stripe expands it only for a restricted key made for the purpose (docs.stripe.com/identity/access-verification-results), and the suite's key is a secret key",
       "side": "response",
-      "status": "unproven",
-      "tests": []
+      "status": "unreachable",
+      "tests": [
+        "TestIdentityVerificationReportAttributes/leaves/response/identity.verification_report/document.dob.month"
+      ]
     },
     {
       "branch": "",
       "object": "identity.verification_report",
       "operation": "",
       "path": "document.dob.year",
+      "reason": "Stripe expands it only for a restricted key made for the purpose (docs.stripe.com/identity/access-verification-results), and the suite's key is a secret key",
       "side": "response",
-      "status": "unproven",
-      "tests": []
+      "status": "unreachable",
+      "tests": [
+        "TestIdentityVerificationReportAttributes/leaves/response/identity.verification_report/document.dob.year"
+      ]
     },
     {
       "branch": "",
+      "nullable": {
+        "non_null_observed": false,
+        "null_observed": false
+      },
       "object": "identity.verification_report",
       "operation": "",
       "path": "document.error.code",
       "side": "response",
-      "status": "unproven",
-      "tests": []
+      "status": "proven",
+      "targets": [
+        "stripe"
+      ],
+      "tests": [
+        "TestIdentityVerificationReportAttributes/leaves/response/identity.verification_report/document.error.code"
+      ]
     },
     {
       "branch": "",
+      "nullable": {
+        "non_null_observed": false,
+        "null_observed": false
+      },
       "object": "identity.verification_report",
       "operation": "",
       "path": "document.error.reason",
       "side": "response",
-      "status": "unproven",
-      "tests": []
+      "status": "proven",
+      "targets": [
+        "stripe"
+      ],
+      "tests": [
+        "TestIdentityVerificationReportAttributes/leaves/response/identity.verification_report/document.error.reason"
+      ]
     },
     {
       "branch": "",
       "object": "identity.verification_report",
       "operation": "",
       "path": "document.expiration_date.day",
+      "reason": "Stripe expands it only for a restricted key made for the purpose (docs.stripe.com/identity/access-verification-results), and the suite's key is a secret key",
       "side": "response",
-      "status": "unproven",
-      "tests": []
+      "status": "unreachable",
+      "tests": [
+        "TestIdentityVerificationReportAttributes/leaves/response/identity.verification_report/document.expiration_date.day"
+      ]
     },
     {
       "branch": "",
       "object": "identity.verification_report",
       "operation": "",
       "path": "document.expiration_date.month",
+      "reason": "Stripe expands it only for a restricted key made for the purpose (docs.stripe.com/identity/access-verification-results), and the suite's key is a secret key",
       "side": "response",
-      "status": "unproven",
-      "tests": []
+      "status": "unreachable",
+      "tests": [
+        "TestIdentityVerificationReportAttributes/leaves/response/identity.verification_report/document.expiration_date.month"
+      ]
     },
     {
       "branch": "",
       "object": "identity.verification_report",
       "operation": "",
       "path": "document.expiration_date.year",
+      "reason": "Stripe expands it only for a restricted key made for the purpose (docs.stripe.com/identity/access-verification-results), and the suite's key is a secret key",
       "side": "response",
-      "status": "unproven",
-      "tests": []
+      "status": "unreachable",
+      "tests": [
+        "TestIdentityVerificationReportAttributes/leaves/response/identity.verification_report/document.expiration_date.year"
+      ]
     },
     {
       "branch": "",
+      "nullable": {
+        "non_null_observed": true,
+        "null_observed": false
+      },
       "object": "identity.verification_report",
       "operation": "",
       "path": "document.files",
       "side": "response",
-      "status": "unproven",
-      "tests": []
+      "status": "proven",
+      "targets": [
+        "stripe"
+      ],
+      "tests": [
+        "TestIdentityVerificationReportAttributes/leaves/response/identity.verification_report/document.files"
+      ]
     },
     {
       "branch": "",
+      "nullable": {
+        "non_null_observed": true,
+        "null_observed": false
+      },
       "object": "identity.verification_report",
       "operation": "",
       "path": "document.first_name",
       "side": "response",
-      "status": "unproven",
-      "tests": []
+      "status": "proven",
+      "targets": [
+        "stripe"
+      ],
+      "tests": [
+        "TestIdentityVerificationReportAttributes/leaves/response/identity.verification_report/document.first_name"
+      ]
     },
     {
       "branch": "",
+      "nullable": {
+        "non_null_observed": true,
+        "null_observed": false
+      },
       "object": "identity.verification_report",
       "operation": "",
       "path": "document.issued_date.day",
       "side": "response",
-      "status": "unproven",
-      "tests": []
+      "status": "proven",
+      "targets": [
+        "stripe"
+      ],
+      "tests": [
+        "TestIdentityVerificationReportAttributes/leaves/response/identity.verification_report/document.issued_date.day"
+      ]
     },
     {
       "branch": "",
+      "nullable": {
+        "non_null_observed": true,
+        "null_observed": false
+      },
       "object": "identity.verification_report",
       "operation": "",
       "path": "document.issued_date.month",
       "side": "response",
-      "status": "unproven",
-      "tests": []
+      "status": "proven",
+      "targets": [
+        "stripe"
+      ],
+      "tests": [
+        "TestIdentityVerificationReportAttributes/leaves/response/identity.verification_report/document.issued_date.month"
+      ]
     },
     {
       "branch": "",
+      "nullable": {
+        "non_null_observed": true,
+        "null_observed": false
+      },
       "object": "identity.verification_report",
       "operation": "",
       "path": "document.issued_date.year",
       "side": "response",
-      "status": "unproven",
-      "tests": []
+      "status": "proven",
+      "targets": [
+        "stripe"
+      ],
+      "tests": [
+        "TestIdentityVerificationReportAttributes/leaves/response/identity.verification_report/document.issued_date.year"
+      ]
     },
     {
       "branch": "",
+      "nullable": {
+        "non_null_observed": true,
+        "null_observed": false
+      },
       "object": "identity.verification_report",
       "operation": "",
       "path": "document.issuing_country",
       "side": "response",
-      "status": "unproven",
-      "tests": []
+      "status": "proven",
+      "targets": [
+        "stripe"
+      ],
+      "tests": [
+        "TestIdentityVerificationReportAttributes/leaves/response/identity.verification_report/document.issuing_country"
+      ]
     },
     {
       "branch": "",
+      "nullable": {
+        "non_null_observed": true,
+        "null_observed": false
+      },
       "object": "identity.verification_report",
       "operation": "",
       "path": "document.last_name",
       "side": "response",
-      "status": "unproven",
-      "tests": []
+      "status": "proven",
+      "targets": [
+        "stripe"
+      ],
+      "tests": [
+        "TestIdentityVerificationReportAttributes/leaves/response/identity.verification_report/document.last_name"
+      ]
     },
     {
       "branch": "",
       "object": "identity.verification_report",
       "operation": "",
       "path": "document.number",
+      "reason": "Stripe expands it only for a restricted key made for the purpose (docs.stripe.com/identity/access-verification-results), and the suite's key is a secret key",
       "side": "response",
-      "status": "unproven",
-      "tests": []
+      "status": "unreachable",
+      "tests": [
+        "TestIdentityVerificationReportAttributes/leaves/response/identity.verification_report/document.number"
+      ]
     },
     {
       "branch": "",
+      "nullable": {
+        "non_null_observed": false,
+        "null_observed": false
+      },
       "object": "identity.verification_report",
       "operation": "",
       "path": "document.sex",
       "side": "response",
-      "status": "unproven",
-      "tests": []
+      "status": "proven",
+      "targets": [
+        "stripe"
+      ],
+      "tests": [
+        "TestIdentityVerificationReportAttributes/leaves/response/identity.verification_report/document.sex"
+      ]
     },
     {
       "branch": "",
+      "nullable": {
+        "non_null_observed": true,
+        "null_observed": false
+      },
       "object": "identity.verification_report",
       "operation": "",
       "path": "document.status",
       "side": "response",
-      "status": "unproven",
-      "tests": []
+      "status": "proven",
+      "targets": [
+        "stripe"
+      ],
+      "tests": [
+        "TestIdentityVerificationReportAttributes/leaves/response/identity.verification_report/document.status"
+      ]
     },
     {
       "branch": "",
+      "nullable": {
+        "non_null_observed": true,
+        "null_observed": false
+      },
       "object": "identity.verification_report",
       "operation": "",
       "path": "document.type",
       "side": "response",
-      "status": "unproven",
-      "tests": []
+      "status": "proven",
+      "targets": [
+        "stripe"
+      ],
+      "tests": [
+        "TestIdentityVerificationReportAttributes/leaves/response/identity.verification_report/document.type"
+      ]
     },
     {
       "branch": "",
+      "nullable": {
+        "non_null_observed": false,
+        "null_observed": false
+      },
       "object": "identity.verification_report",
       "operation": "",
       "path": "document.unparsed_place_of_birth",
       "side": "response",
-      "status": "unproven",
-      "tests": []
+      "status": "proven",
+      "targets": [
+        "stripe"
+      ],
+      "tests": [
+        "TestIdentityVerificationReportAttributes/leaves/response/identity.verification_report/document.unparsed_place_of_birth"
+      ]
     },
     {
       "branch": "",
+      "nullable": {
+        "non_null_observed": false,
+        "null_observed": false
+      },
       "object": "identity.verification_report",
       "operation": "",
       "path": "document.unparsed_sex",
       "side": "response",
-      "status": "unproven",
-      "tests": []
+      "status": "proven",
+      "targets": [
+        "stripe"
+      ],
+      "tests": [
+        "TestIdentityVerificationReportAttributes/leaves/response/identity.verification_report/document.unparsed_sex"
+      ]
     },
     {
       "branch": "",
+      "nullable": {
+        "non_null_observed": false,
+        "null_observed": false
+      },
       "object": "identity.verification_report",
       "operation": "",
       "path": "email.email",
       "side": "response",
-      "status": "unproven",
-      "tests": []
+      "status": "proven",
+      "targets": [
+        "stripe"
+      ],
+      "tests": [
+        "TestIdentityVerificationReportAttributes/leaves/response/identity.verification_report/email.email"
+      ]
     },
     {
       "branch": "",
+      "nullable": {
+        "non_null_observed": false,
+        "null_observed": false
+      },
       "object": "identity.verification_report",
       "operation": "",
       "path": "email.error.code",
       "side": "response",
-      "status": "unproven",
-      "tests": []
+      "status": "proven",
+      "targets": [
+        "stripe"
+      ],
+      "tests": [
+        "TestIdentityVerificationReportAttributes/leaves/response/identity.verification_report/email.error.code"
+      ]
     },
     {
       "branch": "",
+      "nullable": {
+        "non_null_observed": false,
+        "null_observed": false
+      },
       "object": "identity.verification_report",
       "operation": "",
       "path": "email.error.reason",
       "side": "response",
-      "status": "unproven",
-      "tests": []
+      "status": "proven",
+      "targets": [
+        "stripe"
+      ],
+      "tests": [
+        "TestIdentityVerificationReportAttributes/leaves/response/identity.verification_report/email.error.reason"
+      ]
     },
     {
       "branch": "",
+      "nullable": {
+        "non_null_observed": false,
+        "null_observed": false
+      },
       "object": "identity.verification_report",
       "operation": "",
       "path": "email.status",
       "side": "response",
-      "status": "unproven",
-      "tests": []
+      "status": "proven",
+      "targets": [
+        "stripe"
+      ],
+      "tests": [
+        "TestIdentityVerificationReportAttributes/leaves/response/identity.verification_report/email.status"
+      ]
     },
     {
       "branch": "",
+      "nullable": {
+        "non_null_observed": true,
+        "null_observed": false
+      },
       "object": "identity.verification_report",
       "operation": "",
       "path": "id",
       "side": "response",
-      "status": "unproven",
-      "tests": []
+      "status": "proven",
+      "targets": [
+        "stripe"
+      ],
+      "tests": [
+        "TestIdentityVerificationReportAttributes/leaves/response/identity.verification_report/id"
+      ]
     },
     {
       "branch": "",
       "object": "identity.verification_report",
       "operation": "",
       "path": "id_number.dob.day",
+      "reason": "Stripe expands it only for a restricted key made for the purpose (docs.stripe.com/identity/access-verification-results), and the suite's key is a secret key",
       "side": "response",
-      "status": "unproven",
-      "tests": []
+      "status": "unreachable",
+      "tests": [
+        "TestIdentityVerificationReportAttributes/leaves/response/identity.verification_report/id_number.dob.day"
+      ]
     },
     {
       "branch": "",
       "object": "identity.verification_report",
       "operation": "",
       "path": "id_number.dob.month",
+      "reason": "Stripe expands it only for a restricted key made for the purpose (docs.stripe.com/identity/access-verification-results), and the suite's key is a secret key",
       "side": "response",
-      "status": "unproven",
-      "tests": []
+      "status": "unreachable",
+      "tests": [
+        "TestIdentityVerificationReportAttributes/leaves/response/identity.verification_report/id_number.dob.month"
+      ]
     },
     {
       "branch": "",
       "object": "identity.verification_report",
       "operation": "",
       "path": "id_number.dob.year",
+      "reason": "Stripe expands it only for a restricted key made for the purpose (docs.stripe.com/identity/access-verification-results), and the suite's key is a secret key",
       "side": "response",
-      "status": "unproven",
-      "tests": []
+      "status": "unreachable",
+      "tests": [
+        "TestIdentityVerificationReportAttributes/leaves/response/identity.verification_report/id_number.dob.year"
+      ]
     },
     {
       "branch": "",
+      "nullable": {
+        "non_null_observed": false,
+        "null_observed": false
+      },
       "object": "identity.verification_report",
       "operation": "",
       "path": "id_number.error.code",
       "side": "response",
-      "status": "unproven",
-      "tests": []
+      "status": "proven",
+      "targets": [
+        "stripe"
+      ],
+      "tests": [
+        "TestIdentityVerificationReportAttributes/leaves/response/identity.verification_report/id_number.error.code"
+      ]
     },
     {
       "branch": "",
+      "nullable": {
+        "non_null_observed": false,
+        "null_observed": false
+      },
       "object": "identity.verification_report",
       "operation": "",
       "path": "id_number.error.reason",
       "side": "response",
-      "status": "unproven",
-      "tests": []
+      "status": "proven",
+      "targets": [
+        "stripe"
+      ],
+      "tests": [
+        "TestIdentityVerificationReportAttributes/leaves/response/identity.verification_report/id_number.error.reason"
+      ]
     },
     {
       "branch": "",
+      "nullable": {
+        "non_null_observed": false,
+        "null_observed": false
+      },
       "object": "identity.verification_report",
       "operation": "",
       "path": "id_number.first_name",
       "side": "response",
-      "status": "unproven",
-      "tests": []
+      "status": "proven",
+      "targets": [
+        "stripe"
+      ],
+      "tests": [
+        "TestIdentityVerificationReportAttributes/leaves/response/identity.verification_report/id_number.first_name"
+      ]
     },
     {
       "branch": "",
       "object": "identity.verification_report",
       "operation": "",
       "path": "id_number.id_number",
+      "reason": "Stripe expands it only for a restricted key made for the purpose (docs.stripe.com/identity/access-verification-results), and the suite's key is a secret key",
       "side": "response",
-      "status": "unproven",
-      "tests": []
+      "status": "unreachable",
+      "tests": [
+        "TestIdentityVerificationReportAttributes/leaves/response/identity.verification_report/id_number.id_number"
+      ]
     },
     {
       "branch": "",
+      "nullable": {
+        "non_null_observed": false,
+        "null_observed": false
+      },
       "object": "identity.verification_report",
       "operation": "",
       "path": "id_number.id_number_type",
       "side": "response",
-      "status": "unproven",
-      "tests": []
+      "status": "proven",
+      "targets": [
+        "stripe"
+      ],
+      "tests": [
+        "TestIdentityVerificationReportAttributes/leaves/response/identity.verification_report/id_number.id_number_type"
+      ]
     },
     {
       "branch": "",
+      "nullable": {
+        "non_null_observed": false,
+        "null_observed": false
+      },
       "object": "identity.verification_report",
       "operation": "",
       "path": "id_number.last_name",
       "side": "response",
-      "status": "unproven",
-      "tests": []
+      "status": "proven",
+      "targets": [
+        "stripe"
+      ],
+      "tests": [
+        "TestIdentityVerificationReportAttributes/leaves/response/identity.verification_report/id_number.last_name"
+      ]
     },
     {
       "branch": "",
+      "nullable": {
+        "non_null_observed": false,
+        "null_observed": false
+      },
       "object": "identity.verification_report",
       "operation": "",
       "path": "id_number.status",
       "side": "response",
-      "status": "unproven",
-      "tests": []
+      "status": "proven",
+      "targets": [
+        "stripe"
+      ],
+      "tests": [
+        "TestIdentityVerificationReportAttributes/leaves/response/identity.verification_report/id_number.status"
+      ]
     },
     {
       "branch": "",
+      "nullable": {
+        "non_null_observed": true,
+        "null_observed": false
+      },
       "object": "identity.verification_report",
       "operation": "",
       "path": "livemode",
       "side": "response",
-      "status": "unproven",
-      "tests": []
+      "status": "proven",
+      "targets": [
+        "stripe"
+      ],
+      "tests": [
+        "TestIdentityVerificationReportAttributes/leaves/response/identity.verification_report/livemode"
+      ]
     },
     {
       "branch": "",
+      "nullable": {
+        "non_null_observed": true,
+        "null_observed": false
+      },
       "object": "identity.verification_report",
       "operation": "",
       "path": "object",
       "side": "response",
-      "status": "unproven",
-      "tests": []
+      "status": "proven",
+      "targets": [
+        "stripe"
+      ],
+      "tests": [
+        "TestIdentityVerificationReportAttributes/leaves/response/identity.verification_report/object"
+      ]
     },
     {
       "branch": "",
+      "nullable": {
+        "non_null_observed": false,
+        "null_observed": false
+      },
       "object": "identity.verification_report",
       "operation": "",
       "path": "options.document.allowed_types",
       "side": "response",
-      "status": "unproven",
-      "tests": []
+      "status": "proven",
+      "targets": [
+        "stripe"
+      ],
+      "tests": [
+        "TestIdentityVerificationReportAttributes/leaves/response/identity.verification_report/options.document.allowed_types"
+      ]
     },
     {
       "branch": "",
+      "nullable": {
+        "non_null_observed": false,
+        "null_observed": false
+      },
       "object": "identity.verification_report",
       "operation": "",
       "path": "options.document.require_id_number",
       "side": "response",
-      "status": "unproven",
-      "tests": []
+      "status": "proven",
+      "targets": [
+        "stripe"
+      ],
+      "tests": [
+        "TestIdentityVerificationReportAttributes/leaves/response/identity.verification_report/options.document.require_id_number"
+      ]
     },
     {
       "branch": "",
+      "nullable": {
+        "non_null_observed": false,
+        "null_observed": false
+      },
       "object": "identity.verification_report",
       "operation": "",
       "path": "options.document.require_live_capture",
       "side": "response",
-      "status": "unproven",
-      "tests": []
+      "status": "proven",
+      "targets": [
+        "stripe"
+      ],
+      "tests": [
+        "TestIdentityVerificationReportAttributes/leaves/response/identity.verification_report/options.document.require_live_capture"
+      ]
     },
     {
       "branch": "",
+      "nullable": {
+        "non_null_observed": false,
+        "null_observed": false
+      },
       "object": "identity.verification_report",
       "operation": "",
       "path": "options.document.require_matching_selfie",
       "side": "response",
-      "status": "unproven",
-      "tests": []
+      "status": "proven",
+      "targets": [
+        "stripe"
+      ],
+      "tests": [
+        "TestIdentityVerificationReportAttributes/leaves/response/identity.verification_report/options.document.require_matching_selfie"
+      ]
     },
     {
       "branch": "",
@@ -185897,111 +186306,213 @@
     },
     {
       "branch": "",
+      "nullable": {
+        "non_null_observed": false,
+        "null_observed": false
+      },
       "object": "identity.verification_report",
       "operation": "",
       "path": "phone.error.code",
       "side": "response",
-      "status": "unproven",
-      "tests": []
+      "status": "proven",
+      "targets": [
+        "stripe"
+      ],
+      "tests": [
+        "TestIdentityVerificationReportAttributes/leaves/response/identity.verification_report/phone.error.code"
+      ]
     },
     {
       "branch": "",
+      "nullable": {
+        "non_null_observed": false,
+        "null_observed": false
+      },
       "object": "identity.verification_report",
       "operation": "",
       "path": "phone.error.reason",
       "side": "response",
-      "status": "unproven",
-      "tests": []
+      "status": "proven",
+      "targets": [
+        "stripe"
+      ],
+      "tests": [
+        "TestIdentityVerificationReportAttributes/leaves/response/identity.verification_report/phone.error.reason"
+      ]
     },
     {
       "branch": "",
+      "nullable": {
+        "non_null_observed": false,
+        "null_observed": false
+      },
       "object": "identity.verification_report",
       "operation": "",
       "path": "phone.phone",
       "side": "response",
-      "status": "unproven",
-      "tests": []
+      "status": "proven",
+      "targets": [
+        "stripe"
+      ],
+      "tests": [
+        "TestIdentityVerificationReportAttributes/leaves/response/identity.verification_report/phone.phone"
+      ]
     },
     {
       "branch": "",
+      "nullable": {
+        "non_null_observed": false,
+        "null_observed": false
+      },
       "object": "identity.verification_report",
       "operation": "",
       "path": "phone.status",
       "side": "response",
-      "status": "unproven",
-      "tests": []
+      "status": "proven",
+      "targets": [
+        "stripe"
+      ],
+      "tests": [
+        "TestIdentityVerificationReportAttributes/leaves/response/identity.verification_report/phone.status"
+      ]
     },
     {
       "branch": "",
+      "nullable": {
+        "non_null_observed": false,
+        "null_observed": false
+      },
       "object": "identity.verification_report",
       "operation": "",
       "path": "selfie.document",
       "side": "response",
-      "status": "unproven",
-      "tests": []
+      "status": "proven",
+      "targets": [
+        "stripe"
+      ],
+      "tests": [
+        "TestIdentityVerificationReportAttributes/leaves/response/identity.verification_report/selfie.document"
+      ]
     },
     {
       "branch": "",
+      "nullable": {
+        "non_null_observed": false,
+        "null_observed": false
+      },
       "object": "identity.verification_report",
       "operation": "",
       "path": "selfie.error.code",
       "side": "response",
-      "status": "unproven",
-      "tests": []
+      "status": "proven",
+      "targets": [
+        "stripe"
+      ],
+      "tests": [
+        "TestIdentityVerificationReportAttributes/leaves/response/identity.verification_report/selfie.error.code"
+      ]
     },
     {
       "branch": "",
+      "nullable": {
+        "non_null_observed": false,
+        "null_observed": false
+      },
       "object": "identity.verification_report",
       "operation": "",
       "path": "selfie.error.reason",
       "side": "response",
-      "status": "unproven",
-      "tests": []
+      "status": "proven",
+      "targets": [
+        "stripe"
+      ],
+      "tests": [
+        "TestIdentityVerificationReportAttributes/leaves/response/identity.verification_report/selfie.error.reason"
+      ]
     },
     {
       "branch": "",
+      "nullable": {
+        "non_null_observed": false,
+        "null_observed": false
+      },
       "object": "identity.verification_report",
       "operation": "",
       "path": "selfie.selfie",
       "side": "response",
-      "status": "unproven",
-      "tests": []
+      "status": "proven",
+      "targets": [
+        "stripe"
+      ],
+      "tests": [
+        "TestIdentityVerificationReportAttributes/leaves/response/identity.verification_report/selfie.selfie"
+      ]
     },
     {
       "branch": "",
+      "nullable": {
+        "non_null_observed": false,
+        "null_observed": false
+      },
       "object": "identity.verification_report",
       "operation": "",
       "path": "selfie.status",
       "side": "response",
-      "status": "unproven",
-      "tests": []
+      "status": "proven",
+      "targets": [
+        "stripe"
+      ],
+      "tests": [
+        "TestIdentityVerificationReportAttributes/leaves/response/identity.verification_report/selfie.status"
+      ]
     },
     {
       "branch": "",
+      "nullable": {
+        "non_null_observed": true,
+        "null_observed": false
+      },
       "object": "identity.verification_report",
       "operation": "",
       "path": "type",
       "side": "response",
-      "status": "unproven",
-      "tests": []
+      "status": "proven",
+      "targets": [
+        "stripe"
+      ],
+      "tests": [
+        "TestIdentityVerificationReportAttributes/leaves/response/identity.verification_report/type"
+      ]
     },
     {
       "branch": "",
       "object": "identity.verification_report",
       "operation": "",
       "path": "verification_flow",
+      "reason": "only a verification flow sets it, and flows are made in the Dashboard: the API can neither make nor list one, and refuses an unknown one with resource_missing",
       "side": "response",
-      "status": "unproven",
-      "tests": []
+      "status": "unreachable",
+      "tests": [
+        "TestIdentityVerificationReportAttributes/leaves/response/identity.verification_report/verification_flow"
+      ]
     },
     {
       "branch": "",
+      "nullable": {
+        "non_null_observed": true,
+        "null_observed": false
+      },
       "object": "identity.verification_report",
       "operation": "",
       "path": "verification_session",
       "side": "response",
-      "status": "unproven",
-      "tests": []
+      "status": "proven",
+      "targets": [
+        "stripe"
+      ],
+      "tests": [
+        "TestIdentityVerificationReportAttributes/leaves/response/identity.verification_report/verification_session"
+      ]
     },
     {
       "accepted_in": [
@@ -186291,19 +186802,19 @@
       "branch": "",
       "default": {
         "kind": "rule",
-        "rule_ref": 30,
+        "rule_ref": 31,
         "variants": [
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 30
+              "rule_ref": 31
             },
             "variant": "customer"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 30
+              "rule_ref": 31
             },
             "variant": "id_number"
           }
@@ -225613,7 +226124,7 @@
       "branch": "",
       "default": {
         "kind": "rule",
-        "rule_ref": 34,
+        "rule_ref": 35,
         "variants": [
           {
             "default": {
@@ -225688,7 +226199,7 @@
       "branch": "",
       "default": {
         "kind": "rule",
-        "rule_ref": 35,
+        "rule_ref": 36,
         "variants": [
           {
             "default": {
@@ -225861,61 +226372,61 @@
       "branch": "",
       "default": {
         "kind": "rule",
-        "rule_ref": 36,
+        "rule_ref": 37,
         "variants": [
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 36
+              "rule_ref": 37
             },
             "variant": "decimal"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 36
+              "rule_ref": 37
             },
             "variant": "invoice"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 36
+              "rule_ref": 37
             },
             "variant": "price"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 36
+              "rule_ref": 37
             },
             "variant": "price_data"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 36
+              "rule_ref": 37
             },
             "variant": "price_data_decimal"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 36
+              "rule_ref": 37
             },
             "variant": "price_eur"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 36
+              "rule_ref": 37
             },
             "variant": "quantity"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 36
+              "rule_ref": 37
             },
             "variant": "subscription"
           }
@@ -232729,88 +233240,6 @@
       "branch": "",
       "default": {
         "kind": "rule",
-        "rule_ref": 42,
-        "variants": [
-          {
-            "default": {
-              "kind": "rule",
-              "rule_ref": 42
-            },
-            "variant": "in_review"
-          },
-          {
-            "default": {
-              "kind": "rule",
-              "rule_ref": 42
-            },
-            "variant": "physical"
-          },
-          {
-            "default": {
-              "kind": "rule",
-              "rule_ref": 42
-            },
-            "variant": "replacement"
-          },
-          {
-            "default": {
-              "kind": "rule",
-              "rule_ref": 42
-            },
-            "variant": "replacement_damaged"
-          },
-          {
-            "default": {
-              "kind": "rule",
-              "rule_ref": 42
-            },
-            "variant": "replacement_lost"
-          },
-          {
-            "default": {
-              "kind": "rule",
-              "rule_ref": 42
-            },
-            "variant": "replacement_stolen"
-          },
-          {
-            "default": {
-              "kind": "rule",
-              "rule_ref": 42
-            },
-            "variant": "validated"
-          }
-        ]
-      },
-      "object": "issuing.card",
-      "on": [
-        "create"
-      ],
-      "operation": "PostIssuingCards",
-      "path": "exp_month",
-      "refusals": [],
-      "returned": {
-        "form": "as_sent",
-        "response_path": "exp_month"
-      },
-      "side": "request",
-      "status": "proven",
-      "targets": [
-        "fake",
-        "stripe"
-      ],
-      "tests": [
-        "TestIssuingCardAttributes/leaves/request/PostIssuingCards/exp_month",
-        "TestIssuingCardAttributes/leaves/response/issuing.card/exp_month"
-      ]
-    },
-    {
-      "accepted_in": [
-        "US"
-      ],
-      "branch": "",
-      "default": {
-        "kind": "rule",
         "rule_ref": 43,
         "variants": [
           {
@@ -232859,6 +233288,88 @@
             "default": {
               "kind": "rule",
               "rule_ref": 43
+            },
+            "variant": "validated"
+          }
+        ]
+      },
+      "object": "issuing.card",
+      "on": [
+        "create"
+      ],
+      "operation": "PostIssuingCards",
+      "path": "exp_month",
+      "refusals": [],
+      "returned": {
+        "form": "as_sent",
+        "response_path": "exp_month"
+      },
+      "side": "request",
+      "status": "proven",
+      "targets": [
+        "fake",
+        "stripe"
+      ],
+      "tests": [
+        "TestIssuingCardAttributes/leaves/request/PostIssuingCards/exp_month",
+        "TestIssuingCardAttributes/leaves/response/issuing.card/exp_month"
+      ]
+    },
+    {
+      "accepted_in": [
+        "US"
+      ],
+      "branch": "",
+      "default": {
+        "kind": "rule",
+        "rule_ref": 44,
+        "variants": [
+          {
+            "default": {
+              "kind": "rule",
+              "rule_ref": 44
+            },
+            "variant": "in_review"
+          },
+          {
+            "default": {
+              "kind": "rule",
+              "rule_ref": 44
+            },
+            "variant": "physical"
+          },
+          {
+            "default": {
+              "kind": "rule",
+              "rule_ref": 44
+            },
+            "variant": "replacement"
+          },
+          {
+            "default": {
+              "kind": "rule",
+              "rule_ref": 44
+            },
+            "variant": "replacement_damaged"
+          },
+          {
+            "default": {
+              "kind": "rule",
+              "rule_ref": 44
+            },
+            "variant": "replacement_lost"
+          },
+          {
+            "default": {
+              "kind": "rule",
+              "rule_ref": 44
+            },
+            "variant": "replacement_stolen"
+          },
+          {
+            "default": {
+              "kind": "rule",
+              "rule_ref": 44
             },
             "variant": "validated"
           }
@@ -251294,7 +251805,7 @@
       "branch": "",
       "default": {
         "kind": "rule",
-        "rule_ref": 50,
+        "rule_ref": 51,
         "variants": [
           {
             "default": {
@@ -261959,75 +262470,75 @@
       "branch": "",
       "default": {
         "kind": "rule",
-        "rule_ref": 51,
+        "rule_ref": 52,
         "variants": [
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 51
+              "rule_ref": 52
             },
             "variant": "canceled"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 51
+              "rule_ref": 52
             },
             "variant": "duplicate"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 51
+              "rule_ref": 52
             },
             "variant": "fraudulent"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 51
+              "rule_ref": 52
             },
             "variant": "merchandise_not_as_described"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 51
+              "rule_ref": 52
             },
             "variant": "no_valid_authorization"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 51
+              "rule_ref": 52
             },
             "variant": "not_received"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 51
+              "rule_ref": 52
             },
             "variant": "other"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 51
+              "rule_ref": 52
             },
             "variant": "received_debit"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 51
+              "rule_ref": 52
             },
             "variant": "service_not_as_described"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 51
+              "rule_ref": 52
             },
             "variant": "small_transaction"
           }
@@ -272371,7 +272882,7 @@
       "branch": "",
       "default": {
         "kind": "rule",
-        "rule_ref": 52,
+        "rule_ref": 53,
         "variants": [
           {
             "default": {
@@ -272410,7 +272921,7 @@
       "branch": "",
       "default": {
         "kind": "rule",
-        "rule_ref": 53,
+        "rule_ref": 54,
         "variants": [
           {
             "default": {
@@ -272449,7 +272960,7 @@
       "branch": "",
       "default": {
         "kind": "rule",
-        "rule_ref": 54,
+        "rule_ref": 55,
         "variants": [
           {
             "default": {
@@ -272488,7 +272999,7 @@
       "branch": "",
       "default": {
         "kind": "rule",
-        "rule_ref": 55,
+        "rule_ref": 56,
         "variants": [
           {
             "default": {
@@ -305438,103 +305949,103 @@
       "branch": "",
       "default": {
         "kind": "rule",
-        "rule_ref": 66,
+        "rule_ref": 67,
         "variants": [
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 66
+              "rule_ref": 67
             },
             "variant": "custom_dropdown"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 66
+              "rule_ref": 67
             },
             "variant": "custom_numeric"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 66
+              "rule_ref": 67
             },
             "variant": "custom_text"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 66
+              "rule_ref": 67
             },
             "variant": "decimal_price"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 66
+              "rule_ref": 67
             },
             "variant": "destination"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 66
+              "rule_ref": 67
             },
             "variant": "inline_product"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 66
+              "rule_ref": 67
             },
             "variant": "managed"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 66
+              "rule_ref": 67
             },
             "variant": "optional_item"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 66
+              "rule_ref": 67
             },
             "variant": "price_eur"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 66
+              "rule_ref": 67
             },
             "variant": "redirect"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 66
+              "rule_ref": 67
             },
             "variant": "subscription"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 66
+              "rule_ref": 67
             },
             "variant": "subscription_fee"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 66
+              "rule_ref": 67
             },
             "variant": "tax_coded"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 66
+              "rule_ref": 67
             },
             "variant": "transfer_amount"
           }
@@ -343494,7 +344005,7 @@
       "branch": "",
       "default": {
         "kind": "rule",
-        "rule_ref": 73
+        "rule_ref": 74
       },
       "object": "payout",
       "on": [
@@ -348864,7 +349375,7 @@
       "branch": "",
       "default": {
         "kind": "rule",
-        "rule_ref": 74,
+        "rule_ref": 75,
         "variants": [
           {
             "default": {
@@ -348915,33 +349426,33 @@
       "branch": "",
       "default": {
         "kind": "rule",
-        "rule_ref": 75,
+        "rule_ref": 76,
         "variants": [
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 75
+              "rule_ref": 76
             },
             "variant": "amount_other"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 75
+              "rule_ref": 76
             },
             "variant": "metered"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 75
+              "rule_ref": 76
             },
             "variant": "tiered"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 75
+              "rule_ref": 76
             },
             "variant": "tiered_decimal"
           }
@@ -349066,40 +349577,40 @@
       "branch": "",
       "default": {
         "kind": "rule",
-        "rule_ref": 76,
+        "rule_ref": 77,
         "variants": [
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 76
+              "rule_ref": 77
             },
             "variant": "amount_other"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 76
+              "rule_ref": 77
             },
             "variant": "decimal"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 76
+              "rule_ref": 77
             },
             "variant": "metered"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 76
+              "rule_ref": 77
             },
             "variant": "tiered"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 76
+              "rule_ref": 77
             },
             "variant": "tiered_decimal"
           }
@@ -352858,89 +353369,89 @@
       "branch": "",
       "default": {
         "kind": "rule",
-        "rule_ref": 77,
+        "rule_ref": 78,
         "variants": [
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 77
+              "rule_ref": 78
             },
             "variant": "currency_eur"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 77
+              "rule_ref": 78
             },
             "variant": "custom_amount"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 77
+              "rule_ref": 78
             },
             "variant": "decimal"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 77
+              "rule_ref": 78
             },
             "variant": "inline_product"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 77
+              "rule_ref": 78
             },
             "variant": "metered"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 77
+              "rule_ref": 78
             },
             "variant": "monthly"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 77
+              "rule_ref": 78
             },
             "variant": "options"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 77
+              "rule_ref": 78
             },
             "variant": "options_custom"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 77
+              "rule_ref": 78
             },
             "variant": "options_tiered"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 77
+              "rule_ref": 78
             },
             "variant": "options_tiered_decimal"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 77
+              "rule_ref": 78
             },
             "variant": "tiered"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 77
+              "rule_ref": 78
             },
             "variant": "tiered_decimal"
           }
@@ -354011,33 +354522,33 @@
       "branch": "",
       "default": {
         "kind": "rule",
-        "rule_ref": 78,
+        "rule_ref": 79,
         "variants": [
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 78
+              "rule_ref": 79
             },
             "variant": "currency_eur"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 78
+              "rule_ref": 79
             },
             "variant": "inline_product"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 78
+              "rule_ref": 79
             },
             "variant": "metered"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 78
+              "rule_ref": 79
             },
             "variant": "monthly"
           }
@@ -354099,89 +354610,89 @@
       "branch": "",
       "default": {
         "kind": "rule",
-        "rule_ref": 79,
+        "rule_ref": 80,
         "variants": [
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 79
+              "rule_ref": 80
             },
             "variant": "currency_eur"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 79
+              "rule_ref": 80
             },
             "variant": "custom_amount"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 79
+              "rule_ref": 80
             },
             "variant": "decimal"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 79
+              "rule_ref": 80
             },
             "variant": "inline_product"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 79
+              "rule_ref": 80
             },
             "variant": "metered"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 79
+              "rule_ref": 80
             },
             "variant": "monthly"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 79
+              "rule_ref": 80
             },
             "variant": "options"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 79
+              "rule_ref": 80
             },
             "variant": "options_custom"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 79
+              "rule_ref": 80
             },
             "variant": "options_tiered"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 79
+              "rule_ref": 80
             },
             "variant": "options_tiered_decimal"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 79
+              "rule_ref": 80
             },
             "variant": "tiered"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 79
+              "rule_ref": 80
             },
             "variant": "tiered_decimal"
           }
@@ -356690,7 +357201,7 @@
       "branch": "",
       "default": {
         "kind": "rule",
-        "rule_ref": 80,
+        "rule_ref": 81,
         "variants": [
           {
             "default": {
@@ -356765,82 +357276,82 @@
       "branch": "",
       "default": {
         "kind": "rule",
-        "rule_ref": 81,
+        "rule_ref": 82,
         "variants": [
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 81
+              "rule_ref": 82
             },
             "variant": "currency_eur"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 81
+              "rule_ref": 82
             },
             "variant": "custom_amount"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 81
+              "rule_ref": 82
             },
             "variant": "inline_product"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 81
+              "rule_ref": 82
             },
             "variant": "metered"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 81
+              "rule_ref": 82
             },
             "variant": "monthly"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 81
+              "rule_ref": 82
             },
             "variant": "options"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 81
+              "rule_ref": 82
             },
             "variant": "options_custom"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 81
+              "rule_ref": 82
             },
             "variant": "options_tiered"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 81
+              "rule_ref": 82
             },
             "variant": "options_tiered_decimal"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 81
+              "rule_ref": 82
             },
             "variant": "tiered"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 81
+              "rule_ref": 82
             },
             "variant": "tiered_decimal"
           }
@@ -363708,40 +364219,40 @@
       "branch": "",
       "default": {
         "kind": "rule",
-        "rule_ref": 82,
+        "rule_ref": 83,
         "variants": [
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 82
+              "rule_ref": 83
             },
             "variant": "price"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 82
+              "rule_ref": 83
             },
             "variant": "price_custom"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 82
+              "rule_ref": 83
             },
             "variant": "price_decimal"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 82
+              "rule_ref": 83
             },
             "variant": "price_monthly"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 82
+              "rule_ref": 83
             },
             "variant": "price_options"
           }
@@ -367235,7 +367746,7 @@
       "branch": "",
       "default": {
         "kind": "rule",
-        "rule_ref": 83
+        "rule_ref": 84
       },
       "object": "promotion_code",
       "on": [
@@ -369592,103 +370103,103 @@
       "branch": "",
       "default": {
         "kind": "rule",
-        "rule_ref": 88,
+        "rule_ref": 89,
         "variants": [
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 88
+              "rule_ref": 89
             },
             "variant": "charge_automatically"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 88
+              "rule_ref": 89
             },
             "variant": "classic"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 88
+              "rule_ref": 89
             },
             "variant": "customer"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 88
+              "rule_ref": 89
             },
             "variant": "destination"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 88
+              "rule_ref": 89
             },
             "variant": "destination_recurring"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 88
+              "rule_ref": 89
             },
             "variant": "from_quote"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 88
+              "rule_ref": 89
             },
             "variant": "line_items"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 88
+              "rule_ref": 89
             },
             "variant": "price_data"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 88
+              "rule_ref": 89
             },
             "variant": "price_data_decimal"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 88
+              "rule_ref": 89
             },
             "variant": "price_eur"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 88
+              "rule_ref": 89
             },
             "variant": "recurring"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 88
+              "rule_ref": 89
             },
             "variant": "send_invoice"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 88
+              "rule_ref": 89
             },
             "variant": "tax_account"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 88
+              "rule_ref": 89
             },
             "variant": "test_clock"
           }
@@ -385426,12 +385937,12 @@
       "branch": "",
       "default": {
         "kind": "rule",
-        "rule_ref": 94,
+        "rule_ref": 95,
         "variants": [
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 94
+              "rule_ref": 95
             },
             "variant": "charge"
           }
@@ -396761,12 +397272,12 @@
       "branch": "",
       "default": {
         "kind": "rule",
-        "rule_ref": 97,
+        "rule_ref": 98,
         "variants": [
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 97
+              "rule_ref": 98
             },
             "variant": "currency_eur"
           }
@@ -399602,180 +400113,180 @@
       "branch": "",
       "default": {
         "kind": "rule",
-        "rule_ref": 101,
+        "rule_ref": 102,
         "variants": [
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 101
+              "rule_ref": 102
             },
             "variant": "anchor_yearly"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 101
+              "rule_ref": 102
             },
             "variant": "canceling"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 101
+              "rule_ref": 102
             },
             "variant": "canceling_option"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 101
+              "rule_ref": 102
             },
             "variant": "customer_account"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 101
+              "rule_ref": 102
             },
             "variant": "decimal_price"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 101
+              "rule_ref": 102
             },
             "variant": "fee"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 101
+              "rule_ref": 102
             },
             "variant": "flexible"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 101
+              "rule_ref": 102
             },
             "variant": "inline_price"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 101
+              "rule_ref": 102
             },
             "variant": "invoice_decimal"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 101
+              "rule_ref": 102
             },
             "variant": "invoice_item"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 101
+              "rule_ref": 102
             },
             "variant": "metered"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 101
+              "rule_ref": 102
             },
             "variant": "method_aud"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 101
+              "rule_ref": 102
             },
             "variant": "method_brl"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 101
+              "rule_ref": 102
             },
             "variant": "method_eur"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 101
+              "rule_ref": 102
             },
             "variant": "method_inr"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 101
+              "rule_ref": 102
             },
             "variant": "method_pln"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 101
+              "rule_ref": 102
             },
             "variant": "prebilled"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 101
+              "rule_ref": 102
             },
             "variant": "prebilled_timestamp"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 101
+              "rule_ref": 102
             },
             "variant": "price_eur"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 101
+              "rule_ref": 102
             },
             "variant": "send_invoice"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 101
+              "rule_ref": 102
             },
             "variant": "setup_pending"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 101
+              "rule_ref": 102
             },
             "variant": "tax_coded"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 101
+              "rule_ref": 102
             },
             "variant": "test_clock"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 101
+              "rule_ref": 102
             },
             "variant": "trial"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 101
+              "rule_ref": 102
             },
             "variant": "trial_offer"
           }
@@ -403555,180 +404066,180 @@
       "branch": "",
       "default": {
         "kind": "rule",
-        "rule_ref": 102,
+        "rule_ref": 103,
         "variants": [
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 102
+              "rule_ref": 103
             },
             "variant": "anchor_yearly"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 102
+              "rule_ref": 103
             },
             "variant": "canceling"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 102
+              "rule_ref": 103
             },
             "variant": "canceling_option"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 102
+              "rule_ref": 103
             },
             "variant": "customer_account"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 102
+              "rule_ref": 103
             },
             "variant": "decimal_price"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 102
+              "rule_ref": 103
             },
             "variant": "fee"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 102
+              "rule_ref": 103
             },
             "variant": "flexible"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 102
+              "rule_ref": 103
             },
             "variant": "inline_price"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 102
+              "rule_ref": 103
             },
             "variant": "invoice_decimal"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 102
+              "rule_ref": 103
             },
             "variant": "invoice_item"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 102
+              "rule_ref": 103
             },
             "variant": "metered"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 102
+              "rule_ref": 103
             },
             "variant": "method_aud"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 102
+              "rule_ref": 103
             },
             "variant": "method_brl"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 102
+              "rule_ref": 103
             },
             "variant": "method_eur"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 102
+              "rule_ref": 103
             },
             "variant": "method_inr"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 102
+              "rule_ref": 103
             },
             "variant": "method_pln"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 102
+              "rule_ref": 103
             },
             "variant": "prebilled"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 102
+              "rule_ref": 103
             },
             "variant": "prebilled_timestamp"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 102
+              "rule_ref": 103
             },
             "variant": "price_eur"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 102
+              "rule_ref": 103
             },
             "variant": "send_invoice"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 102
+              "rule_ref": 103
             },
             "variant": "setup_pending"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 102
+              "rule_ref": 103
             },
             "variant": "tax_coded"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 102
+              "rule_ref": 103
             },
             "variant": "test_clock"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 102
+              "rule_ref": 103
             },
             "variant": "trial"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 102
+              "rule_ref": 103
             },
             "variant": "trial_offer"
           }
@@ -463319,124 +463830,124 @@
       "branch": "",
       "default": {
         "kind": "rule",
-        "rule_ref": 118,
+        "rule_ref": 119,
         "variants": [
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 118
+              "rule_ref": 119
             },
             "variant": "customer_account"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 118
+              "rule_ref": 119
             },
             "variant": "end_dated"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 118
+              "rule_ref": 119
             },
             "variant": "fee_defaults"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 118
+              "rule_ref": 119
             },
             "variant": "fee_phase"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 118
+              "rule_ref": 119
             },
             "variant": "flexible"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 118
+              "rule_ref": 119
             },
             "variant": "from_subscription"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 118
+              "rule_ref": 119
             },
             "variant": "inline_decimal"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 118
+              "rule_ref": 119
             },
             "variant": "inline_price"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 118
+              "rule_ref": 119
             },
             "variant": "invoice_decimal"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 118
+              "rule_ref": 119
             },
             "variant": "invoice_item"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 118
+              "rule_ref": 119
             },
             "variant": "metered"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 118
+              "rule_ref": 119
             },
             "variant": "pause_duration"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 118
+              "rule_ref": 119
             },
             "variant": "pause_timestamp"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 118
+              "rule_ref": 119
             },
             "variant": "price_eur"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 118
+              "rule_ref": 119
             },
             "variant": "started"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 118
+              "rule_ref": 119
             },
             "variant": "tax_coded"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 118
+              "rule_ref": 119
             },
             "variant": "test_clock"
           }
@@ -464339,117 +464850,117 @@
       "branch": "",
       "default": {
         "kind": "rule",
-        "rule_ref": 119,
+        "rule_ref": 120,
         "variants": [
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 119
+              "rule_ref": 120
             },
             "variant": "customer_account"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 119
+              "rule_ref": 120
             },
             "variant": "fee_defaults"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 119
+              "rule_ref": 120
             },
             "variant": "fee_phase"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 119
+              "rule_ref": 120
             },
             "variant": "flexible"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 119
+              "rule_ref": 120
             },
             "variant": "from_subscription"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 119
+              "rule_ref": 120
             },
             "variant": "inline_decimal"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 119
+              "rule_ref": 120
             },
             "variant": "inline_price"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 119
+              "rule_ref": 120
             },
             "variant": "invoice_decimal"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 119
+              "rule_ref": 120
             },
             "variant": "invoice_item"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 119
+              "rule_ref": 120
             },
             "variant": "metered"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 119
+              "rule_ref": 120
             },
             "variant": "pause_duration"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 119
+              "rule_ref": 120
             },
             "variant": "pause_timestamp"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 119
+              "rule_ref": 120
             },
             "variant": "price_eur"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 119
+              "rule_ref": 120
             },
             "variant": "started"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 119
+              "rule_ref": 120
             },
             "variant": "tax_coded"
           },
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 119
+              "rule_ref": 120
             },
             "variant": "test_clock"
           }
@@ -495454,7 +495965,7 @@
       "branch": "",
       "default": {
         "kind": "rule",
-        "rule_ref": 121,
+        "rule_ref": 122,
         "variants": [
           {
             "default": {
@@ -522938,12 +523449,12 @@
       "branch": "",
       "default": {
         "kind": "rule",
-        "rule_ref": 123,
+        "rule_ref": 124,
         "variants": [
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 123
+              "rule_ref": 124
             },
             "variant": "s700"
           }
@@ -525943,7 +526454,7 @@
       "returned": {
         "form": "as_sent",
         "response_path": "frozen_time",
-        "rule_ref": 124
+        "rule_ref": 125
       },
       "side": "request",
       "status": "proven",
@@ -529815,12 +530326,12 @@
       "branch": "",
       "default": {
         "kind": "rule",
-        "rule_ref": 125,
+        "rule_ref": 126,
         "variants": [
           {
             "default": {
               "kind": "rule",
-              "rule_ref": 125
+              "rule_ref": 126
             },
             "variant": "partly_reversed"
           }
@@ -551258,7 +551769,7 @@
       "branch": "",
       "default": {
         "kind": "rule",
-        "rule_ref": 131,
+        "rule_ref": 132,
         "variants": [
           {
             "default": {
@@ -698012,6 +698523,52 @@
             "params": {
               "line_items": [
                 {
+                  "price": {
+                    "$gen": "ref",
+                    "arg": "price"
+                  },
+                  "quantity": 2
+                }
+              ],
+              "mode": "payment",
+              "name_collection": {
+                "business": {
+                  "enabled": false
+                },
+                "individual": {
+                  "enabled": false
+                }
+              },
+              "success_url": {
+                "$gen": "url"
+              }
+            },
+            "probe": "isolated/name_collection_both_off"
+          },
+          "value": {
+            "message": "If specifying name_collection, you must have either `name_collection[individual][enabled] = true` or `name_collection[business][enabled] = true`.",
+            "status": 400,
+            "type": "invalid_request_error"
+          }
+        }
+      ],
+      "operation": "PostCheckoutSessions",
+      "path": "name_collection.individual.enabled",
+      "rule": "Stripe's answer turns on the request: accepted in []; refused in [isolated/name_collection_both_off]",
+      "tests": [
+        "TestCheckoutSessionAttributes/leaves/request/PostCheckoutSessions/name_collection.individual.enabled",
+        "TestCheckoutSessionAttributes/leaves/response/checkout.session/name_collection.individual.enabled"
+      ]
+    },
+    {
+      "object": "checkout.session",
+      "observations": [
+        {
+          "condition": {
+            "account_country": "US",
+            "params": {
+              "line_items": [
+                {
                   "price_data": {
                     "currency": "eur",
                     "product": {
@@ -702820,11 +703377,54 @@
             "status": 400,
             "type": "invalid_request_error"
           }
+        },
+        {
+          "condition": {
+            "account_country": "US",
+            "created_with": {
+              "line_items": [
+                {
+                  "price": {
+                    "$gen": "ref",
+                    "arg": "price"
+                  },
+                  "quantity": 2
+                }
+              ],
+              "name_collection": {
+                "business": {
+                  "enabled": true
+                },
+                "individual": {
+                  "enabled": true,
+                  "optional": true
+                }
+              }
+            },
+            "params": {
+              "name_collection": {
+                "business": {
+                  "enabled": true
+                },
+                "individual": {
+                  "enabled": true
+                }
+              }
+            },
+            "probe": "isolated/hash_name_collection_individual"
+          },
+          "value": {
+            "read": {
+              "kind": "sent",
+              "path": "name_collection.individual.enabled"
+            },
+            "status": 200
+          }
         }
       ],
       "operation": "PostPaymentLinksPaymentLink",
       "path": "name_collection.individual.enabled",
-      "rule": "Stripe's answer turns on the request: accepted in []; refused in [isolated/name_collection_update_both_off]",
+      "rule": "Stripe's answer turns on the request: accepted in [isolated/hash_name_collection_individual]; refused in [isolated/name_collection_update_both_off]",
       "tests": [
         "TestPaymentLinkAttributes/leaves/request/PostPaymentLinksPaymentLink/name_collection.individual.enabled"
       ]
@@ -706912,6 +707512,44 @@
               "start_date": "now"
             },
             "params": {
+              "phases": ""
+            },
+            "probe": "isolated/phases_empty_started"
+          },
+          "value": {
+            "code": "parameter_invalid_empty",
+            "message": "You passed an empty string for 'phases'. We assume empty values are an attempt to unset a parameter; however 'phases' cannot be unset. You should remove 'phases' from your request or supply a non-empty value.",
+            "param": "phases",
+            "status": 400,
+            "type": "invalid_request_error"
+          }
+        },
+        {
+          "condition": {
+            "account_country": "US",
+            "created_with": {
+              "customer": {
+                "$gen": "ref",
+                "arg": "customer"
+              },
+              "phases": [
+                {
+                  "duration": {
+                    "interval": "month"
+                  },
+                  "items": [
+                    {
+                      "price": {
+                        "$gen": "ref",
+                        "arg": "price"
+                      }
+                    }
+                  ]
+                }
+              ],
+              "start_date": "now"
+            },
+            "params": {
               "phases": [
                 {
                   "items": [
@@ -706929,6 +707567,47 @@
           },
           "value": {
             "message": "The subscription schedule update is missing at least one phase with a `start_date` to anchor end dates to.",
+            "status": 400,
+            "type": "invalid_request_error"
+          }
+        },
+        {
+          "condition": {
+            "account_country": "US",
+            "created_with": {
+              "customer": {
+                "$gen": "ref",
+                "arg": "customer"
+              },
+              "phases": [
+                {
+                  "duration": {
+                    "interval": "month"
+                  },
+                  "items": [
+                    {
+                      "price": {
+                        "$gen": "ref",
+                        "arg": "price"
+                      }
+                    }
+                  ]
+                }
+              ],
+              "start_date": {
+                "$gen": "now",
+                "offset": 86400
+              }
+            },
+            "params": {
+              "phases": ""
+            },
+            "probe": "isolated/phases_empty"
+          },
+          "value": {
+            "code": "parameter_invalid_empty",
+            "message": "You passed an empty string for 'phases'. We assume empty values are an attempt to unset a parameter; however 'phases' cannot be unset. You should remove 'phases' from your request or supply a non-empty value.",
+            "param": "phases",
             "status": 400,
             "type": "invalid_request_error"
           }
@@ -706986,7 +707665,7 @@
       ],
       "operation": "PostSubscriptionSchedulesSchedule",
       "path": "phases.items.price",
-      "rule": "Stripe's answer turns on the request: accepted in []; refused in [isolated/phases_without_start_date, isolated/phases_without_start_date_started]",
+      "rule": "Stripe's answer turns on the request: accepted in []; refused in [isolated/phases_empty, isolated/phases_empty_started, isolated/phases_without_start_date, isolated/phases_without_start_date_started]",
       "tests": [
         "TestSubscriptionScheduleAttributes/leaves/request/PostSubscriptionSchedulesSchedule/phases.items.price"
       ]
@@ -711250,13 +711929,13 @@
   "spec_sha256": "9119e72c7ff8ad142e94f7efa9cf49d8e6eec69df3592e17e8fba15099726ed7",
   "stripe_run": {
     "event": "push",
-    "id": 42360743355,
+    "id": 42411686853,
     "passed": true,
     "platform_country": "US",
     "sandbox": "ci",
-    "time": "2026-11-07T15:08:34Z"
+    "time": "2026-11-07T22:16:23Z"
   },
-  "suite_commit": "b31443e2c7a90a6b802ccd097a34fbab2a6177cc",
+  "suite_commit": "fcc9d56e62fda926c4af25f8450236b947e6a68d",
   "together": [
     {
       "answers": [

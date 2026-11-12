@@ -7,22 +7,22 @@ import "github.com/computomatic/terraform-provider-stripe/internal/fields"
 
 // Table lists every request and response field of the object.
 var Table = []fields.Field{
-	{Name: "card_logo", Shape: fields.String, Create: true, Update: true, Response: true, Description: "The file for the card logo, for use with physical bundles that support card logos. Must have a `purpose` value of `issuing_logo`."},
+	{Name: "card_logo", Shape: fields.String, Create: true, Update: true, Response: true, Stable: true, Description: "The file for the card logo, for use with physical bundles that support card logos. Must have a `purpose` value of `issuing_logo`."},
 	{Name: "carrier_text", Shape: fields.Object, Create: true, Update: true, Response: true, Description: "Hash containing carrier text, for use with physical bundles that support carrier text.", Fields: []fields.Field{
-		{Name: "footer_body", Shape: fields.String, Create: true, Update: true, Response: true, Description: "The footer body text of the carrier letter."},
-		{Name: "footer_title", Shape: fields.String, Create: true, Update: true, Response: true, Description: "The footer title text of the carrier letter."},
-		{Name: "header_body", Shape: fields.String, Create: true, Update: true, Response: true, Description: "The header body text of the carrier letter."},
-		{Name: "header_title", Shape: fields.String, Create: true, Update: true, Response: true, Description: "The header title text of the carrier letter."},
+		{Name: "footer_body", Shape: fields.String, Create: true, Update: true, Response: true, Stable: true, Description: "The footer body text of the carrier letter.", Default: &fields.Default{Kind: fields.DefaultVaries}},
+		{Name: "footer_title", Shape: fields.String, Create: true, Update: true, Response: true, Stable: true, Description: "The footer title text of the carrier letter.", Default: &fields.Default{Kind: fields.DefaultVaries}},
+		{Name: "header_body", Shape: fields.String, Create: true, Update: true, Response: true, Stable: true, Description: "The header body text of the carrier letter.", Default: &fields.Default{Kind: fields.DefaultVaries}},
+		{Name: "header_title", Shape: fields.String, Create: true, Update: true, Response: true, Stable: true, Description: "The header title text of the carrier letter.", Default: &fields.Default{Kind: fields.DefaultVaries}},
 	}},
 	{Name: "created", Shape: fields.Int, Response: true, Description: "Time at which the object was created. Measured in seconds since the Unix epoch."},
 	{Name: "id", Shape: fields.String, Response: true, Description: "Unique identifier for the object."},
 	{Name: "livemode", Shape: fields.Bool, Response: true, Description: "If the object exists in live mode, the value is `true`. If the object exists in test mode, the value is `false`."},
-	{Name: "lookup_key", Shape: fields.String, Create: true, Update: true, Response: true, Description: "A lookup key used to retrieve personalization designs dynamically from a static string. This may be up to 200 characters."},
-	{Name: "metadata", Shape: fields.StringMap, Create: true, Update: true, Response: true, ServerDefaulted: true, Description: "Set of [key-value pairs](https://docs.stripe.com/api/metadata) that you can attach to an object. This can be useful for storing additional information about the object in a structured format. Individual keys can be unset by posting an empty value to them. All keys can be unset by posting an empty value to `metadata`.", MapUpdate: &fields.MapUpdate{Replaced: false, EmptyKept: false}},
-	{Name: "name", Shape: fields.String, Create: true, Update: true, Response: true, Description: "Friendly display name."},
+	{Name: "lookup_key", Shape: fields.String, Create: true, Update: true, Response: true, Stable: true, Description: "A lookup key used to retrieve personalization designs dynamically from a static string. This may be up to 200 characters.", Default: &fields.Default{Kind: fields.DefaultNone}},
+	{Name: "metadata", Shape: fields.StringMap, Create: true, Update: true, Response: true, ServerDefaulted: true, Stable: true, Description: "Set of [key-value pairs](https://docs.stripe.com/api/metadata) that you can attach to an object. This can be useful for storing additional information about the object in a structured format. Individual keys can be unset by posting an empty value to them. All keys can be unset by posting an empty value to `metadata`.", Default: &fields.Default{Kind: fields.DefaultValue, Value: "{}"}, MapUpdate: &fields.MapUpdate{Replaced: false, EmptyKept: false}},
+	{Name: "name", Shape: fields.String, Create: true, Update: true, Response: true, Stable: true, Description: "Friendly display name.", Default: &fields.Default{Kind: fields.DefaultNone}},
 	{Name: "physical_bundle", Shape: fields.String, Required: true, Create: true, Update: true, Response: true, Description: "The physical bundle object belonging to this personalization design."},
-	{Name: "preferences", Shape: fields.Object, Response: true, Fields: []fields.Field{
-		{Name: "is_default", Shape: fields.Bool, Response: true, Description: "Whether we use this personalization design to create cards when one isn't specified. A connected account uses the Connect platform's default design if no personalization design is set as the default design."},
+	{Name: "preferences", Shape: fields.Object, Create: true, Update: true, Response: true, ServerDefaulted: true, Description: "Information on whether this personalization design is used to create cards when one is not specified.", Fields: []fields.Field{
+		{Name: "is_default", Shape: fields.Bool, Required: true, Create: true, Update: true, Response: true, Description: "Whether we use this personalization design to create cards when one isn't specified. A connected account uses the Connect platform's default design if no personalization design is set as the default design."},
 		{Name: "is_platform_default", Shape: fields.Bool, Response: true, Description: "Whether this personalization design is used to create cards when one is not specified and a default for this connected account does not exist."},
 	}},
 	{Name: "rejection_reasons", Shape: fields.Object, Response: true, Fields: []fields.Field{
@@ -30,4 +30,5 @@ var Table = []fields.Field{
 		{Name: "carrier_text", Shape: fields.ScalarList, Elem: fields.String, Response: true, Description: "The reason(s) the carrier text was rejected."},
 	}},
 	{Name: "status", Shape: fields.String, Response: true, Enum: []string{"active", "inactive", "rejected", "review"}, Description: "Whether this personalization design can be used to create cards."},
+	{Name: "transfer_lookup_key", Shape: fields.Bool, Create: true, Update: true, ServerDefaulted: true, NotReturned: true, Description: "If set to true, will atomically remove the lookup key from the existing personalization design, and assign it to this personalization design."},
 }

@@ -6,7 +6,9 @@ import "strconv"
 // the request or the object holds: `{"$any":true}`.
 const AnyName = "$any"
 
-// Any is the pattern value that matches any value but null.
+// Any is the pattern value that matches any value but null and the empty string: it stands for
+// a value the conformance suite generated, which is never empty, and on /v1 the empty string is
+// the unset.
 var Any = Object{{Name: AnyName, Value: Bool(true)}}
 
 // IsAny reports whether a pattern value is Any.
@@ -103,7 +105,7 @@ func matched(p, a Array, eq func(p, v Value) bool) bool {
 
 func present(v Value) bool {
 	_, null := v.(Null)
-	return v != nil && !null
+	return v != nil && !null && v != String("")
 }
 
 // scalarEqual compares two scalars, an Int and a Decimal by their text.

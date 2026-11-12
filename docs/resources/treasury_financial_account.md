@@ -3,12 +3,12 @@
 page_title: "stripe_treasury_financial_account Resource - Stripe"
 subcategory: ""
 description: |-
-  A Treasury financial account that holds money on a connected account and that Issuing cards draw on. Treasury runs on a platform's connected accounts, so manage financial accounts through a provider configuration whose stripe_account is a connected account with the treasury capability active. features requests features when the account is created; active_features, pending_features and restricted_features say how Stripe answered. A plan that changes features afterwards fails.
+  A Treasury financial account that holds money on a connected account and that Issuing cards draw on. Treasury runs on a platform's connected accounts, so manage financial accounts through a provider configuration whose stripe_account is a connected account with the treasury capability active. features requests features when the account is created, and reads back each requested feature's status; active_features, pending_features and restricted_features list them too. A plan that changes features afterwards fails. Stripe takes forwarding_settings, where the money of a closed account goes, only once the account is closed, which the provider does not do: close it with Stripe's API or Dashboard first.
 ---
 
 # Resource: stripe_treasury_financial_account
 
-A Treasury financial account that holds money on a connected account and that Issuing cards draw on. Treasury runs on a platform's connected accounts, so manage financial accounts through a provider configuration whose `stripe_account` is a connected account with the `treasury` capability active. `features` requests features when the account is created; `active_features`, `pending_features` and `restricted_features` say how Stripe answered. A plan that changes `features` afterwards fails.
+A Treasury financial account that holds money on a connected account and that Issuing cards draw on. Treasury runs on a platform's connected accounts, so manage financial accounts through a provider configuration whose `stripe_account` is a connected account with the `treasury` capability active. `features` requests features when the account is created, and reads back each requested feature's `status`; `active_features`, `pending_features` and `restricted_features` list them too. A plan that changes `features` afterwards fails. Stripe takes `forwarding_settings`, where the money of a closed account goes, only once the account is closed, which the provider does not do: close it with Stripe's API or Dashboard first.
 
 ~> Stripe cannot delete a financial account, and the provider does not close one. `terraform destroy`, and a change that would replace the treasury financial account, fail at plan time. To stop managing a treasury financial account, remove it from the state as [Removing from State](#removing-from-state) shows; it stays in the Stripe account.
 
@@ -51,8 +51,9 @@ The following arguments are required:
 The following arguments are optional:
 
 * `features` - (Optional) Encodes whether a FinancialAccount has access to a particular feature. Stripe or the platform can control features via the requested field. See [`features`](#features) below.
-* `metadata` - (Optional) Set of [key-value pairs](https://docs.stripe.com/api/metadata) that you can attach to an object. This can be useful for storing additional information about the object in a structured format. Individual keys can be unset by posting an empty value to them. All keys can be unset by posting an empty value to `metadata`.
-* `nickname` - (Optional) The nickname for the FinancialAccount.
+* `forwarding_settings` - (Optional) A different bank account where funds can be deposited/debited in order to get the closing FA's balance to $0. Stripe does not return this value; the provider keeps it from configuration. Removing it from the configuration leaves the current value. See [`forwarding_settings`](#forwarding_settings) below.
+* `metadata` - (Optional) Set of [key-value pairs](https://docs.stripe.com/api/metadata) that you can attach to an object. This can be useful for storing additional information about the object in a structured format. Individual keys can be unset by posting an empty value to them. All keys can be unset by posting an empty value to `metadata`. Default (Stripe): `{}`.
+* `nickname` - (Optional) The nickname for the FinancialAccount. Default: none.
 * `platform_restrictions` - (Optional) The set of functionalities that the platform can restrict on the FinancialAccount. Removing it from the configuration leaves the current value. See [`platform_restrictions`](#platform_restrictions) below.
 
 <a id="features"></a>
@@ -65,6 +66,7 @@ The `features` attribute supports:
 * `financial_addresses` - (Optional) Settings related to Financial Addresses features on a Financial Account See [`features.financial_addresses`](#features.financial_addresses) below.
 * `inbound_transfers` - (Optional) InboundTransfers contains inbound transfers features for a FinancialAccount. See [`features.inbound_transfers`](#features.inbound_transfers) below.
 * `intra_stripe_flows` - (Optional) Toggle settings for enabling/disabling a feature See [`features.intra_stripe_flows`](#features.intra_stripe_flows) below.
+* `object` - (Read-Only) String representing the object's type. Objects of the same type share the same value. Possible values: `treasury.financial_account_features`.
 * `outbound_payments` - (Optional) Settings related to Outbound Payments features on a Financial Account See [`features.outbound_payments`](#features.outbound_payments) below.
 * `outbound_transfers` - (Optional) OutboundTransfers contains outbound transfers features for a FinancialAccount. See [`features.outbound_transfers`](#features.outbound_transfers) below.
 
@@ -74,6 +76,17 @@ The `features` attribute supports:
 The `features.card_issuing` attribute supports:
 
 * `requested` - (Required) Whether the FinancialAccount should have the Feature.
+* `status` - (Read-Only) Whether the Feature is operational. Possible values: `active`, `pending`, `restricted`.
+* `status_details` - (Read-Only) Additional details; includes at least one entry when the status is not `active`. See [`features.card_issuing.status_details`](#features.card_issuing.status_details) below.
+
+<a id="features.card_issuing.status_details"></a>
+### `features.card_issuing.status_details`
+
+The `features.card_issuing.status_details` attribute is a list. Each element supports:
+
+* `code` - Represents the reason why the status is `pending` or `restricted`. Possible values: `activating`, `capability_not_requested`, `financial_account_closed`, `rejected_other`, `rejected_unsupported_business`, `requirements_past_due`, `requirements_pending_verification`, `restricted_by_platform`, `restricted_other`.
+* `resolution` - Represents what the user should do, if anything, to activate the Feature. Possible values: `contact_stripe`, `provide_information`, `remove_restriction`.
+* `restriction` - The `platform_restrictions` that are restricting this Feature. Possible values: `inbound_flows`, `outbound_flows`.
 
 <a id="features.deposit_insurance"></a>
 ### `features.deposit_insurance`
@@ -81,6 +94,17 @@ The `features.card_issuing` attribute supports:
 The `features.deposit_insurance` attribute supports:
 
 * `requested` - (Required) Whether the FinancialAccount should have the Feature.
+* `status` - (Read-Only) Whether the Feature is operational. Possible values: `active`, `pending`, `restricted`.
+* `status_details` - (Read-Only) Additional details; includes at least one entry when the status is not `active`. See [`features.deposit_insurance.status_details`](#features.deposit_insurance.status_details) below.
+
+<a id="features.deposit_insurance.status_details"></a>
+### `features.deposit_insurance.status_details`
+
+The `features.deposit_insurance.status_details` attribute is a list. Each element supports:
+
+* `code` - Represents the reason why the status is `pending` or `restricted`. Possible values: `activating`, `capability_not_requested`, `financial_account_closed`, `rejected_other`, `rejected_unsupported_business`, `requirements_past_due`, `requirements_pending_verification`, `restricted_by_platform`, `restricted_other`.
+* `resolution` - Represents what the user should do, if anything, to activate the Feature. Possible values: `contact_stripe`, `provide_information`, `remove_restriction`.
+* `restriction` - The `platform_restrictions` that are restricting this Feature. Possible values: `inbound_flows`, `outbound_flows`.
 
 <a id="features.financial_addresses"></a>
 ### `features.financial_addresses`
@@ -95,6 +119,17 @@ The `features.financial_addresses` attribute supports:
 The `features.financial_addresses.aba` attribute supports:
 
 * `requested` - (Required) Whether the FinancialAccount should have the Feature.
+* `status` - (Read-Only) Whether the Feature is operational. Possible values: `active`, `pending`, `restricted`.
+* `status_details` - (Read-Only) Additional details; includes at least one entry when the status is not `active`. See [`features.financial_addresses.aba.status_details`](#features.financial_addresses.aba.status_details) below.
+
+<a id="features.financial_addresses.aba.status_details"></a>
+### `features.financial_addresses.aba.status_details`
+
+The `features.financial_addresses.aba.status_details` attribute is a list. Each element supports:
+
+* `code` - Represents the reason why the status is `pending` or `restricted`. Possible values: `activating`, `capability_not_requested`, `financial_account_closed`, `rejected_other`, `rejected_unsupported_business`, `requirements_past_due`, `requirements_pending_verification`, `restricted_by_platform`, `restricted_other`.
+* `resolution` - Represents what the user should do, if anything, to activate the Feature. Possible values: `contact_stripe`, `provide_information`, `remove_restriction`.
+* `restriction` - The `platform_restrictions` that are restricting this Feature. Possible values: `inbound_flows`, `outbound_flows`.
 
 <a id="features.inbound_transfers"></a>
 ### `features.inbound_transfers`
@@ -109,6 +144,17 @@ The `features.inbound_transfers` attribute supports:
 The `features.inbound_transfers.ach` attribute supports:
 
 * `requested` - (Required) Whether the FinancialAccount should have the Feature.
+* `status` - (Read-Only) Whether the Feature is operational. Possible values: `active`, `pending`, `restricted`.
+* `status_details` - (Read-Only) Additional details; includes at least one entry when the status is not `active`. See [`features.inbound_transfers.ach.status_details`](#features.inbound_transfers.ach.status_details) below.
+
+<a id="features.inbound_transfers.ach.status_details"></a>
+### `features.inbound_transfers.ach.status_details`
+
+The `features.inbound_transfers.ach.status_details` attribute is a list. Each element supports:
+
+* `code` - Represents the reason why the status is `pending` or `restricted`. Possible values: `activating`, `capability_not_requested`, `financial_account_closed`, `rejected_other`, `rejected_unsupported_business`, `requirements_past_due`, `requirements_pending_verification`, `restricted_by_platform`, `restricted_other`.
+* `resolution` - Represents what the user should do, if anything, to activate the Feature. Possible values: `contact_stripe`, `provide_information`, `remove_restriction`.
+* `restriction` - The `platform_restrictions` that are restricting this Feature. Possible values: `inbound_flows`, `outbound_flows`.
 
 <a id="features.intra_stripe_flows"></a>
 ### `features.intra_stripe_flows`
@@ -116,6 +162,17 @@ The `features.inbound_transfers.ach` attribute supports:
 The `features.intra_stripe_flows` attribute supports:
 
 * `requested` - (Required) Whether the FinancialAccount should have the Feature.
+* `status` - (Read-Only) Whether the Feature is operational. Possible values: `active`, `pending`, `restricted`.
+* `status_details` - (Read-Only) Additional details; includes at least one entry when the status is not `active`. See [`features.intra_stripe_flows.status_details`](#features.intra_stripe_flows.status_details) below.
+
+<a id="features.intra_stripe_flows.status_details"></a>
+### `features.intra_stripe_flows.status_details`
+
+The `features.intra_stripe_flows.status_details` attribute is a list. Each element supports:
+
+* `code` - Represents the reason why the status is `pending` or `restricted`. Possible values: `activating`, `capability_not_requested`, `financial_account_closed`, `rejected_other`, `rejected_unsupported_business`, `requirements_past_due`, `requirements_pending_verification`, `restricted_by_platform`, `restricted_other`.
+* `resolution` - Represents what the user should do, if anything, to activate the Feature. Possible values: `contact_stripe`, `provide_information`, `remove_restriction`.
+* `restriction` - The `platform_restrictions` that are restricting this Feature. Possible values: `inbound_flows`, `outbound_flows`.
 
 <a id="features.outbound_payments"></a>
 ### `features.outbound_payments`
@@ -131,6 +188,17 @@ The `features.outbound_payments` attribute supports:
 The `features.outbound_payments.ach` attribute supports:
 
 * `requested` - (Required) Whether the FinancialAccount should have the Feature.
+* `status` - (Read-Only) Whether the Feature is operational. Possible values: `active`, `pending`, `restricted`.
+* `status_details` - (Read-Only) Additional details; includes at least one entry when the status is not `active`. See [`features.outbound_payments.ach.status_details`](#features.outbound_payments.ach.status_details) below.
+
+<a id="features.outbound_payments.ach.status_details"></a>
+### `features.outbound_payments.ach.status_details`
+
+The `features.outbound_payments.ach.status_details` attribute is a list. Each element supports:
+
+* `code` - Represents the reason why the status is `pending` or `restricted`. Possible values: `activating`, `capability_not_requested`, `financial_account_closed`, `rejected_other`, `rejected_unsupported_business`, `requirements_past_due`, `requirements_pending_verification`, `restricted_by_platform`, `restricted_other`.
+* `resolution` - Represents what the user should do, if anything, to activate the Feature. Possible values: `contact_stripe`, `provide_information`, `remove_restriction`.
+* `restriction` - The `platform_restrictions` that are restricting this Feature. Possible values: `inbound_flows`, `outbound_flows`.
 
 <a id="features.outbound_payments.us_domestic_wire"></a>
 ### `features.outbound_payments.us_domestic_wire`
@@ -138,6 +206,17 @@ The `features.outbound_payments.ach` attribute supports:
 The `features.outbound_payments.us_domestic_wire` attribute supports:
 
 * `requested` - (Required) Whether the FinancialAccount should have the Feature.
+* `status` - (Read-Only) Whether the Feature is operational. Possible values: `active`, `pending`, `restricted`.
+* `status_details` - (Read-Only) Additional details; includes at least one entry when the status is not `active`. See [`features.outbound_payments.us_domestic_wire.status_details`](#features.outbound_payments.us_domestic_wire.status_details) below.
+
+<a id="features.outbound_payments.us_domestic_wire.status_details"></a>
+### `features.outbound_payments.us_domestic_wire.status_details`
+
+The `features.outbound_payments.us_domestic_wire.status_details` attribute is a list. Each element supports:
+
+* `code` - Represents the reason why the status is `pending` or `restricted`. Possible values: `activating`, `capability_not_requested`, `financial_account_closed`, `rejected_other`, `rejected_unsupported_business`, `requirements_past_due`, `requirements_pending_verification`, `restricted_by_platform`, `restricted_other`.
+* `resolution` - Represents what the user should do, if anything, to activate the Feature. Possible values: `contact_stripe`, `provide_information`, `remove_restriction`.
+* `restriction` - The `platform_restrictions` that are restricting this Feature. Possible values: `inbound_flows`, `outbound_flows`.
 
 <a id="features.outbound_transfers"></a>
 ### `features.outbound_transfers`
@@ -153,6 +232,17 @@ The `features.outbound_transfers` attribute supports:
 The `features.outbound_transfers.ach` attribute supports:
 
 * `requested` - (Required) Whether the FinancialAccount should have the Feature.
+* `status` - (Read-Only) Whether the Feature is operational. Possible values: `active`, `pending`, `restricted`.
+* `status_details` - (Read-Only) Additional details; includes at least one entry when the status is not `active`. See [`features.outbound_transfers.ach.status_details`](#features.outbound_transfers.ach.status_details) below.
+
+<a id="features.outbound_transfers.ach.status_details"></a>
+### `features.outbound_transfers.ach.status_details`
+
+The `features.outbound_transfers.ach.status_details` attribute is a list. Each element supports:
+
+* `code` - Represents the reason why the status is `pending` or `restricted`. Possible values: `activating`, `capability_not_requested`, `financial_account_closed`, `rejected_other`, `rejected_unsupported_business`, `requirements_past_due`, `requirements_pending_verification`, `restricted_by_platform`, `restricted_other`.
+* `resolution` - Represents what the user should do, if anything, to activate the Feature. Possible values: `contact_stripe`, `provide_information`, `remove_restriction`.
+* `restriction` - The `platform_restrictions` that are restricting this Feature. Possible values: `inbound_flows`, `outbound_flows`.
 
 <a id="features.outbound_transfers.us_domestic_wire"></a>
 ### `features.outbound_transfers.us_domestic_wire`
@@ -160,14 +250,33 @@ The `features.outbound_transfers.ach` attribute supports:
 The `features.outbound_transfers.us_domestic_wire` attribute supports:
 
 * `requested` - (Required) Whether the FinancialAccount should have the Feature.
+* `status` - (Read-Only) Whether the Feature is operational. Possible values: `active`, `pending`, `restricted`.
+* `status_details` - (Read-Only) Additional details; includes at least one entry when the status is not `active`. See [`features.outbound_transfers.us_domestic_wire.status_details`](#features.outbound_transfers.us_domestic_wire.status_details) below.
+
+<a id="features.outbound_transfers.us_domestic_wire.status_details"></a>
+### `features.outbound_transfers.us_domestic_wire.status_details`
+
+The `features.outbound_transfers.us_domestic_wire.status_details` attribute is a list. Each element supports:
+
+* `code` - Represents the reason why the status is `pending` or `restricted`. Possible values: `activating`, `capability_not_requested`, `financial_account_closed`, `rejected_other`, `rejected_unsupported_business`, `requirements_past_due`, `requirements_pending_verification`, `restricted_by_platform`, `restricted_other`.
+* `resolution` - Represents what the user should do, if anything, to activate the Feature. Possible values: `contact_stripe`, `provide_information`, `remove_restriction`.
+* `restriction` - The `platform_restrictions` that are restricting this Feature. Possible values: `inbound_flows`, `outbound_flows`.
+
+<a id="forwarding_settings"></a>
+### `forwarding_settings`
+
+The `forwarding_settings` attribute supports:
+
+* `financial_account` - (Optional) Stripe does not return this value; the provider keeps it from configuration. Default: not sent.
+* `type` - (Optional) Possible values: `financial_account`, `payment_method`. Stripe does not return this value; the provider keeps it from configuration. Stripe fails `payment_method` on every attempt, so the conformance suite never sends it: "Stripe answers 500 api_error 'An unknown error occurred' to every attempt (dev, 2026-10-31 and 2026-11-04)". Default: not sent.
 
 <a id="platform_restrictions"></a>
 ### `platform_restrictions`
 
 The `platform_restrictions` attribute supports:
 
-* `inbound_flows` - (Optional) Restricts all inbound money movement. Possible values: `restricted`, `unrestricted`.
-* `outbound_flows` - (Optional) Restricts all outbound money movement. Possible values: `restricted`, `unrestricted`.
+* `inbound_flows` - (Optional) Restricts all inbound money movement. Possible values: `restricted`, `unrestricted`. Default (Stripe): `unrestricted`.
+* `outbound_flows` - (Optional) Restricts all outbound money movement. Possible values: `restricted`, `unrestricted`. Default (Stripe): `unrestricted`.
 
 ## Attribute Reference
 
@@ -295,4 +404,4 @@ Using `terraform import`, import a treasury financial account using its ID. For 
 % terraform import stripe_treasury_financial_account.operating fa_1MtYCCLkdIwHu7ixUqlIQr8T
 ```
 
-~> Stripe does not return which features were requested, so an imported financial account has no `features` in state. Add `lifecycle { ignore_changes = [features] }` to a configuration that sets it, because a plan that changes `features` fails.
+-> Stripe does not return `forwarding_settings`, so an imported treasury financial account has it null: a configuration that sets it plans an update after the import.

@@ -93,7 +93,8 @@ type Resource struct {
 	// on what the plan cannot know, such as another object's state, or the request the probe
 	// sent does not tell it apart from one Stripe took. Generation fails on a rule of an exposed
 	// argument that it cannot put to the plan and that is not listed here, and on an entry that
-	// names no such rule. The product owner approves each entry.
+	// names no such rule. A key that adds a space and a probe leaves that one refused request of
+	// the rule to Stripe, and the plan refuses the others. The product owner approves each entry.
 	LeftToStripe map[string]string
 	// StatusConfirms says that the declaration's `status` transition confirms the object, so
 	// the request's `confirm` is left out by rule X5.

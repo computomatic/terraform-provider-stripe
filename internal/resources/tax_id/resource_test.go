@@ -3,6 +3,7 @@ package tax_id_test
 import (
 	"fmt"
 	"os"
+	"regexp"
 	"testing"
 
 	"github.com/hashicorp/go-version"
@@ -14,6 +15,7 @@ import (
 	"github.com/computomatic/terraform-provider-stripe/internal/acctest"
 	"github.com/computomatic/terraform-provider-stripe/internal/acctest/tfacc"
 	"github.com/computomatic/terraform-provider-stripe/internal/stripeapi"
+	"github.com/computomatic/terraform-provider-stripe/internal/wire"
 )
 
 func TestMain(m *testing.M) { os.Exit(acctest.Main(m)) }
@@ -218,4 +220,74 @@ func TestAccTaxId_drift(t *testing.T) {
 			},
 		},
 	})
+}
+
+// A tax ID of a connected account names it in `owner.account`, and Stripe reads it back; a
+// customer account must be a v2 account with a customer configuration, so Stripe refuses a
+// connected account there (suite: TestTaxIDAttributes, variants `account` and `customer_account`,
+// which send the transfers account with the minimal create's `us_ein` value). An account holds one
+// tax ID of a value, so in smoke mode, where the transfers account is shared, what an earlier run
+// left there is deleted first.
+func TestAccTaxId_accountOwner(t *testing.T) {
+	acct := acctest.NewAccount(t)
+	connected := tfacc.TransfersAccount(t, acct)
+	const value = "12-7654321"
+	if acct.Smoke {
+		deleteAccountTaxIDs(t, acct, connected, value)
+	}
+	config := func(owner string) string {
+		return acct.ProviderBlock() + fmt.Sprintf(`
+resource "stripe_tax_id" "test" {
+  type  = "us_ein"
+  value = %q
+  owner = %s
+}
+`, value, owner)
+	}
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: tfacc.ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config:      config(fmt.Sprintf("{ type = \"customer\", customer_account = %q }", connected)),
+				ExpectError: regexp.MustCompile(`V2\s+Accounts\s+must\s+be\s+configured\s+as\s+Customers`),
+			},
+			{
+				Config: config(fmt.Sprintf("{ type = \"account\", account = %q }", connected)),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr(address, "owner.type", "account"),
+					resource.TestCheckResourceAttr(address, "owner.account", connected),
+					resource.TestCheckNoResourceAttr(address, "owner.customer"),
+					resource.TestCheckNoResourceAttr(address, "owner.customer_account"),
+					resource.TestCheckResourceAttr(address, "value", value),
+				),
+			},
+			{Config: config(fmt.Sprintf("{ type = \"account\", account = %q }", connected)), PlanOnly: true},
+		},
+	})
+}
+
+// deleteAccountTaxIDs deletes the connected account's tax IDs of value, which an earlier smoke run
+// may have left.
+func deleteAccountTaxIDs(t *testing.T, c acctest.Config, account, value string) {
+	t.Helper()
+	client := tfacc.Client(c)
+	resp, err := client.Do(t.Context(), stripeapi.Request{Method: "GET", Path: "/v1/tax_ids", Params: wire.Object{
+		{Name: "owner", Value: wire.Object{{Name: "type", Value: wire.String("account")}, {Name: "account", Value: wire.String(account)}}},
+		{Name: "limit", Value: wire.Int(100)},
+	}})
+	if err != nil {
+		t.Fatalf("listing the tax IDs of %s: %v", account, err)
+	}
+	data, _ := resp.Body.(wire.Object).Get("data")
+	items, _ := data.(wire.Array)
+	for _, item := range items {
+		taxID, _ := item.(wire.Object)
+		if v, _ := taxID.GetString("value"); v != value {
+			continue
+		}
+		id, _ := taxID.GetString("id")
+		if _, err := client.Do(t.Context(), stripeapi.Request{Method: "DELETE", Path: "/v1/tax_ids/" + id}); err != nil {
+			t.Fatalf("deleting tax ID %s: %v", id, err)
+		}
+	}
 }

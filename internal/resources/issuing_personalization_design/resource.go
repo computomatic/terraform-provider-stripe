@@ -21,9 +21,11 @@ import (
 // change of the bundle, the logo or the carrier text, so those are refused. Stripe has no
 // DELETE route (suite: "delete is not a route"), and only the deactivate test helper, which
 // live mode lacks, ends a design, so destroy is refused. Its `lookup_key` stays taken: a create
-// with a key in use is refused (suite: "lookup key in use"), and the transfer Stripe offers is
-// not proven. Because the key is unique, the data
-// source also finds a design by it.
+// with a key in use is refused (suite: "lookup key in use"). Stripe takes `transfer_lookup_key`
+// and never returns it, so the provider keeps it from configuration; the record proves it only
+// beside a key no other design holds (TestIssuingPersonalizationDesignAttributes, `every_field/1`
+// and `update/1`). `preferences.is_default` makes a design the account's default, on create or
+// update (the same probes). Because the key is unique, the data source also finds a design by it.
 var Declaration = engine.Declaration{
 	TypeName: "stripe_issuing_personalization_design",
 	IDPrefix: "ipcd_",
@@ -31,6 +33,7 @@ var Declaration = engine.Declaration{
 		"Stripe issues cards only for a platform's connected accounts, so manage designs through a provider configuration whose `stripe_account` is a connected account with the `card_issuing` capability active. " +
 		"`card_logo` is the ID of a file uploaded with the purpose `issuing_logo`, which a bundle whose `features.card_logo` is `required` needs; Terraform cannot upload files. A bundle whose `features.carrier_text` is `required` needs `carrier_text`. " +
 		"Stripe reviews a new design: `status` reads `review` until Stripe makes it `active` or `rejected`, with its reasons in `rejection_reasons`. " +
+		"`preferences.is_default` makes the design the one Stripe uses for a card that names none. " +
 		"A plan that changes `physical_bundle`, `card_logo` or `carrier_text` of an existing design fails.",
 	DataSourceDescription: "The look of a physical Issuing card, on a connected account: its physical bundle, card logo and carrier letter. Look one up by its `id` or its `lookup_key`.",
 	Paths: engine.Paths{

@@ -3,12 +3,12 @@
 page_title: "stripe_tax_id Data Source - Stripe"
 subcategory: ""
 description: |-
-  A tax ID of your own account or of a customer.
+  A tax ID of your own account, of a connected account or of a customer.
 ---
 
 # Data Source: stripe_tax_id
 
-A tax ID of your own account or of a customer.
+A tax ID of your own account, of a connected account or of a customer.
 
 ## Example Usage
 

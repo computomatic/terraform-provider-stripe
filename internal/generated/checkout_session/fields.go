@@ -292,7 +292,7 @@ var Table = []fields.Field{
 			{Name: "optional", Shape: fields.Bool, Create: true, Response: true, ServerDefaulted: true, Description: "Whether the customer is required to complete the field before completing the Checkout Session. Defaults to `false`.", Default: &fields.Default{Kind: fields.DefaultNone}},
 		}},
 		{Name: "individual", Shape: fields.Object, Create: true, Response: true, Fields: []fields.Field{
-			{Name: "enabled", Shape: fields.Bool, Required: true, Create: true, Response: true, Description: "Indicates whether individual name collection is enabled for the session"},
+			{Name: "enabled", Shape: fields.Bool, Required: true, Create: true, Response: true, Description: "Indicates whether individual name collection is enabled for the session", Answer: "Elsewhere Stripe refused it on a US account on create: \"If specifying name_collection, you must have either `name_collection[individual][enabled] = true` or `name_collection[business][enabled] = true`.\".", PlanRefusals: []fields.PlanRefusal{{Update: false, Sends: "{\"line_items\":[{\"price\":{\"$any\":true},\"quantity\":2}],\"mode\":\"payment\",\"name_collection\":{\"business\":{\"enabled\":false},\"individual\":{\"enabled\":false}},\"success_url\":{\"$any\":true}}", Probe: "isolated/name_collection_both_off", AccountCountry: "US", Message: "If specifying name_collection, you must have either `name_collection[individual][enabled] = true` or `name_collection[business][enabled] = true`."}}},
 			{Name: "optional", Shape: fields.Bool, Create: true, Response: true, ServerDefaulted: true, Description: "Whether the customer is required to complete the field before completing the Checkout Session. Defaults to `false`.", Default: &fields.Default{Kind: fields.DefaultNone}},
 		}},
 	}},

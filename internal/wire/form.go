@@ -22,6 +22,39 @@ func EncodeForm(obj Object) (string, error) {
 	return strings.Join(pairs, "&"), nil
 }
 
+// FormSent is obj as EncodeForm sends it: each null, empty array and empty object, at any
+// depth, is the empty string. A request pattern that records Stripe's answer to a form body
+// compares with it, so that a removal the encoder holds as null or `[]` matches a recorded `""`.
+func FormSent(obj Object) Object {
+	out := make(Object, len(obj))
+	for i, f := range obj {
+		out[i] = Field{Name: f.Name, Value: formSent(f.Value)}
+	}
+	return out
+}
+
+func formSent(v Value) Value {
+	switch t := v.(type) {
+	case Null:
+		return String("")
+	case Array:
+		if len(t) == 0 {
+			return String("")
+		}
+		out := make(Array, len(t))
+		for i, e := range t {
+			out[i] = formSent(e)
+		}
+		return out
+	case Object:
+		if len(t) == 0 {
+			return String("")
+		}
+		return FormSent(t)
+	}
+	return v
+}
+
 func appendForm(pairs []string, key string, v Value) ([]string, error) {
 	scalar := func(s string) []string { return append(pairs, key+"="+url.QueryEscape(s)) }
 	switch t := v.(type) {

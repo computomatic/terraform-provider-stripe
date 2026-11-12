@@ -12,6 +12,7 @@ const (
 	leftDiscountHeld     = "Stripe's refusal turns on which object holds the discount the request names, which the plan cannot know: it took a quote line's and a subscription item's own discount and refused one of the quote or subscription (probes `isolated/line_discount_held` and `isolated/item_discount_held` against `isolated/*discount_of_*`)."
 	leftCouponBesideHeld = "Stripe refuses a coupon beside a discount in one element (`You may only specify one of these parameters: coupon, discount.`), but the record sends the discount as the one read from the object, so the plan cannot tell the refused request from one naming a discount on its own, on which Stripe's answer turns (probes `isolated/*coupon_beside_held`)."
 	leftMissing          = "Stripe's refusal turns on whether the object the request names exists, which the plan cannot know (code `resource_missing`)."
+	leftStartedLater     = "The probe's schedule was created to start a day after the create (`$gen` `now` with an offset), a time relative to when the probe ran, which a pattern cannot state and any value would widen to every start; the plan refuses the same requests to a schedule created with `start_date = \"now\"` (probes `isolated/phases_empty_started` and `isolated/phases_without_start_date_started`)."
 	leftBusinessURL      = "Stripe's refusal turns on its own check of the URL, not on the request alone: it took `https://example.com/acme` on a create and refused it on an update, and took `https://stripe.com` on a create of an account with no recipient configuration (probes `isolated/url_*`)."
 )
 
@@ -281,7 +282,10 @@ var Resources = []Resource{
 		"PostSubscriptionItemsItem discounts.coupon":     leftCouponBesideHeld,
 	}, AcceptedOnly: subscriptionItemKept(),
 		CreatePath: "/v1/subscription_items", UpdatePath: "/v1/subscription_items/{item}", Omit: []string{"discounts"}},
-	{Package: "subscription_schedule", AcceptedOnly: scheduleKept, CreatePath: "/v1/subscription_schedules", UpdatePath: "/v1/subscription_schedules/{schedule}", Omit: []string{"from_subscription", "pause_schedules"}},
+	{Package: "subscription_schedule", LeftToStripe: map[string]string{
+		"PostSubscriptionSchedulesSchedule phases.items.price isolated/phases_empty":              leftStartedLater,
+		"PostSubscriptionSchedulesSchedule phases.items.price isolated/phases_without_start_date": leftStartedLater,
+	}, AcceptedOnly: scheduleKept, CreatePath: "/v1/subscription_schedules", UpdatePath: "/v1/subscription_schedules/{schedule}", Omit: []string{"from_subscription", "pause_schedules"}},
 	// Wave 6. The setup intent leaves out what only confirming it uses, and its payment
 	// method options, until the gate exposes them. The customer payment method is an
 	// attachment, so the engine adds its `customer` as the parent and `customer_account` is
@@ -430,8 +434,8 @@ var Resources = []Resource{
 		ReadOnly: []string{"relationship.authorizer", "relationship.legal_guardian"}},
 	{Package: "apps_install", ReadPath: "/v1/apps/installs/{id}"},
 	// Wave 8 batch a. A billing alert is never updated: its status moves by action endpoints
-	// the declaration names. A tax ID takes only `self` and `customer` owners, which the suite
-	// proves; the other owners' arguments stay out of reach. The customer's balance
+	// the declaration names. A tax ID's `owner.account` and `owner.customer_account` were out of
+	// reach until the record verified them, and the gate exposes them. The customer's balance
 	// transactions are addressed under their customer, so the engine adds `customer` as the
 	// parent and the response's copy is left out. Cash balance transactions are read-only.
 	{Package: "billing_alert", CreatePath: "/v1/billing/alerts"},
@@ -459,15 +463,14 @@ var Resources = []Resource{
 	{Package: "credit_note_line", ListPath: "/v1/credit_notes/{credit_note}/lines"},
 	{Package: "quote_line_item", ListPath: "/v1/quotes/{quote}/line_items"},
 	{Package: "quote_computed_upfront_line_item", ListPath: "/v1/quotes/{quote}/computed_upfront_line_items"},
-	// Wave 7 batch b. Issuing and Treasury run on a connected account. The card is virtual: the
-	// Omit entries are the physical card's shipping, PIN, personalization design and second line.
-	// Stripe refuses a card without a cardholder (suite: "create errors"), although the spec
-	// leaves it optional.
+	// Wave 7 batch b. Issuing and Treasury run on a connected account. The card was virtual: the
+	// Omit entries are the physical card's shipping, PIN, personalization design and second line,
+	// of which the gate exposes what the record verifies, all but the PIN. Stripe refuses a card
+	// without a cardholder (suite: "create errors"), although the spec leaves it optional.
 	// A financial account's `features` is a hash of `requested` flags on the way in and of
-	// feature statuses, returned only when expanded, on the way out; the top-level
-	// `active_features`, `pending_features` and `restricted_features` read the statuses, so the
-	// attribute is request-only, as an account's `capabilities` is. `forwarding_settings` belongs
-	// to closing the account, which the suite does not prove. The Treasury flows and Financial
+	// feature statuses, returned only when expanded, on the way out, which the gate exposes as
+	// the record verifies it, and `forwarding_settings`, which Stripe takes only on a closed
+	// account, keeps out the bank account form the suite cannot reach. The Treasury flows and Financial
 	// Connections objects are read-only. A transaction's `entries` is returned only when
 	// expanded, which neither the suite nor the fake proves yet; the transaction entry data
 	// source reads them.
@@ -483,16 +486,16 @@ var Resources = []Resource{
 	{Package: "treasury_inbound_transfer", CreatePath: "/v1/treasury/inbound_transfers"},
 	{Package: "treasury_outbound_transfer", CreatePath: "/v1/treasury/outbound_transfers"},
 	{Package: "treasury_outbound_payment", CreatePath: "/v1/treasury/outbound_payments"},
-	// The rest of Issuing. A design's `transfer_lookup_key` is an instruction, not a field of the
-	// design, and nothing proves it; nothing proves setting a design's `preferences` either, so
-	// they are read-only. A dispute's `treasury` names the received debit Stripe disputes in
-	// place of a transaction, which nothing proves, and Stripe fills it in on a Treasury-backed
-	// card, so it is read-only too, and the dispute needs its `transaction`. Stripe refuses a
-	// dispute without `evidence` and evidence without its `reason` (suite: "Issuing disputes
-	// (first run)"), although the spec leaves both optional. Authorizations, transactions,
-	// physical bundles and tokens are read-only objects.
+	// The rest of Issuing. A design's `transfer_lookup_key` and `preferences`, and a dispute's
+	// `treasury`, were out of reach before the record verified them, and the gate exposes them as
+	// it exposes any leaf a table leaves out (E2). A dispute's `treasury` names the received debit
+	// Stripe disputes in place of a `transaction` (suite: TestIssuingDisputeAttributes, variant
+	// `received_debit`, which sends no `transaction`), so neither is required, and the declaration
+	// takes exactly one. Stripe refuses a dispute without `evidence` and evidence without its
+	// `reason` (suite: "Issuing disputes (first run)"), although the spec leaves both optional.
+	// Authorizations, transactions, physical bundles and tokens are read-only objects.
 	{Package: "issuing_personalization_design", CreatePath: "/v1/issuing/personalization_designs", UpdatePath: "/v1/issuing/personalization_designs/{personalization_design}", Omit: []string{"transfer_lookup_key"}, ReadOnly: []string{"preferences"}},
-	{Package: "issuing_dispute", CreatePath: "/v1/issuing/disputes", UpdatePath: "/v1/issuing/disputes/{dispute}", ReadOnly: []string{"treasury"}, Require: []string{"transaction", "evidence", "evidence.reason"}},
+	{Package: "issuing_dispute", CreatePath: "/v1/issuing/disputes", UpdatePath: "/v1/issuing/disputes/{dispute}", ReadOnly: []string{"treasury"}, Require: []string{"evidence", "evidence.reason"}},
 	{Package: "issuing_physical_bundle", ReadPath: "/v1/issuing/physical_bundles/{physical_bundle}"},
 	{Package: "issuing_authorization", ReadPath: "/v1/issuing/authorizations/{authorization}"},
 	{Package: "issuing_transaction", ReadPath: "/v1/issuing/transactions/{transaction}"},

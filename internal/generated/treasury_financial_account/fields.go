@@ -15,40 +15,95 @@ var Table = []fields.Field{
 	}},
 	{Name: "country", Shape: fields.String, Response: true, Description: "Two-letter country code ([ISO 3166-1 alpha-2](https://en.wikipedia.org/wiki/ISO_3166-1_alpha-2))."},
 	{Name: "created", Shape: fields.Int, Response: true, Description: "Time at which the object was created. Measured in seconds since the Unix epoch."},
-	{Name: "features", Shape: fields.Object, Create: true, Update: true, Description: "Encodes whether a FinancialAccount has access to a particular feature. Stripe or the platform can control features via the requested field.", Fields: []fields.Field{
-		{Name: "card_issuing", Shape: fields.Object, Create: true, Update: true, Description: "Toggle settings for enabling/disabling a feature", Fields: []fields.Field{
-			{Name: "requested", Shape: fields.Bool, Required: true, Create: true, Update: true, Description: "Whether the FinancialAccount should have the Feature."},
-		}},
-		{Name: "deposit_insurance", Shape: fields.Object, Create: true, Update: true, Description: "Toggle settings for enabling/disabling a feature", Fields: []fields.Field{
-			{Name: "requested", Shape: fields.Bool, Required: true, Create: true, Update: true, Description: "Whether the FinancialAccount should have the Feature."},
-		}},
-		{Name: "financial_addresses", Shape: fields.Object, Create: true, Update: true, Description: "Settings related to Financial Addresses features on a Financial Account", Fields: []fields.Field{
-			{Name: "aba", Shape: fields.Object, Create: true, Update: true, Description: "Toggle settings for enabling/disabling the ABA address feature", Fields: []fields.Field{
-				{Name: "requested", Shape: fields.Bool, Required: true, Create: true, Update: true, Description: "Whether the FinancialAccount should have the Feature."},
+	{Name: "features", Shape: fields.Object, Create: true, Update: true, Response: true, Description: "Encodes whether a FinancialAccount has access to a particular feature. Stripe or the platform can control features via the requested field.", Fields: []fields.Field{
+		{Name: "card_issuing", Shape: fields.Object, Create: true, Update: true, Response: true, Description: "Toggle settings for enabling/disabling a feature", Fields: []fields.Field{
+			{Name: "requested", Shape: fields.Bool, Required: true, Create: true, Update: true, Response: true, Description: "Whether the FinancialAccount should have the Feature."},
+			{Name: "status", Shape: fields.String, Response: true, Enum: []string{"active", "pending", "restricted"}, Description: "Whether the Feature is operational."},
+			{Name: "status_details", Shape: fields.ObjectList, Response: true, Description: "Additional details; includes at least one entry when the status is not `active`.", Fields: []fields.Field{
+				{Name: "code", Shape: fields.String, Response: true, Enum: []string{"activating", "capability_not_requested", "financial_account_closed", "rejected_other", "rejected_unsupported_business", "requirements_past_due", "requirements_pending_verification", "restricted_by_platform", "restricted_other"}, Description: "Represents the reason why the status is `pending` or `restricted`."},
+				{Name: "resolution", Shape: fields.String, Response: true, Enum: []string{"contact_stripe", "provide_information", "remove_restriction"}, Description: "Represents what the user should do, if anything, to activate the Feature."},
+				{Name: "restriction", Shape: fields.String, Response: true, Enum: []string{"inbound_flows", "outbound_flows"}, Description: "The `platform_restrictions` that are restricting this Feature."},
 			}},
 		}},
-		{Name: "inbound_transfers", Shape: fields.Object, Create: true, Update: true, Description: "InboundTransfers contains inbound transfers features for a FinancialAccount.", Fields: []fields.Field{
-			{Name: "ach", Shape: fields.Object, Create: true, Update: true, Description: "Toggle settings for enabling/disabling an inbound ACH specific feature", Fields: []fields.Field{
-				{Name: "requested", Shape: fields.Bool, Required: true, Create: true, Update: true, Description: "Whether the FinancialAccount should have the Feature."},
+		{Name: "deposit_insurance", Shape: fields.Object, Create: true, Update: true, Response: true, Description: "Toggle settings for enabling/disabling a feature", Fields: []fields.Field{
+			{Name: "requested", Shape: fields.Bool, Required: true, Create: true, Update: true, Response: true, Description: "Whether the FinancialAccount should have the Feature."},
+			{Name: "status", Shape: fields.String, Response: true, Enum: []string{"active", "pending", "restricted"}, Description: "Whether the Feature is operational."},
+			{Name: "status_details", Shape: fields.ObjectList, Response: true, Description: "Additional details; includes at least one entry when the status is not `active`.", Fields: []fields.Field{
+				{Name: "code", Shape: fields.String, Response: true, Enum: []string{"activating", "capability_not_requested", "financial_account_closed", "rejected_other", "rejected_unsupported_business", "requirements_past_due", "requirements_pending_verification", "restricted_by_platform", "restricted_other"}, Description: "Represents the reason why the status is `pending` or `restricted`."},
+				{Name: "resolution", Shape: fields.String, Response: true, Enum: []string{"contact_stripe", "provide_information", "remove_restriction"}, Description: "Represents what the user should do, if anything, to activate the Feature."},
+				{Name: "restriction", Shape: fields.String, Response: true, Enum: []string{"inbound_flows", "outbound_flows"}, Description: "The `platform_restrictions` that are restricting this Feature."},
 			}},
 		}},
-		{Name: "intra_stripe_flows", Shape: fields.Object, Create: true, Update: true, Description: "Toggle settings for enabling/disabling a feature", Fields: []fields.Field{
-			{Name: "requested", Shape: fields.Bool, Required: true, Create: true, Update: true, Description: "Whether the FinancialAccount should have the Feature."},
+		{Name: "financial_addresses", Shape: fields.Object, Create: true, Update: true, Response: true, Description: "Settings related to Financial Addresses features on a Financial Account", Fields: []fields.Field{
+			{Name: "aba", Shape: fields.Object, Create: true, Update: true, Response: true, Description: "Toggle settings for enabling/disabling the ABA address feature", Fields: []fields.Field{
+				{Name: "requested", Shape: fields.Bool, Required: true, Create: true, Update: true, Response: true, Description: "Whether the FinancialAccount should have the Feature."},
+				{Name: "status", Shape: fields.String, Response: true, Enum: []string{"active", "pending", "restricted"}, Description: "Whether the Feature is operational."},
+				{Name: "status_details", Shape: fields.ObjectList, Response: true, Description: "Additional details; includes at least one entry when the status is not `active`.", Fields: []fields.Field{
+					{Name: "code", Shape: fields.String, Response: true, Enum: []string{"activating", "capability_not_requested", "financial_account_closed", "rejected_other", "rejected_unsupported_business", "requirements_past_due", "requirements_pending_verification", "restricted_by_platform", "restricted_other"}, Description: "Represents the reason why the status is `pending` or `restricted`."},
+					{Name: "resolution", Shape: fields.String, Response: true, Enum: []string{"contact_stripe", "provide_information", "remove_restriction"}, Description: "Represents what the user should do, if anything, to activate the Feature."},
+					{Name: "restriction", Shape: fields.String, Response: true, Enum: []string{"inbound_flows", "outbound_flows"}, Description: "The `platform_restrictions` that are restricting this Feature."},
+				}},
+			}},
 		}},
-		{Name: "outbound_payments", Shape: fields.Object, Create: true, Update: true, Description: "Settings related to Outbound Payments features on a Financial Account", Fields: []fields.Field{
-			{Name: "ach", Shape: fields.Object, Create: true, Update: true, Description: "Toggle settings for enabling/disabling an outbound ACH specific feature", Fields: []fields.Field{
-				{Name: "requested", Shape: fields.Bool, Required: true, Create: true, Update: true, Description: "Whether the FinancialAccount should have the Feature."},
-			}},
-			{Name: "us_domestic_wire", Shape: fields.Object, Create: true, Update: true, Description: "Toggle settings for enabling/disabling a feature", Fields: []fields.Field{
-				{Name: "requested", Shape: fields.Bool, Required: true, Create: true, Update: true, Description: "Whether the FinancialAccount should have the Feature."},
+		{Name: "inbound_transfers", Shape: fields.Object, Create: true, Update: true, Response: true, Description: "InboundTransfers contains inbound transfers features for a FinancialAccount.", Fields: []fields.Field{
+			{Name: "ach", Shape: fields.Object, Create: true, Update: true, Response: true, Description: "Toggle settings for enabling/disabling an inbound ACH specific feature", Fields: []fields.Field{
+				{Name: "requested", Shape: fields.Bool, Required: true, Create: true, Update: true, Response: true, Description: "Whether the FinancialAccount should have the Feature."},
+				{Name: "status", Shape: fields.String, Response: true, Enum: []string{"active", "pending", "restricted"}, Description: "Whether the Feature is operational."},
+				{Name: "status_details", Shape: fields.ObjectList, Response: true, Description: "Additional details; includes at least one entry when the status is not `active`.", Fields: []fields.Field{
+					{Name: "code", Shape: fields.String, Response: true, Enum: []string{"activating", "capability_not_requested", "financial_account_closed", "rejected_other", "rejected_unsupported_business", "requirements_past_due", "requirements_pending_verification", "restricted_by_platform", "restricted_other"}, Description: "Represents the reason why the status is `pending` or `restricted`."},
+					{Name: "resolution", Shape: fields.String, Response: true, Enum: []string{"contact_stripe", "provide_information", "remove_restriction"}, Description: "Represents what the user should do, if anything, to activate the Feature."},
+					{Name: "restriction", Shape: fields.String, Response: true, Enum: []string{"inbound_flows", "outbound_flows"}, Description: "The `platform_restrictions` that are restricting this Feature."},
+				}},
 			}},
 		}},
-		{Name: "outbound_transfers", Shape: fields.Object, Create: true, Update: true, Description: "OutboundTransfers contains outbound transfers features for a FinancialAccount.", Fields: []fields.Field{
-			{Name: "ach", Shape: fields.Object, Create: true, Update: true, Description: "Toggle settings for enabling/disabling an outbound ACH specific feature", Fields: []fields.Field{
-				{Name: "requested", Shape: fields.Bool, Required: true, Create: true, Update: true, Description: "Whether the FinancialAccount should have the Feature."},
+		{Name: "intra_stripe_flows", Shape: fields.Object, Create: true, Update: true, Response: true, Description: "Toggle settings for enabling/disabling a feature", Fields: []fields.Field{
+			{Name: "requested", Shape: fields.Bool, Required: true, Create: true, Update: true, Response: true, Description: "Whether the FinancialAccount should have the Feature."},
+			{Name: "status", Shape: fields.String, Response: true, Enum: []string{"active", "pending", "restricted"}, Description: "Whether the Feature is operational."},
+			{Name: "status_details", Shape: fields.ObjectList, Response: true, Description: "Additional details; includes at least one entry when the status is not `active`.", Fields: []fields.Field{
+				{Name: "code", Shape: fields.String, Response: true, Enum: []string{"activating", "capability_not_requested", "financial_account_closed", "rejected_other", "rejected_unsupported_business", "requirements_past_due", "requirements_pending_verification", "restricted_by_platform", "restricted_other"}, Description: "Represents the reason why the status is `pending` or `restricted`."},
+				{Name: "resolution", Shape: fields.String, Response: true, Enum: []string{"contact_stripe", "provide_information", "remove_restriction"}, Description: "Represents what the user should do, if anything, to activate the Feature."},
+				{Name: "restriction", Shape: fields.String, Response: true, Enum: []string{"inbound_flows", "outbound_flows"}, Description: "The `platform_restrictions` that are restricting this Feature."},
 			}},
-			{Name: "us_domestic_wire", Shape: fields.Object, Create: true, Update: true, Description: "Toggle settings for enabling/disabling a feature", Fields: []fields.Field{
-				{Name: "requested", Shape: fields.Bool, Required: true, Create: true, Update: true, Description: "Whether the FinancialAccount should have the Feature."},
+		}},
+		{Name: "object", Shape: fields.String, Response: true, Enum: []string{"treasury.financial_account_features"}, Description: "String representing the object's type. Objects of the same type share the same value."},
+		{Name: "outbound_payments", Shape: fields.Object, Create: true, Update: true, Response: true, Description: "Settings related to Outbound Payments features on a Financial Account", Fields: []fields.Field{
+			{Name: "ach", Shape: fields.Object, Create: true, Update: true, Response: true, Description: "Toggle settings for enabling/disabling an outbound ACH specific feature", Fields: []fields.Field{
+				{Name: "requested", Shape: fields.Bool, Required: true, Create: true, Update: true, Response: true, Description: "Whether the FinancialAccount should have the Feature."},
+				{Name: "status", Shape: fields.String, Response: true, Enum: []string{"active", "pending", "restricted"}, Description: "Whether the Feature is operational."},
+				{Name: "status_details", Shape: fields.ObjectList, Response: true, Description: "Additional details; includes at least one entry when the status is not `active`.", Fields: []fields.Field{
+					{Name: "code", Shape: fields.String, Response: true, Enum: []string{"activating", "capability_not_requested", "financial_account_closed", "rejected_other", "rejected_unsupported_business", "requirements_past_due", "requirements_pending_verification", "restricted_by_platform", "restricted_other"}, Description: "Represents the reason why the status is `pending` or `restricted`."},
+					{Name: "resolution", Shape: fields.String, Response: true, Enum: []string{"contact_stripe", "provide_information", "remove_restriction"}, Description: "Represents what the user should do, if anything, to activate the Feature."},
+					{Name: "restriction", Shape: fields.String, Response: true, Enum: []string{"inbound_flows", "outbound_flows"}, Description: "The `platform_restrictions` that are restricting this Feature."},
+				}},
+			}},
+			{Name: "us_domestic_wire", Shape: fields.Object, Create: true, Update: true, Response: true, Description: "Toggle settings for enabling/disabling a feature", Fields: []fields.Field{
+				{Name: "requested", Shape: fields.Bool, Required: true, Create: true, Update: true, Response: true, Description: "Whether the FinancialAccount should have the Feature."},
+				{Name: "status", Shape: fields.String, Response: true, Enum: []string{"active", "pending", "restricted"}, Description: "Whether the Feature is operational."},
+				{Name: "status_details", Shape: fields.ObjectList, Response: true, Description: "Additional details; includes at least one entry when the status is not `active`.", Fields: []fields.Field{
+					{Name: "code", Shape: fields.String, Response: true, Enum: []string{"activating", "capability_not_requested", "financial_account_closed", "rejected_other", "rejected_unsupported_business", "requirements_past_due", "requirements_pending_verification", "restricted_by_platform", "restricted_other"}, Description: "Represents the reason why the status is `pending` or `restricted`."},
+					{Name: "resolution", Shape: fields.String, Response: true, Enum: []string{"contact_stripe", "provide_information", "remove_restriction"}, Description: "Represents what the user should do, if anything, to activate the Feature."},
+					{Name: "restriction", Shape: fields.String, Response: true, Enum: []string{"inbound_flows", "outbound_flows"}, Description: "The `platform_restrictions` that are restricting this Feature."},
+				}},
+			}},
+		}},
+		{Name: "outbound_transfers", Shape: fields.Object, Create: true, Update: true, Response: true, Description: "OutboundTransfers contains outbound transfers features for a FinancialAccount.", Fields: []fields.Field{
+			{Name: "ach", Shape: fields.Object, Create: true, Update: true, Response: true, Description: "Toggle settings for enabling/disabling an outbound ACH specific feature", Fields: []fields.Field{
+				{Name: "requested", Shape: fields.Bool, Required: true, Create: true, Update: true, Response: true, Description: "Whether the FinancialAccount should have the Feature."},
+				{Name: "status", Shape: fields.String, Response: true, Enum: []string{"active", "pending", "restricted"}, Description: "Whether the Feature is operational."},
+				{Name: "status_details", Shape: fields.ObjectList, Response: true, Description: "Additional details; includes at least one entry when the status is not `active`.", Fields: []fields.Field{
+					{Name: "code", Shape: fields.String, Response: true, Enum: []string{"activating", "capability_not_requested", "financial_account_closed", "rejected_other", "rejected_unsupported_business", "requirements_past_due", "requirements_pending_verification", "restricted_by_platform", "restricted_other"}, Description: "Represents the reason why the status is `pending` or `restricted`."},
+					{Name: "resolution", Shape: fields.String, Response: true, Enum: []string{"contact_stripe", "provide_information", "remove_restriction"}, Description: "Represents what the user should do, if anything, to activate the Feature."},
+					{Name: "restriction", Shape: fields.String, Response: true, Enum: []string{"inbound_flows", "outbound_flows"}, Description: "The `platform_restrictions` that are restricting this Feature."},
+				}},
+			}},
+			{Name: "us_domestic_wire", Shape: fields.Object, Create: true, Update: true, Response: true, Description: "Toggle settings for enabling/disabling a feature", Fields: []fields.Field{
+				{Name: "requested", Shape: fields.Bool, Required: true, Create: true, Update: true, Response: true, Description: "Whether the FinancialAccount should have the Feature."},
+				{Name: "status", Shape: fields.String, Response: true, Enum: []string{"active", "pending", "restricted"}, Description: "Whether the Feature is operational."},
+				{Name: "status_details", Shape: fields.ObjectList, Response: true, Description: "Additional details; includes at least one entry when the status is not `active`.", Fields: []fields.Field{
+					{Name: "code", Shape: fields.String, Response: true, Enum: []string{"activating", "capability_not_requested", "financial_account_closed", "rejected_other", "rejected_unsupported_business", "requirements_past_due", "requirements_pending_verification", "restricted_by_platform", "restricted_other"}, Description: "Represents the reason why the status is `pending` or `restricted`."},
+					{Name: "resolution", Shape: fields.String, Response: true, Enum: []string{"contact_stripe", "provide_information", "remove_restriction"}, Description: "Represents what the user should do, if anything, to activate the Feature."},
+					{Name: "restriction", Shape: fields.String, Response: true, Enum: []string{"inbound_flows", "outbound_flows"}, Description: "The `platform_restrictions` that are restricting this Feature."},
+				}},
 			}},
 		}},
 	}},
@@ -63,15 +118,19 @@ var Table = []fields.Field{
 		{Name: "supported_networks", Shape: fields.ScalarList, Elem: fields.String, Response: true, Description: "The list of networks that the address supports"},
 		{Name: "type", Shape: fields.String, Response: true, Enum: []string{"aba"}, Description: "The type of financial address"},
 	}},
+	{Name: "forwarding_settings", Shape: fields.Object, Update: true, ServerDefaulted: true, NotReturned: true, Description: "A different bank account where funds can be deposited/debited in order to get the closing FA's balance to $0", Fields: []fields.Field{
+		{Name: "financial_account", Shape: fields.String, Update: true, NotReturned: true, Default: &fields.Default{Kind: fields.DefaultNotSent}},
+		{Name: "type", Shape: fields.String, Update: true, NotReturned: true, Enum: []string{"financial_account", "payment_method"}, Default: &fields.Default{Kind: fields.DefaultNotSent}, Unreachable: "Stripe fails `payment_method` on every attempt, so the conformance suite never sends it: \"Stripe answers 500 api_error 'An unknown error occurred' to every attempt (dev, 2026-10-31 and 2026-11-04)\"."},
+	}},
 	{Name: "id", Shape: fields.String, Response: true, Description: "Unique identifier for the object."},
 	{Name: "is_default", Shape: fields.Bool, Response: true},
 	{Name: "livemode", Shape: fields.Bool, Response: true, Description: "If the object exists in live mode, the value is `true`. If the object exists in test mode, the value is `false`."},
-	{Name: "metadata", Shape: fields.StringMap, Create: true, Update: true, Response: true, Description: "Set of [key-value pairs](https://docs.stripe.com/api/metadata) that you can attach to an object. This can be useful for storing additional information about the object in a structured format. Individual keys can be unset by posting an empty value to them. All keys can be unset by posting an empty value to `metadata`.", MapUpdate: &fields.MapUpdate{Replaced: false, EmptyKept: false}},
-	{Name: "nickname", Shape: fields.String, Create: true, Update: true, Response: true, Description: "The nickname for the FinancialAccount."},
+	{Name: "metadata", Shape: fields.StringMap, Create: true, Update: true, Response: true, Stable: true, Description: "Set of [key-value pairs](https://docs.stripe.com/api/metadata) that you can attach to an object. This can be useful for storing additional information about the object in a structured format. Individual keys can be unset by posting an empty value to them. All keys can be unset by posting an empty value to `metadata`.", Default: &fields.Default{Kind: fields.DefaultValue, Value: "{}"}, MapUpdate: &fields.MapUpdate{Replaced: false, EmptyKept: false}},
+	{Name: "nickname", Shape: fields.String, Create: true, Update: true, Response: true, Stable: true, Description: "The nickname for the FinancialAccount.", Default: &fields.Default{Kind: fields.DefaultNone}},
 	{Name: "pending_features", Shape: fields.ScalarList, Elem: fields.String, Response: true, Description: "The array of paths to pending Features in the Features hash."},
 	{Name: "platform_restrictions", Shape: fields.Object, Create: true, Update: true, Response: true, Description: "The set of functionalities that the platform can restrict on the FinancialAccount.", Fields: []fields.Field{
-		{Name: "inbound_flows", Shape: fields.String, Create: true, Update: true, Response: true, Enum: []string{"restricted", "unrestricted"}, Description: "Restricts all inbound money movement."},
-		{Name: "outbound_flows", Shape: fields.String, Create: true, Update: true, Response: true, Enum: []string{"restricted", "unrestricted"}, Description: "Restricts all outbound money movement."},
+		{Name: "inbound_flows", Shape: fields.String, Create: true, Update: true, Response: true, Stable: true, Enum: []string{"restricted", "unrestricted"}, Description: "Restricts all inbound money movement.", Default: &fields.Default{Kind: fields.DefaultValue, Value: "unrestricted"}},
+		{Name: "outbound_flows", Shape: fields.String, Create: true, Update: true, Response: true, Stable: true, Enum: []string{"restricted", "unrestricted"}, Description: "Restricts all outbound money movement.", Default: &fields.Default{Kind: fields.DefaultValue, Value: "unrestricted"}},
 	}},
 	{Name: "restricted_features", Shape: fields.ScalarList, Elem: fields.String, Response: true, Description: "The array of paths to restricted Features in the Features hash."},
 	{Name: "status", Shape: fields.String, Response: true, Enum: []string{"closed", "open"}, Description: "Status of this FinancialAccount."},

@@ -45,6 +45,10 @@ var Declaration = engine.Declaration{
 	// `related_customer` with a customer of the `related_customer_account` the create sends
 	// (suite: TestIdentityVerificationSessionAttributes, probe `every_field/2`).
 	ServerDefaulted: []string{"related_customer", "options", "options.document.allowed_types", "options.document.require_id_number", "options.document.require_live_capture", "options.document.require_matching_selfie"},
+	Defaults: map[string]string{
+		// suite: TestIdentityVerificationSessionAttributes, probe `every_field/2`
+		"related_customer": "none, or a customer of the `related_customer_account` the create sends",
+	},
 }
 
 // NewResource returns the resource constructor the provider registers.

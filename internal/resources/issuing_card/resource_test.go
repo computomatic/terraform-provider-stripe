@@ -1,6 +1,7 @@
 package issuing_card_test
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"regexp"
@@ -40,6 +41,11 @@ func issuing(t *testing.T) scope {
 // cardholders with the details Stripe needs (suite: "cardholderForm"). extra lands inside the
 // card.
 func cardConfig(s scope, holder, extra string) string {
+	return cardConfigOf(s, holder, "virtual", extra)
+}
+
+// cardConfigOf is cardConfig with the card's type.
+func cardConfigOf(s scope, holder, cardType, extra string) string {
 	cfg := s.acct.ProviderBlock() + s.conn.ConnectedProviderBlock()
 	for _, name := range []string{"first", "second"} {
 		cfg += fmt.Sprintf(`
@@ -72,10 +78,10 @@ resource "stripe_issuing_card" "test" {
   provider          = stripe.connected
   cardholder        = stripe_issuing_cardholder.%s.id
   currency          = "usd"
-  type              = "virtual"
+  type              = %q
   financial_account = %q
 %s}
-`, holder, s.financialAccount, extra)
+`, holder, cardType, s.financialAccount, extra)
 }
 
 func idOf(dst *string) resource.TestCheckFunc {
@@ -349,6 +355,195 @@ func TestAccIssuingCard_drift(t *testing.T) {
 					resource.TestCheckResourceAttr(address, "spending_controls.spending_limits.0.amount", "5000"),
 					resource.TestCheckResourceAttr(address, "spending_controls.spending_limits.0.interval", "daily"),
 				),
+			},
+		},
+	})
+}
+
+// design makes a personalization design on the scope's connected account, on a physical bundle
+// that takes a logo and carrier text, as the suite's designs are made, and has Stripe approve it
+// when active is set. A cleanup deactivates it where Stripe allows, since a design cannot be
+// deleted.
+func design(t *testing.T, s scope, active bool) string {
+	t.Helper()
+	resp, err := tfacc.Client(s.conn).Do(t.Context(), stripeapi.Request{Method: "POST", Path: "/v1/issuing/personalization_designs", Params: wire.Object{
+		{Name: "physical_bundle", Value: wire.String(tfacc.PhysicalBundle(t, s.conn))},
+		{Name: "card_logo", Value: wire.String(tfacc.CardLogo(t, s.conn))},
+		{Name: "carrier_text", Value: wire.Object{
+			{Name: "header_title", Value: wire.String("Welcome")},
+			{Name: "header_body", Value: wire.String("Your new card is enclosed.")},
+			{Name: "footer_title", Value: wire.String("Questions")},
+			{Name: "footer_body", Value: wire.String("Contact support.")},
+		}},
+	}})
+	if err != nil {
+		t.Fatalf("creating a personalization design: %v", err)
+	}
+	id, _ := resp.Body.(wire.Object).GetString("id")
+	if active {
+		designHelper(t, s, id, "activate", nil)
+	}
+	t.Cleanup(func() {
+		path := "/v1/test_helpers/issuing/personalization_designs/" + id + "/deactivate"
+		if _, err := tfacc.Client(s.conn).Do(context.Background(), stripeapi.Request{Method: "POST", Path: path}); err != nil {
+			t.Logf("design %s stays as it is: %v", id, err)
+		}
+	})
+	return id
+}
+
+// designHelper moves a design through Stripe's review with a test helper.
+func designHelper(t *testing.T, s scope, id, action string, params wire.Object) {
+	t.Helper()
+	tfacc.Post(t, s.conn, "/v1/test_helpers/issuing/personalization_designs/"+id+"/"+action, params)
+}
+
+// seattle is a physical card's shipping and second line as the suite's create sends them, on a
+// card of an active design (TestIssuingCardAttributes, probes `every_field/2` and `update/2`).
+const seattle = `  second_line = "ACME INC"
+  shipping = {
+    name = "Sam Doe"
+    address = {
+      line1       = "1 Pike Pl"
+      line2       = "Floor 3"
+      city        = "Seattle"
+      state       = "WA"
+      postal_code = "98101"
+      country     = "US"
+    }
+    business_name     = "Acme Inc"
+    customs           = { eori_number = "GB123456789000" }
+    phone_number      = "+18005550111"
+    require_signature = true
+    service           = "express"
+    type              = "individual"
+  }
+`
+
+// newYork is the shipping the suite's update sends whole (TestIssuingCardAttributes, probe
+// `update/2`, the record's `side_effects`).
+const newYork = `  second_line = "ACME INC"
+  shipping = {
+    name = "Sam Q Doe"
+    address = {
+      line1       = "1 Liberty St"
+      line2       = "Floor 4"
+      city        = "New York"
+      state       = "NY"
+      postal_code = "10005"
+      country     = "US"
+    }
+    address_validation = { mode = "disabled" }
+    business_name      = "Acme Corp"
+    customs            = { eori_number = "GB987654321000" }
+    phone_number       = "+18005550122"
+    require_signature  = false
+    service            = "priority"
+    type               = "bulk"
+  }
+`
+
+// A physical card of an active design takes its second line and shipping on create, and Stripe
+// answers with the address it normalised, its validation's result, a carrier for the service and
+// a pending shipment; an update sends the shipping whole, in place, and Stripe answers again: with
+// validation disabled there is no normalised address or result (suite: TestIssuingCardAttributes,
+// probe `update/2`). The second line is create-only.
+func TestAccIssuingCard_shipping(t *testing.T) {
+	s := issuing(t)
+	active := design(t, s, true)
+	withDesign := fmt.Sprintf("  personalization_design = %q\n", active)
+	var first string
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: tfacc.ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: cardConfigOf(s, "first", "physical", withDesign+seattle),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					idOf(&first),
+					resource.TestCheckResourceAttr(address, "type", "physical"),
+					resource.TestCheckResourceAttr(address, "personalization_design", active),
+					resource.TestCheckResourceAttr(address, "second_line", "ACME INC"),
+					resource.TestCheckResourceAttr(address, "shipping.name", "Sam Doe"),
+					resource.TestCheckResourceAttr(address, "shipping.address.line2", "Floor 3"),
+					resource.TestCheckResourceAttr(address, "shipping.business_name", "Acme Inc"),
+					resource.TestCheckResourceAttr(address, "shipping.customs.eori_number", "GB123456789000"),
+					resource.TestCheckResourceAttr(address, "shipping.phone_number", "+18005550111"),
+					resource.TestCheckResourceAttr(address, "shipping.require_signature", "true"),
+					resource.TestCheckResourceAttr(address, "shipping.service", "express"),
+					resource.TestCheckResourceAttr(address, "shipping.type", "individual"),
+					resource.TestCheckResourceAttr(address, "shipping.address_validation.mode", "validation_and_normalization"),
+					resource.TestCheckResourceAttr(address, "shipping.address_validation.result", "likely_deliverable"),
+					resource.TestCheckResourceAttr(address, "shipping.address_validation.normalized_address.line1", "1 PIKE ST"),
+					resource.TestCheckResourceAttr(address, "shipping.address_validation.normalized_address.line2", "FL 3"),
+					resource.TestCheckResourceAttr(address, "shipping.address_validation.normalized_address.city", "SEATTLE"),
+					resource.TestCheckResourceAttr(address, "shipping.address_validation.normalized_address.postal_code", "98101"),
+					resource.TestCheckResourceAttr(address, "shipping.carrier", "fedex"),
+					resource.TestCheckResourceAttr(address, "shipping.status", "pending"),
+					resource.TestCheckResourceAttrSet(address, "shipping.eta"),
+					resource.TestCheckNoResourceAttr(address, "shipping.tracking_number"),
+				),
+			},
+			{
+				Config: cardConfigOf(s, "first", "physical", withDesign+newYork),
+				ConfigPlanChecks: resource.ConfigPlanChecks{PreApply: []plancheck.PlanCheck{
+					plancheck.ExpectResourceAction(address, plancheck.ResourceActionUpdate),
+				}},
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttrWith(address, "id", func(v string) error {
+						if v != first {
+							return fmt.Errorf("the update replaced the card %s with %s", first, v)
+						}
+						return nil
+					}),
+					resource.TestCheckResourceAttr(address, "shipping.name", "Sam Q Doe"),
+					resource.TestCheckResourceAttr(address, "shipping.address.city", "New York"),
+					resource.TestCheckResourceAttr(address, "shipping.business_name", "Acme Corp"),
+					resource.TestCheckResourceAttr(address, "shipping.service", "priority"),
+					resource.TestCheckResourceAttr(address, "shipping.type", "bulk"),
+					resource.TestCheckResourceAttr(address, "shipping.address_validation.mode", "disabled"),
+					resource.TestCheckNoResourceAttr(address, "shipping.address_validation.result"),
+					resource.TestCheckNoResourceAttr(address, "shipping.address_validation.normalized_address.line1"),
+					resource.TestCheckResourceAttr(address, "shipping.carrier", "fedex"),
+					resource.TestCheckResourceAttr(address, "shipping.status", "pending"),
+				),
+			},
+			{Config: cardConfigOf(s, "first", "physical", withDesign+newYork), PlanOnly: true},
+		},
+	})
+}
+
+// Stripe moves a card to another design only from a design it rejected, and only to an active
+// one: the suite creates the card on a design in review, rejects that design and moves the card
+// to an active design (TestIssuingCardAttributes, variant `in_review`, whose update the recipe
+// readies with `rejectCardDesign`). A move from a design in force is a state the record does not
+// prove, so the test does not make one.
+func TestAccIssuingCard_personalizationDesign(t *testing.T) {
+	s := issuing(t)
+	inReview, other := design(t, s, false), design(t, s, true)
+	shipping := `  shipping = {
+    name    = "Sam Doe"
+    address = { line1 = "1 Pike Pl", city = "Seattle", state = "WA", postal_code = "98101", country = "US" }
+  }
+`
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: tfacc.ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: cardConfigOf(s, "first", "physical", fmt.Sprintf("  personalization_design = %q\n", inReview)+shipping),
+				Check:  resource.TestCheckResourceAttr(address, "personalization_design", inReview),
+			},
+			{
+				PreConfig: func() {
+					designHelper(t, s, inReview, "reject", wire.Object{{Name: "rejection_reasons", Value: wire.Object{
+						{Name: "card_logo", Value: wire.Array{wire.String("other")}},
+						{Name: "carrier_text", Value: wire.Array{wire.String("other")}},
+					}}})
+				},
+				Config: cardConfigOf(s, "first", "physical", fmt.Sprintf("  personalization_design = %q\n", other)+shipping),
+				ConfigPlanChecks: resource.ConfigPlanChecks{PreApply: []plancheck.PlanCheck{
+					plancheck.ExpectResourceAction(address, plancheck.ResourceActionUpdate),
+				}},
+				Check: resource.TestCheckResourceAttr(address, "personalization_design", other),
 			},
 		},
 	})

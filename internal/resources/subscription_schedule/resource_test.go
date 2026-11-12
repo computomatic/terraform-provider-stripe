@@ -186,6 +186,27 @@ func TestAccSubscriptionSchedule_updatePhases(t *testing.T) {
 
 // `customer` is create-only, so changing it would replace the schedule, which Stripe cannot
 // delete: the plan fails, and so does a taint, at apply.
+// Stripe refuses an update that sends `phases` empty, which `phases = []` sends, to a schedule
+// created to start `now` with one monthly phase (the record's rule on `phases.items.price`, probe
+// `isolated/phases_empty_started`), so the plan refuses it, with Stripe's message, and nothing
+// reaches Stripe. The record's other refusal of it, `isolated/phases_empty`, is of a schedule
+// created to start a day later, a time relative to the probe that a plan cannot state, so the
+// provider leaves that one to Stripe.
+func TestAccSubscriptionSchedule_phasesEmpty(t *testing.T) {
+	acct := acctest.NewAccount(t)
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: tfacc.ProviderFactories,
+		Steps: acctest.Forget(t, []resource.TestStep{
+			{Config: scheduleConfig(acct, "a", onePhase, "")},
+			{
+				Config:      scheduleConfig(acct, "a", "[]", ""),
+				PlanOnly:    true,
+				ExpectError: regexp.MustCompile(`(?s)Stripe refuses this update.*phases.*Stripe\s+account\s+in\s+US.*cannot\s+be\s+unset.*isolated/phases_empty_started`),
+			},
+		}, nil, "stripe_subscription_schedule"),
+	})
+}
+
 func TestAccSubscriptionSchedule_replace(t *testing.T) {
 	acct := acctest.NewAccount(t)
 	cfg := scheduleConfig(acct, "a", onePhase, "")

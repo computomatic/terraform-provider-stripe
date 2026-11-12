@@ -11,14 +11,16 @@ import (
 
 // Declaration is what the spec cannot say about a tax ID. Stripe serves one object through
 // `/v1/tax_ids` and `/v1/customers/{customer}/tax_ids`; the suite proves `owner[type]` of
-// `self` and `customer` on the first (suite: "create for a customer owner") and that a
-// customer-owned ID retrieves there, so one resource covers both. Stripe never updates a tax
+// `self`, `customer` and `account` on the first (suite: "create for a customer owner",
+// TestTaxIDAttributes, variant `account`) and that a customer-owned ID retrieves there, so one
+// resource covers both. Stripe refuses a connected account as `owner.customer_account`, which
+// takes a v2 account with a customer configuration (variant `customer_account`). Stripe never updates a tax
 // ID (suite: "update is not served"), so every argument forces replacement. Destroy deletes.
 var Declaration = engine.Declaration{
 	TypeName:              "stripe_tax_id",
 	IDPrefix:              "txi_",
-	Description:           "A tax ID of your own account or of a customer, set by `owner`. Stripe does not update tax IDs, so every argument forces replacement. `terraform destroy` deletes the tax ID.",
-	DataSourceDescription: "A tax ID of your own account or of a customer.",
+	Description:           "A tax ID of your own account, of a connected account or of a customer, set by `owner`. Stripe does not update tax IDs, so every argument forces replacement. `terraform destroy` deletes the tax ID.",
+	DataSourceDescription: "A tax ID of your own account, of a connected account or of a customer.",
 	Paths: engine.Paths{
 		Create:   "/v1/tax_ids",
 		Retrieve: "/v1/tax_ids/{id}",

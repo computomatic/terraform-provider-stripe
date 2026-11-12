@@ -191,7 +191,10 @@ func TestAccIssuingDispute_otherReason(t *testing.T) {
 }
 
 // A change of reason in place leaves the evidence hashes to Stripe's answer: the old reason's
-// explanation is not planned from the state, and the new reason's hash is read back.
+// hash is not planned from the state, and the new reason's hash is read back. The dispute starts
+// with its reason alone, as the suite's update probes change the reason of evidence that holds
+// no values (TestIssuingDisputeAttributes, `update/1`); the fake refuses, as unproven, a change of
+// reason with evidence values held.
 func TestAccIssuingDispute_changeReason(t *testing.T) {
 	s := issuing(t)
 	skipOtherReasons(t, s)
@@ -200,7 +203,7 @@ func TestAccIssuingDispute_changeReason(t *testing.T) {
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: tfacc.ProviderFactories,
 		Steps: acctest.Forget(t, []resource.TestStep{
-			{Config: disputeConfig(s, txn, "Not made by the cardholder.", ""), Check: idOf(&first)},
+			{Config: disputeConfig(s, txn, "", ""), Check: idOf(&first)},
 			{
 				Config: reasonConfig(s, txn, "other"),
 				ConfigPlanChecks: resource.ConfigPlanChecks{PreApply: []plancheck.PlanCheck{
@@ -218,6 +221,53 @@ func TestAccIssuingDispute_changeReason(t *testing.T) {
 					resource.TestCheckNoResourceAttr(address, "evidence.fraudulent.explanation"),
 				),
 			},
+		}, nil, "stripe_issuing_dispute"),
+	})
+}
+
+// A dispute of a Treasury received debit names the debit in `treasury` and no `transaction`,
+// which Stripe fills in with the Issuing transaction of the debit (suite:
+// TestIssuingDisputeAttributes, variant `received_debit`, whose debit is the one Stripe names on
+// a captured transaction of the Treasury-backed card). A configuration names exactly one of the
+// two, which the plan checks before Stripe is called.
+func TestAccIssuingDispute_receivedDebit(t *testing.T) {
+	s := issuing(t)
+	txn := s.transaction(t)
+	resp, err := tfacc.Client(s.conn).Do(t.Context(), stripeapi.Request{Method: "GET", Path: "/v1/issuing/transactions/" + txn})
+	if err != nil {
+		t.Fatal(err)
+	}
+	treasury, _ := resp.Body.(wire.Object).GetObject("treasury")
+	debit, _ := treasury.GetString("received_debit")
+	if debit == "" {
+		t.Fatalf("transaction %s names no received debit", txn)
+	}
+	config := func(fields string) string {
+		return s.acct.ProviderBlock() + s.conn.ConnectedProviderBlock() + fmt.Sprintf(`
+resource "stripe_issuing_dispute" "test" {
+  provider = stripe.connected
+  evidence = { reason = "fraudulent" }
+%s}
+`, fields)
+	}
+	byDebit := config(fmt.Sprintf("  treasury = { received_debit = %q }\n", debit))
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: tfacc.ProviderFactories,
+		Steps: acctest.Forget(t, []resource.TestStep{
+			{Config: config(""), PlanOnly: true, ExpectError: regexp.MustCompile(`exactly one of .transaction., .treasury. must be set, got 0`)},
+			{Config: config(fmt.Sprintf("  transaction = %q\n  treasury    = { received_debit = %q }\n", txn, debit)), PlanOnly: true, ExpectError: regexp.MustCompile(`exactly one of .transaction., .treasury. must be set, got 2`)},
+			{
+				Config: byDebit,
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestMatchResourceAttr(address, "id", regexp.MustCompile(`^idp_`)),
+					resource.TestCheckResourceAttr(address, "treasury.received_debit", debit),
+					resource.TestCheckNoResourceAttr(address, "treasury.debit_reversal"),
+					resource.TestMatchResourceAttr(address, "transaction", regexp.MustCompile(`^ipi_`)),
+					resource.TestCheckResourceAttr(address, "status", "unsubmitted"),
+					resource.TestCheckResourceAttr(address, "amount", fmt.Sprint(captured)),
+				),
+			},
+			{Config: byDebit, PlanOnly: true},
 		}, nil, "stripe_issuing_dispute"),
 	})
 }

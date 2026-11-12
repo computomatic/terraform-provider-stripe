@@ -16,30 +16,34 @@ import (
 // `card_issuing` feature requested, which is active within a second, and reads it back `open`
 // ("Issuing cards on a connected account need a Treasury financial account",
 // "TestTreasuryFinancialAccount"). `features` is a hash of `requested` flags that Stripe answers
-// with feature statuses, and only when expanded, so it is request-only, as an account's
-// `capabilities` is, and the statuses are read from `active_features`, `pending_features` and
-// `restricted_features`. Nothing proves that an update requests or drops a feature, so a change
-// to `features` is refused. Stripe has a close endpoint, but nothing proves closing, and Stripe
-// cannot delete a financial account, so destroy is refused. The suite reads `supported_currencies` as a set of currencies.
-// Stripe fills in `platform_restrictions`, unrestricted, when the request leaves it out
+// with each requested feature's status, and only when expanded (TestTreasuryFinancialAccountAttributes),
+// so the engine expands it on every request. Stripe takes an update of `features` and ignores it
+// (the record's update leaves are `accepted_ignored`), so a change to `features` is refused.
+// Stripe takes `forwarding_settings` only on a closed account, and refuses it on an open one
+// (probe `isolated/forward_while_open`), and never returns it. Stripe has a close endpoint, but
+// the provider does not close an account, and Stripe cannot delete one, so destroy is refused.
+// The suite reads `supported_currencies` as a set of currencies. Stripe fills in
+// `platform_restrictions`, unrestricted, when the request leaves it out
 // ("TestTreasuryFinancialAccount", "list").
 var Declaration = engine.Declaration{
 	TypeName: "stripe_treasury_financial_account",
 	IDPrefix: "fa_",
 	Description: "A Treasury financial account that holds money on a connected account and that Issuing cards draw on. " +
 		"Treasury runs on a platform's connected accounts, so manage financial accounts through a provider configuration whose `stripe_account` is a connected account with the `treasury` capability active. " +
-		"`features` requests features when the account is created; `active_features`, `pending_features` and `restricted_features` say how Stripe answered. A plan that changes `features` afterwards fails.",
+		"`features` requests features when the account is created, and reads back each requested feature's `status`; `active_features`, `pending_features` and `restricted_features` list them too. A plan that changes `features` afterwards fails. " +
+		"Stripe takes `forwarding_settings`, where the money of a closed account goes, only once the account is closed, which the provider does not do: close it with Stripe's API or Dashboard first.",
 	DataSourceDescription: "A Treasury financial account that holds money on a connected account. Look one up by its `id`.",
-	ImportNote:            "Stripe does not return which features were requested, so an imported financial account has no `features` in state. Add `lifecycle { ignore_changes = [features] }` to a configuration that sets it, because a plan that changes `features` fails.",
-	ImportNoteLevel:       engine.NoteWarning,
 	Paths: engine.Paths{
 		Create:   "/v1/treasury/financial_accounts",
 		Retrieve: "/v1/treasury/financial_accounts/{id}",
 		Update:   "/v1/treasury/financial_accounts/{id}",
 		List:     "/v1/treasury/financial_accounts",
 	},
-	Delete:          engine.Refuse,
-	RefuseReason:    "Stripe cannot delete a financial account, and the provider does not close one.",
+	Delete:       engine.Refuse,
+	RefuseReason: "Stripe cannot delete a financial account, and the provider does not close one.",
+	// Stripe returns `features` only when asked to expand it (suite:
+	// TestTreasuryFinancialAccountAttributes, which expands it on every request).
+	Expand:          []string{"features"},
 	RefuseChange:    []string{"features"},
 	ServerDefaulted: []string{"platform_restrictions"},
 	Sets:            []string{"supported_currencies"},

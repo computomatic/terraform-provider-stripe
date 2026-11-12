@@ -3,12 +3,12 @@
 page_title: "stripe_issuing_card Resource - Stripe"
 subcategory: ""
 description: |-
-  A virtual card issued to a cardholder. Stripe issues cards only for a platform's connected accounts, so manage cards through a provider configuration whose stripe_account is a connected account with the card_issuing capability active, and set financial_account to a Treasury financial account of that account with its card_issuing feature active. A new card is inactive. Set status to active once the cardholder's review has finished, back to inactive to pause it, or to canceled to cancel it, which is final: a canceled card cannot be activated again. number and cvc hold the full card number and CVC, which Stripe returns on request for a virtual card; they are sensitive.
+  A virtual or physical card issued to a cardholder. Stripe issues cards only for a platform's connected accounts, so manage cards through a provider configuration whose stripe_account is a connected account with the card_issuing capability active, and set financial_account to a Treasury financial account of that account with its card_issuing feature active. A new card is inactive. Set status to active once the cardholder's review has finished, back to inactive to pause it, or to canceled to cancel it, which is final: a canceled card cannot be activated again. number and cvc hold the full card number and CVC, which Stripe returns on request for a virtual card; they are sensitive. A physical card takes a personalization_design, a second_line and its shipping, which Stripe answers with the address it normalised, the carrier and the shipment's status; shipping changes in place before the card ships, and Stripe moves a card to another active design only from a design it rejected.
 ---
 
 # Resource: stripe_issuing_card
 
-A virtual card issued to a cardholder. Stripe issues cards only for a platform's connected accounts, so manage cards through a provider configuration whose `stripe_account` is a connected account with the `card_issuing` capability active, and set `financial_account` to a Treasury financial account of that account with its `card_issuing` feature active. A new card is `inactive`. Set `status` to `active` once the cardholder's review has finished, back to `inactive` to pause it, or to `canceled` to cancel it, which is final: a canceled card cannot be activated again. `number` and `cvc` hold the full card number and CVC, which Stripe returns on request for a virtual card; they are sensitive.
+A virtual or physical card issued to a cardholder. Stripe issues cards only for a platform's connected accounts, so manage cards through a provider configuration whose `stripe_account` is a connected account with the `card_issuing` capability active, and set `financial_account` to a Treasury financial account of that account with its `card_issuing` feature active. A new card is `inactive`. Set `status` to `active` once the cardholder's review has finished, back to `inactive` to pause it, or to `canceled` to cancel it, which is final: a canceled card cannot be activated again. `number` and `cvc` hold the full card number and CVC, which Stripe returns on request for a virtual card; they are sensitive. A physical card takes a `personalization_design`, a `second_line` and its `shipping`, which Stripe answers with the address it normalised, the carrier and the shipment's `status`; `shipping` changes in place before the card ships, and Stripe moves a card to another active design only from a design it rejected.
 
 ~> Stripe cannot delete a card, so `terraform destroy` deactivates it (`status = inactive`), and the card stays on the connected account. Changing `cardholder`, `currency`, `type`, `financial_account` or any other field Stripe takes only on create replaces the card, which deactivates the old one and issues a new number.
 
@@ -67,16 +67,19 @@ The following arguments are required:
 
 The following arguments are optional:
 
-* `cancellation_reason` - (Optional) Reason why the `status` of this card is `canceled`. Possible values: `lost`, `stolen`. Default: not sent. Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
-* `exp_month` - (Optional) The desired expiration month (1-12) for this card if [specifying a custom expiration date](https://docs.stripe.com/issuing/cards/virtual/issue-cards?testing-method=with-code#exp-dates). Changing it replaces the resource. Removing it from the configuration leaves the current value.
-* `exp_year` - (Optional) The desired 4-digit expiration year for this card if [specifying a custom expiration date](https://docs.stripe.com/issuing/cards/virtual/issue-cards?testing-method=with-code#exp-dates). Changing it replaces the resource. Removing it from the configuration leaves the current value.
+* `cancellation_reason` - (Optional) Reason why the `status` of this card is `canceled`. Possible values: `lost`, `stolen`. Default: not sent. Removing it from the configuration leaves the current value.
+* `exp_month` - (Optional) The desired expiration month (1-12) for this card if [specifying a custom expiration date](https://docs.stripe.com/issuing/cards/virtual/issue-cards?testing-method=with-code#exp-dates). Changing it replaces the resource. Default (Stripe): a month Stripe picks for each card. Removing it from the configuration leaves the current value.
+* `exp_year` - (Optional) The desired 4-digit expiration year for this card if [specifying a custom expiration date](https://docs.stripe.com/issuing/cards/virtual/issue-cards?testing-method=with-code#exp-dates). Changing it replaces the resource. Default (Stripe): a year Stripe picks for each card. Removing it from the configuration leaves the current value.
 * `financial_account` - (Optional) The new financial account ID the card will be associated with. This field allows a card to be reassigned to a different financial account. Changing it replaces the resource.
 * `lifecycle_controls` - (Optional) Rules that control the lifecycle of this card, such as automatic cancellation. Refer to our [documentation](https://docs.stripe.com/issuing/controls/lifecycle-controls) for more details. Changing it replaces the resource. See [`lifecycle_controls`](#lifecycle_controls) below.
-* `metadata` - (Optional) Set of [key-value pairs](https://docs.stripe.com/api/metadata) that you can attach to an object. This can be useful for storing additional information about the object in a structured format. Individual keys can be unset by posting an empty value to them. All keys can be unset by posting an empty value to `metadata`.
-* `replacement_for` - (Optional) The card this is meant to be a replacement for (if any). Changing it replaces the resource.
-* `replacement_reason` - (Optional) If `replacement_for` is specified, this should indicate why that card is being replaced. Possible values: `damaged`, `expired`, `lost`, `stolen`. Changing it replaces the resource.
+* `metadata` - (Optional) Set of [key-value pairs](https://docs.stripe.com/api/metadata) that you can attach to an object. This can be useful for storing additional information about the object in a structured format. Individual keys can be unset by posting an empty value to them. All keys can be unset by posting an empty value to `metadata`. Default (Stripe): `{}`.
+* `personalization_design` - (Optional) The personalization design object belonging to this card. Default: none. Removing it from the configuration leaves the current value.
+* `replacement_for` - (Optional) The card this is meant to be a replacement for (if any). Changing it replaces the resource. Default: none.
+* `replacement_reason` - (Optional) If `replacement_for` is specified, this should indicate why that card is being replaced. Possible values: `damaged`, `expired`, `lost`, `stolen`. Changing it replaces the resource. Default: none.
+* `second_line` - (Optional) The second line to print on the card. Max length: 24 characters. Changing it replaces the resource. Default: none.
+* `shipping` - (Optional) The address where the card will be shipped. Removing it from the configuration leaves the current value. See [`shipping`](#shipping) below.
 * `spending_controls` - (Optional) Rules that control spending for this card. Refer to our [documentation](https://docs.stripe.com/issuing/controls/spending-controls) for more details. Removing it from the configuration leaves the current value. See [`spending_controls`](#spending_controls) below.
-* `status` - (Optional) Whether authorizations can be approved on this card. May be blocked from activating cards depending on past-due Cardholder requirements. Defaults to `inactive`. Possible values: `active`, `inactive`, `canceled`. Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
+* `status` - (Optional) Whether authorizations can be approved on this card. May be blocked from activating cards depending on past-due Cardholder requirements. Defaults to `inactive`. Possible values: `active`, `inactive`, `canceled`. Default (Stripe): `inactive`. Removing it from the configuration leaves the current value.
 
 <a id="lifecycle_controls"></a>
 ### `lifecycle_controls`
@@ -92,17 +95,77 @@ The `lifecycle_controls.cancel_after` attribute supports:
 
 * `payment_count` - (Required) The card is automatically cancelled when it makes this number of non-zero payment authorizations and transactions. The count includes penny authorizations, but doesn't include non-payment actions, such as authorization advice.
 
+<a id="shipping"></a>
+### `shipping`
+
+The `shipping` attribute supports:
+
+* `address` - (Required) See [`shipping.address`](#shipping.address) below.
+* `address_validation` - (Optional) Address validation details for the shipment. Removing it from the configuration leaves the current value. See [`shipping.address_validation`](#shipping.address_validation) below.
+* `business_name` - (Optional) The name of the business at the shipping address, used on the shipping label to ensure delivery when the card is shipped to a cardholder's workplace. Default: none. Removing it from the configuration leaves the current value.
+* `carrier` - (Read-Only) The delivery company that shipped a card. Possible values: `correos`, `dhl`, `fedex`, `royal_mail`, `usps`.
+* `customs` - (Optional) Additional information that may be required for clearing customs. Removing it from the configuration leaves the current value. See [`shipping.customs`](#shipping.customs) below.
+* `eta` - (Read-Only) A unix timestamp representing a best estimate of when the card will be delivered.
+* `name` - (Required) Recipient name.
+* `phone_number` - (Optional) The phone number of the receiver of the shipment. Our courier partners will use this number to contact you in the event of card delivery issues. For individual shipments to the EU/UK, if this field is empty, we will provide them with the phone number provided when the cardholder was initially created. Default: none. Removing it from the configuration leaves the current value.
+* `require_signature` - (Optional) Whether a signature is required for card delivery. This feature is only supported for US users. Standard shipping service does not support signature on delivery. The default value for standard shipping service is false and for express and priority services is true. Removing it from the configuration leaves the current value.
+* `service` - (Optional) Shipment service, such as `standard` or `express`. Possible values: `express`, `priority`, `standard`. Removing it from the configuration leaves the current value.
+* `status` - (Read-Only) The delivery status of the card. Possible values: `canceled`, `delivered`, `failure`, `pending`, `returned`, `shipped`, `submitted`.
+* `tracking_number` - (Read-Only) A tracking number for a card shipment.
+* `tracking_url` - (Read-Only) A link to the shipping carrier's site where you can view detailed information about a card shipment.
+* `type` - (Optional) Packaging options. Possible values: `bulk`, `individual`. Removing it from the configuration leaves the current value.
+
+<a id="shipping.address"></a>
+### `shipping.address`
+
+The `shipping.address` attribute supports:
+
+* `city` - (Required) City, district, suburb, town, or village.
+* `country` - (Required) Two-letter country code ([ISO 3166-1 alpha-2](https://en.wikipedia.org/wiki/ISO_3166-1_alpha-2)).
+* `line1` - (Required) Address line 1, such as the street, PO Box, or company name.
+* `line2` - (Optional) Address line 2, such as the apartment, suite, unit, or building. Default: none. Removing it from the configuration leaves the current value.
+* `postal_code` - (Required) ZIP or postal code.
+* `state` - (Optional) State, county, province, or region ([ISO 3166-2](https://en.wikipedia.org/wiki/ISO_3166-2)). Default: none. Removing it from the configuration leaves the current value.
+
+<a id="shipping.address_validation"></a>
+### `shipping.address_validation`
+
+The `shipping.address_validation` attribute supports:
+
+* `mode` - (Required) The address validation capabilities to use. Possible values: `disabled`, `normalization_only`, `validation_and_normalization`.
+* `normalized_address` - (Read-Only) The normalized shipping address. See [`shipping.address_validation.normalized_address`](#shipping.address_validation.normalized_address) below.
+* `result` - (Read-Only) The validation result for the shipping address. Possible values: `indeterminate`, `likely_deliverable`, `likely_undeliverable`.
+
+<a id="shipping.address_validation.normalized_address"></a>
+### `shipping.address_validation.normalized_address`
+
+The `shipping.address_validation.normalized_address` attribute supports:
+
+* `city` - City, district, suburb, town, or village.
+* `country` - Two-letter country code ([ISO 3166-1 alpha-2](https://en.wikipedia.org/wiki/ISO_3166-1_alpha-2)).
+* `line1` - Address line 1, such as the street, PO Box, or company name.
+* `line2` - Address line 2, such as the apartment, suite, unit, or building.
+* `postal_code` - ZIP or postal code.
+* `state` - State, county, province, or region ([ISO 3166-2](https://en.wikipedia.org/wiki/ISO_3166-2)).
+
+<a id="shipping.customs"></a>
+### `shipping.customs`
+
+The `shipping.customs` attribute supports:
+
+* `eori_number` - (Optional) A registration number used for customs in Europe. See [https://www.gov.uk/eori](https://www.gov.uk/eori) for the UK and [https://ec.europa.eu/taxation_customs/business/customs-procedures-import-and-export/customs-procedures/economic-operators-registration-and-identification-number-eori_en](https://ec.europa.eu/taxation_customs/business/customs-procedures-import-and-export/customs-procedures/economic-operators-registration-and-identification-number-eori_en) for the EU. Default: none. Removing it from the configuration leaves the current value.
+
 <a id="spending_controls"></a>
 ### `spending_controls`
 
 The `spending_controls` attribute supports:
 
-* `allowed_card_presences` - (Optional) Array of card presence statuses from which authorizations will be allowed. Possible options are `present`, `not_present`. All other statuses will be blocked. Cannot be set with `blocked_card_presences`. Provide an empty value to unset this control.
-* `allowed_categories` - (Optional) Array of strings containing [categories](https://docs.stripe.com/api#issuing_authorization_object-merchant_data-category) of authorizations to allow. All other categories will be blocked. Cannot be set with `blocked_categories`.
-* `allowed_merchant_countries` - (Optional) Array of strings containing representing countries from which authorizations will be allowed. Authorizations from merchants in all other countries will be declined. Country codes should be ISO 3166 alpha-2 country codes (e.g. `US`). Cannot be set with `blocked_merchant_countries`. Provide an empty value to unset this control.
-* `blocked_card_presences` - (Optional) Array of card presence statuses from which authorizations will be declined. Possible options are `present`, `not_present`. Cannot be set with `allowed_card_presences`. Provide an empty value to unset this control.
-* `blocked_categories` - (Optional) Array of strings containing [categories](https://docs.stripe.com/api#issuing_authorization_object-merchant_data-category) of authorizations to decline. All other categories will be allowed. Cannot be set with `allowed_categories`.
-* `blocked_merchant_countries` - (Optional) Array of strings containing representing countries from which authorizations will be declined. Country codes should be ISO 3166 alpha-2 country codes (e.g. `US`). Cannot be set with `allowed_merchant_countries`. Provide an empty value to unset this control.
+* `allowed_card_presences` - (Optional) Array of card presence statuses from which authorizations will be allowed. Possible options are `present`, `not_present`. All other statuses will be blocked. Cannot be set with `blocked_card_presences`. Provide an empty value to unset this control. Default: none.
+* `allowed_categories` - (Optional) Array of strings containing [categories](https://docs.stripe.com/api#issuing_authorization_object-merchant_data-category) of authorizations to allow. All other categories will be blocked. Cannot be set with `blocked_categories`. Default: none.
+* `allowed_merchant_countries` - (Optional) Array of strings containing representing countries from which authorizations will be allowed. Authorizations from merchants in all other countries will be declined. Country codes should be ISO 3166 alpha-2 country codes (e.g. `US`). Cannot be set with `blocked_merchant_countries`. Provide an empty value to unset this control. Default: none.
+* `blocked_card_presences` - (Optional) Array of card presence statuses from which authorizations will be declined. Possible options are `present`, `not_present`. Cannot be set with `allowed_card_presences`. Provide an empty value to unset this control. Default: none.
+* `blocked_categories` - (Optional) Array of strings containing [categories](https://docs.stripe.com/api#issuing_authorization_object-merchant_data-category) of authorizations to decline. All other categories will be allowed. Cannot be set with `allowed_categories`. Default: none.
+* `blocked_merchant_countries` - (Optional) Array of strings containing representing countries from which authorizations will be declined. Country codes should be ISO 3166 alpha-2 country codes (e.g. `US`). Cannot be set with `allowed_merchant_countries`. Provide an empty value to unset this control. Default: none.
 * `spending_limits` - (Optional) Limit spending with amount-based rules that apply across any cards this card replaced (i.e., its `replacement_for` card and _that_ card's `replacement_for` card, up the chain). See [`spending_controls.spending_limits`](#spending_controls.spending_limits) below.
 * `spending_limits_currency` - (Read-Only) Currency of the amounts within `spending_limits`. Always the same as the currency of the card.
 
@@ -112,7 +175,7 @@ The `spending_controls` attribute supports:
 The `spending_controls.spending_limits` attribute is a list. Each element supports:
 
 * `amount` - (Required) Maximum amount allowed to spend per interval. This amount is in the card's currency and in the [smallest currency unit](https://docs.stripe.com/currencies#zero-decimal).
-* `categories` - (Optional) Array of strings containing [categories](https://docs.stripe.com/api#issuing_authorization_object-merchant_data-category) this limit applies to. Omitting this field will apply the limit to all categories.
+* `categories` - (Optional) Array of strings containing [categories](https://docs.stripe.com/api#issuing_authorization_object-merchant_data-category) this limit applies to. Omitting this field will apply the limit to all categories. Default (Stripe): `[]`.
 * `interval` - (Required) Interval (or event) to which the amount applies. Possible values: `all_time`, `daily`, `monthly`, `per_authorization`, `weekly`, `yearly`.
 
 ## Attribute Reference

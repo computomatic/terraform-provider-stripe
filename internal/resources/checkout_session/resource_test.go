@@ -641,6 +641,26 @@ func TestAccCheckoutSession_replace(t *testing.T) {
 	})
 }
 
+// Stripe refuses a create whose `name_collection` sends both names' `enabled` false (the record's
+// rule on `name_collection.individual.enabled`, probe `isolated/name_collection_both_off`, with
+// its values: a payment of one item of quantity 2), so the plan refuses it, with Stripe's message,
+// and nothing reaches Stripe. The price exists first, so that the plan knows the item.
+func TestAccCheckoutSession_nameCollectionBothOff(t *testing.T) {
+	acct := acctest.NewAccount(t)
+	cfg := sessionConfig(acct, "  name_collection = { business = { enabled = false }, individual = { enabled = false } }\n")
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: tfacc.ProviderFactories,
+		Steps: []resource.TestStep{
+			{Config: cfg[:strings.Index(cfg, `resource "stripe_checkout_session"`)]},
+			{
+				Config:      cfg,
+				PlanOnly:    true,
+				ExpectError: regexp.MustCompile(`(?s)Stripe refuses this create.*name_collection.*Stripe\s+account\s+in\s+US.*If\s+specifying\s+name_collection.*isolated/name_collection_both_off`),
+			},
+		},
+	})
+}
+
 func TestAccCheckoutSession_import(t *testing.T) {
 	acct := acctest.NewAccount(t)
 	cfg := sessionConfig(acct, "  client_reference_id = \"order-1\"\n  metadata = { team = \"a\" }\n")

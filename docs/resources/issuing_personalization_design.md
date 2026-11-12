@@ -3,12 +3,12 @@
 page_title: "stripe_issuing_personalization_design Resource - Stripe"
 subcategory: ""
 description: |-
-  The look of a physical Issuing card: its physical bundle, card logo and carrier letter. Stripe issues cards only for a platform's connected accounts, so manage designs through a provider configuration whose stripe_account is a connected account with the card_issuing capability active. card_logo is the ID of a file uploaded with the purpose issuing_logo, which a bundle whose features.card_logo is required needs; Terraform cannot upload files. A bundle whose features.carrier_text is required needs carrier_text. Stripe reviews a new design: status reads review until Stripe makes it active or rejected, with its reasons in rejection_reasons. A plan that changes physical_bundle, card_logo or carrier_text of an existing design fails.
+  The look of a physical Issuing card: its physical bundle, card logo and carrier letter. Stripe issues cards only for a platform's connected accounts, so manage designs through a provider configuration whose stripe_account is a connected account with the card_issuing capability active. card_logo is the ID of a file uploaded with the purpose issuing_logo, which a bundle whose features.card_logo is required needs; Terraform cannot upload files. A bundle whose features.carrier_text is required needs carrier_text. Stripe reviews a new design: status reads review until Stripe makes it active or rejected, with its reasons in rejection_reasons. preferences.is_default makes the design the one Stripe uses for a card that names none. A plan that changes physical_bundle, card_logo or carrier_text of an existing design fails.
 ---
 
 # Resource: stripe_issuing_personalization_design
 
-The look of a physical Issuing card: its physical bundle, card logo and carrier letter. Stripe issues cards only for a platform's connected accounts, so manage designs through a provider configuration whose `stripe_account` is a connected account with the `card_issuing` capability active. `card_logo` is the ID of a file uploaded with the purpose `issuing_logo`, which a bundle whose `features.card_logo` is `required` needs; Terraform cannot upload files. A bundle whose `features.carrier_text` is `required` needs `carrier_text`. Stripe reviews a new design: `status` reads `review` until Stripe makes it `active` or `rejected`, with its reasons in `rejection_reasons`. A plan that changes `physical_bundle`, `card_logo` or `carrier_text` of an existing design fails.
+The look of a physical Issuing card: its physical bundle, card logo and carrier letter. Stripe issues cards only for a platform's connected accounts, so manage designs through a provider configuration whose `stripe_account` is a connected account with the `card_issuing` capability active. `card_logo` is the ID of a file uploaded with the purpose `issuing_logo`, which a bundle whose `features.card_logo` is `required` needs; Terraform cannot upload files. A bundle whose `features.carrier_text` is `required` needs `carrier_text`. Stripe reviews a new design: `status` reads `review` until Stripe makes it `active` or `rejected`, with its reasons in `rejection_reasons`. `preferences.is_default` makes the design the one Stripe uses for a card that names none. A plan that changes `physical_bundle`, `card_logo` or `carrier_text` of an existing design fails.
 
 ~> Stripe cannot delete a personalization design, and only Stripe's review ends one; it keeps its `lookup_key`, so a new design needs another key. `terraform destroy`, and a change that would replace the issuing personalization design, fail at plan time. To stop managing an issuing personalization design, remove it from the state as [Removing from State](#removing-from-state) shows; it stays in the Stripe account.
 
@@ -62,9 +62,11 @@ The following arguments are optional:
 
 * `card_logo` - (Optional) The file for the card logo, for use with physical bundles that support card logos. Must have a `purpose` value of `issuing_logo`.
 * `carrier_text` - (Optional) Hash containing carrier text, for use with physical bundles that support carrier text. See [`carrier_text`](#carrier_text) below.
-* `lookup_key` - (Optional) A lookup key used to retrieve personalization designs dynamically from a static string. This may be up to 200 characters.
-* `metadata` - (Optional) Set of [key-value pairs](https://docs.stripe.com/api/metadata) that you can attach to an object. This can be useful for storing additional information about the object in a structured format. Individual keys can be unset by posting an empty value to them. All keys can be unset by posting an empty value to `metadata`.
-* `name` - (Optional) Friendly display name.
+* `lookup_key` - (Optional) A lookup key used to retrieve personalization designs dynamically from a static string. This may be up to 200 characters. Default: none.
+* `metadata` - (Optional) Set of [key-value pairs](https://docs.stripe.com/api/metadata) that you can attach to an object. This can be useful for storing additional information about the object in a structured format. Individual keys can be unset by posting an empty value to them. All keys can be unset by posting an empty value to `metadata`. Default (Stripe): `{}`.
+* `name` - (Optional) Friendly display name. Default: none.
+* `preferences` - (Optional) Information on whether this personalization design is used to create cards when one is not specified. Removing it from the configuration leaves the current value. See [`preferences`](#preferences) below.
+* `transfer_lookup_key` - (Optional) If set to true, will atomically remove the lookup key from the existing personalization design, and assign it to this personalization design. Stripe does not return this value; the provider keeps it from configuration. Removing it from the configuration leaves the current value.
 
 <a id="carrier_text"></a>
 ### `carrier_text`
@@ -76,6 +78,14 @@ The `carrier_text` attribute supports:
 * `header_body` - (Optional) The header body text of the carrier letter.
 * `header_title` - (Optional) The header title text of the carrier letter.
 
+<a id="preferences"></a>
+### `preferences`
+
+The `preferences` attribute supports:
+
+* `is_default` - (Required) Whether we use this personalization design to create cards when one isn't specified. A connected account uses the Connect platform's default design if no personalization design is set as the default design.
+* `is_platform_default` - (Read-Only) Whether this personalization design is used to create cards when one is not specified and a default for this connected account does not exist.
+
 ## Attribute Reference
 
 This resource exports the following attributes in addition to the arguments above:
@@ -83,17 +93,8 @@ This resource exports the following attributes in addition to the arguments abov
 * `id` - Unique identifier for the object.
 * `created` - Time at which the object was created. Measured in seconds since the Unix epoch.
 * `livemode` - If the object exists in live mode, the value is `true`. If the object exists in test mode, the value is `false`.
-* `preferences` - See [`preferences`](#preferences) below.
 * `rejection_reasons` - See [`rejection_reasons`](#rejection_reasons) below.
 * `status` - Whether this personalization design can be used to create cards. Possible values: `active`, `inactive`, `rejected`, `review`.
-
-<a id="preferences"></a>
-### `preferences`
-
-The `preferences` attribute supports:
-
-* `is_default` - Whether we use this personalization design to create cards when one isn't specified. A connected account uses the Connect platform's default design if no personalization design is set as the default design.
-* `is_platform_default` - Whether this personalization design is used to create cards when one is not specified and a default for this connected account does not exist.
 
 <a id="rejection_reasons"></a>
 ### `rejection_reasons`
@@ -168,3 +169,5 @@ Using `terraform import`, import an issuing personalization design using its ID.
 ```console
 % terraform import stripe_issuing_personalization_design.standard ipcd_1MvSieLkdIwHu7ixRtAhJoGu
 ```
+
+-> Stripe does not return `transfer_lookup_key`, so an imported issuing personalization design has it null: a configuration that sets it plans an update after the import.

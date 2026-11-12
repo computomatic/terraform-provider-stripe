@@ -3,12 +3,12 @@
 page_title: "stripe_issuing_card Data Source - Stripe"
 subcategory: ""
 description: |-
-  A virtual card issued to a cardholder, on a connected account. Look one up by its id. number and cvc hold the full card number and CVC, which are sensitive.
+  A virtual or physical card issued to a cardholder, on a connected account. Look one up by its id. number and cvc hold the full card number and CVC, which are sensitive.
 ---
 
 # Data Source: stripe_issuing_card
 
-A virtual card issued to a cardholder, on a connected account. Look one up by its `id`. `number` and `cvc` hold the full card number and CVC, which are sensitive.
+A virtual or physical card issued to a cardholder, on a connected account. Look one up by its `id`. `number` and `cvc` hold the full card number and CVC, which are sensitive.
 
 ## Example Usage
 
@@ -58,9 +58,12 @@ This data source exports the following attributes in addition to the arguments a
 * `livemode` - If the object exists in live mode, the value is `true`. If the object exists in test mode, the value is `false`.
 * `metadata` - Set of [key-value pairs](https://docs.stripe.com/api/metadata) that you can attach to an object. This can be useful for storing additional information about the object in a structured format. Individual keys can be unset by posting an empty value to them. All keys can be unset by posting an empty value to `metadata`.
 * `number` - (Sensitive) The full unredacted card number. For security reasons, this is only available for virtual cards, and will be omitted unless you explicitly request it with [the `expand` parameter](https://docs.stripe.com/api/expanding_objects). Additionally, it's only available via the ["Retrieve a card" endpoint](https://docs.stripe.com/api/issuing/cards/retrieve), not via "List all cards" or any other endpoint.
+* `personalization_design` - The personalization design object belonging to this card.
 * `replaced_by` - The latest card that replaces this card, if any.
 * `replacement_for` - The card this is meant to be a replacement for (if any).
 * `replacement_reason` - If `replacement_for` is specified, this should indicate why that card is being replaced. Possible values: `damaged`, `expired`, `lost`, `stolen`.
+* `second_line` - The second line to print on the card. Max length: 24 characters.
+* `shipping` - The address where the card will be shipped. See [`shipping`](#shipping) below.
 * `spending_controls` - Rules that control spending for this card. Refer to our [documentation](https://docs.stripe.com/issuing/controls/spending-controls) for more details. See [`spending_controls`](#spending_controls) below.
 * `status` - Whether authorizations can be approved on this card. May be blocked from activating cards depending on past-due Cardholder requirements. Defaults to `inactive`. Possible values: `active`, `inactive`, `canceled`.
 * `type` - The type of card to issue. Possible values are `physical` or `virtual`. Possible values: `physical`, `virtual`.
@@ -87,6 +90,66 @@ The `lifecycle_controls` attribute supports:
 The `lifecycle_controls.cancel_after` attribute supports:
 
 * `payment_count` - The card is automatically cancelled when it makes this number of non-zero payment authorizations and transactions. The count includes penny authorizations, but doesn't include non-payment actions, such as authorization advice.
+
+<a id="shipping"></a>
+### `shipping`
+
+The `shipping` attribute supports:
+
+* `address` - See [`shipping.address`](#shipping.address) below.
+* `address_validation` - Address validation details for the shipment. See [`shipping.address_validation`](#shipping.address_validation) below.
+* `business_name` - The name of the business at the shipping address, used on the shipping label to ensure delivery when the card is shipped to a cardholder's workplace.
+* `carrier` - The delivery company that shipped a card. Possible values: `correos`, `dhl`, `fedex`, `royal_mail`, `usps`.
+* `customs` - Additional information that may be required for clearing customs. See [`shipping.customs`](#shipping.customs) below.
+* `eta` - A unix timestamp representing a best estimate of when the card will be delivered.
+* `name` - Recipient name.
+* `phone_number` - The phone number of the receiver of the shipment. Our courier partners will use this number to contact you in the event of card delivery issues. For individual shipments to the EU/UK, if this field is empty, we will provide them with the phone number provided when the cardholder was initially created.
+* `require_signature` - Whether a signature is required for card delivery. This feature is only supported for US users. Standard shipping service does not support signature on delivery. The default value for standard shipping service is false and for express and priority services is true.
+* `service` - Shipment service, such as `standard` or `express`. Possible values: `express`, `priority`, `standard`.
+* `status` - The delivery status of the card. Possible values: `canceled`, `delivered`, `failure`, `pending`, `returned`, `shipped`, `submitted`.
+* `tracking_number` - A tracking number for a card shipment.
+* `tracking_url` - A link to the shipping carrier's site where you can view detailed information about a card shipment.
+* `type` - Packaging options. Possible values: `bulk`, `individual`.
+
+<a id="shipping.address"></a>
+### `shipping.address`
+
+The `shipping.address` attribute supports:
+
+* `city` - City, district, suburb, town, or village.
+* `country` - Two-letter country code ([ISO 3166-1 alpha-2](https://en.wikipedia.org/wiki/ISO_3166-1_alpha-2)).
+* `line1` - Address line 1, such as the street, PO Box, or company name.
+* `line2` - Address line 2, such as the apartment, suite, unit, or building.
+* `postal_code` - ZIP or postal code.
+* `state` - State, county, province, or region ([ISO 3166-2](https://en.wikipedia.org/wiki/ISO_3166-2)).
+
+<a id="shipping.address_validation"></a>
+### `shipping.address_validation`
+
+The `shipping.address_validation` attribute supports:
+
+* `mode` - The address validation capabilities to use. Possible values: `disabled`, `normalization_only`, `validation_and_normalization`.
+* `normalized_address` - The normalized shipping address. See [`shipping.address_validation.normalized_address`](#shipping.address_validation.normalized_address) below.
+* `result` - The validation result for the shipping address. Possible values: `indeterminate`, `likely_deliverable`, `likely_undeliverable`.
+
+<a id="shipping.address_validation.normalized_address"></a>
+### `shipping.address_validation.normalized_address`
+
+The `shipping.address_validation.normalized_address` attribute supports:
+
+* `city` - City, district, suburb, town, or village.
+* `country` - Two-letter country code ([ISO 3166-1 alpha-2](https://en.wikipedia.org/wiki/ISO_3166-1_alpha-2)).
+* `line1` - Address line 1, such as the street, PO Box, or company name.
+* `line2` - Address line 2, such as the apartment, suite, unit, or building.
+* `postal_code` - ZIP or postal code.
+* `state` - State, county, province, or region ([ISO 3166-2](https://en.wikipedia.org/wiki/ISO_3166-2)).
+
+<a id="shipping.customs"></a>
+### `shipping.customs`
+
+The `shipping.customs` attribute supports:
+
+* `eori_number` - A registration number used for customs in Europe. See [https://www.gov.uk/eori](https://www.gov.uk/eori) for the UK and [https://ec.europa.eu/taxation_customs/business/customs-procedures-import-and-export/customs-procedures/economic-operators-registration-and-identification-number-eori_en](https://ec.europa.eu/taxation_customs/business/customs-procedures-import-and-export/customs-procedures/economic-operators-registration-and-identification-number-eori_en) for the EU.
 
 <a id="spending_controls"></a>
 ### `spending_controls`

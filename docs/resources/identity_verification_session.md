@@ -46,13 +46,13 @@ The following arguments are required:
 
 The following arguments are optional:
 
-* `client_reference_id` - (Optional) A string to reference this user. This can be a customer ID, a session ID, or similar, and can be used to reconcile this verification with your internal systems. Changing it fails the plan, because this resource cannot be replaced.
-* `metadata` - (Optional) Set of [key-value pairs](https://docs.stripe.com/api/metadata) that you can attach to an object. This can be useful for storing additional information about the object in a structured format. Individual keys can be unset by posting an empty value to them. All keys can be unset by posting an empty value to `metadata`.
+* `client_reference_id` - (Optional) A string to reference this user. This can be a customer ID, a session ID, or similar, and can be used to reconcile this verification with your internal systems. Changing it fails the plan, because this resource cannot be replaced. Default: none.
+* `metadata` - (Optional) Set of [key-value pairs](https://docs.stripe.com/api/metadata) that you can attach to an object. This can be useful for storing additional information about the object in a structured format. Individual keys can be unset by posting an empty value to them. All keys can be unset by posting an empty value to `metadata`. Default (Stripe): `{}`.
 * `options` - (Optional) A set of options for the session’s verification checks. Changing it fails the plan, because this resource cannot be replaced. Removing it from the configuration leaves the current value. See [`options`](#options) below.
 * `provided_details` - (Optional) Details provided about the user being verified. These details might be shown to the user. Changing it fails the plan, because this resource cannot be replaced. See [`provided_details`](#provided_details) below.
-* `related_customer` - (Optional) Customer ID Changing it fails the plan, because this resource cannot be replaced. Removing it from the configuration leaves the current value.
-* `related_customer_account` - (Optional) The ID of the Account representing a customer. Changing it fails the plan, because this resource cannot be replaced.
-* `return_url` - (Optional) The URL that the user will be redirected to upon completing the verification flow. Changing it fails the plan, because this resource cannot be replaced.
+* `related_customer` - (Optional) Customer ID Changing it fails the plan, because this resource cannot be replaced. Default (Stripe): none, or a customer of the `related_customer_account` the create sends. Removing it from the configuration leaves the current value.
+* `related_customer_account` - (Optional) The ID of the Account representing a customer. Changing it fails the plan, because this resource cannot be replaced. Default: none.
+* `return_url` - (Optional) The URL that the user will be redirected to upon completing the verification flow. Changing it fails the plan, because this resource cannot be replaced. Stripe does not return this value; the provider keeps it from configuration.
 * `status` - (Optional) Status of this VerificationSession. [Learn more about the lifecycle of sessions](https://docs.stripe.com/identity/how-sessions-work). Possible values: `canceled`. Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
 
 <a id="options"></a>
@@ -70,10 +70,10 @@ The `options` attribute supports:
 
 The `options.document` attribute supports:
 
-* `allowed_types` - (Optional) Array of strings of allowed identity document types. If the provided identity document isn’t one of the allowed types, the verification check will fail with a document_type_not_allowed error code. Removing it from the configuration leaves the current value.
-* `require_id_number` - (Optional) Collect an ID number and perform an [ID number check](https://docs.stripe.com/identity/verification-checks?type=id-number) with the document’s extracted name and date of birth. Removing it from the configuration leaves the current value.
-* `require_live_capture` - (Optional) Disable image uploads, identity document images have to be captured using the device’s camera. Removing it from the configuration leaves the current value.
-* `require_matching_selfie` - (Optional) Capture a face image and perform a [selfie check](https://docs.stripe.com/identity/verification-checks?type=selfie) comparing a photo ID and a picture of your user’s face. [Learn more](https://docs.stripe.com/identity/selfie). Removing it from the configuration leaves the current value.
+* `allowed_types` - (Optional) Array of strings of allowed identity document types. If the provided identity document isn’t one of the allowed types, the verification check will fail with a document_type_not_allowed error code. Stripe refused it on a US account on update: "The `options[document]` field cannot be passed when not requesting the `document` verification.". Default: none. Removing it from the configuration leaves the current value.
+* `require_id_number` - (Optional) Collect an ID number and perform an [ID number check](https://docs.stripe.com/identity/verification-checks?type=id-number) with the document’s extracted name and date of birth. Stripe refused it on a US account on update: "The `options[document]` field cannot be passed when not requesting the `document` verification.". Default: none. Removing it from the configuration leaves the current value.
+* `require_live_capture` - (Optional) Disable image uploads, identity document images have to be captured using the device’s camera. Stripe refused it on a US account on update: "The `options[document]` field cannot be passed when not requesting the `document` verification.". Default: none. Removing it from the configuration leaves the current value.
+* `require_matching_selfie` - (Optional) Capture a face image and perform a [selfie check](https://docs.stripe.com/identity/verification-checks?type=selfie) comparing a photo ID and a picture of your user’s face. [Learn more](https://docs.stripe.com/identity/selfie). Stripe refused it on a US account on update: "The `options[document]` field cannot be passed when not requesting the `document` verification.". Default: none. Removing it from the configuration leaves the current value.
 
 <a id="options.email"></a>
 ### `options.email`
@@ -102,8 +102,8 @@ The `options.phone` attribute supports:
 
 The `provided_details` attribute supports:
 
-* `email` - (Optional) Email of user being verified
-* `phone` - (Optional) Phone number of user being verified
+* `email` - (Optional) Email of user being verified. Default (Stripe): the `related_customer`'s email, on a create that names one and sends none; absent otherwise.
+* `phone` - (Optional) Phone number of user being verified. Default: none.
 
 ## Attribute Reference
 
@@ -116,6 +116,7 @@ This resource exports the following attributes in addition to the arguments abov
 * `last_verification_report` - ID of the most recent VerificationReport. [Learn more about accessing detailed verification results.](https://docs.stripe.com/identity/verification-sessions#results)
 * `livemode` - If the object exists in live mode, the value is `true`. If the object exists in test mode, the value is `false`.
 * `redaction` - Redaction status of this VerificationSession. If the VerificationSession is not redacted, this field will be null. See [`redaction`](#redaction) below.
+* `related_person` - See [`related_person`](#related_person) below.
 * `url` - (Sensitive) The short-lived URL that you use to redirect a user to Stripe to submit their identity information. This URL expires after 48 hours and can only be used once. Don’t store it, log it, send it in emails or expose it to anyone other than the user. Refer to our docs on [verifying identity documents](https://docs.stripe.com/identity/verify-identity-documents?platform=web&type=redirect) to learn how to redirect users to Stripe.
 * `verified_outputs` - (Sensitive) The user’s verified data. See [`verified_outputs`](#verified_outputs) below.
 
@@ -133,6 +134,14 @@ The `last_error` attribute supports:
 The `redaction` attribute supports:
 
 * `status` - Indicates whether this object and its related objects have been redacted or not. Possible values: `processing`, `redacted`, `validated`.
+
+<a id="related_person"></a>
+### `related_person`
+
+The `related_person` attribute supports:
+
+* `account` - Token referencing the associated Account of the related Person resource.
+* `person` - Token referencing the related Person resource.
 
 <a id="verified_outputs"></a>
 ### `verified_outputs`

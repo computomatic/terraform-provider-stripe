@@ -101,6 +101,47 @@ func TestRecordedRefusalsFailThePlan(t *testing.T) {
 	}
 }
 
+// A recorded refusal of `""`, Stripe's unset on /v1, matches an update that sends the list empty
+// or removes it, as the form sends both as `""`: the plan of `items = []` over a widget that holds
+// items is refused, as a probe that sent `items=""` was. A recorded `[]` or `{}` is a key the
+// suite's form left out, which no removal matches, so neither refuses that plan.
+func TestRecordedRefusalsOfTheUnsetMatchAnEmptyList(t *testing.T) {
+	for sends, refuses := range map[string]bool{`{"items":""}`: true, `{"items":[]}`: false, `{"items":{}}`: false} {
+		table := fixtureTable()
+		for i := range table {
+			if table[i].Name == "items" {
+				table[i].Fields[0].PlanRefusals = []fields.PlanRefusal{{Update: true, Sends: sends, Holds: `{"items":[{"sku":{"$any":true}}]}`,
+					Probe: "isolated/items_empty", AccountCountry: "US", Message: "You passed an empty string for 'items'."}}
+			}
+		}
+		ctor, err := NewResource(fixtureDeclaration(), table)
+		if err != nil {
+			t.Fatal(err)
+		}
+		r := ctor().(*Resource)
+		client := &countryClient{t: t, country: "US"}
+		var cresp resource.ConfigureResponse
+		r.Configure(context.Background(), resource.ConfigureRequest{ProviderData: &ProviderData{Client: client, Country: NewAccountCountry(client)}}, &cresp)
+		noErrors(t, cresp.Diagnostics)
+		itemType := r.objType.AttrTypes["items"].(basetypes.ListType).ElemType.(basetypes.ObjectType)
+		held := types.ListValueMust(itemType, []attr.Value{types.ObjectValueMust(itemType.AttrTypes, map[string]attr.Value{"sku": sv("s"), "qty": types.Int64Null()})})
+		state := r.fill(map[string]attr.Value{"id": sv("wid_1"), "name": sv("w"), "items": held})
+		for name, tc := range map[string]struct {
+			items  attr.Value
+			refuse bool
+		}{
+			"the list emptied": {types.ListValueMust(itemType, nil), refuses},
+			"the list removed": {types.ListNull(itemType), refuses},
+			"the list kept":    {held, false},
+		} {
+			resp := r.modifyPlan(t, r.fill(map[string]attr.Value{"id": sv("wid_1"), "name": sv("w"), "items": tc.items}), state)
+			if resp.Diagnostics.HasError() != tc.refuse {
+				t.Errorf("%s, %s: refused %t, want %t: %v", sends, name, resp.Diagnostics.HasError(), tc.refuse, resp.Diagnostics)
+			}
+		}
+	}
+}
+
 // countryClient answers GET /v1/account with an account in country, or err, counts the reads,
 // and fails on any other request.
 type countryClient struct {

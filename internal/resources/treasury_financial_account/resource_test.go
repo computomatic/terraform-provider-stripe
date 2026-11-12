@@ -45,7 +45,8 @@ func treasury(t *testing.T) (acct, conn acctest.Config) {
 var leftovers sync.Once
 
 // closeLeftovers closes every open financial account of the connected account but the one
-// tfacc.IssuingFinancialAccount keeps, tagged `metadata[tfacc_role]=issuing`.
+// tfacc.IssuingFinancialAccount keeps, tagged `metadata[tfacc_role]=issuing`, to which a close
+// that Stripe refuses without forwarding sends the balance.
 func closeLeftovers(t *testing.T, conn acctest.Config) {
 	t.Helper()
 	resp, err := tfacc.Client(conn).Do(t.Context(), stripeapi.Request{Method: "GET", Path: "/v1/treasury/financial_accounts", Params: wire.Object{
@@ -57,33 +58,61 @@ func closeLeftovers(t *testing.T, conn acctest.Config) {
 	}
 	data, _ := resp.Body.(wire.Object).Get("data")
 	items, _ := data.(wire.Array)
+	var tagged string
+	var others []string
 	for _, item := range items {
 		account, _ := item.(wire.Object)
+		id, _ := account.GetString("id")
 		metadata, _ := account.GetObject("metadata")
-		role, _ := metadata.GetString("tfacc_role")
-		if role == "issuing" {
+		if role, _ := metadata.GetString("tfacc_role"); role == "issuing" {
+			tagged = id
 			continue
 		}
-		id, _ := account.GetString("id")
-		closeAccount(t, conn, id)
+		others = append(others, id)
+	}
+	for _, id := range others {
+		closeAccount(t, conn, tagged, id)
 	}
 }
 
 // closeAfter is a check that, in smoke mode, closes the test's financial account once the test
-// is over, so that it no longer counts toward Stripe's limit. A first step checks with it.
+// is over, so that it no longer counts toward Stripe's limit. A first step checks with it. It
+// finds the tagged account while the test's context still serves requests.
 func closeAfter(t *testing.T, conn acctest.Config) resource.TestCheckFunc {
 	return resource.TestCheckResourceAttrWith(address, "id", func(id string) error {
 		if conn.Smoke {
-			t.Cleanup(func() { closeAccount(t, conn, id) })
+			tagged := tfacc.IssuingFinancialAccount(t, conn)
+			t.Cleanup(func() { closeAccount(t, conn, tagged, id) })
 		}
 		return nil
 	})
 }
 
-func closeAccount(t *testing.T, conn acctest.Config, id string) {
+// closeAccount closes the financial account id, never the tagged one. The record proves a close
+// with nothing else sent, on an account with no activity (suite: TestTreasuryFinancialAccountAttributes,
+// state `closed`), so that is what it sends first. Stripe refuses it for an account with activity
+// in the past 75 days, as an earlier smoke run's may have, until the close names where the
+// balance goes; it then closes again forwarding to the tagged account, as the suite's own cleanup
+// (`closeFinancialAccount`) and its `forwarding_settings` updates do: `type` `financial_account`
+// and the Issuing scope's account.
+func closeAccount(t *testing.T, conn acctest.Config, tagged, id string) {
 	t.Helper()
+	if id == tagged {
+		return
+	}
 	// It runs in a cleanup too, after the test's own context is canceled.
-	if _, err := tfacc.Client(conn).Do(context.Background(), stripeapi.Request{Method: "POST", Path: "/v1/treasury/financial_accounts/" + id + "/close"}); err != nil {
+	client, path := tfacc.Client(conn), "/v1/treasury/financial_accounts/"+id+"/close"
+	_, err := client.Do(context.Background(), stripeapi.Request{Method: "POST", Path: path})
+	var apiErr *stripeapi.APIError
+	if errors.As(err, &apiErr) && strings.Contains(apiErr.Message, "without providing forwarding_settings") && tagged != "" {
+		_, err = client.Do(context.Background(), stripeapi.Request{Method: "POST", Path: path, Params: wire.Object{
+			{Name: "forwarding_settings", Value: wire.Object{
+				{Name: "type", Value: wire.String("financial_account")},
+				{Name: "financial_account", Value: wire.String(tagged)},
+			}},
+		}})
+	}
+	if err != nil {
 		t.Errorf("closing financial account %s: %v", id, err)
 	}
 }
@@ -127,6 +156,21 @@ func cardIssuingFeature(acct acctest.Config, addr string) resource.TestCheckFunc
 	}
 }
 
+// cardIssuingStatus checks the expanded `features.card_issuing`: active with no details, as the
+// fake makes it at once, or pending in smoke mode while Stripe activates it.
+func cardIssuingStatus(acct acctest.Config, addr string) resource.TestCheckFunc {
+	status := resource.TestCheckResourceAttrWith(addr, "features.card_issuing.status", func(v string) error {
+		if v == "active" || acct.Smoke && v == "pending" {
+			return nil
+		}
+		return fmt.Errorf("features.card_issuing.status is %q", v)
+	})
+	if acct.Smoke {
+		return status
+	}
+	return resource.ComposeAggregateTestCheckFunc(status, resource.TestCheckResourceAttr(addr, "features.card_issuing.status_details.#", "0"))
+}
+
 func idOf(dst *string) resource.TestCheckFunc {
 	return resource.TestCheckResourceAttrWith(address, "id", func(v string) error {
 		*dst = v
@@ -164,13 +208,19 @@ data "stripe_treasury_financial_account" "test" {
 				resource.TestCheckResourceAttr(address, "supported_currencies.#", "1"),
 				resource.TestCheckTypeSetElemAttr(address, "supported_currencies.*", "usd"),
 				resource.TestCheckResourceAttr(address, "features.card_issuing.requested", "true"),
+				resource.TestCheckResourceAttr(address, "features.object", "treasury.financial_account_features"),
 				cardIssuingFeature(acct, address),
+				cardIssuingStatus(acct, address),
+				resource.TestCheckNoResourceAttr(address, "features.deposit_insurance"),
+				resource.TestCheckNoResourceAttr(address, "forwarding_settings"),
 				resource.TestCheckResourceAttr(address, "balance.cash.usd", "0"),
 				resource.TestCheckResourceAttr(address, "metadata.run", acct.Name("create")),
 				resource.TestCheckResourceAttr(address, "livemode", "false"),
 				resource.TestCheckResourceAttrPair("data.stripe_treasury_financial_account.test", "id", address, "id"),
 				resource.TestCheckResourceAttr("data.stripe_treasury_financial_account.test", "status", "open"),
 				cardIssuingFeature(acct, "data.stripe_treasury_financial_account.test"),
+				cardIssuingStatus(acct, "data.stripe_treasury_financial_account.test"),
+				resource.TestCheckResourceAttr("data.stripe_treasury_financial_account.test", "features.card_issuing.requested", "true"),
 			),
 		}}, nil, "stripe_treasury_financial_account"),
 	})
@@ -232,6 +282,42 @@ func TestAccTreasuryFinancialAccount_update(t *testing.T) {
 	})
 }
 
+// Stripe takes `forwarding_settings` only once the account is closed, and refuses it before
+// (suite: TestTreasuryFinancialAccountAttributes, the update probes of `forwarding_settings` on an
+// account it closes first, and `isolated/forward_while_open`), and never returns it, so the state
+// keeps the configured value. The provider does not close an account, so the test closes it with
+// Stripe's API between the steps. It forwards to the Issuing financial account, as the suite
+// forwards to the scope's own.
+func TestAccTreasuryFinancialAccount_forwarding(t *testing.T) {
+	acct, conn := treasury(t)
+	destination := tfacc.IssuingFinancialAccount(t, conn)
+	var id string
+	forwarding := fmt.Sprintf("  forwarding_settings = {\n    type              = \"financial_account\"\n    financial_account = %q\n  }\n", destination)
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: tfacc.ProviderFactories,
+		Steps: acctest.Forget(t, []resource.TestStep{
+			{Config: accountConfig(acct, conn, `"usd"`, ""), Check: resource.ComposeTestCheckFunc(idOf(&id), closeAfter(t, conn))},
+			{
+				Config:      accountConfig(acct, conn, `"usd"`, forwarding),
+				ExpectError: regexp.MustCompile("You\\s+can\\s+update\\s+`forwarding_settings`\\s+only\\s+after\\s+the\\s+FinancialAccount\\s+is\\s+closed"),
+			},
+			{
+				PreConfig: func() { closeAccount(t, conn, destination, id) },
+				Config:    accountConfig(acct, conn, `"usd"`, forwarding),
+				ConfigPlanChecks: resource.ConfigPlanChecks{PreApply: []plancheck.PlanCheck{
+					plancheck.ExpectResourceAction(address, plancheck.ResourceActionUpdate),
+				}},
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr(address, "status", "closed"),
+					resource.TestCheckResourceAttr(address, "forwarding_settings.type", "financial_account"),
+					resource.TestCheckResourceAttr(address, "forwarding_settings.financial_account", destination),
+				),
+			},
+			{Config: accountConfig(acct, conn, `"usd"`, forwarding), PlanOnly: true},
+		}, nil, "stripe_treasury_financial_account"),
+	})
+}
+
 // `supported_currencies` is create-only, so changing it would replace the financial account,
 // which Stripe cannot delete: the plan fails, and so does a taint, at apply.
 func TestAccTreasuryFinancialAccount_replace(t *testing.T) {
@@ -247,29 +333,26 @@ func TestAccTreasuryFinancialAccount_replace(t *testing.T) {
 	})
 }
 
-// Stripe does not return the requested features, so an import has none, and a configuration
-// ignores changes to them (see the import note).
+// Stripe returns the requested features when asked to expand them, so an import reads them, and
+// the configuration that requested them plans no change.
 func TestAccTreasuryFinancialAccount_import(t *testing.T) {
 	acct, conn := treasury(t)
-	extra := fmt.Sprintf("  metadata = { run = %q }\n", acct.Name("import"))
-	cfg := accountConfig(acct, conn, `"usd"`, extra)
-	imported := accountConfig(acct, conn, `"usd"`, extra+"  lifecycle {\n    ignore_changes = [features]\n  }\n")
+	cfg := accountConfig(acct, conn, `"usd"`, fmt.Sprintf("  metadata = { run = %q }\n", acct.Name("import")))
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: tfacc.ProviderFactories,
 		Steps: acctest.Forget(t, []resource.TestStep{
 			{Config: cfg, Check: closeAfter(t, conn)},
 			{
-				Config:                  cfg,
-				ResourceName:            address,
-				ImportState:             true,
-				ImportStateVerify:       true,
-				ImportStateVerifyIgnore: []string{"features"},
+				Config:            cfg,
+				ResourceName:      address,
+				ImportState:       true,
+				ImportStateVerify: true,
 			},
 			{
 				ResourceName:    address,
 				ImportState:     true,
 				ImportStateKind: resource.ImportBlockWithID,
-				Config:          imported,
+				Config:          cfg,
 			},
 		}, nil, "stripe_treasury_financial_account"),
 	})
@@ -278,7 +361,7 @@ func TestAccTreasuryFinancialAccount_import(t *testing.T) {
 // The identity form needs Terraform or OpenTofu 1.12.0 or later.
 func TestAccTreasuryFinancialAccount_importIdentity(t *testing.T) {
 	acct, conn := treasury(t)
-	cfg := accountConfig(acct, conn, `"usd"`, "  lifecycle {\n    ignore_changes = [features]\n  }\n")
+	cfg := accountConfig(acct, conn, `"usd"`, "")
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: tfacc.ProviderFactories,
 		TerraformVersionChecks:   []tfversion.TerraformVersionCheck{tfversion.RequireAbove(version.Must(version.NewVersion("1.12.0")))},

@@ -3,12 +3,12 @@
 page_title: "stripe_issuing_dispute Resource - Stripe"
 subcategory: ""
 description: |-
-  A dispute of an Issuing transaction, with the evidence for it. Stripe issues cards only for a platform's connected accounts, so manage disputes through a provider configuration whose stripe_account is a connected account with the card_issuing capability active. A new dispute is unsubmitted, for the whole transaction unless amount says less, and amount, evidence and metadata change in place until it is submitted. Set status to submitted to submit it to the card network, on create or later. After that Stripe refuses a change to evidence or amount, and decides the dispute: status then keeps reading its outcome, won or lost, which satisfies a configured submitted, so the plan shows no change. A dispute that Stripe expires, such as one left unsubmitted too long, reads expired and cannot be submitted: a configuration that sets submitted then fails the plan, so remove status from it.
+  A dispute of an Issuing transaction, with the evidence for it. Stripe issues cards only for a platform's connected accounts, so manage disputes through a provider configuration whose stripe_account is a connected account with the card_issuing capability active. Name the disputed transaction, or the Treasury received debit in treasury.received_debit; Stripe fills in the other. A new dispute is unsubmitted, for the whole transaction unless amount says less, and amount, evidence and metadata change in place until it is submitted. Set status to submitted to submit it to the card network, on create or later. After that Stripe refuses a change to evidence or amount, and decides the dispute: status then keeps reading its outcome, won or lost, which satisfies a configured submitted, so the plan shows no change. A dispute that Stripe expires, such as one left unsubmitted too long, reads expired and cannot be submitted: a configuration that sets submitted then fails the plan, so remove status from it.
 ---
 
 # Resource: stripe_issuing_dispute
 
-A dispute of an Issuing transaction, with the evidence for it. Stripe issues cards only for a platform's connected accounts, so manage disputes through a provider configuration whose `stripe_account` is a connected account with the `card_issuing` capability active. A new dispute is `unsubmitted`, for the whole transaction unless `amount` says less, and `amount`, `evidence` and `metadata` change in place until it is submitted. Set `status` to `submitted` to submit it to the card network, on create or later. After that Stripe refuses a change to `evidence` or `amount`, and decides the dispute: `status` then keeps reading its outcome, `won` or `lost`, which satisfies a configured `submitted`, so the plan shows no change. A dispute that Stripe expires, such as one left unsubmitted too long, reads `expired` and cannot be submitted: a configuration that sets `submitted` then fails the plan, so remove `status` from it.
+A dispute of an Issuing transaction, with the evidence for it. Stripe issues cards only for a platform's connected accounts, so manage disputes through a provider configuration whose `stripe_account` is a connected account with the `card_issuing` capability active. Name the disputed `transaction`, or the Treasury received debit in `treasury.received_debit`; Stripe fills in the other. A new dispute is `unsubmitted`, for the whole transaction unless `amount` says less, and `amount`, `evidence` and `metadata` change in place until it is submitted. Set `status` to `submitted` to submit it to the card network, on create or later. After that Stripe refuses a change to `evidence` or `amount`, and decides the dispute: `status` then keeps reading its outcome, `won` or `lost`, which satisfies a configured `submitted`, so the plan shows no change. A dispute that Stripe expires, such as one left unsubmitted too long, reads `expired` and cannot be submitted: a configuration that sets `submitted` then fails the plan, so remove `status` from it.
 
 ~> Stripe cannot delete or withdraw a dispute. `terraform destroy`, and a change that would replace the issuing dispute, fail at plan time. To stop managing an issuing dispute, remove it from the state as [Removing from State](#removing-from-state) shows; it stays in the Stripe account.
 
@@ -52,13 +52,14 @@ resource "stripe_issuing_dispute" "unrecognised" {
 The following arguments are required:
 
 * `evidence` - (Required) Evidence provided for the dispute. See [`evidence`](#evidence) below.
-* `transaction` - (Required) The ID of the issuing transaction to create a dispute for. For transaction on Treasury FinancialAccounts, use `treasury.received_debit`. Changing it fails the plan, because this resource cannot be replaced.
 
 The following arguments are optional:
 
-* `amount` - (Optional) The dispute amount in the card's currency and in the [smallest currency unit](https://docs.stripe.com/currencies#zero-decimal). If not set, defaults to the full transaction amount. Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
-* `metadata` - (Optional) Set of [key-value pairs](https://docs.stripe.com/api/metadata) that you can attach to an object. This can be useful for storing additional information about the object in a structured format. Individual keys can be unset by posting an empty value to them. All keys can be unset by posting an empty value to `metadata`.
+* `amount` - (Optional) The dispute amount in the card's currency and in the [smallest currency unit](https://docs.stripe.com/currencies#zero-decimal). If not set, defaults to the full transaction amount. Default (Stripe): the whole of the disputed transaction, as a positive amount (`200` on a US account). Removing it from the configuration leaves the current value.
+* `metadata` - (Optional) Set of [key-value pairs](https://docs.stripe.com/api/metadata) that you can attach to an object. This can be useful for storing additional information about the object in a structured format. Individual keys can be unset by posting an empty value to them. All keys can be unset by posting an empty value to `metadata`. Default (Stripe): `{}`.
 * `status` - (Optional) Current status of the dispute. Possible values: `submitted`. Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
+* `transaction` - (Optional) The ID of the issuing transaction to create a dispute for. For transaction on Treasury FinancialAccounts, use `treasury.received_debit`. Changing it fails the plan, because this resource cannot be replaced. Removing it from the configuration leaves the current value.
+* `treasury` - (Optional) Params for disputes related to Treasury FinancialAccounts Changing it fails the plan, because this resource cannot be replaced. Removing it from the configuration leaves the current value. See [`treasury`](#treasury) below.
 
 <a id="evidence"></a>
 ### `evidence`
@@ -80,88 +81,96 @@ The `evidence` attribute supports:
 
 The `evidence.canceled` attribute supports:
 
-* `additional_documentation` - (Optional) (ID of a [file upload](https://stripe.com/docs/guides/file-upload)) Additional documentation supporting the dispute.
-* `canceled_at` - (Optional) Date when order was canceled.
-* `cancellation_policy_provided` - (Optional) Whether the cardholder was provided with a cancellation policy.
-* `cancellation_reason` - (Optional) Reason for canceling the order.
-* `expected_at` - (Optional) Date when the cardholder expected to receive the product.
-* `explanation` - (Optional) Explanation of why the cardholder is disputing this transaction.
-* `product_description` - (Optional) Description of the merchandise or service that was purchased.
-* `product_type` - (Optional) Whether the product was a merchandise or service. Possible values: `merchandise`, `service`.
-* `return_status` - (Optional) Result of cardholder's attempt to return the product. Possible values: `merchant_rejected`, `successful`.
-* `returned_at` - (Optional) Date when the product was returned or attempted to be returned.
+* `additional_documentation` - (Optional) (ID of a [file upload](https://stripe.com/docs/guides/file-upload)) Additional documentation supporting the dispute. Default: none.
+* `canceled_at` - (Optional) Date when order was canceled. Default: none.
+* `cancellation_policy_provided` - (Optional) Whether the cardholder was provided with a cancellation policy. Default: none.
+* `cancellation_reason` - (Optional) Reason for canceling the order. Default: none.
+* `expected_at` - (Optional) Date when the cardholder expected to receive the product. Default: none.
+* `explanation` - (Optional) Explanation of why the cardholder is disputing this transaction. Default: none.
+* `product_description` - (Optional) Description of the merchandise or service that was purchased. Default: none.
+* `product_type` - (Optional) Whether the product was a merchandise or service. Possible values: `merchandise`, `service`. Default: none.
+* `return_status` - (Optional) Result of cardholder's attempt to return the product. Possible values: `merchant_rejected`, `successful`. Default: none.
+* `returned_at` - (Optional) Date when the product was returned or attempted to be returned. Default: none.
 
 <a id="evidence.duplicate"></a>
 ### `evidence.duplicate`
 
 The `evidence.duplicate` attribute supports:
 
-* `additional_documentation` - (Optional) (ID of a [file upload](https://stripe.com/docs/guides/file-upload)) Additional documentation supporting the dispute.
-* `card_statement` - (Optional) (ID of a [file upload](https://stripe.com/docs/guides/file-upload)) Copy of the card statement showing that the product had already been paid for.
-* `cash_receipt` - (Optional) (ID of a [file upload](https://stripe.com/docs/guides/file-upload)) Copy of the receipt showing that the product had been paid for in cash.
-* `check_image` - (Optional) (ID of a [file upload](https://stripe.com/docs/guides/file-upload)) Image of the front and back of the check that was used to pay for the product.
-* `explanation` - (Optional) Explanation of why the cardholder is disputing this transaction.
-* `original_transaction` - (Optional) Transaction (e.g., ipi_...) that the disputed transaction is a duplicate of. Of the two or more transactions that are copies of each other, this is original undisputed one.
+* `additional_documentation` - (Optional) (ID of a [file upload](https://stripe.com/docs/guides/file-upload)) Additional documentation supporting the dispute. Default: none.
+* `card_statement` - (Optional) (ID of a [file upload](https://stripe.com/docs/guides/file-upload)) Copy of the card statement showing that the product had already been paid for. Default: none.
+* `cash_receipt` - (Optional) (ID of a [file upload](https://stripe.com/docs/guides/file-upload)) Copy of the receipt showing that the product had been paid for in cash. Default: none.
+* `check_image` - (Optional) (ID of a [file upload](https://stripe.com/docs/guides/file-upload)) Image of the front and back of the check that was used to pay for the product. Default: none.
+* `explanation` - (Optional) Explanation of why the cardholder is disputing this transaction. Default: none.
+* `original_transaction` - (Optional) Transaction (e.g., ipi_...) that the disputed transaction is a duplicate of. Of the two or more transactions that are copies of each other, this is original undisputed one. Default: none.
 
 <a id="evidence.fraudulent"></a>
 ### `evidence.fraudulent`
 
 The `evidence.fraudulent` attribute supports:
 
-* `additional_documentation` - (Optional) (ID of a [file upload](https://stripe.com/docs/guides/file-upload)) Additional documentation supporting the dispute.
-* `explanation` - (Optional) Explanation of why the cardholder is disputing this transaction.
+* `additional_documentation` - (Optional) (ID of a [file upload](https://stripe.com/docs/guides/file-upload)) Additional documentation supporting the dispute. Default: none.
+* `explanation` - (Optional) Explanation of why the cardholder is disputing this transaction. Default: none.
 
 <a id="evidence.merchandise_not_as_described"></a>
 ### `evidence.merchandise_not_as_described`
 
 The `evidence.merchandise_not_as_described` attribute supports:
 
-* `additional_documentation` - (Optional) (ID of a [file upload](https://stripe.com/docs/guides/file-upload)) Additional documentation supporting the dispute.
-* `explanation` - (Optional) Explanation of why the cardholder is disputing this transaction.
-* `received_at` - (Optional) Date when the product was received.
-* `return_description` - (Optional) Description of the cardholder's attempt to return the product.
-* `return_status` - (Optional) Result of cardholder's attempt to return the product. Possible values: `merchant_rejected`, `successful`.
-* `returned_at` - (Optional) Date when the product was returned or attempted to be returned.
+* `additional_documentation` - (Optional) (ID of a [file upload](https://stripe.com/docs/guides/file-upload)) Additional documentation supporting the dispute. Default: none.
+* `explanation` - (Optional) Explanation of why the cardholder is disputing this transaction. Default: none.
+* `received_at` - (Optional) Date when the product was received. Default: none.
+* `return_description` - (Optional) Description of the cardholder's attempt to return the product. Default: none.
+* `return_status` - (Optional) Result of cardholder's attempt to return the product. Possible values: `merchant_rejected`, `successful`. Default: none.
+* `returned_at` - (Optional) Date when the product was returned or attempted to be returned. Default: none.
 
 <a id="evidence.no_valid_authorization"></a>
 ### `evidence.no_valid_authorization`
 
 The `evidence.no_valid_authorization` attribute supports:
 
-* `additional_documentation` - (Optional) (ID of a [file upload](https://stripe.com/docs/guides/file-upload)) Additional documentation supporting the dispute.
-* `explanation` - (Optional) Explanation of why the cardholder is disputing this transaction.
+* `additional_documentation` - (Optional) (ID of a [file upload](https://stripe.com/docs/guides/file-upload)) Additional documentation supporting the dispute. Default: none.
+* `explanation` - (Optional) Explanation of why the cardholder is disputing this transaction. Default: none.
 
 <a id="evidence.not_received"></a>
 ### `evidence.not_received`
 
 The `evidence.not_received` attribute supports:
 
-* `additional_documentation` - (Optional) (ID of a [file upload](https://stripe.com/docs/guides/file-upload)) Additional documentation supporting the dispute.
-* `expected_at` - (Optional) Date when the cardholder expected to receive the product.
-* `explanation` - (Optional) Explanation of why the cardholder is disputing this transaction.
-* `product_description` - (Optional) Description of the merchandise or service that was purchased.
-* `product_type` - (Optional) Whether the product was a merchandise or service. Possible values: `merchandise`, `service`.
+* `additional_documentation` - (Optional) (ID of a [file upload](https://stripe.com/docs/guides/file-upload)) Additional documentation supporting the dispute. Default: none.
+* `expected_at` - (Optional) Date when the cardholder expected to receive the product. Default: none.
+* `explanation` - (Optional) Explanation of why the cardholder is disputing this transaction. Default: none.
+* `product_description` - (Optional) Description of the merchandise or service that was purchased. Default: none.
+* `product_type` - (Optional) Whether the product was a merchandise or service. Possible values: `merchandise`, `service`. Default: none.
 
 <a id="evidence.other"></a>
 ### `evidence.other`
 
 The `evidence.other` attribute supports:
 
-* `additional_documentation` - (Optional) (ID of a [file upload](https://stripe.com/docs/guides/file-upload)) Additional documentation supporting the dispute.
-* `explanation` - (Optional) Explanation of why the cardholder is disputing this transaction.
-* `product_description` - (Optional) Description of the merchandise or service that was purchased.
-* `product_type` - (Optional) Whether the product was a merchandise or service. Possible values: `merchandise`, `service`.
+* `additional_documentation` - (Optional) (ID of a [file upload](https://stripe.com/docs/guides/file-upload)) Additional documentation supporting the dispute. Default: none.
+* `explanation` - (Optional) Explanation of why the cardholder is disputing this transaction. Default: none.
+* `product_description` - (Optional) Description of the merchandise or service that was purchased. Default: none.
+* `product_type` - (Optional) Whether the product was a merchandise or service. Possible values: `merchandise`, `service`. Default: none.
 
 <a id="evidence.service_not_as_described"></a>
 ### `evidence.service_not_as_described`
 
 The `evidence.service_not_as_described` attribute supports:
 
-* `additional_documentation` - (Optional) (ID of a [file upload](https://stripe.com/docs/guides/file-upload)) Additional documentation supporting the dispute.
-* `canceled_at` - (Optional) Date when order was canceled.
-* `cancellation_reason` - (Optional) Reason for canceling the order.
-* `explanation` - (Optional) Explanation of why the cardholder is disputing this transaction.
-* `received_at` - (Optional) Date when the product was received.
+* `additional_documentation` - (Optional) (ID of a [file upload](https://stripe.com/docs/guides/file-upload)) Additional documentation supporting the dispute. Default: none.
+* `canceled_at` - (Optional) Date when order was canceled. Default: none.
+* `cancellation_reason` - (Optional) Reason for canceling the order. Default: none.
+* `explanation` - (Optional) Explanation of why the cardholder is disputing this transaction. Default: none.
+* `received_at` - (Optional) Date when the product was received. Default: none.
+
+<a id="treasury"></a>
+### `treasury`
+
+The `treasury` attribute supports:
+
+* `debit_reversal` - (Read-Only) The Treasury [DebitReversal](https://docs.stripe.com/api/treasury/debit_reversals) representing this Issuing dispute
+* `received_debit` - (Required) The Treasury [ReceivedDebit](https://docs.stripe.com/api/treasury/received_debits) that is being disputed.
 
 ## Attribute Reference
 
@@ -173,20 +182,11 @@ This resource exports the following attributes in addition to the arguments abov
 * `currency` - The currency the `transaction` was made in.
 * `livemode` - If the object exists in live mode, the value is `true`. If the object exists in test mode, the value is `false`.
 * `loss_reason` - The enum that describes the dispute loss outcome. If the dispute is not lost, this field will be absent. New enum values may be added in the future, so be sure to handle unknown values. Possible values: `cardholder_authentication_issuer_liability`, `eci5_token_transaction_with_tavv`, `excess_disputes_in_timeframe`, `has_not_met_the_minimum_dispute_amount_requirements`, `invalid_duplicate_dispute`, `invalid_incorrect_amount_dispute`, `invalid_no_authorization`, `invalid_use_of_disputes`, `merchandise_delivered_or_shipped`, `merchandise_or_service_as_described`, `not_cancelled`, `other`, `refund_issued`, `submitted_beyond_allowable_time_limit`, `transaction_3ds_required`, `transaction_approved_after_prior_fraud_dispute`, `transaction_authorized`, `transaction_electronically_read`, `transaction_qualifies_for_visa_easy_payment_service`, `transaction_unattended`.
-* `treasury` - [Treasury](https://docs.stripe.com/api/treasury) details related to this dispute if it was created on a [FinancialAccount](https://docs.stripe.com/api/treasury/financial_accounts) See [`treasury`](#treasury) below.
 
 <a id="balance_transactions"></a>
 ### `balance_transactions`
 
 The `balance_transactions` attribute is a list. Each element holds a balance transaction, with the attributes of the [`stripe_balance_transaction`](../data-sources/balance_transaction) data source and `object`, the name of its type.
-
-<a id="treasury"></a>
-### `treasury`
-
-The `treasury` attribute supports:
-
-* `debit_reversal` - The Treasury [DebitReversal](https://docs.stripe.com/api/treasury/debit_reversals) representing this Issuing dispute
-* `received_debit` - The Treasury [ReceivedDebit](https://docs.stripe.com/api/treasury/received_debits) that is being disputed.
 
 ## Timeouts
 
