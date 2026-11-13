@@ -676,12 +676,13 @@ var (
 // response path then held. Unlike a leaf's `default.variants`, which holds only the variants with
 // a literal or none, it gives a value Stripe generates or copies from another argument.
 type minimalCreate struct {
-	Object    string             `json:"object"`
-	Operation string             `json:"operation"`
-	Variant   string             `json:"variant"`
-	Status    int                `json:"status"`
-	Params    recordObject       `json:"params"`
-	Response  map[string]Matcher `json:"response"`
+	Object         string             `json:"object"`
+	Operation      string             `json:"operation"`
+	Variant        string             `json:"variant"`
+	AccountCountry string             `json:"account_country"`
+	Status         int                `json:"status"`
+	Params         recordObject       `json:"params"`
+	Response       map[string]Matcher `json:"response"`
 }
 
 // Pinned is the vendored evidence, read and checked against its pin and the spec's.

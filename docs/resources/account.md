@@ -3,12 +3,12 @@
 page_title: "stripe_account Resource - Stripe"
 subcategory: ""
 description: |-
-  A connected account of the platform. terraform destroy deletes the account and, with it, its bank accounts. Set exactly one of type (a custom account) or controller (an account whose controller properties you choose), together with country. type, controller and country cannot change on an existing account, so changing one replaces it. Stripe refuses a custom account that requests no capability: one in the US must request at least transfers. The resource requests the capabilities it lists on creation only: a plan that changes capabilities on an existing account fails, because changing requested capabilities is not supported yet: revert the configuration, ignore the change, or recreate the account deliberately with terraform taint (tofu taint in OpenTofu). Read their status with the stripe_account_capability data source. The onboarding arguments (business_type, individual.id_number, individual.ssn_last_4, external_account, tos_acceptance, settings.card_issuing.tos_acceptance, settings.treasury.tos_acceptance and the business profile's mcc, url, product_description, annual_revenue and estimated_worker_count) are sent on creation only, and a plan that changes one on an existing account fails in the same way. Stripe never returns individual.id_number, individual.ssn_last_4 or external_account, so state keeps the values you configured, and the two identity numbers are sensitive. The rest of individual and company is read back from Stripe and changes in place, so a value changed outside Terraform plans an update back to the configuration, and a member the configuration leaves out but that Stripe holds plans an update that clears it, where Stripe can clear it. Stripe refuses some changes itself, such as of a verified individual, and its refusal fails the apply. individual.phone keeps the form you configured, because Stripe stores a phone number in its own form, such as +10000000000 for 0000000000, and a verification document's front and back keep what you configured, because Stripe replaces a test token such as file_identity_document_success with a file of its own. Removing email, business_type, tos_acceptance, individual, company, individual.phone or a business_profile or settings argument from the configuration leaves the value on the account. A refresh that finds the account gone (Stripe answers 403 account_invalid) removes it from state.
+  A connected account of the platform. terraform destroy deletes the account and, with it, its bank accounts. Set exactly one of type (a custom account) or controller (an account whose controller properties you choose), together with country. type, controller and country cannot change on an existing account, so changing one replaces it. Stripe refuses a custom account that requests no capability: one in the US must request at least transfers. The resource requests the capabilities it lists on creation only: a plan that changes capabilities on an existing account fails, because changing requested capabilities is not supported yet: revert the configuration, ignore the change, or recreate the account deliberately with terraform taint (tofu taint in OpenTofu). Read their status with the stripe_account_capability data source or the stripe_account data source, whose capabilities holds each status Stripe moves on its own. The onboarding arguments (individual.id_number, individual.ssn_last_4, external_account, bank_account, bank_account_data, company.registration_number, company.tax_id, company.vat_id, tos_acceptance, settings.card_issuing.tos_acceptance and settings.treasury.tos_acceptance) are sent on creation only, and a plan that changes one on an existing account fails in the same way. Stripe never returns those numbers or the bank account, so state keeps the values you configured, and the identity and tax numbers are sensitive; removing one from the configuration leaves it on the account. business_type and the business_profile change in place, and an update sends the profile whole. Stripe fills settings.payments.statement_descriptor and settings.card_payments.statement_descriptor_prefix from the business name, and the prefix from a payments descriptor, so a plan that changes the source leaves the one the configuration does not set known after apply. A weekly or monthly payout schedule needs its weekly_anchor or weekly_payout_days, or its monthly_anchor or monthly_payout_days, which Stripe refuses beside another interval: a plan that changes the interval or an anchor leaves what goes with it to Stripe, and a changed interval leaves delay_days to Stripe too unless the configuration sets it. settings.payouts.schedule.delay_days and weekly_payout_days keep the form you configured, because Stripe answers minimum with a number of days and lists payout days in its own order. The rest of individual and company is read back from Stripe and changes in place, so a value changed outside Terraform plans an update back to the configuration, and a member the configuration leaves out but that Stripe holds plans an update that clears it, where Stripe can clear it. Stripe refuses some changes itself, such as of a verified individual, and its refusal fails the apply. individual.phone keeps the form you configured, because Stripe stores a phone number in its own form, such as +10000000000 for 0000000000, and a verification document's front and back keep what you configured, because Stripe replaces a test token such as file_identity_document_success with a file of its own. Removing email, business_type, tos_acceptance, individual, company, individual.phone or a business_profile or settings argument from the configuration leaves the value on the account. A refresh that finds the account gone (Stripe answers 403 account_invalid) removes it from state.
 ---
 
 # Resource: stripe_account
 
-A connected account of the platform. `terraform destroy` deletes the account and, with it, its bank accounts. Set exactly one of `type` (a custom account) or `controller` (an account whose controller properties you choose), together with `country`. `type`, `controller` and `country` cannot change on an existing account, so changing one replaces it. Stripe refuses a custom account that requests no capability: one in the US must request at least `transfers`. The resource requests the capabilities it lists on creation only: a plan that changes `capabilities` on an existing account fails, because changing requested capabilities is not supported yet: revert the configuration, ignore the change, or recreate the account deliberately with `terraform taint` (`tofu taint` in OpenTofu). Read their status with the `stripe_account_capability` data source. The onboarding arguments (`business_type`, `individual.id_number`, `individual.ssn_last_4`, `external_account`, `tos_acceptance`, `settings.card_issuing.tos_acceptance`, `settings.treasury.tos_acceptance` and the business profile's `mcc`, `url`, `product_description`, `annual_revenue` and `estimated_worker_count`) are sent on creation only, and a plan that changes one on an existing account fails in the same way. Stripe never returns `individual.id_number`, `individual.ssn_last_4` or `external_account`, so state keeps the values you configured, and the two identity numbers are sensitive. The rest of `individual` and `company` is read back from Stripe and changes in place, so a value changed outside Terraform plans an update back to the configuration, and a member the configuration leaves out but that Stripe holds plans an update that clears it, where Stripe can clear it. Stripe refuses some changes itself, such as of a verified individual, and its refusal fails the apply. `individual.phone` keeps the form you configured, because Stripe stores a phone number in its own form, such as `+10000000000` for `0000000000`, and a verification document's `front` and `back` keep what you configured, because Stripe replaces a test token such as `file_identity_document_success` with a file of its own. Removing `email`, `business_type`, `tos_acceptance`, `individual`, `company`, `individual.phone` or a `business_profile` or `settings` argument from the configuration leaves the value on the account. A refresh that finds the account gone (Stripe answers 403 `account_invalid`) removes it from state.
+A connected account of the platform. `terraform destroy` deletes the account and, with it, its bank accounts. Set exactly one of `type` (a custom account) or `controller` (an account whose controller properties you choose), together with `country`. `type`, `controller` and `country` cannot change on an existing account, so changing one replaces it. Stripe refuses a custom account that requests no capability: one in the US must request at least `transfers`. The resource requests the capabilities it lists on creation only: a plan that changes `capabilities` on an existing account fails, because changing requested capabilities is not supported yet: revert the configuration, ignore the change, or recreate the account deliberately with `terraform taint` (`tofu taint` in OpenTofu). Read their status with the `stripe_account_capability` data source or the `stripe_account` data source, whose `capabilities` holds each status Stripe moves on its own. The onboarding arguments (`individual.id_number`, `individual.ssn_last_4`, `external_account`, `bank_account`, `bank_account_data`, `company.registration_number`, `company.tax_id`, `company.vat_id`, `tos_acceptance`, `settings.card_issuing.tos_acceptance` and `settings.treasury.tos_acceptance`) are sent on creation only, and a plan that changes one on an existing account fails in the same way. Stripe never returns those numbers or the bank account, so state keeps the values you configured, and the identity and tax numbers are sensitive; removing one from the configuration leaves it on the account. `business_type` and the `business_profile` change in place, and an update sends the profile whole. Stripe fills `settings.payments.statement_descriptor` and `settings.card_payments.statement_descriptor_prefix` from the business name, and the prefix from a payments descriptor, so a plan that changes the source leaves the one the configuration does not set known after apply. A `weekly` or `monthly` payout schedule needs its `weekly_anchor` or `weekly_payout_days`, or its `monthly_anchor` or `monthly_payout_days`, which Stripe refuses beside another interval: a plan that changes the interval or an anchor leaves what goes with it to Stripe, and a changed interval leaves `delay_days` to Stripe too unless the configuration sets it. `settings.payouts.schedule.delay_days` and `weekly_payout_days` keep the form you configured, because Stripe answers `minimum` with a number of days and lists payout days in its own order. The rest of `individual` and `company` is read back from Stripe and changes in place, so a value changed outside Terraform plans an update back to the configuration, and a member the configuration leaves out but that Stripe holds plans an update that clears it, where Stripe can clear it. Stripe refuses some changes itself, such as of a verified individual, and its refusal fails the apply. `individual.phone` keeps the form you configured, because Stripe stores a phone number in its own form, such as `+10000000000` for `0000000000`, and a verification document's `front` and `back` keep what you configured, because Stripe replaces a test token such as `file_identity_document_success` with a file of its own. Removing `email`, `business_type`, `tos_acceptance`, `individual`, `company`, `individual.phone` or a `business_profile` or `settings` argument from the configuration leaves the value on the account. A refresh that finds the account gone (Stripe answers 403 `account_invalid`) removes it from state.
 
 ## Example Usage
 
@@ -121,18 +121,36 @@ The following arguments are required:
 
 The following arguments are optional:
 
+* `bank_account` - (Optional) Either a token, like the ones returned by [Stripe.js](https://stripe.com/docs/js), or a dictionary containing a user's bank account details. Changing it replaces the resource. Stripe does not return this value; the provider keeps it from configuration.
+* `bank_account_data` - (Optional) Changing it replaces the resource. See [`bank_account_data`](#bank_account_data) below.
 * `business_profile` - (Optional) Business information about the account. Removing it from the configuration leaves the current value. See [`business_profile`](#business_profile) below.
-* `business_type` - (Optional) The business type. Once you create an [Account Link](https://docs.stripe.com/api/account_links) or [Account Session](https://docs.stripe.com/api/account_sessions), this property can only be updated for accounts where [controller.requirement_collection](https://docs.stripe.com/api/accounts/object#account_object-controller-requirement_collection) is `application`, which includes Custom accounts. Possible values: `company`, `government_entity`, `individual`, `non_profit`. Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
+* `business_type` - (Optional) The business type. Once you create an [Account Link](https://docs.stripe.com/api/account_links) or [Account Session](https://docs.stripe.com/api/account_sessions), this property can only be updated for accounts where [controller.requirement_collection](https://docs.stripe.com/api/accounts/object#account_object-controller-requirement_collection) is `application`, which includes Custom accounts. Possible values: `company`, `government_entity`, `individual`, `non_profit`. Default: none. Removing it from the configuration leaves the current value.
 * `capabilities` - (Optional) Each key of the dictionary represents a capability, and each capability maps to its settings (for example, whether it has been requested or not). Each capability is inactive until you have provided its specific requirements and Stripe has verified them. An account might have some of its requested capabilities be active and some be inactive. Required when [account.controller.stripe_dashboard.type](https://docs.stripe.com/api/accounts/create#create_account-controller-dashboard-type) is `none`, which includes Custom accounts. See [`capabilities`](#capabilities) below.
 * `company` - (Optional) Information about the company or business. This field is available for any `business_type`. Once you create an [Account Link](https://docs.stripe.com/api/account_links) or [Account Session](https://docs.stripe.com/api/account_sessions), this property can only be updated for accounts where [controller.requirement_collection](https://docs.stripe.com/api/accounts/object#account_object-controller-requirement_collection) is `application`, which includes Custom accounts. Removing it from the configuration leaves the current value. See [`company`](#company) below.
 * `controller` - (Optional) A hash of configuration describing the account controller's attributes. Changing it replaces the resource. Removing it from the configuration leaves the current value. See [`controller`](#controller) below.
-* `email` - (Optional) The email address of the account holder. This is only to make the account easier to identify to you. If [controller.requirement_collection](https://docs.stripe.com/api/accounts/object#account_object-controller-requirement_collection) is `application`, which includes Custom accounts, Stripe doesn't email the account without your consent. Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
-* `external_account` - (Optional) A card or bank account to attach to the account for receiving [payouts](https://docs.stripe.com/connect/bank-debit-card-payouts) (you won’t be able to use it for top-ups). You can provide either a token, like the ones returned by [Stripe.js](https://docs.stripe.com/js), or a dictionary, as documented in the `external_account` parameter for [bank account](https://docs.stripe.com/api#account_create_bank_account) creation. <br><br>By default, providing an external account sets it as the new default external account for its currency, and deletes the old default if one exists. To add additional external accounts without replacing the existing default for the currency, use the [bank account](https://docs.stripe.com/api#account_create_bank_account) or [card creation](https://docs.stripe.com/api#account_create_card) APIs. After you create an [Account Link](https://docs.stripe.com/api/account_links) or [Account Session](https://docs.stripe.com/api/account_sessions), this property can only be updated for accounts where [controller.requirement_collection](https://docs.stripe.com/api/accounts/object#account_object-controller-requirement_collection) is `application`, which includes Custom accounts.
+* `default_currency` - (Optional) Three-letter ISO currency code representing the default currency for the account. This must be a currency that [Stripe supports in the account's country](https://docs.stripe.com/payouts). Removing it from the configuration leaves the current value.
+* `email` - (Optional) The email address of the account holder. This is only to make the account easier to identify to you. If [controller.requirement_collection](https://docs.stripe.com/api/accounts/object#account_object-controller-requirement_collection) is `application`, which includes Custom accounts, Stripe doesn't email the account without your consent. Default: none. Removing it from the configuration leaves the current value.
+* `external_account` - (Optional) A card or bank account to attach to the account for receiving [payouts](https://docs.stripe.com/connect/bank-debit-card-payouts) (you won’t be able to use it for top-ups). You can provide either a token, like the ones returned by [Stripe.js](https://docs.stripe.com/js), or a dictionary, as documented in the `external_account` parameter for [bank account](https://docs.stripe.com/api#account_create_bank_account) creation. <br><br>By default, providing an external account sets it as the new default external account for its currency, and deletes the old default if one exists. To add additional external accounts without replacing the existing default for the currency, use the [bank account](https://docs.stripe.com/api#account_create_bank_account) or [card creation](https://docs.stripe.com/api#account_create_card) APIs. After you create an [Account Link](https://docs.stripe.com/api/account_links) or [Account Session](https://docs.stripe.com/api/account_sessions), this property can only be updated for accounts where [controller.requirement_collection](https://docs.stripe.com/api/accounts/object#account_object-controller-requirement_collection) is `application`, which includes Custom accounts. Stripe does not return this value; the provider keeps it from configuration. Removing it from the configuration leaves the current value.
+* `groups` - (Optional) A hash of account group type to tokens. These are account groups this account should be added to. See [`groups`](#groups) below.
 * `individual` - (Optional) Information about the person represented by the account. This field is null unless `business_type` is set to `individual`. Once you create an [Account Link](https://docs.stripe.com/api/account_links) or [Account Session](https://docs.stripe.com/api/account_sessions), this property can only be updated for accounts where [controller.requirement_collection](https://docs.stripe.com/api/accounts/object#account_object-controller-requirement_collection) is `application`, which includes Custom accounts. Removing it from the configuration leaves the current value. See [`individual`](#individual) below.
 * `metadata` - (Optional) Set of [key-value pairs](https://docs.stripe.com/api/metadata) that you can attach to an object. This can be useful for storing additional information about the object in a structured format. Individual keys can be unset by posting an empty value to them. All keys can be unset by posting an empty value to `metadata`. Default (Stripe): `{}`.
 * `settings` - (Optional) Options for customizing how the account functions within Stripe. Removing it from the configuration leaves the current value. See [`settings`](#settings) below.
 * `tos_acceptance` - (Optional) Details on the account's acceptance of the [Stripe Services Agreement](https://docs.stripe.com/connect/updating-accounts#tos-acceptance). This property can only be updated for accounts where [controller.requirement_collection](https://docs.stripe.com/api/accounts/object#account_object-controller-requirement_collection) is `application`, which includes Custom accounts. This property defaults to a `full` service agreement when empty. Removing it from the configuration leaves the current value. See [`tos_acceptance`](#tos_acceptance) below.
-* `type` - (Optional) The `type` parameter is deprecated. Use [`controller`](https://docs.stripe.com/api/accounts/create#create_account-controller) instead to configure dashboard access, fee payer, loss liability, and requirement collection. Possible values: `custom`, `express`, `standard`. Changing it replaces the resource. Removing it from the configuration leaves the current value.
+* `type` - (Optional) The `type` parameter is deprecated. Use [`controller`](https://docs.stripe.com/api/accounts/create#create_account-controller) instead to configure dashboard access, fee payer, loss liability, and requirement collection. Possible values: `custom`, `express`, `standard`. Changing it replaces the resource. Default (Stripe): none on an account created with a controller and no type (`standard` on a US account). Removing it from the configuration leaves the current value.
+
+<a id="bank_account_data"></a>
+### `bank_account_data`
+
+The `bank_account_data` attribute supports:
+
+* `account_holder_name` - (Optional) Stripe does not return this value; the provider keeps it from configuration.
+* `account_holder_type` - (Optional) Possible values: `company`, `individual`. Stripe does not return this value; the provider keeps it from configuration.
+* `account_number` - (Required) Stripe does not return this value; the provider keeps it from configuration.
+* `account_type` - (Optional) Possible values: `checking`, `futsu`, `savings`, `toza`. Stripe refused it on a US account on create: "Invalid bank account type: account types are not allowed". Stripe refused every account type the conformance suite sent with a US bank account, on a US account; the suite has recorded no country where Stripe takes one. Elsewhere Stripe refused it on a US account on create: "Invalid bank account type: account types are not allowed". Where the provider's Stripe account is in `US`, the plan refuses a create that sends `bank_account.account_number = "000123456789"`, `bank_account.account_type = "checking"`, `bank_account.country = "US"`, `bank_account.routing_number = "110000000"`, `business_type = "company"`, `capabilities.transfers.requested = true` and `type = "custom"`, which Stripe refused there with "Invalid bank account type: account types are not allowed" (conformance suite probe `isolated/bank_type_checking`). Where the provider's Stripe account is in `US`, the plan refuses a create that sends `bank_account.account_number = "000123456789"`, `bank_account.account_type = "futsu"`, `bank_account.country = "US"`, `bank_account.routing_number = "110000000"`, `business_type = "company"`, `capabilities.transfers.requested = true` and `type = "custom"`, which Stripe refused there with "Invalid bank account type: account types are not allowed" (conformance suite probe `isolated/bank_type_futsu`). Where the provider's Stripe account is in `US`, the plan refuses a create that sends `bank_account.account_number = "000123456789"`, `bank_account.account_type = "savings"`, `bank_account.country = "US"`, `bank_account.routing_number = "110000000"`, `business_type = "company"`, `capabilities.transfers.requested = true` and `type = "custom"`, which Stripe refused there with "Invalid bank account type: account types are not allowed" (conformance suite probe `isolated/bank_type_savings`). Where the provider's Stripe account is in `US`, the plan refuses a create that sends `bank_account.account_number = "000123456789"`, `bank_account.account_type = "toza"`, `bank_account.country = "US"`, `bank_account.routing_number = "110000000"`, `business_type = "company"`, `capabilities.transfers.requested = true` and `type = "custom"`, which Stripe refused there with "Invalid bank account type: account types are not allowed" (conformance suite probe `isolated/bank_type_toza`). The provider reads the account's country only for a plan that sends such a request, and leaves the request to Stripe where the account is elsewhere or the key cannot read it.
+* `country` - (Required) Stripe does not return this value; the provider keeps it from configuration.
+* `currency` - (Optional) Stripe does not return this value; the provider keeps it from configuration.
+* `object` - (Optional) Possible values: `bank_account`. Stripe does not return this value; the provider keeps it from configuration.
+* `routing_number` - (Optional) Stripe does not return this value; the provider keeps it from configuration.
 
 <a id="business_profile"></a>
 ### `business_profile`
@@ -140,18 +158,18 @@ The following arguments are optional:
 The `business_profile` attribute supports:
 
 * `annual_revenue` - (Optional) The applicant's gross annual revenue for its preceding fiscal year. Removing it from the configuration leaves the current value. See [`business_profile.annual_revenue`](#business_profile.annual_revenue) below.
-* `estimated_worker_count` - (Optional) An estimated upper bound of employees, contractors, vendors, etc. currently working for the business. Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
-* `mcc` - (Optional) [The merchant category code for the account](https://docs.stripe.com/connect/setting-mcc). MCCs are used to classify businesses based on the goods or services they provide. Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
-* `minority_owned_business_designation` - (Read-Only) Whether the business is a minority-owned, women-owned, and/or LGBTQI+ -owned business.
-* `monthly_estimated_revenue` - (Read-Only) See [`business_profile.monthly_estimated_revenue`](#business_profile.monthly_estimated_revenue) below.
-* `name` - (Optional) The customer-facing business name. Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
-* `product_description` - (Optional) Internal-only description of the product sold or service provided by the business. It's used by Stripe for risk and underwriting purposes. Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
-* `specified_commercial_transactions_act_url` - (Read-Only) A link to the business's publicly available terms related to the Specified Commercial Transaction Act. Only used for accounts in Japan.
-* `support_address` - (Read-Only) A publicly available mailing address for sending support issues to. See [`business_profile.support_address`](#business_profile.support_address) below.
-* `support_email` - (Read-Only) A publicly available email address for sending support issues to.
-* `support_phone` - (Read-Only) A publicly available phone number to call with support issues.
-* `support_url` - (Read-Only) A publicly available website for handling support issues.
-* `url` - (Optional) The business's publicly available website. Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
+* `estimated_worker_count` - (Optional) An estimated upper bound of employees, contractors, vendors, etc. currently working for the business. Default: none. Removing it from the configuration leaves the current value.
+* `mcc` - (Optional) [The merchant category code for the account](https://docs.stripe.com/connect/setting-mcc). MCCs are used to classify businesses based on the goods or services they provide. Default: none. Removing it from the configuration leaves the current value.
+* `minority_owned_business_designation` - (Optional) Whether the business is a minority-owned, women-owned, and/or LGBTQI+ -owned business. Default: none. Removing it from the configuration leaves the current value.
+* `monthly_estimated_revenue` - (Optional) Removing it from the configuration leaves the current value. See [`business_profile.monthly_estimated_revenue`](#business_profile.monthly_estimated_revenue) below.
+* `name` - (Optional) The customer-facing business name. Default (Stripe): the company's name, where the create sends one. Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
+* `product_description` - (Optional) Internal-only description of the product sold or service provided by the business. It's used by Stripe for risk and underwriting purposes. Default: none. Removing it from the configuration leaves the current value.
+* `specified_commercial_transactions_act_url` - (Optional) A link to the business's publicly available terms related to the Specified Commercial Transaction Act. Only used for accounts in Japan. Default: none.
+* `support_address` - (Optional) A publicly available mailing address for sending support issues to. Removing it from the configuration leaves the current value. See [`business_profile.support_address`](#business_profile.support_address) below.
+* `support_email` - (Optional) A publicly available email address for sending support issues to. Default: none. Removing it from the configuration leaves the current value.
+* `support_phone` - (Optional) A publicly available phone number to call with support issues. Default: none. Removing it from the configuration leaves the current value.
+* `support_url` - (Optional) A publicly available website for handling support issues. Default: none.
+* `url` - (Optional) The business's publicly available website. Default: none. Removing it from the configuration leaves the current value.
 
 <a id="business_profile.annual_revenue"></a>
 ### `business_profile.annual_revenue`
@@ -167,94 +185,94 @@ The `business_profile.annual_revenue` attribute supports:
 
 The `business_profile.monthly_estimated_revenue` attribute supports:
 
-* `amount` - A non-negative integer representing how much to charge in the [smallest currency unit](https://docs.stripe.com/currencies#zero-decimal).
-* `currency` - Three-letter [ISO currency code](https://www.iso.org/iso-4217-currency-codes.html), in lowercase. Must be a [supported currency](https://stripe.com/docs/currencies).
+* `amount` - (Required) A non-negative integer representing how much to charge in the [smallest currency unit](https://docs.stripe.com/currencies#zero-decimal). Stripe refused it on a US account on create and update: "business_profile[monthly_estimated_revenue] is not supported for accounts in the country US.".
+* `currency` - (Required) Three-letter [ISO currency code](https://www.iso.org/iso-4217-currency-codes.html), in lowercase. Must be a [supported currency](https://stripe.com/docs/currencies). Stripe refused it on a US account on create and update: "business_profile[monthly_estimated_revenue] is not supported for accounts in the country US.".
 
 <a id="business_profile.support_address"></a>
 ### `business_profile.support_address`
 
 The `business_profile.support_address` attribute supports:
 
-* `city` - City, district, suburb, town, or village.
-* `country` - Two-letter country code ([ISO 3166-1 alpha-2](https://en.wikipedia.org/wiki/ISO_3166-1_alpha-2)).
-* `line1` - Address line 1, such as the street, PO Box, or company name.
-* `line2` - Address line 2, such as the apartment, suite, unit, or building.
-* `postal_code` - ZIP or postal code.
-* `state` - State, county, province, or region ([ISO 3166-2](https://en.wikipedia.org/wiki/ISO_3166-2)).
+* `city` - (Optional) City, district, suburb, town, or village. Default: none.
+* `country` - (Optional) Two-letter country code ([ISO 3166-1 alpha-2](https://en.wikipedia.org/wiki/ISO_3166-1_alpha-2)). Default: none.
+* `line1` - (Optional) Address line 1, such as the street, PO Box, or company name. Default: none.
+* `line2` - (Optional) Address line 2, such as the apartment, suite, unit, or building. Default: none.
+* `postal_code` - (Optional) ZIP or postal code. Default: none.
+* `state` - (Optional) State, county, province, or region ([ISO 3166-2](https://en.wikipedia.org/wiki/ISO_3166-2)). Default: none.
 
 <a id="capabilities"></a>
 ### `capabilities`
 
 The `capabilities` attribute supports:
 
-* `acss_debit_payments` - (Optional) See [`capabilities.acss_debit_payments`](#capabilities.acss_debit_payments) below.
-* `affirm_payments` - (Optional) See [`capabilities.affirm_payments`](#capabilities.affirm_payments) below.
-* `afterpay_clearpay_payments` - (Optional) See [`capabilities.afterpay_clearpay_payments`](#capabilities.afterpay_clearpay_payments) below.
+* `acss_debit_payments` - (Optional) Stripe does not return this value; the provider keeps it from configuration. See [`capabilities.acss_debit_payments`](#capabilities.acss_debit_payments) below.
+* `affirm_payments` - (Optional) Stripe does not return this value; the provider keeps it from configuration. See [`capabilities.affirm_payments`](#capabilities.affirm_payments) below.
+* `afterpay_clearpay_payments` - (Optional) Stripe does not return this value; the provider keeps it from configuration. See [`capabilities.afterpay_clearpay_payments`](#capabilities.afterpay_clearpay_payments) below.
 * `alma_payments` - (Optional) See [`capabilities.alma_payments`](#capabilities.alma_payments) below.
-* `amazon_pay_payments` - (Optional) See [`capabilities.amazon_pay_payments`](#capabilities.amazon_pay_payments) below.
-* `app_distribution` - (Optional) See [`capabilities.app_distribution`](#capabilities.app_distribution) below.
+* `amazon_pay_payments` - (Optional) Stripe does not return this value; the provider keeps it from configuration. See [`capabilities.amazon_pay_payments`](#capabilities.amazon_pay_payments) below.
+* `app_distribution` - (Optional) Stripe does not return this value; the provider keeps it from configuration. See [`capabilities.app_distribution`](#capabilities.app_distribution) below.
 * `au_becs_debit_payments` - (Optional) See [`capabilities.au_becs_debit_payments`](#capabilities.au_becs_debit_payments) below.
 * `bacs_debit_payments` - (Optional) See [`capabilities.bacs_debit_payments`](#capabilities.bacs_debit_payments) below.
-* `bancontact_payments` - (Optional) See [`capabilities.bancontact_payments`](#capabilities.bancontact_payments) below.
-* `bank_transfer_payments` - (Optional) See [`capabilities.bank_transfer_payments`](#capabilities.bank_transfer_payments) below.
+* `bancontact_payments` - (Optional) Stripe does not return this value; the provider keeps it from configuration. See [`capabilities.bancontact_payments`](#capabilities.bancontact_payments) below.
+* `bank_transfer_payments` - (Optional) Stripe does not return this value; the provider keeps it from configuration. See [`capabilities.bank_transfer_payments`](#capabilities.bank_transfer_payments) below.
 * `billie_payments` - (Optional) See [`capabilities.billie_payments`](#capabilities.billie_payments) below.
 * `bizum_payments` - (Optional) See [`capabilities.bizum_payments`](#capabilities.bizum_payments) below.
 * `blik_payments` - (Optional) See [`capabilities.blik_payments`](#capabilities.blik_payments) below.
-* `blik_recurring_payments` - (Optional) See [`capabilities.blik_recurring_payments`](#capabilities.blik_recurring_payments) below.
+* `blik_recurring_payments` - (Optional) Stripe does not return this value; the provider keeps it from configuration. See [`capabilities.blik_recurring_payments`](#capabilities.blik_recurring_payments) below.
 * `boleto_payments` - (Optional) See [`capabilities.boleto_payments`](#capabilities.boleto_payments) below.
-* `card_issuing` - (Optional) See [`capabilities.card_issuing`](#capabilities.card_issuing) below.
-* `card_payments` - (Optional) See [`capabilities.card_payments`](#capabilities.card_payments) below.
-* `cartes_bancaires_payments` - (Optional) See [`capabilities.cartes_bancaires_payments`](#capabilities.cartes_bancaires_payments) below.
-* `cashapp_payments` - (Optional) See [`capabilities.cashapp_payments`](#capabilities.cashapp_payments) below.
-* `crypto_payments` - (Optional) See [`capabilities.crypto_payments`](#capabilities.crypto_payments) below.
-* `eps_payments` - (Optional) See [`capabilities.eps_payments`](#capabilities.eps_payments) below.
+* `card_issuing` - (Optional) Stripe does not return this value; the provider keeps it from configuration. See [`capabilities.card_issuing`](#capabilities.card_issuing) below.
+* `card_payments` - (Optional) Stripe does not return this value; the provider keeps it from configuration. See [`capabilities.card_payments`](#capabilities.card_payments) below.
+* `cartes_bancaires_payments` - (Optional) Stripe does not return this value; the provider keeps it from configuration. See [`capabilities.cartes_bancaires_payments`](#capabilities.cartes_bancaires_payments) below.
+* `cashapp_payments` - (Optional) Stripe does not return this value; the provider keeps it from configuration. See [`capabilities.cashapp_payments`](#capabilities.cashapp_payments) below.
+* `crypto_payments` - (Optional) Stripe does not return this value; the provider keeps it from configuration. See [`capabilities.crypto_payments`](#capabilities.crypto_payments) below.
+* `eps_payments` - (Optional) Stripe does not return this value; the provider keeps it from configuration. See [`capabilities.eps_payments`](#capabilities.eps_payments) below.
 * `fpx_payments` - (Optional) See [`capabilities.fpx_payments`](#capabilities.fpx_payments) below.
-* `gb_bank_transfer_payments` - (Optional) See [`capabilities.gb_bank_transfer_payments`](#capabilities.gb_bank_transfer_payments) below.
+* `gb_bank_transfer_payments` - (Optional) Stripe does not return this value; the provider keeps it from configuration. See [`capabilities.gb_bank_transfer_payments`](#capabilities.gb_bank_transfer_payments) below.
 * `giropay_payments` - (Optional) See [`capabilities.giropay_payments`](#capabilities.giropay_payments) below.
 * `grabpay_payments` - (Optional) See [`capabilities.grabpay_payments`](#capabilities.grabpay_payments) below.
-* `ideal_payments` - (Optional) See [`capabilities.ideal_payments`](#capabilities.ideal_payments) below.
+* `ideal_payments` - (Optional) Stripe does not return this value; the provider keeps it from configuration. See [`capabilities.ideal_payments`](#capabilities.ideal_payments) below.
 * `india_international_payments` - (Optional) See [`capabilities.india_international_payments`](#capabilities.india_international_payments) below.
 * `jcb_payments` - (Optional) See [`capabilities.jcb_payments`](#capabilities.jcb_payments) below.
 * `jp_bank_transfer_payments` - (Optional) See [`capabilities.jp_bank_transfer_payments`](#capabilities.jp_bank_transfer_payments) below.
-* `kakao_pay_payments` - (Optional) See [`capabilities.kakao_pay_payments`](#capabilities.kakao_pay_payments) below.
-* `klarna_payments` - (Optional) See [`capabilities.klarna_payments`](#capabilities.klarna_payments) below.
+* `kakao_pay_payments` - (Optional) Stripe does not return this value; the provider keeps it from configuration. See [`capabilities.kakao_pay_payments`](#capabilities.kakao_pay_payments) below.
+* `klarna_payments` - (Optional) Stripe does not return this value; the provider keeps it from configuration. See [`capabilities.klarna_payments`](#capabilities.klarna_payments) below.
 * `konbini_payments` - (Optional) See [`capabilities.konbini_payments`](#capabilities.konbini_payments) below.
-* `kr_card_payments` - (Optional) See [`capabilities.kr_card_payments`](#capabilities.kr_card_payments) below.
-* `legacy_payments` - (Optional) See [`capabilities.legacy_payments`](#capabilities.legacy_payments) below.
-* `link_payments` - (Optional) See [`capabilities.link_payments`](#capabilities.link_payments) below.
-* `mb_way_payments` - (Optional) See [`capabilities.mb_way_payments`](#capabilities.mb_way_payments) below.
+* `kr_card_payments` - (Optional) Stripe does not return this value; the provider keeps it from configuration. See [`capabilities.kr_card_payments`](#capabilities.kr_card_payments) below.
+* `legacy_payments` - (Optional) Stripe does not return this value; the provider keeps it from configuration. See [`capabilities.legacy_payments`](#capabilities.legacy_payments) below.
+* `link_payments` - (Optional) Stripe does not return this value; the provider keeps it from configuration. See [`capabilities.link_payments`](#capabilities.link_payments) below.
+* `mb_way_payments` - (Optional) Stripe does not return this value; the provider keeps it from configuration. See [`capabilities.mb_way_payments`](#capabilities.mb_way_payments) below.
 * `mobilepay_payments` - (Optional) See [`capabilities.mobilepay_payments`](#capabilities.mobilepay_payments) below.
-* `multibanco_payments` - (Optional) See [`capabilities.multibanco_payments`](#capabilities.multibanco_payments) below.
+* `multibanco_payments` - (Optional) Stripe does not return this value; the provider keeps it from configuration. See [`capabilities.multibanco_payments`](#capabilities.multibanco_payments) below.
 * `mx_bank_transfer_payments` - (Optional) See [`capabilities.mx_bank_transfer_payments`](#capabilities.mx_bank_transfer_payments) below.
-* `naver_pay_payments` - (Optional) See [`capabilities.naver_pay_payments`](#capabilities.naver_pay_payments) below.
-* `nz_bank_account_becs_debit_payments` - (Optional) See [`capabilities.nz_bank_account_becs_debit_payments`](#capabilities.nz_bank_account_becs_debit_payments) below.
+* `naver_pay_payments` - (Optional) Stripe does not return this value; the provider keeps it from configuration. See [`capabilities.naver_pay_payments`](#capabilities.naver_pay_payments) below.
+* `nz_bank_account_becs_debit_payments` - (Optional) Stripe does not return this value; the provider keeps it from configuration. See [`capabilities.nz_bank_account_becs_debit_payments`](#capabilities.nz_bank_account_becs_debit_payments) below.
 * `oxxo_payments` - (Optional) See [`capabilities.oxxo_payments`](#capabilities.oxxo_payments) below.
-* `p24_payments` - (Optional) See [`capabilities.p24_payments`](#capabilities.p24_payments) below.
+* `p24_payments` - (Optional) Stripe does not return this value; the provider keeps it from configuration. See [`capabilities.p24_payments`](#capabilities.p24_payments) below.
 * `pay_by_bank_payments` - (Optional) See [`capabilities.pay_by_bank_payments`](#capabilities.pay_by_bank_payments) below.
-* `payco_payments` - (Optional) See [`capabilities.payco_payments`](#capabilities.payco_payments) below.
+* `payco_payments` - (Optional) Stripe does not return this value; the provider keeps it from configuration. See [`capabilities.payco_payments`](#capabilities.payco_payments) below.
 * `paynow_payments` - (Optional) See [`capabilities.paynow_payments`](#capabilities.paynow_payments) below.
 * `paypay_payments` - (Optional) See [`capabilities.paypay_payments`](#capabilities.paypay_payments) below.
 * `payto_payments` - (Optional) See [`capabilities.payto_payments`](#capabilities.payto_payments) below.
-* `pix_payments` - (Optional) See [`capabilities.pix_payments`](#capabilities.pix_payments) below.
+* `pix_payments` - (Optional) Stripe does not return this value; the provider keeps it from configuration. See [`capabilities.pix_payments`](#capabilities.pix_payments) below.
 * `promptpay_payments` - (Optional) See [`capabilities.promptpay_payments`](#capabilities.promptpay_payments) below.
 * `revolut_pay_payments` - (Optional) See [`capabilities.revolut_pay_payments`](#capabilities.revolut_pay_payments) below.
-* `samsung_pay_payments` - (Optional) See [`capabilities.samsung_pay_payments`](#capabilities.samsung_pay_payments) below.
-* `satispay_payments` - (Optional) See [`capabilities.satispay_payments`](#capabilities.satispay_payments) below.
-* `scalapay_payments` - (Optional) See [`capabilities.scalapay_payments`](#capabilities.scalapay_payments) below.
-* `sepa_bank_transfer_payments` - (Optional) See [`capabilities.sepa_bank_transfer_payments`](#capabilities.sepa_bank_transfer_payments) below.
-* `sepa_debit_payments` - (Optional) See [`capabilities.sepa_debit_payments`](#capabilities.sepa_debit_payments) below.
+* `samsung_pay_payments` - (Optional) Stripe does not return this value; the provider keeps it from configuration. See [`capabilities.samsung_pay_payments`](#capabilities.samsung_pay_payments) below.
+* `satispay_payments` - (Optional) Stripe does not return this value; the provider keeps it from configuration. See [`capabilities.satispay_payments`](#capabilities.satispay_payments) below.
+* `scalapay_payments` - (Optional) Stripe does not return this value; the provider keeps it from configuration. See [`capabilities.scalapay_payments`](#capabilities.scalapay_payments) below.
+* `sepa_bank_transfer_payments` - (Optional) Stripe does not return this value; the provider keeps it from configuration. See [`capabilities.sepa_bank_transfer_payments`](#capabilities.sepa_bank_transfer_payments) below.
+* `sepa_debit_payments` - (Optional) Stripe does not return this value; the provider keeps it from configuration. See [`capabilities.sepa_debit_payments`](#capabilities.sepa_debit_payments) below.
 * `sequra_payments` - (Optional) See [`capabilities.sequra_payments`](#capabilities.sequra_payments) below.
 * `sofort_payments` - (Optional) See [`capabilities.sofort_payments`](#capabilities.sofort_payments) below.
-* `sunbit_payments` - (Optional) See [`capabilities.sunbit_payments`](#capabilities.sunbit_payments) below.
+* `sunbit_payments` - (Optional) Stripe does not return this value; the provider keeps it from configuration. See [`capabilities.sunbit_payments`](#capabilities.sunbit_payments) below.
 * `swish_payments` - (Optional) See [`capabilities.swish_payments`](#capabilities.swish_payments) below.
-* `tax_reporting_us_1099_k` - (Optional) See [`capabilities.tax_reporting_us_1099_k`](#capabilities.tax_reporting_us_1099_k) below.
-* `tax_reporting_us_1099_misc` - (Optional) See [`capabilities.tax_reporting_us_1099_misc`](#capabilities.tax_reporting_us_1099_misc) below.
-* `transfers` - (Optional) See [`capabilities.transfers`](#capabilities.transfers) below.
-* `treasury` - (Optional) See [`capabilities.treasury`](#capabilities.treasury) below.
+* `tax_reporting_us_1099_k` - (Optional) Stripe does not return this value; the provider keeps it from configuration. See [`capabilities.tax_reporting_us_1099_k`](#capabilities.tax_reporting_us_1099_k) below.
+* `tax_reporting_us_1099_misc` - (Optional) Stripe does not return this value; the provider keeps it from configuration. See [`capabilities.tax_reporting_us_1099_misc`](#capabilities.tax_reporting_us_1099_misc) below.
+* `transfers` - (Optional) Stripe does not return this value; the provider keeps it from configuration. See [`capabilities.transfers`](#capabilities.transfers) below.
+* `treasury` - (Optional) Stripe does not return this value; the provider keeps it from configuration. See [`capabilities.treasury`](#capabilities.treasury) below.
 * `twint_payments` - (Optional) See [`capabilities.twint_payments`](#capabilities.twint_payments) below.
-* `upi_payments` - (Optional) See [`capabilities.upi_payments`](#capabilities.upi_payments) below.
-* `us_bank_account_ach_payments` - (Optional) See [`capabilities.us_bank_account_ach_payments`](#capabilities.us_bank_account_ach_payments) below.
-* `us_bank_transfer_payments` - (Optional) See [`capabilities.us_bank_transfer_payments`](#capabilities.us_bank_transfer_payments) below.
+* `upi_payments` - (Optional) Stripe does not return this value; the provider keeps it from configuration. See [`capabilities.upi_payments`](#capabilities.upi_payments) below.
+* `us_bank_account_ach_payments` - (Optional) Stripe does not return this value; the provider keeps it from configuration. See [`capabilities.us_bank_account_ach_payments`](#capabilities.us_bank_account_ach_payments) below.
+* `us_bank_transfer_payments` - (Optional) Stripe does not return this value; the provider keeps it from configuration. See [`capabilities.us_bank_transfer_payments`](#capabilities.us_bank_transfer_payments) below.
 * `zip_payments` - (Optional) See [`capabilities.zip_payments`](#capabilities.zip_payments) below.
 
 <a id="capabilities.acss_debit_payments"></a>
@@ -262,21 +280,21 @@ The `capabilities` attribute supports:
 
 The `capabilities.acss_debit_payments` attribute supports:
 
-* `requested` - (Optional)
+* `requested` - (Optional) Stripe does not return this value; the provider keeps it from configuration.
 
 <a id="capabilities.affirm_payments"></a>
 ### `capabilities.affirm_payments`
 
 The `capabilities.affirm_payments` attribute supports:
 
-* `requested` - (Optional)
+* `requested` - (Optional) Stripe does not return this value; the provider keeps it from configuration.
 
 <a id="capabilities.afterpay_clearpay_payments"></a>
 ### `capabilities.afterpay_clearpay_payments`
 
 The `capabilities.afterpay_clearpay_payments` attribute supports:
 
-* `requested` - (Optional)
+* `requested` - (Optional) Stripe does not return this value; the provider keeps it from configuration.
 
 <a id="capabilities.alma_payments"></a>
 ### `capabilities.alma_payments`
@@ -290,14 +308,14 @@ The `capabilities.alma_payments` attribute supports:
 
 The `capabilities.amazon_pay_payments` attribute supports:
 
-* `requested` - (Optional)
+* `requested` - (Optional) Stripe does not return this value; the provider keeps it from configuration.
 
 <a id="capabilities.app_distribution"></a>
 ### `capabilities.app_distribution`
 
 The `capabilities.app_distribution` attribute supports:
 
-* `requested` - (Optional)
+* `requested` - (Optional) Stripe does not return this value; the provider keeps it from configuration. Stripe refused it on a US account on update: "Unrequesting the app_distribution capability is not currently supported.". Stripe refused `false` on an update of an account that requested the capability; the provider sends a capability request on create only. Elsewhere Stripe refused it on a US account on update: "Unrequesting the app_distribution capability is not currently supported.". Where the provider's Stripe account is in `US`, the plan refuses an update that sends `capabilities.app_distribution.requested = false` to an account that holds `business_type = "company"`, `capabilities.app_distribution.requested = true`, `capabilities.transfers.requested = true` and `type = "custom"`, which Stripe refused there with "Unrequesting the app_distribution capability is not currently supported." (conformance suite probe `isolated/capability_apps_unrequest`). The provider reads the account's country only for a plan that sends such a request, and leaves the request to Stripe where the account is elsewhere or the key cannot read it.
 
 <a id="capabilities.au_becs_debit_payments"></a>
 ### `capabilities.au_becs_debit_payments`
@@ -318,14 +336,14 @@ The `capabilities.bacs_debit_payments` attribute supports:
 
 The `capabilities.bancontact_payments` attribute supports:
 
-* `requested` - (Optional)
+* `requested` - (Optional) Stripe does not return this value; the provider keeps it from configuration.
 
 <a id="capabilities.bank_transfer_payments"></a>
 ### `capabilities.bank_transfer_payments`
 
 The `capabilities.bank_transfer_payments` attribute supports:
 
-* `requested` - (Optional)
+* `requested` - (Optional) Stripe does not return this value; the provider keeps it from configuration.
 
 <a id="capabilities.billie_payments"></a>
 ### `capabilities.billie_payments`
@@ -353,7 +371,7 @@ The `capabilities.blik_payments` attribute supports:
 
 The `capabilities.blik_recurring_payments` attribute supports:
 
-* `requested` - (Optional)
+* `requested` - (Optional) Stripe does not return this value; the provider keeps it from configuration.
 
 <a id="capabilities.boleto_payments"></a>
 ### `capabilities.boleto_payments`
@@ -367,42 +385,42 @@ The `capabilities.boleto_payments` attribute supports:
 
 The `capabilities.card_issuing` attribute supports:
 
-* `requested` - (Optional)
+* `requested` - (Optional) Stripe does not return this value; the provider keeps it from configuration.
 
 <a id="capabilities.card_payments"></a>
 ### `capabilities.card_payments`
 
 The `capabilities.card_payments` attribute supports:
 
-* `requested` - (Optional)
+* `requested` - (Optional) Stripe does not return this value; the provider keeps it from configuration.
 
 <a id="capabilities.cartes_bancaires_payments"></a>
 ### `capabilities.cartes_bancaires_payments`
 
 The `capabilities.cartes_bancaires_payments` attribute supports:
 
-* `requested` - (Optional)
+* `requested` - (Optional) Stripe does not return this value; the provider keeps it from configuration.
 
 <a id="capabilities.cashapp_payments"></a>
 ### `capabilities.cashapp_payments`
 
 The `capabilities.cashapp_payments` attribute supports:
 
-* `requested` - (Optional)
+* `requested` - (Optional) Stripe does not return this value; the provider keeps it from configuration.
 
 <a id="capabilities.crypto_payments"></a>
 ### `capabilities.crypto_payments`
 
 The `capabilities.crypto_payments` attribute supports:
 
-* `requested` - (Optional)
+* `requested` - (Optional) Stripe does not return this value; the provider keeps it from configuration.
 
 <a id="capabilities.eps_payments"></a>
 ### `capabilities.eps_payments`
 
 The `capabilities.eps_payments` attribute supports:
 
-* `requested` - (Optional)
+* `requested` - (Optional) Stripe does not return this value; the provider keeps it from configuration.
 
 <a id="capabilities.fpx_payments"></a>
 ### `capabilities.fpx_payments`
@@ -416,7 +434,7 @@ The `capabilities.fpx_payments` attribute supports:
 
 The `capabilities.gb_bank_transfer_payments` attribute supports:
 
-* `requested` - (Optional)
+* `requested` - (Optional) Stripe does not return this value; the provider keeps it from configuration.
 
 <a id="capabilities.giropay_payments"></a>
 ### `capabilities.giropay_payments`
@@ -437,7 +455,7 @@ The `capabilities.grabpay_payments` attribute supports:
 
 The `capabilities.ideal_payments` attribute supports:
 
-* `requested` - (Optional)
+* `requested` - (Optional) Stripe does not return this value; the provider keeps it from configuration.
 
 <a id="capabilities.india_international_payments"></a>
 ### `capabilities.india_international_payments`
@@ -465,14 +483,14 @@ The `capabilities.jp_bank_transfer_payments` attribute supports:
 
 The `capabilities.kakao_pay_payments` attribute supports:
 
-* `requested` - (Optional)
+* `requested` - (Optional) Stripe does not return this value; the provider keeps it from configuration.
 
 <a id="capabilities.klarna_payments"></a>
 ### `capabilities.klarna_payments`
 
 The `capabilities.klarna_payments` attribute supports:
 
-* `requested` - (Optional)
+* `requested` - (Optional) Stripe does not return this value; the provider keeps it from configuration.
 
 <a id="capabilities.konbini_payments"></a>
 ### `capabilities.konbini_payments`
@@ -486,28 +504,28 @@ The `capabilities.konbini_payments` attribute supports:
 
 The `capabilities.kr_card_payments` attribute supports:
 
-* `requested` - (Optional)
+* `requested` - (Optional) Stripe does not return this value; the provider keeps it from configuration.
 
 <a id="capabilities.legacy_payments"></a>
 ### `capabilities.legacy_payments`
 
 The `capabilities.legacy_payments` attribute supports:
 
-* `requested` - (Optional)
+* `requested` - (Optional) Stripe does not return this value; the provider keeps it from configuration.
 
 <a id="capabilities.link_payments"></a>
 ### `capabilities.link_payments`
 
 The `capabilities.link_payments` attribute supports:
 
-* `requested` - (Optional)
+* `requested` - (Optional) Stripe does not return this value; the provider keeps it from configuration.
 
 <a id="capabilities.mb_way_payments"></a>
 ### `capabilities.mb_way_payments`
 
 The `capabilities.mb_way_payments` attribute supports:
 
-* `requested` - (Optional)
+* `requested` - (Optional) Stripe does not return this value; the provider keeps it from configuration.
 
 <a id="capabilities.mobilepay_payments"></a>
 ### `capabilities.mobilepay_payments`
@@ -521,7 +539,7 @@ The `capabilities.mobilepay_payments` attribute supports:
 
 The `capabilities.multibanco_payments` attribute supports:
 
-* `requested` - (Optional)
+* `requested` - (Optional) Stripe does not return this value; the provider keeps it from configuration.
 
 <a id="capabilities.mx_bank_transfer_payments"></a>
 ### `capabilities.mx_bank_transfer_payments`
@@ -535,14 +553,14 @@ The `capabilities.mx_bank_transfer_payments` attribute supports:
 
 The `capabilities.naver_pay_payments` attribute supports:
 
-* `requested` - (Optional)
+* `requested` - (Optional) Stripe does not return this value; the provider keeps it from configuration.
 
 <a id="capabilities.nz_bank_account_becs_debit_payments"></a>
 ### `capabilities.nz_bank_account_becs_debit_payments`
 
 The `capabilities.nz_bank_account_becs_debit_payments` attribute supports:
 
-* `requested` - (Optional)
+* `requested` - (Optional) Stripe does not return this value; the provider keeps it from configuration.
 
 <a id="capabilities.oxxo_payments"></a>
 ### `capabilities.oxxo_payments`
@@ -556,7 +574,7 @@ The `capabilities.oxxo_payments` attribute supports:
 
 The `capabilities.p24_payments` attribute supports:
 
-* `requested` - (Optional)
+* `requested` - (Optional) Stripe does not return this value; the provider keeps it from configuration.
 
 <a id="capabilities.pay_by_bank_payments"></a>
 ### `capabilities.pay_by_bank_payments`
@@ -570,7 +588,7 @@ The `capabilities.pay_by_bank_payments` attribute supports:
 
 The `capabilities.payco_payments` attribute supports:
 
-* `requested` - (Optional)
+* `requested` - (Optional) Stripe does not return this value; the provider keeps it from configuration.
 
 <a id="capabilities.paynow_payments"></a>
 ### `capabilities.paynow_payments`
@@ -598,7 +616,7 @@ The `capabilities.payto_payments` attribute supports:
 
 The `capabilities.pix_payments` attribute supports:
 
-* `requested` - (Optional)
+* `requested` - (Optional) Stripe does not return this value; the provider keeps it from configuration.
 
 <a id="capabilities.promptpay_payments"></a>
 ### `capabilities.promptpay_payments`
@@ -619,35 +637,35 @@ The `capabilities.revolut_pay_payments` attribute supports:
 
 The `capabilities.samsung_pay_payments` attribute supports:
 
-* `requested` - (Optional)
+* `requested` - (Optional) Stripe does not return this value; the provider keeps it from configuration.
 
 <a id="capabilities.satispay_payments"></a>
 ### `capabilities.satispay_payments`
 
 The `capabilities.satispay_payments` attribute supports:
 
-* `requested` - (Optional)
+* `requested` - (Optional) Stripe does not return this value; the provider keeps it from configuration.
 
 <a id="capabilities.scalapay_payments"></a>
 ### `capabilities.scalapay_payments`
 
 The `capabilities.scalapay_payments` attribute supports:
 
-* `requested` - (Optional)
+* `requested` - (Optional) Stripe does not return this value; the provider keeps it from configuration.
 
 <a id="capabilities.sepa_bank_transfer_payments"></a>
 ### `capabilities.sepa_bank_transfer_payments`
 
 The `capabilities.sepa_bank_transfer_payments` attribute supports:
 
-* `requested` - (Optional)
+* `requested` - (Optional) Stripe does not return this value; the provider keeps it from configuration.
 
 <a id="capabilities.sepa_debit_payments"></a>
 ### `capabilities.sepa_debit_payments`
 
 The `capabilities.sepa_debit_payments` attribute supports:
 
-* `requested` - (Optional)
+* `requested` - (Optional) Stripe does not return this value; the provider keeps it from configuration.
 
 <a id="capabilities.sequra_payments"></a>
 ### `capabilities.sequra_payments`
@@ -668,7 +686,7 @@ The `capabilities.sofort_payments` attribute supports:
 
 The `capabilities.sunbit_payments` attribute supports:
 
-* `requested` - (Optional)
+* `requested` - (Optional) Stripe does not return this value; the provider keeps it from configuration.
 
 <a id="capabilities.swish_payments"></a>
 ### `capabilities.swish_payments`
@@ -682,28 +700,28 @@ The `capabilities.swish_payments` attribute supports:
 
 The `capabilities.tax_reporting_us_1099_k` attribute supports:
 
-* `requested` - (Optional)
+* `requested` - (Optional) Stripe does not return this value; the provider keeps it from configuration.
 
 <a id="capabilities.tax_reporting_us_1099_misc"></a>
 ### `capabilities.tax_reporting_us_1099_misc`
 
 The `capabilities.tax_reporting_us_1099_misc` attribute supports:
 
-* `requested` - (Optional)
+* `requested` - (Optional) Stripe does not return this value; the provider keeps it from configuration.
 
 <a id="capabilities.transfers"></a>
 ### `capabilities.transfers`
 
 The `capabilities.transfers` attribute supports:
 
-* `requested` - (Optional)
+* `requested` - (Optional) Stripe does not return this value; the provider keeps it from configuration. Stripe refused it on a US account on update: "You must request one or more of the following capabilities: transfers. Please visit https://stripe.com/docs/connect/account-capabilities to learn more.". Stripe refused `false` on an update of a US custom account that requested only `transfers`, which such an account must request; the provider sends a capability request on create only. Elsewhere Stripe refused it on a US account on update: "You must request one or more of the following capabilities: transfers. Please visit https://stripe.com/docs/connect/account-capabilities to learn more.". Where the provider's Stripe account is in `US`, the plan refuses an update that sends `capabilities.transfers.requested = false` to an account that holds `business_type = "company"`, `capabilities.transfers.requested = true` and `type = "custom"`, which Stripe refused there with "You must request one or more of the following capabilities: transfers. Please visit https://stripe.com/docs/connect/account-capabilities to learn more." (conformance suite probe `isolated/capability_transfers_unrequest`). The provider reads the account's country only for a plan that sends such a request, and leaves the request to Stripe where the account is elsewhere or the key cannot read it.
 
 <a id="capabilities.treasury"></a>
 ### `capabilities.treasury`
 
 The `capabilities.treasury` attribute supports:
 
-* `requested` - (Optional)
+* `requested` - (Optional) Stripe does not return this value; the provider keeps it from configuration.
 
 <a id="capabilities.twint_payments"></a>
 ### `capabilities.twint_payments`
@@ -717,21 +735,21 @@ The `capabilities.twint_payments` attribute supports:
 
 The `capabilities.upi_payments` attribute supports:
 
-* `requested` - (Optional)
+* `requested` - (Optional) Stripe does not return this value; the provider keeps it from configuration.
 
 <a id="capabilities.us_bank_account_ach_payments"></a>
 ### `capabilities.us_bank_account_ach_payments`
 
 The `capabilities.us_bank_account_ach_payments` attribute supports:
 
-* `requested` - (Optional)
+* `requested` - (Optional) Stripe does not return this value; the provider keeps it from configuration.
 
 <a id="capabilities.us_bank_transfer_payments"></a>
 ### `capabilities.us_bank_transfer_payments`
 
 The `capabilities.us_bank_transfer_payments` attribute supports:
 
-* `requested` - (Optional)
+* `requested` - (Optional) Stripe does not return this value; the provider keeps it from configuration.
 
 <a id="capabilities.zip_payments"></a>
 ### `capabilities.zip_payments`
@@ -753,10 +771,17 @@ The `company` attribute supports:
 * `name` - (Optional) The company's legal name. Also available for accounts where [controller.requirement_collection](https://docs.stripe.com/api/accounts/object#account_object-controller-requirement_collection) is `stripe`. Default: none.
 * `owners_provided` - (Optional) Whether the company's owners have been provided. This Boolean will be `true` if you've manually indicated that all owners are provided via [the `owners_provided` parameter](https://docs.stripe.com/api/accounts/update#update_account-company-owners_provided), or if Stripe determined that sufficient owners were provided. Stripe determines ownership requirements using both the number of owners provided and their total percent ownership (calculated by adding the `percent_ownership` of each owner together). Default (Stripe): `false` on a company account, `true` on an individual one. Removing it from the configuration leaves the current value.
 * `ownership_declaration` - (Optional) This hash is used to attest that the beneficial owner information provided to Stripe is both current and correct. Removing it from the configuration leaves the current value. See [`company.ownership_declaration`](#company.ownership_declaration) below.
+* `ownership_exemption_reason` - (Optional) Possible values: `qualified_entity_exceeds_ownership_threshold`, `qualifies_as_financial_institution`. Stripe refused it on a US account on create and update: "Country US does not support setting ownership_exemption_reason.".
 * `phone` - (Optional) The company's phone number (used for verification). Default (Stripe): none, or the individual's on an individual account, such as `+10000000000`. Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
 * `principal_place_of_business` - (Optional) Removing it from the configuration leaves the current value. See [`company.principal_place_of_business`](#company.principal_place_of_business) below.
 * `registration_date` - (Optional) Removing it from the configuration leaves the current value. See [`company.registration_date`](#company.registration_date) below.
+* `registration_number` - (Optional) Stripe does not return this value; the provider keeps it from configuration.
 * `structure` - (Optional) The category identifying the legal structure of the company or legal entity. Also available for accounts where [controller.requirement_collection](https://docs.stripe.com/api/accounts/object#account_object-controller-requirement_collection) is `stripe`. See [Business structure](https://docs.stripe.com/connect/identity-verification#business-structure) for more details. Possible values: `free_zone_establishment`, `free_zone_llc`, `government_instrumentality`, `governmental_unit`, `incorporated_non_profit`, `incorporated_partnership`, `limited_liability_partnership`, `llc`, `multi_member_llc`, `private_company`, `private_corporation`, `private_partnership`, `public_company`, `public_corporation`, `public_partnership`, `registered_charity`, `single_member_llc`, `sole_establishment`, `sole_proprietorship`, `tax_exempt_government_instrumentality`, `unincorporated_association`, `unincorporated_non_profit`, `unincorporated_partnership`. Default: none.
+* `tax_id` - (Optional, Sensitive) Stripe does not return this value; the provider keeps it from configuration.
+* `tax_id_provided` - (Read-Only) Whether the company's business ID number was provided.
+* `tax_id_registrar` - (Optional) Stripe refused it on a US account on create: "Registrar Amtsgericht Berlin does not exist in US.". Stripe refused it on a US account on update: "Registrar Amtsgericht Hamburg does not exist in US.".
+* `vat_id` - (Optional, Sensitive) Stripe does not return this value; the provider keeps it from configuration.
+* `vat_id_provided` - (Read-Only) Whether the company's business VAT number was provided.
 
 <a id="company.address"></a>
 ### `company.address`
@@ -829,7 +854,7 @@ The `controller` attribute supports:
 * `fees` - (Optional) Removing it from the configuration leaves the current value. See [`controller.fees`](#controller.fees) below.
 * `is_controller` - (Read-Only) `true` if the Connect application retrieving the resource controls the account and can therefore exercise [platform controls](https://docs.stripe.com/connect/platform-controls-for-standard-accounts). Otherwise, this field is null.
 * `losses` - (Optional) Removing it from the configuration leaves the current value. See [`controller.losses`](#controller.losses) below.
-* `requirement_collection` - (Optional) A value indicating responsibility for collecting requirements on this account. Only returned when the Connect application retrieving the resource controls the account. Possible values: `application`, `stripe`. Removing it from the configuration leaves the current value.
+* `requirement_collection` - (Optional) A value indicating responsibility for collecting requirements on this account. Only returned when the Connect application retrieving the resource controls the account. Possible values: `application`, `stripe`. Default (Stripe): application on a Custom account, stripe on a Standard one (`stripe` on a US account). Removing it from the configuration leaves the current value.
 * `stripe_dashboard` - (Optional) Removing it from the configuration leaves the current value. See [`controller.stripe_dashboard`](#controller.stripe_dashboard) below.
 * `type` - (Read-Only) The controller type. Can be `application`, if a Connect application controls the account, or `account`, if the account controls itself. Possible values: `account`, `application`.
 
@@ -838,42 +863,56 @@ The `controller` attribute supports:
 
 The `controller.fees` attribute supports:
 
-* `payer` - (Optional) A value indicating the responsible payer of a bundle of Stripe fees for pricing-control eligible products on this account. Learn more about [fee behavior on connected accounts](https://docs.stripe.com/connect/direct-charges-fee-payer-behavior). Possible values: `account`, `application`. Removing it from the configuration leaves the current value.
+* `payer` - (Optional) A value indicating the responsible payer of a bundle of Stripe fees for pricing-control eligible products on this account. Learn more about [fee behavior on connected accounts](https://docs.stripe.com/connect/direct-charges-fee-payer-behavior). Possible values: `account`, `application`. Default (Stripe): application on a Custom account, account on a Standard one (`account` on a US account). Removing it from the configuration leaves the current value.
 
 <a id="controller.losses"></a>
 ### `controller.losses`
 
 The `controller.losses` attribute supports:
 
-* `payments` - (Optional) A value indicating who is liable when this account can't pay back negative balances from payments. Possible values: `application`, `stripe`. Removing it from the configuration leaves the current value.
+* `payments` - (Optional) A value indicating who is liable when this account can't pay back negative balances from payments. Possible values: `application`, `stripe`. Default (Stripe): application on a Custom account, stripe on a Standard one (`stripe` on a US account). Removing it from the configuration leaves the current value.
 
 <a id="controller.stripe_dashboard"></a>
 ### `controller.stripe_dashboard`
 
 The `controller.stripe_dashboard` attribute supports:
 
-* `type` - (Optional) A value indicating the Stripe dashboard this account has access to independent of the Connect application. Possible values: `express`, `full`, `none`. Removing it from the configuration leaves the current value.
+* `type` - (Optional) A value indicating the Stripe dashboard this account has access to independent of the Connect application. Possible values: `express`, `full`, `none`. Default (Stripe): none on a Custom account, full on a Standard one (`full` on a US account). Removing it from the configuration leaves the current value.
+
+<a id="groups"></a>
+### `groups`
+
+The `groups` attribute supports:
+
+* `payments_pricing` - (Optional) Stripe refused it on a US account on create: "No such account_group: attrs_pricing_group". Stripe refused it on a US account on update: "No such account_group: attrs_pricing_group_2". Stripe refused a pricing group that does not exist, on create and on update; the suite has recorded none it takes. Elsewhere Stripe refused it on a US account on create: "No such account_group: attrs_pricing_group". Elsewhere Stripe refused it on a US account on update: "No such account_group: attrs_pricing_group_2".
 
 <a id="individual"></a>
 ### `individual`
 
 The `individual` attribute supports:
 
+* `account` - (Read-Only) The account the person is associated with.
 * `address` - (Optional) The person's address. Removing it from the configuration leaves the current value. See [`individual.address`](#individual.address) below.
+* `created` - (Read-Only) Time at which the object was created. Measured in seconds since the Unix epoch.
 * `dob` - (Optional) The person's date of birth. Removing it from the configuration leaves the current value. See [`individual.dob`](#individual.dob) below.
 * `email` - (Optional) The person's email address. Also available for accounts where [controller.requirement_collection](https://docs.stripe.com/api/accounts/object#account_object-controller-requirement_collection) is `stripe`. Default: none.
 * `first_name` - (Optional) The person's first name. Also available for accounts where [controller.requirement_collection](https://docs.stripe.com/api/accounts/object#account_object-controller-requirement_collection) is `stripe`. Default: none.
 * `full_name_aliases` - (Optional) A list of alternate names or aliases that the person is known by. Also available for accounts where [controller.requirement_collection](https://docs.stripe.com/api/accounts/object#account_object-controller-requirement_collection) is `stripe`. Default: none. Removing it from the configuration leaves the current value.
 * `gender` - (Optional) The person's gender. Default: none.
-* `id_number` - (Optional, Sensitive) The person's ID number, as appropriate for their country. For example, a social security number in the U.S., social insurance number in Canada, etc. Instead of the number itself, you can also provide a [PII token provided by Stripe.js](https://docs.stripe.com/js/tokens/create_token?type=pii). Changing this value for the account's representative requires that the account re-accept the [terms of service](https://docs.stripe.com/api/accounts/object#account_object-tos_acceptance).
+* `id` - (Read-Only) Unique identifier for the object.
+* `id_number` - (Optional, Sensitive) The person's ID number, as appropriate for their country. For example, a social security number in the U.S., social insurance number in Canada, etc. Instead of the number itself, you can also provide a [PII token provided by Stripe.js](https://docs.stripe.com/js/tokens/create_token?type=pii). Changing this value for the account's representative requires that the account re-accept the [terms of service](https://docs.stripe.com/api/accounts/object#account_object-tos_acceptance). Stripe does not return this value; the provider keeps it from configuration.
+* `id_number_provided` - (Read-Only) Whether the person's `id_number` was provided. True if either the full ID number was provided or if only the required part of the ID number was provided (ex. last four of an individual's SSN for the US indicated by `ssn_last_4_provided`).
+* `id_number_secondary` - (Optional, Sensitive) The person's secondary ID number, as appropriate for their country, will be used for enhanced verification checks. In Thailand, this would be the laser code found on the back of an ID card. Instead of the number itself, you can also provide a [PII token provided by Stripe.js](https://docs.stripe.com/js/tokens/create_token?type=pii). Changing this value for the account's representative requires that the account re-accept the [terms of service](https://docs.stripe.com/api/accounts/object#account_object-tos_acceptance). Stripe refused it on a US account on create and update: "Unexpected id_number_secondary for US.".
 * `last_name` - (Optional) The person's last name. Also available for accounts where [controller.requirement_collection](https://docs.stripe.com/api/accounts/object#account_object-controller-requirement_collection) is `stripe`. Default: none.
 * `maiden_name` - (Optional) The person's maiden name. Default: none.
 * `metadata` - (Optional) Set of [key-value pairs](https://docs.stripe.com/api/metadata) that you can attach to an object. This can be useful for storing additional information about the object in a structured format. Removing it from the configuration leaves the current value.
+* `object` - (Read-Only) String representing the object's type. Objects of the same type share the same value. Possible values: `person`.
 * `phone` - (Optional) The person's phone number. Default: none. Removing it from the configuration leaves the current value.
 * `political_exposure` - (Optional) Indicates if the person or any of their representatives, family members, or other closely related persons, declares that they hold or have held an important public job or function, in any jurisdiction. Possible values: `existing`, `none`. Default: none. Removing it from the configuration leaves the current value.
 * `registered_address` - (Optional) The person's registered address. Removing it from the configuration leaves the current value. See [`individual.registered_address`](#individual.registered_address) below.
 * `relationship` - (Optional) The relationship that this person has with the account's legal entity. Removing it from the configuration leaves the current value. See [`individual.relationship`](#individual.relationship) below.
-* `ssn_last_4` - (Optional, Sensitive) The last four digits of the person's Social Security number (U.S. only). Changing this value for the account's representative requires that the account re-accept the [terms of service](https://docs.stripe.com/api/accounts/object#account_object-tos_acceptance).
+* `ssn_last_4` - (Optional, Sensitive) The last four digits of the person's Social Security number (U.S. only). Changing this value for the account's representative requires that the account re-accept the [terms of service](https://docs.stripe.com/api/accounts/object#account_object-tos_acceptance). Stripe does not return this value; the provider keeps it from configuration.
+* `ssn_last_4_provided` - (Read-Only) Whether the last four digits of the person's Social Security number have been provided (U.S. only).
 * `verification` - (Optional) The person's verification status. Removing it from the configuration leaves the current value. See [`individual.verification`](#individual.verification) below.
 
 <a id="individual.address"></a>
@@ -914,10 +953,13 @@ The `individual.registered_address` attribute supports:
 
 The `individual.relationship` attribute supports:
 
+* `authorizer` - (Read-Only) Whether the person is the authorizer of the account's representative.
 * `director` - (Optional) Whether the person is a director of the account's legal entity. Directors are typically members of the governing board of the company, or responsible for ensuring the company meets its regulatory obligations. Default (Stripe): `false` once `individual` is set. Removing it from the configuration leaves the current value.
 * `executive` - (Optional) Whether the person has significant responsibility to control, manage, or direct the organization. Default (Stripe): `false` once `individual` is set. Removing it from the configuration leaves the current value.
+* `legal_guardian` - (Read-Only) Whether the person is the legal guardian of the account's representative.
 * `owner` - (Optional) Whether the person is an owner of the account’s legal entity. Default (Stripe): `false` once `individual` is set. Removing it from the configuration leaves the current value.
 * `percent_ownership` - (Optional) The percent owned by the person of the account's legal entity. Default: none.
+* `representative` - (Read-Only) Whether the person is authorized as the primary representative of the account. This is the person nominated by the business to provide information about themselves, and general information about the account. There can only be one representative at any given time. At the time the account is created, this person should be set to the person responsible for opening the account.
 * `title` - (Optional) The person's title (e.g., CEO, Support Engineer). Default: none.
 
 <a id="individual.verification"></a>
@@ -952,13 +994,13 @@ The `settings` attribute supports:
 * `bacs_debit_payments` - (Read-Only) See [`settings.bacs_debit_payments`](#settings.bacs_debit_payments) below.
 * `branding` - (Read-Only) See [`settings.branding`](#settings.branding) below.
 * `card_issuing` - (Optional) Removing it from the configuration leaves the current value. See [`settings.card_issuing`](#settings.card_issuing) below.
-* `card_payments` - (Read-Only) See [`settings.card_payments`](#settings.card_payments) below.
+* `card_payments` - (Optional) Removing it from the configuration leaves the current value. See [`settings.card_payments`](#settings.card_payments) below.
 * `dashboard` - (Read-Only) See [`settings.dashboard`](#settings.dashboard) below.
-* `invoices` - (Read-Only) See [`settings.invoices`](#settings.invoices) below.
-* `payments` - (Read-Only) See [`settings.payments`](#settings.payments) below.
-* `payouts` - (Read-Only) See [`settings.payouts`](#settings.payouts) below.
+* `invoices` - (Optional) Removing it from the configuration leaves the current value. See [`settings.invoices`](#settings.invoices) below.
+* `payments` - (Optional) Removing it from the configuration leaves the current value. See [`settings.payments`](#settings.payments) below.
+* `payouts` - (Optional) Removing it from the configuration leaves the current value. See [`settings.payouts`](#settings.payouts) below.
 * `paypay_payments` - (Read-Only) See [`settings.paypay_payments`](#settings.paypay_payments) below.
-* `sepa_debit_payments` - (Read-Only) See [`settings.sepa_debit_payments`](#settings.sepa_debit_payments) below.
+* `sepa_debit_payments` - (Optional) Removing it from the configuration leaves the current value. See [`settings.sepa_debit_payments`](#settings.sepa_debit_payments) below.
 * `treasury` - (Optional) Removing it from the configuration leaves the current value. See [`settings.treasury`](#settings.treasury) below.
 
 <a id="settings.bacs_debit_payments"></a>
@@ -1000,18 +1042,18 @@ The `settings.card_issuing.tos_acceptance` attribute supports:
 
 The `settings.card_payments` attribute supports:
 
-* `decline_on` - See [`settings.card_payments.decline_on`](#settings.card_payments.decline_on) below.
-* `statement_descriptor_prefix` - The default text that appears on credit card statements when a charge is made. This field prefixes any dynamic `statement_descriptor` specified on the charge. `statement_descriptor_prefix` is useful for maximizing descriptor space for the dynamic portion.
-* `statement_descriptor_prefix_kana` - The Kana variation of the default text that appears on credit card statements when a charge is made (Japan only). This field prefixes any dynamic `statement_descriptor_suffix_kana` specified on the charge. `statement_descriptor_prefix_kana` is useful for maximizing descriptor space for the dynamic portion.
-* `statement_descriptor_prefix_kanji` - The Kanji variation of the default text that appears on credit card statements when a charge is made (Japan only). This field prefixes any dynamic `statement_descriptor_suffix_kanji` specified on the charge. `statement_descriptor_prefix_kanji` is useful for maximizing descriptor space for the dynamic portion.
+* `decline_on` - (Optional) Removing it from the configuration leaves the current value. See [`settings.card_payments.decline_on`](#settings.card_payments.decline_on) below.
+* `statement_descriptor_prefix` - (Optional) The default text that appears on credit card statements when a charge is made. This field prefixes any dynamic `statement_descriptor` specified on the charge. `statement_descriptor_prefix` is useful for maximizing descriptor space for the dynamic portion. Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
+* `statement_descriptor_prefix_kana` - (Read-Only) The Kana variation of the default text that appears on credit card statements when a charge is made (Japan only). This field prefixes any dynamic `statement_descriptor_suffix_kana` specified on the charge. `statement_descriptor_prefix_kana` is useful for maximizing descriptor space for the dynamic portion.
+* `statement_descriptor_prefix_kanji` - (Read-Only) The Kanji variation of the default text that appears on credit card statements when a charge is made (Japan only). This field prefixes any dynamic `statement_descriptor_suffix_kanji` specified on the charge. `statement_descriptor_prefix_kanji` is useful for maximizing descriptor space for the dynamic portion.
 
 <a id="settings.card_payments.decline_on"></a>
 ### `settings.card_payments.decline_on`
 
 The `settings.card_payments.decline_on` attribute supports:
 
-* `avs_failure` - Whether Stripe automatically declines charges with an incorrect ZIP or postal code. This setting only applies when a ZIP or postal code is provided and they fail bank verification.
-* `cvc_failure` - Whether Stripe automatically declines charges with an incorrect CVC. This setting only applies when a CVC is provided and it fails bank verification.
+* `avs_failure` - (Optional) Whether Stripe automatically declines charges with an incorrect ZIP or postal code. This setting only applies when a ZIP or postal code is provided and they fail bank verification. Default (Stripe): `false`. Removing it from the configuration leaves the current value.
+* `cvc_failure` - (Optional) Whether Stripe automatically declines charges with an incorrect CVC. This setting only applies when a CVC is provided and it fails bank verification. Default (Stripe): `false`. Removing it from the configuration leaves the current value.
 
 <a id="settings.dashboard"></a>
 ### `settings.dashboard`
@@ -1026,38 +1068,38 @@ The `settings.dashboard` attribute supports:
 
 The `settings.invoices` attribute supports:
 
-* `default_account_tax_ids` - The list of default Account Tax IDs to automatically include on invoices. Account Tax IDs get added when an invoice is finalized.
-* `hosted_payment_method_save` - Whether to save the payment method after a payment is completed for a one-time invoice or a subscription invoice when the customer already has a default payment method on the hosted invoice page. Possible values: `always`, `never`, `offer`.
+* `default_account_tax_ids` - (Read-Only) The list of default Account Tax IDs to automatically include on invoices. Account Tax IDs get added when an invoice is finalized.
+* `hosted_payment_method_save` - (Optional) Whether to save the payment method after a payment is completed for a one-time invoice or a subscription invoice when the customer already has a default payment method on the hosted invoice page. Possible values: `always`, `never`, `offer`. Default (Stripe): `offer`. Removing it from the configuration leaves the current value.
 
 <a id="settings.payments"></a>
 ### `settings.payments`
 
 The `settings.payments` attribute supports:
 
-* `statement_descriptor` - The default text that appears on credit card statements when a charge is made. This field prefixes any dynamic `statement_descriptor` specified on the charge.
-* `statement_descriptor_kana` - The Kana variation of `statement_descriptor` used for charges in Japan. Japanese statement descriptors have [special requirements](https://docs.stripe.com/get-started/account/statement-descriptors#set-japanese-statement-descriptors).
-* `statement_descriptor_kanji` - The Kanji variation of `statement_descriptor` used for charges in Japan. Japanese statement descriptors have [special requirements](https://docs.stripe.com/get-started/account/statement-descriptors#set-japanese-statement-descriptors).
+* `statement_descriptor` - (Optional) The default text that appears on credit card statements when a charge is made. This field prefixes any dynamic `statement_descriptor` specified on the charge. Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
+* `statement_descriptor_kana` - (Read-Only) The Kana variation of `statement_descriptor` used for charges in Japan. Japanese statement descriptors have [special requirements](https://docs.stripe.com/get-started/account/statement-descriptors#set-japanese-statement-descriptors).
+* `statement_descriptor_kanji` - (Read-Only) The Kanji variation of `statement_descriptor` used for charges in Japan. Japanese statement descriptors have [special requirements](https://docs.stripe.com/get-started/account/statement-descriptors#set-japanese-statement-descriptors).
 
 <a id="settings.payouts"></a>
 ### `settings.payouts`
 
 The `settings.payouts` attribute supports:
 
-* `debit_negative_balances` - A Boolean indicating if Stripe should try to reclaim negative balances from an attached bank account. See [Understanding Connect account balances](https://docs.stripe.com/connect/account-balances) for details. The default value is `false` when [controller.requirement_collection](https://docs.stripe.com/api/accounts/object#account_object-controller-requirement_collection) is `application`, which includes Custom accounts, otherwise `true`.
-* `schedule` - See [`settings.payouts.schedule`](#settings.payouts.schedule) below.
-* `statement_descriptor` - The text that appears on the bank account statement for payouts. If not set, this defaults to the platform's bank descriptor as set in the Dashboard.
+* `debit_negative_balances` - (Optional) A Boolean indicating if Stripe should try to reclaim negative balances from an attached bank account. See [Understanding Connect account balances](https://docs.stripe.com/connect/account-balances) for details. The default value is `false` when [controller.requirement_collection](https://docs.stripe.com/api/accounts/object#account_object-controller-requirement_collection) is `application`, which includes Custom accounts, otherwise `true`. Removing it from the configuration leaves the current value.
+* `schedule` - (Optional) Removing it from the configuration leaves the current value. See [`settings.payouts.schedule`](#settings.payouts.schedule) below.
+* `statement_descriptor` - (Optional) The text that appears on the bank account statement for payouts. If not set, this defaults to the platform's bank descriptor as set in the Dashboard. Default: none.
 
 <a id="settings.payouts.schedule"></a>
 ### `settings.payouts.schedule`
 
 The `settings.payouts.schedule` attribute supports:
 
-* `delay_days` - The number of days charges for the account will be held before being paid out.
-* `interval` - How frequently funds will be paid out. One of `manual` (payouts only created via API call), `daily`, `weekly`, or `monthly`.
-* `monthly_anchor` - The day of the month funds will be paid out. Only shown if `interval` is monthly. Payouts scheduled between the 29th and 31st of the month are sent on the last day of shorter months.
-* `monthly_payout_days` - The days of the month funds will be paid out. Only shown if `interval` is monthly. Payouts scheduled between the 29th and 31st of the month are sent on the last day of shorter months.
-* `weekly_anchor` - The day of the week funds will be paid out, of the style 'monday', 'tuesday', etc. Only shown if `interval` is weekly.
-* `weekly_payout_days` - The days of the week when available funds are paid out, specified as an array, for example, [`monday`, `tuesday`]. Only shown if `interval` is weekly.
+* `delay_days` - (Optional) The number of days charges for the account will be held before being paid out. Removing it from the configuration leaves the current value.
+* `interval` - (Optional) How frequently funds will be paid out. One of `manual` (payouts only created via API call), `daily`, `weekly`, or `monthly`. Possible values: `daily`, `manual`, `monthly`, `weekly`. Default (Stripe): `daily`. Removing it from the configuration leaves the current value.
+* `monthly_anchor` - (Optional) The day of the month funds will be paid out. Only shown if `interval` is monthly. Payouts scheduled between the 29th and 31st of the month are sent on the last day of shorter months. Removing it from the configuration leaves the current value.
+* `monthly_payout_days` - (Optional) The days of the month funds will be paid out. Only shown if `interval` is monthly. Payouts scheduled between the 29th and 31st of the month are sent on the last day of shorter months. Removing it from the configuration leaves the current value.
+* `weekly_anchor` - (Optional) The day of the week funds will be paid out, of the style 'monday', 'tuesday', etc. Only shown if `interval` is weekly. Possible values: `friday`, `monday`, `saturday`, `sunday`, `thursday`, `tuesday`, `wednesday`. Removing it from the configuration leaves the current value.
+* `weekly_payout_days` - (Optional) The days of the week when available funds are paid out, specified as an array, for example, [`monday`, `tuesday`]. Only shown if `interval` is weekly. Removing it from the configuration leaves the current value.
 
 <a id="settings.paypay_payments"></a>
 ### `settings.paypay_payments`
@@ -1097,7 +1139,7 @@ The `settings.paypay_payments.site.restricted` attribute supports:
 
 The `settings.sepa_debit_payments` attribute supports:
 
-* `creditor_id` - SEPA creditor identifier that identifies the company making the payment.
+* `creditor_id` - (Optional) SEPA creditor identifier that identifies the company making the payment. Stripe refused it on a US account on create: "This SEPA Creditor Identifier (CID) is not allowed at Stripe. Please contact us at https://support.stripe.com/contact if you think you should be able to use this CID.". Removing it from the configuration leaves the current value.
 
 <a id="settings.treasury"></a>
 ### `settings.treasury`
@@ -1130,7 +1172,6 @@ This resource exports the following attributes in addition to the arguments abov
 * `id` - Unique identifier for the object.
 * `charges_enabled` - Whether the account can process charges.
 * `created` - Time at which the account was connected. Measured in seconds since the Unix epoch.
-* `default_currency` - Three-letter ISO currency code representing the default currency for the account. This must be a currency that [Stripe supports in the account's country](https://stripe.com/docs/payouts).
 * `details_submitted` - Whether account details have been submitted. Accounts with Stripe Dashboard access, which includes Standard accounts, cannot receive payouts before this is true. Accounts where this is false should be directed to [an onboarding flow](https://docs.stripe.com/connect/onboarding) to finish submitting account details.
 * `future_requirements` - See [`future_requirements`](#future_requirements) below.
 * `payouts_enabled` - Whether the funds in this account can be paid out.
@@ -1240,4 +1281,4 @@ Using `terraform import`, import an account using its ID. For example:
 % terraform import stripe_account.seller acct_1Nv0FGQ9RKHgCVdK
 ```
 
-~> Stripe does not return which `capabilities` were requested, `external_account`, `individual.id_number` or `individual.ssn_last_4`, so an imported account has none of them in state. Add `lifecycle { ignore_changes = [capabilities, external_account, individual.id_number, individual.ssn_last_4] }`, listing those the configuration sets, because a plan that changes one of them fails. An import reads `individual.phone` and the verification documents in Stripe's form, such as `+10000000000` for `0000000000` and a `file_...` ID for a test token, so the first plan updates one configured in another form unless `ignore_changes` lists it too, and Stripe refuses a new document once it has verified the individual.
+~> Stripe does not return which `capabilities` were requested, `external_account`, `bank_account`, `individual.id_number`, `individual.ssn_last_4` or the company's `registration_number`, `tax_id` and `vat_id`, so an imported account has none of them in state. Add `lifecycle { ignore_changes = [capabilities, external_account, bank_account, bank_account_data, individual.id_number, individual.ssn_last_4, company.registration_number, company.tax_id, company.vat_id] }`, listing those the configuration sets, because a plan that changes one of them fails. An import reads `individual.phone` and the verification documents in Stripe's form, such as `+10000000000` for `0000000000` and a `file_...` ID for a test token, so the first plan updates one configured in another form unless `ignore_changes` lists it too, and Stripe refuses a new document once it has verified the individual. Stripe does not return `company.ownership_exemption_reason`, `company.registration_number`, `company.tax_id`, `company.tax_id_registrar`, `company.vat_id`, `groups`, `individual.id_number_secondary` or `bank_account_data`, so an imported account has them null: a configuration that sets `company.ownership_exemption_reason`, `company.registration_number`, `company.tax_id`, `company.tax_id_registrar`, `company.vat_id`, `groups` or `individual.id_number_secondary` plans an update after the import, and one that sets `bank_account_data` plans a replacement.

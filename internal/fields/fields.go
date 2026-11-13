@@ -109,6 +109,11 @@ type Field struct {
 	// conformance suite therefore never sends, the sentence that names the value and the suite's
 	// reason.
 	Unreachable string
+	// UnsetUnreachable is, on a nested argument an update takes, that Stripe fails an update
+	// that unsets it on every attempt, so the engine may not send the unset of its own when the
+	// configuration removes it: it refuses a declaration that sends the hash holding it member by
+	// member, where a removed member goes as the unset.
+	UnsetUnreachable bool
 	// Copy is, on an embedded copy of another Stripe object, the data source type that reads
 	// that object (D3).
 	Copy string

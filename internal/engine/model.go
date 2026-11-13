@@ -1037,6 +1037,17 @@ func (m *model) checkSentMembers() error {
 		if list, member := computedInElements(n); list != "" {
 			return fmt.Errorf("%s: send-whole-members entry `%s` holds `%s`, whose elements have the computed member `%s`: a whole send could not send the list as planned", decl.TypeName, name, list, member)
 		}
+		if leaf := unsetSentWhole(n); leaf != "" {
+			return fmt.Errorf("%s: send-whole-members entry `%s` holds `%s`, whose unset Stripe fails on every attempt, and a whole send would send it as the unset when the configuration removes it", decl.TypeName, name, leaf)
+		}
+	}
+	for _, name := range changed {
+		n, _ := hash(name)
+		for _, k := range n.Kids {
+			if k.Update && k.UnsetUnreachable {
+				return fmt.Errorf("%s: send-changed-members entry `%s` holds `%s`, whose unset Stripe fails on every attempt, and an update would send it as the unset when the configuration removes it", decl.TypeName, name, k.Path)
+			}
+		}
 	}
 	var walk func(n *node) error
 	walk = func(n *node) error {
@@ -1061,6 +1072,25 @@ func (m *model) checkSentMembers() error {
 		}
 	}
 	return nil
+}
+
+// unsetSentWhole finds, among what a whole send of n sends member by member, an argument whose
+// unset Stripe fails on every attempt (UnsetUnreachable), which wholeMembers sends as the unset
+// when the configuration removes it, unless the hash that holds it leaves a removed member out
+// (SiblingsCleared). A list's elements are sent as configured, never with an unset.
+func unsetSentWhole(n *node) string {
+	for _, k := range n.Kids {
+		switch {
+		case !k.Update:
+		case k.Shape == fields.Object:
+			if leaf := unsetSentWhole(k); leaf != "" {
+				return leaf
+			}
+		case k.UnsetUnreachable && !n.SiblingsCleared:
+			return k.Path
+		}
+	}
+	return ""
 }
 
 // computedInElements finds, among what a whole send of n sends, a list or map of hashes whose

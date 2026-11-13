@@ -221,9 +221,12 @@ func TestAccAccountV2_customerOnly(t *testing.T) {
 
 // Stripe updates the display name, the contact email and the registered name and merges the
 // identity and the metadata, removing a key sent as null (suite: "update", "update unsets
-// metadata key with null"). The update never sends the create-only identity fields, the
-// configurations, the dashboard or the defaults. Removing the display name fails, because
-// nothing proves Stripe clears it with null.
+// metadata key with null"; TestV2CoreAccountAttributes, probe `update/84`, which changes the
+// registered name of a merchant created with one). The account is a merchant alone, as
+// `update/84`'s is: the record has no create of a customer beside a merchant to say what such an
+// account's customer configuration reads. The update never sends the create-only identity
+// fields, the configurations, the dashboard or the defaults. Removing the display name fails,
+// because nothing proves Stripe clears it with null.
 func TestAccAccountV2_update(t *testing.T) {
 	acct := acctest.NewAccount(t)
 	var path string
@@ -238,9 +241,9 @@ func TestAccAccountV2_update(t *testing.T) {
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: tfacc.ProviderFactories,
 		Steps: acctest.Forget(t, []resource.TestStep{
-			{Config: merchantConfig(acct, ""), Check: pathOf(&path)},
+			{Config: accountConfig(acct, created(acct), merchant, managed), Check: pathOf(&path)},
 			{
-				Config: accountConfig(acct, renamed, customer+merchant, managed),
+				Config: accountConfig(acct, renamed, merchant, managed),
 				ConfigPlanChecks: resource.ConfigPlanChecks{PreApply: []plancheck.PlanCheck{
 					plancheck.ExpectResourceAction(address, plancheck.ResourceActionUpdate),
 				}},
@@ -286,7 +289,7 @@ func TestAccAccountV2_update(t *testing.T) {
 				),
 			},
 			{
-				Config:      accountConfig(acct, cleared, customer+merchant, managed),
+				Config:      accountConfig(acct, cleared, merchant, managed),
 				ExpectError: regexp.MustCompile("clearing `display_name` is not supported"),
 			},
 		}, nil, "stripe_account_v2"),

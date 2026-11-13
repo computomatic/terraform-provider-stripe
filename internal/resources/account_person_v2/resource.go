@@ -30,12 +30,18 @@ import (
 // so the configured values stay in state. The record proves null unsets `given_name`, `surname`,
 // `email` and `legal_gender`, and Stripe refuses it for `phone` and `political_exposure`.
 //
+// The record of fake `v0.42.0` proves a person's documents, additional addresses and additional
+// names on create and on update, each changed whole on a person created with them (probes
+// `update/5`, `update/6` and `update/8`), and a maiden name in place of an alias, so an update
+// sends each whole as configured, which the record does not list among the hashes whose
+// left-out members Stripe keeps.
+//
 // Stripe deletes a person with DELETE, answers a second delete with the same stub, and a
 // retrieve of a deleted person with a 404 (suite: "delete").
 var Declaration = engine.Declaration{
 	TypeName:              "stripe_account_person_v2",
 	IDPrefix:              "person_",
-	Description:           "A person of an account created through Stripe's `/v2` Accounts API, such as its representative, an executive, an owner or a director. `terraform destroy` deletes the person, and changing `account_id` creates a new one. Stripe never returns the `value` of an ID number, so state keeps the values you configured and treats them as sensitive. State holds only the ID numbers you configured, matched by `type`: a minute or two after it creates a person with a `us_ssn_last_4`, Stripe also lists a `us_ssn`, which the data source shows and the resource leaves out. A plan that changes `id_numbers` on an existing person fails, because changing them is not supported yet: revert the configuration, ignore the change, or recreate the person deliberately with `terraform taint` (`tofu taint` in OpenTofu). Stripe returns `address.country` in upper case and a whole `relationship.percent_ownership` with `.0`, so state keeps the values as you configured them. Removing `given_name`, `surname`, `email` or `legal_gender` from the configuration clears it. Stripe has no proven way to clear the rest of a person's details, so an apply that removes `phone`, `date_of_birth`, `address` or `relationship` fails; removing `political_exposure`, `nationalities` or a member of `address` or `relationship` leaves its value on the person.",
+	Description:           "A person of an account created through Stripe's `/v2` Accounts API, such as its representative, an executive, an owner or a director. `terraform destroy` deletes the person, and changing `account_id` creates a new one. Stripe never returns the `value` of an ID number, so state keeps the values you configured and treats them as sensitive. State holds only the ID numbers you configured, matched by `type`: a minute or two after it creates a person with a `us_ssn_last_4`, Stripe also lists a `us_ssn`, which the data source shows and the resource leaves out. A plan that changes `id_numbers` on an existing person fails, because changing them is not supported yet: revert the configuration, ignore the change, or recreate the person deliberately with `terraform taint` (`tofu taint` in OpenTofu). Stripe returns `address.country` in upper case and a whole `relationship.percent_ownership` with `.0`, so state keeps the values as you configured them. `documents`, `additional_addresses` and `additional_names` change in place, each sent whole: the lists are matched by position, so a reorder is a change, and an element the configuration drops is dropped from the person. Removing `given_name`, `surname`, `email` or `legal_gender` from the configuration clears it. Stripe has no proven way to clear the rest of a person's details, so an apply that removes `phone`, `date_of_birth`, `address` or `relationship` fails; removing `political_exposure`, `nationalities` or a member of `address` or `relationship` leaves its value on the person.",
 	DataSourceDescription: "A person of an account created through Stripe's `/v2` Accounts API, such as its representative, an executive, an owner or a director.",
 	ImportNote:            "Stripe never returns the `value` of an ID number, so an imported person has none in `id_numbers`, and its `address.country` and `relationship.percent_ownership` are as Stripe returns them. Add `lifecycle { ignore_changes = [id_numbers] }` to a configuration that sets them, because a plan that changes `id_numbers` fails.",
 	ImportNoteLevel:       engine.NoteWarning,
@@ -54,6 +60,12 @@ var Declaration = engine.Declaration{
 	Sensitive:          []string{"id_numbers.value"},
 	PreserveConfig:     []string{"address.country", "relationship.percent_ownership"},
 	SendChangedMembers: []string{"relationship"},
+	// Stripe returns an additional address's and an additional name's members as sent (the
+	// record's `returned`), so a list element holds what the configuration sets.
+	NotServerDefaulted: []string{
+		"additional_addresses.city", "additional_addresses.line1", "additional_addresses.line2", "additional_addresses.postal_code",
+		"additional_addresses.state", "additional_addresses.town", "additional_names.full_name", "additional_names.surname",
+	},
 	ServerDefaulted: []string{
 		"address.city", "address.line1", "address.line2", "address.postal_code", "address.state", "address.town",
 		"relationship", "relationship.director", "relationship.executive", "relationship.legal_guardian", "relationship.owner",

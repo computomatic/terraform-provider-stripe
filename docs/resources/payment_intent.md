@@ -153,9 +153,14 @@ The `payment_method_data` attribute supports:
 
 * `allow_redisplay` - (Optional) Possible values: `always`, `limited`, `unspecified`.
 * `billing_details` - (Optional) See [`payment_method_data.billing_details`](#payment_method_data.billing_details) below.
+* `eps` - (Optional) See [`payment_method_data.eps`](#payment_method_data.eps) below.
+* `ideal` - (Optional) See [`payment_method_data.ideal`](#payment_method_data.ideal) below.
 * `metadata` - (Optional)
+* `naver_pay` - (Optional) See [`payment_method_data.naver_pay`](#payment_method_data.naver_pay) below.
+* `p24` - (Optional) See [`payment_method_data.p24`](#payment_method_data.p24) below.
 * `radar_options` - (Optional) See [`payment_method_data.radar_options`](#payment_method_data.radar_options) below.
 * `type` - (Required) Possible values: `acss_debit`, `affirm`, `afterpay_clearpay`, `alipay`, `alma`, `amazon_pay`, `au_becs_debit`, `bacs_debit`, `bancontact`, `billie`, `bizum`, `blik`, `boleto`, `cashapp`, `crypto`, `customer_balance`, `eps`, `fpx`, `giropay`, `grabpay`, `ideal`, `kakao_pay`, `klarna`, `konbini`, `kr_card`, `link`, `mb_way`, `mobilepay`, `multibanco`, `naver_pay`, `nz_bank_account`, `oxxo`, `p24`, `pay_by_bank`, `payco`, `paynow`, `paypal`, `paypay`, `payto`, `pix`, `promptpay`, `revolut_pay`, `samsung_pay`, `satispay`, `scalapay`, `sepa_debit`, `sequra`, `sofort`, `sunbit`, `swish`, `twint`, `upi`, `us_bank_account`, `wechat_pay`, `zip`.
+* `us_bank_account` - (Optional) See [`payment_method_data.us_bank_account`](#payment_method_data.us_bank_account) below.
 
 <a id="payment_method_data.billing_details"></a>
 ### `payment_method_data.billing_details`
@@ -166,7 +171,7 @@ The `payment_method_data.billing_details` attribute supports:
 * `email` - (Optional)
 * `name` - (Optional)
 * `phone` - (Optional)
-* `tax_id` - (Optional) Changing it fails the plan, because this resource cannot be replaced. Stripe refused it on a US account on create: "A tax identifier may not be provided on this payment method as it is not required.".
+* `tax_id` - (Optional) Changing it fails the plan, because this resource cannot be replaced.
 
 <a id="payment_method_data.billing_details.address"></a>
 ### `payment_method_data.billing_details.address`
@@ -180,6 +185,34 @@ The `payment_method_data.billing_details.address` attribute supports:
 * `postal_code` - (Optional)
 * `state` - (Optional)
 
+<a id="payment_method_data.eps"></a>
+### `payment_method_data.eps`
+
+The `payment_method_data.eps` attribute supports:
+
+* `bank` - (Optional) Possible values: `arzte_und_apotheker_bank`, `austrian_anadi_bank_ag`, `bank_austria`, `bankhaus_carl_spangler`, `bankhaus_schelhammer_und_schattera_ag`, `bawag_psk_ag`, `bks_bank_ag`, `brull_kallmus_bank_ag`, `btv_vier_lander_bank`, `capital_bank_grawe_gruppe_ag`, `deutsche_bank_ag`, `dolomitenbank`, `easybank_ag`, `erste_bank_und_sparkassen`, `hypo_alpeadriabank_international_ag`, `hypo_bank_burgenland_aktiengesellschaft`, `hypo_noe_lb_fur_niederosterreich_u_wien`, `hypo_oberosterreich_salzburg_steiermark`, `hypo_tirol_bank_ag`, `hypo_vorarlberg_bank_ag`, `marchfelder_bank`, `oberbank_ag`, `raiffeisen_bankengruppe_osterreich`, `schoellerbank_ag`, `sparda_bank_wien`, `volksbank_gruppe`, `volkskreditbank_ag`, `vr_bank_braunau`.
+
+<a id="payment_method_data.ideal"></a>
+### `payment_method_data.ideal`
+
+The `payment_method_data.ideal` attribute supports:
+
+* `bank` - (Optional) Possible values: `abn_amro`, `adyen`, `asn_bank`, `bunq`, `buut`, `finom`, `handelsbanken`, `ing`, `knab`, `mollie`, `moneyou`, `n26`, `nn`, `rabobank`, `regiobank`, `revolut`, `sns_bank`, `triodos_bank`, `van_lanschot`, `yoursafe`.
+
+<a id="payment_method_data.naver_pay"></a>
+### `payment_method_data.naver_pay`
+
+The `payment_method_data.naver_pay` attribute supports:
+
+* `funding` - (Optional) Possible values: `card`, `points`.
+
+<a id="payment_method_data.p24"></a>
+### `payment_method_data.p24`
+
+The `payment_method_data.p24` attribute supports:
+
+* `bank` - (Optional) Possible values: `alior_bank`, `bank_millennium`, `bank_nowy_bfg_sa`, `bank_pekao_sa`, `banki_spbdzielcze`, `blik`, `bnp_paribas`, `boz`, `citi_handlowy`, `credit_agricole`, `envelobank`, `etransfer_pocztowy24`, `getin_bank`, `ideabank`, `ing`, `inteligo`, `mbank_mtransfer`, `nest_przelew`, `noble_pay`, `pbac_z_ipko`, `plus_bank`, `santander_przelew24`, `tmobile_usbugi_bankowe`, `toyota_bank`, `velobank`, `volkswagen_bank`.
+
 <a id="payment_method_data.radar_options"></a>
 ### `payment_method_data.radar_options`
 
@@ -187,12 +220,112 @@ The `payment_method_data.radar_options` attribute supports:
 
 * `session` - (Optional) Stripe refused it on a US account on create and update: "No such radar session: 'rse_...'".
 
+<a id="payment_method_data.us_bank_account"></a>
+### `payment_method_data.us_bank_account`
+
+The `payment_method_data.us_bank_account` attribute supports:
+
+* `account_holder_type` - (Optional) Possible values: `company`, `individual`.
+* `account_number` - (Optional) Default: not sent.
+* `account_type` - (Optional) Possible values: `checking`, `savings`.
+* `financial_connections_account` - (Optional) Stripe refused it on a US account on update: "No such Financial Connections Account: fca_...". Default: not sent.
+* `routing_number` - (Optional)
+
 <a id="payment_method_options"></a>
 ### `payment_method_options`
 
 The `payment_method_options` attribute supports:
 
+* `acss_debit` - (Optional) Removing it from the configuration leaves the current value. See [`payment_method_options.acss_debit`](#payment_method_options.acss_debit) below.
+* `affirm` - (Optional) Removing it from the configuration leaves the current value. See [`payment_method_options.affirm`](#payment_method_options.affirm) below.
+* `afterpay_clearpay` - (Optional) Removing it from the configuration leaves the current value. See [`payment_method_options.afterpay_clearpay`](#payment_method_options.afterpay_clearpay) below.
+* `alipay` - (Optional) Removing it from the configuration leaves the current value. See [`payment_method_options.alipay`](#payment_method_options.alipay) below.
+* `amazon_pay` - (Optional) Removing it from the configuration leaves the current value. See [`payment_method_options.amazon_pay`](#payment_method_options.amazon_pay) below.
+* `bancontact` - (Optional) Removing it from the configuration leaves the current value. See [`payment_method_options.bancontact`](#payment_method_options.bancontact) below.
 * `card` - (Optional) Removing it from the configuration leaves the current value. See [`payment_method_options.card`](#payment_method_options.card) below.
+* `cashapp` - (Optional) Removing it from the configuration leaves the current value. See [`payment_method_options.cashapp`](#payment_method_options.cashapp) below.
+* `crypto` - (Optional) Removing it from the configuration leaves the current value. See [`payment_method_options.crypto`](#payment_method_options.crypto) below.
+* `customer_balance` - (Optional) Removing it from the configuration leaves the current value. See [`payment_method_options.customer_balance`](#payment_method_options.customer_balance) below.
+* `eps` - (Optional) Removing it from the configuration leaves the current value. See [`payment_method_options.eps`](#payment_method_options.eps) below.
+* `ideal` - (Optional) Removing it from the configuration leaves the current value. See [`payment_method_options.ideal`](#payment_method_options.ideal) below.
+* `kakao_pay` - (Optional) Removing it from the configuration leaves the current value. See [`payment_method_options.kakao_pay`](#payment_method_options.kakao_pay) below.
+* `klarna` - (Optional) Removing it from the configuration leaves the current value. See [`payment_method_options.klarna`](#payment_method_options.klarna) below.
+* `kr_card` - (Optional) Removing it from the configuration leaves the current value. See [`payment_method_options.kr_card`](#payment_method_options.kr_card) below.
+* `mb_way` - (Optional) Removing it from the configuration leaves the current value. See [`payment_method_options.mb_way`](#payment_method_options.mb_way) below.
+* `multibanco` - (Optional) Removing it from the configuration leaves the current value. See [`payment_method_options.multibanco`](#payment_method_options.multibanco) below.
+* `naver_pay` - (Optional) Removing it from the configuration leaves the current value. See [`payment_method_options.naver_pay`](#payment_method_options.naver_pay) below.
+* `p24` - (Optional) Removing it from the configuration leaves the current value. See [`payment_method_options.p24`](#payment_method_options.p24) below.
+* `payco` - (Optional) Removing it from the configuration leaves the current value. See [`payment_method_options.payco`](#payment_method_options.payco) below.
+* `pix` - (Optional) Removing it from the configuration leaves the current value. See [`payment_method_options.pix`](#payment_method_options.pix) below.
+* `samsung_pay` - (Optional) Removing it from the configuration leaves the current value. See [`payment_method_options.samsung_pay`](#payment_method_options.samsung_pay) below.
+* `satispay` - (Optional) Removing it from the configuration leaves the current value. See [`payment_method_options.satispay`](#payment_method_options.satispay) below.
+* `scalapay` - (Optional) Removing it from the configuration leaves the current value. See [`payment_method_options.scalapay`](#payment_method_options.scalapay) below.
+* `sepa_debit` - (Optional) Removing it from the configuration leaves the current value. See [`payment_method_options.sepa_debit`](#payment_method_options.sepa_debit) below.
+* `sunbit` - (Optional) Removing it from the configuration leaves the current value. See [`payment_method_options.sunbit`](#payment_method_options.sunbit) below.
+* `upi` - (Optional) Removing it from the configuration leaves the current value. See [`payment_method_options.upi`](#payment_method_options.upi) below.
+* `us_bank_account` - (Optional) Removing it from the configuration leaves the current value. See [`payment_method_options.us_bank_account`](#payment_method_options.us_bank_account) below.
+* `wechat_pay` - (Optional) Removing it from the configuration leaves the current value. See [`payment_method_options.wechat_pay`](#payment_method_options.wechat_pay) below.
+
+<a id="payment_method_options.acss_debit"></a>
+### `payment_method_options.acss_debit`
+
+The `payment_method_options.acss_debit` attribute supports:
+
+* `mandate_options` - (Optional) Removing it from the configuration leaves the current value. See [`payment_method_options.acss_debit.mandate_options`](#payment_method_options.acss_debit.mandate_options) below.
+* `setup_future_usage` - (Optional) Indicates that you intend to make future payments with this PaymentIntent's payment method. If you provide a Customer with the PaymentIntent, you can use this parameter to [attach the payment method](https://docs.stripe.com/payments/save-during-payment) to the Customer after the PaymentIntent is confirmed and the customer completes any required actions. If you don't provide a Customer, you can still [attach](https://docs.stripe.com/api/payment_methods/attach) the payment method to a Customer after the transaction completes. If the payment method is `card_present` and isn't a digital wallet, Stripe creates and attaches a [generated_card](https://docs.stripe.com/api/charges/object#charge_object-payment_method_details-card_present-generated_card) payment method representing the card to the Customer instead. When processing card payments, Stripe uses `setup_future_usage` to help you comply with regional legislation and network rules, such as [SCA](https://docs.stripe.com/strong-customer-authentication). Possible values: `none`, `off_session`, `on_session`. Removing it from the configuration leaves the current value.
+* `target_date` - (Optional) Controls when Stripe will attempt to debit the funds from the customer's account. The date must be a string in YYYY-MM-DD format. The date must be in the future and between 3 and 15 calendar days from now. Removing it from the configuration leaves the current value.
+* `verification_method` - (Optional) Bank account verification method. The default value is `automatic`. Possible values: `automatic`, `instant`, `microdeposits`. Removing it from the configuration leaves the current value.
+
+<a id="payment_method_options.acss_debit.mandate_options"></a>
+### `payment_method_options.acss_debit.mandate_options`
+
+The `payment_method_options.acss_debit.mandate_options` attribute supports:
+
+* `custom_mandate_url` - (Optional) A URL for custom mandate text. Removing it from the configuration leaves the current value.
+* `interval_description` - (Optional) Description of the interval. Only required if the 'payment_schedule' parameter is 'interval' or 'combined'. Removing it from the configuration leaves the current value.
+* `payment_schedule` - (Optional) Payment schedule for the mandate. Possible values: `combined`, `interval`, `sporadic`. Removing it from the configuration leaves the current value.
+* `transaction_type` - (Optional) Transaction type of the mandate. Possible values: `business`, `personal`. Removing it from the configuration leaves the current value.
+
+<a id="payment_method_options.affirm"></a>
+### `payment_method_options.affirm`
+
+The `payment_method_options.affirm` attribute supports:
+
+* `capture_method` - (Optional) Controls when the funds will be captured from the customer's account. Possible values: `manual`. Stripe fails an update that unsets it on every attempt, so the provider sends no unset of its own: removing it from the configuration leaves it out of the hash the update sends ("Stripe answers 500 to an update that sends `payment_method_options[affirm][capture_method]=` (dev records, 2026-11-07); Afterpay takes the same unset"). Removing it from the configuration leaves the current value.
+* `preferred_locale` - (Optional) Preferred language of the Affirm authorization page that the customer is redirected to. Removing it from the configuration leaves the current value.
+* `setup_future_usage` - (Optional) Indicates that you intend to make future payments with this PaymentIntent's payment method. If you provide a Customer with the PaymentIntent, you can use this parameter to [attach the payment method](https://docs.stripe.com/payments/save-during-payment) to the Customer after the PaymentIntent is confirmed and the customer completes any required actions. If you don't provide a Customer, you can still [attach](https://docs.stripe.com/api/payment_methods/attach) the payment method to a Customer after the transaction completes. If the payment method is `card_present` and isn't a digital wallet, Stripe creates and attaches a [generated_card](https://docs.stripe.com/api/charges/object#charge_object-payment_method_details-card_present-generated_card) payment method representing the card to the Customer instead. When processing card payments, Stripe uses `setup_future_usage` to help you comply with regional legislation and network rules, such as [SCA](https://docs.stripe.com/strong-customer-authentication). Possible values: `none`. Removing it from the configuration leaves the current value.
+
+<a id="payment_method_options.afterpay_clearpay"></a>
+### `payment_method_options.afterpay_clearpay`
+
+The `payment_method_options.afterpay_clearpay` attribute supports:
+
+* `capture_method` - (Optional) Controls when the funds will be captured from the customer's account. Possible values: `manual`. Removing it from the configuration leaves the current value.
+* `reference` - (Optional) An internal identifier or reference that this payment corresponds to. You must limit the identifier to 128 characters, and it can only contain letters, numbers, underscores, backslashes, and dashes. This field differs from the statement descriptor and item name. Removing it from the configuration leaves the current value.
+* `setup_future_usage` - (Optional) Indicates that you intend to make future payments with this PaymentIntent's payment method. If you provide a Customer with the PaymentIntent, you can use this parameter to [attach the payment method](https://docs.stripe.com/payments/save-during-payment) to the Customer after the PaymentIntent is confirmed and the customer completes any required actions. If you don't provide a Customer, you can still [attach](https://docs.stripe.com/api/payment_methods/attach) the payment method to a Customer after the transaction completes. If the payment method is `card_present` and isn't a digital wallet, Stripe creates and attaches a [generated_card](https://docs.stripe.com/api/charges/object#charge_object-payment_method_details-card_present-generated_card) payment method representing the card to the Customer instead. When processing card payments, Stripe uses `setup_future_usage` to help you comply with regional legislation and network rules, such as [SCA](https://docs.stripe.com/strong-customer-authentication). Possible values: `none`. Removing it from the configuration leaves the current value.
+
+<a id="payment_method_options.alipay"></a>
+### `payment_method_options.alipay`
+
+The `payment_method_options.alipay` attribute supports:
+
+* `setup_future_usage` - (Optional) Indicates that you intend to make future payments with this PaymentIntent's payment method. If you provide a Customer with the PaymentIntent, you can use this parameter to [attach the payment method](https://docs.stripe.com/payments/save-during-payment) to the Customer after the PaymentIntent is confirmed and the customer completes any required actions. If you don't provide a Customer, you can still [attach](https://docs.stripe.com/api/payment_methods/attach) the payment method to a Customer after the transaction completes. If the payment method is `card_present` and isn't a digital wallet, Stripe creates and attaches a [generated_card](https://docs.stripe.com/api/charges/object#charge_object-payment_method_details-card_present-generated_card) payment method representing the card to the Customer instead. When processing card payments, Stripe uses `setup_future_usage` to help you comply with regional legislation and network rules, such as [SCA](https://docs.stripe.com/strong-customer-authentication). Possible values: `none`, `off_session`. Removing it from the configuration leaves the current value.
+
+<a id="payment_method_options.amazon_pay"></a>
+### `payment_method_options.amazon_pay`
+
+The `payment_method_options.amazon_pay` attribute supports:
+
+* `capture_method` - (Optional) Controls when the funds will be captured from the customer's account. Possible values: `manual`. Removing it from the configuration leaves the current value.
+* `setup_future_usage` - (Optional) Indicates that you intend to make future payments with this PaymentIntent's payment method. If you provide a Customer with the PaymentIntent, you can use this parameter to [attach the payment method](https://docs.stripe.com/payments/save-during-payment) to the Customer after the PaymentIntent is confirmed and the customer completes any required actions. If you don't provide a Customer, you can still [attach](https://docs.stripe.com/api/payment_methods/attach) the payment method to a Customer after the transaction completes. If the payment method is `card_present` and isn't a digital wallet, Stripe creates and attaches a [generated_card](https://docs.stripe.com/api/charges/object#charge_object-payment_method_details-card_present-generated_card) payment method representing the card to the Customer instead. When processing card payments, Stripe uses `setup_future_usage` to help you comply with regional legislation and network rules, such as [SCA](https://docs.stripe.com/strong-customer-authentication). Possible values: `none`, `off_session`. Removing it from the configuration leaves the current value.
+
+<a id="payment_method_options.bancontact"></a>
+### `payment_method_options.bancontact`
+
+The `payment_method_options.bancontact` attribute supports:
+
+* `preferred_language` - (Optional) Preferred language of the Bancontact authorization page that the customer is redirected to. Possible values: `de`, `en`, `fr`, `nl`. Removing it from the configuration leaves the current value.
+* `setup_future_usage` - (Optional) Indicates that you intend to make future payments with this PaymentIntent's payment method. If you provide a Customer with the PaymentIntent, you can use this parameter to [attach the payment method](https://docs.stripe.com/payments/save-during-payment) to the Customer after the PaymentIntent is confirmed and the customer completes any required actions. If you don't provide a Customer, you can still [attach](https://docs.stripe.com/api/payment_methods/attach) the payment method to a Customer after the transaction completes. If the payment method is `card_present` and isn't a digital wallet, Stripe creates and attaches a [generated_card](https://docs.stripe.com/api/charges/object#charge_object-payment_method_details-card_present-generated_card) payment method representing the card to the Customer instead. When processing card payments, Stripe uses `setup_future_usage` to help you comply with regional legislation and network rules, such as [SCA](https://docs.stripe.com/strong-customer-authentication). Possible values: `none`, `off_session`. Removing it from the configuration leaves the current value.
 
 <a id="payment_method_options.card"></a>
 ### `payment_method_options.card`
@@ -235,6 +368,298 @@ The `payment_method_options.card.mandate_options` attribute supports:
 * `reference` - (Required) Stripe does not return this value; the provider keeps it from configuration.
 * `start_date` - (Required) Stripe does not return this value; the provider keeps it from configuration.
 * `supported_types` - (Optional) Stripe does not return this value; the provider keeps it from configuration.
+
+<a id="payment_method_options.cashapp"></a>
+### `payment_method_options.cashapp`
+
+The `payment_method_options.cashapp` attribute supports:
+
+* `capture_method` - (Optional) Controls when the funds will be captured from the customer's account. Possible values: `manual`. Removing it from the configuration leaves the current value.
+* `setup_future_usage` - (Optional) Indicates that you intend to make future payments with this PaymentIntent's payment method. If you provide a Customer with the PaymentIntent, you can use this parameter to [attach the payment method](https://docs.stripe.com/payments/save-during-payment) to the Customer after the PaymentIntent is confirmed and the customer completes any required actions. If you don't provide a Customer, you can still [attach](https://docs.stripe.com/api/payment_methods/attach) the payment method to a Customer after the transaction completes. If the payment method is `card_present` and isn't a digital wallet, Stripe creates and attaches a [generated_card](https://docs.stripe.com/api/charges/object#charge_object-payment_method_details-card_present-generated_card) payment method representing the card to the Customer instead. When processing card payments, Stripe uses `setup_future_usage` to help you comply with regional legislation and network rules, such as [SCA](https://docs.stripe.com/strong-customer-authentication). Possible values: `none`, `off_session`, `on_session`. Removing it from the configuration leaves the current value.
+
+<a id="payment_method_options.crypto"></a>
+### `payment_method_options.crypto`
+
+The `payment_method_options.crypto` attribute supports:
+
+* `setup_future_usage` - (Optional) Indicates that you intend to make future payments with this PaymentIntent's payment method. If you provide a Customer with the PaymentIntent, you can use this parameter to [attach the payment method](https://docs.stripe.com/payments/save-during-payment) to the Customer after the PaymentIntent is confirmed and the customer completes any required actions. If you don't provide a Customer, you can still [attach](https://docs.stripe.com/api/payment_methods/attach) the payment method to a Customer after the transaction completes. If the payment method is `card_present` and isn't a digital wallet, Stripe creates and attaches a [generated_card](https://docs.stripe.com/api/charges/object#charge_object-payment_method_details-card_present-generated_card) payment method representing the card to the Customer instead. When processing card payments, Stripe uses `setup_future_usage` to help you comply with regional legislation and network rules, such as [SCA](https://docs.stripe.com/strong-customer-authentication). Possible values: `none`. Removing it from the configuration leaves the current value.
+
+<a id="payment_method_options.customer_balance"></a>
+### `payment_method_options.customer_balance`
+
+The `payment_method_options.customer_balance` attribute supports:
+
+* `bank_transfer` - (Optional) Changing it fails the plan, because this resource cannot be replaced. Removing it from the configuration leaves the current value. See [`payment_method_options.customer_balance.bank_transfer`](#payment_method_options.customer_balance.bank_transfer) below.
+* `funding_type` - (Optional) The funding method type to be used when there are not enough funds in the customer balance. Permitted values include: `bank_transfer`. Possible values: `bank_transfer`. Removing it from the configuration leaves the current value.
+* `setup_future_usage` - (Optional) Indicates that you intend to make future payments with this PaymentIntent's payment method. If you provide a Customer with the PaymentIntent, you can use this parameter to [attach the payment method](https://docs.stripe.com/payments/save-during-payment) to the Customer after the PaymentIntent is confirmed and the customer completes any required actions. If you don't provide a Customer, you can still [attach](https://docs.stripe.com/api/payment_methods/attach) the payment method to a Customer after the transaction completes. If the payment method is `card_present` and isn't a digital wallet, Stripe creates and attaches a [generated_card](https://docs.stripe.com/api/charges/object#charge_object-payment_method_details-card_present-generated_card) payment method representing the card to the Customer instead. When processing card payments, Stripe uses `setup_future_usage` to help you comply with regional legislation and network rules, such as [SCA](https://docs.stripe.com/strong-customer-authentication). Possible values: `none`. Removing it from the configuration leaves the current value.
+
+<a id="payment_method_options.customer_balance.bank_transfer"></a>
+### `payment_method_options.customer_balance.bank_transfer`
+
+The `payment_method_options.customer_balance.bank_transfer` attribute supports:
+
+* `eu_bank_transfer` - (Optional) Removing it from the configuration leaves the current value. See [`payment_method_options.customer_balance.bank_transfer.eu_bank_transfer`](#payment_method_options.customer_balance.bank_transfer.eu_bank_transfer) below.
+* `requested_address_types` - (Optional) Stripe does not return this value; the provider keeps it from configuration.
+* `type` - (Required) The bank transfer type that this PaymentIntent is allowed to use for funding Permitted values include: `eu_bank_transfer`, `gb_bank_transfer`, `jp_bank_transfer`, `mx_bank_transfer`, or `us_bank_transfer`. Possible values: `eu_bank_transfer`, `gb_bank_transfer`, `jp_bank_transfer`, `mx_bank_transfer`, `us_bank_transfer`.
+
+<a id="payment_method_options.customer_balance.bank_transfer.eu_bank_transfer"></a>
+### `payment_method_options.customer_balance.bank_transfer.eu_bank_transfer`
+
+The `payment_method_options.customer_balance.bank_transfer.eu_bank_transfer` attribute supports:
+
+* `country` - (Required) The desired country code of the bank account information. Permitted values include: `DE`, `FR`, `IE`, or `NL`. Possible values: `BE`, `DE`, `ES`, `FR`, `IE`, `NL`.
+
+<a id="payment_method_options.eps"></a>
+### `payment_method_options.eps`
+
+The `payment_method_options.eps` attribute supports:
+
+* `setup_future_usage` - (Optional) Indicates that you intend to make future payments with this PaymentIntent's payment method. If you provide a Customer with the PaymentIntent, you can use this parameter to [attach the payment method](https://docs.stripe.com/payments/save-during-payment) to the Customer after the PaymentIntent is confirmed and the customer completes any required actions. If you don't provide a Customer, you can still [attach](https://docs.stripe.com/api/payment_methods/attach) the payment method to a Customer after the transaction completes. If the payment method is `card_present` and isn't a digital wallet, Stripe creates and attaches a [generated_card](https://docs.stripe.com/api/charges/object#charge_object-payment_method_details-card_present-generated_card) payment method representing the card to the Customer instead. When processing card payments, Stripe uses `setup_future_usage` to help you comply with regional legislation and network rules, such as [SCA](https://docs.stripe.com/strong-customer-authentication). Possible values: `none`. Removing it from the configuration leaves the current value.
+
+<a id="payment_method_options.ideal"></a>
+### `payment_method_options.ideal`
+
+The `payment_method_options.ideal` attribute supports:
+
+* `setup_future_usage` - (Optional) Indicates that you intend to make future payments with this PaymentIntent's payment method. If you provide a Customer with the PaymentIntent, you can use this parameter to [attach the payment method](https://docs.stripe.com/payments/save-during-payment) to the Customer after the PaymentIntent is confirmed and the customer completes any required actions. If you don't provide a Customer, you can still [attach](https://docs.stripe.com/api/payment_methods/attach) the payment method to a Customer after the transaction completes. If the payment method is `card_present` and isn't a digital wallet, Stripe creates and attaches a [generated_card](https://docs.stripe.com/api/charges/object#charge_object-payment_method_details-card_present-generated_card) payment method representing the card to the Customer instead. When processing card payments, Stripe uses `setup_future_usage` to help you comply with regional legislation and network rules, such as [SCA](https://docs.stripe.com/strong-customer-authentication). Possible values: `none`, `off_session`. Removing it from the configuration leaves the current value.
+
+<a id="payment_method_options.kakao_pay"></a>
+### `payment_method_options.kakao_pay`
+
+The `payment_method_options.kakao_pay` attribute supports:
+
+* `capture_method` - (Optional) Controls when the funds will be captured from the customer's account. Possible values: `manual`. Removing it from the configuration leaves the current value.
+* `setup_future_usage` - (Optional) Indicates that you intend to make future payments with this PaymentIntent's payment method. If you provide a Customer with the PaymentIntent, you can use this parameter to [attach the payment method](https://docs.stripe.com/payments/save-during-payment) to the Customer after the PaymentIntent is confirmed and the customer completes any required actions. If you don't provide a Customer, you can still [attach](https://docs.stripe.com/api/payment_methods/attach) the payment method to a Customer after the transaction completes. If the payment method is `card_present` and isn't a digital wallet, Stripe creates and attaches a [generated_card](https://docs.stripe.com/api/charges/object#charge_object-payment_method_details-card_present-generated_card) payment method representing the card to the Customer instead. When processing card payments, Stripe uses `setup_future_usage` to help you comply with regional legislation and network rules, such as [SCA](https://docs.stripe.com/strong-customer-authentication). Possible values: `none`, `off_session`. Removing it from the configuration leaves the current value.
+
+<a id="payment_method_options.klarna"></a>
+### `payment_method_options.klarna`
+
+The `payment_method_options.klarna` attribute supports:
+
+* `capture_method` - (Optional) Controls when the funds will be captured from the customer's account. Possible values: `manual`. Removing it from the configuration leaves the current value.
+* `on_demand` - (Optional) Stripe does not return this value; the provider keeps it from configuration. See [`payment_method_options.klarna.on_demand`](#payment_method_options.klarna.on_demand) below.
+* `preferred_locale` - (Optional) Preferred locale of the Klarna checkout page that the customer is redirected to. Possible values: `cs-CZ`, `da-DK`, `de-AT`, `de-CH`, `de-DE`, `el-GR`, `en-AT`, `en-AU`, `en-BE`, `en-CA`, `en-CH`, `en-CZ`, `en-DE`, `en-DK`, `en-ES`, `en-FI`, `en-FR`, `en-GB`, `en-GR`, `en-IE`, `en-IT`, `en-NL`, `en-NO`, `en-NZ`, `en-PL`, `en-PT`, `en-RO`, `en-SE`, `en-US`, `es-ES`, `es-US`, `fi-FI`, `fr-BE`, `fr-CA`, `fr-CH`, `fr-FR`, `it-CH`, `it-IT`, `nb-NO`, `nl-BE`, `nl-NL`, `pl-PL`, `pt-PT`, `ro-RO`, `sv-FI`, `sv-SE`. Removing it from the configuration leaves the current value.
+* `setup_future_usage` - (Optional) Indicates that you intend to make future payments with this PaymentIntent's payment method. If you provide a Customer with the PaymentIntent, you can use this parameter to [attach the payment method](https://docs.stripe.com/payments/save-during-payment) to the Customer after the PaymentIntent is confirmed and the customer completes any required actions. If you don't provide a Customer, you can still [attach](https://docs.stripe.com/api/payment_methods/attach) the payment method to a Customer after the transaction completes. If the payment method is `card_present` and isn't a digital wallet, Stripe creates and attaches a [generated_card](https://docs.stripe.com/api/charges/object#charge_object-payment_method_details-card_present-generated_card) payment method representing the card to the Customer instead. When processing card payments, Stripe uses `setup_future_usage` to help you comply with regional legislation and network rules, such as [SCA](https://docs.stripe.com/strong-customer-authentication). Possible values: `none`, `off_session`, `on_session`. Removing it from the configuration leaves the current value.
+* `subscriptions` - (Optional) Stripe does not return this value; the provider keeps it from configuration. See [`payment_method_options.klarna.subscriptions`](#payment_method_options.klarna.subscriptions) below.
+
+<a id="payment_method_options.klarna.on_demand"></a>
+### `payment_method_options.klarna.on_demand`
+
+The `payment_method_options.klarna.on_demand` attribute supports:
+
+* `average_amount` - (Optional) Stripe does not return this value; the provider keeps it from configuration.
+* `maximum_amount` - (Optional) Stripe does not return this value; the provider keeps it from configuration.
+* `minimum_amount` - (Optional) Stripe does not return this value; the provider keeps it from configuration.
+* `purchase_interval` - (Optional) Possible values: `day`, `month`, `week`, `year`. Stripe does not return this value; the provider keeps it from configuration.
+* `purchase_interval_count` - (Optional) Stripe does not return this value; the provider keeps it from configuration.
+
+<a id="payment_method_options.klarna.subscriptions"></a>
+### `payment_method_options.klarna.subscriptions`
+
+The `payment_method_options.klarna.subscriptions` attribute is a list. Each element supports:
+
+* `interval` - (Required) Possible values: `day`, `month`, `week`, `year`. Stripe does not return this value; the provider keeps it from configuration.
+* `interval_count` - (Optional) Stripe does not return this value; the provider keeps it from configuration.
+* `name` - (Optional) Stripe does not return this value; the provider keeps it from configuration.
+* `next_billing` - (Optional) Stripe does not return this value; the provider keeps it from configuration. See [`payment_method_options.klarna.subscriptions.next_billing`](#payment_method_options.klarna.subscriptions.next_billing) below.
+* `reference` - (Required) Stripe does not return this value; the provider keeps it from configuration.
+
+<a id="payment_method_options.klarna.subscriptions.next_billing"></a>
+### `payment_method_options.klarna.subscriptions.next_billing`
+
+The `payment_method_options.klarna.subscriptions.next_billing` attribute supports:
+
+* `amount` - (Required) Stripe does not return this value; the provider keeps it from configuration.
+* `date` - (Required) Stripe does not return this value; the provider keeps it from configuration.
+
+<a id="payment_method_options.kr_card"></a>
+### `payment_method_options.kr_card`
+
+The `payment_method_options.kr_card` attribute supports:
+
+* `capture_method` - (Optional) Controls when the funds will be captured from the customer's account. Possible values: `manual`. Removing it from the configuration leaves the current value.
+* `setup_future_usage` - (Optional) Indicates that you intend to make future payments with this PaymentIntent's payment method. If you provide a Customer with the PaymentIntent, you can use this parameter to [attach the payment method](https://docs.stripe.com/payments/save-during-payment) to the Customer after the PaymentIntent is confirmed and the customer completes any required actions. If you don't provide a Customer, you can still [attach](https://docs.stripe.com/api/payment_methods/attach) the payment method to a Customer after the transaction completes. If the payment method is `card_present` and isn't a digital wallet, Stripe creates and attaches a [generated_card](https://docs.stripe.com/api/charges/object#charge_object-payment_method_details-card_present-generated_card) payment method representing the card to the Customer instead. When processing card payments, Stripe uses `setup_future_usage` to help you comply with regional legislation and network rules, such as [SCA](https://docs.stripe.com/strong-customer-authentication). Possible values: `none`, `off_session`. Removing it from the configuration leaves the current value.
+
+<a id="payment_method_options.mb_way"></a>
+### `payment_method_options.mb_way`
+
+The `payment_method_options.mb_way` attribute supports:
+
+* `setup_future_usage` - (Optional) Indicates that you intend to make future payments with this PaymentIntent's payment method. If you provide a Customer with the PaymentIntent, you can use this parameter to [attach the payment method](https://docs.stripe.com/payments/save-during-payment) to the Customer after the PaymentIntent is confirmed and the customer completes any required actions. If you don't provide a Customer, you can still [attach](https://docs.stripe.com/api/payment_methods/attach) the payment method to a Customer after the transaction completes. If the payment method is `card_present` and isn't a digital wallet, Stripe creates and attaches a [generated_card](https://docs.stripe.com/api/charges/object#charge_object-payment_method_details-card_present-generated_card) payment method representing the card to the Customer instead. When processing card payments, Stripe uses `setup_future_usage` to help you comply with regional legislation and network rules, such as [SCA](https://docs.stripe.com/strong-customer-authentication). Possible values: `none`. Removing it from the configuration leaves the current value.
+
+<a id="payment_method_options.multibanco"></a>
+### `payment_method_options.multibanco`
+
+The `payment_method_options.multibanco` attribute supports:
+
+* `setup_future_usage` - (Optional) Indicates that you intend to make future payments with this PaymentIntent's payment method. If you provide a Customer with the PaymentIntent, you can use this parameter to [attach the payment method](https://docs.stripe.com/payments/save-during-payment) to the Customer after the PaymentIntent is confirmed and the customer completes any required actions. If you don't provide a Customer, you can still [attach](https://docs.stripe.com/api/payment_methods/attach) the payment method to a Customer after the transaction completes. If the payment method is `card_present` and isn't a digital wallet, Stripe creates and attaches a [generated_card](https://docs.stripe.com/api/charges/object#charge_object-payment_method_details-card_present-generated_card) payment method representing the card to the Customer instead. When processing card payments, Stripe uses `setup_future_usage` to help you comply with regional legislation and network rules, such as [SCA](https://docs.stripe.com/strong-customer-authentication). Possible values: `none`. Removing it from the configuration leaves the current value.
+
+<a id="payment_method_options.naver_pay"></a>
+### `payment_method_options.naver_pay`
+
+The `payment_method_options.naver_pay` attribute supports:
+
+* `capture_method` - (Optional) Controls when the funds will be captured from the customer's account. Possible values: `manual`. Removing it from the configuration leaves the current value.
+* `setup_future_usage` - (Optional) Indicates that you intend to make future payments with this PaymentIntent's payment method. If you provide a Customer with the PaymentIntent, you can use this parameter to [attach the payment method](https://docs.stripe.com/payments/save-during-payment) to the Customer after the PaymentIntent is confirmed and the customer completes any required actions. If you don't provide a Customer, you can still [attach](https://docs.stripe.com/api/payment_methods/attach) the payment method to a Customer after the transaction completes. If the payment method is `card_present` and isn't a digital wallet, Stripe creates and attaches a [generated_card](https://docs.stripe.com/api/charges/object#charge_object-payment_method_details-card_present-generated_card) payment method representing the card to the Customer instead. When processing card payments, Stripe uses `setup_future_usage` to help you comply with regional legislation and network rules, such as [SCA](https://docs.stripe.com/strong-customer-authentication). Possible values: `none`, `off_session`. Removing it from the configuration leaves the current value.
+
+<a id="payment_method_options.p24"></a>
+### `payment_method_options.p24`
+
+The `payment_method_options.p24` attribute supports:
+
+* `setup_future_usage` - (Optional) Indicates that you intend to make future payments with this PaymentIntent's payment method. If you provide a Customer with the PaymentIntent, you can use this parameter to [attach the payment method](https://docs.stripe.com/payments/save-during-payment) to the Customer after the PaymentIntent is confirmed and the customer completes any required actions. If you don't provide a Customer, you can still [attach](https://docs.stripe.com/api/payment_methods/attach) the payment method to a Customer after the transaction completes. If the payment method is `card_present` and isn't a digital wallet, Stripe creates and attaches a [generated_card](https://docs.stripe.com/api/charges/object#charge_object-payment_method_details-card_present-generated_card) payment method representing the card to the Customer instead. When processing card payments, Stripe uses `setup_future_usage` to help you comply with regional legislation and network rules, such as [SCA](https://docs.stripe.com/strong-customer-authentication). Possible values: `none`. Removing it from the configuration leaves the current value.
+* `tos_shown_and_accepted` - (Optional) Stripe does not return this value; the provider keeps it from configuration.
+
+<a id="payment_method_options.payco"></a>
+### `payment_method_options.payco`
+
+The `payment_method_options.payco` attribute supports:
+
+* `capture_method` - (Optional) Controls when the funds will be captured from the customer's account. Possible values: `manual`. Removing it from the configuration leaves the current value.
+* `setup_future_usage` - (Optional) Indicates that you intend to make future payments with this PaymentIntent's payment method. If you provide a Customer with the PaymentIntent, you can use this parameter to [attach the payment method](https://docs.stripe.com/payments/save-during-payment) to the Customer after the PaymentIntent is confirmed and the customer completes any required actions. If you don't provide a Customer, you can still [attach](https://docs.stripe.com/api/payment_methods/attach) the payment method to a Customer after the transaction completes. If the payment method is `card_present` and isn't a digital wallet, Stripe creates and attaches a [generated_card](https://docs.stripe.com/api/charges/object#charge_object-payment_method_details-card_present-generated_card) payment method representing the card to the Customer instead. When processing card payments, Stripe uses `setup_future_usage` to help you comply with regional legislation and network rules, such as [SCA](https://docs.stripe.com/strong-customer-authentication). Possible values: `none`. Removing it from the configuration leaves the current value.
+
+<a id="payment_method_options.pix"></a>
+### `payment_method_options.pix`
+
+The `payment_method_options.pix` attribute supports:
+
+* `amount_includes_iof` - (Optional) Determines if the amount includes the IOF tax. Possible values: `always`, `never`. Removing it from the configuration leaves the current value.
+* `expires_after_seconds` - (Optional) The number of seconds (between 10 and 1209600) after which Pix payment will expire. Removing it from the configuration leaves the current value.
+* `expires_at` - (Optional) The timestamp at which the Pix expires. Removing it from the configuration leaves the current value.
+* `mandate_options` - (Optional) Removing it from the configuration leaves the current value. See [`payment_method_options.pix.mandate_options`](#payment_method_options.pix.mandate_options) below.
+* `setup_future_usage` - (Optional) Indicates that you intend to make future payments with this PaymentIntent's payment method. If you provide a Customer with the PaymentIntent, you can use this parameter to [attach the payment method](https://docs.stripe.com/payments/save-during-payment) to the Customer after the PaymentIntent is confirmed and the customer completes any required actions. If you don't provide a Customer, you can still [attach](https://docs.stripe.com/api/payment_methods/attach) the payment method to a Customer after the transaction completes. If the payment method is `card_present` and isn't a digital wallet, Stripe creates and attaches a [generated_card](https://docs.stripe.com/api/charges/object#charge_object-payment_method_details-card_present-generated_card) payment method representing the card to the Customer instead. When processing card payments, Stripe uses `setup_future_usage` to help you comply with regional legislation and network rules, such as [SCA](https://docs.stripe.com/strong-customer-authentication). Possible values: `none`, `off_session`. Removing it from the configuration leaves the current value.
+
+<a id="payment_method_options.pix.mandate_options"></a>
+### `payment_method_options.pix.mandate_options`
+
+The `payment_method_options.pix.mandate_options` attribute supports:
+
+* `amount` - (Optional) Amount to be charged for future payments. Removing it from the configuration leaves the current value.
+* `amount_includes_iof` - (Optional) Determines if the amount includes the IOF tax. Possible values: `always`, `never`. Removing it from the configuration leaves the current value.
+* `amount_type` - (Optional) Type of amount. Possible values: `fixed`, `maximum`. Removing it from the configuration leaves the current value.
+* `currency` - (Optional) Three-letter [ISO currency code](https://www.iso.org/iso-4217-currency-codes.html), in lowercase. Removing it from the configuration leaves the current value.
+* `end_date` - (Optional) Date when the mandate expires and no further payments will be charged, in `YYYY-MM-DD`. Removing it from the configuration leaves the current value.
+* `payment_schedule` - (Optional) Schedule at which the future payments will be charged. Possible values: `halfyearly`, `monthly`, `quarterly`, `weekly`, `yearly`. Removing it from the configuration leaves the current value.
+* `reference` - (Optional) Subscription name displayed to buyers in their bank app. Removing it from the configuration leaves the current value.
+* `start_date` - (Optional) Start date of the mandate, in `YYYY-MM-DD`. Removing it from the configuration leaves the current value.
+
+<a id="payment_method_options.samsung_pay"></a>
+### `payment_method_options.samsung_pay`
+
+The `payment_method_options.samsung_pay` attribute supports:
+
+* `capture_method` - (Optional) Controls when the funds will be captured from the customer's account. Possible values: `manual`. Removing it from the configuration leaves the current value.
+* `setup_future_usage` - (Optional) Indicates that you intend to make future payments with this PaymentIntent's payment method. If you provide a Customer with the PaymentIntent, you can use this parameter to [attach the payment method](https://docs.stripe.com/payments/save-during-payment) to the Customer after the PaymentIntent is confirmed and the customer completes any required actions. If you don't provide a Customer, you can still [attach](https://docs.stripe.com/api/payment_methods/attach) the payment method to a Customer after the transaction completes. If the payment method is `card_present` and isn't a digital wallet, Stripe creates and attaches a [generated_card](https://docs.stripe.com/api/charges/object#charge_object-payment_method_details-card_present-generated_card) payment method representing the card to the Customer instead. When processing card payments, Stripe uses `setup_future_usage` to help you comply with regional legislation and network rules, such as [SCA](https://docs.stripe.com/strong-customer-authentication). Possible values: `none`. Removing it from the configuration leaves the current value.
+
+<a id="payment_method_options.satispay"></a>
+### `payment_method_options.satispay`
+
+The `payment_method_options.satispay` attribute supports:
+
+* `capture_method` - (Optional) Controls when the funds will be captured from the customer's account. Possible values: `manual`. Removing it from the configuration leaves the current value.
+* `setup_future_usage` - (Optional) Indicates that you intend to make future payments with this PaymentIntent's payment method. If you provide a Customer with the PaymentIntent, you can use this parameter to [attach the payment method](https://docs.stripe.com/payments/save-during-payment) to the Customer after the PaymentIntent is confirmed and the customer completes any required actions. If you don't provide a Customer, you can still [attach](https://docs.stripe.com/api/payment_methods/attach) the payment method to a Customer after the transaction completes. If the payment method is `card_present` and isn't a digital wallet, Stripe creates and attaches a [generated_card](https://docs.stripe.com/api/charges/object#charge_object-payment_method_details-card_present-generated_card) payment method representing the card to the Customer instead. When processing card payments, Stripe uses `setup_future_usage` to help you comply with regional legislation and network rules, such as [SCA](https://docs.stripe.com/strong-customer-authentication). Possible values: `none`, `off_session`, `on_session`. Removing it from the configuration leaves the current value.
+
+<a id="payment_method_options.scalapay"></a>
+### `payment_method_options.scalapay`
+
+The `payment_method_options.scalapay` attribute supports:
+
+* `capture_method` - (Optional) Controls when the funds will be captured from the customer's account. Possible values: `manual`. Removing it from the configuration leaves the current value.
+
+<a id="payment_method_options.sepa_debit"></a>
+### `payment_method_options.sepa_debit`
+
+The `payment_method_options.sepa_debit` attribute supports:
+
+* `mandate_options` - (Optional) Removing it from the configuration leaves the current value. See [`payment_method_options.sepa_debit.mandate_options`](#payment_method_options.sepa_debit.mandate_options) below.
+* `setup_future_usage` - (Optional) Indicates that you intend to make future payments with this PaymentIntent's payment method. If you provide a Customer with the PaymentIntent, you can use this parameter to [attach the payment method](https://docs.stripe.com/payments/save-during-payment) to the Customer after the PaymentIntent is confirmed and the customer completes any required actions. If you don't provide a Customer, you can still [attach](https://docs.stripe.com/api/payment_methods/attach) the payment method to a Customer after the transaction completes. If the payment method is `card_present` and isn't a digital wallet, Stripe creates and attaches a [generated_card](https://docs.stripe.com/api/charges/object#charge_object-payment_method_details-card_present-generated_card) payment method representing the card to the Customer instead. When processing card payments, Stripe uses `setup_future_usage` to help you comply with regional legislation and network rules, such as [SCA](https://docs.stripe.com/strong-customer-authentication). Possible values: `none`, `off_session`, `on_session`. Removing it from the configuration leaves the current value.
+* `target_date` - (Optional) Controls when Stripe will attempt to debit the funds from the customer's account. The date must be a string in YYYY-MM-DD format. The date must be in the future and between 3 and 15 calendar days from now. Removing it from the configuration leaves the current value.
+
+<a id="payment_method_options.sepa_debit.mandate_options"></a>
+### `payment_method_options.sepa_debit.mandate_options`
+
+The `payment_method_options.sepa_debit.mandate_options` attribute supports:
+
+* `reference_prefix` - (Optional) Prefix used to generate the Mandate reference. Must be at most 12 characters long. Must consist of only uppercase letters, numbers, spaces, or the following special characters: '/', '_', '-', '&', '.'. Cannot begin with 'STRIPE'. Removing it from the configuration leaves the current value.
+
+<a id="payment_method_options.sunbit"></a>
+### `payment_method_options.sunbit`
+
+The `payment_method_options.sunbit` attribute supports:
+
+* `capture_method` - (Optional) Controls when the funds will be captured from the customer's account. Possible values: `manual`. Removing it from the configuration leaves the current value.
+* `setup_future_usage` - (Optional) Indicates that you intend to make future payments with this PaymentIntent's payment method. If you provide a Customer with the PaymentIntent, you can use this parameter to [attach the payment method](https://docs.stripe.com/payments/save-during-payment) to the Customer after the PaymentIntent is confirmed and the customer completes any required actions. If you don't provide a Customer, you can still [attach](https://docs.stripe.com/api/payment_methods/attach) the payment method to a Customer after the transaction completes. If the payment method is `card_present` and isn't a digital wallet, Stripe creates and attaches a [generated_card](https://docs.stripe.com/api/charges/object#charge_object-payment_method_details-card_present-generated_card) payment method representing the card to the Customer instead. When processing card payments, Stripe uses `setup_future_usage` to help you comply with regional legislation and network rules, such as [SCA](https://docs.stripe.com/strong-customer-authentication). Possible values: `none`. Removing it from the configuration leaves the current value.
+
+<a id="payment_method_options.upi"></a>
+### `payment_method_options.upi`
+
+The `payment_method_options.upi` attribute supports:
+
+* `mandate_options` - (Optional) Stripe does not return this value; the provider keeps it from configuration. See [`payment_method_options.upi.mandate_options`](#payment_method_options.upi.mandate_options) below.
+* `setup_future_usage` - (Optional) Indicates that you intend to make future payments with this PaymentIntent's payment method. If you provide a Customer with the PaymentIntent, you can use this parameter to [attach the payment method](https://docs.stripe.com/payments/save-during-payment) to the Customer after the PaymentIntent is confirmed and the customer completes any required actions. If you don't provide a Customer, you can still [attach](https://docs.stripe.com/api/payment_methods/attach) the payment method to a Customer after the transaction completes. If the payment method is `card_present` and isn't a digital wallet, Stripe creates and attaches a [generated_card](https://docs.stripe.com/api/charges/object#charge_object-payment_method_details-card_present-generated_card) payment method representing the card to the Customer instead. When processing card payments, Stripe uses `setup_future_usage` to help you comply with regional legislation and network rules, such as [SCA](https://docs.stripe.com/strong-customer-authentication). Possible values: `none`, `off_session`, `on_session`. Stripe fails an update that unsets it on every attempt, so the provider sends no unset of its own: removing it from the configuration leaves it out of the hash the update sends ("Stripe answers 500 to an update that sends `payment_method_options[upi][setup_future_usage]=` alone (dev records, 2026-11-07); every other method whose spec offers `\"\"` there takes it, and a method whose spec does not refuses it as `cannot be unset`"). Removing it from the configuration leaves the current value.
+
+<a id="payment_method_options.upi.mandate_options"></a>
+### `payment_method_options.upi.mandate_options`
+
+The `payment_method_options.upi.mandate_options` attribute supports:
+
+* `amount` - (Optional) Stripe does not return this value; the provider keeps it from configuration.
+* `amount_type` - (Optional) Possible values: `fixed`, `maximum`. Stripe does not return this value; the provider keeps it from configuration.
+* `description` - (Optional) Stripe does not return this value; the provider keeps it from configuration.
+* `end_date` - (Optional) Stripe does not return this value; the provider keeps it from configuration.
+
+<a id="payment_method_options.us_bank_account"></a>
+### `payment_method_options.us_bank_account`
+
+The `payment_method_options.us_bank_account` attribute supports:
+
+* `financial_connections` - (Optional) Removing it from the configuration leaves the current value. See [`payment_method_options.us_bank_account.financial_connections`](#payment_method_options.us_bank_account.financial_connections) below.
+* `mandate_options` - (Optional) Removing it from the configuration leaves the current value. See [`payment_method_options.us_bank_account.mandate_options`](#payment_method_options.us_bank_account.mandate_options) below.
+* `networks` - (Optional) Stripe does not return this value; the provider keeps it from configuration. See [`payment_method_options.us_bank_account.networks`](#payment_method_options.us_bank_account.networks) below.
+* `setup_future_usage` - (Optional) Indicates that you intend to make future payments with this PaymentIntent's payment method. If you provide a Customer with the PaymentIntent, you can use this parameter to [attach the payment method](https://docs.stripe.com/payments/save-during-payment) to the Customer after the PaymentIntent is confirmed and the customer completes any required actions. If you don't provide a Customer, you can still [attach](https://docs.stripe.com/api/payment_methods/attach) the payment method to a Customer after the transaction completes. If the payment method is `card_present` and isn't a digital wallet, Stripe creates and attaches a [generated_card](https://docs.stripe.com/api/charges/object#charge_object-payment_method_details-card_present-generated_card) payment method representing the card to the Customer instead. When processing card payments, Stripe uses `setup_future_usage` to help you comply with regional legislation and network rules, such as [SCA](https://docs.stripe.com/strong-customer-authentication). Possible values: `none`, `off_session`, `on_session`. Removing it from the configuration leaves the current value.
+* `target_date` - (Optional) Controls when Stripe will attempt to debit the funds from the customer's account. The date must be a string in YYYY-MM-DD format. The date must be in the future and between 3 and 15 calendar days from now. Removing it from the configuration leaves the current value.
+* `transaction_purpose` - (Optional) The purpose of the transaction. Possible values: `goods`, `other`, `services`, `unspecified`. Stripe fails an update that unsets it on every attempt, so the provider sends no unset of its own: removing it from the configuration leaves it out of the hash the update sends ("Stripe answers 500 to an update that sends `payment_method_options[us_bank_account][transaction_purpose]=` beside the hash's shortened lists and `mandate_options[collection_method]=` (req_FAu6kee5xSV15l); an update sends those lists whole and `collection_method=` and is answered, and a prefetch its permissions do not cover is refused with a 400"). Removing it from the configuration leaves the current value.
+* `verification_method` - (Optional) Bank account verification method. The default value is `automatic`. Possible values: `automatic`, `instant`, `microdeposits`. Removing it from the configuration leaves the current value.
+
+<a id="payment_method_options.us_bank_account.financial_connections"></a>
+### `payment_method_options.us_bank_account.financial_connections`
+
+The `payment_method_options.us_bank_account.financial_connections` attribute supports:
+
+* `filters` - (Optional) Removing it from the configuration leaves the current value. See [`payment_method_options.us_bank_account.financial_connections.filters`](#payment_method_options.us_bank_account.financial_connections.filters) below.
+* `permissions` - (Optional) The list of permissions to request. The `payment_method` permission must be included. Removing it from the configuration leaves the current value.
+* `prefetch` - (Optional) Data features requested to be retrieved upon account creation. Stripe refused it on a US account on update: "You do not have the required permissions to prefetch.". Removing it from the configuration leaves the current value.
+* `return_url` - (Optional) For webview integrations only. Upon completing OAuth login in the native browser, the user will be redirected to this URL to return to your app. Removing it from the configuration leaves the current value.
+
+<a id="payment_method_options.us_bank_account.financial_connections.filters"></a>
+### `payment_method_options.us_bank_account.financial_connections.filters`
+
+The `payment_method_options.us_bank_account.financial_connections.filters` attribute supports:
+
+* `account_subcategories` - (Optional) The account subcategories to use to filter for possible accounts to link. Valid subcategories are `checking` and `savings`. Removing it from the configuration leaves the current value.
+
+<a id="payment_method_options.us_bank_account.mandate_options"></a>
+### `payment_method_options.us_bank_account.mandate_options`
+
+The `payment_method_options.us_bank_account.mandate_options` attribute supports:
+
+* `collection_method` - (Optional) Mandate collection method Possible values: `paper`. Removing it from the configuration leaves the current value.
+
+<a id="payment_method_options.us_bank_account.networks"></a>
+### `payment_method_options.us_bank_account.networks`
+
+The `payment_method_options.us_bank_account.networks` attribute supports:
+
+* `requested` - (Optional) Stripe does not return this value; the provider keeps it from configuration.
+
+<a id="payment_method_options.wechat_pay"></a>
+### `payment_method_options.wechat_pay`
+
+The `payment_method_options.wechat_pay` attribute supports:
+
+* `app_id` - (Optional) The app ID registered with WeChat Pay. Only required when client is ios, android, or mini_program. Removing it from the configuration leaves the current value.
+* `client` - (Optional) The client type that the end customer will pay from Possible values: `android`, `ios`, `web`. Removing it from the configuration leaves the current value.
+* `setup_future_usage` - (Optional) Indicates that you intend to make future payments with this PaymentIntent's payment method. If you provide a Customer with the PaymentIntent, you can use this parameter to [attach the payment method](https://docs.stripe.com/payments/save-during-payment) to the Customer after the PaymentIntent is confirmed and the customer completes any required actions. If you don't provide a Customer, you can still [attach](https://docs.stripe.com/api/payment_methods/attach) the payment method to a Customer after the transaction completes. If the payment method is `card_present` and isn't a digital wallet, Stripe creates and attaches a [generated_card](https://docs.stripe.com/api/charges/object#charge_object-payment_method_details-card_present-generated_card) payment method representing the card to the Customer instead. When processing card payments, Stripe uses `setup_future_usage` to help you comply with regional legislation and network rules, such as [SCA](https://docs.stripe.com/strong-customer-authentication). Possible values: `none`. Removing it from the configuration leaves the current value.
 
 <a id="radar_options"></a>
 ### `radar_options`
@@ -955,4 +1380,4 @@ Using `terraform import`, import a payment intent using its ID. For example:
 % terraform import stripe_payment_intent.order pi_123
 ```
 
-~> Stripe does not return `amount_details.enforce_arithmetic_validation`, `payment_method_configuration`, `payment_method_data`, `payment_method_options.card.cvc_token`, `payment_method_options.card.installments`, `payment_method_options.card.mandate_options`, `payment_method_options.card.network`, `payment_method_options.card.request_extended_authorization`, `payment_method_options.card.request_incremental_authorization`, `payment_method_options.card.request_multicapture`, `payment_method_options.card.request_overcapture`, `payment_method_options.card.statement_descriptor_suffix_kana`, `payment_method_options.card.statement_descriptor_suffix_kanji`, `confirmation_token`, `mandate` or `radar_options`, so an imported payment intent has them null: a configuration that sets `amount_details.enforce_arithmetic_validation`, `payment_method_configuration`, `payment_method_data`, `payment_method_options.card.cvc_token`, `payment_method_options.card.installments`, `payment_method_options.card.mandate_options`, `payment_method_options.card.network`, `payment_method_options.card.request_extended_authorization`, `payment_method_options.card.request_incremental_authorization`, `payment_method_options.card.request_multicapture`, `payment_method_options.card.request_overcapture`, `payment_method_options.card.statement_descriptor_suffix_kana` or `payment_method_options.card.statement_descriptor_suffix_kanji` plans an update after the import, and one that sets `confirmation_token`, `mandate` or `radar_options` plans a replacement.
+~> Stripe does not return `amount_details.enforce_arithmetic_validation`, `payment_method_configuration`, `payment_method_data`, `payment_method_options.card.cvc_token`, `payment_method_options.card.installments`, `payment_method_options.card.mandate_options`, `payment_method_options.card.network`, `payment_method_options.card.request_extended_authorization`, `payment_method_options.card.request_incremental_authorization`, `payment_method_options.card.request_multicapture`, `payment_method_options.card.request_overcapture`, `payment_method_options.card.statement_descriptor_suffix_kana`, `payment_method_options.card.statement_descriptor_suffix_kanji`, `payment_method_options.klarna.on_demand`, `payment_method_options.klarna.subscriptions`, `payment_method_options.p24.tos_shown_and_accepted`, `payment_method_options.upi.mandate_options`, `payment_method_options.us_bank_account.networks`, `confirmation_token`, `mandate`, `payment_method_options.customer_balance.bank_transfer.requested_address_types` or `radar_options`, so an imported payment intent has them null: a configuration that sets `amount_details.enforce_arithmetic_validation`, `payment_method_configuration`, `payment_method_data`, `payment_method_options.card.cvc_token`, `payment_method_options.card.installments`, `payment_method_options.card.mandate_options`, `payment_method_options.card.network`, `payment_method_options.card.request_extended_authorization`, `payment_method_options.card.request_incremental_authorization`, `payment_method_options.card.request_multicapture`, `payment_method_options.card.request_overcapture`, `payment_method_options.card.statement_descriptor_suffix_kana`, `payment_method_options.card.statement_descriptor_suffix_kanji`, `payment_method_options.klarna.on_demand`, `payment_method_options.klarna.subscriptions`, `payment_method_options.p24.tos_shown_and_accepted`, `payment_method_options.upi.mandate_options` or `payment_method_options.us_bank_account.networks` plans an update after the import, and one that sets `confirmation_token`, `mandate`, `payment_method_options.customer_balance.bank_transfer.requested_address_types` or `radar_options` plans a replacement.

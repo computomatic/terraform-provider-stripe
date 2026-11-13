@@ -55,6 +55,13 @@ var Declaration = engine.Declaration{
 		// `isolated/name_collection_update_both_off`, and `isolated/hash_name_collection`, whose link
 		// is created with both names on
 		"name_collection.individual.enabled": "Stripe takes it beside `name_collection.business.enabled` set to `true`, and refuses both names' `enabled` set to `false`.",
+		// suite: TestPaymentLinkAttributes, probes `isolated/hash_name_collection*`,
+		// `isolated/name_collection_update_both_off_business` and `isolated/name_collection_*_emptied`
+		"name_collection.business.enabled": "Stripe takes it on an update beside `name_collection.individual.enabled` or alone, refuses both names' `enabled` set to `false`, and refuses either name sent empty as `cannot be unset`, which is why removing a name replaces the link.",
+		// suite: TestPaymentLinkAttributes, probes `isolated/tax_id_collection_off_alone` and
+		// `isolated/tax_id_collection_off_required_held`, on a link created with `required` set to
+		// `if_supported`
+		"tax_id_collection.enabled": "Stripe takes `false` on an update that sends it alone, and refuses `false` beside `required`.",
 		// suite: TestPaymentLinkAttributes, probe `isolated/unknown_transfer_destination`
 		"transfer_data.destination": "Stripe takes the ID of a connected account it can find, and refuses one it cannot find.",
 	},

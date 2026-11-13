@@ -378,7 +378,7 @@ func (m *model) encodeChanges(plan, state basetypes.ObjectValue, config tftypes.
 				out = append(out, wire.Field{Name: n.Name, Value: v})
 			}
 		default:
-			v, ok, err := encodeValue(n, withoutUnchangedDefaults(n, pv, sv), updatable)
+			v, ok, err := encodeValue(n, withoutUnchangedDefaults(n, tftypes.NewAttributePath().WithAttributeName(n.AttrName()), pv, sv, config), updatable)
 			if err != nil {
 				return nil, err
 			}
@@ -818,8 +818,12 @@ func hasRequiredMember(n *node) bool {
 
 // withoutUnchangedDefaults drops, from an object that changed, the nested objects Stripe
 // filled in and the update leaves as they are, so the request does not send Stripe its own
-// values back.
-func withoutUnchangedDefaults(n *node, plan, state attr.Value) attr.Value {
+// values back. An object that differs from the state only by values the plan leaves unknown and
+// the configuration leaves unset is left as it is too, such as an account's
+// `settings.card_payments` whose descriptor prefix Stripe fills from a changed payments
+// descriptor: sending it would send what is left of it, or nothing. at is the object's path in
+// config, the configuration; its zero value turns that check off.
+func withoutUnchangedDefaults(n *node, at *tftypes.AttributePath, plan, state attr.Value, config tftypes.Value) attr.Value {
 	p, isObj := plan.(basetypes.ObjectValue)
 	s, hasState := state.(basetypes.ObjectValue)
 	if n.Shape != fields.Object || !isObj || !hasState || p.IsNull() || s.IsNull() {
@@ -831,10 +835,10 @@ func withoutUnchangedDefaults(n *node, plan, state attr.Value) attr.Value {
 		pv, sv := p.Attributes()[name], s.Attributes()[name]
 		switch {
 		case pv == nil:
-		case k.Computed && k.Shape == fields.Object && pv.Equal(sv):
+		case k.Computed && k.Shape == fields.Object && (pv.Equal(sv) || sameBesidesComputed(at.WithAttributeName(name), pv, sv, config)):
 			attrs[name] = nullOf(attrType(k))
 		default:
-			attrs[name] = withoutUnchangedDefaults(k, pv, sv)
+			attrs[name] = withoutUnchangedDefaults(k, at.WithAttributeName(name), pv, sv, config)
 		}
 	}
 	out, diags := types.ObjectValue(p.AttributeTypes(context.Background()), attrs)

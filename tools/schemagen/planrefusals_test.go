@@ -83,6 +83,27 @@ func TestPatternsKeepRecordedNumbers(t *testing.T) {
 	}
 }
 
+// The account's country, which the suite generates as `account_country`, is the probe's own
+// account country, in which alone the pattern holds, so it translates to that country exactly,
+// in the refused request and in the requests Stripe took that a refusal is weighed against.
+func TestAccountCountryIsTheProbesCountry(t *testing.T) {
+	ev := gadgetRules(t, gadget(), EvidenceRule{Operation: "PostGadgets", Observations: []RuleObservation{
+		probe("isolated/red_here", `{"name":"Gadget","color":"red","owner":{"email":{"$gen":"account_country"}}}`, "", 400, "Not red here.", ""),
+		probe("isolated/blue_here", `{"name":"Gadget","color":"blue","owner":{"email":{"$gen":"account_country"}}}`, "", 200, "", ""),
+	}})
+	f := fieldAt(cover(t, gadget(), ev).table, "color")
+	if f == nil || len(f.PlanRefusals) != 1 || f.PlanRefusals[0].Sends != `{"name":"Gadget","color":"red","owner":{"email":"US"}}` {
+		t.Errorf("color: %+v", f)
+	}
+	ev = gadgetRules(t, gadget(), EvidenceRule{Operation: "PostGadgets", Observations: []RuleObservation{
+		probe("isolated/red_here", `{"name":"Gadget","color":"red","owner":{"email":{"$gen":"account_country"}}}`, "", 400, "Not red here.", ""),
+	}})
+	ev.Evidence.Rules[0].Observations[0].Condition.AccountCountry = ""
+	if _, err := coverTable(coverageSpec(t), gadget(), ev); err == nil || !strings.Contains(err.Error(), "names no account country") {
+		t.Errorf("an account country with none recorded: %v", err)
+	}
+}
+
 // A refused request the table cannot send, here with the omitted `confirm`, matches no plan
 // and is left out.
 func TestARequestTheTableCannotSendIsLeftOut(t *testing.T) {

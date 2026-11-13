@@ -549,7 +549,15 @@ func annotate(table []fields.Field, leaves []Leaf, records []Record, create, uns
 		}
 		if e := ev.leaf(l.Key); e != nil {
 			for _, u := range e.Unreachable {
-				if !slices.Contains(f.Enum, u.Value) {
+				// An update's `""` is the unset, which the engine sends of its own for a top-level
+				// field removed from the configuration and for a member of a hash it sends in
+				// part or whole member by member, which the field's UnsetUnreachable lets the
+				// engine refuse in a declaration: inside any other hash a removed member is left
+				// out.
+				switch unset := u.Value == "" && l.Operation != create; {
+				case unset && !strings.Contains(l.At, "."):
+					return fmt.Errorf("%s: the record marks the unset unreachable on a top-level argument, which the engine sends when the configuration removes it", l.Key)
+				case !unset && !slices.Contains(f.Enum, u.Value):
 					return fmt.Errorf("%s: the record marks %q unreachable, which is not one of the argument's documented values", l.Key, u.Value)
 				}
 				if _, seen := unreachable[l.At]; !seen {
@@ -600,10 +608,15 @@ func annotate(table []fields.Field, leaves []Leaf, records []Record, create, uns
 	}
 	for _, at := range unreachablePaths {
 		sentences := make([]string, len(unreachable[at]))
+		f := fieldAt(table, at)
 		for i, u := range unreachable[at] {
 			sentences[i] = fmt.Sprintf("Stripe fails %s on every attempt, so the conformance suite never sends it: %q.", fields.Code(u.Value), strings.TrimSuffix(u.Reason, "."))
+			if u.Value == "" {
+				f.UnsetUnreachable = true
+				sentences[i] = fmt.Sprintf("Stripe fails an update that unsets it on every attempt, so the provider sends no unset of its own: removing it from the configuration leaves it out of the hash the update sends (%q).", strings.TrimSuffix(u.Reason, "."))
+			}
 		}
-		fieldAt(table, at).Unreachable = strings.Join(sentences, " ")
+		f.Unreachable = strings.Join(sentences, " ")
 	}
 	return nil
 }

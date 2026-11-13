@@ -13,6 +13,7 @@ const (
 	leftCouponBesideHeld = "Stripe refuses a coupon beside a discount in one element (`You may only specify one of these parameters: coupon, discount.`), but the record sends the discount as the one read from the object, so the plan cannot tell the refused request from one naming a discount on its own, on which Stripe's answer turns (probes `isolated/*coupon_beside_held`)."
 	leftMissing          = "Stripe's refusal turns on whether the object the request names exists, which the plan cannot know (code `resource_missing`)."
 	leftStartedLater     = "The probe's schedule was created to start a day after the create (`$gen` `now` with an offset), a time relative to when the probe ran, which a pattern cannot state and any value would widen to every start; the plan refuses the same requests to a schedule created with `start_date = \"now\"` (probes `isolated/phases_empty_started` and `isolated/phases_without_start_date_started`)."
+	leftNoTemplate       = "Stripe's refusal turns on whether the invoice rendering template the request names exists, which the plan cannot know (code `invoice_rendering_template_invalid`, probes `isolated/customer_template_*`)."
 	leftBusinessURL      = "Stripe's refusal turns on its own check of the URL, not on the request alone: it took `https://example.com/acme` on a create and refused it on an update, and took `https://stripe.com` on a create of an account with no recipient configuration (probes `isolated/url_*`)."
 )
 
@@ -35,6 +36,14 @@ const mandateData = "A confirm-time instruction: Stripe took the hash only in cr
 // leaf test.
 func confirmTime(test string) string {
 	return "A confirm-time instruction: Stripe took it only in creates that also sent `confirm` true, which this resource never sends, so it would apply to no request the provider makes (suite: " + test + ", every probe of the create that sent it)."
+}
+
+// acssAccountNumber is the register's reason for an intent's inline Canadian pre-authorized debit
+// method: its `account_number`, which the hash requires, is `unproven` with the reason
+// `accepted_ignored` (Stripe took it with no effect the suite could see), so no configuration could
+// send the hash. test names the suite's leaf test.
+func acssAccountNumber(test string) string {
+	return "`account_number`, which the hash requires, is `unproven` with the reason `accepted_ignored`: Stripe took it with no effect the suite could see, so no configuration could send the hash (suite: " + test + ")."
 }
 
 // priceKept is a price's Resource.AcceptedOnly register (the product owner's decision of
@@ -268,6 +277,7 @@ var Resources = []Resource{
 		"PostSubscriptions add_invoice_items.discounts.promotion_code":                                                       leftExpired,
 		"PostSubscriptions items.discounts.coupon":                                                                           leftExpired,
 		"PostSubscriptions items.discounts.promotion_code":                                                                   leftExpired,
+		"PostSubscriptions payment_settings.payment_method_options.card.network":                                             "Stripe's refusal turns on the networks of the customer's card, another object's state, which the plan cannot know: it refused `amex` for a customer whose default card offers only `visa` and took any network for a customer with no payment method, reading it back null (probes `isolated/card_network_not_the_cards` and `isolated/card_network_no_payment_method*`).",
 		"PostSubscriptionsSubscriptionExposedId add_invoice_items.discounts.discount":                                        leftDiscountHeld,
 		"PostSubscriptionsSubscriptionExposedId payment_settings.payment_method_options.customer_balance.bank_transfer.type": "Stripe refused an EU bank transfer sent without `eu_bank_transfer` on a subscription created with a euro price (`price:eur`) and an EU transfer held, and the price's currency is another object's state, which the plan cannot know (probe `isolated/hash_customer_balance_bank_transfer`).",
 	}, AcceptedOnly: subscriptionKept(), Exclude: map[string]string{
@@ -299,7 +309,8 @@ var Resources = []Resource{
 		"PostPaymentLinks transfer_data.destination":                     leftMissing,
 	}, CreatePath: "/v1/payment_links", UpdatePath: "/v1/payment_links/{payment_link}", Omit: []string{"line_items.price_data.product_data.tax_details"}},
 	{Package: "setup_intent", Exclude: map[string]string{
-		"mandate_data": mandateData,
+		"mandate_data":                                                mandateData,
+		"payment_method_data.acss_debit":                              acssAccountNumber("TestSetupIntentAttributes/leaves/request/PostSetupIntents/payment_method_data.acss_debit.account_number"),
 		"PostSetupIntents payment_method_options.card.network":        confirmTime("TestSetupIntentAttributes/leaves/request/PostSetupIntents/payment_method_options.card.network"),
 		"PostSetupIntents payment_method_options.card.three_d_secure": confirmTime("TestSetupIntentAttributes/leaves/request/PostSetupIntents/payment_method_options.card.three_d_secure.version"),
 		"PostSetupIntents return_url":                                 confirmTime("TestSetupIntentAttributes/leaves/request/PostSetupIntents/return_url"),
@@ -314,7 +325,9 @@ var Resources = []Resource{
 	}, StatusConfirms: true,
 		Exclude: map[string]string{
 			"mandate_data":                   mandateData,
-			"PostPaymentIntents off_session": confirmTime("TestPaymentIntentAttributes/leaves/request/PostPaymentIntents/off_session"),
+			"payment_method_data.acss_debit": acssAccountNumber("TestPaymentIntentAttributes/leaves/request/PostPaymentIntents/payment_method_data.acss_debit.account_number"),
+			"PostPaymentIntentsIntent payment_method_options.customer_balance.bank_transfer": "`type`, which the hash requires, is `unproven` on the update with the reason `accepted_ignored`: Stripe took it with no effect the suite could see, so no update could send the hash, which the create alone takes (suite: TestPaymentIntentAttributes/leaves/request/PostPaymentIntentsIntent/payment_method_options.customer_balance.bank_transfer.type).",
+			"PostPaymentIntents off_session":                         confirmTime("TestPaymentIntentAttributes/leaves/request/PostPaymentIntents/off_session"),
 			"PostPaymentIntents payment_method_options.card.network": confirmTime("TestPaymentIntentAttributes/leaves/request/PostPaymentIntents/payment_method_options.card.network"),
 			"PostPaymentIntents radar_options.referrer":              confirmTime("TestPaymentIntentAttributes/leaves/request/PostPaymentIntents/radar_options.referrer"),
 			"PostPaymentIntents return_url":                          confirmTime("TestPaymentIntentAttributes/leaves/request/PostPaymentIntents/return_url"),
@@ -363,7 +376,10 @@ var Resources = []Resource{
 	// says. Their descriptions come from the response, and the individual's identity numbers,
 	// which the person object does not return, from a person's create. The capability data
 	// source reads the statuses.
-	{Package: "account", CreatePath: "/v1/accounts", UpdatePath: "/v1/accounts/{account}",
+	{Package: "account", LeftToStripe: map[string]string{
+		"PostAccounts groups.payments_pricing":        leftMissing,
+		"PostAccountsAccount groups.payments_pricing": leftMissing,
+	}, CreatePath: "/v1/accounts", UpdatePath: "/v1/accounts/{account}",
 		Keep: []string{"business_profile", "business_type", "capabilities", "charges_enabled", "company.name", "controller", "country", "created",
 			"default_currency", "details_submitted", "email", "external_account", "future_requirements", "id",
 			"individual.address.city", "individual.address.line1", "individual.address.postal_code", "individual.address.state",
@@ -415,9 +431,14 @@ var Resources = []Resource{
 			"relationship", "requirements", "ssn_last_4", "ssn_last_4_provided", "verification"},
 		ReadOnly: []string{"relationship.authorizer", "relationship.legal_guardian", "verification"}},
 	{Package: "account_v2", LeftToStripe: map[string]string{
+		"PostV2CoreAccountsId configuration.customer.billing.default_payment_method":                          "Stripe's refusal turns on whether the payment method the request names is the account's own, which the plan cannot know: it refused `pm_card_visa`, a test token no account holds (code `default_payment_method_invalid`, probe `isolated/customer_payment_method`).",
+		"PostV2CoreAccounts configuration.customer.billing.invoice.rendering.template":                        leftNoTemplate,
+		"PostV2CoreAccountsId configuration.customer.billing.invoice.rendering.template":                      leftNoTemplate,
 		"PostV2CoreAccounts defaults.profile.business_url":                                                    leftBusinessURL,
 		"PostV2CoreAccountsId configuration.recipient.capabilities.stripe_balance.stripe_transfers.requested": "Stripe's refusal turns on `dashboard` and the collectors of `defaults.responsibilities` being absent from the request, which a pattern of what a request sends cannot state: it took the same request beside them (probes `isolated/change_adds_recipient` and `isolated/change_adds_recipient_with_collectors`), as the declaration's `Answers` words.",
 		"PostV2CoreAccountsId defaults.profile.business_url":                                                  leftBusinessURL,
+	}, Exclude: map[string]string{
+		"identity.individual.id_numbers": "Stripe lists a `us_ssn` before a person's `us_ssn_last_4` a minute or two after it creates the person (suite: \"Stripe adds a us_ssn after create\"), which `stripe_account_person_v2` meets by matching its top-level `id_numbers` by type (MatchOnRead), and the engine matches no list inside a hash so: the read would pair each `value`, which Stripe never returns, with another number, and every plan would send the list again (suite: TestV2CoreAccountAttributes/leaves/request/PostV2CoreAccounts/identity.individual.id_numbers.type).",
 	},
 		CreatePath: "/v2/core/accounts", UpdatePath: "/v2/core/accounts/{id}",
 		Keep: []string{"applied_configurations", "closed",

@@ -61,8 +61,66 @@ The `configuration` attribute supports:
 
 The `configuration.customer` attribute supports:
 
-* `applied` - Indicates whether the customer configuration is active. You can deactivate or reactivate the customer configuration by updating this property. Deactivating the configuration by setting this value to false will unrequest all capabilities within the configuration. It will not delete any of the configuration's other properties.
+* `applied` - Represents the state of the configuration, and can be updated to deactivate or re-apply a configuration.
+* `automatic_indirect_tax` - Automatic indirect tax settings to be used when automatic tax calculation is enabled on the customer's invoices, subscriptions, checkout sessions, or payment links. Surfaces if automatic tax calculation is possible given the current customer location information. See [`configuration.customer.automatic_indirect_tax`](#configuration.customer.automatic_indirect_tax) below.
+* `billing` - Billing settings - default settings used for this customer in Billing flows such as Invoices and Subscriptions. See [`configuration.customer.billing`](#configuration.customer.billing) below.
 * `capabilities` - Capabilities that have been requested on the Customer Configuration. See [`configuration.customer.capabilities`](#configuration.customer.capabilities) below.
+* `shipping` - The customer's shipping information. Appears on invoices emailed to this customer. See [`configuration.customer.shipping`](#configuration.customer.shipping) below.
+* `test_clock` - ID of the test clock to attach to the customer. Can only be set on testmode Accounts, and when the Customer Configuration is first set on an Account.
+
+<a id="configuration.customer.automatic_indirect_tax"></a>
+### `configuration.customer.automatic_indirect_tax`
+
+The `configuration.customer.automatic_indirect_tax` attribute supports:
+
+* `exempt` - Describes the customer's tax exemption status, which is `none`, `exempt`, or `reverse`. When set to reverse, invoice and receipt PDFs include the following text: "Reverse charge". Possible values: `exempt`, `none`, `reverse`.
+* `ip_address` - A recent IP address of the customer used for tax reporting and tax location inference.
+* `location` - The customer account's identified tax location, derived from `location_source`. Only rendered if the `automatic_indirect_tax` feature is requested and `active`. See [`configuration.customer.automatic_indirect_tax.location`](#configuration.customer.automatic_indirect_tax.location) below.
+* `location_source` - Data source used to identify the customer account's tax location. Defaults to `identity_address`. Used for automatic indirect tax calculation. Possible values: `identity_address`, `ip_address`, `payment_method`, `shipping_address`.
+* `validate_location` - A per-request flag that indicates when Stripe should validate the customer tax location - defaults to `auto`. Possible values: `auto`, `deferred`, `immediately`.
+
+<a id="configuration.customer.automatic_indirect_tax.location"></a>
+### `configuration.customer.automatic_indirect_tax.location`
+
+The `configuration.customer.automatic_indirect_tax.location` attribute supports:
+
+* `country` - The identified tax country of the customer.
+* `state` - The identified tax state, county, province, or region of the customer.
+
+<a id="configuration.customer.billing"></a>
+### `configuration.customer.billing`
+
+The `configuration.customer.billing` attribute supports:
+
+* `default_payment_method` - The ID of a `PaymentMethod` attached to this Account's `customer` configuration, used as the default payment method for invoices and subscriptions.
+* `invoice` - Default invoice settings for the customer account. See [`configuration.customer.billing.invoice`](#configuration.customer.billing.invoice) below.
+
+<a id="configuration.customer.billing.invoice"></a>
+### `configuration.customer.billing.invoice`
+
+The `configuration.customer.billing.invoice` attribute supports:
+
+* `custom_fields` - The list of up to 4 default custom fields to be displayed on invoices for this customer. See [`configuration.customer.billing.invoice.custom_fields`](#configuration.customer.billing.invoice.custom_fields) below.
+* `footer` - Default invoice footer.
+* `next_sequence` - Sequence number to use on the customer account's next invoice. Defaults to 1.
+* `prefix` - Prefix used to generate unique invoice numbers. Must be 3-12 uppercase letters or numbers.
+* `rendering` - Default invoice PDF rendering options. See [`configuration.customer.billing.invoice.rendering`](#configuration.customer.billing.invoice.rendering) below.
+
+<a id="configuration.customer.billing.invoice.custom_fields"></a>
+### `configuration.customer.billing.invoice.custom_fields`
+
+The `configuration.customer.billing.invoice.custom_fields` attribute is a list. Each element supports:
+
+* `name` - The name of the custom field. This may be up to 40 characters.
+* `value` - The value of the custom field. This may be up to 140 characters. When updating, pass an empty string to remove previously-defined values.
+
+<a id="configuration.customer.billing.invoice.rendering"></a>
+### `configuration.customer.billing.invoice.rendering`
+
+The `configuration.customer.billing.invoice.rendering` attribute supports:
+
+* `amount_tax_display` - Indicates whether displayed line item prices and amounts on invoice PDFs include inclusive tax amounts. Must be either `include_inclusive_tax` or `exclude_tax`. Possible values: `exclude_tax`, `include_inclusive_tax`.
+* `template` - ID of the invoice rendering template to use for future invoices.
 
 <a id="configuration.customer.capabilities"></a>
 ### `configuration.customer.capabilities`
@@ -88,21 +146,200 @@ The `configuration.customer.capabilities.automatic_indirect_tax.status_details` 
 * `code` - Machine-readable code explaining the reason for the Capability to be in its current status. Possible values: `determining_status`, `rejected_fraud`, `rejected_incomplete_verification`, `rejected_listed`, `rejected_other`, `rejected_platform_fraud`, `rejected_platform_other`, `rejected_platform_terms_of_service`, `rejected_terms_of_service`, `requirements_past_due`, `requirements_pending_verification`, `restricted_other`, `unsupported_business`, `unsupported_country`, `unsupported_entity_type`.
 * `resolution` - Machine-readable code explaining how to make the Capability active. Possible values: `contact_stripe`, `no_resolution`, `provide_info`.
 
+<a id="configuration.customer.shipping"></a>
+### `configuration.customer.shipping`
+
+The `configuration.customer.shipping` attribute supports:
+
+* `address` - Customer shipping address. See [`configuration.customer.shipping.address`](#configuration.customer.shipping.address) below.
+* `name` - Customer name.
+* `phone` - Customer phone (including extension).
+
+<a id="configuration.customer.shipping.address"></a>
+### `configuration.customer.shipping.address`
+
+The `configuration.customer.shipping.address` attribute supports:
+
+* `city` - City, district, suburb, town, or village.
+* `country` - Two-letter country code ([ISO 3166-1 alpha-2](https://en.wikipedia.org/wiki/ISO_3166-1_alpha-2)).
+* `line1` - Address line 1 (e.g., street, PO Box, or company name).
+* `line2` - Address line 2 (e.g., apartment, suite, unit, or building).
+* `postal_code` - ZIP or postal code.
+* `state` - State, county, province, or region.
+
 <a id="configuration.merchant"></a>
 ### `configuration.merchant`
 
 The `configuration.merchant` attribute supports:
 
-* `applied` - Indicates whether the merchant configuration is active. You can deactivate or reactivate the merchant configuration by updating this property. Deactivating the configuration by setting this value to false doesn't delete the configuration's properties.
+* `applied` - Represents the state of the configuration, and can be updated to deactivate or re-apply a configuration.
+* `branding` - Settings used to apply the merchant's branding to email receipts, invoices, Checkout, and other products. See [`configuration.merchant.branding`](#configuration.merchant.branding) below.
 * `capabilities` - Capabilities to request on the Merchant Configuration. See [`configuration.merchant.capabilities`](#configuration.merchant.capabilities) below.
+* `card_payments` - Card payments settings. See [`configuration.merchant.card_payments`](#configuration.merchant.card_payments) below.
+* `mcc` - The Merchant Category Code (MCC) for the Merchant Configuration. MCCs classify businesses based on the goods or services they provide.
+* `statement_descriptor` - Statement descriptor. See [`configuration.merchant.statement_descriptor`](#configuration.merchant.statement_descriptor) below.
+* `support` - Publicly available contact information for sending support issues to. See [`configuration.merchant.support`](#configuration.merchant.support) below.
+
+<a id="configuration.merchant.branding"></a>
+### `configuration.merchant.branding`
+
+The `configuration.merchant.branding` attribute supports:
+
+* `icon` - ID of a [file upload](https://docs.stripe.com/api/persons/update#create_file): An icon for the merchant. Must be square and at least 128px x 128px.
+* `logo` - ID of a [file upload](https://docs.stripe.com/api/persons/update#create_file): A logo for the merchant that will be used in Checkout instead of the icon and without the merchant's name next to it if provided. Must be at least 128px x 128px.
+* `primary_color` - A CSS hex color value representing the primary branding color for the merchant.
+* `secondary_color` - A CSS hex color value representing the secondary branding color for the merchant.
 
 <a id="configuration.merchant.capabilities"></a>
 ### `configuration.merchant.capabilities`
 
 The `configuration.merchant.capabilities` attribute supports:
 
+* `ach_debit_payments` - Allow the merchant to process ACH debit payments. See [`configuration.merchant.capabilities.ach_debit_payments`](#configuration.merchant.capabilities.ach_debit_payments) below.
+* `acss_debit_payments` - Allow the merchant to process ACSS debit payments. See [`configuration.merchant.capabilities.acss_debit_payments`](#configuration.merchant.capabilities.acss_debit_payments) below.
+* `affirm_payments` - Allow the merchant to process Affirm payments. See [`configuration.merchant.capabilities.affirm_payments`](#configuration.merchant.capabilities.affirm_payments) below.
+* `afterpay_clearpay_payments` - Allow the merchant to process Afterpay/Clearpay payments. See [`configuration.merchant.capabilities.afterpay_clearpay_payments`](#configuration.merchant.capabilities.afterpay_clearpay_payments) below.
+* `amazon_pay_payments` - Allow the merchant to process Amazon Pay payments. See [`configuration.merchant.capabilities.amazon_pay_payments`](#configuration.merchant.capabilities.amazon_pay_payments) below.
+* `bancontact_payments` - Allow the merchant to process Bancontact payments. See [`configuration.merchant.capabilities.bancontact_payments`](#configuration.merchant.capabilities.bancontact_payments) below.
+* `blik_recurring_payments` - Allow the merchant to process recurring BLIK payments. See [`configuration.merchant.capabilities.blik_recurring_payments`](#configuration.merchant.capabilities.blik_recurring_payments) below.
 * `card_payments` - Allow the merchant to collect card payments. See [`configuration.merchant.capabilities.card_payments`](#configuration.merchant.capabilities.card_payments) below.
+* `cartes_bancaires_payments` - Allow the merchant to process Cartes Bancaires payments. See [`configuration.merchant.capabilities.cartes_bancaires_payments`](#configuration.merchant.capabilities.cartes_bancaires_payments) below.
+* `cashapp_payments` - Allow the merchant to process Cash App payments. See [`configuration.merchant.capabilities.cashapp_payments`](#configuration.merchant.capabilities.cashapp_payments) below.
+* `eps_payments` - Allow the merchant to process EPS payments. See [`configuration.merchant.capabilities.eps_payments`](#configuration.merchant.capabilities.eps_payments) below.
+* `gb_bank_transfer_payments` - Allow the merchant to process UK bank transfer payments. See [`configuration.merchant.capabilities.gb_bank_transfer_payments`](#configuration.merchant.capabilities.gb_bank_transfer_payments) below.
+* `ideal_payments` - Allow the merchant to process iDEAL payments. See [`configuration.merchant.capabilities.ideal_payments`](#configuration.merchant.capabilities.ideal_payments) below.
+* `kakao_pay_payments` - Allow the merchant to process Kakao Pay payments. See [`configuration.merchant.capabilities.kakao_pay_payments`](#configuration.merchant.capabilities.kakao_pay_payments) below.
+* `klarna_payments` - Allow the merchant to process Klarna payments. See [`configuration.merchant.capabilities.klarna_payments`](#configuration.merchant.capabilities.klarna_payments) below.
+* `kr_card_payments` - Allow the merchant to process Korean card payments. See [`configuration.merchant.capabilities.kr_card_payments`](#configuration.merchant.capabilities.kr_card_payments) below.
+* `link_payments` - Allow the merchant to process Link payments. See [`configuration.merchant.capabilities.link_payments`](#configuration.merchant.capabilities.link_payments) below.
+* `multibanco_payments` - Allow the merchant to process Multibanco payments. See [`configuration.merchant.capabilities.multibanco_payments`](#configuration.merchant.capabilities.multibanco_payments) below.
+* `naver_pay_payments` - Allow the merchant to process Naver Pay payments. See [`configuration.merchant.capabilities.naver_pay_payments`](#configuration.merchant.capabilities.naver_pay_payments) below.
+* `p24_payments` - Allow the merchant to process Przelewy24 (P24) payments. See [`configuration.merchant.capabilities.p24_payments`](#configuration.merchant.capabilities.p24_payments) below.
+* `payco_payments` - Allow the merchant to process PAYCO payments. See [`configuration.merchant.capabilities.payco_payments`](#configuration.merchant.capabilities.payco_payments) below.
+* `samsung_pay_payments` - Allow the merchant to process Samsung Pay payments. See [`configuration.merchant.capabilities.samsung_pay_payments`](#configuration.merchant.capabilities.samsung_pay_payments) below.
+* `satispay_payments` - Allow the merchant to process Satispay payments. See [`configuration.merchant.capabilities.satispay_payments`](#configuration.merchant.capabilities.satispay_payments) below.
 * `stripe_balance` - Capabilities that enable the merchant to manage their Stripe Balance (/v1/balance). See [`configuration.merchant.capabilities.stripe_balance`](#configuration.merchant.capabilities.stripe_balance) below.
+* `sunbit_payments` - Allow the merchant to process Sunbit payments. See [`configuration.merchant.capabilities.sunbit_payments`](#configuration.merchant.capabilities.sunbit_payments) below.
+* `us_bank_transfer_payments` - Allow the merchant to process US bank transfer payments. See [`configuration.merchant.capabilities.us_bank_transfer_payments`](#configuration.merchant.capabilities.us_bank_transfer_payments) below.
+
+<a id="configuration.merchant.capabilities.ach_debit_payments"></a>
+### `configuration.merchant.capabilities.ach_debit_payments`
+
+The `configuration.merchant.capabilities.ach_debit_payments` attribute supports:
+
+* `requested` - To request a new Capability for an account, pass true. There can be a delay before the requested Capability becomes active.
+* `status` - The status of the Capability. Possible values: `active`, `pending`, `rejected`, `restricted`, `unsupported`.
+* `status_details` - Additional details about the capability's status. This value is empty when `status` is `active`. See [`configuration.merchant.capabilities.ach_debit_payments.status_details`](#configuration.merchant.capabilities.ach_debit_payments.status_details) below.
+
+<a id="configuration.merchant.capabilities.ach_debit_payments.status_details"></a>
+### `configuration.merchant.capabilities.ach_debit_payments.status_details`
+
+The `configuration.merchant.capabilities.ach_debit_payments.status_details` attribute is a list. Each element supports:
+
+* `code` - Machine-readable code explaining the reason for the Capability to be in its current status. Possible values: `determining_status`, `rejected_fraud`, `rejected_incomplete_verification`, `rejected_listed`, `rejected_other`, `rejected_platform_fraud`, `rejected_platform_other`, `rejected_platform_terms_of_service`, `rejected_terms_of_service`, `requirements_past_due`, `requirements_pending_verification`, `restricted_other`, `unsupported_business`, `unsupported_country`, `unsupported_entity_type`.
+* `resolution` - Machine-readable code explaining how to make the Capability active. Possible values: `contact_stripe`, `no_resolution`, `provide_info`.
+
+<a id="configuration.merchant.capabilities.acss_debit_payments"></a>
+### `configuration.merchant.capabilities.acss_debit_payments`
+
+The `configuration.merchant.capabilities.acss_debit_payments` attribute supports:
+
+* `requested` - To request a new Capability for an account, pass true. There can be a delay before the requested Capability becomes active.
+* `status` - The status of the Capability. Possible values: `active`, `pending`, `rejected`, `restricted`, `unsupported`.
+* `status_details` - Additional details about the capability's status. This value is empty when `status` is `active`. See [`configuration.merchant.capabilities.acss_debit_payments.status_details`](#configuration.merchant.capabilities.acss_debit_payments.status_details) below.
+
+<a id="configuration.merchant.capabilities.acss_debit_payments.status_details"></a>
+### `configuration.merchant.capabilities.acss_debit_payments.status_details`
+
+The `configuration.merchant.capabilities.acss_debit_payments.status_details` attribute is a list. Each element supports:
+
+* `code` - Machine-readable code explaining the reason for the Capability to be in its current status. Possible values: `determining_status`, `rejected_fraud`, `rejected_incomplete_verification`, `rejected_listed`, `rejected_other`, `rejected_platform_fraud`, `rejected_platform_other`, `rejected_platform_terms_of_service`, `rejected_terms_of_service`, `requirements_past_due`, `requirements_pending_verification`, `restricted_other`, `unsupported_business`, `unsupported_country`, `unsupported_entity_type`.
+* `resolution` - Machine-readable code explaining how to make the Capability active. Possible values: `contact_stripe`, `no_resolution`, `provide_info`.
+
+<a id="configuration.merchant.capabilities.affirm_payments"></a>
+### `configuration.merchant.capabilities.affirm_payments`
+
+The `configuration.merchant.capabilities.affirm_payments` attribute supports:
+
+* `requested` - To request a new Capability for an account, pass true. There can be a delay before the requested Capability becomes active.
+* `status` - The status of the Capability. Possible values: `active`, `pending`, `rejected`, `restricted`, `unsupported`.
+* `status_details` - Additional details about the capability's status. This value is empty when `status` is `active`. See [`configuration.merchant.capabilities.affirm_payments.status_details`](#configuration.merchant.capabilities.affirm_payments.status_details) below.
+
+<a id="configuration.merchant.capabilities.affirm_payments.status_details"></a>
+### `configuration.merchant.capabilities.affirm_payments.status_details`
+
+The `configuration.merchant.capabilities.affirm_payments.status_details` attribute is a list. Each element supports:
+
+* `code` - Machine-readable code explaining the reason for the Capability to be in its current status. Possible values: `determining_status`, `rejected_fraud`, `rejected_incomplete_verification`, `rejected_listed`, `rejected_other`, `rejected_platform_fraud`, `rejected_platform_other`, `rejected_platform_terms_of_service`, `rejected_terms_of_service`, `requirements_past_due`, `requirements_pending_verification`, `restricted_other`, `unsupported_business`, `unsupported_country`, `unsupported_entity_type`.
+* `resolution` - Machine-readable code explaining how to make the Capability active. Possible values: `contact_stripe`, `no_resolution`, `provide_info`.
+
+<a id="configuration.merchant.capabilities.afterpay_clearpay_payments"></a>
+### `configuration.merchant.capabilities.afterpay_clearpay_payments`
+
+The `configuration.merchant.capabilities.afterpay_clearpay_payments` attribute supports:
+
+* `requested` - To request a new Capability for an account, pass true. There can be a delay before the requested Capability becomes active.
+* `status` - The status of the Capability. Possible values: `active`, `pending`, `rejected`, `restricted`, `unsupported`.
+* `status_details` - Additional details about the capability's status. This value is empty when `status` is `active`. See [`configuration.merchant.capabilities.afterpay_clearpay_payments.status_details`](#configuration.merchant.capabilities.afterpay_clearpay_payments.status_details) below.
+
+<a id="configuration.merchant.capabilities.afterpay_clearpay_payments.status_details"></a>
+### `configuration.merchant.capabilities.afterpay_clearpay_payments.status_details`
+
+The `configuration.merchant.capabilities.afterpay_clearpay_payments.status_details` attribute is a list. Each element supports:
+
+* `code` - Machine-readable code explaining the reason for the Capability to be in its current status. Possible values: `determining_status`, `rejected_fraud`, `rejected_incomplete_verification`, `rejected_listed`, `rejected_other`, `rejected_platform_fraud`, `rejected_platform_other`, `rejected_platform_terms_of_service`, `rejected_terms_of_service`, `requirements_past_due`, `requirements_pending_verification`, `restricted_other`, `unsupported_business`, `unsupported_country`, `unsupported_entity_type`.
+* `resolution` - Machine-readable code explaining how to make the Capability active. Possible values: `contact_stripe`, `no_resolution`, `provide_info`.
+
+<a id="configuration.merchant.capabilities.amazon_pay_payments"></a>
+### `configuration.merchant.capabilities.amazon_pay_payments`
+
+The `configuration.merchant.capabilities.amazon_pay_payments` attribute supports:
+
+* `requested` - To request a new Capability for an account, pass true. There can be a delay before the requested Capability becomes active.
+* `status` - The status of the Capability. Possible values: `active`, `pending`, `rejected`, `restricted`, `unsupported`.
+* `status_details` - Additional details about the capability's status. This value is empty when `status` is `active`. See [`configuration.merchant.capabilities.amazon_pay_payments.status_details`](#configuration.merchant.capabilities.amazon_pay_payments.status_details) below.
+
+<a id="configuration.merchant.capabilities.amazon_pay_payments.status_details"></a>
+### `configuration.merchant.capabilities.amazon_pay_payments.status_details`
+
+The `configuration.merchant.capabilities.amazon_pay_payments.status_details` attribute is a list. Each element supports:
+
+* `code` - Machine-readable code explaining the reason for the Capability to be in its current status. Possible values: `determining_status`, `rejected_fraud`, `rejected_incomplete_verification`, `rejected_listed`, `rejected_other`, `rejected_platform_fraud`, `rejected_platform_other`, `rejected_platform_terms_of_service`, `rejected_terms_of_service`, `requirements_past_due`, `requirements_pending_verification`, `restricted_other`, `unsupported_business`, `unsupported_country`, `unsupported_entity_type`.
+* `resolution` - Machine-readable code explaining how to make the Capability active. Possible values: `contact_stripe`, `no_resolution`, `provide_info`.
+
+<a id="configuration.merchant.capabilities.bancontact_payments"></a>
+### `configuration.merchant.capabilities.bancontact_payments`
+
+The `configuration.merchant.capabilities.bancontact_payments` attribute supports:
+
+* `requested` - To request a new Capability for an account, pass true. There can be a delay before the requested Capability becomes active.
+* `status` - The status of the Capability. Possible values: `active`, `pending`, `rejected`, `restricted`, `unsupported`.
+* `status_details` - Additional details about the capability's status. This value is empty when `status` is `active`. See [`configuration.merchant.capabilities.bancontact_payments.status_details`](#configuration.merchant.capabilities.bancontact_payments.status_details) below.
+
+<a id="configuration.merchant.capabilities.bancontact_payments.status_details"></a>
+### `configuration.merchant.capabilities.bancontact_payments.status_details`
+
+The `configuration.merchant.capabilities.bancontact_payments.status_details` attribute is a list. Each element supports:
+
+* `code` - Machine-readable code explaining the reason for the Capability to be in its current status. Possible values: `determining_status`, `rejected_fraud`, `rejected_incomplete_verification`, `rejected_listed`, `rejected_other`, `rejected_platform_fraud`, `rejected_platform_other`, `rejected_platform_terms_of_service`, `rejected_terms_of_service`, `requirements_past_due`, `requirements_pending_verification`, `restricted_other`, `unsupported_business`, `unsupported_country`, `unsupported_entity_type`.
+* `resolution` - Machine-readable code explaining how to make the Capability active. Possible values: `contact_stripe`, `no_resolution`, `provide_info`.
+
+<a id="configuration.merchant.capabilities.blik_recurring_payments"></a>
+### `configuration.merchant.capabilities.blik_recurring_payments`
+
+The `configuration.merchant.capabilities.blik_recurring_payments` attribute supports:
+
+* `requested` - To request a new Capability for an account, pass true. There can be a delay before the requested Capability becomes active.
+* `status` - The status of the Capability. Possible values: `active`, `pending`, `rejected`, `restricted`, `unsupported`.
+* `status_details` - Additional details about the capability's status. This value is empty when `status` is `active`. See [`configuration.merchant.capabilities.blik_recurring_payments.status_details`](#configuration.merchant.capabilities.blik_recurring_payments.status_details) below.
+
+<a id="configuration.merchant.capabilities.blik_recurring_payments.status_details"></a>
+### `configuration.merchant.capabilities.blik_recurring_payments.status_details`
+
+The `configuration.merchant.capabilities.blik_recurring_payments.status_details` attribute is a list. Each element supports:
+
+* `code` - Machine-readable code explaining the reason for the Capability to be in its current status. Possible values: `determining_status`, `rejected_fraud`, `rejected_incomplete_verification`, `rejected_listed`, `rejected_other`, `rejected_platform_fraud`, `rejected_platform_other`, `rejected_platform_terms_of_service`, `rejected_terms_of_service`, `requirements_past_due`, `requirements_pending_verification`, `restricted_other`, `unsupported_business`, `unsupported_country`, `unsupported_entity_type`.
+* `resolution` - Machine-readable code explaining how to make the Capability active. Possible values: `contact_stripe`, `no_resolution`, `provide_info`.
 
 <a id="configuration.merchant.capabilities.card_payments"></a>
 ### `configuration.merchant.capabilities.card_payments`
@@ -117,6 +354,261 @@ The `configuration.merchant.capabilities.card_payments` attribute supports:
 ### `configuration.merchant.capabilities.card_payments.status_details`
 
 The `configuration.merchant.capabilities.card_payments.status_details` attribute is a list. Each element supports:
+
+* `code` - Machine-readable code explaining the reason for the Capability to be in its current status. Possible values: `determining_status`, `rejected_fraud`, `rejected_incomplete_verification`, `rejected_listed`, `rejected_other`, `rejected_platform_fraud`, `rejected_platform_other`, `rejected_platform_terms_of_service`, `rejected_terms_of_service`, `requirements_past_due`, `requirements_pending_verification`, `restricted_other`, `unsupported_business`, `unsupported_country`, `unsupported_entity_type`.
+* `resolution` - Machine-readable code explaining how to make the Capability active. Possible values: `contact_stripe`, `no_resolution`, `provide_info`.
+
+<a id="configuration.merchant.capabilities.cartes_bancaires_payments"></a>
+### `configuration.merchant.capabilities.cartes_bancaires_payments`
+
+The `configuration.merchant.capabilities.cartes_bancaires_payments` attribute supports:
+
+* `requested` - To request a new Capability for an account, pass true. There can be a delay before the requested Capability becomes active.
+* `status` - The status of the Capability. Possible values: `active`, `pending`, `rejected`, `restricted`, `unsupported`.
+* `status_details` - Additional details about the capability's status. This value is empty when `status` is `active`. See [`configuration.merchant.capabilities.cartes_bancaires_payments.status_details`](#configuration.merchant.capabilities.cartes_bancaires_payments.status_details) below.
+
+<a id="configuration.merchant.capabilities.cartes_bancaires_payments.status_details"></a>
+### `configuration.merchant.capabilities.cartes_bancaires_payments.status_details`
+
+The `configuration.merchant.capabilities.cartes_bancaires_payments.status_details` attribute is a list. Each element supports:
+
+* `code` - Machine-readable code explaining the reason for the Capability to be in its current status. Possible values: `determining_status`, `rejected_fraud`, `rejected_incomplete_verification`, `rejected_listed`, `rejected_other`, `rejected_platform_fraud`, `rejected_platform_other`, `rejected_platform_terms_of_service`, `rejected_terms_of_service`, `requirements_past_due`, `requirements_pending_verification`, `restricted_other`, `unsupported_business`, `unsupported_country`, `unsupported_entity_type`.
+* `resolution` - Machine-readable code explaining how to make the Capability active. Possible values: `contact_stripe`, `no_resolution`, `provide_info`.
+
+<a id="configuration.merchant.capabilities.cashapp_payments"></a>
+### `configuration.merchant.capabilities.cashapp_payments`
+
+The `configuration.merchant.capabilities.cashapp_payments` attribute supports:
+
+* `requested` - To request a new Capability for an account, pass true. There can be a delay before the requested Capability becomes active.
+* `status` - The status of the Capability. Possible values: `active`, `pending`, `rejected`, `restricted`, `unsupported`.
+* `status_details` - Additional details about the capability's status. This value is empty when `status` is `active`. See [`configuration.merchant.capabilities.cashapp_payments.status_details`](#configuration.merchant.capabilities.cashapp_payments.status_details) below.
+
+<a id="configuration.merchant.capabilities.cashapp_payments.status_details"></a>
+### `configuration.merchant.capabilities.cashapp_payments.status_details`
+
+The `configuration.merchant.capabilities.cashapp_payments.status_details` attribute is a list. Each element supports:
+
+* `code` - Machine-readable code explaining the reason for the Capability to be in its current status. Possible values: `determining_status`, `rejected_fraud`, `rejected_incomplete_verification`, `rejected_listed`, `rejected_other`, `rejected_platform_fraud`, `rejected_platform_other`, `rejected_platform_terms_of_service`, `rejected_terms_of_service`, `requirements_past_due`, `requirements_pending_verification`, `restricted_other`, `unsupported_business`, `unsupported_country`, `unsupported_entity_type`.
+* `resolution` - Machine-readable code explaining how to make the Capability active. Possible values: `contact_stripe`, `no_resolution`, `provide_info`.
+
+<a id="configuration.merchant.capabilities.eps_payments"></a>
+### `configuration.merchant.capabilities.eps_payments`
+
+The `configuration.merchant.capabilities.eps_payments` attribute supports:
+
+* `requested` - To request a new Capability for an account, pass true. There can be a delay before the requested Capability becomes active.
+* `status` - The status of the Capability. Possible values: `active`, `pending`, `rejected`, `restricted`, `unsupported`.
+* `status_details` - Additional details about the capability's status. This value is empty when `status` is `active`. See [`configuration.merchant.capabilities.eps_payments.status_details`](#configuration.merchant.capabilities.eps_payments.status_details) below.
+
+<a id="configuration.merchant.capabilities.eps_payments.status_details"></a>
+### `configuration.merchant.capabilities.eps_payments.status_details`
+
+The `configuration.merchant.capabilities.eps_payments.status_details` attribute is a list. Each element supports:
+
+* `code` - Machine-readable code explaining the reason for the Capability to be in its current status. Possible values: `determining_status`, `rejected_fraud`, `rejected_incomplete_verification`, `rejected_listed`, `rejected_other`, `rejected_platform_fraud`, `rejected_platform_other`, `rejected_platform_terms_of_service`, `rejected_terms_of_service`, `requirements_past_due`, `requirements_pending_verification`, `restricted_other`, `unsupported_business`, `unsupported_country`, `unsupported_entity_type`.
+* `resolution` - Machine-readable code explaining how to make the Capability active. Possible values: `contact_stripe`, `no_resolution`, `provide_info`.
+
+<a id="configuration.merchant.capabilities.gb_bank_transfer_payments"></a>
+### `configuration.merchant.capabilities.gb_bank_transfer_payments`
+
+The `configuration.merchant.capabilities.gb_bank_transfer_payments` attribute supports:
+
+* `requested` - To request a new Capability for an account, pass true. There can be a delay before the requested Capability becomes active.
+* `status` - The status of the Capability. Possible values: `active`, `pending`, `rejected`, `restricted`, `unsupported`.
+* `status_details` - Additional details about the capability's status. This value is empty when `status` is `active`. See [`configuration.merchant.capabilities.gb_bank_transfer_payments.status_details`](#configuration.merchant.capabilities.gb_bank_transfer_payments.status_details) below.
+
+<a id="configuration.merchant.capabilities.gb_bank_transfer_payments.status_details"></a>
+### `configuration.merchant.capabilities.gb_bank_transfer_payments.status_details`
+
+The `configuration.merchant.capabilities.gb_bank_transfer_payments.status_details` attribute is a list. Each element supports:
+
+* `code` - Machine-readable code explaining the reason for the Capability to be in its current status. Possible values: `determining_status`, `rejected_fraud`, `rejected_incomplete_verification`, `rejected_listed`, `rejected_other`, `rejected_platform_fraud`, `rejected_platform_other`, `rejected_platform_terms_of_service`, `rejected_terms_of_service`, `requirements_past_due`, `requirements_pending_verification`, `restricted_other`, `unsupported_business`, `unsupported_country`, `unsupported_entity_type`.
+* `resolution` - Machine-readable code explaining how to make the Capability active. Possible values: `contact_stripe`, `no_resolution`, `provide_info`.
+
+<a id="configuration.merchant.capabilities.ideal_payments"></a>
+### `configuration.merchant.capabilities.ideal_payments`
+
+The `configuration.merchant.capabilities.ideal_payments` attribute supports:
+
+* `requested` - To request a new Capability for an account, pass true. There can be a delay before the requested Capability becomes active.
+* `status` - The status of the Capability. Possible values: `active`, `pending`, `rejected`, `restricted`, `unsupported`.
+* `status_details` - Additional details about the capability's status. This value is empty when `status` is `active`. See [`configuration.merchant.capabilities.ideal_payments.status_details`](#configuration.merchant.capabilities.ideal_payments.status_details) below.
+
+<a id="configuration.merchant.capabilities.ideal_payments.status_details"></a>
+### `configuration.merchant.capabilities.ideal_payments.status_details`
+
+The `configuration.merchant.capabilities.ideal_payments.status_details` attribute is a list. Each element supports:
+
+* `code` - Machine-readable code explaining the reason for the Capability to be in its current status. Possible values: `determining_status`, `rejected_fraud`, `rejected_incomplete_verification`, `rejected_listed`, `rejected_other`, `rejected_platform_fraud`, `rejected_platform_other`, `rejected_platform_terms_of_service`, `rejected_terms_of_service`, `requirements_past_due`, `requirements_pending_verification`, `restricted_other`, `unsupported_business`, `unsupported_country`, `unsupported_entity_type`.
+* `resolution` - Machine-readable code explaining how to make the Capability active. Possible values: `contact_stripe`, `no_resolution`, `provide_info`.
+
+<a id="configuration.merchant.capabilities.kakao_pay_payments"></a>
+### `configuration.merchant.capabilities.kakao_pay_payments`
+
+The `configuration.merchant.capabilities.kakao_pay_payments` attribute supports:
+
+* `requested` - To request a new Capability for an account, pass true. There can be a delay before the requested Capability becomes active.
+* `status` - The status of the Capability. Possible values: `active`, `pending`, `rejected`, `restricted`, `unsupported`.
+* `status_details` - Additional details about the capability's status. This value is empty when `status` is `active`. See [`configuration.merchant.capabilities.kakao_pay_payments.status_details`](#configuration.merchant.capabilities.kakao_pay_payments.status_details) below.
+
+<a id="configuration.merchant.capabilities.kakao_pay_payments.status_details"></a>
+### `configuration.merchant.capabilities.kakao_pay_payments.status_details`
+
+The `configuration.merchant.capabilities.kakao_pay_payments.status_details` attribute is a list. Each element supports:
+
+* `code` - Machine-readable code explaining the reason for the Capability to be in its current status. Possible values: `determining_status`, `rejected_fraud`, `rejected_incomplete_verification`, `rejected_listed`, `rejected_other`, `rejected_platform_fraud`, `rejected_platform_other`, `rejected_platform_terms_of_service`, `rejected_terms_of_service`, `requirements_past_due`, `requirements_pending_verification`, `restricted_other`, `unsupported_business`, `unsupported_country`, `unsupported_entity_type`.
+* `resolution` - Machine-readable code explaining how to make the Capability active. Possible values: `contact_stripe`, `no_resolution`, `provide_info`.
+
+<a id="configuration.merchant.capabilities.klarna_payments"></a>
+### `configuration.merchant.capabilities.klarna_payments`
+
+The `configuration.merchant.capabilities.klarna_payments` attribute supports:
+
+* `requested` - To request a new Capability for an account, pass true. There can be a delay before the requested Capability becomes active.
+* `status` - The status of the Capability. Possible values: `active`, `pending`, `rejected`, `restricted`, `unsupported`.
+* `status_details` - Additional details about the capability's status. This value is empty when `status` is `active`. See [`configuration.merchant.capabilities.klarna_payments.status_details`](#configuration.merchant.capabilities.klarna_payments.status_details) below.
+
+<a id="configuration.merchant.capabilities.klarna_payments.status_details"></a>
+### `configuration.merchant.capabilities.klarna_payments.status_details`
+
+The `configuration.merchant.capabilities.klarna_payments.status_details` attribute is a list. Each element supports:
+
+* `code` - Machine-readable code explaining the reason for the Capability to be in its current status. Possible values: `determining_status`, `rejected_fraud`, `rejected_incomplete_verification`, `rejected_listed`, `rejected_other`, `rejected_platform_fraud`, `rejected_platform_other`, `rejected_platform_terms_of_service`, `rejected_terms_of_service`, `requirements_past_due`, `requirements_pending_verification`, `restricted_other`, `unsupported_business`, `unsupported_country`, `unsupported_entity_type`.
+* `resolution` - Machine-readable code explaining how to make the Capability active. Possible values: `contact_stripe`, `no_resolution`, `provide_info`.
+
+<a id="configuration.merchant.capabilities.kr_card_payments"></a>
+### `configuration.merchant.capabilities.kr_card_payments`
+
+The `configuration.merchant.capabilities.kr_card_payments` attribute supports:
+
+* `requested` - To request a new Capability for an account, pass true. There can be a delay before the requested Capability becomes active.
+* `status` - The status of the Capability. Possible values: `active`, `pending`, `rejected`, `restricted`, `unsupported`.
+* `status_details` - Additional details about the capability's status. This value is empty when `status` is `active`. See [`configuration.merchant.capabilities.kr_card_payments.status_details`](#configuration.merchant.capabilities.kr_card_payments.status_details) below.
+
+<a id="configuration.merchant.capabilities.kr_card_payments.status_details"></a>
+### `configuration.merchant.capabilities.kr_card_payments.status_details`
+
+The `configuration.merchant.capabilities.kr_card_payments.status_details` attribute is a list. Each element supports:
+
+* `code` - Machine-readable code explaining the reason for the Capability to be in its current status. Possible values: `determining_status`, `rejected_fraud`, `rejected_incomplete_verification`, `rejected_listed`, `rejected_other`, `rejected_platform_fraud`, `rejected_platform_other`, `rejected_platform_terms_of_service`, `rejected_terms_of_service`, `requirements_past_due`, `requirements_pending_verification`, `restricted_other`, `unsupported_business`, `unsupported_country`, `unsupported_entity_type`.
+* `resolution` - Machine-readable code explaining how to make the Capability active. Possible values: `contact_stripe`, `no_resolution`, `provide_info`.
+
+<a id="configuration.merchant.capabilities.link_payments"></a>
+### `configuration.merchant.capabilities.link_payments`
+
+The `configuration.merchant.capabilities.link_payments` attribute supports:
+
+* `requested` - To request a new Capability for an account, pass true. There can be a delay before the requested Capability becomes active.
+* `status` - The status of the Capability. Possible values: `active`, `pending`, `rejected`, `restricted`, `unsupported`.
+* `status_details` - Additional details about the capability's status. This value is empty when `status` is `active`. See [`configuration.merchant.capabilities.link_payments.status_details`](#configuration.merchant.capabilities.link_payments.status_details) below.
+
+<a id="configuration.merchant.capabilities.link_payments.status_details"></a>
+### `configuration.merchant.capabilities.link_payments.status_details`
+
+The `configuration.merchant.capabilities.link_payments.status_details` attribute is a list. Each element supports:
+
+* `code` - Machine-readable code explaining the reason for the Capability to be in its current status. Possible values: `determining_status`, `rejected_fraud`, `rejected_incomplete_verification`, `rejected_listed`, `rejected_other`, `rejected_platform_fraud`, `rejected_platform_other`, `rejected_platform_terms_of_service`, `rejected_terms_of_service`, `requirements_past_due`, `requirements_pending_verification`, `restricted_other`, `unsupported_business`, `unsupported_country`, `unsupported_entity_type`.
+* `resolution` - Machine-readable code explaining how to make the Capability active. Possible values: `contact_stripe`, `no_resolution`, `provide_info`.
+
+<a id="configuration.merchant.capabilities.multibanco_payments"></a>
+### `configuration.merchant.capabilities.multibanco_payments`
+
+The `configuration.merchant.capabilities.multibanco_payments` attribute supports:
+
+* `requested` - To request a new Capability for an account, pass true. There can be a delay before the requested Capability becomes active.
+* `status` - The status of the Capability. Possible values: `active`, `pending`, `rejected`, `restricted`, `unsupported`.
+* `status_details` - Additional details about the capability's status. This value is empty when `status` is `active`. See [`configuration.merchant.capabilities.multibanco_payments.status_details`](#configuration.merchant.capabilities.multibanco_payments.status_details) below.
+
+<a id="configuration.merchant.capabilities.multibanco_payments.status_details"></a>
+### `configuration.merchant.capabilities.multibanco_payments.status_details`
+
+The `configuration.merchant.capabilities.multibanco_payments.status_details` attribute is a list. Each element supports:
+
+* `code` - Machine-readable code explaining the reason for the Capability to be in its current status. Possible values: `determining_status`, `rejected_fraud`, `rejected_incomplete_verification`, `rejected_listed`, `rejected_other`, `rejected_platform_fraud`, `rejected_platform_other`, `rejected_platform_terms_of_service`, `rejected_terms_of_service`, `requirements_past_due`, `requirements_pending_verification`, `restricted_other`, `unsupported_business`, `unsupported_country`, `unsupported_entity_type`.
+* `resolution` - Machine-readable code explaining how to make the Capability active. Possible values: `contact_stripe`, `no_resolution`, `provide_info`.
+
+<a id="configuration.merchant.capabilities.naver_pay_payments"></a>
+### `configuration.merchant.capabilities.naver_pay_payments`
+
+The `configuration.merchant.capabilities.naver_pay_payments` attribute supports:
+
+* `requested` - To request a new Capability for an account, pass true. There can be a delay before the requested Capability becomes active.
+* `status` - The status of the Capability. Possible values: `active`, `pending`, `rejected`, `restricted`, `unsupported`.
+* `status_details` - Additional details about the capability's status. This value is empty when `status` is `active`. See [`configuration.merchant.capabilities.naver_pay_payments.status_details`](#configuration.merchant.capabilities.naver_pay_payments.status_details) below.
+
+<a id="configuration.merchant.capabilities.naver_pay_payments.status_details"></a>
+### `configuration.merchant.capabilities.naver_pay_payments.status_details`
+
+The `configuration.merchant.capabilities.naver_pay_payments.status_details` attribute is a list. Each element supports:
+
+* `code` - Machine-readable code explaining the reason for the Capability to be in its current status. Possible values: `determining_status`, `rejected_fraud`, `rejected_incomplete_verification`, `rejected_listed`, `rejected_other`, `rejected_platform_fraud`, `rejected_platform_other`, `rejected_platform_terms_of_service`, `rejected_terms_of_service`, `requirements_past_due`, `requirements_pending_verification`, `restricted_other`, `unsupported_business`, `unsupported_country`, `unsupported_entity_type`.
+* `resolution` - Machine-readable code explaining how to make the Capability active. Possible values: `contact_stripe`, `no_resolution`, `provide_info`.
+
+<a id="configuration.merchant.capabilities.p24_payments"></a>
+### `configuration.merchant.capabilities.p24_payments`
+
+The `configuration.merchant.capabilities.p24_payments` attribute supports:
+
+* `requested` - To request a new Capability for an account, pass true. There can be a delay before the requested Capability becomes active.
+* `status` - The status of the Capability. Possible values: `active`, `pending`, `rejected`, `restricted`, `unsupported`.
+* `status_details` - Additional details about the capability's status. This value is empty when `status` is `active`. See [`configuration.merchant.capabilities.p24_payments.status_details`](#configuration.merchant.capabilities.p24_payments.status_details) below.
+
+<a id="configuration.merchant.capabilities.p24_payments.status_details"></a>
+### `configuration.merchant.capabilities.p24_payments.status_details`
+
+The `configuration.merchant.capabilities.p24_payments.status_details` attribute is a list. Each element supports:
+
+* `code` - Machine-readable code explaining the reason for the Capability to be in its current status. Possible values: `determining_status`, `rejected_fraud`, `rejected_incomplete_verification`, `rejected_listed`, `rejected_other`, `rejected_platform_fraud`, `rejected_platform_other`, `rejected_platform_terms_of_service`, `rejected_terms_of_service`, `requirements_past_due`, `requirements_pending_verification`, `restricted_other`, `unsupported_business`, `unsupported_country`, `unsupported_entity_type`.
+* `resolution` - Machine-readable code explaining how to make the Capability active. Possible values: `contact_stripe`, `no_resolution`, `provide_info`.
+
+<a id="configuration.merchant.capabilities.payco_payments"></a>
+### `configuration.merchant.capabilities.payco_payments`
+
+The `configuration.merchant.capabilities.payco_payments` attribute supports:
+
+* `requested` - To request a new Capability for an account, pass true. There can be a delay before the requested Capability becomes active.
+* `status` - The status of the Capability. Possible values: `active`, `pending`, `rejected`, `restricted`, `unsupported`.
+* `status_details` - Additional details about the capability's status. This value is empty when `status` is `active`. See [`configuration.merchant.capabilities.payco_payments.status_details`](#configuration.merchant.capabilities.payco_payments.status_details) below.
+
+<a id="configuration.merchant.capabilities.payco_payments.status_details"></a>
+### `configuration.merchant.capabilities.payco_payments.status_details`
+
+The `configuration.merchant.capabilities.payco_payments.status_details` attribute is a list. Each element supports:
+
+* `code` - Machine-readable code explaining the reason for the Capability to be in its current status. Possible values: `determining_status`, `rejected_fraud`, `rejected_incomplete_verification`, `rejected_listed`, `rejected_other`, `rejected_platform_fraud`, `rejected_platform_other`, `rejected_platform_terms_of_service`, `rejected_terms_of_service`, `requirements_past_due`, `requirements_pending_verification`, `restricted_other`, `unsupported_business`, `unsupported_country`, `unsupported_entity_type`.
+* `resolution` - Machine-readable code explaining how to make the Capability active. Possible values: `contact_stripe`, `no_resolution`, `provide_info`.
+
+<a id="configuration.merchant.capabilities.samsung_pay_payments"></a>
+### `configuration.merchant.capabilities.samsung_pay_payments`
+
+The `configuration.merchant.capabilities.samsung_pay_payments` attribute supports:
+
+* `requested` - To request a new Capability for an account, pass true. There can be a delay before the requested Capability becomes active.
+* `status` - The status of the Capability. Possible values: `active`, `pending`, `rejected`, `restricted`, `unsupported`.
+* `status_details` - Additional details about the capability's status. This value is empty when `status` is `active`. See [`configuration.merchant.capabilities.samsung_pay_payments.status_details`](#configuration.merchant.capabilities.samsung_pay_payments.status_details) below.
+
+<a id="configuration.merchant.capabilities.samsung_pay_payments.status_details"></a>
+### `configuration.merchant.capabilities.samsung_pay_payments.status_details`
+
+The `configuration.merchant.capabilities.samsung_pay_payments.status_details` attribute is a list. Each element supports:
+
+* `code` - Machine-readable code explaining the reason for the Capability to be in its current status. Possible values: `determining_status`, `rejected_fraud`, `rejected_incomplete_verification`, `rejected_listed`, `rejected_other`, `rejected_platform_fraud`, `rejected_platform_other`, `rejected_platform_terms_of_service`, `rejected_terms_of_service`, `requirements_past_due`, `requirements_pending_verification`, `restricted_other`, `unsupported_business`, `unsupported_country`, `unsupported_entity_type`.
+* `resolution` - Machine-readable code explaining how to make the Capability active. Possible values: `contact_stripe`, `no_resolution`, `provide_info`.
+
+<a id="configuration.merchant.capabilities.satispay_payments"></a>
+### `configuration.merchant.capabilities.satispay_payments`
+
+The `configuration.merchant.capabilities.satispay_payments` attribute supports:
+
+* `requested` - To request a new Capability for an account, pass true. There can be a delay before the requested Capability becomes active.
+* `status` - The status of the Capability. Possible values: `active`, `pending`, `rejected`, `restricted`, `unsupported`.
+* `status_details` - Additional details about the capability's status. This value is empty when `status` is `active`. See [`configuration.merchant.capabilities.satispay_payments.status_details`](#configuration.merchant.capabilities.satispay_payments.status_details) below.
+
+<a id="configuration.merchant.capabilities.satispay_payments.status_details"></a>
+### `configuration.merchant.capabilities.satispay_payments.status_details`
+
+The `configuration.merchant.capabilities.satispay_payments.status_details` attribute is a list. Each element supports:
 
 * `code` - Machine-readable code explaining the reason for the Capability to be in its current status. Possible values: `determining_status`, `rejected_fraud`, `rejected_incomplete_verification`, `rejected_listed`, `rejected_other`, `rejected_platform_fraud`, `rejected_platform_other`, `rejected_platform_terms_of_service`, `rejected_terms_of_service`, `requirements_past_due`, `requirements_pending_verification`, `restricted_other`, `unsupported_business`, `unsupported_country`, `unsupported_entity_type`.
 * `resolution` - Machine-readable code explaining how to make the Capability active. Possible values: `contact_stripe`, `no_resolution`, `provide_info`.
@@ -143,6 +635,86 @@ The `configuration.merchant.capabilities.stripe_balance.payouts.status_details` 
 
 * `code` - Machine-readable code explaining the reason for the Capability to be in its current status. Possible values: `determining_status`, `rejected_fraud`, `rejected_incomplete_verification`, `rejected_listed`, `rejected_other`, `rejected_platform_fraud`, `rejected_platform_other`, `rejected_platform_terms_of_service`, `rejected_terms_of_service`, `requirements_past_due`, `requirements_pending_verification`, `restricted_other`, `unsupported_business`, `unsupported_country`, `unsupported_entity_type`.
 * `resolution` - Machine-readable code explaining how to make the Capability active. Possible values: `contact_stripe`, `no_resolution`, `provide_info`.
+
+<a id="configuration.merchant.capabilities.sunbit_payments"></a>
+### `configuration.merchant.capabilities.sunbit_payments`
+
+The `configuration.merchant.capabilities.sunbit_payments` attribute supports:
+
+* `requested` - To request a new Capability for an account, pass true. There can be a delay before the requested Capability becomes active.
+* `status` - The status of the Capability. Possible values: `active`, `pending`, `rejected`, `restricted`, `unsupported`.
+* `status_details` - Additional details about the capability's status. This value is empty when `status` is `active`. See [`configuration.merchant.capabilities.sunbit_payments.status_details`](#configuration.merchant.capabilities.sunbit_payments.status_details) below.
+
+<a id="configuration.merchant.capabilities.sunbit_payments.status_details"></a>
+### `configuration.merchant.capabilities.sunbit_payments.status_details`
+
+The `configuration.merchant.capabilities.sunbit_payments.status_details` attribute is a list. Each element supports:
+
+* `code` - Machine-readable code explaining the reason for the Capability to be in its current status. Possible values: `determining_status`, `rejected_fraud`, `rejected_incomplete_verification`, `rejected_listed`, `rejected_other`, `rejected_platform_fraud`, `rejected_platform_other`, `rejected_platform_terms_of_service`, `rejected_terms_of_service`, `requirements_past_due`, `requirements_pending_verification`, `restricted_other`, `unsupported_business`, `unsupported_country`, `unsupported_entity_type`.
+* `resolution` - Machine-readable code explaining how to make the Capability active. Possible values: `contact_stripe`, `no_resolution`, `provide_info`.
+
+<a id="configuration.merchant.capabilities.us_bank_transfer_payments"></a>
+### `configuration.merchant.capabilities.us_bank_transfer_payments`
+
+The `configuration.merchant.capabilities.us_bank_transfer_payments` attribute supports:
+
+* `requested` - To request a new Capability for an account, pass true. There can be a delay before the requested Capability becomes active.
+* `status` - The status of the Capability. Possible values: `active`, `pending`, `rejected`, `restricted`, `unsupported`.
+* `status_details` - Additional details about the capability's status. This value is empty when `status` is `active`. See [`configuration.merchant.capabilities.us_bank_transfer_payments.status_details`](#configuration.merchant.capabilities.us_bank_transfer_payments.status_details) below.
+
+<a id="configuration.merchant.capabilities.us_bank_transfer_payments.status_details"></a>
+### `configuration.merchant.capabilities.us_bank_transfer_payments.status_details`
+
+The `configuration.merchant.capabilities.us_bank_transfer_payments.status_details` attribute is a list. Each element supports:
+
+* `code` - Machine-readable code explaining the reason for the Capability to be in its current status. Possible values: `determining_status`, `rejected_fraud`, `rejected_incomplete_verification`, `rejected_listed`, `rejected_other`, `rejected_platform_fraud`, `rejected_platform_other`, `rejected_platform_terms_of_service`, `rejected_terms_of_service`, `requirements_past_due`, `requirements_pending_verification`, `restricted_other`, `unsupported_business`, `unsupported_country`, `unsupported_entity_type`.
+* `resolution` - Machine-readable code explaining how to make the Capability active. Possible values: `contact_stripe`, `no_resolution`, `provide_info`.
+
+<a id="configuration.merchant.card_payments"></a>
+### `configuration.merchant.card_payments`
+
+The `configuration.merchant.card_payments` attribute supports:
+
+* `decline_on` - Automatically declines certain charge types regardless of whether the card issuer accepted or declined the charge. See [`configuration.merchant.card_payments.decline_on`](#configuration.merchant.card_payments.decline_on) below.
+
+<a id="configuration.merchant.card_payments.decline_on"></a>
+### `configuration.merchant.card_payments.decline_on`
+
+The `configuration.merchant.card_payments.decline_on` attribute supports:
+
+* `avs_failure` - Whether Stripe automatically declines charges with an incorrect ZIP or postal code. This setting only applies when a ZIP or postal code is provided and they fail bank verification.
+* `cvc_failure` - Whether Stripe automatically declines charges with an incorrect CVC. This setting only applies when a CVC is provided and it fails bank verification.
+
+<a id="configuration.merchant.statement_descriptor"></a>
+### `configuration.merchant.statement_descriptor`
+
+The `configuration.merchant.statement_descriptor` attribute supports:
+
+* `descriptor` - The default text that appears on statements for non-card charges outside of Japan. For card charges, if you don’t set a statement_descriptor_prefix, this text is also used as the statement descriptor prefix. In that case, if concatenating the statement descriptor suffix causes the combined statement descriptor to exceed 22 characters, we truncate the statement_descriptor text to limit the full descriptor to 22 characters. For more information about statement descriptors and their requirements, see the Merchant Configuration settings documentation.
+* `prefix` - Default text that appears on statements for card charges outside of Japan, prefixing any dynamic statement_descriptor_suffix specified on the charge. To maximize space for the dynamic part of the descriptor, keep this text short. If you don’t specify this value, statement_descriptor is used as the prefix. For more information about statement descriptors and their requirements, see the Merchant Configuration settings documentation.
+
+<a id="configuration.merchant.support"></a>
+### `configuration.merchant.support`
+
+The `configuration.merchant.support` attribute supports:
+
+* `address` - A publicly available mailing address for sending support issues to. See [`configuration.merchant.support.address`](#configuration.merchant.support.address) below.
+* `email` - A publicly available email address for sending support issues to.
+* `phone` - A publicly available phone number to call with support issues.
+* `url` - A publicly available website for handling support issues.
+
+<a id="configuration.merchant.support.address"></a>
+### `configuration.merchant.support.address`
+
+The `configuration.merchant.support.address` attribute supports:
+
+* `city` - City, district, suburb, town, or village.
+* `country` - Two-letter country code ([ISO 3166-1 alpha-2](https://en.wikipedia.org/wiki/ISO_3166-1_alpha-2)).
+* `line1` - Address line 1 (e.g., street, PO Box, or company name).
+* `line2` - Address line 2 (e.g., apartment, suite, unit, or building).
+* `postal_code` - ZIP or postal code.
+* `state` - State, county, province, or region.
+* `town` - Town or district.
 
 <a id="configuration.recipient"></a>
 ### `configuration.recipient`
@@ -324,16 +896,457 @@ The `future_requirements.summary.minimum_deadline` attribute supports:
 
 The `identity` attribute supports:
 
+* `attestations` - Attestations from the identity's key people, e.g. owners, executives, directors, representatives. See [`identity.attestations`](#identity.attestations) below.
 * `business_details` - Information about the company or business. See [`identity.business_details`](#identity.business_details) below.
 * `country` - The country in which the account holder resides, or in which the business is legally established. This should be an [ISO 3166-1 alpha-2](https://en.wikipedia.org/wiki/ISO_3166-1_alpha-2) country code.
 * `entity_type` - The entity type represented by the Account. Ensure this field is accurate before adding configurations that rely on identity information, as it determines which identity fields apply and how the Account is validated. Possible values: `company`, `government_entity`, `individual`, `non_profit`.
+* `individual` - Information about the person represented by the account. See [`identity.individual`](#identity.individual) below.
+
+<a id="identity.attestations"></a>
+### `identity.attestations`
+
+The `identity.attestations` attribute supports:
+
+* `directorship_declaration` - This hash is used to attest that the directors information provided to Stripe is both current and correct. See [`identity.attestations.directorship_declaration`](#identity.attestations.directorship_declaration) below.
+* `ownership_declaration` - This hash is used to attest that the beneficial owner information provided to Stripe is both current and correct. See [`identity.attestations.ownership_declaration`](#identity.attestations.ownership_declaration) below.
+* `persons_provided` - Attestation that all Persons with a specific Relationship value have been provided. See [`identity.attestations.persons_provided`](#identity.attestations.persons_provided) below.
+* `representative_declaration` - This hash is used to attest that the representative is authorized to act as the representative of their legal entity. See [`identity.attestations.representative_declaration`](#identity.attestations.representative_declaration) below.
+* `terms_of_service` - Attestations of accepted terms of service agreements. See [`identity.attestations.terms_of_service`](#identity.attestations.terms_of_service) below.
+
+<a id="identity.attestations.directorship_declaration"></a>
+### `identity.attestations.directorship_declaration`
+
+The `identity.attestations.directorship_declaration` attribute supports:
+
+* `date` - The time marking when the director attestation was made. Represented as a RFC 3339 date & time UTC value in millisecond precision, for example: 2022-09-18T13:22:18.123Z.
+* `ip` - The IP address from which the director attestation was made.
+* `user_agent` - The user agent of the browser from which the director attestation was made.
+
+<a id="identity.attestations.ownership_declaration"></a>
+### `identity.attestations.ownership_declaration`
+
+The `identity.attestations.ownership_declaration` attribute supports:
+
+* `date` - The time marking when the beneficial owner attestation was made. Represented as a RFC 3339 date & time UTC value in millisecond precision, for example: 2022-09-18T13:22:18.123Z.
+* `ip` - The IP address from which the beneficial owner attestation was made.
+* `user_agent` - The user agent of the browser from which the beneficial owner attestation was made.
+
+<a id="identity.attestations.persons_provided"></a>
+### `identity.attestations.persons_provided`
+
+The `identity.attestations.persons_provided` attribute supports:
+
+* `directors` - Whether the company’s directors have been provided. Set this Boolean to true after creating all the company’s directors with the [Persons API](https://docs.stripe.com/api/v2/core/accounts/createperson).
+* `executives` - Whether the company’s executives have been provided. Set this Boolean to true after creating all the company’s executives with the [Persons API](https://docs.stripe.com/api/v2/core/accounts/createperson).
+* `owners` - Whether the company’s owners have been provided. Set this Boolean to true after creating all the company’s owners with the [Persons API](https://docs.stripe.com/api/v2/core/accounts/createperson).
+* `ownership_exemption_reason` - Reason for why the company is exempt from providing ownership information. Possible values: `qualified_entity_exceeds_ownership_threshold`, `qualifies_as_financial_institution`.
+
+<a id="identity.attestations.representative_declaration"></a>
+### `identity.attestations.representative_declaration`
+
+The `identity.attestations.representative_declaration` attribute supports:
+
+* `date` - The time marking when the representative attestation was made. Represented as a RFC 3339 date & time UTC value in millisecond precision, for example: 2022-09-18T13:22:18.123Z.
+* `ip` - The IP address from which the representative attestation was made.
+* `user_agent` - The user agent of the browser from which the representative attestation was made.
+
+<a id="identity.attestations.terms_of_service"></a>
+### `identity.attestations.terms_of_service`
+
+The `identity.attestations.terms_of_service` attribute supports:
+
+* `account` - Details on the Account's acceptance of the [Stripe Services Agreement](https://docs.stripe.com/connect/updating-accounts#tos-acceptance). See [`identity.attestations.terms_of_service.account`](#identity.attestations.terms_of_service.account) below.
+* `crypto_money_manager` - Details on the Account's acceptance of Crypto-specific terms of service. See [`identity.attestations.terms_of_service.crypto_money_manager`](#identity.attestations.terms_of_service.crypto_money_manager) below.
+* `money_manager` - Details on the Account's acceptance of Treasury-specific terms of service. See [`identity.attestations.terms_of_service.money_manager`](#identity.attestations.terms_of_service.money_manager) below.
+
+<a id="identity.attestations.terms_of_service.account"></a>
+### `identity.attestations.terms_of_service.account`
+
+The `identity.attestations.terms_of_service.account` attribute supports:
+
+* `date` - The time when the Account's representative accepted the terms of service. Represented as a RFC 3339 date & time UTC value in millisecond precision, for example: 2022-09-18T13:22:18.123Z.
+* `ip` - The IP address from which the Account's representative accepted the terms of service.
+* `user_agent` - The user agent of the browser from which the Account's representative accepted the terms of service.
+
+<a id="identity.attestations.terms_of_service.crypto_money_manager"></a>
+### `identity.attestations.terms_of_service.crypto_money_manager`
+
+The `identity.attestations.terms_of_service.crypto_money_manager` attribute supports:
+
+* `date` - The time when the Account's representative accepted the terms of service. Represented as a RFC 3339 date & time UTC value in millisecond precision, for example: 2022-09-18T13:22:18.123Z.
+* `ip` - The IP address from which the Account's representative accepted the terms of service.
+* `user_agent` - The user agent of the browser from which the Account's representative accepted the terms of service.
+
+<a id="identity.attestations.terms_of_service.money_manager"></a>
+### `identity.attestations.terms_of_service.money_manager`
+
+The `identity.attestations.terms_of_service.money_manager` attribute supports:
+
+* `date` - The time when the Account's representative accepted the terms of service. Represented as a RFC 3339 date & time UTC value in millisecond precision, for example: 2022-09-18T13:22:18.123Z.
+* `ip` - The IP address from which the Account's representative accepted the terms of service.
+* `user_agent` - The user agent of the browser from which the Account's representative accepted the terms of service.
 
 <a id="identity.business_details"></a>
 ### `identity.business_details`
 
 The `identity.business_details` attribute supports:
 
+* `additional_addresses` - Additional addresses associated with the business. See [`identity.business_details.additional_addresses`](#identity.business_details.additional_addresses) below.
+* `address` - The business registration address of the business entity. See [`identity.business_details.address`](#identity.business_details.address) below.
+* `annual_revenue` - The business gross annual revenue for its preceding fiscal year. See [`identity.business_details.annual_revenue`](#identity.business_details.annual_revenue) below.
+* `documents` - A document verifying the business. See [`identity.business_details.documents`](#identity.business_details.documents) below.
+* `estimated_worker_count` - Estimated maximum number of workers currently engaged by the business (including employees, contractors, and vendors).
+* `id_numbers` - The ID numbers of a business entity. See [`identity.business_details.id_numbers`](#identity.business_details.id_numbers) below.
+* `monthly_estimated_revenue` - An estimate of the monthly revenue of the business. See [`identity.business_details.monthly_estimated_revenue`](#identity.business_details.monthly_estimated_revenue) below.
+* `phone` - The phone number of the Business Entity.
 * `registered_name` - The business legal name.
+* `registration_date` - When the business was incorporated or registered. See [`identity.business_details.registration_date`](#identity.business_details.registration_date) below.
+* `structure` - The category identifying the legal structure of the business. Possible values: `cooperative`, `free_zone_establishment`, `free_zone_llc`, `governmental_unit`, `government_instrumentality`, `incorporated_association`, `incorporated_non_profit`, `incorporated_partnership`, `limited_liability_partnership`, `llc`, `multi_member_llc`, `private_company`, `private_corporation`, `private_partnership`, `public_company`, `public_corporation`, `public_listed_corporation`, `public_partnership`, `registered_charity`, `single_member_llc`, `sole_establishment`, `sole_proprietorship`, `tax_exempt_government_instrumentality`, `trust`, `unincorporated_association`, `unincorporated_non_profit`, `unincorporated_partnership`.
+
+<a id="identity.business_details.additional_addresses"></a>
+### `identity.business_details.additional_addresses`
+
+The `identity.business_details.additional_addresses` attribute is a list. Each element supports:
+
+* `city` - City, district, suburb, town, or village.
+* `country` - Two-letter country code ([ISO 3166-1 alpha-2](https://en.wikipedia.org/wiki/ISO_3166-1_alpha-2)).
+* `line1` - Address line 1 (e.g., street, PO Box, or company name).
+* `line2` - Address line 2 (e.g., apartment, suite, unit, or building).
+* `postal_code` - ZIP or postal code.
+* `purpose` - Purpose of additional address. Possible values: `administrative`, `principal_place_of_business`.
+* `state` - State, county, province, or region.
+* `town` - Town or district.
+
+<a id="identity.business_details.address"></a>
+### `identity.business_details.address`
+
+The `identity.business_details.address` attribute supports:
+
+* `city` - City, district, suburb, town, or village.
+* `country` - Two-letter country code ([ISO 3166-1 alpha-2](https://en.wikipedia.org/wiki/ISO_3166-1_alpha-2)).
+* `line1` - Address line 1 (e.g., street, PO Box, or company name).
+* `line2` - Address line 2 (e.g., apartment, suite, unit, or building).
+* `postal_code` - ZIP or postal code.
+* `state` - State, county, province, or region.
+* `town` - Town or district.
+
+<a id="identity.business_details.annual_revenue"></a>
+### `identity.business_details.annual_revenue`
+
+The `identity.business_details.annual_revenue` attribute supports:
+
+* `amount` - A non-negative integer representing the amount in the smallest currency unit. See [`identity.business_details.annual_revenue.amount`](#identity.business_details.annual_revenue.amount) below.
+* `fiscal_year_end` - The close-out date of the preceding fiscal year in ISO 8601 format. E.g. 2023-12-31 for the 31st of December, 2023.
+
+<a id="identity.business_details.annual_revenue.amount"></a>
+### `identity.business_details.annual_revenue.amount`
+
+The `identity.business_details.annual_revenue.amount` attribute supports:
+
+* `currency` - Three-letter [ISO currency code](https://www.iso.org/iso-4217-currency-codes.html), in lowercase. Must be a [supported currency](https://stripe.com/docs/currencies).
+* `value` - A non-negative integer representing how much to charge in the [smallest currency unit](https://docs.stripe.com/currencies#minor-units).
+
+<a id="identity.business_details.documents"></a>
+### `identity.business_details.documents`
+
+The `identity.business_details.documents` attribute supports:
+
+* `bank_account_ownership_verification` - One or more documents that support the bank account ownership verification requirement. Must be a document associated with the account's primary active bank account that displays the last 4 digits of the account number, either a statement or a check. See [`identity.business_details.documents.bank_account_ownership_verification`](#identity.business_details.documents.bank_account_ownership_verification) below.
+* `company_license` - One or more documents that demonstrate proof of a company's license to operate. See [`identity.business_details.documents.company_license`](#identity.business_details.documents.company_license) below.
+* `company_memorandum_of_association` - One or more documents showing the company's Memorandum of Association. See [`identity.business_details.documents.company_memorandum_of_association`](#identity.business_details.documents.company_memorandum_of_association) below.
+* `company_ministerial_decree` - Certain countries only: One or more documents showing the ministerial decree legalizing the company's establishment. See [`identity.business_details.documents.company_ministerial_decree`](#identity.business_details.documents.company_ministerial_decree) below.
+* `company_registration_verification` - One or more documents that demonstrate proof of a company's registration with the appropriate local authorities. See [`identity.business_details.documents.company_registration_verification`](#identity.business_details.documents.company_registration_verification) below.
+* `company_tax_id_verification` - One or more documents that demonstrate proof of a company's tax ID. See [`identity.business_details.documents.company_tax_id_verification`](#identity.business_details.documents.company_tax_id_verification) below.
+* `primary_verification` - A document verifying the business. See [`identity.business_details.documents.primary_verification`](#identity.business_details.documents.primary_verification) below.
+* `proof_of_address` - One or more documents that demonstrate proof of address. See [`identity.business_details.documents.proof_of_address`](#identity.business_details.documents.proof_of_address) below.
+* `proof_of_registration` - One or more documents showing the company's proof of registration with the national business registry. See [`identity.business_details.documents.proof_of_registration`](#identity.business_details.documents.proof_of_registration) below.
+* `proof_of_ultimate_beneficial_ownership` - One or more documents that demonstrate proof of ultimate beneficial ownership. See [`identity.business_details.documents.proof_of_ultimate_beneficial_ownership`](#identity.business_details.documents.proof_of_ultimate_beneficial_ownership) below.
+
+<a id="identity.business_details.documents.bank_account_ownership_verification"></a>
+### `identity.business_details.documents.bank_account_ownership_verification`
+
+The `identity.business_details.documents.bank_account_ownership_verification` attribute supports:
+
+* `files` - One or more document IDs returned by a [file upload](https://docs.stripe.com/api/persons/update#create_file) with a purpose value of `account_requirement`.
+* `type` - The format of the document. Currently supports `files` only. Possible values: `files`.
+
+<a id="identity.business_details.documents.company_license"></a>
+### `identity.business_details.documents.company_license`
+
+The `identity.business_details.documents.company_license` attribute supports:
+
+* `files` - One or more document IDs returned by a [file upload](https://docs.stripe.com/api/persons/update#create_file) with a purpose value of `account_requirement`.
+* `type` - The format of the document. Currently supports `files` only. Possible values: `files`.
+
+<a id="identity.business_details.documents.company_memorandum_of_association"></a>
+### `identity.business_details.documents.company_memorandum_of_association`
+
+The `identity.business_details.documents.company_memorandum_of_association` attribute supports:
+
+* `files` - One or more document IDs returned by a [file upload](https://docs.stripe.com/api/persons/update#create_file) with a purpose value of `account_requirement`.
+* `type` - The format of the document. Currently supports `files` only. Possible values: `files`.
+
+<a id="identity.business_details.documents.company_ministerial_decree"></a>
+### `identity.business_details.documents.company_ministerial_decree`
+
+The `identity.business_details.documents.company_ministerial_decree` attribute supports:
+
+* `files` - One or more document IDs returned by a [file upload](https://docs.stripe.com/api/persons/update#create_file) with a purpose value of `account_requirement`.
+* `type` - The format of the document. Currently supports `files` only. Possible values: `files`.
+
+<a id="identity.business_details.documents.company_registration_verification"></a>
+### `identity.business_details.documents.company_registration_verification`
+
+The `identity.business_details.documents.company_registration_verification` attribute supports:
+
+* `files` - One or more document IDs returned by a [file upload](https://docs.stripe.com/api/persons/update#create_file) with a purpose value of `account_requirement`.
+* `type` - The format of the document. Currently supports `files` only. Possible values: `files`.
+
+<a id="identity.business_details.documents.company_tax_id_verification"></a>
+### `identity.business_details.documents.company_tax_id_verification`
+
+The `identity.business_details.documents.company_tax_id_verification` attribute supports:
+
+* `files` - One or more document IDs returned by a [file upload](https://docs.stripe.com/api/persons/update#create_file) with a purpose value of `account_requirement`.
+* `type` - The format of the document. Currently supports `files` only. Possible values: `files`.
+
+<a id="identity.business_details.documents.primary_verification"></a>
+### `identity.business_details.documents.primary_verification`
+
+The `identity.business_details.documents.primary_verification` attribute supports:
+
+* `front_back` - The [file upload](https://docs.stripe.com/api/persons/update#create_file) tokens referring to each side of the document. See [`identity.business_details.documents.primary_verification.front_back`](#identity.business_details.documents.primary_verification.front_back) below.
+* `type` - The format of the verification document. Currently supports `front_back` only. Possible values: `front_back`.
+
+<a id="identity.business_details.documents.primary_verification.front_back"></a>
+### `identity.business_details.documents.primary_verification.front_back`
+
+The `identity.business_details.documents.primary_verification.front_back` attribute supports:
+
+* `back` - A [file upload](https://docs.stripe.com/api/persons/update#create_file) token representing the back of the verification document. The purpose of the uploaded file should be 'identity_document'. The uploaded file needs to be a color image (smaller than 8,000px by 8,000px), in JPG, PNG, or PDF format, and less than 10 MB in size.
+* `front` - A [file upload](https://docs.stripe.com/api/persons/update#create_file) token representing the front of the verification document. The purpose of the uploaded file should be 'identity_document'. The uploaded file needs to be a color image (smaller than 8,000px by 8,000px), in JPG, PNG, or PDF format, and less than 10 MB in size.
+
+<a id="identity.business_details.documents.proof_of_address"></a>
+### `identity.business_details.documents.proof_of_address`
+
+The `identity.business_details.documents.proof_of_address` attribute supports:
+
+* `files` - One or more document IDs returned by a [file upload](https://docs.stripe.com/api/persons/update#create_file) with a purpose value of `account_requirement`.
+* `type` - The format of the document. Currently supports `files` only. Possible values: `files`.
+
+<a id="identity.business_details.documents.proof_of_registration"></a>
+### `identity.business_details.documents.proof_of_registration`
+
+The `identity.business_details.documents.proof_of_registration` attribute supports:
+
+* `files` - One or more document IDs returned by a [file upload](https://docs.stripe.com/api/persons/update#create_file) with a purpose value of `account_requirement`.
+* `signer` - Person that is signing the document. See [`identity.business_details.documents.proof_of_registration.signer`](#identity.business_details.documents.proof_of_registration.signer) below.
+* `type` - The format of the document. Currently supports `files` only. Possible values: `files`.
+
+<a id="identity.business_details.documents.proof_of_registration.signer"></a>
+### `identity.business_details.documents.proof_of_registration.signer`
+
+The `identity.business_details.documents.proof_of_registration.signer` attribute supports:
+
+* `person` - Person signing the document.
+
+<a id="identity.business_details.documents.proof_of_ultimate_beneficial_ownership"></a>
+### `identity.business_details.documents.proof_of_ultimate_beneficial_ownership`
+
+The `identity.business_details.documents.proof_of_ultimate_beneficial_ownership` attribute supports:
+
+* `files` - One or more document IDs returned by a [file upload](https://docs.stripe.com/api/persons/update#create_file) with a purpose value of `account_requirement`.
+* `signer` - Person that is signing the document. See [`identity.business_details.documents.proof_of_ultimate_beneficial_ownership.signer`](#identity.business_details.documents.proof_of_ultimate_beneficial_ownership.signer) below.
+* `type` - The format of the document. Currently supports `files` only. Possible values: `files`.
+
+<a id="identity.business_details.documents.proof_of_ultimate_beneficial_ownership.signer"></a>
+### `identity.business_details.documents.proof_of_ultimate_beneficial_ownership.signer`
+
+The `identity.business_details.documents.proof_of_ultimate_beneficial_ownership.signer` attribute supports:
+
+* `person` - Person signing the document.
+
+<a id="identity.business_details.id_numbers"></a>
+### `identity.business_details.id_numbers`
+
+The `identity.business_details.id_numbers` attribute is a list. Each element supports:
+
+* `registrar` - The registrar of the ID number (Only valid for DE ID number types).
+* `type` - Open Enum. The ID number type of a business entity. Possible values: `ae_crn`, `ae_vat`, `ao_nif`, `ar_cuit`, `at_fn`, `at_stn`, `at_vat`, `au_abn`, `au_acn`, `au_in`, `az_tin`, `bd_etin`, `be_cbe`, `be_vat`, `bg_uic`, `bg_vat`, `br_cnpj`, `ca_cn`, `ca_crarr`, `ca_gst_hst`, `ca_neq`, `ca_rid`, `ch_chid`, `ch_uid`, `cr_cpj`, `cr_nite`, `cy_he`, `cy_tic`, `cy_vat`, `cz_ico`, `cz_vat`, `de_hrn`, `de_stn`, `de_vat`, `dk_cvr`, `dk_vat`, `do_rcn`, `ee_rk`, `ee_vat`, `es_cif`, `es_vat`, `fi_vat`, `fi_yt`, `fr_rna`, `fr_siren`, `fr_vat`, `gb_crn`, `gb_vat`, `gi_crn`, `gr_afm`, `gr_gemi`, `gr_vat`, `gt_nit`, `hk_br`, `hk_cr`, `hr_mbs`, `hr_oib`, `hr_vat`, `hu_cjs`, `hu_tin`, `hu_vat`, `ie_crn`, `ie_trn`, `ie_vat`, `it_rea`, `it_vat`, `jp_cn`, `kz_bin`, `li_uid`, `lt_ccrn`, `lt_vat`, `lu_nif`, `lu_rcs`, `lu_vat`, `lv_urn`, `lv_vat`, `mt_crn`, `mt_tin`, `mt_vat`, `mx_rfc`, `my_brn`, `my_coid`, `my_itn`, `my_sst`, `mz_nuit`, `nl_kvk`, `nl_rsin`, `nl_vat`, `no_orgnr`, `nz_bn`, `nz_ird`, `pe_ruc`, `pk_ntn`, `pl_nip`, `pl_regon`, `pl_vat`, `pt_vat`, `ro_cui`, `ro_orc`, `ro_vat`, `sa_crn`, `sa_tin`, `se_orgnr`, `se_vat`, `sg_uen`, `si_msp`, `si_tin`, `si_vat`, `sk_dic`, `sk_ico`, `sk_vat`, `th_crn`, `th_prn`, `th_tin`, `us_ein`.
+* `value` - The value of the ID number.
+
+<a id="identity.business_details.monthly_estimated_revenue"></a>
+### `identity.business_details.monthly_estimated_revenue`
+
+The `identity.business_details.monthly_estimated_revenue` attribute supports:
+
+* `amount` - A non-negative integer representing the amount in the smallest currency unit. See [`identity.business_details.monthly_estimated_revenue.amount`](#identity.business_details.monthly_estimated_revenue.amount) below.
+
+<a id="identity.business_details.monthly_estimated_revenue.amount"></a>
+### `identity.business_details.monthly_estimated_revenue.amount`
+
+The `identity.business_details.monthly_estimated_revenue.amount` attribute supports:
+
+* `currency` - Three-letter [ISO currency code](https://www.iso.org/iso-4217-currency-codes.html), in lowercase. Must be a [supported currency](https://stripe.com/docs/currencies).
+* `value` - A non-negative integer representing how much to charge in the [smallest currency unit](https://docs.stripe.com/currencies#minor-units).
+
+<a id="identity.business_details.registration_date"></a>
+### `identity.business_details.registration_date`
+
+The `identity.business_details.registration_date` attribute supports:
+
+* `day` - The day of registration, between 1 and 31.
+* `month` - The month of registration, between 1 and 12.
+* `year` - The four-digit year of registration.
+
+<a id="identity.individual"></a>
+### `identity.individual`
+
+The `identity.individual` attribute supports:
+
+* `account` - The account ID which the individual belongs to.
+* `additional_addresses` - Additional addresses associated with the individual. See [`identity.individual.additional_addresses`](#identity.individual.additional_addresses) below.
+* `additional_names` - Additional names (e.g. aliases) associated with the individual. See [`identity.individual.additional_names`](#identity.individual.additional_names) below.
+* `address` - The individual's residential address. See [`identity.individual.address`](#identity.individual.address) below.
+* `created` - Time at which the object was created. Represented as a RFC 3339 date & time UTC value in millisecond precision, for example: 2022-09-18T13:22:18.123Z.
+* `date_of_birth` - The individual's date of birth. See [`identity.individual.date_of_birth`](#identity.individual.date_of_birth) below.
+* `documents` - Documents that may be submitted to satisfy various informational requests. See [`identity.individual.documents`](#identity.individual.documents) below.
+* `email` - The individual's email address. You can only set this field when the Account is configured as a `merchant` or `recipient`. Use `contact_email` as the primary contact email for this Account.
+* `given_name` - The individual's first name.
+* `id` - Unique identifier for the object.
+* `legal_gender` - The individual's gender (International regulations require either "male" or "female"). Possible values: `female`, `male`.
+* `metadata` - Set of key-value pairs that you can attach to an object. This can be useful for storing additional information about the object in a structured format.
+* `nationalities` - The countries where the individual is a national. Two-letter country code ([ISO 3166-1 alpha-2](https://en.wikipedia.org/wiki/ISO_3166-1_alpha-2)).
+* `object` - String representing the object's type. Objects of the same type share the same value.
+* `phone` - The individual's phone number.
+* `political_exposure` - The individual's political exposure. Possible values: `existing`, `none`.
+* `relationship` - The relationship that this individual has with the account's identity. See [`identity.individual.relationship`](#identity.individual.relationship) below.
+* `surname` - The individual's last name.
+* `updated` - Time at which the object was last updated.
+
+<a id="identity.individual.additional_addresses"></a>
+### `identity.individual.additional_addresses`
+
+The `identity.individual.additional_addresses` attribute is a list. Each element supports:
+
+* `city` - City, district, suburb, town, or village.
+* `country` - Two-letter country code ([ISO 3166-1 alpha-2](https://en.wikipedia.org/wiki/ISO_3166-1_alpha-2)).
+* `line1` - Address line 1 (e.g., street, PO Box, or company name).
+* `line2` - Address line 2 (e.g., apartment, suite, unit, or building).
+* `postal_code` - ZIP or postal code.
+* `purpose` - Purpose of additional address. Possible values: `registered`.
+* `state` - State, county, province, or region.
+* `town` - Town or district.
+
+<a id="identity.individual.additional_names"></a>
+### `identity.individual.additional_names`
+
+The `identity.individual.additional_names` attribute is a list. Each element supports:
+
+* `full_name` - The person's full name.
+* `given_name` - The person's first or given name.
+* `purpose` - The purpose or type of the additional name. Possible values: `alias`, `maiden`.
+* `surname` - The person's last or family name.
+
+<a id="identity.individual.address"></a>
+### `identity.individual.address`
+
+The `identity.individual.address` attribute supports:
+
+* `city` - City, district, suburb, town, or village.
+* `country` - Two-letter country code ([ISO 3166-1 alpha-2](https://en.wikipedia.org/wiki/ISO_3166-1_alpha-2)).
+* `line1` - Address line 1 (e.g., street, PO Box, or company name).
+* `line2` - Address line 2 (e.g., apartment, suite, unit, or building).
+* `postal_code` - ZIP or postal code.
+* `state` - State, county, province, or region.
+* `town` - Town or district.
+
+<a id="identity.individual.date_of_birth"></a>
+### `identity.individual.date_of_birth`
+
+The `identity.individual.date_of_birth` attribute supports:
+
+* `day` - The day of birth.
+* `month` - The month of birth.
+* `year` - The year of birth.
+
+<a id="identity.individual.documents"></a>
+### `identity.individual.documents`
+
+The `identity.individual.documents` attribute supports:
+
+* `company_authorization` - One or more documents that demonstrate proof that this person is authorized to represent the company. See [`identity.individual.documents.company_authorization`](#identity.individual.documents.company_authorization) below.
+* `passport` - One or more documents showing the person's passport page with photo and personal data. See [`identity.individual.documents.passport`](#identity.individual.documents.passport) below.
+* `primary_verification` - An identifying document showing the person's name, either a passport or local ID card. See [`identity.individual.documents.primary_verification`](#identity.individual.documents.primary_verification) below.
+* `secondary_verification` - A document showing address, either a passport, local ID card, or utility bill from a well-known utility company. See [`identity.individual.documents.secondary_verification`](#identity.individual.documents.secondary_verification) below.
+* `visa` - One or more documents showing the person's visa required for living in the country where they are residing. See [`identity.individual.documents.visa`](#identity.individual.documents.visa) below.
+
+<a id="identity.individual.documents.company_authorization"></a>
+### `identity.individual.documents.company_authorization`
+
+The `identity.individual.documents.company_authorization` attribute supports:
+
+* `files` - One or more document IDs returned by a [file upload](https://docs.stripe.com/api/persons/update#create_file) with a purpose value of `account_requirement`.
+* `type` - The format of the document. Currently supports `files` only. Possible values: `files`.
+
+<a id="identity.individual.documents.passport"></a>
+### `identity.individual.documents.passport`
+
+The `identity.individual.documents.passport` attribute supports:
+
+* `files` - One or more document IDs returned by a [file upload](https://docs.stripe.com/api/persons/update#create_file) with a purpose value of `account_requirement`.
+* `type` - The format of the document. Currently supports `files` only. Possible values: `files`.
+
+<a id="identity.individual.documents.primary_verification"></a>
+### `identity.individual.documents.primary_verification`
+
+The `identity.individual.documents.primary_verification` attribute supports:
+
+* `front_back` - The [file upload](https://docs.stripe.com/api/persons/update#create_file) tokens referring to each side of the document. See [`identity.individual.documents.primary_verification.front_back`](#identity.individual.documents.primary_verification.front_back) below.
+* `type` - The format of the verification document. Currently supports `front_back` only. Possible values: `front_back`.
+
+<a id="identity.individual.documents.primary_verification.front_back"></a>
+### `identity.individual.documents.primary_verification.front_back`
+
+The `identity.individual.documents.primary_verification.front_back` attribute supports:
+
+* `back` - A [file upload](https://docs.stripe.com/api/persons/update#create_file) token representing the back of the verification document. The purpose of the uploaded file should be 'identity_document'. The uploaded file needs to be a color image (smaller than 8,000px by 8,000px), in JPG, PNG, or PDF format, and less than 10 MB in size.
+* `front` - A [file upload](https://docs.stripe.com/api/persons/update#create_file) token representing the front of the verification document. The purpose of the uploaded file should be 'identity_document'. The uploaded file needs to be a color image (smaller than 8,000px by 8,000px), in JPG, PNG, or PDF format, and less than 10 MB in size.
+
+<a id="identity.individual.documents.secondary_verification"></a>
+### `identity.individual.documents.secondary_verification`
+
+The `identity.individual.documents.secondary_verification` attribute supports:
+
+* `front_back` - The [file upload](https://docs.stripe.com/api/persons/update#create_file) tokens referring to each side of the document. See [`identity.individual.documents.secondary_verification.front_back`](#identity.individual.documents.secondary_verification.front_back) below.
+* `type` - The format of the verification document. Currently supports `front_back` only. Possible values: `front_back`.
+
+<a id="identity.individual.documents.secondary_verification.front_back"></a>
+### `identity.individual.documents.secondary_verification.front_back`
+
+The `identity.individual.documents.secondary_verification.front_back` attribute supports:
+
+* `back` - A [file upload](https://docs.stripe.com/api/persons/update#create_file) token representing the back of the verification document. The purpose of the uploaded file should be 'identity_document'. The uploaded file needs to be a color image (smaller than 8,000px by 8,000px), in JPG, PNG, or PDF format, and less than 10 MB in size.
+* `front` - A [file upload](https://docs.stripe.com/api/persons/update#create_file) token representing the front of the verification document. The purpose of the uploaded file should be 'identity_document'. The uploaded file needs to be a color image (smaller than 8,000px by 8,000px), in JPG, PNG, or PDF format, and less than 10 MB in size.
+
+<a id="identity.individual.documents.visa"></a>
+### `identity.individual.documents.visa`
+
+The `identity.individual.documents.visa` attribute supports:
+
+* `files` - One or more document IDs returned by a [file upload](https://docs.stripe.com/api/persons/update#create_file) with a purpose value of `account_requirement`.
+* `type` - The format of the document. Currently supports `files` only. Possible values: `files`.
+
+<a id="identity.individual.relationship"></a>
+### `identity.individual.relationship`
+
+The `identity.individual.relationship` attribute supports:
+
+* `director` - Whether the person is a director of the account's identity. Directors are typically members of the governing board of the company, or responsible for ensuring the company meets its regulatory obligations.
+* `executive` - Whether the person has significant responsibility to control, manage, or direct the organization.
+* `owner` - Whether the person is an owner of the account's identity.
+* `percent_ownership` - The percent owned by the person of the account's legal entity.
+* `title` - The person's title (e.g., CEO, Support Engineer).
 
 <a id="requirements"></a>
 ### `requirements`

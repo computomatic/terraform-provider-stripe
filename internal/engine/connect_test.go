@@ -728,6 +728,49 @@ func TestSendWholeMembersRefusesComputedMembersInElements(t *testing.T) {
 	}
 }
 
+// An argument whose unset Stripe fails on every attempt (UnsetUnreachable) may not sit where an
+// update sends a removed member as the unset: directly in a SendChangedMembers object, or at any
+// depth in a SendWholeMembers hash that does not leave a removed member out (SiblingsCleared). A
+// hash the engine sends otherwise, as configured, may hold one.
+func TestUnsetUnreachableIsNeverSentAsTheUnset(t *testing.T) {
+	member := func(name string, shape fields.Shape) fields.Field {
+		return fields.Field{Name: name, Shape: shape, Create: true, Update: true, Response: true}
+	}
+	mode := member("mode", fields.String)
+	mode.UnsetUnreachable = true
+	for name, tc := range map[string]struct {
+		changed, whole  []string
+		cleared, deeper bool
+		want            string
+	}{
+		"a send-changed-members object":           {changed: []string{"data"}, want: "send-changed-members entry `data` holds `data.mode`"},
+		"a send-whole-members hash":               {whole: []string{"data"}, want: "send-whole-members entry `data` holds `data.mode`"},
+		"a hash inside a send-whole hash":         {whole: []string{"data"}, deeper: true, want: "send-whole-members entry `data` holds `data.inner.mode`"},
+		"a send-whole hash that clears":           {whole: []string{"data"}, cleared: true},
+		"a hash sent as configured":               {},
+		"a cleared hash in a send-changed object": {changed: []string{"data"}, whole: []string{"data.inner"}, deeper: true, cleared: true},
+	} {
+		data := member("data", fields.Object)
+		data.Fields = []fields.Field{member("note", fields.String), mode}
+		data.SiblingsCleared = tc.cleared
+		if tc.deeper {
+			inner := member("inner", fields.Object)
+			inner.Fields = []fields.Field{member("note", fields.String), mode}
+			inner.SiblingsCleared = tc.cleared
+			data.Fields = []fields.Field{member("note", fields.String), inner}
+		}
+		decl := fixtureDeclaration()
+		decl.SendChangedMembers, decl.SendWholeMembers = tc.changed, tc.whole
+		_, err := compile(decl, append(refuseTable(), data))
+		switch {
+		case tc.want == "" && err != nil:
+			t.Errorf("%s: %v", name, err)
+		case tc.want != "" && (err == nil || !strings.Contains(err.Error(), tc.want)):
+			t.Errorf("%s: %v, want %s", name, err, tc.want)
+		}
+	}
+}
+
 // A top-level hash in SendWholeMembers goes whole too, with a removed member as null, its map
 // whole, and an empty map that stays empty left out, which Stripe would read as an unset.
 func TestSendWholeMembersAtTopLevel(t *testing.T) {

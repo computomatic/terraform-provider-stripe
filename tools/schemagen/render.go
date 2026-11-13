@@ -173,6 +173,9 @@ func writeLiteral(b *strings.Builder, f fields.Field) {
 	if f.Unreachable != "" {
 		fmt.Fprintf(b, ", Unreachable: %s", strconv.Quote(f.Unreachable))
 	}
+	if f.UnsetUnreachable {
+		b.WriteString(", UnsetUnreachable: true")
+	}
 	if f.Copy != "" {
 		fmt.Fprintf(b, ", Copy: %s", strconv.Quote(f.Copy))
 	}

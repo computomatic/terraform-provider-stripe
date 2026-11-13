@@ -586,6 +586,40 @@ func TestUnreachableValuesAreNamedOnTheField(t *testing.T) {
 	}
 }
 
+// An update's unset, `""`, that Stripe fails on every attempt is named and marked
+// (UnsetUnreachable) on a nested argument, so that the engine can refuse a declaration that would
+// send it, and fails generation on a top-level one, which the engine always would.
+func TestAnUnreachableUnsetIsNamedOnANestedArgument(t *testing.T) {
+	for _, tc := range []struct {
+		path, want string
+	}{
+		{"settings.mode", `Stripe fails an update that unsets it on every attempt, so the provider sends no unset of its own: removing it from the configuration leaves it out of the hash the update sends ("Stripe answers 500 to the unset").`},
+		{"color", "the record marks the unset unreachable on a top-level argument"},
+	} {
+		res := gadget()
+		ev := pinned(t, res, map[string]string{"request/PostGadgets/" + tc.path: ClassVerified, "request/PostGadgetsId/" + tc.path: ClassVerified})
+		for _, l := range ev.Attributes.Leaves {
+			if l.Path == tc.path && l.Side == SideRequest && l.Operation == "PostGadgetsId" {
+				ev.Evidence.Leaves = append(ev.Evidence.Leaves, EvidenceLeaf{Key: l.Key, Status: "proven", Tests: []string{"TestGadgetAttributes/leaves/" + l.Key.String()},
+					Unreachable: []UnreachableValue{{Value: "", Reason: "Stripe answers 500 to the unset."}}})
+			}
+		}
+		tc0, err := coverTable(coverageSpec(t), res, ev)
+		if tc.path == "color" {
+			if err == nil || !strings.Contains(err.Error(), tc.want) {
+				t.Errorf("%s: %v", tc.path, err)
+			}
+			continue
+		}
+		if err != nil {
+			t.Fatal(err)
+		}
+		if f := fieldAt(tc0.table, tc.path); f == nil || f.Unreachable != tc.want || !f.UnsetUnreachable {
+			t.Errorf("%s: %+v", tc.path, f)
+		}
+	}
+}
+
 // A rule that quotes the values Stripe derived, as JSON over several lines, cannot be a docs line,
 // so the leaf has no statement until a declaration words it.
 func TestAMultiLineRuleHasNoStatement(t *testing.T) {

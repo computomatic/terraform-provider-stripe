@@ -34,9 +34,13 @@ This data source supports the following arguments:
 
 This data source exports the following attributes in addition to the arguments above:
 
+* `additional_addresses` - Additional addresses associated with the person. See [`additional_addresses`](#additional_addresses) below.
+* `additional_names` - Additional names (e.g. aliases) associated with the person. See [`additional_names`](#additional_names) below.
+* `additional_terms_of_service` - Attestations of accepted terms of service agreements. See [`additional_terms_of_service`](#additional_terms_of_service) below.
 * `address` - The person's residential address. See [`address`](#address) below.
 * `created` - Time at which the object was created. Represented as a RFC 3339 date & time UTC value in millisecond precision, for example: 2022-09-18T13:22:18.123Z.
 * `date_of_birth` - The person's date of birth. See [`date_of_birth`](#date_of_birth) below.
+* `documents` - Documents that may be submitted to satisfy various informational requests. See [`documents`](#documents) below.
 * `email` - Email.
 * `given_name` - The person's first name.
 * `id_numbers` - The identification numbers (e.g., SSN) associated with the person. See [`id_numbers`](#id_numbers) below.
@@ -49,6 +53,46 @@ This data source exports the following attributes in addition to the arguments a
 * `relationship` - The relationship that this person has with the Account's business or legal entity. See [`relationship`](#relationship) below.
 * `surname` - The person's last name.
 * `updated` - Time at which the object was last updated. Represented as a RFC 3339 date & time UTC value in millisecond precision, for example: 2022-09-18T13:22:18.123Z.
+
+<a id="additional_addresses"></a>
+### `additional_addresses`
+
+The `additional_addresses` attribute is a list. Each element supports:
+
+* `city` - City, district, suburb, town, or village.
+* `country` - Two-letter country code ([ISO 3166-1 alpha-2](https://en.wikipedia.org/wiki/ISO_3166-1_alpha-2)).
+* `line1` - Address line 1 (e.g., street, PO Box, or company name).
+* `line2` - Address line 2 (e.g., apartment, suite, unit, or building).
+* `postal_code` - ZIP or postal code.
+* `purpose` - Purpose of additional address. Possible values: `registered`.
+* `state` - State, county, province, or region.
+* `town` - Town or district.
+
+<a id="additional_names"></a>
+### `additional_names`
+
+The `additional_names` attribute is a list. Each element supports:
+
+* `full_name` - The person's full name.
+* `given_name` - The person's first or given name.
+* `purpose` - The purpose or type of the additional name. Possible values: `alias`, `maiden`.
+* `surname` - The person's last or family name.
+
+<a id="additional_terms_of_service"></a>
+### `additional_terms_of_service`
+
+The `additional_terms_of_service` attribute supports:
+
+* `account` - Stripe terms of service agreement. See [`additional_terms_of_service.account`](#additional_terms_of_service.account) below.
+
+<a id="additional_terms_of_service.account"></a>
+### `additional_terms_of_service.account`
+
+The `additional_terms_of_service.account` attribute supports:
+
+* `date` - The time when the Account's representative accepted the terms of service. Represented as a RFC 3339 date & time UTC value in millisecond precision, for example: 2022-09-18T13:22:18.123Z.
+* `ip` - The IP address from which the Account's representative accepted the terms of service.
+* `user_agent` - The user agent of the browser from which the Account's representative accepted the terms of service.
 
 <a id="address"></a>
 ### `address`
@@ -71,6 +115,73 @@ The `date_of_birth` attribute supports:
 * `day` - The day of birth.
 * `month` - The month of birth.
 * `year` - The year of birth.
+
+<a id="documents"></a>
+### `documents`
+
+The `documents` attribute supports:
+
+* `company_authorization` - One or more documents that demonstrate proof that this person is authorized to represent the company. See [`documents.company_authorization`](#documents.company_authorization) below.
+* `passport` - One or more documents showing the person's passport page with photo and personal data. See [`documents.passport`](#documents.passport) below.
+* `primary_verification` - An identifying document showing the person's name, either a passport or local ID card. See [`documents.primary_verification`](#documents.primary_verification) below.
+* `secondary_verification` - A document showing address, either a passport, local ID card, or utility bill from a well-known utility company. See [`documents.secondary_verification`](#documents.secondary_verification) below.
+* `visa` - One or more documents showing the person's visa required for living in the country where they are residing. See [`documents.visa`](#documents.visa) below.
+
+<a id="documents.company_authorization"></a>
+### `documents.company_authorization`
+
+The `documents.company_authorization` attribute supports:
+
+* `files` - One or more document IDs returned by a [file upload](https://docs.stripe.com/api/persons/update#create_file) with a purpose value of `account_requirement`.
+* `type` - The format of the document. Currently supports `files` only. Possible values: `files`.
+
+<a id="documents.passport"></a>
+### `documents.passport`
+
+The `documents.passport` attribute supports:
+
+* `files` - One or more document IDs returned by a [file upload](https://docs.stripe.com/api/persons/update#create_file) with a purpose value of `account_requirement`.
+* `type` - The format of the document. Currently supports `files` only. Possible values: `files`.
+
+<a id="documents.primary_verification"></a>
+### `documents.primary_verification`
+
+The `documents.primary_verification` attribute supports:
+
+* `front_back` - The [file upload](https://docs.stripe.com/api/persons/update#create_file) tokens referring to each side of the document. See [`documents.primary_verification.front_back`](#documents.primary_verification.front_back) below.
+* `type` - The format of the verification document. Currently supports `front_back` only. Possible values: `front_back`.
+
+<a id="documents.primary_verification.front_back"></a>
+### `documents.primary_verification.front_back`
+
+The `documents.primary_verification.front_back` attribute supports:
+
+* `back` - A [file upload](https://docs.stripe.com/api/persons/update#create_file) token representing the back of the verification document. The purpose of the uploaded file should be 'identity_document'. The uploaded file needs to be a color image (smaller than 8,000px by 8,000px), in JPG, PNG, or PDF format, and less than 10 MB in size.
+* `front` - A [file upload](https://docs.stripe.com/api/persons/update#create_file) token representing the front of the verification document. The purpose of the uploaded file should be 'identity_document'. The uploaded file needs to be a color image (smaller than 8,000px by 8,000px), in JPG, PNG, or PDF format, and less than 10 MB in size.
+
+<a id="documents.secondary_verification"></a>
+### `documents.secondary_verification`
+
+The `documents.secondary_verification` attribute supports:
+
+* `front_back` - The [file upload](https://docs.stripe.com/api/persons/update#create_file) tokens referring to each side of the document. See [`documents.secondary_verification.front_back`](#documents.secondary_verification.front_back) below.
+* `type` - The format of the verification document. Currently supports `front_back` only. Possible values: `front_back`.
+
+<a id="documents.secondary_verification.front_back"></a>
+### `documents.secondary_verification.front_back`
+
+The `documents.secondary_verification.front_back` attribute supports:
+
+* `back` - A [file upload](https://docs.stripe.com/api/persons/update#create_file) token representing the back of the verification document. The purpose of the uploaded file should be 'identity_document'. The uploaded file needs to be a color image (smaller than 8,000px by 8,000px), in JPG, PNG, or PDF format, and less than 10 MB in size.
+* `front` - A [file upload](https://docs.stripe.com/api/persons/update#create_file) token representing the front of the verification document. The purpose of the uploaded file should be 'identity_document'. The uploaded file needs to be a color image (smaller than 8,000px by 8,000px), in JPG, PNG, or PDF format, and less than 10 MB in size.
+
+<a id="documents.visa"></a>
+### `documents.visa`
+
+The `documents.visa` attribute supports:
+
+* `files` - One or more document IDs returned by a [file upload](https://docs.stripe.com/api/persons/update#create_file) with a purpose value of `account_requirement`.
+* `type` - The format of the document. Currently supports `files` only. Possible values: `files`.
 
 <a id="id_numbers"></a>
 ### `id_numbers`

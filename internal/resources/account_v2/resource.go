@@ -22,7 +22,13 @@ import (
 // `stripe_transfers` request, which it refuses without them (the record's answers to probes
 // `isolated/change_adds_recipient` and `isolated/change_adds_recipient_with_collectors`), so a
 // plan sets them while the state holds none and fails on any other change (SetOnce).
-// `configuration.customer` and `configuration.merchant`: nothing proves an update of either.
+// `configuration.customer` and `configuration.merchant`: the record of fake `v0.42.0` proves an
+// update of every setting of each, whole (probes `update/4` and `update/6`), but the record lists
+// neither hash among those whose left-out members Stripe keeps, so an update would send it whole,
+// with the capability it requests, and no update that requests a capability is proven (the fake
+// answers `fake_unproven`). Members Stripe takes only on update, such as the merchant's branding
+// `icon` and `logo` (a create takes them with no effect, `accepted_ignored`), the identity's
+// `representative_declaration` and the money manager terms, are not sent by a create.
 // What a change does prove stays in place: the identity's country and entity type, the defaults'
 // currency, locales and profile, the recipient configuration's `applied` and `stripe_transfers`
 // request, and the contact phone. The country and the currency moved in place with the record of
@@ -37,8 +43,14 @@ import (
 // `FilledFrom` needs, as it only leaves `applied_configurations` unknown. An update of
 // `configuration`, `defaults`, `defaults.profile` or `identity` sends only the members that
 // changed, because Stripe keeps those a request leaves out (family `v2`, `hashes`);
-// `configuration.recipient` and `identity.business_details`, which the record does not list, go
-// whole. Stripe refuses `defaults.responsibilities` in part (`hashes`, `refused`:
+// `configuration.recipient`, `identity.attestations`, `identity.business_details` and
+// `identity.individual`, which the record does not list, go whole, as every update probe of the
+// record of fake `v0.42.0` changes one of their members on an account created with that member
+// alone (`update/7` to `update/74`). Their lists of addresses, names and ID numbers are matched by
+// position and sent whole, so a reorder is a change, and an element Stripe holds that the
+// configuration does not is dropped by the next update of the hash. Stripe shows an address's
+// country in upper case and a whole percent ownership with `.0`, as on a v2 person, so those
+// stay as configured. Stripe refuses `defaults.responsibilities` in part (`hashes`, `refused`:
 // `losses_collector: Required request field missing`), and it is only ever sent whole, with both
 // collectors it requires. Stripe does not return the capabilities a configuration requested, only
 // their status, so the `requested` flags stay in state from the configuration, and Stripe drops
@@ -73,7 +85,7 @@ import (
 var Declaration = engine.Declaration{
 	TypeName:              "stripe_account_v2",
 	IDPrefix:              "acct_",
-	Description:           "A connected account created through Stripe's `/v2` Accounts API, whose configurations say how the platform uses it: as a customer, a merchant or a recipient. Each configuration requests one capability: `automatic_indirect_tax` for a customer, `card_payments` for a merchant and `stripe_balance.stripe_transfers` for a recipient; state holds every configuration the account has applied, with the status of each capability. Stripe refuses `dashboard` on an account that is only a customer. The account is also a v1 connected account with the same ID, which the `stripe_account` data source reads. Set `closed` to `true` to close the account, which cannot be undone; Stripe returns most fields of a closed account as null, so state keeps the values they had before the close. Stripe refuses any change to a closed account, so once it is closed a plan that changes it fails. `identity.country`, `identity.entity_type`, `identity.business_details.registered_name`, `defaults.currency`, `defaults.locales`, `defaults.profile` and the recipient configuration's `applied` and `capabilities.stripe_balance.stripe_transfers.requested` change in place; changing the country can fill `defaults.currency`, and changing the recipient configuration can move `applied_configurations` and the status of the recipient's capabilities. An account without a dashboard takes `dashboard` and the collectors in `defaults.responsibilities` on update, as adding the recipient configuration to it needs, but Stripe refuses a change of them once they are set, so a plan that changes one the account holds fails, as does one that changes `configuration.customer` or `configuration.merchant`, because changing them is not supported yet: revert the configuration, ignore the change, or remove the account from the state and apply again to create a new one. Stripe returns `identity.country` in upper case, so state keeps the country as you configured it. Stripe has no proven way to clear `display_name` or `contact_email`, so an apply that removes one from the configuration fails; removing `dashboard`, `identity.country` or the registered name leaves it on the account, and removing `contact_phone`, `identity.entity_type` or a member of `defaults.profile` clears it.",
+	Description:           "A connected account created through Stripe's `/v2` Accounts API, whose configurations say how the platform uses it: as a customer, a merchant or a recipient. Each configuration requests one capability: `automatic_indirect_tax` for a customer, `card_payments` for a merchant and `stripe_balance.stripe_transfers` for a recipient; state holds every configuration the account has applied, with the status of each capability. Stripe refuses `dashboard` on an account that is only a customer. The account is also a v1 connected account with the same ID, which the `stripe_account` data source reads. Set `closed` to `true` to close the account, which cannot be undone; Stripe returns most fields of a closed account as null, so state keeps the values they had before the close. Stripe refuses any change to a closed account, so once it is closed a plan that changes it fails. `identity.country`, `identity.entity_type`, the members of `identity.individual`, `identity.business_details` and `identity.attestations` an update takes, `defaults.currency`, `defaults.locales`, `defaults.profile` and the recipient configuration's `applied` and `capabilities.stripe_balance.stripe_transfers.requested` change in place; an update sends the individual, the business details or the attestations whole, with their lists of addresses, names and documents matched by position, so a reorder is a change; changing the country can fill `defaults.currency`, and changing the recipient configuration can move `applied_configurations` and the status of the recipient's capabilities. An account without a dashboard takes `dashboard` and the collectors in `defaults.responsibilities` on update, as adding the recipient configuration to it needs, but Stripe refuses a change of them once they are set, so a plan that changes one the account holds fails, as does one that changes `configuration.customer` or `configuration.merchant`, because changing them is not supported yet: revert the configuration, ignore the change, or remove the account from the state and apply again to create a new one. Stripe returns `identity.country` in upper case, so state keeps the country as you configured it, as it does an address's `country` and the individual's `relationship.percent_ownership`. A configuration's members that Stripe takes only on update, such as the merchant's branding `icon` and `logo`, are not sent on create. The individual's ID numbers are not available, because Stripe adds numbers of its own to the list a while after a create, which the provider cannot match inside the identity. Stripe has no proven way to clear `display_name` or `contact_email`, so an apply that removes one from the configuration fails; removing `dashboard`, `identity.country` or the registered name leaves it on the account, and removing `contact_phone`, `identity.entity_type` or a member of `defaults.profile` clears it.",
 	DataSourceDescription: "A connected account created through Stripe's `/v2` Accounts API, whose configurations say how the platform uses it: as a customer, a merchant or a recipient.",
 	ImportNote:            "Stripe does not return the capabilities a configuration requested, so an imported account has no `requested` flags in `configuration`, and its `identity.country` is in upper case. Add `lifecycle { ignore_changes = [configuration] }` to a configuration that sets it, because a plan that changes `configuration.customer` or `configuration.merchant` fails, and add `identity.country` to the list if the configuration writes the country in lower case, because a plan would otherwise send the country again. An imported closed account has no values for the fields Stripe returns as null, and a plan that changes a closed account fails, so its configuration needs `lifecycle { ignore_changes = all }`.",
 	ImportNoteLevel:       engine.NoteWarning,
@@ -98,6 +110,11 @@ var Declaration = engine.Declaration{
 		"configuration.recipient.capabilities.stripe_balance.stripe_transfers.requested": {"applied_configurations"},
 	},
 	Answers: map[string]string{
+		// suite: TestV2CoreAccountAttributes, probe `isolated/customer_payment_method`
+		"configuration.customer.billing.default_payment_method": "Stripe refused `pm_card_visa`, a test token, on an update; the conformance suite has recorded no payment method it takes.",
+		// suite: TestV2CoreAccountAttributes, probes `isolated/customer_template_create` and
+		// `isolated/customer_template_update`
+		"configuration.customer.billing.invoice.rendering.template": "Stripe refused a template it could not find, on create and on update; the conformance suite has recorded no template it takes.",
 		// suite: TestV2CoreAccountAttributes, probe `isolated/hash_responsibilities`
 		"defaults.responsibilities.fees_collector": "Stripe takes it on an update only beside `losses_collector`, which an update sends with it.",
 		// suite: TestV2CoreAccountAttributes, probes `isolated/change_adds_recipient` and
@@ -117,10 +134,35 @@ var Declaration = engine.Declaration{
 	// recipient's capabilities go whole, as every probe sent them; nothing proves a member of
 	// `identity.business_details` alone.
 	SendChangedMembers: []string{"configuration", "configuration.recipient", "defaults", "defaults.profile", "identity"},
-	SendWholeMembers:   []string{"configuration.recipient.capabilities", "identity.business_details"},
-	ClearsWithNull:     []string{"contact_phone"},
-	PreserveConfig:     []string{"identity.country", "configuration.recipient.capabilities.stripe_balance.stripe_transfers.requested"},
-	KeepWhenClosed:     "closed",
+	SendWholeMembers: []string{
+		"configuration.recipient.capabilities", "identity.attestations", "identity.business_details", "identity.individual",
+	},
+	// Stripe returns an additional address's and an additional name's members as sent and leaves
+	// out the ones a create does not send (the record's `returned`, `as_sent`, and its default
+	// none), and a whole send of the hash that holds the list needs every element known at plan.
+	NotServerDefaulted: []string{
+		"identity.business_details.additional_addresses.city", "identity.business_details.additional_addresses.country",
+		"identity.business_details.additional_addresses.line1", "identity.business_details.additional_addresses.line2",
+		"identity.business_details.additional_addresses.postal_code", "identity.business_details.additional_addresses.state",
+		"identity.business_details.additional_addresses.town",
+		"identity.individual.additional_addresses.city", "identity.individual.additional_addresses.line1",
+		"identity.individual.additional_addresses.line2", "identity.individual.additional_addresses.postal_code",
+		"identity.individual.additional_addresses.state", "identity.individual.additional_addresses.town",
+		"identity.individual.additional_names.full_name", "identity.individual.additional_names.surname",
+	},
+	ClearsWithNull: []string{"contact_phone"},
+	PreserveConfig: []string{
+		"identity.country", "configuration.recipient.capabilities.stripe_balance.stripe_transfers.requested",
+		"identity.business_details.address.country", "identity.individual.address.country",
+		"identity.individual.relationship.percent_ownership",
+	},
+	KeepWhenClosed: "closed",
+	Defaults: map[string]string{
+		// suite: TestV2CoreAccountAttributes, probe `nested_minimal/3`, a create that sends the
+		// customer's invoice `custom_fields` alone, which Stripe answers with
+		// `include_inclusive_tax`; every minimal create's variant leaves it absent.
+		"configuration.customer.billing.invoice.rendering.amount_tax_display": "none, or `include_inclusive_tax` where the create sends another member of `configuration.customer.billing.invoice`",
+	},
 	ServerDefaulted: []string{
 		"configuration", "dashboard", "defaults", "defaults.currency",
 		"identity", "identity.business_details", "identity.business_details.registered_name", "identity.country",

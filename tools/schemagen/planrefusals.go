@@ -14,8 +14,11 @@ import (
 )
 
 // genKinds is the closed set of values the suite generates in a request it records (`$gen`),
-// each of which stands for any value of its kind, but where a translation refuses it below.
-var genKinds = []string{"account_currency", "email", "fresh", "now", "read", "ref", "shared", "unique", "url"}
+// each of which stands for any value of its kind, but where a translation refuses it below, and
+// for `account_country`, the country of the account the probe ran on, which is the condition's
+// own `account_country`: a pattern holds only on an account of that country, so that country
+// translates it exactly.
+var genKinds = []string{"account_country", "account_currency", "email", "fresh", "now", "read", "ref", "shared", "unique", "url"}
 
 // meaningfulGenKinds are the generated values that say more than "some value": the account's
 // own currency, and a time relative to when the probe sent it (with its `offset`), such as a
@@ -85,7 +88,7 @@ func markPlanRefusals(res Resource, object, create, update string, table []field
 				}
 			}
 			isUpdate := r.Operation == update
-			var base wire.Object
+			var base *minimalCreate
 			if !isUpdate {
 				base = ev.baseCreate(object, create)
 			}
@@ -117,11 +120,11 @@ func exposedRequestLeaf(leaves []Leaf, records []Record, object, operation, path
 	return ""
 }
 
-// baseCreate is the request of the object's minimal create with nothing else set, or nil.
-func (p *Pinned) baseCreate(object, create string) wire.Object {
-	for _, c := range p.creates[object+" "+create] {
+// baseCreate is the object's minimal create with nothing else set, or nil.
+func (p *Pinned) baseCreate(object, create string) *minimalCreate {
+	for i, c := range p.creates[object+" "+create] {
 		if c.Variant == "" && c.Status == http.StatusOK {
-			return wire.Object(c.Params)
+			return &p.creates[object+" "+create][i]
 		}
 	}
 	return nil
@@ -140,10 +143,10 @@ type taken struct {
 // encoder sends no pair for the first two and refuses the last, so such a member says the probe
 // left the key out, which a pattern cannot state, while the engine compares a request as its form
 // sends it, where a removal is the empty value.
-func translateRule(r EvidenceRule, update bool, base wire.Object, table []fields.Field, left map[string]bool, form bool) ([]fields.PlanRefusal, error) {
+func translateRule(r EvidenceRule, update bool, base *minimalCreate, table []fields.Field, left map[string]bool, form bool) ([]fields.PlanRefusal, error) {
 	var accepted []taken
 	if base != nil {
-		sent, err := pattern(base, false)
+		sent, err := pattern(wire.Object(base.Params), base.AccountCountry, false)
 		if err != nil {
 			return nil, fmt.Errorf("the minimal create: %w", err)
 		}
@@ -153,11 +156,11 @@ func translateRule(r EvidenceRule, update bool, base wire.Object, table []fields
 		if o.Value.Status != http.StatusOK {
 			continue
 		}
-		sent, err := patternOf(o.Condition.Params, false)
+		sent, err := patternOf(o.Condition.Params, o.Condition.AccountCountry, false)
 		if err != nil {
 			return nil, fmt.Errorf("probe %s: %w", o.Condition.Probe, err)
 		}
-		holds, err := patternOf(o.Condition.CreatedWith, false)
+		holds, err := patternOf(o.Condition.CreatedWith, o.Condition.AccountCountry, false)
 		if err != nil {
 			return nil, fmt.Errorf("probe %s: %w", o.Condition.Probe, err)
 		}
@@ -175,13 +178,13 @@ func translateRule(r EvidenceRule, update bool, base wire.Object, table []fields
 		case o.Value.Code == "resource_missing":
 			return nil, fmt.Errorf("probe %s: Stripe refused an object that does not exist, which the plan cannot know", c.Probe)
 		}
-		sends, err := patternOf(c.Params, true)
+		sends, err := patternOf(c.Params, c.AccountCountry, true)
 		if err != nil {
 			return nil, fmt.Errorf("probe %s: %w", c.Probe, err)
 		}
 		var holds wire.Object
 		if update {
-			if holds, err = patternOf(c.CreatedWith, true); err != nil {
+			if holds, err = patternOf(c.CreatedWith, c.AccountCountry, true); err != nil {
 				return nil, fmt.Errorf("probe %s: %w", c.Probe, err)
 			}
 		}
@@ -250,29 +253,30 @@ func emptyMember(v wire.Value, at string) string {
 }
 
 // patternOf is a recorded request or object, whole, as a pattern (pattern).
-func patternOf(raw json.RawMessage, strict bool) (wire.Object, error) {
+func patternOf(raw json.RawMessage, country string, strict bool) (wire.Object, error) {
 	obj, err := decodeObject(raw)
 	if err != nil {
 		return nil, err
 	}
-	return pattern(obj, strict)
+	return pattern(obj, country, strict)
 }
 
 // pattern is a recorded object with each value the suite generated as wire.Any. Where strict, it
 // refuses a generated value whose identity Stripe's answer can turn on: another object in a state
-// of its own, or a value read from the object.
-func pattern(obj wire.Object, strict bool) (wire.Object, error) {
+// of its own, or a value read from the object. country is the account country of the probe that
+// sent it, which a generated `account_country` takes.
+func pattern(obj wire.Object, country string, strict bool) (wire.Object, error) {
 	if obj == nil {
 		return nil, nil
 	}
-	v, err := patternValue(obj, strict)
+	v, err := patternValue(obj, country, strict)
 	if err != nil {
 		return nil, err
 	}
 	return v.(wire.Object), nil
 }
 
-func patternValue(v wire.Value, strict bool) (wire.Value, error) {
+func patternValue(v wire.Value, country string, strict bool) (wire.Value, error) {
 	switch t := v.(type) {
 	case wire.Object:
 		if kind, ok := t.GetString("$gen"); ok {
@@ -281,6 +285,10 @@ func patternValue(v wire.Value, strict bool) (wire.Value, error) {
 			}
 			arg, _ := t.GetString("arg")
 			switch {
+			case kind == "account_country" && country == "":
+				return nil, errors.New("the request holds `$gen` `account_country`, but the record names no account country for it")
+			case kind == "account_country":
+				return wire.String(country), nil
 			case !strict:
 			case kind == "shared" || kind == "ref" && strings.Contains(arg, ":"):
 				return nil, fmt.Errorf("the refused request names %s `%s`, another object in a state of its own, which the plan cannot know", kind, arg)
@@ -293,7 +301,7 @@ func patternValue(v wire.Value, strict bool) (wire.Value, error) {
 		}
 		obj := make(wire.Object, 0, len(t))
 		for _, f := range t {
-			inner, err := patternValue(f.Value, strict)
+			inner, err := patternValue(f.Value, country, strict)
 			if err != nil {
 				return nil, fmt.Errorf("%s: %w", f.Name, err)
 			}
@@ -303,7 +311,7 @@ func patternValue(v wire.Value, strict bool) (wire.Value, error) {
 	case wire.Array:
 		arr := make(wire.Array, 0, len(t))
 		for _, e := range t {
-			inner, err := patternValue(e, strict)
+			inner, err := patternValue(e, country, strict)
 			if err != nil {
 				return nil, err
 			}

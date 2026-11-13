@@ -40,6 +40,19 @@ var Declaration = engine.Declaration{
 	// of `enabled`, true), and fills `allow_redirects` when the request turns them on without it
 	// (suite: `minimal/automatic`).
 	ServerDefaulted: []string{"automatic_payment_methods", "automatic_payment_methods.allow_redirects", "capture_method", "confirmation_method", "transfer_group"},
+	// Stripe holds an options hash for each payment method the intent can take, which its
+	// currency, its payment method configuration and its allowed and excluded types decide (the
+	// record's matchers of each method's options, such as
+	// `payment_method_options.satispay.capture_method@payment_method_options_satispay`, absent where
+	// the intent's configuration does not turn the method on; on the dev sandbox an update from
+	// `usd` to `eur` added Satispay's), so a change of one leaves the options of every method the
+	// configuration does not set to Stripe.
+	FilledFrom: map[string][]string{
+		"currency":                      methodOptions,
+		"payment_method_configuration":  methodOptions,
+		"allowed_payment_method_types":  methodOptions,
+		"excluded_payment_method_types": methodOptions,
+	},
 	// Stripe answers `payment_method_data` with the method it made (the record's `returned`,
 	// `inline_object`), which `payment_method` then leaves to it.
 	MadeBy: map[string]string{"payment_method": "payment_method_data"},
@@ -72,6 +85,20 @@ var Declaration = engine.Declaration{
 		{Field: "status", Value: "canceled", Path: "/v1/payment_intents/{id}/cancel", From: []string{"requires_payment_method", "requires_confirmation", "requires_action", "requires_capture"}, Final: []string{"succeeded"}},
 	},
 }
+
+// methodOptions are the options hashes of the payment methods Stripe returns, which it holds for
+// each method the intent can take.
+var methodOptions = func() []string {
+	var out []string
+	for _, method := range []string{
+		"acss_debit", "affirm", "afterpay_clearpay", "alipay", "amazon_pay", "bancontact", "card", "cashapp", "crypto",
+		"customer_balance", "eps", "ideal", "kakao_pay", "klarna", "kr_card", "mb_way", "multibanco", "naver_pay", "payco",
+		"pix", "samsung_pay", "satispay", "scalapay", "sepa_debit", "sunbit", "upi", "us_bank_account", "wechat_pay",
+	} {
+		out = append(out, "payment_method_options."+method)
+	}
+	return append(out, "payment_method_options")
+}()
 
 // NewResource returns the resource constructor the provider registers.
 func NewResource() (func() resource.Resource, error) {

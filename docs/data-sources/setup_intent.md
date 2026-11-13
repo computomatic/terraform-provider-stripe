@@ -189,9 +189,14 @@ The `payment_method_data` attribute supports:
 
 * `allow_redisplay` - Possible values: `always`, `limited`, `unspecified`.
 * `billing_details` - See [`payment_method_data.billing_details`](#payment_method_data.billing_details) below.
+* `eps` - See [`payment_method_data.eps`](#payment_method_data.eps) below.
+* `ideal` - See [`payment_method_data.ideal`](#payment_method_data.ideal) below.
 * `metadata` -
+* `naver_pay` - See [`payment_method_data.naver_pay`](#payment_method_data.naver_pay) below.
+* `p24` - See [`payment_method_data.p24`](#payment_method_data.p24) below.
 * `radar_options` - See [`payment_method_data.radar_options`](#payment_method_data.radar_options) below.
 * `type` - Possible values: `acss_debit`, `affirm`, `afterpay_clearpay`, `alipay`, `alma`, `amazon_pay`, `au_becs_debit`, `bacs_debit`, `bancontact`, `billie`, `bizum`, `blik`, `boleto`, `cashapp`, `crypto`, `customer_balance`, `eps`, `fpx`, `giropay`, `grabpay`, `ideal`, `kakao_pay`, `klarna`, `konbini`, `kr_card`, `link`, `mb_way`, `mobilepay`, `multibanco`, `naver_pay`, `nz_bank_account`, `oxxo`, `p24`, `pay_by_bank`, `payco`, `paynow`, `paypal`, `paypay`, `payto`, `pix`, `promptpay`, `revolut_pay`, `samsung_pay`, `satispay`, `scalapay`, `sepa_debit`, `sequra`, `sofort`, `sunbit`, `swish`, `twint`, `upi`, `us_bank_account`, `wechat_pay`, `zip`.
+* `us_bank_account` - See [`payment_method_data.us_bank_account`](#payment_method_data.us_bank_account) below.
 
 <a id="payment_method_data.billing_details"></a>
 ### `payment_method_data.billing_details`
@@ -216,6 +221,34 @@ The `payment_method_data.billing_details.address` attribute supports:
 * `postal_code` -
 * `state` -
 
+<a id="payment_method_data.eps"></a>
+### `payment_method_data.eps`
+
+The `payment_method_data.eps` attribute supports:
+
+* `bank` - Possible values: `arzte_und_apotheker_bank`, `austrian_anadi_bank_ag`, `bank_austria`, `bankhaus_carl_spangler`, `bankhaus_schelhammer_und_schattera_ag`, `bawag_psk_ag`, `bks_bank_ag`, `brull_kallmus_bank_ag`, `btv_vier_lander_bank`, `capital_bank_grawe_gruppe_ag`, `deutsche_bank_ag`, `dolomitenbank`, `easybank_ag`, `erste_bank_und_sparkassen`, `hypo_alpeadriabank_international_ag`, `hypo_bank_burgenland_aktiengesellschaft`, `hypo_noe_lb_fur_niederosterreich_u_wien`, `hypo_oberosterreich_salzburg_steiermark`, `hypo_tirol_bank_ag`, `hypo_vorarlberg_bank_ag`, `marchfelder_bank`, `oberbank_ag`, `raiffeisen_bankengruppe_osterreich`, `schoellerbank_ag`, `sparda_bank_wien`, `volksbank_gruppe`, `volkskreditbank_ag`, `vr_bank_braunau`.
+
+<a id="payment_method_data.ideal"></a>
+### `payment_method_data.ideal`
+
+The `payment_method_data.ideal` attribute supports:
+
+* `bank` - Possible values: `abn_amro`, `adyen`, `asn_bank`, `bunq`, `buut`, `finom`, `handelsbanken`, `ing`, `knab`, `mollie`, `moneyou`, `n26`, `nn`, `rabobank`, `regiobank`, `revolut`, `sns_bank`, `triodos_bank`, `van_lanschot`, `yoursafe`.
+
+<a id="payment_method_data.naver_pay"></a>
+### `payment_method_data.naver_pay`
+
+The `payment_method_data.naver_pay` attribute supports:
+
+* `funding` - Possible values: `card`, `points`.
+
+<a id="payment_method_data.p24"></a>
+### `payment_method_data.p24`
+
+The `payment_method_data.p24` attribute supports:
+
+* `bank` - Possible values: `alior_bank`, `bank_millennium`, `bank_nowy_bfg_sa`, `bank_pekao_sa`, `banki_spbdzielcze`, `blik`, `bnp_paribas`, `boz`, `citi_handlowy`, `credit_agricole`, `envelobank`, `etransfer_pocztowy24`, `getin_bank`, `ideabank`, `ing`, `inteligo`, `mbank_mtransfer`, `nest_przelew`, `noble_pay`, `pbac_z_ipko`, `plus_bank`, `santander_przelew24`, `tmobile_usbugi_bankowe`, `toyota_bank`, `velobank`, `volkswagen_bank`.
+
 <a id="payment_method_data.radar_options"></a>
 ### `payment_method_data.radar_options`
 
@@ -223,12 +256,49 @@ The `payment_method_data.radar_options` attribute supports:
 
 * `session` -
 
+<a id="payment_method_data.us_bank_account"></a>
+### `payment_method_data.us_bank_account`
+
+The `payment_method_data.us_bank_account` attribute supports:
+
+* `account_holder_type` - Possible values: `company`, `individual`.
+* `account_number` -
+* `account_type` - Possible values: `checking`, `savings`.
+* `financial_connections_account` -
+* `routing_number` -
+
 <a id="payment_method_options"></a>
 ### `payment_method_options`
 
 The `payment_method_options` attribute supports:
 
+* `acss_debit` - See [`payment_method_options.acss_debit`](#payment_method_options.acss_debit) below.
 * `card` - See [`payment_method_options.card`](#payment_method_options.card) below.
+* `klarna` - See [`payment_method_options.klarna`](#payment_method_options.klarna) below.
+* `pix` - See [`payment_method_options.pix`](#payment_method_options.pix) below.
+* `sepa_debit` - See [`payment_method_options.sepa_debit`](#payment_method_options.sepa_debit) below.
+* `upi` - See [`payment_method_options.upi`](#payment_method_options.upi) below.
+* `us_bank_account` - See [`payment_method_options.us_bank_account`](#payment_method_options.us_bank_account) below.
+
+<a id="payment_method_options.acss_debit"></a>
+### `payment_method_options.acss_debit`
+
+The `payment_method_options.acss_debit` attribute supports:
+
+* `currency` - Currency supported by the bank account Possible values: `cad`, `usd`.
+* `mandate_options` - See [`payment_method_options.acss_debit.mandate_options`](#payment_method_options.acss_debit.mandate_options) below.
+* `verification_method` - Bank account verification method. The default value is `automatic`. Possible values: `automatic`, `instant`, `microdeposits`.
+
+<a id="payment_method_options.acss_debit.mandate_options"></a>
+### `payment_method_options.acss_debit.mandate_options`
+
+The `payment_method_options.acss_debit.mandate_options` attribute supports:
+
+* `custom_mandate_url` - A URL for custom mandate text
+* `default_for` - List of Stripe products where this mandate can be selected automatically.
+* `interval_description` - Description of the interval. Only required if the 'payment_schedule' parameter is 'interval' or 'combined'.
+* `payment_schedule` - Payment schedule for the mandate. Possible values: `combined`, `interval`, `sporadic`.
+* `transaction_type` - Transaction type of the mandate. Possible values: `business`, `personal`.
 
 <a id="payment_method_options.card"></a>
 ### `payment_method_options.card`
@@ -284,6 +354,140 @@ The `payment_method_options.card.three_d_secure.network_options.cartes_bancaires
 * `cb_avalgo` - Possible values: `0`, `1`, `2`, `3`, `4`, `A`.
 * `cb_exemption` -
 * `cb_score` -
+
+<a id="payment_method_options.klarna"></a>
+### `payment_method_options.klarna`
+
+The `payment_method_options.klarna` attribute supports:
+
+* `currency` - The currency of the setup intent. Three letter ISO currency code.
+* `on_demand` - See [`payment_method_options.klarna.on_demand`](#payment_method_options.klarna.on_demand) below.
+* `preferred_locale` - Preferred locale of the Klarna checkout page that the customer is redirected to. Possible values: `cs-CZ`, `da-DK`, `de-AT`, `de-CH`, `de-DE`, `el-GR`, `en-AT`, `en-AU`, `en-BE`, `en-CA`, `en-CH`, `en-CZ`, `en-DE`, `en-DK`, `en-ES`, `en-FI`, `en-FR`, `en-GB`, `en-GR`, `en-IE`, `en-IT`, `en-NL`, `en-NO`, `en-NZ`, `en-PL`, `en-PT`, `en-RO`, `en-SE`, `en-US`, `es-ES`, `es-US`, `fi-FI`, `fr-BE`, `fr-CA`, `fr-CH`, `fr-FR`, `it-CH`, `it-IT`, `nb-NO`, `nl-BE`, `nl-NL`, `pl-PL`, `pt-PT`, `ro-RO`, `sv-FI`, `sv-SE`.
+* `subscriptions` - See [`payment_method_options.klarna.subscriptions`](#payment_method_options.klarna.subscriptions) below.
+
+<a id="payment_method_options.klarna.on_demand"></a>
+### `payment_method_options.klarna.on_demand`
+
+The `payment_method_options.klarna.on_demand` attribute supports:
+
+* `average_amount` -
+* `maximum_amount` -
+* `minimum_amount` -
+* `purchase_interval` - Possible values: `day`, `month`, `week`, `year`.
+* `purchase_interval_count` -
+
+<a id="payment_method_options.klarna.subscriptions"></a>
+### `payment_method_options.klarna.subscriptions`
+
+The `payment_method_options.klarna.subscriptions` attribute is a list. Each element supports:
+
+* `interval` - Possible values: `day`, `month`, `week`, `year`.
+* `interval_count` -
+* `name` -
+* `next_billing` - See [`payment_method_options.klarna.subscriptions.next_billing`](#payment_method_options.klarna.subscriptions.next_billing) below.
+* `reference` -
+
+<a id="payment_method_options.klarna.subscriptions.next_billing"></a>
+### `payment_method_options.klarna.subscriptions.next_billing`
+
+The `payment_method_options.klarna.subscriptions.next_billing` attribute supports:
+
+* `amount` -
+* `date` -
+
+<a id="payment_method_options.pix"></a>
+### `payment_method_options.pix`
+
+The `payment_method_options.pix` attribute supports:
+
+* `mandate_options` - See [`payment_method_options.pix.mandate_options`](#payment_method_options.pix.mandate_options) below.
+
+<a id="payment_method_options.pix.mandate_options"></a>
+### `payment_method_options.pix.mandate_options`
+
+The `payment_method_options.pix.mandate_options` attribute supports:
+
+* `amount` - Amount to be charged for future payments.
+* `amount_includes_iof` - Determines if the amount includes the IOF tax. Possible values: `always`, `never`.
+* `amount_type` - Type of amount. Possible values: `fixed`, `maximum`.
+* `currency` - Three-letter [ISO currency code](https://www.iso.org/iso-4217-currency-codes.html), in lowercase.
+* `end_date` - Date when the mandate expires and no further payments will be charged, in `YYYY-MM-DD`.
+* `payment_schedule` - Schedule at which the future payments will be charged. Possible values: `halfyearly`, `monthly`, `quarterly`, `weekly`, `yearly`.
+* `reference` - Subscription name displayed to buyers in their bank app.
+* `start_date` - Start date of the mandate, in `YYYY-MM-DD`.
+
+<a id="payment_method_options.sepa_debit"></a>
+### `payment_method_options.sepa_debit`
+
+The `payment_method_options.sepa_debit` attribute supports:
+
+* `mandate_options` - See [`payment_method_options.sepa_debit.mandate_options`](#payment_method_options.sepa_debit.mandate_options) below.
+
+<a id="payment_method_options.sepa_debit.mandate_options"></a>
+### `payment_method_options.sepa_debit.mandate_options`
+
+The `payment_method_options.sepa_debit.mandate_options` attribute supports:
+
+* `reference_prefix` - Prefix used to generate the Mandate reference. Must be at most 12 characters long. Must consist of only uppercase letters, numbers, spaces, or the following special characters: '/', '_', '-', '&', '.'. Cannot begin with 'STRIPE'.
+
+<a id="payment_method_options.upi"></a>
+### `payment_method_options.upi`
+
+The `payment_method_options.upi` attribute supports:
+
+* `mandate_options` - See [`payment_method_options.upi.mandate_options`](#payment_method_options.upi.mandate_options) below.
+* `setup_future_usage` - Possible values: `none`, `off_session`, `on_session`.
+
+<a id="payment_method_options.upi.mandate_options"></a>
+### `payment_method_options.upi.mandate_options`
+
+The `payment_method_options.upi.mandate_options` attribute supports:
+
+* `amount` - Amount to be charged for future payments.
+* `amount_type` - One of `fixed` or `maximum`. If `fixed`, the `amount` param refers to the exact amount to be charged in future payments. If `maximum`, the amount charged can be up to the value passed for the `amount` param. Possible values: `fixed`, `maximum`.
+* `description` - A description of the mandate or subscription that is meant to be displayed to the customer.
+* `end_date` - End date of the mandate or subscription.
+
+<a id="payment_method_options.us_bank_account"></a>
+### `payment_method_options.us_bank_account`
+
+The `payment_method_options.us_bank_account` attribute supports:
+
+* `financial_connections` - See [`payment_method_options.us_bank_account.financial_connections`](#payment_method_options.us_bank_account.financial_connections) below.
+* `mandate_options` - See [`payment_method_options.us_bank_account.mandate_options`](#payment_method_options.us_bank_account.mandate_options) below.
+* `networks` - See [`payment_method_options.us_bank_account.networks`](#payment_method_options.us_bank_account.networks) below.
+* `verification_method` - Bank account verification method. The default value is `automatic`. Possible values: `automatic`, `instant`, `microdeposits`.
+
+<a id="payment_method_options.us_bank_account.financial_connections"></a>
+### `payment_method_options.us_bank_account.financial_connections`
+
+The `payment_method_options.us_bank_account.financial_connections` attribute supports:
+
+* `filters` - See [`payment_method_options.us_bank_account.financial_connections.filters`](#payment_method_options.us_bank_account.financial_connections.filters) below.
+* `permissions` - The list of permissions to request. The `payment_method` permission must be included.
+* `prefetch` - Data features requested to be retrieved upon account creation.
+* `return_url` - For webview integrations only. Upon completing OAuth login in the native browser, the user will be redirected to this URL to return to your app.
+
+<a id="payment_method_options.us_bank_account.financial_connections.filters"></a>
+### `payment_method_options.us_bank_account.financial_connections.filters`
+
+The `payment_method_options.us_bank_account.financial_connections.filters` attribute supports:
+
+* `account_subcategories` - The account subcategories to use to filter for possible accounts to link. Valid subcategories are `checking` and `savings`.
+
+<a id="payment_method_options.us_bank_account.mandate_options"></a>
+### `payment_method_options.us_bank_account.mandate_options`
+
+The `payment_method_options.us_bank_account.mandate_options` attribute supports:
+
+* `collection_method` - Mandate collection method Possible values: `paper`.
+
+<a id="payment_method_options.us_bank_account.networks"></a>
+### `payment_method_options.us_bank_account.networks`
+
+The `payment_method_options.us_bank_account.networks` attribute supports:
+
+* `requested` -
 
 <a id="single_use"></a>
 ### `single_use`
