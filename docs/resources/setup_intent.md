@@ -3,12 +3,12 @@
 page_title: "stripe_setup_intent Resource - Stripe"
 subcategory: ""
 description: |-
-  Collects a customer's payment method for later use. Set status to canceled to cancel the intent; one that already succeeded cannot be canceled. Confirming an intent is not a resource: confirm it with its client_secret from your front end, or from your server with Stripe's API, and status reports what happened. The resource has no confirm, mandate_data or payment_method_data argument, and Stripe refuses payment_method_options.card.three_d_secure on an intent that is not being confirmed. Setting payment_method moves the intent to requires_confirmation. usage and on_behalf_of cannot change after creation, and neither can the other arguments that only a create takes, so changing one fails the plan. The client_secret is sensitive and stays in the state.
+  Collects a customer's payment method for later use. Set status to canceled to cancel the intent; one that already succeeded cannot be canceled. Confirming an intent is not a resource: confirm it with its client_secret from your front end, or from your server with Stripe's API, and status reports what happened. The resource has no confirm or mandate_data argument, and Stripe refuses payment_method_options.card.three_d_secure on an intent that is not being confirmed. Setting payment_method moves the intent to requires_confirmation. usage and on_behalf_of cannot change after creation, and neither can the other arguments that only a create takes, so changing one fails the plan. The client_secret is sensitive and stays in the state.
 ---
 
 # Resource: stripe_setup_intent
 
-Collects a customer's payment method for later use. Set `status` to `canceled` to cancel the intent; one that already succeeded cannot be canceled. Confirming an intent is not a resource: confirm it with its `client_secret` from your front end, or from your server with Stripe's API, and `status` reports what happened. The resource has no `confirm`, `mandate_data` or `payment_method_data` argument, and Stripe refuses `payment_method_options.card.three_d_secure` on an intent that is not being confirmed. Setting `payment_method` moves the intent to `requires_confirmation`. `usage` and `on_behalf_of` cannot change after creation, and neither can the other arguments that only a create takes, so changing one fails the plan. The `client_secret` is sensitive and stays in the state.
+Collects a customer's payment method for later use. Set `status` to `canceled` to cancel the intent; one that already succeeded cannot be canceled. Confirming an intent is not a resource: confirm it with its `client_secret` from your front end, or from your server with Stripe's API, and `status` reports what happened. The resource has no `confirm` or `mandate_data` argument, and Stripe refuses `payment_method_options.card.three_d_secure` on an intent that is not being confirmed. Setting `payment_method` moves the intent to `requires_confirmation`. `usage` and `on_behalf_of` cannot change after creation, and neither can the other arguments that only a create takes, so changing one fails the plan. The `client_secret` is sensitive and stays in the state.
 
 ~> Stripe cannot delete a setup intent; set `status` to `canceled` to cancel one. `terraform destroy`, and a change that would replace the setup intent, fail at plan time. To stop managing a setup intent, remove it from the state as [Removing from State](#removing-from-state) shows; it stays in the Stripe account.
 
@@ -54,7 +54,7 @@ The following arguments are optional:
 * `payment_method` - (Optional) ID of the payment method (a PaymentMethod, Card, or saved Source object) to attach to this SetupIntent. Default (Stripe): none, or the method Stripe makes from `payment_method_data`, which this attribute does not hold.
 * `payment_method_configuration` - (Optional) The ID of the [payment method configuration](https://docs.stripe.com/api/payment_method_configurations) to use with this SetupIntent. Stripe does not return this value; the provider keeps it from configuration. Removing it from the configuration leaves the current value.
 * `payment_method_data` - (Optional) When included, this hash creates a PaymentMethod that is set as the [`payment_method`](https://docs.stripe.com/api/setup_intents/object#setup_intent_object-payment_method) value in the SetupIntent. See [`payment_method_data`](#payment_method_data) below.
-* `payment_method_options` - (Optional) Payment method-specific configuration for this SetupIntent. See [`payment_method_options`](#payment_method_options) below.
+* `payment_method_options` - (Optional) Payment method-specific configuration for this SetupIntent. Removing it from the configuration leaves the current value. See [`payment_method_options`](#payment_method_options) below.
 * `single_use` - (Optional) If you populate this hash, this SetupIntent generates a `single_use` mandate after successful completion. Single-use mandates are only valid for the following payment methods: `acss_debit`, `alipay`, `au_becs_debit`, `bacs_debit`, `bancontact`, `boleto`, `ideal`, `link`, `sepa_debit`, and `us_bank_account`. Changing it fails the plan, because this resource cannot be replaced. Stripe does not return this value; the provider keeps it from configuration. See [`single_use`](#single_use) below.
 * `status` - (Optional) [Status](https://docs.stripe.com/payments/intents#intent-statuses) of this SetupIntent, one of `requires_payment_method`, `requires_confirmation`, `requires_action`, `processing`, `canceled`, or `succeeded`. Possible values: `canceled`. Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
 * `usage` - (Optional) Indicates how the payment method is intended to be used in the future. If not provided, this value defaults to `off_session`. Possible values: `off_session`, `on_session`. Changing it fails the plan, because this resource cannot be replaced. Default (Stripe): `off_session`. Removing it from the configuration leaves the current value.
@@ -74,9 +74,14 @@ The `payment_method_data` attribute supports:
 
 * `allow_redisplay` - (Optional) Possible values: `always`, `limited`, `unspecified`.
 * `billing_details` - (Optional) See [`payment_method_data.billing_details`](#payment_method_data.billing_details) below.
+* `eps` - (Optional) See [`payment_method_data.eps`](#payment_method_data.eps) below.
+* `ideal` - (Optional) See [`payment_method_data.ideal`](#payment_method_data.ideal) below.
 * `metadata` - (Optional)
+* `naver_pay` - (Optional) See [`payment_method_data.naver_pay`](#payment_method_data.naver_pay) below.
+* `p24` - (Optional) See [`payment_method_data.p24`](#payment_method_data.p24) below.
 * `radar_options` - (Optional) See [`payment_method_data.radar_options`](#payment_method_data.radar_options) below.
 * `type` - (Required) Possible values: `acss_debit`, `affirm`, `afterpay_clearpay`, `alipay`, `alma`, `amazon_pay`, `au_becs_debit`, `bacs_debit`, `bancontact`, `billie`, `bizum`, `blik`, `boleto`, `cashapp`, `crypto`, `customer_balance`, `eps`, `fpx`, `giropay`, `grabpay`, `ideal`, `kakao_pay`, `klarna`, `konbini`, `kr_card`, `link`, `mb_way`, `mobilepay`, `multibanco`, `naver_pay`, `nz_bank_account`, `oxxo`, `p24`, `pay_by_bank`, `payco`, `paynow`, `paypal`, `paypay`, `payto`, `pix`, `promptpay`, `revolut_pay`, `samsung_pay`, `satispay`, `scalapay`, `sepa_debit`, `sequra`, `sofort`, `sunbit`, `swish`, `twint`, `upi`, `us_bank_account`, `wechat_pay`, `zip`.
+* `us_bank_account` - (Optional) See [`payment_method_data.us_bank_account`](#payment_method_data.us_bank_account) below.
 
 <a id="payment_method_data.billing_details"></a>
 ### `payment_method_data.billing_details`
@@ -87,7 +92,7 @@ The `payment_method_data.billing_details` attribute supports:
 * `email` - (Optional)
 * `name` - (Optional)
 * `phone` - (Optional)
-* `tax_id` - (Optional) Changing it fails the plan, because this resource cannot be replaced. Stripe refused it on a US account on create: "A tax identifier may not be provided on this payment method as it is not required.".
+* `tax_id` - (Optional) Changing it fails the plan, because this resource cannot be replaced.
 
 <a id="payment_method_data.billing_details.address"></a>
 ### `payment_method_data.billing_details.address`
@@ -101,6 +106,34 @@ The `payment_method_data.billing_details.address` attribute supports:
 * `postal_code` - (Optional)
 * `state` - (Optional)
 
+<a id="payment_method_data.eps"></a>
+### `payment_method_data.eps`
+
+The `payment_method_data.eps` attribute supports:
+
+* `bank` - (Optional) Possible values: `arzte_und_apotheker_bank`, `austrian_anadi_bank_ag`, `bank_austria`, `bankhaus_carl_spangler`, `bankhaus_schelhammer_und_schattera_ag`, `bawag_psk_ag`, `bks_bank_ag`, `brull_kallmus_bank_ag`, `btv_vier_lander_bank`, `capital_bank_grawe_gruppe_ag`, `deutsche_bank_ag`, `dolomitenbank`, `easybank_ag`, `erste_bank_und_sparkassen`, `hypo_alpeadriabank_international_ag`, `hypo_bank_burgenland_aktiengesellschaft`, `hypo_noe_lb_fur_niederosterreich_u_wien`, `hypo_oberosterreich_salzburg_steiermark`, `hypo_tirol_bank_ag`, `hypo_vorarlberg_bank_ag`, `marchfelder_bank`, `oberbank_ag`, `raiffeisen_bankengruppe_osterreich`, `schoellerbank_ag`, `sparda_bank_wien`, `volksbank_gruppe`, `volkskreditbank_ag`, `vr_bank_braunau`. Stripe refused it on a US account on update: "The provided `payment_method_data[eps]` data does not correspond to the passed `type`, `bancontact`.". Default: not sent.
+
+<a id="payment_method_data.ideal"></a>
+### `payment_method_data.ideal`
+
+The `payment_method_data.ideal` attribute supports:
+
+* `bank` - (Optional) Possible values: `abn_amro`, `adyen`, `asn_bank`, `bunq`, `buut`, `finom`, `handelsbanken`, `ing`, `knab`, `mollie`, `moneyou`, `n26`, `nn`, `rabobank`, `regiobank`, `revolut`, `sns_bank`, `triodos_bank`, `van_lanschot`, `yoursafe`.
+
+<a id="payment_method_data.naver_pay"></a>
+### `payment_method_data.naver_pay`
+
+The `payment_method_data.naver_pay` attribute supports:
+
+* `funding` - (Optional) Possible values: `card`, `points`.
+
+<a id="payment_method_data.p24"></a>
+### `payment_method_data.p24`
+
+The `payment_method_data.p24` attribute supports:
+
+* `bank` - (Optional) Possible values: `alior_bank`, `bank_millennium`, `bank_nowy_bfg_sa`, `bank_pekao_sa`, `banki_spbdzielcze`, `blik`, `bnp_paribas`, `boz`, `citi_handlowy`, `credit_agricole`, `envelobank`, `etransfer_pocztowy24`, `getin_bank`, `ideabank`, `ing`, `inteligo`, `mbank_mtransfer`, `nest_przelew`, `noble_pay`, `pbac_z_ipko`, `plus_bank`, `santander_przelew24`, `tmobile_usbugi_bankowe`, `toyota_bank`, `velobank`, `volkswagen_bank`. Stripe refused it on a US account on update: "The provided `payment_method_data[p24]` data does not correspond to the passed `type`, `bancontact`.". Default: not sent.
+
 <a id="payment_method_data.radar_options"></a>
 ### `payment_method_data.radar_options`
 
@@ -108,12 +141,49 @@ The `payment_method_data.radar_options` attribute supports:
 
 * `session` - (Optional) Stripe refused it on a US account on create and update: "No such radar session: 'rse_...'".
 
+<a id="payment_method_data.us_bank_account"></a>
+### `payment_method_data.us_bank_account`
+
+The `payment_method_data.us_bank_account` attribute supports:
+
+* `account_holder_type` - (Optional) Possible values: `company`, `individual`.
+* `account_number` - (Optional) Default: not sent.
+* `account_type` - (Optional) Possible values: `checking`, `savings`.
+* `financial_connections_account` - (Optional) Stripe refused it on a US account on update: "No such Financial Connections Account: fca_...". Default: not sent.
+* `routing_number` - (Optional)
+
 <a id="payment_method_options"></a>
 ### `payment_method_options`
 
 The `payment_method_options` attribute supports:
 
+* `acss_debit` - (Optional) Removing it from the configuration leaves the current value. See [`payment_method_options.acss_debit`](#payment_method_options.acss_debit) below.
 * `card` - (Optional) See [`payment_method_options.card`](#payment_method_options.card) below.
+* `klarna` - (Optional) Removing it from the configuration leaves the current value. See [`payment_method_options.klarna`](#payment_method_options.klarna) below.
+* `pix` - (Optional) Removing it from the configuration leaves the current value. See [`payment_method_options.pix`](#payment_method_options.pix) below.
+* `sepa_debit` - (Optional) Removing it from the configuration leaves the current value. See [`payment_method_options.sepa_debit`](#payment_method_options.sepa_debit) below.
+* `upi` - (Optional) Removing it from the configuration leaves the current value. See [`payment_method_options.upi`](#payment_method_options.upi) below.
+* `us_bank_account` - (Optional) Removing it from the configuration leaves the current value. See [`payment_method_options.us_bank_account`](#payment_method_options.us_bank_account) below.
+
+<a id="payment_method_options.acss_debit"></a>
+### `payment_method_options.acss_debit`
+
+The `payment_method_options.acss_debit` attribute supports:
+
+* `currency` - (Optional) Currency supported by the bank account Possible values: `cad`, `usd`. Removing it from the configuration leaves the current value.
+* `mandate_options` - (Optional) Removing it from the configuration leaves the current value. See [`payment_method_options.acss_debit.mandate_options`](#payment_method_options.acss_debit.mandate_options) below.
+* `verification_method` - (Optional) Bank account verification method. The default value is `automatic`. Possible values: `automatic`, `instant`, `microdeposits`. Removing it from the configuration leaves the current value.
+
+<a id="payment_method_options.acss_debit.mandate_options"></a>
+### `payment_method_options.acss_debit.mandate_options`
+
+The `payment_method_options.acss_debit.mandate_options` attribute supports:
+
+* `custom_mandate_url` - (Optional) A URL for custom mandate text. Removing it from the configuration leaves the current value.
+* `default_for` - (Optional) List of Stripe products where this mandate can be selected automatically. Removing it from the configuration leaves the current value.
+* `interval_description` - (Optional) Description of the interval. Only required if the 'payment_schedule' parameter is 'interval' or 'combined'. Removing it from the configuration leaves the current value.
+* `payment_schedule` - (Optional) Payment schedule for the mandate. Possible values: `combined`, `interval`, `sporadic`. Removing it from the configuration leaves the current value.
+* `transaction_type` - (Optional) Transaction type of the mandate. Possible values: `business`, `personal`. Removing it from the configuration leaves the current value.
 
 <a id="payment_method_options.card"></a>
 ### `payment_method_options.card`
@@ -169,6 +239,140 @@ The `payment_method_options.card.three_d_secure.network_options.cartes_bancaires
 * `cb_avalgo` - (Optional) Possible values: `0`, `1`, `2`, `3`, `4`, `A`. Stripe refused it on a US account on update: "The parameter `payment_method_options[card][three_d_secure]` cannot be used when creating a SetupIntent unless `confirm` is set to true.". Default: not sent.
 * `cb_exemption` - (Optional) Stripe refused it on a US account on update: "The parameter `payment_method_options[card][three_d_secure]` cannot be used when creating a SetupIntent unless `confirm` is set to true.". Stripe refuses it unless `confirm` is true, which this resource never sends, and the suite has not seen Stripe take it. Elsewhere Stripe refused it on a US account on update: "The parameter `payment_method_options[card][three_d_secure]` cannot be used when creating a SetupIntent unless `confirm` is set to true.". Where the provider's Stripe account is in `US`, the plan refuses an update that sends `payment_method_options.card.three_d_secure.network_options.cartes_bancaires.cb_avalgo = "2"` and `payment_method_options.card.three_d_secure.network_options.cartes_bancaires.cb_exemption = "0001"`, which Stripe refused there with "The parameter `payment_method_options[card][three_d_secure]` cannot be used when creating a SetupIntent unless `confirm` is set to true." (conformance suite probe `isolated/update_cartes_bancaires_cb_exemption`). The provider reads the account's country only for a plan that sends such a request, and leaves the request to Stripe where the account is elsewhere or the key cannot read it. Default: not sent.
 * `cb_score` - (Optional) Stripe refused it on a US account on update: "The parameter `payment_method_options[card][three_d_secure]` cannot be used when creating a SetupIntent unless `confirm` is set to true.". Stripe refuses it unless `confirm` is true, which this resource never sends, and the suite has not seen Stripe take it. Elsewhere Stripe refused it on a US account on update: "The parameter `payment_method_options[card][three_d_secure]` cannot be used when creating a SetupIntent unless `confirm` is set to true.". Where the provider's Stripe account is in `US`, the plan refuses an update that sends `payment_method_options.card.three_d_secure.network_options.cartes_bancaires.cb_avalgo = "2"` and `payment_method_options.card.three_d_secure.network_options.cartes_bancaires.cb_score = 20`, which Stripe refused there with "The parameter `payment_method_options[card][three_d_secure]` cannot be used when creating a SetupIntent unless `confirm` is set to true." (conformance suite probe `isolated/update_cartes_bancaires_cb_score`). The provider reads the account's country only for a plan that sends such a request, and leaves the request to Stripe where the account is elsewhere or the key cannot read it. Default: not sent.
+
+<a id="payment_method_options.klarna"></a>
+### `payment_method_options.klarna`
+
+The `payment_method_options.klarna` attribute supports:
+
+* `currency` - (Optional) The currency of the setup intent. Three letter ISO currency code. Removing it from the configuration leaves the current value.
+* `on_demand` - (Optional) Stripe does not return this value; the provider keeps it from configuration. See [`payment_method_options.klarna.on_demand`](#payment_method_options.klarna.on_demand) below.
+* `preferred_locale` - (Optional) Preferred locale of the Klarna checkout page that the customer is redirected to. Possible values: `cs-CZ`, `da-DK`, `de-AT`, `de-CH`, `de-DE`, `el-GR`, `en-AT`, `en-AU`, `en-BE`, `en-CA`, `en-CH`, `en-CZ`, `en-DE`, `en-DK`, `en-ES`, `en-FI`, `en-FR`, `en-GB`, `en-GR`, `en-IE`, `en-IT`, `en-NL`, `en-NO`, `en-NZ`, `en-PL`, `en-PT`, `en-RO`, `en-SE`, `en-US`, `es-ES`, `es-US`, `fi-FI`, `fr-BE`, `fr-CA`, `fr-CH`, `fr-FR`, `it-CH`, `it-IT`, `nb-NO`, `nl-BE`, `nl-NL`, `pl-PL`, `pt-PT`, `ro-RO`, `sv-FI`, `sv-SE`. Removing it from the configuration leaves the current value.
+* `subscriptions` - (Optional) Stripe does not return this value; the provider keeps it from configuration. See [`payment_method_options.klarna.subscriptions`](#payment_method_options.klarna.subscriptions) below.
+
+<a id="payment_method_options.klarna.on_demand"></a>
+### `payment_method_options.klarna.on_demand`
+
+The `payment_method_options.klarna.on_demand` attribute supports:
+
+* `average_amount` - (Optional) Stripe does not return this value; the provider keeps it from configuration.
+* `maximum_amount` - (Optional) Stripe does not return this value; the provider keeps it from configuration.
+* `minimum_amount` - (Optional) Stripe does not return this value; the provider keeps it from configuration.
+* `purchase_interval` - (Optional) Possible values: `day`, `month`, `week`, `year`. Stripe does not return this value; the provider keeps it from configuration.
+* `purchase_interval_count` - (Optional) Stripe does not return this value; the provider keeps it from configuration.
+
+<a id="payment_method_options.klarna.subscriptions"></a>
+### `payment_method_options.klarna.subscriptions`
+
+The `payment_method_options.klarna.subscriptions` attribute is a list. Each element supports:
+
+* `interval` - (Required) Possible values: `day`, `month`, `week`, `year`. Stripe does not return this value; the provider keeps it from configuration.
+* `interval_count` - (Optional) Stripe does not return this value; the provider keeps it from configuration.
+* `name` - (Optional) Stripe does not return this value; the provider keeps it from configuration.
+* `next_billing` - (Required) Stripe does not return this value; the provider keeps it from configuration. See [`payment_method_options.klarna.subscriptions.next_billing`](#payment_method_options.klarna.subscriptions.next_billing) below.
+* `reference` - (Required) Stripe does not return this value; the provider keeps it from configuration.
+
+<a id="payment_method_options.klarna.subscriptions.next_billing"></a>
+### `payment_method_options.klarna.subscriptions.next_billing`
+
+The `payment_method_options.klarna.subscriptions.next_billing` attribute supports:
+
+* `amount` - (Required) Stripe does not return this value; the provider keeps it from configuration.
+* `date` - (Required) Stripe does not return this value; the provider keeps it from configuration.
+
+<a id="payment_method_options.pix"></a>
+### `payment_method_options.pix`
+
+The `payment_method_options.pix` attribute supports:
+
+* `mandate_options` - (Optional) Removing it from the configuration leaves the current value. See [`payment_method_options.pix.mandate_options`](#payment_method_options.pix.mandate_options) below.
+
+<a id="payment_method_options.pix.mandate_options"></a>
+### `payment_method_options.pix.mandate_options`
+
+The `payment_method_options.pix.mandate_options` attribute supports:
+
+* `amount` - (Optional) Amount to be charged for future payments. Removing it from the configuration leaves the current value.
+* `amount_includes_iof` - (Optional) Determines if the amount includes the IOF tax. Possible values: `always`, `never`. Removing it from the configuration leaves the current value.
+* `amount_type` - (Optional) Type of amount. Possible values: `fixed`, `maximum`. Removing it from the configuration leaves the current value.
+* `currency` - (Optional) Three-letter [ISO currency code](https://www.iso.org/iso-4217-currency-codes.html), in lowercase. Removing it from the configuration leaves the current value.
+* `end_date` - (Optional) Date when the mandate expires and no further payments will be charged, in `YYYY-MM-DD`. Removing it from the configuration leaves the current value.
+* `payment_schedule` - (Optional) Schedule at which the future payments will be charged. Possible values: `halfyearly`, `monthly`, `quarterly`, `weekly`, `yearly`. Removing it from the configuration leaves the current value.
+* `reference` - (Optional) Subscription name displayed to buyers in their bank app. Removing it from the configuration leaves the current value.
+* `start_date` - (Optional) Start date of the mandate, in `YYYY-MM-DD`. Removing it from the configuration leaves the current value.
+
+<a id="payment_method_options.sepa_debit"></a>
+### `payment_method_options.sepa_debit`
+
+The `payment_method_options.sepa_debit` attribute supports:
+
+* `mandate_options` - (Optional) Removing it from the configuration leaves the current value. See [`payment_method_options.sepa_debit.mandate_options`](#payment_method_options.sepa_debit.mandate_options) below.
+
+<a id="payment_method_options.sepa_debit.mandate_options"></a>
+### `payment_method_options.sepa_debit.mandate_options`
+
+The `payment_method_options.sepa_debit.mandate_options` attribute supports:
+
+* `reference_prefix` - (Optional) Prefix used to generate the Mandate reference. Must be at most 12 characters long. Must consist of only uppercase letters, numbers, spaces, or the following special characters: '/', '_', '-', '&', '.'. Cannot begin with 'STRIPE'. Removing it from the configuration leaves the current value.
+
+<a id="payment_method_options.upi"></a>
+### `payment_method_options.upi`
+
+The `payment_method_options.upi` attribute supports:
+
+* `mandate_options` - (Optional) Removing it from the configuration leaves the current value. See [`payment_method_options.upi.mandate_options`](#payment_method_options.upi.mandate_options) below.
+* `setup_future_usage` - (Optional) Possible values: `none`, `off_session`, `on_session`. Stripe does not return this value; the provider keeps it from configuration.
+
+<a id="payment_method_options.upi.mandate_options"></a>
+### `payment_method_options.upi.mandate_options`
+
+The `payment_method_options.upi.mandate_options` attribute supports:
+
+* `amount` - (Optional) Amount to be charged for future payments. Removing it from the configuration leaves the current value.
+* `amount_type` - (Optional) One of `fixed` or `maximum`. If `fixed`, the `amount` param refers to the exact amount to be charged in future payments. If `maximum`, the amount charged can be up to the value passed for the `amount` param. Possible values: `fixed`, `maximum`. Removing it from the configuration leaves the current value.
+* `description` - (Optional) A description of the mandate or subscription that is meant to be displayed to the customer. Removing it from the configuration leaves the current value.
+* `end_date` - (Optional) End date of the mandate or subscription. Removing it from the configuration leaves the current value.
+
+<a id="payment_method_options.us_bank_account"></a>
+### `payment_method_options.us_bank_account`
+
+The `payment_method_options.us_bank_account` attribute supports:
+
+* `financial_connections` - (Optional) Removing it from the configuration leaves the current value. See [`payment_method_options.us_bank_account.financial_connections`](#payment_method_options.us_bank_account.financial_connections) below.
+* `mandate_options` - (Optional) Removing it from the configuration leaves the current value. See [`payment_method_options.us_bank_account.mandate_options`](#payment_method_options.us_bank_account.mandate_options) below.
+* `networks` - (Optional) See [`payment_method_options.us_bank_account.networks`](#payment_method_options.us_bank_account.networks) below.
+* `verification_method` - (Optional) Bank account verification method. The default value is `automatic`. Possible values: `automatic`, `instant`, `microdeposits`. Removing it from the configuration leaves the current value.
+
+<a id="payment_method_options.us_bank_account.financial_connections"></a>
+### `payment_method_options.us_bank_account.financial_connections`
+
+The `payment_method_options.us_bank_account.financial_connections` attribute supports:
+
+* `filters` - (Optional) Removing it from the configuration leaves the current value. See [`payment_method_options.us_bank_account.financial_connections.filters`](#payment_method_options.us_bank_account.financial_connections.filters) below.
+* `permissions` - (Optional) The list of permissions to request. The `payment_method` permission must be included. Removing it from the configuration leaves the current value.
+* `prefetch` - (Optional) Data features requested to be retrieved upon account creation. Stripe refused it on a US account on create and update: "You do not have the required permissions to prefetch.". Removing it from the configuration leaves the current value.
+* `return_url` - (Optional) For webview integrations only. Upon completing OAuth login in the native browser, the user will be redirected to this URL to return to your app. Removing it from the configuration leaves the current value.
+
+<a id="payment_method_options.us_bank_account.financial_connections.filters"></a>
+### `payment_method_options.us_bank_account.financial_connections.filters`
+
+The `payment_method_options.us_bank_account.financial_connections.filters` attribute supports:
+
+* `account_subcategories` - (Optional) The account subcategories to use to filter for possible accounts to link. Valid subcategories are `checking` and `savings`. Removing it from the configuration leaves the current value.
+
+<a id="payment_method_options.us_bank_account.mandate_options"></a>
+### `payment_method_options.us_bank_account.mandate_options`
+
+The `payment_method_options.us_bank_account.mandate_options` attribute supports:
+
+* `collection_method` - (Optional) Mandate collection method Possible values: `paper`. Removing it from the configuration leaves the current value.
+
+<a id="payment_method_options.us_bank_account.networks"></a>
+### `payment_method_options.us_bank_account.networks`
+
+The `payment_method_options.us_bank_account.networks` attribute supports:
+
+* `requested` - (Optional) Stripe refused it on a US account on create and update: "To use the `us_domestic_wire` network, the PaymentMethod must include billing address information. Please update the PaymentMethod or include the following missing field(s) in your payment method data under `billing_details[address]` and try again: line1, city, state, postal_code, country".
 
 <a id="single_use"></a>
 ### `single_use`
@@ -375,4 +579,4 @@ Using `terraform import`, import a setup intent using its ID. For example:
 % terraform import stripe_setup_intent.card seti_123
 ```
 
-~> Stripe does not return `payment_method_configuration`, `payment_method_data`, `payment_method_options`, `confirmation_token` or `single_use`, so an imported setup intent has them null: a configuration that sets `payment_method_configuration`, `payment_method_data` or `payment_method_options` plans an update after the import, and one that sets `confirmation_token` or `single_use` plans a replacement.
+~> Stripe does not return `payment_method_configuration`, `payment_method_data`, `payment_method_options.card`, `payment_method_options.klarna.on_demand`, `payment_method_options.klarna.subscriptions`, `payment_method_options.upi.setup_future_usage`, `payment_method_options.us_bank_account.networks`, `confirmation_token` or `single_use`, so an imported setup intent has them null: a configuration that sets `payment_method_configuration`, `payment_method_data`, `payment_method_options.card`, `payment_method_options.klarna.on_demand`, `payment_method_options.klarna.subscriptions`, `payment_method_options.upi.setup_future_usage` or `payment_method_options.us_bank_account.networks` plans an update after the import, and one that sets `confirmation_token` or `single_use` plans a replacement.

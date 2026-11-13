@@ -3,12 +3,12 @@
 page_title: "stripe_account_person_v2 Resource - Stripe"
 subcategory: ""
 description: |-
-  A person of an account created through Stripe's /v2 Accounts API, such as its representative, an executive, an owner or a director. terraform destroy deletes the person, and changing account_id creates a new one. Stripe never returns the value of an ID number, so state keeps the values you configured and treats them as sensitive. State holds only the ID numbers you configured, matched by type: a minute or two after it creates a person with a us_ssn_last_4, Stripe also lists a us_ssn, which the data source shows and the resource leaves out. A plan that changes id_numbers on an existing person fails, because changing them is not supported yet: revert the configuration, ignore the change, or recreate the person deliberately with terraform taint (tofu taint in OpenTofu). Stripe returns address.country in upper case and a whole relationship.percent_ownership with .0, so state keeps the values as you configured them. Removing given_name, surname, email or legal_gender from the configuration clears it. Stripe has no proven way to clear the rest of a person's details, so an apply that removes phone, date_of_birth, address or relationship fails; removing political_exposure, nationalities or a member of address or relationship leaves its value on the person.
+  A person of an account created through Stripe's /v2 Accounts API, such as its representative, an executive, an owner or a director. terraform destroy deletes the person, and changing account_id creates a new one. Stripe never returns the value of an ID number, so state keeps the values you configured and treats them as sensitive. State holds only the ID numbers you configured, matched by type: a minute or two after it creates a person with a us_ssn_last_4, Stripe also lists a us_ssn, which the data source shows and the resource leaves out. A plan that changes id_numbers on an existing person fails, because changing them is not supported yet: revert the configuration, ignore the change, or recreate the person deliberately with terraform taint (tofu taint in OpenTofu). Stripe returns address.country in upper case and a whole relationship.percent_ownership with .0, so state keeps the values as you configured them. documents, additional_addresses and additional_names change in place, each sent whole: the lists are matched by position, so a reorder is a change, and an element the configuration drops is dropped from the person. Removing given_name, surname, email or legal_gender from the configuration clears it. Stripe has no proven way to clear the rest of a person's details, so an apply that removes phone, date_of_birth, address or relationship fails; removing political_exposure, nationalities or a member of address or relationship leaves its value on the person.
 ---
 
 # Resource: stripe_account_person_v2
 
-A person of an account created through Stripe's `/v2` Accounts API, such as its representative, an executive, an owner or a director. `terraform destroy` deletes the person, and changing `account_id` creates a new one. Stripe never returns the `value` of an ID number, so state keeps the values you configured and treats them as sensitive. State holds only the ID numbers you configured, matched by `type`: a minute or two after it creates a person with a `us_ssn_last_4`, Stripe also lists a `us_ssn`, which the data source shows and the resource leaves out. A plan that changes `id_numbers` on an existing person fails, because changing them is not supported yet: revert the configuration, ignore the change, or recreate the person deliberately with `terraform taint` (`tofu taint` in OpenTofu). Stripe returns `address.country` in upper case and a whole `relationship.percent_ownership` with `.0`, so state keeps the values as you configured them. Removing `given_name`, `surname`, `email` or `legal_gender` from the configuration clears it. Stripe has no proven way to clear the rest of a person's details, so an apply that removes `phone`, `date_of_birth`, `address` or `relationship` fails; removing `political_exposure`, `nationalities` or a member of `address` or `relationship` leaves its value on the person.
+A person of an account created through Stripe's `/v2` Accounts API, such as its representative, an executive, an owner or a director. `terraform destroy` deletes the person, and changing `account_id` creates a new one. Stripe never returns the `value` of an ID number, so state keeps the values you configured and treats them as sensitive. State holds only the ID numbers you configured, matched by `type`: a minute or two after it creates a person with a `us_ssn_last_4`, Stripe also lists a `us_ssn`, which the data source shows and the resource leaves out. A plan that changes `id_numbers` on an existing person fails, because changing them is not supported yet: revert the configuration, ignore the change, or recreate the person deliberately with `terraform taint` (`tofu taint` in OpenTofu). Stripe returns `address.country` in upper case and a whole `relationship.percent_ownership` with `.0`, so state keeps the values as you configured them. `documents`, `additional_addresses` and `additional_names` change in place, each sent whole: the lists are matched by position, so a reorder is a change, and an element the configuration drops is dropped from the person. Removing `given_name`, `surname`, `email` or `legal_gender` from the configuration clears it. Stripe has no proven way to clear the rest of a person's details, so an apply that removes `phone`, `date_of_birth`, `address` or `relationship` fails; removing `political_exposure`, `nationalities` or a member of `address` or `relationship` leaves its value on the person.
 
 ## Example Usage
 
@@ -55,8 +55,12 @@ The following arguments are required:
 
 The following arguments are optional:
 
+* `additional_addresses` - (Optional) Additional addresses associated with the person. Removing it from the configuration leaves the current value. See [`additional_addresses`](#additional_addresses) below.
+* `additional_names` - (Optional) Additional names (e.g. aliases) associated with the person. Removing it from the configuration leaves the current value. See [`additional_names`](#additional_names) below.
+* `additional_terms_of_service` - (Optional) Attestations of accepted terms of service agreements. Changing it replaces the resource. Removing it from the configuration leaves the current value. See [`additional_terms_of_service`](#additional_terms_of_service) below.
 * `address` - (Optional) The person's residential address. See [`address`](#address) below.
 * `date_of_birth` - (Optional) The person's date of birth. See [`date_of_birth`](#date_of_birth) below.
+* `documents` - (Optional) Documents that may be submitted to satisfy various informational requests. Removing it from the configuration leaves the current value. See [`documents`](#documents) below.
 * `email` - (Optional) Email. Default: none.
 * `given_name` - (Optional) The person's first name. Default: none.
 * `id_numbers` - (Optional) The identification numbers (e.g., SSN) associated with the person. See [`id_numbers`](#id_numbers) below.
@@ -67,6 +71,46 @@ The following arguments are optional:
 * `political_exposure` - (Optional) The person's political exposure. Possible values: `existing`, `none`. Default: none. Removing it from the configuration leaves the current value.
 * `relationship` - (Optional) The relationship that this person has with the Account's business or legal entity. Removing it from the configuration leaves the current value. See [`relationship`](#relationship) below.
 * `surname` - (Optional) The person's last name. Default: none.
+
+<a id="additional_addresses"></a>
+### `additional_addresses`
+
+The `additional_addresses` attribute is a list. Each element supports:
+
+* `city` - (Optional) City, district, suburb, town, or village. Default: none.
+* `country` - (Required) Two-letter country code ([ISO 3166-1 alpha-2](https://en.wikipedia.org/wiki/ISO_3166-1_alpha-2)).
+* `line1` - (Optional) Address line 1 (e.g., street, PO Box, or company name). Default: none.
+* `line2` - (Optional) Address line 2 (e.g., apartment, suite, unit, or building). Default: none.
+* `postal_code` - (Optional) ZIP or postal code. Default: none.
+* `purpose` - (Required) Purpose of additional address. Possible values: `registered`.
+* `state` - (Optional) State, county, province, or region. Default: none.
+* `town` - (Optional) Town or district. Default: none.
+
+<a id="additional_names"></a>
+### `additional_names`
+
+The `additional_names` attribute is a list. Each element supports:
+
+* `full_name` - (Optional) The person's full name. Stripe refused it on a US account on update: "Some fields in the request were invalid: 'additional_names.[0].full_name: Only surname may be provided for additional names with the \"maiden\" purpose.'". Default: none.
+* `given_name` - (Optional) The person's first or given name. Stripe refused it on a US account on create: "Some fields in the request were invalid: 'additional_names.[0].given_name: Only full_name may be provided for additional names with the \"alias\" purpose.'". Stripe refused it on a US account on update: "Some fields in the request were invalid: 'additional_names.[0].given_name: Only surname may be provided for additional names with the \"maiden\" purpose.'".
+* `purpose` - (Required) The purpose or type of the additional name. Possible values: `alias`, `maiden`.
+* `surname` - (Optional) The person's last or family name. Stripe refused it on a US account on create: "Some fields in the request were invalid: 'additional_names.[0].surname: Only full_name may be provided for additional names with the \"alias\" purpose.'". Default: none.
+
+<a id="additional_terms_of_service"></a>
+### `additional_terms_of_service`
+
+The `additional_terms_of_service` attribute supports:
+
+* `account` - (Optional) Stripe terms of service agreement. Removing it from the configuration leaves the current value. See [`additional_terms_of_service.account`](#additional_terms_of_service.account) below.
+
+<a id="additional_terms_of_service.account"></a>
+### `additional_terms_of_service.account`
+
+The `additional_terms_of_service.account` attribute supports:
+
+* `date` - (Required) The time when the Account's representative accepted the terms of service. Represented as a RFC 3339 date & time UTC value in millisecond precision, for example: 2022-09-18T13:22:18.123Z.
+* `ip` - (Required) The IP address from which the Account's representative accepted the terms of service.
+* `user_agent` - (Optional) The user agent of the browser from which the Account's representative accepted the terms of service. Default: none.
 
 <a id="address"></a>
 ### `address`
@@ -90,20 +134,87 @@ The `date_of_birth` attribute supports:
 * `month` - (Required) The month of birth.
 * `year` - (Required) The year of birth.
 
+<a id="documents"></a>
+### `documents`
+
+The `documents` attribute supports:
+
+* `company_authorization` - (Optional) One or more documents that demonstrate proof that this person is authorized to represent the company. Removing it from the configuration leaves the current value. See [`documents.company_authorization`](#documents.company_authorization) below.
+* `passport` - (Optional) One or more documents showing the person's passport page with photo and personal data. Removing it from the configuration leaves the current value. See [`documents.passport`](#documents.passport) below.
+* `primary_verification` - (Optional) An identifying document showing the person's name, either a passport or local ID card. Removing it from the configuration leaves the current value. See [`documents.primary_verification`](#documents.primary_verification) below.
+* `secondary_verification` - (Optional) A document showing address, either a passport, local ID card, or utility bill from a well-known utility company. Removing it from the configuration leaves the current value. See [`documents.secondary_verification`](#documents.secondary_verification) below.
+* `visa` - (Optional) One or more documents showing the person's visa required for living in the country where they are residing. Removing it from the configuration leaves the current value. See [`documents.visa`](#documents.visa) below.
+
+<a id="documents.company_authorization"></a>
+### `documents.company_authorization`
+
+The `documents.company_authorization` attribute supports:
+
+* `files` - (Required) One or more document IDs returned by a [file upload](https://docs.stripe.com/api/persons/update#create_file) with a purpose value of `account_requirement`.
+* `type` - (Required) The format of the document. Currently supports `files` only. Possible values: `files`.
+
+<a id="documents.passport"></a>
+### `documents.passport`
+
+The `documents.passport` attribute supports:
+
+* `files` - (Required) One or more document IDs returned by a [file upload](https://docs.stripe.com/api/persons/update#create_file) with a purpose value of `account_requirement`.
+* `type` - (Required) The format of the document. Currently supports `files` only. Possible values: `files`.
+
+<a id="documents.primary_verification"></a>
+### `documents.primary_verification`
+
+The `documents.primary_verification` attribute supports:
+
+* `front_back` - (Required) The [file upload](https://docs.stripe.com/api/persons/update#create_file) tokens referring to each side of the document. See [`documents.primary_verification.front_back`](#documents.primary_verification.front_back) below.
+* `type` - (Required) The format of the verification document. Currently supports `front_back` only. Possible values: `front_back`.
+
+<a id="documents.primary_verification.front_back"></a>
+### `documents.primary_verification.front_back`
+
+The `documents.primary_verification.front_back` attribute supports:
+
+* `back` - (Optional) A [file upload](https://docs.stripe.com/api/persons/update#create_file) token representing the back of the verification document. The purpose of the uploaded file should be 'identity_document'. The uploaded file needs to be a color image (smaller than 8,000px by 8,000px), in JPG, PNG, or PDF format, and less than 10 MB in size. Default: none.
+* `front` - (Required) A [file upload](https://docs.stripe.com/api/persons/update#create_file) token representing the front of the verification document. The purpose of the uploaded file should be 'identity_document'. The uploaded file needs to be a color image (smaller than 8,000px by 8,000px), in JPG, PNG, or PDF format, and less than 10 MB in size.
+
+<a id="documents.secondary_verification"></a>
+### `documents.secondary_verification`
+
+The `documents.secondary_verification` attribute supports:
+
+* `front_back` - (Required) The [file upload](https://docs.stripe.com/api/persons/update#create_file) tokens referring to each side of the document. See [`documents.secondary_verification.front_back`](#documents.secondary_verification.front_back) below.
+* `type` - (Required) The format of the verification document. Currently supports `front_back` only. Possible values: `front_back`.
+
+<a id="documents.secondary_verification.front_back"></a>
+### `documents.secondary_verification.front_back`
+
+The `documents.secondary_verification.front_back` attribute supports:
+
+* `back` - (Optional) A [file upload](https://docs.stripe.com/api/persons/update#create_file) token representing the back of the verification document. The purpose of the uploaded file should be 'identity_document'. The uploaded file needs to be a color image (smaller than 8,000px by 8,000px), in JPG, PNG, or PDF format, and less than 10 MB in size. Default: none.
+* `front` - (Required) A [file upload](https://docs.stripe.com/api/persons/update#create_file) token representing the front of the verification document. The purpose of the uploaded file should be 'identity_document'. The uploaded file needs to be a color image (smaller than 8,000px by 8,000px), in JPG, PNG, or PDF format, and less than 10 MB in size.
+
+<a id="documents.visa"></a>
+### `documents.visa`
+
+The `documents.visa` attribute supports:
+
+* `files` - (Required) One or more document IDs returned by a [file upload](https://docs.stripe.com/api/persons/update#create_file) with a purpose value of `account_requirement`.
+* `type` - (Required) The format of the document. Currently supports `files` only. Possible values: `files`.
+
 <a id="id_numbers"></a>
 ### `id_numbers`
 
 The `id_numbers` attribute is a list. Each element supports:
 
 * `type` - (Required) The ID number type of an individual. Possible values: `ae_eid`, `ao_nif`, `ar_cuil`, `ar_dni`, `at_stn`, `az_tin`, `bd_brc`, `bd_etin`, `bd_nid`, `be_nrn`, `bg_ucn`, `bn_nric`, `br_cpf`, `ca_sin`, `ch_oasi`, `cl_rut`, `cn_pp`, `co_nuip`, `cr_ci`, `cr_cpf`, `cr_dimex`, `cr_nite`, `cy_tic`, `cz_rc`, `de_stn`, `dk_cpr`, `do_cie`, `do_rcn`, `ec_ci`, `ee_ik`, `es_nif`, `fi_hetu`, `fr_nir`, `gb_nino`, `gr_afm`, `gt_nit`, `hk_id`, `hr_oib`, `hu_ad`, `id_nik`, `ie_ppsn`, `is_kt`, `it_cf`, `jp_inc`, `ke_pin`, `kz_iin`, `li_peid`, `lt_ak`, `lu_nif`, `lv_pk`, `mx_rfc`, `my_nric`, `mz_nuit`, `ng_nin`, `nl_bsn`, `no_nin`, `nz_ird`, `pe_dni`, `pk_cnic`, `pk_snic`, `pl_pesel`, `pt_nif`, `ro_cnp`, `sa_tin`, `se_pin`, `sg_fin`, `sg_nric`, `sk_dic`, `th_lc`, `th_pin`, `tr_tin`, `us_itin`, `us_itin_last_4`, `us_ssn`, `us_ssn_last_4`, `uy_dni`, `za_id`.
-* `value` - (Required, Sensitive) The value of the ID number.
+* `value` - (Required, Sensitive) The value of the ID number. Stripe does not return this value; the provider keeps it from configuration.
 
 <a id="relationship"></a>
 ### `relationship`
 
 The `relationship` attribute supports:
 
-* `authorizer` - (Read-Only) Whether the individual is an authorizer of the Account's identity.
+* `authorizer` - (Optional) Whether the individual is an authorizer of the Account's identity. Stripe refused it on a US account on create and update: "The authorizer relationship is not supported for identity entity_type COMPANY and business structure  for country US.". Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
 * `director` - (Optional) Indicates whether the person is a director of the associated legal entity. Default: none. Removing it from the configuration leaves the current value.
 * `executive` - (Optional) Indicates whether the person is an executive of the associated legal entity. Default: none. Removing it from the configuration leaves the current value.
 * `legal_guardian` - (Optional) Indicates whether the person is a legal guardian of the associated legal entity. Default: none. Removing it from the configuration leaves the current value.
@@ -167,4 +278,4 @@ Using `terraform import`, import a v2 account person using its ID. For example:
 % terraform import stripe_account_person_v2.owner acct_1Nv0FGQ9RKHgCVdK/person_test_61TfDy4hQtjfXq8Y2nVrPw3bKcLmZsAe9uHgJdNo5RiW
 ```
 
-~> Stripe never returns the `value` of an ID number, so an imported person has none in `id_numbers`, and its `address.country` and `relationship.percent_ownership` are as Stripe returns them. Add `lifecycle { ignore_changes = [id_numbers] }` to a configuration that sets them, because a plan that changes `id_numbers` fails.
+~> Stripe never returns the `value` of an ID number, so an imported person has none in `id_numbers`, and its `address.country` and `relationship.percent_ownership` are as Stripe returns them. Add `lifecycle { ignore_changes = [id_numbers] }` to a configuration that sets them, because a plan that changes `id_numbers` fails. Stripe does not return `additional_names.given_name`, so an imported v2 account person has it null: a configuration that sets it plans an update after the import.

@@ -9,6 +9,7 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/hashicorp/terraform-plugin-testing/plancheck"
+	"github.com/hashicorp/terraform-plugin-testing/tfjsonpath"
 
 	"github.com/computomatic/terraform-provider-stripe/internal/acctest"
 	"github.com/computomatic/terraform-provider-stripe/internal/acctest/tfacc"
@@ -485,7 +486,9 @@ resource "stripe_payment_intent" "test" {
 // Before confirmation, `currency`, `receipt_email`, `statement_descriptor_suffix`,
 // `setup_future_usage`, `capture_method` and `shipping` change in place, and
 // removing `receipt_email`, `setup_future_usage` and `shipping` clears them (suite: "update
-// further fields", "clearing optional fields").
+// further fields", "clearing optional fields"). The change of currency leaves the payment method
+// options to Stripe, which holds options for the methods the new currency allows, such as
+// Satispay's in euros on the dev sandbox.
 func TestAccPaymentIntent_updateFurtherFields(t *testing.T) {
 	acct := acctest.NewAccount(t)
 	var id string
@@ -515,6 +518,7 @@ func TestAccPaymentIntent_updateFurtherFields(t *testing.T) {
 				Config: inEuros(further),
 				ConfigPlanChecks: resource.ConfigPlanChecks{PreApply: []plancheck.PlanCheck{
 					plancheck.ExpectResourceAction(address, plancheck.ResourceActionUpdate),
+					plancheck.ExpectUnknownValue(address, tfjsonpath.New("payment_method_options")),
 				}},
 				Check: resource.ComposeAggregateTestCheckFunc(
 					sameIntent(&id),

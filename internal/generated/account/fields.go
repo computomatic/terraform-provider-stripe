@@ -7,67 +7,78 @@ import "github.com/computomatic/terraform-provider-stripe/internal/fields"
 
 // Table lists every request and response field of the object.
 var Table = []fields.Field{
+	{Name: "bank_account", Shape: fields.String, Create: true, NotReturned: true, Description: "Either a token, like the ones returned by [Stripe.js](https://stripe.com/docs/js), or a dictionary containing a user's bank account details."},
+	{Name: "bank_account", Attr: "bank_account_data", Shape: fields.Object, Create: true, Fields: []fields.Field{
+		{Name: "account_holder_name", Shape: fields.String, Create: true, NotReturned: true},
+		{Name: "account_holder_type", Shape: fields.String, Create: true, NotReturned: true, Enum: []string{"company", "individual"}},
+		{Name: "account_number", Shape: fields.String, Required: true, Create: true, NotReturned: true},
+		{Name: "account_type", Shape: fields.String, Create: true, Enum: []string{"checking", "futsu", "savings", "toza"}, Refused: "Stripe refused it on a US account on create: \"Invalid bank account type: account types are not allowed\".", Answer: "Elsewhere Stripe refused it on a US account on create: \"Invalid bank account type: account types are not allowed\".", PlanRefusals: []fields.PlanRefusal{{Update: false, Sends: "{\"bank_account\":{\"account_number\":\"000123456789\",\"account_type\":\"checking\",\"country\":\"US\",\"routing_number\":\"110000000\"},\"business_type\":\"company\",\"capabilities\":{\"transfers\":{\"requested\":true}},\"type\":\"custom\"}", Probe: "isolated/bank_type_checking", AccountCountry: "US", Message: "Invalid bank account type: account types are not allowed"}, {Update: false, Sends: "{\"bank_account\":{\"account_number\":\"000123456789\",\"account_type\":\"futsu\",\"country\":\"US\",\"routing_number\":\"110000000\"},\"business_type\":\"company\",\"capabilities\":{\"transfers\":{\"requested\":true}},\"type\":\"custom\"}", Probe: "isolated/bank_type_futsu", AccountCountry: "US", Message: "Invalid bank account type: account types are not allowed"}, {Update: false, Sends: "{\"bank_account\":{\"account_number\":\"000123456789\",\"account_type\":\"savings\",\"country\":\"US\",\"routing_number\":\"110000000\"},\"business_type\":\"company\",\"capabilities\":{\"transfers\":{\"requested\":true}},\"type\":\"custom\"}", Probe: "isolated/bank_type_savings", AccountCountry: "US", Message: "Invalid bank account type: account types are not allowed"}, {Update: false, Sends: "{\"bank_account\":{\"account_number\":\"000123456789\",\"account_type\":\"toza\",\"country\":\"US\",\"routing_number\":\"110000000\"},\"business_type\":\"company\",\"capabilities\":{\"transfers\":{\"requested\":true}},\"type\":\"custom\"}", Probe: "isolated/bank_type_toza", AccountCountry: "US", Message: "Invalid bank account type: account types are not allowed"}}},
+		{Name: "country", Shape: fields.String, Required: true, Create: true, NotReturned: true},
+		{Name: "currency", Shape: fields.String, Create: true, NotReturned: true},
+		{Name: "object", Shape: fields.String, Create: true, NotReturned: true, Enum: []string{"bank_account"}},
+		{Name: "routing_number", Shape: fields.String, Create: true, NotReturned: true},
+	}},
 	{Name: "business_profile", Shape: fields.Object, Create: true, Update: true, Response: true, Description: "Business information about the account.", Fields: []fields.Field{
 		{Name: "annual_revenue", Shape: fields.Object, Create: true, Update: true, Response: true, Description: "The applicant's gross annual revenue for its preceding fiscal year.", Fields: []fields.Field{
 			{Name: "amount", Shape: fields.Int, Required: true, Create: true, Update: true, Response: true, Description: "A non-negative integer representing the amount in the [smallest currency unit](https://docs.stripe.com/currencies#zero-decimal)."},
 			{Name: "currency", Shape: fields.String, Required: true, Create: true, Update: true, Response: true, Description: "Three-letter [ISO currency code](https://www.iso.org/iso-4217-currency-codes.html), in lowercase. Must be a [supported currency](https://stripe.com/docs/currencies)."},
 			{Name: "fiscal_year_end", Shape: fields.String, Required: true, Create: true, Update: true, Response: true, Description: "The close-out date of the preceding fiscal year in ISO 8601 format. E.g. 2023-12-31 for the 31st of December, 2023."},
 		}},
-		{Name: "estimated_worker_count", Shape: fields.Int, Create: true, Update: true, Response: true, Description: "An estimated upper bound of employees, contractors, vendors, etc. currently working for the business."},
-		{Name: "mcc", Shape: fields.String, Create: true, Update: true, Response: true, Description: "[The merchant category code for the account](https://docs.stripe.com/connect/setting-mcc). MCCs are used to classify businesses based on the goods or services they provide."},
-		{Name: "minority_owned_business_designation", Shape: fields.ScalarList, Elem: fields.String, Response: true, Description: "Whether the business is a minority-owned, women-owned, and/or LGBTQI+ -owned business."},
-		{Name: "monthly_estimated_revenue", Shape: fields.Object, Response: true, Fields: []fields.Field{
-			{Name: "amount", Shape: fields.Int, Response: true, Description: "A non-negative integer representing how much to charge in the [smallest currency unit](https://docs.stripe.com/currencies#zero-decimal)."},
-			{Name: "currency", Shape: fields.String, Response: true, Description: "Three-letter [ISO currency code](https://www.iso.org/iso-4217-currency-codes.html), in lowercase. Must be a [supported currency](https://stripe.com/docs/currencies)."},
+		{Name: "estimated_worker_count", Shape: fields.Int, Create: true, Update: true, Response: true, Stable: true, Description: "An estimated upper bound of employees, contractors, vendors, etc. currently working for the business.", Default: &fields.Default{Kind: fields.DefaultNone}},
+		{Name: "mcc", Shape: fields.String, Create: true, Update: true, Response: true, Stable: true, Description: "[The merchant category code for the account](https://docs.stripe.com/connect/setting-mcc). MCCs are used to classify businesses based on the goods or services they provide.", Default: &fields.Default{Kind: fields.DefaultNone}},
+		{Name: "minority_owned_business_designation", Shape: fields.ScalarList, Elem: fields.String, Create: true, Update: true, Response: true, ServerDefaulted: true, Stable: true, Description: "Whether the business is a minority-owned, women-owned, and/or LGBTQI+ -owned business.", Default: &fields.Default{Kind: fields.DefaultNone}},
+		{Name: "monthly_estimated_revenue", Shape: fields.Object, Create: true, Update: true, Response: true, ServerDefaulted: true, Fields: []fields.Field{
+			{Name: "amount", Shape: fields.Int, Required: true, Create: true, Update: true, Response: true, Description: "A non-negative integer representing how much to charge in the [smallest currency unit](https://docs.stripe.com/currencies#zero-decimal).", Refused: "Stripe refused it on a US account on create and update: \"business_profile[monthly_estimated_revenue] is not supported for accounts in the country US.\"."},
+			{Name: "currency", Shape: fields.String, Required: true, Create: true, Update: true, Response: true, Description: "Three-letter [ISO currency code](https://www.iso.org/iso-4217-currency-codes.html), in lowercase. Must be a [supported currency](https://stripe.com/docs/currencies).", Refused: "Stripe refused it on a US account on create and update: \"business_profile[monthly_estimated_revenue] is not supported for accounts in the country US.\"."},
 		}},
-		{Name: "name", Shape: fields.String, Create: true, Update: true, Response: true, Description: "The customer-facing business name."},
-		{Name: "product_description", Shape: fields.String, Create: true, Update: true, Response: true, Description: "Internal-only description of the product sold or service provided by the business. It's used by Stripe for risk and underwriting purposes."},
-		{Name: "specified_commercial_transactions_act_url", Shape: fields.String, Response: true, Description: "A link to the business's publicly available terms related to the Specified Commercial Transaction Act. Only used for accounts in Japan."},
-		{Name: "support_address", Shape: fields.Object, Response: true, Description: "A publicly available mailing address for sending support issues to.", Fields: []fields.Field{
-			{Name: "city", Shape: fields.String, Response: true, Description: "City, district, suburb, town, or village."},
-			{Name: "country", Shape: fields.String, Response: true, Description: "Two-letter country code ([ISO 3166-1 alpha-2](https://en.wikipedia.org/wiki/ISO_3166-1_alpha-2))."},
-			{Name: "line1", Shape: fields.String, Response: true, Description: "Address line 1, such as the street, PO Box, or company name."},
-			{Name: "line2", Shape: fields.String, Response: true, Description: "Address line 2, such as the apartment, suite, unit, or building."},
-			{Name: "postal_code", Shape: fields.String, Response: true, Description: "ZIP or postal code."},
-			{Name: "state", Shape: fields.String, Response: true, Description: "State, county, province, or region ([ISO 3166-2](https://en.wikipedia.org/wiki/ISO_3166-2))."},
+		{Name: "name", Shape: fields.String, Create: true, Update: true, Response: true, Description: "The customer-facing business name.", Default: &fields.Default{Kind: fields.DefaultRule, Rule: "the company's name, where the create sends one"}},
+		{Name: "product_description", Shape: fields.String, Create: true, Update: true, Response: true, Stable: true, Description: "Internal-only description of the product sold or service provided by the business. It's used by Stripe for risk and underwriting purposes.", Default: &fields.Default{Kind: fields.DefaultNone}},
+		{Name: "specified_commercial_transactions_act_url", Shape: fields.String, Create: true, Update: true, Response: true, Stable: true, Description: "A link to the business's publicly available terms related to the Specified Commercial Transaction Act. Only used for accounts in Japan.", Default: &fields.Default{Kind: fields.DefaultNone}},
+		{Name: "support_address", Shape: fields.Object, Create: true, Update: true, Response: true, ServerDefaulted: true, Description: "A publicly available mailing address for sending support issues to.", Fields: []fields.Field{
+			{Name: "city", Shape: fields.String, Create: true, Update: true, Response: true, Stable: true, Description: "City, district, suburb, town, or village.", Default: &fields.Default{Kind: fields.DefaultNone}},
+			{Name: "country", Shape: fields.String, Create: true, Update: true, Response: true, Stable: true, Description: "Two-letter country code ([ISO 3166-1 alpha-2](https://en.wikipedia.org/wiki/ISO_3166-1_alpha-2)).", Default: &fields.Default{Kind: fields.DefaultNone}},
+			{Name: "line1", Shape: fields.String, Create: true, Update: true, Response: true, Stable: true, Description: "Address line 1, such as the street, PO Box, or company name.", Default: &fields.Default{Kind: fields.DefaultNone}},
+			{Name: "line2", Shape: fields.String, Create: true, Update: true, Response: true, Stable: true, Description: "Address line 2, such as the apartment, suite, unit, or building.", Default: &fields.Default{Kind: fields.DefaultNone}},
+			{Name: "postal_code", Shape: fields.String, Create: true, Update: true, Response: true, Stable: true, Description: "ZIP or postal code.", Default: &fields.Default{Kind: fields.DefaultNone}},
+			{Name: "state", Shape: fields.String, Create: true, Update: true, Response: true, Stable: true, Description: "State, county, province, or region ([ISO 3166-2](https://en.wikipedia.org/wiki/ISO_3166-2)).", Default: &fields.Default{Kind: fields.DefaultNone}},
 		}},
-		{Name: "support_email", Shape: fields.String, Response: true, Description: "A publicly available email address for sending support issues to."},
-		{Name: "support_phone", Shape: fields.String, Response: true, Description: "A publicly available phone number to call with support issues."},
-		{Name: "support_url", Shape: fields.String, Response: true, Description: "A publicly available website for handling support issues."},
-		{Name: "url", Shape: fields.String, Create: true, Update: true, Response: true, Description: "The business's publicly available website."},
+		{Name: "support_email", Shape: fields.String, Create: true, Update: true, Response: true, ServerDefaulted: true, Stable: true, Description: "A publicly available email address for sending support issues to.", Default: &fields.Default{Kind: fields.DefaultNone}},
+		{Name: "support_phone", Shape: fields.String, Create: true, Update: true, Response: true, ServerDefaulted: true, Stable: true, Description: "A publicly available phone number to call with support issues.", Default: &fields.Default{Kind: fields.DefaultNone}},
+		{Name: "support_url", Shape: fields.String, Create: true, Update: true, Response: true, Stable: true, Description: "A publicly available website for handling support issues.", Default: &fields.Default{Kind: fields.DefaultNone}},
+		{Name: "url", Shape: fields.String, Create: true, Update: true, Response: true, Stable: true, Description: "The business's publicly available website.", Default: &fields.Default{Kind: fields.DefaultNone}},
 	}},
-	{Name: "business_type", Shape: fields.String, Create: true, Update: true, Response: true, Enum: []string{"company", "government_entity", "individual", "non_profit"}, Description: "The business type. Once you create an [Account Link](https://docs.stripe.com/api/account_links) or [Account Session](https://docs.stripe.com/api/account_sessions), this property can only be updated for accounts where [controller.requirement_collection](https://docs.stripe.com/api/accounts/object#account_object-controller-requirement_collection) is `application`, which includes Custom accounts."},
-	{Name: "capabilities", Shape: fields.Object, Create: true, Update: true, Description: "Each key of the dictionary represents a capability, and each capability\nmaps to its settings (for example, whether it has been requested or not). Each\ncapability is inactive until you have provided its specific\nrequirements and Stripe has verified them. An account might have some\nof its requested capabilities be active and some be inactive. Required when [account.controller.stripe_dashboard.type](https://docs.stripe.com/api/accounts/create#create_account-controller-dashboard-type)\nis `none`, which includes Custom accounts.", Fields: []fields.Field{
-		{Name: "acss_debit_payments", Shape: fields.Object, Create: true, Update: true, Fields: []fields.Field{
-			{Name: "requested", Shape: fields.Bool, Create: true, Update: true},
+	{Name: "business_type", Shape: fields.String, Create: true, Update: true, Response: true, Stable: true, Enum: []string{"company", "government_entity", "individual", "non_profit"}, Description: "The business type. Once you create an [Account Link](https://docs.stripe.com/api/account_links) or [Account Session](https://docs.stripe.com/api/account_sessions), this property can only be updated for accounts where [controller.requirement_collection](https://docs.stripe.com/api/accounts/object#account_object-controller-requirement_collection) is `application`, which includes Custom accounts.", Default: &fields.Default{Kind: fields.DefaultNone}},
+	{Name: "capabilities", Shape: fields.Object, Create: true, Update: true, Response: true, Description: "Each key of the dictionary represents a capability, and each capability\nmaps to its settings (for example, whether it has been requested or not). Each\ncapability is inactive until you have provided its specific\nrequirements and Stripe has verified them. An account might have some\nof its requested capabilities be active and some be inactive. Required when [account.controller.stripe_dashboard.type](https://docs.stripe.com/api/accounts/create#create_account-controller-dashboard-type)\nis `none`, which includes Custom accounts.", Fields: []fields.Field{
+		{Name: "acss_debit_payments", Shape: fields.Object, Create: true, Update: true, NotReturned: true, Fields: []fields.Field{
+			{Name: "requested", Shape: fields.Bool, Create: true, Update: true, NotReturned: true},
 		}},
-		{Name: "affirm_payments", Shape: fields.Object, Create: true, Update: true, Fields: []fields.Field{
-			{Name: "requested", Shape: fields.Bool, Create: true, Update: true},
-		}},
-		{Name: "afterpay_clearpay_payments", Shape: fields.Object, Create: true, Update: true, Fields: []fields.Field{
-			{Name: "requested", Shape: fields.Bool, Create: true, Update: true},
-		}},
+		{Name: "affirm_payments", Shape: fields.Object, Create: true, Update: true, NotReturned: true, Fields: []fields.Field{
+			{Name: "requested", Shape: fields.Bool, Create: true, Update: true, NotReturned: true},
+		}, DataSource: &fields.Field{Name: "affirm_payments", Shape: fields.String, Response: true, Enum: []string{"active", "inactive", "pending"}, Description: "The status of the Affirm capability of the account, or whether the account can directly process Affirm charges."}},
+		{Name: "afterpay_clearpay_payments", Shape: fields.Object, Create: true, Update: true, NotReturned: true, Fields: []fields.Field{
+			{Name: "requested", Shape: fields.Bool, Create: true, Update: true, NotReturned: true},
+		}, DataSource: &fields.Field{Name: "afterpay_clearpay_payments", Shape: fields.String, Response: true, Enum: []string{"active", "inactive", "pending"}, Description: "The status of the Afterpay Clearpay capability of the account, or whether the account can directly process Afterpay Clearpay charges."}},
 		{Name: "alma_payments", Shape: fields.Object, Create: true, Update: true, Fields: []fields.Field{
 			{Name: "requested", Shape: fields.Bool, Create: true, Update: true},
 		}},
-		{Name: "amazon_pay_payments", Shape: fields.Object, Create: true, Update: true, Fields: []fields.Field{
-			{Name: "requested", Shape: fields.Bool, Create: true, Update: true},
-		}},
-		{Name: "app_distribution", Shape: fields.Object, Create: true, Update: true, Fields: []fields.Field{
-			{Name: "requested", Shape: fields.Bool, Create: true, Update: true},
-		}},
+		{Name: "amazon_pay_payments", Shape: fields.Object, Create: true, Update: true, NotReturned: true, Fields: []fields.Field{
+			{Name: "requested", Shape: fields.Bool, Create: true, Update: true, NotReturned: true},
+		}, DataSource: &fields.Field{Name: "amazon_pay_payments", Shape: fields.String, Response: true, Enum: []string{"active", "inactive", "pending"}, Description: "The status of the AmazonPay capability of the account, or whether the account can directly process AmazonPay payments."}},
+		{Name: "app_distribution", Shape: fields.Object, Create: true, Update: true, NotReturned: true, Fields: []fields.Field{
+			{Name: "requested", Shape: fields.Bool, Create: true, Update: true, NotReturned: true, Refused: "Stripe refused it on a US account on update: \"Unrequesting the app_distribution capability is not currently supported.\".", Answer: "Elsewhere Stripe refused it on a US account on update: \"Unrequesting the app_distribution capability is not currently supported.\".", PlanRefusals: []fields.PlanRefusal{{Update: true, Sends: "{\"capabilities\":{\"app_distribution\":{\"requested\":false}}}", Holds: "{\"business_type\":\"company\",\"capabilities\":{\"app_distribution\":{\"requested\":true},\"transfers\":{\"requested\":true}},\"type\":\"custom\"}", Probe: "isolated/capability_apps_unrequest", AccountCountry: "US", Message: "Unrequesting the app_distribution capability is not currently supported."}}},
+		}, DataSource: &fields.Field{Name: "app_distribution", Shape: fields.String, Response: true, Enum: []string{"active", "inactive", "pending"}, Description: "The status of the `app_distribution` capability of the account, or whether the platform can distribute apps to other accounts."}},
 		{Name: "au_becs_debit_payments", Shape: fields.Object, Create: true, Update: true, Fields: []fields.Field{
 			{Name: "requested", Shape: fields.Bool, Create: true, Update: true},
 		}},
 		{Name: "bacs_debit_payments", Shape: fields.Object, Create: true, Update: true, Fields: []fields.Field{
 			{Name: "requested", Shape: fields.Bool, Create: true, Update: true},
 		}},
-		{Name: "bancontact_payments", Shape: fields.Object, Create: true, Update: true, Fields: []fields.Field{
-			{Name: "requested", Shape: fields.Bool, Create: true, Update: true},
-		}},
-		{Name: "bank_transfer_payments", Shape: fields.Object, Create: true, Update: true, Fields: []fields.Field{
-			{Name: "requested", Shape: fields.Bool, Create: true, Update: true},
-		}},
+		{Name: "bancontact_payments", Shape: fields.Object, Create: true, Update: true, NotReturned: true, Fields: []fields.Field{
+			{Name: "requested", Shape: fields.Bool, Create: true, Update: true, NotReturned: true},
+		}, DataSource: &fields.Field{Name: "bancontact_payments", Shape: fields.String, Response: true, Enum: []string{"active", "inactive", "pending"}, Description: "The status of the Bancontact payments capability of the account, or whether the account can directly process Bancontact charges."}},
+		{Name: "bank_transfer_payments", Shape: fields.Object, Create: true, Update: true, NotReturned: true, Fields: []fields.Field{
+			{Name: "requested", Shape: fields.Bool, Create: true, Update: true, NotReturned: true},
+		}, DataSource: &fields.Field{Name: "bank_transfer_payments", Shape: fields.String, Response: true, Enum: []string{"active", "inactive", "pending"}, Description: "The status of the customer_balance payments capability of the account, or whether the account can directly process customer_balance charges."}},
 		{Name: "billie_payments", Shape: fields.Object, Create: true, Update: true, Fields: []fields.Field{
 			{Name: "requested", Shape: fields.Bool, Create: true, Update: true},
 		}},
@@ -77,45 +88,45 @@ var Table = []fields.Field{
 		{Name: "blik_payments", Shape: fields.Object, Create: true, Update: true, Fields: []fields.Field{
 			{Name: "requested", Shape: fields.Bool, Create: true, Update: true},
 		}},
-		{Name: "blik_recurring_payments", Shape: fields.Object, Create: true, Update: true, Fields: []fields.Field{
-			{Name: "requested", Shape: fields.Bool, Create: true, Update: true},
-		}},
+		{Name: "blik_recurring_payments", Shape: fields.Object, Create: true, Update: true, NotReturned: true, Fields: []fields.Field{
+			{Name: "requested", Shape: fields.Bool, Create: true, Update: true, NotReturned: true},
+		}, DataSource: &fields.Field{Name: "blik_recurring_payments", Shape: fields.String, Response: true, Enum: []string{"active", "inactive", "pending"}, Description: "The status of the BLIK recurring payments capability of the account, or whether the account can accept recurring and subscription BLIK payments."}},
 		{Name: "boleto_payments", Shape: fields.Object, Create: true, Update: true, Fields: []fields.Field{
 			{Name: "requested", Shape: fields.Bool, Create: true, Update: true},
 		}},
-		{Name: "card_issuing", Shape: fields.Object, Create: true, Update: true, Fields: []fields.Field{
-			{Name: "requested", Shape: fields.Bool, Create: true, Update: true},
-		}},
-		{Name: "card_payments", Shape: fields.Object, Create: true, Update: true, Fields: []fields.Field{
-			{Name: "requested", Shape: fields.Bool, Create: true, Update: true},
-		}},
-		{Name: "cartes_bancaires_payments", Shape: fields.Object, Create: true, Update: true, Fields: []fields.Field{
-			{Name: "requested", Shape: fields.Bool, Create: true, Update: true},
-		}},
-		{Name: "cashapp_payments", Shape: fields.Object, Create: true, Update: true, Fields: []fields.Field{
-			{Name: "requested", Shape: fields.Bool, Create: true, Update: true},
-		}},
-		{Name: "crypto_payments", Shape: fields.Object, Create: true, Update: true, Fields: []fields.Field{
-			{Name: "requested", Shape: fields.Bool, Create: true, Update: true},
-		}},
-		{Name: "eps_payments", Shape: fields.Object, Create: true, Update: true, Fields: []fields.Field{
-			{Name: "requested", Shape: fields.Bool, Create: true, Update: true},
-		}},
+		{Name: "card_issuing", Shape: fields.Object, Create: true, Update: true, NotReturned: true, Fields: []fields.Field{
+			{Name: "requested", Shape: fields.Bool, Create: true, Update: true, NotReturned: true},
+		}, DataSource: &fields.Field{Name: "card_issuing", Shape: fields.String, Response: true, Enum: []string{"active", "inactive", "pending"}, Description: "The status of the card issuing capability of the account, or whether you can use Issuing to distribute funds on cards"}},
+		{Name: "card_payments", Shape: fields.Object, Create: true, Update: true, NotReturned: true, Fields: []fields.Field{
+			{Name: "requested", Shape: fields.Bool, Create: true, Update: true, NotReturned: true},
+		}, DataSource: &fields.Field{Name: "card_payments", Shape: fields.String, Response: true, Enum: []string{"active", "inactive", "pending"}, Description: "The status of the card payments capability of the account, or whether the account can directly process credit and debit card charges."}},
+		{Name: "cartes_bancaires_payments", Shape: fields.Object, Create: true, Update: true, NotReturned: true, Fields: []fields.Field{
+			{Name: "requested", Shape: fields.Bool, Create: true, Update: true, NotReturned: true},
+		}, DataSource: &fields.Field{Name: "cartes_bancaires_payments", Shape: fields.String, Response: true, Enum: []string{"active", "inactive", "pending"}, Description: "The status of the Cartes Bancaires payments capability of the account, or whether the account can directly process Cartes Bancaires card charges in EUR currency."}},
+		{Name: "cashapp_payments", Shape: fields.Object, Create: true, Update: true, NotReturned: true, Fields: []fields.Field{
+			{Name: "requested", Shape: fields.Bool, Create: true, Update: true, NotReturned: true},
+		}, DataSource: &fields.Field{Name: "cashapp_payments", Shape: fields.String, Response: true, Enum: []string{"active", "inactive", "pending"}, Description: "The status of the Cash App Pay capability of the account, or whether the account can directly process Cash App Pay payments."}},
+		{Name: "crypto_payments", Shape: fields.Object, Create: true, Update: true, NotReturned: true, Fields: []fields.Field{
+			{Name: "requested", Shape: fields.Bool, Create: true, Update: true, NotReturned: true},
+		}, DataSource: &fields.Field{Name: "crypto_payments", Shape: fields.String, Response: true, Enum: []string{"active", "inactive", "pending"}, Description: "The status of the Crypto capability of the account, or whether the account can directly process Crypto payments."}},
+		{Name: "eps_payments", Shape: fields.Object, Create: true, Update: true, NotReturned: true, Fields: []fields.Field{
+			{Name: "requested", Shape: fields.Bool, Create: true, Update: true, NotReturned: true},
+		}, DataSource: &fields.Field{Name: "eps_payments", Shape: fields.String, Response: true, Enum: []string{"active", "inactive", "pending"}, Description: "The status of the EPS payments capability of the account, or whether the account can directly process EPS charges."}},
 		{Name: "fpx_payments", Shape: fields.Object, Create: true, Update: true, Fields: []fields.Field{
 			{Name: "requested", Shape: fields.Bool, Create: true, Update: true},
 		}},
-		{Name: "gb_bank_transfer_payments", Shape: fields.Object, Create: true, Update: true, Fields: []fields.Field{
-			{Name: "requested", Shape: fields.Bool, Create: true, Update: true},
-		}},
+		{Name: "gb_bank_transfer_payments", Shape: fields.Object, Create: true, Update: true, NotReturned: true, Fields: []fields.Field{
+			{Name: "requested", Shape: fields.Bool, Create: true, Update: true, NotReturned: true},
+		}, DataSource: &fields.Field{Name: "gb_bank_transfer_payments", Shape: fields.String, Response: true, Enum: []string{"active", "inactive", "pending"}, Description: "The status of the GB customer_balance payments (GBP currency) capability of the account, or whether the account can directly process GB customer_balance charges."}},
 		{Name: "giropay_payments", Shape: fields.Object, Create: true, Update: true, Fields: []fields.Field{
 			{Name: "requested", Shape: fields.Bool, Create: true, Update: true},
 		}},
 		{Name: "grabpay_payments", Shape: fields.Object, Create: true, Update: true, Fields: []fields.Field{
 			{Name: "requested", Shape: fields.Bool, Create: true, Update: true},
 		}},
-		{Name: "ideal_payments", Shape: fields.Object, Create: true, Update: true, Fields: []fields.Field{
-			{Name: "requested", Shape: fields.Bool, Create: true, Update: true},
-		}},
+		{Name: "ideal_payments", Shape: fields.Object, Create: true, Update: true, NotReturned: true, Fields: []fields.Field{
+			{Name: "requested", Shape: fields.Bool, Create: true, Update: true, NotReturned: true},
+		}, DataSource: &fields.Field{Name: "ideal_payments", Shape: fields.String, Response: true, Enum: []string{"active", "inactive", "pending"}, Description: "The status of the iDEAL payments capability of the account, or whether the account can directly process iDEAL charges."}},
 		{Name: "india_international_payments", Shape: fields.Object, Create: true, Update: true, Fields: []fields.Field{
 			{Name: "requested", Shape: fields.Bool, Create: true, Update: true},
 		}},
@@ -125,54 +136,54 @@ var Table = []fields.Field{
 		{Name: "jp_bank_transfer_payments", Shape: fields.Object, Create: true, Update: true, Fields: []fields.Field{
 			{Name: "requested", Shape: fields.Bool, Create: true, Update: true},
 		}},
-		{Name: "kakao_pay_payments", Shape: fields.Object, Create: true, Update: true, Fields: []fields.Field{
-			{Name: "requested", Shape: fields.Bool, Create: true, Update: true},
-		}},
-		{Name: "klarna_payments", Shape: fields.Object, Create: true, Update: true, Fields: []fields.Field{
-			{Name: "requested", Shape: fields.Bool, Create: true, Update: true},
-		}},
+		{Name: "kakao_pay_payments", Shape: fields.Object, Create: true, Update: true, NotReturned: true, Fields: []fields.Field{
+			{Name: "requested", Shape: fields.Bool, Create: true, Update: true, NotReturned: true},
+		}, DataSource: &fields.Field{Name: "kakao_pay_payments", Shape: fields.String, Response: true, Enum: []string{"active", "inactive", "pending"}, Description: "The status of the KakaoPay capability of the account, or whether the account can directly process KakaoPay payments."}},
+		{Name: "klarna_payments", Shape: fields.Object, Create: true, Update: true, NotReturned: true, Fields: []fields.Field{
+			{Name: "requested", Shape: fields.Bool, Create: true, Update: true, NotReturned: true},
+		}, DataSource: &fields.Field{Name: "klarna_payments", Shape: fields.String, Response: true, Enum: []string{"active", "inactive", "pending"}, Description: "The status of the Klarna payments capability of the account, or whether the account can directly process Klarna charges."}},
 		{Name: "konbini_payments", Shape: fields.Object, Create: true, Update: true, Fields: []fields.Field{
 			{Name: "requested", Shape: fields.Bool, Create: true, Update: true},
 		}},
-		{Name: "kr_card_payments", Shape: fields.Object, Create: true, Update: true, Fields: []fields.Field{
-			{Name: "requested", Shape: fields.Bool, Create: true, Update: true},
+		{Name: "kr_card_payments", Shape: fields.Object, Create: true, Update: true, NotReturned: true, Fields: []fields.Field{
+			{Name: "requested", Shape: fields.Bool, Create: true, Update: true, NotReturned: true},
+		}, DataSource: &fields.Field{Name: "kr_card_payments", Shape: fields.String, Response: true, Enum: []string{"active", "inactive", "pending"}, Description: "The status of the KrCard capability of the account, or whether the account can directly process KrCard payments."}},
+		{Name: "legacy_payments", Shape: fields.Object, Create: true, Update: true, NotReturned: true, Fields: []fields.Field{
+			{Name: "requested", Shape: fields.Bool, Create: true, Update: true, NotReturned: true},
 		}},
-		{Name: "legacy_payments", Shape: fields.Object, Create: true, Update: true, Fields: []fields.Field{
-			{Name: "requested", Shape: fields.Bool, Create: true, Update: true},
-		}},
-		{Name: "link_payments", Shape: fields.Object, Create: true, Update: true, Fields: []fields.Field{
-			{Name: "requested", Shape: fields.Bool, Create: true, Update: true},
-		}},
-		{Name: "mb_way_payments", Shape: fields.Object, Create: true, Update: true, Fields: []fields.Field{
-			{Name: "requested", Shape: fields.Bool, Create: true, Update: true},
-		}},
+		{Name: "link_payments", Shape: fields.Object, Create: true, Update: true, NotReturned: true, Fields: []fields.Field{
+			{Name: "requested", Shape: fields.Bool, Create: true, Update: true, NotReturned: true},
+		}, DataSource: &fields.Field{Name: "link_payments", Shape: fields.String, Response: true, Enum: []string{"active", "inactive", "pending"}, Description: "The status of the link_payments capability of the account, or whether the account can directly process Link charges."}},
+		{Name: "mb_way_payments", Shape: fields.Object, Create: true, Update: true, NotReturned: true, Fields: []fields.Field{
+			{Name: "requested", Shape: fields.Bool, Create: true, Update: true, NotReturned: true},
+		}, DataSource: &fields.Field{Name: "mb_way_payments", Shape: fields.String, Response: true, Enum: []string{"active", "inactive", "pending"}, Description: "The status of the MB WAY payments capability of the account, or whether the account can directly process MB WAY charges."}},
 		{Name: "mobilepay_payments", Shape: fields.Object, Create: true, Update: true, Fields: []fields.Field{
 			{Name: "requested", Shape: fields.Bool, Create: true, Update: true},
 		}},
-		{Name: "multibanco_payments", Shape: fields.Object, Create: true, Update: true, Fields: []fields.Field{
-			{Name: "requested", Shape: fields.Bool, Create: true, Update: true},
-		}},
+		{Name: "multibanco_payments", Shape: fields.Object, Create: true, Update: true, NotReturned: true, Fields: []fields.Field{
+			{Name: "requested", Shape: fields.Bool, Create: true, Update: true, NotReturned: true},
+		}, DataSource: &fields.Field{Name: "multibanco_payments", Shape: fields.String, Response: true, Enum: []string{"active", "inactive", "pending"}, Description: "The status of the Multibanco payments capability of the account, or whether the account can directly process Multibanco charges."}},
 		{Name: "mx_bank_transfer_payments", Shape: fields.Object, Create: true, Update: true, Fields: []fields.Field{
 			{Name: "requested", Shape: fields.Bool, Create: true, Update: true},
 		}},
-		{Name: "naver_pay_payments", Shape: fields.Object, Create: true, Update: true, Fields: []fields.Field{
-			{Name: "requested", Shape: fields.Bool, Create: true, Update: true},
-		}},
-		{Name: "nz_bank_account_becs_debit_payments", Shape: fields.Object, Create: true, Update: true, Fields: []fields.Field{
-			{Name: "requested", Shape: fields.Bool, Create: true, Update: true},
+		{Name: "naver_pay_payments", Shape: fields.Object, Create: true, Update: true, NotReturned: true, Fields: []fields.Field{
+			{Name: "requested", Shape: fields.Bool, Create: true, Update: true, NotReturned: true},
+		}, DataSource: &fields.Field{Name: "naver_pay_payments", Shape: fields.String, Response: true, Enum: []string{"active", "inactive", "pending"}, Description: "The status of the NaverPay capability of the account, or whether the account can directly process NaverPay payments."}},
+		{Name: "nz_bank_account_becs_debit_payments", Shape: fields.Object, Create: true, Update: true, NotReturned: true, Fields: []fields.Field{
+			{Name: "requested", Shape: fields.Bool, Create: true, Update: true, NotReturned: true},
 		}},
 		{Name: "oxxo_payments", Shape: fields.Object, Create: true, Update: true, Fields: []fields.Field{
 			{Name: "requested", Shape: fields.Bool, Create: true, Update: true},
 		}},
-		{Name: "p24_payments", Shape: fields.Object, Create: true, Update: true, Fields: []fields.Field{
-			{Name: "requested", Shape: fields.Bool, Create: true, Update: true},
-		}},
+		{Name: "p24_payments", Shape: fields.Object, Create: true, Update: true, NotReturned: true, Fields: []fields.Field{
+			{Name: "requested", Shape: fields.Bool, Create: true, Update: true, NotReturned: true},
+		}, DataSource: &fields.Field{Name: "p24_payments", Shape: fields.String, Response: true, Enum: []string{"active", "inactive", "pending"}, Description: "The status of the P24 payments capability of the account, or whether the account can directly process P24 charges."}},
 		{Name: "pay_by_bank_payments", Shape: fields.Object, Create: true, Update: true, Fields: []fields.Field{
 			{Name: "requested", Shape: fields.Bool, Create: true, Update: true},
 		}},
-		{Name: "payco_payments", Shape: fields.Object, Create: true, Update: true, Fields: []fields.Field{
-			{Name: "requested", Shape: fields.Bool, Create: true, Update: true},
-		}},
+		{Name: "payco_payments", Shape: fields.Object, Create: true, Update: true, NotReturned: true, Fields: []fields.Field{
+			{Name: "requested", Shape: fields.Bool, Create: true, Update: true, NotReturned: true},
+		}, DataSource: &fields.Field{Name: "payco_payments", Shape: fields.String, Response: true, Enum: []string{"active", "inactive", "pending"}, Description: "The status of the Payco capability of the account, or whether the account can directly process Payco payments."}},
 		{Name: "paynow_payments", Shape: fields.Object, Create: true, Update: true, Fields: []fields.Field{
 			{Name: "requested", Shape: fields.Bool, Create: true, Update: true},
 		}},
@@ -182,66 +193,66 @@ var Table = []fields.Field{
 		{Name: "payto_payments", Shape: fields.Object, Create: true, Update: true, Fields: []fields.Field{
 			{Name: "requested", Shape: fields.Bool, Create: true, Update: true},
 		}},
-		{Name: "pix_payments", Shape: fields.Object, Create: true, Update: true, Fields: []fields.Field{
-			{Name: "requested", Shape: fields.Bool, Create: true, Update: true},
-		}},
+		{Name: "pix_payments", Shape: fields.Object, Create: true, Update: true, NotReturned: true, Fields: []fields.Field{
+			{Name: "requested", Shape: fields.Bool, Create: true, Update: true, NotReturned: true},
+		}, DataSource: &fields.Field{Name: "pix_payments", Shape: fields.String, Response: true, Enum: []string{"active", "inactive", "pending"}, Description: "The status of the pix payments capability of the account, or whether the account can directly process pix charges."}},
 		{Name: "promptpay_payments", Shape: fields.Object, Create: true, Update: true, Fields: []fields.Field{
 			{Name: "requested", Shape: fields.Bool, Create: true, Update: true},
 		}},
 		{Name: "revolut_pay_payments", Shape: fields.Object, Create: true, Update: true, Fields: []fields.Field{
 			{Name: "requested", Shape: fields.Bool, Create: true, Update: true},
 		}},
-		{Name: "samsung_pay_payments", Shape: fields.Object, Create: true, Update: true, Fields: []fields.Field{
-			{Name: "requested", Shape: fields.Bool, Create: true, Update: true},
-		}},
-		{Name: "satispay_payments", Shape: fields.Object, Create: true, Update: true, Fields: []fields.Field{
-			{Name: "requested", Shape: fields.Bool, Create: true, Update: true},
-		}},
-		{Name: "scalapay_payments", Shape: fields.Object, Create: true, Update: true, Fields: []fields.Field{
-			{Name: "requested", Shape: fields.Bool, Create: true, Update: true},
-		}},
-		{Name: "sepa_bank_transfer_payments", Shape: fields.Object, Create: true, Update: true, Fields: []fields.Field{
-			{Name: "requested", Shape: fields.Bool, Create: true, Update: true},
-		}},
-		{Name: "sepa_debit_payments", Shape: fields.Object, Create: true, Update: true, Fields: []fields.Field{
-			{Name: "requested", Shape: fields.Bool, Create: true, Update: true},
-		}},
+		{Name: "samsung_pay_payments", Shape: fields.Object, Create: true, Update: true, NotReturned: true, Fields: []fields.Field{
+			{Name: "requested", Shape: fields.Bool, Create: true, Update: true, NotReturned: true},
+		}, DataSource: &fields.Field{Name: "samsung_pay_payments", Shape: fields.String, Response: true, Enum: []string{"active", "inactive", "pending"}, Description: "The status of the SamsungPay capability of the account, or whether the account can directly process SamsungPay payments."}},
+		{Name: "satispay_payments", Shape: fields.Object, Create: true, Update: true, NotReturned: true, Fields: []fields.Field{
+			{Name: "requested", Shape: fields.Bool, Create: true, Update: true, NotReturned: true},
+		}, DataSource: &fields.Field{Name: "satispay_payments", Shape: fields.String, Response: true, Enum: []string{"active", "inactive", "pending"}, Description: "The status of the Satispay capability of the account, or whether the account can directly process Satispay payments."}},
+		{Name: "scalapay_payments", Shape: fields.Object, Create: true, Update: true, NotReturned: true, Fields: []fields.Field{
+			{Name: "requested", Shape: fields.Bool, Create: true, Update: true, NotReturned: true},
+		}, DataSource: &fields.Field{Name: "scalapay_payments", Shape: fields.String, Response: true, Enum: []string{"active", "inactive", "pending"}, Description: "The status of the Scalapay capability of the account, or whether the account can directly process Scalapay payments."}},
+		{Name: "sepa_bank_transfer_payments", Shape: fields.Object, Create: true, Update: true, NotReturned: true, Fields: []fields.Field{
+			{Name: "requested", Shape: fields.Bool, Create: true, Update: true, NotReturned: true},
+		}, DataSource: &fields.Field{Name: "sepa_bank_transfer_payments", Shape: fields.String, Response: true, Enum: []string{"active", "inactive", "pending"}, Description: "The status of the SEPA customer_balance payments (EUR currency) capability of the account, or whether the account can directly process SEPA customer_balance charges."}},
+		{Name: "sepa_debit_payments", Shape: fields.Object, Create: true, Update: true, NotReturned: true, Fields: []fields.Field{
+			{Name: "requested", Shape: fields.Bool, Create: true, Update: true, NotReturned: true},
+		}, DataSource: &fields.Field{Name: "sepa_debit_payments", Shape: fields.String, Response: true, Enum: []string{"active", "inactive", "pending"}, Description: "The status of the SEPA Direct Debits payments capability of the account, or whether the account can directly process SEPA Direct Debits charges."}},
 		{Name: "sequra_payments", Shape: fields.Object, Create: true, Update: true, Fields: []fields.Field{
 			{Name: "requested", Shape: fields.Bool, Create: true, Update: true},
 		}},
 		{Name: "sofort_payments", Shape: fields.Object, Create: true, Update: true, Fields: []fields.Field{
 			{Name: "requested", Shape: fields.Bool, Create: true, Update: true},
 		}},
-		{Name: "sunbit_payments", Shape: fields.Object, Create: true, Update: true, Fields: []fields.Field{
-			{Name: "requested", Shape: fields.Bool, Create: true, Update: true},
-		}},
+		{Name: "sunbit_payments", Shape: fields.Object, Create: true, Update: true, NotReturned: true, Fields: []fields.Field{
+			{Name: "requested", Shape: fields.Bool, Create: true, Update: true, NotReturned: true},
+		}, DataSource: &fields.Field{Name: "sunbit_payments", Shape: fields.String, Response: true, Enum: []string{"active", "inactive", "pending"}, Description: "The status of the Sunbit capability of the account, or whether the account can directly process Sunbit payments."}},
 		{Name: "swish_payments", Shape: fields.Object, Create: true, Update: true, Fields: []fields.Field{
 			{Name: "requested", Shape: fields.Bool, Create: true, Update: true},
 		}},
-		{Name: "tax_reporting_us_1099_k", Shape: fields.Object, Create: true, Update: true, Fields: []fields.Field{
-			{Name: "requested", Shape: fields.Bool, Create: true, Update: true},
-		}},
-		{Name: "tax_reporting_us_1099_misc", Shape: fields.Object, Create: true, Update: true, Fields: []fields.Field{
-			{Name: "requested", Shape: fields.Bool, Create: true, Update: true},
-		}},
-		{Name: "transfers", Shape: fields.Object, Create: true, Update: true, Fields: []fields.Field{
-			{Name: "requested", Shape: fields.Bool, Create: true, Update: true},
-		}},
-		{Name: "treasury", Shape: fields.Object, Create: true, Update: true, Fields: []fields.Field{
-			{Name: "requested", Shape: fields.Bool, Create: true, Update: true},
-		}},
+		{Name: "tax_reporting_us_1099_k", Shape: fields.Object, Create: true, Update: true, NotReturned: true, Fields: []fields.Field{
+			{Name: "requested", Shape: fields.Bool, Create: true, Update: true, NotReturned: true},
+		}, DataSource: &fields.Field{Name: "tax_reporting_us_1099_k", Shape: fields.String, Response: true, Enum: []string{"active", "inactive", "pending"}, Description: "The status of the tax reporting 1099-K (US) capability of the account."}},
+		{Name: "tax_reporting_us_1099_misc", Shape: fields.Object, Create: true, Update: true, NotReturned: true, Fields: []fields.Field{
+			{Name: "requested", Shape: fields.Bool, Create: true, Update: true, NotReturned: true},
+		}, DataSource: &fields.Field{Name: "tax_reporting_us_1099_misc", Shape: fields.String, Response: true, Enum: []string{"active", "inactive", "pending"}, Description: "The status of the tax reporting 1099-MISC (US) capability of the account."}},
+		{Name: "transfers", Shape: fields.Object, Create: true, Update: true, NotReturned: true, Fields: []fields.Field{
+			{Name: "requested", Shape: fields.Bool, Create: true, Update: true, NotReturned: true, Refused: "Stripe refused it on a US account on update: \"You must request one or more of the following capabilities: transfers. Please visit https://stripe.com/docs/connect/account-capabilities to learn more.\".", Answer: "Elsewhere Stripe refused it on a US account on update: \"You must request one or more of the following capabilities: transfers. Please visit https://stripe.com/docs/connect/account-capabilities to learn more.\".", PlanRefusals: []fields.PlanRefusal{{Update: true, Sends: "{\"capabilities\":{\"transfers\":{\"requested\":false}}}", Holds: "{\"business_type\":\"company\",\"capabilities\":{\"transfers\":{\"requested\":true}},\"type\":\"custom\"}", Probe: "isolated/capability_transfers_unrequest", AccountCountry: "US", Message: "You must request one or more of the following capabilities: transfers. Please visit https://stripe.com/docs/connect/account-capabilities to learn more."}}},
+		}, DataSource: &fields.Field{Name: "transfers", Shape: fields.String, Response: true, Enum: []string{"active", "inactive", "pending"}, Description: "The status of the transfers capability of the account, or whether your platform can transfer funds to the account."}},
+		{Name: "treasury", Shape: fields.Object, Create: true, Update: true, NotReturned: true, Fields: []fields.Field{
+			{Name: "requested", Shape: fields.Bool, Create: true, Update: true, NotReturned: true},
+		}, DataSource: &fields.Field{Name: "treasury", Shape: fields.String, Response: true, Enum: []string{"active", "inactive", "pending"}, Description: "The status of the banking capability, or whether the account can have bank accounts."}},
 		{Name: "twint_payments", Shape: fields.Object, Create: true, Update: true, Fields: []fields.Field{
 			{Name: "requested", Shape: fields.Bool, Create: true, Update: true},
 		}},
-		{Name: "upi_payments", Shape: fields.Object, Create: true, Update: true, Fields: []fields.Field{
-			{Name: "requested", Shape: fields.Bool, Create: true, Update: true},
-		}},
-		{Name: "us_bank_account_ach_payments", Shape: fields.Object, Create: true, Update: true, Fields: []fields.Field{
-			{Name: "requested", Shape: fields.Bool, Create: true, Update: true},
-		}},
-		{Name: "us_bank_transfer_payments", Shape: fields.Object, Create: true, Update: true, Fields: []fields.Field{
-			{Name: "requested", Shape: fields.Bool, Create: true, Update: true},
-		}},
+		{Name: "upi_payments", Shape: fields.Object, Create: true, Update: true, NotReturned: true, Fields: []fields.Field{
+			{Name: "requested", Shape: fields.Bool, Create: true, Update: true, NotReturned: true},
+		}, DataSource: &fields.Field{Name: "upi_payments", Shape: fields.String, Response: true, Enum: []string{"active", "inactive", "pending"}, Description: "The status of the upi payments capability of the account, or whether the account can directly process upi charges."}},
+		{Name: "us_bank_account_ach_payments", Shape: fields.Object, Create: true, Update: true, NotReturned: true, Fields: []fields.Field{
+			{Name: "requested", Shape: fields.Bool, Create: true, Update: true, NotReturned: true},
+		}, DataSource: &fields.Field{Name: "us_bank_account_ach_payments", Shape: fields.String, Response: true, Enum: []string{"active", "inactive", "pending"}, Description: "The status of the US bank account ACH payments capability of the account, or whether the account can directly process US bank account charges."}},
+		{Name: "us_bank_transfer_payments", Shape: fields.Object, Create: true, Update: true, NotReturned: true, Fields: []fields.Field{
+			{Name: "requested", Shape: fields.Bool, Create: true, Update: true, NotReturned: true},
+		}, DataSource: &fields.Field{Name: "us_bank_transfer_payments", Shape: fields.String, Response: true, Enum: []string{"active", "inactive", "pending"}, Description: "The status of the US customer_balance payments (USD currency) capability of the account, or whether the account can directly process US customer_balance charges."}},
 		{Name: "zip_payments", Shape: fields.Object, Create: true, Update: true, Fields: []fields.Field{
 			{Name: "requested", Shape: fields.Bool, Create: true, Update: true},
 		}},
@@ -278,6 +289,7 @@ var Table = []fields.Field{
 			{Name: "ip", Shape: fields.String, Create: true, Update: true, Response: true, ServerDefaulted: true, Stable: true, Description: "The IP address from which the beneficial owner attestation was made.", Default: &fields.Default{Kind: fields.DefaultNone}, Refused: "Stripe refused it on a US account on create: \"legal_entity[ownership_declaration] is only allowed during account updates and accounts created via account tokens.\"."},
 			{Name: "user_agent", Shape: fields.String, Create: true, Update: true, Response: true, ServerDefaulted: true, Stable: true, Description: "The user-agent string from the browser where the beneficial owner attestation was made.", Default: &fields.Default{Kind: fields.DefaultNone}, Refused: "Stripe refused it on a US account on create: \"legal_entity[ownership_declaration] is only allowed during account updates and accounts created via account tokens.\"."},
 		}},
+		{Name: "ownership_exemption_reason", Shape: fields.String, Create: true, Update: true, Enum: []string{"qualified_entity_exceeds_ownership_threshold", "qualifies_as_financial_institution"}, Refused: "Stripe refused it on a US account on create and update: \"Country US does not support setting ownership_exemption_reason.\"."},
 		{Name: "phone", Shape: fields.String, Create: true, Update: true, Response: true, ServerDefaulted: true, Description: "The company's phone number (used for verification).", Default: &fields.Default{Kind: fields.DefaultNone}},
 		{Name: "principal_place_of_business", Shape: fields.Object, Create: true, Update: true, Response: true, ServerDefaulted: true, Fields: []fields.Field{
 			{Name: "city", Shape: fields.String, Create: true, Update: true, Response: true, Stable: true, Description: "City, district, suburb, town, or village.", Default: &fields.Default{Kind: fields.DefaultNone}},
@@ -292,28 +304,34 @@ var Table = []fields.Field{
 			{Name: "month", Shape: fields.Int, Required: true, Create: true, Update: true, Response: true, Description: "The month of registration, between 1 and 12."},
 			{Name: "year", Shape: fields.Int, Required: true, Create: true, Update: true, Response: true, Description: "The four-digit year of registration."},
 		}},
+		{Name: "registration_number", Shape: fields.String, Create: true, Update: true, NotReturned: true},
 		{Name: "structure", Shape: fields.String, Create: true, Update: true, Response: true, Stable: true, Enum: []string{"free_zone_establishment", "free_zone_llc", "government_instrumentality", "governmental_unit", "incorporated_non_profit", "incorporated_partnership", "limited_liability_partnership", "llc", "multi_member_llc", "private_company", "private_corporation", "private_partnership", "public_company", "public_corporation", "public_partnership", "registered_charity", "single_member_llc", "sole_establishment", "sole_proprietorship", "tax_exempt_government_instrumentality", "unincorporated_association", "unincorporated_non_profit", "unincorporated_partnership"}, Description: "The category identifying the legal structure of the company or legal entity. Also available for accounts where [controller.requirement_collection](https://docs.stripe.com/api/accounts/object#account_object-controller-requirement_collection) is `stripe`. See [Business structure](https://docs.stripe.com/connect/identity-verification#business-structure) for more details.", Default: &fields.Default{Kind: fields.DefaultNone}},
+		{Name: "tax_id", Shape: fields.String, Create: true, Update: true, Sensitive: true, NotReturned: true},
+		{Name: "tax_id_provided", Shape: fields.Bool, Response: true, Description: "Whether the company's business ID number was provided."},
+		{Name: "tax_id_registrar", Shape: fields.String, Create: true, Update: true, Refused: "Stripe refused it on a US account on create: \"Registrar Amtsgericht Berlin does not exist in US.\". Stripe refused it on a US account on update: \"Registrar Amtsgericht Hamburg does not exist in US.\"."},
+		{Name: "vat_id", Shape: fields.String, Create: true, Update: true, Sensitive: true, NotReturned: true},
+		{Name: "vat_id_provided", Shape: fields.Bool, Response: true, Description: "Whether the company's business VAT number was provided."},
 	}},
 	{Name: "controller", Shape: fields.Object, Create: true, Response: true, Description: "A hash of configuration describing the account controller's attributes.", Fields: []fields.Field{
 		{Name: "fees", Shape: fields.Object, Create: true, Response: true, Fields: []fields.Field{
-			{Name: "payer", Shape: fields.String, Create: true, Response: true, ServerDefaulted: true, Enum: []string{"account", "application"}, Description: "A value indicating the responsible payer of a bundle of Stripe fees for pricing-control eligible products on this account. Learn more about [fee behavior on connected accounts](https://docs.stripe.com/connect/direct-charges-fee-payer-behavior)."},
+			{Name: "payer", Shape: fields.String, Create: true, Response: true, ServerDefaulted: true, Enum: []string{"account", "application"}, Description: "A value indicating the responsible payer of a bundle of Stripe fees for pricing-control eligible products on this account. Learn more about [fee behavior on connected accounts](https://docs.stripe.com/connect/direct-charges-fee-payer-behavior).", Default: &fields.Default{Kind: fields.DefaultRule, Rule: "application on a Custom account, account on a Standard one", Observed: "`account` on a US account"}},
 		}},
 		{Name: "is_controller", Shape: fields.Bool, Response: true, Description: "`true` if the Connect application retrieving the resource controls the account and can therefore exercise [platform controls](https://docs.stripe.com/connect/platform-controls-for-standard-accounts). Otherwise, this field is null."},
 		{Name: "losses", Shape: fields.Object, Create: true, Response: true, Fields: []fields.Field{
-			{Name: "payments", Shape: fields.String, Create: true, Response: true, ServerDefaulted: true, Enum: []string{"application", "stripe"}, Description: "A value indicating who is liable when this account can't pay back negative balances from payments."},
+			{Name: "payments", Shape: fields.String, Create: true, Response: true, ServerDefaulted: true, Enum: []string{"application", "stripe"}, Description: "A value indicating who is liable when this account can't pay back negative balances from payments.", Default: &fields.Default{Kind: fields.DefaultRule, Rule: "application on a Custom account, stripe on a Standard one", Observed: "`stripe` on a US account"}},
 		}},
-		{Name: "requirement_collection", Shape: fields.String, Create: true, Response: true, Enum: []string{"application", "stripe"}, Description: "A value indicating responsibility for collecting requirements on this account. Only returned when the Connect application retrieving the resource controls the account."},
+		{Name: "requirement_collection", Shape: fields.String, Create: true, Response: true, Enum: []string{"application", "stripe"}, Description: "A value indicating responsibility for collecting requirements on this account. Only returned when the Connect application retrieving the resource controls the account.", Default: &fields.Default{Kind: fields.DefaultRule, Rule: "application on a Custom account, stripe on a Standard one", Observed: "`stripe` on a US account"}},
 		{Name: "stripe_dashboard", Shape: fields.Object, Create: true, Response: true, Fields: []fields.Field{
-			{Name: "type", Shape: fields.String, Create: true, Response: true, ServerDefaulted: true, Enum: []string{"express", "full", "none"}, Description: "A value indicating the Stripe dashboard this account has access to independent of the Connect application."},
+			{Name: "type", Shape: fields.String, Create: true, Response: true, ServerDefaulted: true, Enum: []string{"express", "full", "none"}, Description: "A value indicating the Stripe dashboard this account has access to independent of the Connect application.", Default: &fields.Default{Kind: fields.DefaultRule, Rule: "none on a Custom account, full on a Standard one", Observed: "`full` on a US account"}},
 		}},
 		{Name: "type", Shape: fields.String, Response: true, Enum: []string{"account", "application"}, Description: "The controller type. Can be `application`, if a Connect application controls the account, or `account`, if the account controls itself."},
 	}},
 	{Name: "country", Shape: fields.String, Required: true, Create: true, Response: true, Description: "The country in which the account holder resides, or in which the business is legally established. This should be an ISO 3166-1 alpha-2 country code. For example, if you are in the United States and the business for which you're creating an account is legally represented in Canada, you would use `CA` as the country for the account being created. Available countries include [Stripe's global markets](https://stripe.com/global) as well as countries where [cross-border payouts](https://stripe.com/docs/connect/cross-border-payouts) are supported."},
 	{Name: "created", Shape: fields.Int, Response: true, Description: "Time at which the account was connected. Measured in seconds since the Unix epoch."},
-	{Name: "default_currency", Shape: fields.String, Response: true, Description: "Three-letter ISO currency code representing the default currency for the account. This must be a currency that [Stripe supports in the account's country](https://stripe.com/docs/payouts)."},
+	{Name: "default_currency", Shape: fields.String, Create: true, Update: true, Response: true, ServerDefaulted: true, Stable: true, Description: "Three-letter ISO currency code representing the default currency for the account. This must be a currency that [Stripe supports in the account's country](https://docs.stripe.com/payouts).", Default: &fields.Default{Kind: fields.DefaultVaries}},
 	{Name: "details_submitted", Shape: fields.Bool, Response: true, Description: "Whether account details have been submitted. Accounts with Stripe Dashboard access, which includes Standard accounts, cannot receive payouts before this is true. Accounts where this is false should be directed to [an onboarding flow](https://docs.stripe.com/connect/onboarding) to finish submitting account details."},
-	{Name: "email", Shape: fields.String, Create: true, Update: true, Response: true, Description: "The email address of the account holder. This is only to make the account easier to identify to you. If [controller.requirement_collection](https://docs.stripe.com/api/accounts/object#account_object-controller-requirement_collection) is `application`, which includes Custom accounts, Stripe doesn't email the account without your consent."},
-	{Name: "external_account", Shape: fields.String, Create: true, Update: true, Description: "A card or bank account to attach to the account for receiving [payouts](https://docs.stripe.com/connect/bank-debit-card-payouts) (you won’t be able to use it for top-ups). You can provide either a token, like the ones returned by [Stripe.js](https://docs.stripe.com/js), or a dictionary, as documented in the `external_account` parameter for [bank account](https://docs.stripe.com/api#account_create_bank_account) creation. <br><br>By default, providing an external account sets it as the new default external account for its currency, and deletes the old default if one exists. To add additional external accounts without replacing the existing default for the currency, use the [bank account](https://docs.stripe.com/api#account_create_bank_account) or [card creation](https://docs.stripe.com/api#account_create_card) APIs. After you create an [Account Link](https://docs.stripe.com/api/account_links) or [Account Session](https://docs.stripe.com/api/account_sessions), this property can only be updated for accounts where [controller.requirement_collection](https://docs.stripe.com/api/accounts/object#account_object-controller-requirement_collection) is `application`, which includes Custom accounts."},
+	{Name: "email", Shape: fields.String, Create: true, Update: true, Response: true, Stable: true, Description: "The email address of the account holder. This is only to make the account easier to identify to you. If [controller.requirement_collection](https://docs.stripe.com/api/accounts/object#account_object-controller-requirement_collection) is `application`, which includes Custom accounts, Stripe doesn't email the account without your consent.", Default: &fields.Default{Kind: fields.DefaultNone}},
+	{Name: "external_account", Shape: fields.String, Create: true, Update: true, ServerDefaulted: true, NotReturned: true, Description: "A card or bank account to attach to the account for receiving [payouts](https://docs.stripe.com/connect/bank-debit-card-payouts) (you won’t be able to use it for top-ups). You can provide either a token, like the ones returned by [Stripe.js](https://docs.stripe.com/js), or a dictionary, as documented in the `external_account` parameter for [bank account](https://docs.stripe.com/api#account_create_bank_account) creation. <br><br>By default, providing an external account sets it as the new default external account for its currency, and deletes the old default if one exists. To add additional external accounts without replacing the existing default for the currency, use the [bank account](https://docs.stripe.com/api#account_create_bank_account) or [card creation](https://docs.stripe.com/api#account_create_card) APIs. After you create an [Account Link](https://docs.stripe.com/api/account_links) or [Account Session](https://docs.stripe.com/api/account_sessions), this property can only be updated for accounts where [controller.requirement_collection](https://docs.stripe.com/api/accounts/object#account_object-controller-requirement_collection) is `application`, which includes Custom accounts."},
 	{Name: "future_requirements", Shape: fields.Object, Response: true, Fields: []fields.Field{
 		{Name: "alternatives", Shape: fields.ObjectList, Response: true, Description: "Fields that are due and can be resolved by providing the corresponding alternative fields instead. Many alternatives can list the same `original_fields_due`, and any of these alternatives can serve as a pathway for attempting to resolve the fields again. Re-providing `original_fields_due` also serves as a pathway for attempting to resolve the fields again.", Fields: []fields.Field{
 			{Name: "alternative_fields_due", Shape: fields.ScalarList, Elem: fields.String, Response: true, Description: "Fields that can be provided to resolve all fields in `original_fields_due`."},
@@ -331,8 +349,12 @@ var Table = []fields.Field{
 		{Name: "past_due", Shape: fields.ScalarList, Elem: fields.String, Response: true, Description: "Fields that haven't been resolved by `requirements.current_deadline`. These fields need to be resolved to enable the capability on the account. `future_requirements.past_due` is a subset of `requirements.past_due`."},
 		{Name: "pending_verification", Shape: fields.ScalarList, Elem: fields.String, Response: true, Description: "Fields that are being reviewed, or might become required depending on the results of a review. If the review fails, these fields can move to `eventually_due`, `currently_due`, `past_due` or `alternatives`. Fields might appear in `eventually_due`, `currently_due`, `past_due` or `alternatives` and in `pending_verification` if one verification fails but another is still pending."},
 	}},
+	{Name: "groups", Shape: fields.Object, Create: true, Update: true, Description: "A hash of account group type to tokens. These are account groups this account should be added to.", Fields: []fields.Field{
+		{Name: "payments_pricing", Shape: fields.String, Create: true, Update: true, Refused: "Stripe refused it on a US account on create: \"No such account_group: attrs_pricing_group\". Stripe refused it on a US account on update: \"No such account_group: attrs_pricing_group_2\".", Answer: "Elsewhere Stripe refused it on a US account on create: \"No such account_group: attrs_pricing_group\". Elsewhere Stripe refused it on a US account on update: \"No such account_group: attrs_pricing_group_2\"."},
+	}},
 	{Name: "id", Shape: fields.String, Response: true, Description: "Unique identifier for the object."},
 	{Name: "individual", Shape: fields.Object, Create: true, Update: true, Response: true, Description: "Information about the person represented by the account. This field is null unless `business_type` is set to `individual`. Once you create an [Account Link](https://docs.stripe.com/api/account_links) or [Account Session](https://docs.stripe.com/api/account_sessions), this property can only be updated for accounts where [controller.requirement_collection](https://docs.stripe.com/api/accounts/object#account_object-controller-requirement_collection) is `application`, which includes Custom accounts.", Fields: []fields.Field{
+		{Name: "account", Shape: fields.String, Response: true, Description: "The account the person is associated with."},
 		{Name: "address", Shape: fields.Object, Create: true, Update: true, Response: true, Description: "The person's address.", Fields: []fields.Field{
 			{Name: "city", Shape: fields.String, Create: true, Update: true, Response: true, Stable: true, Description: "City, district, suburb, town, or village.", Default: &fields.Default{Kind: fields.DefaultNone}},
 			{Name: "country", Shape: fields.String, Create: true, Update: true, Response: true, ServerDefaulted: true, Description: "Two-letter country code ([ISO 3166-1 alpha-2](https://en.wikipedia.org/wiki/ISO_3166-1_alpha-2)).", Default: &fields.Default{Kind: fields.DefaultVaries}},
@@ -341,6 +363,7 @@ var Table = []fields.Field{
 			{Name: "postal_code", Shape: fields.String, Create: true, Update: true, Response: true, Stable: true, Description: "ZIP or postal code.", Default: &fields.Default{Kind: fields.DefaultNone}},
 			{Name: "state", Shape: fields.String, Create: true, Update: true, Response: true, Stable: true, Description: "State, county, province, or region ([ISO 3166-2](https://en.wikipedia.org/wiki/ISO_3166-2)).", Default: &fields.Default{Kind: fields.DefaultNone}},
 		}},
+		{Name: "created", Shape: fields.Int, Response: true, Description: "Time at which the object was created. Measured in seconds since the Unix epoch."},
 		{Name: "dob", Shape: fields.Object, Create: true, Update: true, Response: true, Description: "The person's date of birth.", Fields: []fields.Field{
 			{Name: "day", Shape: fields.Int, Required: true, Create: true, Update: true, Response: true, Description: "The day of birth, between 1 and 31."},
 			{Name: "month", Shape: fields.Int, Required: true, Create: true, Update: true, Response: true, Description: "The month of birth, between 1 and 12."},
@@ -350,10 +373,14 @@ var Table = []fields.Field{
 		{Name: "first_name", Shape: fields.String, Create: true, Update: true, Response: true, Stable: true, Description: "The person's first name. Also available for accounts where [controller.requirement_collection](https://docs.stripe.com/api/accounts/object#account_object-controller-requirement_collection) is `stripe`.", Default: &fields.Default{Kind: fields.DefaultNone}},
 		{Name: "full_name_aliases", Shape: fields.ScalarList, Elem: fields.String, Create: true, Update: true, Response: true, ServerDefaulted: true, Stable: true, Description: "A list of alternate names or aliases that the person is known by. Also available for accounts where [controller.requirement_collection](https://docs.stripe.com/api/accounts/object#account_object-controller-requirement_collection) is `stripe`.", Default: &fields.Default{Kind: fields.DefaultNone}},
 		{Name: "gender", Shape: fields.String, Create: true, Update: true, Response: true, Stable: true, Description: "The person's gender.", Default: &fields.Default{Kind: fields.DefaultNone}},
-		{Name: "id_number", Shape: fields.String, Create: true, Update: true, Description: "The person's ID number, as appropriate for their country. For example, a social security number in the U.S., social insurance number in Canada, etc. Instead of the number itself, you can also provide a [PII token provided by Stripe.js](https://docs.stripe.com/js/tokens/create_token?type=pii). Changing this value for the account's representative requires that the account re-accept the [terms of service](https://docs.stripe.com/api/accounts/object#account_object-tos_acceptance)."},
+		{Name: "id", Shape: fields.String, Response: true, Description: "Unique identifier for the object."},
+		{Name: "id_number", Shape: fields.String, Create: true, Update: true, Sensitive: true, NotReturned: true, Description: "The person's ID number, as appropriate for their country. For example, a social security number in the U.S., social insurance number in Canada, etc. Instead of the number itself, you can also provide a [PII token provided by Stripe.js](https://docs.stripe.com/js/tokens/create_token?type=pii). Changing this value for the account's representative requires that the account re-accept the [terms of service](https://docs.stripe.com/api/accounts/object#account_object-tos_acceptance)."},
+		{Name: "id_number_provided", Shape: fields.Bool, Response: true, Description: "Whether the person's `id_number` was provided. True if either the full ID number was provided or if only the required part of the ID number was provided (ex. last four of an individual's SSN for the US indicated by `ssn_last_4_provided`)."},
+		{Name: "id_number_secondary", Shape: fields.String, Create: true, Update: true, Sensitive: true, Description: "The person's secondary ID number, as appropriate for their country, will be used for enhanced verification checks. In Thailand, this would be the laser code found on the back of an ID card. Instead of the number itself, you can also provide a [PII token provided by Stripe.js](https://docs.stripe.com/js/tokens/create_token?type=pii). Changing this value for the account's representative requires that the account re-accept the [terms of service](https://docs.stripe.com/api/accounts/object#account_object-tos_acceptance).", Refused: "Stripe refused it on a US account on create and update: \"Unexpected id_number_secondary for US.\"."},
 		{Name: "last_name", Shape: fields.String, Create: true, Update: true, Response: true, Stable: true, Description: "The person's last name. Also available for accounts where [controller.requirement_collection](https://docs.stripe.com/api/accounts/object#account_object-controller-requirement_collection) is `stripe`.", Default: &fields.Default{Kind: fields.DefaultNone}},
 		{Name: "maiden_name", Shape: fields.String, Create: true, Update: true, Response: true, Stable: true, Description: "The person's maiden name.", Default: &fields.Default{Kind: fields.DefaultNone}},
 		{Name: "metadata", Shape: fields.StringMap, Create: true, Update: true, Response: true, ServerDefaulted: true, Stable: true, Description: "Set of [key-value pairs](https://docs.stripe.com/api/metadata) that you can attach to an object. This can be useful for storing additional information about the object in a structured format.", Default: &fields.Default{Kind: fields.DefaultVaries}, MapUpdate: &fields.MapUpdate{Replaced: false, EmptyKept: false}},
+		{Name: "object", Shape: fields.String, Response: true, Enum: []string{"person"}, Description: "String representing the object's type. Objects of the same type share the same value."},
 		{Name: "phone", Shape: fields.String, Create: true, Update: true, Response: true, Stable: true, Description: "The person's phone number.", Default: &fields.Default{Kind: fields.DefaultNone}},
 		{Name: "political_exposure", Shape: fields.String, Create: true, Update: true, Response: true, ServerDefaulted: true, Stable: true, Enum: []string{"existing", "none"}, Description: "Indicates if the person or any of their representatives, family members, or other closely related persons, declares that they hold or have held an important public job or function, in any jurisdiction.", Default: &fields.Default{Kind: fields.DefaultNone}},
 		{Name: "registered_address", Shape: fields.Object, Create: true, Update: true, Response: true, ServerDefaulted: true, Description: "The person's registered address.", Fields: []fields.Field{
@@ -365,13 +392,17 @@ var Table = []fields.Field{
 			{Name: "state", Shape: fields.String, Create: true, Update: true, Response: true, Stable: true, Description: "State, county, province, or region ([ISO 3166-2](https://en.wikipedia.org/wiki/ISO_3166-2)).", Default: &fields.Default{Kind: fields.DefaultNone}},
 		}},
 		{Name: "relationship", Shape: fields.Object, Create: true, Update: true, Response: true, ServerDefaulted: true, Description: "The relationship that this person has with the account's legal entity.", Fields: []fields.Field{
+			{Name: "authorizer", Shape: fields.Bool, Response: true, Description: "Whether the person is the authorizer of the account's representative."},
 			{Name: "director", Shape: fields.Bool, Create: true, Update: true, Response: true, ServerDefaulted: true, Stable: true, Description: "Whether the person is a director of the account's legal entity. Directors are typically members of the governing board of the company, or responsible for ensuring the company meets its regulatory obligations.", Default: &fields.Default{Kind: fields.DefaultVaries}},
 			{Name: "executive", Shape: fields.Bool, Create: true, Update: true, Response: true, ServerDefaulted: true, Stable: true, Description: "Whether the person has significant responsibility to control, manage, or direct the organization.", Default: &fields.Default{Kind: fields.DefaultVaries}},
+			{Name: "legal_guardian", Shape: fields.Bool, Response: true, Description: "Whether the person is the legal guardian of the account's representative."},
 			{Name: "owner", Shape: fields.Bool, Create: true, Update: true, Response: true, ServerDefaulted: true, Stable: true, Description: "Whether the person is an owner of the account’s legal entity.", Default: &fields.Default{Kind: fields.DefaultVaries}},
 			{Name: "percent_ownership", Shape: fields.Float, Create: true, Update: true, Response: true, Stable: true, Description: "The percent owned by the person of the account's legal entity.", Default: &fields.Default{Kind: fields.DefaultNone}},
+			{Name: "representative", Shape: fields.Bool, Response: true, Description: "Whether the person is authorized as the primary representative of the account. This is the person nominated by the business to provide information about themselves, and general information about the account. There can only be one representative at any given time. At the time the account is created, this person should be set to the person responsible for opening the account."},
 			{Name: "title", Shape: fields.String, Create: true, Update: true, Response: true, Stable: true, Description: "The person's title (e.g., CEO, Support Engineer).", Default: &fields.Default{Kind: fields.DefaultNone}},
 		}},
-		{Name: "ssn_last_4", Shape: fields.String, Create: true, Update: true, Description: "The last four digits of the person's Social Security number (U.S. only). Changing this value for the account's representative requires that the account re-accept the [terms of service](https://docs.stripe.com/api/accounts/object#account_object-tos_acceptance)."},
+		{Name: "ssn_last_4", Shape: fields.String, Create: true, Update: true, Sensitive: true, NotReturned: true, Description: "The last four digits of the person's Social Security number (U.S. only). Changing this value for the account's representative requires that the account re-accept the [terms of service](https://docs.stripe.com/api/accounts/object#account_object-tos_acceptance)."},
+		{Name: "ssn_last_4_provided", Shape: fields.Bool, Response: true, Description: "Whether the last four digits of the person's Social Security number have been provided (U.S. only)."},
 		{Name: "verification", Shape: fields.Object, Create: true, Update: true, Response: true, Description: "The person's verification status.", Fields: []fields.Field{
 			{Name: "additional_document", Shape: fields.Object, Create: true, Update: true, Response: true, ServerDefaulted: true, Description: "A document showing address, either a passport, local ID card, or utility bill from a well-known utility company.", Fields: []fields.Field{
 				{Name: "back", Shape: fields.String, Create: true, Update: true, Response: true, Stable: true, Description: "The back of an ID returned by a [file upload](https://docs.stripe.com/api#create_file) with a `purpose` value of `identity_document`.", Default: &fields.Default{Kind: fields.DefaultNone}},
@@ -420,12 +451,12 @@ var Table = []fields.Field{
 				{Name: "user_agent", Shape: fields.String, Response: true, Description: "The user agent of the browser from which the account representative accepted the service agreement."},
 			}},
 		}},
-		{Name: "card_payments", Shape: fields.Object, Response: true, Fields: []fields.Field{
-			{Name: "decline_on", Shape: fields.Object, Response: true, Fields: []fields.Field{
-				{Name: "avs_failure", Shape: fields.Bool, Response: true, Description: "Whether Stripe automatically declines charges with an incorrect ZIP or postal code. This setting only applies when a ZIP or postal code is provided and they fail bank verification."},
-				{Name: "cvc_failure", Shape: fields.Bool, Response: true, Description: "Whether Stripe automatically declines charges with an incorrect CVC. This setting only applies when a CVC is provided and it fails bank verification."},
+		{Name: "card_payments", Shape: fields.Object, Create: true, Update: true, Response: true, ServerDefaulted: true, Fields: []fields.Field{
+			{Name: "decline_on", Shape: fields.Object, Create: true, Update: true, Response: true, ServerDefaulted: true, Fields: []fields.Field{
+				{Name: "avs_failure", Shape: fields.Bool, Create: true, Update: true, Response: true, ServerDefaulted: true, Stable: true, Description: "Whether Stripe automatically declines charges with an incorrect ZIP or postal code. This setting only applies when a ZIP or postal code is provided and they fail bank verification.", Default: &fields.Default{Kind: fields.DefaultValue, Value: "false"}},
+				{Name: "cvc_failure", Shape: fields.Bool, Create: true, Update: true, Response: true, ServerDefaulted: true, Stable: true, Description: "Whether Stripe automatically declines charges with an incorrect CVC. This setting only applies when a CVC is provided and it fails bank verification.", Default: &fields.Default{Kind: fields.DefaultValue, Value: "false"}},
 			}},
-			{Name: "statement_descriptor_prefix", Shape: fields.String, Response: true, Description: "The default text that appears on credit card statements when a charge is made. This field prefixes any dynamic `statement_descriptor` specified on the charge. `statement_descriptor_prefix` is useful for maximizing descriptor space for the dynamic portion."},
+			{Name: "statement_descriptor_prefix", Shape: fields.String, Create: true, Update: true, Response: true, ServerDefaulted: true, Description: "The default text that appears on credit card statements when a charge is made. This field prefixes any dynamic `statement_descriptor` specified on the charge. `statement_descriptor_prefix` is useful for maximizing descriptor space for the dynamic portion.", Default: &fields.Default{Kind: fields.DefaultVaries}},
 			{Name: "statement_descriptor_prefix_kana", Shape: fields.String, Response: true, Description: "The Kana variation of the default text that appears on credit card statements when a charge is made (Japan only). This field prefixes any dynamic `statement_descriptor_suffix_kana` specified on the charge. `statement_descriptor_prefix_kana` is useful for maximizing descriptor space for the dynamic portion."},
 			{Name: "statement_descriptor_prefix_kanji", Shape: fields.String, Response: true, Description: "The Kanji variation of the default text that appears on credit card statements when a charge is made (Japan only). This field prefixes any dynamic `statement_descriptor_suffix_kanji` specified on the charge. `statement_descriptor_prefix_kanji` is useful for maximizing descriptor space for the dynamic portion."},
 		}},
@@ -433,26 +464,26 @@ var Table = []fields.Field{
 			{Name: "display_name", Shape: fields.String, Response: true, Description: "The display name for this account. This is used on the Stripe Dashboard to differentiate between accounts."},
 			{Name: "timezone", Shape: fields.String, Response: true, Description: "The timezone used in the Stripe Dashboard for this account. A list of possible time zone values is maintained at the [IANA Time Zone Database](http://www.iana.org/time-zones)."},
 		}},
-		{Name: "invoices", Shape: fields.Object, Response: true, Fields: []fields.Field{
+		{Name: "invoices", Shape: fields.Object, Create: true, Update: true, Response: true, ServerDefaulted: true, Fields: []fields.Field{
 			{Name: "default_account_tax_ids", Shape: fields.ScalarList, Elem: fields.String, Response: true, Description: "The list of default Account Tax IDs to automatically include on invoices. Account Tax IDs get added when an invoice is finalized."},
-			{Name: "hosted_payment_method_save", Shape: fields.String, Response: true, Enum: []string{"always", "never", "offer"}, Description: "Whether to save the payment method after a payment is completed for a one-time invoice or a subscription invoice when the customer already has a default payment method on the hosted invoice page."},
+			{Name: "hosted_payment_method_save", Shape: fields.String, Create: true, Update: true, Response: true, ServerDefaulted: true, Stable: true, Enum: []string{"always", "never", "offer"}, Description: "Whether to save the payment method after a payment is completed for a one-time invoice or a subscription invoice when the customer already has a default payment method on the hosted invoice page.", Default: &fields.Default{Kind: fields.DefaultValue, Value: "offer"}},
 		}},
-		{Name: "payments", Shape: fields.Object, Response: true, Fields: []fields.Field{
-			{Name: "statement_descriptor", Shape: fields.String, Response: true, Description: "The default text that appears on credit card statements when a charge is made. This field prefixes any dynamic `statement_descriptor` specified on the charge."},
+		{Name: "payments", Shape: fields.Object, Create: true, Update: true, Response: true, ServerDefaulted: true, Fields: []fields.Field{
+			{Name: "statement_descriptor", Shape: fields.String, Create: true, Update: true, Response: true, ServerDefaulted: true, Description: "The default text that appears on credit card statements when a charge is made. This field prefixes any dynamic `statement_descriptor` specified on the charge.", Default: &fields.Default{Kind: fields.DefaultVaries}},
 			{Name: "statement_descriptor_kana", Shape: fields.String, Response: true, Description: "The Kana variation of `statement_descriptor` used for charges in Japan. Japanese statement descriptors have [special requirements](https://docs.stripe.com/get-started/account/statement-descriptors#set-japanese-statement-descriptors)."},
 			{Name: "statement_descriptor_kanji", Shape: fields.String, Response: true, Description: "The Kanji variation of `statement_descriptor` used for charges in Japan. Japanese statement descriptors have [special requirements](https://docs.stripe.com/get-started/account/statement-descriptors#set-japanese-statement-descriptors)."},
 		}},
-		{Name: "payouts", Shape: fields.Object, Response: true, Fields: []fields.Field{
-			{Name: "debit_negative_balances", Shape: fields.Bool, Response: true, Description: "A Boolean indicating if Stripe should try to reclaim negative balances from an attached bank account. See [Understanding Connect account balances](https://docs.stripe.com/connect/account-balances) for details. The default value is `false` when [controller.requirement_collection](https://docs.stripe.com/api/accounts/object#account_object-controller-requirement_collection) is `application`, which includes Custom accounts, otherwise `true`."},
-			{Name: "schedule", Shape: fields.Object, Response: true, Fields: []fields.Field{
-				{Name: "delay_days", Shape: fields.Int, Response: true, Description: "The number of days charges for the account will be held before being paid out."},
-				{Name: "interval", Shape: fields.String, Response: true, Description: "How frequently funds will be paid out. One of `manual` (payouts only created via API call), `daily`, `weekly`, or `monthly`."},
-				{Name: "monthly_anchor", Shape: fields.Int, Response: true, Description: "The day of the month funds will be paid out. Only shown if `interval` is monthly. Payouts scheduled between the 29th and 31st of the month are sent on the last day of shorter months."},
-				{Name: "monthly_payout_days", Shape: fields.ScalarList, Elem: fields.Int, Response: true, Description: "The days of the month funds will be paid out. Only shown if `interval` is monthly. Payouts scheduled between the 29th and 31st of the month are sent on the last day of shorter months."},
-				{Name: "weekly_anchor", Shape: fields.String, Response: true, Description: "The day of the week funds will be paid out, of the style 'monday', 'tuesday', etc. Only shown if `interval` is weekly."},
-				{Name: "weekly_payout_days", Shape: fields.ScalarList, Elem: fields.String, Response: true, Description: "The days of the week when available funds are paid out, specified as an array, for example, [`monday`, `tuesday`]. Only shown if `interval` is weekly."},
+		{Name: "payouts", Shape: fields.Object, Create: true, Update: true, Response: true, ServerDefaulted: true, Fields: []fields.Field{
+			{Name: "debit_negative_balances", Shape: fields.Bool, Create: true, Update: true, Response: true, ServerDefaulted: true, Stable: true, Description: "A Boolean indicating if Stripe should try to reclaim negative balances from an attached bank account. See [Understanding Connect account balances](https://docs.stripe.com/connect/account-balances) for details. The default value is `false` when [controller.requirement_collection](https://docs.stripe.com/api/accounts/object#account_object-controller-requirement_collection) is `application`, which includes Custom accounts, otherwise `true`.", Default: &fields.Default{Kind: fields.DefaultVaries}},
+			{Name: "schedule", Shape: fields.Object, Create: true, Update: true, Response: true, ServerDefaulted: true, Fields: []fields.Field{
+				{Name: "delay_days", Shape: fields.String, Create: true, Update: true, Response: true, ServerDefaulted: true, Stable: true, Description: "The number of days charges for the account will be held before being paid out.", Default: &fields.Default{Kind: fields.DefaultVaries}},
+				{Name: "interval", Shape: fields.String, Create: true, Update: true, Response: true, ServerDefaulted: true, Stable: true, Enum: []string{"daily", "manual", "monthly", "weekly"}, Description: "How frequently funds will be paid out. One of `manual` (payouts only created via API call), `daily`, `weekly`, or `monthly`.", Default: &fields.Default{Kind: fields.DefaultValue, Value: "daily"}},
+				{Name: "monthly_anchor", Shape: fields.Int, Create: true, Update: true, Response: true, ServerDefaulted: true, Stable: true, Description: "The day of the month funds will be paid out. Only shown if `interval` is monthly. Payouts scheduled between the 29th and 31st of the month are sent on the last day of shorter months.", Default: &fields.Default{Kind: fields.DefaultVaries}},
+				{Name: "monthly_payout_days", Shape: fields.ScalarList, Elem: fields.Int, Create: true, Update: true, Response: true, ServerDefaulted: true, Stable: true, Description: "The days of the month funds will be paid out. Only shown if `interval` is monthly. Payouts scheduled between the 29th and 31st of the month are sent on the last day of shorter months.", Default: &fields.Default{Kind: fields.DefaultVaries}},
+				{Name: "weekly_anchor", Shape: fields.String, Create: true, Update: true, Response: true, ServerDefaulted: true, Stable: true, Enum: []string{"friday", "monday", "saturday", "sunday", "thursday", "tuesday", "wednesday"}, Description: "The day of the week funds will be paid out, of the style 'monday', 'tuesday', etc. Only shown if `interval` is weekly.", Default: &fields.Default{Kind: fields.DefaultVaries}},
+				{Name: "weekly_payout_days", Shape: fields.ScalarList, Elem: fields.String, Create: true, Update: true, Response: true, ServerDefaulted: true, Stable: true, Description: "The days of the week when available funds are paid out, specified as an array, for example, [`monday`, `tuesday`]. Only shown if `interval` is weekly.", Default: &fields.Default{Kind: fields.DefaultVaries}},
 			}},
-			{Name: "statement_descriptor", Shape: fields.String, Response: true, Description: "The text that appears on the bank account statement for payouts. If not set, this defaults to the platform's bank descriptor as set in the Dashboard."},
+			{Name: "statement_descriptor", Shape: fields.String, Create: true, Update: true, Response: true, Stable: true, Description: "The text that appears on the bank account statement for payouts. If not set, this defaults to the platform's bank descriptor as set in the Dashboard.", Default: &fields.Default{Kind: fields.DefaultNone}},
 		}},
 		{Name: "paypay_payments", Shape: fields.Object, Response: true, Fields: []fields.Field{
 			{Name: "additional_files", Shape: fields.ScalarList, Elem: fields.String, Response: true, Description: "Additional files that are required to support the onboarding process of your business."},
@@ -468,8 +499,8 @@ var Table = []fields.Field{
 				{Name: "type", Shape: fields.String, Response: true, Enum: []string{"accessible", "in_development", "restricted"}, Description: "The status of your business's website."},
 			}},
 		}},
-		{Name: "sepa_debit_payments", Shape: fields.Object, Response: true, Fields: []fields.Field{
-			{Name: "creditor_id", Shape: fields.String, Response: true, Description: "SEPA creditor identifier that identifies the company making the payment."},
+		{Name: "sepa_debit_payments", Shape: fields.Object, Create: true, Update: true, Response: true, ServerDefaulted: true, Fields: []fields.Field{
+			{Name: "creditor_id", Shape: fields.String, Create: true, Update: true, Response: true, ServerDefaulted: true, Stable: true, Description: "SEPA creditor identifier that identifies the company making the payment.", Default: &fields.Default{Kind: fields.DefaultVaries}, Refused: "Stripe refused it on a US account on create: \"This SEPA Creditor Identifier (CID) is not allowed at Stripe. Please contact us at https://support.stripe.com/contact if you think you should be able to use this CID.\"."},
 		}},
 		{Name: "treasury", Shape: fields.Object, Create: true, Update: true, Response: true, Fields: []fields.Field{
 			{Name: "tos_acceptance", Shape: fields.Object, Create: true, Update: true, Response: true, Fields: []fields.Field{
@@ -483,5 +514,5 @@ var Table = []fields.Field{
 		{Name: "date", Shape: fields.Int, Create: true, Update: true, Response: true, Description: "The Unix timestamp marking when the account representative accepted their service agreement"},
 		{Name: "ip", Shape: fields.String, Create: true, Update: true, Response: true, Description: "The IP address from which the account representative accepted their service agreement"},
 	}},
-	{Name: "type", Shape: fields.String, Create: true, Response: true, Enum: []string{"custom", "express", "standard"}, Description: "The `type` parameter is deprecated. Use [`controller`](https://docs.stripe.com/api/accounts/create#create_account-controller) instead to configure dashboard access, fee payer, loss liability, and requirement collection."},
+	{Name: "type", Shape: fields.String, Create: true, Response: true, Enum: []string{"custom", "express", "standard"}, Description: "The `type` parameter is deprecated. Use [`controller`](https://docs.stripe.com/api/accounts/create#create_account-controller) instead to configure dashboard access, fee payer, loss liability, and requirement collection.", Default: &fields.Default{Kind: fields.DefaultRule, Rule: "none on an account created with a controller and no type", Observed: "`standard` on a US account"}},
 }

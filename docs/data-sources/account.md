@@ -28,6 +28,7 @@ This data source supports the following arguments:
 
 This data source exports the following attributes in addition to the arguments above:
 
+* `bank_account` - Either a token, like the ones returned by [Stripe.js](https://stripe.com/docs/js), or a dictionary containing a user's bank account details.
 * `business_profile` - Business information about the account. See [`business_profile`](#business_profile) below.
 * `business_type` - The business type. Once you create an [Account Link](https://docs.stripe.com/api/account_links) or [Account Session](https://docs.stripe.com/api/account_sessions), this property can only be updated for accounts where [controller.requirement_collection](https://docs.stripe.com/api/accounts/object#account_object-controller-requirement_collection) is `application`, which includes Custom accounts. Possible values: `company`, `government_entity`, `individual`, `non_profit`.
 * `capabilities` - Each key of the dictionary represents a capability, and each capability maps to its settings (for example, whether it has been requested or not). Each capability is inactive until you have provided its specific requirements and Stripe has verified them. An account might have some of its requested capabilities be active and some be inactive. Required when [account.controller.stripe_dashboard.type](https://docs.stripe.com/api/accounts/create#create_account-controller-dashboard-type) is `none`, which includes Custom accounts. See [`capabilities`](#capabilities) below.
@@ -36,11 +37,12 @@ This data source exports the following attributes in addition to the arguments a
 * `controller` - A hash of configuration describing the account controller's attributes. See [`controller`](#controller) below.
 * `country` - The country in which the account holder resides, or in which the business is legally established. This should be an ISO 3166-1 alpha-2 country code. For example, if you are in the United States and the business for which you're creating an account is legally represented in Canada, you would use `CA` as the country for the account being created. Available countries include [Stripe's global markets](https://stripe.com/global) as well as countries where [cross-border payouts](https://stripe.com/docs/connect/cross-border-payouts) are supported.
 * `created` - Time at which the account was connected. Measured in seconds since the Unix epoch.
-* `default_currency` - Three-letter ISO currency code representing the default currency for the account. This must be a currency that [Stripe supports in the account's country](https://stripe.com/docs/payouts).
+* `default_currency` - Three-letter ISO currency code representing the default currency for the account. This must be a currency that [Stripe supports in the account's country](https://docs.stripe.com/payouts).
 * `details_submitted` - Whether account details have been submitted. Accounts with Stripe Dashboard access, which includes Standard accounts, cannot receive payouts before this is true. Accounts where this is false should be directed to [an onboarding flow](https://docs.stripe.com/connect/onboarding) to finish submitting account details.
 * `email` - The email address of the account holder. This is only to make the account easier to identify to you. If [controller.requirement_collection](https://docs.stripe.com/api/accounts/object#account_object-controller-requirement_collection) is `application`, which includes Custom accounts, Stripe doesn't email the account without your consent.
 * `external_account` - A card or bank account to attach to the account for receiving [payouts](https://docs.stripe.com/connect/bank-debit-card-payouts) (you won’t be able to use it for top-ups). You can provide either a token, like the ones returned by [Stripe.js](https://docs.stripe.com/js), or a dictionary, as documented in the `external_account` parameter for [bank account](https://docs.stripe.com/api#account_create_bank_account) creation. <br><br>By default, providing an external account sets it as the new default external account for its currency, and deletes the old default if one exists. To add additional external accounts without replacing the existing default for the currency, use the [bank account](https://docs.stripe.com/api#account_create_bank_account) or [card creation](https://docs.stripe.com/api#account_create_card) APIs. After you create an [Account Link](https://docs.stripe.com/api/account_links) or [Account Session](https://docs.stripe.com/api/account_sessions), this property can only be updated for accounts where [controller.requirement_collection](https://docs.stripe.com/api/accounts/object#account_object-controller-requirement_collection) is `application`, which includes Custom accounts.
 * `future_requirements` - See [`future_requirements`](#future_requirements) below.
+* `groups` - A hash of account group type to tokens. These are account groups this account should be added to. See [`groups`](#groups) below.
 * `individual` - Information about the person represented by the account. This field is null unless `business_type` is set to `individual`. Once you create an [Account Link](https://docs.stripe.com/api/account_links) or [Account Session](https://docs.stripe.com/api/account_sessions), this property can only be updated for accounts where [controller.requirement_collection](https://docs.stripe.com/api/accounts/object#account_object-controller-requirement_collection) is `application`, which includes Custom accounts. See [`individual`](#individual) below.
 * `metadata` - Set of [key-value pairs](https://docs.stripe.com/api/metadata) that you can attach to an object. This can be useful for storing additional information about the object in a structured format. Individual keys can be unset by posting an empty value to them. All keys can be unset by posting an empty value to `metadata`.
 * `payouts_enabled` - Whether the funds in this account can be paid out.
@@ -103,73 +105,73 @@ The `business_profile.support_address` attribute supports:
 The `capabilities` attribute supports:
 
 * `acss_debit_payments` - See [`capabilities.acss_debit_payments`](#capabilities.acss_debit_payments) below.
-* `affirm_payments` - See [`capabilities.affirm_payments`](#capabilities.affirm_payments) below.
-* `afterpay_clearpay_payments` - See [`capabilities.afterpay_clearpay_payments`](#capabilities.afterpay_clearpay_payments) below.
+* `affirm_payments` - The status of the Affirm capability of the account, or whether the account can directly process Affirm charges. Possible values: `active`, `inactive`, `pending`.
+* `afterpay_clearpay_payments` - The status of the Afterpay Clearpay capability of the account, or whether the account can directly process Afterpay Clearpay charges. Possible values: `active`, `inactive`, `pending`.
 * `alma_payments` - See [`capabilities.alma_payments`](#capabilities.alma_payments) below.
-* `amazon_pay_payments` - See [`capabilities.amazon_pay_payments`](#capabilities.amazon_pay_payments) below.
-* `app_distribution` - See [`capabilities.app_distribution`](#capabilities.app_distribution) below.
+* `amazon_pay_payments` - The status of the AmazonPay capability of the account, or whether the account can directly process AmazonPay payments. Possible values: `active`, `inactive`, `pending`.
+* `app_distribution` - The status of the `app_distribution` capability of the account, or whether the platform can distribute apps to other accounts. Possible values: `active`, `inactive`, `pending`.
 * `au_becs_debit_payments` - See [`capabilities.au_becs_debit_payments`](#capabilities.au_becs_debit_payments) below.
 * `bacs_debit_payments` - See [`capabilities.bacs_debit_payments`](#capabilities.bacs_debit_payments) below.
-* `bancontact_payments` - See [`capabilities.bancontact_payments`](#capabilities.bancontact_payments) below.
-* `bank_transfer_payments` - See [`capabilities.bank_transfer_payments`](#capabilities.bank_transfer_payments) below.
+* `bancontact_payments` - The status of the Bancontact payments capability of the account, or whether the account can directly process Bancontact charges. Possible values: `active`, `inactive`, `pending`.
+* `bank_transfer_payments` - The status of the customer_balance payments capability of the account, or whether the account can directly process customer_balance charges. Possible values: `active`, `inactive`, `pending`.
 * `billie_payments` - See [`capabilities.billie_payments`](#capabilities.billie_payments) below.
 * `bizum_payments` - See [`capabilities.bizum_payments`](#capabilities.bizum_payments) below.
 * `blik_payments` - See [`capabilities.blik_payments`](#capabilities.blik_payments) below.
-* `blik_recurring_payments` - See [`capabilities.blik_recurring_payments`](#capabilities.blik_recurring_payments) below.
+* `blik_recurring_payments` - The status of the BLIK recurring payments capability of the account, or whether the account can accept recurring and subscription BLIK payments. Possible values: `active`, `inactive`, `pending`.
 * `boleto_payments` - See [`capabilities.boleto_payments`](#capabilities.boleto_payments) below.
-* `card_issuing` - See [`capabilities.card_issuing`](#capabilities.card_issuing) below.
-* `card_payments` - See [`capabilities.card_payments`](#capabilities.card_payments) below.
-* `cartes_bancaires_payments` - See [`capabilities.cartes_bancaires_payments`](#capabilities.cartes_bancaires_payments) below.
-* `cashapp_payments` - See [`capabilities.cashapp_payments`](#capabilities.cashapp_payments) below.
-* `crypto_payments` - See [`capabilities.crypto_payments`](#capabilities.crypto_payments) below.
-* `eps_payments` - See [`capabilities.eps_payments`](#capabilities.eps_payments) below.
+* `card_issuing` - The status of the card issuing capability of the account, or whether you can use Issuing to distribute funds on cards Possible values: `active`, `inactive`, `pending`.
+* `card_payments` - The status of the card payments capability of the account, or whether the account can directly process credit and debit card charges. Possible values: `active`, `inactive`, `pending`.
+* `cartes_bancaires_payments` - The status of the Cartes Bancaires payments capability of the account, or whether the account can directly process Cartes Bancaires card charges in EUR currency. Possible values: `active`, `inactive`, `pending`.
+* `cashapp_payments` - The status of the Cash App Pay capability of the account, or whether the account can directly process Cash App Pay payments. Possible values: `active`, `inactive`, `pending`.
+* `crypto_payments` - The status of the Crypto capability of the account, or whether the account can directly process Crypto payments. Possible values: `active`, `inactive`, `pending`.
+* `eps_payments` - The status of the EPS payments capability of the account, or whether the account can directly process EPS charges. Possible values: `active`, `inactive`, `pending`.
 * `fpx_payments` - See [`capabilities.fpx_payments`](#capabilities.fpx_payments) below.
-* `gb_bank_transfer_payments` - See [`capabilities.gb_bank_transfer_payments`](#capabilities.gb_bank_transfer_payments) below.
+* `gb_bank_transfer_payments` - The status of the GB customer_balance payments (GBP currency) capability of the account, or whether the account can directly process GB customer_balance charges. Possible values: `active`, `inactive`, `pending`.
 * `giropay_payments` - See [`capabilities.giropay_payments`](#capabilities.giropay_payments) below.
 * `grabpay_payments` - See [`capabilities.grabpay_payments`](#capabilities.grabpay_payments) below.
-* `ideal_payments` - See [`capabilities.ideal_payments`](#capabilities.ideal_payments) below.
+* `ideal_payments` - The status of the iDEAL payments capability of the account, or whether the account can directly process iDEAL charges. Possible values: `active`, `inactive`, `pending`.
 * `india_international_payments` - See [`capabilities.india_international_payments`](#capabilities.india_international_payments) below.
 * `jcb_payments` - See [`capabilities.jcb_payments`](#capabilities.jcb_payments) below.
 * `jp_bank_transfer_payments` - See [`capabilities.jp_bank_transfer_payments`](#capabilities.jp_bank_transfer_payments) below.
-* `kakao_pay_payments` - See [`capabilities.kakao_pay_payments`](#capabilities.kakao_pay_payments) below.
-* `klarna_payments` - See [`capabilities.klarna_payments`](#capabilities.klarna_payments) below.
+* `kakao_pay_payments` - The status of the KakaoPay capability of the account, or whether the account can directly process KakaoPay payments. Possible values: `active`, `inactive`, `pending`.
+* `klarna_payments` - The status of the Klarna payments capability of the account, or whether the account can directly process Klarna charges. Possible values: `active`, `inactive`, `pending`.
 * `konbini_payments` - See [`capabilities.konbini_payments`](#capabilities.konbini_payments) below.
-* `kr_card_payments` - See [`capabilities.kr_card_payments`](#capabilities.kr_card_payments) below.
+* `kr_card_payments` - The status of the KrCard capability of the account, or whether the account can directly process KrCard payments. Possible values: `active`, `inactive`, `pending`.
 * `legacy_payments` - See [`capabilities.legacy_payments`](#capabilities.legacy_payments) below.
-* `link_payments` - See [`capabilities.link_payments`](#capabilities.link_payments) below.
-* `mb_way_payments` - See [`capabilities.mb_way_payments`](#capabilities.mb_way_payments) below.
+* `link_payments` - The status of the link_payments capability of the account, or whether the account can directly process Link charges. Possible values: `active`, `inactive`, `pending`.
+* `mb_way_payments` - The status of the MB WAY payments capability of the account, or whether the account can directly process MB WAY charges. Possible values: `active`, `inactive`, `pending`.
 * `mobilepay_payments` - See [`capabilities.mobilepay_payments`](#capabilities.mobilepay_payments) below.
-* `multibanco_payments` - See [`capabilities.multibanco_payments`](#capabilities.multibanco_payments) below.
+* `multibanco_payments` - The status of the Multibanco payments capability of the account, or whether the account can directly process Multibanco charges. Possible values: `active`, `inactive`, `pending`.
 * `mx_bank_transfer_payments` - See [`capabilities.mx_bank_transfer_payments`](#capabilities.mx_bank_transfer_payments) below.
-* `naver_pay_payments` - See [`capabilities.naver_pay_payments`](#capabilities.naver_pay_payments) below.
+* `naver_pay_payments` - The status of the NaverPay capability of the account, or whether the account can directly process NaverPay payments. Possible values: `active`, `inactive`, `pending`.
 * `nz_bank_account_becs_debit_payments` - See [`capabilities.nz_bank_account_becs_debit_payments`](#capabilities.nz_bank_account_becs_debit_payments) below.
 * `oxxo_payments` - See [`capabilities.oxxo_payments`](#capabilities.oxxo_payments) below.
-* `p24_payments` - See [`capabilities.p24_payments`](#capabilities.p24_payments) below.
+* `p24_payments` - The status of the P24 payments capability of the account, or whether the account can directly process P24 charges. Possible values: `active`, `inactive`, `pending`.
 * `pay_by_bank_payments` - See [`capabilities.pay_by_bank_payments`](#capabilities.pay_by_bank_payments) below.
-* `payco_payments` - See [`capabilities.payco_payments`](#capabilities.payco_payments) below.
+* `payco_payments` - The status of the Payco capability of the account, or whether the account can directly process Payco payments. Possible values: `active`, `inactive`, `pending`.
 * `paynow_payments` - See [`capabilities.paynow_payments`](#capabilities.paynow_payments) below.
 * `paypay_payments` - See [`capabilities.paypay_payments`](#capabilities.paypay_payments) below.
 * `payto_payments` - See [`capabilities.payto_payments`](#capabilities.payto_payments) below.
-* `pix_payments` - See [`capabilities.pix_payments`](#capabilities.pix_payments) below.
+* `pix_payments` - The status of the pix payments capability of the account, or whether the account can directly process pix charges. Possible values: `active`, `inactive`, `pending`.
 * `promptpay_payments` - See [`capabilities.promptpay_payments`](#capabilities.promptpay_payments) below.
 * `revolut_pay_payments` - See [`capabilities.revolut_pay_payments`](#capabilities.revolut_pay_payments) below.
-* `samsung_pay_payments` - See [`capabilities.samsung_pay_payments`](#capabilities.samsung_pay_payments) below.
-* `satispay_payments` - See [`capabilities.satispay_payments`](#capabilities.satispay_payments) below.
-* `scalapay_payments` - See [`capabilities.scalapay_payments`](#capabilities.scalapay_payments) below.
-* `sepa_bank_transfer_payments` - See [`capabilities.sepa_bank_transfer_payments`](#capabilities.sepa_bank_transfer_payments) below.
-* `sepa_debit_payments` - See [`capabilities.sepa_debit_payments`](#capabilities.sepa_debit_payments) below.
+* `samsung_pay_payments` - The status of the SamsungPay capability of the account, or whether the account can directly process SamsungPay payments. Possible values: `active`, `inactive`, `pending`.
+* `satispay_payments` - The status of the Satispay capability of the account, or whether the account can directly process Satispay payments. Possible values: `active`, `inactive`, `pending`.
+* `scalapay_payments` - The status of the Scalapay capability of the account, or whether the account can directly process Scalapay payments. Possible values: `active`, `inactive`, `pending`.
+* `sepa_bank_transfer_payments` - The status of the SEPA customer_balance payments (EUR currency) capability of the account, or whether the account can directly process SEPA customer_balance charges. Possible values: `active`, `inactive`, `pending`.
+* `sepa_debit_payments` - The status of the SEPA Direct Debits payments capability of the account, or whether the account can directly process SEPA Direct Debits charges. Possible values: `active`, `inactive`, `pending`.
 * `sequra_payments` - See [`capabilities.sequra_payments`](#capabilities.sequra_payments) below.
 * `sofort_payments` - See [`capabilities.sofort_payments`](#capabilities.sofort_payments) below.
-* `sunbit_payments` - See [`capabilities.sunbit_payments`](#capabilities.sunbit_payments) below.
+* `sunbit_payments` - The status of the Sunbit capability of the account, or whether the account can directly process Sunbit payments. Possible values: `active`, `inactive`, `pending`.
 * `swish_payments` - See [`capabilities.swish_payments`](#capabilities.swish_payments) below.
-* `tax_reporting_us_1099_k` - See [`capabilities.tax_reporting_us_1099_k`](#capabilities.tax_reporting_us_1099_k) below.
-* `tax_reporting_us_1099_misc` - See [`capabilities.tax_reporting_us_1099_misc`](#capabilities.tax_reporting_us_1099_misc) below.
-* `transfers` - See [`capabilities.transfers`](#capabilities.transfers) below.
-* `treasury` - See [`capabilities.treasury`](#capabilities.treasury) below.
+* `tax_reporting_us_1099_k` - The status of the tax reporting 1099-K (US) capability of the account. Possible values: `active`, `inactive`, `pending`.
+* `tax_reporting_us_1099_misc` - The status of the tax reporting 1099-MISC (US) capability of the account. Possible values: `active`, `inactive`, `pending`.
+* `transfers` - The status of the transfers capability of the account, or whether your platform can transfer funds to the account. Possible values: `active`, `inactive`, `pending`.
+* `treasury` - The status of the banking capability, or whether the account can have bank accounts. Possible values: `active`, `inactive`, `pending`.
 * `twint_payments` - See [`capabilities.twint_payments`](#capabilities.twint_payments) below.
-* `upi_payments` - See [`capabilities.upi_payments`](#capabilities.upi_payments) below.
-* `us_bank_account_ach_payments` - See [`capabilities.us_bank_account_ach_payments`](#capabilities.us_bank_account_ach_payments) below.
-* `us_bank_transfer_payments` - See [`capabilities.us_bank_transfer_payments`](#capabilities.us_bank_transfer_payments) below.
+* `upi_payments` - The status of the upi payments capability of the account, or whether the account can directly process upi charges. Possible values: `active`, `inactive`, `pending`.
+* `us_bank_account_ach_payments` - The status of the US bank account ACH payments capability of the account, or whether the account can directly process US bank account charges. Possible values: `active`, `inactive`, `pending`.
+* `us_bank_transfer_payments` - The status of the US customer_balance payments (USD currency) capability of the account, or whether the account can directly process US customer_balance charges. Possible values: `active`, `inactive`, `pending`.
 * `zip_payments` - See [`capabilities.zip_payments`](#capabilities.zip_payments) below.
 
 <a id="capabilities.acss_debit_payments"></a>
@@ -179,38 +181,10 @@ The `capabilities.acss_debit_payments` attribute supports:
 
 * `requested` -
 
-<a id="capabilities.affirm_payments"></a>
-### `capabilities.affirm_payments`
-
-The `capabilities.affirm_payments` attribute supports:
-
-* `requested` -
-
-<a id="capabilities.afterpay_clearpay_payments"></a>
-### `capabilities.afterpay_clearpay_payments`
-
-The `capabilities.afterpay_clearpay_payments` attribute supports:
-
-* `requested` -
-
 <a id="capabilities.alma_payments"></a>
 ### `capabilities.alma_payments`
 
 The `capabilities.alma_payments` attribute supports:
-
-* `requested` -
-
-<a id="capabilities.amazon_pay_payments"></a>
-### `capabilities.amazon_pay_payments`
-
-The `capabilities.amazon_pay_payments` attribute supports:
-
-* `requested` -
-
-<a id="capabilities.app_distribution"></a>
-### `capabilities.app_distribution`
-
-The `capabilities.app_distribution` attribute supports:
 
 * `requested` -
 
@@ -225,20 +199,6 @@ The `capabilities.au_becs_debit_payments` attribute supports:
 ### `capabilities.bacs_debit_payments`
 
 The `capabilities.bacs_debit_payments` attribute supports:
-
-* `requested` -
-
-<a id="capabilities.bancontact_payments"></a>
-### `capabilities.bancontact_payments`
-
-The `capabilities.bancontact_payments` attribute supports:
-
-* `requested` -
-
-<a id="capabilities.bank_transfer_payments"></a>
-### `capabilities.bank_transfer_payments`
-
-The `capabilities.bank_transfer_payments` attribute supports:
 
 * `requested` -
 
@@ -263,13 +223,6 @@ The `capabilities.blik_payments` attribute supports:
 
 * `requested` -
 
-<a id="capabilities.blik_recurring_payments"></a>
-### `capabilities.blik_recurring_payments`
-
-The `capabilities.blik_recurring_payments` attribute supports:
-
-* `requested` -
-
 <a id="capabilities.boleto_payments"></a>
 ### `capabilities.boleto_payments`
 
@@ -277,59 +230,10 @@ The `capabilities.boleto_payments` attribute supports:
 
 * `requested` -
 
-<a id="capabilities.card_issuing"></a>
-### `capabilities.card_issuing`
-
-The `capabilities.card_issuing` attribute supports:
-
-* `requested` -
-
-<a id="capabilities.card_payments"></a>
-### `capabilities.card_payments`
-
-The `capabilities.card_payments` attribute supports:
-
-* `requested` -
-
-<a id="capabilities.cartes_bancaires_payments"></a>
-### `capabilities.cartes_bancaires_payments`
-
-The `capabilities.cartes_bancaires_payments` attribute supports:
-
-* `requested` -
-
-<a id="capabilities.cashapp_payments"></a>
-### `capabilities.cashapp_payments`
-
-The `capabilities.cashapp_payments` attribute supports:
-
-* `requested` -
-
-<a id="capabilities.crypto_payments"></a>
-### `capabilities.crypto_payments`
-
-The `capabilities.crypto_payments` attribute supports:
-
-* `requested` -
-
-<a id="capabilities.eps_payments"></a>
-### `capabilities.eps_payments`
-
-The `capabilities.eps_payments` attribute supports:
-
-* `requested` -
-
 <a id="capabilities.fpx_payments"></a>
 ### `capabilities.fpx_payments`
 
 The `capabilities.fpx_payments` attribute supports:
-
-* `requested` -
-
-<a id="capabilities.gb_bank_transfer_payments"></a>
-### `capabilities.gb_bank_transfer_payments`
-
-The `capabilities.gb_bank_transfer_payments` attribute supports:
 
 * `requested` -
 
@@ -344,13 +248,6 @@ The `capabilities.giropay_payments` attribute supports:
 ### `capabilities.grabpay_payments`
 
 The `capabilities.grabpay_payments` attribute supports:
-
-* `requested` -
-
-<a id="capabilities.ideal_payments"></a>
-### `capabilities.ideal_payments`
-
-The `capabilities.ideal_payments` attribute supports:
 
 * `requested` -
 
@@ -375,31 +272,10 @@ The `capabilities.jp_bank_transfer_payments` attribute supports:
 
 * `requested` -
 
-<a id="capabilities.kakao_pay_payments"></a>
-### `capabilities.kakao_pay_payments`
-
-The `capabilities.kakao_pay_payments` attribute supports:
-
-* `requested` -
-
-<a id="capabilities.klarna_payments"></a>
-### `capabilities.klarna_payments`
-
-The `capabilities.klarna_payments` attribute supports:
-
-* `requested` -
-
 <a id="capabilities.konbini_payments"></a>
 ### `capabilities.konbini_payments`
 
 The `capabilities.konbini_payments` attribute supports:
-
-* `requested` -
-
-<a id="capabilities.kr_card_payments"></a>
-### `capabilities.kr_card_payments`
-
-The `capabilities.kr_card_payments` attribute supports:
 
 * `requested` -
 
@@ -410,20 +286,6 @@ The `capabilities.legacy_payments` attribute supports:
 
 * `requested` -
 
-<a id="capabilities.link_payments"></a>
-### `capabilities.link_payments`
-
-The `capabilities.link_payments` attribute supports:
-
-* `requested` -
-
-<a id="capabilities.mb_way_payments"></a>
-### `capabilities.mb_way_payments`
-
-The `capabilities.mb_way_payments` attribute supports:
-
-* `requested` -
-
 <a id="capabilities.mobilepay_payments"></a>
 ### `capabilities.mobilepay_payments`
 
@@ -431,24 +293,10 @@ The `capabilities.mobilepay_payments` attribute supports:
 
 * `requested` -
 
-<a id="capabilities.multibanco_payments"></a>
-### `capabilities.multibanco_payments`
-
-The `capabilities.multibanco_payments` attribute supports:
-
-* `requested` -
-
 <a id="capabilities.mx_bank_transfer_payments"></a>
 ### `capabilities.mx_bank_transfer_payments`
 
 The `capabilities.mx_bank_transfer_payments` attribute supports:
-
-* `requested` -
-
-<a id="capabilities.naver_pay_payments"></a>
-### `capabilities.naver_pay_payments`
-
-The `capabilities.naver_pay_payments` attribute supports:
 
 * `requested` -
 
@@ -466,24 +314,10 @@ The `capabilities.oxxo_payments` attribute supports:
 
 * `requested` -
 
-<a id="capabilities.p24_payments"></a>
-### `capabilities.p24_payments`
-
-The `capabilities.p24_payments` attribute supports:
-
-* `requested` -
-
 <a id="capabilities.pay_by_bank_payments"></a>
 ### `capabilities.pay_by_bank_payments`
 
 The `capabilities.pay_by_bank_payments` attribute supports:
-
-* `requested` -
-
-<a id="capabilities.payco_payments"></a>
-### `capabilities.payco_payments`
-
-The `capabilities.payco_payments` attribute supports:
 
 * `requested` -
 
@@ -508,13 +342,6 @@ The `capabilities.payto_payments` attribute supports:
 
 * `requested` -
 
-<a id="capabilities.pix_payments"></a>
-### `capabilities.pix_payments`
-
-The `capabilities.pix_payments` attribute supports:
-
-* `requested` -
-
 <a id="capabilities.promptpay_payments"></a>
 ### `capabilities.promptpay_payments`
 
@@ -526,41 +353,6 @@ The `capabilities.promptpay_payments` attribute supports:
 ### `capabilities.revolut_pay_payments`
 
 The `capabilities.revolut_pay_payments` attribute supports:
-
-* `requested` -
-
-<a id="capabilities.samsung_pay_payments"></a>
-### `capabilities.samsung_pay_payments`
-
-The `capabilities.samsung_pay_payments` attribute supports:
-
-* `requested` -
-
-<a id="capabilities.satispay_payments"></a>
-### `capabilities.satispay_payments`
-
-The `capabilities.satispay_payments` attribute supports:
-
-* `requested` -
-
-<a id="capabilities.scalapay_payments"></a>
-### `capabilities.scalapay_payments`
-
-The `capabilities.scalapay_payments` attribute supports:
-
-* `requested` -
-
-<a id="capabilities.sepa_bank_transfer_payments"></a>
-### `capabilities.sepa_bank_transfer_payments`
-
-The `capabilities.sepa_bank_transfer_payments` attribute supports:
-
-* `requested` -
-
-<a id="capabilities.sepa_debit_payments"></a>
-### `capabilities.sepa_debit_payments`
-
-The `capabilities.sepa_debit_payments` attribute supports:
 
 * `requested` -
 
@@ -578,13 +370,6 @@ The `capabilities.sofort_payments` attribute supports:
 
 * `requested` -
 
-<a id="capabilities.sunbit_payments"></a>
-### `capabilities.sunbit_payments`
-
-The `capabilities.sunbit_payments` attribute supports:
-
-* `requested` -
-
 <a id="capabilities.swish_payments"></a>
 ### `capabilities.swish_payments`
 
@@ -592,59 +377,10 @@ The `capabilities.swish_payments` attribute supports:
 
 * `requested` -
 
-<a id="capabilities.tax_reporting_us_1099_k"></a>
-### `capabilities.tax_reporting_us_1099_k`
-
-The `capabilities.tax_reporting_us_1099_k` attribute supports:
-
-* `requested` -
-
-<a id="capabilities.tax_reporting_us_1099_misc"></a>
-### `capabilities.tax_reporting_us_1099_misc`
-
-The `capabilities.tax_reporting_us_1099_misc` attribute supports:
-
-* `requested` -
-
-<a id="capabilities.transfers"></a>
-### `capabilities.transfers`
-
-The `capabilities.transfers` attribute supports:
-
-* `requested` -
-
-<a id="capabilities.treasury"></a>
-### `capabilities.treasury`
-
-The `capabilities.treasury` attribute supports:
-
-* `requested` -
-
 <a id="capabilities.twint_payments"></a>
 ### `capabilities.twint_payments`
 
 The `capabilities.twint_payments` attribute supports:
-
-* `requested` -
-
-<a id="capabilities.upi_payments"></a>
-### `capabilities.upi_payments`
-
-The `capabilities.upi_payments` attribute supports:
-
-* `requested` -
-
-<a id="capabilities.us_bank_account_ach_payments"></a>
-### `capabilities.us_bank_account_ach_payments`
-
-The `capabilities.us_bank_account_ach_payments` attribute supports:
-
-* `requested` -
-
-<a id="capabilities.us_bank_transfer_payments"></a>
-### `capabilities.us_bank_transfer_payments`
-
-The `capabilities.us_bank_transfer_payments` attribute supports:
 
 * `requested` -
 
@@ -668,10 +404,17 @@ The `company` attribute supports:
 * `name` - The company's legal name. Also available for accounts where [controller.requirement_collection](https://docs.stripe.com/api/accounts/object#account_object-controller-requirement_collection) is `stripe`.
 * `owners_provided` - Whether the company's owners have been provided. This Boolean will be `true` if you've manually indicated that all owners are provided via [the `owners_provided` parameter](https://docs.stripe.com/api/accounts/update#update_account-company-owners_provided), or if Stripe determined that sufficient owners were provided. Stripe determines ownership requirements using both the number of owners provided and their total percent ownership (calculated by adding the `percent_ownership` of each owner together).
 * `ownership_declaration` - This hash is used to attest that the beneficial owner information provided to Stripe is both current and correct. See [`company.ownership_declaration`](#company.ownership_declaration) below.
+* `ownership_exemption_reason` - Possible values: `qualified_entity_exceeds_ownership_threshold`, `qualifies_as_financial_institution`.
 * `phone` - The company's phone number (used for verification).
 * `principal_place_of_business` - See [`company.principal_place_of_business`](#company.principal_place_of_business) below.
 * `registration_date` - See [`company.registration_date`](#company.registration_date) below.
+* `registration_number` -
 * `structure` - The category identifying the legal structure of the company or legal entity. Also available for accounts where [controller.requirement_collection](https://docs.stripe.com/api/accounts/object#account_object-controller-requirement_collection) is `stripe`. See [Business structure](https://docs.stripe.com/connect/identity-verification#business-structure) for more details. Possible values: `free_zone_establishment`, `free_zone_llc`, `government_instrumentality`, `governmental_unit`, `incorporated_non_profit`, `incorporated_partnership`, `limited_liability_partnership`, `llc`, `multi_member_llc`, `private_company`, `private_corporation`, `private_partnership`, `public_company`, `public_corporation`, `public_partnership`, `registered_charity`, `single_member_llc`, `sole_establishment`, `sole_proprietorship`, `tax_exempt_government_instrumentality`, `unincorporated_association`, `unincorporated_non_profit`, `unincorporated_partnership`.
+* `tax_id` - (Sensitive)
+* `tax_id_provided` - Whether the company's business ID number was provided.
+* `tax_id_registrar` -
+* `vat_id` - (Sensitive)
+* `vat_id_provided` - Whether the company's business VAT number was provided.
 
 <a id="company.address"></a>
 ### `company.address`
@@ -800,26 +543,40 @@ The `future_requirements.errors` attribute is a list. Each element supports:
 * `reason` - An informative message that indicates the error type and provides additional details about the error.
 * `requirement` - The specific user onboarding requirement field (in the requirements hash) that needs to be resolved.
 
+<a id="groups"></a>
+### `groups`
+
+The `groups` attribute supports:
+
+* `payments_pricing` -
+
 <a id="individual"></a>
 ### `individual`
 
 The `individual` attribute supports:
 
+* `account` - The account the person is associated with.
 * `address` - The person's address. See [`individual.address`](#individual.address) below.
+* `created` - Time at which the object was created. Measured in seconds since the Unix epoch.
 * `dob` - The person's date of birth. See [`individual.dob`](#individual.dob) below.
 * `email` - The person's email address. Also available for accounts where [controller.requirement_collection](https://docs.stripe.com/api/accounts/object#account_object-controller-requirement_collection) is `stripe`.
 * `first_name` - The person's first name. Also available for accounts where [controller.requirement_collection](https://docs.stripe.com/api/accounts/object#account_object-controller-requirement_collection) is `stripe`.
 * `full_name_aliases` - A list of alternate names or aliases that the person is known by. Also available for accounts where [controller.requirement_collection](https://docs.stripe.com/api/accounts/object#account_object-controller-requirement_collection) is `stripe`.
 * `gender` - The person's gender.
+* `id` - Unique identifier for the object.
 * `id_number` - (Sensitive) The person's ID number, as appropriate for their country. For example, a social security number in the U.S., social insurance number in Canada, etc. Instead of the number itself, you can also provide a [PII token provided by Stripe.js](https://docs.stripe.com/js/tokens/create_token?type=pii). Changing this value for the account's representative requires that the account re-accept the [terms of service](https://docs.stripe.com/api/accounts/object#account_object-tos_acceptance).
+* `id_number_provided` - Whether the person's `id_number` was provided. True if either the full ID number was provided or if only the required part of the ID number was provided (ex. last four of an individual's SSN for the US indicated by `ssn_last_4_provided`).
+* `id_number_secondary` - (Sensitive) The person's secondary ID number, as appropriate for their country, will be used for enhanced verification checks. In Thailand, this would be the laser code found on the back of an ID card. Instead of the number itself, you can also provide a [PII token provided by Stripe.js](https://docs.stripe.com/js/tokens/create_token?type=pii). Changing this value for the account's representative requires that the account re-accept the [terms of service](https://docs.stripe.com/api/accounts/object#account_object-tos_acceptance).
 * `last_name` - The person's last name. Also available for accounts where [controller.requirement_collection](https://docs.stripe.com/api/accounts/object#account_object-controller-requirement_collection) is `stripe`.
 * `maiden_name` - The person's maiden name.
 * `metadata` - Set of [key-value pairs](https://docs.stripe.com/api/metadata) that you can attach to an object. This can be useful for storing additional information about the object in a structured format.
+* `object` - String representing the object's type. Objects of the same type share the same value. Possible values: `person`.
 * `phone` - The person's phone number.
 * `political_exposure` - Indicates if the person or any of their representatives, family members, or other closely related persons, declares that they hold or have held an important public job or function, in any jurisdiction. Possible values: `existing`, `none`.
 * `registered_address` - The person's registered address. See [`individual.registered_address`](#individual.registered_address) below.
 * `relationship` - The relationship that this person has with the account's legal entity. See [`individual.relationship`](#individual.relationship) below.
 * `ssn_last_4` - (Sensitive) The last four digits of the person's Social Security number (U.S. only). Changing this value for the account's representative requires that the account re-accept the [terms of service](https://docs.stripe.com/api/accounts/object#account_object-tos_acceptance).
+* `ssn_last_4_provided` - Whether the last four digits of the person's Social Security number have been provided (U.S. only).
 * `verification` - The person's verification status. See [`individual.verification`](#individual.verification) below.
 
 <a id="individual.address"></a>
@@ -860,10 +617,13 @@ The `individual.registered_address` attribute supports:
 
 The `individual.relationship` attribute supports:
 
+* `authorizer` - Whether the person is the authorizer of the account's representative.
 * `director` - Whether the person is a director of the account's legal entity. Directors are typically members of the governing board of the company, or responsible for ensuring the company meets its regulatory obligations.
 * `executive` - Whether the person has significant responsibility to control, manage, or direct the organization.
+* `legal_guardian` - Whether the person is the legal guardian of the account's representative.
 * `owner` - Whether the person is an owner of the account’s legal entity.
 * `percent_ownership` - The percent owned by the person of the account's legal entity.
+* `representative` - Whether the person is authorized as the primary representative of the account. This is the person nominated by the business to provide information about themselves, and general information about the account. There can only be one representative at any given time. At the time the account is created, this person should be set to the person responsible for opening the account.
 * `title` - The person's title (e.g., CEO, Support Engineer).
 
 <a id="individual.verification"></a>
@@ -1030,10 +790,10 @@ The `settings.payouts` attribute supports:
 The `settings.payouts.schedule` attribute supports:
 
 * `delay_days` - The number of days charges for the account will be held before being paid out.
-* `interval` - How frequently funds will be paid out. One of `manual` (payouts only created via API call), `daily`, `weekly`, or `monthly`.
+* `interval` - How frequently funds will be paid out. One of `manual` (payouts only created via API call), `daily`, `weekly`, or `monthly`. Possible values: `daily`, `manual`, `monthly`, `weekly`.
 * `monthly_anchor` - The day of the month funds will be paid out. Only shown if `interval` is monthly. Payouts scheduled between the 29th and 31st of the month are sent on the last day of shorter months.
 * `monthly_payout_days` - The days of the month funds will be paid out. Only shown if `interval` is monthly. Payouts scheduled between the 29th and 31st of the month are sent on the last day of shorter months.
-* `weekly_anchor` - The day of the week funds will be paid out, of the style 'monday', 'tuesday', etc. Only shown if `interval` is weekly.
+* `weekly_anchor` - The day of the week funds will be paid out, of the style 'monday', 'tuesday', etc. Only shown if `interval` is weekly. Possible values: `friday`, `monday`, `saturday`, `sunday`, `thursday`, `tuesday`, `wednesday`.
 * `weekly_payout_days` - The days of the week when available funds are paid out, specified as an array, for example, [`monday`, `tuesday`]. Only shown if `interval` is weekly.
 
 <a id="settings.paypay_payments"></a>

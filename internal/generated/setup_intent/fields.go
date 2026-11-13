@@ -417,15 +417,45 @@ var Table = []fields.Field{
 			{Name: "email", Shape: fields.String, Create: true, Update: true},
 			{Name: "name", Shape: fields.String, Create: true, Update: true},
 			{Name: "phone", Shape: fields.String, Create: true, Update: true},
-			{Name: "tax_id", Shape: fields.String, Create: true, Refused: "Stripe refused it on a US account on create: \"A tax identifier may not be provided on this payment method as it is not required.\"."},
+			{Name: "tax_id", Shape: fields.String, Create: true},
+		}},
+		{Name: "eps", Shape: fields.Object, Update: true, Fields: []fields.Field{
+			{Name: "bank", Shape: fields.String, Update: true, Enum: []string{"arzte_und_apotheker_bank", "austrian_anadi_bank_ag", "bank_austria", "bankhaus_carl_spangler", "bankhaus_schelhammer_und_schattera_ag", "bawag_psk_ag", "bks_bank_ag", "brull_kallmus_bank_ag", "btv_vier_lander_bank", "capital_bank_grawe_gruppe_ag", "deutsche_bank_ag", "dolomitenbank", "easybank_ag", "erste_bank_und_sparkassen", "hypo_alpeadriabank_international_ag", "hypo_bank_burgenland_aktiengesellschaft", "hypo_noe_lb_fur_niederosterreich_u_wien", "hypo_oberosterreich_salzburg_steiermark", "hypo_tirol_bank_ag", "hypo_vorarlberg_bank_ag", "marchfelder_bank", "oberbank_ag", "raiffeisen_bankengruppe_osterreich", "schoellerbank_ag", "sparda_bank_wien", "volksbank_gruppe", "volkskreditbank_ag", "vr_bank_braunau"}, Default: &fields.Default{Kind: fields.DefaultNotSent}, Refused: "Stripe refused it on a US account on update: \"The provided `payment_method_data[eps]` data does not correspond to the passed `type`, `bancontact`.\"."},
+		}},
+		{Name: "ideal", Shape: fields.Object, Create: true, Update: true, Fields: []fields.Field{
+			{Name: "bank", Shape: fields.String, Create: true, Update: true, Enum: []string{"abn_amro", "adyen", "asn_bank", "bunq", "buut", "finom", "handelsbanken", "ing", "knab", "mollie", "moneyou", "n26", "nn", "rabobank", "regiobank", "revolut", "sns_bank", "triodos_bank", "van_lanschot", "yoursafe"}},
 		}},
 		{Name: "metadata", Shape: fields.StringMap, Create: true, Update: true},
+		{Name: "naver_pay", Shape: fields.Object, Create: true, Update: true, Fields: []fields.Field{
+			{Name: "funding", Shape: fields.String, Create: true, Update: true, Enum: []string{"card", "points"}},
+		}},
+		{Name: "p24", Shape: fields.Object, Update: true, Fields: []fields.Field{
+			{Name: "bank", Shape: fields.String, Update: true, Enum: []string{"alior_bank", "bank_millennium", "bank_nowy_bfg_sa", "bank_pekao_sa", "banki_spbdzielcze", "blik", "bnp_paribas", "boz", "citi_handlowy", "credit_agricole", "envelobank", "etransfer_pocztowy24", "getin_bank", "ideabank", "ing", "inteligo", "mbank_mtransfer", "nest_przelew", "noble_pay", "pbac_z_ipko", "plus_bank", "santander_przelew24", "tmobile_usbugi_bankowe", "toyota_bank", "velobank", "volkswagen_bank"}, Default: &fields.Default{Kind: fields.DefaultNotSent}, Refused: "Stripe refused it on a US account on update: \"The provided `payment_method_data[p24]` data does not correspond to the passed `type`, `bancontact`.\"."},
+		}},
 		{Name: "radar_options", Shape: fields.Object, Create: true, Update: true, Fields: []fields.Field{
 			{Name: "session", Shape: fields.String, Create: true, Update: true, Refused: "Stripe refused it on a US account on create and update: \"No such radar session: 'rse_...'\"."},
 		}},
 		{Name: "type", Shape: fields.String, Required: true, Create: true, Update: true, Enum: []string{"acss_debit", "affirm", "afterpay_clearpay", "alipay", "alma", "amazon_pay", "au_becs_debit", "bacs_debit", "bancontact", "billie", "bizum", "blik", "boleto", "cashapp", "crypto", "customer_balance", "eps", "fpx", "giropay", "grabpay", "ideal", "kakao_pay", "klarna", "konbini", "kr_card", "link", "mb_way", "mobilepay", "multibanco", "naver_pay", "nz_bank_account", "oxxo", "p24", "pay_by_bank", "payco", "paynow", "paypal", "paypay", "payto", "pix", "promptpay", "revolut_pay", "samsung_pay", "satispay", "scalapay", "sepa_debit", "sequra", "sofort", "sunbit", "swish", "twint", "upi", "us_bank_account", "wechat_pay", "zip"}},
+		{Name: "us_bank_account", Shape: fields.Object, Create: true, Update: true, Fields: []fields.Field{
+			{Name: "account_holder_type", Shape: fields.String, Create: true, Update: true, Enum: []string{"company", "individual"}},
+			{Name: "account_number", Shape: fields.String, Update: true, Default: &fields.Default{Kind: fields.DefaultNotSent}},
+			{Name: "account_type", Shape: fields.String, Create: true, Update: true, Enum: []string{"checking", "savings"}},
+			{Name: "financial_connections_account", Shape: fields.String, Update: true, Default: &fields.Default{Kind: fields.DefaultNotSent}, Refused: "Stripe refused it on a US account on update: \"No such Financial Connections Account: fca_...\"."},
+			{Name: "routing_number", Shape: fields.String, Create: true, Update: true},
+		}},
 	}},
-	{Name: "payment_method_options", Shape: fields.Object, Create: true, Update: true, Description: "Payment method-specific configuration for this SetupIntent.", Fields: []fields.Field{
+	{Name: "payment_method_options", Shape: fields.Object, Create: true, Update: true, Response: true, ServerDefaulted: true, Description: "Payment method-specific configuration for this SetupIntent.", Fields: []fields.Field{
+		{Name: "acss_debit", Shape: fields.Object, Create: true, Update: true, Response: true, ServerDefaulted: true, Fields: []fields.Field{
+			{Name: "currency", Shape: fields.String, Create: true, Update: true, Response: true, ServerDefaulted: true, Stable: true, Enum: []string{"cad", "usd"}, Description: "Currency supported by the bank account"},
+			{Name: "mandate_options", Shape: fields.Object, Create: true, Update: true, Response: true, ServerDefaulted: true, Fields: []fields.Field{
+				{Name: "custom_mandate_url", Shape: fields.String, Create: true, Update: true, Response: true, ServerDefaulted: true, Stable: true, Description: "A URL for custom mandate text"},
+				{Name: "default_for", Shape: fields.ScalarList, Elem: fields.String, Create: true, Update: true, Response: true, ServerDefaulted: true, Stable: true, Description: "List of Stripe products where this mandate can be selected automatically."},
+				{Name: "interval_description", Shape: fields.String, Create: true, Update: true, Response: true, ServerDefaulted: true, Stable: true, Description: "Description of the interval. Only required if the 'payment_schedule' parameter is 'interval' or 'combined'."},
+				{Name: "payment_schedule", Shape: fields.String, Create: true, Update: true, Response: true, ServerDefaulted: true, Stable: true, Enum: []string{"combined", "interval", "sporadic"}, Description: "Payment schedule for the mandate."},
+				{Name: "transaction_type", Shape: fields.String, Create: true, Update: true, Response: true, ServerDefaulted: true, Stable: true, Enum: []string{"business", "personal"}, Description: "Transaction type of the mandate."},
+			}},
+			{Name: "verification_method", Shape: fields.String, Create: true, Update: true, Response: true, ServerDefaulted: true, Stable: true, Enum: []string{"automatic", "instant", "microdeposits"}, Description: "Bank account verification method. The default value is `automatic`."},
+		}},
 		{Name: "card", Shape: fields.Object, Create: true, Update: true, Fields: []fields.Field{
 			{Name: "mandate_options", Shape: fields.Object, Create: true, Update: true, NotReturned: true, Fields: []fields.Field{
 				{Name: "amount", Shape: fields.Int, Required: true, Create: true, Update: true, NotReturned: true},
@@ -456,6 +486,70 @@ var Table = []fields.Field{
 				{Name: "transaction_id", Shape: fields.String, Update: true, Default: &fields.Default{Kind: fields.DefaultNotSent}, Refused: "Stripe refused it on a US account on update: \"You may only specify all or none of these parameters: version, cryptogram, transaction_id.\"."},
 				{Name: "version", Shape: fields.String, Update: true, Enum: []string{"1.0.2", "2.1.0", "2.2.0", "2.3.0", "2.3.1"}, Default: &fields.Default{Kind: fields.DefaultNotSent}, Refused: "Stripe refused it on a US account on update: \"You may only specify all or none of these parameters: version, cryptogram, transaction_id.\"."},
 			}},
+		}},
+		{Name: "klarna", Shape: fields.Object, Create: true, Update: true, Response: true, ServerDefaulted: true, Fields: []fields.Field{
+			{Name: "currency", Shape: fields.String, Create: true, Update: true, Response: true, ServerDefaulted: true, Stable: true, Description: "The currency of the setup intent. Three letter ISO currency code."},
+			{Name: "on_demand", Shape: fields.Object, Create: true, Update: true, NotReturned: true, Fields: []fields.Field{
+				{Name: "average_amount", Shape: fields.Int, Create: true, Update: true, NotReturned: true},
+				{Name: "maximum_amount", Shape: fields.Int, Create: true, Update: true, NotReturned: true},
+				{Name: "minimum_amount", Shape: fields.Int, Create: true, Update: true, NotReturned: true},
+				{Name: "purchase_interval", Shape: fields.String, Create: true, Update: true, NotReturned: true, Enum: []string{"day", "month", "week", "year"}},
+				{Name: "purchase_interval_count", Shape: fields.Int, Create: true, Update: true, NotReturned: true},
+			}},
+			{Name: "preferred_locale", Shape: fields.String, Create: true, Update: true, Response: true, ServerDefaulted: true, Stable: true, Enum: []string{"cs-CZ", "da-DK", "de-AT", "de-CH", "de-DE", "el-GR", "en-AT", "en-AU", "en-BE", "en-CA", "en-CH", "en-CZ", "en-DE", "en-DK", "en-ES", "en-FI", "en-FR", "en-GB", "en-GR", "en-IE", "en-IT", "en-NL", "en-NO", "en-NZ", "en-PL", "en-PT", "en-RO", "en-SE", "en-US", "es-ES", "es-US", "fi-FI", "fr-BE", "fr-CA", "fr-CH", "fr-FR", "it-CH", "it-IT", "nb-NO", "nl-BE", "nl-NL", "pl-PL", "pt-PT", "ro-RO", "sv-FI", "sv-SE"}, Description: "Preferred locale of the Klarna checkout page that the customer is redirected to."},
+			{Name: "subscriptions", Shape: fields.ObjectList, Create: true, Update: true, NotReturned: true, Fields: []fields.Field{
+				{Name: "interval", Shape: fields.String, Required: true, Create: true, Update: true, NotReturned: true, Enum: []string{"day", "month", "week", "year"}},
+				{Name: "interval_count", Shape: fields.Int, Create: true, Update: true, NotReturned: true},
+				{Name: "name", Shape: fields.String, Create: true, Update: true, NotReturned: true},
+				{Name: "next_billing", Shape: fields.Object, Required: true, Create: true, Update: true, NotReturned: true, Fields: []fields.Field{
+					{Name: "amount", Shape: fields.Int, Required: true, Create: true, Update: true, NotReturned: true},
+					{Name: "date", Shape: fields.String, Required: true, Create: true, Update: true, NotReturned: true},
+				}},
+				{Name: "reference", Shape: fields.String, Required: true, Create: true, Update: true, NotReturned: true},
+			}},
+		}},
+		{Name: "pix", Shape: fields.Object, Create: true, Update: true, Response: true, ServerDefaulted: true, Fields: []fields.Field{
+			{Name: "mandate_options", Shape: fields.Object, Create: true, Update: true, Response: true, ServerDefaulted: true, Fields: []fields.Field{
+				{Name: "amount", Shape: fields.Int, Create: true, Update: true, Response: true, ServerDefaulted: true, Stable: true, Description: "Amount to be charged for future payments."},
+				{Name: "amount_includes_iof", Shape: fields.String, Create: true, Update: true, Response: true, ServerDefaulted: true, Stable: true, Enum: []string{"always", "never"}, Description: "Determines if the amount includes the IOF tax."},
+				{Name: "amount_type", Shape: fields.String, Create: true, Update: true, Response: true, ServerDefaulted: true, Stable: true, Enum: []string{"fixed", "maximum"}, Description: "Type of amount."},
+				{Name: "currency", Shape: fields.String, Create: true, Update: true, Response: true, ServerDefaulted: true, Stable: true, Description: "Three-letter [ISO currency code](https://www.iso.org/iso-4217-currency-codes.html), in lowercase."},
+				{Name: "end_date", Shape: fields.String, Create: true, Update: true, Response: true, ServerDefaulted: true, Stable: true, Description: "Date when the mandate expires and no further payments will be charged, in `YYYY-MM-DD`."},
+				{Name: "payment_schedule", Shape: fields.String, Create: true, Update: true, Response: true, ServerDefaulted: true, Stable: true, Enum: []string{"halfyearly", "monthly", "quarterly", "weekly", "yearly"}, Description: "Schedule at which the future payments will be charged."},
+				{Name: "reference", Shape: fields.String, Create: true, Update: true, Response: true, ServerDefaulted: true, Stable: true, Description: "Subscription name displayed to buyers in their bank app."},
+				{Name: "start_date", Shape: fields.String, Create: true, Update: true, Response: true, ServerDefaulted: true, Stable: true, Description: "Start date of the mandate, in `YYYY-MM-DD`."},
+			}},
+		}},
+		{Name: "sepa_debit", Shape: fields.Object, Create: true, Update: true, Response: true, ServerDefaulted: true, Fields: []fields.Field{
+			{Name: "mandate_options", Shape: fields.Object, Create: true, Update: true, Response: true, ServerDefaulted: true, Fields: []fields.Field{
+				{Name: "reference_prefix", Shape: fields.String, Create: true, Update: true, Response: true, ServerDefaulted: true, Stable: true, Description: "Prefix used to generate the Mandate reference. Must be at most 12 characters long. Must consist of only uppercase letters, numbers, spaces, or the following special characters: '/', '_', '-', '&', '.'. Cannot begin with 'STRIPE'."},
+			}},
+		}},
+		{Name: "upi", Shape: fields.Object, Create: true, Update: true, Response: true, ServerDefaulted: true, Fields: []fields.Field{
+			{Name: "mandate_options", Shape: fields.Object, Create: true, Update: true, Response: true, ServerDefaulted: true, Fields: []fields.Field{
+				{Name: "amount", Shape: fields.Int, Create: true, Update: true, Response: true, ServerDefaulted: true, Stable: true, Description: "Amount to be charged for future payments."},
+				{Name: "amount_type", Shape: fields.String, Create: true, Update: true, Response: true, ServerDefaulted: true, Stable: true, Enum: []string{"fixed", "maximum"}, Description: "One of `fixed` or `maximum`. If `fixed`, the `amount` param refers to the exact amount to be charged in future payments. If `maximum`, the amount charged can be up to the value passed for the `amount` param."},
+				{Name: "description", Shape: fields.String, Create: true, Update: true, Response: true, ServerDefaulted: true, Stable: true, Description: "A description of the mandate or subscription that is meant to be displayed to the customer."},
+				{Name: "end_date", Shape: fields.String, Create: true, Update: true, Response: true, ServerDefaulted: true, Stable: true, Description: "End date of the mandate or subscription."},
+			}},
+			{Name: "setup_future_usage", Shape: fields.String, Create: true, Update: true, NotReturned: true, Enum: []string{"none", "off_session", "on_session"}},
+		}},
+		{Name: "us_bank_account", Shape: fields.Object, Create: true, Update: true, Response: true, ServerDefaulted: true, Fields: []fields.Field{
+			{Name: "financial_connections", Shape: fields.Object, Create: true, Update: true, Response: true, ServerDefaulted: true, Fields: []fields.Field{
+				{Name: "filters", Shape: fields.Object, Create: true, Update: true, Response: true, ServerDefaulted: true, Fields: []fields.Field{
+					{Name: "account_subcategories", Shape: fields.ScalarList, Elem: fields.String, Create: true, Update: true, Response: true, ServerDefaulted: true, Stable: true, Description: "The account subcategories to use to filter for possible accounts to link. Valid subcategories are `checking` and `savings`."},
+				}},
+				{Name: "permissions", Shape: fields.ScalarList, Elem: fields.String, Create: true, Update: true, Response: true, ServerDefaulted: true, Stable: true, Description: "The list of permissions to request. The `payment_method` permission must be included."},
+				{Name: "prefetch", Shape: fields.ScalarList, Elem: fields.String, Create: true, Update: true, Response: true, ServerDefaulted: true, Stable: true, Description: "Data features requested to be retrieved upon account creation.", Refused: "Stripe refused it on a US account on create and update: \"You do not have the required permissions to prefetch.\"."},
+				{Name: "return_url", Shape: fields.String, Create: true, Update: true, Response: true, ServerDefaulted: true, Stable: true, Description: "For webview integrations only. Upon completing OAuth login in the native browser, the user will be redirected to this URL to return to your app."},
+			}},
+			{Name: "mandate_options", Shape: fields.Object, Create: true, Update: true, Response: true, ServerDefaulted: true, Fields: []fields.Field{
+				{Name: "collection_method", Shape: fields.String, Create: true, Update: true, Response: true, ServerDefaulted: true, Stable: true, Enum: []string{"paper"}, Description: "Mandate collection method"},
+			}},
+			{Name: "networks", Shape: fields.Object, Create: true, Update: true, Fields: []fields.Field{
+				{Name: "requested", Shape: fields.ScalarList, Elem: fields.String, Create: true, Update: true, Refused: "Stripe refused it on a US account on create and update: \"To use the `us_domestic_wire` network, the PaymentMethod must include billing address information. Please update the PaymentMethod or include the following missing field(s) in your payment method data under `billing_details[address]` and try again: line1, city, state, postal_code, country\"."},
+			}},
+			{Name: "verification_method", Shape: fields.String, Create: true, Update: true, Response: true, ServerDefaulted: true, Stable: true, Enum: []string{"automatic", "instant", "microdeposits"}, Description: "Bank account verification method. The default value is `automatic`."},
 		}},
 	}},
 	{Name: "payment_method_types", Shape: fields.ScalarList, Elem: fields.String, Response: true, Description: "The list of payment method types (e.g. card) that this SetupIntent is allowed to set up. A list of valid payment method types can be found [here](https://docs.stripe.com/api/payment_methods/object#payment_method_object-type)."},

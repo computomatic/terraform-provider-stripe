@@ -951,31 +951,29 @@ func TestRefusedMembersAreThoseWithNoVerifiedUpdate(t *testing.T) {
 	}
 }
 
-// The onboarding values are proven on create only, and replacing an account deletes it, so a
-// plan that changes one fails, field by field: the profile's MCC beside its updatable name and
-// the Issuing terms. A change to the name alone is an update.
+// The terms of service are proven on create only, and replacing an account deletes it, so a
+// plan that changes them fails, field by field: the Issuing terms. A change to the name alone is
+// an update, and an MCC change `ignore_changes` lists plans nothing.
 func TestAccAccount_refuseOnboardingChange(t *testing.T) {
 	acct := acctest.NewAccount(t)
 	var first string
 	otherMCC, otherIP, renamed := verified, verified, verified
-	otherMCC.mcc, otherIP.issuingIP, renamed.name = "5045", "8.8.4.4", "Renamed"
+	otherMCC.mcc, otherIP.issuingIP, renamed.name = "7372", "8.8.4.4", "Renamed"
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: tfacc.ProviderFactories,
 		Steps: []resource.TestStep{
 			{Config: onboardedConfig(acct, verified, ""), Check: idOf(&first)},
 			{
-				Config:      onboardedConfig(acct, otherMCC, ""),
-				ExpectError: regexp.MustCompile(refused("business_profile.mcc") + `(?s).*ignore_changes`),
-			},
-			{
 				Config:      onboardedConfig(acct, otherIP, ""),
-				ExpectError: regexp.MustCompile(refused("settings.card_issuing.tos_acceptance")),
+				ExpectError: regexp.MustCompile(refused("settings.card_issuing.tos_acceptance") + `(?s).*ignore_changes`),
 			},
-			// Removing the onboarding arguments is a change of those Stripe does not return.
-			// Stripe holds the rest, such as `individual`, so removing them changes nothing.
+			// Removing the onboarding arguments changes nothing: Stripe holds most of them, such
+			// as `individual`, and the provider keeps those Stripe never returns, such as
+			// `external_account`, from configuration, sending nothing when they are removed.
 			{
-				Config:      customConfig(acct, "  lifecycle {\n    ignore_changes = [capabilities]\n  }\n"),
-				ExpectError: regexp.MustCompile(refused("external_account")),
+				Config:             customConfig(acct, "  lifecycle {\n    ignore_changes = [capabilities]\n  }\n"),
+				PlanOnly:           true,
+				ExpectNonEmptyPlan: false,
 			},
 			{
 				Config: onboardedConfig(acct, otherMCC, "  lifecycle {\n    ignore_changes = [business_profile.mcc]\n  }\n"),
@@ -988,7 +986,7 @@ func TestAccAccount_refuseOnboardingChange(t *testing.T) {
 				ConfigPlanChecks: resource.ConfigPlanChecks{PreApply: []plancheck.PlanCheck{
 					plancheck.ExpectResourceAction(address, plancheck.ResourceActionUpdate),
 					// The configuration sets other `settings`, so only what it leaves unset is Stripe's.
-					plancheck.ExpectUnknownValue(address, tfjsonpath.New("settings").AtMapKey("payments")),
+					plancheck.ExpectUnknownValue(address, tfjsonpath.New("settings").AtMapKey("payments").AtMapKey("statement_descriptor")),
 				}},
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr(address, "business_profile.name", acct.Name(renamed.name)),
@@ -998,19 +996,22 @@ func TestAccAccount_refuseOnboardingChange(t *testing.T) {
 						}
 						return nil
 					}),
-					// The update sends the name alone, never the refused profile fields beside it.
+					// The update sends the business profile alone, whole as configured, as the
+					// suite's probe `update/8` sends it, and never the refused terms beside it.
 					func(*terraform.State) error {
 						if acct.Smoke {
 							return nil
 						}
 						var updates int
 						for _, entry := range acctest.RequestLog(t, acct) {
-							if entry.Method != "POST" || entry.Path != "/v1/accounts/"+first {
+							params, ok := entry.Params.(wire.Object)
+							if entry.Method != "POST" || entry.Path != "/v1/accounts/"+first || !ok {
 								continue
 							}
 							updates++
-							if got, want := fmt.Sprint(entry.Params), fmt.Sprint(wire.Object{{Name: "business_profile", Value: wire.Object{{Name: "name", Value: wire.String(renamed.name)}}}}); got != want {
-								return fmt.Errorf("the update sent %s, want only business_profile[name]: %s", got, want)
+							profile, _ := params.GetObject("business_profile")
+							if name, _ := profile.GetString("name"); len(params) != 1 || name != renamed.name {
+								return fmt.Errorf("the update sent %v, want only business_profile, with the name %s", params, renamed.name)
 							}
 						}
 						if updates != 1 {

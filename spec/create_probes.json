@@ -1,5 +1,5 @@
 {
- "suite_ref": "fcc9d56e62fda926c4af25f8450236b947e6a68d",
+ "suite_ref": "7dbae2a5466760841adf18f3161ad91ddb07b24c",
  "leaves": [
   {
    "object": "account",
@@ -145,6 +145,113 @@
   {
    "object": "account",
    "operation": "PostAccounts",
+   "path": "controller.fees.payer",
+   "held": [
+    {
+     "kind": "value",
+     "value": "account",
+     "probe": "enums/54"
+    },
+    {
+     "kind": "value",
+     "value": "application_custom",
+     "probe": "enums/1"
+    },
+    {
+     "kind": "value",
+     "value": "application_express",
+     "probe": "enums/49"
+    }
+   ]
+  },
+  {
+   "object": "account",
+   "operation": "PostAccounts",
+   "path": "controller.losses.payments",
+   "held": [
+    {
+     "kind": "value",
+     "value": "application",
+     "probe": "enums/1"
+    },
+    {
+     "kind": "value",
+     "value": "stripe",
+     "probe": "enums/54"
+    }
+   ]
+  },
+  {
+   "object": "account",
+   "operation": "PostAccounts",
+   "path": "controller.requirement_collection",
+   "held": [
+    {
+     "kind": "value",
+     "value": "application",
+     "probe": "enums/1"
+    },
+    {
+     "kind": "value",
+     "value": "stripe",
+     "probe": "enums/49"
+    }
+   ]
+  },
+  {
+   "object": "account",
+   "operation": "PostAccounts",
+   "path": "controller.stripe_dashboard.type",
+   "held": [
+    {
+     "kind": "value",
+     "value": "express",
+     "probe": "enums/49"
+    },
+    {
+     "kind": "value",
+     "value": "full",
+     "probe": "enums/54"
+    },
+    {
+     "kind": "value",
+     "value": "none",
+     "probe": "enums/1"
+    }
+   ]
+  },
+  {
+   "object": "account",
+   "operation": "PostAccounts",
+   "path": "country",
+   "held": [
+    {
+     "kind": "value",
+     "value": "US",
+     "probe": "enums/1"
+    }
+   ]
+  },
+  {
+   "object": "account",
+   "operation": "PostAccounts",
+   "path": "default_currency",
+   "held": [
+    {
+     "kind": "value",
+     "value": "gbp",
+     "probe": "minimal/individual_gb"
+    },
+    {
+     "kind": "value",
+     "value": "usd",
+     "probe": "enums/1"
+    }
+   ]
+  },
+  {
+   "object": "account",
+   "operation": "PostAccounts",
    "path": "individual.address.country",
    "held": [
     {
@@ -216,17 +323,53 @@
   {
    "object": "account",
    "operation": "PostAccounts",
+   "path": "settings.card_payments.decline_on.avs_failure",
+   "held": [
+    {
+     "kind": "value",
+     "value": false,
+     "probe": "enums/1"
+    }
+   ]
+  },
+  {
+   "object": "account",
+   "operation": "PostAccounts",
+   "path": "settings.card_payments.decline_on.cvc_failure",
+   "held": [
+    {
+     "kind": "value",
+     "value": false,
+     "probe": "enums/1"
+    }
+   ]
+  },
+  {
+   "object": "account",
+   "operation": "PostAccounts",
    "path": "settings.card_payments.statement_descriptor_prefix",
    "held": [
     {
      "kind": "value",
      "value": "CONFORMANC",
-     "probe": "isolated/name_follows_company"
+     "probe": "isolated/descriptor_name_create"
     },
     {
      "kind": "value",
      "value": "JENNY ROSE",
      "probe": "isolated/name_follows_individual"
+    }
+   ]
+  },
+  {
+   "object": "account",
+   "operation": "PostAccounts",
+   "path": "settings.invoices.hosted_payment_method_save",
+   "held": [
+    {
+     "kind": "value",
+     "value": "offer",
+     "probe": "enums/1"
     }
    ]
   },
@@ -242,8 +385,149 @@
     },
     {
      "kind": "value",
+     "value": "CONFORMANCE TOURS",
+     "probe": "isolated/descriptor_name_create"
+    },
+    {
+     "kind": "value",
      "value": "JENNY ROSEN",
      "probe": "isolated/name_follows_individual"
+    }
+   ]
+  },
+  {
+   "object": "account",
+   "operation": "PostAccounts",
+   "path": "settings.payouts.debit_negative_balances",
+   "held": [
+    {
+     "kind": "value",
+     "value": false,
+     "probe": "enums/1"
+    },
+    {
+     "kind": "value",
+     "value": true,
+     "probe": "enums/49"
+    }
+   ]
+  },
+  {
+   "object": "account",
+   "operation": "PostAccounts",
+   "path": "settings.payouts.schedule.delay_days",
+   "held": [
+    {
+     "kind": "value",
+     "value": 2,
+     "probe": "enums/1"
+    },
+    {
+     "kind": "value",
+     "value": 7,
+     "probe": "minimal/individual_gb"
+    }
+   ]
+  },
+  {
+   "object": "account",
+   "operation": "PostAccounts",
+   "path": "settings.payouts.schedule.interval",
+   "held": [
+    {
+     "kind": "value",
+     "value": "daily",
+     "probe": "enums/1"
+    }
+   ]
+  },
+  {
+   "object": "account",
+   "operation": "PostAccounts",
+   "path": "settings.payouts.schedule.monthly_anchor",
+   "held": [
+    {
+     "kind": "value",
+     "value": 1,
+     "probe": "minimal/payouts_monthly_days"
+    }
+   ]
+  },
+  {
+   "object": "account",
+   "operation": "PostAccounts",
+   "path": "settings.payouts.schedule.monthly_payout_days",
+   "held": [
+    {
+     "kind": "normalised",
+     "probe": "every_field/12"
+    }
+   ]
+  },
+  {
+   "object": "account",
+   "operation": "PostAccounts",
+   "path": "settings.payouts.schedule.weekly_anchor",
+   "held": [
+    {
+     "kind": "value",
+     "value": "thursday",
+     "probe": "enums/61"
+    },
+    {
+     "kind": "value",
+     "value": "tuesday",
+     "probe": "enums/48"
+    },
+    {
+     "kind": "value",
+     "value": "wednesday",
+     "probe": "enums/53"
+    }
+   ]
+  },
+  {
+   "object": "account",
+   "operation": "PostAccounts",
+   "path": "settings.payouts.schedule.weekly_payout_days",
+   "held": [
+    {
+     "kind": "normalised",
+     "probe": "enums/47"
+    }
+   ]
+  },
+  {
+   "object": "account",
+   "operation": "PostAccounts",
+   "path": "settings.sepa_debit_payments.creditor_id",
+   "held": [
+    {
+     "kind": "value",
+     "value": "DE16ZZZ00001941136",
+     "probe": "enums/1"
+    },
+    {
+     "kind": "value",
+     "value": "GB67ZZZSDDDEUT0000000184776",
+     "probe": "minimal/individual_gb"
+    }
+   ]
+  },
+  {
+   "object": "account",
+   "operation": "PostAccounts",
+   "path": "type",
+   "held": [
+    {
+     "kind": "value",
+     "value": "none",
+     "probe": "minimal/controlled"
+    },
+    {
+     "kind": "value",
+     "value": "standard",
+     "probe": "minimal"
     }
    ]
   },
@@ -2862,7 +3146,7 @@
     {
      "kind": "value",
      "value": "automatic_async",
-     "probe": "enums/16"
+     "probe": "enums/100"
     }
    ]
   },
@@ -2874,7 +3158,7 @@
     {
      "kind": "value",
      "value": "automatic",
-     "probe": "enums/16"
+     "probe": "enums/100"
     }
    ]
   },
@@ -2897,7 +3181,37 @@
    "held": [
     {
      "kind": "id",
-     "probe": "enums/23"
+     "probe": "enums/100"
+    }
+   ]
+  },
+  {
+   "object": "payment_intent",
+   "operation": "PostPaymentIntents",
+   "path": "payment_method_data.acss_debit.institution_number",
+   "held": [
+    {
+     "kind": "id",
+     "probe": "enums/100"
+    },
+    {
+     "kind": "sent",
+     "probe": "enums/4"
+    }
+   ]
+  },
+  {
+   "object": "payment_intent",
+   "operation": "PostPaymentIntents",
+   "path": "payment_method_data.acss_debit.transit_number",
+   "held": [
+    {
+     "kind": "id",
+     "probe": "enums/100"
+    },
+    {
+     "kind": "sent",
+     "probe": "enums/4"
     }
    ]
   },
@@ -2908,11 +3222,11 @@
    "held": [
     {
      "kind": "id",
-     "probe": "enums/48"
+     "probe": "enums/100"
     },
     {
      "kind": "sent",
-     "probe": "enums/25"
+     "probe": "enums/4"
     }
    ]
   },
@@ -2923,11 +3237,11 @@
    "held": [
     {
      "kind": "id",
-     "probe": "enums/23"
+     "probe": "enums/100"
     },
     {
      "kind": "sent",
-     "probe": "enums/25"
+     "probe": "enums/4"
     }
    ]
   },
@@ -2938,11 +3252,11 @@
    "held": [
     {
      "kind": "id",
-     "probe": "enums/23"
+     "probe": "enums/100"
     },
     {
      "kind": "sent",
-     "probe": "enums/25"
+     "probe": "enums/4"
     }
    ]
   },
@@ -2953,11 +3267,11 @@
    "held": [
     {
      "kind": "id",
-     "probe": "enums/23"
+     "probe": "enums/100"
     },
     {
      "kind": "sent",
-     "probe": "enums/25"
+     "probe": "enums/4"
     }
    ]
   },
@@ -2968,11 +3282,11 @@
    "held": [
     {
      "kind": "id",
-     "probe": "enums/23"
+     "probe": "enums/100"
     },
     {
      "kind": "sent",
-     "probe": "enums/25"
+     "probe": "enums/4"
     }
    ]
   },
@@ -2983,11 +3297,11 @@
    "held": [
     {
      "kind": "id",
-     "probe": "enums/23"
+     "probe": "enums/100"
     },
     {
      "kind": "sent",
-     "probe": "enums/25"
+     "probe": "enums/4"
     }
    ]
   },
@@ -2998,11 +3312,11 @@
    "held": [
     {
      "kind": "id",
-     "probe": "enums/23"
+     "probe": "enums/100"
     },
     {
      "kind": "sent",
-     "probe": "enums/25"
+     "probe": "enums/4"
     }
    ]
   },
@@ -3013,11 +3327,11 @@
    "held": [
     {
      "kind": "id",
-     "probe": "enums/23"
+     "probe": "enums/200"
     },
     {
      "kind": "sent",
-     "probe": "enums/25"
+     "probe": "enums/4"
     }
    ]
   },
@@ -3028,7 +3342,7 @@
    "held": [
     {
      "kind": "sent",
-     "probe": "enums/25"
+     "probe": "enums/4"
     }
    ]
   },
@@ -3039,11 +3353,56 @@
    "held": [
     {
      "kind": "id",
-     "probe": "enums/23"
+     "probe": "enums/100"
     },
     {
      "kind": "sent",
-     "probe": "enums/25"
+     "probe": "enums/4"
+    }
+   ]
+  },
+  {
+   "object": "payment_intent",
+   "operation": "PostPaymentIntents",
+   "path": "payment_method_data.billing_details.tax_id",
+   "held": [
+    {
+     "kind": "id",
+     "probe": "enums/100"
+    },
+    {
+     "kind": "sent",
+     "probe": "enums/4"
+    }
+   ]
+  },
+  {
+   "object": "payment_intent",
+   "operation": "PostPaymentIntents",
+   "path": "payment_method_data.eps.bank",
+   "held": [
+    {
+     "kind": "id",
+     "probe": "enums/100"
+    },
+    {
+     "kind": "sent",
+     "probe": "enums/4"
+    }
+   ]
+  },
+  {
+   "object": "payment_intent",
+   "operation": "PostPaymentIntents",
+   "path": "payment_method_data.ideal.bank",
+   "held": [
+    {
+     "kind": "id",
+     "probe": "enums/100"
+    },
+    {
+     "kind": "sent",
+     "probe": "enums/4"
     }
    ]
   },
@@ -3054,11 +3413,41 @@
    "held": [
     {
      "kind": "id",
-     "probe": "enums/23"
+     "probe": "enums/100"
     },
     {
      "kind": "sent",
-     "probe": "enums/25"
+     "probe": "enums/4"
+    }
+   ]
+  },
+  {
+   "object": "payment_intent",
+   "operation": "PostPaymentIntents",
+   "path": "payment_method_data.naver_pay.funding",
+   "held": [
+    {
+     "kind": "id",
+     "probe": "enums/100"
+    },
+    {
+     "kind": "sent",
+     "probe": "enums/4"
+    }
+   ]
+  },
+  {
+   "object": "payment_intent",
+   "operation": "PostPaymentIntents",
+   "path": "payment_method_data.p24.bank",
+   "held": [
+    {
+     "kind": "id",
+     "probe": "enums/102"
+    },
+    {
+     "kind": "sent",
+     "probe": "enums/4"
     }
    ]
   },
@@ -3069,7 +3458,52 @@
    "held": [
     {
      "kind": "sent",
-     "probe": "enums/25"
+     "probe": "enums/4"
+    }
+   ]
+  },
+  {
+   "object": "payment_intent",
+   "operation": "PostPaymentIntents",
+   "path": "payment_method_data.us_bank_account.account_holder_type",
+   "held": [
+    {
+     "kind": "id",
+     "probe": "enums/100"
+    },
+    {
+     "kind": "sent",
+     "probe": "enums/4"
+    }
+   ]
+  },
+  {
+   "object": "payment_intent",
+   "operation": "PostPaymentIntents",
+   "path": "payment_method_data.us_bank_account.account_type",
+   "held": [
+    {
+     "kind": "id",
+     "probe": "enums/100"
+    },
+    {
+     "kind": "sent",
+     "probe": "enums/4"
+    }
+   ]
+  },
+  {
+   "object": "payment_intent",
+   "operation": "PostPaymentIntents",
+   "path": "payment_method_data.us_bank_account.routing_number",
+   "held": [
+    {
+     "kind": "id",
+     "probe": "enums/100"
+    },
+    {
+     "kind": "sent",
+     "probe": "enums/4"
     }
    ]
   },
@@ -3363,7 +3797,7 @@
     {
      "kind": "value",
      "value": false,
-     "probe": "nested_minimal/1"
+     "probe": "isolated/name_collection_business_emptied"
     }
    ]
   },
@@ -5412,7 +5846,37 @@
    "held": [
     {
      "kind": "id",
-     "probe": "enums/12"
+     "probe": "enums/101"
+    }
+   ]
+  },
+  {
+   "object": "setup_intent",
+   "operation": "PostSetupIntents",
+   "path": "payment_method_data.acss_debit.institution_number",
+   "held": [
+    {
+     "kind": "id",
+     "probe": "enums/101"
+    },
+    {
+     "kind": "sent",
+     "probe": "enums/14"
+    }
+   ]
+  },
+  {
+   "object": "setup_intent",
+   "operation": "PostSetupIntents",
+   "path": "payment_method_data.acss_debit.transit_number",
+   "held": [
+    {
+     "kind": "id",
+     "probe": "enums/101"
+    },
+    {
+     "kind": "sent",
+     "probe": "enums/14"
     }
    ]
   },
@@ -5423,7 +5887,7 @@
    "held": [
     {
      "kind": "id",
-     "probe": "enums/36"
+     "probe": "enums/101"
     },
     {
      "kind": "sent",
@@ -5438,7 +5902,7 @@
    "held": [
     {
      "kind": "id",
-     "probe": "enums/12"
+     "probe": "enums/104"
     },
     {
      "kind": "sent",
@@ -5453,7 +5917,7 @@
    "held": [
     {
      "kind": "id",
-     "probe": "enums/12"
+     "probe": "enums/104"
     },
     {
      "kind": "sent",
@@ -5468,7 +5932,7 @@
    "held": [
     {
      "kind": "id",
-     "probe": "enums/12"
+     "probe": "enums/104"
     },
     {
      "kind": "sent",
@@ -5483,7 +5947,7 @@
    "held": [
     {
      "kind": "id",
-     "probe": "enums/12"
+     "probe": "enums/101"
     },
     {
      "kind": "sent",
@@ -5498,7 +5962,7 @@
    "held": [
     {
      "kind": "id",
-     "probe": "enums/12"
+     "probe": "enums/104"
     },
     {
      "kind": "sent",
@@ -5513,7 +5977,7 @@
    "held": [
     {
      "kind": "id",
-     "probe": "enums/12"
+     "probe": "enums/104"
     },
     {
      "kind": "sent",
@@ -5554,7 +6018,37 @@
    "held": [
     {
      "kind": "id",
-     "probe": "enums/12"
+     "probe": "enums/101"
+    },
+    {
+     "kind": "sent",
+     "probe": "enums/14"
+    }
+   ]
+  },
+  {
+   "object": "setup_intent",
+   "operation": "PostSetupIntents",
+   "path": "payment_method_data.billing_details.tax_id",
+   "held": [
+    {
+     "kind": "id",
+     "probe": "enums/101"
+    },
+    {
+     "kind": "sent",
+     "probe": "enums/14"
+    }
+   ]
+  },
+  {
+   "object": "setup_intent",
+   "operation": "PostSetupIntents",
+   "path": "payment_method_data.ideal.bank",
+   "held": [
+    {
+     "kind": "id",
+     "probe": "enums/101"
     },
     {
      "kind": "sent",
@@ -5569,7 +6063,22 @@
    "held": [
     {
      "kind": "id",
-     "probe": "enums/12"
+     "probe": "enums/101"
+    },
+    {
+     "kind": "sent",
+     "probe": "enums/14"
+    }
+   ]
+  },
+  {
+   "object": "setup_intent",
+   "operation": "PostSetupIntents",
+   "path": "payment_method_data.naver_pay.funding",
+   "held": [
+    {
+     "kind": "id",
+     "probe": "enums/101"
     },
     {
      "kind": "sent",
@@ -5591,12 +6100,57 @@
   {
    "object": "setup_intent",
    "operation": "PostSetupIntents",
+   "path": "payment_method_data.us_bank_account.account_holder_type",
+   "held": [
+    {
+     "kind": "id",
+     "probe": "enums/101"
+    },
+    {
+     "kind": "sent",
+     "probe": "enums/14"
+    }
+   ]
+  },
+  {
+   "object": "setup_intent",
+   "operation": "PostSetupIntents",
+   "path": "payment_method_data.us_bank_account.account_type",
+   "held": [
+    {
+     "kind": "id",
+     "probe": "enums/101"
+    },
+    {
+     "kind": "sent",
+     "probe": "enums/14"
+    }
+   ]
+  },
+  {
+   "object": "setup_intent",
+   "operation": "PostSetupIntents",
+   "path": "payment_method_data.us_bank_account.routing_number",
+   "held": [
+    {
+     "kind": "id",
+     "probe": "enums/101"
+    },
+    {
+     "kind": "sent",
+     "probe": "enums/14"
+    }
+   ]
+  },
+  {
+   "object": "setup_intent",
+   "operation": "PostSetupIntents",
    "path": "usage",
    "held": [
     {
      "kind": "value",
      "value": "off_session",
-     "probe": "enums/11"
+     "probe": "enums/101"
     }
    ]
   },
@@ -7373,6 +7927,77 @@
   {
    "object": "v2.core.account",
    "operation": "PostV2CoreAccounts",
+   "path": "configuration.customer.automatic_indirect_tax.exempt",
+   "held": [
+    {
+     "kind": "value",
+     "value": "none",
+     "probe": "enums/39"
+    }
+   ]
+  },
+  {
+   "object": "v2.core.account",
+   "operation": "PostV2CoreAccounts",
+   "path": "configuration.customer.billing.invoice.next_sequence",
+   "held": [
+    {
+     "kind": "value",
+     "value": 1,
+     "probe": "enums/13"
+    }
+   ]
+  },
+  {
+   "object": "v2.core.account",
+   "operation": "PostV2CoreAccounts",
+   "path": "configuration.customer.billing.invoice.prefix",
+   "held": [
+    {
+     "kind": "url",
+     "probe": "enums/13"
+    }
+   ]
+  },
+  {
+   "object": "v2.core.account",
+   "operation": "PostV2CoreAccounts",
+   "path": "configuration.customer.billing.invoice.rendering.amount_tax_display",
+   "held": [
+    {
+     "kind": "value",
+     "value": "include_inclusive_tax",
+     "probe": "nested_minimal/3"
+    }
+   ]
+  },
+  {
+   "object": "v2.core.account",
+   "operation": "PostV2CoreAccounts",
+   "path": "configuration.merchant.card_payments.decline_on.avs_failure",
+   "held": [
+    {
+     "kind": "value",
+     "value": false,
+     "probe": "enums/11"
+    }
+   ]
+  },
+  {
+   "object": "v2.core.account",
+   "operation": "PostV2CoreAccounts",
+   "path": "configuration.merchant.card_payments.decline_on.cvc_failure",
+   "held": [
+    {
+     "kind": "value",
+     "value": false,
+     "probe": "enums/11"
+    }
+   ]
+  },
+  {
+   "object": "v2.core.account",
+   "operation": "PostV2CoreAccounts",
    "path": "defaults.currency",
    "held": [
     {
@@ -7402,12 +8027,380 @@
   {
    "object": "v2.core.account",
    "operation": "PostV2CoreAccounts",
+   "path": "identity.attestations.persons_provided.directors",
+   "held": [
+    {
+     "kind": "value",
+     "value": false,
+     "probe": "enums/1"
+    }
+   ]
+  },
+  {
+   "object": "v2.core.account",
+   "operation": "PostV2CoreAccounts",
+   "path": "identity.attestations.persons_provided.executives",
+   "held": [
+    {
+     "kind": "value",
+     "value": false,
+     "probe": "enums/1"
+    }
+   ]
+  },
+  {
+   "object": "v2.core.account",
+   "operation": "PostV2CoreAccounts",
+   "path": "identity.attestations.persons_provided.owners",
+   "held": [
+    {
+     "kind": "value",
+     "value": false,
+     "probe": "enums/1"
+    }
+   ]
+  },
+  {
+   "object": "v2.core.account",
+   "operation": "PostV2CoreAccounts",
+   "path": "identity.business_details.additional_addresses.city",
+   "held": [
+    {
+     "kind": "value",
+     "value": [
+      null
+     ],
+     "probe": "enums/11"
+    }
+   ]
+  },
+  {
+   "object": "v2.core.account",
+   "operation": "PostV2CoreAccounts",
+   "path": "identity.business_details.additional_addresses.line1",
+   "held": [
+    {
+     "kind": "value",
+     "value": [
+      null
+     ],
+     "probe": "enums/11"
+    }
+   ]
+  },
+  {
+   "object": "v2.core.account",
+   "operation": "PostV2CoreAccounts",
+   "path": "identity.business_details.additional_addresses.line2",
+   "held": [
+    {
+     "kind": "value",
+     "value": [
+      null
+     ],
+     "probe": "enums/11"
+    }
+   ]
+  },
+  {
+   "object": "v2.core.account",
+   "operation": "PostV2CoreAccounts",
+   "path": "identity.business_details.additional_addresses.postal_code",
+   "held": [
+    {
+     "kind": "value",
+     "value": [
+      null
+     ],
+     "probe": "enums/11"
+    }
+   ]
+  },
+  {
+   "object": "v2.core.account",
+   "operation": "PostV2CoreAccounts",
+   "path": "identity.business_details.additional_addresses.state",
+   "held": [
+    {
+     "kind": "value",
+     "value": [
+      null
+     ],
+     "probe": "enums/11"
+    }
+   ]
+  },
+  {
+   "object": "v2.core.account",
+   "operation": "PostV2CoreAccounts",
+   "path": "identity.business_details.additional_addresses.town",
+   "held": [
+    {
+     "kind": "value",
+     "value": [
+      null
+     ],
+     "probe": "enums/11"
+    }
+   ]
+  },
+  {
+   "object": "v2.core.account",
+   "operation": "PostV2CoreAccounts",
+   "path": "identity.individual.additional_addresses.city",
+   "held": [
+    {
+     "kind": "value",
+     "value": [
+      null
+     ],
+     "probe": "every_field/10"
+    }
+   ]
+  },
+  {
+   "object": "v2.core.account",
+   "operation": "PostV2CoreAccounts",
+   "path": "identity.individual.additional_addresses.line1",
+   "held": [
+    {
+     "kind": "value",
+     "value": [
+      null
+     ],
+     "probe": "every_field/10"
+    }
+   ]
+  },
+  {
+   "object": "v2.core.account",
+   "operation": "PostV2CoreAccounts",
+   "path": "identity.individual.additional_addresses.line2",
+   "held": [
+    {
+     "kind": "value",
+     "value": [
+      null
+     ],
+     "probe": "every_field/11"
+    }
+   ]
+  },
+  {
+   "object": "v2.core.account",
+   "operation": "PostV2CoreAccounts",
+   "path": "identity.individual.additional_addresses.postal_code",
+   "held": [
+    {
+     "kind": "value",
+     "value": [
+      null
+     ],
+     "probe": "every_field/10"
+    }
+   ]
+  },
+  {
+   "object": "v2.core.account",
+   "operation": "PostV2CoreAccounts",
+   "path": "identity.individual.additional_addresses.state",
+   "held": [
+    {
+     "kind": "value",
+     "value": [
+      null
+     ],
+     "probe": "every_field/10"
+    }
+   ]
+  },
+  {
+   "object": "v2.core.account",
+   "operation": "PostV2CoreAccounts",
+   "path": "identity.individual.additional_addresses.town",
+   "held": [
+    {
+     "kind": "value",
+     "value": [
+      null
+     ],
+     "probe": "every_field/10"
+    }
+   ]
+  },
+  {
+   "object": "v2.core.account",
+   "operation": "PostV2CoreAccounts",
+   "path": "identity.individual.additional_names.full_name",
+   "held": [
+    {
+     "kind": "value",
+     "value": [
+      null
+     ],
+     "probe": "enums/9"
+    }
+   ]
+  },
+  {
+   "object": "v2.core.account",
+   "operation": "PostV2CoreAccounts",
+   "path": "identity.individual.additional_names.surname",
+   "held": [
+    {
+     "kind": "value",
+     "value": [
+      null
+     ],
+     "probe": "enums/9"
+    }
+   ]
+  },
+  {
+   "object": "v2.core.account",
+   "operation": "PostV2CoreAccounts",
+   "path": "identity.individual.metadata",
+   "held": [
+    {
+     "kind": "value",
+     "value": {},
+     "probe": "enums/9"
+    }
+   ]
+  },
+  {
+   "object": "v2.core.account",
+   "operation": "PostV2CoreAccounts",
+   "path": "identity.individual.nationalities",
+   "held": [
+    {
+     "kind": "value",
+     "value": [],
+     "probe": "enums/9"
+    }
+   ]
+  },
+  {
+   "object": "v2.core.account",
+   "operation": "PostV2CoreAccounts",
    "path": "metadata",
    "held": [
     {
      "kind": "value",
      "value": {},
      "probe": "enums/1"
+    }
+   ]
+  },
+  {
+   "object": "v2.core.account_person",
+   "operation": "PostV2CoreAccountsAccountIdPersons",
+   "path": "additional_addresses.city",
+   "held": [
+    {
+     "kind": "value",
+     "value": [
+      null
+     ],
+     "probe": "nested_minimal/3"
+    }
+   ]
+  },
+  {
+   "object": "v2.core.account_person",
+   "operation": "PostV2CoreAccountsAccountIdPersons",
+   "path": "additional_addresses.line1",
+   "held": [
+    {
+     "kind": "value",
+     "value": [
+      null
+     ],
+     "probe": "nested_minimal/3"
+    }
+   ]
+  },
+  {
+   "object": "v2.core.account_person",
+   "operation": "PostV2CoreAccountsAccountIdPersons",
+   "path": "additional_addresses.line2",
+   "held": [
+    {
+     "kind": "value",
+     "value": [
+      null
+     ],
+     "probe": "nested_minimal/3"
+    }
+   ]
+  },
+  {
+   "object": "v2.core.account_person",
+   "operation": "PostV2CoreAccountsAccountIdPersons",
+   "path": "additional_addresses.postal_code",
+   "held": [
+    {
+     "kind": "value",
+     "value": [
+      null
+     ],
+     "probe": "nested_minimal/3"
+    }
+   ]
+  },
+  {
+   "object": "v2.core.account_person",
+   "operation": "PostV2CoreAccountsAccountIdPersons",
+   "path": "additional_addresses.state",
+   "held": [
+    {
+     "kind": "value",
+     "value": [
+      null
+     ],
+     "probe": "nested_minimal/3"
+    }
+   ]
+  },
+  {
+   "object": "v2.core.account_person",
+   "operation": "PostV2CoreAccountsAccountIdPersons",
+   "path": "additional_addresses.town",
+   "held": [
+    {
+     "kind": "value",
+     "value": [
+      null
+     ],
+     "probe": "nested_minimal/3"
+    }
+   ]
+  },
+  {
+   "object": "v2.core.account_person",
+   "operation": "PostV2CoreAccountsAccountIdPersons",
+   "path": "additional_names.full_name",
+   "held": [
+    {
+     "kind": "value",
+     "value": [
+      null
+     ],
+     "probe": "enums/3"
+    }
+   ]
+  },
+  {
+   "object": "v2.core.account_person",
+   "operation": "PostV2CoreAccountsAccountIdPersons",
+   "path": "additional_names.surname",
+   "held": [
+    {
+     "kind": "value",
+     "value": [
+      null
+     ],
+     "probe": "enums/3"
     }
    ]
   },

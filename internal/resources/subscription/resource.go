@@ -41,6 +41,16 @@ var Declaration = engine.Declaration{
 		"billing_mode.flexible", "billing_mode.flexible.proration_discounts",
 		"billing_schedules.bill_until.duration.interval_count", "invoice_settings.issuer.account",
 		"payment_settings.save_default_payment_method", "trial_end", "trial_settings.end_behavior.billing_cycle_anchor",
+		// Stripe refuses an empty ACSS debit `mandate_options`, its `transaction_type` and a
+		// customer balance's `bank_transfer` as `cannot be unset` (probes
+		// `isolated/acss_debit_mandate_options_emptied`, `isolated/acss_debit_transaction_type_empty`
+		// and `isolated/customer_balance_bank_transfer_emptied*`), so removing one keeps the
+		// value Stripe holds and the whole send carries it. Stripe takes the whole `acss_debit` or
+		// `customer_balance` sent empty, and drops it (`isolated/acss_debit_emptied` and
+		// `isolated/customer_balance_emptied`), which is how the whole send removes either.
+		"payment_settings.payment_method_options.acss_debit.mandate_options",
+		"payment_settings.payment_method_options.acss_debit.mandate_options.transaction_type",
+		"payment_settings.payment_method_options.customer_balance.bank_transfer",
 	},
 	// Stripe sets `cancellation_details.reason` to `cancellation_requested` when
 	// `cancel_at_period_end` turns true, and clears it when it turns false (suite: update
@@ -65,8 +75,12 @@ var Declaration = engine.Declaration{
 	// US bank account's Financial Connections (the record's `normalised` form `sorted`: a create's
 	// `permissions`, probe `every_field/40`, and an update's `account_subcategories` and
 	// `prefetch`, probe `update/37`), so they stay as configured too, as an invoice's do.
+	// Stripe reads the card's `network` back as sent for a customer with a default card that
+	// offers it, and null for a customer with no payment method, which takes any network (probes
+	// `isolated/card_network_default_card` and `isolated/card_network_no_payment_method*`), so
+	// the configured network stays in state.
 	PreserveConfig: []string{
-		"cancel_at", "trial_end",
+		"cancel_at", "trial_end", "payment_settings.payment_method_options.card.network",
 		"payment_settings.payment_method_options.us_bank_account.financial_connections.filters.account_subcategories",
 		"payment_settings.payment_method_options.us_bank_account.financial_connections.permissions",
 		"payment_settings.payment_method_options.us_bank_account.financial_connections.prefetch",
@@ -117,6 +131,10 @@ var Declaration = engine.Declaration{
 		// suite: TestSubscriptionAttributes, probe `isolated/hash_customer_balance`, whose
 		// subscription is created with a US bank transfer beside its `funding_type`
 		"payment_settings.payment_method_options.customer_balance.funding_type": "Stripe takes `bank_transfer` beside `bank_transfer.type`, and refused it on an update that sent no `bank_transfer`.",
+		// suite: TestSubscriptionAttributes, probes `isolated/card_network_*`
+		"payment_settings.payment_method_options.card.network": "Stripe takes a network the customer's default card offers, and any network for a customer with no payment method, which it then reads back as null; it refused `amex` for a customer whose card offers only `visa`.",
+		// suite: TestSubscriptionAttributes, probes `isolated/acss_debit_*`
+		"payment_settings.payment_method_options.acss_debit.mandate_options.transaction_type": "Stripe takes it on an update, and refuses it, or `mandate_options`, sent empty as `cannot be unset`, so removing either from the configuration keeps the current value.",
 	},
 	Defaults: map[string]string{
 		// suite: TestSubscriptionAttributes, probe `every_field/19`, which sends `on_behalf_of`
