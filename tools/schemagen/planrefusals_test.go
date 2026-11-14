@@ -147,6 +147,9 @@ func TestRulesThePlanCannotTellFailUnlessLeftToStripe(t *testing.T) {
 		"a time relative to the request": {[]RuleObservation{
 			probe("isolated/later", `{"name":"Gadget","color":{"$gen":"now","offset":86400}}`, "", 400, "Later.", ""),
 		}, "`$gen` `now`"},
+		"a value computed from another": {[]RuleObservation{
+			probe("isolated/one_ton", `{"name":"Gadget","color":{"$gen":"computed","arg":"one_ton_amount"}}`, "", 400, "Too little.", ""),
+		}, "`$gen` `computed`"},
 		"an empty hash, which the suite's form left out": {[]RuleObservation{
 			probe("isolated/empty_owner", `{"name":"Gadget","color":"red","owner":{}}`, "", 400, "Empty owner.", ""),
 		}, "`owner` is empty or null"},

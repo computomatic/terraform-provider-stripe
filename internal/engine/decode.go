@@ -315,6 +315,28 @@ func (d *decoder) value(n *node, w wire.Value, prior attr.Value) attr.Value {
 			elems[f.Name] = v
 		}
 		return d.mapOf(scalarType(elem), elems)
+	case fields.ScalarListMap:
+		o, ok := w.(wire.Object)
+		if !ok {
+			return d.wrongShape(n, fmt.Sprintf("expected an object, got %s", wireLabel(w)), prior)
+		}
+		elems := make(map[string]attr.Value, len(o))
+		for _, f := range o {
+			arr, ok := f.Value.(wire.Array)
+			if !ok {
+				return d.wrongShape(n, fmt.Sprintf("key %q: expected an array, got %s", f.Name, wireLabel(f.Value)), prior)
+			}
+			list := make([]attr.Value, len(arr))
+			for i, item := range arr {
+				v, problem := scalar(n.Elem, item)
+				if problem != "" {
+					return d.wrongShape(n, fmt.Sprintf("key %q, element %d: %s", f.Name, i, problem), prior)
+				}
+				list[i] = v
+			}
+			elems[f.Name] = d.list(scalarType(n.Elem), list)
+		}
+		return d.mapOf(scalarListType(n.Elem), elems)
 	case fields.ScalarList, fields.ScalarSet:
 		arr, ok := w.(wire.Array)
 		if !ok {

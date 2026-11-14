@@ -525,6 +525,10 @@ func (b *builder) object(l level, where string, depth int) ([]fields.Field, erro
 			Update:   uv != nil,
 			Response: rv != nil,
 		}
+		// The engine reads a map of scalar lists and never encodes one.
+		if f.Shape == fields.ScalarListMap && f.Writable() {
+			return nil, fmt.Errorf("%s: a request-side map of lists is not supported; add an Omit or ReadOnly entry", at)
+		}
 		for _, v := range views {
 			if v == nil {
 				continue
@@ -897,6 +901,8 @@ func (b *builder) classify(sc *Schema, where string, depth int, stack []string) 
 				v.shape = fields.StringMap
 			case value.shape == fields.Int:
 				v.shape = fields.IntMap
+			case value.shape == fields.ScalarList:
+				v.shape, v.elem = fields.ScalarListMap, value.elem
 			case value.shape == fields.Object:
 				v.shape, v.obj = fields.ObjectMap, value.obj
 				v.refs = append(v.refs, value.refs...)

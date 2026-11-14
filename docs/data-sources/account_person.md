@@ -34,9 +34,11 @@ This data source supports the following arguments:
 
 This data source exports the following attributes in addition to the arguments above:
 
+* `additional_tos_acceptances` - Details on the legal guardian's or authorizer's acceptance of the required Stripe agreements. See [`additional_tos_acceptances`](#additional_tos_acceptances) below.
 * `address` - The person's address. See [`address`](#address) below.
 * `created` - Time at which the object was created. Measured in seconds since the Unix epoch.
 * `dob` - The person's date of birth. See [`dob`](#dob) below.
+* `documents` - Documents that may be submitted to satisfy various informational requests. See [`documents`](#documents) below.
 * `email` - The person's email address.
 * `first_name` - The person's first name.
 * `full_name_aliases` - A list of alternate names or aliases that the person is known by.
@@ -47,6 +49,8 @@ This data source exports the following attributes in addition to the arguments a
 * `last_name` - The person's last name.
 * `maiden_name` - The person's maiden name.
 * `metadata` - Set of [key-value pairs](https://docs.stripe.com/api/metadata) that you can attach to an object. This can be useful for storing additional information about the object in a structured format. Individual keys can be unset by posting an empty value to them. All keys can be unset by posting an empty value to `metadata`.
+* `nationality` - The country where the person is a national. Two-letter country code ([ISO 3166-1 alpha-2](https://en.wikipedia.org/wiki/ISO_3166-1_alpha-2)), or "XX" if unavailable.
+* `person_token` - A [person token](https://docs.stripe.com/connect/account-tokens), used to securely provide details to the person.
 * `phone` - The person's phone number.
 * `political_exposure` - Indicates if the person or any of their representatives, family members, or other closely related persons, declares that they hold or have held an important public job or function, in any jurisdiction. Possible values: `existing`, `none`.
 * `registered_address` - The person's registered address. See [`registered_address`](#registered_address) below.
@@ -54,7 +58,24 @@ This data source exports the following attributes in addition to the arguments a
 * `requirements` - See [`requirements`](#requirements) below.
 * `ssn_last_4` - (Sensitive) The last four digits of the person's Social Security number (U.S. only). Changing this value for the account's representative requires that the account re-accept the [terms of service](https://docs.stripe.com/api/accounts/object#account_object-tos_acceptance).
 * `ssn_last_4_provided` - Whether the last four digits of the person's Social Security number have been provided (U.S. only).
+* `us_cfpb_data` - Demographic data related to the person. See [`us_cfpb_data`](#us_cfpb_data) below.
 * `verification` - The person's verification status. See [`verification`](#verification) below.
+
+<a id="additional_tos_acceptances"></a>
+### `additional_tos_acceptances`
+
+The `additional_tos_acceptances` attribute supports:
+
+* `account` - Details on the legal guardian's acceptance of the main Stripe service agreement. See [`additional_tos_acceptances.account`](#additional_tos_acceptances.account) below.
+
+<a id="additional_tos_acceptances.account"></a>
+### `additional_tos_acceptances.account`
+
+The `additional_tos_acceptances.account` attribute supports:
+
+* `date` - The Unix timestamp marking when the legal guardian accepted the service agreement.
+* `ip` - The IP address from which the legal guardian accepted the service agreement.
+* `user_agent` - The user agent of the browser from which the legal guardian accepted the service agreement.
 
 <a id="address"></a>
 ### `address`
@@ -76,6 +97,36 @@ The `dob` attribute supports:
 * `day` - The day of birth, between 1 and 31.
 * `month` - The month of birth, between 1 and 12.
 * `year` - The four-digit year of birth.
+
+<a id="documents"></a>
+### `documents`
+
+The `documents` attribute supports:
+
+* `company_authorization` - See [`documents.company_authorization`](#documents.company_authorization) below.
+* `passport` - See [`documents.passport`](#documents.passport) below.
+* `visa` - See [`documents.visa`](#documents.visa) below.
+
+<a id="documents.company_authorization"></a>
+### `documents.company_authorization`
+
+The `documents.company_authorization` attribute supports:
+
+* `files` -
+
+<a id="documents.passport"></a>
+### `documents.passport`
+
+The `documents.passport` attribute supports:
+
+* `files` -
+
+<a id="documents.visa"></a>
+### `documents.visa`
+
+The `documents.visa` attribute supports:
+
+* `files` -
 
 <a id="future_requirements"></a>
 ### `future_requirements`
@@ -160,6 +211,31 @@ The `requirements.errors` attribute is a list. Each element supports:
 * `code` - The code for the type of error. Possible values: `external_request`, `information_missing`, `invalid_address_city_state_postal_code`, `invalid_address_cmra_address`, `invalid_address_highway_contract_box`, `invalid_address_private_mailbox`, `invalid_address_registered_agent_address`, `invalid_business_profile_name`, `invalid_business_profile_name_denylisted`, `invalid_company_name_denylisted`, `invalid_dob_age_over_maximum`, `invalid_dob_age_under_18`, `invalid_dob_age_under_minimum`, `invalid_product_description_length`, `invalid_product_description_url_match`, `invalid_representative_country`, `invalid_signator`, `invalid_statement_descriptor_business_mismatch`, `invalid_statement_descriptor_denylisted`, `invalid_statement_descriptor_length`, `invalid_statement_descriptor_prefix_denylisted`, `invalid_statement_descriptor_prefix_mismatch`, `invalid_street_address`, `invalid_tax_id`, `invalid_tax_id_format`, `invalid_tos_acceptance`, `invalid_url_denylisted`, `invalid_url_format`, `invalid_url_web_presence_detected`, `invalid_url_website_business_information_mismatch`, `invalid_url_website_empty`, `invalid_url_website_inaccessible`, `invalid_url_website_inaccessible_geoblocked`, `invalid_url_website_inaccessible_password_protected`, `invalid_url_website_incomplete`, `invalid_url_website_incomplete_cancellation_policy`, `invalid_url_website_incomplete_customer_service_details`, `invalid_url_website_incomplete_legal_restrictions`, `invalid_url_website_incomplete_refund_policy`, `invalid_url_website_incomplete_return_policy`, `invalid_url_website_incomplete_terms_and_conditions`, `invalid_url_website_incomplete_under_construction`, `invalid_url_website_other`, `invalid_value_other`, `unsupported_business_type`, `verification_directors_mismatch`, `verification_document_address_mismatch`, `verification_document_address_missing`, `verification_document_corrupt`, `verification_document_country_not_supported`, `verification_document_directors_mismatch`, `verification_document_dob_mismatch`, `verification_document_duplicate_type`, `verification_document_expired`, `verification_document_failed_copy`, `verification_document_failed_greyscale`, `verification_document_failed_other`, `verification_document_failed_test_mode`, `verification_document_fraudulent`, `verification_document_id_number_mismatch`, `verification_document_id_number_missing`, `verification_document_incomplete`, `verification_document_invalid`, `verification_document_issue_or_expiry_date_missing`, `verification_document_manipulated`, `verification_document_missing_back`, `verification_document_missing_front`, `verification_document_name_mismatch`, `verification_document_name_missing`, `verification_document_nationality_mismatch`, `verification_document_not_readable`, `verification_document_not_signed`, `verification_document_not_uploaded`, `verification_document_photo_mismatch`, `verification_document_too_large`, `verification_document_type_not_supported`, `verification_extraneous_directors`, `verification_failed_address_match`, `verification_failed_authorizer_authority`, `verification_failed_business_iec_number`, `verification_failed_document_match`, `verification_failed_id_number_match`, `verification_failed_keyed_identity`, `verification_failed_keyed_match`, `verification_failed_name_match`, `verification_failed_other`, `verification_failed_representative_authority`, `verification_failed_residential_address`, `verification_failed_tax_id_match`, `verification_failed_tax_id_not_issued`, `verification_legal_entity_structure_mismatch`, `verification_missing_directors`, `verification_missing_executives`, `verification_missing_owners`, `verification_rejected_ownership_exemption_reason`, `verification_requires_additional_memorandum_of_associations`, `verification_requires_additional_proof_of_registration`, `verification_supportability`.
 * `reason` - An informative message that indicates the error type and provides additional details about the error.
 * `requirement` - The specific user onboarding requirement field (in the requirements hash) that needs to be resolved.
+
+<a id="us_cfpb_data"></a>
+### `us_cfpb_data`
+
+The `us_cfpb_data` attribute supports:
+
+* `ethnicity_details` - The persons ethnicity details See [`us_cfpb_data.ethnicity_details`](#us_cfpb_data.ethnicity_details) below.
+* `race_details` - The persons race details See [`us_cfpb_data.race_details`](#us_cfpb_data.race_details) below.
+* `self_identified_gender` - The persons self-identified gender
+
+<a id="us_cfpb_data.ethnicity_details"></a>
+### `us_cfpb_data.ethnicity_details`
+
+The `us_cfpb_data.ethnicity_details` attribute supports:
+
+* `ethnicity` - The persons ethnicity
+* `ethnicity_other` - Please specify your origin, when other is selected.
+
+<a id="us_cfpb_data.race_details"></a>
+### `us_cfpb_data.race_details`
+
+The `us_cfpb_data.race_details` attribute supports:
+
+* `race` - The persons race.
+* `race_other` - Please specify your race, when other is selected.
 
 <a id="verification"></a>
 ### `verification`

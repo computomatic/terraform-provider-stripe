@@ -507,7 +507,7 @@ The `payment_settings.payment_method_options.payto.mandate_options` attribute su
 
 The `payment_settings.payment_method_options.pix` attribute supports:
 
-* `expires_after_seconds` - (Optional) The number of seconds (between 10 and 1209600) after which Pix payment will expire. Defaults to 86400 seconds. Default: none.
+* `expires_after_seconds` - (Optional) The number of seconds (between 10 and 1209600) after which Pix payment will expire. Defaults to 86400 seconds. Default: none. Removing it from the configuration leaves the current value.
 * `mandate_options` - (Optional) See [`payment_settings.payment_method_options.pix.mandate_options`](#payment_settings.payment_method_options.pix.mandate_options) below.
 
 <a id="payment_settings.payment_method_options.pix.mandate_options"></a>
@@ -515,10 +515,10 @@ The `payment_settings.payment_method_options.pix` attribute supports:
 
 The `payment_settings.payment_method_options.pix.mandate_options` attribute supports:
 
-* `amount` - (Optional) Amount to be charged for future payments. Default: none.
-* `amount_includes_iof` - (Optional) Determines if the amount includes the IOF tax. Possible values: `always`, `never`. Default: none.
-* `end_date` - (Optional) Date when the mandate expires and no further payments will be charged, in `YYYY-MM-DD`. Default: none.
-* `payment_schedule` - (Optional) Schedule at which the future payments will be charged. Possible values: `halfyearly`, `monthly`, `quarterly`, `weekly`, `yearly`. Default: none.
+* `amount` - (Optional) Amount to be charged for future payments. Default: none. Removing it from the configuration leaves the current value.
+* `amount_includes_iof` - (Optional) Determines if the amount includes the IOF tax. Possible values: `always`, `never`. Default: none. Removing it from the configuration leaves the current value.
+* `end_date` - (Optional) Date when the mandate expires and no further payments will be charged, in `YYYY-MM-DD`. Default: none. Removing it from the configuration leaves the current value.
+* `payment_schedule` - (Optional) Schedule at which the future payments will be charged. Possible values: `halfyearly`, `monthly`, `quarterly`, `weekly`, `yearly`. Default: none. Removing it from the configuration leaves the current value.
 
 <a id="payment_settings.payment_method_options.upi"></a>
 ### `payment_settings.payment_method_options.upi`

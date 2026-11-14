@@ -8,13 +8,14 @@ import (
 // The reasons of LeftToStripe entries the record's rules share: what Stripe's refusal turns on,
 // which the plan cannot know.
 const (
-	leftExpired          = "Stripe's refusal turns on the state of the coupon or promotion code it names, expired or inactive, which the plan cannot know (probes `isolated/*coupon_expired` and `isolated/*promotion_code_inactive`)."
-	leftDiscountHeld     = "Stripe's refusal turns on which object holds the discount the request names, which the plan cannot know: it took a quote line's and a subscription item's own discount and refused one of the quote or subscription (probes `isolated/line_discount_held` and `isolated/item_discount_held` against `isolated/*discount_of_*`)."
-	leftCouponBesideHeld = "Stripe refuses a coupon beside a discount in one element (`You may only specify one of these parameters: coupon, discount.`), but the record sends the discount as the one read from the object, so the plan cannot tell the refused request from one naming a discount on its own, on which Stripe's answer turns (probes `isolated/*coupon_beside_held`)."
-	leftMissing          = "Stripe's refusal turns on whether the object the request names exists, which the plan cannot know (code `resource_missing`)."
-	leftStartedLater     = "The probe's schedule was created to start a day after the create (`$gen` `now` with an offset), a time relative to when the probe ran, which a pattern cannot state and any value would widen to every start; the plan refuses the same requests to a schedule created with `start_date = \"now\"` (probes `isolated/phases_empty_started` and `isolated/phases_without_start_date_started`)."
-	leftNoTemplate       = "Stripe's refusal turns on whether the invoice rendering template the request names exists, which the plan cannot know (code `invoice_rendering_template_invalid`, probes `isolated/customer_template_*`)."
-	leftBusinessURL      = "Stripe's refusal turns on its own check of the URL, not on the request alone: it took `https://example.com/acme` on a create and refused it on an update, and took `https://stripe.com` on a create of an account with no recipient configuration (probes `isolated/url_*`)."
+	leftExpired            = "Stripe's refusal turns on the state of the coupon or promotion code it names, expired or inactive, which the plan cannot know (probes `isolated/*coupon_expired` and `isolated/*promotion_code_inactive`)."
+	leftDiscountHeld       = "Stripe's refusal turns on which object holds the discount the request names, which the plan cannot know: it took a quote line's and a subscription item's own discount and refused one of the quote or subscription (probes `isolated/line_discount_held` and `isolated/item_discount_held` against `isolated/*discount_of_*`)."
+	leftCouponBesideHeld   = "Stripe refuses a coupon beside a discount in one element (`You may only specify one of these parameters: coupon, discount.`), but the record sends the discount as the one read from the object, so the plan cannot tell the refused request from one naming a discount on its own, on which Stripe's answer turns (probes `isolated/*coupon_beside_held`)."
+	leftMissing            = "Stripe's refusal turns on whether the object the request names exists, which the plan cannot know (code `resource_missing`)."
+	leftStartedLater       = "The probe's schedule was created to start a day after the create (`$gen` `now` with an offset), a time relative to when the probe ran, which a pattern cannot state and any value would widen to every start; the plan refuses the same requests to a schedule created with `start_date = \"now\"` (probes `isolated/phases_empty_started` and `isolated/phases_without_start_date_started`)."
+	leftNoTemplate         = "Stripe's refusal turns on whether the invoice rendering template the request names exists, which the plan cannot know (code `invoice_rendering_template_invalid`, probes `isolated/customer_template_*`)."
+	leftDestinationAccount = "Stripe's refusal turns on the capabilities of the connected account the request names, which the plan cannot know: it refused a destination account with `transfers` and without `card_payments`, and the probes sent the account's own currency (`$gen` `account_currency`), which a pattern cannot state either (probes `isolated/destination_*`)."
+	leftBusinessURL        = "Stripe's refusal turns on its own check of the URL, not on the request alone: it took `https://example.com/acme` on a create and refused it on an update, and took `https://stripe.com` on a create of an account with no recipient configuration (probes `isolated/url_*`)."
 )
 
 // parentHolds is the register's reason for a table's own copy of the parent ID that the
@@ -327,6 +328,8 @@ var Resources = []Resource{
 			"mandate_data":                   mandateData,
 			"payment_method_data.acss_debit": acssAccountNumber("TestPaymentIntentAttributes/leaves/request/PostPaymentIntents/payment_method_data.acss_debit.account_number"),
 			"PostPaymentIntentsIntent payment_method_options.customer_balance.bank_transfer": "`type`, which the hash requires, is `unproven` on the update with the reason `accepted_ignored`: Stripe took it with no effect the suite could see, so no update could send the hash, which the create alone takes (suite: TestPaymentIntentAttributes/leaves/request/PostPaymentIntentsIntent/payment_method_options.customer_balance.bank_transfer.type).",
+			"amount_details.line_items":                              "Stripe returns the line items only to a request that expands them (the record reads them absent on every create that does not, variant `line_items` among them), and the conformance suite proves the expansion only on a create or an update that sends line items and on a retrieve of an intent that holds them (the fake answers `fake_unproven` elsewhere, suite follow-up: payment intent line items expanded), while the engine expands a field on every request that returns the object, so it could not read them back (suite: TestPaymentIntentAttributes/leaves/response/payment_intent/amount_details.line_items@payment_flows_amount_details).",
+			"PostPaymentIntents error_on_requires_action":            confirmTime("TestPaymentIntentAttributes/leaves/request/PostPaymentIntents/error_on_requires_action"),
 			"PostPaymentIntents off_session":                         confirmTime("TestPaymentIntentAttributes/leaves/request/PostPaymentIntents/off_session"),
 			"PostPaymentIntents payment_method_options.card.network": confirmTime("TestPaymentIntentAttributes/leaves/request/PostPaymentIntents/payment_method_options.card.network"),
 			"PostPaymentIntents radar_options.referrer":              confirmTime("TestPaymentIntentAttributes/leaves/request/PostPaymentIntents/radar_options.referrer"),
@@ -344,7 +347,11 @@ var Resources = []Resource{
 	// `destination` are left out; the gate exposes `application_fee`, `fraud_details` and
 	// `radar_options`, which `ReadOnly` keeps out of the baseline. Stripe requires `amount` and
 	// `currency`, which the spec leaves optional (suite: "missing amount", "missing currency").
-	{Package: "charge", AcceptedOnly: map[string]string{
+	{Package: "charge", LeftToStripe: map[string]string{
+		"PostCharges destination":         leftDestinationAccount,
+		"PostCharges destination.account": leftDestinationAccount,
+		"PostCharges destination.amount":  leftDestinationAccount,
+	}, AcceptedOnly: map[string]string{
 		"capture": "Its effect shows in `captured`.",
 		"source":  "The token becomes the charge's card, read back at `source` and `payment_method`; without it a charge needs a customer with a default source.",
 	}, CreatePath: "/v1/charges", UpdatePath: "/v1/charges/{charge}", Omit: []string{"card", "destination"}, ReadOnly: []string{"application_fee", "fraud_details", "radar_options"}, Require: []string{"amount", "currency"}},
@@ -377,8 +384,10 @@ var Resources = []Resource{
 	// which the person object does not return, from a person's create. The capability data
 	// source reads the statuses.
 	{Package: "account", LeftToStripe: map[string]string{
-		"PostAccounts groups.payments_pricing":        leftMissing,
-		"PostAccountsAccount groups.payments_pricing": leftMissing,
+		"PostAccounts documents.proof_of_ultimate_beneficial_ownership.signer.person": leftMissing,
+		"PostAccounts company.representative_declaration.date":                        "The probe sent a date a day before it ran (`$gen` `now` with an offset), a time relative to when the probe ran, which a pattern cannot state and any value would widen; Stripe refused the hash on every create, whatever member it held (`only allowed during account updates`), and the plan refuses the probes that sent `ip` or `user_agent` alone (probes `isolated/representative_declaration_*_create`).",
+		"PostAccounts groups.payments_pricing":                                        leftMissing,
+		"PostAccountsAccount groups.payments_pricing":                                 leftMissing,
 	}, CreatePath: "/v1/accounts", UpdatePath: "/v1/accounts/{account}",
 		Keep: []string{"business_profile", "business_type", "capabilities", "charges_enabled", "company.name", "controller", "country", "created",
 			"default_currency", "details_submitted", "email", "external_account", "future_requirements", "id",
@@ -397,8 +406,9 @@ var Resources = []Resource{
 	// The external account is a bank account here (a card is a different object), created from
 	// the hash the spec documents under `bank_account`, or from a token in `external_account`.
 	// Its `account` is the parent ID. The Omit entries are the card's update parameters, which
-	// the register keeps out, and the documents, which need a file. The account type is refused
-	// on a US account; the suite leaves the countries that take one for later.
+	// the register keeps out, and the documents, which the gate exposes on create (batch R02).
+	// The account type is refused on a US account and proven only on the suite's JP account,
+	// which the fake does not serve (`country_profile_missing`), so it is read-only.
 	{Package: "account_external_account", AcceptedOnly: map[string]string{
 		"bank_account.account_number": "Its effect shows in `last4`, and the hash form needs it.",
 		"external_account":            "Its effect shows in the bank details Stripe reads from the token.",
@@ -426,7 +436,10 @@ var Resources = []Resource{
 	// the suite requests; the balance capabilities Stripe adds to it, and whether a
 	// configuration is applied, are read-only until the record verifies them. App installs are
 	// read-only: no suite test can install an app.
-	{Package: "account_person", Exclude: map[string]string{"account": parentHolds}, CreatePath: "/v1/accounts/{account}/persons", UpdatePath: "/v1/accounts/{account}/persons/{person}",
+	{Package: "account_person", LeftToStripe: map[string]string{
+		"PostAccountsAccountPersons person_token":       leftMissing,
+		"PostAccountsAccountPersonsPerson person_token": leftMissing,
+	}, Exclude: map[string]string{"account": parentHolds}, CreatePath: "/v1/accounts/{account}/persons", UpdatePath: "/v1/accounts/{account}/persons/{person}",
 		Keep: []string{"address", "created", "dob", "email", "first_name", "future_requirements", "id", "id_number", "id_number_provided", "last_name", "metadata", "phone",
 			"relationship", "requirements", "ssn_last_4", "ssn_last_4_provided", "verification"},
 		ReadOnly: []string{"relationship.authorizer", "relationship.legal_guardian", "verification"}},

@@ -82,9 +82,17 @@ The `amount_details` attribute supports:
 
 * `discount_amount` - (Optional) The total discount applied on the transaction represented in the [smallest currency unit](https://docs.stripe.com/currencies#zero-decimal). An integer greater than 0. This field is mutually exclusive with the `amount_details[line_items][#][discount_amount]` field. Removing it from the configuration leaves the current value.
 * `enforce_arithmetic_validation` - (Optional) Stripe does not return this value; the provider keeps it from configuration.
+* `error` - (Read-Only) See [`amount_details.error`](#amount_details.error) below.
 * `shipping` - (Optional) Removing it from the configuration leaves the current value. See [`amount_details.shipping`](#amount_details.shipping) below.
 * `tax` - (Optional) Removing it from the configuration leaves the current value. See [`amount_details.tax`](#amount_details.tax) below.
-* `tip` - (Read-Only) See [`amount_details.tip`](#amount_details.tip) below.
+
+<a id="amount_details.error"></a>
+### `amount_details.error`
+
+The `amount_details.error` attribute supports:
+
+* `code` - The code of the error that occurred when validating the current amount details. Possible values: `amount_details_amount_mismatch`, `amount_details_tax_shipping_discount_greater_than_amount`.
+* `message` - A message providing more details about the error.
 
 <a id="amount_details.shipping"></a>
 ### `amount_details.shipping`
@@ -102,19 +110,12 @@ The `amount_details.tax` attribute supports:
 
 * `total_tax_amount` - (Required) The total amount of tax on the transaction represented in the [smallest currency unit](https://docs.stripe.com/currencies#zero-decimal). Required for L2 rates. An integer greater than or equal to 0. This field is mutually exclusive with the `amount_details[line_items][#][tax][total_tax_amount]` field.
 
-<a id="amount_details.tip"></a>
-### `amount_details.tip`
-
-The `amount_details.tip` attribute supports:
-
-* `amount` - Portion of the amount that corresponds to a tip.
-
 <a id="automatic_payment_methods"></a>
 ### `automatic_payment_methods`
 
 The `automatic_payment_methods` attribute supports:
 
-* `allow_redirects` - (Optional) Controls whether this PaymentIntent will accept redirect-based payment methods. Redirect-based payment methods may require your customer to be redirected to a payment method's app or site for authentication or additional steps. To [confirm](https://docs.stripe.com/api/payment_intents/confirm) this PaymentIntent, you may be required to provide a `return_url` to redirect customers back to your site after they authenticate or complete the payment. Possible values: `always`, `never`. Default (Stripe): `always`. Removing it from the configuration leaves the current value.
+* `allow_redirects` - (Optional) Controls whether this PaymentIntent will accept redirect-based payment methods. Redirect-based payment methods may require your customer to be redirected to a payment method's app or site for authentication or additional steps. To [confirm](https://docs.stripe.com/api/payment_intents/confirm) this PaymentIntent, you may be required to provide a `return_url` to redirect customers back to your site after they authenticate or complete the payment. Possible values: `always`, `never`. Removing it from the configuration leaves the current value.
 * `enabled` - (Required) Automatically calculates compatible payment methods
 
 <a id="hooks"></a>
@@ -243,6 +244,7 @@ The `payment_method_options` attribute supports:
 * `amazon_pay` - (Optional) Removing it from the configuration leaves the current value. See [`payment_method_options.amazon_pay`](#payment_method_options.amazon_pay) below.
 * `bancontact` - (Optional) Removing it from the configuration leaves the current value. See [`payment_method_options.bancontact`](#payment_method_options.bancontact) below.
 * `card` - (Optional) Removing it from the configuration leaves the current value. See [`payment_method_options.card`](#payment_method_options.card) below.
+* `card_present` - (Optional) Removing it from the configuration leaves the current value. See [`payment_method_options.card_present`](#payment_method_options.card_present) below.
 * `cashapp` - (Optional) Removing it from the configuration leaves the current value. See [`payment_method_options.cashapp`](#payment_method_options.cashapp) below.
 * `crypto` - (Optional) Removing it from the configuration leaves the current value. See [`payment_method_options.crypto`](#payment_method_options.crypto) below.
 * `customer_balance` - (Optional) Removing it from the configuration leaves the current value. See [`payment_method_options.customer_balance`](#payment_method_options.customer_balance) below.
@@ -335,12 +337,12 @@ The `payment_method_options.card` attribute supports:
 * `capture_method` - (Optional) Controls when the funds will be captured from the customer's account. Possible values: `manual`. Removing it from the configuration leaves the current value.
 * `cvc_token` - (Optional) Stripe refused it on a US account on create: "No such cvc_update: 'cvctok_...'". Stripe refused it on a US account on update: "The parameter `payment_method_options[card][cvc_token]` cannot be used when creating a PaymentIntent unless `confirm` is set to true.".
 * `installments` - (Optional) Stripe does not return this value; the provider keeps it from configuration. See [`payment_method_options.card.installments`](#payment_method_options.card.installments) below.
-* `mandate_options` - (Optional) Stripe does not return this value; the provider keeps it from configuration. See [`payment_method_options.card.mandate_options`](#payment_method_options.card.mandate_options) below.
-* `network` - (Optional) Possible values: `amex`, `cartes_bancaires`, `diners`, `discover`, `eftpos_au`, `girocard`, `interac`, `jcb`, `link`, `mastercard`, `unionpay`, `unknown`, `visa`. Stripe refused it on a US account on update: "The parameter `payment_method_options[card][network]` cannot be used when creating a PaymentIntent unless `confirm` is set to true.". Default: not sent.
-* `request_extended_authorization` - (Optional) Possible values: `if_available`, `never`. Stripe does not return this value; the provider keeps it from configuration.
-* `request_incremental_authorization` - (Optional) Possible values: `if_available`, `never`. Stripe does not return this value; the provider keeps it from configuration.
+* `mandate_options` - (Optional) Configuration options for setting up an eMandate for cards issued in India. Removing it from the configuration leaves the current value. See [`payment_method_options.card.mandate_options`](#payment_method_options.card.mandate_options) below.
+* `network` - (Optional) Selected network to process this payment intent on. Depends on the available networks of the card attached to the payment intent. Can be only set confirm-time. Possible values: `amex`, `cartes_bancaires`, `diners`, `discover`, `eftpos_au`, `girocard`, `interac`, `jcb`, `link`, `mastercard`, `unionpay`, `unknown`, `visa`. Stripe refused it on a US account on update: "The parameter `payment_method_options[card][network]` cannot be used when creating a PaymentIntent unless `confirm` is set to true.". Default: not sent. Removing it from the configuration leaves the current value.
+* `request_extended_authorization` - (Optional) Request ability to [capture beyond the standard authorization validity window](https://docs.stripe.com/payments/extended-authorization) for this PaymentIntent. Possible values: `if_available`, `never`. Removing it from the configuration leaves the current value.
+* `request_incremental_authorization` - (Optional) Request ability to [increment the authorization](https://docs.stripe.com/payments/incremental-authorization) for this PaymentIntent. Possible values: `if_available`, `never`. Removing it from the configuration leaves the current value.
 * `request_multicapture` - (Optional) Possible values: `if_available`, `never`. Stripe does not return this value; the provider keeps it from configuration.
-* `request_overcapture` - (Optional) Possible values: `if_available`, `never`. Stripe does not return this value; the provider keeps it from configuration.
+* `request_overcapture` - (Optional) Request ability to [overcapture](https://docs.stripe.com/payments/overcapture) for this PaymentIntent. Possible values: `if_available`, `never`. Removing it from the configuration leaves the current value.
 * `request_three_d_secure` - (Optional) We strongly recommend that you rely on our SCA Engine to automatically prompt your customers for authentication based on risk level and [other requirements](https://docs.stripe.com/strong-customer-authentication). However, if you wish to request 3D Secure based on logic from your own fraud engine, provide this option. If not provided, this value defaults to `automatic`. Read our guide on [manually requesting 3D Secure](https://docs.stripe.com/payments/3d-secure/authentication-flow#manual-three-ds) for more information on how this configuration interacts with Radar and our SCA Engine. Possible values: `any`, `automatic`, `challenge`. Removing it from the configuration leaves the current value.
 * `require_cvc_recollection` - (Optional) When enabled, using a card that is attached to a customer will require the CVC to be provided again (i.e. using the cvc_token parameter). Removing it from the configuration leaves the current value.
 * `setup_future_usage` - (Optional) Indicates that you intend to make future payments with this PaymentIntent's payment method. If you provide a Customer with the PaymentIntent, you can use this parameter to [attach the payment method](https://docs.stripe.com/payments/save-during-payment) to the Customer after the PaymentIntent is confirmed and the customer completes any required actions. If you don't provide a Customer, you can still [attach](https://docs.stripe.com/api/payment_methods/attach) the payment method to a Customer after the transaction completes. If the payment method is `card_present` and isn't a digital wallet, Stripe creates and attaches a [generated_card](https://docs.stripe.com/api/charges/object#charge_object-payment_method_details-card_present-generated_card) payment method representing the card to the Customer instead. When processing card payments, Stripe uses `setup_future_usage` to help you comply with regional legislation and network rules, such as [SCA](https://docs.stripe.com/strong-customer-authentication). Possible values: `none`, `off_session`, `on_session`. Removing it from the configuration leaves the current value.
@@ -359,15 +361,32 @@ The `payment_method_options.card.installments` attribute supports:
 
 The `payment_method_options.card.mandate_options` attribute supports:
 
-* `amount` - (Required) Stripe does not return this value; the provider keeps it from configuration.
-* `amount_type` - (Required) Possible values: `fixed`, `maximum`. Stripe does not return this value; the provider keeps it from configuration.
-* `description` - (Optional) Stripe does not return this value; the provider keeps it from configuration.
-* `end_date` - (Optional) Stripe does not return this value; the provider keeps it from configuration.
-* `interval` - (Required) Possible values: `day`, `month`, `sporadic`, `week`, `year`. Stripe does not return this value; the provider keeps it from configuration.
-* `interval_count` - (Optional) Stripe does not return this value; the provider keeps it from configuration.
-* `reference` - (Required) Stripe does not return this value; the provider keeps it from configuration.
-* `start_date` - (Required) Stripe does not return this value; the provider keeps it from configuration.
-* `supported_types` - (Optional) Stripe does not return this value; the provider keeps it from configuration.
+* `amount` - (Required) Amount to be charged for future payments, specified in the presentment currency.
+* `amount_type` - (Required) One of `fixed` or `maximum`. If `fixed`, the `amount` param refers to the exact amount to be charged in future payments. If `maximum`, the amount charged can be up to the value passed for the `amount` param. Possible values: `fixed`, `maximum`.
+* `description` - (Optional) A description of the mandate or subscription that is meant to be displayed to the customer. Removing it from the configuration leaves the current value.
+* `end_date` - (Optional) End date of the mandate or subscription. If not provided, the mandate will be active until canceled. If provided, end date should be after start date. Removing it from the configuration leaves the current value.
+* `interval` - (Required) Specifies payment frequency. One of `day`, `week`, `month`, `year`, or `sporadic`. Possible values: `day`, `month`, `sporadic`, `week`, `year`.
+* `interval_count` - (Optional) The number of intervals between payments. For example, `interval=month` and `interval_count=3` indicates one payment every three months. Maximum of one year interval allowed (1 year, 12 months, or 52 weeks). This parameter is optional when `interval=sporadic`. Removing it from the configuration leaves the current value.
+* `reference` - (Required) Unique identifier for the mandate or subscription.
+* `start_date` - (Required) Start date of the mandate or subscription. Start date should not be lesser than yesterday.
+* `supported_types` - (Optional) Specifies the type of mandates supported. Possible values are `india`. Removing it from the configuration leaves the current value.
+
+<a id="payment_method_options.card_present"></a>
+### `payment_method_options.card_present`
+
+The `payment_method_options.card_present` attribute supports:
+
+* `capture_method` - (Optional) Controls when the funds will be captured from the customer's account. Possible values: `manual`, `manual_preferred`. Removing it from the configuration leaves the current value.
+* `request_extended_authorization` - (Optional) Request ability to capture this payment beyond the standard [authorization validity window](https://docs.stripe.com/terminal/features/extended-authorizations#authorization-validity). Removing it from the configuration leaves the current value.
+* `request_incremental_authorization_support` - (Optional) Request ability to [increment](https://docs.stripe.com/terminal/features/incremental-authorizations) this PaymentIntent if the combination of MCC and card brand is eligible. Check [incremental_authorization_supported](https://docs.stripe.com/api/charges/object#charge_object-payment_method_details-card_present-incremental_authorization_supported) in the [Confirm](https://docs.stripe.com/api/payment_intents/confirm) response to verify support. Removing it from the configuration leaves the current value.
+* `routing` - (Optional) See [`payment_method_options.card_present.routing`](#payment_method_options.card_present.routing) below.
+
+<a id="payment_method_options.card_present.routing"></a>
+### `payment_method_options.card_present.routing`
+
+The `payment_method_options.card_present.routing` attribute supports:
+
+* `requested_priority` - (Optional) Possible values: `domestic`, `international`. Stripe refused it on a US account on create and update: "Received unknown parameter: payment_method_options[card_present][routing]".
 
 <a id="payment_method_options.cashapp"></a>
 ### `payment_method_options.cashapp`
@@ -751,12 +770,1021 @@ The `last_payment_error` attribute supports:
 * `payment_method` - PaymentMethod objects represent your customer's payment instruments. You can use them with [PaymentIntents](https://docs.stripe.com/payments/payment-intents) to collect payments or save them to Customer objects to store instrument details for future payments. Related guides: [Payment Methods](https://docs.stripe.com/payments/payment-methods) and [More Payment Scenarios](https://docs.stripe.com/payments/more-payment-scenarios). See [`last_payment_error.payment_method`](#last_payment_error.payment_method) below.
 * `payment_method_type` - If the error is specific to the type of payment method, the payment method type that had a problem. This field is only populated for invoice-related errors.
 * `request_log_url` - A URL to the request log entry in your dashboard.
+* `setup_intent` - A SetupIntent guides you through the process of setting up and saving a customer's payment credentials for future payments. For example, you can use a SetupIntent to set up and save your customer's card without immediately collecting a payment. Later, you can use [PaymentIntents](https://docs.stripe.com/api#payment_intents) to drive the payment flow. Create a SetupIntent when you're ready to collect your customer's payment credentials. Don't maintain long-lived, unconfirmed SetupIntents because they might not be valid. The SetupIntent transitions through multiple [statuses](https://docs.stripe.com/payments/intents#intent-statuses) as it guides you through the setup process. Successful SetupIntents result in payment credentials that are optimized for future payments. For example, cardholders in [certain regions](https://stripe.com/guides/strong-customer-authentication) might need to be run through [Strong Customer Authentication](https://docs.stripe.com/strong-customer-authentication) during payment method collection to streamline later [off-session payments](https://docs.stripe.com/payments/setup-intents). If you use the SetupIntent with a [Customer](https://docs.stripe.com/api#setup_intent_object-customer), it automatically attaches the resulting payment method to that Customer after successful setup. We recommend using SetupIntents or [setup_future_usage](https://docs.stripe.com/api#payment_intent_object-setup_future_usage) on PaymentIntents to save payment methods to prevent saving invalid or unoptimized payment methods. By using SetupIntents, you can reduce friction for your customers, even as regulations change over time. Related guide: [Setup Intents API](https://docs.stripe.com/payments/setup-intents) See [`last_payment_error.setup_intent`](#last_payment_error.setup_intent) below.
+* `source` - The [source object](https://docs.stripe.com/api/sources/object) for errors returned on a request involving a source. See [`last_payment_error.source`](#last_payment_error.source) below.
 * `type` - The type of error returned. One of `api_error`, `card_error`, `idempotency_error`, or `invalid_request_error` Possible values: `api_error`, `card_error`, `idempotency_error`, `invalid_request_error`.
 
 <a id="last_payment_error.payment_method"></a>
 ### `last_payment_error.payment_method`
 
 The `last_payment_error.payment_method` attribute holds a customer payment method, with the attributes of the [`stripe_customer_payment_method`](../data-sources/customer_payment_method) data source and `object`, the name of its type.
+
+<a id="last_payment_error.setup_intent"></a>
+### `last_payment_error.setup_intent`
+
+The `last_payment_error.setup_intent` attribute supports:
+
+* `allowed_payment_method_types` - The list of payment method types to allow for this SetupIntent. Stripe will only use methods in this list when determining the payment methods to offer.
+* `application` - ID of the Connect application that created the SetupIntent.
+* `attach_to_self` - If present, the SetupIntent's payment method will be attached to the in-context Stripe Account. It can only be used for this Stripe Account’s own money movement flows like InboundTransfer and OutboundTransfers. It cannot be set to true when setting up a PaymentMethod for a Customer, and defaults to false when attaching a PaymentMethod to a Customer.
+* `automatic_payment_methods` - Settings for dynamic payment methods compatible with this Setup Intent See [`last_payment_error.setup_intent.automatic_payment_methods`](#last_payment_error.setup_intent.automatic_payment_methods) below.
+* `cancellation_reason` - Reason for cancellation of this SetupIntent, one of `abandoned`, `requested_by_customer`, or `duplicate`. Possible values: `abandoned`, `duplicate`, `requested_by_customer`.
+* `client_secret` - The client secret of this SetupIntent. Used for client-side retrieval using a publishable key. The client secret can be used to complete payment setup from your frontend. It should not be stored, logged, or exposed to anyone other than the customer. Make sure that you have TLS enabled on any page that includes the client secret.
+* `created` - Time at which the object was created. Measured in seconds since the Unix epoch.
+* `customer` - ID of the Customer this SetupIntent belongs to, if one exists. If present, the SetupIntent's payment method will be attached to the Customer on successful setup. Payment methods attached to other Customers cannot be used with this SetupIntent.
+* `customer_account` - ID of the Account this SetupIntent belongs to, if one exists. If present, the SetupIntent's payment method will be attached to the Account on successful setup. Payment methods attached to other Accounts cannot be used with this SetupIntent.
+* `description` - An arbitrary string attached to the object. Often useful for displaying to users.
+* `excluded_payment_method_types` - Payment method types that are excluded from this SetupIntent.
+* `flow_directions` - Indicates the directions of money movement for which this payment method is intended to be used. Include `inbound` if you intend to use the payment method as the origin to pull funds from. Include `outbound` if you intend to use the payment method as the destination to send funds to. You can include both if you intend to use the payment method for both purposes.
+* `id` - Unique identifier for the object.
+* `latest_attempt` - The most recent SetupAttempt for this SetupIntent.
+* `livemode` - If the object exists in live mode, the value is `true`. If the object exists in test mode, the value is `false`.
+* `managed_payments` - See [`last_payment_error.setup_intent.managed_payments`](#last_payment_error.setup_intent.managed_payments) below.
+* `mandate` - ID of the multi use Mandate generated by the SetupIntent.
+* `metadata` - Set of [key-value pairs](https://docs.stripe.com/api/metadata) that you can attach to an object. This can be useful for storing additional information about the object in a structured format.
+* `next_action` - If present, this property tells you what actions you need to take in order for your customer to continue payment setup. See [`last_payment_error.setup_intent.next_action`](#last_payment_error.setup_intent.next_action) below.
+* `object` - String representing the object's type. Objects of the same type share the same value. Possible values: `setup_intent`.
+* `on_behalf_of` - The account (if any) for which the setup is intended.
+* `payment_method` - ID of the payment method used with this SetupIntent. If the payment method is `card_present` and isn't a digital wallet, then the [generated_card](https://docs.stripe.com/api/setup_attempts/object#setup_attempt_object-payment_method_details-card_present-generated_card) associated with the `latest_attempt` is attached to the Customer instead.
+* `payment_method_configuration_details` - Information about the [payment method configuration](https://docs.stripe.com/api/payment_method_configurations) used for this Setup Intent. See [`last_payment_error.setup_intent.payment_method_configuration_details`](#last_payment_error.setup_intent.payment_method_configuration_details) below.
+* `payment_method_options` - Payment method-specific configuration for this SetupIntent. See [`last_payment_error.setup_intent.payment_method_options`](#last_payment_error.setup_intent.payment_method_options) below.
+* `payment_method_types` - The list of payment method types (e.g. card) that this SetupIntent is allowed to set up. A list of valid payment method types can be found [here](https://docs.stripe.com/api/payment_methods/object#payment_method_object-type).
+* `single_use_mandate` - ID of the single_use Mandate generated by the SetupIntent.
+* `status` - [Status](https://docs.stripe.com/payments/intents#intent-statuses) of this SetupIntent, one of `requires_payment_method`, `requires_confirmation`, `requires_action`, `processing`, `canceled`, or `succeeded`. Possible values: `canceled`, `processing`, `requires_action`, `requires_confirmation`, `requires_payment_method`, `succeeded`.
+* `usage` - Indicates how the payment method is intended to be used in the future. Use `on_session` if you intend to only reuse the payment method when the customer is in your checkout flow. Use `off_session` if your customer may or may not be in your checkout flow. If not provided, this value defaults to `off_session`.
+
+<a id="last_payment_error.setup_intent.automatic_payment_methods"></a>
+### `last_payment_error.setup_intent.automatic_payment_methods`
+
+The `last_payment_error.setup_intent.automatic_payment_methods` attribute supports:
+
+* `allow_redirects` - Controls whether this SetupIntent will accept redirect-based payment methods. Redirect-based payment methods may require your customer to be redirected to a payment method's app or site for authentication or additional steps. To [confirm](https://docs.stripe.com/api/setup_intents/confirm) this SetupIntent, you may be required to provide a `return_url` to redirect customers back to your site after they authenticate or complete the setup. Possible values: `always`, `never`.
+* `enabled` - Automatically calculates compatible payment methods
+
+<a id="last_payment_error.setup_intent.managed_payments"></a>
+### `last_payment_error.setup_intent.managed_payments`
+
+The `last_payment_error.setup_intent.managed_payments` attribute supports:
+
+* `enabled` - Set to `true` to enable [Managed Payments](https://docs.stripe.com/payments/managed-payments), Stripe's merchant of record solution, for this session.
+
+<a id="last_payment_error.setup_intent.next_action"></a>
+### `last_payment_error.setup_intent.next_action`
+
+The `last_payment_error.setup_intent.next_action` attribute supports:
+
+* `cashapp_handle_redirect_or_display_qr_code` - See [`last_payment_error.setup_intent.next_action.cashapp_handle_redirect_or_display_qr_code`](#last_payment_error.setup_intent.next_action.cashapp_handle_redirect_or_display_qr_code) below.
+* `pix_display_qr_code` - See [`last_payment_error.setup_intent.next_action.pix_display_qr_code`](#last_payment_error.setup_intent.next_action.pix_display_qr_code) below.
+* `redirect_to_url` - See [`last_payment_error.setup_intent.next_action.redirect_to_url`](#last_payment_error.setup_intent.next_action.redirect_to_url) below.
+* `type` - Type of the next action to perform. Refer to the other child attributes under `next_action` for available values. Examples include: `redirect_to_url`, `use_stripe_sdk`, `alipay_handle_redirect`, `oxxo_display_details`, or `verify_with_microdeposits`.
+* `upi_handle_redirect_or_display_qr_code` - See [`last_payment_error.setup_intent.next_action.upi_handle_redirect_or_display_qr_code`](#last_payment_error.setup_intent.next_action.upi_handle_redirect_or_display_qr_code) below.
+* `verify_with_microdeposits` - See [`last_payment_error.setup_intent.next_action.verify_with_microdeposits`](#last_payment_error.setup_intent.next_action.verify_with_microdeposits) below.
+
+<a id="last_payment_error.setup_intent.next_action.cashapp_handle_redirect_or_display_qr_code"></a>
+### `last_payment_error.setup_intent.next_action.cashapp_handle_redirect_or_display_qr_code`
+
+The `last_payment_error.setup_intent.next_action.cashapp_handle_redirect_or_display_qr_code` attribute supports:
+
+* `hosted_instructions_url` - The URL to the hosted Cash App Pay instructions page, which allows customers to view the QR code, and supports QR code refreshing on expiration.
+* `mobile_auth_url` - The url for mobile redirect based auth
+* `qr_code` - See [`last_payment_error.setup_intent.next_action.cashapp_handle_redirect_or_display_qr_code.qr_code`](#last_payment_error.setup_intent.next_action.cashapp_handle_redirect_or_display_qr_code.qr_code) below.
+
+<a id="last_payment_error.setup_intent.next_action.cashapp_handle_redirect_or_display_qr_code.qr_code"></a>
+### `last_payment_error.setup_intent.next_action.cashapp_handle_redirect_or_display_qr_code.qr_code`
+
+The `last_payment_error.setup_intent.next_action.cashapp_handle_redirect_or_display_qr_code.qr_code` attribute supports:
+
+* `expires_at` - The date (unix timestamp) when the QR code expires.
+* `image_url_png` - The image_url_png string used to render QR code
+* `image_url_svg` - The image_url_svg string used to render QR code
+
+<a id="last_payment_error.setup_intent.next_action.pix_display_qr_code"></a>
+### `last_payment_error.setup_intent.next_action.pix_display_qr_code`
+
+The `last_payment_error.setup_intent.next_action.pix_display_qr_code` attribute supports:
+
+* `data` - The raw data string used to generate QR code, it should be used together with QR code library.
+* `expires_at` - The date (unix timestamp) when the PIX expires.
+* `hosted_instructions_url` - The URL to the hosted pix instructions page, which allows customers to view the pix QR code.
+* `image_url_png` - The image_url_png string used to render png QR code
+* `image_url_svg` - The image_url_svg string used to render svg QR code
+
+<a id="last_payment_error.setup_intent.next_action.redirect_to_url"></a>
+### `last_payment_error.setup_intent.next_action.redirect_to_url`
+
+The `last_payment_error.setup_intent.next_action.redirect_to_url` attribute supports:
+
+* `return_url` - If the customer does not exit their browser while authenticating, they will be redirected to this specified URL after completion.
+* `url` - The URL you must redirect your customer to in order to authenticate.
+
+<a id="last_payment_error.setup_intent.next_action.upi_handle_redirect_or_display_qr_code"></a>
+### `last_payment_error.setup_intent.next_action.upi_handle_redirect_or_display_qr_code`
+
+The `last_payment_error.setup_intent.next_action.upi_handle_redirect_or_display_qr_code` attribute supports:
+
+* `hosted_instructions_url` - The URL to the hosted UPI instructions page, which allows customers to view the QR code.
+* `qr_code` - See [`last_payment_error.setup_intent.next_action.upi_handle_redirect_or_display_qr_code.qr_code`](#last_payment_error.setup_intent.next_action.upi_handle_redirect_or_display_qr_code.qr_code) below.
+
+<a id="last_payment_error.setup_intent.next_action.upi_handle_redirect_or_display_qr_code.qr_code"></a>
+### `last_payment_error.setup_intent.next_action.upi_handle_redirect_or_display_qr_code.qr_code`
+
+The `last_payment_error.setup_intent.next_action.upi_handle_redirect_or_display_qr_code.qr_code` attribute supports:
+
+* `expires_at` - The date (unix timestamp) when the QR code expires.
+* `image_url_png` - The image_url_png string used to render QR code
+* `image_url_svg` - The image_url_svg string used to render QR code
+
+<a id="last_payment_error.setup_intent.next_action.verify_with_microdeposits"></a>
+### `last_payment_error.setup_intent.next_action.verify_with_microdeposits`
+
+The `last_payment_error.setup_intent.next_action.verify_with_microdeposits` attribute supports:
+
+* `arrival_date` - The timestamp when the microdeposits are expected to land.
+* `hosted_verification_url` - The URL for the hosted verification page, which allows customers to verify their bank account.
+* `microdeposit_type` - The type of the microdeposit sent to the customer. Used to distinguish between different verification methods. Possible values: `amounts`, `descriptor_code`.
+
+<a id="last_payment_error.setup_intent.payment_method_configuration_details"></a>
+### `last_payment_error.setup_intent.payment_method_configuration_details`
+
+The `last_payment_error.setup_intent.payment_method_configuration_details` attribute supports:
+
+* `id` - ID of the payment method configuration used.
+* `parent` - ID of the parent payment method configuration used.
+
+<a id="last_payment_error.setup_intent.payment_method_options"></a>
+### `last_payment_error.setup_intent.payment_method_options`
+
+The `last_payment_error.setup_intent.payment_method_options` attribute supports:
+
+* `acss_debit` - See [`last_payment_error.setup_intent.payment_method_options.acss_debit`](#last_payment_error.setup_intent.payment_method_options.acss_debit) below.
+* `amazon_pay` - See [`last_payment_error.setup_intent.payment_method_options.amazon_pay`](#last_payment_error.setup_intent.payment_method_options.amazon_pay) below.
+* `bacs_debit` - See [`last_payment_error.setup_intent.payment_method_options.bacs_debit`](#last_payment_error.setup_intent.payment_method_options.bacs_debit) below.
+* `bizum` - See [`last_payment_error.setup_intent.payment_method_options.bizum`](#last_payment_error.setup_intent.payment_method_options.bizum) below.
+* `blik` - See [`last_payment_error.setup_intent.payment_method_options.blik`](#last_payment_error.setup_intent.payment_method_options.blik) below.
+* `card` - See [`last_payment_error.setup_intent.payment_method_options.card`](#last_payment_error.setup_intent.payment_method_options.card) below.
+* `card_present` - See [`last_payment_error.setup_intent.payment_method_options.card_present`](#last_payment_error.setup_intent.payment_method_options.card_present) below.
+* `klarna` - See [`last_payment_error.setup_intent.payment_method_options.klarna`](#last_payment_error.setup_intent.payment_method_options.klarna) below.
+* `link` - See [`last_payment_error.setup_intent.payment_method_options.link`](#last_payment_error.setup_intent.payment_method_options.link) below.
+* `paypal` - See [`last_payment_error.setup_intent.payment_method_options.paypal`](#last_payment_error.setup_intent.payment_method_options.paypal) below.
+* `payto` - See [`last_payment_error.setup_intent.payment_method_options.payto`](#last_payment_error.setup_intent.payment_method_options.payto) below.
+* `pix` - See [`last_payment_error.setup_intent.payment_method_options.pix`](#last_payment_error.setup_intent.payment_method_options.pix) below.
+* `sepa_debit` - See [`last_payment_error.setup_intent.payment_method_options.sepa_debit`](#last_payment_error.setup_intent.payment_method_options.sepa_debit) below.
+* `upi` - See [`last_payment_error.setup_intent.payment_method_options.upi`](#last_payment_error.setup_intent.payment_method_options.upi) below.
+* `us_bank_account` - See [`last_payment_error.setup_intent.payment_method_options.us_bank_account`](#last_payment_error.setup_intent.payment_method_options.us_bank_account) below.
+
+<a id="last_payment_error.setup_intent.payment_method_options.acss_debit"></a>
+### `last_payment_error.setup_intent.payment_method_options.acss_debit`
+
+The `last_payment_error.setup_intent.payment_method_options.acss_debit` attribute supports:
+
+* `currency` - Currency supported by the bank account Possible values: `cad`, `usd`.
+* `mandate_options` - See [`last_payment_error.setup_intent.payment_method_options.acss_debit.mandate_options`](#last_payment_error.setup_intent.payment_method_options.acss_debit.mandate_options) below.
+* `verification_method` - Bank account verification method. The default value is `automatic`. Possible values: `automatic`, `instant`, `microdeposits`.
+
+<a id="last_payment_error.setup_intent.payment_method_options.acss_debit.mandate_options"></a>
+### `last_payment_error.setup_intent.payment_method_options.acss_debit.mandate_options`
+
+The `last_payment_error.setup_intent.payment_method_options.acss_debit.mandate_options` attribute supports:
+
+* `amount` - Amount that will be collected. It is required when `amount_type` is `fixed`.
+* `amount_type` - The type of amount that will be collected. The amount charged must be exact or up to the value of `amount` param for `fixed` or `maximum` type respectively. Defaults to `maximum`. Possible values: `fixed`, `maximum`.
+* `custom_mandate_url` - A URL for custom mandate text
+* `default_for` - List of Stripe products where this mandate can be selected automatically.
+* `end_date` - Date, in YYYY-MM-DD format, after which payments will not be collected. Defaults to no end date.
+* `interval_description` - Description of the interval. Only required if the 'payment_schedule' parameter is 'interval' or 'combined'.
+* `payment_schedule` - Payment schedule for the mandate. Possible values: `combined`, `interval`, `sporadic`, `adhoc`, `annual`, `daily`, `fortnightly`, `monthly`, `quarterly`, `semi_annual`, `weekly`.
+* `payments_per_period` - The number of payments that will be made during a payment period. Defaults to 1 except for when `payment_schedule` is `adhoc`. In that case, it defaults to no limit.
+* `purpose` - The purpose for which payments are made. Has a default value based on your merchant category code. Possible values: `dependant_support`, `government`, `loan`, `mortgage`, `other`, `pension`, `personal`, `retail`, `salary`, `tax`, `utility`.
+* `start_date` - Date, in YYYY-MM-DD format, from which payments will be collected. Defaults to confirmation time.
+* `transaction_type` - Transaction type of the mandate. Possible values: `business`, `personal`.
+
+<a id="last_payment_error.setup_intent.payment_method_options.amazon_pay"></a>
+### `last_payment_error.setup_intent.payment_method_options.amazon_pay`
+
+The `last_payment_error.setup_intent.payment_method_options.amazon_pay` attribute supports:
+
+* `mandate_options` - See [`last_payment_error.setup_intent.payment_method_options.amazon_pay.mandate_options`](#last_payment_error.setup_intent.payment_method_options.amazon_pay.mandate_options) below.
+* `verification_method` - Bank account verification method. The default value is `automatic`. Possible values: `automatic`, `instant`, `microdeposits`.
+
+<a id="last_payment_error.setup_intent.payment_method_options.amazon_pay.mandate_options"></a>
+### `last_payment_error.setup_intent.payment_method_options.amazon_pay.mandate_options`
+
+The `last_payment_error.setup_intent.payment_method_options.amazon_pay.mandate_options` attribute supports:
+
+* `amount` - Amount that will be collected. It is required when `amount_type` is `fixed`.
+* `amount_type` - The type of amount that will be collected. The amount charged must be exact or up to the value of `amount` param for `fixed` or `maximum` type respectively. Defaults to `maximum`. Possible values: `fixed`, `maximum`.
+* `end_date` - Date, in YYYY-MM-DD format, after which payments will not be collected. Defaults to no end date.
+* `payment_schedule` - The periodicity at which payments will be collected. Defaults to `adhoc`. Possible values: `adhoc`, `annual`, `daily`, `fortnightly`, `monthly`, `quarterly`, `semi_annual`, `weekly`.
+* `payments_per_period` - The number of payments that will be made during a payment period. Defaults to 1 except for when `payment_schedule` is `adhoc`. In that case, it defaults to no limit.
+* `purpose` - The purpose for which payments are made. Has a default value based on your merchant category code. Possible values: `dependant_support`, `government`, `loan`, `mortgage`, `other`, `pension`, `personal`, `retail`, `salary`, `tax`, `utility`.
+* `start_date` - Date, in YYYY-MM-DD format, from which payments will be collected. Defaults to confirmation time.
+
+<a id="last_payment_error.setup_intent.payment_method_options.bacs_debit"></a>
+### `last_payment_error.setup_intent.payment_method_options.bacs_debit`
+
+The `last_payment_error.setup_intent.payment_method_options.bacs_debit` attribute supports:
+
+* `mandate_options` - See [`last_payment_error.setup_intent.payment_method_options.bacs_debit.mandate_options`](#last_payment_error.setup_intent.payment_method_options.bacs_debit.mandate_options) below.
+* `verification_method` - Bank account verification method. The default value is `automatic`. Possible values: `automatic`, `instant`, `microdeposits`.
+
+<a id="last_payment_error.setup_intent.payment_method_options.bacs_debit.mandate_options"></a>
+### `last_payment_error.setup_intent.payment_method_options.bacs_debit.mandate_options`
+
+The `last_payment_error.setup_intent.payment_method_options.bacs_debit.mandate_options` attribute supports:
+
+* `amount` - Amount that will be collected. It is required when `amount_type` is `fixed`.
+* `amount_type` - The type of amount that will be collected. The amount charged must be exact or up to the value of `amount` param for `fixed` or `maximum` type respectively. Defaults to `maximum`. Possible values: `fixed`, `maximum`.
+* `end_date` - Date, in YYYY-MM-DD format, after which payments will not be collected. Defaults to no end date.
+* `payment_schedule` - The periodicity at which payments will be collected. Defaults to `adhoc`. Possible values: `adhoc`, `annual`, `daily`, `fortnightly`, `monthly`, `quarterly`, `semi_annual`, `weekly`.
+* `payments_per_period` - The number of payments that will be made during a payment period. Defaults to 1 except for when `payment_schedule` is `adhoc`. In that case, it defaults to no limit.
+* `purpose` - The purpose for which payments are made. Has a default value based on your merchant category code. Possible values: `dependant_support`, `government`, `loan`, `mortgage`, `other`, `pension`, `personal`, `retail`, `salary`, `tax`, `utility`.
+* `reference_prefix` - Prefix used to generate the Mandate reference. Must be at most 12 characters long. Must consist of only uppercase letters, numbers, spaces, or the following special characters: '/', '_', '-', '&', '.'. Cannot begin with 'DDIC' or 'STRIPE'.
+* `start_date` - Date, in YYYY-MM-DD format, from which payments will be collected. Defaults to confirmation time.
+
+<a id="last_payment_error.setup_intent.payment_method_options.bizum"></a>
+### `last_payment_error.setup_intent.payment_method_options.bizum`
+
+The `last_payment_error.setup_intent.payment_method_options.bizum` attribute supports:
+
+* `mandate_options` - See [`last_payment_error.setup_intent.payment_method_options.bizum.mandate_options`](#last_payment_error.setup_intent.payment_method_options.bizum.mandate_options) below.
+* `verification_method` - Bank account verification method. The default value is `automatic`. Possible values: `automatic`, `instant`, `microdeposits`.
+
+<a id="last_payment_error.setup_intent.payment_method_options.bizum.mandate_options"></a>
+### `last_payment_error.setup_intent.payment_method_options.bizum.mandate_options`
+
+The `last_payment_error.setup_intent.payment_method_options.bizum.mandate_options` attribute supports:
+
+* `amount` - Amount that will be collected. It is required when `amount_type` is `fixed`.
+* `amount_type` - The type of amount that will be collected. The amount charged must be exact or up to the value of `amount` param for `fixed` or `maximum` type respectively. Defaults to `maximum`. Possible values: `fixed`, `maximum`.
+* `end_date` - Date, in YYYY-MM-DD format, after which payments will not be collected. Defaults to no end date.
+* `payment_schedule` - The periodicity at which payments will be collected. Defaults to `adhoc`. Possible values: `adhoc`, `annual`, `daily`, `fortnightly`, `monthly`, `quarterly`, `semi_annual`, `weekly`.
+* `payments_per_period` - The number of payments that will be made during a payment period. Defaults to 1 except for when `payment_schedule` is `adhoc`. In that case, it defaults to no limit.
+* `purpose` - The purpose for which payments are made. Has a default value based on your merchant category code. Possible values: `dependant_support`, `government`, `loan`, `mortgage`, `other`, `pension`, `personal`, `retail`, `salary`, `tax`, `utility`.
+* `start_date` - Date, in YYYY-MM-DD format, from which payments will be collected. Defaults to confirmation time.
+
+<a id="last_payment_error.setup_intent.payment_method_options.blik"></a>
+### `last_payment_error.setup_intent.payment_method_options.blik`
+
+The `last_payment_error.setup_intent.payment_method_options.blik` attribute supports:
+
+* `mandate_options` - See [`last_payment_error.setup_intent.payment_method_options.blik.mandate_options`](#last_payment_error.setup_intent.payment_method_options.blik.mandate_options) below.
+* `verification_method` - Bank account verification method. The default value is `automatic`. Possible values: `automatic`, `instant`, `microdeposits`.
+
+<a id="last_payment_error.setup_intent.payment_method_options.blik.mandate_options"></a>
+### `last_payment_error.setup_intent.payment_method_options.blik.mandate_options`
+
+The `last_payment_error.setup_intent.payment_method_options.blik.mandate_options` attribute supports:
+
+* `amount` - Amount that will be collected. It is required when `amount_type` is `fixed`.
+* `amount_type` - The type of amount that will be collected. The amount charged must be exact or up to the value of `amount` param for `fixed` or `maximum` type respectively. Defaults to `maximum`. Possible values: `fixed`, `maximum`.
+* `end_date` - Date, in YYYY-MM-DD format, after which payments will not be collected. Defaults to no end date.
+* `expires_at` - Date at which the mandate expires.
+* `payment_schedule` - The periodicity at which payments will be collected. Defaults to `adhoc`. Possible values: `adhoc`, `annual`, `daily`, `fortnightly`, `monthly`, `quarterly`, `semi_annual`, `weekly`.
+* `payments_per_period` - The number of payments that will be made during a payment period. Defaults to 1 except for when `payment_schedule` is `adhoc`. In that case, it defaults to no limit.
+* `purpose` - The purpose for which payments are made. Has a default value based on your merchant category code. Possible values: `dependant_support`, `government`, `loan`, `mortgage`, `other`, `pension`, `personal`, `retail`, `salary`, `tax`, `utility`.
+* `start_date` - Date, in YYYY-MM-DD format, from which payments will be collected. Defaults to confirmation time.
+* `type` - Type of the mandate. Possible values: `off_session`.
+
+<a id="last_payment_error.setup_intent.payment_method_options.card"></a>
+### `last_payment_error.setup_intent.payment_method_options.card`
+
+The `last_payment_error.setup_intent.payment_method_options.card` attribute supports:
+
+* `mandate_options` - Configuration options for setting up an eMandate for cards issued in India. See [`last_payment_error.setup_intent.payment_method_options.card.mandate_options`](#last_payment_error.setup_intent.payment_method_options.card.mandate_options) below.
+* `network` - Selected network to process this SetupIntent on. Depends on the available networks of the card attached to the setup intent. Can be only set confirm-time. Possible values: `amex`, `cartes_bancaires`, `diners`, `discover`, `eftpos_au`, `girocard`, `interac`, `jcb`, `link`, `mastercard`, `unionpay`, `unknown`, `visa`.
+* `request_three_d_secure` - We strongly recommend that you rely on our SCA Engine to automatically prompt your customers for authentication based on risk level and [other requirements](https://docs.stripe.com/strong-customer-authentication). However, if you wish to request 3D Secure based on logic from your own fraud engine, provide this option. If not provided, this value defaults to `automatic`. Read our guide on [manually requesting 3D Secure](https://docs.stripe.com/payments/3d-secure/authentication-flow#manual-three-ds) for more information on how this configuration interacts with Radar and our SCA Engine. Possible values: `any`, `automatic`, `challenge`.
+* `verification_method` - Bank account verification method. The default value is `automatic`. Possible values: `automatic`, `instant`, `microdeposits`.
+
+<a id="last_payment_error.setup_intent.payment_method_options.card.mandate_options"></a>
+### `last_payment_error.setup_intent.payment_method_options.card.mandate_options`
+
+The `last_payment_error.setup_intent.payment_method_options.card.mandate_options` attribute supports:
+
+* `amount` - Amount to be charged for future payments, specified in the presentment currency.
+* `amount_type` - One of `fixed` or `maximum`. If `fixed`, the `amount` param refers to the exact amount to be charged in future payments. If `maximum`, the amount charged can be up to the value passed for the `amount` param. Possible values: `fixed`, `maximum`.
+* `currency` - Three-letter [ISO currency code](https://www.iso.org/iso-4217-currency-codes.html), in lowercase. Must be a [supported currency](https://stripe.com/docs/currencies).
+* `description` - A description of the mandate or subscription that is meant to be displayed to the customer.
+* `end_date` - End date of the mandate or subscription. If not provided, the mandate will be active until canceled. If provided, end date should be after start date.
+* `interval` - Specifies payment frequency. One of `day`, `week`, `month`, `year`, or `sporadic`. Possible values: `day`, `month`, `sporadic`, `week`, `year`.
+* `interval_count` - The number of intervals between payments. For example, `interval=month` and `interval_count=3` indicates one payment every three months. Maximum of one year interval allowed (1 year, 12 months, or 52 weeks). This parameter is optional when `interval=sporadic`.
+* `payment_schedule` - The periodicity at which payments will be collected. Defaults to `adhoc`. Possible values: `adhoc`, `annual`, `daily`, `fortnightly`, `monthly`, `quarterly`, `semi_annual`, `weekly`.
+* `payments_per_period` - The number of payments that will be made during a payment period. Defaults to 1 except for when `payment_schedule` is `adhoc`. In that case, it defaults to no limit.
+* `purpose` - The purpose for which payments are made. Has a default value based on your merchant category code. Possible values: `dependant_support`, `government`, `loan`, `mortgage`, `other`, `pension`, `personal`, `retail`, `salary`, `tax`, `utility`.
+* `reference` - Unique identifier for the mandate or subscription.
+* `start_date` - Start date of the mandate or subscription. Start date should not be lesser than yesterday.
+* `supported_types` - Specifies the type of mandates supported. Possible values are `india`.
+
+<a id="last_payment_error.setup_intent.payment_method_options.card_present"></a>
+### `last_payment_error.setup_intent.payment_method_options.card_present`
+
+The `last_payment_error.setup_intent.payment_method_options.card_present` attribute supports:
+
+* `mandate_options` - See [`last_payment_error.setup_intent.payment_method_options.card_present.mandate_options`](#last_payment_error.setup_intent.payment_method_options.card_present.mandate_options) below.
+* `verification_method` - Bank account verification method. The default value is `automatic`. Possible values: `automatic`, `instant`, `microdeposits`.
+
+<a id="last_payment_error.setup_intent.payment_method_options.card_present.mandate_options"></a>
+### `last_payment_error.setup_intent.payment_method_options.card_present.mandate_options`
+
+The `last_payment_error.setup_intent.payment_method_options.card_present.mandate_options` attribute supports:
+
+* `amount` - Amount that will be collected. It is required when `amount_type` is `fixed`.
+* `amount_type` - The type of amount that will be collected. The amount charged must be exact or up to the value of `amount` param for `fixed` or `maximum` type respectively. Defaults to `maximum`. Possible values: `fixed`, `maximum`.
+* `end_date` - Date, in YYYY-MM-DD format, after which payments will not be collected. Defaults to no end date.
+* `payment_schedule` - The periodicity at which payments will be collected. Defaults to `adhoc`. Possible values: `adhoc`, `annual`, `daily`, `fortnightly`, `monthly`, `quarterly`, `semi_annual`, `weekly`.
+* `payments_per_period` - The number of payments that will be made during a payment period. Defaults to 1 except for when `payment_schedule` is `adhoc`. In that case, it defaults to no limit.
+* `purpose` - The purpose for which payments are made. Has a default value based on your merchant category code. Possible values: `dependant_support`, `government`, `loan`, `mortgage`, `other`, `pension`, `personal`, `retail`, `salary`, `tax`, `utility`.
+* `start_date` - Date, in YYYY-MM-DD format, from which payments will be collected. Defaults to confirmation time.
+
+<a id="last_payment_error.setup_intent.payment_method_options.klarna"></a>
+### `last_payment_error.setup_intent.payment_method_options.klarna`
+
+The `last_payment_error.setup_intent.payment_method_options.klarna` attribute supports:
+
+* `currency` - The currency of the setup intent. Three letter ISO currency code.
+* `mandate_options` - See [`last_payment_error.setup_intent.payment_method_options.klarna.mandate_options`](#last_payment_error.setup_intent.payment_method_options.klarna.mandate_options) below.
+* `preferred_locale` - Preferred locale of the Klarna checkout page that the customer is redirected to.
+* `verification_method` - Bank account verification method. The default value is `automatic`. Possible values: `automatic`, `instant`, `microdeposits`.
+
+<a id="last_payment_error.setup_intent.payment_method_options.klarna.mandate_options"></a>
+### `last_payment_error.setup_intent.payment_method_options.klarna.mandate_options`
+
+The `last_payment_error.setup_intent.payment_method_options.klarna.mandate_options` attribute supports:
+
+* `amount` - Amount that will be collected. It is required when `amount_type` is `fixed`.
+* `amount_type` - The type of amount that will be collected. The amount charged must be exact or up to the value of `amount` param for `fixed` or `maximum` type respectively. Defaults to `maximum`. Possible values: `fixed`, `maximum`.
+* `end_date` - Date, in YYYY-MM-DD format, after which payments will not be collected. Defaults to no end date.
+* `payment_schedule` - The periodicity at which payments will be collected. Defaults to `adhoc`. Possible values: `adhoc`, `annual`, `daily`, `fortnightly`, `monthly`, `quarterly`, `semi_annual`, `weekly`.
+* `payments_per_period` - The number of payments that will be made during a payment period. Defaults to 1 except for when `payment_schedule` is `adhoc`. In that case, it defaults to no limit.
+* `purpose` - The purpose for which payments are made. Has a default value based on your merchant category code. Possible values: `dependant_support`, `government`, `loan`, `mortgage`, `other`, `pension`, `personal`, `retail`, `salary`, `tax`, `utility`.
+* `start_date` - Date, in YYYY-MM-DD format, from which payments will be collected. Defaults to confirmation time.
+
+<a id="last_payment_error.setup_intent.payment_method_options.link"></a>
+### `last_payment_error.setup_intent.payment_method_options.link`
+
+The `last_payment_error.setup_intent.payment_method_options.link` attribute supports:
+
+* `mandate_options` - See [`last_payment_error.setup_intent.payment_method_options.link.mandate_options`](#last_payment_error.setup_intent.payment_method_options.link.mandate_options) below.
+* `verification_method` - Bank account verification method. The default value is `automatic`. Possible values: `automatic`, `instant`, `microdeposits`.
+
+<a id="last_payment_error.setup_intent.payment_method_options.link.mandate_options"></a>
+### `last_payment_error.setup_intent.payment_method_options.link.mandate_options`
+
+The `last_payment_error.setup_intent.payment_method_options.link.mandate_options` attribute supports:
+
+* `amount` - Amount that will be collected. It is required when `amount_type` is `fixed`.
+* `amount_type` - The type of amount that will be collected. The amount charged must be exact or up to the value of `amount` param for `fixed` or `maximum` type respectively. Defaults to `maximum`. Possible values: `fixed`, `maximum`.
+* `end_date` - Date, in YYYY-MM-DD format, after which payments will not be collected. Defaults to no end date.
+* `payment_schedule` - The periodicity at which payments will be collected. Defaults to `adhoc`. Possible values: `adhoc`, `annual`, `daily`, `fortnightly`, `monthly`, `quarterly`, `semi_annual`, `weekly`.
+* `payments_per_period` - The number of payments that will be made during a payment period. Defaults to 1 except for when `payment_schedule` is `adhoc`. In that case, it defaults to no limit.
+* `purpose` - The purpose for which payments are made. Has a default value based on your merchant category code. Possible values: `dependant_support`, `government`, `loan`, `mortgage`, `other`, `pension`, `personal`, `retail`, `salary`, `tax`, `utility`.
+* `start_date` - Date, in YYYY-MM-DD format, from which payments will be collected. Defaults to confirmation time.
+
+<a id="last_payment_error.setup_intent.payment_method_options.paypal"></a>
+### `last_payment_error.setup_intent.payment_method_options.paypal`
+
+The `last_payment_error.setup_intent.payment_method_options.paypal` attribute supports:
+
+* `billing_agreement_id` - The PayPal Billing Agreement ID (BAID). This is an ID generated by PayPal which represents the mandate between the merchant and the customer.
+* `mandate_options` - See [`last_payment_error.setup_intent.payment_method_options.paypal.mandate_options`](#last_payment_error.setup_intent.payment_method_options.paypal.mandate_options) below.
+* `verification_method` - Bank account verification method. The default value is `automatic`. Possible values: `automatic`, `instant`, `microdeposits`.
+
+<a id="last_payment_error.setup_intent.payment_method_options.paypal.mandate_options"></a>
+### `last_payment_error.setup_intent.payment_method_options.paypal.mandate_options`
+
+The `last_payment_error.setup_intent.payment_method_options.paypal.mandate_options` attribute supports:
+
+* `amount` - Amount that will be collected. It is required when `amount_type` is `fixed`.
+* `amount_type` - The type of amount that will be collected. The amount charged must be exact or up to the value of `amount` param for `fixed` or `maximum` type respectively. Defaults to `maximum`. Possible values: `fixed`, `maximum`.
+* `end_date` - Date, in YYYY-MM-DD format, after which payments will not be collected. Defaults to no end date.
+* `payment_schedule` - The periodicity at which payments will be collected. Defaults to `adhoc`. Possible values: `adhoc`, `annual`, `daily`, `fortnightly`, `monthly`, `quarterly`, `semi_annual`, `weekly`.
+* `payments_per_period` - The number of payments that will be made during a payment period. Defaults to 1 except for when `payment_schedule` is `adhoc`. In that case, it defaults to no limit.
+* `purpose` - The purpose for which payments are made. Has a default value based on your merchant category code. Possible values: `dependant_support`, `government`, `loan`, `mortgage`, `other`, `pension`, `personal`, `retail`, `salary`, `tax`, `utility`.
+* `start_date` - Date, in YYYY-MM-DD format, from which payments will be collected. Defaults to confirmation time.
+
+<a id="last_payment_error.setup_intent.payment_method_options.payto"></a>
+### `last_payment_error.setup_intent.payment_method_options.payto`
+
+The `last_payment_error.setup_intent.payment_method_options.payto` attribute supports:
+
+* `mandate_options` - See [`last_payment_error.setup_intent.payment_method_options.payto.mandate_options`](#last_payment_error.setup_intent.payment_method_options.payto.mandate_options) below.
+* `verification_method` - Bank account verification method. The default value is `automatic`. Possible values: `automatic`, `instant`, `microdeposits`.
+
+<a id="last_payment_error.setup_intent.payment_method_options.payto.mandate_options"></a>
+### `last_payment_error.setup_intent.payment_method_options.payto.mandate_options`
+
+The `last_payment_error.setup_intent.payment_method_options.payto.mandate_options` attribute supports:
+
+* `amount` - Amount that will be collected. It is required when `amount_type` is `fixed`.
+* `amount_type` - The type of amount that will be collected. The amount charged must be exact or up to the value of `amount` param for `fixed` or `maximum` type respectively. Defaults to `maximum`. Possible values: `fixed`, `maximum`.
+* `end_date` - Date, in YYYY-MM-DD format, after which payments will not be collected. Defaults to no end date.
+* `payment_schedule` - The periodicity at which payments will be collected. Defaults to `adhoc`. Possible values: `adhoc`, `annual`, `daily`, `fortnightly`, `monthly`, `quarterly`, `semi_annual`, `weekly`.
+* `payments_per_period` - The number of payments that will be made during a payment period. Defaults to 1 except for when `payment_schedule` is `adhoc`. In that case, it defaults to no limit.
+* `purpose` - The purpose for which payments are made. Has a default value based on your merchant category code. Possible values: `dependant_support`, `government`, `loan`, `mortgage`, `other`, `pension`, `personal`, `retail`, `salary`, `tax`, `utility`.
+* `start_date` - Date, in YYYY-MM-DD format, from which payments will be collected. Defaults to confirmation time.
+
+<a id="last_payment_error.setup_intent.payment_method_options.pix"></a>
+### `last_payment_error.setup_intent.payment_method_options.pix`
+
+The `last_payment_error.setup_intent.payment_method_options.pix` attribute supports:
+
+* `mandate_options` - See [`last_payment_error.setup_intent.payment_method_options.pix.mandate_options`](#last_payment_error.setup_intent.payment_method_options.pix.mandate_options) below.
+* `verification_method` - Bank account verification method. The default value is `automatic`. Possible values: `automatic`, `instant`, `microdeposits`.
+
+<a id="last_payment_error.setup_intent.payment_method_options.pix.mandate_options"></a>
+### `last_payment_error.setup_intent.payment_method_options.pix.mandate_options`
+
+The `last_payment_error.setup_intent.payment_method_options.pix.mandate_options` attribute supports:
+
+* `amount` - Amount to be charged for future payments.
+* `amount_includes_iof` - Determines if the amount includes the IOF tax. Possible values: `always`, `never`.
+* `amount_type` - Type of amount. Possible values: `fixed`, `maximum`.
+* `currency` - Three-letter [ISO currency code](https://www.iso.org/iso-4217-currency-codes.html), in lowercase.
+* `end_date` - Date when the mandate expires and no further payments will be charged, in `YYYY-MM-DD`.
+* `payment_schedule` - Schedule at which the future payments will be charged. Possible values: `halfyearly`, `monthly`, `quarterly`, `weekly`, `yearly`, `adhoc`, `annual`, `daily`, `fortnightly`, `semi_annual`.
+* `payments_per_period` - The number of payments that will be made during a payment period. Defaults to 1 except for when `payment_schedule` is `adhoc`. In that case, it defaults to no limit.
+* `purpose` - The purpose for which payments are made. Has a default value based on your merchant category code. Possible values: `dependant_support`, `government`, `loan`, `mortgage`, `other`, `pension`, `personal`, `retail`, `salary`, `tax`, `utility`.
+* `reference` - Subscription name displayed to buyers in their bank app.
+* `start_date` - Start date of the mandate, in `YYYY-MM-DD`.
+
+<a id="last_payment_error.setup_intent.payment_method_options.sepa_debit"></a>
+### `last_payment_error.setup_intent.payment_method_options.sepa_debit`
+
+The `last_payment_error.setup_intent.payment_method_options.sepa_debit` attribute supports:
+
+* `mandate_options` - See [`last_payment_error.setup_intent.payment_method_options.sepa_debit.mandate_options`](#last_payment_error.setup_intent.payment_method_options.sepa_debit.mandate_options) below.
+* `verification_method` - Bank account verification method. The default value is `automatic`. Possible values: `automatic`, `instant`, `microdeposits`.
+
+<a id="last_payment_error.setup_intent.payment_method_options.sepa_debit.mandate_options"></a>
+### `last_payment_error.setup_intent.payment_method_options.sepa_debit.mandate_options`
+
+The `last_payment_error.setup_intent.payment_method_options.sepa_debit.mandate_options` attribute supports:
+
+* `amount` - Amount that will be collected. It is required when `amount_type` is `fixed`.
+* `amount_type` - The type of amount that will be collected. The amount charged must be exact or up to the value of `amount` param for `fixed` or `maximum` type respectively. Defaults to `maximum`. Possible values: `fixed`, `maximum`.
+* `end_date` - Date, in YYYY-MM-DD format, after which payments will not be collected. Defaults to no end date.
+* `payment_schedule` - The periodicity at which payments will be collected. Defaults to `adhoc`. Possible values: `adhoc`, `annual`, `daily`, `fortnightly`, `monthly`, `quarterly`, `semi_annual`, `weekly`.
+* `payments_per_period` - The number of payments that will be made during a payment period. Defaults to 1 except for when `payment_schedule` is `adhoc`. In that case, it defaults to no limit.
+* `purpose` - The purpose for which payments are made. Has a default value based on your merchant category code. Possible values: `dependant_support`, `government`, `loan`, `mortgage`, `other`, `pension`, `personal`, `retail`, `salary`, `tax`, `utility`.
+* `reference_prefix` - Prefix used to generate the Mandate reference. Must be at most 12 characters long. Must consist of only uppercase letters, numbers, spaces, or the following special characters: '/', '_', '-', '&', '.'. Cannot begin with 'STRIPE'.
+* `start_date` - Date, in YYYY-MM-DD format, from which payments will be collected. Defaults to confirmation time.
+
+<a id="last_payment_error.setup_intent.payment_method_options.upi"></a>
+### `last_payment_error.setup_intent.payment_method_options.upi`
+
+The `last_payment_error.setup_intent.payment_method_options.upi` attribute supports:
+
+* `mandate_options` - See [`last_payment_error.setup_intent.payment_method_options.upi.mandate_options`](#last_payment_error.setup_intent.payment_method_options.upi.mandate_options) below.
+* `verification_method` - Bank account verification method. The default value is `automatic`. Possible values: `automatic`, `instant`, `microdeposits`.
+
+<a id="last_payment_error.setup_intent.payment_method_options.upi.mandate_options"></a>
+### `last_payment_error.setup_intent.payment_method_options.upi.mandate_options`
+
+The `last_payment_error.setup_intent.payment_method_options.upi.mandate_options` attribute supports:
+
+* `amount` - Amount to be charged for future payments.
+* `amount_type` - One of `fixed` or `maximum`. If `fixed`, the `amount` param refers to the exact amount to be charged in future payments. If `maximum`, the amount charged can be up to the value passed for the `amount` param. Possible values: `fixed`, `maximum`.
+* `description` - A description of the mandate or subscription that is meant to be displayed to the customer.
+* `end_date` - End date of the mandate or subscription.
+* `payment_schedule` - The periodicity at which payments will be collected. Defaults to `adhoc`. Possible values: `adhoc`, `annual`, `daily`, `fortnightly`, `monthly`, `quarterly`, `semi_annual`, `weekly`.
+* `payments_per_period` - The number of payments that will be made during a payment period. Defaults to 1 except for when `payment_schedule` is `adhoc`. In that case, it defaults to no limit.
+* `purpose` - The purpose for which payments are made. Has a default value based on your merchant category code. Possible values: `dependant_support`, `government`, `loan`, `mortgage`, `other`, `pension`, `personal`, `retail`, `salary`, `tax`, `utility`.
+* `start_date` - Date, in YYYY-MM-DD format, from which payments will be collected. Defaults to confirmation time.
+
+<a id="last_payment_error.setup_intent.payment_method_options.us_bank_account"></a>
+### `last_payment_error.setup_intent.payment_method_options.us_bank_account`
+
+The `last_payment_error.setup_intent.payment_method_options.us_bank_account` attribute supports:
+
+* `financial_connections` - See [`last_payment_error.setup_intent.payment_method_options.us_bank_account.financial_connections`](#last_payment_error.setup_intent.payment_method_options.us_bank_account.financial_connections) below.
+* `mandate_options` - See [`last_payment_error.setup_intent.payment_method_options.us_bank_account.mandate_options`](#last_payment_error.setup_intent.payment_method_options.us_bank_account.mandate_options) below.
+* `verification_method` - Bank account verification method. The default value is `automatic`. Possible values: `automatic`, `instant`, `microdeposits`.
+
+<a id="last_payment_error.setup_intent.payment_method_options.us_bank_account.financial_connections"></a>
+### `last_payment_error.setup_intent.payment_method_options.us_bank_account.financial_connections`
+
+The `last_payment_error.setup_intent.payment_method_options.us_bank_account.financial_connections` attribute supports:
+
+* `filters` - See [`last_payment_error.setup_intent.payment_method_options.us_bank_account.financial_connections.filters`](#last_payment_error.setup_intent.payment_method_options.us_bank_account.financial_connections.filters) below.
+* `permissions` - The list of permissions to request. The `payment_method` permission must be included.
+* `prefetch` - Data features requested to be retrieved upon account creation.
+* `return_url` - For webview integrations only. Upon completing OAuth login in the native browser, the user will be redirected to this URL to return to your app.
+
+<a id="last_payment_error.setup_intent.payment_method_options.us_bank_account.financial_connections.filters"></a>
+### `last_payment_error.setup_intent.payment_method_options.us_bank_account.financial_connections.filters`
+
+The `last_payment_error.setup_intent.payment_method_options.us_bank_account.financial_connections.filters` attribute supports:
+
+* `account_subcategories` - The account subcategories to use to filter for possible accounts to link. Valid subcategories are `checking` and `savings`.
+
+<a id="last_payment_error.setup_intent.payment_method_options.us_bank_account.mandate_options"></a>
+### `last_payment_error.setup_intent.payment_method_options.us_bank_account.mandate_options`
+
+The `last_payment_error.setup_intent.payment_method_options.us_bank_account.mandate_options` attribute supports:
+
+* `amount` - Amount that will be collected. It is required when `amount_type` is `fixed`.
+* `amount_type` - The type of amount that will be collected. The amount charged must be exact or up to the value of `amount` param for `fixed` or `maximum` type respectively. Defaults to `maximum`. Possible values: `fixed`, `maximum`.
+* `collection_method` - Mandate collection method Possible values: `paper`.
+* `end_date` - Date, in YYYY-MM-DD format, after which payments will not be collected. Defaults to no end date.
+* `payment_schedule` - The periodicity at which payments will be collected. Defaults to `adhoc`. Possible values: `adhoc`, `annual`, `daily`, `fortnightly`, `monthly`, `quarterly`, `semi_annual`, `weekly`.
+* `payments_per_period` - The number of payments that will be made during a payment period. Defaults to 1 except for when `payment_schedule` is `adhoc`. In that case, it defaults to no limit.
+* `purpose` - The purpose for which payments are made. Has a default value based on your merchant category code. Possible values: `dependant_support`, `government`, `loan`, `mortgage`, `other`, `pension`, `personal`, `retail`, `salary`, `tax`, `utility`.
+* `start_date` - Date, in YYYY-MM-DD format, from which payments will be collected. Defaults to confirmation time.
+
+<a id="last_payment_error.source"></a>
+### `last_payment_error.source`
+
+The `last_payment_error.source` attribute supports:
+
+* `account` - The account this bank account belongs to. Only applicable on Accounts (not customers or recipients) This property is only available when returned as an [External Account](https://docs.stripe.com/api/external_account_bank_accounts/object) where [controller.is_controller](https://docs.stripe.com/api/accounts/object#account_object-controller-is_controller) is `true`.
+* `account_holder_name` - The name of the person or business that owns the bank account.
+* `account_holder_type` - The type of entity that holds the account. This can be either `individual` or `company`.
+* `account_type` - The bank account type. This can only be `checking` or `savings` in most countries. In Japan, this can only be `futsu` or `toza`.
+* `ach_credit_transfer` - See [`last_payment_error.source.ach_credit_transfer`](#last_payment_error.source.ach_credit_transfer) below.
+* `ach_debit` - See [`last_payment_error.source.ach_debit`](#last_payment_error.source.ach_debit) below.
+* `acss_debit` - See [`last_payment_error.source.acss_debit`](#last_payment_error.source.acss_debit) below.
+* `address_city` - City/District/Suburb/Town/Village.
+* `address_country` - Billing address country, if provided when creating card.
+* `address_line1` - Address line 1 (Street address/PO Box/Company name).
+* `address_line1_check` - If `address_line1` was provided, results of the check: `pass`, `fail`, `unavailable`, or `unchecked`.
+* `address_line2` - Address line 2 (Apartment/Suite/Unit/Building).
+* `address_state` - State/County/Province/Region.
+* `address_zip` - ZIP or postal code.
+* `address_zip_check` - If `address_zip` was provided, results of the check: `pass`, `fail`, `unavailable`, or `unchecked`.
+* `alipay` - See [`last_payment_error.source.alipay`](#last_payment_error.source.alipay) below.
+* `allow_redisplay` - This field indicates whether this payment method can be shown again to its customer in a checkout flow. Stripe products such as Checkout and Elements use this field to determine whether a payment method can be shown as a saved payment method in a checkout flow. The field defaults to “unspecified”. Possible values: `always`, `limited`, `unspecified`.
+* `amount` - A positive integer in the smallest currency unit (that is, 100 cents for $1.00, or 1 for ¥1, Japanese Yen being a zero-decimal currency) representing the total amount associated with the source. This is the amount for which the source will be chargeable once ready. Required for `single_use` sources.
+* `au_becs_debit` - See [`last_payment_error.source.au_becs_debit`](#last_payment_error.source.au_becs_debit) below.
+* `available_payout_methods` - A set of available payout methods for this bank account. Only values from this set should be passed as the `method` when creating a payout.
+* `bancontact` - See [`last_payment_error.source.bancontact`](#last_payment_error.source.bancontact) below.
+* `bank_name` - Name of the bank associated with the routing number (e.g., `WELLS FARGO`).
+* `brand` - Card brand. Can be `American Express`, `Cartes Bancaires`, `Diners Club`, `Discover`, `Eftpos Australia`, `Girocard`, `JCB`, `MasterCard`, `UnionPay`, `Visa`, or `Unknown`.
+* `card` - See [`last_payment_error.source.card`](#last_payment_error.source.card) below.
+* `card_present` - See [`last_payment_error.source.card_present`](#last_payment_error.source.card_present) below.
+* `client_secret` - The client secret of the source. Used for client-side retrieval using a publishable key.
+* `code_verification` - See [`last_payment_error.source.code_verification`](#last_payment_error.source.code_verification) below.
+* `country` - Two-letter ISO code representing the country the bank account is located in.
+* `created` - Time at which the object was created. Measured in seconds since the Unix epoch.
+* `currency` - Three-letter [ISO code for the currency](https://stripe.com/docs/payouts) paid out to the bank account.
+* `customer` - The ID of the customer that the bank account is associated with.
+* `cvc_check` - If a CVC was provided, results of the check: `pass`, `fail`, `unavailable`, or `unchecked`. A result of unchecked indicates that CVC was provided but hasn't been checked yet. Checks are typically performed when attaching a card to a Customer object, or when creating a charge. For more details, see [Check if a card is valid without a charge](https://support.stripe.com/questions/check-if-a-card-is-valid-without-a-charge).
+* `default_for_currency` - Whether this bank account is the default external account for its currency.
+* `dynamic_last4` - (For tokenized numbers only.) The last four digits of the device account number.
+* `eps` - See [`last_payment_error.source.eps`](#last_payment_error.source.eps) below.
+* `exp_month` - Two-digit number representing the card's expiration month.
+* `exp_year` - Four-digit number representing the card's expiration year.
+* `fingerprint` - Uniquely identifies this particular bank account. You can use this attribute to check whether two bank accounts are the same.
+* `flow` - The authentication `flow` of the source. `flow` is one of `redirect`, `receiver`, `code_verification`, `none`.
+* `funding` - Card funding type. Can be `credit`, `debit`, `prepaid`, or `unknown`.
+* `future_requirements` - Information about the [upcoming new requirements for the bank account](https://docs.stripe.com/connect/custom-accounts/future-requirements), including what information needs to be collected, and by when. See [`last_payment_error.source.future_requirements`](#last_payment_error.source.future_requirements) below.
+* `giropay` - See [`last_payment_error.source.giropay`](#last_payment_error.source.giropay) below.
+* `id` - Unique identifier for the object.
+* `ideal` - See [`last_payment_error.source.ideal`](#last_payment_error.source.ideal) below.
+* `klarna` - See [`last_payment_error.source.klarna`](#last_payment_error.source.klarna) below.
+* `last4` - The last four digits of the bank account number.
+* `livemode` - If the object exists in live mode, the value is `true`. If the object exists in test mode, the value is `false`.
+* `metadata` - Set of [key-value pairs](https://docs.stripe.com/api/metadata) that you can attach to an object. This can be useful for storing additional information about the object in a structured format.
+* `multibanco` - See [`last_payment_error.source.multibanco`](#last_payment_error.source.multibanco) below.
+* `name` - Cardholder name.
+* `networks` - See [`last_payment_error.source.networks`](#last_payment_error.source.networks) below.
+* `object` - String representing the object's type. Objects of the same type share the same value. Possible values: `bank_account`, `card`, `source`.
+* `owner` - Information about the owner of the payment instrument that may be used or required by particular source types. See [`last_payment_error.source.owner`](#last_payment_error.source.owner) below.
+* `p24` - See [`last_payment_error.source.p24`](#last_payment_error.source.p24) below.
+* `receiver` - See [`last_payment_error.source.receiver`](#last_payment_error.source.receiver) below.
+* `redirect` - See [`last_payment_error.source.redirect`](#last_payment_error.source.redirect) below.
+* `regulated_status` - Status of a card based on the card issuer. Possible values: `regulated`, `unregulated`.
+* `requirements` - Information about the requirements for the bank account, including what information needs to be collected. See [`last_payment_error.source.requirements`](#last_payment_error.source.requirements) below.
+* `routing_number` - The routing transit number for the bank account.
+* `sepa_debit` - See [`last_payment_error.source.sepa_debit`](#last_payment_error.source.sepa_debit) below.
+* `sofort` - See [`last_payment_error.source.sofort`](#last_payment_error.source.sofort) below.
+* `source_order` - See [`last_payment_error.source.source_order`](#last_payment_error.source.source_order) below.
+* `statement_descriptor` - Extra information about a source. This will appear on your customer's statement every time you charge the source.
+* `status` - For bank accounts, possible values are `new`, `validated`, `verified`, `verification_failed`, `tokenized_account_number_deactivated` or `errored`. A bank account that hasn't had any activity or validation performed is `new`. If Stripe can determine that the bank account exists, its status will be `validated`. Note that there often isn’t enough information to know (e.g., for smaller credit unions), and the validation is not always run. If customer bank account verification has succeeded, the bank account status will be `verified`. If the verification failed for any reason, such as microdeposit failure, the status will be `verification_failed`. If the status is `tokenized_account_number_deactivated`, the account utilizes a tokenized account number which has been deactivated due to expiration or revocation. This account will need to be reverified to continue using it for money movement. If a payout sent to this bank account fails, we'll set the status to `errored` and will not continue to send [scheduled payouts](https://stripe.com/docs/payouts#payout-schedule) until the bank details are updated. For external accounts, possible values are `new`, `errored`, `verification_failed`, and `tokenized_account_number_deactivated`. If a payout fails, the status is set to `errored` and scheduled payouts are stopped until account details are updated. In the US and India, if we can't [verify the owner of the bank account](https://support.stripe.com/questions/bank-account-ownership-verification), we'll set the status to `verification_failed`. Other validations aren't run against external accounts because they're only used for payouts. This means the other statuses don't apply.
+* `three_d_secure` - See [`last_payment_error.source.three_d_secure`](#last_payment_error.source.three_d_secure) below.
+* `tokenization_method` - If the card number is tokenized, this is the method that was used. Can be `android_pay` (includes Google Pay), `apple_pay`, `masterpass`, `visa_checkout`, or null.
+* `type` - The `type` of the source. The `type` is a payment method, one of `ach_credit_transfer`, `ach_debit`, `alipay`, `bancontact`, `card`, `card_present`, `eps`, `giropay`, `ideal`, `multibanco`, `klarna`, `p24`, `sepa_debit`, `sofort`, `three_d_secure`, or `wechat`. An additional hash is included on the source with a name matching this value. It contains additional information specific to the [payment method](https://docs.stripe.com/sources) used. Possible values: `ach_credit_transfer`, `ach_debit`, `acss_debit`, `alipay`, `au_becs_debit`, `bancontact`, `card`, `card_present`, `eps`, `giropay`, `ideal`, `klarna`, `multibanco`, `p24`, `sepa_debit`, `sofort`, `three_d_secure`, `wechat`.
+* `usage` - Either `reusable` or `single_use`. Whether this source should be reusable or not. Some source types may or may not be reusable by construction, while others may leave the option at creation. If an incompatible value is passed, an error will be returned.
+* `wechat` - See [`last_payment_error.source.wechat`](#last_payment_error.source.wechat) below.
+
+<a id="last_payment_error.source.ach_credit_transfer"></a>
+### `last_payment_error.source.ach_credit_transfer`
+
+The `last_payment_error.source.ach_credit_transfer` attribute supports:
+
+* `account_number` -
+* `bank_name` -
+* `fingerprint` -
+* `refund_account_holder_name` -
+* `refund_account_holder_type` -
+* `refund_routing_number` -
+* `routing_number` -
+* `swift_code` -
+
+<a id="last_payment_error.source.ach_debit"></a>
+### `last_payment_error.source.ach_debit`
+
+The `last_payment_error.source.ach_debit` attribute supports:
+
+* `bank_name` -
+* `country` -
+* `fingerprint` -
+* `last4` -
+* `routing_number` -
+* `type` -
+
+<a id="last_payment_error.source.acss_debit"></a>
+### `last_payment_error.source.acss_debit`
+
+The `last_payment_error.source.acss_debit` attribute supports:
+
+* `bank_address_city` -
+* `bank_address_line_1` -
+* `bank_address_line_2` -
+* `bank_address_postal_code` -
+* `bank_name` -
+* `category` -
+* `country` -
+* `fingerprint` -
+* `last4` -
+* `routing_number` -
+
+<a id="last_payment_error.source.alipay"></a>
+### `last_payment_error.source.alipay`
+
+The `last_payment_error.source.alipay` attribute supports:
+
+* `data_string` -
+* `native_url` -
+* `statement_descriptor` -
+
+<a id="last_payment_error.source.au_becs_debit"></a>
+### `last_payment_error.source.au_becs_debit`
+
+The `last_payment_error.source.au_becs_debit` attribute supports:
+
+* `bsb_number` -
+* `fingerprint` -
+* `last4` -
+
+<a id="last_payment_error.source.bancontact"></a>
+### `last_payment_error.source.bancontact`
+
+The `last_payment_error.source.bancontact` attribute supports:
+
+* `bank_code` -
+* `bank_name` -
+* `bic` -
+* `iban_last4` -
+* `preferred_language` -
+* `statement_descriptor` -
+
+<a id="last_payment_error.source.card"></a>
+### `last_payment_error.source.card`
+
+The `last_payment_error.source.card` attribute supports:
+
+* `address_line1_check` -
+* `address_zip_check` -
+* `brand` -
+* `country` -
+* `cvc_check` -
+* `dynamic_last4` -
+* `exp_month` -
+* `exp_year` -
+* `fingerprint` -
+* `funding` -
+* `last4` -
+* `name` -
+* `three_d_secure` -
+* `tokenization_method` -
+
+<a id="last_payment_error.source.card_present"></a>
+### `last_payment_error.source.card_present`
+
+The `last_payment_error.source.card_present` attribute supports:
+
+* `application_cryptogram` -
+* `application_preferred_name` -
+* `authorization_code` -
+* `authorization_response_code` -
+* `brand` -
+* `country` -
+* `cvm_type` -
+* `data_type` -
+* `dedicated_file_name` -
+* `emv_auth_data` -
+* `evidence_customer_signature` -
+* `evidence_transaction_certificate` -
+* `exp_month` -
+* `exp_year` -
+* `fingerprint` -
+* `funding` -
+* `last4` -
+* `pos_device_id` -
+* `pos_entry_mode` -
+* `read_method` -
+* `reader` -
+* `terminal_verification_results` -
+* `transaction_status_information` -
+
+<a id="last_payment_error.source.code_verification"></a>
+### `last_payment_error.source.code_verification`
+
+The `last_payment_error.source.code_verification` attribute supports:
+
+* `attempts_remaining` - The number of attempts remaining to authenticate the source object with a verification code.
+* `status` - The status of the code verification, either `pending` (awaiting verification, `attempts_remaining` should be greater than 0), `succeeded` (successful verification) or `failed` (failed verification, cannot be verified anymore as `attempts_remaining` should be 0).
+
+<a id="last_payment_error.source.eps"></a>
+### `last_payment_error.source.eps`
+
+The `last_payment_error.source.eps` attribute supports:
+
+* `reference` -
+* `statement_descriptor` -
+
+<a id="last_payment_error.source.future_requirements"></a>
+### `last_payment_error.source.future_requirements`
+
+The `last_payment_error.source.future_requirements` attribute supports:
+
+* `currently_due` - Fields that need to be resolved to keep the external account enabled. If not resolved by `current_deadline`, these fields will appear in `past_due` as well, and the account is disabled.
+* `errors` - Fields that are `currently_due` and need to be collected again because validation or verification failed. See [`last_payment_error.source.future_requirements.errors`](#last_payment_error.source.future_requirements.errors) below.
+* `past_due` - Fields that haven't been resolved by `current_deadline`. These fields need to be resolved to enable the external account.
+* `pending_verification` - Fields that are being reviewed, or might become required depending on the results of a review. If the review fails, these fields can move to `eventually_due`, `currently_due`, `past_due` or `alternatives`. Fields might appear in `eventually_due`, `currently_due`, `past_due` or `alternatives` and in `pending_verification` if one verification fails but another is still pending.
+
+<a id="last_payment_error.source.future_requirements.errors"></a>
+### `last_payment_error.source.future_requirements.errors`
+
+The `last_payment_error.source.future_requirements.errors` attribute is a list. Each element supports:
+
+* `code` - The code for the type of error. Possible values: `external_request`, `information_missing`, `invalid_address_city_state_postal_code`, `invalid_address_cmra_address`, `invalid_address_highway_contract_box`, `invalid_address_private_mailbox`, `invalid_address_registered_agent_address`, `invalid_business_profile_name`, `invalid_business_profile_name_denylisted`, `invalid_company_name_denylisted`, `invalid_dob_age_over_maximum`, `invalid_dob_age_under_18`, `invalid_dob_age_under_minimum`, `invalid_product_description_length`, `invalid_product_description_url_match`, `invalid_representative_country`, `invalid_signator`, `invalid_statement_descriptor_business_mismatch`, `invalid_statement_descriptor_denylisted`, `invalid_statement_descriptor_length`, `invalid_statement_descriptor_prefix_denylisted`, `invalid_statement_descriptor_prefix_mismatch`, `invalid_street_address`, `invalid_tax_id`, `invalid_tax_id_format`, `invalid_tos_acceptance`, `invalid_url_denylisted`, `invalid_url_format`, `invalid_url_web_presence_detected`, `invalid_url_website_business_information_mismatch`, `invalid_url_website_empty`, `invalid_url_website_inaccessible`, `invalid_url_website_inaccessible_geoblocked`, `invalid_url_website_inaccessible_password_protected`, `invalid_url_website_incomplete`, `invalid_url_website_incomplete_cancellation_policy`, `invalid_url_website_incomplete_customer_service_details`, `invalid_url_website_incomplete_legal_restrictions`, `invalid_url_website_incomplete_refund_policy`, `invalid_url_website_incomplete_return_policy`, `invalid_url_website_incomplete_terms_and_conditions`, `invalid_url_website_incomplete_under_construction`, `invalid_url_website_other`, `invalid_value_other`, `unsupported_business_type`, `verification_directors_mismatch`, `verification_document_address_mismatch`, `verification_document_address_missing`, `verification_document_corrupt`, `verification_document_country_not_supported`, `verification_document_directors_mismatch`, `verification_document_dob_mismatch`, `verification_document_duplicate_type`, `verification_document_expired`, `verification_document_failed_copy`, `verification_document_failed_greyscale`, `verification_document_failed_other`, `verification_document_failed_test_mode`, `verification_document_fraudulent`, `verification_document_id_number_mismatch`, `verification_document_id_number_missing`, `verification_document_incomplete`, `verification_document_invalid`, `verification_document_issue_or_expiry_date_missing`, `verification_document_manipulated`, `verification_document_missing_back`, `verification_document_missing_front`, `verification_document_name_mismatch`, `verification_document_name_missing`, `verification_document_nationality_mismatch`, `verification_document_not_readable`, `verification_document_not_signed`, `verification_document_not_uploaded`, `verification_document_photo_mismatch`, `verification_document_too_large`, `verification_document_type_not_supported`, `verification_extraneous_directors`, `verification_failed_address_match`, `verification_failed_authorizer_authority`, `verification_failed_business_iec_number`, `verification_failed_document_match`, `verification_failed_id_number_match`, `verification_failed_keyed_identity`, `verification_failed_keyed_match`, `verification_failed_name_match`, `verification_failed_other`, `verification_failed_representative_authority`, `verification_failed_residential_address`, `verification_failed_tax_id_match`, `verification_failed_tax_id_not_issued`, `verification_legal_entity_structure_mismatch`, `verification_missing_directors`, `verification_missing_executives`, `verification_missing_owners`, `verification_rejected_ownership_exemption_reason`, `verification_requires_additional_memorandum_of_associations`, `verification_requires_additional_proof_of_registration`, `verification_supportability`.
+* `reason` - An informative message that indicates the error type and provides additional details about the error.
+* `requirement` - The specific user onboarding requirement field (in the requirements hash) that needs to be resolved.
+
+<a id="last_payment_error.source.giropay"></a>
+### `last_payment_error.source.giropay`
+
+The `last_payment_error.source.giropay` attribute supports:
+
+* `bank_code` -
+* `bank_name` -
+* `bic` -
+* `statement_descriptor` -
+
+<a id="last_payment_error.source.ideal"></a>
+### `last_payment_error.source.ideal`
+
+The `last_payment_error.source.ideal` attribute supports:
+
+* `bank` -
+* `bic` -
+* `iban_last4` -
+* `statement_descriptor` -
+
+<a id="last_payment_error.source.klarna"></a>
+### `last_payment_error.source.klarna`
+
+The `last_payment_error.source.klarna` attribute supports:
+
+* `background_image_url` -
+* `client_token` -
+* `first_name` -
+* `last_name` -
+* `locale` -
+* `logo_url` -
+* `page_title` -
+* `pay_later_asset_urls_descriptive` -
+* `pay_later_asset_urls_standard` -
+* `pay_later_name` -
+* `pay_later_redirect_url` -
+* `pay_now_asset_urls_descriptive` -
+* `pay_now_asset_urls_standard` -
+* `pay_now_name` -
+* `pay_now_redirect_url` -
+* `pay_over_time_asset_urls_descriptive` -
+* `pay_over_time_asset_urls_standard` -
+* `pay_over_time_name` -
+* `pay_over_time_redirect_url` -
+* `payment_method_categories` -
+* `purchase_country` -
+* `purchase_type` -
+* `redirect_url` -
+* `shipping_delay` -
+* `shipping_first_name` -
+* `shipping_last_name` -
+
+<a id="last_payment_error.source.multibanco"></a>
+### `last_payment_error.source.multibanco`
+
+The `last_payment_error.source.multibanco` attribute supports:
+
+* `entity` -
+* `reference` -
+* `refund_account_holder_address_city` -
+* `refund_account_holder_address_country` -
+* `refund_account_holder_address_line1` -
+* `refund_account_holder_address_line2` -
+* `refund_account_holder_address_postal_code` -
+* `refund_account_holder_address_state` -
+* `refund_account_holder_name` -
+* `refund_iban` -
+
+<a id="last_payment_error.source.networks"></a>
+### `last_payment_error.source.networks`
+
+The `last_payment_error.source.networks` attribute supports:
+
+* `preferred` - The preferred network for co-branded cards. Can be `cartes_bancaires`, `mastercard`, `visa` or `invalid_preference` if requested network is not valid for the card.
+
+<a id="last_payment_error.source.owner"></a>
+### `last_payment_error.source.owner`
+
+The `last_payment_error.source.owner` attribute supports:
+
+* `address` - Owner's address. See [`last_payment_error.source.owner.address`](#last_payment_error.source.owner.address) below.
+* `email` - Owner's email address.
+* `name` - Owner's full name.
+* `phone` - Owner's phone number (including extension).
+* `verified_address` - Verified owner's address. Verified values are verified or provided by the payment method directly (and if supported) at the time of authorization or settlement. They cannot be set or mutated. See [`last_payment_error.source.owner.verified_address`](#last_payment_error.source.owner.verified_address) below.
+* `verified_email` - Verified owner's email address. Verified values are verified or provided by the payment method directly (and if supported) at the time of authorization or settlement. They cannot be set or mutated.
+* `verified_name` - Verified owner's full name. Verified values are verified or provided by the payment method directly (and if supported) at the time of authorization or settlement. They cannot be set or mutated.
+* `verified_phone` - Verified owner's phone number (including extension). Verified values are verified or provided by the payment method directly (and if supported) at the time of authorization or settlement. They cannot be set or mutated.
+
+<a id="last_payment_error.source.owner.address"></a>
+### `last_payment_error.source.owner.address`
+
+The `last_payment_error.source.owner.address` attribute supports:
+
+* `city` - City, district, suburb, town, or village.
+* `country` - Two-letter country code ([ISO 3166-1 alpha-2](https://en.wikipedia.org/wiki/ISO_3166-1_alpha-2)).
+* `line1` - Address line 1, such as the street, PO Box, or company name.
+* `line2` - Address line 2, such as the apartment, suite, unit, or building.
+* `postal_code` - ZIP or postal code.
+* `state` - State, county, province, or region ([ISO 3166-2](https://en.wikipedia.org/wiki/ISO_3166-2)).
+
+<a id="last_payment_error.source.owner.verified_address"></a>
+### `last_payment_error.source.owner.verified_address`
+
+The `last_payment_error.source.owner.verified_address` attribute supports:
+
+* `city` - City, district, suburb, town, or village.
+* `country` - Two-letter country code ([ISO 3166-1 alpha-2](https://en.wikipedia.org/wiki/ISO_3166-1_alpha-2)).
+* `line1` - Address line 1, such as the street, PO Box, or company name.
+* `line2` - Address line 2, such as the apartment, suite, unit, or building.
+* `postal_code` - ZIP or postal code.
+* `state` - State, county, province, or region ([ISO 3166-2](https://en.wikipedia.org/wiki/ISO_3166-2)).
+
+<a id="last_payment_error.source.p24"></a>
+### `last_payment_error.source.p24`
+
+The `last_payment_error.source.p24` attribute supports:
+
+* `reference` -
+
+<a id="last_payment_error.source.receiver"></a>
+### `last_payment_error.source.receiver`
+
+The `last_payment_error.source.receiver` attribute supports:
+
+* `address` - The address of the receiver source. This is the value that should be communicated to the customer to send their funds to.
+* `amount_charged` - The total amount that was moved to your balance. This is almost always equal to the amount charged. In rare cases when customers deposit excess funds and we are unable to refund those, those funds get moved to your balance and show up in amount_charged as well. The amount charged is expressed in the source's currency.
+* `amount_received` - The total amount received by the receiver source. `amount_received = amount_returned + amount_charged` should be true for consumed sources unless customers deposit excess funds. The amount received is expressed in the source's currency.
+* `amount_returned` - The total amount that was returned to the customer. The amount returned is expressed in the source's currency.
+* `refund_attributes_method` - Type of refund attribute method, one of `email`, `manual`, or `none`.
+* `refund_attributes_status` - Type of refund attribute status, one of `missing`, `requested`, or `available`.
+
+<a id="last_payment_error.source.redirect"></a>
+### `last_payment_error.source.redirect`
+
+The `last_payment_error.source.redirect` attribute supports:
+
+* `failure_reason` - The failure reason for the redirect, either `user_abort` (the customer aborted or dropped out of the redirect flow), `declined` (the authentication failed or the transaction was declined), or `processing_error` (the redirect failed due to a technical error). Present only if the redirect status is `failed`.
+* `return_url` - The URL you provide to redirect the customer to after they authenticated their payment.
+* `status` - The status of the redirect, either `pending` (ready to be used by your customer to authenticate the transaction), `succeeded` (successful authentication, cannot be reused) or `not_required` (redirect should not be used) or `failed` (failed authentication, cannot be reused).
+* `url` - The URL provided to you to redirect a customer to as part of a `redirect` authentication flow.
+
+<a id="last_payment_error.source.requirements"></a>
+### `last_payment_error.source.requirements`
+
+The `last_payment_error.source.requirements` attribute supports:
+
+* `currently_due` - Fields that need to be resolved to keep the external account enabled. If not resolved by `current_deadline`, these fields will appear in `past_due` as well, and the account is disabled.
+* `errors` - Fields that are `currently_due` and need to be collected again because validation or verification failed. See [`last_payment_error.source.requirements.errors`](#last_payment_error.source.requirements.errors) below.
+* `past_due` - Fields that haven't been resolved by `current_deadline`. These fields need to be resolved to enable the external account.
+* `pending_verification` - Fields that are being reviewed, or might become required depending on the results of a review. If the review fails, these fields can move to `eventually_due`, `currently_due`, `past_due` or `alternatives`. Fields might appear in `eventually_due`, `currently_due`, `past_due` or `alternatives` and in `pending_verification` if one verification fails but another is still pending.
+
+<a id="last_payment_error.source.requirements.errors"></a>
+### `last_payment_error.source.requirements.errors`
+
+The `last_payment_error.source.requirements.errors` attribute is a list. Each element supports:
+
+* `code` - The code for the type of error. Possible values: `external_request`, `information_missing`, `invalid_address_city_state_postal_code`, `invalid_address_cmra_address`, `invalid_address_highway_contract_box`, `invalid_address_private_mailbox`, `invalid_address_registered_agent_address`, `invalid_business_profile_name`, `invalid_business_profile_name_denylisted`, `invalid_company_name_denylisted`, `invalid_dob_age_over_maximum`, `invalid_dob_age_under_18`, `invalid_dob_age_under_minimum`, `invalid_product_description_length`, `invalid_product_description_url_match`, `invalid_representative_country`, `invalid_signator`, `invalid_statement_descriptor_business_mismatch`, `invalid_statement_descriptor_denylisted`, `invalid_statement_descriptor_length`, `invalid_statement_descriptor_prefix_denylisted`, `invalid_statement_descriptor_prefix_mismatch`, `invalid_street_address`, `invalid_tax_id`, `invalid_tax_id_format`, `invalid_tos_acceptance`, `invalid_url_denylisted`, `invalid_url_format`, `invalid_url_web_presence_detected`, `invalid_url_website_business_information_mismatch`, `invalid_url_website_empty`, `invalid_url_website_inaccessible`, `invalid_url_website_inaccessible_geoblocked`, `invalid_url_website_inaccessible_password_protected`, `invalid_url_website_incomplete`, `invalid_url_website_incomplete_cancellation_policy`, `invalid_url_website_incomplete_customer_service_details`, `invalid_url_website_incomplete_legal_restrictions`, `invalid_url_website_incomplete_refund_policy`, `invalid_url_website_incomplete_return_policy`, `invalid_url_website_incomplete_terms_and_conditions`, `invalid_url_website_incomplete_under_construction`, `invalid_url_website_other`, `invalid_value_other`, `unsupported_business_type`, `verification_directors_mismatch`, `verification_document_address_mismatch`, `verification_document_address_missing`, `verification_document_corrupt`, `verification_document_country_not_supported`, `verification_document_directors_mismatch`, `verification_document_dob_mismatch`, `verification_document_duplicate_type`, `verification_document_expired`, `verification_document_failed_copy`, `verification_document_failed_greyscale`, `verification_document_failed_other`, `verification_document_failed_test_mode`, `verification_document_fraudulent`, `verification_document_id_number_mismatch`, `verification_document_id_number_missing`, `verification_document_incomplete`, `verification_document_invalid`, `verification_document_issue_or_expiry_date_missing`, `verification_document_manipulated`, `verification_document_missing_back`, `verification_document_missing_front`, `verification_document_name_mismatch`, `verification_document_name_missing`, `verification_document_nationality_mismatch`, `verification_document_not_readable`, `verification_document_not_signed`, `verification_document_not_uploaded`, `verification_document_photo_mismatch`, `verification_document_too_large`, `verification_document_type_not_supported`, `verification_extraneous_directors`, `verification_failed_address_match`, `verification_failed_authorizer_authority`, `verification_failed_business_iec_number`, `verification_failed_document_match`, `verification_failed_id_number_match`, `verification_failed_keyed_identity`, `verification_failed_keyed_match`, `verification_failed_name_match`, `verification_failed_other`, `verification_failed_representative_authority`, `verification_failed_residential_address`, `verification_failed_tax_id_match`, `verification_failed_tax_id_not_issued`, `verification_legal_entity_structure_mismatch`, `verification_missing_directors`, `verification_missing_executives`, `verification_missing_owners`, `verification_rejected_ownership_exemption_reason`, `verification_requires_additional_memorandum_of_associations`, `verification_requires_additional_proof_of_registration`, `verification_supportability`.
+* `reason` - An informative message that indicates the error type and provides additional details about the error.
+* `requirement` - The specific user onboarding requirement field (in the requirements hash) that needs to be resolved.
+
+<a id="last_payment_error.source.sepa_debit"></a>
+### `last_payment_error.source.sepa_debit`
+
+The `last_payment_error.source.sepa_debit` attribute supports:
+
+* `bank_code` -
+* `branch_code` -
+* `country` -
+* `fingerprint` -
+* `last4` -
+* `mandate_reference` -
+* `mandate_url` -
+
+<a id="last_payment_error.source.sofort"></a>
+### `last_payment_error.source.sofort`
+
+The `last_payment_error.source.sofort` attribute supports:
+
+* `bank_code` -
+* `bank_name` -
+* `bic` -
+* `country` -
+* `iban_last4` -
+* `preferred_language` -
+* `statement_descriptor` -
+
+<a id="last_payment_error.source.source_order"></a>
+### `last_payment_error.source.source_order`
+
+The `last_payment_error.source.source_order` attribute supports:
+
+* `amount` - A positive integer in the smallest currency unit (that is, 100 cents for $1.00, or 1 for ¥1, Japanese Yen being a zero-decimal currency) representing the total amount for the order.
+* `currency` - Three-letter [ISO currency code](https://www.iso.org/iso-4217-currency-codes.html), in lowercase. Must be a [supported currency](https://stripe.com/docs/currencies).
+* `email` - The email address of the customer placing the order.
+* `items` - List of items constituting the order. See [`last_payment_error.source.source_order.items`](#last_payment_error.source.source_order.items) below.
+* `shipping` - See [`last_payment_error.source.source_order.shipping`](#last_payment_error.source.source_order.shipping) below.
+
+<a id="last_payment_error.source.source_order.items"></a>
+### `last_payment_error.source.source_order.items`
+
+The `last_payment_error.source.source_order.items` attribute is a list. Each element supports:
+
+* `amount` - The amount (price) for this order item.
+* `currency` - This currency of this order item. Required when `amount` is present.
+* `description` - Human-readable description for this order item.
+* `parent` - The ID of the associated object for this line item. Expandable if not null (e.g., expandable to a SKU).
+* `quantity` - The quantity of this order item. When type is `sku`, this is the number of instances of the SKU to be ordered.
+* `type` - The type of this order item. Must be `sku`, `tax`, or `shipping`.
+
+<a id="last_payment_error.source.source_order.shipping"></a>
+### `last_payment_error.source.source_order.shipping`
+
+The `last_payment_error.source.source_order.shipping` attribute supports:
+
+* `address` - See [`last_payment_error.source.source_order.shipping.address`](#last_payment_error.source.source_order.shipping.address) below.
+* `carrier` - The delivery service that shipped a physical product, such as Fedex, UPS, USPS, etc.
+* `name` - Recipient name.
+* `phone` - Recipient phone (including extension).
+* `tracking_number` - The tracking number for a physical product, obtained from the delivery service. If multiple tracking numbers were generated for this purchase, please separate them with commas.
+
+<a id="last_payment_error.source.source_order.shipping.address"></a>
+### `last_payment_error.source.source_order.shipping.address`
+
+The `last_payment_error.source.source_order.shipping.address` attribute supports:
+
+* `city` - City, district, suburb, town, or village.
+* `country` - Two-letter country code ([ISO 3166-1 alpha-2](https://en.wikipedia.org/wiki/ISO_3166-1_alpha-2)).
+* `line1` - Address line 1, such as the street, PO Box, or company name.
+* `line2` - Address line 2, such as the apartment, suite, unit, or building.
+* `postal_code` - ZIP or postal code.
+* `state` - State, county, province, or region ([ISO 3166-2](https://en.wikipedia.org/wiki/ISO_3166-2)).
+
+<a id="last_payment_error.source.three_d_secure"></a>
+### `last_payment_error.source.three_d_secure`
+
+The `last_payment_error.source.three_d_secure` attribute supports:
+
+* `address_line1_check` -
+* `address_zip_check` -
+* `authenticated` -
+* `brand` -
+* `card` -
+* `country` -
+* `customer` -
+* `cvc_check` -
+* `dynamic_last4` -
+* `exp_month` -
+* `exp_year` -
+* `fingerprint` -
+* `funding` -
+* `last4` -
+* `name` -
+* `three_d_secure` -
+* `tokenization_method` -
+
+<a id="last_payment_error.source.wechat"></a>
+### `last_payment_error.source.wechat`
+
+The `last_payment_error.source.wechat` attribute supports:
+
+* `prepay_id` -
+* `qr_code_url` -
+* `statement_descriptor` -
 
 <a id="managed_payments"></a>
 ### `managed_payments`
@@ -1380,4 +2408,4 @@ Using `terraform import`, import a payment intent using its ID. For example:
 % terraform import stripe_payment_intent.order pi_123
 ```
 
-~> Stripe does not return `amount_details.enforce_arithmetic_validation`, `payment_method_configuration`, `payment_method_data`, `payment_method_options.card.cvc_token`, `payment_method_options.card.installments`, `payment_method_options.card.mandate_options`, `payment_method_options.card.network`, `payment_method_options.card.request_extended_authorization`, `payment_method_options.card.request_incremental_authorization`, `payment_method_options.card.request_multicapture`, `payment_method_options.card.request_overcapture`, `payment_method_options.card.statement_descriptor_suffix_kana`, `payment_method_options.card.statement_descriptor_suffix_kanji`, `payment_method_options.klarna.on_demand`, `payment_method_options.klarna.subscriptions`, `payment_method_options.p24.tos_shown_and_accepted`, `payment_method_options.upi.mandate_options`, `payment_method_options.us_bank_account.networks`, `confirmation_token`, `mandate`, `payment_method_options.customer_balance.bank_transfer.requested_address_types` or `radar_options`, so an imported payment intent has them null: a configuration that sets `amount_details.enforce_arithmetic_validation`, `payment_method_configuration`, `payment_method_data`, `payment_method_options.card.cvc_token`, `payment_method_options.card.installments`, `payment_method_options.card.mandate_options`, `payment_method_options.card.network`, `payment_method_options.card.request_extended_authorization`, `payment_method_options.card.request_incremental_authorization`, `payment_method_options.card.request_multicapture`, `payment_method_options.card.request_overcapture`, `payment_method_options.card.statement_descriptor_suffix_kana`, `payment_method_options.card.statement_descriptor_suffix_kanji`, `payment_method_options.klarna.on_demand`, `payment_method_options.klarna.subscriptions`, `payment_method_options.p24.tos_shown_and_accepted`, `payment_method_options.upi.mandate_options` or `payment_method_options.us_bank_account.networks` plans an update after the import, and one that sets `confirmation_token`, `mandate`, `payment_method_options.customer_balance.bank_transfer.requested_address_types` or `radar_options` plans a replacement.
+~> Stripe does not return `amount_details.enforce_arithmetic_validation`, `payment_method_configuration`, `payment_method_data`, `payment_method_options.card.cvc_token`, `payment_method_options.card.installments`, `payment_method_options.card.request_multicapture`, `payment_method_options.card.statement_descriptor_suffix_kana`, `payment_method_options.card.statement_descriptor_suffix_kanji`, `payment_method_options.card_present.routing`, `payment_method_options.klarna.on_demand`, `payment_method_options.klarna.subscriptions`, `payment_method_options.p24.tos_shown_and_accepted`, `payment_method_options.upi.mandate_options`, `payment_method_options.us_bank_account.networks`, `confirmation_token`, `mandate`, `payment_method_options.customer_balance.bank_transfer.requested_address_types` or `radar_options`, so an imported payment intent has them null: a configuration that sets `amount_details.enforce_arithmetic_validation`, `payment_method_configuration`, `payment_method_data`, `payment_method_options.card.cvc_token`, `payment_method_options.card.installments`, `payment_method_options.card.request_multicapture`, `payment_method_options.card.statement_descriptor_suffix_kana`, `payment_method_options.card.statement_descriptor_suffix_kanji`, `payment_method_options.card_present.routing`, `payment_method_options.klarna.on_demand`, `payment_method_options.klarna.subscriptions`, `payment_method_options.p24.tos_shown_and_accepted`, `payment_method_options.upi.mandate_options` or `payment_method_options.us_bank_account.networks` plans an update after the import, and one that sets `confirmation_token`, `mandate`, `payment_method_options.customer_balance.bank_transfer.requested_address_types` or `radar_options` plans a replacement.

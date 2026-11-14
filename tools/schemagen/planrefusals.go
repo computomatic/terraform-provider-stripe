@@ -18,12 +18,14 @@ import (
 // for `account_country`, the country of the account the probe ran on, which is the condition's
 // own `account_country`: a pattern holds only on an account of that country, so that country
 // translates it exactly.
-var genKinds = []string{"account_country", "account_currency", "email", "fresh", "now", "read", "ref", "shared", "unique", "url"}
+var genKinds = []string{"account_country", "account_currency", "computed", "email", "fresh", "now", "read", "ref", "shared", "unique", "url"}
 
 // meaningfulGenKinds are the generated values that say more than "some value": the account's
-// own currency, and a time relative to when the probe sent it (with its `offset`), such as a
-// start a day after the create. A refused request holding one is not translated as any value.
-var meaningfulGenKinds = []string{"account_currency", "now"}
+// own currency, a time relative to when the probe sent it (with its `offset`), such as a start a
+// day after the create, and a value the suite computed from another (with its `arg`), such as a
+// climate order's amount for one ton. A refused request holding one is not translated as any
+// value.
+var meaningfulGenKinds = []string{"account_currency", "computed", "now"}
 
 // recordObject is a JSON object of the record decoded as wire values, which keep each number's
 // text, so that a large integer or an exponent reaches a pattern as recorded.
@@ -295,7 +297,7 @@ func patternValue(v wire.Value, country string, strict bool) (wire.Value, error)
 			case kind == "read":
 				return nil, fmt.Errorf("the refused request sends `%s` as read from the object, and Stripe's answer can turn on which value that is", arg)
 			case slices.Contains(meaningfulGenKinds, kind):
-				return nil, fmt.Errorf("the refused request holds `$gen` `%s`, a value that means something of its own (the account's currency, or a time relative to the request), which a pattern cannot state and any value would widen", kind)
+				return nil, fmt.Errorf("the refused request holds `$gen` `%s`, a value that means something of its own (the account's currency, a time relative to the request, or a value computed from another), which a pattern cannot state and any value would widen", kind)
 			}
 			return wire.Any, nil
 		}

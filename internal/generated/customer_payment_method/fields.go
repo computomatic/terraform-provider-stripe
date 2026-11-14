@@ -299,9 +299,9 @@ var Table = []fields.Field{
 	{Name: "upi", Shape: fields.Object, Response: true, Fields: []fields.Field{
 		{Name: "vpa", Shape: fields.String, Response: true, Description: "Customer's unique Virtual Payment Address"},
 	}},
-	{Name: "us_bank_account", Shape: fields.Object, Response: true, Fields: []fields.Field{
-		{Name: "account_holder_type", Shape: fields.String, Response: true, Enum: []string{"company", "individual"}, Description: "Account holder type: individual or company."},
-		{Name: "account_type", Shape: fields.String, Response: true, Enum: []string{"checking", "savings"}, Description: "Account type: checkings or savings. Defaults to checking if omitted."},
+	{Name: "us_bank_account", Shape: fields.Object, Update: true, Response: true, ServerDefaulted: true, Description: "If this is an `us_bank_account` PaymentMethod, this hash contains details about the US bank account payment method.", Fields: []fields.Field{
+		{Name: "account_holder_type", Shape: fields.String, Update: true, Response: true, ServerDefaulted: true, Stable: true, Enum: []string{"company", "individual"}, Description: "Account holder type: individual or company.", Default: &fields.Default{Kind: fields.DefaultNotSent}},
+		{Name: "account_type", Shape: fields.String, Update: true, Response: true, ServerDefaulted: true, Stable: true, Enum: []string{"checking", "savings"}, Description: "Account type: checkings or savings. Defaults to checking if omitted.", Default: &fields.Default{Kind: fields.DefaultNotSent}},
 		{Name: "bank_name", Shape: fields.String, Response: true, Description: "The name of the bank."},
 		{Name: "financial_connections_account", Shape: fields.String, Response: true, Description: "The ID of the Financial Connections Account used to create the payment method."},
 		{Name: "fingerprint", Shape: fields.String, Response: true, Description: "Uniquely identifies this particular bank account. You can use this attribute to check whether two bank accounts are the same."},

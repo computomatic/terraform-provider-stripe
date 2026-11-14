@@ -48,6 +48,7 @@ This data source exports the following attributes in addition to the arguments a
 * `currency` - Three-letter [ISO currency code](https://www.iso.org/iso-4217-currency-codes.html), in lowercase. Must be a [supported currency](https://stripe.com/docs/currencies).
 * `customer` - The ID of an existing customer that will be charged in this request.
 * `description` - An arbitrary string which you can attach to a `Charge` object. It is displayed when in the web interface alongside the charge. Note that if you use Stripe to send automatic email receipts to your customers, your receipt emails will include the `description` of the charge(s) that they are describing.
+* `destination` -
 * `disputed` - Whether the charge has been disputed.
 * `failure_balance_transaction` - ID of the balance transaction that describes the reversal of the balance on your account due to payment failure.
 * `failure_code` - Error code explaining reason for charge failure if available (see [the errors section](https://docs.stripe.com/error-codes) for a list of codes).

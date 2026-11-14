@@ -50,6 +50,7 @@ The following arguments are optional:
 * `card` - (Optional) If this is a `card` PaymentMethod, this hash contains the user's card details. Removing it from the configuration leaves the current value. See [`card`](#card) below.
 * `customer_account` - (Optional) The ID of the Account representing the customer to which to attach the PaymentMethod. Changing it fails the plan, because this resource cannot be replaced. Stripe refused it on a US account on create: "The supplied ID is not a valid Customer. V2 Accounts must be configured as Customers before they can be used in the Customers API.". Default: none.
 * `metadata` - (Optional) Set of [key-value pairs](https://docs.stripe.com/api/metadata) that you can attach to an object. This can be useful for storing additional information about the object in a structured format. Individual keys can be unset by posting an empty value to them. All keys can be unset by posting an empty value to `metadata`. Default: not sent.
+* `us_bank_account` - (Optional) If this is an `us_bank_account` PaymentMethod, this hash contains details about the US bank account payment method. Removing it from the configuration leaves the current value. See [`us_bank_account`](#us_bank_account) below.
 
 <a id="billing_details"></a>
 ### `billing_details`
@@ -275,6 +276,44 @@ The `card.wallet.visa_checkout.shipping_address` attribute supports:
 * `postal_code` - ZIP or postal code.
 * `state` - State, county, province, or region ([ISO 3166-2](https://en.wikipedia.org/wiki/ISO_3166-2)).
 
+<a id="us_bank_account"></a>
+### `us_bank_account`
+
+The `us_bank_account` attribute supports:
+
+* `account_holder_type` - (Optional) Account holder type: individual or company. Possible values: `company`, `individual`. Default: not sent. Removing it from the configuration leaves the current value.
+* `account_type` - (Optional) Account type: checkings or savings. Defaults to checking if omitted. Possible values: `checking`, `savings`. Default: not sent. Removing it from the configuration leaves the current value.
+* `bank_name` - (Read-Only) The name of the bank.
+* `financial_connections_account` - (Read-Only) The ID of the Financial Connections Account used to create the payment method.
+* `fingerprint` - (Read-Only) Uniquely identifies this particular bank account. You can use this attribute to check whether two bank accounts are the same.
+* `last4` - (Read-Only) Last four digits of the bank account number.
+* `networks` - (Read-Only) Contains information about US bank account networks that can be used. See [`us_bank_account.networks`](#us_bank_account.networks) below.
+* `routing_number` - (Read-Only) Routing number of the bank account.
+* `status_details` - (Read-Only) Contains information about the future reusability of this PaymentMethod. See [`us_bank_account.status_details`](#us_bank_account.status_details) below.
+
+<a id="us_bank_account.networks"></a>
+### `us_bank_account.networks`
+
+The `us_bank_account.networks` attribute supports:
+
+* `preferred` - The preferred network.
+* `supported` - All supported networks.
+
+<a id="us_bank_account.status_details"></a>
+### `us_bank_account.status_details`
+
+The `us_bank_account.status_details` attribute supports:
+
+* `blocked` - See [`us_bank_account.status_details.blocked`](#us_bank_account.status_details.blocked) below.
+
+<a id="us_bank_account.status_details.blocked"></a>
+### `us_bank_account.status_details.blocked`
+
+The `us_bank_account.status_details.blocked` attribute supports:
+
+* `network_code` - The ACH network code that resulted in this block. Possible values: `R02`, `R03`, `R04`, `R05`, `R07`, `R08`, `R10`, `R11`, `R16`, `R20`, `R29`, `R31`.
+* `reason` - The reason why this PaymentMethod's fingerprint has been blocked Possible values: `bank_account_closed`, `bank_account_frozen`, `bank_account_invalid_details`, `bank_account_restricted`, `bank_account_unusable`, `debit_not_authorized`, `tokenized_account_number_deactivated`.
+
 ## Attribute Reference
 
 This resource exports the following attributes in addition to the arguments above:
@@ -309,7 +348,6 @@ This resource exports the following attributes in addition to the arguments abov
 * `sofort` - See [`sofort`](#sofort) below.
 * `type` - The type of the PaymentMethod. An additional hash is included on the PaymentMethod with a name matching this value. It contains additional information specific to the PaymentMethod type. Possible values: `acss_debit`, `affirm`, `afterpay_clearpay`, `alipay`, `alma`, `amazon_pay`, `au_becs_debit`, `bacs_debit`, `bancontact`, `billie`, `bizum`, `blik`, `boleto`, `card`, `card_present`, `cashapp`, `crypto`, `custom`, `customer_balance`, `eps`, `fpx`, `giropay`, `grabpay`, `ideal`, `interac_present`, `kakao_pay`, `klarna`, `konbini`, `kr_card`, `link`, `mb_way`, `mobilepay`, `multibanco`, `naver_pay`, `nz_bank_account`, `oxxo`, `p24`, `pay_by_bank`, `payco`, `paynow`, `paypal`, `paypay`, `payto`, `pix`, `promptpay`, `revolut_pay`, `samsung_pay`, `satispay`, `scalapay`, `sepa_debit`, `sequra`, `sofort`, `sunbit`, `swish`, `twint`, `upi`, `us_bank_account`, `wechat_pay`, `zip`.
 * `upi` - See [`upi`](#upi) below.
-* `us_bank_account` - See [`us_bank_account`](#us_bank_account) below.
 
 <a id="acss_debit"></a>
 ### `acss_debit`
@@ -603,44 +641,6 @@ The `sofort` attribute supports:
 The `upi` attribute supports:
 
 * `vpa` - Customer's unique Virtual Payment Address
-
-<a id="us_bank_account"></a>
-### `us_bank_account`
-
-The `us_bank_account` attribute supports:
-
-* `account_holder_type` - Account holder type: individual or company. Possible values: `company`, `individual`.
-* `account_type` - Account type: checkings or savings. Defaults to checking if omitted. Possible values: `checking`, `savings`.
-* `bank_name` - The name of the bank.
-* `financial_connections_account` - The ID of the Financial Connections Account used to create the payment method.
-* `fingerprint` - Uniquely identifies this particular bank account. You can use this attribute to check whether two bank accounts are the same.
-* `last4` - Last four digits of the bank account number.
-* `networks` - Contains information about US bank account networks that can be used. See [`us_bank_account.networks`](#us_bank_account.networks) below.
-* `routing_number` - Routing number of the bank account.
-* `status_details` - Contains information about the future reusability of this PaymentMethod. See [`us_bank_account.status_details`](#us_bank_account.status_details) below.
-
-<a id="us_bank_account.networks"></a>
-### `us_bank_account.networks`
-
-The `us_bank_account.networks` attribute supports:
-
-* `preferred` - The preferred network.
-* `supported` - All supported networks.
-
-<a id="us_bank_account.status_details"></a>
-### `us_bank_account.status_details`
-
-The `us_bank_account.status_details` attribute supports:
-
-* `blocked` - See [`us_bank_account.status_details.blocked`](#us_bank_account.status_details.blocked) below.
-
-<a id="us_bank_account.status_details.blocked"></a>
-### `us_bank_account.status_details.blocked`
-
-The `us_bank_account.status_details.blocked` attribute supports:
-
-* `network_code` - The ACH network code that resulted in this block. Possible values: `R02`, `R03`, `R04`, `R05`, `R07`, `R08`, `R10`, `R11`, `R16`, `R20`, `R29`, `R31`.
-* `reason` - The reason why this PaymentMethod's fingerprint has been blocked Possible values: `bank_account_closed`, `bank_account_frozen`, `bank_account_invalid_details`, `bank_account_restricted`, `bank_account_unusable`, `debit_not_authorized`, `tokenized_account_number_deactivated`.
 
 ## Timeouts
 

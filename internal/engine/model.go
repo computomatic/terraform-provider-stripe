@@ -876,6 +876,9 @@ func (c *compiler) build(table []fields.Field, prefix string, top, parentOutput,
 				n.Computed = false
 			}
 		}
+		if f.Shape == fields.ScalarListMap && f.Writable() && !parentOutput {
+			return nil, fmt.Errorf("`%s` is a map of lists the configuration would set, which the engine cannot send", path)
+		}
 		replaceOn := c.mark("replace_on", c.replaceOn, path)
 		if replaceOn && !f.Update {
 			return nil, fmt.Errorf("replace_on entry `%s` is not an updatable field; a create-only field already forces replacement", path)
@@ -888,7 +891,15 @@ func (c *compiler) build(table []fields.Field, prefix string, top, parentOutput,
 		// replaces the object, so the value keeps its prior one as any child of such a field does.
 		serverFilledInList := inList && n.Computed && f.CreateOnly() && !replaceOn && !parentReplace
 		n.ReplaceIfSet = serverFilledInList && !nestedShape(f.Shape)
-		n.Replace = (f.CreateOnly() || replaceOn) && !parentReplace && !n.computedOnly() && !serverFilledInList && !(top && c.decl.Advance != nil && f.Name == c.decl.Advance.Field)
+		// Below a RefuseChange entry a plan that changes anything fails, so a create-only member
+		// there, such as the user agent of an account's Issuing terms, needs no replacement of
+		// its own, which refuseChanges could not tell from its top-level sources. A SetOnce entry
+		// lets a plan set the hash on an object that holds none, and the update would drop such
+		// a member, so it keeps its replacement there.
+		underRefused := slices.ContainsFunc(c.decl.RefuseChange, func(r string) bool {
+			return strings.HasPrefix(path, r+".") && !slices.Contains(c.decl.SetOnce, r)
+		})
+		n.Replace = (f.CreateOnly() || replaceOn) && !parentReplace && !underRefused && !n.computedOnly() && !serverFilledInList && !(top && c.decl.Advance != nil && f.Name == c.decl.Advance.Field)
 		// Below a field that forces replacement nothing changes in place, so a computed
 		// value there stays as it is: an unknown one would read as a change of the parent.
 		// Terraform proposes null for an unset nested attribute even when it is Computed
@@ -1153,8 +1164,10 @@ func attrType(n *node) attr.Type {
 		return types.MapType{ElemType: types.StringType}
 	case fields.IntMap:
 		return types.MapType{ElemType: types.Int64Type}
+	case fields.ScalarListMap:
+		return types.MapType{ElemType: scalarListType(n.Elem)}
 	case fields.ScalarList:
-		return types.ListType{ElemType: scalarType(n.Elem)}
+		return scalarListType(n.Elem)
 	case fields.ScalarSet:
 		return types.SetType{ElemType: scalarType(n.Elem)}
 	default:
@@ -1173,6 +1186,11 @@ func scalarType(s fields.Shape) attr.Type {
 	default:
 		return types.StringType
 	}
+}
+
+// scalarListType is the type of a list of scalars, alone or as a ScalarListMap's values.
+func scalarListType(elem fields.Shape) attr.Type {
+	return types.ListType{ElemType: scalarType(elem)}
 }
 
 func objectType(kids []*node) types.ObjectType {

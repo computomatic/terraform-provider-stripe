@@ -33,6 +33,7 @@ This data source supports the following arguments:
 This data source exports the following attributes in addition to the arguments above:
 
 * `default_currency` - The default currency for this country. This applies to both payment methods and bank accounts.
+* `supported_bank_account_currencies` - Currencies that can be accepted in the specific country (for transfers).
 * `supported_payment_currencies` - Currencies that can be accepted in the specified country (for payments).
 * `supported_payment_methods` - Payment methods available in the specified country. You may need to enable some payment methods (e.g., [ACH](https://stripe.com/docs/ach)) on your account before they appear in this list. The `stripe` payment method refers to [charging through your platform](https://stripe.com/docs/connect/destination-charges).
 * `supported_transfer_countries` - Countries that can accept transfers from the specified country.

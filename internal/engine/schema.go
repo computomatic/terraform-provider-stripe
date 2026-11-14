@@ -310,6 +310,9 @@ func (m *model) resourceAttribute(n *node) rschema.Attribute {
 	case fields.IntMap:
 		return rschema.MapAttribute{ElementType: scalarType(fields.Int), Required: n.Required, Optional: n.Optional, Computed: n.Computed, Sensitive: n.Sensitive, MarkdownDescription: desc,
 			PlanModifiers: planMods(n, m.refuseMap, keepHeldMap, mapplanmodifier.RequiresReplace)}
+	case fields.ScalarListMap:
+		return rschema.MapAttribute{ElementType: scalarListType(n.Elem), Required: n.Required, Optional: n.Optional, Computed: n.Computed, Sensitive: n.Sensitive, MarkdownDescription: desc,
+			PlanModifiers: planMods(n, m.refuseMap, keepHeldMap, mapplanmodifier.RequiresReplace)}
 	case fields.ScalarList:
 		return rschema.ListAttribute{ElementType: scalarType(n.Elem), Required: n.Required, Optional: n.Optional, Computed: n.Computed, Sensitive: n.Sensitive, MarkdownDescription: desc,
 			PlanModifiers: planMods(n, m.refuseList, keepHeldList, listplanmodifier.RequiresReplace)}
@@ -457,6 +460,8 @@ func dataSourceAttribute(n *node) dschema.Attribute {
 		return dschema.MapAttribute{ElementType: scalarType(fields.String), Computed: true, Sensitive: n.Sensitive, MarkdownDescription: desc}
 	case fields.IntMap:
 		return dschema.MapAttribute{ElementType: scalarType(fields.Int), Computed: true, Sensitive: n.Sensitive, MarkdownDescription: desc}
+	case fields.ScalarListMap:
+		return dschema.MapAttribute{ElementType: scalarListType(n.Elem), Computed: true, Sensitive: n.Sensitive, MarkdownDescription: desc}
 	case fields.ScalarList:
 		return dschema.ListAttribute{ElementType: scalarType(n.Elem), Computed: true, Sensitive: n.Sensitive, MarkdownDescription: desc}
 	case fields.ScalarSet:

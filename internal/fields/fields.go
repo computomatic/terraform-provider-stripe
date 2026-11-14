@@ -33,6 +33,9 @@ const (
 	StringMap
 	// IntMap is a hash of integers keyed by a variable, such as amounts by currency.
 	IntMap
+	// ScalarListMap is a hash of scalar lists keyed by a variable, such as a country's bank
+	// account currencies by currency. Elem is the lists' element shape.
+	ScalarListMap
 )
 
 // Field is one entry of a resource's table. Nested fields hang off Fields.
@@ -45,7 +48,7 @@ type Field struct {
 	// applies declaration renames to it.
 	Attr  string
 	Shape Shape
-	// Elem is the element shape of a ScalarList or ScalarSet.
+	// Elem is the element shape of a ScalarList or ScalarSet, or of a ScalarListMap's lists.
 	Elem Shape
 	// Fields are the members of an Object, or of the elements of an ObjectList or
 	// ObjectMap.

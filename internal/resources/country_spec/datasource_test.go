@@ -28,6 +28,9 @@ data "stripe_country_spec" "test" {
 					resource.TestCheckResourceAttr("data.stripe_country_spec.test", "id", "US"),
 					resource.TestCheckResourceAttr("data.stripe_country_spec.test", "default_currency", "usd"),
 					resource.TestCheckResourceAttrSet("data.stripe_country_spec.test", "supported_payment_currencies.#"),
+					// Each currency a US account can be paid out in maps to the countries of the bank
+					// accounts that take it.
+					resource.TestCheckResourceAttr("data.stripe_country_spec.test", "supported_bank_account_currencies.usd.0", "US"),
 					resource.TestCheckResourceAttrSet("data.stripe_country_spec.test", "verification_fields.individual.minimum.#"),
 				),
 			},

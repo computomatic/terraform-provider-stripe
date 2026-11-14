@@ -3,12 +3,12 @@
 page_title: "stripe_account_person_v2 Resource - Stripe"
 subcategory: ""
 description: |-
-  A person of an account created through Stripe's /v2 Accounts API, such as its representative, an executive, an owner or a director. terraform destroy deletes the person, and changing account_id creates a new one. Stripe never returns the value of an ID number, so state keeps the values you configured and treats them as sensitive. State holds only the ID numbers you configured, matched by type: a minute or two after it creates a person with a us_ssn_last_4, Stripe also lists a us_ssn, which the data source shows and the resource leaves out. A plan that changes id_numbers on an existing person fails, because changing them is not supported yet: revert the configuration, ignore the change, or recreate the person deliberately with terraform taint (tofu taint in OpenTofu). Stripe returns address.country in upper case and a whole relationship.percent_ownership with .0, so state keeps the values as you configured them. documents, additional_addresses and additional_names change in place, each sent whole: the lists are matched by position, so a reorder is a change, and an element the configuration drops is dropped from the person. Removing given_name, surname, email or legal_gender from the configuration clears it. Stripe has no proven way to clear the rest of a person's details, so an apply that removes phone, date_of_birth, address or relationship fails; removing political_exposure, nationalities or a member of address or relationship leaves its value on the person.
+  A person of an account created through Stripe's /v2 Accounts API, such as its representative, an executive, an owner or a director. terraform destroy deletes the person, and changing account_id creates a new one. Stripe never returns the value of an ID number, so state keeps the values you configured and treats them as sensitive. State holds only the ID numbers you configured, matched by type: a minute or two after it creates a person with a us_ssn_last_4, Stripe also lists a us_ssn, which the data source shows and the resource leaves out. A plan that changes id_numbers on an existing person fails, because changing them is not supported yet: revert the configuration, ignore the change, or recreate the person deliberately with terraform taint (tofu taint in OpenTofu). Stripe returns address.country in upper case and a whole relationship.percent_ownership with .0, so state keeps the values as you configured them. The kana and kanji script_addresses and script_names of a Japanese account's person change in place, each sent whole; Stripe fills address.postal_code from the script addresses a create sends and moves it when an update changes them, so such a plan leaves it known after apply. documents, additional_addresses and additional_names change in place, each sent whole: the lists are matched by position, so a reorder is a change, and an element the configuration drops is dropped from the person. Removing given_name, surname, email or legal_gender from the configuration clears it. Stripe has no proven way to clear the rest of a person's details, so an apply that removes phone, date_of_birth, address or relationship fails; removing political_exposure, nationalities or a member of address or relationship leaves its value on the person.
 ---
 
 # Resource: stripe_account_person_v2
 
-A person of an account created through Stripe's `/v2` Accounts API, such as its representative, an executive, an owner or a director. `terraform destroy` deletes the person, and changing `account_id` creates a new one. Stripe never returns the `value` of an ID number, so state keeps the values you configured and treats them as sensitive. State holds only the ID numbers you configured, matched by `type`: a minute or two after it creates a person with a `us_ssn_last_4`, Stripe also lists a `us_ssn`, which the data source shows and the resource leaves out. A plan that changes `id_numbers` on an existing person fails, because changing them is not supported yet: revert the configuration, ignore the change, or recreate the person deliberately with `terraform taint` (`tofu taint` in OpenTofu). Stripe returns `address.country` in upper case and a whole `relationship.percent_ownership` with `.0`, so state keeps the values as you configured them. `documents`, `additional_addresses` and `additional_names` change in place, each sent whole: the lists are matched by position, so a reorder is a change, and an element the configuration drops is dropped from the person. Removing `given_name`, `surname`, `email` or `legal_gender` from the configuration clears it. Stripe has no proven way to clear the rest of a person's details, so an apply that removes `phone`, `date_of_birth`, `address` or `relationship` fails; removing `political_exposure`, `nationalities` or a member of `address` or `relationship` leaves its value on the person.
+A person of an account created through Stripe's `/v2` Accounts API, such as its representative, an executive, an owner or a director. `terraform destroy` deletes the person, and changing `account_id` creates a new one. Stripe never returns the `value` of an ID number, so state keeps the values you configured and treats them as sensitive. State holds only the ID numbers you configured, matched by `type`: a minute or two after it creates a person with a `us_ssn_last_4`, Stripe also lists a `us_ssn`, which the data source shows and the resource leaves out. A plan that changes `id_numbers` on an existing person fails, because changing them is not supported yet: revert the configuration, ignore the change, or recreate the person deliberately with `terraform taint` (`tofu taint` in OpenTofu). Stripe returns `address.country` in upper case and a whole `relationship.percent_ownership` with `.0`, so state keeps the values as you configured them. The kana and kanji `script_addresses` and `script_names` of a Japanese account's person change in place, each sent whole; Stripe fills `address.postal_code` from the script addresses a create sends and moves it when an update changes them, so such a plan leaves it known after apply. `documents`, `additional_addresses` and `additional_names` change in place, each sent whole: the lists are matched by position, so a reorder is a change, and an element the configuration drops is dropped from the person. Removing `given_name`, `surname`, `email` or `legal_gender` from the configuration clears it. Stripe has no proven way to clear the rest of a person's details, so an apply that removes `phone`, `date_of_birth`, `address` or `relationship` fails; removing `political_exposure`, `nationalities` or a member of `address` or `relationship` leaves its value on the person.
 
 ## Example Usage
 
@@ -70,6 +70,8 @@ The following arguments are optional:
 * `phone` - (Optional) The phone number for this person. Default: none.
 * `political_exposure` - (Optional) The person's political exposure. Possible values: `existing`, `none`. Default: none. Removing it from the configuration leaves the current value.
 * `relationship` - (Optional) The relationship that this person has with the Account's business or legal entity. Removing it from the configuration leaves the current value. See [`relationship`](#relationship) below.
+* `script_addresses` - (Optional) The script addresses (e.g., non-Latin characters) associated with the person. Removing it from the configuration leaves the current value. See [`script_addresses`](#script_addresses) below.
+* `script_names` - (Optional) The script names (e.g. non-Latin characters) associated with the person. Removing it from the configuration leaves the current value. See [`script_names`](#script_names) below.
 * `surname` - (Optional) The person's last name. Default: none.
 
 <a id="additional_addresses"></a>
@@ -121,7 +123,7 @@ The `address` attribute supports:
 * `country` - (Required) Two-letter country code ([ISO 3166-1 alpha-2](https://en.wikipedia.org/wiki/ISO_3166-1_alpha-2)).
 * `line1` - (Optional) Address line 1 (e.g., street, PO Box, or company name). Default: none. Removing it from the configuration leaves the current value.
 * `line2` - (Optional) Address line 2 (e.g., apartment, suite, unit, or building). Default: none. Removing it from the configuration leaves the current value.
-* `postal_code` - (Optional) ZIP or postal code. Default: none. Removing it from the configuration leaves the current value.
+* `postal_code` - (Optional) ZIP or postal code. Default (Stripe): none, or the postal code the create sends in `script_addresses` where it sends none here (`1500001` for a kana `1500001` and a kanji `１５００００１`). Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
 * `state` - (Optional) State, county, province, or region. Default: none. Removing it from the configuration leaves the current value.
 * `town` - (Optional) Town or district. Default: none. Removing it from the configuration leaves the current value.
 
@@ -222,6 +224,64 @@ The `relationship` attribute supports:
 * `percent_ownership` - (Optional) The percentage of ownership the person has in the associated legal entity. Default: none. Removing it from the configuration leaves the current value.
 * `representative` - (Optional) Indicates whether the person is a representative of the associated legal entity. Default: none. Removing it from the configuration leaves the current value.
 * `title` - (Optional) The title or position the person holds in the associated legal entity. Default: none. Removing it from the configuration leaves the current value.
+
+<a id="script_addresses"></a>
+### `script_addresses`
+
+The `script_addresses` attribute supports:
+
+* `kana` - (Optional) Kana Address. Removing it from the configuration leaves the current value. See [`script_addresses.kana`](#script_addresses.kana) below.
+* `kanji` - (Optional) Kanji Address. Removing it from the configuration leaves the current value. See [`script_addresses.kanji`](#script_addresses.kanji) below.
+
+<a id="script_addresses.kana"></a>
+### `script_addresses.kana`
+
+The `script_addresses.kana` attribute supports:
+
+* `city` - (Optional) City, district, suburb, town, or village. Default: none. Removing it from the configuration leaves the current value.
+* `country` - (Required) Two-letter country code ([ISO 3166-1 alpha-2](https://en.wikipedia.org/wiki/ISO_3166-1_alpha-2)).
+* `line1` - (Optional) Address line 1 (e.g., street, PO Box, or company name). Default: none.
+* `line2` - (Optional) Address line 2 (e.g., apartment, suite, unit, or building). Default: none.
+* `postal_code` - (Optional) ZIP or postal code. Default: none. Removing it from the configuration leaves the current value.
+* `state` - (Optional) State, county, province, or region. Default: none. Removing it from the configuration leaves the current value.
+* `town` - (Optional) Town or district. Default: none.
+
+<a id="script_addresses.kanji"></a>
+### `script_addresses.kanji`
+
+The `script_addresses.kanji` attribute supports:
+
+* `city` - (Optional) City, district, suburb, town, or village. Default: none. Removing it from the configuration leaves the current value.
+* `country` - (Required) Two-letter country code ([ISO 3166-1 alpha-2](https://en.wikipedia.org/wiki/ISO_3166-1_alpha-2)).
+* `line1` - (Optional) Address line 1 (e.g., street, PO Box, or company name). Default: none.
+* `line2` - (Optional) Address line 2 (e.g., apartment, suite, unit, or building). Default: none.
+* `postal_code` - (Optional) ZIP or postal code. Default: none. Removing it from the configuration leaves the current value.
+* `state` - (Optional) State, county, province, or region. Default: none. Removing it from the configuration leaves the current value.
+* `town` - (Optional) Town or district. Default: none.
+
+<a id="script_names"></a>
+### `script_names`
+
+The `script_names` attribute supports:
+
+* `kana` - (Optional) Persons name in kana script. Removing it from the configuration leaves the current value. See [`script_names.kana`](#script_names.kana) below.
+* `kanji` - (Optional) Persons name in kanji script. Removing it from the configuration leaves the current value. See [`script_names.kanji`](#script_names.kanji) below.
+
+<a id="script_names.kana"></a>
+### `script_names.kana`
+
+The `script_names.kana` attribute supports:
+
+* `given_name` - (Optional) The person's first or given name. Default: none.
+* `surname` - (Optional) The person's last or family name. Default: none.
+
+<a id="script_names.kanji"></a>
+### `script_names.kanji`
+
+The `script_names.kanji` attribute supports:
+
+* `given_name` - (Optional) The person's first or given name. Default: none.
+* `surname` - (Optional) The person's last or family name. Default: none.
 
 ## Attribute Reference
 

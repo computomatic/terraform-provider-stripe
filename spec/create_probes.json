@@ -1,5 +1,5 @@
 {
- "suite_ref": "7dbae2a5466760841adf18f3161ad91ddb07b24c",
+ "suite_ref": "180f34f11f1ba45fd6acffacb11483018cff9cc0",
  "leaves": [
   {
    "object": "account",
@@ -560,6 +560,17 @@
      "kind": "value",
      "value": "individual",
      "probe": "minimal/token"
+    }
+   ]
+  },
+  {
+   "object": "bank_account",
+   "operation": "PostAccountsAccountExternalAccounts",
+   "path": "bank_account.account_type",
+   "held": [
+    {
+     "kind": "sent",
+     "probe": "isolated/jp_account_type"
     }
    ]
   },
@@ -3797,7 +3808,7 @@
     {
      "kind": "value",
      "value": false,
-     "probe": "isolated/name_collection_business_emptied"
+     "probe": "every_field/4"
     }
    ]
   },
@@ -4056,6 +4067,18 @@
   {
    "object": "person",
    "operation": "PostAccountsAccountPersons",
+   "path": "relationship.authorizer",
+   "held": [
+    {
+     "kind": "value",
+     "value": false,
+     "probe": "enums/1"
+    }
+   ]
+  },
+  {
+   "object": "person",
+   "operation": "PostAccountsAccountPersons",
    "path": "relationship.director",
    "held": [
     {
@@ -4069,6 +4092,18 @@
    "object": "person",
    "operation": "PostAccountsAccountPersons",
    "path": "relationship.executive",
+   "held": [
+    {
+     "kind": "value",
+     "value": false,
+     "probe": "enums/1"
+    }
+   ]
+  },
+  {
+   "object": "person",
+   "operation": "PostAccountsAccountPersons",
+   "path": "relationship.legal_guardian",
    "held": [
     {
      "kind": "value",
@@ -7998,12 +8033,28 @@
   {
    "object": "v2.core.account",
    "operation": "PostV2CoreAccounts",
+   "path": "configuration.merchant.sepa_debit_payments.creditor_id",
+   "held": [
+    {
+     "kind": "url",
+     "probe": "enums/11"
+    }
+   ]
+  },
+  {
+   "object": "v2.core.account",
+   "operation": "PostV2CoreAccounts",
    "path": "defaults.currency",
    "held": [
     {
      "kind": "value",
      "value": "gbp",
-     "probe": "minimal/uk_identity"
+     "probe": "every_field/109"
+    },
+    {
+     "kind": "value",
+     "value": "jpy",
+     "probe": "every_field/106"
     },
     {
      "kind": "value",
@@ -8147,6 +8198,30 @@
   {
    "object": "v2.core.account",
    "operation": "PostV2CoreAccounts",
+   "path": "identity.business_details.address.country",
+   "held": [
+    {
+     "kind": "value",
+     "value": "JP",
+     "probe": "every_field/107"
+    }
+   ]
+  },
+  {
+   "object": "v2.core.account",
+   "operation": "PostV2CoreAccounts",
+   "path": "identity.business_details.address.postal_code",
+   "held": [
+    {
+     "kind": "value",
+     "value": "1500001",
+     "probe": "every_field/107"
+    }
+   ]
+  },
+  {
+   "object": "v2.core.account",
+   "operation": "PostV2CoreAccounts",
    "path": "identity.individual.additional_addresses.city",
    "held": [
     {
@@ -8253,6 +8328,30 @@
       null
      ],
      "probe": "enums/9"
+    }
+   ]
+  },
+  {
+   "object": "v2.core.account",
+   "operation": "PostV2CoreAccounts",
+   "path": "identity.individual.address.country",
+   "held": [
+    {
+     "kind": "value",
+     "value": "JP",
+     "probe": "every_field/106"
+    }
+   ]
+  },
+  {
+   "object": "v2.core.account",
+   "operation": "PostV2CoreAccounts",
+   "path": "identity.individual.address.postal_code",
+   "held": [
+    {
+     "kind": "value",
+     "value": "1500001",
+     "probe": "every_field/106"
     }
    ]
   },
@@ -8401,6 +8500,18 @@
       null
      ],
      "probe": "enums/3"
+    }
+   ]
+  },
+  {
+   "object": "v2.core.account_person",
+   "operation": "PostV2CoreAccountsAccountIdPersons",
+   "path": "address.postal_code",
+   "held": [
+    {
+     "kind": "value",
+     "value": "1500001",
+     "probe": "every_field/15"
     }
    ]
   },

@@ -64,22 +64,43 @@ The following arguments are required:
 
 The following arguments are optional:
 
+* `additional_tos_acceptances` - (Optional) Details on the legal guardian's or authorizer's acceptance of the required Stripe agreements. Removing it from the configuration leaves the current value. See [`additional_tos_acceptances`](#additional_tos_acceptances) below.
 * `address` - (Optional) The person's address. Removing it from the configuration leaves the current value. See [`address`](#address) below.
 * `dob` - (Optional) The person's date of birth. Removing it from the configuration leaves the current value. See [`dob`](#dob) below.
+* `documents` - (Optional) Documents that may be submitted to satisfy various informational requests. Stripe does not return this value; the provider keeps it from configuration. Removing it from the configuration leaves the current value. See [`documents`](#documents) below.
 * `email` - (Optional) The person's email address. Default: none. Removing it from the configuration leaves the current value.
 * `first_name` - (Optional) The person's first name. Default: none. Removing it from the configuration leaves the current value.
 * `full_name_aliases` - (Optional) A list of alternate names or aliases that the person is known by. Default: none. Removing it from the configuration leaves the current value.
 * `gender` - (Optional) The person's gender (International regulations require either "male" or "female"). Default: none.
-* `id_number` - (Optional, Sensitive) The person's ID number, as appropriate for their country. For example, a social security number in the U.S., social insurance number in Canada, etc. Instead of the number itself, you can also provide a [PII token provided by Stripe.js](https://docs.stripe.com/js/tokens/create_token?type=pii). Changing this value for the account's representative requires that the account re-accept the [terms of service](https://docs.stripe.com/api/accounts/object#account_object-tos_acceptance).
+* `id_number` - (Optional, Sensitive) The person's ID number, as appropriate for their country. For example, a social security number in the U.S., social insurance number in Canada, etc. Instead of the number itself, you can also provide a [PII token provided by Stripe.js](https://docs.stripe.com/js/tokens/create_token?type=pii). Changing this value for the account's representative requires that the account re-accept the [terms of service](https://docs.stripe.com/api/accounts/object#account_object-tos_acceptance). Stripe does not return this value; the provider keeps it from configuration. Removing it from the configuration leaves the current value.
 * `last_name` - (Optional) The person's last name. Default: none. Removing it from the configuration leaves the current value.
 * `maiden_name` - (Optional) The person's maiden name. Default: none.
 * `metadata` - (Optional) Set of [key-value pairs](https://docs.stripe.com/api/metadata) that you can attach to an object. This can be useful for storing additional information about the object in a structured format. Individual keys can be unset by posting an empty value to them. All keys can be unset by posting an empty value to `metadata`. Default (Stripe): `{}`.
+* `nationality` - (Optional) The country where the person is a national. Two-letter country code ([ISO 3166-1 alpha-2](https://en.wikipedia.org/wiki/ISO_3166-1_alpha-2)), or "XX" if unavailable. Default: none. Removing it from the configuration leaves the current value.
+* `person_token` - (Optional) A [person token](https://docs.stripe.com/connect/account-tokens), used to securely provide details to the person. Stripe refused it on a US account on create and update: "No such token: 'cpt_...'". Stripe refused a token it could not find, on create and on update; the conformance suite has recorded no person token it takes. Elsewhere Stripe refused it on a US account on create and update: "No such token: 'cpt_...'".
 * `phone` - (Optional) The person's phone number. Default: none. Removing it from the configuration leaves the current value.
 * `political_exposure` - (Optional) Indicates if the person or any of their representatives, family members, or other closely related persons, declares that they hold or have held an important public job or function, in any jurisdiction. Possible values: `existing`, `none`. Default: none. Removing it from the configuration leaves the current value.
 * `registered_address` - (Optional) The person's registered address. Removing it from the configuration leaves the current value. See [`registered_address`](#registered_address) below.
 * `relationship` - (Optional) The relationship that this person has with the account's legal entity. Removing it from the configuration leaves the current value. See [`relationship`](#relationship) below.
-* `ssn_last_4` - (Optional, Sensitive) The last four digits of the person's Social Security number (U.S. only). Changing this value for the account's representative requires that the account re-accept the [terms of service](https://docs.stripe.com/api/accounts/object#account_object-tos_acceptance).
+* `ssn_last_4` - (Optional, Sensitive) The last four digits of the person's Social Security number (U.S. only). Changing this value for the account's representative requires that the account re-accept the [terms of service](https://docs.stripe.com/api/accounts/object#account_object-tos_acceptance). Stripe does not return this value; the provider keeps it from configuration. Removing it from the configuration leaves the current value.
+* `us_cfpb_data` - (Optional) Demographic data related to the person. Removing it from the configuration leaves the current value. See [`us_cfpb_data`](#us_cfpb_data) below.
 * `verification` - (Optional) The person's verification status. Removing it from the configuration leaves the current value. See [`verification`](#verification) below.
+
+<a id="additional_tos_acceptances"></a>
+### `additional_tos_acceptances`
+
+The `additional_tos_acceptances` attribute supports:
+
+* `account` - (Optional) Details on the legal guardian's acceptance of the main Stripe service agreement. Removing it from the configuration leaves the current value. See [`additional_tos_acceptances.account`](#additional_tos_acceptances.account) below.
+
+<a id="additional_tos_acceptances.account"></a>
+### `additional_tos_acceptances.account`
+
+The `additional_tos_acceptances.account` attribute supports:
+
+* `date` - (Optional) The Unix timestamp marking when the legal guardian accepted the service agreement. Default: none. Removing it from the configuration leaves the current value.
+* `ip` - (Optional) The IP address from which the legal guardian accepted the service agreement. Default: none. Removing it from the configuration leaves the current value.
+* `user_agent` - (Optional) The user agent of the browser from which the legal guardian accepted the service agreement. Default: none. Removing it from the configuration leaves the current value.
 
 <a id="address"></a>
 ### `address`
@@ -102,6 +123,36 @@ The `dob` attribute supports:
 * `month` - (Required) The month of birth, between 1 and 12.
 * `year` - (Required) The four-digit year of birth.
 
+<a id="documents"></a>
+### `documents`
+
+The `documents` attribute supports:
+
+* `company_authorization` - (Optional) Stripe does not return this value; the provider keeps it from configuration. See [`documents.company_authorization`](#documents.company_authorization) below.
+* `passport` - (Optional) Stripe does not return this value; the provider keeps it from configuration. See [`documents.passport`](#documents.passport) below.
+* `visa` - (Optional) Stripe does not return this value; the provider keeps it from configuration. See [`documents.visa`](#documents.visa) below.
+
+<a id="documents.company_authorization"></a>
+### `documents.company_authorization`
+
+The `documents.company_authorization` attribute supports:
+
+* `files` - (Optional) Stripe does not return this value; the provider keeps it from configuration.
+
+<a id="documents.passport"></a>
+### `documents.passport`
+
+The `documents.passport` attribute supports:
+
+* `files` - (Optional) Stripe does not return this value; the provider keeps it from configuration.
+
+<a id="documents.visa"></a>
+### `documents.visa`
+
+The `documents.visa` attribute supports:
+
+* `files` - (Optional) Stripe does not return this value; the provider keeps it from configuration.
+
 <a id="registered_address"></a>
 ### `registered_address`
 
@@ -119,14 +170,39 @@ The `registered_address` attribute supports:
 
 The `relationship` attribute supports:
 
-* `authorizer` - (Read-Only) Whether the person is the authorizer of the account's representative.
+* `authorizer` - (Optional) Whether the person is the authorizer of the account's representative. Stripe refused it on a US account on create and update: "The authorizer role is not supported for an account with your business type. The following business types are supported in your country: government_entity, public_corporation.". Stripe refused `true` on create and on update of a person of a US company account, and takes the role only for a government entity or a public corporation. Elsewhere Stripe refused it on a US account on create and update: "The authorizer role is not supported for an account with your business type. The following business types are supported in your country: government_entity, public_corporation.". Where the provider's Stripe account is in `US`, the plan refuses a create that sends `relationship.authorizer = true`, which Stripe refused there with "The authorizer role is not supported for an account with your business type. The following business types are supported in your country: government_entity, public_corporation." (conformance suite probe `isolated/authorizer_create`). Where the provider's Stripe account is in `US`, the plan refuses an update that sends `relationship.authorizer = true`, which Stripe refused there with "The authorizer role is not supported for an account with your business type. The following business types are supported in your country: government_entity, public_corporation." (conformance suite probe `isolated/authorizer_update`). The provider reads the account's country only for a plan that sends such a request, and leaves the request to Stripe where the account is elsewhere or the key cannot read it. Default (Stripe): `false`. Removing it from the configuration leaves the current value.
 * `director` - (Optional) Whether the person is a director of the account's legal entity. Directors are typically members of the governing board of the company, or responsible for ensuring the company meets its regulatory obligations. Default (Stripe): `false`. Removing it from the configuration leaves the current value.
 * `executive` - (Optional) Whether the person has significant responsibility to control, manage, or direct the organization. Default (Stripe): `false`. Removing it from the configuration leaves the current value.
-* `legal_guardian` - (Read-Only) Whether the person is the legal guardian of the account's representative.
+* `legal_guardian` - (Optional) Whether the person is the legal guardian of the account's representative. Default (Stripe): `false`. Removing it from the configuration leaves the current value.
 * `owner` - (Optional) Whether the person is an owner of the account’s legal entity. Default (Stripe): `false`. Removing it from the configuration leaves the current value.
 * `percent_ownership` - (Optional) The percent owned by the person of the account's legal entity. Default: none. Removing it from the configuration leaves the current value.
 * `representative` - (Optional) Whether the person is authorized as the primary representative of the account. This is the person nominated by the business to provide information about themselves, and general information about the account. There can only be one representative at any given time. At the time the account is created, this person should be set to the person responsible for opening the account. Default (Stripe): `false`. Removing it from the configuration leaves the current value.
 * `title` - (Optional) The person's title (e.g., CEO, Support Engineer). Default: none. Removing it from the configuration leaves the current value.
+
+<a id="us_cfpb_data"></a>
+### `us_cfpb_data`
+
+The `us_cfpb_data` attribute supports:
+
+* `ethnicity_details` - (Optional) The persons ethnicity details. Removing it from the configuration leaves the current value. See [`us_cfpb_data.ethnicity_details`](#us_cfpb_data.ethnicity_details) below.
+* `race_details` - (Optional) The persons race details. Removing it from the configuration leaves the current value. See [`us_cfpb_data.race_details`](#us_cfpb_data.race_details) below.
+* `self_identified_gender` - (Optional) The persons self-identified gender. Default: none. Removing it from the configuration leaves the current value.
+
+<a id="us_cfpb_data.ethnicity_details"></a>
+### `us_cfpb_data.ethnicity_details`
+
+The `us_cfpb_data.ethnicity_details` attribute supports:
+
+* `ethnicity` - (Optional) The persons ethnicity. Default: none. Removing it from the configuration leaves the current value.
+* `ethnicity_other` - (Optional) Please specify your origin, when other is selected. Default: none. Removing it from the configuration leaves the current value.
+
+<a id="us_cfpb_data.race_details"></a>
+### `us_cfpb_data.race_details`
+
+The `us_cfpb_data.race_details` attribute supports:
+
+* `race` - (Optional) The persons race. Default: none. Removing it from the configuration leaves the current value.
+* `race_other` - (Optional) Please specify your race, when other is selected. Default: none. Removing it from the configuration leaves the current value.
 
 <a id="verification"></a>
 ### `verification`
@@ -274,4 +350,4 @@ Using `terraform import`, import an account person using its ID. For example:
 % terraform import stripe_account_person.representative acct_1Nv0FGQ9RKHgCVdK/person_1Nv0FGQ9RKHgCVdKmZb5XqT2
 ```
 
-~> Stripe never returns `id_number` or `ssn_last_4`, so an imported person has neither in state, and its `phone` and verification documents are in Stripe's form. Add `lifecycle { ignore_changes = [id_number, ssn_last_4] }` to a configuration that sets them, because a plan that changes them fails, and add `phone` to the list if the configuration writes it without the `+1`, and the verification documents if it names a test token.
+~> Stripe never returns `id_number` or `ssn_last_4`, so an imported person has neither in state, and its `phone` and verification documents are in Stripe's form. Add `lifecycle { ignore_changes = [id_number, ssn_last_4] }` to a configuration that sets them, because a plan that changes them fails, and add `phone` to the list if the configuration writes it without the `+1`, and the verification documents if it names a test token. Stripe does not return `documents` or `person_token`, so an imported account person has them null: a configuration that sets one plans an update after the import.
