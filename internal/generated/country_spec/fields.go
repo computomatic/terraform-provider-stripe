@@ -9,6 +9,7 @@ import "github.com/computomatic/terraform-provider-stripe/internal/fields"
 var Table = []fields.Field{
 	{Name: "default_currency", Shape: fields.String, Response: true, Description: "The default currency for this country. This applies to both payment methods and bank accounts."},
 	{Name: "id", Shape: fields.String, Response: true, Description: "Unique identifier for the object. Represented as the ISO country code for this country."},
+	{Name: "supported_bank_account_currencies", Shape: fields.ScalarListMap, Elem: fields.String, Response: true, Description: "Currencies that can be accepted in the specific country (for transfers)."},
 	{Name: "supported_payment_currencies", Shape: fields.ScalarList, Elem: fields.String, Response: true, Description: "Currencies that can be accepted in the specified country (for payments)."},
 	{Name: "supported_payment_methods", Shape: fields.ScalarList, Elem: fields.String, Response: true, Description: "Payment methods available in the specified country. You may need to enable some payment methods (e.g., [ACH](https://stripe.com/docs/ach)) on your account before they appear in this list. The `stripe` payment method refers to [charging through your platform](https://stripe.com/docs/connect/destination-charges)."},
 	{Name: "supported_transfer_countries", Shape: fields.ScalarList, Elem: fields.String, Response: true, Description: "Countries that can accept transfers from the specified country."},

@@ -47,8 +47,16 @@ var Declaration = engine.Declaration{
 		Delete:   "/v1/accounts/{account}/persons/{id}",
 		List:     "/v1/accounts/{account}/persons",
 	},
-	Delete:             engine.Delete,
-	GoneOnForbidden:    "account_invalid",
+	Delete:          engine.Delete,
+	GoneOnForbidden: "account_invalid",
+	Answers: map[string]string{
+		// suite: TestAccountPersonAttributes, probes `isolated/person_token_create` and
+		// `isolated/person_token_update`
+		"person_token": "Stripe refused a token it could not find, on create and on update; the conformance suite has recorded no person token it takes.",
+		// suite: TestAccountPersonAttributes, probes `isolated/authorizer_create` and
+		// `isolated/authorizer_update`, on a US company account
+		"relationship.authorizer": "Stripe refused `true` on create and on update of a person of a US company account, and takes the role only for a government entity or a public corporation.",
+	},
 	RefuseChange:       []string{"id_number", "ssn_last_4"},
 	Sensitive:          []string{"id_number", "ssn_last_4"},
 	SendChangedMembers: []string{"address", "registered_address", "relationship", "verification", "verification.document", "verification.additional_document"},

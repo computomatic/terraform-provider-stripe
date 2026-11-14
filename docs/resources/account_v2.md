@@ -3,12 +3,12 @@
 page_title: "stripe_account_v2 Resource - Stripe"
 subcategory: ""
 description: |-
-  A connected account created through Stripe's /v2 Accounts API, whose configurations say how the platform uses it: as a customer, a merchant or a recipient. Each configuration requests one capability: automatic_indirect_tax for a customer, card_payments for a merchant and stripe_balance.stripe_transfers for a recipient; state holds every configuration the account has applied, with the status of each capability. Stripe refuses dashboard on an account that is only a customer. The account is also a v1 connected account with the same ID, which the stripe_account data source reads. Set closed to true to close the account, which cannot be undone; Stripe returns most fields of a closed account as null, so state keeps the values they had before the close. Stripe refuses any change to a closed account, so once it is closed a plan that changes it fails. identity.country, identity.entity_type, the members of identity.individual, identity.business_details and identity.attestations an update takes, defaults.currency, defaults.locales, defaults.profile and the recipient configuration's applied and capabilities.stripe_balance.stripe_transfers.requested change in place; an update sends the individual, the business details or the attestations whole, with their lists of addresses, names and documents matched by position, so a reorder is a change; changing the country can fill defaults.currency, and changing the recipient configuration can move applied_configurations and the status of the recipient's capabilities. An account without a dashboard takes dashboard and the collectors in defaults.responsibilities on update, as adding the recipient configuration to it needs, but Stripe refuses a change of them once they are set, so a plan that changes one the account holds fails, as does one that changes configuration.customer or configuration.merchant, because changing them is not supported yet: revert the configuration, ignore the change, or remove the account from the state and apply again to create a new one. Stripe returns identity.country in upper case, so state keeps the country as you configured it, as it does an address's country and the individual's relationship.percent_ownership. A configuration's members that Stripe takes only on update, such as the merchant's branding icon and logo, are not sent on create. The individual's ID numbers are not available, because Stripe adds numbers of its own to the list a while after a create, which the provider cannot match inside the identity. Stripe has no proven way to clear display_name or contact_email, so an apply that removes one from the configuration fails; removing dashboard, identity.country or the registered name leaves it on the account, and removing contact_phone, identity.entity_type or a member of defaults.profile clears it.
+  A connected account created through Stripe's /v2 Accounts API, whose configurations say how the platform uses it: as a customer, a merchant or a recipient. Each configuration requests one capability: automatic_indirect_tax for a customer, card_payments for a merchant and stripe_balance.stripe_transfers for a recipient; state holds every configuration the account has applied, with the status of each capability. Stripe refuses dashboard on an account that is only a customer. The account is also a v1 connected account with the same ID, which the stripe_account data source reads. Set closed to true to close the account, which cannot be undone; Stripe returns most fields of a closed account as null, so state keeps the values they had before the close. Stripe refuses any change to a closed account, so once it is closed a plan that changes it fails. identity.country, identity.entity_type, the members of identity.individual, identity.business_details and identity.attestations an update takes, defaults.currency, defaults.locales, defaults.profile and the recipient configuration's applied and capabilities.stripe_balance.stripe_transfers.requested change in place; an update sends the individual, the business details or the attestations whole, with their lists of addresses, names and documents matched by position, so a reorder is a change; changing the country can fill defaults.currency, and changing the recipient configuration can move applied_configurations and the status of the recipient's capabilities. An account without a dashboard takes dashboard and the collectors in defaults.responsibilities on update, as adding the recipient configuration to it needs, but Stripe refuses a change of them once they are set, so a plan that changes one the account holds fails, as does one that changes configuration.customer or configuration.merchant, because changing them is not supported yet: revert the configuration, ignore the change, or remove the account from the state and apply again to create a new one. Stripe returns identity.country in upper case, so state keeps the country as you configured it, as it does an address's country and the individual's relationship.percent_ownership. A configuration's members that Stripe takes only on update, such as the merchant's branding icon and logo and its script_statement_descriptor, are not sent on create. A merchant takes the capabilities of its country's payment methods, a Japanese merchant its Konbini support details and a British one its Bacs Direct Debit display name, on create only. The kana and kanji script names and addresses of a Japanese individual or company change in place with the rest of identity.individual or identity.business_details; Stripe fills the address's postal_code from the script addresses a create sends and moves it when an update changes them, so such a plan leaves it known after apply. The individual's ID numbers are not available, because Stripe adds numbers of its own to the list a while after a create, which the provider cannot match inside the identity. Stripe has no proven way to clear display_name or contact_email, so an apply that removes one from the configuration fails; removing dashboard, identity.country or the registered name leaves it on the account, and removing contact_phone, identity.entity_type or a member of defaults.profile clears it.
 ---
 
 # Resource: stripe_account_v2
 
-A connected account created through Stripe's `/v2` Accounts API, whose configurations say how the platform uses it: as a customer, a merchant or a recipient. Each configuration requests one capability: `automatic_indirect_tax` for a customer, `card_payments` for a merchant and `stripe_balance.stripe_transfers` for a recipient; state holds every configuration the account has applied, with the status of each capability. Stripe refuses `dashboard` on an account that is only a customer. The account is also a v1 connected account with the same ID, which the `stripe_account` data source reads. Set `closed` to `true` to close the account, which cannot be undone; Stripe returns most fields of a closed account as null, so state keeps the values they had before the close. Stripe refuses any change to a closed account, so once it is closed a plan that changes it fails. `identity.country`, `identity.entity_type`, the members of `identity.individual`, `identity.business_details` and `identity.attestations` an update takes, `defaults.currency`, `defaults.locales`, `defaults.profile` and the recipient configuration's `applied` and `capabilities.stripe_balance.stripe_transfers.requested` change in place; an update sends the individual, the business details or the attestations whole, with their lists of addresses, names and documents matched by position, so a reorder is a change; changing the country can fill `defaults.currency`, and changing the recipient configuration can move `applied_configurations` and the status of the recipient's capabilities. An account without a dashboard takes `dashboard` and the collectors in `defaults.responsibilities` on update, as adding the recipient configuration to it needs, but Stripe refuses a change of them once they are set, so a plan that changes one the account holds fails, as does one that changes `configuration.customer` or `configuration.merchant`, because changing them is not supported yet: revert the configuration, ignore the change, or remove the account from the state and apply again to create a new one. Stripe returns `identity.country` in upper case, so state keeps the country as you configured it, as it does an address's `country` and the individual's `relationship.percent_ownership`. A configuration's members that Stripe takes only on update, such as the merchant's branding `icon` and `logo`, are not sent on create. The individual's ID numbers are not available, because Stripe adds numbers of its own to the list a while after a create, which the provider cannot match inside the identity. Stripe has no proven way to clear `display_name` or `contact_email`, so an apply that removes one from the configuration fails; removing `dashboard`, `identity.country` or the registered name leaves it on the account, and removing `contact_phone`, `identity.entity_type` or a member of `defaults.profile` clears it.
+A connected account created through Stripe's `/v2` Accounts API, whose configurations say how the platform uses it: as a customer, a merchant or a recipient. Each configuration requests one capability: `automatic_indirect_tax` for a customer, `card_payments` for a merchant and `stripe_balance.stripe_transfers` for a recipient; state holds every configuration the account has applied, with the status of each capability. Stripe refuses `dashboard` on an account that is only a customer. The account is also a v1 connected account with the same ID, which the `stripe_account` data source reads. Set `closed` to `true` to close the account, which cannot be undone; Stripe returns most fields of a closed account as null, so state keeps the values they had before the close. Stripe refuses any change to a closed account, so once it is closed a plan that changes it fails. `identity.country`, `identity.entity_type`, the members of `identity.individual`, `identity.business_details` and `identity.attestations` an update takes, `defaults.currency`, `defaults.locales`, `defaults.profile` and the recipient configuration's `applied` and `capabilities.stripe_balance.stripe_transfers.requested` change in place; an update sends the individual, the business details or the attestations whole, with their lists of addresses, names and documents matched by position, so a reorder is a change; changing the country can fill `defaults.currency`, and changing the recipient configuration can move `applied_configurations` and the status of the recipient's capabilities. An account without a dashboard takes `dashboard` and the collectors in `defaults.responsibilities` on update, as adding the recipient configuration to it needs, but Stripe refuses a change of them once they are set, so a plan that changes one the account holds fails, as does one that changes `configuration.customer` or `configuration.merchant`, because changing them is not supported yet: revert the configuration, ignore the change, or remove the account from the state and apply again to create a new one. Stripe returns `identity.country` in upper case, so state keeps the country as you configured it, as it does an address's `country` and the individual's `relationship.percent_ownership`. A configuration's members that Stripe takes only on update, such as the merchant's branding `icon` and `logo` and its `script_statement_descriptor`, are not sent on create. A merchant takes the capabilities of its country's payment methods, a Japanese merchant its Konbini support details and a British one its Bacs Direct Debit display name, on create only. The kana and kanji script names and addresses of a Japanese individual or company change in place with the rest of `identity.individual` or `identity.business_details`; Stripe fills the address's `postal_code` from the script addresses a create sends and moves it when an update changes them, so such a plan leaves it known after apply. The individual's ID numbers are not available, because Stripe adds numbers of its own to the list a while after a create, which the provider cannot match inside the identity. Stripe has no proven way to clear `display_name` or `contact_email`, so an apply that removes one from the configuration fails; removing `dashboard`, `identity.country` or the registered name leaves it on the account, and removing `contact_phone`, `identity.entity_type` or a member of `defaults.profile` clears it.
 
 ~> Stripe cannot delete an account created through `/v2`; set `closed` to `true` to close it. `terraform destroy`, and a change that would replace the v2 account, fail at plan time. To stop managing a v2 account, remove it from the state as [Removing from State](#removing-from-state) shows; it stays in the Stripe account.
 
@@ -192,12 +192,23 @@ The `configuration.customer.shipping.address` attribute supports:
 The `configuration.merchant` attribute supports:
 
 * `applied` - (Optional) Represents the state of the configuration, and can be updated to deactivate or re-apply a configuration. Default: not sent. Removing it from the configuration leaves the current value.
+* `bacs_debit_payments` - (Optional) Settings used for Bacs debit payments. Removing it from the configuration leaves the current value. See [`configuration.merchant.bacs_debit_payments`](#configuration.merchant.bacs_debit_payments) below.
 * `branding` - (Optional) Settings used to apply the merchant's branding to email receipts, invoices, Checkout, and other products. Removing it from the configuration leaves the current value. See [`configuration.merchant.branding`](#configuration.merchant.branding) below.
 * `capabilities` - (Optional) Capabilities to request on the Merchant Configuration. See [`configuration.merchant.capabilities`](#configuration.merchant.capabilities) below.
 * `card_payments` - (Optional) Card payments settings. Removing it from the configuration leaves the current value. See [`configuration.merchant.card_payments`](#configuration.merchant.card_payments) below.
+* `konbini_payments` - (Optional) Settings specific to Konbini payments on the account. Removing it from the configuration leaves the current value. See [`configuration.merchant.konbini_payments`](#configuration.merchant.konbini_payments) below.
 * `mcc` - (Optional) The Merchant Category Code (MCC) for the Merchant Configuration. MCCs classify businesses based on the goods or services they provide. Default: none. Removing it from the configuration leaves the current value.
+* `script_statement_descriptor` - (Optional) Settings for the default text that appears on statements for language variations. Removing it from the configuration leaves the current value. See [`configuration.merchant.script_statement_descriptor`](#configuration.merchant.script_statement_descriptor) below.
+* `sepa_debit_payments` - (Optional) Settings used for SEPA Direct Debit payments. Removing it from the configuration leaves the current value. See [`configuration.merchant.sepa_debit_payments`](#configuration.merchant.sepa_debit_payments) below.
 * `statement_descriptor` - (Optional) Statement descriptor. Removing it from the configuration leaves the current value. See [`configuration.merchant.statement_descriptor`](#configuration.merchant.statement_descriptor) below.
 * `support` - (Optional) Publicly available contact information for sending support issues to. Removing it from the configuration leaves the current value. See [`configuration.merchant.support`](#configuration.merchant.support) below.
+
+<a id="configuration.merchant.bacs_debit_payments"></a>
+### `configuration.merchant.bacs_debit_payments`
+
+The `configuration.merchant.bacs_debit_payments` attribute supports:
+
+* `display_name` - (Optional) Display name for Bacs Direct Debit payments. Stripe refused it on a US account on update: "Some fields in the request were invalid: 'configuration.merchant.bacs_debit_payments.display_name: You cannot update the Bacs Direct Debit Display Name.'". Default: none. Removing it from the configuration leaves the current value.
 
 <a id="configuration.merchant.branding"></a>
 ### `configuration.merchant.branding`
@@ -218,28 +229,47 @@ The `configuration.merchant.capabilities` attribute supports:
 * `acss_debit_payments` - (Optional) Allow the merchant to process ACSS debit payments. Removing it from the configuration leaves the current value. See [`configuration.merchant.capabilities.acss_debit_payments`](#configuration.merchant.capabilities.acss_debit_payments) below.
 * `affirm_payments` - (Optional) Allow the merchant to process Affirm payments. Removing it from the configuration leaves the current value. See [`configuration.merchant.capabilities.affirm_payments`](#configuration.merchant.capabilities.affirm_payments) below.
 * `afterpay_clearpay_payments` - (Optional) Allow the merchant to process Afterpay/Clearpay payments. Removing it from the configuration leaves the current value. See [`configuration.merchant.capabilities.afterpay_clearpay_payments`](#configuration.merchant.capabilities.afterpay_clearpay_payments) below.
+* `alma_payments` - (Optional) Allow the merchant to process Alma payments. Removing it from the configuration leaves the current value. See [`configuration.merchant.capabilities.alma_payments`](#configuration.merchant.capabilities.alma_payments) below.
 * `amazon_pay_payments` - (Optional) Allow the merchant to process Amazon Pay payments. Removing it from the configuration leaves the current value. See [`configuration.merchant.capabilities.amazon_pay_payments`](#configuration.merchant.capabilities.amazon_pay_payments) below.
+* `au_becs_debit_payments` - (Optional) Allow the merchant to process Australian BECS Direct Debit payments. Removing it from the configuration leaves the current value. See [`configuration.merchant.capabilities.au_becs_debit_payments`](#configuration.merchant.capabilities.au_becs_debit_payments) below.
+* `bacs_debit_payments` - (Optional) Allow the merchant to process BACS Direct Debit payments. Removing it from the configuration leaves the current value. See [`configuration.merchant.capabilities.bacs_debit_payments`](#configuration.merchant.capabilities.bacs_debit_payments) below.
 * `bancontact_payments` - (Optional) Allow the merchant to process Bancontact payments. Removing it from the configuration leaves the current value. See [`configuration.merchant.capabilities.bancontact_payments`](#configuration.merchant.capabilities.bancontact_payments) below.
+* `blik_payments` - (Optional) Allow the merchant to process BLIK payments. Removing it from the configuration leaves the current value. See [`configuration.merchant.capabilities.blik_payments`](#configuration.merchant.capabilities.blik_payments) below.
 * `blik_recurring_payments` - (Optional) Allow the merchant to process recurring BLIK payments. Removing it from the configuration leaves the current value. See [`configuration.merchant.capabilities.blik_recurring_payments`](#configuration.merchant.capabilities.blik_recurring_payments) below.
 * `card_payments` - (Optional) Allow the merchant to collect card payments. See [`configuration.merchant.capabilities.card_payments`](#configuration.merchant.capabilities.card_payments) below.
 * `cartes_bancaires_payments` - (Optional) Allow the merchant to process Cartes Bancaires payments. Removing it from the configuration leaves the current value. See [`configuration.merchant.capabilities.cartes_bancaires_payments`](#configuration.merchant.capabilities.cartes_bancaires_payments) below.
 * `cashapp_payments` - (Optional) Allow the merchant to process Cash App payments. Removing it from the configuration leaves the current value. See [`configuration.merchant.capabilities.cashapp_payments`](#configuration.merchant.capabilities.cashapp_payments) below.
 * `eps_payments` - (Optional) Allow the merchant to process EPS payments. Removing it from the configuration leaves the current value. See [`configuration.merchant.capabilities.eps_payments`](#configuration.merchant.capabilities.eps_payments) below.
+* `fpx_payments` - (Optional) Allow the merchant to process FPX payments. Removing it from the configuration leaves the current value. See [`configuration.merchant.capabilities.fpx_payments`](#configuration.merchant.capabilities.fpx_payments) below.
 * `gb_bank_transfer_payments` - (Optional) Allow the merchant to process UK bank transfer payments. Removing it from the configuration leaves the current value. See [`configuration.merchant.capabilities.gb_bank_transfer_payments`](#configuration.merchant.capabilities.gb_bank_transfer_payments) below.
+* `grabpay_payments` - (Optional) Allow the merchant to process GrabPay payments. Removing it from the configuration leaves the current value. See [`configuration.merchant.capabilities.grabpay_payments`](#configuration.merchant.capabilities.grabpay_payments) below.
 * `ideal_payments` - (Optional) Allow the merchant to process iDEAL payments. Removing it from the configuration leaves the current value. See [`configuration.merchant.capabilities.ideal_payments`](#configuration.merchant.capabilities.ideal_payments) below.
+* `jcb_payments` - (Optional) Allow the merchant to process JCB card payments. See [`configuration.merchant.capabilities.jcb_payments`](#configuration.merchant.capabilities.jcb_payments) below.
+* `jp_bank_transfer_payments` - (Optional) Allow the merchant to process Japanese bank transfer payments. Removing it from the configuration leaves the current value. See [`configuration.merchant.capabilities.jp_bank_transfer_payments`](#configuration.merchant.capabilities.jp_bank_transfer_payments) below.
 * `kakao_pay_payments` - (Optional) Allow the merchant to process Kakao Pay payments. Removing it from the configuration leaves the current value. See [`configuration.merchant.capabilities.kakao_pay_payments`](#configuration.merchant.capabilities.kakao_pay_payments) below.
 * `klarna_payments` - (Optional) Allow the merchant to process Klarna payments. Removing it from the configuration leaves the current value. See [`configuration.merchant.capabilities.klarna_payments`](#configuration.merchant.capabilities.klarna_payments) below.
 * `kr_card_payments` - (Optional) Allow the merchant to process Korean card payments. Removing it from the configuration leaves the current value. See [`configuration.merchant.capabilities.kr_card_payments`](#configuration.merchant.capabilities.kr_card_payments) below.
 * `link_payments` - (Optional) Allow the merchant to process Link payments. Removing it from the configuration leaves the current value. See [`configuration.merchant.capabilities.link_payments`](#configuration.merchant.capabilities.link_payments) below.
+* `mobilepay_payments` - (Optional) Allow the merchant to process MobilePay payments. Removing it from the configuration leaves the current value. See [`configuration.merchant.capabilities.mobilepay_payments`](#configuration.merchant.capabilities.mobilepay_payments) below.
 * `multibanco_payments` - (Optional) Allow the merchant to process Multibanco payments. Removing it from the configuration leaves the current value. See [`configuration.merchant.capabilities.multibanco_payments`](#configuration.merchant.capabilities.multibanco_payments) below.
 * `naver_pay_payments` - (Optional) Allow the merchant to process Naver Pay payments. Removing it from the configuration leaves the current value. See [`configuration.merchant.capabilities.naver_pay_payments`](#configuration.merchant.capabilities.naver_pay_payments) below.
+* `oxxo_payments` - (Optional) Allow the merchant to process OXXO payments. Removing it from the configuration leaves the current value. See [`configuration.merchant.capabilities.oxxo_payments`](#configuration.merchant.capabilities.oxxo_payments) below.
 * `p24_payments` - (Optional) Allow the merchant to process Przelewy24 (P24) payments. Removing it from the configuration leaves the current value. See [`configuration.merchant.capabilities.p24_payments`](#configuration.merchant.capabilities.p24_payments) below.
+* `pay_by_bank_payments` - (Optional) Allow the merchant to process Pay by Bank payments. Removing it from the configuration leaves the current value. See [`configuration.merchant.capabilities.pay_by_bank_payments`](#configuration.merchant.capabilities.pay_by_bank_payments) below.
 * `payco_payments` - (Optional) Allow the merchant to process PAYCO payments. Removing it from the configuration leaves the current value. See [`configuration.merchant.capabilities.payco_payments`](#configuration.merchant.capabilities.payco_payments) below.
+* `paynow_payments` - (Optional) Allow the merchant to process PayNow payments. Removing it from the configuration leaves the current value. See [`configuration.merchant.capabilities.paynow_payments`](#configuration.merchant.capabilities.paynow_payments) below.
+* `promptpay_payments` - (Optional) Allow the merchant to process PromptPay payments. Removing it from the configuration leaves the current value. See [`configuration.merchant.capabilities.promptpay_payments`](#configuration.merchant.capabilities.promptpay_payments) below.
+* `revolut_pay_payments` - (Optional) Allow the merchant to process Revolut Pay payments. Removing it from the configuration leaves the current value. See [`configuration.merchant.capabilities.revolut_pay_payments`](#configuration.merchant.capabilities.revolut_pay_payments) below.
 * `samsung_pay_payments` - (Optional) Allow the merchant to process Samsung Pay payments. Removing it from the configuration leaves the current value. See [`configuration.merchant.capabilities.samsung_pay_payments`](#configuration.merchant.capabilities.samsung_pay_payments) below.
 * `satispay_payments` - (Optional) Allow the merchant to process Satispay payments. Removing it from the configuration leaves the current value. See [`configuration.merchant.capabilities.satispay_payments`](#configuration.merchant.capabilities.satispay_payments) below.
+* `sepa_bank_transfer_payments` - (Optional) Allow the merchant to process SEPA bank transfer payments. Removing it from the configuration leaves the current value. See [`configuration.merchant.capabilities.sepa_bank_transfer_payments`](#configuration.merchant.capabilities.sepa_bank_transfer_payments) below.
+* `sepa_debit_payments` - (Optional) Allow the merchant to process SEPA Direct Debit payments. Removing it from the configuration leaves the current value. See [`configuration.merchant.capabilities.sepa_debit_payments`](#configuration.merchant.capabilities.sepa_debit_payments) below.
+* `sequra_payments` - (Optional) Allow the merchant to process SeQura payments. Removing it from the configuration leaves the current value. See [`configuration.merchant.capabilities.sequra_payments`](#configuration.merchant.capabilities.sequra_payments) below.
 * `stripe_balance` - (Read-Only) Capabilities that enable the merchant to manage their Stripe Balance (/v1/balance). See [`configuration.merchant.capabilities.stripe_balance`](#configuration.merchant.capabilities.stripe_balance) below.
 * `sunbit_payments` - (Optional) Allow the merchant to process Sunbit payments. Removing it from the configuration leaves the current value. See [`configuration.merchant.capabilities.sunbit_payments`](#configuration.merchant.capabilities.sunbit_payments) below.
+* `twint_payments` - (Optional) Allow the merchant to process TWINT payments. Removing it from the configuration leaves the current value. See [`configuration.merchant.capabilities.twint_payments`](#configuration.merchant.capabilities.twint_payments) below.
 * `us_bank_transfer_payments` - (Optional) Allow the merchant to process US bank transfer payments. Removing it from the configuration leaves the current value. See [`configuration.merchant.capabilities.us_bank_transfer_payments`](#configuration.merchant.capabilities.us_bank_transfer_payments) below.
+* `zip_payments` - (Optional) Allow the merchant to process Zip payments. Removing it from the configuration leaves the current value. See [`configuration.merchant.capabilities.zip_payments`](#configuration.merchant.capabilities.zip_payments) below.
 
 <a id="configuration.merchant.capabilities.ach_debit_payments"></a>
 ### `configuration.merchant.capabilities.ach_debit_payments`
@@ -309,6 +339,23 @@ The `configuration.merchant.capabilities.afterpay_clearpay_payments.status_detai
 * `code` - Machine-readable code explaining the reason for the Capability to be in its current status. Possible values: `determining_status`, `rejected_fraud`, `rejected_incomplete_verification`, `rejected_listed`, `rejected_other`, `rejected_platform_fraud`, `rejected_platform_other`, `rejected_platform_terms_of_service`, `rejected_terms_of_service`, `requirements_past_due`, `requirements_pending_verification`, `restricted_other`, `unsupported_business`, `unsupported_country`, `unsupported_entity_type`.
 * `resolution` - Machine-readable code explaining how to make the Capability active. Possible values: `contact_stripe`, `no_resolution`, `provide_info`.
 
+<a id="configuration.merchant.capabilities.alma_payments"></a>
+### `configuration.merchant.capabilities.alma_payments`
+
+The `configuration.merchant.capabilities.alma_payments` attribute supports:
+
+* `requested` - (Required) To request a new Capability for an account, pass true. There can be a delay before the requested Capability becomes active. Stripe does not return this value; the provider keeps it from configuration.
+* `status` - (Read-Only) The status of the Capability. Possible values: `active`, `pending`, `rejected`, `restricted`, `unsupported`.
+* `status_details` - (Read-Only) Additional details about the capability's status. This value is empty when `status` is `active`. See [`configuration.merchant.capabilities.alma_payments.status_details`](#configuration.merchant.capabilities.alma_payments.status_details) below.
+
+<a id="configuration.merchant.capabilities.alma_payments.status_details"></a>
+### `configuration.merchant.capabilities.alma_payments.status_details`
+
+The `configuration.merchant.capabilities.alma_payments.status_details` attribute is a list. Each element supports:
+
+* `code` - Machine-readable code explaining the reason for the Capability to be in its current status. Possible values: `determining_status`, `rejected_fraud`, `rejected_incomplete_verification`, `rejected_listed`, `rejected_other`, `rejected_platform_fraud`, `rejected_platform_other`, `rejected_platform_terms_of_service`, `rejected_terms_of_service`, `requirements_past_due`, `requirements_pending_verification`, `restricted_other`, `unsupported_business`, `unsupported_country`, `unsupported_entity_type`.
+* `resolution` - Machine-readable code explaining how to make the Capability active. Possible values: `contact_stripe`, `no_resolution`, `provide_info`.
+
 <a id="configuration.merchant.capabilities.amazon_pay_payments"></a>
 ### `configuration.merchant.capabilities.amazon_pay_payments`
 
@@ -326,6 +373,40 @@ The `configuration.merchant.capabilities.amazon_pay_payments.status_details` att
 * `code` - Machine-readable code explaining the reason for the Capability to be in its current status. Possible values: `determining_status`, `rejected_fraud`, `rejected_incomplete_verification`, `rejected_listed`, `rejected_other`, `rejected_platform_fraud`, `rejected_platform_other`, `rejected_platform_terms_of_service`, `rejected_terms_of_service`, `requirements_past_due`, `requirements_pending_verification`, `restricted_other`, `unsupported_business`, `unsupported_country`, `unsupported_entity_type`.
 * `resolution` - Machine-readable code explaining how to make the Capability active. Possible values: `contact_stripe`, `no_resolution`, `provide_info`.
 
+<a id="configuration.merchant.capabilities.au_becs_debit_payments"></a>
+### `configuration.merchant.capabilities.au_becs_debit_payments`
+
+The `configuration.merchant.capabilities.au_becs_debit_payments` attribute supports:
+
+* `requested` - (Required) To request a new Capability for an account, pass true. There can be a delay before the requested Capability becomes active. Stripe does not return this value; the provider keeps it from configuration.
+* `status` - (Read-Only) The status of the Capability. Possible values: `active`, `pending`, `rejected`, `restricted`, `unsupported`.
+* `status_details` - (Read-Only) Additional details about the capability's status. This value is empty when `status` is `active`. See [`configuration.merchant.capabilities.au_becs_debit_payments.status_details`](#configuration.merchant.capabilities.au_becs_debit_payments.status_details) below.
+
+<a id="configuration.merchant.capabilities.au_becs_debit_payments.status_details"></a>
+### `configuration.merchant.capabilities.au_becs_debit_payments.status_details`
+
+The `configuration.merchant.capabilities.au_becs_debit_payments.status_details` attribute is a list. Each element supports:
+
+* `code` - Machine-readable code explaining the reason for the Capability to be in its current status. Possible values: `determining_status`, `rejected_fraud`, `rejected_incomplete_verification`, `rejected_listed`, `rejected_other`, `rejected_platform_fraud`, `rejected_platform_other`, `rejected_platform_terms_of_service`, `rejected_terms_of_service`, `requirements_past_due`, `requirements_pending_verification`, `restricted_other`, `unsupported_business`, `unsupported_country`, `unsupported_entity_type`.
+* `resolution` - Machine-readable code explaining how to make the Capability active. Possible values: `contact_stripe`, `no_resolution`, `provide_info`.
+
+<a id="configuration.merchant.capabilities.bacs_debit_payments"></a>
+### `configuration.merchant.capabilities.bacs_debit_payments`
+
+The `configuration.merchant.capabilities.bacs_debit_payments` attribute supports:
+
+* `requested` - (Required) To request a new Capability for an account, pass true. There can be a delay before the requested Capability becomes active. Stripe does not return this value; the provider keeps it from configuration.
+* `status` - (Read-Only) The status of the Capability. Possible values: `active`, `pending`, `rejected`, `restricted`, `unsupported`.
+* `status_details` - (Read-Only) Additional details about the capability's status. This value is empty when `status` is `active`. See [`configuration.merchant.capabilities.bacs_debit_payments.status_details`](#configuration.merchant.capabilities.bacs_debit_payments.status_details) below.
+
+<a id="configuration.merchant.capabilities.bacs_debit_payments.status_details"></a>
+### `configuration.merchant.capabilities.bacs_debit_payments.status_details`
+
+The `configuration.merchant.capabilities.bacs_debit_payments.status_details` attribute is a list. Each element supports:
+
+* `code` - Machine-readable code explaining the reason for the Capability to be in its current status. Possible values: `determining_status`, `rejected_fraud`, `rejected_incomplete_verification`, `rejected_listed`, `rejected_other`, `rejected_platform_fraud`, `rejected_platform_other`, `rejected_platform_terms_of_service`, `rejected_terms_of_service`, `requirements_past_due`, `requirements_pending_verification`, `restricted_other`, `unsupported_business`, `unsupported_country`, `unsupported_entity_type`.
+* `resolution` - Machine-readable code explaining how to make the Capability active. Possible values: `contact_stripe`, `no_resolution`, `provide_info`.
+
 <a id="configuration.merchant.capabilities.bancontact_payments"></a>
 ### `configuration.merchant.capabilities.bancontact_payments`
 
@@ -339,6 +420,23 @@ The `configuration.merchant.capabilities.bancontact_payments` attribute supports
 ### `configuration.merchant.capabilities.bancontact_payments.status_details`
 
 The `configuration.merchant.capabilities.bancontact_payments.status_details` attribute is a list. Each element supports:
+
+* `code` - Machine-readable code explaining the reason for the Capability to be in its current status. Possible values: `determining_status`, `rejected_fraud`, `rejected_incomplete_verification`, `rejected_listed`, `rejected_other`, `rejected_platform_fraud`, `rejected_platform_other`, `rejected_platform_terms_of_service`, `rejected_terms_of_service`, `requirements_past_due`, `requirements_pending_verification`, `restricted_other`, `unsupported_business`, `unsupported_country`, `unsupported_entity_type`.
+* `resolution` - Machine-readable code explaining how to make the Capability active. Possible values: `contact_stripe`, `no_resolution`, `provide_info`.
+
+<a id="configuration.merchant.capabilities.blik_payments"></a>
+### `configuration.merchant.capabilities.blik_payments`
+
+The `configuration.merchant.capabilities.blik_payments` attribute supports:
+
+* `requested` - (Required) To request a new Capability for an account, pass true. There can be a delay before the requested Capability becomes active. Stripe does not return this value; the provider keeps it from configuration.
+* `status` - (Read-Only) The status of the Capability. Possible values: `active`, `pending`, `rejected`, `restricted`, `unsupported`.
+* `status_details` - (Read-Only) Additional details about the capability's status. This value is empty when `status` is `active`. See [`configuration.merchant.capabilities.blik_payments.status_details`](#configuration.merchant.capabilities.blik_payments.status_details) below.
+
+<a id="configuration.merchant.capabilities.blik_payments.status_details"></a>
+### `configuration.merchant.capabilities.blik_payments.status_details`
+
+The `configuration.merchant.capabilities.blik_payments.status_details` attribute is a list. Each element supports:
 
 * `code` - Machine-readable code explaining the reason for the Capability to be in its current status. Possible values: `determining_status`, `rejected_fraud`, `rejected_incomplete_verification`, `rejected_listed`, `rejected_other`, `rejected_platform_fraud`, `rejected_platform_other`, `rejected_platform_terms_of_service`, `rejected_terms_of_service`, `requirements_past_due`, `requirements_pending_verification`, `restricted_other`, `unsupported_business`, `unsupported_country`, `unsupported_entity_type`.
 * `resolution` - Machine-readable code explaining how to make the Capability active. Possible values: `contact_stripe`, `no_resolution`, `provide_info`.
@@ -428,6 +526,23 @@ The `configuration.merchant.capabilities.eps_payments.status_details` attribute 
 * `code` - Machine-readable code explaining the reason for the Capability to be in its current status. Possible values: `determining_status`, `rejected_fraud`, `rejected_incomplete_verification`, `rejected_listed`, `rejected_other`, `rejected_platform_fraud`, `rejected_platform_other`, `rejected_platform_terms_of_service`, `rejected_terms_of_service`, `requirements_past_due`, `requirements_pending_verification`, `restricted_other`, `unsupported_business`, `unsupported_country`, `unsupported_entity_type`.
 * `resolution` - Machine-readable code explaining how to make the Capability active. Possible values: `contact_stripe`, `no_resolution`, `provide_info`.
 
+<a id="configuration.merchant.capabilities.fpx_payments"></a>
+### `configuration.merchant.capabilities.fpx_payments`
+
+The `configuration.merchant.capabilities.fpx_payments` attribute supports:
+
+* `requested` - (Required) To request a new Capability for an account, pass true. There can be a delay before the requested Capability becomes active. Stripe does not return this value; the provider keeps it from configuration.
+* `status` - (Read-Only) The status of the Capability. Possible values: `active`, `pending`, `rejected`, `restricted`, `unsupported`.
+* `status_details` - (Read-Only) Additional details about the capability's status. This value is empty when `status` is `active`. See [`configuration.merchant.capabilities.fpx_payments.status_details`](#configuration.merchant.capabilities.fpx_payments.status_details) below.
+
+<a id="configuration.merchant.capabilities.fpx_payments.status_details"></a>
+### `configuration.merchant.capabilities.fpx_payments.status_details`
+
+The `configuration.merchant.capabilities.fpx_payments.status_details` attribute is a list. Each element supports:
+
+* `code` - Machine-readable code explaining the reason for the Capability to be in its current status. Possible values: `determining_status`, `rejected_fraud`, `rejected_incomplete_verification`, `rejected_listed`, `rejected_other`, `rejected_platform_fraud`, `rejected_platform_other`, `rejected_platform_terms_of_service`, `rejected_terms_of_service`, `requirements_past_due`, `requirements_pending_verification`, `restricted_other`, `unsupported_business`, `unsupported_country`, `unsupported_entity_type`.
+* `resolution` - Machine-readable code explaining how to make the Capability active. Possible values: `contact_stripe`, `no_resolution`, `provide_info`.
+
 <a id="configuration.merchant.capabilities.gb_bank_transfer_payments"></a>
 ### `configuration.merchant.capabilities.gb_bank_transfer_payments`
 
@@ -445,6 +560,23 @@ The `configuration.merchant.capabilities.gb_bank_transfer_payments.status_detail
 * `code` - Machine-readable code explaining the reason for the Capability to be in its current status. Possible values: `determining_status`, `rejected_fraud`, `rejected_incomplete_verification`, `rejected_listed`, `rejected_other`, `rejected_platform_fraud`, `rejected_platform_other`, `rejected_platform_terms_of_service`, `rejected_terms_of_service`, `requirements_past_due`, `requirements_pending_verification`, `restricted_other`, `unsupported_business`, `unsupported_country`, `unsupported_entity_type`.
 * `resolution` - Machine-readable code explaining how to make the Capability active. Possible values: `contact_stripe`, `no_resolution`, `provide_info`.
 
+<a id="configuration.merchant.capabilities.grabpay_payments"></a>
+### `configuration.merchant.capabilities.grabpay_payments`
+
+The `configuration.merchant.capabilities.grabpay_payments` attribute supports:
+
+* `requested` - (Required) To request a new Capability for an account, pass true. There can be a delay before the requested Capability becomes active. Stripe does not return this value; the provider keeps it from configuration.
+* `status` - (Read-Only) The status of the Capability. Possible values: `active`, `pending`, `rejected`, `restricted`, `unsupported`.
+* `status_details` - (Read-Only) Additional details about the capability's status. This value is empty when `status` is `active`. See [`configuration.merchant.capabilities.grabpay_payments.status_details`](#configuration.merchant.capabilities.grabpay_payments.status_details) below.
+
+<a id="configuration.merchant.capabilities.grabpay_payments.status_details"></a>
+### `configuration.merchant.capabilities.grabpay_payments.status_details`
+
+The `configuration.merchant.capabilities.grabpay_payments.status_details` attribute is a list. Each element supports:
+
+* `code` - Machine-readable code explaining the reason for the Capability to be in its current status. Possible values: `determining_status`, `rejected_fraud`, `rejected_incomplete_verification`, `rejected_listed`, `rejected_other`, `rejected_platform_fraud`, `rejected_platform_other`, `rejected_platform_terms_of_service`, `rejected_terms_of_service`, `requirements_past_due`, `requirements_pending_verification`, `restricted_other`, `unsupported_business`, `unsupported_country`, `unsupported_entity_type`.
+* `resolution` - Machine-readable code explaining how to make the Capability active. Possible values: `contact_stripe`, `no_resolution`, `provide_info`.
+
 <a id="configuration.merchant.capabilities.ideal_payments"></a>
 ### `configuration.merchant.capabilities.ideal_payments`
 
@@ -458,6 +590,30 @@ The `configuration.merchant.capabilities.ideal_payments` attribute supports:
 ### `configuration.merchant.capabilities.ideal_payments.status_details`
 
 The `configuration.merchant.capabilities.ideal_payments.status_details` attribute is a list. Each element supports:
+
+* `code` - Machine-readable code explaining the reason for the Capability to be in its current status. Possible values: `determining_status`, `rejected_fraud`, `rejected_incomplete_verification`, `rejected_listed`, `rejected_other`, `rejected_platform_fraud`, `rejected_platform_other`, `rejected_platform_terms_of_service`, `rejected_terms_of_service`, `requirements_past_due`, `requirements_pending_verification`, `restricted_other`, `unsupported_business`, `unsupported_country`, `unsupported_entity_type`.
+* `resolution` - Machine-readable code explaining how to make the Capability active. Possible values: `contact_stripe`, `no_resolution`, `provide_info`.
+
+<a id="configuration.merchant.capabilities.jcb_payments"></a>
+### `configuration.merchant.capabilities.jcb_payments`
+
+The `configuration.merchant.capabilities.jcb_payments` attribute supports:
+
+* `requested` - (Required) To request a new Capability for an account, pass true. There can be a delay before the requested Capability becomes active. Stripe refused it on a US account on create and update: "Capability jcb_payments is not available for platforms in country US.". Stripe refused it on create and on update of a JP account, because the platform is in the US; the suite has recorded no platform country where Stripe takes it. Elsewhere Stripe refused it on a US account on create and update: "Capability jcb_payments is not available for platforms in country US.". Where the provider's Stripe account is in `US`, the plan refuses a create that sends `configuration.merchant.capabilities.card_payments.requested = true`, `configuration.merchant.capabilities.jcb_payments.requested = true`, `contact_email` set, `dashboard = "none"`, `defaults.responsibilities.fees_collector = "application"`, `defaults.responsibilities.losses_collector = "application"`, `identity.country = "JP"` and `identity.entity_type = "company"`, which Stripe refused there with "Capability jcb_payments is not available for platforms in country US." (conformance suite probe `isolated/capability_jcb_create`). Where the provider's Stripe account is in `US`, the plan refuses an update that sends `configuration.merchant.capabilities.jcb_payments.requested = true` to a v2 account that holds `configuration.merchant.capabilities.card_payments.requested = true`, `contact_email` set, `dashboard = "none"`, `defaults.responsibilities.fees_collector = "application"`, `defaults.responsibilities.losses_collector = "application"`, `identity.country = "JP"` and `identity.entity_type = "company"`, which Stripe refused there with "Capability jcb_payments is not available for platforms in country US." (conformance suite probe `isolated/capability_jcb_update`). The provider reads the account's country only for a plan that sends such a request, and leaves the request to Stripe where the account is elsewhere or the key cannot read it.
+
+<a id="configuration.merchant.capabilities.jp_bank_transfer_payments"></a>
+### `configuration.merchant.capabilities.jp_bank_transfer_payments`
+
+The `configuration.merchant.capabilities.jp_bank_transfer_payments` attribute supports:
+
+* `requested` - (Required) To request a new Capability for an account, pass true. There can be a delay before the requested Capability becomes active. Stripe does not return this value; the provider keeps it from configuration.
+* `status` - (Read-Only) The status of the Capability. Possible values: `active`, `pending`, `rejected`, `restricted`, `unsupported`.
+* `status_details` - (Read-Only) Additional details about the capability's status. This value is empty when `status` is `active`. See [`configuration.merchant.capabilities.jp_bank_transfer_payments.status_details`](#configuration.merchant.capabilities.jp_bank_transfer_payments.status_details) below.
+
+<a id="configuration.merchant.capabilities.jp_bank_transfer_payments.status_details"></a>
+### `configuration.merchant.capabilities.jp_bank_transfer_payments.status_details`
+
+The `configuration.merchant.capabilities.jp_bank_transfer_payments.status_details` attribute is a list. Each element supports:
 
 * `code` - Machine-readable code explaining the reason for the Capability to be in its current status. Possible values: `determining_status`, `rejected_fraud`, `rejected_incomplete_verification`, `rejected_listed`, `rejected_other`, `rejected_platform_fraud`, `rejected_platform_other`, `rejected_platform_terms_of_service`, `rejected_terms_of_service`, `requirements_past_due`, `requirements_pending_verification`, `restricted_other`, `unsupported_business`, `unsupported_country`, `unsupported_entity_type`.
 * `resolution` - Machine-readable code explaining how to make the Capability active. Possible values: `contact_stripe`, `no_resolution`, `provide_info`.
@@ -530,6 +686,23 @@ The `configuration.merchant.capabilities.link_payments.status_details` attribute
 * `code` - Machine-readable code explaining the reason for the Capability to be in its current status. Possible values: `determining_status`, `rejected_fraud`, `rejected_incomplete_verification`, `rejected_listed`, `rejected_other`, `rejected_platform_fraud`, `rejected_platform_other`, `rejected_platform_terms_of_service`, `rejected_terms_of_service`, `requirements_past_due`, `requirements_pending_verification`, `restricted_other`, `unsupported_business`, `unsupported_country`, `unsupported_entity_type`.
 * `resolution` - Machine-readable code explaining how to make the Capability active. Possible values: `contact_stripe`, `no_resolution`, `provide_info`.
 
+<a id="configuration.merchant.capabilities.mobilepay_payments"></a>
+### `configuration.merchant.capabilities.mobilepay_payments`
+
+The `configuration.merchant.capabilities.mobilepay_payments` attribute supports:
+
+* `requested` - (Required) To request a new Capability for an account, pass true. There can be a delay before the requested Capability becomes active. Stripe does not return this value; the provider keeps it from configuration.
+* `status` - (Read-Only) The status of the Capability. Possible values: `active`, `pending`, `rejected`, `restricted`, `unsupported`.
+* `status_details` - (Read-Only) Additional details about the capability's status. This value is empty when `status` is `active`. See [`configuration.merchant.capabilities.mobilepay_payments.status_details`](#configuration.merchant.capabilities.mobilepay_payments.status_details) below.
+
+<a id="configuration.merchant.capabilities.mobilepay_payments.status_details"></a>
+### `configuration.merchant.capabilities.mobilepay_payments.status_details`
+
+The `configuration.merchant.capabilities.mobilepay_payments.status_details` attribute is a list. Each element supports:
+
+* `code` - Machine-readable code explaining the reason for the Capability to be in its current status. Possible values: `determining_status`, `rejected_fraud`, `rejected_incomplete_verification`, `rejected_listed`, `rejected_other`, `rejected_platform_fraud`, `rejected_platform_other`, `rejected_platform_terms_of_service`, `rejected_terms_of_service`, `requirements_past_due`, `requirements_pending_verification`, `restricted_other`, `unsupported_business`, `unsupported_country`, `unsupported_entity_type`.
+* `resolution` - Machine-readable code explaining how to make the Capability active. Possible values: `contact_stripe`, `no_resolution`, `provide_info`.
+
 <a id="configuration.merchant.capabilities.multibanco_payments"></a>
 ### `configuration.merchant.capabilities.multibanco_payments`
 
@@ -564,6 +737,23 @@ The `configuration.merchant.capabilities.naver_pay_payments.status_details` attr
 * `code` - Machine-readable code explaining the reason for the Capability to be in its current status. Possible values: `determining_status`, `rejected_fraud`, `rejected_incomplete_verification`, `rejected_listed`, `rejected_other`, `rejected_platform_fraud`, `rejected_platform_other`, `rejected_platform_terms_of_service`, `rejected_terms_of_service`, `requirements_past_due`, `requirements_pending_verification`, `restricted_other`, `unsupported_business`, `unsupported_country`, `unsupported_entity_type`.
 * `resolution` - Machine-readable code explaining how to make the Capability active. Possible values: `contact_stripe`, `no_resolution`, `provide_info`.
 
+<a id="configuration.merchant.capabilities.oxxo_payments"></a>
+### `configuration.merchant.capabilities.oxxo_payments`
+
+The `configuration.merchant.capabilities.oxxo_payments` attribute supports:
+
+* `requested` - (Required) To request a new Capability for an account, pass true. There can be a delay before the requested Capability becomes active. Stripe does not return this value; the provider keeps it from configuration.
+* `status` - (Read-Only) The status of the Capability. Possible values: `active`, `pending`, `rejected`, `restricted`, `unsupported`.
+* `status_details` - (Read-Only) Additional details about the capability's status. This value is empty when `status` is `active`. See [`configuration.merchant.capabilities.oxxo_payments.status_details`](#configuration.merchant.capabilities.oxxo_payments.status_details) below.
+
+<a id="configuration.merchant.capabilities.oxxo_payments.status_details"></a>
+### `configuration.merchant.capabilities.oxxo_payments.status_details`
+
+The `configuration.merchant.capabilities.oxxo_payments.status_details` attribute is a list. Each element supports:
+
+* `code` - Machine-readable code explaining the reason for the Capability to be in its current status. Possible values: `determining_status`, `rejected_fraud`, `rejected_incomplete_verification`, `rejected_listed`, `rejected_other`, `rejected_platform_fraud`, `rejected_platform_other`, `rejected_platform_terms_of_service`, `rejected_terms_of_service`, `requirements_past_due`, `requirements_pending_verification`, `restricted_other`, `unsupported_business`, `unsupported_country`, `unsupported_entity_type`.
+* `resolution` - Machine-readable code explaining how to make the Capability active. Possible values: `contact_stripe`, `no_resolution`, `provide_info`.
+
 <a id="configuration.merchant.capabilities.p24_payments"></a>
 ### `configuration.merchant.capabilities.p24_payments`
 
@@ -581,6 +771,23 @@ The `configuration.merchant.capabilities.p24_payments.status_details` attribute 
 * `code` - Machine-readable code explaining the reason for the Capability to be in its current status. Possible values: `determining_status`, `rejected_fraud`, `rejected_incomplete_verification`, `rejected_listed`, `rejected_other`, `rejected_platform_fraud`, `rejected_platform_other`, `rejected_platform_terms_of_service`, `rejected_terms_of_service`, `requirements_past_due`, `requirements_pending_verification`, `restricted_other`, `unsupported_business`, `unsupported_country`, `unsupported_entity_type`.
 * `resolution` - Machine-readable code explaining how to make the Capability active. Possible values: `contact_stripe`, `no_resolution`, `provide_info`.
 
+<a id="configuration.merchant.capabilities.pay_by_bank_payments"></a>
+### `configuration.merchant.capabilities.pay_by_bank_payments`
+
+The `configuration.merchant.capabilities.pay_by_bank_payments` attribute supports:
+
+* `requested` - (Required) To request a new Capability for an account, pass true. There can be a delay before the requested Capability becomes active. Stripe does not return this value; the provider keeps it from configuration.
+* `status` - (Read-Only) The status of the Capability. Possible values: `active`, `pending`, `rejected`, `restricted`, `unsupported`.
+* `status_details` - (Read-Only) Additional details about the capability's status. This value is empty when `status` is `active`. See [`configuration.merchant.capabilities.pay_by_bank_payments.status_details`](#configuration.merchant.capabilities.pay_by_bank_payments.status_details) below.
+
+<a id="configuration.merchant.capabilities.pay_by_bank_payments.status_details"></a>
+### `configuration.merchant.capabilities.pay_by_bank_payments.status_details`
+
+The `configuration.merchant.capabilities.pay_by_bank_payments.status_details` attribute is a list. Each element supports:
+
+* `code` - Machine-readable code explaining the reason for the Capability to be in its current status. Possible values: `determining_status`, `rejected_fraud`, `rejected_incomplete_verification`, `rejected_listed`, `rejected_other`, `rejected_platform_fraud`, `rejected_platform_other`, `rejected_platform_terms_of_service`, `rejected_terms_of_service`, `requirements_past_due`, `requirements_pending_verification`, `restricted_other`, `unsupported_business`, `unsupported_country`, `unsupported_entity_type`.
+* `resolution` - Machine-readable code explaining how to make the Capability active. Possible values: `contact_stripe`, `no_resolution`, `provide_info`.
+
 <a id="configuration.merchant.capabilities.payco_payments"></a>
 ### `configuration.merchant.capabilities.payco_payments`
 
@@ -594,6 +801,57 @@ The `configuration.merchant.capabilities.payco_payments` attribute supports:
 ### `configuration.merchant.capabilities.payco_payments.status_details`
 
 The `configuration.merchant.capabilities.payco_payments.status_details` attribute is a list. Each element supports:
+
+* `code` - Machine-readable code explaining the reason for the Capability to be in its current status. Possible values: `determining_status`, `rejected_fraud`, `rejected_incomplete_verification`, `rejected_listed`, `rejected_other`, `rejected_platform_fraud`, `rejected_platform_other`, `rejected_platform_terms_of_service`, `rejected_terms_of_service`, `requirements_past_due`, `requirements_pending_verification`, `restricted_other`, `unsupported_business`, `unsupported_country`, `unsupported_entity_type`.
+* `resolution` - Machine-readable code explaining how to make the Capability active. Possible values: `contact_stripe`, `no_resolution`, `provide_info`.
+
+<a id="configuration.merchant.capabilities.paynow_payments"></a>
+### `configuration.merchant.capabilities.paynow_payments`
+
+The `configuration.merchant.capabilities.paynow_payments` attribute supports:
+
+* `requested` - (Required) To request a new Capability for an account, pass true. There can be a delay before the requested Capability becomes active. Stripe does not return this value; the provider keeps it from configuration.
+* `status` - (Read-Only) The status of the Capability. Possible values: `active`, `pending`, `rejected`, `restricted`, `unsupported`.
+* `status_details` - (Read-Only) Additional details about the capability's status. This value is empty when `status` is `active`. See [`configuration.merchant.capabilities.paynow_payments.status_details`](#configuration.merchant.capabilities.paynow_payments.status_details) below.
+
+<a id="configuration.merchant.capabilities.paynow_payments.status_details"></a>
+### `configuration.merchant.capabilities.paynow_payments.status_details`
+
+The `configuration.merchant.capabilities.paynow_payments.status_details` attribute is a list. Each element supports:
+
+* `code` - Machine-readable code explaining the reason for the Capability to be in its current status. Possible values: `determining_status`, `rejected_fraud`, `rejected_incomplete_verification`, `rejected_listed`, `rejected_other`, `rejected_platform_fraud`, `rejected_platform_other`, `rejected_platform_terms_of_service`, `rejected_terms_of_service`, `requirements_past_due`, `requirements_pending_verification`, `restricted_other`, `unsupported_business`, `unsupported_country`, `unsupported_entity_type`.
+* `resolution` - Machine-readable code explaining how to make the Capability active. Possible values: `contact_stripe`, `no_resolution`, `provide_info`.
+
+<a id="configuration.merchant.capabilities.promptpay_payments"></a>
+### `configuration.merchant.capabilities.promptpay_payments`
+
+The `configuration.merchant.capabilities.promptpay_payments` attribute supports:
+
+* `requested` - (Required) To request a new Capability for an account, pass true. There can be a delay before the requested Capability becomes active. Stripe does not return this value; the provider keeps it from configuration.
+* `status` - (Read-Only) The status of the Capability. Possible values: `active`, `pending`, `rejected`, `restricted`, `unsupported`.
+* `status_details` - (Read-Only) Additional details about the capability's status. This value is empty when `status` is `active`. See [`configuration.merchant.capabilities.promptpay_payments.status_details`](#configuration.merchant.capabilities.promptpay_payments.status_details) below.
+
+<a id="configuration.merchant.capabilities.promptpay_payments.status_details"></a>
+### `configuration.merchant.capabilities.promptpay_payments.status_details`
+
+The `configuration.merchant.capabilities.promptpay_payments.status_details` attribute is a list. Each element supports:
+
+* `code` - Machine-readable code explaining the reason for the Capability to be in its current status. Possible values: `determining_status`, `rejected_fraud`, `rejected_incomplete_verification`, `rejected_listed`, `rejected_other`, `rejected_platform_fraud`, `rejected_platform_other`, `rejected_platform_terms_of_service`, `rejected_terms_of_service`, `requirements_past_due`, `requirements_pending_verification`, `restricted_other`, `unsupported_business`, `unsupported_country`, `unsupported_entity_type`.
+* `resolution` - Machine-readable code explaining how to make the Capability active. Possible values: `contact_stripe`, `no_resolution`, `provide_info`.
+
+<a id="configuration.merchant.capabilities.revolut_pay_payments"></a>
+### `configuration.merchant.capabilities.revolut_pay_payments`
+
+The `configuration.merchant.capabilities.revolut_pay_payments` attribute supports:
+
+* `requested` - (Required) To request a new Capability for an account, pass true. There can be a delay before the requested Capability becomes active. Stripe does not return this value; the provider keeps it from configuration.
+* `status` - (Read-Only) The status of the Capability. Possible values: `active`, `pending`, `rejected`, `restricted`, `unsupported`.
+* `status_details` - (Read-Only) Additional details about the capability's status. This value is empty when `status` is `active`. See [`configuration.merchant.capabilities.revolut_pay_payments.status_details`](#configuration.merchant.capabilities.revolut_pay_payments.status_details) below.
+
+<a id="configuration.merchant.capabilities.revolut_pay_payments.status_details"></a>
+### `configuration.merchant.capabilities.revolut_pay_payments.status_details`
+
+The `configuration.merchant.capabilities.revolut_pay_payments.status_details` attribute is a list. Each element supports:
 
 * `code` - Machine-readable code explaining the reason for the Capability to be in its current status. Possible values: `determining_status`, `rejected_fraud`, `rejected_incomplete_verification`, `rejected_listed`, `rejected_other`, `rejected_platform_fraud`, `rejected_platform_other`, `rejected_platform_terms_of_service`, `rejected_terms_of_service`, `requirements_past_due`, `requirements_pending_verification`, `restricted_other`, `unsupported_business`, `unsupported_country`, `unsupported_entity_type`.
 * `resolution` - Machine-readable code explaining how to make the Capability active. Possible values: `contact_stripe`, `no_resolution`, `provide_info`.
@@ -628,6 +886,57 @@ The `configuration.merchant.capabilities.satispay_payments` attribute supports:
 ### `configuration.merchant.capabilities.satispay_payments.status_details`
 
 The `configuration.merchant.capabilities.satispay_payments.status_details` attribute is a list. Each element supports:
+
+* `code` - Machine-readable code explaining the reason for the Capability to be in its current status. Possible values: `determining_status`, `rejected_fraud`, `rejected_incomplete_verification`, `rejected_listed`, `rejected_other`, `rejected_platform_fraud`, `rejected_platform_other`, `rejected_platform_terms_of_service`, `rejected_terms_of_service`, `requirements_past_due`, `requirements_pending_verification`, `restricted_other`, `unsupported_business`, `unsupported_country`, `unsupported_entity_type`.
+* `resolution` - Machine-readable code explaining how to make the Capability active. Possible values: `contact_stripe`, `no_resolution`, `provide_info`.
+
+<a id="configuration.merchant.capabilities.sepa_bank_transfer_payments"></a>
+### `configuration.merchant.capabilities.sepa_bank_transfer_payments`
+
+The `configuration.merchant.capabilities.sepa_bank_transfer_payments` attribute supports:
+
+* `requested` - (Required) To request a new Capability for an account, pass true. There can be a delay before the requested Capability becomes active. Stripe does not return this value; the provider keeps it from configuration.
+* `status` - (Read-Only) The status of the Capability. Possible values: `active`, `pending`, `rejected`, `restricted`, `unsupported`.
+* `status_details` - (Read-Only) Additional details about the capability's status. This value is empty when `status` is `active`. See [`configuration.merchant.capabilities.sepa_bank_transfer_payments.status_details`](#configuration.merchant.capabilities.sepa_bank_transfer_payments.status_details) below.
+
+<a id="configuration.merchant.capabilities.sepa_bank_transfer_payments.status_details"></a>
+### `configuration.merchant.capabilities.sepa_bank_transfer_payments.status_details`
+
+The `configuration.merchant.capabilities.sepa_bank_transfer_payments.status_details` attribute is a list. Each element supports:
+
+* `code` - Machine-readable code explaining the reason for the Capability to be in its current status. Possible values: `determining_status`, `rejected_fraud`, `rejected_incomplete_verification`, `rejected_listed`, `rejected_other`, `rejected_platform_fraud`, `rejected_platform_other`, `rejected_platform_terms_of_service`, `rejected_terms_of_service`, `requirements_past_due`, `requirements_pending_verification`, `restricted_other`, `unsupported_business`, `unsupported_country`, `unsupported_entity_type`.
+* `resolution` - Machine-readable code explaining how to make the Capability active. Possible values: `contact_stripe`, `no_resolution`, `provide_info`.
+
+<a id="configuration.merchant.capabilities.sepa_debit_payments"></a>
+### `configuration.merchant.capabilities.sepa_debit_payments`
+
+The `configuration.merchant.capabilities.sepa_debit_payments` attribute supports:
+
+* `requested` - (Required) To request a new Capability for an account, pass true. There can be a delay before the requested Capability becomes active. Stripe does not return this value; the provider keeps it from configuration.
+* `status` - (Read-Only) The status of the Capability. Possible values: `active`, `pending`, `rejected`, `restricted`, `unsupported`.
+* `status_details` - (Read-Only) Additional details about the capability's status. This value is empty when `status` is `active`. See [`configuration.merchant.capabilities.sepa_debit_payments.status_details`](#configuration.merchant.capabilities.sepa_debit_payments.status_details) below.
+
+<a id="configuration.merchant.capabilities.sepa_debit_payments.status_details"></a>
+### `configuration.merchant.capabilities.sepa_debit_payments.status_details`
+
+The `configuration.merchant.capabilities.sepa_debit_payments.status_details` attribute is a list. Each element supports:
+
+* `code` - Machine-readable code explaining the reason for the Capability to be in its current status. Possible values: `determining_status`, `rejected_fraud`, `rejected_incomplete_verification`, `rejected_listed`, `rejected_other`, `rejected_platform_fraud`, `rejected_platform_other`, `rejected_platform_terms_of_service`, `rejected_terms_of_service`, `requirements_past_due`, `requirements_pending_verification`, `restricted_other`, `unsupported_business`, `unsupported_country`, `unsupported_entity_type`.
+* `resolution` - Machine-readable code explaining how to make the Capability active. Possible values: `contact_stripe`, `no_resolution`, `provide_info`.
+
+<a id="configuration.merchant.capabilities.sequra_payments"></a>
+### `configuration.merchant.capabilities.sequra_payments`
+
+The `configuration.merchant.capabilities.sequra_payments` attribute supports:
+
+* `requested` - (Required) To request a new Capability for an account, pass true. There can be a delay before the requested Capability becomes active. Stripe does not return this value; the provider keeps it from configuration.
+* `status` - (Read-Only) The status of the Capability. Possible values: `active`, `pending`, `rejected`, `restricted`, `unsupported`.
+* `status_details` - (Read-Only) Additional details about the capability's status. This value is empty when `status` is `active`. See [`configuration.merchant.capabilities.sequra_payments.status_details`](#configuration.merchant.capabilities.sequra_payments.status_details) below.
+
+<a id="configuration.merchant.capabilities.sequra_payments.status_details"></a>
+### `configuration.merchant.capabilities.sequra_payments.status_details`
+
+The `configuration.merchant.capabilities.sequra_payments.status_details` attribute is a list. Each element supports:
 
 * `code` - Machine-readable code explaining the reason for the Capability to be in its current status. Possible values: `determining_status`, `rejected_fraud`, `rejected_incomplete_verification`, `rejected_listed`, `rejected_other`, `rejected_platform_fraud`, `rejected_platform_other`, `rejected_platform_terms_of_service`, `rejected_terms_of_service`, `requirements_past_due`, `requirements_pending_verification`, `restricted_other`, `unsupported_business`, `unsupported_country`, `unsupported_entity_type`.
 * `resolution` - Machine-readable code explaining how to make the Capability active. Possible values: `contact_stripe`, `no_resolution`, `provide_info`.
@@ -672,6 +981,23 @@ The `configuration.merchant.capabilities.sunbit_payments.status_details` attribu
 * `code` - Machine-readable code explaining the reason for the Capability to be in its current status. Possible values: `determining_status`, `rejected_fraud`, `rejected_incomplete_verification`, `rejected_listed`, `rejected_other`, `rejected_platform_fraud`, `rejected_platform_other`, `rejected_platform_terms_of_service`, `rejected_terms_of_service`, `requirements_past_due`, `requirements_pending_verification`, `restricted_other`, `unsupported_business`, `unsupported_country`, `unsupported_entity_type`.
 * `resolution` - Machine-readable code explaining how to make the Capability active. Possible values: `contact_stripe`, `no_resolution`, `provide_info`.
 
+<a id="configuration.merchant.capabilities.twint_payments"></a>
+### `configuration.merchant.capabilities.twint_payments`
+
+The `configuration.merchant.capabilities.twint_payments` attribute supports:
+
+* `requested` - (Required) To request a new Capability for an account, pass true. There can be a delay before the requested Capability becomes active. Stripe does not return this value; the provider keeps it from configuration.
+* `status` - (Read-Only) The status of the Capability. Possible values: `active`, `pending`, `rejected`, `restricted`, `unsupported`.
+* `status_details` - (Read-Only) Additional details about the capability's status. This value is empty when `status` is `active`. See [`configuration.merchant.capabilities.twint_payments.status_details`](#configuration.merchant.capabilities.twint_payments.status_details) below.
+
+<a id="configuration.merchant.capabilities.twint_payments.status_details"></a>
+### `configuration.merchant.capabilities.twint_payments.status_details`
+
+The `configuration.merchant.capabilities.twint_payments.status_details` attribute is a list. Each element supports:
+
+* `code` - Machine-readable code explaining the reason for the Capability to be in its current status. Possible values: `determining_status`, `rejected_fraud`, `rejected_incomplete_verification`, `rejected_listed`, `rejected_other`, `rejected_platform_fraud`, `rejected_platform_other`, `rejected_platform_terms_of_service`, `rejected_terms_of_service`, `requirements_past_due`, `requirements_pending_verification`, `restricted_other`, `unsupported_business`, `unsupported_country`, `unsupported_entity_type`.
+* `resolution` - Machine-readable code explaining how to make the Capability active. Possible values: `contact_stripe`, `no_resolution`, `provide_info`.
+
 <a id="configuration.merchant.capabilities.us_bank_transfer_payments"></a>
 ### `configuration.merchant.capabilities.us_bank_transfer_payments`
 
@@ -685,6 +1011,23 @@ The `configuration.merchant.capabilities.us_bank_transfer_payments` attribute su
 ### `configuration.merchant.capabilities.us_bank_transfer_payments.status_details`
 
 The `configuration.merchant.capabilities.us_bank_transfer_payments.status_details` attribute is a list. Each element supports:
+
+* `code` - Machine-readable code explaining the reason for the Capability to be in its current status. Possible values: `determining_status`, `rejected_fraud`, `rejected_incomplete_verification`, `rejected_listed`, `rejected_other`, `rejected_platform_fraud`, `rejected_platform_other`, `rejected_platform_terms_of_service`, `rejected_terms_of_service`, `requirements_past_due`, `requirements_pending_verification`, `restricted_other`, `unsupported_business`, `unsupported_country`, `unsupported_entity_type`.
+* `resolution` - Machine-readable code explaining how to make the Capability active. Possible values: `contact_stripe`, `no_resolution`, `provide_info`.
+
+<a id="configuration.merchant.capabilities.zip_payments"></a>
+### `configuration.merchant.capabilities.zip_payments`
+
+The `configuration.merchant.capabilities.zip_payments` attribute supports:
+
+* `requested` - (Required) To request a new Capability for an account, pass true. There can be a delay before the requested Capability becomes active. Stripe does not return this value; the provider keeps it from configuration.
+* `status` - (Read-Only) The status of the Capability. Possible values: `active`, `pending`, `rejected`, `restricted`, `unsupported`.
+* `status_details` - (Read-Only) Additional details about the capability's status. This value is empty when `status` is `active`. See [`configuration.merchant.capabilities.zip_payments.status_details`](#configuration.merchant.capabilities.zip_payments.status_details) below.
+
+<a id="configuration.merchant.capabilities.zip_payments.status_details"></a>
+### `configuration.merchant.capabilities.zip_payments.status_details`
+
+The `configuration.merchant.capabilities.zip_payments.status_details` attribute is a list. Each element supports:
 
 * `code` - Machine-readable code explaining the reason for the Capability to be in its current status. Possible values: `determining_status`, `rejected_fraud`, `rejected_incomplete_verification`, `rejected_listed`, `rejected_other`, `rejected_platform_fraud`, `rejected_platform_other`, `rejected_platform_terms_of_service`, `rejected_terms_of_service`, `requirements_past_due`, `requirements_pending_verification`, `restricted_other`, `unsupported_business`, `unsupported_country`, `unsupported_entity_type`.
 * `resolution` - Machine-readable code explaining how to make the Capability active. Possible values: `contact_stripe`, `no_resolution`, `provide_info`.
@@ -703,6 +1046,61 @@ The `configuration.merchant.card_payments.decline_on` attribute supports:
 
 * `avs_failure` - (Optional) Whether Stripe automatically declines charges with an incorrect ZIP or postal code. This setting only applies when a ZIP or postal code is provided and they fail bank verification. Removing it from the configuration leaves the current value.
 * `cvc_failure` - (Optional) Whether Stripe automatically declines charges with an incorrect CVC. This setting only applies when a CVC is provided and it fails bank verification. Removing it from the configuration leaves the current value.
+
+<a id="configuration.merchant.konbini_payments"></a>
+### `configuration.merchant.konbini_payments`
+
+The `configuration.merchant.konbini_payments` attribute supports:
+
+* `support` - (Optional) Support for Konbini payments. Removing it from the configuration leaves the current value. See [`configuration.merchant.konbini_payments.support`](#configuration.merchant.konbini_payments.support) below.
+
+<a id="configuration.merchant.konbini_payments.support"></a>
+### `configuration.merchant.konbini_payments.support`
+
+The `configuration.merchant.konbini_payments.support` attribute supports:
+
+* `email` - (Optional) Support email address for Konbini payments. Default: none. Removing it from the configuration leaves the current value.
+* `hours` - (Optional) Support hours for Konbini payments. Removing it from the configuration leaves the current value. See [`configuration.merchant.konbini_payments.support.hours`](#configuration.merchant.konbini_payments.support.hours) below.
+* `phone` - (Optional) Support phone number for Konbini payments. Default: none. Removing it from the configuration leaves the current value.
+
+<a id="configuration.merchant.konbini_payments.support.hours"></a>
+### `configuration.merchant.konbini_payments.support.hours`
+
+The `configuration.merchant.konbini_payments.support.hours` attribute supports:
+
+* `end_time` - (Optional) Support hours end time (JST time of day) for in `HH:MM` format. Default: none. Removing it from the configuration leaves the current value.
+* `start_time` - (Optional) Support hours start time (JST time of day) for in `HH:MM` format. Default: none. Removing it from the configuration leaves the current value.
+
+<a id="configuration.merchant.script_statement_descriptor"></a>
+### `configuration.merchant.script_statement_descriptor`
+
+The `configuration.merchant.script_statement_descriptor` attribute supports:
+
+* `kana` - (Optional) The Kana variation of statement_descriptor used for charges in Japan. Japanese statement descriptors have [special requirements](https://docs.stripe.com/get-started/account/statement-descriptors#set-japanese-statement-descriptors). Removing it from the configuration leaves the current value. See [`configuration.merchant.script_statement_descriptor.kana`](#configuration.merchant.script_statement_descriptor.kana) below.
+* `kanji` - (Optional) The Kanji variation of statement_descriptor used for charges in Japan. Japanese statement descriptors have [special requirements](https://docs.stripe.com/get-started/account/statement-descriptors#set-japanese-statement-descriptors). Removing it from the configuration leaves the current value. See [`configuration.merchant.script_statement_descriptor.kanji`](#configuration.merchant.script_statement_descriptor.kanji) below.
+
+<a id="configuration.merchant.script_statement_descriptor.kana"></a>
+### `configuration.merchant.script_statement_descriptor.kana`
+
+The `configuration.merchant.script_statement_descriptor.kana` attribute supports:
+
+* `descriptor` - (Optional) The default text that appears on statements for non-card charges outside of Japan. For card charges, if you don’t set a statement_descriptor_prefix, this text is also used as the statement descriptor prefix. In that case, if concatenating the statement descriptor suffix causes the combined statement descriptor to exceed 22 characters, we truncate the statement_descriptor text to limit the full descriptor to 22 characters. For more information about statement descriptors and their requirements, see the Merchant Configuration settings documentation. Default: not sent. Removing it from the configuration leaves the current value.
+* `prefix` - (Optional) Default text that appears on statements for card charges outside of Japan, prefixing any dynamic statement_descriptor_suffix specified on the charge. To maximize space for the dynamic part of the descriptor, keep this text short. If you don’t specify this value, statement_descriptor is used as the prefix. For more information about statement descriptors and their requirements, see the Merchant Configuration settings documentation. Default: not sent. Removing it from the configuration leaves the current value.
+
+<a id="configuration.merchant.script_statement_descriptor.kanji"></a>
+### `configuration.merchant.script_statement_descriptor.kanji`
+
+The `configuration.merchant.script_statement_descriptor.kanji` attribute supports:
+
+* `descriptor` - (Optional) The default text that appears on statements for non-card charges outside of Japan. For card charges, if you don’t set a statement_descriptor_prefix, this text is also used as the statement descriptor prefix. In that case, if concatenating the statement descriptor suffix causes the combined statement descriptor to exceed 22 characters, we truncate the statement_descriptor text to limit the full descriptor to 22 characters. For more information about statement descriptors and their requirements, see the Merchant Configuration settings documentation. Default: not sent. Removing it from the configuration leaves the current value.
+* `prefix` - (Optional) Default text that appears on statements for card charges outside of Japan, prefixing any dynamic statement_descriptor_suffix specified on the charge. To maximize space for the dynamic part of the descriptor, keep this text short. If you don’t specify this value, statement_descriptor is used as the prefix. For more information about statement descriptors and their requirements, see the Merchant Configuration settings documentation. Default: not sent. Removing it from the configuration leaves the current value.
+
+<a id="configuration.merchant.sepa_debit_payments"></a>
+### `configuration.merchant.sepa_debit_payments`
+
+The `configuration.merchant.sepa_debit_payments` attribute supports:
+
+* `creditor_id` - (Optional) Creditor ID for SEPA Direct Debit payments. Stripe refused it on a US account on create and update: "Some fields in the request were invalid: 'configuration.merchant.sepa_debit_payments.creditor_id: You cannot configure a custom SEPA Creditor Identifier for a sandbox Account.'". Stripe refused a custom creditor ID on create and on update of an account in a sandbox; the suite has recorded none it takes. Elsewhere Stripe refused it on a US account on create and update: "Some fields in the request were invalid: 'configuration.merchant.sepa_debit_payments.creditor_id: You cannot configure a custom SEPA Creditor Identifier for a sandbox Account.'". Where the provider's Stripe account is in `US`, the plan refuses a create that sends `configuration.merchant.capabilities.card_payments.requested = true`, `configuration.merchant.sepa_debit_payments.creditor_id = "DE98ZZZ09999999999"`, `contact_email` set, `dashboard = "none"`, `defaults.responsibilities.fees_collector = "application"`, `defaults.responsibilities.losses_collector = "application"` and `identity.country = "DE"`, which Stripe refused there with "Some fields in the request were invalid: 'configuration.merchant.sepa_debit_payments.creditor_id: You cannot configure a custom SEPA Creditor Identifier for a sandbox Account.'" (conformance suite probe `isolated/sepa_creditor_create`). Where the provider's Stripe account is in `US`, the plan refuses an update that sends `configuration.merchant.sepa_debit_payments.creditor_id = "DE79ZZZ01234567890"` to a v2 account that holds `configuration.merchant.capabilities.card_payments.requested = true`, `contact_email` set, `dashboard = "none"`, `defaults.responsibilities.fees_collector = "application"`, `defaults.responsibilities.losses_collector = "application"` and `identity.country = "DE"`, which Stripe refused there with "Some fields in the request were invalid: 'configuration.merchant.sepa_debit_payments.creditor_id: You cannot configure a custom SEPA Creditor Identifier for a sandbox Account.'" (conformance suite probe `isolated/sepa_creditor_update`). The provider reads the account's country only for a plan that sends such a request, and leaves the request to Stripe where the account is elsewhere or the key cannot read it. Removing it from the configuration leaves the current value.
 
 <a id="configuration.merchant.statement_descriptor"></a>
 ### `configuration.merchant.statement_descriptor`
@@ -929,6 +1327,8 @@ The `identity.business_details` attribute supports:
 * `phone` - (Optional) The phone number of the Business Entity. Default: none. Removing it from the configuration leaves the current value.
 * `registered_name` - (Optional) The business legal name. Default: none. Removing it from the configuration leaves the current value.
 * `registration_date` - (Optional) When the business was incorporated or registered. Removing it from the configuration leaves the current value. See [`identity.business_details.registration_date`](#identity.business_details.registration_date) below.
+* `script_addresses` - (Optional) The business registration address of the business entity in non latin script. Removing it from the configuration leaves the current value. See [`identity.business_details.script_addresses`](#identity.business_details.script_addresses) below.
+* `script_names` - (Optional) The business legal name in non latin script. Removing it from the configuration leaves the current value. See [`identity.business_details.script_names`](#identity.business_details.script_names) below.
 * `structure` - (Optional) The category identifying the legal structure of the business. Possible values: `cooperative`, `free_zone_establishment`, `free_zone_llc`, `governmental_unit`, `government_instrumentality`, `incorporated_association`, `incorporated_non_profit`, `incorporated_partnership`, `limited_liability_partnership`, `llc`, `multi_member_llc`, `private_company`, `private_corporation`, `private_partnership`, `public_company`, `public_corporation`, `public_listed_corporation`, `public_partnership`, `registered_charity`, `single_member_llc`, `sole_establishment`, `sole_proprietorship`, `tax_exempt_government_instrumentality`, `trust`, `unincorporated_association`, `unincorporated_non_profit`, `unincorporated_partnership`. Default: none.
 
 <a id="identity.business_details.additional_addresses"></a>
@@ -954,7 +1354,7 @@ The `identity.business_details.address` attribute supports:
 * `country` - (Required) Two-letter country code ([ISO 3166-1 alpha-2](https://en.wikipedia.org/wiki/ISO_3166-1_alpha-2)).
 * `line1` - (Optional) Address line 1 (e.g., street, PO Box, or company name). Default: none.
 * `line2` - (Optional) Address line 2 (e.g., apartment, suite, unit, or building). Default: none.
-* `postal_code` - (Optional) ZIP or postal code. Default: none.
+* `postal_code` - (Optional) ZIP or postal code. Default (Stripe): none, or the postal code the create sends in `identity.business_details.script_addresses` where it sends none here (`1500001` for a kana `1500001` and a kanji `１５００００１`). Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
 * `state` - (Optional) State, county, province, or region. Default: none.
 * `town` - (Optional) Town or district. Default: none.
 
@@ -1127,6 +1527,62 @@ The `identity.business_details.registration_date` attribute supports:
 * `month` - (Required) The month of registration, between 1 and 12.
 * `year` - (Required) The four-digit year of registration.
 
+<a id="identity.business_details.script_addresses"></a>
+### `identity.business_details.script_addresses`
+
+The `identity.business_details.script_addresses` attribute supports:
+
+* `kana` - (Optional) Kana Address. Removing it from the configuration leaves the current value. See [`identity.business_details.script_addresses.kana`](#identity.business_details.script_addresses.kana) below.
+* `kanji` - (Optional) Kanji Address. Removing it from the configuration leaves the current value. See [`identity.business_details.script_addresses.kanji`](#identity.business_details.script_addresses.kanji) below.
+
+<a id="identity.business_details.script_addresses.kana"></a>
+### `identity.business_details.script_addresses.kana`
+
+The `identity.business_details.script_addresses.kana` attribute supports:
+
+* `city` - (Optional) City, district, suburb, town, or village. Default: none. Removing it from the configuration leaves the current value.
+* `country` - (Required) Two-letter country code ([ISO 3166-1 alpha-2](https://en.wikipedia.org/wiki/ISO_3166-1_alpha-2)).
+* `line1` - (Optional) Address line 1 (e.g., street, PO Box, or company name). Default: none.
+* `line2` - (Optional) Address line 2 (e.g., apartment, suite, unit, or building). Default: none.
+* `postal_code` - (Optional) ZIP or postal code. Default: none. Removing it from the configuration leaves the current value.
+* `state` - (Optional) State, county, province, or region. Default: none. Removing it from the configuration leaves the current value.
+* `town` - (Optional) Town or district. Default: none.
+
+<a id="identity.business_details.script_addresses.kanji"></a>
+### `identity.business_details.script_addresses.kanji`
+
+The `identity.business_details.script_addresses.kanji` attribute supports:
+
+* `city` - (Optional) City, district, suburb, town, or village. Default: none. Removing it from the configuration leaves the current value.
+* `country` - (Required) Two-letter country code ([ISO 3166-1 alpha-2](https://en.wikipedia.org/wiki/ISO_3166-1_alpha-2)).
+* `line1` - (Optional) Address line 1 (e.g., street, PO Box, or company name). Default: none.
+* `line2` - (Optional) Address line 2 (e.g., apartment, suite, unit, or building). Default: none.
+* `postal_code` - (Optional) ZIP or postal code. Default: none. Removing it from the configuration leaves the current value.
+* `state` - (Optional) State, county, province, or region. Default: none. Removing it from the configuration leaves the current value.
+* `town` - (Optional) Town or district. Default: none.
+
+<a id="identity.business_details.script_names"></a>
+### `identity.business_details.script_names`
+
+The `identity.business_details.script_names` attribute supports:
+
+* `kana` - (Optional) Kana name. Removing it from the configuration leaves the current value. See [`identity.business_details.script_names.kana`](#identity.business_details.script_names.kana) below.
+* `kanji` - (Optional) Kanji name. Removing it from the configuration leaves the current value. See [`identity.business_details.script_names.kanji`](#identity.business_details.script_names.kanji) below.
+
+<a id="identity.business_details.script_names.kana"></a>
+### `identity.business_details.script_names.kana`
+
+The `identity.business_details.script_names.kana` attribute supports:
+
+* `registered_name` - (Optional) Registered name of the business. Default: none.
+
+<a id="identity.business_details.script_names.kanji"></a>
+### `identity.business_details.script_names.kanji`
+
+The `identity.business_details.script_names.kanji` attribute supports:
+
+* `registered_name` - (Optional) Registered name of the business. Default: none.
+
 <a id="identity.individual"></a>
 ### `identity.individual`
 
@@ -1149,6 +1605,8 @@ The `identity.individual` attribute supports:
 * `phone` - (Optional) The individual's phone number. Default: none. Removing it from the configuration leaves the current value.
 * `political_exposure` - (Optional) The individual's political exposure. Possible values: `existing`, `none`. Default: none. Removing it from the configuration leaves the current value.
 * `relationship` - (Optional) The relationship that this individual has with the account's identity. Removing it from the configuration leaves the current value. See [`identity.individual.relationship`](#identity.individual.relationship) below.
+* `script_addresses` - (Optional) The script addresses (e.g., non-Latin characters) associated with the individual. Removing it from the configuration leaves the current value. See [`identity.individual.script_addresses`](#identity.individual.script_addresses) below.
+* `script_names` - (Optional) The individuals primary name in non latin script. Removing it from the configuration leaves the current value. See [`identity.individual.script_names`](#identity.individual.script_names) below.
 * `surname` - (Optional) The individual's last name. Default: none.
 * `updated` - (Read-Only) Time at which the object was last updated.
 
@@ -1185,7 +1643,7 @@ The `identity.individual.address` attribute supports:
 * `country` - (Required) Two-letter country code ([ISO 3166-1 alpha-2](https://en.wikipedia.org/wiki/ISO_3166-1_alpha-2)).
 * `line1` - (Optional) Address line 1 (e.g., street, PO Box, or company name). Default: none.
 * `line2` - (Optional) Address line 2 (e.g., apartment, suite, unit, or building). Default: none.
-* `postal_code` - (Optional) ZIP or postal code. Default: none.
+* `postal_code` - (Optional) ZIP or postal code. Default (Stripe): none, or the postal code the create sends in `identity.individual.script_addresses` where it sends none here (`1500001` for a kana `1500001` and a kanji `１５００００１`). Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
 * `state` - (Optional) State, county, province, or region. Default: none.
 * `town` - (Optional) Town or district. Default: none.
 
@@ -1275,6 +1733,64 @@ The `identity.individual.relationship` attribute supports:
 * `owner` - (Optional) Whether the person is an owner of the account's identity. Default: none.
 * `percent_ownership` - (Optional) The percent owned by the person of the account's legal entity. Default: none.
 * `title` - (Optional) The person's title (e.g., CEO, Support Engineer). Default: none.
+
+<a id="identity.individual.script_addresses"></a>
+### `identity.individual.script_addresses`
+
+The `identity.individual.script_addresses` attribute supports:
+
+* `kana` - (Optional) Kana Address. Removing it from the configuration leaves the current value. See [`identity.individual.script_addresses.kana`](#identity.individual.script_addresses.kana) below.
+* `kanji` - (Optional) Kanji Address. Removing it from the configuration leaves the current value. See [`identity.individual.script_addresses.kanji`](#identity.individual.script_addresses.kanji) below.
+
+<a id="identity.individual.script_addresses.kana"></a>
+### `identity.individual.script_addresses.kana`
+
+The `identity.individual.script_addresses.kana` attribute supports:
+
+* `city` - (Optional) City, district, suburb, town, or village. Default: none. Removing it from the configuration leaves the current value.
+* `country` - (Required) Two-letter country code ([ISO 3166-1 alpha-2](https://en.wikipedia.org/wiki/ISO_3166-1_alpha-2)).
+* `line1` - (Optional) Address line 1 (e.g., street, PO Box, or company name). Default: none.
+* `line2` - (Optional) Address line 2 (e.g., apartment, suite, unit, or building). Default: none.
+* `postal_code` - (Optional) ZIP or postal code. Default: none. Removing it from the configuration leaves the current value.
+* `state` - (Optional) State, county, province, or region. Default: none. Removing it from the configuration leaves the current value.
+* `town` - (Optional) Town or district. Default: none.
+
+<a id="identity.individual.script_addresses.kanji"></a>
+### `identity.individual.script_addresses.kanji`
+
+The `identity.individual.script_addresses.kanji` attribute supports:
+
+* `city` - (Optional) City, district, suburb, town, or village. Default: none. Removing it from the configuration leaves the current value.
+* `country` - (Required) Two-letter country code ([ISO 3166-1 alpha-2](https://en.wikipedia.org/wiki/ISO_3166-1_alpha-2)).
+* `line1` - (Optional) Address line 1 (e.g., street, PO Box, or company name). Default: none.
+* `line2` - (Optional) Address line 2 (e.g., apartment, suite, unit, or building). Default: none.
+* `postal_code` - (Optional) ZIP or postal code. Default: none. Removing it from the configuration leaves the current value.
+* `state` - (Optional) State, county, province, or region. Default: none. Removing it from the configuration leaves the current value.
+* `town` - (Optional) Town or district. Default: none.
+
+<a id="identity.individual.script_names"></a>
+### `identity.individual.script_names`
+
+The `identity.individual.script_names` attribute supports:
+
+* `kana` - (Optional) Persons name in kana script. Removing it from the configuration leaves the current value. See [`identity.individual.script_names.kana`](#identity.individual.script_names.kana) below.
+* `kanji` - (Optional) Persons name in kanji script. Removing it from the configuration leaves the current value. See [`identity.individual.script_names.kanji`](#identity.individual.script_names.kanji) below.
+
+<a id="identity.individual.script_names.kana"></a>
+### `identity.individual.script_names.kana`
+
+The `identity.individual.script_names.kana` attribute supports:
+
+* `given_name` - (Optional) The person's first or given name. Default: none.
+* `surname` - (Optional) The person's last or family name. Default: none.
+
+<a id="identity.individual.script_names.kanji"></a>
+### `identity.individual.script_names.kanji`
+
+The `identity.individual.script_names.kanji` attribute supports:
+
+* `given_name` - (Optional) The person's first or given name. Default: none.
+* `surname` - (Optional) The person's last or family name. Default: none.
 
 ## Attribute Reference
 

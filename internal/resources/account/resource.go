@@ -33,13 +33,28 @@ import (
 // external account token, and the terms of service of the account, of Issuing and of
 // Treasury. The suite also creates a company account with `company[name]`. Replacing an
 // account deletes a business's account, so a change to any of them whose update the evidence
-// does not verify is refused, never a replacement: the terms of service, the external account
+// does not verify is refused, never a replacement: the terms of service of Issuing and of
+// Treasury, whose updates the record of fake `v0.43.0` shows Stripe taking with no effect
+// (`accepted_ignored`), the external account
 // in either of its forms (`external_account`, or `bank_account` as a token or a hash), and the
 // ID numbers of the individual and the company, whose updates Stripe takes and never returns,
 // so a read could not confirm one. The record of fake `v0.42.0` proves an update of the business
 // type and of every business profile value (probe `update/8`), which change in place, sent
 // whole with the rest of the profile, as the probe sends them. The business type, the business
-// profile values and the acceptances are read back and server-filled, like `email`.
+// profile values and the acceptances are read back and server-filled, like `email`. The record
+// of fake `v0.43.0` proves an update of the account's own terms of service to other values
+// (probe `isolated/tos`), so they change in place, sent whole as the probe sends them.
+//
+// Batch R02 of the suite proves what onboarding writes (fake `v0.43.0`): the documents' files,
+// taken on create and on update and never returned, so state keeps them from configuration; the
+// company's verification document, taken on create and on update; the branding, sent with the
+// rest of `settings`; and the representative declaration, which Stripe refuses on create and
+// takes on an update of a company that has a representative (probe
+// `isolated/representative_declaration_update`, which adds one first). The requirements and the
+// verification results Stripe works out as it reviews an account are read-only and unknown in
+// any plan that changes the account. Batch C1 proves a Japanese account's kana and kanji
+// names, addresses and descriptors (probes `isolated/jp_*`), which change in place; the
+// addresses go whole, as the probes send them.
 //
 // Stripe fills the payments descriptor and the card descriptor prefix from the business name,
 // and the prefix from a payments descriptor sent alone (probes `isolated/descriptor_*`); a
@@ -87,7 +102,7 @@ import (
 var Declaration = engine.Declaration{
 	TypeName:              "stripe_account",
 	IDPrefix:              "acct_",
-	Description:           "A connected account of the platform. `terraform destroy` deletes the account and, with it, its bank accounts. Set exactly one of `type` (a custom account) or `controller` (an account whose controller properties you choose), together with `country`. `type`, `controller` and `country` cannot change on an existing account, so changing one replaces it. Stripe refuses a custom account that requests no capability: one in the US must request at least `transfers`. The resource requests the capabilities it lists on creation only: a plan that changes `capabilities` on an existing account fails, because changing requested capabilities is not supported yet: revert the configuration, ignore the change, or recreate the account deliberately with `terraform taint` (`tofu taint` in OpenTofu). Read their status with the `stripe_account_capability` data source or the `stripe_account` data source, whose `capabilities` holds each status Stripe moves on its own. The onboarding arguments (`individual.id_number`, `individual.ssn_last_4`, `external_account`, `bank_account`, `bank_account_data`, `company.registration_number`, `company.tax_id`, `company.vat_id`, `tos_acceptance`, `settings.card_issuing.tos_acceptance` and `settings.treasury.tos_acceptance`) are sent on creation only, and a plan that changes one on an existing account fails in the same way. Stripe never returns those numbers or the bank account, so state keeps the values you configured, and the identity and tax numbers are sensitive; removing one from the configuration leaves it on the account. `business_type` and the `business_profile` change in place, and an update sends the profile whole. Stripe fills `settings.payments.statement_descriptor` and `settings.card_payments.statement_descriptor_prefix` from the business name, and the prefix from a payments descriptor, so a plan that changes the source leaves the one the configuration does not set known after apply. A `weekly` or `monthly` payout schedule needs its `weekly_anchor` or `weekly_payout_days`, or its `monthly_anchor` or `monthly_payout_days`, which Stripe refuses beside another interval: a plan that changes the interval or an anchor leaves what goes with it to Stripe, and a changed interval leaves `delay_days` to Stripe too unless the configuration sets it. `settings.payouts.schedule.delay_days` and `weekly_payout_days` keep the form you configured, because Stripe answers `minimum` with a number of days and lists payout days in its own order. The rest of `individual` and `company` is read back from Stripe and changes in place, so a value changed outside Terraform plans an update back to the configuration, and a member the configuration leaves out but that Stripe holds plans an update that clears it, where Stripe can clear it. Stripe refuses some changes itself, such as of a verified individual, and its refusal fails the apply. `individual.phone` keeps the form you configured, because Stripe stores a phone number in its own form, such as `+10000000000` for `0000000000`, and a verification document's `front` and `back` keep what you configured, because Stripe replaces a test token such as `file_identity_document_success` with a file of its own. Removing `email`, `business_type`, `tos_acceptance`, `individual`, `company`, `individual.phone` or a `business_profile` or `settings` argument from the configuration leaves the value on the account. A refresh that finds the account gone (Stripe answers 403 `account_invalid`) removes it from state.",
+	Description:           "A connected account of the platform. `terraform destroy` deletes the account and, with it, its bank accounts. Set exactly one of `type` (a custom account) or `controller` (an account whose controller properties you choose), together with `country`. `type`, `controller` and `country` cannot change on an existing account, so changing one replaces it. Stripe refuses a custom account that requests no capability: one in the US must request at least `transfers`. The resource requests the capabilities it lists on creation only: a plan that changes `capabilities` on an existing account fails, because changing requested capabilities is not supported yet: revert the configuration, ignore the change, or recreate the account deliberately with `terraform taint` (`tofu taint` in OpenTofu). Read their status with the `stripe_account_capability` data source or the `stripe_account` data source, whose `capabilities` holds each status Stripe moves on its own. The onboarding arguments (`individual.id_number`, `individual.ssn_last_4`, `external_account`, `bank_account`, `bank_account_data`, `company.registration_number`, `company.tax_id`, `company.vat_id`, `settings.card_issuing.tos_acceptance` and `settings.treasury.tos_acceptance`) are sent on creation only, and a plan that changes one on an existing account fails in the same way. `tos_acceptance` changes in place, and an update sends it whole. Stripe takes `company.representative_declaration` only on an update of a company account that has a representative, such as a `stripe_account_person` with `relationship.representative`, and refuses it on create. Stripe never returns `documents` or a bank account's documents, so state keeps the files you configured, matched by position, and a change to them made outside Terraform is not seen. Stripe never returns those numbers or the bank account, so state keeps the values you configured, and the identity and tax numbers are sensitive; removing one from the configuration leaves it on the account. `business_type` and the `business_profile` change in place, and an update sends the profile whole. Stripe fills `settings.payments.statement_descriptor` and `settings.card_payments.statement_descriptor_prefix` from the business name, and the prefix from a payments descriptor, so a plan that changes the source leaves the one the configuration does not set known after apply. A `weekly` or `monthly` payout schedule needs its `weekly_anchor` or `weekly_payout_days`, or its `monthly_anchor` or `monthly_payout_days`, which Stripe refuses beside another interval: a plan that changes the interval or an anchor leaves what goes with it to Stripe, and a changed interval leaves `delay_days` to Stripe too unless the configuration sets it. `settings.payouts.schedule.delay_days` and `weekly_payout_days` keep the form you configured, because Stripe answers `minimum` with a number of days and lists payout days in its own order. The rest of `individual` and `company` is read back from Stripe and changes in place, so a value changed outside Terraform plans an update back to the configuration, and a member the configuration leaves out but that Stripe holds plans an update that clears it, where Stripe can clear it. Stripe refuses some changes itself, such as of a verified individual, and its refusal fails the apply. `individual.phone` keeps the form you configured, because Stripe stores a phone number in its own form, such as `+10000000000` for `0000000000`, and a verification document's `front` and `back` keep what you configured, because Stripe replaces a test token such as `file_identity_document_success` with a file of its own. Removing `email`, `business_type`, `tos_acceptance`, `individual`, `company`, `individual.phone` or a `business_profile` or `settings` argument from the configuration leaves the value on the account. Set a Japanese individual's `first_name` and `last_name` beside the kana and kanji names: Stripe can fill them from the kanji names, which the provider does not plan for. A refresh that finds the account gone (Stripe answers 403 `account_invalid`) removes it from state.",
 	DataSourceDescription: "A connected account of the platform.",
 	ImportNote:            "Stripe does not return which `capabilities` were requested, `external_account`, `bank_account`, `individual.id_number`, `individual.ssn_last_4` or the company's `registration_number`, `tax_id` and `vat_id`, so an imported account has none of them in state. Add `lifecycle { ignore_changes = [capabilities, external_account, bank_account, bank_account_data, individual.id_number, individual.ssn_last_4, company.registration_number, company.tax_id, company.vat_id] }`, listing those the configuration sets, because a plan that changes one of them fails. An import reads `individual.phone` and the verification documents in Stripe's form, such as `+10000000000` for `0000000000` and a `file_...` ID for a test token, so the first plan updates one configured in another form unless `ignore_changes` lists it too, and Stripe refuses a new document once it has verified the individual.",
 	ImportNoteLevel:       engine.NoteWarning,
@@ -103,7 +118,7 @@ var Declaration = engine.Declaration{
 	ExactlyOneOf:    [][]string{{"type", "controller"}},
 	RefuseChange: []string{
 		"capabilities", "individual.id_number", "individual.ssn_last_4", "external_account", "bank_account",
-		"tos_acceptance", "company.registration_number", "company.tax_id", "company.vat_id",
+		"company.registration_number", "company.tax_id", "company.vat_id",
 		"settings.card_issuing.tos_acceptance", "settings.treasury.tos_acceptance",
 	},
 	Answers: map[string]string{
@@ -116,6 +131,25 @@ var Declaration = engine.Declaration{
 		// suite: TestAccountAttributes, probes `isolated/pricing_group_create` and
 		// `isolated/pricing_group_update`
 		"groups.payments_pricing": "Stripe refused a pricing group that does not exist, on create and on update; the suite has recorded none it takes.",
+		// suite: TestAccountAttributes, probes `isolated/capability_jcb_create` and
+		// `isolated/capability_jcb_update`, on a JP custom company account
+		"capabilities.jcb_payments.requested": "Stripe refused it on create and on update of a JP account, because the platform is in the US; the suite has recorded no platform country where Stripe takes it.",
+		// suite: TestAccountAttributes, probe `isolated/capability_legacy_create`
+		"capabilities.legacy_payments.requested": "Stripe refused it on create, as a deprecated capability; the suite has recorded no account that takes it.",
+		// suite: TestAccountAttributes, probe `isolated/capability_becs_create`, on a US custom
+		// company account
+		"capabilities.nz_bank_account_becs_debit_payments.requested": "Stripe refused it on create of a US account; the suite has recorded no country where Stripe takes it.",
+		// suite: TestAccountAttributes, probes `isolated/representative_declaration_*_create`
+		// and `isolated/representative_declaration_update`, which adds a representative first
+		"company.representative_declaration.date":       "Stripe refuses it on create and takes it on an update of a company account that has a representative.",
+		"company.representative_declaration.ip":         "Stripe refuses it on create and takes it on an update of a company account that has a representative.",
+		"company.representative_declaration.user_agent": "Stripe refuses it on create and takes it on an update of a company account that has a representative.",
+		// suite: TestAccountAttributes, probes `isolated/document_signer_create` and
+		// `isolated/documents_update`
+		"documents.proof_of_ultimate_beneficial_ownership.signer.person": "Stripe refused a person the account does not have, on create and on update; the suite has recorded no person it takes.",
+		// suite: TestAccountAttributes, probe `isolated/service_agreement_update`, on a US
+		// custom company account
+		"tos_acceptance.service_agreement": "Stripe refused `recipient` on an update of a US account, because the platform is in the US too; the suite has recorded no account it takes it on.",
 	},
 	Sensitive: []string{"individual.id_number", "individual.ssn_last_4"},
 	FilledFrom: map[string][]string{
@@ -141,12 +175,29 @@ var Declaration = engine.Declaration{
 		"business_profile.name":                    {"settings", "settings.payments.statement_descriptor", "settings.card_payments.statement_descriptor_prefix"},
 		"company":                                  {"settings", "settings.payments.statement_descriptor", "settings.card_payments.statement_descriptor_prefix", "business_profile.name"},
 		"individual":                               {"settings", "settings.payments.statement_descriptor", "settings.card_payments.statement_descriptor_prefix"},
-		"individual.address.city":                  {"company.address.city"},
-		"individual.address.line1":                 {"company.address.line1"},
-		"individual.address.line2":                 {"company.address.line2"},
-		"individual.address.postal_code":           {"company.address.postal_code"},
-		"individual.address.state":                 {"company.address.state"},
-		"individual.phone":                         {"company.phone"},
+		// On the dev sandbox Stripe filled the Bacs settings on an update of only the terms of
+		// service or only the documents (probes `isolated/tos` and `isolated/documents_update`,
+		// which read neither), as the record shows it doing on the descriptor and name updates
+		// (`side_effects`), and filled the company's verification document from the documents.
+		// Neither is in the record yet (a suite question), so a plan that changes the source
+		// leaves them known after apply, which relies on no value.
+		"tos_acceptance": {"settings.bacs_debit_payments.display_name", "settings.bacs_debit_payments.service_user_number"},
+		"documents": {
+			"settings.bacs_debit_payments.display_name", "settings.bacs_debit_payments.service_user_number",
+			"company.verification.document.front",
+		},
+		"individual.address.city":        {"company.address.city"},
+		"individual.address.line1":       {"company.address.line1"},
+		"individual.address.line2":       {"company.address.line2"},
+		"individual.address.postal_code": {"company.address.postal_code"},
+		"individual.address.state":       {"company.address.state"},
+		"individual.phone":               {"company.phone"},
+		// On an individual account Stripe copies the individual's kana and kanji addresses into
+		// the company's, as the record shows it copying the latin address (`filled_from`), and
+		// moves the copy when an update changes them (dev sandbox; probe `isolated/jp_individual`
+		// reads only the individual's, a suite question).
+		"individual.address_kana":  {"company.address_kana"},
+		"individual.address_kanji": {"company.address_kanji"},
 	},
 	SendChangedMembers: []string{
 		"individual", "individual.address", "individual.registered_address", "individual.relationship",
@@ -154,7 +205,7 @@ var Declaration = engine.Declaration{
 		"company", "company.address", "company.administrative_address", "company.principal_place_of_business",
 	},
 	// The record's `families[].hashes` does not list these.
-	SendWholeMembers: []string{"company.directorship_declaration", "company.ownership_declaration"},
+	SendWholeMembers: []string{"company.directorship_declaration", "company.ownership_declaration", "company.verification", "company.representative_declaration", "company.address_kanji", "company.address_kana", "individual.address_kanji", "individual.address_kana"},
 	// suite: "TestAccountAttributes/leaves/response/account/company.directors_provided", and
 	// `executives_provided` and `owners_provided` beside it: the variants `company`, `individual`
 	// and `individual_gb` of the minimal create.

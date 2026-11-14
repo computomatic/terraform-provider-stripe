@@ -51,6 +51,8 @@ This data source exports the following attributes in addition to the arguments a
 * `phone` - The phone number for this person.
 * `political_exposure` - The person's political exposure. Possible values: `existing`, `none`.
 * `relationship` - The relationship that this person has with the Account's business or legal entity. See [`relationship`](#relationship) below.
+* `script_addresses` - The script addresses (e.g., non-Latin characters) associated with the person. See [`script_addresses`](#script_addresses) below.
+* `script_names` - The script names (e.g. non-Latin characters) associated with the person. See [`script_names`](#script_names) below.
 * `surname` - The person's last name.
 * `updated` - Time at which the object was last updated. Represented as a RFC 3339 date & time UTC value in millisecond precision, for example: 2022-09-18T13:22:18.123Z.
 
@@ -204,3 +206,61 @@ The `relationship` attribute supports:
 * `percent_ownership` - The percentage of ownership the person has in the associated legal entity.
 * `representative` - Indicates whether the person is a representative of the associated legal entity.
 * `title` - The title or position the person holds in the associated legal entity.
+
+<a id="script_addresses"></a>
+### `script_addresses`
+
+The `script_addresses` attribute supports:
+
+* `kana` - Kana Address. See [`script_addresses.kana`](#script_addresses.kana) below.
+* `kanji` - Kanji Address. See [`script_addresses.kanji`](#script_addresses.kanji) below.
+
+<a id="script_addresses.kana"></a>
+### `script_addresses.kana`
+
+The `script_addresses.kana` attribute supports:
+
+* `city` - City, district, suburb, town, or village.
+* `country` - Two-letter country code ([ISO 3166-1 alpha-2](https://en.wikipedia.org/wiki/ISO_3166-1_alpha-2)).
+* `line1` - Address line 1 (e.g., street, PO Box, or company name).
+* `line2` - Address line 2 (e.g., apartment, suite, unit, or building).
+* `postal_code` - ZIP or postal code.
+* `state` - State, county, province, or region.
+* `town` - Town or district.
+
+<a id="script_addresses.kanji"></a>
+### `script_addresses.kanji`
+
+The `script_addresses.kanji` attribute supports:
+
+* `city` - City, district, suburb, town, or village.
+* `country` - Two-letter country code ([ISO 3166-1 alpha-2](https://en.wikipedia.org/wiki/ISO_3166-1_alpha-2)).
+* `line1` - Address line 1 (e.g., street, PO Box, or company name).
+* `line2` - Address line 2 (e.g., apartment, suite, unit, or building).
+* `postal_code` - ZIP or postal code.
+* `state` - State, county, province, or region.
+* `town` - Town or district.
+
+<a id="script_names"></a>
+### `script_names`
+
+The `script_names` attribute supports:
+
+* `kana` - Persons name in kana script. See [`script_names.kana`](#script_names.kana) below.
+* `kanji` - Persons name in kanji script. See [`script_names.kanji`](#script_names.kanji) below.
+
+<a id="script_names.kana"></a>
+### `script_names.kana`
+
+The `script_names.kana` attribute supports:
+
+* `given_name` - The person's first or given name.
+* `surname` - The person's last or family name.
+
+<a id="script_names.kanji"></a>
+### `script_names.kanji`
+
+The `script_names.kanji` attribute supports:
+
+* `given_name` - The person's first or given name.
+* `surname` - The person's last or family name.

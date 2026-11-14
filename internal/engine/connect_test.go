@@ -1383,6 +1383,19 @@ func TestRefuseChangeRefusesNestedReplaceSources(t *testing.T) {
 	if _, err = NewResource(mapDecl, deep); err == nil || !strings.Contains(err.Error(), "outer.inner.code") {
 		t.Errorf("a create-only field two objects down must be refused, naming its path: %v", err)
 	}
+	// Below a RefuseChange entry a change fails the plan anyway, so a create-only member there,
+	// such as the user agent of an account's Issuing terms, is no replace source.
+	mapDecl.RefuseChange = []string{"note", "outer"}
+	if _, err = NewResource(mapDecl, deep); err != nil {
+		t.Errorf("a create-only field below a RefuseChange entry must compile: %v", err)
+	}
+	// A SetOnce entry lets a plan set the hash on an object that holds none, which the update
+	// would send without its create-only members, so they stay replace sources there.
+	mapDecl.SetOnce = []string{"outer"}
+	if _, err = NewResource(mapDecl, deep); err == nil || !strings.Contains(err.Error(), "outer.inner.code") {
+		t.Errorf("a create-only field below a SetOnce entry must be refused, naming its path: %v", err)
+	}
+	mapDecl.SetOnce = nil
 	mapDecl.RefuseChange = nil
 	if _, err = NewResource(mapDecl, table); err != nil {
 		t.Errorf("without RefuseChange the same table compiles: %v", err)

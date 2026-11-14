@@ -39,6 +39,7 @@ This data source exports the following attributes in addition to the arguments a
 * `created` - Time at which the account was connected. Measured in seconds since the Unix epoch.
 * `default_currency` - Three-letter ISO currency code representing the default currency for the account. This must be a currency that [Stripe supports in the account's country](https://docs.stripe.com/payouts).
 * `details_submitted` - Whether account details have been submitted. Accounts with Stripe Dashboard access, which includes Standard accounts, cannot receive payouts before this is true. Accounts where this is false should be directed to [an onboarding flow](https://docs.stripe.com/connect/onboarding) to finish submitting account details.
+* `documents` - Documents that may be submitted to satisfy various informational requests. See [`documents`](#documents) below.
 * `email` - The email address of the account holder. This is only to make the account easier to identify to you. If [controller.requirement_collection](https://docs.stripe.com/api/accounts/object#account_object-controller-requirement_collection) is `application`, which includes Custom accounts, Stripe doesn't email the account without your consent.
 * `external_account` - A card or bank account to attach to the account for receiving [payouts](https://docs.stripe.com/connect/bank-debit-card-payouts) (you won’t be able to use it for top-ups). You can provide either a token, like the ones returned by [Stripe.js](https://docs.stripe.com/js), or a dictionary, as documented in the `external_account` parameter for [bank account](https://docs.stripe.com/api#account_create_bank_account) creation. <br><br>By default, providing an external account sets it as the new default external account for its currency, and deletes the old default if one exists. To add additional external accounts without replacing the existing default for the currency, use the [bank account](https://docs.stripe.com/api#account_create_bank_account) or [card creation](https://docs.stripe.com/api#account_create_card) APIs. After you create an [Account Link](https://docs.stripe.com/api/account_links) or [Account Session](https://docs.stripe.com/api/account_sessions), this property can only be updated for accounts where [controller.requirement_collection](https://docs.stripe.com/api/accounts/object#account_object-controller-requirement_collection) is `application`, which includes Custom accounts.
 * `future_requirements` - See [`future_requirements`](#future_requirements) below.
@@ -104,19 +105,19 @@ The `business_profile.support_address` attribute supports:
 
 The `capabilities` attribute supports:
 
-* `acss_debit_payments` - See [`capabilities.acss_debit_payments`](#capabilities.acss_debit_payments) below.
+* `acss_debit_payments` - The status of the Canadian pre-authorized debits payments capability of the account, or whether the account can directly process Canadian pre-authorized debits charges. Possible values: `active`, `inactive`, `pending`.
 * `affirm_payments` - The status of the Affirm capability of the account, or whether the account can directly process Affirm charges. Possible values: `active`, `inactive`, `pending`.
 * `afterpay_clearpay_payments` - The status of the Afterpay Clearpay capability of the account, or whether the account can directly process Afterpay Clearpay charges. Possible values: `active`, `inactive`, `pending`.
-* `alma_payments` - See [`capabilities.alma_payments`](#capabilities.alma_payments) below.
+* `alma_payments` - The status of the Alma capability of the account, or whether the account can directly process Alma payments. Possible values: `active`, `inactive`, `pending`.
 * `amazon_pay_payments` - The status of the AmazonPay capability of the account, or whether the account can directly process AmazonPay payments. Possible values: `active`, `inactive`, `pending`.
 * `app_distribution` - The status of the `app_distribution` capability of the account, or whether the platform can distribute apps to other accounts. Possible values: `active`, `inactive`, `pending`.
-* `au_becs_debit_payments` - See [`capabilities.au_becs_debit_payments`](#capabilities.au_becs_debit_payments) below.
-* `bacs_debit_payments` - See [`capabilities.bacs_debit_payments`](#capabilities.bacs_debit_payments) below.
+* `au_becs_debit_payments` - The status of the BECS Direct Debit (AU) payments capability of the account, or whether the account can directly process BECS Direct Debit (AU) charges. Possible values: `active`, `inactive`, `pending`.
+* `bacs_debit_payments` - The status of the Bacs Direct Debits payments capability of the account, or whether the account can directly process Bacs Direct Debits charges. Possible values: `active`, `inactive`, `pending`.
 * `bancontact_payments` - The status of the Bancontact payments capability of the account, or whether the account can directly process Bancontact charges. Possible values: `active`, `inactive`, `pending`.
 * `bank_transfer_payments` - The status of the customer_balance payments capability of the account, or whether the account can directly process customer_balance charges. Possible values: `active`, `inactive`, `pending`.
-* `billie_payments` - See [`capabilities.billie_payments`](#capabilities.billie_payments) below.
-* `bizum_payments` - See [`capabilities.bizum_payments`](#capabilities.bizum_payments) below.
-* `blik_payments` - See [`capabilities.blik_payments`](#capabilities.blik_payments) below.
+* `billie_payments` - The status of the Billie capability of the account, or whether the account can directly process Billie payments. Possible values: `active`, `inactive`, `pending`.
+* `bizum_payments` - The status of the Bizum capability of the account, or whether the account can directly process Bizum payments. Possible values: `active`, `inactive`, `pending`.
+* `blik_payments` - The status of the blik payments capability of the account, or whether the account can directly process blik charges. Possible values: `active`, `inactive`, `pending`.
 * `blik_recurring_payments` - The status of the BLIK recurring payments capability of the account, or whether the account can accept recurring and subscription BLIK payments. Possible values: `active`, `inactive`, `pending`.
 * `boleto_payments` - See [`capabilities.boleto_payments`](#capabilities.boleto_payments) below.
 * `card_issuing` - The status of the card issuing capability of the account, or whether you can use Issuing to distribute funds on cards Possible values: `active`, `inactive`, `pending`.
@@ -125,14 +126,14 @@ The `capabilities` attribute supports:
 * `cashapp_payments` - The status of the Cash App Pay capability of the account, or whether the account can directly process Cash App Pay payments. Possible values: `active`, `inactive`, `pending`.
 * `crypto_payments` - The status of the Crypto capability of the account, or whether the account can directly process Crypto payments. Possible values: `active`, `inactive`, `pending`.
 * `eps_payments` - The status of the EPS payments capability of the account, or whether the account can directly process EPS charges. Possible values: `active`, `inactive`, `pending`.
-* `fpx_payments` - See [`capabilities.fpx_payments`](#capabilities.fpx_payments) below.
+* `fpx_payments` - The status of the FPX payments capability of the account, or whether the account can directly process FPX charges. Possible values: `active`, `inactive`, `pending`.
 * `gb_bank_transfer_payments` - The status of the GB customer_balance payments (GBP currency) capability of the account, or whether the account can directly process GB customer_balance charges. Possible values: `active`, `inactive`, `pending`.
 * `giropay_payments` - See [`capabilities.giropay_payments`](#capabilities.giropay_payments) below.
-* `grabpay_payments` - See [`capabilities.grabpay_payments`](#capabilities.grabpay_payments) below.
+* `grabpay_payments` - The status of the GrabPay payments capability of the account, or whether the account can directly process GrabPay charges. Possible values: `active`, `inactive`, `pending`.
 * `ideal_payments` - The status of the iDEAL payments capability of the account, or whether the account can directly process iDEAL charges. Possible values: `active`, `inactive`, `pending`.
 * `india_international_payments` - See [`capabilities.india_international_payments`](#capabilities.india_international_payments) below.
 * `jcb_payments` - See [`capabilities.jcb_payments`](#capabilities.jcb_payments) below.
-* `jp_bank_transfer_payments` - See [`capabilities.jp_bank_transfer_payments`](#capabilities.jp_bank_transfer_payments) below.
+* `jp_bank_transfer_payments` - The status of the Japanese customer_balance payments (JPY currency) capability of the account, or whether the account can directly process Japanese customer_balance charges. Possible values: `active`, `inactive`, `pending`.
 * `kakao_pay_payments` - The status of the KakaoPay capability of the account, or whether the account can directly process KakaoPay payments. Possible values: `active`, `inactive`, `pending`.
 * `klarna_payments` - The status of the Klarna payments capability of the account, or whether the account can directly process Klarna charges. Possible values: `active`, `inactive`, `pending`.
 * `konbini_payments` - See [`capabilities.konbini_payments`](#capabilities.konbini_payments) below.
@@ -140,27 +141,27 @@ The `capabilities` attribute supports:
 * `legacy_payments` - See [`capabilities.legacy_payments`](#capabilities.legacy_payments) below.
 * `link_payments` - The status of the link_payments capability of the account, or whether the account can directly process Link charges. Possible values: `active`, `inactive`, `pending`.
 * `mb_way_payments` - The status of the MB WAY payments capability of the account, or whether the account can directly process MB WAY charges. Possible values: `active`, `inactive`, `pending`.
-* `mobilepay_payments` - See [`capabilities.mobilepay_payments`](#capabilities.mobilepay_payments) below.
+* `mobilepay_payments` - The status of the MobilePay capability of the account, or whether the account can directly process MobilePay charges. Possible values: `active`, `inactive`, `pending`.
 * `multibanco_payments` - The status of the Multibanco payments capability of the account, or whether the account can directly process Multibanco charges. Possible values: `active`, `inactive`, `pending`.
 * `mx_bank_transfer_payments` - See [`capabilities.mx_bank_transfer_payments`](#capabilities.mx_bank_transfer_payments) below.
 * `naver_pay_payments` - The status of the NaverPay capability of the account, or whether the account can directly process NaverPay payments. Possible values: `active`, `inactive`, `pending`.
-* `nz_bank_account_becs_debit_payments` - See [`capabilities.nz_bank_account_becs_debit_payments`](#capabilities.nz_bank_account_becs_debit_payments) below.
-* `oxxo_payments` - See [`capabilities.oxxo_payments`](#capabilities.oxxo_payments) below.
+* `nz_bank_account_becs_debit_payments` - The status of the New Zealand BECS Direct Debit payments capability of the account, or whether the account can directly process New Zealand BECS Direct Debit charges. Possible values: `active`, `inactive`, `pending`.
+* `oxxo_payments` - The status of the OXXO payments capability of the account, or whether the account can directly process OXXO charges. Possible values: `active`, `inactive`, `pending`.
 * `p24_payments` - The status of the P24 payments capability of the account, or whether the account can directly process P24 charges. Possible values: `active`, `inactive`, `pending`.
-* `pay_by_bank_payments` - See [`capabilities.pay_by_bank_payments`](#capabilities.pay_by_bank_payments) below.
+* `pay_by_bank_payments` - The status of the pay_by_bank payments capability of the account, or whether the account can directly process pay_by_bank charges. Possible values: `active`, `inactive`, `pending`.
 * `payco_payments` - The status of the Payco capability of the account, or whether the account can directly process Payco payments. Possible values: `active`, `inactive`, `pending`.
-* `paynow_payments` - See [`capabilities.paynow_payments`](#capabilities.paynow_payments) below.
+* `paynow_payments` - The status of the paynow payments capability of the account, or whether the account can directly process paynow charges. Possible values: `active`, `inactive`, `pending`.
 * `paypay_payments` - See [`capabilities.paypay_payments`](#capabilities.paypay_payments) below.
-* `payto_payments` - See [`capabilities.payto_payments`](#capabilities.payto_payments) below.
+* `payto_payments` - The status of the PayTo capability of the account, or whether the account can directly process PayTo charges. Possible values: `active`, `inactive`, `pending`.
 * `pix_payments` - The status of the pix payments capability of the account, or whether the account can directly process pix charges. Possible values: `active`, `inactive`, `pending`.
-* `promptpay_payments` - See [`capabilities.promptpay_payments`](#capabilities.promptpay_payments) below.
-* `revolut_pay_payments` - See [`capabilities.revolut_pay_payments`](#capabilities.revolut_pay_payments) below.
+* `promptpay_payments` - The status of the promptpay payments capability of the account, or whether the account can directly process promptpay charges. Possible values: `active`, `inactive`, `pending`.
+* `revolut_pay_payments` - The status of the RevolutPay capability of the account, or whether the account can directly process RevolutPay payments. Possible values: `active`, `inactive`, `pending`.
 * `samsung_pay_payments` - The status of the SamsungPay capability of the account, or whether the account can directly process SamsungPay payments. Possible values: `active`, `inactive`, `pending`.
 * `satispay_payments` - The status of the Satispay capability of the account, or whether the account can directly process Satispay payments. Possible values: `active`, `inactive`, `pending`.
 * `scalapay_payments` - The status of the Scalapay capability of the account, or whether the account can directly process Scalapay payments. Possible values: `active`, `inactive`, `pending`.
 * `sepa_bank_transfer_payments` - The status of the SEPA customer_balance payments (EUR currency) capability of the account, or whether the account can directly process SEPA customer_balance charges. Possible values: `active`, `inactive`, `pending`.
 * `sepa_debit_payments` - The status of the SEPA Direct Debits payments capability of the account, or whether the account can directly process SEPA Direct Debits charges. Possible values: `active`, `inactive`, `pending`.
-* `sequra_payments` - See [`capabilities.sequra_payments`](#capabilities.sequra_payments) below.
+* `sequra_payments` - The status of the SeQura capability of the account, or whether the account can directly process SeQura payments. Possible values: `active`, `inactive`, `pending`.
 * `sofort_payments` - See [`capabilities.sofort_payments`](#capabilities.sofort_payments) below.
 * `sunbit_payments` - The status of the Sunbit capability of the account, or whether the account can directly process Sunbit payments. Possible values: `active`, `inactive`, `pending`.
 * `swish_payments` - See [`capabilities.swish_payments`](#capabilities.swish_payments) below.
@@ -168,60 +169,11 @@ The `capabilities` attribute supports:
 * `tax_reporting_us_1099_misc` - The status of the tax reporting 1099-MISC (US) capability of the account. Possible values: `active`, `inactive`, `pending`.
 * `transfers` - The status of the transfers capability of the account, or whether your platform can transfer funds to the account. Possible values: `active`, `inactive`, `pending`.
 * `treasury` - The status of the banking capability, or whether the account can have bank accounts. Possible values: `active`, `inactive`, `pending`.
-* `twint_payments` - See [`capabilities.twint_payments`](#capabilities.twint_payments) below.
+* `twint_payments` - The status of the TWINT capability of the account, or whether the account can directly process TWINT charges. Possible values: `active`, `inactive`, `pending`.
 * `upi_payments` - The status of the upi payments capability of the account, or whether the account can directly process upi charges. Possible values: `active`, `inactive`, `pending`.
 * `us_bank_account_ach_payments` - The status of the US bank account ACH payments capability of the account, or whether the account can directly process US bank account charges. Possible values: `active`, `inactive`, `pending`.
 * `us_bank_transfer_payments` - The status of the US customer_balance payments (USD currency) capability of the account, or whether the account can directly process US customer_balance charges. Possible values: `active`, `inactive`, `pending`.
-* `zip_payments` - See [`capabilities.zip_payments`](#capabilities.zip_payments) below.
-
-<a id="capabilities.acss_debit_payments"></a>
-### `capabilities.acss_debit_payments`
-
-The `capabilities.acss_debit_payments` attribute supports:
-
-* `requested` -
-
-<a id="capabilities.alma_payments"></a>
-### `capabilities.alma_payments`
-
-The `capabilities.alma_payments` attribute supports:
-
-* `requested` -
-
-<a id="capabilities.au_becs_debit_payments"></a>
-### `capabilities.au_becs_debit_payments`
-
-The `capabilities.au_becs_debit_payments` attribute supports:
-
-* `requested` -
-
-<a id="capabilities.bacs_debit_payments"></a>
-### `capabilities.bacs_debit_payments`
-
-The `capabilities.bacs_debit_payments` attribute supports:
-
-* `requested` -
-
-<a id="capabilities.billie_payments"></a>
-### `capabilities.billie_payments`
-
-The `capabilities.billie_payments` attribute supports:
-
-* `requested` -
-
-<a id="capabilities.bizum_payments"></a>
-### `capabilities.bizum_payments`
-
-The `capabilities.bizum_payments` attribute supports:
-
-* `requested` -
-
-<a id="capabilities.blik_payments"></a>
-### `capabilities.blik_payments`
-
-The `capabilities.blik_payments` attribute supports:
-
-* `requested` -
+* `zip_payments` - The status of the Zip capability of the account, or whether the account can directly process Zip charges. Possible values: `active`, `inactive`, `pending`.
 
 <a id="capabilities.boleto_payments"></a>
 ### `capabilities.boleto_payments`
@@ -230,24 +182,10 @@ The `capabilities.boleto_payments` attribute supports:
 
 * `requested` -
 
-<a id="capabilities.fpx_payments"></a>
-### `capabilities.fpx_payments`
-
-The `capabilities.fpx_payments` attribute supports:
-
-* `requested` -
-
 <a id="capabilities.giropay_payments"></a>
 ### `capabilities.giropay_payments`
 
 The `capabilities.giropay_payments` attribute supports:
-
-* `requested` -
-
-<a id="capabilities.grabpay_payments"></a>
-### `capabilities.grabpay_payments`
-
-The `capabilities.grabpay_payments` attribute supports:
 
 * `requested` -
 
@@ -265,13 +203,6 @@ The `capabilities.jcb_payments` attribute supports:
 
 * `requested` -
 
-<a id="capabilities.jp_bank_transfer_payments"></a>
-### `capabilities.jp_bank_transfer_payments`
-
-The `capabilities.jp_bank_transfer_payments` attribute supports:
-
-* `requested` -
-
 <a id="capabilities.konbini_payments"></a>
 ### `capabilities.konbini_payments`
 
@@ -286,13 +217,6 @@ The `capabilities.legacy_payments` attribute supports:
 
 * `requested` -
 
-<a id="capabilities.mobilepay_payments"></a>
-### `capabilities.mobilepay_payments`
-
-The `capabilities.mobilepay_payments` attribute supports:
-
-* `requested` -
-
 <a id="capabilities.mx_bank_transfer_payments"></a>
 ### `capabilities.mx_bank_transfer_payments`
 
@@ -300,66 +224,10 @@ The `capabilities.mx_bank_transfer_payments` attribute supports:
 
 * `requested` -
 
-<a id="capabilities.nz_bank_account_becs_debit_payments"></a>
-### `capabilities.nz_bank_account_becs_debit_payments`
-
-The `capabilities.nz_bank_account_becs_debit_payments` attribute supports:
-
-* `requested` -
-
-<a id="capabilities.oxxo_payments"></a>
-### `capabilities.oxxo_payments`
-
-The `capabilities.oxxo_payments` attribute supports:
-
-* `requested` -
-
-<a id="capabilities.pay_by_bank_payments"></a>
-### `capabilities.pay_by_bank_payments`
-
-The `capabilities.pay_by_bank_payments` attribute supports:
-
-* `requested` -
-
-<a id="capabilities.paynow_payments"></a>
-### `capabilities.paynow_payments`
-
-The `capabilities.paynow_payments` attribute supports:
-
-* `requested` -
-
 <a id="capabilities.paypay_payments"></a>
 ### `capabilities.paypay_payments`
 
 The `capabilities.paypay_payments` attribute supports:
-
-* `requested` -
-
-<a id="capabilities.payto_payments"></a>
-### `capabilities.payto_payments`
-
-The `capabilities.payto_payments` attribute supports:
-
-* `requested` -
-
-<a id="capabilities.promptpay_payments"></a>
-### `capabilities.promptpay_payments`
-
-The `capabilities.promptpay_payments` attribute supports:
-
-* `requested` -
-
-<a id="capabilities.revolut_pay_payments"></a>
-### `capabilities.revolut_pay_payments`
-
-The `capabilities.revolut_pay_payments` attribute supports:
-
-* `requested` -
-
-<a id="capabilities.sequra_payments"></a>
-### `capabilities.sequra_payments`
-
-The `capabilities.sequra_payments` attribute supports:
 
 * `requested` -
 
@@ -377,31 +245,21 @@ The `capabilities.swish_payments` attribute supports:
 
 * `requested` -
 
-<a id="capabilities.twint_payments"></a>
-### `capabilities.twint_payments`
-
-The `capabilities.twint_payments` attribute supports:
-
-* `requested` -
-
-<a id="capabilities.zip_payments"></a>
-### `capabilities.zip_payments`
-
-The `capabilities.zip_payments` attribute supports:
-
-* `requested` -
-
 <a id="company"></a>
 ### `company`
 
 The `company` attribute supports:
 
 * `address` - See [`company.address`](#company.address) below.
+* `address_kana` - The Kana variation of the company's primary address (Japan only). See [`company.address_kana`](#company.address_kana) below.
+* `address_kanji` - The Kanji variation of the company's primary address (Japan only). See [`company.address_kanji`](#company.address_kanji) below.
 * `administrative_address` - See [`company.administrative_address`](#company.administrative_address) below.
 * `directors_provided` - Whether the company's directors have been provided. This Boolean will be `true` if you've manually indicated that all directors are provided via [the `directors_provided` parameter](https://docs.stripe.com/api/accounts/update#update_account-company-directors_provided).
 * `directorship_declaration` - This hash is used to attest that the director information provided to Stripe is both current and correct. See [`company.directorship_declaration`](#company.directorship_declaration) below.
 * `executives_provided` - Whether the company's executives have been provided. This Boolean will be `true` if you've manually indicated that all executives are provided via [the `executives_provided` parameter](https://docs.stripe.com/api/accounts/update#update_account-company-executives_provided), or if Stripe determined that sufficient executives were provided.
 * `name` - The company's legal name. Also available for accounts where [controller.requirement_collection](https://docs.stripe.com/api/accounts/object#account_object-controller-requirement_collection) is `stripe`.
+* `name_kana` - The Kana variation of the company's legal name (Japan only). Also available for accounts where [controller.requirement_collection](https://docs.stripe.com/api/accounts/object#account_object-controller-requirement_collection) is `stripe`.
+* `name_kanji` - The Kanji variation of the company's legal name (Japan only). Also available for accounts where [controller.requirement_collection](https://docs.stripe.com/api/accounts/object#account_object-controller-requirement_collection) is `stripe`.
 * `owners_provided` - Whether the company's owners have been provided. This Boolean will be `true` if you've manually indicated that all owners are provided via [the `owners_provided` parameter](https://docs.stripe.com/api/accounts/update#update_account-company-owners_provided), or if Stripe determined that sufficient owners were provided. Stripe determines ownership requirements using both the number of owners provided and their total percent ownership (calculated by adding the `percent_ownership` of each owner together).
 * `ownership_declaration` - This hash is used to attest that the beneficial owner information provided to Stripe is both current and correct. See [`company.ownership_declaration`](#company.ownership_declaration) below.
 * `ownership_exemption_reason` - Possible values: `qualified_entity_exceeds_ownership_threshold`, `qualifies_as_financial_institution`.
@@ -409,12 +267,14 @@ The `company` attribute supports:
 * `principal_place_of_business` - See [`company.principal_place_of_business`](#company.principal_place_of_business) below.
 * `registration_date` - See [`company.registration_date`](#company.registration_date) below.
 * `registration_number` -
+* `representative_declaration` - This hash is used to attest that the representative is authorized to act as the representative of their legal entity. See [`company.representative_declaration`](#company.representative_declaration) below.
 * `structure` - The category identifying the legal structure of the company or legal entity. Also available for accounts where [controller.requirement_collection](https://docs.stripe.com/api/accounts/object#account_object-controller-requirement_collection) is `stripe`. See [Business structure](https://docs.stripe.com/connect/identity-verification#business-structure) for more details. Possible values: `free_zone_establishment`, `free_zone_llc`, `government_instrumentality`, `governmental_unit`, `incorporated_non_profit`, `incorporated_partnership`, `limited_liability_partnership`, `llc`, `multi_member_llc`, `private_company`, `private_corporation`, `private_partnership`, `public_company`, `public_corporation`, `public_partnership`, `registered_charity`, `single_member_llc`, `sole_establishment`, `sole_proprietorship`, `tax_exempt_government_instrumentality`, `unincorporated_association`, `unincorporated_non_profit`, `unincorporated_partnership`.
 * `tax_id` - (Sensitive)
 * `tax_id_provided` - Whether the company's business ID number was provided.
 * `tax_id_registrar` -
 * `vat_id` - (Sensitive)
 * `vat_id_provided` - Whether the company's business VAT number was provided.
+* `verification` - Information on the verification state of the company. See [`company.verification`](#company.verification) below.
 
 <a id="company.address"></a>
 ### `company.address`
@@ -427,6 +287,32 @@ The `company.address` attribute supports:
 * `line2` - Address line 2, such as the apartment, suite, unit, or building.
 * `postal_code` - ZIP or postal code.
 * `state` - State, county, province, or region ([ISO 3166-2](https://en.wikipedia.org/wiki/ISO_3166-2)).
+
+<a id="company.address_kana"></a>
+### `company.address_kana`
+
+The `company.address_kana` attribute supports:
+
+* `city` - City/Ward.
+* `country` - Two-letter country code ([ISO 3166-1 alpha-2](https://en.wikipedia.org/wiki/ISO_3166-1_alpha-2)).
+* `line1` - Block/Building number.
+* `line2` - Building details.
+* `postal_code` - ZIP or postal code.
+* `state` - Prefecture.
+* `town` - Town/cho-me.
+
+<a id="company.address_kanji"></a>
+### `company.address_kanji`
+
+The `company.address_kanji` attribute supports:
+
+* `city` - City/Ward.
+* `country` - Two-letter country code ([ISO 3166-1 alpha-2](https://en.wikipedia.org/wiki/ISO_3166-1_alpha-2)).
+* `line1` - Block/Building number.
+* `line2` - Building details.
+* `postal_code` - ZIP or postal code.
+* `state` - Prefecture.
+* `town` - Town/cho-me.
 
 <a id="company.administrative_address"></a>
 ### `company.administrative_address`
@@ -479,6 +365,32 @@ The `company.registration_date` attribute supports:
 * `month` - The month of registration, between 1 and 12.
 * `year` - The four-digit year of registration.
 
+<a id="company.representative_declaration"></a>
+### `company.representative_declaration`
+
+The `company.representative_declaration` attribute supports:
+
+* `date` - The Unix timestamp marking when the representative declaration attestation was made.
+* `ip` - The IP address from which the representative declaration attestation was made.
+* `user_agent` - The user-agent string from the browser where the representative declaration attestation was made.
+
+<a id="company.verification"></a>
+### `company.verification`
+
+The `company.verification` attribute supports:
+
+* `document` - See [`company.verification.document`](#company.verification.document) below.
+
+<a id="company.verification.document"></a>
+### `company.verification.document`
+
+The `company.verification.document` attribute supports:
+
+* `back` - The back of a document returned by a [file upload](https://docs.stripe.com/api#create_file) with a `purpose` value of `additional_verification`. Note that `additional_verification` files are [not downloadable](https://docs.stripe.com/file-upload#uploading-a-file).
+* `details` - A user-displayable string describing the verification state of this document.
+* `details_code` - One of `document_corrupt`, `document_expired`, `document_failed_copy`, `document_failed_greyscale`, `document_failed_other`, `document_failed_test_mode`, `document_fraudulent`, `document_incomplete`, `document_invalid`, `document_manipulated`, `document_not_readable`, `document_not_uploaded`, `document_type_not_supported`, or `document_too_large`. A machine-readable code specifying the verification state for this document.
+* `front` - The front of a document returned by a [file upload](https://docs.stripe.com/api#create_file) with a `purpose` value of `additional_verification`. Note that `additional_verification` files are [not downloadable](https://docs.stripe.com/file-upload#uploading-a-file).
+
 <a id="controller"></a>
 ### `controller`
 
@@ -511,6 +423,100 @@ The `controller.losses` attribute supports:
 The `controller.stripe_dashboard` attribute supports:
 
 * `type` - A value indicating the Stripe dashboard this account has access to independent of the Connect application. Possible values: `express`, `full`, `none`.
+
+<a id="documents"></a>
+### `documents`
+
+The `documents` attribute supports:
+
+* `bank_account_ownership_verification` - See [`documents.bank_account_ownership_verification`](#documents.bank_account_ownership_verification) below.
+* `company_license` - See [`documents.company_license`](#documents.company_license) below.
+* `company_memorandum_of_association` - See [`documents.company_memorandum_of_association`](#documents.company_memorandum_of_association) below.
+* `company_ministerial_decree` - See [`documents.company_ministerial_decree`](#documents.company_ministerial_decree) below.
+* `company_registration_verification` - See [`documents.company_registration_verification`](#documents.company_registration_verification) below.
+* `company_tax_id_verification` - See [`documents.company_tax_id_verification`](#documents.company_tax_id_verification) below.
+* `proof_of_address` - See [`documents.proof_of_address`](#documents.proof_of_address) below.
+* `proof_of_registration` - See [`documents.proof_of_registration`](#documents.proof_of_registration) below.
+* `proof_of_ultimate_beneficial_ownership` - See [`documents.proof_of_ultimate_beneficial_ownership`](#documents.proof_of_ultimate_beneficial_ownership) below.
+
+<a id="documents.bank_account_ownership_verification"></a>
+### `documents.bank_account_ownership_verification`
+
+The `documents.bank_account_ownership_verification` attribute supports:
+
+* `files` -
+
+<a id="documents.company_license"></a>
+### `documents.company_license`
+
+The `documents.company_license` attribute supports:
+
+* `files` -
+
+<a id="documents.company_memorandum_of_association"></a>
+### `documents.company_memorandum_of_association`
+
+The `documents.company_memorandum_of_association` attribute supports:
+
+* `files` -
+
+<a id="documents.company_ministerial_decree"></a>
+### `documents.company_ministerial_decree`
+
+The `documents.company_ministerial_decree` attribute supports:
+
+* `files` -
+
+<a id="documents.company_registration_verification"></a>
+### `documents.company_registration_verification`
+
+The `documents.company_registration_verification` attribute supports:
+
+* `files` -
+
+<a id="documents.company_tax_id_verification"></a>
+### `documents.company_tax_id_verification`
+
+The `documents.company_tax_id_verification` attribute supports:
+
+* `files` -
+
+<a id="documents.proof_of_address"></a>
+### `documents.proof_of_address`
+
+The `documents.proof_of_address` attribute supports:
+
+* `files` -
+
+<a id="documents.proof_of_registration"></a>
+### `documents.proof_of_registration`
+
+The `documents.proof_of_registration` attribute supports:
+
+* `files` -
+* `signer` - See [`documents.proof_of_registration.signer`](#documents.proof_of_registration.signer) below.
+
+<a id="documents.proof_of_registration.signer"></a>
+### `documents.proof_of_registration.signer`
+
+The `documents.proof_of_registration.signer` attribute supports:
+
+* `person` -
+
+<a id="documents.proof_of_ultimate_beneficial_ownership"></a>
+### `documents.proof_of_ultimate_beneficial_ownership`
+
+The `documents.proof_of_ultimate_beneficial_ownership` attribute supports:
+
+* `files` -
+* `signer` - See [`documents.proof_of_ultimate_beneficial_ownership.signer`](#documents.proof_of_ultimate_beneficial_ownership.signer) below.
+
+<a id="documents.proof_of_ultimate_beneficial_ownership.signer"></a>
+### `documents.proof_of_ultimate_beneficial_ownership.signer`
+
+The `documents.proof_of_ultimate_beneficial_ownership.signer` attribute supports:
+
+* `person` -
 
 <a id="future_requirements"></a>
 ### `future_requirements`
@@ -557,17 +563,24 @@ The `individual` attribute supports:
 
 * `account` - The account the person is associated with.
 * `address` - The person's address. See [`individual.address`](#individual.address) below.
+* `address_kana` - The Kana variation of the person's address (Japan only). See [`individual.address_kana`](#individual.address_kana) below.
+* `address_kanji` - The Kanji variation of the person's address (Japan only). See [`individual.address_kanji`](#individual.address_kanji) below.
 * `created` - Time at which the object was created. Measured in seconds since the Unix epoch.
 * `dob` - The person's date of birth. See [`individual.dob`](#individual.dob) below.
 * `email` - The person's email address. Also available for accounts where [controller.requirement_collection](https://docs.stripe.com/api/accounts/object#account_object-controller-requirement_collection) is `stripe`.
 * `first_name` - The person's first name. Also available for accounts where [controller.requirement_collection](https://docs.stripe.com/api/accounts/object#account_object-controller-requirement_collection) is `stripe`.
+* `first_name_kana` - The Kana variation of the person's first name (Japan only). Also available for accounts where [controller.requirement_collection](https://docs.stripe.com/api/accounts/object#account_object-controller-requirement_collection) is `stripe`.
+* `first_name_kanji` - The Kanji variation of the person's first name (Japan only). Also available for accounts where [controller.requirement_collection](https://docs.stripe.com/api/accounts/object#account_object-controller-requirement_collection) is `stripe`.
 * `full_name_aliases` - A list of alternate names or aliases that the person is known by. Also available for accounts where [controller.requirement_collection](https://docs.stripe.com/api/accounts/object#account_object-controller-requirement_collection) is `stripe`.
+* `future_requirements` - See [`individual.future_requirements`](#individual.future_requirements) below.
 * `gender` - The person's gender.
 * `id` - Unique identifier for the object.
 * `id_number` - (Sensitive) The person's ID number, as appropriate for their country. For example, a social security number in the U.S., social insurance number in Canada, etc. Instead of the number itself, you can also provide a [PII token provided by Stripe.js](https://docs.stripe.com/js/tokens/create_token?type=pii). Changing this value for the account's representative requires that the account re-accept the [terms of service](https://docs.stripe.com/api/accounts/object#account_object-tos_acceptance).
 * `id_number_provided` - Whether the person's `id_number` was provided. True if either the full ID number was provided or if only the required part of the ID number was provided (ex. last four of an individual's SSN for the US indicated by `ssn_last_4_provided`).
 * `id_number_secondary` - (Sensitive) The person's secondary ID number, as appropriate for their country, will be used for enhanced verification checks. In Thailand, this would be the laser code found on the back of an ID card. Instead of the number itself, you can also provide a [PII token provided by Stripe.js](https://docs.stripe.com/js/tokens/create_token?type=pii). Changing this value for the account's representative requires that the account re-accept the [terms of service](https://docs.stripe.com/api/accounts/object#account_object-tos_acceptance).
 * `last_name` - The person's last name. Also available for accounts where [controller.requirement_collection](https://docs.stripe.com/api/accounts/object#account_object-controller-requirement_collection) is `stripe`.
+* `last_name_kana` - The Kana variation of the person's last name (Japan only). Also available for accounts where [controller.requirement_collection](https://docs.stripe.com/api/accounts/object#account_object-controller-requirement_collection) is `stripe`.
+* `last_name_kanji` - The Kanji variation of the person's last name (Japan only). Also available for accounts where [controller.requirement_collection](https://docs.stripe.com/api/accounts/object#account_object-controller-requirement_collection) is `stripe`.
 * `maiden_name` - The person's maiden name.
 * `metadata` - Set of [key-value pairs](https://docs.stripe.com/api/metadata) that you can attach to an object. This can be useful for storing additional information about the object in a structured format.
 * `object` - String representing the object's type. Objects of the same type share the same value. Possible values: `person`.
@@ -575,6 +588,7 @@ The `individual` attribute supports:
 * `political_exposure` - Indicates if the person or any of their representatives, family members, or other closely related persons, declares that they hold or have held an important public job or function, in any jurisdiction. Possible values: `existing`, `none`.
 * `registered_address` - The person's registered address. See [`individual.registered_address`](#individual.registered_address) below.
 * `relationship` - The relationship that this person has with the account's legal entity. See [`individual.relationship`](#individual.relationship) below.
+* `requirements` - See [`individual.requirements`](#individual.requirements) below.
 * `ssn_last_4` - (Sensitive) The last four digits of the person's Social Security number (U.S. only). Changing this value for the account's representative requires that the account re-accept the [terms of service](https://docs.stripe.com/api/accounts/object#account_object-tos_acceptance).
 * `ssn_last_4_provided` - Whether the last four digits of the person's Social Security number have been provided (U.S. only).
 * `verification` - The person's verification status. See [`individual.verification`](#individual.verification) below.
@@ -591,6 +605,32 @@ The `individual.address` attribute supports:
 * `postal_code` - ZIP or postal code.
 * `state` - State, county, province, or region ([ISO 3166-2](https://en.wikipedia.org/wiki/ISO_3166-2)).
 
+<a id="individual.address_kana"></a>
+### `individual.address_kana`
+
+The `individual.address_kana` attribute supports:
+
+* `city` - City/Ward.
+* `country` - Two-letter country code ([ISO 3166-1 alpha-2](https://en.wikipedia.org/wiki/ISO_3166-1_alpha-2)).
+* `line1` - Block/Building number.
+* `line2` - Building details.
+* `postal_code` - ZIP or postal code.
+* `state` - Prefecture.
+* `town` - Town/cho-me.
+
+<a id="individual.address_kanji"></a>
+### `individual.address_kanji`
+
+The `individual.address_kanji` attribute supports:
+
+* `city` - City/Ward.
+* `country` - Two-letter country code ([ISO 3166-1 alpha-2](https://en.wikipedia.org/wiki/ISO_3166-1_alpha-2)).
+* `line1` - Block/Building number.
+* `line2` - Building details.
+* `postal_code` - ZIP or postal code.
+* `state` - Prefecture.
+* `town` - Town/cho-me.
+
 <a id="individual.dob"></a>
 ### `individual.dob`
 
@@ -599,6 +639,16 @@ The `individual.dob` attribute supports:
 * `day` - The day of birth, between 1 and 31.
 * `month` - The month of birth, between 1 and 12.
 * `year` - The four-digit year of birth.
+
+<a id="individual.future_requirements"></a>
+### `individual.future_requirements`
+
+The `individual.future_requirements` attribute supports:
+
+* `currently_due` - Fields that need to be resolved to keep the person's account enabled. If not resolved by the account's `future_requirements[current_deadline]`, these fields will transition to the main `requirements` hash, and may immediately become `past_due`, but the account may also be given a grace period depending on the account's enablement state prior to transition.
+* `eventually_due` - Fields you must collect when all thresholds are reached. As they become required, they appear in `currently_due` as well, and the account's `future_requirements[current_deadline]` becomes set.
+* `past_due` - Fields that haven't been resolved by the account's `requirements.current_deadline`. These fields need to be resolved to enable the person's account. `future_requirements.past_due` is a subset of `requirements.past_due`.
+* `pending_verification` - Fields that are being reviewed, or might become required depending on the results of a review. If the review fails, these fields can move to `eventually_due`, `currently_due`, `past_due` or `alternatives`. Fields might appear in `eventually_due`, `currently_due`, `past_due` or `alternatives` and in `pending_verification` if one verification fails but another is still pending.
 
 <a id="individual.registered_address"></a>
 ### `individual.registered_address`
@@ -626,13 +676,36 @@ The `individual.relationship` attribute supports:
 * `representative` - Whether the person is authorized as the primary representative of the account. This is the person nominated by the business to provide information about themselves, and general information about the account. There can only be one representative at any given time. At the time the account is created, this person should be set to the person responsible for opening the account.
 * `title` - The person's title (e.g., CEO, Support Engineer).
 
+<a id="individual.requirements"></a>
+### `individual.requirements`
+
+The `individual.requirements` attribute supports:
+
+* `currently_due` - Fields that need to be resolved to keep the person's account enabled. If not resolved by the account's `current_deadline`, these fields will appear in `past_due` as well, and the account is disabled.
+* `errors` - Fields that are `currently_due` and need to be collected again because validation or verification failed. See [`individual.requirements.errors`](#individual.requirements.errors) below.
+* `eventually_due` - Fields you must collect when all thresholds are reached. As they become required, they appear in `currently_due` as well, and the account's `current_deadline` becomes set.
+* `past_due` - Fields that haven't been resolved by `current_deadline`. These fields need to be resolved to enable the person's account.
+* `pending_verification` - Fields that are being reviewed, or might become required depending on the results of a review. If the review fails, these fields can move to `eventually_due`, `currently_due`, `past_due` or `alternatives`. Fields might appear in `eventually_due`, `currently_due`, `past_due` or `alternatives` and in `pending_verification` if one verification fails but another is still pending.
+
+<a id="individual.requirements.errors"></a>
+### `individual.requirements.errors`
+
+The `individual.requirements.errors` attribute is a list. Each element supports:
+
+* `code` - The code for the type of error. Possible values: `external_request`, `information_missing`, `invalid_address_city_state_postal_code`, `invalid_address_cmra_address`, `invalid_address_highway_contract_box`, `invalid_address_private_mailbox`, `invalid_address_registered_agent_address`, `invalid_business_profile_name`, `invalid_business_profile_name_denylisted`, `invalid_company_name_denylisted`, `invalid_dob_age_over_maximum`, `invalid_dob_age_under_18`, `invalid_dob_age_under_minimum`, `invalid_product_description_length`, `invalid_product_description_url_match`, `invalid_representative_country`, `invalid_signator`, `invalid_statement_descriptor_business_mismatch`, `invalid_statement_descriptor_denylisted`, `invalid_statement_descriptor_length`, `invalid_statement_descriptor_prefix_denylisted`, `invalid_statement_descriptor_prefix_mismatch`, `invalid_street_address`, `invalid_tax_id`, `invalid_tax_id_format`, `invalid_tos_acceptance`, `invalid_url_denylisted`, `invalid_url_format`, `invalid_url_web_presence_detected`, `invalid_url_website_business_information_mismatch`, `invalid_url_website_empty`, `invalid_url_website_inaccessible`, `invalid_url_website_inaccessible_geoblocked`, `invalid_url_website_inaccessible_password_protected`, `invalid_url_website_incomplete`, `invalid_url_website_incomplete_cancellation_policy`, `invalid_url_website_incomplete_customer_service_details`, `invalid_url_website_incomplete_legal_restrictions`, `invalid_url_website_incomplete_refund_policy`, `invalid_url_website_incomplete_return_policy`, `invalid_url_website_incomplete_terms_and_conditions`, `invalid_url_website_incomplete_under_construction`, `invalid_url_website_other`, `invalid_value_other`, `unsupported_business_type`, `verification_directors_mismatch`, `verification_document_address_mismatch`, `verification_document_address_missing`, `verification_document_corrupt`, `verification_document_country_not_supported`, `verification_document_directors_mismatch`, `verification_document_dob_mismatch`, `verification_document_duplicate_type`, `verification_document_expired`, `verification_document_failed_copy`, `verification_document_failed_greyscale`, `verification_document_failed_other`, `verification_document_failed_test_mode`, `verification_document_fraudulent`, `verification_document_id_number_mismatch`, `verification_document_id_number_missing`, `verification_document_incomplete`, `verification_document_invalid`, `verification_document_issue_or_expiry_date_missing`, `verification_document_manipulated`, `verification_document_missing_back`, `verification_document_missing_front`, `verification_document_name_mismatch`, `verification_document_name_missing`, `verification_document_nationality_mismatch`, `verification_document_not_readable`, `verification_document_not_signed`, `verification_document_not_uploaded`, `verification_document_photo_mismatch`, `verification_document_too_large`, `verification_document_type_not_supported`, `verification_extraneous_directors`, `verification_failed_address_match`, `verification_failed_authorizer_authority`, `verification_failed_business_iec_number`, `verification_failed_document_match`, `verification_failed_id_number_match`, `verification_failed_keyed_identity`, `verification_failed_keyed_match`, `verification_failed_name_match`, `verification_failed_other`, `verification_failed_representative_authority`, `verification_failed_residential_address`, `verification_failed_tax_id_match`, `verification_failed_tax_id_not_issued`, `verification_legal_entity_structure_mismatch`, `verification_missing_directors`, `verification_missing_executives`, `verification_missing_owners`, `verification_rejected_ownership_exemption_reason`, `verification_requires_additional_memorandum_of_associations`, `verification_requires_additional_proof_of_registration`, `verification_supportability`.
+* `reason` - An informative message that indicates the error type and provides additional details about the error.
+* `requirement` - The specific user onboarding requirement field (in the requirements hash) that needs to be resolved.
+
 <a id="individual.verification"></a>
 ### `individual.verification`
 
 The `individual.verification` attribute supports:
 
 * `additional_document` - A document showing address, either a passport, local ID card, or utility bill from a well-known utility company. See [`individual.verification.additional_document`](#individual.verification.additional_document) below.
+* `details` - A user-displayable string describing the verification state for the person. For example, this may say "Provided identity information could not be verified".
+* `details_code` - One of `document_address_mismatch`, `document_dob_mismatch`, `document_duplicate_type`, `document_id_number_mismatch`, `document_name_mismatch`, `document_nationality_mismatch`, `failed_keyed_identity`, or `failed_other`. A machine-readable code specifying the verification state for the person.
 * `document` - See [`individual.verification.document`](#individual.verification.document) below.
+* `status` - The state of verification for the person. Possible values are `unverified`, `pending`, or `verified`. Please refer [guide](https://docs.stripe.com/connect/handling-api-verification) to handle verification updates.
 
 <a id="individual.verification.additional_document"></a>
 ### `individual.verification.additional_document`
@@ -648,6 +721,8 @@ The `individual.verification.additional_document` attribute supports:
 The `individual.verification.document` attribute supports:
 
 * `back` - The back of an ID returned by a [file upload](https://docs.stripe.com/api#create_file) with a `purpose` value of `identity_document`.
+* `details` - A user-displayable string describing the verification state of this document. For example, if a document is uploaded and the picture is too fuzzy, this may say "Identity document is too unclear to read".
+* `details_code` - One of `document_corrupt`, `document_country_not_supported`, `document_expired`, `document_failed_copy`, `document_failed_other`, `document_failed_test_mode`, `document_fraudulent`, `document_failed_greyscale`, `document_incomplete`, `document_invalid`, `document_manipulated`, `document_missing_back`, `document_missing_front`, `document_not_readable`, `document_not_uploaded`, `document_photo_mismatch`, `document_too_large`, or `document_type_not_supported`. A machine-readable code specifying the verification state for this document.
 * `front` - The front of an ID returned by a [file upload](https://docs.stripe.com/api#create_file) with a `purpose` value of `identity_document`.
 
 <a id="requirements"></a>
@@ -859,3 +934,5 @@ The `tos_acceptance` attribute supports:
 
 * `date` - The Unix timestamp marking when the account representative accepted their service agreement
 * `ip` - The IP address from which the account representative accepted their service agreement
+* `service_agreement` -
+* `user_agent` - The user agent of the browser from which the account representative accepted their service agreement

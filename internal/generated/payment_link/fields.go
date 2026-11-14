@@ -148,6 +148,7 @@ var Table = []fields.Field{
 				{Name: "name", Shape: fields.String, Required: true, Create: true},
 				{Name: "tax_code", Shape: fields.String, Create: true},
 				{Name: "tax_details", Shape: fields.Object, Create: true, Fields: []fields.Field{
+					{Name: "performance_location", Shape: fields.String, Create: true},
 					{Name: "tax_code", Shape: fields.String, Create: true},
 				}},
 				{Name: "unit_label", Shape: fields.String, Create: true},

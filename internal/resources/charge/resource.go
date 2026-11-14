@@ -33,6 +33,13 @@ var Declaration = engine.Declaration{
 	// `statement_descriptor_suffix`, variant `descriptor`), and names a transfer group for a charge
 	// with `transfer_data` (variants `destination` and `transfer_amount`).
 	ServerDefaulted: []string{"statement_descriptor_suffix", "transfer_group"},
+	Answers: map[string]string{
+		// suite: TestChargeAttributes, probes `isolated/destination_string`,
+		// `isolated/destination_account` and `isolated/destination_amount`
+		"destination":              "Stripe refused it, for a connected account with `transfers` and without `card_payments`, and pointed to `transfer_data.destination`; the conformance suite has recorded no account it takes.",
+		"destination_data.account": "Stripe refused it, for a connected account with `transfers` and without `card_payments`, and pointed to `transfer_data.destination`; the conformance suite has recorded no account it takes.",
+		"destination_data.amount":  "Stripe refused it beside such an account; the conformance suite has recorded no account it takes.",
+	},
 	Defaults: map[string]string{
 		// suite: TestChargeAttributes, variant `descriptor`
 		"statement_descriptor_suffix": "none, or the `statement_descriptor` the charge sends",

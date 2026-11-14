@@ -158,7 +158,7 @@ The `payment_method_data.us_bank_account` attribute supports:
 The `payment_method_options` attribute supports:
 
 * `acss_debit` - (Optional) Removing it from the configuration leaves the current value. See [`payment_method_options.acss_debit`](#payment_method_options.acss_debit) below.
-* `card` - (Optional) See [`payment_method_options.card`](#payment_method_options.card) below.
+* `card` - (Optional) Removing it from the configuration leaves the current value. See [`payment_method_options.card`](#payment_method_options.card) below.
 * `klarna` - (Optional) Removing it from the configuration leaves the current value. See [`payment_method_options.klarna`](#payment_method_options.klarna) below.
 * `pix` - (Optional) Removing it from the configuration leaves the current value. See [`payment_method_options.pix`](#payment_method_options.pix) below.
 * `sepa_debit` - (Optional) Removing it from the configuration leaves the current value. See [`payment_method_options.sepa_debit`](#payment_method_options.sepa_debit) below.
@@ -190,9 +190,9 @@ The `payment_method_options.acss_debit.mandate_options` attribute supports:
 
 The `payment_method_options.card` attribute supports:
 
-* `mandate_options` - (Optional) Stripe does not return this value; the provider keeps it from configuration. See [`payment_method_options.card.mandate_options`](#payment_method_options.card.mandate_options) below.
-* `network` - (Optional) Possible values: `amex`, `cartes_bancaires`, `diners`, `discover`, `eftpos_au`, `girocard`, `interac`, `jcb`, `link`, `mastercard`, `unionpay`, `unknown`, `visa`. Stripe does not return this value; the provider keeps it from configuration. Default: not sent.
-* `request_three_d_secure` - (Optional) Possible values: `any`, `automatic`, `challenge`. Stripe does not return this value; the provider keeps it from configuration.
+* `mandate_options` - (Optional) Configuration options for setting up an eMandate for cards issued in India. Removing it from the configuration leaves the current value. See [`payment_method_options.card.mandate_options`](#payment_method_options.card.mandate_options) below.
+* `network` - (Optional) Selected network to process this SetupIntent on. Depends on the available networks of the card attached to the setup intent. Can be only set confirm-time. Possible values: `amex`, `cartes_bancaires`, `diners`, `discover`, `eftpos_au`, `girocard`, `interac`, `jcb`, `link`, `mastercard`, `unionpay`, `unknown`, `visa`. Default: not sent. Removing it from the configuration leaves the current value.
+* `request_three_d_secure` - (Optional) We strongly recommend that you rely on our SCA Engine to automatically prompt your customers for authentication based on risk level and [other requirements](https://docs.stripe.com/strong-customer-authentication). However, if you wish to request 3D Secure based on logic from your own fraud engine, provide this option. If not provided, this value defaults to `automatic`. Read our guide on [manually requesting 3D Secure](https://docs.stripe.com/payments/3d-secure/authentication-flow#manual-three-ds) for more information on how this configuration interacts with Radar and our SCA Engine. Possible values: `any`, `automatic`, `challenge`. Removing it from the configuration leaves the current value.
 * `three_d_secure` - (Optional) See [`payment_method_options.card.three_d_secure`](#payment_method_options.card.three_d_secure) below.
 
 <a id="payment_method_options.card.mandate_options"></a>
@@ -200,16 +200,16 @@ The `payment_method_options.card` attribute supports:
 
 The `payment_method_options.card.mandate_options` attribute supports:
 
-* `amount` - (Required) Stripe does not return this value; the provider keeps it from configuration.
-* `amount_type` - (Required) Possible values: `fixed`, `maximum`. Stripe does not return this value; the provider keeps it from configuration.
-* `currency` - (Required) Stripe does not return this value; the provider keeps it from configuration.
-* `description` - (Optional) Stripe does not return this value; the provider keeps it from configuration.
-* `end_date` - (Optional) Stripe does not return this value; the provider keeps it from configuration.
-* `interval` - (Required) Possible values: `day`, `month`, `sporadic`, `week`, `year`. Stripe does not return this value; the provider keeps it from configuration.
-* `interval_count` - (Optional) Stripe does not return this value; the provider keeps it from configuration.
-* `reference` - (Required) Stripe does not return this value; the provider keeps it from configuration.
-* `start_date` - (Required) Stripe does not return this value; the provider keeps it from configuration.
-* `supported_types` - (Optional) Stripe does not return this value; the provider keeps it from configuration.
+* `amount` - (Required) Amount to be charged for future payments, specified in the presentment currency.
+* `amount_type` - (Required) One of `fixed` or `maximum`. If `fixed`, the `amount` param refers to the exact amount to be charged in future payments. If `maximum`, the amount charged can be up to the value passed for the `amount` param. Possible values: `fixed`, `maximum`.
+* `currency` - (Required) Three-letter [ISO currency code](https://www.iso.org/iso-4217-currency-codes.html), in lowercase. Must be a [supported currency](https://stripe.com/docs/currencies).
+* `description` - (Optional) A description of the mandate or subscription that is meant to be displayed to the customer. Removing it from the configuration leaves the current value.
+* `end_date` - (Optional) End date of the mandate or subscription. If not provided, the mandate will be active until canceled. If provided, end date should be after start date. Removing it from the configuration leaves the current value.
+* `interval` - (Required) Specifies payment frequency. One of `day`, `week`, `month`, `year`, or `sporadic`. Possible values: `day`, `month`, `sporadic`, `week`, `year`.
+* `interval_count` - (Optional) The number of intervals between payments. For example, `interval=month` and `interval_count=3` indicates one payment every three months. Maximum of one year interval allowed (1 year, 12 months, or 52 weeks). This parameter is optional when `interval=sporadic`. Removing it from the configuration leaves the current value.
+* `reference` - (Required) Unique identifier for the mandate or subscription.
+* `start_date` - (Required) Start date of the mandate or subscription. Start date should not be lesser than yesterday.
+* `supported_types` - (Optional) Specifies the type of mandates supported. Possible values are `india`. Removing it from the configuration leaves the current value.
 
 <a id="payment_method_options.card.three_d_secure"></a>
 ### `payment_method_options.card.three_d_secure`
@@ -391,7 +391,7 @@ This resource exports the following attributes in addition to the arguments abov
 * `cancellation_reason` - Reason for cancellation of this SetupIntent, one of `abandoned`, `requested_by_customer`, or `duplicate`. Possible values: `abandoned`, `duplicate`, `requested_by_customer`.
 * `client_secret` - (Sensitive) The client secret of this SetupIntent. Used for client-side retrieval using a publishable key. The client secret can be used to complete payment setup from your frontend. It should not be stored, logged, or exposed to anyone other than the customer. Make sure that you have TLS enabled on any page that includes the client secret.
 * `created` - Time at which the object was created. Measured in seconds since the Unix epoch.
-* `last_setup_error` - The error encountered in the previous SetupIntent confirmation. See [`last_setup_error`](#last_setup_error) below.
+* `last_setup_error` - The error encountered in the previous SetupIntent confirmation. See [`last_setup_error`](../guides/setup_intent-resource-last_setup_error) on its own page.
 * `latest_attempt` - The most recent SetupAttempt for this SetupIntent.
 * `livemode` - If the object exists in live mode, the value is `true`. If the object exists in test mode, the value is `false`.
 * `managed_payments` - See [`managed_payments`](#managed_payments) below.
@@ -400,30 +400,6 @@ This resource exports the following attributes in addition to the arguments abov
 * `payment_method_configuration_details` - Information about the [payment method configuration](https://docs.stripe.com/api/payment_method_configurations) used for this Setup Intent. See [`payment_method_configuration_details`](#payment_method_configuration_details) below.
 * `payment_method_types` - The list of payment method types (e.g. card) that this SetupIntent is allowed to set up. A list of valid payment method types can be found [here](https://docs.stripe.com/api/payment_methods/object#payment_method_object-type).
 * `single_use_mandate` - ID of the single_use Mandate generated by the SetupIntent.
-
-<a id="last_setup_error"></a>
-### `last_setup_error`
-
-The `last_setup_error` attribute supports:
-
-* `advice_code` - For card errors resulting from a card issuer decline, a short string indicating [how to proceed with an error](https://docs.stripe.com/declines/card#retrying-issuer-declines) if they provide one.
-* `charge` - For card errors, the ID of the failed charge.
-* `code` - For some errors that could be handled programmatically, a short string indicating the [error code](https://docs.stripe.com/error-codes) reported.
-* `decline_code` - For card errors resulting from a card issuer decline, a short string indicating the [card issuer's reason for the decline](https://docs.stripe.com/declines#issuer-declines) if they provide one.
-* `doc_url` - A URL to more information about the [error code](https://docs.stripe.com/error-codes) reported.
-* `message` - A human-readable message providing more details about the error. For card errors, these messages can be shown to your users.
-* `network_advice_code` - For card errors resulting from a card issuer decline, a 2 digit code which indicates the advice given to merchant by the card network on how to proceed with an error.
-* `network_decline_code` - For payments declined by the network, an alphanumeric code which indicates the reason the payment failed.
-* `param` - If the error is parameter-specific, the parameter related to the error. For example, you can use this to display a message near the correct form field.
-* `payment_method` - PaymentMethod objects represent your customer's payment instruments. You can use them with [PaymentIntents](https://docs.stripe.com/payments/payment-intents) to collect payments or save them to Customer objects to store instrument details for future payments. Related guides: [Payment Methods](https://docs.stripe.com/payments/payment-methods) and [More Payment Scenarios](https://docs.stripe.com/payments/more-payment-scenarios). See [`last_setup_error.payment_method`](#last_setup_error.payment_method) below.
-* `payment_method_type` - If the error is specific to the type of payment method, the payment method type that had a problem. This field is only populated for invoice-related errors.
-* `request_log_url` - A URL to the request log entry in your dashboard.
-* `type` - The type of error returned. One of `api_error`, `card_error`, `idempotency_error`, or `invalid_request_error` Possible values: `api_error`, `card_error`, `idempotency_error`, `invalid_request_error`.
-
-<a id="last_setup_error.payment_method"></a>
-### `last_setup_error.payment_method`
-
-The `last_setup_error.payment_method` attribute holds a customer payment method, with the attributes of the [`stripe_customer_payment_method`](../data-sources/customer_payment_method) data source and `object`, the name of its type.
 
 <a id="managed_payments"></a>
 ### `managed_payments`
@@ -579,4 +555,4 @@ Using `terraform import`, import a setup intent using its ID. For example:
 % terraform import stripe_setup_intent.card seti_123
 ```
 
-~> Stripe does not return `payment_method_configuration`, `payment_method_data`, `payment_method_options.card`, `payment_method_options.klarna.on_demand`, `payment_method_options.klarna.subscriptions`, `payment_method_options.upi.setup_future_usage`, `payment_method_options.us_bank_account.networks`, `confirmation_token` or `single_use`, so an imported setup intent has them null: a configuration that sets `payment_method_configuration`, `payment_method_data`, `payment_method_options.card`, `payment_method_options.klarna.on_demand`, `payment_method_options.klarna.subscriptions`, `payment_method_options.upi.setup_future_usage` or `payment_method_options.us_bank_account.networks` plans an update after the import, and one that sets `confirmation_token` or `single_use` plans a replacement.
+~> Stripe does not return `payment_method_configuration`, `payment_method_data`, `payment_method_options.card.three_d_secure`, `payment_method_options.klarna.on_demand`, `payment_method_options.klarna.subscriptions`, `payment_method_options.upi.setup_future_usage`, `payment_method_options.us_bank_account.networks`, `confirmation_token` or `single_use`, so an imported setup intent has them null: a configuration that sets `payment_method_configuration`, `payment_method_data`, `payment_method_options.card.three_d_secure`, `payment_method_options.klarna.on_demand`, `payment_method_options.klarna.subscriptions`, `payment_method_options.upi.setup_future_usage` or `payment_method_options.us_bank_account.networks` plans an update after the import, and one that sets `confirmation_token` or `single_use` plans a replacement.

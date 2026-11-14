@@ -637,3 +637,50 @@ func must(data []byte, err error) []byte {
 	}
 	return data
 }
+
+// A map of scalar lists, such as a country spec's bank account currencies by currency, reads each
+// key's list in Stripe's order, and the schema types it as a map of lists of the element shape.
+func TestDecodeReadsAMapOfScalarLists(t *testing.T) {
+	table := append(fixtureTable(), fields.Field{Name: "currencies", Shape: fields.ScalarListMap, Elem: fields.String, Response: true})
+	r := configured(t, fixtureDeclaration(), table, newStub())
+	n, _, ok := r.m.at("currencies")
+	if !ok {
+		t.Fatal("no node for currencies")
+	}
+	if got, want := attrType(n), (types.MapType{ElemType: types.ListType{ElemType: types.StringType}}); !got.Equal(want) {
+		t.Errorf("type %v, want %v", got, want)
+	}
+	body := wire.Object{
+		{Name: "id", Value: wire.String("wid_1")},
+		{Name: "name", Value: wire.String("n")},
+		{Name: "currencies", Value: wire.Object{
+			{Name: "eur", Value: wire.Array{wire.String("DE"), wire.String("AT")}},
+			{Name: "usd", Value: wire.Array{wire.String("US")}},
+		}},
+	}
+	got, diags := r.m.decodeState(body, r.fill(nil), r.objType, false, nil)
+	if diags.HasError() {
+		t.Fatal(diags)
+	}
+	want := types.MapValueMust(types.ListType{ElemType: types.StringType}, map[string]attr.Value{
+		"eur": types.ListValueMust(types.StringType, []attr.Value{types.StringValue("DE"), types.StringValue("AT")}),
+		"usd": types.ListValueMust(types.StringType, []attr.Value{types.StringValue("US")}),
+	})
+	if v := got.Attributes()["currencies"]; !v.Equal(want) {
+		t.Errorf("currencies %v, want %v", v, want)
+	}
+	body[2].Value = wire.Object{{Name: "usd", Value: wire.String("US")}}
+	_, diags = r.m.decodeState(body, r.fill(nil), r.objType, false, nil)
+	if warnings := diags.Warnings(); len(warnings) != 1 || !strings.Contains(warnings[0].Detail(), `key "usd": expected an array`) {
+		t.Errorf("a key that holds no list is a shape the provider does not read: %v", diags)
+	}
+}
+
+// The engine reads a map of scalar lists and never sends one, so a declaration whose table lets
+// the configuration set one does not compile.
+func TestWritableMapOfScalarListsDoesNotCompile(t *testing.T) {
+	table := append(fixtureTable(), fields.Field{Name: "currencies", Shape: fields.ScalarListMap, Elem: fields.String, Create: true, Response: true})
+	if _, err := NewResource(fixtureDeclaration(), table); err == nil || !strings.Contains(err.Error(), "currencies") {
+		t.Errorf("a writable map of lists must be refused, naming it: %v", err)
+	}
+}

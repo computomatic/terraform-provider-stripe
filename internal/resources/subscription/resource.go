@@ -51,6 +51,15 @@ var Declaration = engine.Declaration{
 		"payment_settings.payment_method_options.acss_debit.mandate_options",
 		"payment_settings.payment_method_options.acss_debit.mandate_options.transaction_type",
 		"payment_settings.payment_method_options.customer_balance.bank_transfer",
+		// Stripe keeps the members of Pix's options and of its `mandate_options` a write leaves out
+		// (`siblings_kept`, probe `siblings/35`, fake `v0.43.0`) and refuses each sent as `""`
+		// (probe `unset/35`), so removing one keeps the value Stripe holds and the whole send
+		// carries it.
+		"payment_settings.payment_method_options.pix.expires_after_seconds",
+		"payment_settings.payment_method_options.pix.mandate_options.amount",
+		"payment_settings.payment_method_options.pix.mandate_options.amount_includes_iof",
+		"payment_settings.payment_method_options.pix.mandate_options.end_date",
+		"payment_settings.payment_method_options.pix.mandate_options.payment_schedule",
 	},
 	// Stripe sets `cancellation_details.reason` to `cancellation_requested` when
 	// `cancel_at_period_end` turns true, and clears it when it turns false (suite: update
@@ -101,11 +110,12 @@ var Declaration = engine.Declaration{
 	// sends only those that changed; `issuer` requires its `type` and goes whole, and so do
 	// `payment_settings.payment_method_options`, which the record does not list, as the update
 	// probes sent it. A write of Billie's `company_details` and its `registered_address`, of the
-	// card's, Pix's and the US bank account's options, of Financial Connections, or of a card's,
-	// Pix's or UPI's `mandate_options`, clears what it leaves out (`siblings_cleared`; probes
-	// `isolated/hash_*` and `siblings/32`, which clears the card's `network` too), so the whole
-	// send keeps those whole, and leaves out a member the configuration removes, which Stripe
-	// refuses as `""` (probes `unset/32`, `unset/35` and `unset/36`). ACSS debit's options and
+	// card's and the US bank account's options, of Financial Connections, or of a card's or UPI's
+	// `mandate_options`, clears what it leaves out (`siblings_cleared`; probes `isolated/hash_*`
+	// and `siblings/32`, which clears the card's `network` too), so the whole send keeps those
+	// whole, and leaves out a member the configuration removes, which Stripe refuses as `""`
+	// (probes `unset/32` and `unset/36`). Pix's options and their `mandate_options` keep what a
+	// write leaves out (probe `siblings/35`). ACSS debit's options and
 	// PayTo's `mandate_options` keep what a write leaves out (probes `isolated/hash_acss_debit`
 	// and `siblings/34`), which the whole send also holds. Stripe refuses a customer balance's
 	// options, and their `bank_transfer`, written in part (probes `isolated/hash_customer_balance`

@@ -41,7 +41,7 @@ This data source exports the following attributes in addition to the arguments a
 * `description` - An arbitrary string attached to the object. Often useful for displaying to users.
 * `excluded_payment_method_types` - The list of payment method types to exclude from use with this SetupIntent.
 * `flow_directions` - Indicates the directions of money movement for which this payment method is intended to be used. Include `inbound` if you intend to use the payment method as the origin to pull funds from. Include `outbound` if you intend to use the payment method as the destination to send funds to. You can include both if you intend to use the payment method for both purposes.
-* `last_setup_error` - The error encountered in the previous SetupIntent confirmation. See [`last_setup_error`](#last_setup_error) below.
+* `last_setup_error` - The error encountered in the previous SetupIntent confirmation. See [`last_setup_error`](../guides/setup_intent-data-source-last_setup_error) on its own page.
 * `latest_attempt` - The most recent SetupAttempt for this SetupIntent.
 * `livemode` - If the object exists in live mode, the value is `true`. If the object exists in test mode, the value is `false`.
 * `managed_payments` - See [`managed_payments`](#managed_payments) below.
@@ -67,30 +67,6 @@ The `automatic_payment_methods` attribute supports:
 
 * `allow_redirects` - Controls whether this SetupIntent will accept redirect-based payment methods. Redirect-based payment methods may require your customer to be redirected to a payment method's app or site for authentication or additional steps. To [confirm](https://docs.stripe.com/api/setup_intents/confirm) this SetupIntent, you may be required to provide a `return_url` to redirect customers back to your site after they authenticate or complete the setup. Possible values: `always`, `never`.
 * `enabled` - Automatically calculates compatible payment methods
-
-<a id="last_setup_error"></a>
-### `last_setup_error`
-
-The `last_setup_error` attribute supports:
-
-* `advice_code` - For card errors resulting from a card issuer decline, a short string indicating [how to proceed with an error](https://docs.stripe.com/declines/card#retrying-issuer-declines) if they provide one.
-* `charge` - For card errors, the ID of the failed charge.
-* `code` - For some errors that could be handled programmatically, a short string indicating the [error code](https://docs.stripe.com/error-codes) reported.
-* `decline_code` - For card errors resulting from a card issuer decline, a short string indicating the [card issuer's reason for the decline](https://docs.stripe.com/declines#issuer-declines) if they provide one.
-* `doc_url` - A URL to more information about the [error code](https://docs.stripe.com/error-codes) reported.
-* `message` - A human-readable message providing more details about the error. For card errors, these messages can be shown to your users.
-* `network_advice_code` - For card errors resulting from a card issuer decline, a 2 digit code which indicates the advice given to merchant by the card network on how to proceed with an error.
-* `network_decline_code` - For payments declined by the network, an alphanumeric code which indicates the reason the payment failed.
-* `param` - If the error is parameter-specific, the parameter related to the error. For example, you can use this to display a message near the correct form field.
-* `payment_method` - PaymentMethod objects represent your customer's payment instruments. You can use them with [PaymentIntents](https://docs.stripe.com/payments/payment-intents) to collect payments or save them to Customer objects to store instrument details for future payments. Related guides: [Payment Methods](https://docs.stripe.com/payments/payment-methods) and [More Payment Scenarios](https://docs.stripe.com/payments/more-payment-scenarios). See [`last_setup_error.payment_method`](#last_setup_error.payment_method) below.
-* `payment_method_type` - If the error is specific to the type of payment method, the payment method type that had a problem. This field is only populated for invoice-related errors.
-* `request_log_url` - A URL to the request log entry in your dashboard.
-* `type` - The type of error returned. One of `api_error`, `card_error`, `idempotency_error`, or `invalid_request_error` Possible values: `api_error`, `card_error`, `idempotency_error`, `invalid_request_error`.
-
-<a id="last_setup_error.payment_method"></a>
-### `last_setup_error.payment_method`
-
-The `last_setup_error.payment_method` attribute holds a customer payment method, with the attributes of the [`stripe_customer_payment_method`](../data-sources/customer_payment_method) data source and `object`, the name of its type.
 
 <a id="managed_payments"></a>
 ### `managed_payments`
@@ -305,9 +281,9 @@ The `payment_method_options.acss_debit.mandate_options` attribute supports:
 
 The `payment_method_options.card` attribute supports:
 
-* `mandate_options` - See [`payment_method_options.card.mandate_options`](#payment_method_options.card.mandate_options) below.
-* `network` - Possible values: `amex`, `cartes_bancaires`, `diners`, `discover`, `eftpos_au`, `girocard`, `interac`, `jcb`, `link`, `mastercard`, `unionpay`, `unknown`, `visa`.
-* `request_three_d_secure` - Possible values: `any`, `automatic`, `challenge`.
+* `mandate_options` - Configuration options for setting up an eMandate for cards issued in India. See [`payment_method_options.card.mandate_options`](#payment_method_options.card.mandate_options) below.
+* `network` - Selected network to process this SetupIntent on. Depends on the available networks of the card attached to the setup intent. Can be only set confirm-time. Possible values: `amex`, `cartes_bancaires`, `diners`, `discover`, `eftpos_au`, `girocard`, `interac`, `jcb`, `link`, `mastercard`, `unionpay`, `unknown`, `visa`.
+* `request_three_d_secure` - We strongly recommend that you rely on our SCA Engine to automatically prompt your customers for authentication based on risk level and [other requirements](https://docs.stripe.com/strong-customer-authentication). However, if you wish to request 3D Secure based on logic from your own fraud engine, provide this option. If not provided, this value defaults to `automatic`. Read our guide on [manually requesting 3D Secure](https://docs.stripe.com/payments/3d-secure/authentication-flow#manual-three-ds) for more information on how this configuration interacts with Radar and our SCA Engine. Possible values: `any`, `automatic`, `challenge`.
 * `three_d_secure` - See [`payment_method_options.card.three_d_secure`](#payment_method_options.card.three_d_secure) below.
 
 <a id="payment_method_options.card.mandate_options"></a>
@@ -315,16 +291,16 @@ The `payment_method_options.card` attribute supports:
 
 The `payment_method_options.card.mandate_options` attribute supports:
 
-* `amount` -
-* `amount_type` - Possible values: `fixed`, `maximum`.
-* `currency` -
-* `description` -
-* `end_date` -
-* `interval` - Possible values: `day`, `month`, `sporadic`, `week`, `year`.
-* `interval_count` -
-* `reference` -
-* `start_date` -
-* `supported_types` -
+* `amount` - Amount to be charged for future payments, specified in the presentment currency.
+* `amount_type` - One of `fixed` or `maximum`. If `fixed`, the `amount` param refers to the exact amount to be charged in future payments. If `maximum`, the amount charged can be up to the value passed for the `amount` param. Possible values: `fixed`, `maximum`.
+* `currency` - Three-letter [ISO currency code](https://www.iso.org/iso-4217-currency-codes.html), in lowercase. Must be a [supported currency](https://stripe.com/docs/currencies).
+* `description` - A description of the mandate or subscription that is meant to be displayed to the customer.
+* `end_date` - End date of the mandate or subscription. If not provided, the mandate will be active until canceled. If provided, end date should be after start date.
+* `interval` - Specifies payment frequency. One of `day`, `week`, `month`, `year`, or `sporadic`. Possible values: `day`, `month`, `sporadic`, `week`, `year`.
+* `interval_count` - The number of intervals between payments. For example, `interval=month` and `interval_count=3` indicates one payment every three months. Maximum of one year interval allowed (1 year, 12 months, or 52 weeks). This parameter is optional when `interval=sporadic`.
+* `reference` - Unique identifier for the mandate or subscription.
+* `start_date` - Start date of the mandate or subscription. Start date should not be lesser than yesterday.
+* `supported_types` - Specifies the type of mandates supported. Possible values are `india`.
 
 <a id="payment_method_options.card.three_d_secure"></a>
 ### `payment_method_options.card.three_d_secure`

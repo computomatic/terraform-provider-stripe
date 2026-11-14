@@ -1,8 +1,12 @@
 package account_external_account_test
 
 import (
+	"bytes"
 	"fmt"
+	"image"
+	"image/png"
 	"os"
+	"path/filepath"
 	"regexp"
 	"testing"
 
@@ -586,16 +590,43 @@ func TestAccAccountExternalAccount_tokenThenHolder(t *testing.T) {
 	})
 }
 
-// Stripe refuses `account_type` on a US account, on create and on update, with its own message
-// (suite: "bank_account.account_type"), which the provider passes on.
-func TestAccAccountExternalAccount_accountTypeRefused(t *testing.T) {
+// `account_type` is read-only: the suite proves Stripe taking it only on a JP platform account
+// (probe `jp_account_type`), a country the fake of `v0.43.0` does not serve, so a configuration
+// that sets it fails at plan.
+func TestAccAccountExternalAccount_accountTypeReadOnly(t *testing.T) {
 	acct := acctest.NewAccount(t)
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: tfacc.ProviderFactories,
 		Steps: []resource.TestStep{{
 			Config:      accountBlock(acct) + bankBlock("test", "000111111116", "  account_type = \"checking\"\n"),
-			ExpectError: regexp.MustCompile("account types are not allowed"),
+			PlanOnly:    true,
+			ExpectError: regexp.MustCompile("Invalid Configuration for Read-Only Attribute"),
 		}},
+	})
+}
+
+// A bank account takes its ownership verification documents on create, as the suite's probe
+// `isolated/ownership_documents` sends them, and Stripe never returns them, so state keeps them
+// from configuration.
+func TestAccAccountExternalAccount_ownershipDocuments(t *testing.T) {
+	acct := acctest.NewAccount(t)
+	path := filepath.Join(t.TempDir(), "requirement.png")
+	var b bytes.Buffer
+	if err := png.Encode(&b, image.NewGray(image.Rect(0, 0, 1, 1))); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(path, b.Bytes(), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	file := fmt.Sprintf("\nresource \"stripe_file\" \"requirement\" {\n  source  = %q\n  purpose = \"account_requirement\"\n}\n", path)
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: tfacc.ProviderFactories,
+		Steps: acctest.Forget(t, []resource.TestStep{{
+			Config: accountBlock(acct) + file + bankBlock("test", "000111111116",
+				"  documents = { bank_account_ownership_verification = { files = [stripe_file.requirement.id] } }\n"),
+			Check:            resource.TestCheckResourceAttrPair(address, "documents.bank_account_ownership_verification.files.0", "stripe_file.requirement", "id"),
+			ConfigPlanChecks: resource.ConfigPlanChecks{PostApplyPostRefresh: []plancheck.PlanCheck{plancheck.ExpectEmptyPlan()}},
+		}}, nil, "stripe_file", "stripe_account_external_account"),
 	})
 }
 

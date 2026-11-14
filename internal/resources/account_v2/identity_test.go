@@ -6,6 +6,7 @@ import (
 	"image"
 	"image/png"
 	"maps"
+	"math/rand/v2"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -171,8 +172,9 @@ func TestAccAccountV2_identityInPlace(t *testing.T) {
 // its configuration, and `update/6`, a customer created with every setting of its, each of
 // which an update changes whole. Branding names business icon and logo uploads, which Stripe
 // takes only 128 pixels square or larger, and only on an update: the record shows a create taking
-// them with no effect (`accepted_ignored`), so the create here leaves them out.
-func configurationsConfig(t *testing.T, c acctest.Config, updated bool) string {
+// them with no effect (`accepted_ignored`), so the create here leaves them out. digits are the
+// seven digits after the customer's invoice prefix letter.
+func configurationsConfig(t *testing.T, c acctest.Config, digits string, updated bool) string {
 	dir := t.TempDir()
 	files := ""
 	for _, f := range []struct{ name, purpose string }{
@@ -203,7 +205,7 @@ func configurationsConfig(t *testing.T, c acctest.Config, updated bool) string {
         custom_fields = [{ name = "Reference", value = "PO-1" }]
         footer        = "Thank you"
         next_sequence = 7
-        prefix        = "A0000007"
+        prefix        = "A` + digits + `"
         rendering     = { amount_tax_display = "exclude_tax" }
       } }
       capabilities = { automatic_indirect_tax = { requested = true } }
@@ -233,7 +235,7 @@ func configurationsConfig(t *testing.T, c acctest.Config, updated bool) string {
         custom_fields = [{ name = "Purchase order", value = "PO-2" }]
         footer        = "Thanks again"
         next_sequence = 8
-        prefix        = "B0000007"
+        prefix        = "B` + digits + `"
         rendering     = { amount_tax_display = "include_inclusive_tax" }
       } }
       capabilities = { automatic_indirect_tax = { requested = false } }
@@ -268,12 +270,15 @@ resource "stripe_account_v2" "customer" {
 // form is checked.
 func TestAccAccountV2_configurationsOnCreate(t *testing.T) {
 	acct := acctest.NewAccount(t)
+	// Stripe keeps an invoice prefix unique among an account's customers, so each run takes its
+	// own, `A` or `B` and seven random digits, as the suite generates it (`$gen` `digits`).
+	digits := fmt.Sprintf("%07d", rand.IntN(10_000_000))
 	status := regexp.MustCompile(`^(active|pending|restricted|unsupported)$`)
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: tfacc.ProviderFactories,
 		Steps: acctest.Forget(t, []resource.TestStep{
 			{
-				Config: configurationsConfig(t, acct, false),
+				Config: configurationsConfig(t, acct, digits, false),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr("stripe_account_v2.merchant", "configuration.merchant.mcc", "5734"),
 					resource.TestCheckResourceAttr("stripe_account_v2.merchant", "configuration.merchant.branding.primary_color", "#0a2540"),
@@ -289,7 +294,7 @@ func TestAccAccountV2_configurationsOnCreate(t *testing.T) {
 				ConfigPlanChecks: resource.ConfigPlanChecks{PostApplyPostRefresh: []plancheck.PlanCheck{plancheck.ExpectEmptyPlan()}},
 			},
 			{
-				Config:      configurationsConfig(t, acct, true),
+				Config:      configurationsConfig(t, acct, digits, true),
 				ExpectError: regexp.MustCompile("Changing\\s+`configuration\\.(customer|merchant)`"),
 			},
 		}, nil, "stripe_account_v2", "stripe_file"),

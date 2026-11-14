@@ -353,6 +353,7 @@ The `line_items.price_data.product_data` attribute supports:
 
 The `line_items.price_data.product_data.tax_details` attribute supports:
 
+* `performance_location` -
 * `tax_code` -
 
 <a id="line_items.price_data.recurring"></a>

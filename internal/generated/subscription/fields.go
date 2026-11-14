@@ -231,9 +231,9 @@ var Table = []fields.Field{
 					{Name: "purpose", Shape: fields.String, Create: true, Update: true, Response: true, Stable: true, Enum: []string{"dependant_support", "government", "loan", "mortgage", "other", "pension", "personal", "retail", "salary", "tax", "utility"}, Description: "The purpose for which payments are made. Has a default value based on your merchant category code.", Default: &fields.Default{Kind: fields.DefaultNone}},
 				}},
 			}},
-			{Name: "pix", Shape: fields.Object, Create: true, Update: true, Response: true, Description: "This sub-hash contains details about the Pix payment method options to pass to invoices created by the subscription.", SiblingsCleared: true, Fields: []fields.Field{
+			{Name: "pix", Shape: fields.Object, Create: true, Update: true, Response: true, Description: "This sub-hash contains details about the Pix payment method options to pass to invoices created by the subscription.", Fields: []fields.Field{
 				{Name: "expires_after_seconds", Shape: fields.Int, Create: true, Update: true, Response: true, Stable: true, Description: "The number of seconds (between 10 and 1209600) after which Pix payment will expire. Defaults to 86400 seconds.", Default: &fields.Default{Kind: fields.DefaultNone}},
-				{Name: "mandate_options", Shape: fields.Object, Create: true, Update: true, Response: true, SiblingsCleared: true, Fields: []fields.Field{
+				{Name: "mandate_options", Shape: fields.Object, Create: true, Update: true, Response: true, Fields: []fields.Field{
 					{Name: "amount", Shape: fields.Int, Create: true, Update: true, Response: true, Stable: true, Description: "Amount to be charged for future payments.", Default: &fields.Default{Kind: fields.DefaultNone}},
 					{Name: "amount_includes_iof", Shape: fields.String, Create: true, Update: true, Response: true, Stable: true, Enum: []string{"always", "never"}, Description: "Determines if the amount includes the IOF tax.", Default: &fields.Default{Kind: fields.DefaultNone}},
 					{Name: "end_date", Shape: fields.String, Create: true, Update: true, Response: true, Stable: true, Description: "Date when the mandate expires and no further payments will be charged, in `YYYY-MM-DD`.", Default: &fields.Default{Kind: fields.DefaultNone}},

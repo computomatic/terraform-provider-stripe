@@ -64,7 +64,7 @@ This data source exports the following attributes in addition to the arguments a
 * `sofort` - See [`sofort`](#sofort) below.
 * `type` - The type of the PaymentMethod. An additional hash is included on the PaymentMethod with a name matching this value. It contains additional information specific to the PaymentMethod type. Possible values: `acss_debit`, `affirm`, `afterpay_clearpay`, `alipay`, `alma`, `amazon_pay`, `au_becs_debit`, `bacs_debit`, `bancontact`, `billie`, `bizum`, `blik`, `boleto`, `card`, `card_present`, `cashapp`, `crypto`, `custom`, `customer_balance`, `eps`, `fpx`, `giropay`, `grabpay`, `ideal`, `interac_present`, `kakao_pay`, `klarna`, `konbini`, `kr_card`, `link`, `mb_way`, `mobilepay`, `multibanco`, `naver_pay`, `nz_bank_account`, `oxxo`, `p24`, `pay_by_bank`, `payco`, `paynow`, `paypal`, `paypay`, `payto`, `pix`, `promptpay`, `revolut_pay`, `samsung_pay`, `satispay`, `scalapay`, `sepa_debit`, `sequra`, `sofort`, `sunbit`, `swish`, `twint`, `upi`, `us_bank_account`, `wechat_pay`, `zip`.
 * `upi` - See [`upi`](#upi) below.
-* `us_bank_account` - See [`us_bank_account`](#us_bank_account) below.
+* `us_bank_account` - If this is an `us_bank_account` PaymentMethod, this hash contains details about the US bank account payment method. See [`us_bank_account`](#us_bank_account) below.
 
 <a id="acss_debit"></a>
 ### `acss_debit`

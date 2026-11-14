@@ -173,12 +173,23 @@ The `configuration.customer.shipping.address` attribute supports:
 The `configuration.merchant` attribute supports:
 
 * `applied` - Represents the state of the configuration, and can be updated to deactivate or re-apply a configuration.
+* `bacs_debit_payments` - Settings used for Bacs debit payments. See [`configuration.merchant.bacs_debit_payments`](#configuration.merchant.bacs_debit_payments) below.
 * `branding` - Settings used to apply the merchant's branding to email receipts, invoices, Checkout, and other products. See [`configuration.merchant.branding`](#configuration.merchant.branding) below.
 * `capabilities` - Capabilities to request on the Merchant Configuration. See [`configuration.merchant.capabilities`](#configuration.merchant.capabilities) below.
 * `card_payments` - Card payments settings. See [`configuration.merchant.card_payments`](#configuration.merchant.card_payments) below.
+* `konbini_payments` - Settings specific to Konbini payments on the account. See [`configuration.merchant.konbini_payments`](#configuration.merchant.konbini_payments) below.
 * `mcc` - The Merchant Category Code (MCC) for the Merchant Configuration. MCCs classify businesses based on the goods or services they provide.
+* `script_statement_descriptor` - Settings for the default text that appears on statements for language variations. See [`configuration.merchant.script_statement_descriptor`](#configuration.merchant.script_statement_descriptor) below.
+* `sepa_debit_payments` - Settings used for SEPA Direct Debit payments. See [`configuration.merchant.sepa_debit_payments`](#configuration.merchant.sepa_debit_payments) below.
 * `statement_descriptor` - Statement descriptor. See [`configuration.merchant.statement_descriptor`](#configuration.merchant.statement_descriptor) below.
 * `support` - Publicly available contact information for sending support issues to. See [`configuration.merchant.support`](#configuration.merchant.support) below.
+
+<a id="configuration.merchant.bacs_debit_payments"></a>
+### `configuration.merchant.bacs_debit_payments`
+
+The `configuration.merchant.bacs_debit_payments` attribute supports:
+
+* `display_name` - Display name for Bacs Direct Debit payments.
 
 <a id="configuration.merchant.branding"></a>
 ### `configuration.merchant.branding`
@@ -199,28 +210,47 @@ The `configuration.merchant.capabilities` attribute supports:
 * `acss_debit_payments` - Allow the merchant to process ACSS debit payments. See [`configuration.merchant.capabilities.acss_debit_payments`](#configuration.merchant.capabilities.acss_debit_payments) below.
 * `affirm_payments` - Allow the merchant to process Affirm payments. See [`configuration.merchant.capabilities.affirm_payments`](#configuration.merchant.capabilities.affirm_payments) below.
 * `afterpay_clearpay_payments` - Allow the merchant to process Afterpay/Clearpay payments. See [`configuration.merchant.capabilities.afterpay_clearpay_payments`](#configuration.merchant.capabilities.afterpay_clearpay_payments) below.
+* `alma_payments` - Allow the merchant to process Alma payments. See [`configuration.merchant.capabilities.alma_payments`](#configuration.merchant.capabilities.alma_payments) below.
 * `amazon_pay_payments` - Allow the merchant to process Amazon Pay payments. See [`configuration.merchant.capabilities.amazon_pay_payments`](#configuration.merchant.capabilities.amazon_pay_payments) below.
+* `au_becs_debit_payments` - Allow the merchant to process Australian BECS Direct Debit payments. See [`configuration.merchant.capabilities.au_becs_debit_payments`](#configuration.merchant.capabilities.au_becs_debit_payments) below.
+* `bacs_debit_payments` - Allow the merchant to process BACS Direct Debit payments. See [`configuration.merchant.capabilities.bacs_debit_payments`](#configuration.merchant.capabilities.bacs_debit_payments) below.
 * `bancontact_payments` - Allow the merchant to process Bancontact payments. See [`configuration.merchant.capabilities.bancontact_payments`](#configuration.merchant.capabilities.bancontact_payments) below.
+* `blik_payments` - Allow the merchant to process BLIK payments. See [`configuration.merchant.capabilities.blik_payments`](#configuration.merchant.capabilities.blik_payments) below.
 * `blik_recurring_payments` - Allow the merchant to process recurring BLIK payments. See [`configuration.merchant.capabilities.blik_recurring_payments`](#configuration.merchant.capabilities.blik_recurring_payments) below.
 * `card_payments` - Allow the merchant to collect card payments. See [`configuration.merchant.capabilities.card_payments`](#configuration.merchant.capabilities.card_payments) below.
 * `cartes_bancaires_payments` - Allow the merchant to process Cartes Bancaires payments. See [`configuration.merchant.capabilities.cartes_bancaires_payments`](#configuration.merchant.capabilities.cartes_bancaires_payments) below.
 * `cashapp_payments` - Allow the merchant to process Cash App payments. See [`configuration.merchant.capabilities.cashapp_payments`](#configuration.merchant.capabilities.cashapp_payments) below.
 * `eps_payments` - Allow the merchant to process EPS payments. See [`configuration.merchant.capabilities.eps_payments`](#configuration.merchant.capabilities.eps_payments) below.
+* `fpx_payments` - Allow the merchant to process FPX payments. See [`configuration.merchant.capabilities.fpx_payments`](#configuration.merchant.capabilities.fpx_payments) below.
 * `gb_bank_transfer_payments` - Allow the merchant to process UK bank transfer payments. See [`configuration.merchant.capabilities.gb_bank_transfer_payments`](#configuration.merchant.capabilities.gb_bank_transfer_payments) below.
+* `grabpay_payments` - Allow the merchant to process GrabPay payments. See [`configuration.merchant.capabilities.grabpay_payments`](#configuration.merchant.capabilities.grabpay_payments) below.
 * `ideal_payments` - Allow the merchant to process iDEAL payments. See [`configuration.merchant.capabilities.ideal_payments`](#configuration.merchant.capabilities.ideal_payments) below.
+* `jcb_payments` - Allow the merchant to process JCB card payments. See [`configuration.merchant.capabilities.jcb_payments`](#configuration.merchant.capabilities.jcb_payments) below.
+* `jp_bank_transfer_payments` - Allow the merchant to process Japanese bank transfer payments. See [`configuration.merchant.capabilities.jp_bank_transfer_payments`](#configuration.merchant.capabilities.jp_bank_transfer_payments) below.
 * `kakao_pay_payments` - Allow the merchant to process Kakao Pay payments. See [`configuration.merchant.capabilities.kakao_pay_payments`](#configuration.merchant.capabilities.kakao_pay_payments) below.
 * `klarna_payments` - Allow the merchant to process Klarna payments. See [`configuration.merchant.capabilities.klarna_payments`](#configuration.merchant.capabilities.klarna_payments) below.
 * `kr_card_payments` - Allow the merchant to process Korean card payments. See [`configuration.merchant.capabilities.kr_card_payments`](#configuration.merchant.capabilities.kr_card_payments) below.
 * `link_payments` - Allow the merchant to process Link payments. See [`configuration.merchant.capabilities.link_payments`](#configuration.merchant.capabilities.link_payments) below.
+* `mobilepay_payments` - Allow the merchant to process MobilePay payments. See [`configuration.merchant.capabilities.mobilepay_payments`](#configuration.merchant.capabilities.mobilepay_payments) below.
 * `multibanco_payments` - Allow the merchant to process Multibanco payments. See [`configuration.merchant.capabilities.multibanco_payments`](#configuration.merchant.capabilities.multibanco_payments) below.
 * `naver_pay_payments` - Allow the merchant to process Naver Pay payments. See [`configuration.merchant.capabilities.naver_pay_payments`](#configuration.merchant.capabilities.naver_pay_payments) below.
+* `oxxo_payments` - Allow the merchant to process OXXO payments. See [`configuration.merchant.capabilities.oxxo_payments`](#configuration.merchant.capabilities.oxxo_payments) below.
 * `p24_payments` - Allow the merchant to process Przelewy24 (P24) payments. See [`configuration.merchant.capabilities.p24_payments`](#configuration.merchant.capabilities.p24_payments) below.
+* `pay_by_bank_payments` - Allow the merchant to process Pay by Bank payments. See [`configuration.merchant.capabilities.pay_by_bank_payments`](#configuration.merchant.capabilities.pay_by_bank_payments) below.
 * `payco_payments` - Allow the merchant to process PAYCO payments. See [`configuration.merchant.capabilities.payco_payments`](#configuration.merchant.capabilities.payco_payments) below.
+* `paynow_payments` - Allow the merchant to process PayNow payments. See [`configuration.merchant.capabilities.paynow_payments`](#configuration.merchant.capabilities.paynow_payments) below.
+* `promptpay_payments` - Allow the merchant to process PromptPay payments. See [`configuration.merchant.capabilities.promptpay_payments`](#configuration.merchant.capabilities.promptpay_payments) below.
+* `revolut_pay_payments` - Allow the merchant to process Revolut Pay payments. See [`configuration.merchant.capabilities.revolut_pay_payments`](#configuration.merchant.capabilities.revolut_pay_payments) below.
 * `samsung_pay_payments` - Allow the merchant to process Samsung Pay payments. See [`configuration.merchant.capabilities.samsung_pay_payments`](#configuration.merchant.capabilities.samsung_pay_payments) below.
 * `satispay_payments` - Allow the merchant to process Satispay payments. See [`configuration.merchant.capabilities.satispay_payments`](#configuration.merchant.capabilities.satispay_payments) below.
+* `sepa_bank_transfer_payments` - Allow the merchant to process SEPA bank transfer payments. See [`configuration.merchant.capabilities.sepa_bank_transfer_payments`](#configuration.merchant.capabilities.sepa_bank_transfer_payments) below.
+* `sepa_debit_payments` - Allow the merchant to process SEPA Direct Debit payments. See [`configuration.merchant.capabilities.sepa_debit_payments`](#configuration.merchant.capabilities.sepa_debit_payments) below.
+* `sequra_payments` - Allow the merchant to process SeQura payments. See [`configuration.merchant.capabilities.sequra_payments`](#configuration.merchant.capabilities.sequra_payments) below.
 * `stripe_balance` - Capabilities that enable the merchant to manage their Stripe Balance (/v1/balance). See [`configuration.merchant.capabilities.stripe_balance`](#configuration.merchant.capabilities.stripe_balance) below.
 * `sunbit_payments` - Allow the merchant to process Sunbit payments. See [`configuration.merchant.capabilities.sunbit_payments`](#configuration.merchant.capabilities.sunbit_payments) below.
+* `twint_payments` - Allow the merchant to process TWINT payments. See [`configuration.merchant.capabilities.twint_payments`](#configuration.merchant.capabilities.twint_payments) below.
 * `us_bank_transfer_payments` - Allow the merchant to process US bank transfer payments. See [`configuration.merchant.capabilities.us_bank_transfer_payments`](#configuration.merchant.capabilities.us_bank_transfer_payments) below.
+* `zip_payments` - Allow the merchant to process Zip payments. See [`configuration.merchant.capabilities.zip_payments`](#configuration.merchant.capabilities.zip_payments) below.
 
 <a id="configuration.merchant.capabilities.ach_debit_payments"></a>
 ### `configuration.merchant.capabilities.ach_debit_payments`
@@ -290,6 +320,23 @@ The `configuration.merchant.capabilities.afterpay_clearpay_payments.status_detai
 * `code` - Machine-readable code explaining the reason for the Capability to be in its current status. Possible values: `determining_status`, `rejected_fraud`, `rejected_incomplete_verification`, `rejected_listed`, `rejected_other`, `rejected_platform_fraud`, `rejected_platform_other`, `rejected_platform_terms_of_service`, `rejected_terms_of_service`, `requirements_past_due`, `requirements_pending_verification`, `restricted_other`, `unsupported_business`, `unsupported_country`, `unsupported_entity_type`.
 * `resolution` - Machine-readable code explaining how to make the Capability active. Possible values: `contact_stripe`, `no_resolution`, `provide_info`.
 
+<a id="configuration.merchant.capabilities.alma_payments"></a>
+### `configuration.merchant.capabilities.alma_payments`
+
+The `configuration.merchant.capabilities.alma_payments` attribute supports:
+
+* `requested` - To request a new Capability for an account, pass true. There can be a delay before the requested Capability becomes active.
+* `status` - The status of the Capability. Possible values: `active`, `pending`, `rejected`, `restricted`, `unsupported`.
+* `status_details` - Additional details about the capability's status. This value is empty when `status` is `active`. See [`configuration.merchant.capabilities.alma_payments.status_details`](#configuration.merchant.capabilities.alma_payments.status_details) below.
+
+<a id="configuration.merchant.capabilities.alma_payments.status_details"></a>
+### `configuration.merchant.capabilities.alma_payments.status_details`
+
+The `configuration.merchant.capabilities.alma_payments.status_details` attribute is a list. Each element supports:
+
+* `code` - Machine-readable code explaining the reason for the Capability to be in its current status. Possible values: `determining_status`, `rejected_fraud`, `rejected_incomplete_verification`, `rejected_listed`, `rejected_other`, `rejected_platform_fraud`, `rejected_platform_other`, `rejected_platform_terms_of_service`, `rejected_terms_of_service`, `requirements_past_due`, `requirements_pending_verification`, `restricted_other`, `unsupported_business`, `unsupported_country`, `unsupported_entity_type`.
+* `resolution` - Machine-readable code explaining how to make the Capability active. Possible values: `contact_stripe`, `no_resolution`, `provide_info`.
+
 <a id="configuration.merchant.capabilities.amazon_pay_payments"></a>
 ### `configuration.merchant.capabilities.amazon_pay_payments`
 
@@ -307,6 +354,40 @@ The `configuration.merchant.capabilities.amazon_pay_payments.status_details` att
 * `code` - Machine-readable code explaining the reason for the Capability to be in its current status. Possible values: `determining_status`, `rejected_fraud`, `rejected_incomplete_verification`, `rejected_listed`, `rejected_other`, `rejected_platform_fraud`, `rejected_platform_other`, `rejected_platform_terms_of_service`, `rejected_terms_of_service`, `requirements_past_due`, `requirements_pending_verification`, `restricted_other`, `unsupported_business`, `unsupported_country`, `unsupported_entity_type`.
 * `resolution` - Machine-readable code explaining how to make the Capability active. Possible values: `contact_stripe`, `no_resolution`, `provide_info`.
 
+<a id="configuration.merchant.capabilities.au_becs_debit_payments"></a>
+### `configuration.merchant.capabilities.au_becs_debit_payments`
+
+The `configuration.merchant.capabilities.au_becs_debit_payments` attribute supports:
+
+* `requested` - To request a new Capability for an account, pass true. There can be a delay before the requested Capability becomes active.
+* `status` - The status of the Capability. Possible values: `active`, `pending`, `rejected`, `restricted`, `unsupported`.
+* `status_details` - Additional details about the capability's status. This value is empty when `status` is `active`. See [`configuration.merchant.capabilities.au_becs_debit_payments.status_details`](#configuration.merchant.capabilities.au_becs_debit_payments.status_details) below.
+
+<a id="configuration.merchant.capabilities.au_becs_debit_payments.status_details"></a>
+### `configuration.merchant.capabilities.au_becs_debit_payments.status_details`
+
+The `configuration.merchant.capabilities.au_becs_debit_payments.status_details` attribute is a list. Each element supports:
+
+* `code` - Machine-readable code explaining the reason for the Capability to be in its current status. Possible values: `determining_status`, `rejected_fraud`, `rejected_incomplete_verification`, `rejected_listed`, `rejected_other`, `rejected_platform_fraud`, `rejected_platform_other`, `rejected_platform_terms_of_service`, `rejected_terms_of_service`, `requirements_past_due`, `requirements_pending_verification`, `restricted_other`, `unsupported_business`, `unsupported_country`, `unsupported_entity_type`.
+* `resolution` - Machine-readable code explaining how to make the Capability active. Possible values: `contact_stripe`, `no_resolution`, `provide_info`.
+
+<a id="configuration.merchant.capabilities.bacs_debit_payments"></a>
+### `configuration.merchant.capabilities.bacs_debit_payments`
+
+The `configuration.merchant.capabilities.bacs_debit_payments` attribute supports:
+
+* `requested` - To request a new Capability for an account, pass true. There can be a delay before the requested Capability becomes active.
+* `status` - The status of the Capability. Possible values: `active`, `pending`, `rejected`, `restricted`, `unsupported`.
+* `status_details` - Additional details about the capability's status. This value is empty when `status` is `active`. See [`configuration.merchant.capabilities.bacs_debit_payments.status_details`](#configuration.merchant.capabilities.bacs_debit_payments.status_details) below.
+
+<a id="configuration.merchant.capabilities.bacs_debit_payments.status_details"></a>
+### `configuration.merchant.capabilities.bacs_debit_payments.status_details`
+
+The `configuration.merchant.capabilities.bacs_debit_payments.status_details` attribute is a list. Each element supports:
+
+* `code` - Machine-readable code explaining the reason for the Capability to be in its current status. Possible values: `determining_status`, `rejected_fraud`, `rejected_incomplete_verification`, `rejected_listed`, `rejected_other`, `rejected_platform_fraud`, `rejected_platform_other`, `rejected_platform_terms_of_service`, `rejected_terms_of_service`, `requirements_past_due`, `requirements_pending_verification`, `restricted_other`, `unsupported_business`, `unsupported_country`, `unsupported_entity_type`.
+* `resolution` - Machine-readable code explaining how to make the Capability active. Possible values: `contact_stripe`, `no_resolution`, `provide_info`.
+
 <a id="configuration.merchant.capabilities.bancontact_payments"></a>
 ### `configuration.merchant.capabilities.bancontact_payments`
 
@@ -320,6 +401,23 @@ The `configuration.merchant.capabilities.bancontact_payments` attribute supports
 ### `configuration.merchant.capabilities.bancontact_payments.status_details`
 
 The `configuration.merchant.capabilities.bancontact_payments.status_details` attribute is a list. Each element supports:
+
+* `code` - Machine-readable code explaining the reason for the Capability to be in its current status. Possible values: `determining_status`, `rejected_fraud`, `rejected_incomplete_verification`, `rejected_listed`, `rejected_other`, `rejected_platform_fraud`, `rejected_platform_other`, `rejected_platform_terms_of_service`, `rejected_terms_of_service`, `requirements_past_due`, `requirements_pending_verification`, `restricted_other`, `unsupported_business`, `unsupported_country`, `unsupported_entity_type`.
+* `resolution` - Machine-readable code explaining how to make the Capability active. Possible values: `contact_stripe`, `no_resolution`, `provide_info`.
+
+<a id="configuration.merchant.capabilities.blik_payments"></a>
+### `configuration.merchant.capabilities.blik_payments`
+
+The `configuration.merchant.capabilities.blik_payments` attribute supports:
+
+* `requested` - To request a new Capability for an account, pass true. There can be a delay before the requested Capability becomes active.
+* `status` - The status of the Capability. Possible values: `active`, `pending`, `rejected`, `restricted`, `unsupported`.
+* `status_details` - Additional details about the capability's status. This value is empty when `status` is `active`. See [`configuration.merchant.capabilities.blik_payments.status_details`](#configuration.merchant.capabilities.blik_payments.status_details) below.
+
+<a id="configuration.merchant.capabilities.blik_payments.status_details"></a>
+### `configuration.merchant.capabilities.blik_payments.status_details`
+
+The `configuration.merchant.capabilities.blik_payments.status_details` attribute is a list. Each element supports:
 
 * `code` - Machine-readable code explaining the reason for the Capability to be in its current status. Possible values: `determining_status`, `rejected_fraud`, `rejected_incomplete_verification`, `rejected_listed`, `rejected_other`, `rejected_platform_fraud`, `rejected_platform_other`, `rejected_platform_terms_of_service`, `rejected_terms_of_service`, `requirements_past_due`, `requirements_pending_verification`, `restricted_other`, `unsupported_business`, `unsupported_country`, `unsupported_entity_type`.
 * `resolution` - Machine-readable code explaining how to make the Capability active. Possible values: `contact_stripe`, `no_resolution`, `provide_info`.
@@ -409,6 +507,23 @@ The `configuration.merchant.capabilities.eps_payments.status_details` attribute 
 * `code` - Machine-readable code explaining the reason for the Capability to be in its current status. Possible values: `determining_status`, `rejected_fraud`, `rejected_incomplete_verification`, `rejected_listed`, `rejected_other`, `rejected_platform_fraud`, `rejected_platform_other`, `rejected_platform_terms_of_service`, `rejected_terms_of_service`, `requirements_past_due`, `requirements_pending_verification`, `restricted_other`, `unsupported_business`, `unsupported_country`, `unsupported_entity_type`.
 * `resolution` - Machine-readable code explaining how to make the Capability active. Possible values: `contact_stripe`, `no_resolution`, `provide_info`.
 
+<a id="configuration.merchant.capabilities.fpx_payments"></a>
+### `configuration.merchant.capabilities.fpx_payments`
+
+The `configuration.merchant.capabilities.fpx_payments` attribute supports:
+
+* `requested` - To request a new Capability for an account, pass true. There can be a delay before the requested Capability becomes active.
+* `status` - The status of the Capability. Possible values: `active`, `pending`, `rejected`, `restricted`, `unsupported`.
+* `status_details` - Additional details about the capability's status. This value is empty when `status` is `active`. See [`configuration.merchant.capabilities.fpx_payments.status_details`](#configuration.merchant.capabilities.fpx_payments.status_details) below.
+
+<a id="configuration.merchant.capabilities.fpx_payments.status_details"></a>
+### `configuration.merchant.capabilities.fpx_payments.status_details`
+
+The `configuration.merchant.capabilities.fpx_payments.status_details` attribute is a list. Each element supports:
+
+* `code` - Machine-readable code explaining the reason for the Capability to be in its current status. Possible values: `determining_status`, `rejected_fraud`, `rejected_incomplete_verification`, `rejected_listed`, `rejected_other`, `rejected_platform_fraud`, `rejected_platform_other`, `rejected_platform_terms_of_service`, `rejected_terms_of_service`, `requirements_past_due`, `requirements_pending_verification`, `restricted_other`, `unsupported_business`, `unsupported_country`, `unsupported_entity_type`.
+* `resolution` - Machine-readable code explaining how to make the Capability active. Possible values: `contact_stripe`, `no_resolution`, `provide_info`.
+
 <a id="configuration.merchant.capabilities.gb_bank_transfer_payments"></a>
 ### `configuration.merchant.capabilities.gb_bank_transfer_payments`
 
@@ -426,6 +541,23 @@ The `configuration.merchant.capabilities.gb_bank_transfer_payments.status_detail
 * `code` - Machine-readable code explaining the reason for the Capability to be in its current status. Possible values: `determining_status`, `rejected_fraud`, `rejected_incomplete_verification`, `rejected_listed`, `rejected_other`, `rejected_platform_fraud`, `rejected_platform_other`, `rejected_platform_terms_of_service`, `rejected_terms_of_service`, `requirements_past_due`, `requirements_pending_verification`, `restricted_other`, `unsupported_business`, `unsupported_country`, `unsupported_entity_type`.
 * `resolution` - Machine-readable code explaining how to make the Capability active. Possible values: `contact_stripe`, `no_resolution`, `provide_info`.
 
+<a id="configuration.merchant.capabilities.grabpay_payments"></a>
+### `configuration.merchant.capabilities.grabpay_payments`
+
+The `configuration.merchant.capabilities.grabpay_payments` attribute supports:
+
+* `requested` - To request a new Capability for an account, pass true. There can be a delay before the requested Capability becomes active.
+* `status` - The status of the Capability. Possible values: `active`, `pending`, `rejected`, `restricted`, `unsupported`.
+* `status_details` - Additional details about the capability's status. This value is empty when `status` is `active`. See [`configuration.merchant.capabilities.grabpay_payments.status_details`](#configuration.merchant.capabilities.grabpay_payments.status_details) below.
+
+<a id="configuration.merchant.capabilities.grabpay_payments.status_details"></a>
+### `configuration.merchant.capabilities.grabpay_payments.status_details`
+
+The `configuration.merchant.capabilities.grabpay_payments.status_details` attribute is a list. Each element supports:
+
+* `code` - Machine-readable code explaining the reason for the Capability to be in its current status. Possible values: `determining_status`, `rejected_fraud`, `rejected_incomplete_verification`, `rejected_listed`, `rejected_other`, `rejected_platform_fraud`, `rejected_platform_other`, `rejected_platform_terms_of_service`, `rejected_terms_of_service`, `requirements_past_due`, `requirements_pending_verification`, `restricted_other`, `unsupported_business`, `unsupported_country`, `unsupported_entity_type`.
+* `resolution` - Machine-readable code explaining how to make the Capability active. Possible values: `contact_stripe`, `no_resolution`, `provide_info`.
+
 <a id="configuration.merchant.capabilities.ideal_payments"></a>
 ### `configuration.merchant.capabilities.ideal_payments`
 
@@ -439,6 +571,30 @@ The `configuration.merchant.capabilities.ideal_payments` attribute supports:
 ### `configuration.merchant.capabilities.ideal_payments.status_details`
 
 The `configuration.merchant.capabilities.ideal_payments.status_details` attribute is a list. Each element supports:
+
+* `code` - Machine-readable code explaining the reason for the Capability to be in its current status. Possible values: `determining_status`, `rejected_fraud`, `rejected_incomplete_verification`, `rejected_listed`, `rejected_other`, `rejected_platform_fraud`, `rejected_platform_other`, `rejected_platform_terms_of_service`, `rejected_terms_of_service`, `requirements_past_due`, `requirements_pending_verification`, `restricted_other`, `unsupported_business`, `unsupported_country`, `unsupported_entity_type`.
+* `resolution` - Machine-readable code explaining how to make the Capability active. Possible values: `contact_stripe`, `no_resolution`, `provide_info`.
+
+<a id="configuration.merchant.capabilities.jcb_payments"></a>
+### `configuration.merchant.capabilities.jcb_payments`
+
+The `configuration.merchant.capabilities.jcb_payments` attribute supports:
+
+* `requested` - To request a new Capability for an account, pass true. There can be a delay before the requested Capability becomes active.
+
+<a id="configuration.merchant.capabilities.jp_bank_transfer_payments"></a>
+### `configuration.merchant.capabilities.jp_bank_transfer_payments`
+
+The `configuration.merchant.capabilities.jp_bank_transfer_payments` attribute supports:
+
+* `requested` - To request a new Capability for an account, pass true. There can be a delay before the requested Capability becomes active.
+* `status` - The status of the Capability. Possible values: `active`, `pending`, `rejected`, `restricted`, `unsupported`.
+* `status_details` - Additional details about the capability's status. This value is empty when `status` is `active`. See [`configuration.merchant.capabilities.jp_bank_transfer_payments.status_details`](#configuration.merchant.capabilities.jp_bank_transfer_payments.status_details) below.
+
+<a id="configuration.merchant.capabilities.jp_bank_transfer_payments.status_details"></a>
+### `configuration.merchant.capabilities.jp_bank_transfer_payments.status_details`
+
+The `configuration.merchant.capabilities.jp_bank_transfer_payments.status_details` attribute is a list. Each element supports:
 
 * `code` - Machine-readable code explaining the reason for the Capability to be in its current status. Possible values: `determining_status`, `rejected_fraud`, `rejected_incomplete_verification`, `rejected_listed`, `rejected_other`, `rejected_platform_fraud`, `rejected_platform_other`, `rejected_platform_terms_of_service`, `rejected_terms_of_service`, `requirements_past_due`, `requirements_pending_verification`, `restricted_other`, `unsupported_business`, `unsupported_country`, `unsupported_entity_type`.
 * `resolution` - Machine-readable code explaining how to make the Capability active. Possible values: `contact_stripe`, `no_resolution`, `provide_info`.
@@ -511,6 +667,23 @@ The `configuration.merchant.capabilities.link_payments.status_details` attribute
 * `code` - Machine-readable code explaining the reason for the Capability to be in its current status. Possible values: `determining_status`, `rejected_fraud`, `rejected_incomplete_verification`, `rejected_listed`, `rejected_other`, `rejected_platform_fraud`, `rejected_platform_other`, `rejected_platform_terms_of_service`, `rejected_terms_of_service`, `requirements_past_due`, `requirements_pending_verification`, `restricted_other`, `unsupported_business`, `unsupported_country`, `unsupported_entity_type`.
 * `resolution` - Machine-readable code explaining how to make the Capability active. Possible values: `contact_stripe`, `no_resolution`, `provide_info`.
 
+<a id="configuration.merchant.capabilities.mobilepay_payments"></a>
+### `configuration.merchant.capabilities.mobilepay_payments`
+
+The `configuration.merchant.capabilities.mobilepay_payments` attribute supports:
+
+* `requested` - To request a new Capability for an account, pass true. There can be a delay before the requested Capability becomes active.
+* `status` - The status of the Capability. Possible values: `active`, `pending`, `rejected`, `restricted`, `unsupported`.
+* `status_details` - Additional details about the capability's status. This value is empty when `status` is `active`. See [`configuration.merchant.capabilities.mobilepay_payments.status_details`](#configuration.merchant.capabilities.mobilepay_payments.status_details) below.
+
+<a id="configuration.merchant.capabilities.mobilepay_payments.status_details"></a>
+### `configuration.merchant.capabilities.mobilepay_payments.status_details`
+
+The `configuration.merchant.capabilities.mobilepay_payments.status_details` attribute is a list. Each element supports:
+
+* `code` - Machine-readable code explaining the reason for the Capability to be in its current status. Possible values: `determining_status`, `rejected_fraud`, `rejected_incomplete_verification`, `rejected_listed`, `rejected_other`, `rejected_platform_fraud`, `rejected_platform_other`, `rejected_platform_terms_of_service`, `rejected_terms_of_service`, `requirements_past_due`, `requirements_pending_verification`, `restricted_other`, `unsupported_business`, `unsupported_country`, `unsupported_entity_type`.
+* `resolution` - Machine-readable code explaining how to make the Capability active. Possible values: `contact_stripe`, `no_resolution`, `provide_info`.
+
 <a id="configuration.merchant.capabilities.multibanco_payments"></a>
 ### `configuration.merchant.capabilities.multibanco_payments`
 
@@ -545,6 +718,23 @@ The `configuration.merchant.capabilities.naver_pay_payments.status_details` attr
 * `code` - Machine-readable code explaining the reason for the Capability to be in its current status. Possible values: `determining_status`, `rejected_fraud`, `rejected_incomplete_verification`, `rejected_listed`, `rejected_other`, `rejected_platform_fraud`, `rejected_platform_other`, `rejected_platform_terms_of_service`, `rejected_terms_of_service`, `requirements_past_due`, `requirements_pending_verification`, `restricted_other`, `unsupported_business`, `unsupported_country`, `unsupported_entity_type`.
 * `resolution` - Machine-readable code explaining how to make the Capability active. Possible values: `contact_stripe`, `no_resolution`, `provide_info`.
 
+<a id="configuration.merchant.capabilities.oxxo_payments"></a>
+### `configuration.merchant.capabilities.oxxo_payments`
+
+The `configuration.merchant.capabilities.oxxo_payments` attribute supports:
+
+* `requested` - To request a new Capability for an account, pass true. There can be a delay before the requested Capability becomes active.
+* `status` - The status of the Capability. Possible values: `active`, `pending`, `rejected`, `restricted`, `unsupported`.
+* `status_details` - Additional details about the capability's status. This value is empty when `status` is `active`. See [`configuration.merchant.capabilities.oxxo_payments.status_details`](#configuration.merchant.capabilities.oxxo_payments.status_details) below.
+
+<a id="configuration.merchant.capabilities.oxxo_payments.status_details"></a>
+### `configuration.merchant.capabilities.oxxo_payments.status_details`
+
+The `configuration.merchant.capabilities.oxxo_payments.status_details` attribute is a list. Each element supports:
+
+* `code` - Machine-readable code explaining the reason for the Capability to be in its current status. Possible values: `determining_status`, `rejected_fraud`, `rejected_incomplete_verification`, `rejected_listed`, `rejected_other`, `rejected_platform_fraud`, `rejected_platform_other`, `rejected_platform_terms_of_service`, `rejected_terms_of_service`, `requirements_past_due`, `requirements_pending_verification`, `restricted_other`, `unsupported_business`, `unsupported_country`, `unsupported_entity_type`.
+* `resolution` - Machine-readable code explaining how to make the Capability active. Possible values: `contact_stripe`, `no_resolution`, `provide_info`.
+
 <a id="configuration.merchant.capabilities.p24_payments"></a>
 ### `configuration.merchant.capabilities.p24_payments`
 
@@ -562,6 +752,23 @@ The `configuration.merchant.capabilities.p24_payments.status_details` attribute 
 * `code` - Machine-readable code explaining the reason for the Capability to be in its current status. Possible values: `determining_status`, `rejected_fraud`, `rejected_incomplete_verification`, `rejected_listed`, `rejected_other`, `rejected_platform_fraud`, `rejected_platform_other`, `rejected_platform_terms_of_service`, `rejected_terms_of_service`, `requirements_past_due`, `requirements_pending_verification`, `restricted_other`, `unsupported_business`, `unsupported_country`, `unsupported_entity_type`.
 * `resolution` - Machine-readable code explaining how to make the Capability active. Possible values: `contact_stripe`, `no_resolution`, `provide_info`.
 
+<a id="configuration.merchant.capabilities.pay_by_bank_payments"></a>
+### `configuration.merchant.capabilities.pay_by_bank_payments`
+
+The `configuration.merchant.capabilities.pay_by_bank_payments` attribute supports:
+
+* `requested` - To request a new Capability for an account, pass true. There can be a delay before the requested Capability becomes active.
+* `status` - The status of the Capability. Possible values: `active`, `pending`, `rejected`, `restricted`, `unsupported`.
+* `status_details` - Additional details about the capability's status. This value is empty when `status` is `active`. See [`configuration.merchant.capabilities.pay_by_bank_payments.status_details`](#configuration.merchant.capabilities.pay_by_bank_payments.status_details) below.
+
+<a id="configuration.merchant.capabilities.pay_by_bank_payments.status_details"></a>
+### `configuration.merchant.capabilities.pay_by_bank_payments.status_details`
+
+The `configuration.merchant.capabilities.pay_by_bank_payments.status_details` attribute is a list. Each element supports:
+
+* `code` - Machine-readable code explaining the reason for the Capability to be in its current status. Possible values: `determining_status`, `rejected_fraud`, `rejected_incomplete_verification`, `rejected_listed`, `rejected_other`, `rejected_platform_fraud`, `rejected_platform_other`, `rejected_platform_terms_of_service`, `rejected_terms_of_service`, `requirements_past_due`, `requirements_pending_verification`, `restricted_other`, `unsupported_business`, `unsupported_country`, `unsupported_entity_type`.
+* `resolution` - Machine-readable code explaining how to make the Capability active. Possible values: `contact_stripe`, `no_resolution`, `provide_info`.
+
 <a id="configuration.merchant.capabilities.payco_payments"></a>
 ### `configuration.merchant.capabilities.payco_payments`
 
@@ -575,6 +782,57 @@ The `configuration.merchant.capabilities.payco_payments` attribute supports:
 ### `configuration.merchant.capabilities.payco_payments.status_details`
 
 The `configuration.merchant.capabilities.payco_payments.status_details` attribute is a list. Each element supports:
+
+* `code` - Machine-readable code explaining the reason for the Capability to be in its current status. Possible values: `determining_status`, `rejected_fraud`, `rejected_incomplete_verification`, `rejected_listed`, `rejected_other`, `rejected_platform_fraud`, `rejected_platform_other`, `rejected_platform_terms_of_service`, `rejected_terms_of_service`, `requirements_past_due`, `requirements_pending_verification`, `restricted_other`, `unsupported_business`, `unsupported_country`, `unsupported_entity_type`.
+* `resolution` - Machine-readable code explaining how to make the Capability active. Possible values: `contact_stripe`, `no_resolution`, `provide_info`.
+
+<a id="configuration.merchant.capabilities.paynow_payments"></a>
+### `configuration.merchant.capabilities.paynow_payments`
+
+The `configuration.merchant.capabilities.paynow_payments` attribute supports:
+
+* `requested` - To request a new Capability for an account, pass true. There can be a delay before the requested Capability becomes active.
+* `status` - The status of the Capability. Possible values: `active`, `pending`, `rejected`, `restricted`, `unsupported`.
+* `status_details` - Additional details about the capability's status. This value is empty when `status` is `active`. See [`configuration.merchant.capabilities.paynow_payments.status_details`](#configuration.merchant.capabilities.paynow_payments.status_details) below.
+
+<a id="configuration.merchant.capabilities.paynow_payments.status_details"></a>
+### `configuration.merchant.capabilities.paynow_payments.status_details`
+
+The `configuration.merchant.capabilities.paynow_payments.status_details` attribute is a list. Each element supports:
+
+* `code` - Machine-readable code explaining the reason for the Capability to be in its current status. Possible values: `determining_status`, `rejected_fraud`, `rejected_incomplete_verification`, `rejected_listed`, `rejected_other`, `rejected_platform_fraud`, `rejected_platform_other`, `rejected_platform_terms_of_service`, `rejected_terms_of_service`, `requirements_past_due`, `requirements_pending_verification`, `restricted_other`, `unsupported_business`, `unsupported_country`, `unsupported_entity_type`.
+* `resolution` - Machine-readable code explaining how to make the Capability active. Possible values: `contact_stripe`, `no_resolution`, `provide_info`.
+
+<a id="configuration.merchant.capabilities.promptpay_payments"></a>
+### `configuration.merchant.capabilities.promptpay_payments`
+
+The `configuration.merchant.capabilities.promptpay_payments` attribute supports:
+
+* `requested` - To request a new Capability for an account, pass true. There can be a delay before the requested Capability becomes active.
+* `status` - The status of the Capability. Possible values: `active`, `pending`, `rejected`, `restricted`, `unsupported`.
+* `status_details` - Additional details about the capability's status. This value is empty when `status` is `active`. See [`configuration.merchant.capabilities.promptpay_payments.status_details`](#configuration.merchant.capabilities.promptpay_payments.status_details) below.
+
+<a id="configuration.merchant.capabilities.promptpay_payments.status_details"></a>
+### `configuration.merchant.capabilities.promptpay_payments.status_details`
+
+The `configuration.merchant.capabilities.promptpay_payments.status_details` attribute is a list. Each element supports:
+
+* `code` - Machine-readable code explaining the reason for the Capability to be in its current status. Possible values: `determining_status`, `rejected_fraud`, `rejected_incomplete_verification`, `rejected_listed`, `rejected_other`, `rejected_platform_fraud`, `rejected_platform_other`, `rejected_platform_terms_of_service`, `rejected_terms_of_service`, `requirements_past_due`, `requirements_pending_verification`, `restricted_other`, `unsupported_business`, `unsupported_country`, `unsupported_entity_type`.
+* `resolution` - Machine-readable code explaining how to make the Capability active. Possible values: `contact_stripe`, `no_resolution`, `provide_info`.
+
+<a id="configuration.merchant.capabilities.revolut_pay_payments"></a>
+### `configuration.merchant.capabilities.revolut_pay_payments`
+
+The `configuration.merchant.capabilities.revolut_pay_payments` attribute supports:
+
+* `requested` - To request a new Capability for an account, pass true. There can be a delay before the requested Capability becomes active.
+* `status` - The status of the Capability. Possible values: `active`, `pending`, `rejected`, `restricted`, `unsupported`.
+* `status_details` - Additional details about the capability's status. This value is empty when `status` is `active`. See [`configuration.merchant.capabilities.revolut_pay_payments.status_details`](#configuration.merchant.capabilities.revolut_pay_payments.status_details) below.
+
+<a id="configuration.merchant.capabilities.revolut_pay_payments.status_details"></a>
+### `configuration.merchant.capabilities.revolut_pay_payments.status_details`
+
+The `configuration.merchant.capabilities.revolut_pay_payments.status_details` attribute is a list. Each element supports:
 
 * `code` - Machine-readable code explaining the reason for the Capability to be in its current status. Possible values: `determining_status`, `rejected_fraud`, `rejected_incomplete_verification`, `rejected_listed`, `rejected_other`, `rejected_platform_fraud`, `rejected_platform_other`, `rejected_platform_terms_of_service`, `rejected_terms_of_service`, `requirements_past_due`, `requirements_pending_verification`, `restricted_other`, `unsupported_business`, `unsupported_country`, `unsupported_entity_type`.
 * `resolution` - Machine-readable code explaining how to make the Capability active. Possible values: `contact_stripe`, `no_resolution`, `provide_info`.
@@ -609,6 +867,57 @@ The `configuration.merchant.capabilities.satispay_payments` attribute supports:
 ### `configuration.merchant.capabilities.satispay_payments.status_details`
 
 The `configuration.merchant.capabilities.satispay_payments.status_details` attribute is a list. Each element supports:
+
+* `code` - Machine-readable code explaining the reason for the Capability to be in its current status. Possible values: `determining_status`, `rejected_fraud`, `rejected_incomplete_verification`, `rejected_listed`, `rejected_other`, `rejected_platform_fraud`, `rejected_platform_other`, `rejected_platform_terms_of_service`, `rejected_terms_of_service`, `requirements_past_due`, `requirements_pending_verification`, `restricted_other`, `unsupported_business`, `unsupported_country`, `unsupported_entity_type`.
+* `resolution` - Machine-readable code explaining how to make the Capability active. Possible values: `contact_stripe`, `no_resolution`, `provide_info`.
+
+<a id="configuration.merchant.capabilities.sepa_bank_transfer_payments"></a>
+### `configuration.merchant.capabilities.sepa_bank_transfer_payments`
+
+The `configuration.merchant.capabilities.sepa_bank_transfer_payments` attribute supports:
+
+* `requested` - To request a new Capability for an account, pass true. There can be a delay before the requested Capability becomes active.
+* `status` - The status of the Capability. Possible values: `active`, `pending`, `rejected`, `restricted`, `unsupported`.
+* `status_details` - Additional details about the capability's status. This value is empty when `status` is `active`. See [`configuration.merchant.capabilities.sepa_bank_transfer_payments.status_details`](#configuration.merchant.capabilities.sepa_bank_transfer_payments.status_details) below.
+
+<a id="configuration.merchant.capabilities.sepa_bank_transfer_payments.status_details"></a>
+### `configuration.merchant.capabilities.sepa_bank_transfer_payments.status_details`
+
+The `configuration.merchant.capabilities.sepa_bank_transfer_payments.status_details` attribute is a list. Each element supports:
+
+* `code` - Machine-readable code explaining the reason for the Capability to be in its current status. Possible values: `determining_status`, `rejected_fraud`, `rejected_incomplete_verification`, `rejected_listed`, `rejected_other`, `rejected_platform_fraud`, `rejected_platform_other`, `rejected_platform_terms_of_service`, `rejected_terms_of_service`, `requirements_past_due`, `requirements_pending_verification`, `restricted_other`, `unsupported_business`, `unsupported_country`, `unsupported_entity_type`.
+* `resolution` - Machine-readable code explaining how to make the Capability active. Possible values: `contact_stripe`, `no_resolution`, `provide_info`.
+
+<a id="configuration.merchant.capabilities.sepa_debit_payments"></a>
+### `configuration.merchant.capabilities.sepa_debit_payments`
+
+The `configuration.merchant.capabilities.sepa_debit_payments` attribute supports:
+
+* `requested` - To request a new Capability for an account, pass true. There can be a delay before the requested Capability becomes active.
+* `status` - The status of the Capability. Possible values: `active`, `pending`, `rejected`, `restricted`, `unsupported`.
+* `status_details` - Additional details about the capability's status. This value is empty when `status` is `active`. See [`configuration.merchant.capabilities.sepa_debit_payments.status_details`](#configuration.merchant.capabilities.sepa_debit_payments.status_details) below.
+
+<a id="configuration.merchant.capabilities.sepa_debit_payments.status_details"></a>
+### `configuration.merchant.capabilities.sepa_debit_payments.status_details`
+
+The `configuration.merchant.capabilities.sepa_debit_payments.status_details` attribute is a list. Each element supports:
+
+* `code` - Machine-readable code explaining the reason for the Capability to be in its current status. Possible values: `determining_status`, `rejected_fraud`, `rejected_incomplete_verification`, `rejected_listed`, `rejected_other`, `rejected_platform_fraud`, `rejected_platform_other`, `rejected_platform_terms_of_service`, `rejected_terms_of_service`, `requirements_past_due`, `requirements_pending_verification`, `restricted_other`, `unsupported_business`, `unsupported_country`, `unsupported_entity_type`.
+* `resolution` - Machine-readable code explaining how to make the Capability active. Possible values: `contact_stripe`, `no_resolution`, `provide_info`.
+
+<a id="configuration.merchant.capabilities.sequra_payments"></a>
+### `configuration.merchant.capabilities.sequra_payments`
+
+The `configuration.merchant.capabilities.sequra_payments` attribute supports:
+
+* `requested` - To request a new Capability for an account, pass true. There can be a delay before the requested Capability becomes active.
+* `status` - The status of the Capability. Possible values: `active`, `pending`, `rejected`, `restricted`, `unsupported`.
+* `status_details` - Additional details about the capability's status. This value is empty when `status` is `active`. See [`configuration.merchant.capabilities.sequra_payments.status_details`](#configuration.merchant.capabilities.sequra_payments.status_details) below.
+
+<a id="configuration.merchant.capabilities.sequra_payments.status_details"></a>
+### `configuration.merchant.capabilities.sequra_payments.status_details`
+
+The `configuration.merchant.capabilities.sequra_payments.status_details` attribute is a list. Each element supports:
 
 * `code` - Machine-readable code explaining the reason for the Capability to be in its current status. Possible values: `determining_status`, `rejected_fraud`, `rejected_incomplete_verification`, `rejected_listed`, `rejected_other`, `rejected_platform_fraud`, `rejected_platform_other`, `rejected_platform_terms_of_service`, `rejected_terms_of_service`, `requirements_past_due`, `requirements_pending_verification`, `restricted_other`, `unsupported_business`, `unsupported_country`, `unsupported_entity_type`.
 * `resolution` - Machine-readable code explaining how to make the Capability active. Possible values: `contact_stripe`, `no_resolution`, `provide_info`.
@@ -653,6 +962,23 @@ The `configuration.merchant.capabilities.sunbit_payments.status_details` attribu
 * `code` - Machine-readable code explaining the reason for the Capability to be in its current status. Possible values: `determining_status`, `rejected_fraud`, `rejected_incomplete_verification`, `rejected_listed`, `rejected_other`, `rejected_platform_fraud`, `rejected_platform_other`, `rejected_platform_terms_of_service`, `rejected_terms_of_service`, `requirements_past_due`, `requirements_pending_verification`, `restricted_other`, `unsupported_business`, `unsupported_country`, `unsupported_entity_type`.
 * `resolution` - Machine-readable code explaining how to make the Capability active. Possible values: `contact_stripe`, `no_resolution`, `provide_info`.
 
+<a id="configuration.merchant.capabilities.twint_payments"></a>
+### `configuration.merchant.capabilities.twint_payments`
+
+The `configuration.merchant.capabilities.twint_payments` attribute supports:
+
+* `requested` - To request a new Capability for an account, pass true. There can be a delay before the requested Capability becomes active.
+* `status` - The status of the Capability. Possible values: `active`, `pending`, `rejected`, `restricted`, `unsupported`.
+* `status_details` - Additional details about the capability's status. This value is empty when `status` is `active`. See [`configuration.merchant.capabilities.twint_payments.status_details`](#configuration.merchant.capabilities.twint_payments.status_details) below.
+
+<a id="configuration.merchant.capabilities.twint_payments.status_details"></a>
+### `configuration.merchant.capabilities.twint_payments.status_details`
+
+The `configuration.merchant.capabilities.twint_payments.status_details` attribute is a list. Each element supports:
+
+* `code` - Machine-readable code explaining the reason for the Capability to be in its current status. Possible values: `determining_status`, `rejected_fraud`, `rejected_incomplete_verification`, `rejected_listed`, `rejected_other`, `rejected_platform_fraud`, `rejected_platform_other`, `rejected_platform_terms_of_service`, `rejected_terms_of_service`, `requirements_past_due`, `requirements_pending_verification`, `restricted_other`, `unsupported_business`, `unsupported_country`, `unsupported_entity_type`.
+* `resolution` - Machine-readable code explaining how to make the Capability active. Possible values: `contact_stripe`, `no_resolution`, `provide_info`.
+
 <a id="configuration.merchant.capabilities.us_bank_transfer_payments"></a>
 ### `configuration.merchant.capabilities.us_bank_transfer_payments`
 
@@ -666,6 +992,23 @@ The `configuration.merchant.capabilities.us_bank_transfer_payments` attribute su
 ### `configuration.merchant.capabilities.us_bank_transfer_payments.status_details`
 
 The `configuration.merchant.capabilities.us_bank_transfer_payments.status_details` attribute is a list. Each element supports:
+
+* `code` - Machine-readable code explaining the reason for the Capability to be in its current status. Possible values: `determining_status`, `rejected_fraud`, `rejected_incomplete_verification`, `rejected_listed`, `rejected_other`, `rejected_platform_fraud`, `rejected_platform_other`, `rejected_platform_terms_of_service`, `rejected_terms_of_service`, `requirements_past_due`, `requirements_pending_verification`, `restricted_other`, `unsupported_business`, `unsupported_country`, `unsupported_entity_type`.
+* `resolution` - Machine-readable code explaining how to make the Capability active. Possible values: `contact_stripe`, `no_resolution`, `provide_info`.
+
+<a id="configuration.merchant.capabilities.zip_payments"></a>
+### `configuration.merchant.capabilities.zip_payments`
+
+The `configuration.merchant.capabilities.zip_payments` attribute supports:
+
+* `requested` - To request a new Capability for an account, pass true. There can be a delay before the requested Capability becomes active.
+* `status` - The status of the Capability. Possible values: `active`, `pending`, `rejected`, `restricted`, `unsupported`.
+* `status_details` - Additional details about the capability's status. This value is empty when `status` is `active`. See [`configuration.merchant.capabilities.zip_payments.status_details`](#configuration.merchant.capabilities.zip_payments.status_details) below.
+
+<a id="configuration.merchant.capabilities.zip_payments.status_details"></a>
+### `configuration.merchant.capabilities.zip_payments.status_details`
+
+The `configuration.merchant.capabilities.zip_payments.status_details` attribute is a list. Each element supports:
 
 * `code` - Machine-readable code explaining the reason for the Capability to be in its current status. Possible values: `determining_status`, `rejected_fraud`, `rejected_incomplete_verification`, `rejected_listed`, `rejected_other`, `rejected_platform_fraud`, `rejected_platform_other`, `rejected_platform_terms_of_service`, `rejected_terms_of_service`, `requirements_past_due`, `requirements_pending_verification`, `restricted_other`, `unsupported_business`, `unsupported_country`, `unsupported_entity_type`.
 * `resolution` - Machine-readable code explaining how to make the Capability active. Possible values: `contact_stripe`, `no_resolution`, `provide_info`.
@@ -684,6 +1027,61 @@ The `configuration.merchant.card_payments.decline_on` attribute supports:
 
 * `avs_failure` - Whether Stripe automatically declines charges with an incorrect ZIP or postal code. This setting only applies when a ZIP or postal code is provided and they fail bank verification.
 * `cvc_failure` - Whether Stripe automatically declines charges with an incorrect CVC. This setting only applies when a CVC is provided and it fails bank verification.
+
+<a id="configuration.merchant.konbini_payments"></a>
+### `configuration.merchant.konbini_payments`
+
+The `configuration.merchant.konbini_payments` attribute supports:
+
+* `support` - Support for Konbini payments. See [`configuration.merchant.konbini_payments.support`](#configuration.merchant.konbini_payments.support) below.
+
+<a id="configuration.merchant.konbini_payments.support"></a>
+### `configuration.merchant.konbini_payments.support`
+
+The `configuration.merchant.konbini_payments.support` attribute supports:
+
+* `email` - Support email address for Konbini payments.
+* `hours` - Support hours for Konbini payments. See [`configuration.merchant.konbini_payments.support.hours`](#configuration.merchant.konbini_payments.support.hours) below.
+* `phone` - Support phone number for Konbini payments.
+
+<a id="configuration.merchant.konbini_payments.support.hours"></a>
+### `configuration.merchant.konbini_payments.support.hours`
+
+The `configuration.merchant.konbini_payments.support.hours` attribute supports:
+
+* `end_time` - Support hours end time (JST time of day) for in `HH:MM` format.
+* `start_time` - Support hours start time (JST time of day) for in `HH:MM` format.
+
+<a id="configuration.merchant.script_statement_descriptor"></a>
+### `configuration.merchant.script_statement_descriptor`
+
+The `configuration.merchant.script_statement_descriptor` attribute supports:
+
+* `kana` - The Kana variation of statement_descriptor used for charges in Japan. Japanese statement descriptors have [special requirements](https://docs.stripe.com/get-started/account/statement-descriptors#set-japanese-statement-descriptors). See [`configuration.merchant.script_statement_descriptor.kana`](#configuration.merchant.script_statement_descriptor.kana) below.
+* `kanji` - The Kanji variation of statement_descriptor used for charges in Japan. Japanese statement descriptors have [special requirements](https://docs.stripe.com/get-started/account/statement-descriptors#set-japanese-statement-descriptors). See [`configuration.merchant.script_statement_descriptor.kanji`](#configuration.merchant.script_statement_descriptor.kanji) below.
+
+<a id="configuration.merchant.script_statement_descriptor.kana"></a>
+### `configuration.merchant.script_statement_descriptor.kana`
+
+The `configuration.merchant.script_statement_descriptor.kana` attribute supports:
+
+* `descriptor` - The default text that appears on statements for non-card charges outside of Japan. For card charges, if you don’t set a statement_descriptor_prefix, this text is also used as the statement descriptor prefix. In that case, if concatenating the statement descriptor suffix causes the combined statement descriptor to exceed 22 characters, we truncate the statement_descriptor text to limit the full descriptor to 22 characters. For more information about statement descriptors and their requirements, see the Merchant Configuration settings documentation.
+* `prefix` - Default text that appears on statements for card charges outside of Japan, prefixing any dynamic statement_descriptor_suffix specified on the charge. To maximize space for the dynamic part of the descriptor, keep this text short. If you don’t specify this value, statement_descriptor is used as the prefix. For more information about statement descriptors and their requirements, see the Merchant Configuration settings documentation.
+
+<a id="configuration.merchant.script_statement_descriptor.kanji"></a>
+### `configuration.merchant.script_statement_descriptor.kanji`
+
+The `configuration.merchant.script_statement_descriptor.kanji` attribute supports:
+
+* `descriptor` - The default text that appears on statements for non-card charges outside of Japan. For card charges, if you don’t set a statement_descriptor_prefix, this text is also used as the statement descriptor prefix. In that case, if concatenating the statement descriptor suffix causes the combined statement descriptor to exceed 22 characters, we truncate the statement_descriptor text to limit the full descriptor to 22 characters. For more information about statement descriptors and their requirements, see the Merchant Configuration settings documentation.
+* `prefix` - Default text that appears on statements for card charges outside of Japan, prefixing any dynamic statement_descriptor_suffix specified on the charge. To maximize space for the dynamic part of the descriptor, keep this text short. If you don’t specify this value, statement_descriptor is used as the prefix. For more information about statement descriptors and their requirements, see the Merchant Configuration settings documentation.
+
+<a id="configuration.merchant.sepa_debit_payments"></a>
+### `configuration.merchant.sepa_debit_payments`
+
+The `configuration.merchant.sepa_debit_payments` attribute supports:
+
+* `creditor_id` - Creditor ID for SEPA Direct Debit payments.
 
 <a id="configuration.merchant.statement_descriptor"></a>
 ### `configuration.merchant.statement_descriptor`
@@ -1001,6 +1399,8 @@ The `identity.business_details` attribute supports:
 * `phone` - The phone number of the Business Entity.
 * `registered_name` - The business legal name.
 * `registration_date` - When the business was incorporated or registered. See [`identity.business_details.registration_date`](#identity.business_details.registration_date) below.
+* `script_addresses` - The business registration address of the business entity in non latin script. See [`identity.business_details.script_addresses`](#identity.business_details.script_addresses) below.
+* `script_names` - The business legal name in non latin script. See [`identity.business_details.script_names`](#identity.business_details.script_names) below.
 * `structure` - The category identifying the legal structure of the business. Possible values: `cooperative`, `free_zone_establishment`, `free_zone_llc`, `governmental_unit`, `government_instrumentality`, `incorporated_association`, `incorporated_non_profit`, `incorporated_partnership`, `limited_liability_partnership`, `llc`, `multi_member_llc`, `private_company`, `private_corporation`, `private_partnership`, `public_company`, `public_corporation`, `public_listed_corporation`, `public_partnership`, `registered_charity`, `single_member_llc`, `sole_establishment`, `sole_proprietorship`, `tax_exempt_government_instrumentality`, `trust`, `unincorporated_association`, `unincorporated_non_profit`, `unincorporated_partnership`.
 
 <a id="identity.business_details.additional_addresses"></a>
@@ -1199,6 +1599,62 @@ The `identity.business_details.registration_date` attribute supports:
 * `month` - The month of registration, between 1 and 12.
 * `year` - The four-digit year of registration.
 
+<a id="identity.business_details.script_addresses"></a>
+### `identity.business_details.script_addresses`
+
+The `identity.business_details.script_addresses` attribute supports:
+
+* `kana` - Kana Address. See [`identity.business_details.script_addresses.kana`](#identity.business_details.script_addresses.kana) below.
+* `kanji` - Kanji Address. See [`identity.business_details.script_addresses.kanji`](#identity.business_details.script_addresses.kanji) below.
+
+<a id="identity.business_details.script_addresses.kana"></a>
+### `identity.business_details.script_addresses.kana`
+
+The `identity.business_details.script_addresses.kana` attribute supports:
+
+* `city` - City, district, suburb, town, or village.
+* `country` - Two-letter country code ([ISO 3166-1 alpha-2](https://en.wikipedia.org/wiki/ISO_3166-1_alpha-2)).
+* `line1` - Address line 1 (e.g., street, PO Box, or company name).
+* `line2` - Address line 2 (e.g., apartment, suite, unit, or building).
+* `postal_code` - ZIP or postal code.
+* `state` - State, county, province, or region.
+* `town` - Town or district.
+
+<a id="identity.business_details.script_addresses.kanji"></a>
+### `identity.business_details.script_addresses.kanji`
+
+The `identity.business_details.script_addresses.kanji` attribute supports:
+
+* `city` - City, district, suburb, town, or village.
+* `country` - Two-letter country code ([ISO 3166-1 alpha-2](https://en.wikipedia.org/wiki/ISO_3166-1_alpha-2)).
+* `line1` - Address line 1 (e.g., street, PO Box, or company name).
+* `line2` - Address line 2 (e.g., apartment, suite, unit, or building).
+* `postal_code` - ZIP or postal code.
+* `state` - State, county, province, or region.
+* `town` - Town or district.
+
+<a id="identity.business_details.script_names"></a>
+### `identity.business_details.script_names`
+
+The `identity.business_details.script_names` attribute supports:
+
+* `kana` - Kana name. See [`identity.business_details.script_names.kana`](#identity.business_details.script_names.kana) below.
+* `kanji` - Kanji name. See [`identity.business_details.script_names.kanji`](#identity.business_details.script_names.kanji) below.
+
+<a id="identity.business_details.script_names.kana"></a>
+### `identity.business_details.script_names.kana`
+
+The `identity.business_details.script_names.kana` attribute supports:
+
+* `registered_name` - Registered name of the business.
+
+<a id="identity.business_details.script_names.kanji"></a>
+### `identity.business_details.script_names.kanji`
+
+The `identity.business_details.script_names.kanji` attribute supports:
+
+* `registered_name` - Registered name of the business.
+
 <a id="identity.individual"></a>
 ### `identity.individual`
 
@@ -1221,6 +1677,8 @@ The `identity.individual` attribute supports:
 * `phone` - The individual's phone number.
 * `political_exposure` - The individual's political exposure. Possible values: `existing`, `none`.
 * `relationship` - The relationship that this individual has with the account's identity. See [`identity.individual.relationship`](#identity.individual.relationship) below.
+* `script_addresses` - The script addresses (e.g., non-Latin characters) associated with the individual. See [`identity.individual.script_addresses`](#identity.individual.script_addresses) below.
+* `script_names` - The individuals primary name in non latin script. See [`identity.individual.script_names`](#identity.individual.script_names) below.
 * `surname` - The individual's last name.
 * `updated` - Time at which the object was last updated.
 
@@ -1347,6 +1805,64 @@ The `identity.individual.relationship` attribute supports:
 * `owner` - Whether the person is an owner of the account's identity.
 * `percent_ownership` - The percent owned by the person of the account's legal entity.
 * `title` - The person's title (e.g., CEO, Support Engineer).
+
+<a id="identity.individual.script_addresses"></a>
+### `identity.individual.script_addresses`
+
+The `identity.individual.script_addresses` attribute supports:
+
+* `kana` - Kana Address. See [`identity.individual.script_addresses.kana`](#identity.individual.script_addresses.kana) below.
+* `kanji` - Kanji Address. See [`identity.individual.script_addresses.kanji`](#identity.individual.script_addresses.kanji) below.
+
+<a id="identity.individual.script_addresses.kana"></a>
+### `identity.individual.script_addresses.kana`
+
+The `identity.individual.script_addresses.kana` attribute supports:
+
+* `city` - City, district, suburb, town, or village.
+* `country` - Two-letter country code ([ISO 3166-1 alpha-2](https://en.wikipedia.org/wiki/ISO_3166-1_alpha-2)).
+* `line1` - Address line 1 (e.g., street, PO Box, or company name).
+* `line2` - Address line 2 (e.g., apartment, suite, unit, or building).
+* `postal_code` - ZIP or postal code.
+* `state` - State, county, province, or region.
+* `town` - Town or district.
+
+<a id="identity.individual.script_addresses.kanji"></a>
+### `identity.individual.script_addresses.kanji`
+
+The `identity.individual.script_addresses.kanji` attribute supports:
+
+* `city` - City, district, suburb, town, or village.
+* `country` - Two-letter country code ([ISO 3166-1 alpha-2](https://en.wikipedia.org/wiki/ISO_3166-1_alpha-2)).
+* `line1` - Address line 1 (e.g., street, PO Box, or company name).
+* `line2` - Address line 2 (e.g., apartment, suite, unit, or building).
+* `postal_code` - ZIP or postal code.
+* `state` - State, county, province, or region.
+* `town` - Town or district.
+
+<a id="identity.individual.script_names"></a>
+### `identity.individual.script_names`
+
+The `identity.individual.script_names` attribute supports:
+
+* `kana` - Persons name in kana script. See [`identity.individual.script_names.kana`](#identity.individual.script_names.kana) below.
+* `kanji` - Persons name in kanji script. See [`identity.individual.script_names.kanji`](#identity.individual.script_names.kanji) below.
+
+<a id="identity.individual.script_names.kana"></a>
+### `identity.individual.script_names.kana`
+
+The `identity.individual.script_names.kana` attribute supports:
+
+* `given_name` - The person's first or given name.
+* `surname` - The person's last or family name.
+
+<a id="identity.individual.script_names.kanji"></a>
+### `identity.individual.script_names.kanji`
+
+The `identity.individual.script_names.kanji` attribute supports:
+
+* `given_name` - The person's first or given name.
+* `surname` - The person's last or family name.
 
 <a id="requirements"></a>
 ### `requirements`

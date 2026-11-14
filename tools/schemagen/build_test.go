@@ -638,3 +638,35 @@ func TestNoResponseFieldsTakeOtherSchemasDescriptions(t *testing.T) {
 		}
 	}
 }
+
+// mapOfListsSpec has a map of string lists in the create request and in the response, as a
+// country spec's `supported_bank_account_currencies` is in its response.
+const mapOfListsSpec = `{"paths":{
+ "/v1/regions":{"post":{"operationId":"PostRegions","requestBody":{"content":{"application/x-www-form-urlencoded":{"schema":{
+   "type":"object","properties":{
+    "name":{"type":"string"},
+    "currencies":{"type":"object","additionalProperties":{"type":"array","items":{"type":"string"}}}}}}}},
+   "responses":{"200":{"content":{"application/json":{"schema":{"type":"object","required":["id"],"properties":{
+    "id":{"type":"string"},
+    "name":{"type":"string"},
+    "currencies":{"type":"object","additionalProperties":{"type":"array","items":{"type":"string"}}}}}}}}}}}
+}}`
+
+// A map of scalar lists the response returns is read; one a request sends fails generation, since
+// the engine cannot send it, until the table leaves it out or makes it read-only.
+func TestMapOfListsIsResponseOnly(t *testing.T) {
+	spec, err := ParseSpec([]byte(mapOfListsSpec))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := Build(spec, Resource{Package: "region", CreatePath: "/v1/regions"}); err == nil || !strings.Contains(err.Error(), "currencies: a request-side map of lists is not supported") {
+		t.Errorf("a request-side map of lists: %v", err)
+	}
+	table, err := Build(spec, Resource{Package: "region", CreatePath: "/v1/regions", ReadOnly: []string{"currencies"}})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if f := lookup(t, table, "currencies"); f.Shape != fields.ScalarListMap || f.Elem != fields.String || f.Writable() || !f.Response {
+		t.Errorf("currencies: %+v", f)
+	}
+}
