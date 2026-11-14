@@ -18,7 +18,7 @@ import (
 var Declaration = engine.Declaration{
 	TypeName:              "stripe_payment_intent",
 	IDPrefix:              "pi_",
-	Description:           "A customer payment. Set `status` to `succeeded` to confirm the intent with its `payment_method` and, when `capture_method` is `manual`, to capture it in the same apply; set it to `canceled` to cancel one that has not succeeded. Confirming with a card that needs a further action, or that is declined, leaves the intent where Stripe put it and fails the apply. Setting `payment_method` moves the intent to `requires_confirmation`; a test payment method such as `pm_card_visa`, which Stripe turns into a new one, stays in the state as configured. Stripe changes `amount`, `currency` and `setup_future_usage` only before the intent is confirmed (`requires_payment_method`, `requires_confirmation` or `requires_action`), `statement_descriptor_suffix` also while it is `requires_capture`, and `capture_method` only while it is `requires_payment_method` or `requires_confirmation`; it refuses such a change in any other status, and the apply fails. `description`, `metadata` and `receipt_email` still change once it has succeeded. `transfer_group` is sent on creation only: Stripe refuses to change a transfer group once set, so a plan that sets or changes it on an existing payment intent fails, and removing it from the configuration keeps the current value. The `client_secret` is sensitive.",
+	Description:           "A customer payment. Set `status` to `succeeded` to confirm the intent with its `payment_method` and, when `capture_method` is `manual`, to capture it in the same apply; set it to `canceled` to cancel one that has not succeeded. Confirming with a card that needs a further action, or that is declined, leaves the intent where Stripe put it and fails the apply. Setting `payment_method` moves the intent to `requires_confirmation`; a test payment method such as `pm_card_visa`, which Stripe turns into a new one, stays in the state as configured. Stripe changes `amount`, `currency` and `setup_future_usage` only before the intent is confirmed (`requires_payment_method`, `requires_confirmation` or `requires_action`), `statement_descriptor_suffix` also while it is `requires_capture`, and `capture_method` only while it is `requires_payment_method` or `requires_confirmation`; it refuses such a change in any other status, and the apply fails. `description`, `metadata` and `receipt_email` still change once it has succeeded. `transfer_group` is sent on creation only: Stripe refuses to change a transfer group once set, so a plan that sets or changes it on an existing payment intent fails, and removing it from the configuration keeps the current value. Changing any of `amount_details.line_items` sends the whole list, whose lines are matched by position, and Stripe replaces the intent's lines with new ones, with new IDs. Stripe returns the lines only on request, so the provider reads them where it sends them and on a refresh of an intent whose state holds them: an imported intent holds none until an apply sends the configured lines, and lines added outside Terraform to an intent that holds none are not seen. With `amount_details.enforce_arithmetic_validation` set to `false`, Stripe takes lines whose total is not the `amount` and reports the mismatch in `amount_details.error`. The `client_secret` is sensitive.",
 	DataSourceDescription: "A customer payment, such as the one behind an invoice.",
 	Paths: engine.Paths{
 		Create:   "/v1/payment_intents",
@@ -77,8 +77,13 @@ var Declaration = engine.Declaration{
 	// `shipping.address` (family `v1-payments`, `hashes`), so an update sends only the payment
 	// details that changed and `shipping`, which requires its `address` and `name`, whole.
 	SendChangedMembers: []string{"payment_details"},
-	Delete:             engine.Refuse,
-	RefuseReason:       "Stripe cannot delete a payment intent; set `status` to `canceled` to cancel one that has not succeeded.",
+	// Stripe returns the line items only expanded, and the record shows the expansion only on a
+	// create or an update that sends line items and on a retrieve of an intent that holds them
+	// (suite: TestPaymentIntentAttributes, `ExpandWhen`; the fake answers `fake_unproven`
+	// elsewhere, as on a confirm, a capture or a cancel).
+	ExpandWhenHeld: []string{"amount_details.line_items"},
+	Delete:         engine.Refuse,
+	RefuseReason:   "Stripe cannot delete a payment intent; set `status` to `canceled` to cancel one that has not succeeded.",
 	Transitions: []engine.Transition{
 		{Field: "status", Value: "succeeded", Path: "/v1/payment_intents/{id}/confirm", From: []string{"requires_confirmation"}, Final: []string{"canceled"}},
 		{Field: "status", Value: "succeeded", Path: "/v1/payment_intents/{id}/capture", From: []string{"requires_capture"}, Final: []string{"canceled"}},

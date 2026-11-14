@@ -282,7 +282,14 @@ func compile(decl Declaration, table []fields.Field) (*model, error) {
 	if len(decl.ExpandOnRetrieve) > 0 && (len(decl.Lookups) > 0 || decl.FindInList || len(decl.FindBy) > 0 || decl.Singleton) {
 		return nil, fmt.Errorf("%s: expand-on-retrieve needs an object read by its ID alone, with no lookups", decl.TypeName)
 	}
-	if v2 && len(decl.Expand)+len(decl.ExpandOnRetrieve) > 0 {
+	for _, e := range decl.ExpandWhenHeld {
+		n, _, ok := m.at(e)
+		if !ok || !n.Response || slices.Contains(decl.Expand, e) {
+			return nil, fmt.Errorf("%s: expand-when-held entry `%s` is not a field outside a list that the response returns, or is also in expand", decl.TypeName, e)
+		}
+		n.KeepOmitted = true
+	}
+	if v2 && len(decl.Expand)+len(decl.ExpandOnRetrieve)+len(decl.ExpandWhenHeld) > 0 {
 		return nil, fmt.Errorf("%s: /v2 does not support expand; declare include values instead", decl.TypeName)
 	}
 	for _, name := range decl.LowerCase {

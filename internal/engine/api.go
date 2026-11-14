@@ -13,6 +13,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/tfsdk"
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
+	"github.com/hashicorp/terraform-plugin-go/tftypes"
 
 	"github.com/computomatic/terraform-provider-stripe/internal/stripeapi"
 	"github.com/computomatic/terraform-provider-stripe/internal/wire"
@@ -78,9 +79,41 @@ func (a *api) retrieved(params wire.Object) wire.Object {
 }
 
 // created is expanded for a create, which also includes the once-returned fields Stripe
-// returns only to the create that asks for them.
+// returns only to the create that asks for them, and expands each ExpandWhenHeld field it
+// sends.
 func (a *api) created(params wire.Object) wire.Object {
-	return a.withExpand(params, "", a.m.decl.Expand, slices.Concat(a.m.decl.Include, a.m.decl.IncludeOnCreate))
+	return a.withExpand(params, "", slices.Concat(a.m.decl.Expand, a.m.sentHeld(params)), slices.Concat(a.m.decl.Include, a.m.decl.IncludeOnCreate))
+}
+
+// updated is expanded for an update, which also expands each ExpandWhenHeld field it sends.
+func (a *api) updated(params wire.Object) wire.Object {
+	return a.withExpand(params, "", slices.Concat(a.m.decl.Expand, a.m.sentHeld(params)), a.m.decl.Include)
+}
+
+// retrievedHolding is retrieved for a resource's retrieve, which also expands each
+// ExpandWhenHeld field the state holds.
+func (a *api) retrievedHolding(state tftypes.Value) wire.Object {
+	var held []string
+	for _, e := range a.m.decl.ExpandWhenHeld {
+		_, p, _ := a.m.at(e)
+		v := valueAt(state, p)
+		var elems []tftypes.Value
+		if v.IsKnown() && !v.IsNull() && (v.As(&elems) != nil || len(elems) > 0) {
+			held = append(held, e)
+		}
+	}
+	return a.withExpand(nil, "", slices.Concat(a.m.decl.Expand, a.m.decl.ExpandOnRetrieve, held), a.m.decl.Include)
+}
+
+// sentHeld are the ExpandWhenHeld fields params send.
+func (m *model) sentHeld(params wire.Object) []string {
+	var sent []string
+	for _, p := range m.decl.ExpandWhenHeld {
+		if !isAbsent(wireAt(params, strings.Split(p, "."))) {
+			sent = append(sent, p)
+		}
+	}
+	return sent
 }
 
 func (a *api) withExpand(params wire.Object, prefix string, expand, include []string) wire.Object {

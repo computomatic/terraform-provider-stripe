@@ -17,6 +17,38 @@ var Table = []fields.Field{
 			{Name: "code", Shape: fields.String, Response: true, Enum: []string{"amount_details_amount_mismatch", "amount_details_tax_shipping_discount_greater_than_amount"}, Description: "The code of the error that occurred when validating the current amount details."},
 			{Name: "message", Shape: fields.String, Response: true, Description: "A message providing more details about the error."},
 		}},
+		{Name: "line_items", Shape: fields.ObjectList, Create: true, Update: true, Response: true, ServerDefaulted: true, Stable: true, Description: "Details about each object.", Fields: []fields.Field{
+			{Name: "discount_amount", Shape: fields.Int, Create: true, Update: true, Response: true, ServerDefaulted: true, Description: "The discount applied on this line item represented in the [smallest currency unit](https://docs.stripe.com/currencies#zero-decimal). An integer greater than 0. This field is mutually exclusive with the `amount_details[discount_amount]` field."},
+			{Name: "id", Shape: fields.String, Response: true, Description: "Unique identifier for the object."},
+			{Name: "object", Shape: fields.String, Response: true, Enum: []string{"payment_intent_amount_details_line_item"}, Description: "String representing the object's type. Objects of the same type share the same value."},
+			{Name: "payment_method_options", Shape: fields.Object, Create: true, Update: true, Response: true, ServerDefaulted: true, Description: "Payment method-specific information for line items.", Fields: []fields.Field{
+				{Name: "card", Shape: fields.Object, Create: true, Update: true, Response: true, ServerDefaulted: true, Fields: []fields.Field{
+					{Name: "commodity_code", Shape: fields.String, Create: true, Update: true, Response: true, ServerDefaulted: true},
+				}},
+				{Name: "card_present", Shape: fields.Object, Create: true, Update: true, Response: true, ServerDefaulted: true, Fields: []fields.Field{
+					{Name: "commodity_code", Shape: fields.String, Create: true, Update: true, Response: true, ServerDefaulted: true},
+				}},
+				{Name: "klarna", Shape: fields.Object, Create: true, Update: true, Response: true, ServerDefaulted: true, Fields: []fields.Field{
+					{Name: "image_url", Shape: fields.String, Create: true, Update: true, Response: true, ServerDefaulted: true},
+					{Name: "product_url", Shape: fields.String, Create: true, Update: true, Response: true, ServerDefaulted: true},
+					{Name: "reference", Shape: fields.String, Create: true, Update: true, Response: true, ServerDefaulted: true},
+					{Name: "subscription_reference", Shape: fields.String, Create: true, Update: true, Response: true, ServerDefaulted: true},
+				}},
+				{Name: "paypal", Shape: fields.Object, Create: true, Update: true, Response: true, ServerDefaulted: true, Fields: []fields.Field{
+					{Name: "category", Shape: fields.String, Create: true, Update: true, Response: true, ServerDefaulted: true, Enum: []string{"digital_goods", "donation", "physical_goods"}, Description: "Type of the line item."},
+					{Name: "description", Shape: fields.String, Create: true, Update: true, Response: true, ServerDefaulted: true, Description: "Description of the line item."},
+					{Name: "sold_by", Shape: fields.String, Create: true, Update: true, Response: true, ServerDefaulted: true, Description: "The Stripe account ID of the connected account that sells the item. This is only needed when using [Separate Charges and Transfers](https://docs.stripe.com/connect/separate-charges-and-transfers)."},
+				}},
+			}},
+			{Name: "product_code", Shape: fields.String, Create: true, Update: true, Response: true, ServerDefaulted: true, Description: "The product code of the line item, such as an SKU. Required for L3 rates. At most 12 characters long."},
+			{Name: "product_name", Shape: fields.String, Required: true, Create: true, Update: true, Response: true, Description: "The product name of the line item. Required for L3 rates. At most 1024 characters long. For Cards, this field is truncated to 26 alphanumeric characters before being sent to the card networks. For PayPal, this field is truncated to 127 characters."},
+			{Name: "quantity", Shape: fields.Int, Required: true, Create: true, Update: true, Response: true, Description: "The quantity of items. Required for L3 rates. An integer greater than 0."},
+			{Name: "tax", Shape: fields.Object, Create: true, Update: true, Response: true, ServerDefaulted: true, Description: "Contains information about the tax on the item.", Fields: []fields.Field{
+				{Name: "total_tax_amount", Shape: fields.Int, Required: true, Create: true, Update: true, Response: true, Description: "The total amount of tax on a single line item represented in the [smallest currency unit](https://docs.stripe.com/currencies#zero-decimal). Required for L3 rates. An integer greater than or equal to 0. This field is mutually exclusive with the `amount_details[tax][total_tax_amount]` field."},
+			}},
+			{Name: "unit_cost", Shape: fields.Int, Required: true, Create: true, Update: true, Response: true, Description: "The unit cost of the line item represented in the [smallest currency unit](https://docs.stripe.com/currencies#zero-decimal). Required for L3 rates. An integer greater than or equal to 0."},
+			{Name: "unit_of_measure", Shape: fields.String, Create: true, Update: true, Response: true, ServerDefaulted: true, Description: "A unit of measure for the line item, such as gallons, feet, meters, etc. Required for L3 rates. At most 12 alphanumeric characters long."},
+		}},
 		{Name: "shipping", Shape: fields.Object, Create: true, Update: true, Response: true, ServerDefaulted: true, Fields: []fields.Field{
 			{Name: "amount", Shape: fields.Int, Create: true, Update: true, Response: true, ServerDefaulted: true, Stable: true, Description: "If a physical good is being shipped, the cost of shipping represented in the [smallest currency unit](https://docs.stripe.com/currencies#zero-decimal). An integer greater than or equal to 0."},
 			{Name: "from_postal_code", Shape: fields.String, Create: true, Update: true, Response: true, ServerDefaulted: true, Stable: true, Description: "If a physical good is being shipped, the postal code of where it is being shipped from. At most 10 alphanumeric characters long, hyphens and spaces are allowed."},
