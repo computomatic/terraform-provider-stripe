@@ -20,6 +20,13 @@ import (
 // constructor the provider registers.
 func NewDataSource(decl Declaration, table []fields.Field) (func() datasource.DataSource, error) {
 	dsTable := fields.ForDataSource(table)
+	// A field Stripe returns only expanded, and only where the record proves it, which a data
+	// source cannot know before it reads, would always be null here, so the data source leaves
+	// it out.
+	for _, p := range decl.ExpandWhenHeld {
+		dsTable = withoutField(dsTable, strings.Split(p, "."))
+	}
+	decl.ExpandWhenHeld = nil
 	decl.Answers = answersIn(decl.Answers, dsTable)
 	m, err := compile(decl, dsTable)
 	if err != nil {
@@ -225,6 +232,21 @@ func (d *DataSource) listParams(ctx context.Context, config basetypes.ObjectValu
 		params = append(params, wire.Field{Name: p.Name, Value: wire.String(value)})
 	}
 	return params, nil
+}
+
+// withoutField returns table without the field at the dotted path, given as its names.
+func withoutField(table []fields.Field, names []string) []fields.Field {
+	out := make([]fields.Field, 0, len(table))
+	for _, f := range table {
+		if f.Name == names[0] {
+			if len(names) == 1 {
+				continue
+			}
+			f.Fields = withoutField(f.Fields, names[1:])
+		}
+		out = append(out, f)
+	}
+	return out
 }
 
 // idOf returns the ID a field of body holds, as a string or as an expanded object, or "" when

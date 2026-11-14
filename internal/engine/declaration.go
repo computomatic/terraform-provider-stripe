@@ -310,6 +310,15 @@ type Declaration struct {
 	// read them. A declaration with a list lookup cannot have them, because the list does not
 	// return them.
 	ExpandOnRetrieve []string
+	// ExpandWhenHeld lists response fields, by dotted path outside any list, that Stripe returns
+	// only when asked for with `expand[]`, and that the conformance record shows expanded only
+	// on a create or an update that sends the field and on a retrieve of an object that holds
+	// it, such as a payment intent's `amount_details.line_items`. A create or an update asks for
+	// one when its request sends it, and a resource's retrieve when the state holds it; no
+	// action, list, search or data source asks for it. A response that leaves it out keeps the
+	// prior value, as KeepOmitted does, and a later response within one apply that did not ask
+	// for it, such as an action's, the value the request before it returned.
+	ExpandWhenHeld []string
 	// Include lists the values of the `include` parameter that `/v2` takes in place of
 	// `expand`, such as `webhook_endpoint.url`, which Stripe redacts unless asked. The engine
 	// sends them on every request that returns the object, so the value is read back and

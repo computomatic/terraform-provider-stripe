@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"maps"
 	"net/http"
 	"net/url"
 	"slices"
@@ -685,7 +686,7 @@ func (r *Resource) Create(ctx context.Context, req resource.CreateRequest, resp 
 			return
 		}
 		if len(followUp) > 0 {
-			updated, err := r.api.call(ctx, "POST", r.m.expand(r.m.decl.Paths.Update, id, parent), r.api.expanded(followUp, ""))
+			updated, err := r.api.call(ctx, "POST", r.m.expand(r.m.decl.Paths.Update, id, parent), r.api.updated(followUp))
 			if err != nil {
 				r.api.fail(&resp.Diagnostics, err)
 				r.taintedAfterCreate(&resp.Diagnostics, id)
@@ -693,8 +694,9 @@ func (r *Resource) Create(ctx context.Context, req resource.CreateRequest, resp 
 			}
 			// Stripe sends once-returned fields, such as a webhook secret, on the create
 			// response only, and a `/v2` object's beside the fields it includes, so the
-			// update's copy of those is dropped.
-			body = mergeBodies(body, withoutIncluded(updated, r.m.decl.IncludeOnCreate))
+			// update's copy of those is dropped. A held field below the top level the follow-up
+			// did not ask for stays as the create read it.
+			body = r.m.keepExpandedWhenHeld(body, mergeBodies(body, withoutIncluded(updated, r.m.decl.IncludeOnCreate)))
 		}
 	}
 	body, refusals, err := r.applyTransitions(ctx, body, plan, id, parent)
@@ -791,7 +793,7 @@ func (r *Resource) Read(ctx context.Context, req resource.ReadRequest, resp *res
 		resp.State.RemoveResource(ctx)
 		return
 	}
-	body, err := r.api.call(ctx, "GET", r.m.expand(r.m.decl.Paths.Retrieve, id, parent), r.api.retrieved(nil))
+	body, err := r.api.call(ctx, "GET", r.m.expand(r.m.decl.Paths.Retrieve, id, parent), r.api.retrievedHolding(req.State.Raw))
 	if r.m.gone(err, &resp.Diagnostics) || err == nil && isDeletedStub(body) {
 		resp.State.RemoveResource(ctx)
 		return
@@ -850,9 +852,9 @@ func (r *Resource) Update(ctx context.Context, req resource.UpdateRequest, resp 
 	}
 	id, parent := r.m.ids(state)
 	// With nothing to send (only `timeouts` changed) a read refreshes the computed values.
-	method, target, sent := "GET", r.m.expand(r.m.decl.Paths.Retrieve, id, parent), r.api.retrieved(nil)
+	method, target, sent := "GET", r.m.expand(r.m.decl.Paths.Retrieve, id, parent), r.api.retrievedHolding(req.State.Raw)
 	if len(params) > 0 {
-		method, target, sent = "POST", r.m.expand(r.m.decl.Paths.Update, id, parent), r.api.expanded(params, "")
+		method, target, sent = "POST", r.m.expand(r.m.decl.Paths.Update, id, parent), r.api.updated(params)
 	}
 	keep := r.m.managedKeys(state, plan)
 	hints, addsKeyless := r.m.keyedHints(plan, state, req.Config.Raw)
@@ -896,7 +898,8 @@ func (r *Resource) Update(ctx context.Context, req resource.UpdateRequest, resp 
 			}
 		}
 	}
-	next, diags := r.m.decodeState(body, r.m.withKeptFromState(plan, state, req.Config.Raw), r.objType, false, keep)
+	prior := r.m.withUnsentHeldFromState(r.m.withKeptFromState(plan, state, req.Config.Raw), state, params)
+	next, diags := r.m.decodeState(body, prior, r.objType, false, keep)
 	resp.Diagnostics.Append(r.api.strictly(diags)...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -984,6 +987,7 @@ func (r *Resource) Delete(ctx context.Context, req resource.DeleteRequest, resp 
 // object, so the next plan sees it.
 func (r *Resource) applyTransitions(ctx context.Context, body wire.Object, plan basetypes.ObjectValue, id, parent string) (wire.Object, map[string]*stripeapi.APIError, error) {
 	var refusals map[string]*stripeapi.APIError
+	written := body
 	for _, t := range r.m.decl.Transitions {
 		n, _ := r.m.top(t.Field)
 		current := wireScalar(body, t.Field)
@@ -1023,7 +1027,7 @@ func (r *Resource) applyTransitions(ctx context.Context, body wire.Object, plan 
 		// A once-returned field is in the create response only, so the action's does not replace it.
 		body = mergeBodies(body, next)
 	}
-	return body, refusals, nil
+	return r.m.keepExpandedWhenHeld(written, body), refusals, nil
 }
 
 // retrieveExpandOnRetrieve lays a retrieve's answer over body, for a declaration with fields
@@ -1036,7 +1040,7 @@ func (r *Resource) retrieveExpandOnRetrieve(ctx context.Context, body wire.Objec
 	if err != nil {
 		return nil, err
 	}
-	return mergeBodies(body, got), nil
+	return r.m.keepExpandedWhenHeld(body, mergeBodies(body, got)), nil
 }
 
 // withoutIncluded drops from a `/v2` response the top-level fields that hold the include
@@ -1083,6 +1087,83 @@ func mergeBodies(earlier, later wire.Object) wire.Object {
 		}
 	}
 	return out
+}
+
+// keepExpandedWhenHeld lays each ExpandWhenHeld field that earlier holds onto later where later
+// leaves it out: a response that did not ask for the field, such as an action's or a create's
+// follow-up update's, laid over the body (mergeBodies, which replaces top-level fields whole),
+// keeps what the request before it read.
+func (m *model) keepExpandedWhenHeld(earlier, later wire.Object) wire.Object {
+	for _, p := range m.decl.ExpandWhenHeld {
+		names := strings.Split(p, ".")
+		if v := wireAt(earlier, names); !isAbsent(v) && isAbsent(wireAt(later, names)) {
+			later = withWireAt(later, names, v)
+		}
+	}
+	return later
+}
+
+// withUnsentHeldFromState returns prior with the state's value of each ExpandWhenHeld field the
+// update params do not send, which the response therefore leaves out and the update did not
+// change. The plan can leave the members the configuration does not set unknown, which
+// KeepOmitted would not keep.
+func (m *model) withUnsentHeldFromState(prior, state basetypes.ObjectValue, params wire.Object) basetypes.ObjectValue {
+	sent := m.sentHeld(params)
+	for _, e := range m.decl.ExpandWhenHeld {
+		if slices.Contains(sent, e) {
+			continue
+		}
+		_, p, _ := m.at(e)
+		var names []string
+		for _, step := range p.Steps() {
+			if name, ok := step.(tftypes.AttributeName); ok {
+				names = append(names, string(name))
+			}
+		}
+		prior = withAttrAt(prior, names, attrAt(context.Background(), state, names))
+	}
+	return prior
+}
+
+// withAttrAt is obj with v at the attribute names below it, or obj where a value on the way is
+// not known.
+func withAttrAt(obj basetypes.ObjectValue, names []string, v attr.Value) basetypes.ObjectValue {
+	if !known(obj) || v == nil {
+		return obj
+	}
+	attrs := maps.Clone(obj.Attributes())
+	if len(names) > 1 {
+		below, ok := attrs[names[0]].(basetypes.ObjectValue)
+		if !ok {
+			return obj
+		}
+		v = withAttrAt(below, names[1:], v)
+	}
+	attrs[names[0]] = v
+	out, diags := basetypes.NewObjectValue(obj.AttributeTypes(context.Background()), attrs)
+	if diags.HasError() {
+		return obj
+	}
+	return out
+}
+
+// wireAt is the value at the field names below o, or nil.
+func wireAt(o wire.Object, names []string) wire.Value {
+	var v wire.Value = o
+	for _, name := range names {
+		obj, _ := v.(wire.Object)
+		v, _ = obj.Get(name)
+	}
+	return v
+}
+
+// withWireAt is a copy of o holding v at the field names below it.
+func withWireAt(o wire.Object, names []string, v wire.Value) wire.Object {
+	if len(names) > 1 {
+		below, _ := o.GetObject(names[0])
+		v = withWireAt(below, names[1:], v)
+	}
+	return mergeBodies(o, wire.Object{{Name: names[0], Value: v}})
 }
 
 // refused reports whether err is the Stripe refusal the declaration names.

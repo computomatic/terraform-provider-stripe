@@ -3,12 +3,12 @@
 page_title: "stripe_payment_intent Resource - Stripe"
 subcategory: ""
 description: |-
-  A customer payment. Set status to succeeded to confirm the intent with its payment_method and, when capture_method is manual, to capture it in the same apply; set it to canceled to cancel one that has not succeeded. Confirming with a card that needs a further action, or that is declined, leaves the intent where Stripe put it and fails the apply. Setting payment_method moves the intent to requires_confirmation; a test payment method such as pm_card_visa, which Stripe turns into a new one, stays in the state as configured. Stripe changes amount, currency and setup_future_usage only before the intent is confirmed (requires_payment_method, requires_confirmation or requires_action), statement_descriptor_suffix also while it is requires_capture, and capture_method only while it is requires_payment_method or requires_confirmation; it refuses such a change in any other status, and the apply fails. description, metadata and receipt_email still change once it has succeeded. transfer_group is sent on creation only: Stripe refuses to change a transfer group once set, so a plan that sets or changes it on an existing payment intent fails, and removing it from the configuration keeps the current value. The client_secret is sensitive.
+  A customer payment. Set status to succeeded to confirm the intent with its payment_method and, when capture_method is manual, to capture it in the same apply; set it to canceled to cancel one that has not succeeded. Confirming with a card that needs a further action, or that is declined, leaves the intent where Stripe put it and fails the apply. Setting payment_method moves the intent to requires_confirmation; a test payment method such as pm_card_visa, which Stripe turns into a new one, stays in the state as configured. Stripe changes amount, currency and setup_future_usage only before the intent is confirmed (requires_payment_method, requires_confirmation or requires_action), statement_descriptor_suffix also while it is requires_capture, and capture_method only while it is requires_payment_method or requires_confirmation; it refuses such a change in any other status, and the apply fails. description, metadata and receipt_email still change once it has succeeded. transfer_group is sent on creation only: Stripe refuses to change a transfer group once set, so a plan that sets or changes it on an existing payment intent fails, and removing it from the configuration keeps the current value. Changing any of amount_details.line_items sends the whole list, whose lines are matched by position, and Stripe replaces the intent's lines with new ones, with new IDs. Stripe returns the lines only on request, so the provider reads them where it sends them and on a refresh of an intent whose state holds them: an imported intent holds none until an apply sends the configured lines, and lines added outside Terraform to an intent that holds none are not seen. With amount_details.enforce_arithmetic_validation set to false, Stripe takes lines whose total is not the amount and reports the mismatch in amount_details.error. The client_secret is sensitive.
 ---
 
 # Resource: stripe_payment_intent
 
-A customer payment. Set `status` to `succeeded` to confirm the intent with its `payment_method` and, when `capture_method` is `manual`, to capture it in the same apply; set it to `canceled` to cancel one that has not succeeded. Confirming with a card that needs a further action, or that is declined, leaves the intent where Stripe put it and fails the apply. Setting `payment_method` moves the intent to `requires_confirmation`; a test payment method such as `pm_card_visa`, which Stripe turns into a new one, stays in the state as configured. Stripe changes `amount`, `currency` and `setup_future_usage` only before the intent is confirmed (`requires_payment_method`, `requires_confirmation` or `requires_action`), `statement_descriptor_suffix` also while it is `requires_capture`, and `capture_method` only while it is `requires_payment_method` or `requires_confirmation`; it refuses such a change in any other status, and the apply fails. `description`, `metadata` and `receipt_email` still change once it has succeeded. `transfer_group` is sent on creation only: Stripe refuses to change a transfer group once set, so a plan that sets or changes it on an existing payment intent fails, and removing it from the configuration keeps the current value. The `client_secret` is sensitive.
+A customer payment. Set `status` to `succeeded` to confirm the intent with its `payment_method` and, when `capture_method` is `manual`, to capture it in the same apply; set it to `canceled` to cancel one that has not succeeded. Confirming with a card that needs a further action, or that is declined, leaves the intent where Stripe put it and fails the apply. Setting `payment_method` moves the intent to `requires_confirmation`; a test payment method such as `pm_card_visa`, which Stripe turns into a new one, stays in the state as configured. Stripe changes `amount`, `currency` and `setup_future_usage` only before the intent is confirmed (`requires_payment_method`, `requires_confirmation` or `requires_action`), `statement_descriptor_suffix` also while it is `requires_capture`, and `capture_method` only while it is `requires_payment_method` or `requires_confirmation`; it refuses such a change in any other status, and the apply fails. `description`, `metadata` and `receipt_email` still change once it has succeeded. `transfer_group` is sent on creation only: Stripe refuses to change a transfer group once set, so a plan that sets or changes it on an existing payment intent fails, and removing it from the configuration keeps the current value. Changing any of `amount_details.line_items` sends the whole list, whose lines are matched by position, and Stripe replaces the intent's lines with new ones, with new IDs. Stripe returns the lines only on request, so the provider reads them where it sends them and on a refresh of an intent whose state holds them: an imported intent holds none until an apply sends the configured lines, and lines added outside Terraform to an intent that holds none are not seen. With `amount_details.enforce_arithmetic_validation` set to `false`, Stripe takes lines whose total is not the `amount` and reports the mismatch in `amount_details.error`. The `client_secret` is sensitive.
 
 ~> A payment intent can move real money. In a live-mode Stripe account, creating or changing one, including setting its `status`, fails at plan time unless the provider sets `allow_live_money_movement = true`. Reading or importing one never does. The provider asks Stripe for the account's mode. See the Managing Test Data guide.
 
@@ -83,6 +83,7 @@ The `amount_details` attribute supports:
 * `discount_amount` - (Optional) The total discount applied on the transaction represented in the [smallest currency unit](https://docs.stripe.com/currencies#zero-decimal). An integer greater than 0. This field is mutually exclusive with the `amount_details[line_items][#][discount_amount]` field. Removing it from the configuration leaves the current value.
 * `enforce_arithmetic_validation` - (Optional) Stripe does not return this value; the provider keeps it from configuration.
 * `error` - (Read-Only) See [`amount_details.error`](#amount_details.error) below.
+* `line_items` - (Optional) Details about each object. Removing it from the configuration leaves the current value. See [`amount_details.line_items`](#amount_details.line_items) below.
 * `shipping` - (Optional) Removing it from the configuration leaves the current value. See [`amount_details.shipping`](#amount_details.shipping) below.
 * `tax` - (Optional) Removing it from the configuration leaves the current value. See [`amount_details.tax`](#amount_details.tax) below.
 
@@ -93,6 +94,72 @@ The `amount_details.error` attribute supports:
 
 * `code` - The code of the error that occurred when validating the current amount details. Possible values: `amount_details_amount_mismatch`, `amount_details_tax_shipping_discount_greater_than_amount`.
 * `message` - A message providing more details about the error.
+
+<a id="amount_details.line_items"></a>
+### `amount_details.line_items`
+
+The `amount_details.line_items` attribute is a list. Each element supports:
+
+* `discount_amount` - (Optional) The discount applied on this line item represented in the [smallest currency unit](https://docs.stripe.com/currencies#zero-decimal). An integer greater than 0. This field is mutually exclusive with the `amount_details[discount_amount]` field. Removing it from the configuration lets Stripe set it when the list is next sent.
+* `id` - (Read-Only) Unique identifier for the object.
+* `object` - (Read-Only) String representing the object's type. Objects of the same type share the same value. Possible values: `payment_intent_amount_details_line_item`.
+* `payment_method_options` - (Optional) Payment method-specific information for line items. Removing it from the configuration lets Stripe set it when the list is next sent. See [`amount_details.line_items.payment_method_options`](#amount_details.line_items.payment_method_options) below.
+* `product_code` - (Optional) The product code of the line item, such as an SKU. Required for L3 rates. At most 12 characters long. Removing it from the configuration lets Stripe set it when the list is next sent.
+* `product_name` - (Required) The product name of the line item. Required for L3 rates. At most 1024 characters long. For Cards, this field is truncated to 26 alphanumeric characters before being sent to the card networks. For PayPal, this field is truncated to 127 characters.
+* `quantity` - (Required) The quantity of items. Required for L3 rates. An integer greater than 0.
+* `tax` - (Optional) Contains information about the tax on the item. Removing it from the configuration lets Stripe set it when the list is next sent. See [`amount_details.line_items.tax`](#amount_details.line_items.tax) below.
+* `unit_cost` - (Required) The unit cost of the line item represented in the [smallest currency unit](https://docs.stripe.com/currencies#zero-decimal). Required for L3 rates. An integer greater than or equal to 0.
+* `unit_of_measure` - (Optional) A unit of measure for the line item, such as gallons, feet, meters, etc. Required for L3 rates. At most 12 alphanumeric characters long. Removing it from the configuration lets Stripe set it when the list is next sent.
+
+<a id="amount_details.line_items.payment_method_options"></a>
+### `amount_details.line_items.payment_method_options`
+
+The `amount_details.line_items.payment_method_options` attribute supports:
+
+* `card` - (Optional) Removing it from the configuration lets Stripe set it when the list is next sent. See [`amount_details.line_items.payment_method_options.card`](#amount_details.line_items.payment_method_options.card) below.
+* `card_present` - (Optional) Removing it from the configuration lets Stripe set it when the list is next sent. See [`amount_details.line_items.payment_method_options.card_present`](#amount_details.line_items.payment_method_options.card_present) below.
+* `klarna` - (Optional) Removing it from the configuration lets Stripe set it when the list is next sent. See [`amount_details.line_items.payment_method_options.klarna`](#amount_details.line_items.payment_method_options.klarna) below.
+* `paypal` - (Optional) Removing it from the configuration lets Stripe set it when the list is next sent. See [`amount_details.line_items.payment_method_options.paypal`](#amount_details.line_items.payment_method_options.paypal) below.
+
+<a id="amount_details.line_items.payment_method_options.card"></a>
+### `amount_details.line_items.payment_method_options.card`
+
+The `amount_details.line_items.payment_method_options.card` attribute supports:
+
+* `commodity_code` - (Optional) Removing it from the configuration lets Stripe set it when the list is next sent.
+
+<a id="amount_details.line_items.payment_method_options.card_present"></a>
+### `amount_details.line_items.payment_method_options.card_present`
+
+The `amount_details.line_items.payment_method_options.card_present` attribute supports:
+
+* `commodity_code` - (Optional) Removing it from the configuration lets Stripe set it when the list is next sent.
+
+<a id="amount_details.line_items.payment_method_options.klarna"></a>
+### `amount_details.line_items.payment_method_options.klarna`
+
+The `amount_details.line_items.payment_method_options.klarna` attribute supports:
+
+* `image_url` - (Optional) Removing it from the configuration lets Stripe set it when the list is next sent.
+* `product_url` - (Optional) Removing it from the configuration lets Stripe set it when the list is next sent.
+* `reference` - (Optional) Removing it from the configuration lets Stripe set it when the list is next sent.
+* `subscription_reference` - (Optional) Removing it from the configuration lets Stripe set it when the list is next sent.
+
+<a id="amount_details.line_items.payment_method_options.paypal"></a>
+### `amount_details.line_items.payment_method_options.paypal`
+
+The `amount_details.line_items.payment_method_options.paypal` attribute supports:
+
+* `category` - (Optional) Type of the line item. Possible values: `digital_goods`, `donation`, `physical_goods`. Removing it from the configuration lets Stripe set it when the list is next sent.
+* `description` - (Optional) Description of the line item. Removing it from the configuration lets Stripe set it when the list is next sent.
+* `sold_by` - (Optional) The Stripe account ID of the connected account that sells the item. This is only needed when using [Separate Charges and Transfers](https://docs.stripe.com/connect/separate-charges-and-transfers). Removing it from the configuration lets Stripe set it when the list is next sent.
+
+<a id="amount_details.line_items.tax"></a>
+### `amount_details.line_items.tax`
+
+The `amount_details.line_items.tax` attribute supports:
+
+* `total_tax_amount` - (Required) The total amount of tax on a single line item represented in the [smallest currency unit](https://docs.stripe.com/currencies#zero-decimal). Required for L3 rates. An integer greater than or equal to 0. This field is mutually exclusive with the `amount_details[tax][total_tax_amount]` field.
 
 <a id="amount_details.shipping"></a>
 ### `amount_details.shipping`
