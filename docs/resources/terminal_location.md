@@ -3,12 +3,12 @@
 page_title: "stripe_terminal_location Resource - Stripe"
 subcategory: ""
 description: |-
-  A place where you use Stripe Terminal readers. terraform destroy deletes the location. Changing the country of address creates a new location, because Stripe cannot change it. A location in the US needs address.state.
+  A place where you use Stripe Terminal readers. terraform destroy deletes the location. Changing the country of address creates a new location, because Stripe cannot change it. A location in the US needs address.state. The kana and kanji display names and addresses are for a location of a Japanese account, such as the connected account a provider block names in stripe_account: the provider sends them wherever you set them, because it does not know the account's country when it plans, and Stripe decides when you apply. Stripe fills a script address's line2 the configuration leaves unset, so removing it leaves the current value; set it to "" to clear it.
 ---
 
 # Resource: stripe_terminal_location
 
-A place where you use Stripe Terminal readers. `terraform destroy` deletes the location. Changing the country of `address` creates a new location, because Stripe cannot change it. A location in the US needs `address.state`.
+A place where you use Stripe Terminal readers. `terraform destroy` deletes the location. Changing the country of `address` creates a new location, because Stripe cannot change it. A location in the US needs `address.state`. The kana and kanji display names and addresses are for a location of a Japanese account, such as the connected account a provider block names in `stripe_account`: the provider sends them wherever you set them, because it does not know the account's country when it plans, and Stripe decides when you apply. Stripe fills a script address's `line2` the configuration leaves unset, so removing it leaves the current value; set it to `""` to clear it.
 
 ## Example Usage
 
@@ -33,12 +33,12 @@ The following arguments are optional:
 * `address` - (Optional) The full address of the location. Removing it from the configuration leaves the current value. See [`address`](#address) below.
 * `address_kana` - (Optional) The Kana variation of the full address of the location (Japan only). See [`address_kana`](#address_kana) below.
 * `address_kanji` - (Optional) The Kanji variation of the full address of the location (Japan only). See [`address_kanji`](#address_kanji) below.
-* `configuration_overrides` - (Optional) The ID of a configuration that will be used to customize all readers in this location.
-* `display_name` - (Optional) A name for the location. Maximum length is 1000 characters. Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
-* `display_name_kana` - (Optional) The Kana variation of the name for the location (Japan only). Maximum length is 1000 characters.
-* `display_name_kanji` - (Optional) The Kanji variation of the name for the location (Japan only). Maximum length is 1000 characters.
-* `metadata` - (Optional) Set of [key-value pairs](https://docs.stripe.com/api/metadata) that you can attach to an object. This can be useful for storing additional information about the object in a structured format. Individual keys can be unset by posting an empty value to them. All keys can be unset by posting an empty value to `metadata`.
-* `phone` - (Optional) The phone number for the location.
+* `configuration_overrides` - (Optional) The ID of a configuration that will be used to customize all readers in this location. Default: none.
+* `display_name` - (Optional) A name for the location. Maximum length is 1000 characters. Removing it from the configuration leaves the current value.
+* `display_name_kana` - (Optional) The Kana variation of the name for the location (Japan only). Maximum length is 1000 characters. Default: none.
+* `display_name_kanji` - (Optional) The Kanji variation of the name for the location (Japan only). Maximum length is 1000 characters. Default: none.
+* `metadata` - (Optional) Set of [key-value pairs](https://docs.stripe.com/api/metadata) that you can attach to an object. This can be useful for storing additional information about the object in a structured format. Individual keys can be unset by posting an empty value to them. All keys can be unset by posting an empty value to `metadata`. Default (Stripe): `{}`.
+* `phone` - (Optional) The phone number for the location. Default: none.
 
 <a id="address"></a>
 ### `address`
@@ -46,9 +46,9 @@ The following arguments are optional:
 The `address` attribute supports:
 
 * `city` - (Optional) City, district, suburb, town, or village.
-* `country` - (Required) Two-letter country code ([ISO 3166-1 alpha-2](https://en.wikipedia.org/wiki/ISO_3166-1_alpha-2)). Changing it replaces the resource.
+* `country` - (Required) Two-letter country code ([ISO 3166-1 alpha-2](https://en.wikipedia.org/wiki/ISO_3166-1_alpha-2)). Changing it replaces the resource. Stripe refused it on a US account on update: "A Location's country can't be changed after creation. Create a new Location for a different country.".
 * `line1` - (Optional) Address line 1, such as the street, PO Box, or company name.
-* `line2` - (Optional) Address line 2, such as the apartment, suite, unit, or building. Removing it from the configuration stops sending it, and the next apply records the value Stripe holds.
+* `line2` - (Optional) Address line 2, such as the apartment, suite, unit, or building. Default (Stripe): `""`. Removing it from the configuration leaves the current value.
 * `postal_code` - (Optional) ZIP or postal code.
 * `state` - (Optional) State, county, province, or region ([ISO 3166-2](https://en.wikipedia.org/wiki/ISO_3166-2)).
 
@@ -57,26 +57,26 @@ The `address` attribute supports:
 
 The `address_kana` attribute supports:
 
-* `city` - (Optional) City/Ward.
-* `country` - (Optional) Two-letter country code ([ISO 3166-1 alpha-2](https://en.wikipedia.org/wiki/ISO_3166-1_alpha-2)).
-* `line1` - (Optional) Block/Building number.
-* `line2` - (Optional) Building details.
-* `postal_code` - (Optional) ZIP or postal code.
-* `state` - (Optional) Prefecture.
-* `town` - (Optional) Town/cho-me.
+* `city` - (Optional) City/Ward. Default: none.
+* `country` - (Optional) Two-letter country code ([ISO 3166-1 alpha-2](https://en.wikipedia.org/wiki/ISO_3166-1_alpha-2)). Default: none.
+* `line1` - (Optional) Block/Building number. Default: none.
+* `line2` - (Optional) Building details. Default: none. Removing it from the configuration leaves the current value.
+* `postal_code` - (Optional) ZIP or postal code. Default: none.
+* `state` - (Optional) Prefecture. Default: none.
+* `town` - (Optional) Town/cho-me. Default: none.
 
 <a id="address_kanji"></a>
 ### `address_kanji`
 
 The `address_kanji` attribute supports:
 
-* `city` - (Optional) City/Ward.
-* `country` - (Optional) Two-letter country code ([ISO 3166-1 alpha-2](https://en.wikipedia.org/wiki/ISO_3166-1_alpha-2)).
-* `line1` - (Optional) Block/Building number.
-* `line2` - (Optional) Building details.
-* `postal_code` - (Optional) ZIP or postal code.
-* `state` - (Optional) Prefecture.
-* `town` - (Optional) Town/cho-me.
+* `city` - (Optional) City/Ward. Default: none.
+* `country` - (Optional) Two-letter country code ([ISO 3166-1 alpha-2](https://en.wikipedia.org/wiki/ISO_3166-1_alpha-2)). Default: none.
+* `line1` - (Optional) Block/Building number. Default: none.
+* `line2` - (Optional) Building details. Default: none. Removing it from the configuration leaves the current value.
+* `postal_code` - (Optional) ZIP or postal code. Default: none.
+* `state` - (Optional) Prefecture. Default: none.
+* `town` - (Optional) Town/cho-me. Default: none.
 
 ## Attribute Reference
 

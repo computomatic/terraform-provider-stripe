@@ -590,17 +590,73 @@ func TestAccAccountExternalAccount_tokenThenHolder(t *testing.T) {
 	})
 }
 
-// `account_type` is read-only: the suite proves Stripe taking it only on a JP platform account
-// (probe `jp_account_type`), a country the fake of `v0.43.0` does not serve, so a configuration
-// that sets it fails at plan.
-func TestAccAccountExternalAccount_accountTypeReadOnly(t *testing.T) {
+// japaneseBank is a bank account of a Japanese individual account, created as the fake's
+// conformance run creates the suite's tagged `country_jp` account, with the bank details and
+// type of the suite's probe `isolated/jp_account_type`: the Connect testing guide's JP success
+// account, `futsu` on create and `toza` on update.
+func japaneseBank(c acctest.Config, accountType string) string {
+	return c.ProviderBlock() + fmt.Sprintf(`
+resource "stripe_account" "test" {
+  type          = "custom"
+  country       = "JP"
+  business_type = "individual"
+  capabilities  = { card_payments = { requested = true }, transfers = { requested = true } }
+}
+
+resource "stripe_account_external_account" "test" {
+  account             = stripe_account.test.id
+  country             = "JP"
+  currency            = "jpy"
+  routing_number      = "1100000"
+  account_number      = "0001234"
+  account_holder_name = "Jenny Rosen"
+  account_type        = %q
+}
+`, accountType)
+}
+
+// A Japanese bank account takes `account_type` on create and changes it in place, as the
+// suite's probe does on its JP account.
+func TestAccAccountExternalAccount_japaneseAccountType(t *testing.T) {
+	acct := acctest.NewAccount(t)
+	var account, id string
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: tfacc.ProviderFactories,
+		Steps: acctest.Forget(t, []resource.TestStep{
+			{
+				Config: japaneseBank(acct, "futsu"),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					ids(address, &account, &id),
+					resource.TestCheckResourceAttr(address, "account_type", "futsu"),
+					resource.TestCheckResourceAttr(address, "currency", "jpy"),
+				),
+				ConfigPlanChecks: resource.ConfigPlanChecks{PostApplyPostRefresh: []plancheck.PlanCheck{plancheck.ExpectEmptyPlan()}},
+			},
+			{
+				Config: japaneseBank(acct, "toza"),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply:             []plancheck.PlanCheck{plancheck.ExpectResourceAction(address, plancheck.ResourceActionUpdate)},
+					PostApplyPostRefresh: []plancheck.PlanCheck{plancheck.ExpectEmptyPlan()},
+				},
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttrPtr(address, "id", &id),
+					resource.TestCheckResourceAttr(address, "account_type", "toza"),
+				),
+			},
+		}, nil, "stripe_account_external_account"),
+	})
+}
+
+// Stripe refuses `account_type` on a US bank account with its own message, which the record
+// gives for the `checking` the suite sent (suite: "bank_account.account_type"); the provider,
+// which does not know the account's country at plan, passes it on at apply.
+func TestAccAccountExternalAccount_accountTypeRefused(t *testing.T) {
 	acct := acctest.NewAccount(t)
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: tfacc.ProviderFactories,
 		Steps: []resource.TestStep{{
-			Config:      accountBlock(acct) + bankBlock("test", "000111111116", "  account_type = \"checking\"\n"),
-			PlanOnly:    true,
-			ExpectError: regexp.MustCompile("Invalid Configuration for Read-Only Attribute"),
+			Config:      accountBlock(acct) + bankBlock("test", otherNumber, "  account_type = \"checking\"\n"),
+			ExpectError: regexp.MustCompile("account types are not allowed"),
 		}},
 	})
 }

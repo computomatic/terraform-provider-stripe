@@ -1,10 +1,10 @@
 {
-  "fake_version": "v0.43.0",
+  "fake_version": "v0.44.0",
   "suite_ref": "180f34f11f1ba45fd6acffacb11483018cff9cc0",
   "run_id": 43553278459,
   "attributes": {
-    "bytes": 7209000,
-    "sha256": "052f12977c62d8fc80878b93833ba71e13a1af5fb79d2bcd2f9e797347c22bca"
+    "bytes": 7202777,
+    "sha256": "d873648ab62d350f8a9c33b4c0004fc9c52d51577a568c9852d832576e35c383"
   },
   "evidence": {
     "bytes": 27507973,

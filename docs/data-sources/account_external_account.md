@@ -33,7 +33,7 @@ This data source exports the following attributes in addition to the arguments a
 * `account_holder_name` - The name of the person or business that owns the bank account.
 * `account_holder_type` - The type of entity that holds the account. This can be either `individual` or `company`. Possible values: `company`, `individual`.
 * `account_number` - (Sensitive)
-* `account_type` - The bank account type. This can only be `checking` or `savings` in most countries. In Japan, this can only be `futsu` or `toza`.
+* `account_type` - The bank account type. This can only be `checking` or `savings` in most countries. In Japan, this can only be `futsu` or `toza`. Possible values: `checking`, `futsu`, `savings`, `toza`.
 * `available_payout_methods` - A set of available payout methods for this bank account. Only values from this set should be passed as the `method` when creating a payout.
 * `bank_name` - Name of the bank associated with the routing number (e.g., `WELLS FARGO`).
 * `country` - Two-letter ISO code representing the country the bank account is located in.
