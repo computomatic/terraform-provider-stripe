@@ -36,17 +36,25 @@ This data source exports the following attributes in addition to the arguments a
 
 * `additional_tos_acceptances` - Details on the legal guardian's or authorizer's acceptance of the required Stripe agreements. See [`additional_tos_acceptances`](#additional_tos_acceptances) below.
 * `address` - The person's address. See [`address`](#address) below.
+* `address_kana` - The Kana variation of the person's address (Japan only). See [`address_kana`](#address_kana) below.
+* `address_kanji` - The Kanji variation of the person's address (Japan only). See [`address_kanji`](#address_kanji) below.
 * `created` - Time at which the object was created. Measured in seconds since the Unix epoch.
 * `dob` - The person's date of birth. See [`dob`](#dob) below.
 * `documents` - Documents that may be submitted to satisfy various informational requests. See [`documents`](#documents) below.
 * `email` - The person's email address.
 * `first_name` - The person's first name.
+* `first_name_kana` - The Kana variation of the person's first name (Japan only).
+* `first_name_kanji` - The Kanji variation of the person's first name (Japan only).
 * `full_name_aliases` - A list of alternate names or aliases that the person is known by.
 * `future_requirements` - See [`future_requirements`](#future_requirements) below.
 * `gender` - The person's gender (International regulations require either "male" or "female").
 * `id_number` - (Sensitive) The person's ID number, as appropriate for their country. For example, a social security number in the U.S., social insurance number in Canada, etc. Instead of the number itself, you can also provide a [PII token provided by Stripe.js](https://docs.stripe.com/js/tokens/create_token?type=pii). Changing this value for the account's representative requires that the account re-accept the [terms of service](https://docs.stripe.com/api/accounts/object#account_object-tos_acceptance).
 * `id_number_provided` - Whether the person's `id_number` was provided. True if either the full ID number was provided or if only the required part of the ID number was provided (ex. last four of an individual's SSN for the US indicated by `ssn_last_4_provided`).
+* `id_number_secondary` - (Sensitive) The person's secondary ID number, as appropriate for their country, will be used for enhanced verification checks. In Thailand, this would be the laser code found on the back of an ID card. Instead of the number itself, you can also provide a [PII token provided by Stripe.js](https://docs.stripe.com/js/tokens/create_token?type=pii). Changing this value for the account's representative requires that the account re-accept the [terms of service](https://docs.stripe.com/api/accounts/object#account_object-tos_acceptance).
+* `id_number_secondary_provided` - Whether the person's `id_number_secondary` was provided.
 * `last_name` - The person's last name.
+* `last_name_kana` - The Kana variation of the person's last name (Japan only).
+* `last_name_kanji` - The Kanji variation of the person's last name (Japan only).
 * `maiden_name` - The person's maiden name.
 * `metadata` - Set of [key-value pairs](https://docs.stripe.com/api/metadata) that you can attach to an object. This can be useful for storing additional information about the object in a structured format. Individual keys can be unset by posting an empty value to them. All keys can be unset by posting an empty value to `metadata`.
 * `nationality` - The country where the person is a national. Two-letter country code ([ISO 3166-1 alpha-2](https://en.wikipedia.org/wiki/ISO_3166-1_alpha-2)), or "XX" if unavailable.
@@ -88,6 +96,32 @@ The `address` attribute supports:
 * `line2` - Address line 2, such as the apartment, suite, unit, or building.
 * `postal_code` - ZIP or postal code.
 * `state` - State, county, province, or region ([ISO 3166-2](https://en.wikipedia.org/wiki/ISO_3166-2)).
+
+<a id="address_kana"></a>
+### `address_kana`
+
+The `address_kana` attribute supports:
+
+* `city` - City/Ward.
+* `country` - Two-letter country code ([ISO 3166-1 alpha-2](https://en.wikipedia.org/wiki/ISO_3166-1_alpha-2)).
+* `line1` - Block/Building number.
+* `line2` - Building details.
+* `postal_code` - ZIP or postal code.
+* `state` - Prefecture.
+* `town` - Town/cho-me.
+
+<a id="address_kanji"></a>
+### `address_kanji`
+
+The `address_kanji` attribute supports:
+
+* `city` - City/Ward.
+* `country` - Two-letter country code ([ISO 3166-1 alpha-2](https://en.wikipedia.org/wiki/ISO_3166-1_alpha-2)).
+* `line1` - Block/Building number.
+* `line2` - Building details.
+* `postal_code` - ZIP or postal code.
+* `state` - Prefecture.
+* `town` - Town/cho-me.
 
 <a id="dob"></a>
 ### `dob`

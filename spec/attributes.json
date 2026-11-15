@@ -1,19 +1,19 @@
 {
-  "fake_version": "v0.43.0",
+  "fake_version": "v0.44.0",
   "suite_ref": "180f34f11f1ba45fd6acffacb11483018cff9cc0",
   "run_id": 43553278459,
   "api_version": "2026-09-30.endive",
   "spec_sha256": "9119e72c7ff8ad142e94f7efa9cf49d8e6eec69df3592e17e8fba15099726ed7",
   "counts": {
     "gap_placeholder_null": 37,
-    "gap_proven_not_served": 829,
+    "gap_proven_not_served": 688,
     "gap_stripe_only": 86,
-    "proven_by_test": 4950,
-    "unproven": 5707,
-    "verified": 6495,
-    "verified_accepted_only": 715
+    "proven_by_test": 4951,
+    "unproven": 5706,
+    "verified": 6634,
+    "verified_accepted_only": 717
   },
-  "refused_only": 255,
+  "refused_only": 256,
   "objects": [
     {
       "object": "account",
@@ -84,10 +84,9 @@
     {
       "object": "bank_account",
       "counts": {
-        "gap_proven_not_served": 3,
         "proven_by_test": 70,
         "unproven": 133,
-        "verified": 40,
+        "verified": 43,
         "verified_accepted_only": 3
       }
     },
@@ -166,8 +165,8 @@
     {
       "object": "card",
       "counts": {
-        "proven_by_test": 102,
-        "unproven": 147
+        "proven_by_test": 103,
+        "unproven": 146
       }
     },
     {
@@ -708,12 +707,11 @@
       "object": "person",
       "counts": {
         "gap_placeholder_null": 2,
-        "gap_proven_not_served": 57,
         "gap_stripe_only": 3,
         "proven_by_test": 8,
         "unproven": 140,
-        "verified": 155,
-        "verified_accepted_only": 10
+        "verified": 210,
+        "verified_accepted_only": 12
       }
     },
     {
@@ -982,7 +980,7 @@
     {
       "object": "terminal.location",
       "counts": {
-        "gap_proven_not_served": 81
+        "verified": 81
       }
     },
     {
@@ -18533,14 +18531,13 @@
       "path": "bank_account.account_type",
       "branch": "object",
       "shape": "enum",
-      "state": "unserved",
-      "reason": "country_profile_missing",
+      "state": "served",
       "status": "proven",
       "tests": [
         "TestAccountExternalAccountAttributes/leaves/request/PostAccountsAccountExternalAccounts/bank_account.account_type@object",
         "TestAccountExternalAccountAttributes/leaves/response/bank_account/account_type"
       ],
-      "class": "gap_proven_not_served"
+      "class": "verified"
     },
     {
       "object": "bank_account",
@@ -18693,13 +18690,12 @@
       "path": "account_type",
       "branch": "",
       "shape": "enum",
-      "state": "unserved",
-      "reason": "country_profile_missing",
+      "state": "served",
       "status": "proven",
       "tests": [
         "TestAccountExternalAccountAttributes/leaves/request/PostAccountsAccountExternalAccountsId/account_type"
       ],
-      "class": "gap_proven_not_served"
+      "class": "verified"
     },
     {
       "object": "bank_account",
@@ -20686,13 +20682,12 @@
       "path": "account_type",
       "branch": "",
       "shape": "string",
-      "state": "unserved",
-      "reason": "needs_declaration",
+      "state": "served",
       "status": "proven",
       "tests": [
         "TestAccountExternalAccountAttributes/leaves/response/bank_account/account_type"
       ],
-      "class": "gap_proven_not_served"
+      "class": "verified"
     },
     {
       "object": "bank_account",
@@ -25340,9 +25335,8 @@
       "path": "bank_account.account_type",
       "branch": "object",
       "shape": "enum",
-      "state": "unserved",
-      "reason": "not_proven",
-      "class": "unproven"
+      "state": "proven_by_test",
+      "class": "proven_by_test"
     },
     {
       "object": "card",
@@ -142762,14 +142756,13 @@
       "path": "address_kana.city",
       "branch": "",
       "shape": "string",
-      "state": "unserved",
-      "reason": "country_profile_missing",
+      "state": "served",
       "status": "proven",
       "tests": [
         "TestAccountPersonAttributes/leaves/request/PostAccountsAccountPersons/address_kana.city",
         "TestAccountPersonAttributes/leaves/response/person/address_kana.city"
       ],
-      "class": "gap_proven_not_served"
+      "class": "verified"
     },
     {
       "object": "person",
@@ -142778,14 +142771,13 @@
       "path": "address_kana.country",
       "branch": "",
       "shape": "string",
-      "state": "unserved",
-      "reason": "country_profile_missing",
+      "state": "served",
       "status": "proven",
       "tests": [
         "TestAccountPersonAttributes/leaves/request/PostAccountsAccountPersons/address_kana.country",
         "TestAccountPersonAttributes/leaves/response/person/address_kana.country"
       ],
-      "class": "gap_proven_not_served"
+      "class": "verified"
     },
     {
       "object": "person",
@@ -142794,14 +142786,13 @@
       "path": "address_kana.line1",
       "branch": "",
       "shape": "string",
-      "state": "unserved",
-      "reason": "country_profile_missing",
+      "state": "served",
       "status": "proven",
       "tests": [
         "TestAccountPersonAttributes/leaves/request/PostAccountsAccountPersons/address_kana.line1",
         "TestAccountPersonAttributes/leaves/response/person/address_kana.line1"
       ],
-      "class": "gap_proven_not_served"
+      "class": "verified"
     },
     {
       "object": "person",
@@ -142810,14 +142801,13 @@
       "path": "address_kana.line2",
       "branch": "",
       "shape": "string",
-      "state": "unserved",
-      "reason": "country_profile_missing",
+      "state": "served",
       "status": "proven",
       "tests": [
         "TestAccountPersonAttributes/leaves/request/PostAccountsAccountPersons/address_kana.line2",
         "TestAccountPersonAttributes/leaves/response/person/address_kana.line2"
       ],
-      "class": "gap_proven_not_served"
+      "class": "verified"
     },
     {
       "object": "person",
@@ -142826,14 +142816,13 @@
       "path": "address_kana.postal_code",
       "branch": "",
       "shape": "string",
-      "state": "unserved",
-      "reason": "country_profile_missing",
+      "state": "served",
       "status": "proven",
       "tests": [
         "TestAccountPersonAttributes/leaves/request/PostAccountsAccountPersons/address_kana.postal_code",
         "TestAccountPersonAttributes/leaves/response/person/address_kana.postal_code"
       ],
-      "class": "gap_proven_not_served"
+      "class": "verified"
     },
     {
       "object": "person",
@@ -142842,14 +142831,13 @@
       "path": "address_kana.state",
       "branch": "",
       "shape": "string",
-      "state": "unserved",
-      "reason": "country_profile_missing",
+      "state": "served",
       "status": "proven",
       "tests": [
         "TestAccountPersonAttributes/leaves/request/PostAccountsAccountPersons/address_kana.state",
         "TestAccountPersonAttributes/leaves/response/person/address_kana.state"
       ],
-      "class": "gap_proven_not_served"
+      "class": "verified"
     },
     {
       "object": "person",
@@ -142858,14 +142846,13 @@
       "path": "address_kana.town",
       "branch": "",
       "shape": "string",
-      "state": "unserved",
-      "reason": "country_profile_missing",
+      "state": "served",
       "status": "proven",
       "tests": [
         "TestAccountPersonAttributes/leaves/request/PostAccountsAccountPersons/address_kana.town",
         "TestAccountPersonAttributes/leaves/response/person/address_kana.town"
       ],
-      "class": "gap_proven_not_served"
+      "class": "verified"
     },
     {
       "object": "person",
@@ -142874,14 +142861,13 @@
       "path": "address_kanji.city",
       "branch": "",
       "shape": "string",
-      "state": "unserved",
-      "reason": "country_profile_missing",
+      "state": "served",
       "status": "proven",
       "tests": [
         "TestAccountPersonAttributes/leaves/request/PostAccountsAccountPersons/address_kanji.city",
         "TestAccountPersonAttributes/leaves/response/person/address_kanji.city"
       ],
-      "class": "gap_proven_not_served"
+      "class": "verified"
     },
     {
       "object": "person",
@@ -142890,14 +142876,13 @@
       "path": "address_kanji.country",
       "branch": "",
       "shape": "string",
-      "state": "unserved",
-      "reason": "country_profile_missing",
+      "state": "served",
       "status": "proven",
       "tests": [
         "TestAccountPersonAttributes/leaves/request/PostAccountsAccountPersons/address_kanji.country",
         "TestAccountPersonAttributes/leaves/response/person/address_kanji.country"
       ],
-      "class": "gap_proven_not_served"
+      "class": "verified"
     },
     {
       "object": "person",
@@ -142906,14 +142891,13 @@
       "path": "address_kanji.line1",
       "branch": "",
       "shape": "string",
-      "state": "unserved",
-      "reason": "country_profile_missing",
+      "state": "served",
       "status": "proven",
       "tests": [
         "TestAccountPersonAttributes/leaves/request/PostAccountsAccountPersons/address_kanji.line1",
         "TestAccountPersonAttributes/leaves/response/person/address_kanji.line1"
       ],
-      "class": "gap_proven_not_served"
+      "class": "verified"
     },
     {
       "object": "person",
@@ -142922,14 +142906,13 @@
       "path": "address_kanji.line2",
       "branch": "",
       "shape": "string",
-      "state": "unserved",
-      "reason": "country_profile_missing",
+      "state": "served",
       "status": "proven",
       "tests": [
         "TestAccountPersonAttributes/leaves/request/PostAccountsAccountPersons/address_kanji.line2",
         "TestAccountPersonAttributes/leaves/response/person/address_kanji.line2"
       ],
-      "class": "gap_proven_not_served"
+      "class": "verified"
     },
     {
       "object": "person",
@@ -142938,14 +142921,13 @@
       "path": "address_kanji.postal_code",
       "branch": "",
       "shape": "string",
-      "state": "unserved",
-      "reason": "country_profile_missing",
+      "state": "served",
       "status": "proven",
       "tests": [
         "TestAccountPersonAttributes/leaves/request/PostAccountsAccountPersons/address_kanji.postal_code",
         "TestAccountPersonAttributes/leaves/response/person/address_kanji.postal_code"
       ],
-      "class": "gap_proven_not_served"
+      "class": "verified"
     },
     {
       "object": "person",
@@ -142954,14 +142936,13 @@
       "path": "address_kanji.state",
       "branch": "",
       "shape": "string",
-      "state": "unserved",
-      "reason": "country_profile_missing",
+      "state": "served",
       "status": "proven",
       "tests": [
         "TestAccountPersonAttributes/leaves/request/PostAccountsAccountPersons/address_kanji.state",
         "TestAccountPersonAttributes/leaves/response/person/address_kanji.state"
       ],
-      "class": "gap_proven_not_served"
+      "class": "verified"
     },
     {
       "object": "person",
@@ -142970,14 +142951,13 @@
       "path": "address_kanji.town",
       "branch": "",
       "shape": "string",
-      "state": "unserved",
-      "reason": "country_profile_missing",
+      "state": "served",
       "status": "proven",
       "tests": [
         "TestAccountPersonAttributes/leaves/request/PostAccountsAccountPersons/address_kanji.town",
         "TestAccountPersonAttributes/leaves/response/person/address_kanji.town"
       ],
-      "class": "gap_proven_not_served"
+      "class": "verified"
     },
     {
       "object": "person",
@@ -143106,14 +143086,13 @@
       "path": "first_name_kana",
       "branch": "",
       "shape": "string",
-      "state": "unserved",
-      "reason": "country_profile_missing",
+      "state": "served",
       "status": "proven",
       "tests": [
         "TestAccountPersonAttributes/leaves/request/PostAccountsAccountPersons/first_name_kana",
         "TestAccountPersonAttributes/leaves/response/person/first_name_kana"
       ],
-      "class": "gap_proven_not_served"
+      "class": "verified"
     },
     {
       "object": "person",
@@ -143122,14 +143101,13 @@
       "path": "first_name_kanji",
       "branch": "",
       "shape": "string",
-      "state": "unserved",
-      "reason": "country_profile_missing",
+      "state": "served",
       "status": "proven",
       "tests": [
         "TestAccountPersonAttributes/leaves/request/PostAccountsAccountPersons/first_name_kanji",
         "TestAccountPersonAttributes/leaves/response/person/first_name_kanji"
       ],
-      "class": "gap_proven_not_served"
+      "class": "verified"
     },
     {
       "object": "person",
@@ -143183,13 +143161,13 @@
       "path": "id_number_secondary",
       "branch": "",
       "shape": "string",
-      "state": "unserved",
-      "reason": "country_profile_missing",
+      "state": "served",
+      "reason": "accepted_only",
       "status": "proven",
       "tests": [
         "TestAccountPersonAttributes/leaves/request/PostAccountsAccountPersons/id_number_secondary"
       ],
-      "class": "gap_proven_not_served"
+      "class": "verified_accepted_only"
     },
     {
       "object": "person",
@@ -143213,14 +143191,13 @@
       "path": "last_name_kana",
       "branch": "",
       "shape": "string",
-      "state": "unserved",
-      "reason": "country_profile_missing",
+      "state": "served",
       "status": "proven",
       "tests": [
         "TestAccountPersonAttributes/leaves/request/PostAccountsAccountPersons/last_name_kana",
         "TestAccountPersonAttributes/leaves/response/person/last_name_kana"
       ],
-      "class": "gap_proven_not_served"
+      "class": "verified"
     },
     {
       "object": "person",
@@ -143229,14 +143206,13 @@
       "path": "last_name_kanji",
       "branch": "",
       "shape": "string",
-      "state": "unserved",
-      "reason": "country_profile_missing",
+      "state": "served",
       "status": "proven",
       "tests": [
         "TestAccountPersonAttributes/leaves/request/PostAccountsAccountPersons/last_name_kanji",
         "TestAccountPersonAttributes/leaves/response/person/last_name_kanji"
       ],
-      "class": "gap_proven_not_served"
+      "class": "verified"
     },
     {
       "object": "person",
@@ -143822,13 +143798,12 @@
       "path": "address_kana.city",
       "branch": "",
       "shape": "string",
-      "state": "unserved",
-      "reason": "country_profile_missing",
+      "state": "served",
       "status": "proven",
       "tests": [
         "TestAccountPersonAttributes/leaves/request/PostAccountsAccountPersonsPerson/address_kana.city"
       ],
-      "class": "gap_proven_not_served"
+      "class": "verified"
     },
     {
       "object": "person",
@@ -143837,13 +143812,12 @@
       "path": "address_kana.country",
       "branch": "",
       "shape": "string",
-      "state": "unserved",
-      "reason": "country_profile_missing",
+      "state": "served",
       "status": "proven",
       "tests": [
         "TestAccountPersonAttributes/leaves/request/PostAccountsAccountPersonsPerson/address_kana.country"
       ],
-      "class": "gap_proven_not_served"
+      "class": "verified"
     },
     {
       "object": "person",
@@ -143852,13 +143826,12 @@
       "path": "address_kana.line1",
       "branch": "",
       "shape": "string",
-      "state": "unserved",
-      "reason": "country_profile_missing",
+      "state": "served",
       "status": "proven",
       "tests": [
         "TestAccountPersonAttributes/leaves/request/PostAccountsAccountPersonsPerson/address_kana.line1"
       ],
-      "class": "gap_proven_not_served"
+      "class": "verified"
     },
     {
       "object": "person",
@@ -143867,13 +143840,12 @@
       "path": "address_kana.line2",
       "branch": "",
       "shape": "string",
-      "state": "unserved",
-      "reason": "country_profile_missing",
+      "state": "served",
       "status": "proven",
       "tests": [
         "TestAccountPersonAttributes/leaves/request/PostAccountsAccountPersonsPerson/address_kana.line2"
       ],
-      "class": "gap_proven_not_served"
+      "class": "verified"
     },
     {
       "object": "person",
@@ -143882,13 +143854,12 @@
       "path": "address_kana.postal_code",
       "branch": "",
       "shape": "string",
-      "state": "unserved",
-      "reason": "country_profile_missing",
+      "state": "served",
       "status": "proven",
       "tests": [
         "TestAccountPersonAttributes/leaves/request/PostAccountsAccountPersonsPerson/address_kana.postal_code"
       ],
-      "class": "gap_proven_not_served"
+      "class": "verified"
     },
     {
       "object": "person",
@@ -143897,13 +143868,12 @@
       "path": "address_kana.state",
       "branch": "",
       "shape": "string",
-      "state": "unserved",
-      "reason": "country_profile_missing",
+      "state": "served",
       "status": "proven",
       "tests": [
         "TestAccountPersonAttributes/leaves/request/PostAccountsAccountPersonsPerson/address_kana.state"
       ],
-      "class": "gap_proven_not_served"
+      "class": "verified"
     },
     {
       "object": "person",
@@ -143912,13 +143882,12 @@
       "path": "address_kana.town",
       "branch": "",
       "shape": "string",
-      "state": "unserved",
-      "reason": "country_profile_missing",
+      "state": "served",
       "status": "proven",
       "tests": [
         "TestAccountPersonAttributes/leaves/request/PostAccountsAccountPersonsPerson/address_kana.town"
       ],
-      "class": "gap_proven_not_served"
+      "class": "verified"
     },
     {
       "object": "person",
@@ -143927,13 +143896,12 @@
       "path": "address_kanji.city",
       "branch": "",
       "shape": "string",
-      "state": "unserved",
-      "reason": "country_profile_missing",
+      "state": "served",
       "status": "proven",
       "tests": [
         "TestAccountPersonAttributes/leaves/request/PostAccountsAccountPersonsPerson/address_kanji.city"
       ],
-      "class": "gap_proven_not_served"
+      "class": "verified"
     },
     {
       "object": "person",
@@ -143942,13 +143910,12 @@
       "path": "address_kanji.country",
       "branch": "",
       "shape": "string",
-      "state": "unserved",
-      "reason": "country_profile_missing",
+      "state": "served",
       "status": "proven",
       "tests": [
         "TestAccountPersonAttributes/leaves/request/PostAccountsAccountPersonsPerson/address_kanji.country"
       ],
-      "class": "gap_proven_not_served"
+      "class": "verified"
     },
     {
       "object": "person",
@@ -143957,13 +143924,12 @@
       "path": "address_kanji.line1",
       "branch": "",
       "shape": "string",
-      "state": "unserved",
-      "reason": "country_profile_missing",
+      "state": "served",
       "status": "proven",
       "tests": [
         "TestAccountPersonAttributes/leaves/request/PostAccountsAccountPersonsPerson/address_kanji.line1"
       ],
-      "class": "gap_proven_not_served"
+      "class": "verified"
     },
     {
       "object": "person",
@@ -143972,13 +143938,12 @@
       "path": "address_kanji.line2",
       "branch": "",
       "shape": "string",
-      "state": "unserved",
-      "reason": "country_profile_missing",
+      "state": "served",
       "status": "proven",
       "tests": [
         "TestAccountPersonAttributes/leaves/request/PostAccountsAccountPersonsPerson/address_kanji.line2"
       ],
-      "class": "gap_proven_not_served"
+      "class": "verified"
     },
     {
       "object": "person",
@@ -143987,13 +143952,12 @@
       "path": "address_kanji.postal_code",
       "branch": "",
       "shape": "string",
-      "state": "unserved",
-      "reason": "country_profile_missing",
+      "state": "served",
       "status": "proven",
       "tests": [
         "TestAccountPersonAttributes/leaves/request/PostAccountsAccountPersonsPerson/address_kanji.postal_code"
       ],
-      "class": "gap_proven_not_served"
+      "class": "verified"
     },
     {
       "object": "person",
@@ -144002,13 +143966,12 @@
       "path": "address_kanji.state",
       "branch": "",
       "shape": "string",
-      "state": "unserved",
-      "reason": "country_profile_missing",
+      "state": "served",
       "status": "proven",
       "tests": [
         "TestAccountPersonAttributes/leaves/request/PostAccountsAccountPersonsPerson/address_kanji.state"
       ],
-      "class": "gap_proven_not_served"
+      "class": "verified"
     },
     {
       "object": "person",
@@ -144017,13 +143980,12 @@
       "path": "address_kanji.town",
       "branch": "",
       "shape": "string",
-      "state": "unserved",
-      "reason": "country_profile_missing",
+      "state": "served",
       "status": "proven",
       "tests": [
         "TestAccountPersonAttributes/leaves/request/PostAccountsAccountPersonsPerson/address_kanji.town"
       ],
-      "class": "gap_proven_not_served"
+      "class": "verified"
     },
     {
       "object": "person",
@@ -144147,13 +144109,12 @@
       "path": "first_name_kana",
       "branch": "",
       "shape": "string",
-      "state": "unserved",
-      "reason": "country_profile_missing",
+      "state": "served",
       "status": "proven",
       "tests": [
         "TestAccountPersonAttributes/leaves/request/PostAccountsAccountPersonsPerson/first_name_kana"
       ],
-      "class": "gap_proven_not_served"
+      "class": "verified"
     },
     {
       "object": "person",
@@ -144162,13 +144123,12 @@
       "path": "first_name_kanji",
       "branch": "",
       "shape": "string",
-      "state": "unserved",
-      "reason": "country_profile_missing",
+      "state": "served",
       "status": "proven",
       "tests": [
         "TestAccountPersonAttributes/leaves/request/PostAccountsAccountPersonsPerson/first_name_kanji"
       ],
-      "class": "gap_proven_not_served"
+      "class": "verified"
     },
     {
       "object": "person",
@@ -144220,13 +144180,13 @@
       "path": "id_number_secondary",
       "branch": "",
       "shape": "string",
-      "state": "unserved",
-      "reason": "country_profile_missing",
+      "state": "served",
+      "reason": "accepted_only",
       "status": "proven",
       "tests": [
         "TestAccountPersonAttributes/leaves/request/PostAccountsAccountPersonsPerson/id_number_secondary"
       ],
-      "class": "gap_proven_not_served"
+      "class": "verified_accepted_only"
     },
     {
       "object": "person",
@@ -144249,13 +144209,12 @@
       "path": "last_name_kana",
       "branch": "",
       "shape": "string",
-      "state": "unserved",
-      "reason": "country_profile_missing",
+      "state": "served",
       "status": "proven",
       "tests": [
         "TestAccountPersonAttributes/leaves/request/PostAccountsAccountPersonsPerson/last_name_kana"
       ],
-      "class": "gap_proven_not_served"
+      "class": "verified"
     },
     {
       "object": "person",
@@ -144264,13 +144223,12 @@
       "path": "last_name_kanji",
       "branch": "",
       "shape": "string",
-      "state": "unserved",
-      "reason": "country_profile_missing",
+      "state": "served",
       "status": "proven",
       "tests": [
         "TestAccountPersonAttributes/leaves/request/PostAccountsAccountPersonsPerson/last_name_kanji"
       ],
-      "class": "gap_proven_not_served"
+      "class": "verified"
     },
     {
       "object": "person",
@@ -144842,13 +144800,12 @@
       "path": "address_kana.city",
       "branch": "",
       "shape": "string",
-      "state": "unserved",
-      "reason": "needs_declaration",
+      "state": "served",
       "status": "proven",
       "tests": [
         "TestAccountPersonAttributes/leaves/response/person/address_kana.city"
       ],
-      "class": "gap_proven_not_served"
+      "class": "verified"
     },
     {
       "object": "person",
@@ -144857,13 +144814,12 @@
       "path": "address_kana.country",
       "branch": "",
       "shape": "string",
-      "state": "unserved",
-      "reason": "needs_declaration",
+      "state": "served",
       "status": "proven",
       "tests": [
         "TestAccountPersonAttributes/leaves/response/person/address_kana.country"
       ],
-      "class": "gap_proven_not_served"
+      "class": "verified"
     },
     {
       "object": "person",
@@ -144872,13 +144828,12 @@
       "path": "address_kana.line1",
       "branch": "",
       "shape": "string",
-      "state": "unserved",
-      "reason": "needs_declaration",
+      "state": "served",
       "status": "proven",
       "tests": [
         "TestAccountPersonAttributes/leaves/response/person/address_kana.line1"
       ],
-      "class": "gap_proven_not_served"
+      "class": "verified"
     },
     {
       "object": "person",
@@ -144887,13 +144842,12 @@
       "path": "address_kana.line2",
       "branch": "",
       "shape": "string",
-      "state": "unserved",
-      "reason": "needs_declaration",
+      "state": "served",
       "status": "proven",
       "tests": [
         "TestAccountPersonAttributes/leaves/response/person/address_kana.line2"
       ],
-      "class": "gap_proven_not_served"
+      "class": "verified"
     },
     {
       "object": "person",
@@ -144902,13 +144856,12 @@
       "path": "address_kana.postal_code",
       "branch": "",
       "shape": "string",
-      "state": "unserved",
-      "reason": "needs_declaration",
+      "state": "served",
       "status": "proven",
       "tests": [
         "TestAccountPersonAttributes/leaves/response/person/address_kana.postal_code"
       ],
-      "class": "gap_proven_not_served"
+      "class": "verified"
     },
     {
       "object": "person",
@@ -144917,13 +144870,12 @@
       "path": "address_kana.state",
       "branch": "",
       "shape": "string",
-      "state": "unserved",
-      "reason": "needs_declaration",
+      "state": "served",
       "status": "proven",
       "tests": [
         "TestAccountPersonAttributes/leaves/response/person/address_kana.state"
       ],
-      "class": "gap_proven_not_served"
+      "class": "verified"
     },
     {
       "object": "person",
@@ -144932,13 +144884,12 @@
       "path": "address_kana.town",
       "branch": "",
       "shape": "string",
-      "state": "unserved",
-      "reason": "needs_declaration",
+      "state": "served",
       "status": "proven",
       "tests": [
         "TestAccountPersonAttributes/leaves/response/person/address_kana.town"
       ],
-      "class": "gap_proven_not_served"
+      "class": "verified"
     },
     {
       "object": "person",
@@ -144947,13 +144898,12 @@
       "path": "address_kanji.city",
       "branch": "",
       "shape": "string",
-      "state": "unserved",
-      "reason": "needs_declaration",
+      "state": "served",
       "status": "proven",
       "tests": [
         "TestAccountPersonAttributes/leaves/response/person/address_kanji.city"
       ],
-      "class": "gap_proven_not_served"
+      "class": "verified"
     },
     {
       "object": "person",
@@ -144962,13 +144912,12 @@
       "path": "address_kanji.country",
       "branch": "",
       "shape": "string",
-      "state": "unserved",
-      "reason": "needs_declaration",
+      "state": "served",
       "status": "proven",
       "tests": [
         "TestAccountPersonAttributes/leaves/response/person/address_kanji.country"
       ],
-      "class": "gap_proven_not_served"
+      "class": "verified"
     },
     {
       "object": "person",
@@ -144977,13 +144926,12 @@
       "path": "address_kanji.line1",
       "branch": "",
       "shape": "string",
-      "state": "unserved",
-      "reason": "needs_declaration",
+      "state": "served",
       "status": "proven",
       "tests": [
         "TestAccountPersonAttributes/leaves/response/person/address_kanji.line1"
       ],
-      "class": "gap_proven_not_served"
+      "class": "verified"
     },
     {
       "object": "person",
@@ -144992,13 +144940,12 @@
       "path": "address_kanji.line2",
       "branch": "",
       "shape": "string",
-      "state": "unserved",
-      "reason": "needs_declaration",
+      "state": "served",
       "status": "proven",
       "tests": [
         "TestAccountPersonAttributes/leaves/response/person/address_kanji.line2"
       ],
-      "class": "gap_proven_not_served"
+      "class": "verified"
     },
     {
       "object": "person",
@@ -145007,13 +144954,12 @@
       "path": "address_kanji.postal_code",
       "branch": "",
       "shape": "string",
-      "state": "unserved",
-      "reason": "needs_declaration",
+      "state": "served",
       "status": "proven",
       "tests": [
         "TestAccountPersonAttributes/leaves/response/person/address_kanji.postal_code"
       ],
-      "class": "gap_proven_not_served"
+      "class": "verified"
     },
     {
       "object": "person",
@@ -145022,13 +144968,12 @@
       "path": "address_kanji.state",
       "branch": "",
       "shape": "string",
-      "state": "unserved",
-      "reason": "needs_declaration",
+      "state": "served",
       "status": "proven",
       "tests": [
         "TestAccountPersonAttributes/leaves/response/person/address_kanji.state"
       ],
-      "class": "gap_proven_not_served"
+      "class": "verified"
     },
     {
       "object": "person",
@@ -145037,13 +144982,12 @@
       "path": "address_kanji.town",
       "branch": "",
       "shape": "string",
-      "state": "unserved",
-      "reason": "needs_declaration",
+      "state": "served",
       "status": "proven",
       "tests": [
         "TestAccountPersonAttributes/leaves/response/person/address_kanji.town"
       ],
-      "class": "gap_proven_not_served"
+      "class": "verified"
     },
     {
       "object": "person",
@@ -145136,13 +145080,12 @@
       "path": "first_name_kana",
       "branch": "",
       "shape": "string",
-      "state": "unserved",
-      "reason": "needs_declaration",
+      "state": "served",
       "status": "proven",
       "tests": [
         "TestAccountPersonAttributes/leaves/response/person/first_name_kana"
       ],
-      "class": "gap_proven_not_served"
+      "class": "verified"
     },
     {
       "object": "person",
@@ -145151,13 +145094,12 @@
       "path": "first_name_kanji",
       "branch": "",
       "shape": "string",
-      "state": "unserved",
-      "reason": "needs_declaration",
+      "state": "served",
       "status": "proven",
       "tests": [
         "TestAccountPersonAttributes/leaves/response/person/first_name_kanji"
       ],
-      "class": "gap_proven_not_served"
+      "class": "verified"
     },
     {
       "object": "person",
@@ -145333,13 +145275,12 @@
       "path": "id_number_secondary_provided",
       "branch": "",
       "shape": "boolean",
-      "state": "unserved",
-      "reason": "needs_declaration",
+      "state": "served",
       "status": "proven",
       "tests": [
         "TestAccountPersonAttributes/leaves/response/person/id_number_secondary_provided"
       ],
-      "class": "gap_proven_not_served"
+      "class": "verified"
     },
     {
       "object": "person",
@@ -145362,13 +145303,12 @@
       "path": "last_name_kana",
       "branch": "",
       "shape": "string",
-      "state": "unserved",
-      "reason": "needs_declaration",
+      "state": "served",
       "status": "proven",
       "tests": [
         "TestAccountPersonAttributes/leaves/response/person/last_name_kana"
       ],
-      "class": "gap_proven_not_served"
+      "class": "verified"
     },
     {
       "object": "person",
@@ -145377,13 +145317,12 @@
       "path": "last_name_kanji",
       "branch": "",
       "shape": "string",
-      "state": "unserved",
-      "reason": "needs_declaration",
+      "state": "served",
       "status": "proven",
       "tests": [
         "TestAccountPersonAttributes/leaves/response/person/last_name_kanji"
       ],
-      "class": "gap_proven_not_served"
+      "class": "verified"
     },
     {
       "object": "person",
@@ -201182,12 +201121,12 @@
       "path": "address.city",
       "branch": "",
       "shape": "string",
-      "state": "proven_by_test",
+      "state": "served",
       "status": "proven",
       "tests": [
         "TestTerminalLocationAttributes/leaves/request/PostTerminalLocations/address.city"
       ],
-      "class": "gap_proven_not_served"
+      "class": "verified"
     },
     {
       "object": "terminal.location",
@@ -201196,12 +201135,12 @@
       "path": "address.country",
       "branch": "",
       "shape": "string",
-      "state": "proven_by_test",
+      "state": "served",
       "status": "proven",
       "tests": [
         "TestTerminalLocationAttributes/leaves/request/PostTerminalLocations/address.country"
       ],
-      "class": "gap_proven_not_served"
+      "class": "verified"
     },
     {
       "object": "terminal.location",
@@ -201210,12 +201149,12 @@
       "path": "address.line1",
       "branch": "",
       "shape": "string",
-      "state": "proven_by_test",
+      "state": "served",
       "status": "proven",
       "tests": [
         "TestTerminalLocationAttributes/leaves/request/PostTerminalLocations/address.line1"
       ],
-      "class": "gap_proven_not_served"
+      "class": "verified"
     },
     {
       "object": "terminal.location",
@@ -201224,13 +201163,13 @@
       "path": "address.line2",
       "branch": "",
       "shape": "string",
-      "state": "proven_by_test",
+      "state": "served",
       "status": "proven",
       "tests": [
         "TestTerminalLocationAttributes/leaves/request/PostTerminalLocations/address.line2",
         "TestTerminalLocationAttributes/leaves/response/terminal.location/address.line2"
       ],
-      "class": "gap_proven_not_served"
+      "class": "verified"
     },
     {
       "object": "terminal.location",
@@ -201239,12 +201178,12 @@
       "path": "address.postal_code",
       "branch": "",
       "shape": "string",
-      "state": "proven_by_test",
+      "state": "served",
       "status": "proven",
       "tests": [
         "TestTerminalLocationAttributes/leaves/request/PostTerminalLocations/address.postal_code"
       ],
-      "class": "gap_proven_not_served"
+      "class": "verified"
     },
     {
       "object": "terminal.location",
@@ -201253,12 +201192,12 @@
       "path": "address.state",
       "branch": "",
       "shape": "string",
-      "state": "proven_by_test",
+      "state": "served",
       "status": "proven",
       "tests": [
         "TestTerminalLocationAttributes/leaves/request/PostTerminalLocations/address.state"
       ],
-      "class": "gap_proven_not_served"
+      "class": "verified"
     },
     {
       "object": "terminal.location",
@@ -201267,14 +201206,13 @@
       "path": "address_kana.city",
       "branch": "",
       "shape": "string",
-      "state": "unserved",
-      "reason": "country_profile_missing",
+      "state": "served",
       "status": "proven",
       "tests": [
         "TestTerminalLocationAttributes/leaves/request/PostTerminalLocations/address_kana.city",
         "TestTerminalLocationAttributes/leaves/response/terminal.location/address_kana.city"
       ],
-      "class": "gap_proven_not_served"
+      "class": "verified"
     },
     {
       "object": "terminal.location",
@@ -201283,14 +201221,13 @@
       "path": "address_kana.country",
       "branch": "",
       "shape": "string",
-      "state": "unserved",
-      "reason": "country_profile_missing",
+      "state": "served",
       "status": "proven",
       "tests": [
         "TestTerminalLocationAttributes/leaves/request/PostTerminalLocations/address_kana.country",
         "TestTerminalLocationAttributes/leaves/response/terminal.location/address_kana.country"
       ],
-      "class": "gap_proven_not_served"
+      "class": "verified"
     },
     {
       "object": "terminal.location",
@@ -201299,14 +201236,13 @@
       "path": "address_kana.line1",
       "branch": "",
       "shape": "string",
-      "state": "unserved",
-      "reason": "country_profile_missing",
+      "state": "served",
       "status": "proven",
       "tests": [
         "TestTerminalLocationAttributes/leaves/request/PostTerminalLocations/address_kana.line1",
         "TestTerminalLocationAttributes/leaves/response/terminal.location/address_kana.line1"
       ],
-      "class": "gap_proven_not_served"
+      "class": "verified"
     },
     {
       "object": "terminal.location",
@@ -201315,14 +201251,13 @@
       "path": "address_kana.line2",
       "branch": "",
       "shape": "string",
-      "state": "unserved",
-      "reason": "country_profile_missing",
+      "state": "served",
       "status": "proven",
       "tests": [
         "TestTerminalLocationAttributes/leaves/request/PostTerminalLocations/address_kana.line2",
         "TestTerminalLocationAttributes/leaves/response/terminal.location/address_kana.line2"
       ],
-      "class": "gap_proven_not_served"
+      "class": "verified"
     },
     {
       "object": "terminal.location",
@@ -201331,14 +201266,13 @@
       "path": "address_kana.postal_code",
       "branch": "",
       "shape": "string",
-      "state": "unserved",
-      "reason": "country_profile_missing",
+      "state": "served",
       "status": "proven",
       "tests": [
         "TestTerminalLocationAttributes/leaves/request/PostTerminalLocations/address_kana.postal_code",
         "TestTerminalLocationAttributes/leaves/response/terminal.location/address_kana.postal_code"
       ],
-      "class": "gap_proven_not_served"
+      "class": "verified"
     },
     {
       "object": "terminal.location",
@@ -201347,14 +201281,13 @@
       "path": "address_kana.state",
       "branch": "",
       "shape": "string",
-      "state": "unserved",
-      "reason": "country_profile_missing",
+      "state": "served",
       "status": "proven",
       "tests": [
         "TestTerminalLocationAttributes/leaves/request/PostTerminalLocations/address_kana.state",
         "TestTerminalLocationAttributes/leaves/response/terminal.location/address_kana.state"
       ],
-      "class": "gap_proven_not_served"
+      "class": "verified"
     },
     {
       "object": "terminal.location",
@@ -201363,14 +201296,13 @@
       "path": "address_kana.town",
       "branch": "",
       "shape": "string",
-      "state": "unserved",
-      "reason": "country_profile_missing",
+      "state": "served",
       "status": "proven",
       "tests": [
         "TestTerminalLocationAttributes/leaves/request/PostTerminalLocations/address_kana.town",
         "TestTerminalLocationAttributes/leaves/response/terminal.location/address_kana.town"
       ],
-      "class": "gap_proven_not_served"
+      "class": "verified"
     },
     {
       "object": "terminal.location",
@@ -201379,14 +201311,13 @@
       "path": "address_kanji.city",
       "branch": "",
       "shape": "string",
-      "state": "unserved",
-      "reason": "country_profile_missing",
+      "state": "served",
       "status": "proven",
       "tests": [
         "TestTerminalLocationAttributes/leaves/request/PostTerminalLocations/address_kanji.city",
         "TestTerminalLocationAttributes/leaves/response/terminal.location/address_kanji.city"
       ],
-      "class": "gap_proven_not_served"
+      "class": "verified"
     },
     {
       "object": "terminal.location",
@@ -201395,14 +201326,13 @@
       "path": "address_kanji.country",
       "branch": "",
       "shape": "string",
-      "state": "unserved",
-      "reason": "country_profile_missing",
+      "state": "served",
       "status": "proven",
       "tests": [
         "TestTerminalLocationAttributes/leaves/request/PostTerminalLocations/address_kanji.country",
         "TestTerminalLocationAttributes/leaves/response/terminal.location/address_kanji.country"
       ],
-      "class": "gap_proven_not_served"
+      "class": "verified"
     },
     {
       "object": "terminal.location",
@@ -201411,14 +201341,13 @@
       "path": "address_kanji.line1",
       "branch": "",
       "shape": "string",
-      "state": "unserved",
-      "reason": "country_profile_missing",
+      "state": "served",
       "status": "proven",
       "tests": [
         "TestTerminalLocationAttributes/leaves/request/PostTerminalLocations/address_kanji.line1",
         "TestTerminalLocationAttributes/leaves/response/terminal.location/address_kanji.line1"
       ],
-      "class": "gap_proven_not_served"
+      "class": "verified"
     },
     {
       "object": "terminal.location",
@@ -201427,14 +201356,13 @@
       "path": "address_kanji.line2",
       "branch": "",
       "shape": "string",
-      "state": "unserved",
-      "reason": "country_profile_missing",
+      "state": "served",
       "status": "proven",
       "tests": [
         "TestTerminalLocationAttributes/leaves/request/PostTerminalLocations/address_kanji.line2",
         "TestTerminalLocationAttributes/leaves/response/terminal.location/address_kanji.line2"
       ],
-      "class": "gap_proven_not_served"
+      "class": "verified"
     },
     {
       "object": "terminal.location",
@@ -201443,14 +201371,13 @@
       "path": "address_kanji.postal_code",
       "branch": "",
       "shape": "string",
-      "state": "unserved",
-      "reason": "country_profile_missing",
+      "state": "served",
       "status": "proven",
       "tests": [
         "TestTerminalLocationAttributes/leaves/request/PostTerminalLocations/address_kanji.postal_code",
         "TestTerminalLocationAttributes/leaves/response/terminal.location/address_kanji.postal_code"
       ],
-      "class": "gap_proven_not_served"
+      "class": "verified"
     },
     {
       "object": "terminal.location",
@@ -201459,14 +201386,13 @@
       "path": "address_kanji.state",
       "branch": "",
       "shape": "string",
-      "state": "unserved",
-      "reason": "country_profile_missing",
+      "state": "served",
       "status": "proven",
       "tests": [
         "TestTerminalLocationAttributes/leaves/request/PostTerminalLocations/address_kanji.state",
         "TestTerminalLocationAttributes/leaves/response/terminal.location/address_kanji.state"
       ],
-      "class": "gap_proven_not_served"
+      "class": "verified"
     },
     {
       "object": "terminal.location",
@@ -201475,14 +201401,13 @@
       "path": "address_kanji.town",
       "branch": "",
       "shape": "string",
-      "state": "unserved",
-      "reason": "country_profile_missing",
+      "state": "served",
       "status": "proven",
       "tests": [
         "TestTerminalLocationAttributes/leaves/request/PostTerminalLocations/address_kanji.town",
         "TestTerminalLocationAttributes/leaves/response/terminal.location/address_kanji.town"
       ],
-      "class": "gap_proven_not_served"
+      "class": "verified"
     },
     {
       "object": "terminal.location",
@@ -201491,13 +201416,13 @@
       "path": "configuration_overrides",
       "branch": "",
       "shape": "string",
-      "state": "proven_by_test",
+      "state": "served",
       "status": "proven",
       "tests": [
         "TestTerminalLocationAttributes/leaves/request/PostTerminalLocations/configuration_overrides",
         "TestTerminalLocationAttributes/leaves/response/terminal.location/configuration_overrides"
       ],
-      "class": "gap_proven_not_served"
+      "class": "verified"
     },
     {
       "object": "terminal.location",
@@ -201506,12 +201431,12 @@
       "path": "display_name",
       "branch": "",
       "shape": "string",
-      "state": "proven_by_test",
+      "state": "served",
       "status": "proven",
       "tests": [
         "TestTerminalLocationAttributes/leaves/request/PostTerminalLocations/display_name"
       ],
-      "class": "gap_proven_not_served"
+      "class": "verified"
     },
     {
       "object": "terminal.location",
@@ -201520,14 +201445,13 @@
       "path": "display_name_kana",
       "branch": "",
       "shape": "string",
-      "state": "unserved",
-      "reason": "country_profile_missing",
+      "state": "served",
       "status": "proven",
       "tests": [
         "TestTerminalLocationAttributes/leaves/request/PostTerminalLocations/display_name_kana",
         "TestTerminalLocationAttributes/leaves/response/terminal.location/display_name_kana"
       ],
-      "class": "gap_proven_not_served"
+      "class": "verified"
     },
     {
       "object": "terminal.location",
@@ -201536,14 +201460,13 @@
       "path": "display_name_kanji",
       "branch": "",
       "shape": "string",
-      "state": "unserved",
-      "reason": "country_profile_missing",
+      "state": "served",
       "status": "proven",
       "tests": [
         "TestTerminalLocationAttributes/leaves/request/PostTerminalLocations/display_name_kanji",
         "TestTerminalLocationAttributes/leaves/response/terminal.location/display_name_kanji"
       ],
-      "class": "gap_proven_not_served"
+      "class": "verified"
     },
     {
       "object": "terminal.location",
@@ -201552,13 +201475,13 @@
       "path": "metadata",
       "branch": "",
       "shape": "map",
-      "state": "proven_by_test",
+      "state": "served",
       "status": "proven",
       "tests": [
         "TestTerminalLocationAttributes/leaves/request/PostTerminalLocations/metadata",
         "TestTerminalLocationAttributes/leaves/response/terminal.location/metadata"
       ],
-      "class": "gap_proven_not_served"
+      "class": "verified"
     },
     {
       "object": "terminal.location",
@@ -201567,13 +201490,13 @@
       "path": "phone",
       "branch": "",
       "shape": "string",
-      "state": "proven_by_test",
+      "state": "served",
       "status": "proven",
       "tests": [
         "TestTerminalLocationAttributes/leaves/request/PostTerminalLocations/phone",
         "TestTerminalLocationAttributes/leaves/response/terminal.location/phone"
       ],
-      "class": "gap_proven_not_served"
+      "class": "verified"
     },
     {
       "object": "terminal.location",
@@ -201582,12 +201505,12 @@
       "path": "address.city",
       "branch": "",
       "shape": "string",
-      "state": "proven_by_test",
+      "state": "served",
       "status": "proven",
       "tests": [
         "TestTerminalLocationAttributes/leaves/request/PostTerminalLocationsLocation/address.city"
       ],
-      "class": "gap_proven_not_served"
+      "class": "verified"
     },
     {
       "object": "terminal.location",
@@ -201596,12 +201519,13 @@
       "path": "address.country",
       "branch": "",
       "shape": "string",
-      "state": "proven_by_test",
+      "state": "served",
+      "reason": "refused_only",
       "status": "proven",
       "tests": [
         "TestTerminalLocationAttributes/leaves/request/PostTerminalLocationsLocation/address.country"
       ],
-      "class": "gap_proven_not_served"
+      "class": "verified"
     },
     {
       "object": "terminal.location",
@@ -201610,12 +201534,12 @@
       "path": "address.line1",
       "branch": "",
       "shape": "string",
-      "state": "proven_by_test",
+      "state": "served",
       "status": "proven",
       "tests": [
         "TestTerminalLocationAttributes/leaves/request/PostTerminalLocationsLocation/address.line1"
       ],
-      "class": "gap_proven_not_served"
+      "class": "verified"
     },
     {
       "object": "terminal.location",
@@ -201624,12 +201548,12 @@
       "path": "address.line2",
       "branch": "",
       "shape": "string",
-      "state": "proven_by_test",
+      "state": "served",
       "status": "proven",
       "tests": [
         "TestTerminalLocationAttributes/leaves/request/PostTerminalLocationsLocation/address.line2"
       ],
-      "class": "gap_proven_not_served"
+      "class": "verified"
     },
     {
       "object": "terminal.location",
@@ -201638,12 +201562,12 @@
       "path": "address.postal_code",
       "branch": "",
       "shape": "string",
-      "state": "proven_by_test",
+      "state": "served",
       "status": "proven",
       "tests": [
         "TestTerminalLocationAttributes/leaves/request/PostTerminalLocationsLocation/address.postal_code"
       ],
-      "class": "gap_proven_not_served"
+      "class": "verified"
     },
     {
       "object": "terminal.location",
@@ -201652,12 +201576,12 @@
       "path": "address.state",
       "branch": "",
       "shape": "string",
-      "state": "proven_by_test",
+      "state": "served",
       "status": "proven",
       "tests": [
         "TestTerminalLocationAttributes/leaves/request/PostTerminalLocationsLocation/address.state"
       ],
-      "class": "gap_proven_not_served"
+      "class": "verified"
     },
     {
       "object": "terminal.location",
@@ -201666,13 +201590,12 @@
       "path": "address_kana.city",
       "branch": "",
       "shape": "string",
-      "state": "unserved",
-      "reason": "country_profile_missing",
+      "state": "served",
       "status": "proven",
       "tests": [
         "TestTerminalLocationAttributes/leaves/request/PostTerminalLocationsLocation/address_kana.city"
       ],
-      "class": "gap_proven_not_served"
+      "class": "verified"
     },
     {
       "object": "terminal.location",
@@ -201681,13 +201604,12 @@
       "path": "address_kana.country",
       "branch": "",
       "shape": "string",
-      "state": "unserved",
-      "reason": "country_profile_missing",
+      "state": "served",
       "status": "proven",
       "tests": [
         "TestTerminalLocationAttributes/leaves/request/PostTerminalLocationsLocation/address_kana.country"
       ],
-      "class": "gap_proven_not_served"
+      "class": "verified"
     },
     {
       "object": "terminal.location",
@@ -201696,13 +201618,12 @@
       "path": "address_kana.line1",
       "branch": "",
       "shape": "string",
-      "state": "unserved",
-      "reason": "country_profile_missing",
+      "state": "served",
       "status": "proven",
       "tests": [
         "TestTerminalLocationAttributes/leaves/request/PostTerminalLocationsLocation/address_kana.line1"
       ],
-      "class": "gap_proven_not_served"
+      "class": "verified"
     },
     {
       "object": "terminal.location",
@@ -201711,13 +201632,12 @@
       "path": "address_kana.line2",
       "branch": "",
       "shape": "string",
-      "state": "unserved",
-      "reason": "country_profile_missing",
+      "state": "served",
       "status": "proven",
       "tests": [
         "TestTerminalLocationAttributes/leaves/request/PostTerminalLocationsLocation/address_kana.line2"
       ],
-      "class": "gap_proven_not_served"
+      "class": "verified"
     },
     {
       "object": "terminal.location",
@@ -201726,13 +201646,12 @@
       "path": "address_kana.postal_code",
       "branch": "",
       "shape": "string",
-      "state": "unserved",
-      "reason": "country_profile_missing",
+      "state": "served",
       "status": "proven",
       "tests": [
         "TestTerminalLocationAttributes/leaves/request/PostTerminalLocationsLocation/address_kana.postal_code"
       ],
-      "class": "gap_proven_not_served"
+      "class": "verified"
     },
     {
       "object": "terminal.location",
@@ -201741,13 +201660,12 @@
       "path": "address_kana.state",
       "branch": "",
       "shape": "string",
-      "state": "unserved",
-      "reason": "country_profile_missing",
+      "state": "served",
       "status": "proven",
       "tests": [
         "TestTerminalLocationAttributes/leaves/request/PostTerminalLocationsLocation/address_kana.state"
       ],
-      "class": "gap_proven_not_served"
+      "class": "verified"
     },
     {
       "object": "terminal.location",
@@ -201756,13 +201674,12 @@
       "path": "address_kana.town",
       "branch": "",
       "shape": "string",
-      "state": "unserved",
-      "reason": "country_profile_missing",
+      "state": "served",
       "status": "proven",
       "tests": [
         "TestTerminalLocationAttributes/leaves/request/PostTerminalLocationsLocation/address_kana.town"
       ],
-      "class": "gap_proven_not_served"
+      "class": "verified"
     },
     {
       "object": "terminal.location",
@@ -201771,13 +201688,12 @@
       "path": "address_kanji.city",
       "branch": "",
       "shape": "string",
-      "state": "unserved",
-      "reason": "country_profile_missing",
+      "state": "served",
       "status": "proven",
       "tests": [
         "TestTerminalLocationAttributes/leaves/request/PostTerminalLocationsLocation/address_kanji.city"
       ],
-      "class": "gap_proven_not_served"
+      "class": "verified"
     },
     {
       "object": "terminal.location",
@@ -201786,13 +201702,12 @@
       "path": "address_kanji.country",
       "branch": "",
       "shape": "string",
-      "state": "unserved",
-      "reason": "country_profile_missing",
+      "state": "served",
       "status": "proven",
       "tests": [
         "TestTerminalLocationAttributes/leaves/request/PostTerminalLocationsLocation/address_kanji.country"
       ],
-      "class": "gap_proven_not_served"
+      "class": "verified"
     },
     {
       "object": "terminal.location",
@@ -201801,13 +201716,12 @@
       "path": "address_kanji.line1",
       "branch": "",
       "shape": "string",
-      "state": "unserved",
-      "reason": "country_profile_missing",
+      "state": "served",
       "status": "proven",
       "tests": [
         "TestTerminalLocationAttributes/leaves/request/PostTerminalLocationsLocation/address_kanji.line1"
       ],
-      "class": "gap_proven_not_served"
+      "class": "verified"
     },
     {
       "object": "terminal.location",
@@ -201816,13 +201730,12 @@
       "path": "address_kanji.line2",
       "branch": "",
       "shape": "string",
-      "state": "unserved",
-      "reason": "country_profile_missing",
+      "state": "served",
       "status": "proven",
       "tests": [
         "TestTerminalLocationAttributes/leaves/request/PostTerminalLocationsLocation/address_kanji.line2"
       ],
-      "class": "gap_proven_not_served"
+      "class": "verified"
     },
     {
       "object": "terminal.location",
@@ -201831,13 +201744,12 @@
       "path": "address_kanji.postal_code",
       "branch": "",
       "shape": "string",
-      "state": "unserved",
-      "reason": "country_profile_missing",
+      "state": "served",
       "status": "proven",
       "tests": [
         "TestTerminalLocationAttributes/leaves/request/PostTerminalLocationsLocation/address_kanji.postal_code"
       ],
-      "class": "gap_proven_not_served"
+      "class": "verified"
     },
     {
       "object": "terminal.location",
@@ -201846,13 +201758,12 @@
       "path": "address_kanji.state",
       "branch": "",
       "shape": "string",
-      "state": "unserved",
-      "reason": "country_profile_missing",
+      "state": "served",
       "status": "proven",
       "tests": [
         "TestTerminalLocationAttributes/leaves/request/PostTerminalLocationsLocation/address_kanji.state"
       ],
-      "class": "gap_proven_not_served"
+      "class": "verified"
     },
     {
       "object": "terminal.location",
@@ -201861,13 +201772,12 @@
       "path": "address_kanji.town",
       "branch": "",
       "shape": "string",
-      "state": "unserved",
-      "reason": "country_profile_missing",
+      "state": "served",
       "status": "proven",
       "tests": [
         "TestTerminalLocationAttributes/leaves/request/PostTerminalLocationsLocation/address_kanji.town"
       ],
-      "class": "gap_proven_not_served"
+      "class": "verified"
     },
     {
       "object": "terminal.location",
@@ -201876,12 +201786,12 @@
       "path": "configuration_overrides",
       "branch": "",
       "shape": "string",
-      "state": "proven_by_test",
+      "state": "served",
       "status": "proven",
       "tests": [
         "TestTerminalLocationAttributes/leaves/request/PostTerminalLocationsLocation/configuration_overrides"
       ],
-      "class": "gap_proven_not_served"
+      "class": "verified"
     },
     {
       "object": "terminal.location",
@@ -201890,12 +201800,12 @@
       "path": "display_name",
       "branch": "",
       "shape": "string",
-      "state": "proven_by_test",
+      "state": "served",
       "status": "proven",
       "tests": [
         "TestTerminalLocationAttributes/leaves/request/PostTerminalLocationsLocation/display_name"
       ],
-      "class": "gap_proven_not_served"
+      "class": "verified"
     },
     {
       "object": "terminal.location",
@@ -201904,13 +201814,12 @@
       "path": "display_name_kana",
       "branch": "",
       "shape": "string",
-      "state": "unserved",
-      "reason": "country_profile_missing",
+      "state": "served",
       "status": "proven",
       "tests": [
         "TestTerminalLocationAttributes/leaves/request/PostTerminalLocationsLocation/display_name_kana"
       ],
-      "class": "gap_proven_not_served"
+      "class": "verified"
     },
     {
       "object": "terminal.location",
@@ -201919,13 +201828,12 @@
       "path": "display_name_kanji",
       "branch": "",
       "shape": "string",
-      "state": "unserved",
-      "reason": "country_profile_missing",
+      "state": "served",
       "status": "proven",
       "tests": [
         "TestTerminalLocationAttributes/leaves/request/PostTerminalLocationsLocation/display_name_kanji"
       ],
-      "class": "gap_proven_not_served"
+      "class": "verified"
     },
     {
       "object": "terminal.location",
@@ -201934,12 +201842,12 @@
       "path": "metadata",
       "branch": "",
       "shape": "map",
-      "state": "proven_by_test",
+      "state": "served",
       "status": "proven",
       "tests": [
         "TestTerminalLocationAttributes/leaves/request/PostTerminalLocationsLocation/metadata"
       ],
-      "class": "gap_proven_not_served"
+      "class": "verified"
     },
     {
       "object": "terminal.location",
@@ -201948,12 +201856,12 @@
       "path": "phone",
       "branch": "",
       "shape": "string",
-      "state": "proven_by_test",
+      "state": "served",
       "status": "proven",
       "tests": [
         "TestTerminalLocationAttributes/leaves/request/PostTerminalLocationsLocation/phone"
       ],
-      "class": "gap_proven_not_served"
+      "class": "verified"
     },
     {
       "object": "terminal.location",
@@ -201962,12 +201870,12 @@
       "path": "address.city",
       "branch": "",
       "shape": "string",
-      "state": "proven_by_test",
+      "state": "served",
       "status": "proven",
       "tests": [
         "TestTerminalLocationAttributes/leaves/response/terminal.location/address.city"
       ],
-      "class": "gap_proven_not_served"
+      "class": "verified"
     },
     {
       "object": "terminal.location",
@@ -201976,12 +201884,12 @@
       "path": "address.country",
       "branch": "",
       "shape": "string",
-      "state": "proven_by_test",
+      "state": "served",
       "status": "proven",
       "tests": [
         "TestTerminalLocationAttributes/leaves/response/terminal.location/address.country"
       ],
-      "class": "gap_proven_not_served"
+      "class": "verified"
     },
     {
       "object": "terminal.location",
@@ -201990,12 +201898,12 @@
       "path": "address.line1",
       "branch": "",
       "shape": "string",
-      "state": "proven_by_test",
+      "state": "served",
       "status": "proven",
       "tests": [
         "TestTerminalLocationAttributes/leaves/response/terminal.location/address.line1"
       ],
-      "class": "gap_proven_not_served"
+      "class": "verified"
     },
     {
       "object": "terminal.location",
@@ -202004,12 +201912,12 @@
       "path": "address.line2",
       "branch": "",
       "shape": "string",
-      "state": "proven_by_test",
+      "state": "served",
       "status": "proven",
       "tests": [
         "TestTerminalLocationAttributes/leaves/response/terminal.location/address.line2"
       ],
-      "class": "gap_proven_not_served"
+      "class": "verified"
     },
     {
       "object": "terminal.location",
@@ -202018,12 +201926,12 @@
       "path": "address.postal_code",
       "branch": "",
       "shape": "string",
-      "state": "proven_by_test",
+      "state": "served",
       "status": "proven",
       "tests": [
         "TestTerminalLocationAttributes/leaves/response/terminal.location/address.postal_code"
       ],
-      "class": "gap_proven_not_served"
+      "class": "verified"
     },
     {
       "object": "terminal.location",
@@ -202032,12 +201940,12 @@
       "path": "address.state",
       "branch": "",
       "shape": "string",
-      "state": "proven_by_test",
+      "state": "served",
       "status": "proven",
       "tests": [
         "TestTerminalLocationAttributes/leaves/response/terminal.location/address.state"
       ],
-      "class": "gap_proven_not_served"
+      "class": "verified"
     },
     {
       "object": "terminal.location",
@@ -202046,12 +201954,12 @@
       "path": "address_kana.city",
       "branch": "",
       "shape": "string",
-      "state": "proven_by_test",
+      "state": "served",
       "status": "proven",
       "tests": [
         "TestTerminalLocationAttributes/leaves/response/terminal.location/address_kana.city"
       ],
-      "class": "gap_proven_not_served"
+      "class": "verified"
     },
     {
       "object": "terminal.location",
@@ -202060,12 +201968,12 @@
       "path": "address_kana.country",
       "branch": "",
       "shape": "string",
-      "state": "proven_by_test",
+      "state": "served",
       "status": "proven",
       "tests": [
         "TestTerminalLocationAttributes/leaves/response/terminal.location/address_kana.country"
       ],
-      "class": "gap_proven_not_served"
+      "class": "verified"
     },
     {
       "object": "terminal.location",
@@ -202074,12 +201982,12 @@
       "path": "address_kana.line1",
       "branch": "",
       "shape": "string",
-      "state": "proven_by_test",
+      "state": "served",
       "status": "proven",
       "tests": [
         "TestTerminalLocationAttributes/leaves/response/terminal.location/address_kana.line1"
       ],
-      "class": "gap_proven_not_served"
+      "class": "verified"
     },
     {
       "object": "terminal.location",
@@ -202088,12 +201996,12 @@
       "path": "address_kana.line2",
       "branch": "",
       "shape": "string",
-      "state": "proven_by_test",
+      "state": "served",
       "status": "proven",
       "tests": [
         "TestTerminalLocationAttributes/leaves/response/terminal.location/address_kana.line2"
       ],
-      "class": "gap_proven_not_served"
+      "class": "verified"
     },
     {
       "object": "terminal.location",
@@ -202102,12 +202010,12 @@
       "path": "address_kana.postal_code",
       "branch": "",
       "shape": "string",
-      "state": "proven_by_test",
+      "state": "served",
       "status": "proven",
       "tests": [
         "TestTerminalLocationAttributes/leaves/response/terminal.location/address_kana.postal_code"
       ],
-      "class": "gap_proven_not_served"
+      "class": "verified"
     },
     {
       "object": "terminal.location",
@@ -202116,12 +202024,12 @@
       "path": "address_kana.state",
       "branch": "",
       "shape": "string",
-      "state": "proven_by_test",
+      "state": "served",
       "status": "proven",
       "tests": [
         "TestTerminalLocationAttributes/leaves/response/terminal.location/address_kana.state"
       ],
-      "class": "gap_proven_not_served"
+      "class": "verified"
     },
     {
       "object": "terminal.location",
@@ -202130,12 +202038,12 @@
       "path": "address_kana.town",
       "branch": "",
       "shape": "string",
-      "state": "proven_by_test",
+      "state": "served",
       "status": "proven",
       "tests": [
         "TestTerminalLocationAttributes/leaves/response/terminal.location/address_kana.town"
       ],
-      "class": "gap_proven_not_served"
+      "class": "verified"
     },
     {
       "object": "terminal.location",
@@ -202144,12 +202052,12 @@
       "path": "address_kanji.city",
       "branch": "",
       "shape": "string",
-      "state": "proven_by_test",
+      "state": "served",
       "status": "proven",
       "tests": [
         "TestTerminalLocationAttributes/leaves/response/terminal.location/address_kanji.city"
       ],
-      "class": "gap_proven_not_served"
+      "class": "verified"
     },
     {
       "object": "terminal.location",
@@ -202158,12 +202066,12 @@
       "path": "address_kanji.country",
       "branch": "",
       "shape": "string",
-      "state": "proven_by_test",
+      "state": "served",
       "status": "proven",
       "tests": [
         "TestTerminalLocationAttributes/leaves/response/terminal.location/address_kanji.country"
       ],
-      "class": "gap_proven_not_served"
+      "class": "verified"
     },
     {
       "object": "terminal.location",
@@ -202172,12 +202080,12 @@
       "path": "address_kanji.line1",
       "branch": "",
       "shape": "string",
-      "state": "proven_by_test",
+      "state": "served",
       "status": "proven",
       "tests": [
         "TestTerminalLocationAttributes/leaves/response/terminal.location/address_kanji.line1"
       ],
-      "class": "gap_proven_not_served"
+      "class": "verified"
     },
     {
       "object": "terminal.location",
@@ -202186,12 +202094,12 @@
       "path": "address_kanji.line2",
       "branch": "",
       "shape": "string",
-      "state": "proven_by_test",
+      "state": "served",
       "status": "proven",
       "tests": [
         "TestTerminalLocationAttributes/leaves/response/terminal.location/address_kanji.line2"
       ],
-      "class": "gap_proven_not_served"
+      "class": "verified"
     },
     {
       "object": "terminal.location",
@@ -202200,12 +202108,12 @@
       "path": "address_kanji.postal_code",
       "branch": "",
       "shape": "string",
-      "state": "proven_by_test",
+      "state": "served",
       "status": "proven",
       "tests": [
         "TestTerminalLocationAttributes/leaves/response/terminal.location/address_kanji.postal_code"
       ],
-      "class": "gap_proven_not_served"
+      "class": "verified"
     },
     {
       "object": "terminal.location",
@@ -202214,12 +202122,12 @@
       "path": "address_kanji.state",
       "branch": "",
       "shape": "string",
-      "state": "proven_by_test",
+      "state": "served",
       "status": "proven",
       "tests": [
         "TestTerminalLocationAttributes/leaves/response/terminal.location/address_kanji.state"
       ],
-      "class": "gap_proven_not_served"
+      "class": "verified"
     },
     {
       "object": "terminal.location",
@@ -202228,12 +202136,12 @@
       "path": "address_kanji.town",
       "branch": "",
       "shape": "string",
-      "state": "proven_by_test",
+      "state": "served",
       "status": "proven",
       "tests": [
         "TestTerminalLocationAttributes/leaves/response/terminal.location/address_kanji.town"
       ],
-      "class": "gap_proven_not_served"
+      "class": "verified"
     },
     {
       "object": "terminal.location",
@@ -202242,12 +202150,12 @@
       "path": "configuration_overrides",
       "branch": "",
       "shape": "string",
-      "state": "proven_by_test",
+      "state": "served",
       "status": "proven",
       "tests": [
         "TestTerminalLocationAttributes/leaves/response/terminal.location/configuration_overrides"
       ],
-      "class": "gap_proven_not_served"
+      "class": "verified"
     },
     {
       "object": "terminal.location",
@@ -202256,12 +202164,12 @@
       "path": "display_name",
       "branch": "",
       "shape": "string",
-      "state": "proven_by_test",
+      "state": "served",
       "status": "proven",
       "tests": [
         "TestTerminalLocationAttributes/leaves/response/terminal.location/display_name"
       ],
-      "class": "gap_proven_not_served"
+      "class": "verified"
     },
     {
       "object": "terminal.location",
@@ -202270,12 +202178,12 @@
       "path": "display_name_kana",
       "branch": "",
       "shape": "string",
-      "state": "proven_by_test",
+      "state": "served",
       "status": "proven",
       "tests": [
         "TestTerminalLocationAttributes/leaves/response/terminal.location/display_name_kana"
       ],
-      "class": "gap_proven_not_served"
+      "class": "verified"
     },
     {
       "object": "terminal.location",
@@ -202284,12 +202192,12 @@
       "path": "display_name_kanji",
       "branch": "",
       "shape": "string",
-      "state": "proven_by_test",
+      "state": "served",
       "status": "proven",
       "tests": [
         "TestTerminalLocationAttributes/leaves/response/terminal.location/display_name_kanji"
       ],
-      "class": "gap_proven_not_served"
+      "class": "verified"
     },
     {
       "object": "terminal.location",
@@ -202298,12 +202206,12 @@
       "path": "id",
       "branch": "",
       "shape": "string",
-      "state": "proven_by_test",
+      "state": "served",
       "status": "proven",
       "tests": [
         "TestTerminalLocationAttributes/leaves/response/terminal.location/id"
       ],
-      "class": "gap_proven_not_served"
+      "class": "verified"
     },
     {
       "object": "terminal.location",
@@ -202312,12 +202220,12 @@
       "path": "livemode",
       "branch": "",
       "shape": "boolean",
-      "state": "proven_by_test",
+      "state": "served",
       "status": "proven",
       "tests": [
         "TestTerminalLocationAttributes/leaves/response/terminal.location/livemode"
       ],
-      "class": "gap_proven_not_served"
+      "class": "verified"
     },
     {
       "object": "terminal.location",
@@ -202326,12 +202234,12 @@
       "path": "metadata",
       "branch": "",
       "shape": "map",
-      "state": "proven_by_test",
+      "state": "served",
       "status": "proven",
       "tests": [
         "TestTerminalLocationAttributes/leaves/response/terminal.location/metadata"
       ],
-      "class": "gap_proven_not_served"
+      "class": "verified"
     },
     {
       "object": "terminal.location",
@@ -202340,12 +202248,12 @@
       "path": "object",
       "branch": "",
       "shape": "enum",
-      "state": "proven_by_test",
+      "state": "served",
       "status": "proven",
       "tests": [
         "TestTerminalLocationAttributes/leaves/response/terminal.location/object"
       ],
-      "class": "gap_proven_not_served"
+      "class": "verified"
     },
     {
       "object": "terminal.location",
@@ -202354,12 +202262,12 @@
       "path": "phone",
       "branch": "",
       "shape": "string",
-      "state": "proven_by_test",
+      "state": "served",
       "status": "proven",
       "tests": [
         "TestTerminalLocationAttributes/leaves/response/terminal.location/phone"
       ],
-      "class": "gap_proven_not_served"
+      "class": "verified"
     },
     {
       "object": "terminal.onboarding_link",

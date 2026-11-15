@@ -3,12 +3,12 @@
 page_title: "stripe_account_person Resource - Stripe"
 subcategory: ""
 description: |-
-  A person of a connected account's business, such as its representative, an executive, an owner or a director. terraform destroy deletes the person, and changing account creates a new one. Stripe never returns id_number or ssn_last_4, so state keeps the values you configured and treats them as sensitive; id_number_provided and ssn_last_4_provided say whether Stripe has them. A plan that changes either on an existing person fails, because changing them is not supported yet: revert the configuration, ignore the change, or recreate the person deliberately with terraform taint (tofu taint in OpenTofu). Stripe returns a ten digit phone with +1 in front, so state keeps the phone number as you configured it, and a verification document's front and back keep what you configured, because Stripe replaces a test token such as file_identity_document_success with a file of its own, so a change of these made outside Terraform is not seen. Stripe refuses a new document once it has verified the person, and its refusal fails the apply. Removing gender, maiden_name, a member of registered_address or a verification document from the configuration clears it, removing a metadata key removes that key, and removing any other argument leaves its value on the person. A refresh that finds the account gone (Stripe answers 403 account_invalid) removes the person from state.
+  A person of a connected account's business, such as its representative, an executive, an owner or a director. terraform destroy deletes the person, and changing account creates a new one. Stripe never returns id_number or ssn_last_4, so state keeps the values you configured and treats them as sensitive; id_number_provided and ssn_last_4_provided say whether Stripe has them. A plan that changes either on an existing person fails, because changing them is not supported yet: revert the configuration, ignore the change, or recreate the person deliberately with terraform taint (tofu taint in OpenTofu). Stripe returns a ten digit phone with +1 in front, so state keeps the phone number as you configured it, and a verification document's front and back keep what you configured, because Stripe replaces a test token such as file_identity_document_success with a file of its own, so a change of these made outside Terraform is not seen. Stripe refuses a new document once it has verified the person, and its refusal fails the apply. The kana and kanji names and addresses are for a person of a Japanese account, and id_number_secondary for one of a Thai account: the provider sends them wherever you set them, because it does not know the account's country when it plans, and Stripe decides when you apply. Set a Japanese person's first_name and last_name beside the kana and kanji names: Stripe can fill them from the kanji names, which the provider does not plan for. Stripe never returns id_number_secondary, so state keeps the value you configured and treats it as sensitive; a change to it is sent in place. Removing gender, maiden_name, a kana or kanji name, a member of registered_address, a member of address_kana or address_kanji other than country, or a verification document from the configuration clears it, removing a metadata key removes that key, and removing any other argument leaves its value on the person. A refresh that finds the account gone (Stripe answers 403 account_invalid) removes the person from state.
 ---
 
 # Resource: stripe_account_person
 
-A person of a connected account's business, such as its representative, an executive, an owner or a director. `terraform destroy` deletes the person, and changing `account` creates a new one. Stripe never returns `id_number` or `ssn_last_4`, so state keeps the values you configured and treats them as sensitive; `id_number_provided` and `ssn_last_4_provided` say whether Stripe has them. A plan that changes either on an existing person fails, because changing them is not supported yet: revert the configuration, ignore the change, or recreate the person deliberately with `terraform taint` (`tofu taint` in OpenTofu). Stripe returns a ten digit `phone` with `+1` in front, so state keeps the phone number as you configured it, and a verification document's `front` and `back` keep what you configured, because Stripe replaces a test token such as `file_identity_document_success` with a file of its own, so a change of these made outside Terraform is not seen. Stripe refuses a new document once it has verified the person, and its refusal fails the apply. Removing `gender`, `maiden_name`, a member of `registered_address` or a verification document from the configuration clears it, removing a `metadata` key removes that key, and removing any other argument leaves its value on the person. A refresh that finds the account gone (Stripe answers 403 `account_invalid`) removes the person from state.
+A person of a connected account's business, such as its representative, an executive, an owner or a director. `terraform destroy` deletes the person, and changing `account` creates a new one. Stripe never returns `id_number` or `ssn_last_4`, so state keeps the values you configured and treats them as sensitive; `id_number_provided` and `ssn_last_4_provided` say whether Stripe has them. A plan that changes either on an existing person fails, because changing them is not supported yet: revert the configuration, ignore the change, or recreate the person deliberately with `terraform taint` (`tofu taint` in OpenTofu). Stripe returns a ten digit `phone` with `+1` in front, so state keeps the phone number as you configured it, and a verification document's `front` and `back` keep what you configured, because Stripe replaces a test token such as `file_identity_document_success` with a file of its own, so a change of these made outside Terraform is not seen. Stripe refuses a new document once it has verified the person, and its refusal fails the apply. The kana and kanji names and addresses are for a person of a Japanese account, and `id_number_secondary` for one of a Thai account: the provider sends them wherever you set them, because it does not know the account's country when it plans, and Stripe decides when you apply. Set a Japanese person's `first_name` and `last_name` beside the kana and kanji names: Stripe can fill them from the kanji names, which the provider does not plan for. Stripe never returns `id_number_secondary`, so state keeps the value you configured and treats it as sensitive; a change to it is sent in place. Removing `gender`, `maiden_name`, a kana or kanji name, a member of `registered_address`, a member of `address_kana` or `address_kanji` other than `country`, or a verification document from the configuration clears it, removing a `metadata` key removes that key, and removing any other argument leaves its value on the person. A refresh that finds the account gone (Stripe answers 403 `account_invalid`) removes the person from state.
 
 ## Example Usage
 
@@ -66,14 +66,21 @@ The following arguments are optional:
 
 * `additional_tos_acceptances` - (Optional) Details on the legal guardian's or authorizer's acceptance of the required Stripe agreements. Removing it from the configuration leaves the current value. See [`additional_tos_acceptances`](#additional_tos_acceptances) below.
 * `address` - (Optional) The person's address. Removing it from the configuration leaves the current value. See [`address`](#address) below.
+* `address_kana` - (Optional) The Kana variation of the person's address (Japan only). Removing it from the configuration leaves the current value. See [`address_kana`](#address_kana) below.
+* `address_kanji` - (Optional) The Kanji variation of the person's address (Japan only). Removing it from the configuration leaves the current value. See [`address_kanji`](#address_kanji) below.
 * `dob` - (Optional) The person's date of birth. Removing it from the configuration leaves the current value. See [`dob`](#dob) below.
 * `documents` - (Optional) Documents that may be submitted to satisfy various informational requests. Stripe does not return this value; the provider keeps it from configuration. Removing it from the configuration leaves the current value. See [`documents`](#documents) below.
 * `email` - (Optional) The person's email address. Default: none. Removing it from the configuration leaves the current value.
 * `first_name` - (Optional) The person's first name. Default: none. Removing it from the configuration leaves the current value.
+* `first_name_kana` - (Optional) The Kana variation of the person's first name (Japan only). Default: none.
+* `first_name_kanji` - (Optional) The Kanji variation of the person's first name (Japan only). Default: none.
 * `full_name_aliases` - (Optional) A list of alternate names or aliases that the person is known by. Default: none. Removing it from the configuration leaves the current value.
 * `gender` - (Optional) The person's gender (International regulations require either "male" or "female"). Default: none.
 * `id_number` - (Optional, Sensitive) The person's ID number, as appropriate for their country. For example, a social security number in the U.S., social insurance number in Canada, etc. Instead of the number itself, you can also provide a [PII token provided by Stripe.js](https://docs.stripe.com/js/tokens/create_token?type=pii). Changing this value for the account's representative requires that the account re-accept the [terms of service](https://docs.stripe.com/api/accounts/object#account_object-tos_acceptance). Stripe does not return this value; the provider keeps it from configuration. Removing it from the configuration leaves the current value.
+* `id_number_secondary` - (Optional, Sensitive) The person's secondary ID number, as appropriate for their country, will be used for enhanced verification checks. In Thailand, this would be the laser code found on the back of an ID card. Instead of the number itself, you can also provide a [PII token provided by Stripe.js](https://docs.stripe.com/js/tokens/create_token?type=pii). Changing this value for the account's representative requires that the account re-accept the [terms of service](https://docs.stripe.com/api/accounts/object#account_object-tos_acceptance). Stripe does not return this value; the provider keeps it from configuration. Removing it from the configuration leaves the current value.
 * `last_name` - (Optional) The person's last name. Default: none. Removing it from the configuration leaves the current value.
+* `last_name_kana` - (Optional) The Kana variation of the person's last name (Japan only). Default: none.
+* `last_name_kanji` - (Optional) The Kanji variation of the person's last name (Japan only). Default: none.
 * `maiden_name` - (Optional) The person's maiden name. Default: none.
 * `metadata` - (Optional) Set of [key-value pairs](https://docs.stripe.com/api/metadata) that you can attach to an object. This can be useful for storing additional information about the object in a structured format. Individual keys can be unset by posting an empty value to them. All keys can be unset by posting an empty value to `metadata`. Default (Stripe): `{}`.
 * `nationality` - (Optional) The country where the person is a national. Two-letter country code ([ISO 3166-1 alpha-2](https://en.wikipedia.org/wiki/ISO_3166-1_alpha-2)), or "XX" if unavailable. Default: none. Removing it from the configuration leaves the current value.
@@ -113,6 +120,32 @@ The `address` attribute supports:
 * `line2` - (Optional) Address line 2, such as the apartment, suite, unit, or building. Default: none. Removing it from the configuration leaves the current value.
 * `postal_code` - (Optional) ZIP or postal code. Default: none. Removing it from the configuration leaves the current value.
 * `state` - (Optional) State, county, province, or region ([ISO 3166-2](https://en.wikipedia.org/wiki/ISO_3166-2)). Default: none. Removing it from the configuration leaves the current value.
+
+<a id="address_kana"></a>
+### `address_kana`
+
+The `address_kana` attribute supports:
+
+* `city` - (Optional) City/Ward. Default: none.
+* `country` - (Optional) Two-letter country code ([ISO 3166-1 alpha-2](https://en.wikipedia.org/wiki/ISO_3166-1_alpha-2)). Default: none. Removing it from the configuration leaves the current value.
+* `line1` - (Optional) Block/Building number. Default: none.
+* `line2` - (Optional) Building details. Default: none.
+* `postal_code` - (Optional) ZIP or postal code. Default: none.
+* `state` - (Optional) Prefecture. Default: none.
+* `town` - (Optional) Town/cho-me. Default: none.
+
+<a id="address_kanji"></a>
+### `address_kanji`
+
+The `address_kanji` attribute supports:
+
+* `city` - (Optional) City/Ward. Default: none.
+* `country` - (Optional) Two-letter country code ([ISO 3166-1 alpha-2](https://en.wikipedia.org/wiki/ISO_3166-1_alpha-2)). Default: none. Removing it from the configuration leaves the current value.
+* `line1` - (Optional) Block/Building number. Default: none.
+* `line2` - (Optional) Building details. Default: none.
+* `postal_code` - (Optional) ZIP or postal code. Default: none.
+* `state` - (Optional) Prefecture. Default: none.
+* `town` - (Optional) Town/cho-me. Default: none.
 
 <a id="dob"></a>
 ### `dob`
@@ -243,6 +276,7 @@ This resource exports the following attributes in addition to the arguments abov
 * `created` - Time at which the object was created. Measured in seconds since the Unix epoch.
 * `future_requirements` - See [`future_requirements`](#future_requirements) below.
 * `id_number_provided` - Whether the person's `id_number` was provided. True if either the full ID number was provided or if only the required part of the ID number was provided (ex. last four of an individual's SSN for the US indicated by `ssn_last_4_provided`).
+* `id_number_secondary_provided` - Whether the person's `id_number_secondary` was provided.
 * `requirements` - See [`requirements`](#requirements) below.
 * `ssn_last_4_provided` - Whether the last four digits of the person's Social Security number have been provided (U.S. only).
 
@@ -350,4 +384,4 @@ Using `terraform import`, import an account person using its ID. For example:
 % terraform import stripe_account_person.representative acct_1Nv0FGQ9RKHgCVdK/person_1Nv0FGQ9RKHgCVdKmZb5XqT2
 ```
 
-~> Stripe never returns `id_number` or `ssn_last_4`, so an imported person has neither in state, and its `phone` and verification documents are in Stripe's form. Add `lifecycle { ignore_changes = [id_number, ssn_last_4] }` to a configuration that sets them, because a plan that changes them fails, and add `phone` to the list if the configuration writes it without the `+1`, and the verification documents if it names a test token. Stripe does not return `documents` or `person_token`, so an imported account person has them null: a configuration that sets one plans an update after the import.
+~> Stripe never returns `id_number` or `ssn_last_4`, so an imported person has neither in state, and its `phone` and verification documents are in Stripe's form. Add `lifecycle { ignore_changes = [id_number, ssn_last_4] }` to a configuration that sets them, because a plan that changes them fails, and add `phone` to the list if the configuration writes it without the `+1`, and the verification documents if it names a test token. Stripe does not return `documents`, `id_number_secondary` or `person_token`, so an imported account person has them null: a configuration that sets one plans an update after the import.
