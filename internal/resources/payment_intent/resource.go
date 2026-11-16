@@ -18,7 +18,7 @@ import (
 var Declaration = engine.Declaration{
 	TypeName:              "stripe_payment_intent",
 	IDPrefix:              "pi_",
-	Description:           "A customer payment. Set `status` to `succeeded` to confirm the intent with its `payment_method` and, when `capture_method` is `manual`, to capture it in the same apply; set it to `canceled` to cancel one that has not succeeded. Confirming with a card that needs a further action, or that is declined, leaves the intent where Stripe put it and fails the apply. Setting `payment_method` moves the intent to `requires_confirmation`; a test payment method such as `pm_card_visa`, which Stripe turns into a new one, stays in the state as configured. Stripe changes `amount`, `currency` and `setup_future_usage` only before the intent is confirmed (`requires_payment_method`, `requires_confirmation` or `requires_action`), `statement_descriptor_suffix` also while it is `requires_capture`, and `capture_method` only while it is `requires_payment_method` or `requires_confirmation`; it refuses such a change in any other status, and the apply fails. `description`, `metadata` and `receipt_email` still change once it has succeeded. `transfer_group` is sent on creation only: Stripe refuses to change a transfer group once set, so a plan that sets or changes it on an existing payment intent fails, and removing it from the configuration keeps the current value. Changing any of `amount_details.line_items` sends the whole list, whose lines are matched by position, and Stripe replaces the intent's lines with new ones, with new IDs. Stripe returns the lines only on request, so the provider reads them where it sends them and on a refresh of an intent whose state holds them: an imported intent holds none until an apply sends the configured lines, and lines added outside Terraform to an intent that holds none are not seen. With `amount_details.enforce_arithmetic_validation` set to `false`, Stripe takes lines whose total is not the `amount` and reports the mismatch in `amount_details.error`. The `client_secret` is sensitive.",
+	Description:           "A customer payment. Set `status` to `succeeded` to confirm the intent with its `payment_method` and, when `capture_method` is `manual`, to capture it in the same apply; set it to `canceled` to cancel one that has not succeeded. Confirming with a card that needs a further action, or that is declined, leaves the intent where Stripe put it and fails the apply. Setting `payment_method` moves the intent to `requires_confirmation`; a test payment method such as `pm_card_visa`, which Stripe turns into a new one, stays in the state as configured. Stripe changes `amount`, `currency` and `setup_future_usage` only before the intent is confirmed (`requires_payment_method`, `requires_confirmation` or `requires_action`), `statement_descriptor_suffix` also while it is `requires_capture`, and `capture_method` only while it is `requires_payment_method` or `requires_confirmation`; it refuses such a change in any other status, and the apply fails. `description`, `metadata` and `receipt_email` still change once it has succeeded. `transfer_group` is sent on creation only: Stripe refuses to change a transfer group once set, so a plan that sets or changes it on an existing payment intent fails, and removing it from the configuration keeps the current value. Changing any of `amount_details.line_items` sends the whole list, whose lines are matched by position, and Stripe replaces the intent's lines with new ones, with new IDs. Stripe returns the lines only on request, so the provider reads them where it sends them and on a refresh of an intent whose state holds them: an imported intent holds none until an apply sends the configured lines, and lines added outside Terraform to an intent that holds none are not seen. With `amount_details.enforce_arithmetic_validation` set to `false`, Stripe takes lines whose total is not the `amount` and reports the mismatch in `amount_details.error`. The `client_secret` is sensitive. Stripe never returns an inline payment method's `sepa_debit.iban`, `upi.mandate_options` or the `account_number` of `acss_debit` and `us_bank_account` in `payment_method_data`, so state keeps them from configuration and treats the numbers as sensitive. A change of `payment_method_data` sends it whole, and Stripe makes a new payment method from it; SEPA Debit needs the billing name and email beside the IBAN. `acss_debit` is taken on create only, so a plan that changes it fails, because the intent cannot be replaced, and while the intent holds it, so does a plan that changes anything else in `payment_method_data`, because the update could not send it.",
 	DataSourceDescription: "A customer payment, such as the one behind an invoice.",
 	Paths: engine.Paths{
 		Create:   "/v1/payment_intents",
@@ -27,8 +27,13 @@ var Declaration = engine.Declaration{
 		List:     "/v1/payment_intents",
 	},
 	MovesMoney: true,
-	// The client secret lets a front end finish the payment.
-	Sensitive: []string{"client_secret"},
+	// The client secret lets a front end finish the payment. Stripe never returns an inline
+	// method's bank account number or IBAN, which state keeps from configuration (the record's
+	// `returned`, `not_returned`), as a bank account's number is kept.
+	Sensitive: []string{
+		"client_secret", "payment_method_data.acss_debit.account_number", "payment_method_data.sepa_debit.iban",
+		"payment_method_data.us_bank_account.account_number",
+	},
 	// Stripe answers a test payment method such as `pm_card_visa` with a new payment method's
 	// ID, so the configured value stays in state.
 	PreserveConfig: []string{"payment_method"},
@@ -56,6 +61,12 @@ var Declaration = engine.Declaration{
 	// Stripe answers `payment_method_data` with the method it made (the record's `returned`,
 	// `inline_object`), which `payment_method` then leaves to it.
 	MadeBy: map[string]string{"payment_method": "payment_method_data"},
+	// Stripe takes ACSS Debit's details on create only (the record proves none of the update's
+	// `payment_method_data.acss_debit` leaves; the suite's dev record met Stripe refusing an update
+	// that sent the account number, `parameter_missing`), and the update sends `payment_method_data`
+	// whole without them, an ACSS Debit method with no bank details, so a change of the rest of the
+	// hash is refused while the intent holds them.
+	RefuseChangeWhileHeld: map[string]string{"payment_method_data": "payment_method_data.acss_debit"},
 	Answers: map[string]string{
 		// suite: TestPaymentIntentAttributes, probes `isolated/descriptor_*`: a create took it
 		// beside a suffix with a card or with no payment method, and refused it without one in
@@ -97,7 +108,7 @@ var methodOptions = func() []string {
 	var out []string
 	for _, method := range []string{
 		"acss_debit", "affirm", "afterpay_clearpay", "alipay", "amazon_pay", "bancontact", "card", "cashapp", "crypto",
-		"customer_balance", "eps", "ideal", "kakao_pay", "klarna", "kr_card", "mb_way", "multibanco", "naver_pay", "payco",
+		"customer_balance", "eps", "ideal", "kakao_pay", "klarna", "kr_card", "link", "mb_way", "multibanco", "naver_pay", "payco",
 		"pix", "samsung_pay", "satispay", "scalapay", "sepa_debit", "sunbit", "upi", "us_bank_account", "wechat_pay",
 	} {
 		out = append(out, "payment_method_options."+method)

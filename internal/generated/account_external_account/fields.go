@@ -17,9 +17,9 @@ var Table = []fields.Field{
 	{Name: "currency", Shape: fields.String, Create: true, Response: true, ServerDefaulted: true, Description: "Three-letter [ISO code for the currency](https://stripe.com/docs/payouts) paid out to the bank account.", Default: &fields.Default{Kind: fields.DefaultVaries}},
 	{Name: "customer", Shape: fields.String, Response: true, Description: "The ID of the customer that the bank account is associated with."},
 	{Name: "default_for_currency", Shape: fields.Bool, Create: true, Update: true, Response: true, Stable: true, Description: "When set to true, or if this is the first external account added in this currency, this account becomes the default external account for its currency.", Default: &fields.Default{Kind: fields.DefaultRule, Rule: "true for the first bank account in its currency on its account, false beside one", Observed: "`false` on a US account"}, Refused: "Stripe refused it on a US account on update: \"default_for_currency cannot be set to false, instead set a new bank account with the same currency to true\"."},
-	{Name: "documents", Shape: fields.Object, Create: true, NotReturned: true, Fields: []fields.Field{
-		{Name: "bank_account_ownership_verification", Shape: fields.Object, Create: true, NotReturned: true, Fields: []fields.Field{
-			{Name: "files", Shape: fields.ScalarList, Elem: fields.String, Create: true, NotReturned: true},
+	{Name: "documents", Shape: fields.Object, Create: true, Update: true, ServerDefaulted: true, NotReturned: true, Description: "Documents that may be submitted to satisfy various informational requests.", Fields: []fields.Field{
+		{Name: "bank_account_ownership_verification", Shape: fields.Object, Create: true, Update: true, NotReturned: true, Fields: []fields.Field{
+			{Name: "files", Shape: fields.ScalarList, Elem: fields.String, Create: true, Update: true, NotReturned: true},
 		}},
 	}},
 	{Name: "external_account", Shape: fields.String, Create: true, Description: "A token, like the ones returned by [Stripe.js](https://docs.stripe.com/js) or a dictionary containing a user's external account details (with the options shown below). Please refer to full [documentation](https://stripe.com/docs/api/external_accounts) instead."},

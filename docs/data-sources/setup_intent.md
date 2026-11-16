@@ -163,6 +163,7 @@ The `payment_method_configuration_details` attribute supports:
 
 The `payment_method_data` attribute supports:
 
+* `acss_debit` - See [`payment_method_data.acss_debit`](#payment_method_data.acss_debit) below.
 * `allow_redisplay` - Possible values: `always`, `limited`, `unspecified`.
 * `billing_details` - See [`payment_method_data.billing_details`](#payment_method_data.billing_details) below.
 * `eps` - See [`payment_method_data.eps`](#payment_method_data.eps) below.
@@ -171,8 +172,19 @@ The `payment_method_data` attribute supports:
 * `naver_pay` - See [`payment_method_data.naver_pay`](#payment_method_data.naver_pay) below.
 * `p24` - See [`payment_method_data.p24`](#payment_method_data.p24) below.
 * `radar_options` - See [`payment_method_data.radar_options`](#payment_method_data.radar_options) below.
+* `sepa_debit` - See [`payment_method_data.sepa_debit`](#payment_method_data.sepa_debit) below.
 * `type` - Possible values: `acss_debit`, `affirm`, `afterpay_clearpay`, `alipay`, `alma`, `amazon_pay`, `au_becs_debit`, `bacs_debit`, `bancontact`, `billie`, `bizum`, `blik`, `boleto`, `cashapp`, `crypto`, `customer_balance`, `eps`, `fpx`, `giropay`, `grabpay`, `ideal`, `kakao_pay`, `klarna`, `konbini`, `kr_card`, `link`, `mb_way`, `mobilepay`, `multibanco`, `naver_pay`, `nz_bank_account`, `oxxo`, `p24`, `pay_by_bank`, `payco`, `paynow`, `paypal`, `paypay`, `payto`, `pix`, `promptpay`, `revolut_pay`, `samsung_pay`, `satispay`, `scalapay`, `sepa_debit`, `sequra`, `sofort`, `sunbit`, `swish`, `twint`, `upi`, `us_bank_account`, `wechat_pay`, `zip`.
+* `upi` - See [`payment_method_data.upi`](#payment_method_data.upi) below.
 * `us_bank_account` - See [`payment_method_data.us_bank_account`](#payment_method_data.us_bank_account) below.
+
+<a id="payment_method_data.acss_debit"></a>
+### `payment_method_data.acss_debit`
+
+The `payment_method_data.acss_debit` attribute supports:
+
+* `account_number` - (Sensitive)
+* `institution_number` -
+* `transit_number` -
 
 <a id="payment_method_data.billing_details"></a>
 ### `payment_method_data.billing_details`
@@ -232,13 +244,37 @@ The `payment_method_data.radar_options` attribute supports:
 
 * `session` -
 
+<a id="payment_method_data.sepa_debit"></a>
+### `payment_method_data.sepa_debit`
+
+The `payment_method_data.sepa_debit` attribute supports:
+
+* `iban` - (Sensitive)
+
+<a id="payment_method_data.upi"></a>
+### `payment_method_data.upi`
+
+The `payment_method_data.upi` attribute supports:
+
+* `mandate_options` - See [`payment_method_data.upi.mandate_options`](#payment_method_data.upi.mandate_options) below.
+
+<a id="payment_method_data.upi.mandate_options"></a>
+### `payment_method_data.upi.mandate_options`
+
+The `payment_method_data.upi.mandate_options` attribute supports:
+
+* `amount` -
+* `amount_type` - Possible values: `fixed`, `maximum`.
+* `description` -
+* `end_date` -
+
 <a id="payment_method_data.us_bank_account"></a>
 ### `payment_method_data.us_bank_account`
 
 The `payment_method_data.us_bank_account` attribute supports:
 
 * `account_holder_type` - Possible values: `company`, `individual`.
-* `account_number` -
+* `account_number` - (Sensitive)
 * `account_type` - Possible values: `checking`, `savings`.
 * `financial_connections_account` -
 * `routing_number` -

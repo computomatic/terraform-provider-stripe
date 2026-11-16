@@ -30,14 +30,15 @@ type methodCase struct {
 	// customer says the intent is for a customer of its own, as a bank transfer needs.
 	customer bool
 	// billing is what lands inside the inline payment method's `billing_details`, and data
-	// what lands inside `payment_method_data` beside it.
-	billing, data    string
-	created, changed string
-	once             bool
+	// what lands inside `payment_method_data` beside it, or changedData on the update where set.
+	billing, data, changedData string
+	created, changed           string
+	once                       bool
 	// atFirst and atLast are the intent's attributes after the create and after the update, by
-	// their path below the method's options; sent is what the update sent of the options.
+	// their path below the method's options; sent is what the update sent of the options, and
+	// sentData what it sent of `payment_method_data`.
 	atFirst, atLast map[string]string
-	sent            map[string]string
+	sent, sentData  map[string]string
 }
 
 // final is the options the case's intent holds at the end.
@@ -62,9 +63,12 @@ func methodBlocks(acct acctest.Config, cases map[string]methodCase, changed bool
 	b.WriteString(acct.ProviderBlock())
 	for _, key := range sortedKeys(cases) {
 		c := cases[key]
-		options := c.created
+		options, data := c.created, c.data
 		if changed {
 			options = c.final()
+			if c.changedData != "" && !c.once {
+				data = c.changedData
+			}
 		}
 		fmt.Fprintf(&b, `
 resource "stripe_payment_method_configuration" %[1]q {
@@ -94,7 +98,7 @@ resource "stripe_payment_intent" %[1]q {
 %[6]s    }
 %[7]s  }
 %[8]s}
-`, key, c.amount, c.currency, customer, c.method, c.billing, c.data, opts)
+`, key, c.amount, c.currency, customer, c.method, c.billing, data, opts)
 	}
 	return b.String()
 }
@@ -113,10 +117,13 @@ func methodChecks(t *testing.T, acct acctest.Config, cases map[string]methodCase
 		for _, p := range sortedKeys(want) {
 			checks = append(checks, resource.TestCheckResourceAttr(intentAddress(key), prefix+p, want[p]))
 		}
-		if changed && len(c.sent) > 0 {
+		if changed && len(c.sent)+len(c.sentData) > 0 {
 			sent := map[string]string{}
 			for p, v := range c.sent {
 				sent[prefix+p] = v
+			}
+			for p, v := range c.sentData {
+				sent["payment_method_data."+p] = v
 			}
 			path := new(string)
 			checks = append(checks,
@@ -516,6 +523,159 @@ func TestAccPaymentIntent_customerBalanceBankTransfer(t *testing.T) {
 				Config:      methodBlocks(acct, cases, true),
 				PlanOnly:    true,
 				ExpectError: regexp.MustCompile("(?s)Cannot replace stripe_payment_intent.*Changing `payment_method_options.customer_balance.bank_transfer`"),
+			},
+		}, nil, "stripe_payment_intent"),
+	})
+}
+
+// The inline payment methods' members Stripe never returns are kept from configuration: a SEPA
+// Debit IBAN, a UPI mandate, and the account numbers of ACSS Debit and a US bank account, each with
+// the values of the probe named above it. The IBAN and the mandate change in place, and the update
+// sends `payment_method_data` whole, with the billing details SEPA Debit needs beside the IBAN. A
+// UPI mandate goes in `payment_method_data` beside the same mandate in the method's options, as
+// every probe that Stripe answered sent it.
+func TestAccPaymentIntent_inlineMethodData(t *testing.T) {
+	acct := acctest.NewAccount(t)
+	end := time.Now().Add(30 * 24 * time.Hour).Unix()
+	// The suite sends a generated value of at most 20 characters (`$gen` `unique`, arg `20`), a
+	// bound Stripe enforces, so the value is fixed rather than the account's run-scoped name.
+	description := "attrs UPI mandate"
+	mandate := func(amount int, amountType string) string {
+		return fmt.Sprintf(`mandate_options = {
+        amount      = %d
+        amount_type = %q
+        description = %q
+        end_date    = %d
+      }
+`, amount, amountType, description, end)
+	}
+	upiData := func(amount int, amountType string) string {
+		return "    upi = {\n      " + mandate(amount, amountType) + "    }\n"
+	}
+	upiOptions := func(amount int, amountType, future string) string {
+		return "      " + mandate(amount, amountType) + fmt.Sprintf("      setup_future_usage = %q\n", future)
+	}
+	testMethods(t, acct, map[string]methodCase{
+		// minimal/sepa_debit and update/46
+		"sepa_debit": {
+			method: "sepa_debit", currency: "eur", amount: 2000, billing: jenny(acct),
+			data:        "    sepa_debit = { iban = \"DE89370400440532013000\" }\n",
+			changedData: "    sepa_debit = { iban = \"AT611904300234573201\" }\n",
+			sentData: map[string]string{
+				"sepa_debit.iban":       "AT611904300234573201",
+				"billing_details.name":  "Jenny Rosen",
+				"billing_details.email": acct.Name("jenny") + "@example.com",
+			},
+		},
+		// update/48
+		"upi": {
+			method: "upi", currency: "inr", amount: 10000, billing: inAddress(acct),
+			data: upiData(7, "fixed"), changedData: upiData(8, "maximum"),
+			created: upiOptions(7, "fixed", "none"), changed: upiOptions(8, "maximum", "off_session"),
+			atFirst: map[string]string{"mandate_options.amount": "7", "mandate_options.amount_type": "fixed", "setup_future_usage": "none"},
+			atLast:  map[string]string{"mandate_options.amount": "8", "mandate_options.amount_type": "maximum", "setup_future_usage": "off_session"},
+			sentData: map[string]string{
+				"upi.mandate_options.amount":      "8",
+				"upi.mandate_options.amount_type": "maximum",
+				"upi.mandate_options.description": description,
+				"upi.mandate_options.end_date":    fmt.Sprint(end),
+			},
+		},
+		// minimal/acss_debit
+		"acss_debit": {
+			method: "acss_debit", currency: "cad", amount: 2000, billing: jenny(acct), once: true,
+			data: "    acss_debit = { account_number = \"000123456789\", institution_number = \"000\", transit_number = \"11000\" }\n",
+		},
+		// minimal/us_bank_account
+		"us_bank_account": {
+			method: "us_bank_account", currency: "usd", amount: 2000, billing: jenny(acct), once: true,
+			data: "    us_bank_account = { account_holder_type = \"individual\", account_number = \"000123456789\", routing_number = \"110000000\" }\n",
+		},
+	})
+}
+
+// linkIntent is an intent of the suite's Link probes, which allows card and Link at 500 cents in
+// the account's currency, with the given Link options.
+func linkIntent(name, options string) string {
+	if options != "" {
+		options = fmt.Sprintf("  payment_method_options = { link = { %s } }\n", options)
+	}
+	return fmt.Sprintf(`
+resource "stripe_payment_intent" %q {
+  amount                       = 500
+  currency                     = "usd"
+  allowed_payment_method_types = ["card", "link"]
+%s}
+`, name, options)
+}
+
+// Link's capture method and future usage are taken on create and on update, each alone, and read
+// back, as the suite's probes `isolated/link_<option>_create` and `_update` send them.
+func TestAccPaymentIntent_linkOptions(t *testing.T) {
+	acct := acctest.NewAccount(t)
+	const capture, future = `capture_method = "manual"`, `setup_future_usage = "off_session"`
+	config := func(updated bool) string {
+		later := map[bool][2]string{false: {"", ""}, true: {capture, future}}[updated]
+		return acct.ProviderBlock() + linkIntent("capture_created", capture) + linkIntent("future_created", future) +
+			linkIntent("capture_updated", later[0]) + linkIntent("future_updated", later[1])
+	}
+	link := "payment_method_options.link."
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: tfacc.ProviderFactories,
+		Steps: acctest.Forget(t, []resource.TestStep{
+			{
+				Config: config(false),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr(intentAddress("capture_created"), link+"capture_method", "manual"),
+					resource.TestCheckResourceAttr(intentAddress("future_created"), link+"setup_future_usage", "off_session"),
+					resource.TestCheckNoResourceAttr(intentAddress("capture_updated"), link+"capture_method"),
+					resource.TestCheckNoResourceAttr(intentAddress("future_updated"), link+"setup_future_usage"),
+				),
+				ConfigPlanChecks: resource.ConfigPlanChecks{PostApplyPostRefresh: []plancheck.PlanCheck{plancheck.ExpectEmptyPlan()}},
+			},
+			{
+				Config: config(true),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectResourceAction(intentAddress("capture_created"), plancheck.ResourceActionNoop),
+						plancheck.ExpectResourceAction(intentAddress("future_created"), plancheck.ResourceActionNoop),
+						plancheck.ExpectResourceAction(intentAddress("capture_updated"), plancheck.ResourceActionUpdate),
+						plancheck.ExpectResourceAction(intentAddress("future_updated"), plancheck.ResourceActionUpdate),
+					},
+					PostApplyPostRefresh: []plancheck.PlanCheck{plancheck.ExpectEmptyPlan()},
+				},
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr(intentAddress("capture_updated"), link+"capture_method", "manual"),
+					resource.TestCheckResourceAttr(intentAddress("future_updated"), link+"setup_future_usage", "off_session"),
+				),
+			},
+		}, nil, "stripe_payment_intent"),
+	})
+}
+
+// While an intent holds ACSS Debit's details, which Stripe takes on create only, a plan that
+// changes anything else in `payment_method_data`, such as the billing name, fails before Stripe
+// is called, because the update would send the hash without them. The intent is created as the
+// suite's probe `minimal/acss_debit` creates it.
+func TestAccPaymentIntent_acssDebitDataRefusesChange(t *testing.T) {
+	acct := acctest.NewAccount(t)
+	acss := methodCase{
+		method: "acss_debit", currency: "cad", amount: 2000, billing: jenny(acct), once: true,
+		data: "    acss_debit = { account_number = \"000123456789\", institution_number = \"000\", transit_number = \"11000\" }\n",
+	}
+	renamed := acss
+	renamed.billing = strings.Replace(acss.billing, "Jenny Rosen", "Jane Roe", 1)
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: tfacc.ProviderFactories,
+		Steps: acctest.Forget(t, []resource.TestStep{
+			{
+				Config:           methodBlocks(acct, map[string]methodCase{"acss_debit": acss}, false),
+				ConfigPlanChecks: resource.ConfigPlanChecks{PostApplyPostRefresh: []plancheck.PlanCheck{plancheck.ExpectEmptyPlan()}},
+			},
+			{
+				Config:      methodBlocks(acct, map[string]methodCase{"acss_debit": renamed}, false),
+				PlanOnly:    true,
+				ExpectError: regexp.MustCompile("(?s)Changing `payment_method_data` is not supported while\\s+`payment_method_data.acss_debit` is set"),
 			},
 		}, nil, "stripe_payment_intent"),
 	})

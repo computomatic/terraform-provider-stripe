@@ -479,8 +479,11 @@ func (r *Resource) attrName(field string) string {
 // the parent and the attached object. The engine's own checks (currency options, fixed keys)
 // have run before, and a plan they replace never gets here. compile refuses a declaration
 // with a replace source below the top level, which is not checked. (`-replace` is not seen: its first plan still carries the prior state.)
+//
+// A RefuseChangeWhileHeld field is refused the same way where the state holds its member and the
+// plan keeps the member as it is.
 func (r *Resource) refuseChanges(ctx context.Context, req resource.ModifyPlanRequest, resp *resource.ModifyPlanResponse) bool {
-	if len(r.m.decl.RefuseChange) == 0 {
+	if len(r.m.decl.RefuseChange)+len(r.m.decl.RefuseChangeWhileHeld) == 0 {
 		return false
 	}
 	var plan, state, config basetypes.ObjectValue
@@ -494,33 +497,60 @@ func (r *Resource) refuseChanges(ctx context.Context, req resource.ModifyPlanReq
 		return false
 	}
 	for _, name := range r.m.decl.RefuseChange {
-		n, at, _ := r.m.at(name)
-		var names []string
-		where := path.Empty()
-		for _, step := range at.Steps() {
-			names = append(names, string(step.(tftypes.AttributeName)))
-			where = where.AtName(names[len(names)-1])
+		r.refuseChange(ctx, req, resp, plan, state, config, name, "")
+	}
+	for _, name := range slices.Sorted(maps.Keys(r.m.decl.RefuseChangeWhileHeld)) {
+		held := r.m.decl.RefuseChangeWhileHeld[name]
+		_, at, _ := r.m.at(held)
+		names := attrNames(at)
+		if sv := attrAt(ctx, state, names); sv != nil && !sv.IsNull() && sv.Equal(attrAt(ctx, plan, names)) {
+			r.refuseChange(ctx, req, resp, plan, state, config, name, held)
 		}
-		pv, sv := attrAt(ctx, plan, names), attrAt(ctx, state, names)
-		if pv == nil || pv.Equal(sv) || slices.Contains(r.m.decl.SetOnce, name) && holdsNone(n, sv) {
-			continue
-		}
-		if v, err := pv.ToTerraformValue(ctx); err != nil || !v.IsFullyKnown() {
-			// A computed value the configuration leaves unset is Stripe's to fill in.
-			cv, err := attrAt(ctx, config, names).ToTerraformValue(ctx)
-			if err != nil || !cv.IsFullyKnown() || cv.IsNull() && n.Computed || sameBesidesComputed(at, pv, sv, req.Config.Raw) {
-				continue
-			}
-		}
-		attrName := strings.Join(names, ".")
-		recreate := "recreate the object deliberately with `terraform taint` (`tofu taint` in OpenTofu)."
-		if r.m.refusal(req.State.Raw) != "" {
-			recreate = "remove the object from the state with a removed block or `terraform state rm` and apply again to create a new one."
-		}
-		resp.Diagnostics.AddAttributeError(where, "Changing `"+attrName+"` is not supported yet",
-			"Changing the "+attrName+" of an existing "+r.m.decl.TypeName+" is not supported yet. Revert the configuration, add `lifecycle { ignore_changes = ["+attrName+"] }` to leave it as it is, or "+recreate)
 	}
 	return resp.Diagnostics.HasError()
+}
+
+// refuseChange adds refuseChanges' error where the plan changes the field name, a RefuseChange
+// entry or, with held, the RefuseChangeWhileHeld entry whose member the state holds.
+func (r *Resource) refuseChange(ctx context.Context, req resource.ModifyPlanRequest, resp *resource.ModifyPlanResponse, plan, state, config basetypes.ObjectValue, name, held string) {
+	n, at, _ := r.m.at(name)
+	names := attrNames(at)
+	where := path.Empty()
+	for _, name := range names {
+		where = where.AtName(name)
+	}
+	pv, sv := attrAt(ctx, plan, names), attrAt(ctx, state, names)
+	if pv == nil || pv.Equal(sv) || slices.Contains(r.m.decl.SetOnce, name) && holdsNone(n, sv) {
+		return
+	}
+	if v, err := pv.ToTerraformValue(ctx); err != nil || !v.IsFullyKnown() {
+		// A computed value the configuration leaves unset is Stripe's to fill in.
+		cv, err := attrAt(ctx, config, names).ToTerraformValue(ctx)
+		if err != nil || !cv.IsFullyKnown() || cv.IsNull() && n.Computed || sameBesidesComputed(at, pv, sv, req.Config.Raw) {
+			return
+		}
+	}
+	attrName := strings.Join(names, ".")
+	recreate := "recreate the object deliberately with `terraform taint` (`tofu taint` in OpenTofu)."
+	if r.m.refusal(req.State.Raw) != "" {
+		recreate = "remove the object from the state with a removed block or `terraform state rm` and apply again to create a new one."
+	}
+	summary, detail := "Changing `"+attrName+"` is not supported yet", "Changing the "+attrName+" of an existing "+r.m.decl.TypeName+" is not supported yet."
+	if held != "" {
+		summary = "Changing `" + attrName + "` is not supported while `" + held + "` is set"
+		detail = "Stripe takes `" + held + "` on create only, and an update of the " + attrName + " of an existing " + r.m.decl.TypeName + " could not send it."
+	}
+	resp.Diagnostics.AddAttributeError(where, summary,
+		detail+" Revert the configuration, add `lifecycle { ignore_changes = ["+attrName+"] }` to leave it as it is, or "+recreate)
+}
+
+// attrNames is the attribute names along at, a path through nested objects.
+func attrNames(at *tftypes.AttributePath) []string {
+	var names []string
+	for _, step := range at.Steps() {
+		names = append(names, string(step.(tftypes.AttributeName)))
+	}
+	return names
 }
 
 // holdsNone reports a value of n that is null, or an object whose configurable members all hold

@@ -3,12 +3,12 @@
 page_title: "stripe_payment_intent Resource - Stripe"
 subcategory: ""
 description: |-
-  A customer payment. Set status to succeeded to confirm the intent with its payment_method and, when capture_method is manual, to capture it in the same apply; set it to canceled to cancel one that has not succeeded. Confirming with a card that needs a further action, or that is declined, leaves the intent where Stripe put it and fails the apply. Setting payment_method moves the intent to requires_confirmation; a test payment method such as pm_card_visa, which Stripe turns into a new one, stays in the state as configured. Stripe changes amount, currency and setup_future_usage only before the intent is confirmed (requires_payment_method, requires_confirmation or requires_action), statement_descriptor_suffix also while it is requires_capture, and capture_method only while it is requires_payment_method or requires_confirmation; it refuses such a change in any other status, and the apply fails. description, metadata and receipt_email still change once it has succeeded. transfer_group is sent on creation only: Stripe refuses to change a transfer group once set, so a plan that sets or changes it on an existing payment intent fails, and removing it from the configuration keeps the current value. Changing any of amount_details.line_items sends the whole list, whose lines are matched by position, and Stripe replaces the intent's lines with new ones, with new IDs. Stripe returns the lines only on request, so the provider reads them where it sends them and on a refresh of an intent whose state holds them: an imported intent holds none until an apply sends the configured lines, and lines added outside Terraform to an intent that holds none are not seen. With amount_details.enforce_arithmetic_validation set to false, Stripe takes lines whose total is not the amount and reports the mismatch in amount_details.error. The client_secret is sensitive.
+  A customer payment. Set status to succeeded to confirm the intent with its payment_method and, when capture_method is manual, to capture it in the same apply; set it to canceled to cancel one that has not succeeded. Confirming with a card that needs a further action, or that is declined, leaves the intent where Stripe put it and fails the apply. Setting payment_method moves the intent to requires_confirmation; a test payment method such as pm_card_visa, which Stripe turns into a new one, stays in the state as configured. Stripe changes amount, currency and setup_future_usage only before the intent is confirmed (requires_payment_method, requires_confirmation or requires_action), statement_descriptor_suffix also while it is requires_capture, and capture_method only while it is requires_payment_method or requires_confirmation; it refuses such a change in any other status, and the apply fails. description, metadata and receipt_email still change once it has succeeded. transfer_group is sent on creation only: Stripe refuses to change a transfer group once set, so a plan that sets or changes it on an existing payment intent fails, and removing it from the configuration keeps the current value. Changing any of amount_details.line_items sends the whole list, whose lines are matched by position, and Stripe replaces the intent's lines with new ones, with new IDs. Stripe returns the lines only on request, so the provider reads them where it sends them and on a refresh of an intent whose state holds them: an imported intent holds none until an apply sends the configured lines, and lines added outside Terraform to an intent that holds none are not seen. With amount_details.enforce_arithmetic_validation set to false, Stripe takes lines whose total is not the amount and reports the mismatch in amount_details.error. The client_secret is sensitive. Stripe never returns an inline payment method's sepa_debit.iban, upi.mandate_options or the account_number of acss_debit and us_bank_account in payment_method_data, so state keeps them from configuration and treats the numbers as sensitive. A change of payment_method_data sends it whole, and Stripe makes a new payment method from it; SEPA Debit needs the billing name and email beside the IBAN. acss_debit is taken on create only, so a plan that changes it fails, because the intent cannot be replaced, and while the intent holds it, so does a plan that changes anything else in payment_method_data, because the update could not send it.
 ---
 
 # Resource: stripe_payment_intent
 
-A customer payment. Set `status` to `succeeded` to confirm the intent with its `payment_method` and, when `capture_method` is `manual`, to capture it in the same apply; set it to `canceled` to cancel one that has not succeeded. Confirming with a card that needs a further action, or that is declined, leaves the intent where Stripe put it and fails the apply. Setting `payment_method` moves the intent to `requires_confirmation`; a test payment method such as `pm_card_visa`, which Stripe turns into a new one, stays in the state as configured. Stripe changes `amount`, `currency` and `setup_future_usage` only before the intent is confirmed (`requires_payment_method`, `requires_confirmation` or `requires_action`), `statement_descriptor_suffix` also while it is `requires_capture`, and `capture_method` only while it is `requires_payment_method` or `requires_confirmation`; it refuses such a change in any other status, and the apply fails. `description`, `metadata` and `receipt_email` still change once it has succeeded. `transfer_group` is sent on creation only: Stripe refuses to change a transfer group once set, so a plan that sets or changes it on an existing payment intent fails, and removing it from the configuration keeps the current value. Changing any of `amount_details.line_items` sends the whole list, whose lines are matched by position, and Stripe replaces the intent's lines with new ones, with new IDs. Stripe returns the lines only on request, so the provider reads them where it sends them and on a refresh of an intent whose state holds them: an imported intent holds none until an apply sends the configured lines, and lines added outside Terraform to an intent that holds none are not seen. With `amount_details.enforce_arithmetic_validation` set to `false`, Stripe takes lines whose total is not the `amount` and reports the mismatch in `amount_details.error`. The `client_secret` is sensitive.
+A customer payment. Set `status` to `succeeded` to confirm the intent with its `payment_method` and, when `capture_method` is `manual`, to capture it in the same apply; set it to `canceled` to cancel one that has not succeeded. Confirming with a card that needs a further action, or that is declined, leaves the intent where Stripe put it and fails the apply. Setting `payment_method` moves the intent to `requires_confirmation`; a test payment method such as `pm_card_visa`, which Stripe turns into a new one, stays in the state as configured. Stripe changes `amount`, `currency` and `setup_future_usage` only before the intent is confirmed (`requires_payment_method`, `requires_confirmation` or `requires_action`), `statement_descriptor_suffix` also while it is `requires_capture`, and `capture_method` only while it is `requires_payment_method` or `requires_confirmation`; it refuses such a change in any other status, and the apply fails. `description`, `metadata` and `receipt_email` still change once it has succeeded. `transfer_group` is sent on creation only: Stripe refuses to change a transfer group once set, so a plan that sets or changes it on an existing payment intent fails, and removing it from the configuration keeps the current value. Changing any of `amount_details.line_items` sends the whole list, whose lines are matched by position, and Stripe replaces the intent's lines with new ones, with new IDs. Stripe returns the lines only on request, so the provider reads them where it sends them and on a refresh of an intent whose state holds them: an imported intent holds none until an apply sends the configured lines, and lines added outside Terraform to an intent that holds none are not seen. With `amount_details.enforce_arithmetic_validation` set to `false`, Stripe takes lines whose total is not the `amount` and reports the mismatch in `amount_details.error`. The `client_secret` is sensitive. Stripe never returns an inline payment method's `sepa_debit.iban`, `upi.mandate_options` or the `account_number` of `acss_debit` and `us_bank_account` in `payment_method_data`, so state keeps them from configuration and treats the numbers as sensitive. A change of `payment_method_data` sends it whole, and Stripe makes a new payment method from it; SEPA Debit needs the billing name and email beside the IBAN. `acss_debit` is taken on create only, so a plan that changes it fails, because the intent cannot be replaced, and while the intent holds it, so does a plan that changes anything else in `payment_method_data`, because the update could not send it.
 
 ~> A payment intent can move real money. In a live-mode Stripe account, creating or changing one, including setting its `status`, fails at plan time unless the provider sets `allow_live_money_movement = true`. Reading or importing one never does. The provider asks Stripe for the account's mode. See the Managing Test Data guide.
 
@@ -219,6 +219,7 @@ The `payment_details` attribute supports:
 
 The `payment_method_data` attribute supports:
 
+* `acss_debit` - (Optional) Changing it fails the plan, because this resource cannot be replaced. See [`payment_method_data.acss_debit`](#payment_method_data.acss_debit) below.
 * `allow_redisplay` - (Optional) Possible values: `always`, `limited`, `unspecified`.
 * `billing_details` - (Optional) See [`payment_method_data.billing_details`](#payment_method_data.billing_details) below.
 * `eps` - (Optional) See [`payment_method_data.eps`](#payment_method_data.eps) below.
@@ -227,8 +228,19 @@ The `payment_method_data` attribute supports:
 * `naver_pay` - (Optional) See [`payment_method_data.naver_pay`](#payment_method_data.naver_pay) below.
 * `p24` - (Optional) See [`payment_method_data.p24`](#payment_method_data.p24) below.
 * `radar_options` - (Optional) See [`payment_method_data.radar_options`](#payment_method_data.radar_options) below.
+* `sepa_debit` - (Optional) Stripe does not return this value; the provider keeps it from configuration. See [`payment_method_data.sepa_debit`](#payment_method_data.sepa_debit) below.
 * `type` - (Required) Possible values: `acss_debit`, `affirm`, `afterpay_clearpay`, `alipay`, `alma`, `amazon_pay`, `au_becs_debit`, `bacs_debit`, `bancontact`, `billie`, `bizum`, `blik`, `boleto`, `cashapp`, `crypto`, `customer_balance`, `eps`, `fpx`, `giropay`, `grabpay`, `ideal`, `kakao_pay`, `klarna`, `konbini`, `kr_card`, `link`, `mb_way`, `mobilepay`, `multibanco`, `naver_pay`, `nz_bank_account`, `oxxo`, `p24`, `pay_by_bank`, `payco`, `paynow`, `paypal`, `paypay`, `payto`, `pix`, `promptpay`, `revolut_pay`, `samsung_pay`, `satispay`, `scalapay`, `sepa_debit`, `sequra`, `sofort`, `sunbit`, `swish`, `twint`, `upi`, `us_bank_account`, `wechat_pay`, `zip`.
+* `upi` - (Optional) Stripe does not return this value; the provider keeps it from configuration. See [`payment_method_data.upi`](#payment_method_data.upi) below.
 * `us_bank_account` - (Optional) See [`payment_method_data.us_bank_account`](#payment_method_data.us_bank_account) below.
+
+<a id="payment_method_data.acss_debit"></a>
+### `payment_method_data.acss_debit`
+
+The `payment_method_data.acss_debit` attribute supports:
+
+* `account_number` - (Required, Sensitive) Stripe does not return this value; the provider keeps it from configuration.
+* `institution_number` - (Required)
+* `transit_number` - (Required)
 
 <a id="payment_method_data.billing_details"></a>
 ### `payment_method_data.billing_details`
@@ -288,13 +300,37 @@ The `payment_method_data.radar_options` attribute supports:
 
 * `session` - (Optional) Stripe refused it on a US account on create and update: "No such radar session: 'rse_...'".
 
+<a id="payment_method_data.sepa_debit"></a>
+### `payment_method_data.sepa_debit`
+
+The `payment_method_data.sepa_debit` attribute supports:
+
+* `iban` - (Required, Sensitive) Stripe does not return this value; the provider keeps it from configuration.
+
+<a id="payment_method_data.upi"></a>
+### `payment_method_data.upi`
+
+The `payment_method_data.upi` attribute supports:
+
+* `mandate_options` - (Optional) Stripe does not return this value; the provider keeps it from configuration. See [`payment_method_data.upi.mandate_options`](#payment_method_data.upi.mandate_options) below.
+
+<a id="payment_method_data.upi.mandate_options"></a>
+### `payment_method_data.upi.mandate_options`
+
+The `payment_method_data.upi.mandate_options` attribute supports:
+
+* `amount` - (Optional) Stripe does not return this value; the provider keeps it from configuration.
+* `amount_type` - (Optional) Possible values: `fixed`, `maximum`. Stripe does not return this value; the provider keeps it from configuration. Stripe fails `maximum` on every attempt, so the conformance suite never sends it: "Stripe answers 500 to a create that sends `payment_method_data[upi][mandate_options][amount_type]=maximum` without the mandate's amount, beside `payment_method_options[upi][setup_future_usage]=off_session` (req_sPM99YlQ4hNjGm); a create with the whole mandate and `none` is answered, and so is an update with `maximum` beside the mandate's other members". Stripe fails `fixed` on every attempt, so the conformance suite never sends it: "Stripe answers 500 to an update that sends `payment_method_data[upi][mandate_options][amount_type]` without the mandate's amount, beside `payment_method_options[upi][setup_future_usage]` (req_ADYQiqu5lKLSW9); an update with the whole mandate is answered, and a create takes `fixed` beside it".
+* `description` - (Optional) Stripe does not return this value; the provider keeps it from configuration.
+* `end_date` - (Optional) Stripe does not return this value; the provider keeps it from configuration.
+
 <a id="payment_method_data.us_bank_account"></a>
 ### `payment_method_data.us_bank_account`
 
 The `payment_method_data.us_bank_account` attribute supports:
 
 * `account_holder_type` - (Optional) Possible values: `company`, `individual`.
-* `account_number` - (Optional) Default: not sent.
+* `account_number` - (Optional, Sensitive) Stripe does not return this value; the provider keeps it from configuration.
 * `account_type` - (Optional) Possible values: `checking`, `savings`.
 * `financial_connections_account` - (Optional) Stripe refused it on a US account on update: "No such Financial Connections Account: fca_...". Default: not sent.
 * `routing_number` - (Optional)
@@ -320,6 +356,7 @@ The `payment_method_options` attribute supports:
 * `kakao_pay` - (Optional) Removing it from the configuration leaves the current value. See [`payment_method_options.kakao_pay`](#payment_method_options.kakao_pay) below.
 * `klarna` - (Optional) Removing it from the configuration leaves the current value. See [`payment_method_options.klarna`](#payment_method_options.klarna) below.
 * `kr_card` - (Optional) Removing it from the configuration leaves the current value. See [`payment_method_options.kr_card`](#payment_method_options.kr_card) below.
+* `link` - (Optional) Removing it from the configuration leaves the current value. See [`payment_method_options.link`](#payment_method_options.link) below.
 * `mb_way` - (Optional) Removing it from the configuration leaves the current value. See [`payment_method_options.mb_way`](#payment_method_options.mb_way) below.
 * `multibanco` - (Optional) Removing it from the configuration leaves the current value. See [`payment_method_options.multibanco`](#payment_method_options.multibanco) below.
 * `naver_pay` - (Optional) Removing it from the configuration leaves the current value. See [`payment_method_options.naver_pay`](#payment_method_options.naver_pay) below.
@@ -562,6 +599,14 @@ The `payment_method_options.klarna.subscriptions.next_billing` attribute support
 ### `payment_method_options.kr_card`
 
 The `payment_method_options.kr_card` attribute supports:
+
+* `capture_method` - (Optional) Controls when the funds will be captured from the customer's account. Possible values: `manual`. Removing it from the configuration leaves the current value.
+* `setup_future_usage` - (Optional) Indicates that you intend to make future payments with this PaymentIntent's payment method. If you provide a Customer with the PaymentIntent, you can use this parameter to [attach the payment method](https://docs.stripe.com/payments/save-during-payment) to the Customer after the PaymentIntent is confirmed and the customer completes any required actions. If you don't provide a Customer, you can still [attach](https://docs.stripe.com/api/payment_methods/attach) the payment method to a Customer after the transaction completes. If the payment method is `card_present` and isn't a digital wallet, Stripe creates and attaches a [generated_card](https://docs.stripe.com/api/charges/object#charge_object-payment_method_details-card_present-generated_card) payment method representing the card to the Customer instead. When processing card payments, Stripe uses `setup_future_usage` to help you comply with regional legislation and network rules, such as [SCA](https://docs.stripe.com/strong-customer-authentication). Possible values: `none`, `off_session`. Removing it from the configuration leaves the current value.
+
+<a id="payment_method_options.link"></a>
+### `payment_method_options.link`
+
+The `payment_method_options.link` attribute supports:
 
 * `capture_method` - (Optional) Controls when the funds will be captured from the customer's account. Possible values: `manual`. Removing it from the configuration leaves the current value.
 * `setup_future_usage` - (Optional) Indicates that you intend to make future payments with this PaymentIntent's payment method. If you provide a Customer with the PaymentIntent, you can use this parameter to [attach the payment method](https://docs.stripe.com/payments/save-during-payment) to the Customer after the PaymentIntent is confirmed and the customer completes any required actions. If you don't provide a Customer, you can still [attach](https://docs.stripe.com/api/payment_methods/attach) the payment method to a Customer after the transaction completes. If the payment method is `card_present` and isn't a digital wallet, Stripe creates and attaches a [generated_card](https://docs.stripe.com/api/charges/object#charge_object-payment_method_details-card_present-generated_card) payment method representing the card to the Customer instead. When processing card payments, Stripe uses `setup_future_usage` to help you comply with regional legislation and network rules, such as [SCA](https://docs.stripe.com/strong-customer-authentication). Possible values: `none`, `off_session`. Removing it from the configuration leaves the current value.

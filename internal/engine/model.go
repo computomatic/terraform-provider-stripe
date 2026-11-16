@@ -388,6 +388,14 @@ func compile(decl Declaration, table []fields.Field) (*model, error) {
 			return nil, fmt.Errorf("%s: refuse-change entry `%s` is not a configurable field outside a list", decl.TypeName, name)
 		}
 	}
+	for name, held := range decl.RefuseChangeWhileHeld {
+		if n, _, ok := m.at(name); !ok || !n.Optional && !n.Required {
+			return nil, fmt.Errorf("%s: refuse-change-while-held entry `%s` is not a configurable field outside a list", decl.TypeName, name)
+		}
+		if n, _, ok := m.at(held); !ok || !strings.HasPrefix(held, name+".") || !n.Optional && !n.Required || !n.Create || n.Update {
+			return nil, fmt.Errorf("%s: refuse-change-while-held entry `%s` names `%s`, which is not a create-only member of it", decl.TypeName, name, held)
+		}
+	}
 	for _, name := range decl.SetOnce {
 		if !slices.Contains(decl.RefuseChange, name) {
 			return nil, fmt.Errorf("%s: set-once entry `%s` is not in RefuseChange", decl.TypeName, name)
@@ -396,7 +404,7 @@ func compile(decl Declaration, table []fields.Field) (*model, error) {
 	// refuseChanges tells a replace only by its top-level sources. A resource that refuses
 	// destroy fails every real replacement in the attribute plan modifier, before refuseChanges
 	// runs, so a source below the top level needs no telling there.
-	if len(decl.RefuseChange) > 0 && decl.Delete != Refuse {
+	if len(decl.RefuseChange)+len(decl.RefuseChangeWhileHeld) > 0 && decl.Delete != Refuse {
 		for _, n := range m.nodes {
 			if below := nestedReplaceSource(n.Kids); below != "" {
 				return nil, fmt.Errorf("%s: field `%s.%s` forces replacement, and RefuseChange supports only top-level replace sources", decl.TypeName, n.Name, below)

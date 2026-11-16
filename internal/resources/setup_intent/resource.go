@@ -16,7 +16,7 @@ import (
 var Declaration = engine.Declaration{
 	TypeName:              "stripe_setup_intent",
 	IDPrefix:              "seti_",
-	Description:           "Collects a customer's payment method for later use. Set `status` to `canceled` to cancel the intent; one that already succeeded cannot be canceled. Confirming an intent is not a resource: confirm it with its `client_secret` from your front end, or from your server with Stripe's API, and `status` reports what happened. The resource has no `confirm` or `mandate_data` argument, and Stripe refuses `payment_method_options.card.three_d_secure` on an intent that is not being confirmed. Setting `payment_method` moves the intent to `requires_confirmation`. `usage` and `on_behalf_of` cannot change after creation, and neither can the other arguments that only a create takes, so changing one fails the plan. The `client_secret` is sensitive and stays in the state.",
+	Description:           "Collects a customer's payment method for later use. Set `status` to `canceled` to cancel the intent; one that already succeeded cannot be canceled. Confirming an intent is not a resource: confirm it with its `client_secret` from your front end, or from your server with Stripe's API, and `status` reports what happened. The resource has no `confirm` or `mandate_data` argument, and Stripe refuses `payment_method_options.card.three_d_secure` on an intent that is not being confirmed. Setting `payment_method` moves the intent to `requires_confirmation`. `usage` and `on_behalf_of` cannot change after creation, and neither can the other arguments that only a create takes, so changing one fails the plan. The `client_secret` is sensitive and stays in the state. Stripe never returns an inline payment method's `sepa_debit.iban`, `upi.mandate_options` or the `account_number` of `acss_debit` and `us_bank_account` in `payment_method_data`, so state keeps them from configuration and treats the numbers as sensitive. A change of `payment_method_data` sends it whole, and Stripe makes a new payment method from it; SEPA Debit needs the billing name and email beside the IBAN. `acss_debit` is taken on create only, so a plan that changes it fails, because the intent cannot be replaced, and while the intent holds it, so does a plan that changes anything else in `payment_method_data`, because the update could not send it.",
 	DataSourceDescription: "Collects a customer's payment method for later use.",
 	Paths: engine.Paths{
 		Create:   "/v1/setup_intents",
@@ -34,6 +34,18 @@ var Declaration = engine.Declaration{
 	// Stripe answers `payment_method_data` with the method it made (the record's `returned`,
 	// `inline_object`), which `payment_method` then leaves to it.
 	MadeBy: map[string]string{"payment_method": "payment_method_data"},
+	// Stripe takes ACSS Debit's details on create only (the record proves none of the update's
+	// `payment_method_data.acss_debit` leaves; the suite's dev record met Stripe refusing an update
+	// that sent the account number, `parameter_missing`), and the update sends `payment_method_data`
+	// whole without them, an ACSS Debit method with no bank details, so a change of the rest of the
+	// hash is refused while the intent holds them.
+	RefuseChangeWhileHeld: map[string]string{"payment_method_data": "payment_method_data.acss_debit"},
+	// Stripe never returns an inline method's bank account number or IBAN, which state keeps from
+	// configuration (the record's `returned`, `not_returned`), as a bank account's number is kept.
+	Sensitive: []string{
+		"payment_method_data.acss_debit.account_number", "payment_method_data.sepa_debit.iban",
+		"payment_method_data.us_bank_account.account_number",
+	},
 	Defaults: map[string]string{
 		// suite: variant `bancontact`, which the resource keeps null
 		"payment_method": "none, or the method Stripe makes from `payment_method_data`, which this attribute does not hold",
