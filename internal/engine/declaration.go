@@ -500,6 +500,14 @@ type Declaration struct {
 	// with a replace source below the top level, which is not checked, unless it refuses
 	// destroy, which fails every replacement first. Nor is a value not fully known at plan time. `-replace` cannot be told from an update at plan time.
 	RefuseChange []string
+	// RefuseChangeWhileHeld maps a field, by dotted path through nested objects, to a member of
+	// it that only a create takes, such as a payment intent's `payment_method_data` to
+	// `payment_method_data.acss_debit`, where Stripe needs the member beside any change of the
+	// field that the update cannot send. While the state holds the member, a plan that changes the
+	// field and keeps the member fails as RefuseChange says; a plan that changes the member itself
+	// is the replace its create-only member forces. The rules of RefuseChange on replace sources
+	// apply.
+	RefuseChangeWhileHeld map[string]string
 	// SetOnce lists RefuseChange fields that Stripe takes on update while the object holds none
 	// and refuses to change once set, such as a v2 account's `dashboard`. A plan that sets one the
 	// state holds none of (null, or an object whose configurable members are all null) is not

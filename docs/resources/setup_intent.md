@@ -3,12 +3,12 @@
 page_title: "stripe_setup_intent Resource - Stripe"
 subcategory: ""
 description: |-
-  Collects a customer's payment method for later use. Set status to canceled to cancel the intent; one that already succeeded cannot be canceled. Confirming an intent is not a resource: confirm it with its client_secret from your front end, or from your server with Stripe's API, and status reports what happened. The resource has no confirm or mandate_data argument, and Stripe refuses payment_method_options.card.three_d_secure on an intent that is not being confirmed. Setting payment_method moves the intent to requires_confirmation. usage and on_behalf_of cannot change after creation, and neither can the other arguments that only a create takes, so changing one fails the plan. The client_secret is sensitive and stays in the state.
+  Collects a customer's payment method for later use. Set status to canceled to cancel the intent; one that already succeeded cannot be canceled. Confirming an intent is not a resource: confirm it with its client_secret from your front end, or from your server with Stripe's API, and status reports what happened. The resource has no confirm or mandate_data argument, and Stripe refuses payment_method_options.card.three_d_secure on an intent that is not being confirmed. Setting payment_method moves the intent to requires_confirmation. usage and on_behalf_of cannot change after creation, and neither can the other arguments that only a create takes, so changing one fails the plan. The client_secret is sensitive and stays in the state. Stripe never returns an inline payment method's sepa_debit.iban, upi.mandate_options or the account_number of acss_debit and us_bank_account in payment_method_data, so state keeps them from configuration and treats the numbers as sensitive. A change of payment_method_data sends it whole, and Stripe makes a new payment method from it; SEPA Debit needs the billing name and email beside the IBAN. acss_debit is taken on create only, so a plan that changes it fails, because the intent cannot be replaced, and while the intent holds it, so does a plan that changes anything else in payment_method_data, because the update could not send it.
 ---
 
 # Resource: stripe_setup_intent
 
-Collects a customer's payment method for later use. Set `status` to `canceled` to cancel the intent; one that already succeeded cannot be canceled. Confirming an intent is not a resource: confirm it with its `client_secret` from your front end, or from your server with Stripe's API, and `status` reports what happened. The resource has no `confirm` or `mandate_data` argument, and Stripe refuses `payment_method_options.card.three_d_secure` on an intent that is not being confirmed. Setting `payment_method` moves the intent to `requires_confirmation`. `usage` and `on_behalf_of` cannot change after creation, and neither can the other arguments that only a create takes, so changing one fails the plan. The `client_secret` is sensitive and stays in the state.
+Collects a customer's payment method for later use. Set `status` to `canceled` to cancel the intent; one that already succeeded cannot be canceled. Confirming an intent is not a resource: confirm it with its `client_secret` from your front end, or from your server with Stripe's API, and `status` reports what happened. The resource has no `confirm` or `mandate_data` argument, and Stripe refuses `payment_method_options.card.three_d_secure` on an intent that is not being confirmed. Setting `payment_method` moves the intent to `requires_confirmation`. `usage` and `on_behalf_of` cannot change after creation, and neither can the other arguments that only a create takes, so changing one fails the plan. The `client_secret` is sensitive and stays in the state. Stripe never returns an inline payment method's `sepa_debit.iban`, `upi.mandate_options` or the `account_number` of `acss_debit` and `us_bank_account` in `payment_method_data`, so state keeps them from configuration and treats the numbers as sensitive. A change of `payment_method_data` sends it whole, and Stripe makes a new payment method from it; SEPA Debit needs the billing name and email beside the IBAN. `acss_debit` is taken on create only, so a plan that changes it fails, because the intent cannot be replaced, and while the intent holds it, so does a plan that changes anything else in `payment_method_data`, because the update could not send it.
 
 ~> Stripe cannot delete a setup intent; set `status` to `canceled` to cancel one. `terraform destroy`, and a change that would replace the setup intent, fail at plan time. To stop managing a setup intent, remove it from the state as [Removing from State](#removing-from-state) shows; it stays in the Stripe account.
 
@@ -72,6 +72,7 @@ The `automatic_payment_methods` attribute supports:
 
 The `payment_method_data` attribute supports:
 
+* `acss_debit` - (Optional) Changing it fails the plan, because this resource cannot be replaced. See [`payment_method_data.acss_debit`](#payment_method_data.acss_debit) below.
 * `allow_redisplay` - (Optional) Possible values: `always`, `limited`, `unspecified`.
 * `billing_details` - (Optional) See [`payment_method_data.billing_details`](#payment_method_data.billing_details) below.
 * `eps` - (Optional) See [`payment_method_data.eps`](#payment_method_data.eps) below.
@@ -80,8 +81,19 @@ The `payment_method_data` attribute supports:
 * `naver_pay` - (Optional) See [`payment_method_data.naver_pay`](#payment_method_data.naver_pay) below.
 * `p24` - (Optional) See [`payment_method_data.p24`](#payment_method_data.p24) below.
 * `radar_options` - (Optional) See [`payment_method_data.radar_options`](#payment_method_data.radar_options) below.
+* `sepa_debit` - (Optional) Stripe does not return this value; the provider keeps it from configuration. See [`payment_method_data.sepa_debit`](#payment_method_data.sepa_debit) below.
 * `type` - (Required) Possible values: `acss_debit`, `affirm`, `afterpay_clearpay`, `alipay`, `alma`, `amazon_pay`, `au_becs_debit`, `bacs_debit`, `bancontact`, `billie`, `bizum`, `blik`, `boleto`, `cashapp`, `crypto`, `customer_balance`, `eps`, `fpx`, `giropay`, `grabpay`, `ideal`, `kakao_pay`, `klarna`, `konbini`, `kr_card`, `link`, `mb_way`, `mobilepay`, `multibanco`, `naver_pay`, `nz_bank_account`, `oxxo`, `p24`, `pay_by_bank`, `payco`, `paynow`, `paypal`, `paypay`, `payto`, `pix`, `promptpay`, `revolut_pay`, `samsung_pay`, `satispay`, `scalapay`, `sepa_debit`, `sequra`, `sofort`, `sunbit`, `swish`, `twint`, `upi`, `us_bank_account`, `wechat_pay`, `zip`.
+* `upi` - (Optional) Stripe does not return this value; the provider keeps it from configuration. See [`payment_method_data.upi`](#payment_method_data.upi) below.
 * `us_bank_account` - (Optional) See [`payment_method_data.us_bank_account`](#payment_method_data.us_bank_account) below.
+
+<a id="payment_method_data.acss_debit"></a>
+### `payment_method_data.acss_debit`
+
+The `payment_method_data.acss_debit` attribute supports:
+
+* `account_number` - (Required, Sensitive) Stripe does not return this value; the provider keeps it from configuration.
+* `institution_number` - (Required)
+* `transit_number` - (Required)
 
 <a id="payment_method_data.billing_details"></a>
 ### `payment_method_data.billing_details`
@@ -141,13 +153,37 @@ The `payment_method_data.radar_options` attribute supports:
 
 * `session` - (Optional) Stripe refused it on a US account on create and update: "No such radar session: 'rse_...'".
 
+<a id="payment_method_data.sepa_debit"></a>
+### `payment_method_data.sepa_debit`
+
+The `payment_method_data.sepa_debit` attribute supports:
+
+* `iban` - (Required, Sensitive) Stripe does not return this value; the provider keeps it from configuration.
+
+<a id="payment_method_data.upi"></a>
+### `payment_method_data.upi`
+
+The `payment_method_data.upi` attribute supports:
+
+* `mandate_options` - (Optional) Stripe does not return this value; the provider keeps it from configuration. See [`payment_method_data.upi.mandate_options`](#payment_method_data.upi.mandate_options) below.
+
+<a id="payment_method_data.upi.mandate_options"></a>
+### `payment_method_data.upi.mandate_options`
+
+The `payment_method_data.upi.mandate_options` attribute supports:
+
+* `amount` - (Optional) Stripe does not return this value; the provider keeps it from configuration.
+* `amount_type` - (Optional) Possible values: `fixed`, `maximum`. Stripe does not return this value; the provider keeps it from configuration.
+* `description` - (Optional) Stripe does not return this value; the provider keeps it from configuration.
+* `end_date` - (Optional) Stripe does not return this value; the provider keeps it from configuration.
+
 <a id="payment_method_data.us_bank_account"></a>
 ### `payment_method_data.us_bank_account`
 
 The `payment_method_data.us_bank_account` attribute supports:
 
 * `account_holder_type` - (Optional) Possible values: `company`, `individual`.
-* `account_number` - (Optional) Default: not sent.
+* `account_number` - (Optional, Sensitive) Stripe does not return this value; the provider keeps it from configuration.
 * `account_type` - (Optional) Possible values: `checking`, `savings`.
 * `financial_connections_account` - (Optional) Stripe refused it on a US account on update: "No such Financial Connections Account: fca_...". Default: not sent.
 * `routing_number` - (Optional)

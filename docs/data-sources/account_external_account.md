@@ -40,7 +40,7 @@ This data source exports the following attributes in addition to the arguments a
 * `currency` - Three-letter [ISO code for the currency](https://stripe.com/docs/payouts) paid out to the bank account.
 * `customer` - The ID of the customer that the bank account is associated with.
 * `default_for_currency` - When set to true, or if this is the first external account added in this currency, this account becomes the default external account for its currency.
-* `documents` - See [`documents`](#documents) below.
+* `documents` - Documents that may be submitted to satisfy various informational requests. See [`documents`](#documents) below.
 * `external_account` - A token, like the ones returned by [Stripe.js](https://docs.stripe.com/js) or a dictionary containing a user's external account details (with the options shown below). Please refer to full [documentation](https://stripe.com/docs/api/external_accounts) instead.
 * `fingerprint` - Uniquely identifies this particular bank account. You can use this attribute to check whether two bank accounts are the same.
 * `future_requirements` - Information about the [upcoming new requirements for the bank account](https://docs.stripe.com/connect/custom-accounts/future-requirements), including what information needs to be collected, and by when. See [`future_requirements`](#future_requirements) below.

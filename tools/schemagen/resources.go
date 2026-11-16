@@ -39,14 +39,6 @@ func confirmTime(test string) string {
 	return "A confirm-time instruction: Stripe took it only in creates that also sent `confirm` true, which this resource never sends, so it would apply to no request the provider makes (suite: " + test + ", every probe of the create that sent it)."
 }
 
-// acssAccountNumber is the register's reason for an intent's inline Canadian pre-authorized debit
-// method: its `account_number`, which the hash requires, is `unproven` with the reason
-// `accepted_ignored` (Stripe took it with no effect the suite could see), so no configuration could
-// send the hash. test names the suite's leaf test.
-func acssAccountNumber(test string) string {
-	return "`account_number`, which the hash requires, is `unproven` with the reason `accepted_ignored`: Stripe took it with no effect the suite could see, so no configuration could send the hash (suite: " + test + ")."
-}
-
 // priceKept is a price's Resource.AcceptedOnly register (the product owner's decision of
 // 2026-11-04).
 var priceKept = map[string]string{
@@ -310,8 +302,7 @@ var Resources = []Resource{
 		"PostPaymentLinks transfer_data.destination":                     leftMissing,
 	}, CreatePath: "/v1/payment_links", UpdatePath: "/v1/payment_links/{payment_link}", Omit: []string{"line_items.price_data.product_data.tax_details"}},
 	{Package: "setup_intent", Exclude: map[string]string{
-		"mandate_data":                                                mandateData,
-		"payment_method_data.acss_debit":                              acssAccountNumber("TestSetupIntentAttributes/leaves/request/PostSetupIntents/payment_method_data.acss_debit.account_number"),
+		"mandate_data": mandateData,
 		"PostSetupIntents payment_method_options.card.network":        confirmTime("TestSetupIntentAttributes/leaves/request/PostSetupIntents/payment_method_options.card.network"),
 		"PostSetupIntents payment_method_options.card.three_d_secure": confirmTime("TestSetupIntentAttributes/leaves/request/PostSetupIntents/payment_method_options.card.three_d_secure.version"),
 		"PostSetupIntents return_url":                                 confirmTime("TestSetupIntentAttributes/leaves/request/PostSetupIntents/return_url"),
@@ -325,8 +316,7 @@ var Resources = []Resource{
 		"PostPaymentIntentsIntent statement_descriptor": "Stripe's refusal turns on a `statement_descriptor_suffix` absent from the request and the intent, which a pattern of what a request sends cannot state: it took the refused update once it sent a suffix too or the intent held one (probes `isolated/descriptor_update_*`), as the declaration's `Answers` words.",
 	}, StatusConfirms: true,
 		Exclude: map[string]string{
-			"mandate_data":                   mandateData,
-			"payment_method_data.acss_debit": acssAccountNumber("TestPaymentIntentAttributes/leaves/request/PostPaymentIntents/payment_method_data.acss_debit.account_number"),
+			"mandate_data": mandateData,
 			"PostPaymentIntentsIntent payment_method_options.customer_balance.bank_transfer": "`type`, which the hash requires, is `unproven` on the update with the reason `accepted_ignored`: Stripe took it with no effect the suite could see, so no update could send the hash, which the create alone takes (suite: TestPaymentIntentAttributes/leaves/request/PostPaymentIntentsIntent/payment_method_options.customer_balance.bank_transfer.type).",
 			"PostPaymentIntents error_on_requires_action":                                    confirmTime("TestPaymentIntentAttributes/leaves/request/PostPaymentIntents/error_on_requires_action"),
 			"PostPaymentIntents off_session":                                                 confirmTime("TestPaymentIntentAttributes/leaves/request/PostPaymentIntents/off_session"),
@@ -387,6 +377,9 @@ var Resources = []Resource{
 		"PostAccounts company.representative_declaration.date":                        "The probe sent a date a day before it ran (`$gen` `now` with an offset), a time relative to when the probe ran, which a pattern cannot state and any value would widen; Stripe refused the hash on every create, whatever member it held (`only allowed during account updates`), and the plan refuses the probes that sent `ip` or `user_agent` alone (probes `isolated/representative_declaration_*_create`).",
 		"PostAccounts groups.payments_pricing":                                        leftMissing,
 		"PostAccountsAccount groups.payments_pricing":                                 leftMissing,
+		"PostAccounts account_token":                                                  leftMissing,
+		"PostAccountsAccount account_token":                                           leftMissing,
+		"PostAccountsAccount settings.invoices.default_account_tax_ids":               leftMissing,
 	}, CreatePath: "/v1/accounts", UpdatePath: "/v1/accounts/{account}",
 		Keep: []string{"business_profile", "business_type", "capabilities", "charges_enabled", "company.name", "controller", "country", "created",
 			"default_currency", "details_submitted", "email", "external_account", "future_requirements", "id",
@@ -405,7 +398,8 @@ var Resources = []Resource{
 	// The external account is a bank account here (a card is a different object), created from
 	// the hash the spec documents under `bank_account`, or from a token in `external_account`.
 	// Its `account` is the parent ID. The Omit entries are the card's update parameters, which
-	// the register keeps out, and the documents, which the gate exposes on create (batch R02).
+	// the register keeps out, and the documents, which the gate exposes on create (batch R02) and on
+	// update (the suite's sweep of 2026-11-14).
 	// The account type is refused on a US account and proven only on the suite's JP account,
 	// which the fake does not serve (`country_profile_missing`), so it is read-only.
 	{Package: "account_external_account", AcceptedOnly: map[string]string{

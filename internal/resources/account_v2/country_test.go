@@ -203,3 +203,73 @@ func TestAccAccountV2_countryRefusals(t *testing.T) {
 		},
 	})
 }
+
+// exemptionReason is the ownership exemption reason the suite's Singapore probes send, the value
+// Stripe's changelog gives as its example.
+const exemptionReason = "qualified_entity_exceeds_ownership_threshold"
+
+// abroadConfig holds the suite's probes of an identity outside the US: a Singapore company
+// merchant created with its ownership exemption reason (`isolated/ownership_exemption_sg_create`),
+// one created without it that an update gives it (`isolated/ownership_exemption_sg_update`), and a
+// German company merchant created with a `de_hrn` number and its registrar
+// (`isolated/registrar_de_hrn`), each created after the one before.
+func abroadConfig(c acctest.Config, updated bool) string {
+	exempt := fmt.Sprintf("attestations = { persons_provided = { ownership_exemption_reason = %q } }", exemptionReason)
+	later := ""
+	if updated {
+		later = exempt
+	}
+	merchant := `{ capabilities = { card_payments = { requested = true } } }`
+	return c.ProviderBlock() +
+		countryMerchant(c, "exempt", "", fmt.Sprintf(`{
+    country     = "SG"
+    entity_type = "company"
+    %s
+  }`, exempt), merchant) +
+		countryMerchant(c, "exempt_later", "exempt", fmt.Sprintf(`{
+    country     = "SG"
+    entity_type = "company"
+    %s
+  }`, later), merchant) +
+		countryMerchant(c, "registrar", "exempt_later", `{
+    country          = "DE"
+    entity_type      = "company"
+    business_details = { id_numbers = [{ registrar = "Berlin (Charlottenburg)", type = "de_hrn", value = "HRB 123456" }] }
+  }`, merchant)
+}
+
+// A Singapore company's ownership exemption reason is taken on create and on update and read back,
+// and a German company's registrar on create, as the suite's probes send them. A US account refuses
+// both when you apply, which no test here sends.
+func TestAccAccountV2_identityAbroad(t *testing.T) {
+	acct := acctest.NewAccount(t)
+	const exempt, later, registrar = "stripe_account_v2.exempt", "stripe_account_v2.exempt_later", "stripe_account_v2.registrar"
+	const reason = "identity.attestations.persons_provided.ownership_exemption_reason"
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: tfacc.ProviderFactories,
+		Steps: acctest.Forget(t, []resource.TestStep{
+			{
+				Config: abroadConfig(acct, false),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr(exempt, reason, exemptionReason),
+					resource.TestCheckNoResourceAttr(later, reason),
+					resource.TestCheckResourceAttr(registrar, "identity.business_details.id_numbers.0.registrar", "Berlin (Charlottenburg)"),
+					resource.TestCheckResourceAttr(registrar, "identity.business_details.id_numbers.0.type", "de_hrn"),
+				),
+				ConfigPlanChecks: resource.ConfigPlanChecks{PostApplyPostRefresh: []plancheck.PlanCheck{plancheck.ExpectEmptyPlan()}},
+			},
+			{
+				Config: abroadConfig(acct, true),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectResourceAction(exempt, plancheck.ResourceActionNoop),
+						plancheck.ExpectResourceAction(later, plancheck.ResourceActionUpdate),
+						plancheck.ExpectResourceAction(registrar, plancheck.ResourceActionNoop),
+					},
+					PostApplyPostRefresh: []plancheck.PlanCheck{plancheck.ExpectEmptyPlan()},
+				},
+				Check: resource.TestCheckResourceAttr(later, reason, exemptionReason),
+			},
+		}, nil, "stripe_account_v2"),
+	})
+}

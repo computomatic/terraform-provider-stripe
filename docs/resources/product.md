@@ -98,7 +98,7 @@ The `default_price_data.currency_options.tiers` attribute is a list. Each elemen
 
 The `default_price_data.custom_unit_amount` attribute supports:
 
-* `enabled` - (Required)
+* `enabled` - (Required) Stripe does not return this value; the provider keeps it from configuration.
 * `maximum` - (Optional)
 * `minimum` - (Optional)
 * `preset` - (Optional)

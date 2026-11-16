@@ -666,15 +666,7 @@ func TestAccAccountExternalAccount_accountTypeRefused(t *testing.T) {
 // from configuration.
 func TestAccAccountExternalAccount_ownershipDocuments(t *testing.T) {
 	acct := acctest.NewAccount(t)
-	path := filepath.Join(t.TempDir(), "requirement.png")
-	var b bytes.Buffer
-	if err := png.Encode(&b, image.NewGray(image.Rect(0, 0, 1, 1))); err != nil {
-		t.Fatal(err)
-	}
-	if err := os.WriteFile(path, b.Bytes(), 0o600); err != nil {
-		t.Fatal(err)
-	}
-	file := fmt.Sprintf("\nresource \"stripe_file\" \"requirement\" {\n  source  = %q\n  purpose = \"account_requirement\"\n}\n", path)
+	file := requirementFile(t)
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: tfacc.ProviderFactories,
 		Steps: acctest.Forget(t, []resource.TestStep{{
@@ -683,6 +675,61 @@ func TestAccAccountExternalAccount_ownershipDocuments(t *testing.T) {
 			Check:            resource.TestCheckResourceAttrPair(address, "documents.bank_account_ownership_verification.files.0", "stripe_file.requirement", "id"),
 			ConfigPlanChecks: resource.ConfigPlanChecks{PostApplyPostRefresh: []plancheck.PlanCheck{plancheck.ExpectEmptyPlan()}},
 		}}, nil, "stripe_file", "stripe_account_external_account"),
+	})
+}
+
+// requirementFile is a stripe_file of a blank PNG uploaded for an account requirement, as the
+// suite's inert test images are.
+func requirementFile(t *testing.T) string {
+	t.Helper()
+	path := filepath.Join(t.TempDir(), "requirement.png")
+	var b bytes.Buffer
+	if err := png.Encode(&b, image.NewGray(image.Rect(0, 0, 1, 1))); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(path, b.Bytes(), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	return fmt.Sprintf("\nresource \"stripe_file\" \"requirement\" {\n  source  = %q\n  purpose = \"account_requirement\"\n}\n", path)
+}
+
+// A bank account created without ownership verification documents takes them on an update, in
+// place, as the suite's probe `isolated/ownership_documents_update` sends them, and the update
+// sends them.
+func TestAccAccountExternalAccount_ownershipDocumentsOnUpdate(t *testing.T) {
+	acct := acctest.NewAccount(t)
+	file := requirementFile(t)
+	var account, id string
+	path, sent := new(string), map[string]string{}
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: tfacc.ProviderFactories,
+		Steps: acctest.Forget(t, []resource.TestStep{
+			{
+				Config: accountBlock(acct) + file + bankBlock("test", "000111111116", ""),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckNoResourceAttr(address, "documents.bank_account_ownership_verification.files.#"),
+					ids(address, &account, &id),
+				),
+				ConfigPlanChecks: resource.ConfigPlanChecks{PostApplyPostRefresh: []plancheck.PlanCheck{plancheck.ExpectEmptyPlan()}},
+			},
+			{
+				PreConfig: func() { *path = bankPath(account, id) },
+				Config: accountBlock(acct) + file + bankBlock("test", "000111111116",
+					"  documents = { bank_account_ownership_verification = { files = [stripe_file.requirement.id] } }\n"),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply:             []plancheck.PlanCheck{plancheck.ExpectResourceAction(address, plancheck.ResourceActionUpdate)},
+					PostApplyPostRefresh: []plancheck.PlanCheck{plancheck.ExpectEmptyPlan()},
+				},
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttrPair(address, "documents.bank_account_ownership_verification.files.0", "stripe_file.requirement", "id"),
+					resource.TestCheckResourceAttrWith("stripe_file.requirement", "id", func(v string) error {
+						sent["documents.bank_account_ownership_verification.files.0"] = v
+						return nil
+					}),
+					tfacc.Sent(t, acct, "POST", path, sent),
+				),
+			},
+		}, nil, "stripe_file", "stripe_account_external_account"),
 	})
 }
 

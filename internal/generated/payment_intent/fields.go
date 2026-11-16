@@ -1325,6 +1325,11 @@ var Table = []fields.Field{
 		{Name: "parent", Shape: fields.String, Response: true, Description: "ID of the parent payment method configuration used."},
 	}},
 	{Name: "payment_method_data", Shape: fields.Object, Create: true, Update: true, Description: "If provided, this hash will be used to create a PaymentMethod. The new PaymentMethod will appear\nin the [payment_method](https://docs.stripe.com/api/payment_intents/object#payment_intent_object-payment_method)\nproperty on the PaymentIntent.", Fields: []fields.Field{
+		{Name: "acss_debit", Shape: fields.Object, Create: true, Fields: []fields.Field{
+			{Name: "account_number", Shape: fields.String, Required: true, Create: true, NotReturned: true},
+			{Name: "institution_number", Shape: fields.String, Required: true, Create: true},
+			{Name: "transit_number", Shape: fields.String, Required: true, Create: true},
+		}},
 		{Name: "allow_redisplay", Shape: fields.String, Create: true, Update: true, Enum: []string{"always", "limited", "unspecified"}},
 		{Name: "billing_details", Shape: fields.Object, Create: true, Update: true, Fields: []fields.Field{
 			{Name: "address", Shape: fields.Object, Create: true, Update: true, Fields: []fields.Field{
@@ -1356,10 +1361,21 @@ var Table = []fields.Field{
 		{Name: "radar_options", Shape: fields.Object, Create: true, Update: true, Fields: []fields.Field{
 			{Name: "session", Shape: fields.String, Create: true, Update: true, Refused: "Stripe refused it on a US account on create and update: \"No such radar session: 'rse_...'\"."},
 		}},
+		{Name: "sepa_debit", Shape: fields.Object, Create: true, Update: true, NotReturned: true, Fields: []fields.Field{
+			{Name: "iban", Shape: fields.String, Required: true, Create: true, Update: true, NotReturned: true},
+		}},
 		{Name: "type", Shape: fields.String, Required: true, Create: true, Update: true, Enum: []string{"acss_debit", "affirm", "afterpay_clearpay", "alipay", "alma", "amazon_pay", "au_becs_debit", "bacs_debit", "bancontact", "billie", "bizum", "blik", "boleto", "cashapp", "crypto", "customer_balance", "eps", "fpx", "giropay", "grabpay", "ideal", "kakao_pay", "klarna", "konbini", "kr_card", "link", "mb_way", "mobilepay", "multibanco", "naver_pay", "nz_bank_account", "oxxo", "p24", "pay_by_bank", "payco", "paynow", "paypal", "paypay", "payto", "pix", "promptpay", "revolut_pay", "samsung_pay", "satispay", "scalapay", "sepa_debit", "sequra", "sofort", "sunbit", "swish", "twint", "upi", "us_bank_account", "wechat_pay", "zip"}},
+		{Name: "upi", Shape: fields.Object, Create: true, Update: true, NotReturned: true, Fields: []fields.Field{
+			{Name: "mandate_options", Shape: fields.Object, Create: true, Update: true, NotReturned: true, Fields: []fields.Field{
+				{Name: "amount", Shape: fields.Int, Create: true, Update: true, NotReturned: true},
+				{Name: "amount_type", Shape: fields.String, Create: true, Update: true, NotReturned: true, Enum: []string{"fixed", "maximum"}, Unreachable: "Stripe fails `maximum` on every attempt, so the conformance suite never sends it: \"Stripe answers 500 to a create that sends `payment_method_data[upi][mandate_options][amount_type]=maximum` without the mandate's amount, beside `payment_method_options[upi][setup_future_usage]=off_session` (req_sPM99YlQ4hNjGm); a create with the whole mandate and `none` is answered, and so is an update with `maximum` beside the mandate's other members\". Stripe fails `fixed` on every attempt, so the conformance suite never sends it: \"Stripe answers 500 to an update that sends `payment_method_data[upi][mandate_options][amount_type]` without the mandate's amount, beside `payment_method_options[upi][setup_future_usage]` (req_ADYQiqu5lKLSW9); an update with the whole mandate is answered, and a create takes `fixed` beside it\"."},
+				{Name: "description", Shape: fields.String, Create: true, Update: true, NotReturned: true},
+				{Name: "end_date", Shape: fields.Int, Create: true, Update: true, NotReturned: true},
+			}},
+		}},
 		{Name: "us_bank_account", Shape: fields.Object, Create: true, Update: true, Fields: []fields.Field{
 			{Name: "account_holder_type", Shape: fields.String, Create: true, Update: true, Enum: []string{"company", "individual"}},
-			{Name: "account_number", Shape: fields.String, Update: true, Default: &fields.Default{Kind: fields.DefaultNotSent}},
+			{Name: "account_number", Shape: fields.String, Create: true, Update: true, NotReturned: true},
 			{Name: "account_type", Shape: fields.String, Create: true, Update: true, Enum: []string{"checking", "savings"}},
 			{Name: "financial_connections_account", Shape: fields.String, Update: true, Default: &fields.Default{Kind: fields.DefaultNotSent}, Refused: "Stripe refused it on a US account on update: \"No such Financial Connections Account: fca_...\"."},
 			{Name: "routing_number", Shape: fields.String, Create: true, Update: true},
@@ -1485,6 +1501,10 @@ var Table = []fields.Field{
 			}},
 		}},
 		{Name: "kr_card", Shape: fields.Object, Create: true, Update: true, Response: true, ServerDefaulted: true, Fields: []fields.Field{
+			{Name: "capture_method", Shape: fields.String, Create: true, Update: true, Response: true, ServerDefaulted: true, Stable: true, Enum: []string{"manual"}, Description: "Controls when the funds will be captured from the customer's account."},
+			{Name: "setup_future_usage", Shape: fields.String, Create: true, Update: true, Response: true, ServerDefaulted: true, Stable: true, Enum: []string{"none", "off_session"}, Description: "Indicates that you intend to make future payments with this PaymentIntent's payment method. If you provide a Customer with the PaymentIntent, you can use this parameter to [attach the payment method](https://docs.stripe.com/payments/save-during-payment) to the Customer after the PaymentIntent is confirmed and the customer completes any required actions. If you don't provide a Customer, you can still [attach](https://docs.stripe.com/api/payment_methods/attach) the payment method to a Customer after the transaction completes. If the payment method is `card_present` and isn't a digital wallet, Stripe creates and attaches a [generated_card](https://docs.stripe.com/api/charges/object#charge_object-payment_method_details-card_present-generated_card) payment method representing the card to the Customer instead. When processing card payments, Stripe uses `setup_future_usage` to help you comply with regional legislation and network rules, such as [SCA](https://docs.stripe.com/strong-customer-authentication)."},
+		}},
+		{Name: "link", Shape: fields.Object, Create: true, Update: true, Response: true, ServerDefaulted: true, Fields: []fields.Field{
 			{Name: "capture_method", Shape: fields.String, Create: true, Update: true, Response: true, ServerDefaulted: true, Stable: true, Enum: []string{"manual"}, Description: "Controls when the funds will be captured from the customer's account."},
 			{Name: "setup_future_usage", Shape: fields.String, Create: true, Update: true, Response: true, ServerDefaulted: true, Stable: true, Enum: []string{"none", "off_session"}, Description: "Indicates that you intend to make future payments with this PaymentIntent's payment method. If you provide a Customer with the PaymentIntent, you can use this parameter to [attach the payment method](https://docs.stripe.com/payments/save-during-payment) to the Customer after the PaymentIntent is confirmed and the customer completes any required actions. If you don't provide a Customer, you can still [attach](https://docs.stripe.com/api/payment_methods/attach) the payment method to a Customer after the transaction completes. If the payment method is `card_present` and isn't a digital wallet, Stripe creates and attaches a [generated_card](https://docs.stripe.com/api/charges/object#charge_object-payment_method_details-card_present-generated_card) payment method representing the card to the Customer instead. When processing card payments, Stripe uses `setup_future_usage` to help you comply with regional legislation and network rules, such as [SCA](https://docs.stripe.com/strong-customer-authentication)."},
 		}},

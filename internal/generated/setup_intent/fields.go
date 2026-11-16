@@ -2757,6 +2757,11 @@ var Table = []fields.Field{
 		{Name: "parent", Shape: fields.String, Response: true, Description: "ID of the parent payment method configuration used."},
 	}},
 	{Name: "payment_method_data", Shape: fields.Object, Create: true, Update: true, Description: "When included, this hash creates a PaymentMethod that is set as the [`payment_method`](https://docs.stripe.com/api/setup_intents/object#setup_intent_object-payment_method)\nvalue in the SetupIntent.", Fields: []fields.Field{
+		{Name: "acss_debit", Shape: fields.Object, Create: true, Fields: []fields.Field{
+			{Name: "account_number", Shape: fields.String, Required: true, Create: true, NotReturned: true},
+			{Name: "institution_number", Shape: fields.String, Required: true, Create: true},
+			{Name: "transit_number", Shape: fields.String, Required: true, Create: true},
+		}},
 		{Name: "allow_redisplay", Shape: fields.String, Create: true, Update: true, Enum: []string{"always", "limited", "unspecified"}},
 		{Name: "billing_details", Shape: fields.Object, Create: true, Update: true, Fields: []fields.Field{
 			{Name: "address", Shape: fields.Object, Create: true, Update: true, Fields: []fields.Field{
@@ -2788,10 +2793,21 @@ var Table = []fields.Field{
 		{Name: "radar_options", Shape: fields.Object, Create: true, Update: true, Fields: []fields.Field{
 			{Name: "session", Shape: fields.String, Create: true, Update: true, Refused: "Stripe refused it on a US account on create and update: \"No such radar session: 'rse_...'\"."},
 		}},
+		{Name: "sepa_debit", Shape: fields.Object, Create: true, Update: true, NotReturned: true, Fields: []fields.Field{
+			{Name: "iban", Shape: fields.String, Required: true, Create: true, Update: true, NotReturned: true},
+		}},
 		{Name: "type", Shape: fields.String, Required: true, Create: true, Update: true, Enum: []string{"acss_debit", "affirm", "afterpay_clearpay", "alipay", "alma", "amazon_pay", "au_becs_debit", "bacs_debit", "bancontact", "billie", "bizum", "blik", "boleto", "cashapp", "crypto", "customer_balance", "eps", "fpx", "giropay", "grabpay", "ideal", "kakao_pay", "klarna", "konbini", "kr_card", "link", "mb_way", "mobilepay", "multibanco", "naver_pay", "nz_bank_account", "oxxo", "p24", "pay_by_bank", "payco", "paynow", "paypal", "paypay", "payto", "pix", "promptpay", "revolut_pay", "samsung_pay", "satispay", "scalapay", "sepa_debit", "sequra", "sofort", "sunbit", "swish", "twint", "upi", "us_bank_account", "wechat_pay", "zip"}},
+		{Name: "upi", Shape: fields.Object, Create: true, Update: true, NotReturned: true, Fields: []fields.Field{
+			{Name: "mandate_options", Shape: fields.Object, Create: true, Update: true, NotReturned: true, Fields: []fields.Field{
+				{Name: "amount", Shape: fields.Int, Create: true, Update: true, NotReturned: true},
+				{Name: "amount_type", Shape: fields.String, Create: true, Update: true, NotReturned: true, Enum: []string{"fixed", "maximum"}},
+				{Name: "description", Shape: fields.String, Create: true, Update: true, NotReturned: true},
+				{Name: "end_date", Shape: fields.Int, Create: true, Update: true, NotReturned: true},
+			}},
+		}},
 		{Name: "us_bank_account", Shape: fields.Object, Create: true, Update: true, Fields: []fields.Field{
 			{Name: "account_holder_type", Shape: fields.String, Create: true, Update: true, Enum: []string{"company", "individual"}},
-			{Name: "account_number", Shape: fields.String, Update: true, Default: &fields.Default{Kind: fields.DefaultNotSent}},
+			{Name: "account_number", Shape: fields.String, Create: true, Update: true, NotReturned: true},
 			{Name: "account_type", Shape: fields.String, Create: true, Update: true, Enum: []string{"checking", "savings"}},
 			{Name: "financial_connections_account", Shape: fields.String, Update: true, Default: &fields.Default{Kind: fields.DefaultNotSent}, Refused: "Stripe refused it on a US account on update: \"No such Financial Connections Account: fca_...\"."},
 			{Name: "routing_number", Shape: fields.String, Create: true, Update: true},

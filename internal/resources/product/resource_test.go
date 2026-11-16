@@ -311,3 +311,25 @@ func TestAccProduct_taxCodesFillEachOther(t *testing.T) {
 		},
 	})
 }
+
+// A product's default price can let the customer choose the amount, as the suite's probe
+// `minimal/price_custom` creates it, in the account's currency. Stripe never returns `enabled`, so
+// state keeps it from configuration, and a refresh plans nothing.
+func TestAccProduct_defaultPriceCustomAmount(t *testing.T) {
+	acct := acctest.NewAccount(t)
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: tfacc.ProviderFactories,
+		Steps: []resource.TestStep{{
+			Config: config(acct, fmt.Sprintf(`resource "stripe_product" "test" {
+  name               = %q
+  default_price_data = { currency = "usd", custom_unit_amount = { enabled = true } }
+}
+`, acct.Name("Custom amount"))),
+			Check: resource.ComposeAggregateTestCheckFunc(
+				resource.TestCheckResourceAttr(address, "default_price_data.custom_unit_amount.enabled", "true"),
+				resource.TestCheckResourceAttrSet(address, "default_price"),
+			),
+			ConfigPlanChecks: resource.ConfigPlanChecks{PostApplyPostRefresh: []plancheck.PlanCheck{plancheck.ExpectEmptyPlan()}},
+		}},
+	})
+}

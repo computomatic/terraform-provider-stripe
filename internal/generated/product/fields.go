@@ -31,7 +31,7 @@ var Table = []fields.Field{
 			{Name: "unit_amount_decimal", Shape: fields.String, Create: true},
 		}},
 		{Name: "custom_unit_amount", Shape: fields.Object, Create: true, Fields: []fields.Field{
-			{Name: "enabled", Shape: fields.Bool, Required: true, Create: true},
+			{Name: "enabled", Shape: fields.Bool, Required: true, Create: true, NotReturned: true},
 			{Name: "maximum", Shape: fields.Int, Create: true},
 			{Name: "minimum", Shape: fields.Int, Create: true},
 			{Name: "preset", Shape: fields.Int, Create: true},
