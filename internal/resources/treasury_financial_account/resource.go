@@ -17,8 +17,10 @@ import (
 // ("Issuing cards on a connected account need a Treasury financial account",
 // "TestTreasuryFinancialAccount"). `features` is a hash of `requested` flags that Stripe answers
 // with each requested feature's status, and only when expanded (TestTreasuryFinancialAccountAttributes),
-// so the engine expands it on every request. Stripe takes an update of `features` and ignores it
-// (the record's update leaves are `accepted_ignored`), so a change to `features` is refused.
+// so the engine expands it on every request. Nothing in the record proves an update of `features`
+// applies: its update leaves are `accepted_ignored`, since the suite's update sends every feature's
+// `requested` as false and then reads each feature absent, so a change to a feature the
+// configuration names is refused.
 // Stripe takes `forwarding_settings` only on a closed account, and refuses it on an open one
 // (probe `isolated/forward_while_open`), and never returns it. Stripe has a close endpoint, but
 // the provider does not close an account, and Stripe cannot delete one, so destroy is refused.
@@ -30,7 +32,8 @@ var Declaration = engine.Declaration{
 	IDPrefix: "fa_",
 	Description: "A Treasury financial account that holds money on a connected account and that Issuing cards draw on. " +
 		"Treasury runs on a platform's connected accounts, so manage financial accounts through a provider configuration whose `stripe_account` is a connected account with the `treasury` capability active. " +
-		"`features` requests features when the account is created, and reads back each requested feature's `status`; `active_features`, `pending_features` and `restricted_features` list them too. A plan that changes `features` afterwards fails. " +
+		"`features` requests features when the account is created, and reads back each requested feature's `status`; `active_features`, `pending_features` and `restricted_features` list them too. " +
+		"A feature the configuration does not name is left as Stripe holds it, so one requested later through Stripe's API or Dashboard reads back into `features` and plans no change, and removing a feature from the configuration leaves it requested. A plan that changes a feature the configuration names fails. " +
 		"Stripe takes `forwarding_settings`, where the money of a closed account goes, only once the account is closed, which the provider does not do: close it with Stripe's API or Dashboard first.",
 	DataSourceDescription: "A Treasury financial account that holds money on a connected account. Look one up by its `id`.",
 	Paths: engine.Paths{
@@ -43,11 +46,32 @@ var Declaration = engine.Declaration{
 	RefuseReason: "Stripe cannot delete a financial account, and the provider does not close one.",
 	// Stripe returns `features` only when asked to expand it (suite:
 	// TestTreasuryFinancialAccountAttributes, which expands it on every request).
-	Expand:          []string{"features"},
-	RefuseChange:    []string{"features"},
-	ServerDefaulted: []string{"platform_restrictions"},
-	Sets:            []string{"supported_currencies"},
-	Sensitive:       []string{"financial_addresses.aba.account_number"},
+	Expand:       []string{"features"},
+	RefuseChange: []string{"features"},
+	// A feature can be requested after create, outside Terraform, through Stripe's features
+	// endpoint (suite: "Treasury test helpers need `financial_addresses.aba`"), and a feature
+	// nobody requested has no key in `features` (TestTreasuryFinancialAccountAttributes). So
+	// `features` and each feature are Optional and Computed: one the configuration does not
+	// name keeps what Stripe holds, and `features` reads back its `object` when none is named.
+	ServerDefaulted: []string{
+		"platform_restrictions",
+		"features",
+		"features.card_issuing",
+		"features.deposit_insurance",
+		"features.financial_addresses",
+		"features.financial_addresses.aba",
+		"features.inbound_transfers",
+		"features.inbound_transfers.ach",
+		"features.intra_stripe_flows",
+		"features.outbound_payments",
+		"features.outbound_payments.ach",
+		"features.outbound_payments.us_domestic_wire",
+		"features.outbound_transfers",
+		"features.outbound_transfers.ach",
+		"features.outbound_transfers.us_domestic_wire",
+	},
+	Sets:      []string{"supported_currencies"},
+	Sensitive: []string{"financial_addresses.aba.account_number"},
 }
 
 // NewResource returns the resource constructor the provider registers.
