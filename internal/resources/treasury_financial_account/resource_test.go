@@ -253,6 +253,90 @@ resource "stripe_treasury_financial_account" "test" {
 	})
 }
 
+// featuresConfig is a financial account in `usd` whose `features` attribute is features, or
+// which leaves `features` out when features is "".
+func featuresConfig(acct, conn acctest.Config, features string) string {
+	if features != "" {
+		features = "  features = {\n" + features + "  }\n"
+	}
+	return acct.ProviderBlock() + conn.ConnectedProviderBlock() + `
+resource "stripe_treasury_financial_account" "test" {
+  provider             = stripe.connected
+  supported_currencies = ["usd"]
+` + features + "}\n"
+}
+
+// emptyPlan is the plan check of a step that must plan no change.
+var emptyPlan = resource.ConfigPlanChecks{PreApply: []plancheck.PlanCheck{plancheck.ExpectEmptyPlan()}}
+
+// A feature requested outside Terraform, through Stripe's features endpoint as the suite requests
+// `financial_addresses.aba` on a financial account made with `card_issuing` (suite: "Treasury test
+// helpers need `financial_addresses.aba`"), reads back into `features`, and a configuration that
+// does not name it plans no change: Stripe keeps it. Naming it as Stripe holds it plans none either,
+// and neither does naming no feature at all, while a change to a feature the configuration names
+// is refused as before.
+func TestAccTreasuryFinancialAccount_featureRequestedOutside(t *testing.T) {
+	acct, conn := treasury(t)
+	var id string
+	cfg := accountConfig(acct, conn, `"usd"`, "")
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: tfacc.ProviderFactories,
+		Steps: acctest.Forget(t, []resource.TestStep{
+			{Config: cfg, Check: resource.ComposeTestCheckFunc(idOf(&id), closeAfter(t, conn))},
+			{
+				PreConfig:        func() { tfacc.TreasuryFeatures(t, conn, id, "financial_addresses.aba") },
+				Config:           cfg,
+				ConfigPlanChecks: emptyPlan,
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr(address, "features.card_issuing.requested", "true"),
+					resource.TestCheckResourceAttr(address, "features.financial_addresses.aba.requested", "true"),
+					resource.TestCheckResourceAttr(address, "features.financial_addresses.aba.status", "active"),
+					resource.TestCheckTypeSetElemAttr(address, "active_features.*", "financial_addresses.aba"),
+				),
+			},
+			{
+				Config:           featuresConfig(acct, conn, "    card_issuing        = { requested = true }\n    financial_addresses = { aba = { requested = true } }\n"),
+				ConfigPlanChecks: emptyPlan,
+			},
+			{
+				Config:           featuresConfig(acct, conn, ""),
+				ConfigPlanChecks: emptyPlan,
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr(address, "features.card_issuing.requested", "true"),
+					resource.TestCheckResourceAttr(address, "features.financial_addresses.aba.requested", "true"),
+				),
+			},
+			{
+				Config:      featuresConfig(acct, conn, "    card_issuing        = { requested = true }\n    financial_addresses = { aba = { requested = false } }\n"),
+				PlanOnly:    true,
+				ExpectError: regexp.MustCompile(`(?s)Changing .features. is not supported yet.*ignore_changes`),
+			},
+		}, nil, "stripe_treasury_financial_account"),
+	})
+}
+
+// A financial account made without `features`, as the suite's minimal create is (suite:
+// TestTreasuryFinancialAccountAttributes, `minimal`), reads back the `features` object Stripe
+// answers with no feature in it, and plans no change afterwards.
+func TestAccTreasuryFinancialAccount_noFeatures(t *testing.T) {
+	acct, conn := treasury(t)
+	cfg := featuresConfig(acct, conn, "")
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: tfacc.ProviderFactories,
+		Steps: acctest.Forget(t, []resource.TestStep{
+			{
+				Config: cfg,
+				Check: resource.ComposeAggregateTestCheckFunc(
+					closeAfter(t, conn),
+					resource.TestCheckResourceAttr(address, "features.object", "treasury.financial_account_features"),
+					resource.TestCheckNoResourceAttr(address, "features.card_issuing"),
+				),
+			},
+			{Config: cfg, ConfigPlanChecks: emptyPlan},
+		}, nil, "stripe_treasury_financial_account"),
+	})
+}
+
 // Metadata changes in place; the fake does not serve that update yet.
 func TestAccTreasuryFinancialAccount_update(t *testing.T) {
 	acct, conn := treasury(t)

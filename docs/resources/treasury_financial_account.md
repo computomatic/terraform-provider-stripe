@@ -3,12 +3,12 @@
 page_title: "stripe_treasury_financial_account Resource - Stripe"
 subcategory: ""
 description: |-
-  A Treasury financial account that holds money on a connected account and that Issuing cards draw on. Treasury runs on a platform's connected accounts, so manage financial accounts through a provider configuration whose stripe_account is a connected account with the treasury capability active. features requests features when the account is created, and reads back each requested feature's status; active_features, pending_features and restricted_features list them too. A plan that changes features afterwards fails. Stripe takes forwarding_settings, where the money of a closed account goes, only once the account is closed, which the provider does not do: close it with Stripe's API or Dashboard first.
+  A Treasury financial account that holds money on a connected account and that Issuing cards draw on. Treasury runs on a platform's connected accounts, so manage financial accounts through a provider configuration whose stripe_account is a connected account with the treasury capability active. features requests features when the account is created, and reads back each requested feature's status; active_features, pending_features and restricted_features list them too. A feature the configuration does not name is left as Stripe holds it, so one requested later through Stripe's API or Dashboard reads back into features and plans no change, and removing a feature from the configuration leaves it requested. A plan that changes a feature the configuration names fails. Stripe takes forwarding_settings, where the money of a closed account goes, only once the account is closed, which the provider does not do: close it with Stripe's API or Dashboard first.
 ---
 
 # Resource: stripe_treasury_financial_account
 
-A Treasury financial account that holds money on a connected account and that Issuing cards draw on. Treasury runs on a platform's connected accounts, so manage financial accounts through a provider configuration whose `stripe_account` is a connected account with the `treasury` capability active. `features` requests features when the account is created, and reads back each requested feature's `status`; `active_features`, `pending_features` and `restricted_features` list them too. A plan that changes `features` afterwards fails. Stripe takes `forwarding_settings`, where the money of a closed account goes, only once the account is closed, which the provider does not do: close it with Stripe's API or Dashboard first.
+A Treasury financial account that holds money on a connected account and that Issuing cards draw on. Treasury runs on a platform's connected accounts, so manage financial accounts through a provider configuration whose `stripe_account` is a connected account with the `treasury` capability active. `features` requests features when the account is created, and reads back each requested feature's `status`; `active_features`, `pending_features` and `restricted_features` list them too. A feature the configuration does not name is left as Stripe holds it, so one requested later through Stripe's API or Dashboard reads back into `features` and plans no change, and removing a feature from the configuration leaves it requested. A plan that changes a feature the configuration names fails. Stripe takes `forwarding_settings`, where the money of a closed account goes, only once the account is closed, which the provider does not do: close it with Stripe's API or Dashboard first.
 
 ~> Stripe cannot delete a financial account, and the provider does not close one. `terraform destroy`, and a change that would replace the treasury financial account, fail at plan time. To stop managing a treasury financial account, remove it from the state as [Removing from State](#removing-from-state) shows; it stays in the Stripe account.
 
@@ -50,7 +50,7 @@ The following arguments are required:
 
 The following arguments are optional:
 
-* `features` - (Optional) Encodes whether a FinancialAccount has access to a particular feature. Stripe or the platform can control features via the requested field. See [`features`](#features) below.
+* `features` - (Optional) Encodes whether a FinancialAccount has access to a particular feature. Stripe or the platform can control features via the requested field. Removing it from the configuration leaves the current value. See [`features`](#features) below.
 * `forwarding_settings` - (Optional) A different bank account where funds can be deposited/debited in order to get the closing FA's balance to $0. Stripe does not return this value; the provider keeps it from configuration. Removing it from the configuration leaves the current value. See [`forwarding_settings`](#forwarding_settings) below.
 * `metadata` - (Optional) Set of [key-value pairs](https://docs.stripe.com/api/metadata) that you can attach to an object. This can be useful for storing additional information about the object in a structured format. Individual keys can be unset by posting an empty value to them. All keys can be unset by posting an empty value to `metadata`. Default (Stripe): `{}`.
 * `nickname` - (Optional) The nickname for the FinancialAccount. Default: none.
@@ -61,14 +61,14 @@ The following arguments are optional:
 
 The `features` attribute supports:
 
-* `card_issuing` - (Optional) Toggle settings for enabling/disabling a feature See [`features.card_issuing`](#features.card_issuing) below.
-* `deposit_insurance` - (Optional) Toggle settings for enabling/disabling a feature See [`features.deposit_insurance`](#features.deposit_insurance) below.
-* `financial_addresses` - (Optional) Settings related to Financial Addresses features on a Financial Account See [`features.financial_addresses`](#features.financial_addresses) below.
-* `inbound_transfers` - (Optional) InboundTransfers contains inbound transfers features for a FinancialAccount. See [`features.inbound_transfers`](#features.inbound_transfers) below.
-* `intra_stripe_flows` - (Optional) Toggle settings for enabling/disabling a feature See [`features.intra_stripe_flows`](#features.intra_stripe_flows) below.
+* `card_issuing` - (Optional) Toggle settings for enabling/disabling a feature. Removing it from the configuration leaves the current value. See [`features.card_issuing`](#features.card_issuing) below.
+* `deposit_insurance` - (Optional) Toggle settings for enabling/disabling a feature. Removing it from the configuration leaves the current value. See [`features.deposit_insurance`](#features.deposit_insurance) below.
+* `financial_addresses` - (Optional) Settings related to Financial Addresses features on a Financial Account. Removing it from the configuration leaves the current value. See [`features.financial_addresses`](#features.financial_addresses) below.
+* `inbound_transfers` - (Optional) InboundTransfers contains inbound transfers features for a FinancialAccount. Removing it from the configuration leaves the current value. See [`features.inbound_transfers`](#features.inbound_transfers) below.
+* `intra_stripe_flows` - (Optional) Toggle settings for enabling/disabling a feature. Removing it from the configuration leaves the current value. See [`features.intra_stripe_flows`](#features.intra_stripe_flows) below.
 * `object` - (Read-Only) String representing the object's type. Objects of the same type share the same value. Possible values: `treasury.financial_account_features`.
-* `outbound_payments` - (Optional) Settings related to Outbound Payments features on a Financial Account See [`features.outbound_payments`](#features.outbound_payments) below.
-* `outbound_transfers` - (Optional) OutboundTransfers contains outbound transfers features for a FinancialAccount. See [`features.outbound_transfers`](#features.outbound_transfers) below.
+* `outbound_payments` - (Optional) Settings related to Outbound Payments features on a Financial Account. Removing it from the configuration leaves the current value. See [`features.outbound_payments`](#features.outbound_payments) below.
+* `outbound_transfers` - (Optional) OutboundTransfers contains outbound transfers features for a FinancialAccount. Removing it from the configuration leaves the current value. See [`features.outbound_transfers`](#features.outbound_transfers) below.
 
 <a id="features.card_issuing"></a>
 ### `features.card_issuing`
@@ -111,7 +111,7 @@ The `features.deposit_insurance.status_details` attribute is a list. Each elemen
 
 The `features.financial_addresses` attribute supports:
 
-* `aba` - (Optional) Toggle settings for enabling/disabling the ABA address feature See [`features.financial_addresses.aba`](#features.financial_addresses.aba) below.
+* `aba` - (Optional) Toggle settings for enabling/disabling the ABA address feature. Removing it from the configuration leaves the current value. See [`features.financial_addresses.aba`](#features.financial_addresses.aba) below.
 
 <a id="features.financial_addresses.aba"></a>
 ### `features.financial_addresses.aba`
@@ -136,7 +136,7 @@ The `features.financial_addresses.aba.status_details` attribute is a list. Each 
 
 The `features.inbound_transfers` attribute supports:
 
-* `ach` - (Optional) Toggle settings for enabling/disabling an inbound ACH specific feature See [`features.inbound_transfers.ach`](#features.inbound_transfers.ach) below.
+* `ach` - (Optional) Toggle settings for enabling/disabling an inbound ACH specific feature. Removing it from the configuration leaves the current value. See [`features.inbound_transfers.ach`](#features.inbound_transfers.ach) below.
 
 <a id="features.inbound_transfers.ach"></a>
 ### `features.inbound_transfers.ach`
@@ -179,8 +179,8 @@ The `features.intra_stripe_flows.status_details` attribute is a list. Each eleme
 
 The `features.outbound_payments` attribute supports:
 
-* `ach` - (Optional) Toggle settings for enabling/disabling an outbound ACH specific feature See [`features.outbound_payments.ach`](#features.outbound_payments.ach) below.
-* `us_domestic_wire` - (Optional) Toggle settings for enabling/disabling a feature See [`features.outbound_payments.us_domestic_wire`](#features.outbound_payments.us_domestic_wire) below.
+* `ach` - (Optional) Toggle settings for enabling/disabling an outbound ACH specific feature. Removing it from the configuration leaves the current value. See [`features.outbound_payments.ach`](#features.outbound_payments.ach) below.
+* `us_domestic_wire` - (Optional) Toggle settings for enabling/disabling a feature. Removing it from the configuration leaves the current value. See [`features.outbound_payments.us_domestic_wire`](#features.outbound_payments.us_domestic_wire) below.
 
 <a id="features.outbound_payments.ach"></a>
 ### `features.outbound_payments.ach`
@@ -223,8 +223,8 @@ The `features.outbound_payments.us_domestic_wire.status_details` attribute is a 
 
 The `features.outbound_transfers` attribute supports:
 
-* `ach` - (Optional) Toggle settings for enabling/disabling an outbound ACH specific feature See [`features.outbound_transfers.ach`](#features.outbound_transfers.ach) below.
-* `us_domestic_wire` - (Optional) Toggle settings for enabling/disabling a feature See [`features.outbound_transfers.us_domestic_wire`](#features.outbound_transfers.us_domestic_wire) below.
+* `ach` - (Optional) Toggle settings for enabling/disabling an outbound ACH specific feature. Removing it from the configuration leaves the current value. See [`features.outbound_transfers.ach`](#features.outbound_transfers.ach) below.
+* `us_domestic_wire` - (Optional) Toggle settings for enabling/disabling a feature. Removing it from the configuration leaves the current value. See [`features.outbound_transfers.us_domestic_wire`](#features.outbound_transfers.us_domestic_wire) below.
 
 <a id="features.outbound_transfers.ach"></a>
 ### `features.outbound_transfers.ach`
