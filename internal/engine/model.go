@@ -395,6 +395,16 @@ func compile(decl Declaration, table []fields.Field) (*model, error) {
 		if n, _, ok := m.at(held); !ok || !strings.HasPrefix(held, name+".") || !n.Optional && !n.Required || !n.Create || n.Update {
 			return nil, fmt.Errorf("%s: refuse-change-while-held entry `%s` names `%s`, which is not a create-only member of it", decl.TypeName, name, held)
 		}
+		if slices.Contains(decl.RefuseChange, name) {
+			return nil, fmt.Errorf("%s: refuse-change-while-held entry `%s` is in RefuseChange too, which refuses every change of it", decl.TypeName, name)
+		}
+		// An update of a SendChangedMembers object sends only the members that changed, and Stripe
+		// keeps the rest, the create-only member among them, so a change beside it needs no refusal.
+		// A SendWholeMembers object leaves a create-only member out of its whole send as any other
+		// update does, which is what the refusal is for.
+		if slices.Contains(decl.SendChangedMembers, name) {
+			return nil, fmt.Errorf("%s: refuse-change-while-held entry `%s` is in SendChangedMembers, whose update Stripe takes without the members it leaves out", decl.TypeName, name)
+		}
 	}
 	for _, name := range decl.SetOnce {
 		if !slices.Contains(decl.RefuseChange, name) {

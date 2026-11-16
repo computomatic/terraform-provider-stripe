@@ -482,10 +482,16 @@ func (r *Resource) attrName(field string) string {
 //
 // A RefuseChangeWhileHeld field is refused the same way where the state holds its member and the
 // plan keeps the member as it is.
+//
+// A declaration with RefuseChange reports any error the plan holds, an earlier check's too, as it
+// did before RefuseChangeWhileHeld; one with only RefuseChangeWhileHeld reports only the errors
+// this check adds, so that an earlier check's error leaves the checks after it to run, as they did
+// for it without either entry.
 func (r *Resource) refuseChanges(ctx context.Context, req resource.ModifyPlanRequest, resp *resource.ModifyPlanResponse) bool {
 	if len(r.m.decl.RefuseChange)+len(r.m.decl.RefuseChangeWhileHeld) == 0 {
 		return false
 	}
+	before := resp.Diagnostics.ErrorsCount()
 	var plan, state, config basetypes.ObjectValue
 	diags := req.Plan.Get(ctx, &plan)
 	diags.Append(req.State.Get(ctx, &state)...)
@@ -507,7 +513,10 @@ func (r *Resource) refuseChanges(ctx context.Context, req resource.ModifyPlanReq
 			r.refuseChange(ctx, req, resp, plan, state, config, name, held)
 		}
 	}
-	return resp.Diagnostics.HasError()
+	if len(r.m.decl.RefuseChange) > 0 {
+		return resp.Diagnostics.HasError()
+	}
+	return resp.Diagnostics.ErrorsCount() > before
 }
 
 // refuseChange adds refuseChanges' error where the plan changes the field name, a RefuseChange

@@ -7,6 +7,8 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
+
+	"github.com/computomatic/terraform-provider-stripe/internal/fields"
 )
 
 // refusingWhileHeld refuses a change of the fixture's `address` while the state holds its
@@ -71,4 +73,45 @@ func TestRefuseChangeWhileHeldMustNameACreateOnlyMember(t *testing.T) {
 			t.Errorf("%s: must not compile", name)
 		}
 	}
+}
+
+// A field the entry names may not be in RefuseChange, which refuses every change of it, nor in
+// SendChangedMembers, whose update Stripe takes without the members it leaves out. One in
+// SendWholeMembers, whose whole send leaves the create-only member out too, compiles.
+func TestRefuseChangeWhileHeldConflicts(t *testing.T) {
+	for name, tc := range map[string]struct {
+		set  func(*Declaration)
+		want string
+	}{
+		"refuse change":        {func(d *Declaration) { d.RefuseChange = []string{"address"} }, "is in RefuseChange too"},
+		"send changed members": {func(d *Declaration) { d.SendChangedMembers = []string{"address"} }, "is in SendChangedMembers"},
+		"send whole members":   {func(d *Declaration) { d.SendWholeMembers = []string{"address"} }, ""},
+	} {
+		decl := refusingWhileHeld()
+		tc.set(&decl)
+		_, err := NewResource(decl, optionalLine1())
+		switch {
+		case tc.want == "" && err != nil:
+			t.Errorf("%s: must compile: %v", name, err)
+		case tc.want != "" && (err == nil || !strings.Contains(err.Error(), tc.want)):
+			t.Errorf("%s: must not compile with %q: %v", name, tc.want, err)
+		}
+	}
+}
+
+// optionalLine1 is the fixture table with `address.line1` optional, so that `address`, which then
+// has no Required member, may be sent in part.
+func optionalLine1() []fields.Field {
+	table := fixtureTable()
+	for i := range table {
+		if table[i].Name != "address" {
+			continue
+		}
+		for j := range table[i].Fields {
+			if table[i].Fields[j].Name == "line1" {
+				table[i].Fields[j].Required = false
+			}
+		}
+	}
+	return table
 }

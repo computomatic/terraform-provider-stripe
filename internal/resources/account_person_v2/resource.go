@@ -37,7 +37,9 @@ import (
 // left-out members Stripe keeps.
 //
 // Suite #149 proves a person token Stripe made for the person's account, sent alone on a create and
-// on an update of a minimal person (probes `isolated/person_token_*`), reading nothing back. Stripe's
+// on an update of a minimal person (probes `isolated/person_token_*`), reading nothing back. On the
+// dev sandbox (pin 19's smoke run, 2026-11-16) a token sent on an update set the person's names to
+// the token's, which the data source then read, as the fake does. Stripe's
 // docs say a person made from a token takes later updates only from another token, which the fake
 // answers `fake_unproven`, so no test writes such a person without one.
 //
