@@ -28826,8 +28826,99 @@
       ]
     },
     {
-      "accepted_in": [],
+      "accepted_in": [
+        "US"
+      ],
       "branch": "",
+      "default": {
+        "kind": "absent",
+        "variants": [
+          {
+            "default": {
+              "kind": "absent"
+            },
+            "variant": "company"
+          },
+          {
+            "default": {
+              "kind": "absent"
+            },
+            "variant": "company_named"
+          },
+          {
+            "default": {
+              "kind": "absent"
+            },
+            "variant": "controlled"
+          },
+          {
+            "default": {
+              "kind": "absent"
+            },
+            "variant": "controlled_express"
+          },
+          {
+            "default": {
+              "kind": "absent"
+            },
+            "variant": "controlled_standard"
+          },
+          {
+            "default": {
+              "kind": "absent"
+            },
+            "variant": "individual"
+          },
+          {
+            "default": {
+              "kind": "absent"
+            },
+            "variant": "individual_gb"
+          },
+          {
+            "default": {
+              "kind": "absent"
+            },
+            "variant": "individual_named"
+          },
+          {
+            "default": {
+              "kind": "absent"
+            },
+            "variant": "individual_with_company"
+          },
+          {
+            "default": {
+              "kind": "absent"
+            },
+            "variant": "payouts_monthly"
+          },
+          {
+            "default": {
+              "kind": "absent"
+            },
+            "variant": "payouts_monthly_days"
+          },
+          {
+            "default": {
+              "kind": "absent"
+            },
+            "variant": "payouts_weekly"
+          },
+          {
+            "default": {
+              "kind": "absent"
+            },
+            "variant": "payouts_weekly_days"
+          },
+          {
+            "default": {
+              "kind": "absent"
+            },
+            "variant": "profile_named"
+          }
+        ]
+      },
       "object": "account",
       "on": [
         "create"
@@ -28847,6 +28938,10 @@
           "type": "invalid_request_error"
         }
       ],
+      "returned": {
+        "form": "as_sent",
+        "response_path": "company.tax_id_registrar"
+      },
       "side": "request",
       "status": "proven",
       "targets": [
@@ -28854,7 +28949,8 @@
         "stripe"
       ],
       "tests": [
-        "TestAccountAttributes/leaves/request/PostAccounts/company.tax_id_registrar"
+        "TestAccountAttributes/leaves/request/PostAccounts/company.tax_id_registrar",
+        "TestAccountAttributes/leaves/response/account/company.tax_id_registrar"
       ]
     },
     {
@@ -36364,13 +36460,120 @@
       ]
     },
     {
+      "accepted_in": [
+        "US"
+      ],
       "branch": "",
+      "default": {
+        "kind": "null",
+        "variants": [
+          {
+            "default": {
+              "kind": "null"
+            },
+            "variant": "company"
+          },
+          {
+            "default": {
+              "kind": "null"
+            },
+            "variant": "company_named"
+          },
+          {
+            "default": {
+              "kind": "null"
+            },
+            "variant": "controlled"
+          },
+          {
+            "default": {
+              "kind": "null"
+            },
+            "variant": "controlled_express"
+          },
+          {
+            "default": {
+              "kind": "null"
+            },
+            "variant": "controlled_standard"
+          },
+          {
+            "default": {
+              "kind": "null"
+            },
+            "variant": "individual"
+          },
+          {
+            "default": {
+              "kind": "null"
+            },
+            "variant": "individual_gb"
+          },
+          {
+            "default": {
+              "kind": "null"
+            },
+            "variant": "individual_named"
+          },
+          {
+            "default": {
+              "kind": "null"
+            },
+            "variant": "individual_with_company"
+          },
+          {
+            "default": {
+              "kind": "null"
+            },
+            "variant": "payouts_monthly"
+          },
+          {
+            "default": {
+              "kind": "null"
+            },
+            "variant": "payouts_monthly_days"
+          },
+          {
+            "default": {
+              "kind": "null"
+            },
+            "variant": "payouts_weekly"
+          },
+          {
+            "default": {
+              "kind": "null"
+            },
+            "variant": "payouts_weekly_days"
+          },
+          {
+            "default": {
+              "kind": "null"
+            },
+            "variant": "profile_named"
+          }
+        ]
+      },
       "object": "account",
+      "on": [
+        "create"
+      ],
       "operation": "PostAccounts",
       "path": "settings.bacs_debit_payments.display_name",
+      "refusals": [],
+      "returned": {
+        "form": "as_sent",
+        "response_path": "settings.bacs_debit_payments.display_name"
+      },
       "side": "request",
-      "status": "unproven",
-      "tests": []
+      "status": "proven",
+      "targets": [
+        "fake",
+        "stripe"
+      ],
+      "tests": [
+        "TestAccountAttributes/leaves/request/PostAccounts/settings.bacs_debit_payments.display_name",
+        "TestAccountAttributes/leaves/response/account/settings.bacs_debit_payments.display_name"
+      ]
     },
     {
       "accepted_in": [
@@ -39488,63 +39691,84 @@
       "object": "account",
       "operation": "PostAccounts",
       "path": "settings.paypay_payments.additional_files",
+      "reason": "Stripe answers `parameter_unknown` for `settings[paypay_payments]` on a JP Custom company's create and update on this platform (dev, 2026-11-16); its changelog gives PayPay onboarding of platform-controlled accounts only to platforms approved for PayPay Connect",
       "side": "request",
-      "status": "unproven",
-      "tests": []
+      "status": "unreachable",
+      "tests": [
+        "TestAccountAttributes/leaves/request/PostAccounts/settings.paypay_payments.additional_files"
+      ]
     },
     {
       "branch": "",
       "object": "account",
       "operation": "PostAccounts",
       "path": "settings.paypay_payments.goods_type",
+      "reason": "Stripe answers `parameter_unknown` for `settings[paypay_payments]` on a JP Custom company's create and update on this platform (dev, 2026-11-16); its changelog gives PayPay onboarding of platform-controlled accounts only to platforms approved for PayPay Connect",
       "side": "request",
-      "status": "unproven",
-      "tests": []
+      "status": "unreachable",
+      "tests": [
+        "TestAccountAttributes/leaves/request/PostAccounts/settings.paypay_payments.goods_type"
+      ]
     },
     {
       "branch": "",
       "object": "account",
       "operation": "PostAccounts",
       "path": "settings.paypay_payments.site.accessible",
+      "reason": "a form cannot send an empty hash; `settings.paypay_payments.site.type` names an accessible site",
       "side": "request",
-      "status": "unproven",
-      "tests": []
+      "status": "unreachable",
+      "tests": [
+        "TestAccountAttributes/leaves/request/PostAccounts/settings.paypay_payments.site.accessible"
+      ]
     },
     {
       "branch": "",
       "object": "account",
       "operation": "PostAccounts",
       "path": "settings.paypay_payments.site.in_development.password",
+      "reason": "Stripe answers `parameter_unknown` for `settings[paypay_payments]` on a JP Custom company's create and update on this platform (dev, 2026-11-16); its changelog gives PayPay onboarding of platform-controlled accounts only to platforms approved for PayPay Connect",
       "side": "request",
-      "status": "unproven",
-      "tests": []
+      "status": "unreachable",
+      "tests": [
+        "TestAccountAttributes/leaves/request/PostAccounts/settings.paypay_payments.site.in_development.password"
+      ]
     },
     {
       "branch": "",
       "object": "account",
       "operation": "PostAccounts",
       "path": "settings.paypay_payments.site.in_development.username",
+      "reason": "Stripe answers `parameter_unknown` for `settings[paypay_payments]` on a JP Custom company's create and update on this platform (dev, 2026-11-16); its changelog gives PayPay onboarding of platform-controlled accounts only to platforms approved for PayPay Connect",
       "side": "request",
-      "status": "unproven",
-      "tests": []
+      "status": "unreachable",
+      "tests": [
+        "TestAccountAttributes/leaves/request/PostAccounts/settings.paypay_payments.site.in_development.username"
+      ]
     },
     {
       "branch": "",
       "object": "account",
       "operation": "PostAccounts",
       "path": "settings.paypay_payments.site.restricted.payment_flow_file",
+      "reason": "Stripe answers `parameter_unknown` for `settings[paypay_payments]` on a JP Custom company's create and update on this platform (dev, 2026-11-16); its changelog gives PayPay onboarding of platform-controlled accounts only to platforms approved for PayPay Connect",
       "side": "request",
-      "status": "unproven",
-      "tests": []
+      "status": "unreachable",
+      "tests": [
+        "TestAccountAttributes/leaves/request/PostAccounts/settings.paypay_payments.site.restricted.payment_flow_file"
+      ]
     },
     {
       "branch": "",
       "object": "account",
       "operation": "PostAccounts",
       "path": "settings.paypay_payments.site.type",
+      "reason": "Stripe answers `parameter_unknown` for `settings[paypay_payments]` on a JP Custom company's create and update on this platform (dev, 2026-11-16); its changelog gives PayPay onboarding of platform-controlled accounts only to platforms approved for PayPay Connect",
       "side": "request",
-      "status": "unproven",
-      "tests": []
+      "status": "unreachable",
+      "tests": [
+        "TestAccountAttributes/leaves/request/PostAccounts/settings.paypay_payments.site.type"
+      ]
     },
     {
       "accepted_in": [],
@@ -45292,7 +45516,9 @@
       ]
     },
     {
-      "accepted_in": [],
+      "accepted_in": [
+        "US"
+      ],
       "branch": "",
       "object": "account",
       "on": [
@@ -45313,6 +45539,10 @@
           "type": "invalid_request_error"
         }
       ],
+      "returned": {
+        "form": "as_sent",
+        "response_path": "company.tax_id_registrar"
+      },
       "side": "request",
       "status": "proven",
       "targets": [
@@ -47571,13 +47801,30 @@
       }
     },
     {
+      "accepted_in": [
+        "US"
+      ],
       "branch": "",
       "object": "account",
+      "on": [
+        "update"
+      ],
       "operation": "PostAccountsAccount",
       "path": "settings.bacs_debit_payments.display_name",
+      "refusals": [],
+      "returned": {
+        "form": "as_sent",
+        "response_path": "settings.bacs_debit_payments.display_name"
+      },
       "side": "request",
-      "status": "unproven",
-      "tests": []
+      "status": "proven",
+      "targets": [
+        "fake",
+        "stripe"
+      ],
+      "tests": [
+        "TestAccountAttributes/leaves/request/PostAccountsAccount/settings.bacs_debit_payments.display_name"
+      ]
     },
     {
       "accepted_in": [
@@ -48484,63 +48731,84 @@
       "object": "account",
       "operation": "PostAccountsAccount",
       "path": "settings.paypay_payments.additional_files",
+      "reason": "Stripe answers `parameter_unknown` for `settings[paypay_payments]` on a JP Custom company's create and update on this platform (dev, 2026-11-16); its changelog gives PayPay onboarding of platform-controlled accounts only to platforms approved for PayPay Connect",
       "side": "request",
-      "status": "unproven",
-      "tests": []
+      "status": "unreachable",
+      "tests": [
+        "TestAccountAttributes/leaves/request/PostAccountsAccount/settings.paypay_payments.additional_files"
+      ]
     },
     {
       "branch": "",
       "object": "account",
       "operation": "PostAccountsAccount",
       "path": "settings.paypay_payments.goods_type",
+      "reason": "Stripe answers `parameter_unknown` for `settings[paypay_payments]` on a JP Custom company's create and update on this platform (dev, 2026-11-16); its changelog gives PayPay onboarding of platform-controlled accounts only to platforms approved for PayPay Connect",
       "side": "request",
-      "status": "unproven",
-      "tests": []
+      "status": "unreachable",
+      "tests": [
+        "TestAccountAttributes/leaves/request/PostAccountsAccount/settings.paypay_payments.goods_type"
+      ]
     },
     {
       "branch": "",
       "object": "account",
       "operation": "PostAccountsAccount",
       "path": "settings.paypay_payments.site.accessible",
+      "reason": "a form cannot send an empty hash; `settings.paypay_payments.site.type` names an accessible site",
       "side": "request",
-      "status": "unproven",
-      "tests": []
+      "status": "unreachable",
+      "tests": [
+        "TestAccountAttributes/leaves/request/PostAccountsAccount/settings.paypay_payments.site.accessible"
+      ]
     },
     {
       "branch": "",
       "object": "account",
       "operation": "PostAccountsAccount",
       "path": "settings.paypay_payments.site.in_development.password",
+      "reason": "Stripe answers `parameter_unknown` for `settings[paypay_payments]` on a JP Custom company's create and update on this platform (dev, 2026-11-16); its changelog gives PayPay onboarding of platform-controlled accounts only to platforms approved for PayPay Connect",
       "side": "request",
-      "status": "unproven",
-      "tests": []
+      "status": "unreachable",
+      "tests": [
+        "TestAccountAttributes/leaves/request/PostAccountsAccount/settings.paypay_payments.site.in_development.password"
+      ]
     },
     {
       "branch": "",
       "object": "account",
       "operation": "PostAccountsAccount",
       "path": "settings.paypay_payments.site.in_development.username",
+      "reason": "Stripe answers `parameter_unknown` for `settings[paypay_payments]` on a JP Custom company's create and update on this platform (dev, 2026-11-16); its changelog gives PayPay onboarding of platform-controlled accounts only to platforms approved for PayPay Connect",
       "side": "request",
-      "status": "unproven",
-      "tests": []
+      "status": "unreachable",
+      "tests": [
+        "TestAccountAttributes/leaves/request/PostAccountsAccount/settings.paypay_payments.site.in_development.username"
+      ]
     },
     {
       "branch": "",
       "object": "account",
       "operation": "PostAccountsAccount",
       "path": "settings.paypay_payments.site.restricted.payment_flow_file",
+      "reason": "Stripe answers `parameter_unknown` for `settings[paypay_payments]` on a JP Custom company's create and update on this platform (dev, 2026-11-16); its changelog gives PayPay onboarding of platform-controlled accounts only to platforms approved for PayPay Connect",
       "side": "request",
-      "status": "unproven",
-      "tests": []
+      "status": "unreachable",
+      "tests": [
+        "TestAccountAttributes/leaves/request/PostAccountsAccount/settings.paypay_payments.site.restricted.payment_flow_file"
+      ]
     },
     {
       "branch": "",
       "object": "account",
       "operation": "PostAccountsAccount",
       "path": "settings.paypay_payments.site.type",
+      "reason": "Stripe answers `parameter_unknown` for `settings[paypay_payments]` on a JP Custom company's create and update on this platform (dev, 2026-11-16); its changelog gives PayPay onboarding of platform-controlled accounts only to platforms approved for PayPay Connect",
       "side": "request",
-      "status": "unproven",
-      "tests": []
+      "status": "unreachable",
+      "tests": [
+        "TestAccountAttributes/leaves/request/PostAccountsAccount/settings.paypay_payments.site.type"
+      ]
     },
     {
       "accepted_in": [
@@ -58378,12 +58646,114 @@
     },
     {
       "branch": "",
+      "initial": [
+        {
+          "matcher": {
+            "kind": "absent"
+          },
+          "variant": ""
+        },
+        {
+          "matcher": {
+            "kind": "absent"
+          },
+          "variant": "company"
+        },
+        {
+          "matcher": {
+            "kind": "absent"
+          },
+          "variant": "company_named"
+        },
+        {
+          "matcher": {
+            "kind": "absent"
+          },
+          "variant": "controlled"
+        },
+        {
+          "matcher": {
+            "kind": "absent"
+          },
+          "variant": "controlled_express"
+        },
+        {
+          "matcher": {
+            "kind": "absent"
+          },
+          "variant": "controlled_standard"
+        },
+        {
+          "matcher": {
+            "kind": "absent"
+          },
+          "variant": "individual"
+        },
+        {
+          "matcher": {
+            "kind": "absent"
+          },
+          "variant": "individual_gb"
+        },
+        {
+          "matcher": {
+            "kind": "absent"
+          },
+          "variant": "individual_named"
+        },
+        {
+          "matcher": {
+            "kind": "absent"
+          },
+          "variant": "individual_with_company"
+        },
+        {
+          "matcher": {
+            "kind": "absent"
+          },
+          "variant": "payouts_monthly"
+        },
+        {
+          "matcher": {
+            "kind": "absent"
+          },
+          "variant": "payouts_monthly_days"
+        },
+        {
+          "matcher": {
+            "kind": "absent"
+          },
+          "variant": "payouts_weekly"
+        },
+        {
+          "matcher": {
+            "kind": "absent"
+          },
+          "variant": "payouts_weekly_days"
+        },
+        {
+          "matcher": {
+            "kind": "absent"
+          },
+          "variant": "profile_named"
+        }
+      ],
+      "nullable": {
+        "non_null_observed": true,
+        "null_observed": false
+      },
       "object": "account",
       "operation": "",
       "path": "company.tax_id_registrar",
       "side": "response",
-      "status": "unproven",
-      "tests": []
+      "status": "proven",
+      "targets": [
+        "fake",
+        "stripe"
+      ],
+      "tests": [
+        "TestAccountAttributes/leaves/response/account/company.tax_id_registrar"
+      ]
     },
     {
       "branch": "",
@@ -739389,6 +739759,9 @@
         "company.tax_id_provided": {
           "kind": "absent"
         },
+        "company.tax_id_registrar": {
+          "kind": "absent"
+        },
         "company.vat_id_provided": {
           "kind": "absent"
         },
@@ -739833,6 +740206,7 @@
         "TestAccountAttributes/leaves/response/account/company.representative_declaration.user_agent",
         "TestAccountAttributes/leaves/response/account/company.structure",
         "TestAccountAttributes/leaves/response/account/company.tax_id_provided",
+        "TestAccountAttributes/leaves/response/account/company.tax_id_registrar",
         "TestAccountAttributes/leaves/response/account/company.vat_id_provided",
         "TestAccountAttributes/leaves/response/account/company.verification.document.back",
         "TestAccountAttributes/leaves/response/account/company.verification.document.front",
@@ -740196,6 +740570,9 @@
         "company.tax_id_provided": {
           "kind": "value",
           "value": false
+        },
+        "company.tax_id_registrar": {
+          "kind": "absent"
         },
         "company.vat_id_provided": {
           "kind": "value",
@@ -740650,6 +741027,7 @@
         "TestAccountAttributes/leaves/response/account/company.representative_declaration.user_agent",
         "TestAccountAttributes/leaves/response/account/company.structure",
         "TestAccountAttributes/leaves/response/account/company.tax_id_provided",
+        "TestAccountAttributes/leaves/response/account/company.tax_id_registrar",
         "TestAccountAttributes/leaves/response/account/company.vat_id_provided",
         "TestAccountAttributes/leaves/response/account/company.verification.document.back",
         "TestAccountAttributes/leaves/response/account/company.verification.document.front",
@@ -741018,6 +741396,9 @@
         "company.tax_id_provided": {
           "kind": "value",
           "value": false
+        },
+        "company.tax_id_registrar": {
+          "kind": "absent"
         },
         "company.vat_id_provided": {
           "kind": "value",
@@ -741477,6 +741858,7 @@
         "TestAccountAttributes/leaves/response/account/company.representative_declaration.user_agent",
         "TestAccountAttributes/leaves/response/account/company.structure",
         "TestAccountAttributes/leaves/response/account/company.tax_id_provided",
+        "TestAccountAttributes/leaves/response/account/company.tax_id_registrar",
         "TestAccountAttributes/leaves/response/account/company.vat_id_provided",
         "TestAccountAttributes/leaves/response/account/company.verification.document.back",
         "TestAccountAttributes/leaves/response/account/company.verification.document.front",
@@ -741845,6 +742227,9 @@
         "company.tax_id_provided": {
           "kind": "absent"
         },
+        "company.tax_id_registrar": {
+          "kind": "absent"
+        },
         "company.vat_id_provided": {
           "kind": "absent"
         },
@@ -742307,6 +742692,7 @@
         "TestAccountAttributes/leaves/response/account/company.representative_declaration.user_agent",
         "TestAccountAttributes/leaves/response/account/company.structure",
         "TestAccountAttributes/leaves/response/account/company.tax_id_provided",
+        "TestAccountAttributes/leaves/response/account/company.tax_id_registrar",
         "TestAccountAttributes/leaves/response/account/company.vat_id_provided",
         "TestAccountAttributes/leaves/response/account/company.verification.document.back",
         "TestAccountAttributes/leaves/response/account/company.verification.document.front",
@@ -742673,6 +743059,9 @@
           "kind": "absent"
         },
         "company.tax_id_provided": {
+          "kind": "absent"
+        },
+        "company.tax_id_registrar": {
           "kind": "absent"
         },
         "company.vat_id_provided": {
@@ -743137,6 +743526,7 @@
         "TestAccountAttributes/leaves/response/account/company.representative_declaration.user_agent",
         "TestAccountAttributes/leaves/response/account/company.structure",
         "TestAccountAttributes/leaves/response/account/company.tax_id_provided",
+        "TestAccountAttributes/leaves/response/account/company.tax_id_registrar",
         "TestAccountAttributes/leaves/response/account/company.vat_id_provided",
         "TestAccountAttributes/leaves/response/account/company.verification.document.back",
         "TestAccountAttributes/leaves/response/account/company.verification.document.front",
@@ -743506,6 +743896,9 @@
           "kind": "absent"
         },
         "company.tax_id_provided": {
+          "kind": "absent"
+        },
+        "company.tax_id_registrar": {
           "kind": "absent"
         },
         "company.vat_id_provided": {
@@ -743973,6 +744366,7 @@
         "TestAccountAttributes/leaves/response/account/company.representative_declaration.user_agent",
         "TestAccountAttributes/leaves/response/account/company.structure",
         "TestAccountAttributes/leaves/response/account/company.tax_id_provided",
+        "TestAccountAttributes/leaves/response/account/company.tax_id_registrar",
         "TestAccountAttributes/leaves/response/account/company.vat_id_provided",
         "TestAccountAttributes/leaves/response/account/company.verification.document.back",
         "TestAccountAttributes/leaves/response/account/company.verification.document.front",
@@ -744336,6 +744730,9 @@
         "company.tax_id_provided": {
           "kind": "value",
           "value": false
+        },
+        "company.tax_id_registrar": {
+          "kind": "absent"
         },
         "company.vat_id_provided": {
           "kind": "value",
@@ -744790,6 +745187,7 @@
         "TestAccountAttributes/leaves/response/account/company.representative_declaration.user_agent",
         "TestAccountAttributes/leaves/response/account/company.structure",
         "TestAccountAttributes/leaves/response/account/company.tax_id_provided",
+        "TestAccountAttributes/leaves/response/account/company.tax_id_registrar",
         "TestAccountAttributes/leaves/response/account/company.vat_id_provided",
         "TestAccountAttributes/leaves/response/account/company.verification.document.back",
         "TestAccountAttributes/leaves/response/account/company.verification.document.front",
@@ -745157,6 +745555,9 @@
         "company.tax_id_provided": {
           "kind": "value",
           "value": false
+        },
+        "company.tax_id_registrar": {
+          "kind": "absent"
         },
         "company.vat_id_provided": {
           "kind": "absent"
@@ -745614,6 +746015,7 @@
         "TestAccountAttributes/leaves/response/account/company.representative_declaration.user_agent",
         "TestAccountAttributes/leaves/response/account/company.structure",
         "TestAccountAttributes/leaves/response/account/company.tax_id_provided",
+        "TestAccountAttributes/leaves/response/account/company.tax_id_registrar",
         "TestAccountAttributes/leaves/response/account/company.vat_id_provided",
         "TestAccountAttributes/leaves/response/account/company.verification.document.back",
         "TestAccountAttributes/leaves/response/account/company.verification.document.front",
@@ -745981,6 +746383,9 @@
         "company.tax_id_provided": {
           "kind": "value",
           "value": false
+        },
+        "company.tax_id_registrar": {
+          "kind": "absent"
         },
         "company.vat_id_provided": {
           "kind": "value",
@@ -746455,6 +746860,7 @@
         "TestAccountAttributes/leaves/response/account/company.representative_declaration.user_agent",
         "TestAccountAttributes/leaves/response/account/company.structure",
         "TestAccountAttributes/leaves/response/account/company.tax_id_provided",
+        "TestAccountAttributes/leaves/response/account/company.tax_id_registrar",
         "TestAccountAttributes/leaves/response/account/company.vat_id_provided",
         "TestAccountAttributes/leaves/response/account/company.verification.document.back",
         "TestAccountAttributes/leaves/response/account/company.verification.document.front",
@@ -746837,6 +747243,9 @@
         "company.tax_id_provided": {
           "kind": "value",
           "value": false
+        },
+        "company.tax_id_registrar": {
+          "kind": "absent"
         },
         "company.vat_id_provided": {
           "kind": "value",
@@ -747324,6 +747733,7 @@
         "TestAccountAttributes/leaves/response/account/company.representative_declaration.user_agent",
         "TestAccountAttributes/leaves/response/account/company.structure",
         "TestAccountAttributes/leaves/response/account/company.tax_id_provided",
+        "TestAccountAttributes/leaves/response/account/company.tax_id_registrar",
         "TestAccountAttributes/leaves/response/account/company.vat_id_provided",
         "TestAccountAttributes/leaves/response/account/company.verification.document.back",
         "TestAccountAttributes/leaves/response/account/company.verification.document.front",
@@ -747695,6 +748105,9 @@
         "company.tax_id_provided": {
           "kind": "value",
           "value": false
+        },
+        "company.tax_id_registrar": {
+          "kind": "absent"
         },
         "company.vat_id_provided": {
           "kind": "value",
@@ -748162,6 +748575,7 @@
         "TestAccountAttributes/leaves/response/account/company.representative_declaration.user_agent",
         "TestAccountAttributes/leaves/response/account/company.structure",
         "TestAccountAttributes/leaves/response/account/company.tax_id_provided",
+        "TestAccountAttributes/leaves/response/account/company.tax_id_registrar",
         "TestAccountAttributes/leaves/response/account/company.vat_id_provided",
         "TestAccountAttributes/leaves/response/account/company.verification.document.back",
         "TestAccountAttributes/leaves/response/account/company.verification.document.front",
@@ -748535,6 +748949,9 @@
         "company.tax_id_provided": {
           "kind": "value",
           "value": false
+        },
+        "company.tax_id_registrar": {
+          "kind": "absent"
         },
         "company.vat_id_provided": {
           "kind": "value",
@@ -749001,6 +749418,7 @@
         "TestAccountAttributes/leaves/response/account/company.representative_declaration.user_agent",
         "TestAccountAttributes/leaves/response/account/company.structure",
         "TestAccountAttributes/leaves/response/account/company.tax_id_provided",
+        "TestAccountAttributes/leaves/response/account/company.tax_id_registrar",
         "TestAccountAttributes/leaves/response/account/company.vat_id_provided",
         "TestAccountAttributes/leaves/response/account/company.verification.document.back",
         "TestAccountAttributes/leaves/response/account/company.verification.document.front",
@@ -749372,6 +749790,9 @@
         "company.tax_id_provided": {
           "kind": "value",
           "value": false
+        },
+        "company.tax_id_registrar": {
+          "kind": "absent"
         },
         "company.vat_id_provided": {
           "kind": "value",
@@ -749839,6 +750260,7 @@
         "TestAccountAttributes/leaves/response/account/company.representative_declaration.user_agent",
         "TestAccountAttributes/leaves/response/account/company.structure",
         "TestAccountAttributes/leaves/response/account/company.tax_id_provided",
+        "TestAccountAttributes/leaves/response/account/company.tax_id_registrar",
         "TestAccountAttributes/leaves/response/account/company.vat_id_provided",
         "TestAccountAttributes/leaves/response/account/company.verification.document.back",
         "TestAccountAttributes/leaves/response/account/company.verification.document.front",
@@ -750212,6 +750634,9 @@
         "company.tax_id_provided": {
           "kind": "value",
           "value": false
+        },
+        "company.tax_id_registrar": {
+          "kind": "absent"
         },
         "company.vat_id_provided": {
           "kind": "value",
@@ -750678,6 +751103,7 @@
         "TestAccountAttributes/leaves/response/account/company.representative_declaration.user_agent",
         "TestAccountAttributes/leaves/response/account/company.structure",
         "TestAccountAttributes/leaves/response/account/company.tax_id_provided",
+        "TestAccountAttributes/leaves/response/account/company.tax_id_registrar",
         "TestAccountAttributes/leaves/response/account/company.vat_id_provided",
         "TestAccountAttributes/leaves/response/account/company.verification.document.back",
         "TestAccountAttributes/leaves/response/account/company.verification.document.front",
@@ -751045,6 +751471,9 @@
         "company.tax_id_provided": {
           "kind": "value",
           "value": false
+        },
+        "company.tax_id_registrar": {
+          "kind": "absent"
         },
         "company.vat_id_provided": {
           "kind": "value",
@@ -751505,6 +751934,7 @@
         "TestAccountAttributes/leaves/response/account/company.representative_declaration.user_agent",
         "TestAccountAttributes/leaves/response/account/company.structure",
         "TestAccountAttributes/leaves/response/account/company.tax_id_provided",
+        "TestAccountAttributes/leaves/response/account/company.tax_id_registrar",
         "TestAccountAttributes/leaves/response/account/company.vat_id_provided",
         "TestAccountAttributes/leaves/response/account/company.verification.document.back",
         "TestAccountAttributes/leaves/response/account/company.verification.document.front",
@@ -958505,13 +958935,13 @@
   "spec_sha256": "9119e72c7ff8ad142e94f7efa9cf49d8e6eec69df3592e17e8fba15099726ed7",
   "stripe_run": {
     "event": "push",
-    "id": 43746592478,
+    "id": 44021059219,
     "passed": true,
     "platform_country": "US",
     "sandbox": "ci",
-    "time": "2026-11-16T01:33:54Z"
+    "time": "2026-11-17T10:27:30Z"
   },
-  "suite_commit": "ba6fbe0213f5b2e3d07b6440aabde114dbddbc3f",
+  "suite_commit": "ac6b45764d9d8d09cd66adf911376ae3943094f6",
   "together": [
     {
       "answers": [

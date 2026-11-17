@@ -168,6 +168,131 @@ func TestAccAccount_ownershipExemptionReason(t *testing.T) {
 	})
 }
 
+// A German company takes its registrar on create and on update and reads it back (probes
+// `isolated/registrar_de_create` and `_update`), with the register court the suite sends
+// (`accountRegistrarDE`); removing it from the configuration leaves it on the account.
+func TestAccAccount_taxIDRegistrar(t *testing.T) {
+	acct := acctest.NewAccount(t)
+	registrar := "  company = { tax_id_registrar = \"Berlin (Charlottenburg)\" }\n"
+	path := new(string)
+	config := func(first, later string) string {
+		return acct.ProviderBlock() + countryCompany("created", "DE", "", first) + countryCompany("updated", "DE", "created", later)
+	}
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: tfacc.ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: config(registrar, ""),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr("stripe_account.created", "company.tax_id_registrar", "Berlin (Charlottenburg)"),
+					resource.TestCheckNoResourceAttr("stripe_account.updated", "company.tax_id_registrar"),
+					resource.TestCheckResourceAttrWith("stripe_account.updated", "id", func(v string) error {
+						*path = "/v1/accounts/" + v
+						return nil
+					}),
+				),
+				ConfigPlanChecks: resource.ConfigPlanChecks{PostApplyPostRefresh: []plancheck.PlanCheck{plancheck.ExpectEmptyPlan()}},
+			},
+			{
+				Config: config(registrar, registrar),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectResourceAction("stripe_account.created", plancheck.ResourceActionNoop),
+						plancheck.ExpectResourceAction("stripe_account.updated", plancheck.ResourceActionUpdate),
+					},
+					PostApplyPostRefresh: []plancheck.PlanCheck{plancheck.ExpectEmptyPlan()},
+				},
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr("stripe_account.updated", "company.tax_id_registrar", "Berlin (Charlottenburg)"),
+					tfacc.Sent(t, acct, "POST", path, map[string]string{"company.tax_id_registrar": "Berlin (Charlottenburg)"}),
+				),
+			},
+			{
+				Config:             config("", registrar),
+				PlanOnly:           true,
+				ExpectNonEmptyPlan: false,
+			},
+		},
+	})
+}
+
+// A US company's create with a German registrar is Stripe's to refuse when you apply (probe
+// `every_field/22`, a US custom company that requests `transfers`): the plan does not refuse it.
+func TestAccAccount_taxIDRegistrarRefusedInUS(t *testing.T) {
+	acct := acctest.NewAccount(t)
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: tfacc.ProviderFactories,
+		Steps: []resource.TestStep{{
+			Config:      acct.ProviderBlock() + companyAccount("test", "", "  company = { tax_id_registrar = \"Amtsgericht Berlin\" }\n"),
+			ExpectError: regexp.MustCompile(`Registrar Amtsgericht Berlin does not exist in US`),
+		}},
+	})
+}
+
+// gbIndividual is the suite's British individual (`accountIndividualGB`), a custom individual
+// requesting `card_payments` and `transfers` and no Bacs capability, with the given extra
+// arguments, created after previous.
+func gbIndividual(name, previous, extra string) string {
+	return fmt.Sprintf(`
+resource "stripe_account" %q {
+  type          = "custom"
+  country       = "GB"
+  business_type = "individual"
+  capabilities  = { card_payments = { requested = true }, transfers = { requested = true } }
+%s%s}
+`, name, extra, after(previous))
+}
+
+// A British individual takes its Bacs display name on create and on an update from none, and reads
+// it back (probes `isolated/bacs_name_gb_create` and `_update`, which send `Conformance Tours` and
+// `Harbour Tours`). Removing it from the configuration sends nothing and plans no change.
+func TestAccAccount_bacsDisplayName(t *testing.T) {
+	acct := acctest.NewAccount(t)
+	bacs := func(name string) string {
+		return fmt.Sprintf("  settings = { bacs_debit_payments = { display_name = %q } }\n", name)
+	}
+	path := new(string)
+	config := func(first, later string) string {
+		return acct.ProviderBlock() + gbIndividual("created", "", first) + gbIndividual("updated", "created", later)
+	}
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: tfacc.ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: config(bacs("Conformance Tours"), ""),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr("stripe_account.created", "settings.bacs_debit_payments.display_name", "Conformance Tours"),
+					resource.TestCheckNoResourceAttr("stripe_account.updated", "settings.bacs_debit_payments.display_name"),
+					resource.TestCheckResourceAttrWith("stripe_account.updated", "id", func(v string) error {
+						*path = "/v1/accounts/" + v
+						return nil
+					}),
+				),
+				ConfigPlanChecks: resource.ConfigPlanChecks{PostApplyPostRefresh: []plancheck.PlanCheck{plancheck.ExpectEmptyPlan()}},
+			},
+			{
+				Config: config(bacs("Conformance Tours"), bacs("Harbour Tours")),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectResourceAction("stripe_account.created", plancheck.ResourceActionNoop),
+						plancheck.ExpectResourceAction("stripe_account.updated", plancheck.ResourceActionUpdate),
+					},
+					PostApplyPostRefresh: []plancheck.PlanCheck{plancheck.ExpectEmptyPlan()},
+				},
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr("stripe_account.updated", "settings.bacs_debit_payments.display_name", "Harbour Tours"),
+					tfacc.Sent(t, acct, "POST", path, map[string]string{"settings.bacs_debit_payments.display_name": "Harbour Tours"}),
+				),
+			},
+			{
+				Config:             config("", bacs("Harbour Tours")),
+				PlanOnly:           true,
+				ExpectNonEmptyPlan: false,
+			},
+		},
+	})
+}
+
 // An individual's reads the sweep proves: a Thai individual created with a secondary ID number reads
 // that Stripe has it (state `individual_secondary_id_th`), with the number of the suite's Thai
 // persons (`personTHSecondaryID`), and a US individual reads the nationality the persons API gives

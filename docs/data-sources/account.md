@@ -272,7 +272,7 @@ The `company` attribute supports:
 * `structure` - The category identifying the legal structure of the company or legal entity. Also available for accounts where [controller.requirement_collection](https://docs.stripe.com/api/accounts/object#account_object-controller-requirement_collection) is `stripe`. See [Business structure](https://docs.stripe.com/connect/identity-verification#business-structure) for more details. Possible values: `free_zone_establishment`, `free_zone_llc`, `government_instrumentality`, `governmental_unit`, `incorporated_non_profit`, `incorporated_partnership`, `limited_liability_partnership`, `llc`, `multi_member_llc`, `private_company`, `private_corporation`, `private_partnership`, `public_company`, `public_corporation`, `public_partnership`, `registered_charity`, `single_member_llc`, `sole_establishment`, `sole_proprietorship`, `tax_exempt_government_instrumentality`, `unincorporated_association`, `unincorporated_non_profit`, `unincorporated_partnership`.
 * `tax_id` - (Sensitive)
 * `tax_id_provided` - Whether the company's business ID number was provided.
-* `tax_id_registrar` -
+* `tax_id_registrar` - The jurisdiction in which the `tax_id` is registered (Germany-based companies only).
 * `vat_id` - (Sensitive)
 * `vat_id_provided` - Whether the company's business VAT number was provided.
 * `verification` - Information on the verification state of the company. See [`company.verification`](#company.verification) below.

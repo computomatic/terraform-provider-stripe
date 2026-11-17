@@ -219,6 +219,12 @@ func TestAccAccount_update(t *testing.T) {
   business_profile = { name = %q }
   metadata         = { run = %q }
 `, name, acct.Name("update"))),
+				// An update of the metadata alone leaves the Bacs settings to Stripe, which can fill
+				// them on an account's update.
+				ConfigPlanChecks: resource.ConfigPlanChecks{PreApply: []plancheck.PlanCheck{
+					plancheck.ExpectUnknownValue(address, tfjsonpath.New("settings").AtMapKey("bacs_debit_payments").AtMapKey("display_name")),
+					plancheck.ExpectUnknownValue(address, tfjsonpath.New("settings").AtMapKey("bacs_debit_payments").AtMapKey("service_user_number")),
+				}},
 				Check: resource.TestCheckNoResourceAttr(address, "metadata.stage"),
 			},
 			// Removing email and the profile leaves them on the account: a plain string cleared
@@ -987,6 +993,7 @@ func TestAccAccount_refuseOnboardingChange(t *testing.T) {
 					plancheck.ExpectResourceAction(address, plancheck.ResourceActionUpdate),
 					// The configuration sets other `settings`, so only what it leaves unset is Stripe's.
 					plancheck.ExpectUnknownValue(address, tfjsonpath.New("settings").AtMapKey("payments").AtMapKey("statement_descriptor")),
+					plancheck.ExpectUnknownValue(address, tfjsonpath.New("settings").AtMapKey("bacs_debit_payments").AtMapKey("display_name")),
 				}},
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr(address, "business_profile.name", acct.Name(renamed.name)),

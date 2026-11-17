@@ -1,7 +1,7 @@
 {
-  "fake_version": "v0.45.0",
-  "suite_ref": "ba6fbe0213f5b2e3d07b6440aabde114dbddbc3f",
-  "run_id": 43746592478,
+  "fake_version": "v0.46.0",
+  "suite_ref": "ac6b45764d9d8d09cd66adf911376ae3943094f6",
+  "run_id": 44021059219,
   "api_version": "2026-09-30.endive",
   "spec_sha256": "9119e72c7ff8ad142e94f7efa9cf49d8e6eec69df3592e17e8fba15099726ed7",
   "counts": {
@@ -9,18 +9,18 @@
     "gap_proven_not_served": 688,
     "gap_stripe_only": 86,
     "proven_by_test": 4962,
-    "unproven": 5650,
-    "verified": 6647,
+    "unproven": 5647,
+    "verified": 6650,
     "verified_accepted_only": 749
   },
-  "refused_only": 253,
+  "refused_only": 251,
   "objects": [
     {
       "object": "account",
       "counts": {
         "proven_by_test": 95,
-        "unproven": 85,
-        "verified": 626,
+        "unproven": 82,
+        "verified": 629,
         "verified_accepted_only": 156
       }
     },
@@ -3567,10 +3567,10 @@
       "branch": "",
       "shape": "string",
       "state": "served",
-      "reason": "refused_only",
       "status": "proven",
       "tests": [
-        "TestAccountAttributes/leaves/request/PostAccounts/company.tax_id_registrar"
+        "TestAccountAttributes/leaves/request/PostAccounts/company.tax_id_registrar",
+        "TestAccountAttributes/leaves/response/account/company.tax_id_registrar"
       ],
       "class": "verified"
     },
@@ -4717,10 +4717,13 @@
       "path": "settings.bacs_debit_payments.display_name",
       "branch": "",
       "shape": "string",
-      "state": "unserved",
-      "reason": "not_proven",
-      "status": "unproven",
-      "class": "unproven"
+      "state": "served",
+      "status": "proven",
+      "tests": [
+        "TestAccountAttributes/leaves/request/PostAccounts/settings.bacs_debit_payments.display_name",
+        "TestAccountAttributes/leaves/response/account/settings.bacs_debit_payments.display_name"
+      ],
+      "class": "verified"
     },
     {
       "object": "account",
@@ -5106,7 +5109,10 @@
       "shape": "list",
       "state": "unserved",
       "reason": "not_proven",
-      "status": "unproven",
+      "status": "unreachable",
+      "tests": [
+        "TestAccountAttributes/leaves/request/PostAccounts/settings.paypay_payments.additional_files"
+      ],
       "class": "unproven"
     },
     {
@@ -5118,7 +5124,10 @@
       "shape": "enum",
       "state": "unserved",
       "reason": "not_proven",
-      "status": "unproven",
+      "status": "unreachable",
+      "tests": [
+        "TestAccountAttributes/leaves/request/PostAccounts/settings.paypay_payments.goods_type"
+      ],
       "class": "unproven"
     },
     {
@@ -5130,7 +5139,10 @@
       "shape": "empty_hash",
       "state": "unserved",
       "reason": "not_proven",
-      "status": "unproven",
+      "status": "unreachable",
+      "tests": [
+        "TestAccountAttributes/leaves/request/PostAccounts/settings.paypay_payments.site.accessible"
+      ],
       "class": "unproven"
     },
     {
@@ -5142,7 +5154,10 @@
       "shape": "string",
       "state": "unserved",
       "reason": "not_proven",
-      "status": "unproven",
+      "status": "unreachable",
+      "tests": [
+        "TestAccountAttributes/leaves/request/PostAccounts/settings.paypay_payments.site.in_development.password"
+      ],
       "class": "unproven"
     },
     {
@@ -5154,7 +5169,10 @@
       "shape": "string",
       "state": "unserved",
       "reason": "not_proven",
-      "status": "unproven",
+      "status": "unreachable",
+      "tests": [
+        "TestAccountAttributes/leaves/request/PostAccounts/settings.paypay_payments.site.in_development.username"
+      ],
       "class": "unproven"
     },
     {
@@ -5166,7 +5184,10 @@
       "shape": "string",
       "state": "unserved",
       "reason": "not_proven",
-      "status": "unproven",
+      "status": "unreachable",
+      "tests": [
+        "TestAccountAttributes/leaves/request/PostAccounts/settings.paypay_payments.site.restricted.payment_flow_file"
+      ],
       "class": "unproven"
     },
     {
@@ -5178,7 +5199,10 @@
       "shape": "enum",
       "state": "unserved",
       "reason": "not_proven",
-      "status": "unproven",
+      "status": "unreachable",
+      "tests": [
+        "TestAccountAttributes/leaves/request/PostAccounts/settings.paypay_payments.site.type"
+      ],
       "class": "unproven"
     },
     {
@@ -7449,7 +7473,6 @@
       "branch": "",
       "shape": "string",
       "state": "served",
-      "reason": "refused_only",
       "status": "proven",
       "tests": [
         "TestAccountAttributes/leaves/request/PostAccountsAccount/company.tax_id_registrar"
@@ -8502,10 +8525,12 @@
       "path": "settings.bacs_debit_payments.display_name",
       "branch": "",
       "shape": "string",
-      "state": "unserved",
-      "reason": "not_proven",
-      "status": "unproven",
-      "class": "unproven"
+      "state": "served",
+      "status": "proven",
+      "tests": [
+        "TestAccountAttributes/leaves/request/PostAccountsAccount/settings.bacs_debit_payments.display_name"
+      ],
+      "class": "verified"
     },
     {
       "object": "account",
@@ -8884,7 +8909,10 @@
       "shape": "list",
       "state": "unserved",
       "reason": "not_proven",
-      "status": "unproven",
+      "status": "unreachable",
+      "tests": [
+        "TestAccountAttributes/leaves/request/PostAccountsAccount/settings.paypay_payments.additional_files"
+      ],
       "class": "unproven"
     },
     {
@@ -8896,7 +8924,10 @@
       "shape": "enum",
       "state": "unserved",
       "reason": "not_proven",
-      "status": "unproven",
+      "status": "unreachable",
+      "tests": [
+        "TestAccountAttributes/leaves/request/PostAccountsAccount/settings.paypay_payments.goods_type"
+      ],
       "class": "unproven"
     },
     {
@@ -8908,7 +8939,10 @@
       "shape": "empty_hash",
       "state": "unserved",
       "reason": "not_proven",
-      "status": "unproven",
+      "status": "unreachable",
+      "tests": [
+        "TestAccountAttributes/leaves/request/PostAccountsAccount/settings.paypay_payments.site.accessible"
+      ],
       "class": "unproven"
     },
     {
@@ -8920,7 +8954,10 @@
       "shape": "string",
       "state": "unserved",
       "reason": "not_proven",
-      "status": "unproven",
+      "status": "unreachable",
+      "tests": [
+        "TestAccountAttributes/leaves/request/PostAccountsAccount/settings.paypay_payments.site.in_development.password"
+      ],
       "class": "unproven"
     },
     {
@@ -8932,7 +8969,10 @@
       "shape": "string",
       "state": "unserved",
       "reason": "not_proven",
-      "status": "unproven",
+      "status": "unreachable",
+      "tests": [
+        "TestAccountAttributes/leaves/request/PostAccountsAccount/settings.paypay_payments.site.in_development.username"
+      ],
       "class": "unproven"
     },
     {
@@ -8944,7 +8984,10 @@
       "shape": "string",
       "state": "unserved",
       "reason": "not_proven",
-      "status": "unproven",
+      "status": "unreachable",
+      "tests": [
+        "TestAccountAttributes/leaves/request/PostAccountsAccount/settings.paypay_payments.site.restricted.payment_flow_file"
+      ],
       "class": "unproven"
     },
     {
@@ -8956,7 +8999,10 @@
       "shape": "enum",
       "state": "unserved",
       "reason": "not_proven",
-      "status": "unproven",
+      "status": "unreachable",
+      "tests": [
+        "TestAccountAttributes/leaves/request/PostAccountsAccount/settings.paypay_payments.site.type"
+      ],
       "class": "unproven"
     },
     {
@@ -12029,10 +12075,12 @@
       "path": "company.tax_id_registrar",
       "branch": "",
       "shape": "string",
-      "state": "unserved",
-      "reason": "not_proven",
-      "status": "unproven",
-      "class": "unproven"
+      "state": "served",
+      "status": "proven",
+      "tests": [
+        "TestAccountAttributes/leaves/response/account/company.tax_id_registrar"
+      ],
+      "class": "verified"
     },
     {
       "object": "account",
