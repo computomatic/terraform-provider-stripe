@@ -16,7 +16,7 @@ import (
 var Declaration = engine.Declaration{
 	TypeName:              "stripe_quote",
 	IDPrefix:              "qt_",
-	Description:           "A proposal of prices to a customer. Set `status` to `canceled` to cancel the quote; a quote that was accepted cannot be cancelled. Finalizing and accepting a quote are not resources: the quote stays a draft here, and `status` reports what happened to it elsewhere. Stripe lets only `metadata` and a few other fields change once the quote is finalized. With `collection_method = \"send_invoice\"` the customer needs an email address, or Stripe refuses the create.",
+	Description:           "A proposal of prices to a customer. Set `status` to `canceled` to cancel the quote; a quote that was accepted cannot be cancelled. Finalizing and accepting a quote are not resources: the quote stays a draft here, and `status` reports what happened to it elsewhere. Stripe lets only `metadata` and a few other fields change once the quote is finalized. With `collection_method = \"send_invoice\"` the customer needs an email address, or Stripe refuses the create. Removing `invoice_settings.days_until_due` from the configuration fails the apply, because Stripe refuses to clear it.",
 	DataSourceDescription: "A proposal of prices to a customer.",
 	ImportNote:            "An imported quote names each of its discounts, and each of its lines' discounts, by its ID in `discount`, so a configuration that names one by `coupon` or `promotion_code` plans an update that applies it again. Name each discount of an imported quote by `discount`.",
 	Paths: engine.Paths{

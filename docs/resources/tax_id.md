@@ -111,3 +111,5 @@ Using `terraform import`, import a tax id using its ID. For example:
 ```console
 % terraform import stripe_tax_id.acme_vat txi_123
 ```
+
+~> An import reads `owner` from Stripe, so a configuration that sets it must name the same owner, with `owner.account` for a connected account's tax ID, or the plan replaces the tax ID.

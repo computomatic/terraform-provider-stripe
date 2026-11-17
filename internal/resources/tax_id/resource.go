@@ -21,6 +21,8 @@ var Declaration = engine.Declaration{
 	IDPrefix:              "txi_",
 	Description:           "A tax ID of your own account, of a connected account or of a customer, set by `owner`. Stripe does not update tax IDs, so every argument forces replacement. `terraform destroy` deletes the tax ID.",
 	DataSourceDescription: "A tax ID of your own account, of a connected account or of a customer.",
+	ImportNote:            "An import reads `owner` from Stripe, so a configuration that sets it must name the same owner, with `owner.account` for a connected account's tax ID, or the plan replaces the tax ID.",
+	ImportNoteLevel:       engine.NoteWarning,
 	Paths: engine.Paths{
 		Create:   "/v1/tax_ids",
 		Retrieve: "/v1/tax_ids/{id}",

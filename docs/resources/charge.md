@@ -1393,4 +1393,4 @@ Using `terraform import`, import a charge using its ID. For example:
 % terraform import stripe_charge.deposit ch_123
 ```
 
-~> Stripe does not return `source` as it was sent, or `capture`, so an imported charge has them null. Leave them out of its configuration: changing either needs a new charge. Stripe does not return `card`, `destination`, `destination_data` or `transfer_data.description`, so an imported charge has them null: a configuration that sets one plans a replacement after the import.
+~> Stripe does not return `source` as it was sent, or `capture`, so an imported charge has them null. Leave them out of its configuration: changing either needs a new charge. Stripe does not return `card`, `destination`, `destination_data` or `transfer_data.description`, so an imported charge has them null: a configuration that sets one fails the plan after the import, because this resource cannot be replaced.

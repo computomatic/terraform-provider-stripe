@@ -3,12 +3,12 @@
 page_title: "stripe_price Resource - Stripe"
 subcategory: ""
 description: |-
-  What a product costs and how often it is charged. terraform destroy archives the price, because Stripe cannot delete one.
+  What a product costs and how often it is charged. terraform destroy archives the price, because Stripe cannot delete one. currency_options leaves out the price's own currency, which Stripe adds to the map, and the plan refuses a configuration that names it as a key.
 ---
 
 # Resource: stripe_price
 
-What a product costs and how often it is charged. `terraform destroy` archives the price, because Stripe cannot delete one.
+What a product costs and how often it is charged. `terraform destroy` archives the price, because Stripe cannot delete one. `currency_options` leaves out the price's own `currency`, which Stripe adds to the map, and the plan refuses a configuration that names it as a key.
 
 ## Example Usage
 

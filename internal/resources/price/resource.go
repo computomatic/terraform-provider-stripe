@@ -16,7 +16,7 @@ import (
 var Declaration = engine.Declaration{
 	TypeName:              "stripe_price",
 	IDPrefix:              "price_",
-	Description:           "What a product costs and how often it is charged. `terraform destroy` archives the price, because Stripe cannot delete one.",
+	Description:           "What a product costs and how often it is charged. `terraform destroy` archives the price, because Stripe cannot delete one. `currency_options` leaves out the price's own `currency`, which Stripe adds to the map, and the plan refuses a configuration that names it as a key.",
 	DataSourceDescription: "What a product costs and how often it is charged.",
 	Paths: engine.Paths{
 		Create:   "/v1/prices",

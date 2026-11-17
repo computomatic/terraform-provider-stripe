@@ -3,6 +3,7 @@ package engine
 import (
 	"context"
 	"fmt"
+	"slices"
 	"strconv"
 	"strings"
 
@@ -27,6 +28,9 @@ func NewDataSource(decl Declaration, table []fields.Field) (func() datasource.Da
 		dsTable = withoutField(dsTable, strings.Split(p, "."))
 	}
 	decl.ExpandWhenHeld = nil
+	// The table has no hash forms, such as an account's `bank_account_data`, which a refusal
+	// may name.
+	decl.RefuseChange = slices.DeleteFunc(slices.Clone(decl.RefuseChange), func(p string) bool { return !inTable(dsTable, p) })
 	decl.Answers = answersIn(decl.Answers, dsTable)
 	m, err := compile(decl, dsTable)
 	if err != nil {
@@ -436,17 +440,22 @@ func appendLabels(labels []string, name string, value wire.Value) []string {
 func answersIn(answers map[string]string, table []fields.Field) map[string]string {
 	out := make(map[string]string, len(answers))
 	for p, wording := range answers {
-		level, ok := table, false
-		for _, name := range strings.Split(p, ".") {
-			var f fields.Field
-			if f, ok = fields.Find(level, name); !ok {
-				break
-			}
-			level = f.Fields
-		}
-		if ok {
+		if inTable(table, p) {
 			out[p] = wording
 		}
 	}
 	return out
+}
+
+// inTable reports whether the table has a field at the dotted path of Stripe names.
+func inTable(table []fields.Field, p string) bool {
+	level, ok := table, false
+	for _, name := range strings.Split(p, ".") {
+		var f fields.Field
+		if f, ok = fields.Find(level, name); !ok {
+			break
+		}
+		level = f.Fields
+	}
+	return ok
 }

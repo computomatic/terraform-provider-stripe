@@ -45,12 +45,15 @@ const NotProvenDoc = "The provider keeps this value from configuration, because 
 
 // The removal sentences (ADR 2026-10-29-full-attribute-coverage, D4, E2 and E5). An argument the
 // plan keeps (keepHeld) leaves the current value; one in a list element, which the
-// plan cannot keep, Stripe sets when the list is sent again; any other the provider stops sending,
-// and the state takes Stripe's value at the next apply.
+// plan cannot keep, Stripe sets when the list is sent again; one the response never carries,
+// such as a token, is not sent, and the state keeps it until the framework leaves it unknown in a
+// plan that changes something else, whose apply has nothing to read it from; any other the
+// provider stops sending, and the state takes Stripe's value at the next apply.
 const (
-	RemovalKeeps   = "Removing it from the configuration leaves the current value."
-	RemovalInList  = "Removing it from the configuration lets Stripe set it when the list is next sent."
-	RemovalNotSent = "Removing it from the configuration stops sending it, and the next apply records the value Stripe holds."
+	RemovalKeeps       = "Removing it from the configuration leaves the current value."
+	RemovalInList      = "Removing it from the configuration lets Stripe set it when the list is next sent."
+	RemovalNotReturned = "Stripe never returns it, so removing it from the configuration sends nothing, and the state keeps it until an apply that changes something else leaves it null."
+	RemovalNotSent     = "Removing it from the configuration stops sending it, and the next apply records the value Stripe holds."
 )
 
 // removal is the removal sentence of an Optional and Computed argument, from what the plan does
@@ -63,6 +66,8 @@ func removal(n *node) string {
 		return RemovalKeeps
 	case n.InList:
 		return RemovalInList
+	case !n.Response && !n.Once:
+		return RemovalNotReturned
 	}
 	return RemovalNotSent
 }

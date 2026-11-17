@@ -19,7 +19,7 @@ var Declaration = engine.Declaration{
 	IDPrefix:              "vs_",
 	Description:           "A Stripe Identity check of one person's document or ID number. Set `status` to `canceled` to cancel a session that still requires input. The `client_secret` and `url` that start the check are sensitive and stay in the state. Redacting a session is not a resource: redact it with Stripe's API, after which Stripe no longer serves it. Verification flows and related persons are not available, so `type` is required. `type` and `metadata` change in place; changing `options` or `provided_details`, or any argument that only a create takes, fails the plan.",
 	DataSourceDescription: "A Stripe Identity check of one person's document or ID number.",
-	ImportNote:            "Stripe does not return `provided_details`, so an imported session has none in state and the next plan replaces it if the configuration sets some.",
+	ImportNote:            "Stripe does not return `provided_details`, so an imported session has none in state, and a configuration that sets some fails the plan, because a session cannot be replaced.",
 	ImportNoteLevel:       engine.NoteWarning,
 	Paths: engine.Paths{
 		Create:   "/v1/identity/verification_sessions",

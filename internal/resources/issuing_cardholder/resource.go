@@ -26,7 +26,8 @@ var Declaration = engine.Declaration{
 	IDPrefix: "ich_",
 	Description: "A person or business that Issuing cards are issued to. " +
 		"Stripe issues cards only for a platform's connected accounts, so manage cardholders through a provider configuration whose `stripe_account` is a connected account with the `card_issuing` capability active. " +
-		"Stripe reviews a new cardholder before its cards can be activated: `requirements.disabled_reason` reads `under_review` until then.\n\n" +
+		"Stripe reviews a new cardholder before its cards can be activated: `requirements.disabled_reason` reads `under_review` until then. " +
+		"Removing `individual.first_name` from the configuration sends it cleared, which the conformance suite has not proven Stripe takes, so keep it set.\n\n" +
 		"~> Stripe cannot delete a cardholder, so `terraform destroy` sets its `status` to `inactive` and leaves it on the connected account. Changing `name` or `type` replaces the cardholder, which leaves the old one inactive.",
 	DataSourceDescription: "A person or business that Issuing cards are issued to, on a connected account. Look one up by its `id`.",
 	ImportNote:            "Stripe never returns a company's `tax_id`, so an imported cardholder has none in state, and a configuration that sets `company.tax_id` plans an update that sends it again.",

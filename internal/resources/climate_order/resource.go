@@ -18,7 +18,7 @@ var Declaration = engine.Declaration{
 	IDPrefix:              "climorder_",
 	Description:           "A purchase of carbon removal from Stripe Climate. Set exactly one of `metric_tons` (a whole number of tons) and `amount` (the money to spend, in the smallest unit of the order's currency). The order spends the account's available balance in its settlement currency. Set `status` to `canceled` to cancel an order that is not yet delivered, which refunds its `amount_subtotal` but not its `amount_fees`. Only `beneficiary` and `metadata` change in place: changing any other argument fails the plan.",
 	DataSourceDescription: "A purchase of carbon removal from Stripe Climate.",
-	ImportNote:            "Stripe does not return `amount`, so an imported order has none in state. Importing an order that was bought by `amount` and configuring `amount` plans a replacement.",
+	ImportNote:            "Stripe does not return `amount`, so an imported order has none in state. Importing an order that was bought by `amount` and configuring `amount` fails the plan, because an order cannot be replaced.",
 	ImportNoteLevel:       engine.NoteWarning,
 	Paths: engine.Paths{
 		Create:   "/v1/climate/orders",

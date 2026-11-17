@@ -40,7 +40,7 @@ func checkTogether(decl Declaration, nodes []*node) error {
 						others = append(others, "`"+p+"`")
 					}
 				}
-				member.TogetherDoc = strings.TrimSpace(fmt.Sprintf("Stripe takes it only together with %s, so a configuration sets all of them or none. %s", joinAnd(others), set.Refused))
+				member.TogetherDoc = strings.TrimSpace(fmt.Sprintf("Stripe takes it only together with %s, so a configuration sets all of them or none, and the plan refuses one that sets only some. %s", joinAnd(others), set.Refused))
 			}
 		}
 		if err := checkTogether(decl, n.Kids); err != nil {

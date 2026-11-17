@@ -52,7 +52,15 @@ Every request is sent with Stripe API version `2026-09-30.endive`. Attributes th
 
 ## Defaults
 
-An optional argument's line ends with its default once that default is verified against Stripe, and every provider argument's line, and every line of an argument only an update takes, ends with its own: `Default (Stripe):` is the value Stripe applies when the configuration leaves the argument out, or the rule by which Stripe picks one; `Default (provider):` is the value the provider applies; `Default: none.` means the argument stays unset; and `Default: not sent.` marks an argument only an update takes. An argument that Stripe fills in when the configuration leaves it out says what deleting it from the configuration does: it leaves the current value, it lets Stripe set the value when the list that holds it is next sent, or the provider stops sending it and records the value Stripe holds at the next apply. To change such a value, set the value you want instead.
+An optional argument's line ends with its default once that default is verified against Stripe, and every provider argument's line, and every line of an argument only an update takes, ends with its own: `Default (Stripe):` is the value Stripe applies when the configuration leaves the argument out, or the rule by which Stripe picks one; `Default (provider):` is the value the provider applies; `Default: none.` means the argument stays unset; and `Default: not sent.` marks an argument only an update takes. An argument that Stripe fills in when the configuration leaves it out says what deleting it from the configuration does: it leaves the current value, it lets Stripe set the value when the list that holds it is next sent, or the provider stops sending it and records the value Stripe holds at the next apply; one Stripe never returns, such as a token, is not sent, and stays in the state until an apply that changes something else leaves it null. To change such a value, set the value you want instead.
+
+## When Stripe answers otherwise
+
+When Stripe stores a configured value in another form than the configuration's, the apply keeps the configured value in the state and warns, naming the attribute and the value Stripe stored. The next refresh records Stripe's value, so the next plan shows the difference: configure Stripe's form to avoid it. When Stripe returns a field in a shape the provider does not read, the state keeps the field's prior value and the provider warns, instead of failing the plan or the refresh.
+
+## Objects already gone
+
+A refresh that finds an object gone from Stripe removes it from the state, so the next plan creates it again. Destroying an object that is already gone succeeds.
 
 ## Argument Reference
 
