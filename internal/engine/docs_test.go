@@ -35,14 +35,16 @@ func docsTable() []fields.Field {
 		fields.Field{Name: "price", Shape: fields.String, Response: true, ReadBy: "stripe_widget_price", Description: "The price."},
 		fields.Field{Name: "tax_rates", Shape: fields.ScalarList, Elem: fields.String, Response: true, ReadBy: "stripe_tax_rate", Description: "The tax rates."},
 		fields.Field{Name: "referrer", Shape: fields.String, Create: true, NotReturned: true},
-		fields.Field{Name: "display", Shape: fields.String, Create: true, Response: true, NotReturned: true})
+		fields.Field{Name: "display", Shape: fields.String, Create: true, Response: true, NotReturned: true},
+		fields.Field{Name: "token", Shape: fields.String, Create: true, Update: true, ServerDefaulted: true})
 }
 
 // The page of an optional argument states its default: the evidence's, or the declaration's
 // wording of a rule the evidence records. An Optional and Computed argument says what removing it
 // does, as the plan treats it: one the plan keeps (a stable one, E5) leaves the current value,
-// one in a list element, stable or not, Stripe sets when the list is sent again, and any other
-// the provider stops sending. An argument only the update takes is marked so that docgen
+// one in a list element, stable or not, Stripe sets when the list is sent again, one the response
+// never carries stays in state until another change's apply leaves it null, and any other the
+// provider stops sending. An argument only the update takes is marked so that docgen
 // refuses it without a statement, and an embedded copy names the data source of the copied
 // object. An argument Stripe never returns says the provider keeps it from configuration, which
 // it does as PreserveConfig keeps a value, and one the response holds says why it is kept.
@@ -70,6 +72,7 @@ func TestAttributeDocs(t *testing.T) {
 		"default_ref":   {NeedsDefault: true, Removal: RemovalNotSent},
 		"referrer":      {NotReturned: NotReturnedDoc},
 		"display":       {NotReturned: NotProvenDoc},
+		"token":         {Removal: RemovalNotReturned},
 	} {
 		if got[path] != want {
 			t.Errorf("%s: %+v, want %+v", path, got[path], want)

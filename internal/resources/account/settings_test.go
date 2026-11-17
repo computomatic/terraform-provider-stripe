@@ -478,3 +478,99 @@ func TestAccAccount_bankAccountTypeRefused(t *testing.T) {
 		}},
 	})
 }
+
+// bankConfig is two custom company accounts made with a bank account, one from the token and
+// the other from the hash with the account number, each with extra; an empty value leaves its
+// bank account out.
+func bankConfig(c acctest.Config, token, number, extra string) string {
+	tokenBody, dataBody := extra, extra
+	if token != "" {
+		tokenBody = fmt.Sprintf("  bank_account = %q\n", token) + extra
+	}
+	if number != "" {
+		dataBody = fmt.Sprintf(`  bank_account_data = {
+    account_holder_name = "Jenny Rosen"
+    account_holder_type = "company"
+    account_number      = %q
+    country             = "US"
+    currency            = "usd"
+    object              = "bank_account"
+    routing_number      = "110000000"
+  }
+`, number) + extra
+	}
+	return c.ProviderBlock() + companyAccount("bank_token", "", tokenBody) + companyAccount("bank_data", "", dataBody)
+}
+
+// Stripe's account update takes no bank account, so the provider sends `bank_account` and
+// `bank_account_data` on create only, and a plan that changes or removes either on an existing
+// account fails rather than replacing the account, which would delete it; an update of anything
+// else applies in place and leaves both as they are.
+func TestAccAccount_bankAccountChangeRefused(t *testing.T) {
+	acct := acctest.NewAccount(t)
+	ids := map[string]string{}
+	keep := func(name string) resource.TestCheckFunc {
+		return resource.TestCheckResourceAttrWith("stripe_account."+name, "id", func(v string) error {
+			if ids[name] == "" {
+				ids[name] = v
+			} else if ids[name] != v {
+				return fmt.Errorf("stripe_account.%s was replaced: %s, then %s", name, ids[name], v)
+			}
+			return nil
+		})
+	}
+	const token, number = "btok_us_verified", "000123456789"
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: tfacc.ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: bankConfig(acct, token, number, ""),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					keep("bank_token"), keep("bank_data"),
+					resource.TestCheckResourceAttr("stripe_account.bank_token", "bank_account", token),
+					resource.TestCheckResourceAttr("stripe_account.bank_data", "bank_account_data.account_number", number),
+				),
+			},
+			{Config: bankConfig(acct, "btok_us", number, ""), PlanOnly: true, ExpectError: regexp.MustCompile(refused("bank_account"))},
+			{Config: bankConfig(acct, token, "000222222227", ""), PlanOnly: true, ExpectError: regexp.MustCompile(refused("bank_account_data"))},
+			{Config: bankConfig(acct, "", number, ""), PlanOnly: true, ExpectError: regexp.MustCompile(refused("bank_account"))},
+			{Config: bankConfig(acct, token, "", ""), PlanOnly: true, ExpectError: regexp.MustCompile(refused("bank_account_data"))},
+			{
+				Config: bankConfig(acct, token, number, "  metadata      = { team = \"payouts\" }\n"),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectResourceAction("stripe_account.bank_token", plancheck.ResourceActionUpdate),
+						plancheck.ExpectResourceAction("stripe_account.bank_data", plancheck.ResourceActionUpdate),
+					},
+					PostApplyPostRefresh: []plancheck.PlanCheck{plancheck.ExpectEmptyPlan()},
+				},
+				Check: resource.ComposeAggregateTestCheckFunc(
+					keep("bank_token"), keep("bank_data"),
+					resource.TestCheckResourceAttr("stripe_account.bank_token", "metadata.team", "payouts"),
+					resource.TestCheckResourceAttr("stripe_account.bank_token", "bank_account", token),
+					resource.TestCheckResourceAttr("stripe_account.bank_data", "bank_account_data.account_number", number),
+				),
+			},
+		},
+	})
+}
+
+// Stripe never returns the bank account, so an imported account has none, and a configuration
+// that sets one fails the plan after the import, as a change does, rather than replacing it.
+func TestAccAccount_importWithBankAccountRefused(t *testing.T) {
+	acct := acctest.NewAccount(t)
+	cfg := customConfig(acct, "  business_type = \"company\"\n  capabilities  = { transfers = { requested = true } }\n  bank_account  = \"btok_us_verified\"\n")
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: tfacc.ProviderFactories,
+		Steps: []resource.TestStep{
+			{Config: cfg},
+			{
+				ResourceName:    address,
+				ImportState:     true,
+				ImportStateKind: resource.ImportBlockWithID,
+				Config:          cfg,
+				ExpectError:     regexp.MustCompile(refused("bank_account")),
+			},
+		},
+	})
+}

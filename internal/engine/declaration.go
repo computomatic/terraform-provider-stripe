@@ -494,8 +494,14 @@ type Declaration struct {
 	// account's `capabilities` or its `business_profile.mcc`. A plan that
 	// changes one on an existing object fails before Stripe is called, and the error says to
 	// revert, to ignore the change or to taint the object, or for a resource that refuses
-	// destroy to remove it from state. The field is sent on create only. A plan that is a replace is not
-	// refused when a top-level create-only or replace-on field, the parent, the attached object,
+	// destroy to remove it from state. The field is sent on create only. An entry may itself be
+	// create-only, such as an account's `bank_account`, whose replacement would delete the
+	// account: the refusal wins, and neither it nor a field below it forces a replacement. Each
+	// form of a token-or-hash parameter is an entry of its own (`bank_account`,
+	// `bank_account_data`). compile refuses an entry that a replacement always comes before: one
+	// below a field that forces replacement, a create-only SetOnce entry, the parent or the
+	// attached object. A plan that is a replace is not
+	// refused when another top-level create-only or replace-on field, the parent, the attached object,
 	// a currency options change or a fixed keys change forces it. compile refuses a declaration
 	// with a replace source below the top level, which is not checked, unless it refuses
 	// destroy, which fails every replacement first. Nor is a value not fully known at plan time. `-replace` cannot be told from an update at plan time.

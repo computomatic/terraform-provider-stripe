@@ -2,6 +2,7 @@ package engine
 
 import (
 	"context"
+	"maps"
 	"strings"
 	"testing"
 
@@ -435,5 +436,100 @@ func TestImportNoteListsTheArgumentsStripeNeverReturns(t *testing.T) {
 	note, level = m.importNote()
 	if want := "Stripe never returns `passcode`. Stripe does not return `hint` or `token`, so an imported widget has them null: a configuration that sets `hint` plans an update after the import, and one that sets `token` plans a replacement."; note != want || level != NoteWarning {
 		t.Errorf("note %q (%v), want %q", note, level, want)
+	}
+
+	// A resource whose destroy is refused fails the plan of the replacement.
+	decl.Delete, decl.RefuseReason, decl.Paths.Delete = Refuse, "Stripe cannot delete a widget.", ""
+	if m, err = compile(decl, table); err != nil {
+		t.Fatal(err)
+	}
+	note, _ = m.importNote()
+	if want := "Stripe never returns `passcode`. Stripe does not return `hint` or `token`, so an imported widget has them null: a configuration that sets `hint` plans an update after the import, and one that sets `token` fails the plan, because this resource cannot be replaced."; note != want {
+		t.Errorf("note %q, want %q", note, want)
+	}
+	if m, err = compile(decl, append(fixtureTable(), fields.Field{Name: "token", Shape: fields.String, Create: true})); err != nil {
+		t.Fatal(err)
+	}
+	note, _ = m.importNote()
+	if want := "fails the plan after the import, because this resource cannot be replaced."; !strings.HasSuffix(note, want) {
+		t.Errorf("note %q, want it to end %q", note, want)
+	}
+}
+
+// An argument Stripe never returns that the declaration makes server-defaulted, as an account's
+// or a person's token, is Computed: removing it from the configuration plans nothing, and once a
+// plan that changes something else leaves it unknown, the update sends nothing of it and the
+// state holds null, as there is nothing to read it from. Left Optional alone, its removal is
+// sent as an unset.
+func TestRemovingAComputedNeverReturnedArgumentSendsNothing(t *testing.T) {
+	for _, computed := range []bool{true, false} {
+		decl := fixtureDeclaration()
+		if computed {
+			decl.ServerDefaulted = []string{"passcode"}
+		}
+		stub := newStub()
+		r := configured(t, decl, fixtureTable(), stub)
+		if got := r.schema.Attributes["passcode"].IsComputed(); got != computed {
+			t.Fatalf("server-defaulted %t: passcode computed %t", computed, got)
+		}
+		state, _ := r.create(t, createPlan(r))
+		attrs := maps.Clone(state.Attributes())
+		attrs["name"] = types.StringValue("renamed")
+		if computed {
+			attrs["passcode"] = types.StringUnknown()
+		} else {
+			attrs["passcode"] = types.StringNull()
+		}
+		stub.reset()
+		next := r.update(t, r.fill(attrs), state)
+		var sent, ok bool
+		for _, req := range stub.requests() {
+			if req.Method == "POST" {
+				_, ok = req.Params.Get("passcode")
+				sent = sent || ok
+			}
+		}
+		if sent == computed {
+			t.Errorf("server-defaulted %t: the update sent passcode %t", computed, sent)
+		}
+		if !next.Attributes()["passcode"].IsNull() {
+			t.Errorf("server-defaulted %t: state holds %v", computed, next.Attributes()["passcode"])
+		}
+	}
+}
+
+// An argument Stripe never returns that RefuseChange refuses, or one below such an entry, fails
+// the plan of a configuration that sets it after an import, and the note says to ignore it; a
+// SetOnce entry, which a plan may set where the state holds none, plans an update.
+func TestImportNoteNamesRefusedArguments(t *testing.T) {
+	decl := fixtureDeclaration()
+	decl.RefuseChange = []string{"code", "lock"}
+	table := append(refuseTable(),
+		fields.Field{Name: "token", Shape: fields.String, Create: true},
+		fields.Field{Name: "code", Shape: fields.String, Create: true, Update: true},
+		fields.Field{Name: "lock", Shape: fields.Object, Create: true, Update: true, Response: true, Fields: []fields.Field{
+			{Name: "pin", Shape: fields.String, Create: true, Update: true},
+		}})
+	m, err := compile(decl, table)
+	if err != nil {
+		t.Fatal(err)
+	}
+	note, level := m.importNote()
+	if want := "Stripe does not return `passcode`, `token`, `code` or `lock.pin`, so an imported widget has them null: a configuration that sets `passcode` plans an update after the import, one that sets `token` plans a replacement, and one that sets `code` or `lock.pin` fails the plan, because the provider refuses a change of it: add it to `lifecycle { ignore_changes }`."; note != want || level != NoteWarning {
+		t.Errorf("note %q (%v), want %q", note, level, want)
+	}
+	decl.RefuseChange, decl.SetOnce = []string{"code"}, []string{"code"}
+	if m, err = compile(decl, table[:len(table)-1]); err != nil {
+		t.Fatal(err)
+	}
+	if note, _ = m.importNote(); !strings.Contains(note, "a configuration that sets `passcode` or `code` plans an update after the import") {
+		t.Errorf("a set-once entry: %q", note)
+	}
+	decl.RefuseChange, decl.SetOnce, decl.ImportNote = []string{"code"}, nil, "Stripe never returns `passcode` or `token`."
+	if m, err = compile(decl, table[:len(table)-1]); err != nil {
+		t.Fatal(err)
+	}
+	if note, _ = m.importNote(); note != "Stripe never returns `passcode` or `token`. Stripe does not return `code`, so an imported widget has it null: a configuration that sets it fails the plan after the import, because the provider refuses a change of it: add it to `lifecycle { ignore_changes }`." {
+		t.Errorf("a lone refused argument: %q", note)
 	}
 }

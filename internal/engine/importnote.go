@@ -10,13 +10,15 @@ import (
 // arguments Stripe never returns, which an import cannot recover (ADR
 // 2026-10-29-full-attribute-coverage, E3), leaving out those the declaration's note already
 // names. A configuration that sets one plans an update after the import, or a replacement where
-// the argument cannot change in place, which flags the note as a warning. A kept member of a
-// keyed list's elements whose response form a read can see (listedKept) is adopted where Stripe
-// lists some and replaces where it lists none; any other such member replaces
-// (requiresReplaceForKeptInKeyed).
+// the argument cannot change in place, which flags the note as a warning; on a resource whose
+// destroy is refused that replacement fails the plan, and the note says so. One that sets a
+// RefuseChange argument fails the plan, a warning too, and the note says to ignore its changes.
+// A kept member of a keyed list's elements whose response form a read can see (listedKept) is
+// adopted where Stripe lists some and replaces where it lists none; any other such member
+// replaces (requiresReplaceForKeptInKeyed).
 func (m *model) importNote() (string, NoteLevel) {
 	note, level := strings.TrimSpace(m.decl.ImportNote), m.decl.ImportNoteLevel
-	var update, replace, adopt []string
+	var update, replace, refuse, adopt []string
 	var walk func(nodes []*node, prefix string, replacing bool)
 	walk = func(nodes []*node, prefix string, replacing bool) {
 		for _, n := range nodes {
@@ -39,30 +41,60 @@ func (m *model) importNote() (string, NoteLevel) {
 				adopt = append(adopt, "`"+name+"`")
 				continue
 			}
-			if replaces {
+			switch {
+			// A SetOnce entry is no refusal here: a plan may set it where the state holds none.
+			case refusedAt(m.decl, n.Path):
+				refuse = append(refuse, "`"+name+"`")
+			case replaces:
 				replace = append(replace, "`"+name+"`")
-			} else {
+			default:
 				update = append(update, "`"+name+"`")
 			}
 		}
 	}
 	walk(m.nodes, "", false)
-	if len(update)+len(replace)+len(adopt) == 0 {
+	if len(update)+len(replace)+len(refuse)+len(adopt) == 0 {
 		return note, level
 	}
-	all := slices.Concat(update, replace, adopt)
+	all := slices.Concat(update, replace, refuse, adopt)
 	thing := Noun(m.decl.TypeName)
 	generated := fmt.Sprintf("Stripe does not return %s, so an imported %s has %s null", inWords(all, "or"), thing, pronoun(len(all)))
-	switch {
-	case len(update)+len(replace) == 0:
-		generated += "."
-	case len(replace) == 0:
-		generated += ": a configuration that sets " + oneOf(len(update)) + " plans an update after the import."
-	case len(update) == 0:
-		generated += ": a configuration that sets " + oneOf(len(replace)) + " plans a replacement after the import."
-		level = NoteWarning
-	default:
-		generated += fmt.Sprintf(": a configuration that sets %s plans an update after the import, and one that sets %s plans a replacement.", inWords(update, "or"), inWords(replace, "or"))
+	// A resource whose destroy is refused fails the plan of a replacement instead.
+	replaces, because := "plans a replacement", ""
+	if m.decl.Delete == Refuse {
+		replaces, because = "fails the plan", ", because this resource cannot be replaced"
+	}
+	// What a configuration that sets each group plans after the import, in one sentence: a lone
+	// group calls its arguments `it` or `one`, as the note names them just before.
+	type group struct {
+		names         []string
+		does, because string
+	}
+	var groups []group
+	for _, g := range []group{
+		{update, "plans an update", ""},
+		{replace, replaces, because},
+		{refuse, "fails the plan", ", because the provider refuses a change of it: add it to `lifecycle { ignore_changes }`"},
+	} {
+		if len(g.names) > 0 {
+			groups = append(groups, g)
+		}
+	}
+	for i, g := range groups {
+		sets := inWords(g.names, "or")
+		switch {
+		case i == 0 && len(groups) == 1:
+			generated += ": a configuration that sets " + oneOf(len(g.names)) + " " + g.does + " after the import" + g.because
+		case i == 0:
+			generated += ": a configuration that sets " + sets + " " + g.does + " after the import" + g.because
+		case i == len(groups)-1:
+			generated += ", and one that sets " + sets + " " + g.does + g.because
+		default:
+			generated += ", one that sets " + sets + " " + g.does + g.because
+		}
+	}
+	generated += "."
+	if len(replace)+len(refuse) > 0 {
 		level = NoteWarning
 	}
 	if len(adopt) > 0 {

@@ -67,7 +67,7 @@ func TestTogetherRefusesAPartOfASet(t *testing.T) {
 func TestTogetherDocsNameTheSet(t *testing.T) {
 	r := configured(t, fixtureDeclaration(), secureTable(), noCalls(t))
 	docs := r.AttributeDocs()
-	if got, want := docs["secure.plan.count"].Together, "Stripe takes it only together with `cryptogram` and `version`, so a configuration sets all of them or none. Sent together, Stripe refused them."; got != want {
+	if got, want := docs["secure.plan.count"].Together, "Stripe takes it only together with `cryptogram` and `version`, so a configuration sets all of them or none, and the plan refuses one that sets only some. Sent together, Stripe refused them."; got != want {
 		t.Errorf("count's line:\n got %q\nwant %q", got, want)
 	}
 	if got := docs["secure.indicator"].Together; got != "" {

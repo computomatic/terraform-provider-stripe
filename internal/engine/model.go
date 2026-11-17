@@ -411,6 +411,29 @@ func compile(decl Declaration, table []fields.Field) (*model, error) {
 			return nil, fmt.Errorf("%s: set-once entry `%s` is not in RefuseChange", decl.TypeName, name)
 		}
 	}
+	// A refusal takes effect only where no replacement comes first: the attribute plan modifiers
+	// plan one before ModifyPlan runs, and refuseChanges lets a replace through. So an entry may
+	// neither force a replacement itself nor sit below a field that does.
+	for _, name := range slices.Concat(decl.RefuseChange, slices.Sorted(maps.Keys(decl.RefuseChangeWhileHeld))) {
+		if source := m.replaceSourceAt(name); source != "" {
+			return nil, fmt.Errorf("%s: refuse-change entry `%s` can never fail a plan, because `%s` forces a replacement first", decl.TypeName, name, source)
+		}
+	}
+	// Each form of a token-or-hash parameter is its own field, and a form left out of
+	// RefuseChange keeps the replacement it forces as a create-only field.
+	for _, name := range decl.RefuseChange {
+		n, _, _ := m.at(name)
+		if n.TokenForm == "" && n.DataForm == "" {
+			continue
+		}
+		sibling := strings.TrimSuffix(name, "_data")
+		if !n.IsHashForm {
+			sibling = name + "_data"
+		}
+		if !slices.Contains(decl.RefuseChange, sibling) {
+			return nil, fmt.Errorf("%s: refuse-change entry `%s` names one form of a token-or-hash parameter; list `%s` too, or a change of it still replaces the object", decl.TypeName, name, sibling)
+		}
+	}
 	// refuseChanges tells a replace only by its top-level sources. A resource that refuses
 	// destroy fails every real replacement in the attribute plan modifier, before refuseChanges
 	// runs, so a source below the top level needs no telling there.
@@ -730,17 +753,19 @@ func (m *model) top(name string) (*node, bool) {
 }
 
 // at returns the node at a dotted Stripe field path and its attribute path, through nested
-// objects only.
+// objects only. It matches each node by its path, so that `bank_account` names a token-or-hash
+// parameter's token and `bank_account_data` its hash form, which share a Stripe name.
 func (m *model) at(dotted string) (*node, *tftypes.AttributePath, bool) {
 	kids, p := m.nodes, tftypes.NewAttributePath()
 	var n *node
-	for i, name := range strings.Split(dotted, ".") {
+	names := strings.Split(dotted, ".")
+	for i := range names {
 		if i > 0 && n.Shape != fields.Object {
 			return nil, nil, false
 		}
 		n = nil
 		for _, k := range kids {
-			if k.Name == name {
+			if k.Path == strings.Join(names[:i+1], ".") {
 				n = k
 			}
 		}
@@ -751,6 +776,31 @@ func (m *model) at(dotted string) (*node, *tftypes.AttributePath, bool) {
 		kids = n.Kids
 	}
 	return n, p, true
+}
+
+// refusedAt reports whether a plan that changes the field at path fails, because the field is,
+// or sits below, a RefuseChange entry that is not SetOnce.
+func refusedAt(decl Declaration, path string) bool {
+	return slices.ContainsFunc(decl.RefuseChange, func(r string) bool {
+		return (path == r || strings.HasPrefix(path, r+".")) && !slices.Contains(decl.SetOnce, r)
+	})
+}
+
+// replaceSourceAt is the path of the field at or above the dotted path that forces a
+// replacement when it changes, or "": one the plan replaces on, or the parent or the attached
+// object, which make the request path.
+func (m *model) replaceSourceAt(dotted string) string {
+	names := strings.Split(dotted, ".")
+	if name := names[0]; name == m.decl.Parent || name == m.decl.Attach {
+		return name
+	}
+	for i := range names {
+		n, _, ok := m.at(strings.Join(names[:i+1], "."))
+		if ok && (n.Replace || n.ReplaceIfSet || n.Fixed || n.FixedOnceSet != "") {
+			return n.Path
+		}
+	}
+	return ""
 }
 
 type compiler struct {
@@ -916,14 +966,14 @@ func (c *compiler) build(table []fields.Field, prefix string, top, parentOutput,
 		// replaces the object, so the value keeps its prior one as any child of such a field does.
 		serverFilledInList := inList && n.Computed && f.CreateOnly() && !replaceOn && !parentReplace
 		n.ReplaceIfSet = serverFilledInList && !nestedShape(f.Shape)
-		// Below a RefuseChange entry a plan that changes anything fails, so a create-only member
-		// there, such as the user agent of an account's Issuing terms, needs no replacement of
-		// its own, which refuseChanges could not tell from its top-level sources. A SetOnce entry
-		// lets a plan set the hash on an object that holds none, and the update would drop such
-		// a member, so it keeps its replacement there.
-		underRefused := slices.ContainsFunc(c.decl.RefuseChange, func(r string) bool {
-			return strings.HasPrefix(path, r+".") && !slices.Contains(c.decl.SetOnce, r)
-		})
+		// At or below a RefuseChange entry a plan that changes anything fails, so a create-only
+		// field there, such as an account's `bank_account` or the user agent of its Issuing terms,
+		// forces no replacement: the refusal wins over it, where a replacement would make the plan
+		// that refuseChanges lets through, and below the top level one it could not tell. A
+		// SetOnce entry lets a plan set the hash on an object that holds none, and the update would
+		// drop such a field, so it keeps its replacement there (compile refuses a create-only
+		// SetOnce entry, whose own replacement would come before its refusal).
+		underRefused := refusedAt(c.decl, path)
 		n.Replace = (f.CreateOnly() || replaceOn) && !parentReplace && !underRefused && !n.computedOnly() && !serverFilledInList && !(top && c.decl.Advance != nil && f.Name == c.decl.Advance.Field)
 		// Below a field that forces replacement nothing changes in place, so a computed
 		// value there stays as it is: an unknown one would read as a change of the parent.

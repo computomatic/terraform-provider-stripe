@@ -16,7 +16,7 @@ import (
 var Declaration = engine.Declaration{
 	TypeName:              "stripe_shipping_rate",
 	IDPrefix:              "shr_",
-	Description:           "What Checkout charges for shipping. `terraform destroy` archives the shipping rate, because Stripe cannot delete one.",
+	Description:           "What Checkout charges for shipping. `terraform destroy` archives the shipping rate, because Stripe cannot delete one. `fixed_amount.currency_options` leaves out the rate's own `fixed_amount.currency`, which Stripe adds to the map, and the plan refuses a configuration that names it as a key.",
 	DataSourceDescription: "What Checkout charges for shipping.",
 	Paths: engine.Paths{
 		Create:   "/v1/shipping_rates",

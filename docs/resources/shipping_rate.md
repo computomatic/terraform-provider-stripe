@@ -3,12 +3,12 @@
 page_title: "stripe_shipping_rate Resource - Stripe"
 subcategory: ""
 description: |-
-  What Checkout charges for shipping. terraform destroy archives the shipping rate, because Stripe cannot delete one.
+  What Checkout charges for shipping. terraform destroy archives the shipping rate, because Stripe cannot delete one. fixed_amount.currency_options leaves out the rate's own fixed_amount.currency, which Stripe adds to the map, and the plan refuses a configuration that names it as a key.
 ---
 
 # Resource: stripe_shipping_rate
 
-What Checkout charges for shipping. `terraform destroy` archives the shipping rate, because Stripe cannot delete one.
+What Checkout charges for shipping. `terraform destroy` archives the shipping rate, because Stripe cannot delete one. `fixed_amount.currency_options` leaves out the rate's own `fixed_amount.currency`, which Stripe adds to the map, and the plan refuses a configuration that names it as a key.
 
 ## Example Usage
 

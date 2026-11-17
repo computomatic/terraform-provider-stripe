@@ -3,12 +3,12 @@
 page_title: "stripe_issuing_cardholder Resource - Stripe"
 subcategory: ""
 description: |-
-  A person or business that Issuing cards are issued to. Stripe issues cards only for a platform's connected accounts, so manage cardholders through a provider configuration whose stripe_account is a connected account with the card_issuing capability active. Stripe reviews a new cardholder before its cards can be activated: requirements.disabled_reason reads under_review until then.
+  A person or business that Issuing cards are issued to. Stripe issues cards only for a platform's connected accounts, so manage cardholders through a provider configuration whose stripe_account is a connected account with the card_issuing capability active. Stripe reviews a new cardholder before its cards can be activated: requirements.disabled_reason reads under_review until then. Removing individual.first_name from the configuration sends it cleared, which the conformance suite has not proven Stripe takes, so keep it set.
 ---
 
 # Resource: stripe_issuing_cardholder
 
-A person or business that Issuing cards are issued to. Stripe issues cards only for a platform's connected accounts, so manage cardholders through a provider configuration whose `stripe_account` is a connected account with the `card_issuing` capability active. Stripe reviews a new cardholder before its cards can be activated: `requirements.disabled_reason` reads `under_review` until then.
+A person or business that Issuing cards are issued to. Stripe issues cards only for a platform's connected accounts, so manage cardholders through a provider configuration whose `stripe_account` is a connected account with the `card_issuing` capability active. Stripe reviews a new cardholder before its cards can be activated: `requirements.disabled_reason` reads `under_review` until then. Removing `individual.first_name` from the configuration sends it cleared, which the conformance suite has not proven Stripe takes, so keep it set.
 
 ~> Stripe cannot delete a cardholder, so `terraform destroy` sets its `status` to `inactive` and leaves it on the connected account. Changing `name` or `type` replaces the cardholder, which leaves the old one inactive.
 

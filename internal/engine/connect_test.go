@@ -478,6 +478,107 @@ func TestRefuseChangeMustNameAConfigurableField(t *testing.T) {
 	}
 }
 
+// A create-only field, such as an account's `bank_account` and its hash form `bank_account_data`,
+// is refused like any RefuseChange field: the refusal wins over the replacement the field would
+// otherwise force, so a change or a removal on an existing object fails the plan rather than
+// planning a replacement, while a create still sends the field. Each entry names its own form.
+func TestRefuseChangeWinsOverACreateOnlyField(t *testing.T) {
+	decl := fixtureDeclaration()
+	decl.RefuseChange = []string{"source", "source_data"}
+	table := append(refuseTable(),
+		fields.Field{Name: "source", Shape: fields.String, Create: true, NotReturned: true},
+		fields.Field{Name: "source", Attr: "source_data", Shape: fields.Object, Create: true, Fields: []fields.Field{
+			{Name: "number", Shape: fields.String, Create: true, NotReturned: true},
+		}})
+	stub := newStub()
+	r := configured(t, decl, table, stub)
+	for _, name := range []string{"source", "source_data", "source_data.number"} {
+		n, _, ok := r.m.at(name)
+		if !ok || n.Replace || n.ReplaceIfSet || n.IsHashForm != (name == "source_data") {
+			t.Fatalf("%s: %+v", name, n)
+		}
+	}
+	dataType := r.objType.AttrTypes["source_data"]
+	for _, tc := range []struct {
+		form            string
+		created, change attr.Value
+	}{
+		{"source", types.StringValue("tok_1"), types.StringValue("tok_2")},
+		{"source_data", object(dataType, map[string]attr.Value{"number": types.StringValue("1")}), object(dataType, map[string]attr.Value{"number": types.StringValue("2")})},
+	} {
+		attrs := maps.Clone(createPlan(r).Attributes())
+		attrs[tc.form] = tc.created
+		stub.reset()
+		state, _ := r.create(t, r.fill(attrs))
+		if creates := stub.requests(); len(creates) == 0 {
+			t.Fatalf("%s: nothing was created", tc.form)
+		} else if _, sent := creates[0].Params.Get("source"); !sent {
+			t.Errorf("%s: the create did not send it: %v", tc.form, creates[0].Params)
+		}
+		for name, v := range map[string]attr.Value{"changed": tc.change, "removed": nullOf(r.objType.AttrTypes[tc.form]), "kept": tc.created} {
+			attrs := maps.Clone(state.Attributes())
+			attrs[tc.form] = v
+			p := r.fill(attrs)
+			resp := &resource.ModifyPlanResponse{Plan: tfsdk.Plan{Schema: r.schema, Raw: raw(t, p)}}
+			r.ModifyPlan(context.Background(), resource.ModifyPlanRequest{
+				Config: tfsdk.Config{Schema: r.schema, Raw: raw(t, p)},
+				Plan:   tfsdk.Plan{Schema: r.schema, Raw: raw(t, p)},
+				State:  tfsdk.State{Schema: r.schema, Raw: raw(t, state)},
+			}, resp)
+			refused := resp.Diagnostics.HasError() && strings.Contains(resp.Diagnostics.Errors()[0].Summary(), "Changing `"+tc.form+"` is not supported yet")
+			if refused != (name != "kept") {
+				t.Errorf("%s %s: %v", tc.form, name, resp.Diagnostics)
+			}
+			if len(resp.RequiresReplace) > 0 {
+				t.Errorf("%s %s: plans a replacement of %v", tc.form, name, resp.RequiresReplace)
+			}
+		}
+	}
+	for _, name := range []string{"source", "source_data"} {
+		if d := r.m.describeResource(r.m.nodes[slices.IndexFunc(r.m.nodes, func(n *node) bool { return n.Path == name })]); strings.Contains(d, "replaces") {
+			t.Errorf("%s: the docs say %q", name, d)
+		}
+	}
+}
+
+// Each form of a token-or-hash parameter forces a replacement of its own unless it is refused,
+// so a refusal of one form without the other does not compile, whichever form is left out.
+func TestRefuseChangeNeedsBothFormsOfATokenOrHash(t *testing.T) {
+	table := append(refuseTable(),
+		fields.Field{Name: "source", Shape: fields.String, Create: true},
+		fields.Field{Name: "source", Attr: "source_data", Shape: fields.Object, Create: true, Fields: []fields.Field{
+			{Name: "number", Shape: fields.String, Create: true},
+		}})
+	for listed, missing := range map[string]string{"source": "source_data", "source_data": "source"} {
+		decl := fixtureDeclaration()
+		decl.RefuseChange = []string{listed}
+		_, err := NewResource(decl, table)
+		if err == nil || !strings.Contains(err.Error(), "`"+listed+"`") || !strings.Contains(err.Error(), "list `"+missing+"` too") {
+			t.Errorf("%s alone: %v", listed, err)
+		}
+	}
+}
+
+// A refusal that a replacement would always come before could never fail a plan, so compile
+// refuses it: an entry below a field that forces replacement, and a SetOnce entry that is
+// create-only, which keeps its replacement so that the plan can set it.
+func TestRefuseChangeThatCannotTakeEffectDoesNotCompile(t *testing.T) {
+	below := fixtureDeclaration()
+	below.RefuseChange = []string{"origin.code"}
+	setOnce := fixtureDeclaration()
+	setOnce.RefuseChange, setOnce.SetOnce = []string{"source"}, []string{"source"}
+	table := append(refuseTable(),
+		fields.Field{Name: "origin", Shape: fields.Object, Create: true, Response: true, Fields: []fields.Field{
+			{Name: "code", Shape: fields.String, Create: true, Update: true, Response: true},
+		}},
+		fields.Field{Name: "source", Shape: fields.String, Create: true})
+	for name, decl := range map[string]Declaration{"below a replace source": below, "create-only set-once": setOnce} {
+		if _, err := NewResource(decl, table); err == nil || !strings.Contains(err.Error(), "can never fail a plan") {
+			t.Errorf("%s: %v", name, err)
+		}
+	}
+}
+
 // A field below the top level, such as an account's `business_profile.mcc`, is refused on its
 // own: a change beside it in the same object passes, and removing the object that holds it is
 // a change of it.

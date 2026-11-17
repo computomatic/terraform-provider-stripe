@@ -166,4 +166,4 @@ Using `terraform import`, import a climate order using its ID. For example:
 % terraform import stripe_climate_order.offset climorder_123
 ```
 
-~> Stripe does not return `amount`, so an imported order has none in state. Importing an order that was bought by `amount` and configuring `amount` plans a replacement.
+~> Stripe does not return `amount`, so an imported order has none in state. Importing an order that was bought by `amount` and configuring `amount` fails the plan, because an order cannot be replaced.
