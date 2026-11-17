@@ -171,8 +171,10 @@ func received(t *testing.T, conn acctest.Config, kind, financialAccount string, 
 		{Name: "amount", Value: wire.Int(amount)},
 		{Name: "currency", Value: wire.String("usd")},
 		{Name: "network", Value: wire.String("ach")},
-		// Stripe takes at most 10 characters of description on an ACH transfer, too few for
-		// the smoke prefix, and no sweep finds received credits or debits by it.
+		// The fake takes at most 10 characters of description on an ACH received debit and 34
+		// on a received credit, which Stripe limited to 10 too until 2026-11-17 (the suite's
+		// behaviour notes): too few for the smoke prefix, and no sweep finds received credits
+		// or debits by it.
 		{Name: "description", Value: wire.String("tfacc")},
 	}})
 	if err != nil {
